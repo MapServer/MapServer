@@ -537,7 +537,7 @@ void  msSOSAddGeometryNode(xmlNodePtr psParent, layerObj *lp, shapeObj *psShape,
 void msSOSAddDataBlockDefinition(xmlNodePtr psParent, layerObj *lp)
 {
     xmlNsPtr psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe");
-    xmlNodePtr psNode, psRecordNode, psCompNode;
+    xmlNodePtr psNode, psRecordNode, psCompNode, psSubNode;
     const char *pszDefinition = NULL, *pszUom=NULL, *pszValue=NULL, *pszName=NULL;
     char szTmp[100];
     int i=0;
@@ -560,7 +560,7 @@ void msSOSAddDataBlockDefinition(xmlNodePtr psParent, layerObj *lp)
         {
             psNode = xmlNewChild(psRecordNode, NULL, BAD_CAST "field", NULL);
             xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST "time");
-            psNode = xmlNewChild(psNode, NULL, BAD_CAST "time", NULL);
+            psNode = xmlNewChild(psNode, NULL, BAD_CAST "Time", NULL);
             xmlNewNsProp(psNode, NULL, BAD_CAST "definition", BAD_CAST "urn:ogc:phenomenon:time:iso8601");
         }
         /*add all other fields*/
@@ -581,27 +581,27 @@ void msSOSAddDataBlockDefinition(xmlNodePtr psParent, layerObj *lp)
 
                 xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST pszName);
 
-                psNode = xmlNewChild(psNode, NULL, BAD_CAST pszName, NULL);
+                psNode = xmlNewChild(psNode, NULL, BAD_CAST "Quantity", NULL);
 
                 /*TODO : are definition and uom manadtory?*/
                 /*get definition and uom*/
                 sprintf(szTmp, "%s_definition", lp->items[i]);
                 pszDefinition =  msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
                     
-                if (pszDefinition)
-                  xmlNewNsProp(psNode, NULL, BAD_CAST "definition", BAD_CAST pszDefinition);
+                if (pszDefinition == NULL)
+                  pszDefinition = "urn:ogc:object:definition";
+
+                xmlNewNsProp(psNode, NULL, BAD_CAST "definition", BAD_CAST pszDefinition);
 
                 sprintf(szTmp, "%s_uom", lp->items[i]);
                 pszUom =  msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
-                if (pszUom)
-                {
-                    psNode = xmlNewChild(psNode, NULL, BAD_CAST "uom", NULL);
+
+                if (pszUom == NULL)
+                  pszUom = "urn:ogc:object:uom";
+
+                psNode = xmlNewChild(psNode, NULL, BAD_CAST "uom", NULL);
+                xmlNewNsProp(psNode, NULL, BAD_CAST "code", BAD_CAST pszUom);
                          
-                    xmlNewNsProp(psNode, 
-                                 xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
-                                          BAD_CAST "xlink"),
-                                 BAD_CAST "href", BAD_CAST pszUom);
-                }
             }
         }
             
@@ -614,21 +614,24 @@ void msSOSAddDataBlockDefinition(xmlNodePtr psParent, layerObj *lp)
                                           "encoding_blockSeparator");
         pszTokenSep = msOWSLookupMetadata(&(lp->map->web.metadata), "S", 
                                           "encoding_tokenSeparator");
-        pszTokenValue = msStringConcatenate(pszTokenValue, "TextBlock tokenSeparator=\"");
+
+        psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "TextBlock", NULL);
+
         if (pszTokenSep)
           pszTokenValue = msStringConcatenate(pszTokenValue, (char *)pszTokenSep);
         else
           pszTokenValue = msStringConcatenate(pszTokenValue, ",");
 
-        pszTokenValue = msStringConcatenate(pszTokenValue, "\" blockSeparator=\"");
+        xmlNewNsProp(psSubNode, NULL, BAD_CAST "tokenSeparator", BAD_CAST pszTokenValue);
+
         if (pszBlockSep)
           pszTokenValue = msStringConcatenate(pszTokenValue, (char *)pszBlockSep);
         else
-          pszTokenValue = msStringConcatenate(pszTokenValue, "@@");
+          pszTokenValue = msStringConcatenate(pszTokenValue, "\n");
 
-        pszTokenValue = msStringConcatenate(pszTokenValue, "\" decimalSeparator=\".\"");
+        xmlNewNsProp(psSubNode, NULL, BAD_CAST "blockSeparator", BAD_CAST pszTokenValue);
 
-        psNode = xmlNewChild(psNode, NULL, BAD_CAST pszTokenValue, NULL);
+        xmlNewNsProp(psSubNode, NULL, BAD_CAST "decimalSeparator", BAD_CAST ".");
 
         msFree(pszTokenValue);
     }   
@@ -980,7 +983,6 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNodePtr psParent, mapObj *map,
     xmlNodePtr psNode=NULL, psObsNode=NULL, psMemberNode=NULL;
     layerObj *lpfirst;
     const char *value = NULL;
-
 
     xmlNsPtr psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
     //xmlNsPtr psNsOm = xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix);
@@ -2346,7 +2348,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                 else
                  n1 = 0;
 
-                if (pszResultModel == NULL || strcasecmp(pszResultModel, "Measurement") == 0) 
+                if (pszResultModel == NULL || strcasecmp(pszResultModel, "om:Measurement") == 0) 
                 {
                     for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
                     {
@@ -2376,7 +2378,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                                  if (pszBlockSep)
                                    xmlNodeAddContent(psResultNode, BAD_CAST pszBlockSep);
                                  else
-                                   xmlNodeAddContent(psResultNode, BAD_CAST "@@");
+                                   xmlNodeAddContent(psResultNode, BAD_CAST "\n");
                             }
                             pszResult = msSOSReturnMemberResult((GET_LAYER(map, i)), j, NULL);
                             if (pszResult)
@@ -2406,7 +2408,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                                     if (pszBlockSep)
                                       xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST pszBlockSep);
                                     else
-                                      xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST "@@");
+                                      xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST "\n");
                                     xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST pszResult);
                                     break;
                                 }
