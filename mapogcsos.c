@@ -1055,7 +1055,7 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNodePtr psParent, mapObj *map,
          msSOSAddDataBlockDefinition(psNode, lpfirst);
          
     }   
-    return psMemberNode;
+    return psObsNode;
 }
 
 /************************************************************************/
@@ -1729,7 +1729,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlChar *buffer = NULL;
     int size = 0;
     msIOContext *context = NULL;
-    xmlNodePtr psMemberNode = NULL, psResultNode=NULL;
+    xmlNodePtr psObservationNode = NULL, psResultNode=NULL;
     const char *pszProcedure = NULL;
     const char *pszBlockSep=NULL;
     char *pszResult=NULL;
@@ -2364,10 +2364,10 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                     if (msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "procedure_item") == NULL)
                     {
                         pszProcedure = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
-                        psMemberNode = msSOSAddMemberNodeObservation(psRootNode, map, (GET_LAYER(map, i)),
+                        psObservationNode = msSOSAddMemberNodeObservation(psRootNode, map, (GET_LAYER(map, i)),
                                                                       pszProcedure);
                         /*add a result node*/
-                        psResultNode = xmlNewChild(psMemberNode, NULL, BAD_CAST "result", NULL);
+                        psResultNode = xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
                         for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
                         {
                             /*add a block serarator*/
@@ -2424,13 +2424,13 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                                                                                *nDiffrentProc);
 
                                 paDiffrentProc[nDiffrentProc-1].pszProcedure = strdup(pszProcedureValue);
-                                psMemberNode = msSOSAddMemberNodeObservation(psRootNode, map, 
-                                                                              (GET_LAYER(map, i)),
-                                                                             pszProcedureValue);
+                                psObservationNode = msSOSAddMemberNodeObservation(psRootNode, map, 
+                                                                                  (GET_LAYER(map, i)),
+                                                                                  pszProcedureValue);
                                 msFree(pszProcedureValue);
                                 
                                 paDiffrentProc[nDiffrentProc-1].psResultNode = 
-                                  xmlNewChild(psMemberNode, NULL, BAD_CAST "result", NULL);
+                                  xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
 
                                 xmlNodeAddContent(paDiffrentProc[nDiffrentProc-1].psResultNode, BAD_CAST pszResult);
                                 msFree(pszResult);
