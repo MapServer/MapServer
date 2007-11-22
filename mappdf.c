@@ -1168,7 +1168,7 @@ int msSaveImagePDF(imageObj *image, char *filename)
       /send the active buffer to disk
       /-----------------------------------------------*/
   
-      fwrite(pdfBuffer, sizeof(char), size, stream);
+      msIO_fwrite(pdfBuffer, sizeof(char), size, stream);
       if(filename != NULL && strlen(filename) > 0)
          fclose(stream);
       /* free(pdfBuffer); */
