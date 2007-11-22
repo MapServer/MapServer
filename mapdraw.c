@@ -753,7 +753,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 #endif
 
   /* restore original alpha blending */
-  else if (layer->opacity == MS_GD_ALPHA) {
+  else if (layer->opacity == MS_GD_ALPHA && 
+           (MS_RENDERER_GD(image_draw->format) || MS_RENDERER_AGG(image_draw->format))) {
     gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
   } else {
     assert( image == image_draw );
