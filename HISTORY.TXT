@@ -94,6 +94,10 @@ Current Version (5.1-dev, SVN trunk):
 
 - mapowscommon.c: fix namespace leak issues (#2375)
 
+- mapogcsos.c: add SWE DataBlock support (#2248)
+
+- mapogcsos.c: fix build warnings, namespace and schema pointers (#2248)
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
