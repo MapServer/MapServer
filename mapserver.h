@@ -880,11 +880,14 @@ typedef struct {
 #ifdef SWIG
   %immutable;
 #endif /* SWIG */
-  int refcount;
   int numsymbols;
   int maxsymbols;
-  symbolObj** symbol;
+#ifdef SWIG
+%mutable;
+#endif /* SWIG */
 #ifndef SWIG
+  int refcount;
+  symbolObj** symbol;
   struct map_obj *map;
   fontSetObj *fontset; /* a pointer to the main mapObj version */
   struct imageCacheObj *imagecache;
