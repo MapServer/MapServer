@@ -45,6 +45,8 @@ MS_CVSID("$Id$")
 
 #include "libxml/parser.h"
 #include "libxml/tree.h"
+#include "libxml/xpath.h"
+#include "libxml/xpathInternals.h"
 
 const char *pszSOSVersion                = "1.0.0";
 const char *pszSOSNamespaceUri           = "http://www.opengis.net/sos/1.0";
@@ -59,6 +61,9 @@ typedef struct
   char *pszProcedure;
   xmlNodePtr psResultNode;
 }SOSProcedureNode;
+
+void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams);
+void msSOSFreeParamsObj(sosParamsObj *sosparams);
 
 /*
 ** msSOSException()
@@ -1141,7 +1146,7 @@ char *msSOSParseTimeGML(char *pszGmlTime)
 /*                                                                      */
 /*      getCapabilities request handler.                                */
 /************************************************************************/
-int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
+int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
     xmlDocPtr psDoc = NULL;       /* document pointer */
     xmlNodePtr psRootNode, psMainNode, psNode;
     xmlNodePtr psOfferingNode;
@@ -1183,7 +1188,7 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
     xmlChar *buffer = NULL;
     int size = 0;
     msIOContext *context = NULL;
- 
+
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
     psRootNode = xmlNewNode(NULL, BAD_CAST "Capabilities");
@@ -1699,552 +1704,411 @@ int msSOSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req) {
 /*                                                                      */
 /*      GetObservation request handler                                  */
 /************************************************************************/
-int msSOSGetObservation(mapObj *map, int nVersion, char **names,
-                        char **values, int numentries)
+int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
+  char *schemalocation = NULL;
+  char *xsi_schemaLocation = NULL;
+  const char *pszTmp = NULL, *pszTmp2 = NULL;
+  int i, j, k, bLayerFound = 0;
+  layerObj *lp = NULL, *lpfirst = NULL; 
+  const char *pszTimeExtent=NULL, *pszTimeField=NULL, *pszValue=NULL;
+  FilterEncodingNode *psFilterNode = NULL;
+  rectObj sBbox;
 
-{
-    char *pszOffering=NULL, *pszProperty=NULL, *pszResponseFormat=NULL, *pszTime = NULL, *pszVersion=NULL;
-    char *pszFilter = NULL, *pszProdedure = NULL;
-    char *pszBbox = NULL, *pszFeature=NULL, *pszResultModel=NULL;
-
-    char *schemalocation = NULL;
-    char *xsi_schemaLocation = NULL;
-
-    const char *pszTmp = NULL, *pszTmp2 = NULL;
-    int i, j, k, bLayerFound = 0;
-    layerObj *lp = NULL, *lpfirst = NULL; 
-    const char *pszTimeExtent=NULL, *pszTimeField=NULL, *pszValue=NULL;
-    FilterEncodingNode *psFilterNode = NULL;
-    rectObj sBbox;
-
-
-    xmlDocPtr psDoc = NULL;
-    xmlNodePtr psRootNode,  psNode;
-    char **tokens=NULL, **tokens1;
-    int n=0, n1=0;
-    xmlNsPtr psNsGml = NULL;
-    char *pszBuffer = NULL;
-    const char *pszProcedureItem = NULL;
-    int bSpatialDB = 0;
-    xmlChar *buffer = NULL;
-    int size = 0;
-    msIOContext *context = NULL;
-    xmlNodePtr psObservationNode = NULL, psResultNode=NULL;
-    const char *pszProcedure = NULL;
-    const char *pszBlockSep=NULL;
-    char *pszResult=NULL;
-    int nDiffrentProc = 0;
-    SOSProcedureNode *paDiffrentProc = NULL;
-    char *pszProcedureValue = NULL;
+  xmlDocPtr psDoc = NULL;
+  xmlNodePtr psRootNode,  psNode;
+  char **tokens=NULL, **tokens1;
+  int n=0, n1=0;
+  xmlNsPtr psNsGml = NULL;
+  char *pszBuffer = NULL;
+  const char *pszProcedureItem = NULL;
+  int bSpatialDB = 0;
+  xmlChar *buffer = NULL;
+  int size = 0;
+  msIOContext *context = NULL;
+  xmlNodePtr psObservationNode = NULL, psResultNode=NULL;
+  const char *pszProcedure = NULL;
+  const char *pszBlockSep=NULL;
+  char *pszResult=NULL;
+  int nDiffrentProc = 0;
+  SOSProcedureNode *paDiffrentProc = NULL;
+  char *pszProcedureValue = NULL;
     
-    sBbox = map->extent;
+  sBbox = map->extent;
 
-    psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
+  psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
-    for(i=0; i<numentries; i++) 
-    {
-         if (strcasecmp(names[i], "OFFERING") == 0)
-           pszOffering = values[i];
-         else if (strcasecmp(names[i], "OBSERVEDPROPERTY") == 0)
-           pszProperty = values[i];
-         else if ((strcasecmp(names[i], "EVENTTIME") == 0) ||
-                  (strcasecmp(names[i], "TIME") == 0))
-           pszTime = values[i];
-         else if (strcasecmp(names[i], "RESULT") == 0)
-           pszFilter = values[i];
-         else if (strcasecmp(names[i], "PROCEDURE") == 0)
-           pszProdedure = values[i];
-         else if (strcasecmp(names[i], "FEATUREOFINTEREST") == 0)
-           pszFeature = values[i];
-         else if (strcasecmp(names[i], "BBOX") == 0)
-           pszBbox = values[i];
-         else if (strcasecmp(names[i], "RESPONSEFORMAT") == 0)
-           pszResponseFormat = values[i];
-         else if (strcasecmp(names[i], "VERSION") == 0)
-           pszVersion = values[i];
-         else if (strcasecmp(names[i], "RESULTMODEL") == 0)
-           pszResultModel = values[i];
-     }
+  /*TODO : validate for version number*/
 
-    /*TODO : validate for version number*/
+  /* validates mandatory request elements */
+  if (!sosparams->pszOffering) {
+    msSetError(MS_SOSERR, "Missing mandatory Offering parameter.", "msSOSGetObservation()");
+    return msSOSException(map, "offering", "MissingParameterValue");
+  }
 
-    /* validates mandatory request elements */
-    if (!pszVersion)
-    {
-        msSetError(MS_SOSERR, "Missing mandatory version parameter.",
-                   "msSOSGetObservation()");
-        return msSOSException(map, "version", "MissingParameterValue");
-    }
+  if (!sosparams->pszObservedProperty) {
+    msSetError(MS_SOSERR, "Missing mandatory ObservedProperty parameter.", "msSOSGetObservation()");
+    return msSOSException(map, "observedproperty", "MissingParameterValue");
+  }
 
-    /* check version */
-    if (msOWSParseVersionString(pszVersion) != OWS_1_0_0) {
-        msSetError(MS_SOSERR, "Version %s not supported.  Supported versions are: %s.",
-                   "msSOSGetObservation()", pszVersion, pszSOSVersion);
-        return msSOSException(map, "version", "InvalidParameterValue");
-    }
+  if (!sosparams->pszResponseFormat) {
+    msSetError(MS_SOSERR, "Missing mandatory responseFormat parameter.", "msSOSGetObservation()");
+    return msSOSException(map, "responseformat", "MissingParameterValue");
+  }
 
-    if (!pszOffering) 
-    {
-        msSetError(MS_SOSERR, "Missing mandatory Offering parameter.",
-                   "msSOSGetObservation()");
-        return msSOSException(map, "offering", "MissingParameterValue");
-    }
+  if (strcasecmp(sosparams->pszResponseFormat, pszSOSGetObservationMimeType) != 0) {
+    msSetError(MS_SOSERR, "Invalid responseFormat parameter %s.  Allowable values are: %s", "msSOSGetObservation()", sosparams->pszResponseFormat, pszSOSGetObservationMimeType);
+    return msSOSException(map, "responseformat", "InvalidParameterValue");
+  }
 
-    if (!pszProperty)
-    {
-        msSetError(MS_SOSERR, "Missing mandatory ObservedProperty parameter.",
-                   "msSOSGetObservation()");
-        return msSOSException(map, "observedproperty", "MissingParameterValue");
-    }
+  /*validate if offering exists*/
+  for (i=0; i<map->numlayers; i++) {
+    pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
+    if (pszTmp && (strcasecmp(pszTmp, sosparams->pszOffering) == 0))
+      break;
+  }
 
-    if (!pszResponseFormat)
-    {
-        msSetError(MS_SOSERR, "Missing mandatory responseFormat parameter.",
-                   "msSOSGetObservation()");
-        return msSOSException(map, "responseformat", "MissingParameterValue");
-    }
+  if (i==map->numlayers) {
+    msSetError(MS_SOSERR, "Offering %s not found.", "msSOSGetObservation()", sosparams->pszOffering);
+    return msSOSException(map, "offering", "InvalidParameterValue");
+  }
 
-    if (strcasecmp(pszResponseFormat, pszSOSGetObservationMimeType) != 0) {
-        msSetError(MS_SOSERR, "Invalid responseFormat parameter %s.  Allowable values are: %s",
-                   "msSOSGetObservation()", pszResponseFormat, pszSOSGetObservationMimeType);
-        return msSOSException(map, "responseformat", "InvalidParameterValue");
-    }
+  /*validate if observed property exist*/
+  /* Allow more the 1 oberved property comma separated (specs is unclear on it). If we
+     do it, we need to see if other parameters like result (filter encoding)
+     should be given for each property too) */
 
-    /*validate if offering exists*/
-    for (i=0; i<map->numlayers; i++)
-    {
-        pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
-        if (pszTmp && (strcasecmp(pszTmp, pszOffering) == 0))
-          break;
-    }
-
-
-    if (i==map->numlayers)
-    {
-        msSetError(MS_SOSERR, "Offering %s not found.",
-                   "msSOSGetObservation()", pszOffering);
-        return msSOSException(map, "offering", "InvalidParameterValue");
-    }
-
-    /*validate if observed property exist*/
-    /* Allow more the 1 oberved property comma separated (specs is unclear on it). If we
-      do it, we need to see if other parameters like result (filter encoding)
-      should be given for each property too) */
-
-    bLayerFound = 0;
-    tokens = msStringSplit(pszProperty, ',', &n);
+  bLayerFound = 0;
+  tokens = msStringSplit(sosparams->pszObservedProperty, ',', &n);
     
-    for (i=0; i<map->numlayers; i++)
-    {
-        pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
-        pszTmp2 = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", 
-                                      "observedproperty_id");
+  for (i=0; i<map->numlayers; i++) {
+    pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
+    pszTmp2 = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "observedproperty_id");
 
-        GET_LAYER(map, i)->status = MS_OFF;
+    GET_LAYER(map, i)->status = MS_OFF;
         
-        if (pszTmp && pszTmp2)
-        {
-            if (strcasecmp(pszTmp, pszOffering) == 0)
-            {   
-                if (tokens && n > 0)
-                {
-                    for (j=0; j<n; j++)
-                    {
-                        if(strcasecmp(pszTmp2, tokens[j]) == 0)
-                        {
-                            GET_LAYER(map, i)->status = MS_ON;
-                            /* Force setting a template to enable query. */
-                            if (!GET_LAYER(map, i)->template)
-                              GET_LAYER(map, i)->template = strdup("ttt.html");
-                            bLayerFound = 1;
-                            break;
-                        }
-                    }
-                }                 
+    if (pszTmp && pszTmp2) {
+      if (strcasecmp(pszTmp, sosparams->pszOffering) == 0) {   
+        if (tokens && n > 0) {
+          for (j=0; j<n; j++) {
+            if(strcasecmp(pszTmp2, tokens[j]) == 0) {
+              GET_LAYER(map, i)->status = MS_ON;
+              /* Force setting a template to enable query. */
+              if (!GET_LAYER(map, i)->template)
+                GET_LAYER(map, i)->template = strdup("ttt.html");
+              bLayerFound = 1;
+              break;
             }
-        }
+          }
+        }                 
+      }
     }
-    if (tokens && n > 0)
-       msFreeCharArray(tokens, n);
+  }
+  if (tokens && n > 0)
+    msFreeCharArray(tokens, n);
 
-
-    if (bLayerFound == 0)
-    {
-        msSetError(MS_SOSERR, "ObservedProperty %s not found.",
-                   "msSOSGetObservation()", pszProperty);
-        return msSOSException(map, "observedproperty", "InvalidParameterValue");
-    }
+  if (bLayerFound == 0) {
+    msSetError(MS_SOSERR, "ObservedProperty %s not found.", "msSOSGetObservation()", sosparams->pszObservedProperty);
+    return msSOSException(map, "observedproperty", "InvalidParameterValue");
+  }
      
-    /*apply procedure : could be a comma separated list.
-      set status to on those layers that have the sos_procedure metadata
+  /* apply procedure : could be a comma separated list.
+     set status to on those layers that have the sos_procedure metadata
      equals to this parameter. Note that the layer should already have it's status at ON
      by the  offering,observedproperty filter done above */
-    if (pszProdedure)
-    {
-        tokens = msStringSplit(pszProdedure, ',', &n);
+
+  if (sosparams->pszProcedure) {
+    tokens = msStringSplit(sosparams->pszProcedure, ',', &n);
         
-        if (tokens && n > 0)
-        {
-            for (i=0; i<map->numlayers; i++)
-            {
-                if(GET_LAYER(map, i)->status == MS_ON)
-                {
-                    pszValue =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S",
-                                                    "procedure");
+    if (tokens && n > 0) {
+      for (i=0; i<map->numlayers; i++) {
+        if(GET_LAYER(map, i)->status == MS_ON) {
+          pszValue =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "procedure");
                     
-                    if (pszValue)
-                    {
-                        /* the procedure metadata can be a list "sensor1 sensor2..."*/
-                        tokens1 = msStringSplit(pszValue, ' ', &n1);
+          if (pszValue) {
+            /* the procedure metadata can be a list "sensor1 sensor2..."*/
+            tokens1 = msStringSplit(pszValue, ' ', &n1);
                         
-                        for (j=0; j<n; j++)
-                        {
-                            for (k=0; k<n1; k++)
-                            {
-                                if (strcasecmp(tokens1[k], tokens[j]) == 0)
-                                  break;
-                            }
-                            if (k<n1)
-                              break;
-                        }
-                        if (j == n) /*not found*/
-                          GET_LAYER(map, i)->status = MS_OFF;
+            for (j=0; j<n; j++) {
+              for (k=0; k<n1; k++) {
+                if (strcasecmp(tokens1[k], tokens[j]) == 0)
+                  break;
+              }
+              if (k<n1)
+                break;
+            }
+            if (j == n) /*not found*/
+              GET_LAYER(map, i)->status = MS_OFF;
 
-                        if (tokens1)
-                          msFreeCharArray(tokens1, n1);
-                    }
+            if (tokens1)
+              msFreeCharArray(tokens1, n1);
+          }
                     
-                    /* if there is a procedure_item defined on the layer, we will 
-                     use it to set the filter parameter of the layer*/
-                    if ((GET_LAYER(map, i)->status == MS_ON) && 
-                        (pszProcedureItem =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S",
-                                                                 "procedure_item")))
-                    {
-                        lp = GET_LAYER(map, i);
-                        pszBuffer = NULL;
-                        if (&lp->filter)
-                        {
-                            if (lp->filter.string && strlen(lp->filter.string) > 0)
-                              freeExpression(&lp->filter);
-                        } 
-                                
-                        /*The filter should reflect the underlying db*/
-                        /*for ogr add a where clause */
-                        bSpatialDB = 0;
-                        if (lp->connectiontype == MS_POSTGIS ||  
-                            lp->connectiontype == MS_ORACLESPATIAL ||
-                            lp->connectiontype == MS_SDE ||     
-                            lp->connectiontype == MS_OGR)
-                          bSpatialDB = 1;
-                                    
-                                    
-                        if (bSpatialDB)
-                        {
-                            if (lp->connectiontype != MS_OGR)
-                              pszBuffer = msStringConcatenate(pszBuffer, "(");
-                            else
-                              pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
-                        }
-                        else
-                          pszBuffer = msStringConcatenate(pszBuffer, "(");
-                                
+          /* if there is a procedure_item defined on the layer, we will 
+             use it to set the filter parameter of the layer*/
 
-                        for (j=0; j<n; j++)
-                        {
-                            if (j > 0)
-                              pszBuffer = msStringConcatenate(pszBuffer, " OR ");
-                            
-                            pszBuffer = msStringConcatenate(pszBuffer, "(");
-                            
-                            if (!bSpatialDB)
-                              pszBuffer = msStringConcatenate(pszBuffer, "'[");
-                            pszBuffer = msStringConcatenate(pszBuffer, (char *)pszProcedureItem);
-                            if (!bSpatialDB)
-                              pszBuffer = msStringConcatenate(pszBuffer, "]'");
-                                    
-                            pszBuffer = msStringConcatenate(pszBuffer, " = '");
-                            pszBuffer = msStringConcatenate(pszBuffer,  tokens[j]);
-                            pszBuffer = msStringConcatenate(pszBuffer,  "')");
-                        }
-                                
-                        if (!bSpatialDB || lp->connectiontype != MS_OGR)
-                          pszBuffer = msStringConcatenate(pszBuffer, ")");
-
-                        loadExpressionString(&lp->filter, pszBuffer);
-                        if (pszBuffer)
-                          msFree(pszBuffer);
-                    }
-                }       
-            }
-            
-            msFreeCharArray(tokens, n);
-        }
-    }
-              
-/* -------------------------------------------------------------------- */
-/*      supports 2 types of gml:Time : TimePeriod and TimeInstant :     */
-/*      - <gml:TimePeriod>                                              */
-/*          <gml:beginPosition>2005-09-01T11:54:32</gml:beginPosition>  */
-/*         <gml:endPosition>2005-09-02T14:54:32</gml:endPosition>       */
-/*       </gml:TimePeriod>                                              */
-/*                                                                      */
-/*      - <gml:TimeInstant>                                             */
-/*           <gml:timePosition>2003-02-13T12:28-08:00</gml:timePosition>*/
-/*         </gml:TimeInstant>                                           */
-/*                                                                      */
-/*       The user can specify mutilple times separated by commas.       */
-/*                                                                      */
-/*       The gml will be parsed and trasformed into a sting tah         */
-/*      looks like timestart/timeend,...                                */
-/* -------------------------------------------------------------------- */
-
-
-    /*apply time filter if available */
-    if (pszTime)
-    {
-        char **apszTimes = NULL;
-        int numtimes = 0;
-        char *pszTimeString = NULL, *pszTmp = NULL;
-
-        apszTimes = msStringSplit (pszTime, ',', &numtimes);
-        if (numtimes >=1)
-        {
-            for (i=0; i<numtimes; i++)
-            {
-                pszTmp = msSOSParseTimeGML(apszTimes[i]);
-                if (pszTmp)
-                {
-                    if (pszTimeString)
-                      pszTimeString = msStringConcatenate(pszTimeString, ",");
-                    pszTimeString = msStringConcatenate(pszTimeString, pszTmp);
-                    msFree(pszTmp);
-                }
-            }
-            msFreeCharArray(apszTimes, numtimes);
-        }
-        if (!pszTimeString)
-        {
-            msSetError(MS_SOSERR, "Invalid time value given for the eventTime parameter",
-                   "msSOSGetObservation()", pszProperty);
-            return msSOSException(map, "eventtime", "InvalidParameterValue");
-        }
-        for (i=0; i<map->numlayers; i++)
-        {
-            if (GET_LAYER(map, i)->status == MS_ON)
-            {
-                /* the sos_offering_timeextent should be used for time validation*/
-                /*TODO : too documented  ?*/
-                lpfirst = 
-                  msSOSGetFirstLayerForOffering(map, 
-                                                msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", 
-                                                                    "offering_id"),
-                                                NULL);
-                if (lpfirst)
-                  pszTimeExtent = 
-                    msOWSLookupMetadata(&lpfirst->metadata, "S", "offering_timeextent");
-
-                pszTimeField =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "SO",
-                                                    "timeitem");
-
-                if (pszTimeField)
-                {
-                  /*validate only if time extent is set.*/
-                  if (pszTimeExtent)
-                  {
-                    if (msValidateTimeValue(pszTimeString, pszTimeExtent) == MS_TRUE)
-                      msLayerSetTimeFilter((GET_LAYER(map, i)), pszTimeString, 
-                                           pszTimeField);
-                    else
-                    {
-                        /*we should turn the layer off since the eventTime is not in the time extent*/
-                        GET_LAYER(map, i)->status = MS_OFF;
-                    }
-                  }
-                  else
-                    msLayerSetTimeFilter((GET_LAYER(map, i)), pszTimeString, 
-                                         pszTimeField);
-                }
-            }
-        }
-        if (pszTimeString)
-          msFree(pszTimeString);
-    }
-    /* apply filter */
-    if (pszFilter)
-    {
-        
-        
-        psFilterNode = FLTParseFilterEncoding(pszFilter);
-	  
-
-	if (!psFilterNode) {
-	  msSetError(MS_SOSERR, 
-		     "Invalid or Unsupported FILTER in GetObservation", 
-		     "msSOSGetObservation()");
-	  return msSOSException(map, "filter", "InvalidParameterValue");
-	}
-        /* apply the filter to all layers thar are on*/
-        for (i=0; i<map->numlayers; i++)
-        {
+          if ((GET_LAYER(map, i)->status == MS_ON) && (pszProcedureItem =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "procedure_item"))) {
             lp = GET_LAYER(map, i);
-            if (lp->status == MS_ON)
-            {
-                //preparse parser so that alias for fields can be used
-                msSOSPreParseFilterForAlias(psFilterNode, map, i);
-                //vaidate that the property names used are valid 
-                //(there is a corresponding layer attribute)
-                if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
-                {
-                    if (msSOSValidateFilter(psFilterNode, lp)== MS_FALSE)
-                    {
-                        msSetError(MS_SOSERR, "Invalid component name in ogc filter statement", 
-                                   "msSOSGetObservation()");
-                        return msSOSException(map, "filter", "InvalidParameterValue");
-                    }
-                    msLayerClose(lp);
-                }
-                FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
+            pszBuffer = NULL;
+            if (&lp->filter) {
+              if (lp->filter.string && strlen(lp->filter.string) > 0)
+                freeExpression(&lp->filter);
+            } 
+                                
+            /*The filter should reflect the underlying db*/
+            /*for ogr add a where clause */
+            bSpatialDB = 0;
+            if (lp->connectiontype == MS_POSTGIS ||  lp->connectiontype == MS_ORACLESPATIAL || lp->connectiontype == MS_SDE ||     lp->connectiontype == MS_OGR)
+              bSpatialDB = 1;
+                                    
+                                    
+            if (bSpatialDB) {
+              if (lp->connectiontype != MS_OGR)
+                pszBuffer = msStringConcatenate(pszBuffer, "(");
+              else
+                pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
             }
-        }
-    }
- 
+            else
+              pszBuffer = msStringConcatenate(pszBuffer, "(");
 
-    /*bbox*/
-    /* this is a gml feature
-- <gml:Envelope xmlns:gml="http://www.opengis.net/gml">
+            for (j=0; j<n; j++) {
+              if (j > 0)
+                pszBuffer = msStringConcatenate(pszBuffer, " OR ");
+                            
+              pszBuffer = msStringConcatenate(pszBuffer, "(");
+                            
+              if (!bSpatialDB)
+                pszBuffer = msStringConcatenate(pszBuffer, "'[");
+
+              pszBuffer = msStringConcatenate(pszBuffer, (char *)pszProcedureItem);
+
+              if (!bSpatialDB)
+                pszBuffer = msStringConcatenate(pszBuffer, "]'");
+
+              pszBuffer = msStringConcatenate(pszBuffer, " = '");
+              pszBuffer = msStringConcatenate(pszBuffer,  tokens[j]);
+              pszBuffer = msStringConcatenate(pszBuffer,  "')");
+            }
+                                
+            if (!bSpatialDB || lp->connectiontype != MS_OGR)
+              pszBuffer = msStringConcatenate(pszBuffer, ")");
+
+            loadExpressionString(&lp->filter, pszBuffer);
+            if (pszBuffer)
+              msFree(pszBuffer);
+          }
+        }       
+      }
+      msFreeCharArray(tokens, n);
+    }
+  }
+              
+  /* -------------------------------------------------------------------- */
+  /*      supports 2 types of gml:Time : TimePeriod and TimeInstant :     */
+  /*      - <gml:TimePeriod>                                              */
+  /*          <gml:beginPosition>2005-09-01T11:54:32</gml:beginPosition>  */
+  /*         <gml:endPosition>2005-09-02T14:54:32</gml:endPosition>       */
+  /*       </gml:TimePeriod>                                              */
+  /*                                                                      */
+  /*      - <gml:TimeInstant>                                             */
+  /*           <gml:timePosition>2003-02-13T12:28-08:00</gml:timePosition>*/
+  /*         </gml:TimeInstant>                                           */
+  /*                                                                      */
+  /*       The user can specify mutilple times separated by commas.       */
+  /*                                                                      */
+  /*       The gml will be parsed and trasformed into a sting tah         */
+  /*      looks like timestart/timeend,...                                */
+  /* -------------------------------------------------------------------- */
+
+  /*apply time filter if available */
+  if (sosparams->pszEventTime) {
+    char **apszTimes = NULL;
+    int numtimes = 0;
+    char *pszTimeString = NULL, *pszTmp = NULL;
+
+    apszTimes = msStringSplit (sosparams->pszEventTime, ',', &numtimes);
+    if (numtimes >=1) {
+      for (i=0; i<numtimes; i++) {
+        pszTmp = msSOSParseTimeGML(apszTimes[i]);
+        if (pszTmp) {
+          if (pszTimeString)
+            pszTimeString = msStringConcatenate(pszTimeString, ",");
+          pszTimeString = msStringConcatenate(pszTimeString, pszTmp);
+          msFree(pszTmp);
+        }
+      }
+      msFreeCharArray(apszTimes, numtimes);
+    }
+    if (!pszTimeString) {
+      msSetError(MS_SOSERR, "Invalid time value given for the eventTime parameter", "msSOSGetObservation()", sosparams->pszObservedProperty);
+      return msSOSException(map, "eventtime", "InvalidParameterValue");
+    }
+    for (i=0; i<map->numlayers; i++) {
+      if (GET_LAYER(map, i)->status == MS_ON) {
+        /* the sos_offering_timeextent should be used for time validation*/
+        /*TODO : too documented  ?*/
+        lpfirst = msSOSGetFirstLayerForOffering(map, msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id"), NULL);
+        if (lpfirst)
+          pszTimeExtent = msOWSLookupMetadata(&lpfirst->metadata, "S", "offering_timeextent");
+
+        pszTimeField =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "SO", "timeitem");
+
+        if (pszTimeField) {
+          /*validate only if time extent is set.*/
+          if (pszTimeExtent) {
+            if (msValidateTimeValue(pszTimeString, pszTimeExtent) == MS_TRUE)
+              msLayerSetTimeFilter((GET_LAYER(map, i)), pszTimeString, pszTimeField);
+            else {
+              /*we should turn the layer off since the eventTime is not in the time extent*/
+              GET_LAYER(map, i)->status = MS_OFF;
+            }
+          }
+          else
+            msLayerSetTimeFilter((GET_LAYER(map, i)), pszTimeString, pszTimeField);
+        }
+      }
+    }
+    if (pszTimeString)
+      msFree(pszTimeString);
+  }
+
+  /* apply filter */
+  if (sosparams->pszResult) {
+    psFilterNode = FLTParseFilterEncoding(sosparams->pszResult);
+
+    if (!psFilterNode) {
+      msSetError(MS_SOSERR, "Invalid or Unsupported FILTER in GetObservation", "msSOSGetObservation()");
+      return msSOSException(map, "filter", "InvalidParameterValue");
+    }
+    /* apply the filter to all layers thar are on*/
+    for (i=0; i<map->numlayers; i++) {
+      lp = GET_LAYER(map, i);
+      if (lp->status == MS_ON) {
+        //preparse parser so that alias for fields can be used
+        msSOSPreParseFilterForAlias(psFilterNode, map, i);
+        //vaidate that the property names used are valid 
+        //(there is a corresponding layer attribute)
+        if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
+          if (msSOSValidateFilter(psFilterNode, lp)== MS_FALSE) {
+            msSetError(MS_SOSERR, "Invalid component name in ogc filter statement", "msSOSGetObservation()");
+            return msSOSException(map, "filter", "InvalidParameterValue");
+          }
+          msLayerClose(lp);
+        }
+        FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
+      }
+    }
+  }
+
+  /*bbox*/
+  /* this is a gml feature
+  <gml:Envelope xmlns:gml="http://www.opengis.net/gml">
   <gml:lowerCorner srsName="EPSG:4326">-66 43</gml:lowerCorner> 
   <upperCorner srsName="EPSG:4326">-62 45</upperCorner> 
   </gml:Envelope>
-*/
+  */
 
-    if (pszFeature)
-    {
-        CPLXMLNode *psRoot=NULL, *psChild=NULL; 
-        CPLXMLNode *psUpperCorner=NULL, *psLowerCorner=NULL;
-        char *pszLowerCorner=NULL, *pszUpperCorner=NULL;
-        int bValid = 0;
-         char **tokens;
-        int n;
+  if (sosparams->pszFeatureOfInterest) {
+    CPLXMLNode *psRoot=NULL, *psChild=NULL; 
+    CPLXMLNode *psUpperCorner=NULL, *psLowerCorner=NULL;
+    char *pszLowerCorner=NULL, *pszUpperCorner=NULL;
+    int bValid = 0;
+    char **tokens;
+    int n;
 
-        psRoot = CPLParseXMLString(pszFeature);
-        if(!psRoot)
-        {       
-            msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest.", 
-                       "msSOSGetObservation()");
-            return msSOSException(map, "featureofinterest", "InvalidParameterValue");
-        }
+    psRoot = CPLParseXMLString(sosparams->pszFeatureOfInterest);
+    if(!psRoot) {       
+      msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest.", "msSOSGetObservation()");
+      return msSOSException(map, "featureofinterest", "InvalidParameterValue");
+    }
 
-        CPLStripXMLNamespace(psRoot, "gml", 1);
-        bValid = 0;
-        if (psRoot->eType == CXT_Element && 
-            EQUAL(psRoot->pszValue,"Envelope"))
-        {
-            psLowerCorner = psRoot->psChild;
-            if (psLowerCorner)
-              psUpperCorner=  psLowerCorner->psNext;
+    CPLStripXMLNamespace(psRoot, "gml", 1);
+    bValid = 0;
+    if (psRoot->eType == CXT_Element && EQUAL(psRoot->pszValue,"Envelope")) {
+      psLowerCorner = psRoot->psChild;
+      if (psLowerCorner)
+        psUpperCorner=  psLowerCorner->psNext;
 
-            if (psLowerCorner && psUpperCorner && 
-                EQUAL(psLowerCorner->pszValue,"lowerCorner") &&
-                EQUAL(psUpperCorner->pszValue,"upperCorner"))
-            {
-                /*get the values*/
-                psChild = psLowerCorner->psChild;
-                while (psChild != NULL)
-                {
-                    if (psChild->eType != CXT_Text)
-                      psChild = psChild->psNext;
-                    else
-                      break;
-                }
-                if (psChild && psChild->eType == CXT_Text)
-                  pszLowerCorner = psChild->pszValue;
+      if (psLowerCorner && psUpperCorner && EQUAL(psLowerCorner->pszValue,"lowerCorner") && EQUAL(psUpperCorner->pszValue,"upperCorner")) {
+        /*get the values*/
+        psChild = psLowerCorner->psChild;
+        while (psChild != NULL) {
+          if (psChild->eType != CXT_Text)
+            psChild = psChild->psNext;
+          else
+            break;
+          }
+          if (psChild && psChild->eType == CXT_Text)
+            pszLowerCorner = psChild->pszValue;
 
-                psChild = psUpperCorner->psChild;
-                while (psChild != NULL)
-                {
-                    if (psChild->eType != CXT_Text)
-                      psChild = psChild->psNext;
-                    else
-                      break;
-                }
-                if (psChild && psChild->eType == CXT_Text)
-                  pszUpperCorner = psChild->pszValue;
-
-                if (pszLowerCorner && pszUpperCorner)
-                {
-                    tokens = msStringSplit(pszLowerCorner, ' ', &n);
-                    if (tokens && n == 2)
-                    {
-                        sBbox.minx = atof(tokens[0]);
-                        sBbox.miny = atof(tokens[1]);
-
-                         msFreeCharArray(tokens, n);
-
-                         tokens = msStringSplit(pszUpperCorner, ' ', &n);
-                         if (tokens && n == 2)
-                         {
-                             sBbox.maxx = atof(tokens[0]);
-                             sBbox.maxy = atof(tokens[1]);
-                             msFreeCharArray(tokens, n);
-
-                             bValid = 1;
-                         }
-                    }
-                }
-                    
+          psChild = psUpperCorner->psChild;
+          while (psChild != NULL) {
+            if (psChild->eType != CXT_Text)
+              psChild = psChild->psNext;
+            else
+              break;
             }
-            
+            if (psChild && psChild->eType == CXT_Text)
+              pszUpperCorner = psChild->pszValue;
+
+            if (pszLowerCorner && pszUpperCorner) {
+              tokens = msStringSplit(pszLowerCorner, ' ', &n);
+              if (tokens && n == 2) {
+                sBbox.minx = atof(tokens[0]);
+                sBbox.miny = atof(tokens[1]);
+
+                msFreeCharArray(tokens, n);
+
+                tokens = msStringSplit(pszUpperCorner, ' ', &n);
+                if (tokens && n == 2) {
+                  sBbox.maxx = atof(tokens[0]);
+                  sBbox.maxy = atof(tokens[1]);
+                  msFreeCharArray(tokens, n);
+
+                  bValid = 1;
+                }
+              }
+            }
+          }
         }
 
-        if (!bValid)
-        {
+        if (!bValid) {
             msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest .", "msSOSGetObservation()");
             return msSOSException(map, "featureofinterest", "InvalidParameterValue");
         }
-    }
+      }
 
-
-    /* this is just a fall back if bbox is enetered. The bbox parameter is not supported
-       by the sos specs */
-    if (pszBbox && !pszFeature)
-    {
+      /* this is just a fall back if bbox is enetered. The bbox parameter is not supported
+         by the sos specs */
+      if (sosparams->pszBBox && !sosparams->pszFeatureOfInterest) {
         char **tokens;
         int n;
 
-
-        tokens = msStringSplit(pszBbox, ',', &n);
-        if (tokens==NULL || n != 4) 
-        {
-            msSetError(MS_SOSERR, "Wrong number of arguments for bounding box.", "msSOSGetObservation()");
-            return msSOSException(map, "bbox", "InvalidParameterValue");
+        tokens = msStringSplit(sosparams->pszBBox, ',', &n);
+        if (tokens==NULL || n != 4) {
+          msSetError(MS_SOSERR, "Wrong number of arguments for bounding box.", "msSOSGetObservation()");
+          return msSOSException(map, "bbox", "InvalidParameterValue");
         }
         sBbox.minx = atof(tokens[0]);
         sBbox.miny = atof(tokens[1]);
         sBbox.maxx = atof(tokens[2]);
         sBbox.maxy = atof(tokens[3]);
         msFreeCharArray(tokens, n);
-    }
-    
+      }
 
-    /*do the query. use the same logic (?) as wfs. bbox and filer are incomaptible since bbox
-     can be given inside a filter*/
-    if (!pszFilter) 
-    {
+      /* do the query. use the same logic (?) as wfs. bbox and filer are incomaptible since bbox
+        can be given inside a filter*/
+      if (!sosparams->pszResult) {
         msQueryByRect(map, -1, sBbox);
-        
-    }
+      }
 
-    /*get the first layers of the offering*/
-    for (i=0; i<map->numlayers; i++)
-    {
+      /*get the first layers of the offering*/
+      for (i=0; i<map->numlayers; i++) {
         pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
-        if (pszTmp && (strcasecmp(pszTmp, pszOffering) == 0))
-        {
-            lp = (GET_LAYER(map, i));
-            break;
+        if (pszTmp && (strcasecmp(pszTmp, sosparams->pszOffering) == 0)) {
+          lp = (GET_LAYER(map, i));
+          break;
         }
-    }
-    
+      }
     
     /* build xml return tree*/
     psDoc = xmlNewDoc(BAD_CAST "1.0");
@@ -2259,7 +2123,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om", BAD_CAST "om"));
  
     xmlNewNsProp(psRootNode,  xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"),
-                 BAD_CAST "id", BAD_CAST pszOffering);
+                 BAD_CAST "id", BAD_CAST sosparams->pszOffering);
 
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
@@ -2326,8 +2190,8 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                      
     }
 
-    if (pszResultModel && strcasecmp(pszResultModel, "om:Measurement") != 0 &&
-        strcasecmp(pszResultModel, "om:Observation") != 0)
+    if (sosparams->pszResultModel && strcasecmp(sosparams->pszResultModel, "om:Measurement") != 0 &&
+        strcasecmp(sosparams->pszResultModel, "om:Observation") != 0)
     {
         msSetError(MS_SOSERR, "resultModel should be om:Measurement or om:Observation", "msSOSGetObservation()");
         return msSOSException(map, "resultModel", "InvalidParameterValue");
@@ -2348,7 +2212,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                 else
                  n1 = 0;
 
-                if (pszResultModel == NULL || strcasecmp(pszResultModel, "om:Measurement") == 0) 
+                if (sosparams->pszResultModel == NULL || strcasecmp(sosparams->pszResultModel, "om:Measurement") == 0) 
                 {
                     for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
                     {
@@ -2479,201 +2343,127 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
 /*                                                                      */
 /*      Describe sensor request handler.                               */
 /************************************************************************/
-int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
-                        char **values, int numentries)
+int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
+  char *pszEncodedUrl = NULL;
+  const char *pszId = NULL, *pszUrl = NULL;
+  int i = 0, j=0, k=0;
+  layerObj *lp = NULL;
+  int iItemPosition = -1;
+  shapeObj sShape;
+  int status;
+  char *tmpstr = NULL, *pszTmp = NULL;
 
-{
-    char *pszVersion=NULL;
-    char *pszSensorId=NULL;
-    char *pszOutputFormat=NULL;
-    char *pszEncodedUrl = NULL;
-    const char *pszId = NULL, *pszUrl = NULL;
-    int i = 0, j=0, k=0;
-    layerObj *lp = NULL;
-    int iItemPosition = -1;
-    shapeObj sShape;
-    int status;
-    char *tmpstr = NULL, *pszTmp = NULL;
+  if (!sosparams->pszSensorId) {
+    msSetError(MS_SOSERR, "Missing mandatory parameter sensorid", "msSOSDescribeSensor()");
+    return msSOSException(map, "sensorid", "MissingParameterValue");
+  }
 
-    for(i=0; i<numentries; i++) 
-    {
-        if (strcasecmp(names[i], "VERSION") == 0) {
-          pszVersion = values[i];
-        }
-        if (strcasecmp(names[i], "PROCEDURE") == 0) {
-          pszSensorId= values[i];
-        }
-        if (strcasecmp(names[i], "OUTPUTFORMAT") == 0) {
-          pszOutputFormat = values[i];
-        }
-    }
+  if (!sosparams->pszOutputFormat) {
+    msSetError(MS_SOSERR, "Missing mandatory parameter outputFormat.", "msSOSDescribeSensor()");
+    return msSOSException(map, "outputformat", "MissingParameterValue");
+  }
 
-    if (!pszVersion)
-    {
-        msSetError(MS_SOSERR, "Missing mandatory parameter version.",
-                   "msSOSDescribeSensor()");
-        return msSOSException(map, "version", "MissingParameterValue");
-    }
-
-    /* check version */
-    if (msOWSParseVersionString(pszVersion) != OWS_1_0_0) {
-        msSetError(MS_SOSERR, "Version %s not supported.  Supported versions are: %s.",
-                   "msSOSDescribeSensor()", pszVersion, pszSOSVersion);
-        return msSOSException(map, "version", "InvalidParameterValue");
-    }
-
-    if (!pszSensorId)
-    {
-        msSetError(MS_SOSERR, "Missing mandatory parameter sensorid",
-                   "msSOSDescribeSensor()");
-        return msSOSException(map, "procedure", "MissingParameterValue");
-    }
-
-    if (!pszOutputFormat)
-    {
-        msSetError(MS_SOSERR, "Missing mandatory parameter outputFormat.",
-                   "msSOSDescribeSensor()");
-        return msSOSException(map, "outputformat", "MissingParameterValue");
-    }
-
-    if (strcasecmp(pszOutputFormat, pszSOSDescribeSensorMimeType) != 0) {
-        msSetError(MS_SOSERR, "Invalid outputformat parameter %s.  Allowable values are: %s",
-                   "msSOSDescribeSensor()", pszOutputFormat, pszSOSDescribeSensorMimeType);
-        return msSOSException(map, "outputformat", "InvalidParameterValue");
-    }
+  if (strcasecmp(sosparams->pszOutputFormat, pszSOSDescribeSensorMimeType) != 0) {
+    msSetError(MS_SOSERR, "Invalid outputformat parameter %s.  Allowable values are: %s", "msSOSDescribeSensor()", sosparams->pszOutputFormat, pszSOSDescribeSensorMimeType);
+    return msSOSException(map, "outputformat", "InvalidParameterValue");
+  }
  
-    for (i=0; i<map->numlayers; i++)
-    {
-        lp = GET_LAYER(map, i);
-        pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
-        if (pszId && strlen(pszId) > 0)
-        {
-            /*procdedure could be a list*/
-            char **tokens = NULL;
-            int n=0;
-            int bFound = 0;
-            tokens = msStringSplit(pszId, ' ', &n);
-            for (k=0; k<n; k++)
-            {
-                if (tokens[k] && strlen(tokens[k]) > 0 &&
-                    strcasecmp(tokens[k], pszSensorId) == 0)
-                {
-                    bFound = 1; 
-                    break;
-                }
-            }
-            if (bFound)
-            {
-                pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
-                
-                if (pszUrl)
-                {
-                    pszTmp = strdup(pszUrl);
-                    for(k=0; k<numentries; k++) 
-                    {
-                        tmpstr = (char *)malloc(sizeof(char)*strlen(names[k]) + 3);
-                        sprintf(tmpstr,"%%%s%%", names[k]);
-                        if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
-                        {
-                            pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, values[k]);
-                            break;
-                        }
-                        msFree(tmpstr);
-                    }
-                    pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
-                    msIO_printf("Location: %s\n\n", pszEncodedUrl);
-                    msFree(pszTmp);
-                    return(MS_SUCCESS);
-                }
-                else
-                {
-                    msSetError(MS_SOSERR, "Missing mandatory metadata sos_describesensor_url on layer %s",
-                               "msSOSDescribeSensor()", lp->name);
-                    return msSOSException(map, "sos_describesensor_url", "MissingValue");
-                }
-            }
+  for (i=0; i<map->numlayers; i++) {
+    lp = GET_LAYER(map, i);
+    pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
+    if (pszId && strlen(pszId) > 0) {
+      /*procedure could be a list*/
+      char **tokens = NULL;
+      int n=0;
+      int bFound = 0;
+      tokens = msStringSplit(pszId, ' ', &n);
+      for (k=0; k<n; k++) {
+        if (tokens[k] && strlen(tokens[k]) > 0 && strcasecmp(tokens[k], sosparams->pszSensorId) == 0) {
+          bFound = 1; 
+          break;
         }
-        else if ((pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item")))
-        {   
-            iItemPosition = -1;
-            if (msLayerOpen(lp) == MS_SUCCESS && 
-                msLayerGetItems(lp) == MS_SUCCESS)
-            {
-                for(j=0; j<lp->numitems; j++) 
-                {
-                    if (strcasecmp(lp->items[j], pszId) == 0)
-                    {
-                        iItemPosition = j;
-                        break;
-                    }
-                }
-                msLayerClose(lp);
-            }
-            if (iItemPosition >=0)
-            {
+      }
+      if (bFound) {
+        pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
+        if (pszUrl) {
+          pszTmp = strdup(pszUrl);
 
-                if (lp->template == NULL)
-                  lp->template = strdup("ttt");
-                msQueryByRect(map, i, map->extent);
-                
-                msLayerOpen(lp);
-                msLayerGetItems(lp);
-                
-                if (lp->resultcache && lp->resultcache->numresults > 0)
-                {
-                    for(j=0; j<lp->resultcache->numresults; j++)
-                    {      
-                        msInitShape(&sShape);     
-                        status = msLayerGetShape(lp, &sShape, 
-                                                 lp->resultcache->results[j].tileindex, 
-                                                 lp->resultcache->results[j].shapeindex);
-                        if(status != MS_SUCCESS) 
-                          continue;
+          /* %sensorid% is now the hardcoded variable names to use 
+             within sos_describesensor_url */
+          tmpstr = (char *)malloc(sizeof(char)*strlen("sensorid") + 3);
+          sprintf(tmpstr,"%%%s%%", "sensorid");
+          if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
+            pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszSensorId);
+          msFree(tmpstr);
 
-                        if (sShape.values[iItemPosition] && 
-                            strcasecmp(sShape.values[iItemPosition], pszSensorId) == 0)
-                        {
-                            pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
-                            if (pszUrl)
-                            {   
-                                pszTmp = strdup(pszUrl);
-                                for(k=0; k<numentries; k++) 
-                                {
-                                    tmpstr = (char *)malloc(sizeof(char)*strlen(names[k]) + 3);
-                                    sprintf(tmpstr,"%%%s%%", names[k]);
-                                    if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
-                                    {
-                                        pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, values[k]);
-                                        break;
-                                    }
-                                    msFree(tmpstr);
-                                }
-                                pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
-                                msIO_printf("Location: %s\n\n", pszEncodedUrl);
-                                msFree(pszTmp);
-                                return(MS_SUCCESS);
-                            }
-                            else
-                            {
-                                msSetError(MS_SOSERR, "Missing mandatory metadata sos_describesensor_url on layer %s",
-                                           "msSOSDescribeSensor()", lp->name);
-                                return msSOSException(map, "sos_describesensor_url", "MissingValue");
-                            }
-                        }
-                    }
-                }
-                msLayerClose(lp);
-            }
-            
+          pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
+          msIO_printf("Location: %s\n\n", pszEncodedUrl);
+          msFree(pszTmp);
+          return(MS_SUCCESS);
         }
+        else {
+          msSetError(MS_SOSERR, "Missing mandatory metadata sos_describesensor_url on layer %s", "msSOSDescribeSensor()", lp->name);
+          return msSOSException(map, "sos_describesensor_url", "MissingParameterValue");
+        }
+      }
     }
+    else if ((pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item"))) {   
+      iItemPosition = -1;
+      if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
+        for(j=0; j<lp->numitems; j++) {
+          if (strcasecmp(lp->items[j], pszId) == 0) {
+            iItemPosition = j;
+            break;
+          }
+        }
+        msLayerClose(lp);
+      }
+      if (iItemPosition >=0) {
+        if (lp->template == NULL)
+          lp->template = strdup("ttt");
+        msQueryByRect(map, i, map->extent);
+        msLayerOpen(lp);
+        msLayerGetItems(lp);
+                
+        if (lp->resultcache && lp->resultcache->numresults > 0) {
+          for(j=0; j<lp->resultcache->numresults; j++) {      
+            msInitShape(&sShape);     
+            status = msLayerGetShape(lp, &sShape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+            if(status != MS_SUCCESS) 
+              continue;
 
-     msSetError(MS_SOSERR, "procedure not found.",
-                   "msSOSDescribeSensor()");
-     return msSOSException(map, "procedure", "InvalidParameterValue");
-    
+            if (sShape.values[iItemPosition] && strcasecmp(sShape.values[iItemPosition], sosparams->pszSensorId) == 0) {
+              pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
+              if (pszUrl) {   
+                pszTmp = strdup(pszUrl);
+
+                /* %sensorid% is now the hardcoded variable names to use
+                   within sos_describesensor_url */
+                tmpstr = (char *)malloc(sizeof(char)*strlen("sensorid") + 3);
+                sprintf(tmpstr,"%%%s%%", "sensorid");
+                if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
+                  pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszSensorId);
+                msFree(tmpstr);
+
+                pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
+                msIO_printf("Location: %s\n\n", pszEncodedUrl);
+                msFree(pszTmp);
+                return(MS_SUCCESS);
+              }
+              else {
+                msSetError(MS_SOSERR, "Missing mandatory metadata sos_describesensor_url on layer %s", "msSOSDescribeSensor()", lp->name);
+                return msSOSException(map, "sos_describesensor_url", "MissingValue");
+              }
+            }
+          }
+        }
+        msLayerClose(lp);
+      }
+    }
+  }
+  msSetError(MS_SOSERR, "sensorid %s not found.", "msSOSDescribeSensor()", sosparams->pszSensorId);
+  return msSOSException(map, "sensorid", "InvalidParameterValue");
 }
-
 
 #endif /* USE_SOS_SVR*/
 
@@ -2682,42 +2472,299 @@ int msSOSDescribeSensor(mapObj *map, int nVersion, char **names,
 ** - If this is a valid request then it is processed and MS_SUCCESS is returned
 **   on success, or MS_FAILURE on failure.
 */
-int msSOSDispatch(mapObj *map, cgiRequestObj *req)
-{
+int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
 #ifdef USE_SOS_SVR
-    int i,  nVersion=-1;
-    static char *request=NULL, *service=NULL;
+  int returnvalue = MS_DONE;
+  sosParamsObj *paramsObj = (sosParamsObj *)calloc(1, sizeof(sosParamsObj));
 
+  msSOSParseRequest(req, paramsObj);
 
-     for(i=0; i<req->NumParams; i++) 
-     {
-         if (strcasecmp(req->ParamNames[i], "SERVICE") == 0)
-           service = req->ParamValues[i];
-         else if (strcasecmp(req->ParamNames[i], "REQUEST") == 0)
-           request = req->ParamValues[i];
-     }
+  /* SERVICE must be specified and be SOS */
+  if (strcasecmp(paramsObj->pszService, "SOS") == 0) { /* this is an SOS request */
+    if (!paramsObj->pszRequest) {
+      msSetError(MS_SOSERR, "Missing REQUEST Parameter", "msSOSDispatch()");
+      return msSOSException(map, "request", "MissingParameterValue");
+    }
 
-     /* SERVICE must be specified and be SOS */
-     if (service == NULL || request == NULL || 
-         strcasecmp(service, "SOS") != 0)
-       return MS_DONE;  /* Not a SOS request */
+    if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0) {
+      returnvalue = msSOSGetCapabilities(map, paramsObj->pszVersion, req);
+      msSOSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
+      return returnvalue;
+    }
 
-     if (strcasecmp(request, "GetCapabilities") == 0)
-       return  msSOSGetCapabilities(map, nVersion, req);
-     else if (strcasecmp(request, "GetObservation") == 0)
-       return  msSOSGetObservation(map, nVersion, req->ParamNames, 
-                                   req->ParamValues, req->NumParams);
-     else if (strcasecmp(request, "DescribeSensor") == 0)
-       return  msSOSDescribeSensor(map, nVersion, req->ParamNames, 
-                                   req->ParamValues, req->NumParams);
-     else
-       return MS_DONE;  /* Not an SOS request */
+    else if (strcasecmp(paramsObj->pszRequest, "DescribeSensor") == 0 || strcasecmp(paramsObj->pszRequest, "GetObservation") == 0) { 
+      /* check version */
+      if (!paramsObj->pszVersion) {
+        msSetError(MS_SOSERR, "Missing VERSION parameter", "msSOSDispatch()");
+        return msSOSException(map, "version", "MissingParameterValue");
+      }
 
+      if (msOWSParseVersionString(paramsObj->pszVersion) != OWS_1_0_0) {
+        msSetError(MS_SOSERR, "VERSION %s not supported.  Supported versions are: %s.", "msSOSDispatch()", paramsObj->pszVersion, pszSOSVersion);
+        return msSOSException(map, "version", "InvalidParameterValue");
+      }
+
+      if (strcasecmp(paramsObj->pszRequest, "DescribeSensor") == 0)
+        returnvalue = msSOSDescribeSensor(map, paramsObj);
+
+      else if (strcasecmp(paramsObj->pszRequest, "GetObservation") == 0)
+        returnvalue = msSOSGetObservation(map, paramsObj);
+
+      msSOSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
+      return returnvalue;
+    }
+    else {
+      msSetError(MS_SOSERR, "Invalid REQUEST parameter: %s", "msSOSDispatch()", paramsObj->pszRequest);
+      return msSOSException(map, "request", "InvalidParameterValue");
+    }
+  }
+  else
+    return MS_DONE;  /* Not an SOS request */
 #else
   msSetError(MS_SOSERR, "SOS support is not available.", "msSOSDispatch()");
   return(MS_FAILURE);
-
 #endif
-
 }
 
+xmlXPathObjectPtr _getXPathName(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath){
+  xmlXPathObjectPtr result;
+
+  result = xmlXPathEval(xpath, context);
+  if (result == NULL) {
+    printf("Error in xmlXPathEvalExpression\n");
+    return NULL;
+  }
+  if(xmlXPathNodeSetIsEmpty(result->nodesetval)){
+    xmlXPathFreeObject(result);
+    return NULL;
+  }
+  return result;
+}
+
+xmlXPathObjectPtr _getXPathValue(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath){
+  xmlXPathObjectPtr result;
+
+  result = xmlXPathEvalExpression(xpath, context);
+  if (result == NULL) {
+    printf("Error in xmlXPathEvalExpression\n");
+    return NULL;
+  }
+  if(xmlXPathNodeSetIsEmpty(result->nodesetval)){
+    xmlXPathFreeObject(result);
+    return NULL;
+  }
+  return result;
+}
+
+void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
+  int i;
+  xmlDocPtr doc;
+  xmlXPathContextPtr context;
+  xmlNodeSetPtr nodeset;
+  xmlXPathObjectPtr psXPathTmp;
+
+  if (request->NumParams) { /* this is a GET request */
+    for(i=0; i<request->NumParams; i++) {
+      if (strcasecmp(request->ParamNames[i], "SERVICE") == 0)
+        sosparams->pszService = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "VERSION") == 0)
+        sosparams->pszVersion = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
+        sosparams->pszRequest = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "UPDATESEQUENCE") == 0)
+        sosparams->pszUpdateSequence = request->ParamValues[i];
+      else  if (strcasecmp(request->ParamNames[i], "SENSORID") == 0)
+        sosparams->pszSensorId = request->ParamValues[i];
+      else  if (strcasecmp(request->ParamNames[i], "PROCEDURE") == 0)
+        sosparams->pszProcedure = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "OUTPUTFORMAT") == 0)
+        sosparams->pszOutputFormat = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "OFFERING") == 0)
+        sosparams->pszOffering = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "OBSERVEDPROPERTY") == 0)
+        sosparams->pszObservedProperty = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "EVENTTIME") == 0)
+        sosparams->pszEventTime = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "RESULT") == 0)
+        sosparams->pszResult = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "RESULTMODEL") == 0)
+        sosparams->pszResultModel = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "RESPONSEFORMAT") == 0)
+        sosparams->pszResponseFormat = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "RESPONSEMODE") == 0)
+        sosparams->pszResponseMode = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "BBOX") == 0)
+        sosparams->pszBBox = request->ParamValues[i];
+    }
+  }
+
+  if (request->postrequest) { /* this a POST request */
+    /* load document */
+    doc = xmlParseDoc((xmlChar *)request->postrequest);
+    if (doc == NULL ) {
+      return;
+    }
+
+    /* load context */
+    context = xmlXPathNewContext(doc);
+    if (context == NULL) {
+      return;
+    }
+
+    /* register namespaces */
+    if(xmlXPathRegisterNs(context, (xmlChar *)"sos", (xmlChar *)"http://www.opengis.net/sos/1.0") != 0 || xmlXPathRegisterNs(context, (xmlChar *)"ows", (xmlChar *)"http://www.opengis.net/ows") != 0) {
+      return;
+    }
+
+    /* check for service */
+    psXPathTmp = _getXPathValue(doc, context, (xmlChar *)"/*/@service");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszService = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for updateSequence*/
+    psXPathTmp = _getXPathValue(doc, context, (xmlChar *)"/*/@updateSequence");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszUpdateSequence = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for version */
+    psXPathTmp = _getXPathValue(doc, context, (xmlChar *)"/*/ows:AcceptVersions/ows:Version|/*/@version");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszVersion = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for request */
+    //psXPathTmp = _getXPathName(doc, context, (xmlChar *)"/*");
+    psXPathTmp = _getXPathValue(doc, context, (xmlChar *)"/*/@request");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszRequest = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+      //sosparams->pszRequest = (char *)nodeset->nodeTab[0]->name;
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for outputformat */
+    psXPathTmp = _getXPathName(doc, context, (xmlChar *)"/sos:DescribeSensor/@outputFormat");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszOutputFormat = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for SensorId */
+    psXPathTmp = _getXPathName(doc, context, (xmlChar *)"/sos:DescribeSensor/sos:SensorId");
+    
+    if (psXPathTmp) { 
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszSensorId = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for offering */
+    psXPathTmp = _getXPathName(doc, context, (xmlChar *)"/sos:GetObservation/sos:offering");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszOffering = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for observedproperty */
+    psXPathTmp = _getXPathName(doc, context, (xmlChar *)"/sos:GetObservation/sos:observedProperty");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszObservedProperty = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for procedure */
+    psXPathTmp = _getXPathName(doc, context, (xmlChar *)"/sos:GetObservation/sos:procedure");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszProcedure = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for responseFormat */
+    psXPathTmp = _getXPathName(doc, context, (xmlChar *)"/sos:GetObservation/sos:responseFormat");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszResponseFormat = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for resultModel */
+    psXPathTmp = _getXPathName(doc, context, (xmlChar *)"/sos:GetObservation/sos:resultModel");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszResultModel = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+    xmlXPathFreeContext(context);
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
+  }
+  return;
+}
+
+void msSOSFreeParamsObj(sosParamsObj *sosparams) {
+  if (sosparams) {
+    if (sosparams->pszVersion)
+      free(sosparams->pszVersion);
+    if (sosparams->pszUpdateSequence)
+      free(sosparams->pszUpdateSequence);
+    if (sosparams->pszRequest)
+      free(sosparams->pszRequest);
+    if (sosparams->pszOutputFormat)
+      free(sosparams->pszOutputFormat);
+    if (sosparams->pszSensorId)
+      free(sosparams->pszSensorId);
+    if (sosparams->pszProcedure)
+      free(sosparams->pszProcedure);
+    if (sosparams->pszOffering)
+      free(sosparams->pszOffering);
+    if (sosparams->pszObservedProperty)
+      free(sosparams->pszObservedProperty);
+    if (sosparams->pszEventTime);
+      free(sosparams->pszEventTime);
+    if (sosparams->pszResult)
+      free(sosparams->pszResult);
+    if (sosparams->pszResponseFormat)
+      free(sosparams->pszResponseFormat);
+    if (sosparams->pszResultModel)
+      free(sosparams->pszResultModel);
+    if (sosparams->pszResponseMode)
+      free(sosparams->pszResponseMode);
+  }
+}
