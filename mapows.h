@@ -58,6 +58,29 @@ typedef  struct
 
 } wfsParamsObj;
 
+/*
+ * sosParamsObj
+ * Used to preprocess SOS request parameters
+ *
+ */
+
+typedef struct {
+  char *pszVersion;
+  char *pszUpdateSequence;
+  char *pszRequest;
+  char *pszService;
+  char *pszOutputFormat;
+  char *pszSensorId;
+  char *pszProcedure;
+  char *pszOffering; 
+  char *pszObservedProperty;
+  char *pszEventTime;
+  char *pszResult;
+  char *pszResultFormat;
+  char *pszResultModel;
+  char *pszResponseMode;
+  char *pszBBox;
+} sosParamsObj;
 
 /* wmsParamsObj
  *
