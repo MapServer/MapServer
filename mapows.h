@@ -80,6 +80,7 @@ typedef struct {
   char *pszResultModel;
   char *pszResponseMode;
   char *pszBBox;
+  char *pszFeatureOfInterest;
 } sosParamsObj;
 
 /* wmsParamsObj
