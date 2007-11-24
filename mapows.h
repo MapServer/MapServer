@@ -76,7 +76,7 @@ typedef struct {
   char *pszObservedProperty;
   char *pszEventTime;
   char *pszResult;
-  char *pszResultFormat;
+  char *pszResponseFormat;
   char *pszResultModel;
   char *pszResponseMode;
   char *pszBBox;
