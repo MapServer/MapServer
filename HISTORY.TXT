@@ -103,6 +103,8 @@ Current Version (5.1-dev, SVN trunk):
 
 - mappdf.c: support output in fastcgi case via msIO_fwrite() (#2406)
 
+- mapogcsos.c: Initial support for POST requests (#2379) and updated msSOSDispatch() handling
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
