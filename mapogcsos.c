@@ -2530,6 +2530,8 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
 #endif
 }
 
+#ifdef USE_SOS_SVR
+
 xmlXPathObjectPtr _getXPathName(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath){
   xmlXPathObjectPtr result;
 
@@ -2768,3 +2770,5 @@ void msSOSFreeParamsObj(sosParamsObj *sosparams) {
       free(sosparams->pszResponseMode);
   }
 }
+#endif /* USE_SOS_SVR*/
+
