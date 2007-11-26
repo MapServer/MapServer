@@ -120,12 +120,10 @@ o The connection pooling API will report details about connection
   registrations, requests, releases and closes if the layer debug flag is
   on for the layers in question. 
 
-o Currently the connection pooling API makes not attempt to address 
-  multi-threading issues.  In particular, it will currently allow a 
-  connection to be shared between different threads, and no effort is
-  made to ensure that only one thread at a time is updating the connection
-  pool.  This should likely be altered to only share a connection within
-  a thread, and protect updates to the connection pool with a lock. 
+o The connection pooling API will let a connection be used/referenced multiple
+  times from a single thread, but will not allow a connection to be shared
+  between different threads concurrently.  But if a connection is released
+  by one thread, it is available for use by another thread. 
 
  ****************************************************************************/
 
@@ -157,11 +155,7 @@ typedef struct {
 } connectionObj;
 
 /*
-** It seems to me that the connection pool should potentially be 
-** thread local data, or at least access to the list should be protected
-** by a mutex.  I am deferring looking into this till I have a better
-** understanding about how connection pooling should be used in a 
-** multithreaded situation.  Can connections be safely shared between threads?
+** These static structures are protected by the TLOCK_POOL mutex.
 */
 
 static int connectionCount = 0;
