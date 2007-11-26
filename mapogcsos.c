@@ -2479,7 +2479,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
   msSOSParseRequest(req, paramsObj);
 
   /* SERVICE must be specified and be SOS */
-  if (strcasecmp(paramsObj->pszService, "SOS") == 0) { /* this is an SOS request */
+  if (paramsObj->pszService && strcasecmp(paramsObj->pszService, "SOS") == 0) { /* this is an SOS request */
     if (!paramsObj->pszRequest) {
       msSetError(MS_SOSERR, "Missing REQUEST Parameter", "msSOSDispatch()");
       return msSOSException(map, "request", "MissingParameterValue");
