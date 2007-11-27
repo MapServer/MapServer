@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- AGG: added and use a line and polygon adaptor to avoid copying shapeObj
+ points to an agg path_storage. avoids a few mallocs and a few copies.
+
 - fixed symbolsetObj not to set the SWIG immutable flag permanently
   don't expose refcount and the symbol attributes (Ticket #2407)
 

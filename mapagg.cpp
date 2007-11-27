@@ -124,35 +124,6 @@ typedef agg::scanline_p8 scanline;
 
 MS_CVSID("$Id$")
 
-///transform a mapserver shapeobj to an agg path_storage
-///@param close set to true for polygons. set to false for lines
-///@param ox,oy offset the shape by the given number of pixels
-///@returns an agg path_storage
-static void shapeToPath(shapeObj *p,agg::path_storage &path, bool close, double ox=0, double oy=0) {
-    for(int i = 0; i < p->numlines; i++) {
-        path.move_to(p->line[i].point[0].x, p->line[i].point[0].y);
-        for(int j=1; j<p->line[i].numpoints; j++)
-            path.line_to(p->line[i].point[j].x, p->line[i].point[j].y);
-        if(close)
-            path.close_polygon();
-    }
-    if(ox!=0||oy!=0) {
-        path.translate(ox,oy);
-    }
-}
-
-///shortcut function to create a path_storage representing a polygon
-///from a shapeobj
-static void shapePolygonToPath(shapeObj *p,agg::path_storage &path, double ox=0, double oy=0) {
-    shapeToPath(p,path,true,ox,oy);
-}
-
-///shortcut function to create a path_storage representing a polyline
-///from a shapeobj
-static void shapePolylineToPath(shapeObj *p,agg::path_storage &path, double ox=0, double oy=0) {
-    shapeToPath(p,path,false,ox,oy);
-}
-
 ///apply line styling functions. applies the line joining and capping
 ///parameters from the symbolobj to the given stroke
 ///@param stroke the stroke to which we apply the styling
@@ -280,13 +251,10 @@ public:
     ///clear the whole image.
     ///@param color the fully opaque background color to use  
     void clear(colorObj *color) {
-        ren_base.clear(msToAGGColor(color));
-    }
-    
-    ///
-    ///clear the background of the image. sets the background to fully transparent
-    void clear() {
-        ren_base.clear(agg::rgba(0,0,0,0));
+        if(color!=NULL && MS_VALID_COLOR(*color))
+            ren_base.clear(msToAGGColor(color));
+        else
+            ren_base.clear(agg::rgba(0,0,0,0));
     }
     
     ///shortcut function to render an ellipse, optinally filled and/or outlined
@@ -313,7 +281,8 @@ public:
     ///     greater or eauql to dashstylelength
     ///@param lc the style of the line caps, defaults to round caps
     ///@param lj the style of the line joins, defaults to round joins
-    void renderPolyline(agg::path_storage &p,colorObj *c, 
+    template<class VertexSource>
+    void renderPolyline(VertexSource &p,colorObj *c, 
             double width,int dashstylelength, int *dashstyle,
             enum agg::line_cap_e lc=agg::round_cap,
             enum agg::line_join_e lj=agg::round_join) {
@@ -322,14 +291,14 @@ public:
         ren_aa.color(msToAGGColor(c));
 
         if (dashstylelength <= 0) {
-            agg::conv_stroke<agg::path_storage> stroke(p);  
+            agg::conv_stroke<VertexSource> stroke(p);  
             stroke.width(width);
             stroke.line_cap(lc);
             stroke.line_join(lj);
             ras_aa.add_path(stroke);
         } else {
-            agg::conv_dash<agg::path_storage> dash(p);
-            agg::conv_stroke<agg::conv_dash<agg::path_storage> > stroke_dash(dash);  
+            agg::conv_dash<VertexSource> dash(p);
+            agg::conv_stroke<agg::conv_dash<VertexSource> > stroke_dash(dash);  
             for (int i=0; i<dashstylelength; i+=2) {
                 if (i < dashstylelength-1)
                     dash.add_dash(dashstyle[i], dashstyle[i+1]);
@@ -340,14 +309,6 @@ public:
             ras_aa.add_path(stroke_dash);
         }
         agg::render_scanlines(ras_aa, sl, ren_aa);
-    }
-    
-    ///render an aliased 1 pixel width polyline
-    ///@param p the path_storage containing the vertexes of the polyline
-    ///@param c the color of the line
-    void renderPolylineFast(agg::path_storage &p,colorObj *c) {
-        ren_prim.line_color(msToAGGColor(c));
-        ras_oa.add_path(p);
     }
     
     ///brush a polyline with a vector symbol. draws the vector symbol in a temporary
@@ -397,7 +358,8 @@ public:
     ///     images produced by the AGG renderers are already premultiplied, but images
     ///     read from an another source (i.e the GD pixmaps) should be explicitely
     ///     premultiplied before calling
-    void renderPathPixmapBGRA(agg::path_storage &line, GDpixfmt &pattern) {
+    template<class VertexSource>
+    void renderPathPixmapBGRA(VertexSource &line, GDpixfmt &pattern) {
         agg::pattern_filter_bilinear_rgba8 fltr;
         typedef agg::line_image_pattern<agg::pattern_filter_bilinear_rgba8> pattern_type;
         typedef agg::renderer_outline_image<renderer_base, pattern_type> renderer_img_type;
@@ -417,7 +379,8 @@ public:
     ///@param outlinewidth width of outline
     ///@param lc capping used for the optional outline, defaults to round caps
     ///@param lj joins used for the optional outline, defaults to round joins
-    void renderPathSolid(agg::path_storage &path, colorObj *color,
+    template<class VertexSource>
+    void renderPathSolid(VertexSource &path, colorObj *color,
             colorObj *outlinecolor, double outlinewidth,
             enum agg::line_cap_e lc=agg::round_cap,
             enum agg::line_join_e lj=agg::round_join) {
@@ -434,29 +397,12 @@ public:
             ras_aa.reset();
             ras_aa.filling_rule(agg::fill_non_zero); 
             ren_aa.color(msToAGGColor(outlinecolor));
-            agg::conv_stroke<agg::path_storage> stroke(path);
+            agg::conv_stroke<VertexSource> stroke(path);
             stroke.width(outlinewidth);
             stroke.line_cap(lc);
             stroke.line_join(lj);
             ras_aa.add_path(stroke);
             agg::render_scanlines ( ras_aa, sl, ren_aa );
-        }
-    }
-    
-    ///render a non antialiased shape represented by an agg::path_storage 
-    ///@param path the path containing the geometry to render
-    ///@param color fill color or null for no fill
-    void renderPathSolidFast(agg::path_storage &p, colorObj *color, 
-            colorObj *outlinecolor) {
-        if(MS_VALID_COLOR(*color)) {
-            ras_aa.reset();
-            ren_bin.color(msToAGGColor(color));
-            ras_aa.add_path(p);
-            agg::render_scanlines(ras_aa, m_sl_bin, ren_bin);
-        }
-        
-        if(MS_VALID_COLOR(*outlinecolor)) {
-            renderPolylineFast(p,outlinecolor);
         }
     }
 
@@ -840,10 +786,6 @@ public:
         }
         return MS_SUCCESS;
     }
-
-    agg::path_storage &get_path() {
-        return path;
-    }
 private:
     mapserv_row_ptr_cache<int>  *pRowCache;
     pixelFormat thePixelFormat;
@@ -857,7 +799,6 @@ private:
     rasterizer_outline ras_oa;
     font_engine_type m_feng;
     font_manager_type m_fman;
-    agg::path_storage path;
     agg::rgba msToAGGColor(colorObj *c) {
         return agg::rgba(((double) c->red) / 255.0, 
                 ((double) c->green) / 255.0, 
@@ -912,7 +853,7 @@ void msImageInitAGG(imageObj *image, colorObj *background)
     
     AGGMapserverRenderer* ren = getAGGRenderer(image);
     if(image->format->imagemode == MS_IMAGEMODE_RGBA) {
-        ren->clear();
+        ren->clear(NULL);
     } else {
         ren->clear(background);
     }
@@ -1585,9 +1526,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     
     //transform the shapeobj to something AGG understands
     
-    agg::path_storage &line  = ren->get_path();
-    line.remove_all();
-    shapePolylineToPath(p,line);
+    line_adaptor lines(p);
     
     // treat the easy case
     // NOTE/TODO:  symbols of type ELLIPSE are included here, as using those with a SIZE param was
@@ -1633,7 +1572,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
                 break;
             }
         }
-        ren->renderPolyline(line,color,nwidth,symbol->patternlength,symbol->pattern,lc,lj);
+        ren->renderPolyline(lines,color,nwidth,symbol->patternlength,symbol->pattern,lc,lj);
     }
     else if(symbol->type==MS_SYMBOL_TRUETYPE) {
         //specific function that treats truetype symbols
@@ -1647,7 +1586,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         switch(symbol->type) {
         case MS_SYMBOL_PIXMAP: {
              GDpixfmt img_pixf = loadSymbolPixmap(symbol);
-            ren->renderPathPixmapBGRA(line,img_pixf);
+            ren->renderPathPixmapBGRA(lines,img_pixf);
         }
         break;
         case MS_SYMBOL_VECTOR: {
@@ -1662,7 +1601,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
             int pw =(int) ceil(symbol->sizex*d);    
             int ph =(int) ceil(symbol->sizey*d);
             if((pw <= 1) && (ph <= 1)) { // No sense using a tile, just draw a simple line
-                ren->renderPolyline(line,color,size,0,NULL);
+                ren->renderPolyline(lines,color,size,0,NULL);
                 return;
             }
             agg::path_storage path = imageVectorSymbolAGG(symbol,d);
@@ -1676,14 +1615,14 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
             
             if(symbol->filled) {
                 //brush with a filled vector symbol, with an optional background
-                ren->renderPolylineVectorSymbol(line,path,pw,ph,color,&(style->backgroundcolor));
+                ren->renderPolylineVectorSymbol(lines,path,pw,ph,color,&(style->backgroundcolor));
             } else  {
                 //brush with a stroked vector symbol (to get width), 
                 //with an optional background
                 agg::conv_stroke <agg::path_storage > stroke(path);
                 stroke.width(style->width);            
                 strokeFromSymbol(stroke,symbol);             
-                ren->renderPolylineVectorSymbol(line,stroke,pw,ph,color,&(style->backgroundcolor));
+                ren->renderPolylineVectorSymbol(lines,stroke,pw,ph,color,&(style->backgroundcolor));
             }
             if(bRotated) { /* free the rotated symbol */
                 msFreeSymbol(symbol);
@@ -1746,21 +1685,16 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     if(size < 1) return; // size too small 
 
     AGGMapserverRenderer* ren = getAGGRenderer(image);
-    agg::path_storage& polygon = ren->get_path();
-    polygon.remove_all();
-    shapePolygonToPath(p,polygon,ox,oy);
-    if(symbol->type==MS_SYMBOL_SIMPLE &&symbol->antialias==MS_FALSE) { // solid fill
-                ren->renderPathSolidFast(polygon,&(style->color),&(style->outlinecolor));
-                return; // done simple case
-    }
+    polygon_adaptor polygons(p);
+    
     if(style->symbol == 0 || symbol->type==MS_SYMBOL_SIMPLE) {
         // simply draw a solid fill and outline of the specified colors
         if(MS_VALID_COLOR(style->outlinecolor))
-            ren->renderPathSolid(polygon,&(style->color),&(style->outlinecolor),style->width);
+            ren->renderPathSolid(polygons,&(style->color),&(style->outlinecolor),style->width);
             //use outline width without scalefactor applied
         else
             //draw a one pixel outline of the same color as the fill to avoid a faint outline
-            ren->renderPathSolid(polygon,&(style->color),&(style->color),1); 
+            ren->renderPathSolid(polygons,&(style->color),&(style->color),1); 
     }
     else {
         switch(symbol->type) {
@@ -1772,7 +1706,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             agg::path_storage hatch;
             
             //optional backgroundcolor before drawing the symbol
-            ren->renderPathSolid(polygon,&(style->backgroundcolor),NULL,1);
+            ren->renderPathSolid(polygons,&(style->backgroundcolor),NULL,1);
             
             //create a rectangular hatch of size pw,ph starting at 0,0
             //the created hatch is of the size of the shape's bounding box
@@ -1785,10 +1719,10 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             stroke.width(style->width);
             
             //render the hatch clipped by the shape
-            ren->renderPathSolidClipped(stroke,polygon,&(style->color));
+            ren->renderPathSolidClipped(stroke,polygons,&(style->color));
             
             //render the optional outline
-            ren->renderPathSolid(polygon,NULL,&(style->outlinecolor),1);
+            ren->renderPathSolid(polygons,NULL,&(style->outlinecolor),1);
             return;
         }
         break;
@@ -1805,11 +1739,11 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             if((pw <= 1) && (ph <= 1)) {
                 //use a solid fill if the symbol is too small
                 if(MS_VALID_COLOR(style->outlinecolor))
-                    ren->renderPathSolid(polygon,&(style->color),&(style->outlinecolor),width);
+                    ren->renderPathSolid(polygons,&(style->color),&(style->outlinecolor),width);
                 else
                     //render a one pixel outline of the same color as the fill to prevent a
                     //faint due to antialiasing with contiguous polygons
-                    ren->renderPathSolid(polygon,&(style->color),&(style->color),1);
+                    ren->renderPathSolid(polygons,&(style->color),&(style->color),1);
                 return;
             }
             agg::path_storage path = imageVectorSymbolAGG(symbol,d);
@@ -1822,13 +1756,13 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 path.transform(agg::trans_affine_translation(gap/2.,gap/2.));
             }
             if(symbol->filled) {
-                ren->renderPathTiled(polygon,path,pw,ph,&(style->color),&(style->backgroundcolor));
+                ren->renderPathTiled(polygons,path,pw,ph,&(style->color),&(style->backgroundcolor));
             } else  {
                 agg::conv_stroke <agg::path_storage > stroke(path);
                 stroke.width(style->width);
                 //apply symbol caps and joins
                 strokeFromSymbol(stroke,symbol);             
-                ren->renderPathTiled(polygon,stroke,pw,ph,&(style->color),&(style->backgroundcolor));
+                ren->renderPathTiled(polygons,stroke,pw,ph,&(style->color),&(style->backgroundcolor));
             }
             
             //draw an outline on the shape
@@ -1839,7 +1773,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             else if(MS_VALID_COLOR(style->backgroundcolor))
                 oc=&(style->backgroundcolor);
             if(oc!=NULL)
-            ren->renderPathSolid(polygon,NULL,oc,1);
+            ren->renderPathSolid(polygons,NULL,oc,1);
             
             if(bRotated) { // free the rotated symbol
                 msFreeSymbol(symbol);
@@ -1850,9 +1784,9 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         case MS_SYMBOL_PIXMAP: {
             //TODO: rotate and scale image before tiling
             GDpixfmt img_pixf = loadSymbolPixmap(symbol);
-            ren->renderPathSolid(polygon,(&style->backgroundcolor),(&style->backgroundcolor),1);
-            ren->renderPathTiledPixmapBGRA(polygon,img_pixf);
-            ren->renderPathSolid(polygon,NULL,&(style->outlinecolor),style->width);
+            ren->renderPathSolid(polygons,(&style->backgroundcolor),(&style->backgroundcolor),1);
+            ren->renderPathTiledPixmapBGRA(polygons,img_pixf);
+            ren->renderPathSolid(polygons,NULL,&(style->outlinecolor),style->width);
         }
         break;
         case MS_SYMBOL_ELLIPSE: {
@@ -1861,9 +1795,9 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             int ph = MS_NINT(symbol->sizey*d)+1;
             if((ph <= 1) && (pw <= 1)) { /* No sense using a tile, just fill solid */
                 if(MS_VALID_COLOR(style->outlinecolor))
-                    ren->renderPathSolid(polygon,&(style->color),&(style->outlinecolor),style->width);
+                    ren->renderPathSolid(polygons,&(style->color),&(style->outlinecolor),style->width);
                 else
-                    ren->renderPathSolid(polygon,&(style->color),&(style->color),1);
+                    ren->renderPathSolid(polygons,&(style->color),&(style->color),1);
             }
             else {
                 agg::path_storage path;
@@ -1878,7 +1812,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                     ph+=MS_NINT(gap);
                     path.transform(agg::trans_affine_translation(gap/2.,gap/2.));
                 }
-                ren->renderPathTiled(polygon,ellipse,pw,ph,
+                ren->renderPathTiled(polygons,ellipse,pw,ph,
                         &(style->color),&(style->backgroundcolor));
                 
                 //draw an outline on the shape
@@ -1889,7 +1823,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 else if(MS_VALID_COLOR(style->backgroundcolor))
                     oc=&(style->backgroundcolor);
                 if(oc!=NULL)
-                    ren->renderPathSolid(polygon,NULL,oc,1);
+                    ren->renderPathSolid(polygons,NULL,oc,1);
             }
         }
         break;
@@ -1898,11 +1832,11 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             if(!font)
                 return;
             double gap=(symbol->gap>0)?symbol->gap*size:0;
-            ren->renderPathTruetypeTiled(polygon,font,(unsigned int)((unsigned char)symbol->character[0]),size,
+            ren->renderPathTruetypeTiled(polygons,font,(unsigned int)((unsigned char)symbol->character[0]),size,
                     gap,&(style->color),&(style->backgroundcolor),&(style->outlinecolor));
             //if a background was specified, draw an outline of the color
             //to avoid faint outlines in contiguous polygons
-            ren->renderPathSolid(polygon,NULL,&(style->backgroundcolor),1);
+            ren->renderPathSolid(polygons,NULL,&(style->backgroundcolor),1);
         }
         break;
         case MS_SYMBOL_CARTOLINE:
@@ -2062,7 +1996,7 @@ void msPieSliceAGG ( imageObj *image, styleObj *style, double center_x, double c
     }
 
     //create a path with pie slice
-    agg::path_storage path=ren->get_path();
+    agg::path_storage path;
     path.remove_all();
     path.move_to ( center_x,center_y );
     //NOTE: agg angles are anti-trigonometric
@@ -2086,7 +2020,7 @@ void msFilledRectangleAGG ( imageObj *image, styleObj *style, double c1_x, doubl
         double c2_x, double c2_y )
 {
     AGGMapserverRenderer* ren = getAGGRenderer(image);
-    agg::path_storage path=ren->get_path();
+    agg::path_storage path;
     path.remove_all();
     path.move_to ( c1_x,c1_y );
     path.line_to ( c2_x,c1_y );
