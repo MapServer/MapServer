@@ -2586,6 +2586,8 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
         sosparams->pszBBox = request->ParamValues[i];
       else if (strcasecmp(request->ParamNames[i], "SRSNAME") == 0)
         sosparams->pszSrsName = request->ParamValues[i];
+      else if (strcasecmp(request->ParamNames[i], "FEATUREOFINTEREST") == 0)
+        sosparams->pszFeatureOfInterest = request->ParamValues[i];
     }
   }
 
@@ -2780,6 +2782,8 @@ void msSOSFreeParamsObj(sosParamsObj *sosparams) {
       free(sosparams->pszResponseMode);
     if (sosparams->pszSrsName)
       free(sosparams->pszSrsName);
+    if (sosparams->pszFeatureOfInterest)
+      free(sosparams->pszFeatureOfInterest);
   }
 }
 #endif /* USE_SOS_SVR*/
