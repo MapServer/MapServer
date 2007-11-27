@@ -240,6 +240,18 @@ OGC Web Feature Service (WFS)
 ----------------------------------------------------
 
 ----------------------------------------------------
+OGC Sensor Observation Service (SOS)
+----------------------------------------------------
+The format of MAP/LAYER/WEB/METADATA/sos_describesensor_url
+has been changed such that users now must format the value
+per:
+
+"sos_describesensor_url" "http://example.org/sml/%procedure%.xml"
+
+This change has been made to clarify and unify the meaning of procedure
+within SOS Server's context of a DescribeSensor request.
+
+----------------------------------------------------
 Build Changes
 ----------------------------------------------------
 
