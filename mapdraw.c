@@ -686,11 +686,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
       }
       msImageInitAGG(image_draw, &map->imagecolor);
     }
-
-    /* keeping this for the time being. will go when full switch to AGG */
-    else if (layer->opacity == MS_GD_ALPHA) {
-      oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
-    }
   }
 #endif
 
