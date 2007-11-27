@@ -2387,10 +2387,10 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
         if (pszUrl) {
           pszTmp = strdup(pszUrl);
 
-          /* %sensorid% is now the hardcoded variable names to use 
+          /* %procedure% is the hardcoded variable name to use 
              within sos_describesensor_url */
-          tmpstr = (char *)malloc(sizeof(char)*strlen("sensorid") + 3);
-          sprintf(tmpstr,"%%%s%%", "sensorid");
+          tmpstr = (char *)malloc(sizeof(char)*strlen("procedure") + 3);
+          sprintf(tmpstr,"%%%s%%", "procedure");
           if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
             pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszSensorId);
           msFree(tmpstr);
@@ -2436,10 +2436,10 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
               if (pszUrl) {   
                 pszTmp = strdup(pszUrl);
 
-                /* %sensorid% is now the hardcoded variable names to use
+                /* %procedure% is the hardcoded variable names to use
                    within sos_describesensor_url */
-                tmpstr = (char *)malloc(sizeof(char)*strlen("sensorid") + 3);
-                sprintf(tmpstr,"%%%s%%", "sensorid");
+                tmpstr = (char *)malloc(sizeof(char)*strlen("procedure") + 3);
+                sprintf(tmpstr,"%%%s%%", "procedure");
                 if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
                   pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszSensorId);
                 msFree(tmpstr);
