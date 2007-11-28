@@ -1528,7 +1528,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     
     //transform the shapeobj to something AGG understands
     
-    line_adaptor lines(p);
+    line_adaptor lines(p,style->offsetx,style->offsety);
     
     // treat the easy case
     // NOTE/TODO:  symbols of type ELLIPSE are included here, as using those with a SIZE param was
@@ -1687,7 +1687,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     if(size < 1) return; // size too small 
 
     AGGMapserverRenderer* ren = getAGGRenderer(image);
-    polygon_adaptor polygons(p);
+    polygon_adaptor polygons(p,style->offsetx,style->offsety);
     
     if(style->symbol == 0 || symbol->type==MS_SYMBOL_SIMPLE) {
         // simply draw a solid fill and outline of the specified colors

@@ -154,7 +154,7 @@ public:
  */
 class line_adaptor {
 public:
-    line_adaptor(shapeObj *shape):s(shape)
+    line_adaptor(shapeObj *shape, double ox, double oy):s(shape),ox(ox),oy(oy)
     {
         m_line=s->line; /*first line*/
         m_point=m_line->point; /*current vertex is first vertex of first line*/
@@ -174,8 +174,8 @@ public:
         {
             /*here we treat the case where a real vertex is returned*/
             bool first = m_point == m_line->point; /*is this the first vertex of a line*/
-            *x = m_point->x;
-            *y = m_point->y;
+            *x = m_point->x+ox;
+            *y = m_point->y+oy;
             m_point++;
             return first ? agg::path_cmd_move_to : agg::path_cmd_line_to;
         }
@@ -195,6 +195,7 @@ public:
     }
 private:
     shapeObj *s;
+    double ox,oy;
     lineObj *m_line, /*current line pointer*/
     *m_lend; /*points to after the last line*/
     pointObj *m_point, /*current point*/
@@ -203,7 +204,7 @@ private:
 
 class polygon_adaptor {
 public:
-    polygon_adaptor(shapeObj *shape):s(shape),m_stop(false)
+    polygon_adaptor(shapeObj *shape, double ox, double oy):s(shape),m_stop(false),ox(ox),oy(oy)
     {
         m_line=s->line; /*first lines*/
         m_point=m_line->point; /*first vertex of first line*/
@@ -225,8 +226,8 @@ public:
         {
             /*if here, we have a real vertex*/
             bool first = m_point == m_line->point;
-            *x = m_point->x;
-            *y = m_point->y;
+            *x = m_point->x+ox;
+            *y = m_point->y+oy;
             m_point++;
             return first ? agg::path_cmd_move_to : agg::path_cmd_line_to;
         }
@@ -255,6 +256,7 @@ public:
     }
 private:
     shapeObj *s;
+    double ox,oy;
     lineObj *m_line, /*pointer to current line*/
     *m_lend; /*pointer to after last line of the shape*/
     pointObj *m_point, /*pointer to current vertex*/
