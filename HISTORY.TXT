@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- fix clipping rectangle to take width as well as size into account (#2411)
+
 - AGG: added and use a line and polygon adaptor to avoid copying shapeObj
  points to an agg path_storage. avoids a few mallocs and a few copies.
 

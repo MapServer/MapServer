@@ -1273,14 +1273,22 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msShapeToRange((layer->class[c]->styles[s]), shape);
   }
   
-  /* changed when Tomas added CARTOLINE symbols */
+  /* changed when Tomas added CARTOLINE symbols
+   * adjust the clipping rectangle so that clipped polygon shapes with thick lines
+   * do not enter the image */
   if(layer->class[c]->numstyles > 0 && layer->class[c]->styles[0] != NULL) {
-    if(layer->class[c]->styles[0]->size == -1)
-      csz = MS_NINT(((msSymbolGetDefaultSize(map->symbolset.symbol[layer->class[c]->styles[0]->symbol])) * layer->scalefactor) / 2.0);
-    else
-      csz = MS_NINT((layer->class[c]->styles[0]->size*layer->scalefactor)/2.0);
+      double maxsize;
+      if(layer->class[c]->styles[0]->size == -1)
+          maxsize=MS_MAX(
+                  msSymbolGetDefaultSize(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]),
+                  layer->class[c]->styles[0]->width);
+      else
+          maxsize=MS_MAX(
+                  layer->class[c]->styles[0]->size,
+                  layer->class[c]->styles[0]->width);
+      csz = MS_NINT((maxsize*layer->scalefactor)/2.0);
   } else {
-    csz = 0;
+      csz = 0;
   }
   cliprect.minx = map->extent.minx - csz*map->cellsize;
   cliprect.miny = map->extent.miny - csz*map->cellsize;
