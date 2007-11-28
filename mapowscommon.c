@@ -372,6 +372,31 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psX
 }
 
 /**
+ * msGenerateXMLListItems()
+ *
+ * Convenience function to produce a series of XML elements from a comma
+ * or space delimited list string list. 
+ *
+ */
+
+void msGenerateXMLListItems( xmlNodePtr psParent, 
+                             xmlNsPtr psNs, const char *elname, 
+                             const char *values, char delim )
+
+{
+  char **tokens = NULL;
+  int n = 0;
+  int i = 0;
+  tokens = msStringSplit(values, delim, &n);
+  if (tokens && n > 0) {
+    for (i=0; i<n; i++) { 
+        xmlNewChild(psParent, psNs, BAD_CAST elname, BAD_CAST tokens[i]);
+    }
+    msFreeCharArray(tokens, n);
+  }
+}
+
+/**
  * msOWSCommonOperationsMetadataDomainType()
  *
  * returns a Parameter or Constraint element (which are of type ows:DomainType)
@@ -387,7 +412,6 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psX
 
 xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elname, char *name, char *values) {
   xmlNodePtr psRootNode = NULL;
-  xmlNodePtr psNode     = NULL; 
 
   if (_validateNamespace(psNsOws) == MS_FAILURE)
     psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
@@ -396,18 +420,8 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elnam
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
-  if (values != NULL) {
-    char **tokens = NULL;
-    int n = 0;
-    int i = 0;
-    tokens = msStringSplit(values, ',', &n);
-    if (tokens && n > 0) {
-      for (i=0; i<n; i++) { 
-        psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Value", BAD_CAST tokens[i]);
-      }
-      msFreeCharArray(tokens, n);
-    }
-  }
+  msGenerateXMLListItems( psRootNode, psNsOws, "Value", values, ',' );
+
   return psRootNode;
 }
 
