@@ -1525,7 +1525,7 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
                          }
                          else
                          {
-                              msSetError(MS_SOSERR, "Manadatory metadata procedure_item could not be found on the layer %s",
+                              msSetError(MS_SOSERR, "Mandatory metadata procedure_item could not be found on the layer %s",
                                             "msSOSGetCapabilities()", GET_LAYER(map,j)->name);
                                  return msSOSException(map, "procedure_item", "MissingValue");
                          }
@@ -1655,6 +1655,8 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
      /*free buffer and the document */
      /*xmlFree(buffer);*/
      xmlFreeDoc(psDoc);
+     xmlFreeNs(psNsGml);
+     xmlFreeNs(psNsSos);
 
      free(xsi_schemaLocation);
      free(schemalocation);
@@ -1736,26 +1738,24 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
 
   psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
 
-  /*TODO : validate for version number*/
-
   /* validates mandatory request elements */
   if (!sosparams->pszOffering) {
-    msSetError(MS_SOSERR, "Missing mandatory Offering parameter.", "msSOSGetObservation()");
+    msSetError(MS_SOSERR, "Missing OFFERING parameter.", "msSOSGetObservation()");
     return msSOSException(map, "offering", "MissingParameterValue");
   }
 
   if (!sosparams->pszObservedProperty) {
-    msSetError(MS_SOSERR, "Missing mandatory ObservedProperty parameter.", "msSOSGetObservation()");
+    msSetError(MS_SOSERR, "Missing OBSERVEDPROPERTY parameter.", "msSOSGetObservation()");
     return msSOSException(map, "observedproperty", "MissingParameterValue");
   }
 
   if (!sosparams->pszResponseFormat) {
-    msSetError(MS_SOSERR, "Missing mandatory responseFormat parameter.", "msSOSGetObservation()");
+    msSetError(MS_SOSERR, "Missing RESPONSEFORMAT parameter.", "msSOSGetObservation()");
     return msSOSException(map, "responseformat", "MissingParameterValue");
   }
 
   if (strcasecmp(sosparams->pszResponseFormat, pszSOSGetObservationMimeType) != 0) {
-    msSetError(MS_SOSERR, "Invalid responseFormat parameter %s.  Allowable values are: %s", "msSOSGetObservation()", sosparams->pszResponseFormat, pszSOSGetObservationMimeType);
+    msSetError(MS_SOSERR, "Invalid RESPONSEFORMAT parameter %s.  Allowable values are: %s", "msSOSGetObservation()", sosparams->pszResponseFormat, pszSOSGetObservationMimeType);
     return msSOSException(map, "responseformat", "InvalidParameterValue");
   }
 
@@ -2555,39 +2555,39 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
   if (request->NumParams) { /* this is a GET request */
     for(i=0; i<request->NumParams; i++) {
       if (strcasecmp(request->ParamNames[i], "SERVICE") == 0)
-        sosparams->pszService = request->ParamValues[i];
+        sosparams->pszService = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "VERSION") == 0)
-        sosparams->pszVersion = request->ParamValues[i];
+        sosparams->pszVersion = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
-        sosparams->pszRequest = request->ParamValues[i];
+        sosparams->pszRequest = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "UPDATESEQUENCE") == 0)
-        sosparams->pszUpdateSequence = request->ParamValues[i];
+        sosparams->pszUpdateSequence = strdup(request->ParamValues[i]);
       else  if (strcasecmp(request->ParamNames[i], "SENSORID") == 0)
-        sosparams->pszSensorId = request->ParamValues[i];
+        sosparams->pszSensorId = strdup(request->ParamValues[i]);
       else  if (strcasecmp(request->ParamNames[i], "PROCEDURE") == 0)
-        sosparams->pszProcedure = request->ParamValues[i];
+        sosparams->pszProcedure = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "OUTPUTFORMAT") == 0)
-        sosparams->pszOutputFormat = request->ParamValues[i];
+        sosparams->pszOutputFormat = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "OFFERING") == 0)
-        sosparams->pszOffering = request->ParamValues[i];
+        sosparams->pszOffering = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "OBSERVEDPROPERTY") == 0)
-        sosparams->pszObservedProperty = request->ParamValues[i];
+        sosparams->pszObservedProperty = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "EVENTTIME") == 0)
-        sosparams->pszEventTime = request->ParamValues[i];
+        sosparams->pszEventTime = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "RESULT") == 0)
-        sosparams->pszResult = request->ParamValues[i];
+        sosparams->pszResult = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "RESULTMODEL") == 0)
-        sosparams->pszResultModel = request->ParamValues[i];
+        sosparams->pszResultModel = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "RESPONSEFORMAT") == 0)
-        sosparams->pszResponseFormat = request->ParamValues[i];
+        sosparams->pszResponseFormat = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "RESPONSEMODE") == 0)
-        sosparams->pszResponseMode = request->ParamValues[i];
+        sosparams->pszResponseMode = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "BBOX") == 0)
-        sosparams->pszBBox = request->ParamValues[i];
+        sosparams->pszBBox = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "SRSNAME") == 0)
-        sosparams->pszSrsName = request->ParamValues[i];
+        sosparams->pszSrsName = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "FEATUREOFINTEREST") == 0)
-        sosparams->pszFeatureOfInterest = request->ParamValues[i];
+        sosparams->pszFeatureOfInterest = strdup(request->ParamValues[i]);
     }
   }
 
