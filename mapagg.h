@@ -204,7 +204,7 @@ private:
 
 class polygon_adaptor {
 public:
-    polygon_adaptor(shapeObj *shape, double ox, double oy):s(shape),m_stop(false),ox(ox),oy(oy)
+    polygon_adaptor(shapeObj *shape, double ox, double oy):s(shape),ox(ox),oy(oy),m_stop(false)
     {
         m_line=s->line; /*first lines*/
         m_point=m_line->point; /*first vertex of first line*/
