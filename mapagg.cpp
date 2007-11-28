@@ -498,10 +498,10 @@ public:
         font_curve_type m_curves(m_fman.path_adaptor());
         const agg::glyph_cache* glyph=m_fman.glyph(glyphUnicode);
         if(!glyph) return;
-        int gw=glyph->bounds.x2-glyph->bounds.x1,
-            gh=glyph->bounds.y2-glyph->bounds.y1;
-        int tilewidth=MS_NINT(gw+gap)+1,
-            tileheight=MS_NINT(gh+gap)+1;
+        int gw=glyph->bounds.x2-glyph->bounds.x1+1,
+            gh=glyph->bounds.y2-glyph->bounds.y1+1;
+        int tilewidth=MS_NINT(gw+gap),
+            tileheight=MS_NINT(gh+gap);
         
             ras_aa.filling_rule(agg::fill_non_zero);
             agg::int8u* m_pattern;
@@ -1734,8 +1734,8 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 symbol = msRotateSymbol(symbol, style->angle);
             }
 
-            int pw = MS_NINT(symbol->sizex*d)+1;    
-            int ph = MS_NINT(symbol->sizey*d)+1;
+            int pw = MS_NINT(symbol->sizex*d);    
+            int ph = MS_NINT(symbol->sizey*d);
             if((pw <= 1) && (ph <= 1)) {
                 //use a solid fill if the symbol is too small
                 if(MS_VALID_COLOR(style->outlinecolor))
@@ -1771,7 +1771,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             if(MS_VALID_COLOR(style->outlinecolor))
                 oc=&(style->outlinecolor);
             else if(MS_VALID_COLOR(style->backgroundcolor))
-                oc=&(style->backgroundcolor);
+                oc=&(style->backgroundcolor); /*avoid faint outline*/
             if(oc!=NULL)
             ren->renderPathSolid(polygons,NULL,oc,1);
             
@@ -1791,8 +1791,8 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         break;
         case MS_SYMBOL_ELLIPSE: {
             double d = size/symbol->sizey; /* size ~ height in pixels */
-            int pw = MS_NINT(symbol->sizex*d)+1;
-            int ph = MS_NINT(symbol->sizey*d)+1;
+            int pw = MS_NINT(symbol->sizex*d);
+            int ph = MS_NINT(symbol->sizey*d);
             if((ph <= 1) && (pw <= 1)) { /* No sense using a tile, just fill solid */
                 if(MS_VALID_COLOR(style->outlinecolor))
                     ren->renderPathSolid(polygons,&(style->color),&(style->outlinecolor),style->width);
