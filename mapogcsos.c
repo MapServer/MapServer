@@ -2770,7 +2770,7 @@ void msSOSFreeParamsObj(sosParamsObj *sosparams) {
       free(sosparams->pszOffering);
     if (sosparams->pszObservedProperty)
       free(sosparams->pszObservedProperty);
-    if (sosparams->pszEventTime);
+    if (sosparams->pszEventTime)
       free(sosparams->pszEventTime);
     if (sosparams->pszResult)
       free(sosparams->pszResult);
