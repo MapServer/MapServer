@@ -42,6 +42,7 @@ MS_CVSID("$Id$")
 #include "mapogcfilter.h"
 
 #include "mapowscommon.h"
+#include "maplibxml2.h"
 
 #include "libxml/parser.h"
 #include "libxml/tree.h"
@@ -56,11 +57,10 @@ const char *pszOMNamespacePrefix         = "om";
 const char *pszSOSDescribeSensorMimeType = "text/xml; subtype=sensorML/1.0.0";
 const char *pszSOSGetObservationMimeType = "text/xml; subtype=om/1.0.0";
 
-typedef struct
-{
+typedef struct {
   char *pszProcedure;
   xmlNodePtr psResultNode;
-}SOSProcedureNode;
+} SOSProcedureNode;
 
 void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams);
 void msSOSFreeParamsObj(sosParamsObj *sosparams);
@@ -1626,7 +1626,9 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
 
              }/*end of offerings*/
          }
-             
+     
+         free(papsOfferings);
+         free(panOfferingLayers);        
 
      }/* end of offerings */
 
@@ -2121,8 +2123,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om", BAD_CAST "om"));
  
-    xmlNewNsProp(psRootNode,  xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"),
-                 BAD_CAST "id", BAD_CAST sosparams->pszOffering);
+    //xmlNewNsProp(psRootNode,  xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"), BAD_CAST "id", BAD_CAST sosparams->pszOffering);
+    xmlNewNsProp(psRootNode, psNsGml, BAD_CAST "id", BAD_CAST sosparams->pszOffering);
 
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
@@ -2319,6 +2321,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
      context = msIO_getHandler(stdout);
      xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
      msIO_contextWrite(context, buffer, size);
+     xmlFreeNs(psNsGml);
      xmlFree(buffer);
 
 
@@ -2379,6 +2382,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       for (k=0; k<n; k++) {
         if (tokens[k] && strlen(tokens[k]) > 0 && strcasecmp(tokens[k], sosparams->pszSensorId) == 0) {
           bFound = 1; 
+          msFreeCharArray(tokens, n);
           break;
         }
       }
@@ -2398,6 +2402,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
           pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
           msIO_printf("Location: %s\n\n", pszEncodedUrl);
           msFree(pszTmp);
+          msFree(pszEncodedUrl);
           return(MS_SUCCESS);
         }
         else {
@@ -2531,20 +2536,6 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
 
 #ifdef USE_SOS_SVR
 
-xmlXPathObjectPtr _getXPath(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath){
-  xmlXPathObjectPtr result;
-
-  result = xmlXPathEval(xpath, context);
-  if (result == NULL) {
-    return NULL;
-  }
-  if(xmlXPathNodeSetIsEmpty(result->nodesetval)){
-    xmlXPathFreeObject(result);
-    return NULL;
-  }
-  return result;
-}
-
 void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
   int i;
   xmlDocPtr doc;
@@ -2610,7 +2601,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     }
 
     /* check for service */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/*/@service");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/*/@service");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2620,7 +2611,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for updateSequence*/
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/*/@updateSequence");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/*/@updateSequence");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2630,7 +2621,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for version */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/*/ows:AcceptVersions/ows:Version|/*/@version");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/*/ows:AcceptVersions/ows:Version|/*/@version");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2643,8 +2634,8 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
 
     /* this works with @request */
 
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/*/@request");
-    //psXPathTmp = _getXPath(doc, context, (xmlChar *)"/sos:*");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/*/@request");
+    //psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:*");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2654,7 +2645,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     /* this is a test for root val */
 
 /*
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"//");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"//");
     
     if (psXPathTmp) {
       //sosparams->pszRequest = "Foooo";
@@ -2667,7 +2658,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for outputformat */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/sos:DescribeSensor/@outputFormat");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeSensor/@outputFormat");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2677,7 +2668,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for SensorId */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/sos:DescribeSensor/sos:SensorId");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeSensor/sos:SensorId");
     
     if (psXPathTmp) { 
       nodeset = psXPathTmp->nodesetval;
@@ -2687,7 +2678,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for offering */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:offering");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:offering");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2697,7 +2688,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for observedproperty */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:observedProperty");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:observedProperty");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2707,7 +2698,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for procedure */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:procedure");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:procedure");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2717,7 +2708,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for responseFormat */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:responseFormat");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:responseFormat");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2727,7 +2718,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for resultModel */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:resultModel");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:resultModel");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
@@ -2737,7 +2728,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for srsName */
-    psXPathTmp = _getXPath(doc, context, (xmlChar *)"/sos:GetObservation/@srsName");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/@srsName");
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
