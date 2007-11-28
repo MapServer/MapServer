@@ -36,6 +36,7 @@
 #include<libxml/tree.h>
 
 #include "mapowscommon.h"
+#include "maplibxml2.h"
 
 MS_CVSID("$Id$")
 
@@ -372,31 +373,6 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psX
 }
 
 /**
- * msGenerateXMLListItems()
- *
- * Convenience function to produce a series of XML elements from a comma
- * or space delimited list string list. 
- *
- */
-
-void msGenerateXMLListItems( xmlNodePtr psParent, 
-                             xmlNsPtr psNs, const char *elname, 
-                             const char *values, char delim )
-
-{
-  char **tokens = NULL;
-  int n = 0;
-  int i = 0;
-  tokens = msStringSplit(values, delim, &n);
-  if (tokens && n > 0) {
-    for (i=0; i<n; i++) { 
-        xmlNewChild(psParent, psNs, BAD_CAST elname, BAD_CAST tokens[i]);
-    }
-    msFreeCharArray(tokens, n);
-  }
-}
-
-/**
  * msOWSCommonOperationsMetadataDomainType()
  *
  * returns a Parameter or Constraint element (which are of type ows:DomainType)
@@ -420,7 +396,7 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elnam
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
-  msGenerateXMLListItems( psRootNode, psNsOws, "Value", values, ',' );
+  msLibXml2GenerateList(psRootNode, psNsOws, "Value", values, ',');
 
   return psRootNode;
 }

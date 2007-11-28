@@ -89,9 +89,6 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensi
 xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double minx, double miny, double maxx, double maxy);
 
 int _validateNamespace(xmlNsPtr psNsOws);
-void msGenerateXMLListItems( xmlNodePtr psParent, 
-                             xmlNsPtr psNs, const char *elname, 
-                             const char *values, char delim );
 
 #endif /* defined(USE_SOS_SVR) */
 
