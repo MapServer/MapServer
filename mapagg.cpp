@@ -120,7 +120,6 @@ typedef agg::renderer_scanline_bin_solid<renderer_base> renderer_bin;
 typedef agg::rasterizer_outline_aa<renderer_oaa> rasterizer_outline_aa;
 typedef agg::rasterizer_outline <renderer_prim> rasterizer_outline;
 typedef agg::rasterizer_scanline_aa<> rasterizer_scanline;
-typedef agg::scanline_p8 scanline;
 
 MS_CVSID("$Id$")
 
@@ -308,7 +307,7 @@ public:
             stroke_dash.line_join(lj);                        
             ras_aa.add_path(stroke_dash);
         }
-        agg::render_scanlines(ras_aa, sl, ren_aa);
+        agg::render_scanlines(ras_aa, sl_line, ren_aa);
     }
     
     ///brush a polyline with a vector symbol. draws the vector symbol in a temporary
@@ -346,7 +345,7 @@ public:
             rb.clear(agg::rgba(0,0,0,0));
         rs.color(msToAGGColor(color));
         ras_aa.add_path(symbol);
-        agg::render_scanlines(ras_aa, sl, rs);
+        agg::render_scanlines(ras_aa, sl_line, rs);
         renderPathPixmapBGRA(shape,pixf);
         delete[](m_pattern);
     }
@@ -391,7 +390,7 @@ public:
             ras_aa.filling_rule(agg::fill_even_odd);
             ras_aa.add_path ( path );
             ren_aa.color(msToAGGColor(color));
-            agg::render_scanlines ( ras_aa, sl, ren_aa );
+            agg::render_scanlines ( ras_aa, sl_poly, ren_aa );
         }
         if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor) && outlinewidth > 0) {
             ras_aa.reset();
@@ -402,7 +401,7 @@ public:
             stroke.line_cap(lc);
             stroke.line_join(lj);
             ras_aa.add_path(stroke);
-            agg::render_scanlines ( ras_aa, sl, ren_aa );
+            agg::render_scanlines ( ras_aa, sl_line, ren_aa );
         }
     }
 
@@ -426,13 +425,13 @@ public:
         agg::scanline_p8 sl1,sl2;
         ras1.filling_rule(agg::fill_non_zero);
         ras1.add_path(pattern);                    
-        agg::render_scanlines(ras1, sl, storage1);
+        agg::render_scanlines(ras1, sl_line, storage1);
         ras2.filling_rule(agg::fill_even_odd);
         ras2.add_path(clipper);
-        agg::render_scanlines(ras2,sl,storage2);
-        agg::sbool_combine_shapes_aa(agg::sbool_and, storage1, storage2, sl1, sl2, sl, storage);
+        agg::render_scanlines(ras2,sl_poly,storage2);
+        agg::sbool_combine_shapes_aa(agg::sbool_and, storage1, storage2, sl1, sl2, sl_line, storage);
         ren_aa.color(msToAGGColor(color));
-        agg::render_scanlines ( storage, sl, ren_aa );
+        agg::render_scanlines ( storage, sl_line, ren_aa );
     }
     
     ///tile a shape with a vector symbol. this function
@@ -466,7 +465,7 @@ public:
             rb.clear(agg::rgba(0,0,0,0));
         rs.color(msToAGGColor(color));
         ras_aa.add_path(tile);
-        agg::render_scanlines(ras_aa, sl, rs);
+        agg::render_scanlines(ras_aa, sl_poly, rs);
         renderPathTiledPixmapBGRA(shape,pixf);
         delete[](m_pattern);
     }
@@ -531,14 +530,14 @@ public:
                         }
                     }
                 rs.color(msToAGGColor(outlinecolor));
-                agg::render_scanlines(ras_aa, sl, rs);
+                agg::render_scanlines(ras_aa, sl_line, rs);
             }
             if(color!=NULL && MS_VALID_COLOR(*color)) {
                 ras_aa.reset();
                 m_fman.init_embedded_adaptors(glyph,fx,fy);
                 ras_aa.add_path(m_curves);
                 rs.color(msToAGGColor(color));
-                agg::render_scanlines(ras_aa, sl, rs);
+                agg::render_scanlines(ras_aa, sl_line, rs);
             }
             renderPathTiledPixmapBGRA(shape,pixf);
             delete[](m_pattern);
@@ -563,7 +562,7 @@ public:
         img_source_type img_src(tile);
         span_gen_type sg(img_src, 0, 0);
         ras_aa.add_path(path);
-        agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
+        agg::render_scanlines_aa(ras_aa, sl_poly, ren_base, sa, sg);
     }
 
     ///render a single pixmap at a specified location
@@ -606,7 +605,7 @@ public:
             pixmap_bbox.line_to(x-ims_2,y+ims_2);
             pixmap_bbox.close_polygon();      
             ras_aa.add_path(pixmap_bbox);
-            agg::render_scanlines_aa(ras_aa, sl, ren_base, sa, sg);
+            agg::render_scanlines_aa(ras_aa, sl_line, ren_base, sa, sg);
         }
         else {
             //just copy the image at the correct location (we place the pixmap on 
@@ -774,7 +773,7 @@ public:
                 }
             }
             ren_aa.color(msToAGGColor(outlinecolor));
-            agg::render_scanlines(ras_aa, sl, ren_aa);
+            agg::render_scanlines(ras_aa, sl_line, ren_aa);
         }
     
         if(color!=NULL && MS_VALID_COLOR(*color)) {
@@ -782,7 +781,7 @@ public:
             ras_aa.filling_rule(agg::fill_non_zero);
             ras_aa.add_path(glyphs);
             ren_aa.color(msToAGGColor(color));
-            agg::render_scanlines(ras_aa, sl, ren_aa);
+            agg::render_scanlines(ras_aa, sl_line, ren_aa);
         }
         return MS_SUCCESS;
     }
@@ -793,7 +792,10 @@ private:
     renderer_aa ren_aa;
     renderer_prim ren_prim;
     renderer_bin ren_bin;
-    scanline sl;
+    agg::scanline_p8 sl_poly; /*packed scanlines, works faster when the area is larger 
+    than the perimeter, in number of pixels*/
+    agg::scanline_u8 sl_line; /*unpacked scanlines, works faster if the area is roughly
+    equal to the perimeter, in number of pixels*/
     agg::scanline_bin m_sl_bin;
     rasterizer_scanline ras_aa;
     rasterizer_outline ras_oa;
