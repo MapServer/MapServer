@@ -32,7 +32,7 @@
 
 MS_CVSID("$Id$")
 
-#ifdef USE_SOS_SVR
+#if defined(USE_SOS_SVR) && defined(USE_LIBXML2)
 
 #include "maperror.h"
 #include "mapthread.h"
@@ -671,8 +671,11 @@ void msSOSAddMemberNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParen
         status = msLayerGetShape(lp, &sShape, 
                                  lp->resultcache->results[iFeatureId].tileindex, 
                                  lp->resultcache->results[iFeatureId].shapeindex);
-        if(status != MS_SUCCESS) 
+        if(status != MS_SUCCESS) {
+          xmlFreeNs(psNsGml);
+          xmlFreeNs(psNsOm);
           return;
+        }
 
         psNode = xmlNewChild(psParent, NULL, BAD_CAST "member", NULL);
         
@@ -872,9 +875,8 @@ void msSOSAddMemberNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParen
             if (lp->index != lpfirst->index)
               msLayerClose(lpfirst);
         }
-    }        
+    }
 }
-  
 
 /************************************************************************/
 /*                           msSOSReturnMemberResult                    */
@@ -2481,7 +2483,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
   return msSOSException(map, "sensorid", "InvalidParameterValue");
 }
 
-#endif /* USE_SOS_SVR*/
+#endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
 
 /*
 ** msSOSDispatch() is the entry point for SOS requests.
@@ -2489,7 +2491,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
 **   on success, or MS_FAILURE on failure.
 */
 int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
-#ifdef USE_SOS_SVR
+#if defined(USE_SOS_SVR) && defined(USE_LIBXML2)
   int returnvalue = MS_DONE;
   sosParamsObj *paramsObj = (sosParamsObj *)calloc(1, sizeof(sosParamsObj));
 
@@ -2546,7 +2548,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
 #endif
 }
 
-#ifdef USE_SOS_SVR
+#if defined(USE_SOS_SVR) && defined(USE_LIBXML2)
 
 void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
   int i;
@@ -2789,5 +2791,5 @@ void msSOSFreeParamsObj(sosParamsObj *sosparams) {
       free(sosparams->pszFeatureOfInterest);
   }
 }
-#endif /* USE_SOS_SVR*/
+#endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
 
