@@ -3368,7 +3368,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       legend->label.position = MS_XY; /* overrides go here */
       return(0);
       break;
-    case(IMAGECOLOR):      
+    case(IMAGECOLOR):
       if(loadColor(&(legend->imagecolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(INTERLACE):
@@ -3591,7 +3591,7 @@ static void writeScalebar(scalebarObj *scalebar, FILE *stream)
   fprintf(stream, "  SCALEBAR\n");
   writeColor(&(scalebar->backgroundcolor), stream, "BACKGROUNDCOLOR", "    ");
   writeColor(&(scalebar->color), stream, "COLOR", "    ");
-  fprintf(stream, "    IMAGECOLOR %d %d %d\n", scalebar->imagecolor.red, scalebar->imagecolor.green, scalebar->imagecolor.blue);
+  writeColor(&(scalebar->imagecolor), stream, "IMAGECOLOR", "    ");
   if( scalebar->interlace != MS_NOOVERRIDE )
       fprintf(stream, "    INTERLACE %s\n", msTrueFalse[scalebar->interlace]);
   fprintf(stream, "    INTERVALS %d\n", scalebar->intervals);
@@ -3932,9 +3932,8 @@ int initMap(mapObj *map)
   map->cellsize = 0;
   map->shapepath = NULL;
   map->mappath = NULL;
-  map->imagecolor.red = 255;
-  map->imagecolor.green = 255;
-  map->imagecolor.blue = 255;
+
+  MS_INIT_COLOR(map->imagecolor, 255,255,255); /* white */
 
   map->numoutputformats = 0;
   map->outputformatlist = NULL;
@@ -4169,10 +4168,9 @@ int msSaveMap(mapObj *map, char *filename)
   fprintf(stream, "  EXTENT %.15g %.15g %.15g %.15g\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
   if(map->fontset.filename) fprintf(stream, "  FONTSET \"%s\"\n", map->fontset.filename);
   if(map->templatepattern) fprintf(stream, "  TEMPLATEPATTERN \"%s\"\n", map->templatepattern);
-  fprintf(stream, "  IMAGECOLOR %d %d %d\n", map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
 
-  if( map->imagetype != NULL )
-      fprintf(stream, "  IMAGETYPE %s\n", map->imagetype );
+  writeColor(&(map->imagecolor), stream, "IMAGECOLOR", "  ");
+  if(map->imagetype != NULL) fprintf(stream, "  IMAGETYPE %s\n", map->imagetype);
 
   if(map->resolution != 72.0) fprintf(stream, "  RESOLUTION %f\n", map->resolution);
 
@@ -4327,9 +4325,7 @@ static int loadMapInternal(mapObj *map)
       if(getString(&map->fontset.filename) == MS_FAILURE) return MS_FAILURE;
       break;
     case(IMAGECOLOR):
-      if(getInteger(&(map->imagecolor.red)) == -1) return MS_FAILURE;
-      if(getInteger(&(map->imagecolor.green)) == -1) return MS_FAILURE;
-      if(getInteger(&(map->imagecolor.blue)) == -1) return MS_FAILURE;
+      if(loadColor(&(map->imagecolor), NULL) != MS_SUCCESS) return MS_FAILURE;
       break; 
     case(IMAGEQUALITY):
       if(getInteger(&(map->imagequality)) == -1) return MS_FAILURE;
@@ -4651,10 +4647,8 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
     case(IMAGECOLOR):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
       msyylex();
-
-      if(getInteger(&(map->imagecolor.red)) == -1) break;
-      if(getInteger(&(map->imagecolor.green)) == -1) break;
-      if(getInteger(&(map->imagecolor.blue)) == -1) break;
+      
+      if(loadColor(&(map->imagecolor), NULL) != MS_SUCCESS) break;
       break;
     case(IMAGETYPE):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
