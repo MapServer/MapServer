@@ -221,10 +221,7 @@ LD_SONAME_LIBMAP = -W1,@SO_COMMAND_NAME@,$(LIBMAP_SH_VER)
 XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
-DEFINES = $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) $(EPPL) $(PROJ) \
-        $(OWS) $(MING) $(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(AGG) $(PDF) $(SDE) \
-        $(SDERASTER) $(OGR) $(GDAL) $(GEOS) $(ICONV) $(FASTCGI) $(PHP_REGEX) \
-        $(POSTGIS) $(MYGIS) $(THREAD) $(ZLIB)
+DEFINES = $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@
 
 INCLUDES = $(REGEX_INC) $(GD_INC) $(AGG_INC) $(PDF_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) \
         $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
@@ -250,7 +247,7 @@ EXE_LDFLAGS =	$(RUNPATHS) -L. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
-OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapagg.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o maplibxml2.o mapdebug.o mapchart.o maptclutf.o $(EPPL_OBJ) $(AGG_FT_OBJ)
+OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapagg.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o maplibxml2.o mapdebug.o mapchart.o maptclutf.o $(EPPL_OBJ) $(AGG_FT_OBJ)
 
 EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms \
@@ -271,7 +268,7 @@ all: $(MAKE_GD) libmapserver.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@
 
 mapogr.o:	mapogr.cpp
 	$(CXX) -c $(CXXFLAGS) mapogr.cpp -o mapogr.o
-	
+
 mapagg.o: mapagg.cpp mapagg.h
 	$(CXX) -c $(CXXFLAGS) -O3 -Wno-uninitialized mapagg.cpp -o mapagg.o
 
@@ -359,7 +356,7 @@ test_mapcrypto: $(LIBMAP_STATIC) mapcrypto.c
 mapscriptvars:	Makefile
 	touch mapscriptvars
 	pwd > mapscriptvars
-	echo $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) $(GEOS) $(OWS) $(AGG) >> mapscriptvars
+	echo $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ >> mapscriptvars
 	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) $(GEOS_INC) >> mapscriptvars
 	echo $(EXE_LDFLAGS) >> mapscriptvars
 	echo $(STATIC_LIBS) >> mapscriptvars

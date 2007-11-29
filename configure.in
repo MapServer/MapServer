@@ -1410,7 +1410,6 @@ if test "$MY_CONFIG" = "no" ; then
   MYGIS_LIB=
 else
   AC_MSG_RESULT([yes, user supplied my_config])
-#  AC_MSG_RESULT([yes, user supplied my_config])
   MYGIS_ENABLED=-DUSE_MYGIS
   MYGIS_LIB="`$MY_CONFIG --libs` -lmysqlclient"
 #  MYGIS_LIB="-L/usr/lib/mysql -lmysqlclient"
@@ -1664,18 +1663,22 @@ AC_ARG_WITH(sos,
 [  --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and
                           OGR required).],,)
 
-if test "$with_sos" = "no" ; then
+if test "x$with_sos" != "xyes" ; then
 
-  AC_MSG_RESULT([        OGC SOS Server support disabled by --without-sos.])
+  AC_MSG_RESULT([        OGC SOS Server support not requested.])
 
-elif test -z "$PROJ_ENABLED" ; then
+else
 
-  AC_MSG_RESULT([        OGC SOS Support not enabled (libxml2 and PROJ4 and OGR required).])
-
-elif test "$with_sos" = "yes" ; then
+  if test -z "$PROJ_ENABLED" ; then
+    AC_MSG_ERROR([        OGC SOS Support requested, but PROJ.4 required and missing.])
+  fi
+  if test -z "$OGR_ENABLED" ; then
+    AC_MSG_ERROR([        OGC SOS Support requested, but OGR required and missing.])
+  fi
 
   dnl we'll test for libxml2 below.
   SOS_REQUESTED="yes"
+  AC_MSG_RESULT([        OGC SOS Server support requested.])
 
 fi
 
@@ -1726,6 +1729,7 @@ if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
+  CURL_ENABLED=-DUSE_CURL
 
 fi
 
@@ -1740,14 +1744,35 @@ dnl ---------------------------------------------------------------------
 dnl Look for libxml2 if SOS Server requested
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(for xml2-config)
+AC_MSG_CHECKING(for libxml2)
+
 AC_ARG_WITH(xml2-config,
 [  --with-xml2-config=PATH Specify path to xml2-config.],,)
 
 dnl Clear some cache variables
 unset ac_cv_path_LIBXML2_CONFIG
 
-if test "$SOS_REQUESTED" = "yes" ; then
+dnl If xml2 not explicitly mentioned, set to yes/no depending on whether
+dnl we are requesting libxml2 related services. 
+
+if test -z "$with_xml2_config" ; then
+  if test "x$SOS_REQUESTED" = "xyes" ; then
+    with_xml2_config=yes
+    AC_MSG_RESULT([libxml2 required.])
+  elif test "x$WCS_SVR_ENABLED" != "x" ; then 
+    with_xml2_config=yes
+    AC_MSG_RESULT([libxml2 requested for WCS Server.])
+    AC_MSG_RESULT([      If unavailable disable using --without-xml2-config,])
+    AC_MSG_RESULT([      but WCS 1.1 support will be disabled.])
+  else
+    with_xml2_config=no
+    AC_MSG_RESULT([libxml2 not required.])
+  fi
+else
+  AC_MSG_RESULT([--with-xml2-config=$with_xml2_config specified.])
+fi
+
+if test "$with_xml2_config" != "no" ; then
 
   if test "`basename xx/$with_xml2_config`" = "xml2-config" ; then
     LIBXML2_CONFIG="$with_xml2_config"
@@ -1756,19 +1781,20 @@ if test "$SOS_REQUESTED" = "yes" ; then
   fi
 
   if test "$LIBXML2_CONFIG" = "no" ; then
-    AC_MSG_ERROR([couldn't find xml2-config, try using --with-xml2-config=PATH])
+   AC_MSG_ERROR([couldn't find xml2-config, try using --with-xml2-config=PATH])
   fi
 
   XML2_VER=`$LIBXML2_CONFIG --version`
 
   AC_MSG_RESULT([        found libxml2 version $XML2_VER])
-  
-  SOS_SVR_ENABLED="-DUSE_SOS_SVR"
+
   XML2_INC=`$LIBXML2_CONFIG --cflags`
   XML2_LIB=`$LIBXML2_CONFIG --libs`
-
-  AC_MSG_RESULT([        OGC SOS Server enabled ($SOS_SVR_ENABLED).])
-
+  XML2_ENABLED=-DUSE_LIBXML2
+ 
+  if test "$SOS_REQUESTED" = "yes" ; then  
+    SOS_SVR_ENABLED="-DUSE_SOS_SVR"
+  fi
 fi
 
 AC_SUBST(XML2_INC,    $XML2_INC)
@@ -1777,25 +1803,30 @@ AC_SUBST(XML2_LIB,    $XML2_LIB)
 ALL_INC="$XML2_INC $ALL_INC"
 ALL_LIB="$XML2_LIB $ALL_LIB"
 
+dnl ---------------------------------------------------------------------
 dnl Substitutions for vars which are set only if curl and/or libxml2 are found
+dnl ---------------------------------------------------------------------
+
 AC_SUBST(WMS_LYR_ENABLED,$WMS_LYR_ENABLED)
 AC_SUBST(WFS_LYR_ENABLED,$WFS_LYR_ENABLED)
 AC_SUBST(SOS_SVR_ENABLED,$SOS_SVR_ENABLED)
-ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $SOS_SVR_ENABLED $ALL_ENABLED"
 
+ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $SOS_SVR_ENABLED $XML2_ENABLED $CURL_ENABLED $ALL_ENABLED"
 
 dnl ---------------------------------------------------------------------
 dnl Support for FastCGI enabled builds.
 dnl ---------------------------------------------------------------------
-AC_CHECKING(whether FastCGI support should be enabled)
+AC_MSG_CHECKING(FastCGI support)
 AC_ARG_WITH(fastcgi,
 [  --with-fastcgi=path     Enable FastCGI, point to installed tree.],,)
 
 if test "$with_fastcgi" = "no" -o "$with_fastcgi" = "" ; then
 
-  AC_MSG_RESULT([        FastCGI support not enabled.])
+  AC_MSG_RESULT([not requested.])
 
 else 
+
+  AC_MSG_RESULT([requested.])
 
   if test "$with_fastcgi" = "yes" ; then
     FASTCGI_INC=""
@@ -2337,7 +2368,6 @@ AC_MSG_RESULT([  C compiler:                ${CC} ${CFLAGS}])
 AC_MSG_RESULT([  C++ compiler:              ${CXX} ${CXXFLAGS}])
 AC_MSG_RESULT([  Debug:                     ${REPORT_ENABLE_DEBUG}${DEBUG_FLAGS}])
 AC_MSG_RESULT([  Generic NINT:              ${USE_NINT}])
-AC_MSG_RESULT([  Threading support:         ${THREAD_FLAG}])
 AC_MSG_RESULT()
 AC_MSG_RESULT([ -------------- Renderer Settings --------- ])
 AC_MSG_RESULT([  zlib support:              ${ZLIB_ENABLED}])
@@ -2350,17 +2380,23 @@ AC_MSG_RESULT([  Ming(flash) support:       ${MING_ENABLED}])
 AC_MSG_RESULT([  PDFLib support:            ${PDF_ENABLED}])
 AC_MSG_RESULT()
 
+AC_MSG_RESULT([ -------------- Support Libraries --------- ])
+AC_MSG_RESULT([  Proj.4 support:            ${PROJ_ENABLED}])
+AC_MSG_RESULT([  Libxml2 support:           ${XML2_ENABLED}])
+AC_MSG_RESULT([  Curl support:              ${CURL_ENABLED}])
+AC_MSG_RESULT([  FastCGI support:           ${FASTCGI_ENABLED}])
+AC_MSG_RESULT([  Threading support:         ${THREAD_FLAG}])
+AC_MSG_RESULT([  GEOS support:              ${GEOS_ENABLED}])
+AC_MSG_RESULT()
+
 AC_MSG_RESULT([ -------------- Data Format Drivers ------- ])
 AC_MSG_RESULT([  native tiff support:       ${TIFF_ENABLED}])
 AC_MSG_RESULT([  PostGIS support:           ${POSTGIS_ENABLED}])
-AC_MSG_RESULT([  Proj.4 support:            ${PROJ_ENABLED}])
 AC_MSG_RESULT([  EPPL7 support:             ${EPPL_ENABLED}])
 AC_MSG_RESULT([  ArcSDE support:            ${SDE_ENABLED}])
 AC_MSG_RESULT([  OGR support:               ${OGR_ENABLED}])
 AC_MSG_RESULT([  GDAL support:              ${GDAL_ENABLED}])
-AC_MSG_RESULT([  GEOS support:              ${GEOS_ENABLED}])
 AC_MSG_RESULT([  Oracle Spatial support:    ${ORACLESPATIAL_ENABLED}])
-AC_MSG_RESULT([  FastCGI support:           ${FASTCGI_ENABLED}])
 AC_MSG_RESULT()
 
 AC_MSG_RESULT([ -------------- OGC Services -------------- ])
