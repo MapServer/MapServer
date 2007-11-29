@@ -679,8 +679,10 @@ pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, do
     newline.numpoints=5;
     newline.point=newpoints;
     rp = get_metrics_line(p, position, rect, ox,oy, angle, buffer, &newline);
-    msAddLine(poly,&newline);
-    msComputeBounds(poly);
+    if(poly) {
+        msAddLine(poly,&newline);
+        msComputeBounds(poly);
+    }
     return rp;
 }
 
