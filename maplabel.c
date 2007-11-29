@@ -576,12 +576,14 @@ gdFontPtr msGetBitmapFont(int size)
 
 #define MARKER_SLOP 2
 
-/* static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly) */
-pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly)
+/*pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, lineObj *poly)
+ * called by get_metrics and drawLabelCache 
+ * the poly lineObj MUST have at least 5 points allocated in poly->point
+ * it should also probably have poly->numpoints set to 5 */
+pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, lineObj *poly)
 {
   pointObj q;
   double x1=0, y1=0, x2=0, y2=0;
-  lineObj line={0,NULL};
   double sin_a,cos_a;
   double w, h, x, y;
 
@@ -636,38 +638,50 @@ pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, do
   q.y = p->y - MS_NINT(x * sin_a + (y) * cos_a);
 
   if(poly) {
-    line.point = (pointObj *)malloc(sizeof(pointObj)*5);
-    line.numpoints = 5;
+      /*
+       * here we should/could have a test asserting that the poly lineObj 
+       * has at least 5 points available.
+       */
 
     x2 = x1 - buffer; /* ll */
     y2 = y1 + buffer;
-    line.point[0].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
-    line.point[0].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
+    poly->point[0].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
+    poly->point[0].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
 
     x2 = x1 - buffer; /* ul */
     y2 = y1 - h - buffer;
-    line.point[1].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
-    line.point[1].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
+    poly->point[1].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
+    poly->point[1].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
 
     x2 = x1 + w + buffer; /* ur */
     y2 = y1 - h - buffer;
-    line.point[2].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
-    line.point[2].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
+    poly->point[2].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
+    poly->point[2].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
 
     x2 = x1 + w + buffer; /* lr */
     y2 = y1 + buffer;
-    line.point[3].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
-    line.point[3].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
+    poly->point[3].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
+    poly->point[3].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
 
-    line.point[4].x = line.point[0].x;
-    line.point[4].y = line.point[0].y;
-
-    msAddLine(poly, &line);
-    msComputeBounds(poly); /* make sure the polygon has a bounding box for fast collision testing */
-    free(line.point);
+    poly->point[4].x = poly->point[0].x;
+    poly->point[4].y = poly->point[0].y;
   }
 
   return(q);
+}
+
+
+/* static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly) */
+pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly) {
+    lineObj newline;
+    pointObj newpoints[5];
+    pointObj rp;
+    newline.numpoints=5;
+    newline.point=newpoints;
+    rp = get_metrics_line(p, position, rect, ox,oy, angle, buffer, &newline);
+    msAddLine(poly,&newline);
+    msComputeBounds(poly);
+    return rp;
 }
 
 /*

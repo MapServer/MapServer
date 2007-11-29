@@ -565,7 +565,7 @@ typedef struct {
     
   colorObj color;
   colorObj outlinecolor;
-
+  
   colorObj shadowcolor;
   int shadowsizex, shadowsizey;
 
@@ -1452,6 +1452,7 @@ MS_DLL_EXPORT int getClassIndex(layerObj *layer, char *str);
 /* For maplabel and mappdf */
 int labelInImage(int width, int height, shapeObj *lpoly, int buffer);
 int intersectLabelPolygons(shapeObj *p1, shapeObj *p2);
+pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, lineObj *poly);
 pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly);
 double dist(pointObj a, pointObj b);
    

@@ -1952,7 +1952,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             int i, l, priority;
             int oldAlphaBlending=0;
             rectObj r;
-
+            shapeObj billboard;
+            lineObj billboard_line;
+            pointObj billboard_points[5];
             labelCacheMemberObj *cachePtr=NULL;
             layerObj *layerPtr=NULL;
             labelObj *labelPtr=NULL;
@@ -1971,7 +1973,11 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                 oldAlphaBlending = image->img.gd->alphaBlendingFlag;
                 gdImageAlphaBlending( image->img.gd, 1);
             }
-
+            
+            billboard.numlines=1;
+            billboard.line=&billboard_line;
+            billboard.line->numpoints=5;
+            billboard.line->point=billboard_points;
             /* Look for labelcache_map_edge_buffer map metadata
              * If set then the value defines a buffer (in pixels) along the edge of the
              * map image where labels can't fall
@@ -2021,7 +2027,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                         marker_rect.maxx = marker_rect.minx + (marker_width-1);
                         marker_rect.maxy = marker_rect.miny + (marker_height-1); 
                     }
-
                     if(labelPtr->position == MS_AUTO) {
 
                         /* If we have a label path there are no alternate positions.
@@ -2062,7 +2067,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                                 cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
                                 p = get_metrics(&(cachePtr->point), pos, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
-
+                                if(MS_VALID_COLOR(labelPtr->backgroundcolor))
+                                    get_metrics_line(&(cachePtr->point), pos, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, 1, billboard.line);
                                 if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
                                     msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
@@ -2083,11 +2089,17 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
                         cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-                        if(labelPtr->position == MS_CC) /* don't need the marker_offset */
+                        if(labelPtr->position == MS_CC) {/* don't need the marker_offset */
                             p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
-                        else
-                            p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                            if(MS_VALID_COLOR(labelPtr->backgroundcolor))
+                                get_metrics_line(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, 1, billboard.line);
 
+                        }
+                        else{
+                            p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                            if(MS_VALID_COLOR(labelPtr->backgroundcolor))
+                                get_metrics_line(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, 1, billboard.line);
+                        }
                         if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
                             msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
@@ -2112,20 +2124,17 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
                     if(MS_VALID_COLOR(labelPtr->backgroundcolor)) {
                         styleObj style;
-                        int nlines=cachePtr->poly->numlines;
-                        cachePtr->poly->numlines=1; /*only draw the first polygon, i.e. behind the text*/
-                        initStyle(&style);                      
+                        initStyle(&style);                    
                         if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
                             MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundshadowcolor));
                             style.offsetx=labelPtr->backgroundshadowsizex;
                             style.offsety=labelPtr->backgroundshadowsizey;
-                            msDrawShadeSymbol(&map->symbolset,image,cachePtr->poly,&style,1);
+                            msDrawShadeSymbol(&map->symbolset,image,&billboard,&style,1);
                             style.offsetx=0;
                             style.offsety=0;
                         }
                         MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundcolor));
-                        msDrawShadeSymbol(&map->symbolset,image,cachePtr->poly,&style,1);
-                        cachePtr->poly->numlines=nlines;   
+                        msDrawShadeSymbol(&map->symbolset,image,&billboard,&style,1);
                     }
 
                     if ( cachePtr->labelpath ) {
