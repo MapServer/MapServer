@@ -34,41 +34,10 @@ MS_CVSID("$Id$")
 
 #ifdef USE_WCS_SVR
 
+#include "mapwcs.h"
+
 #include "gdal.h"
 #include "cpl_string.h" /* GDAL string handling */
-
-/*
-** Structure to hold metadata taken from the image or image tile index
-*/
-typedef struct {
-  const char *srs;
-  rectObj extent, llextent;
-  double geotransform[6];
-  int xsize, ysize;
-  double xresolution, yresolution;
-  int bandcount; 
-  int imagemode;
-} coverageMetadataObj;
-
-typedef struct {
-  char *version;		/* 1.0.0 for now */
-  char *request;		/* GetCapabilities|DescribeCoverage|GetCoverage */
-  char *service;		/* MUST be WCS */
-  char *section;		/* of capabilities document: /WCS_Capabilities/Service|/WCS_Capabilities/Capability|/WCS_Capabilities/ContentMetadata */
-  char **coverages;		/* NULL terminated list of coverages (in the case of a GetCoverage there will only be 1) */
-  char *crs;	        /* request coordinate reference system */
-  char *response_crs;	/* response coordinate reference system */
-  rectObj bbox;		    /* subset bounding box (3D), although we'll only use 2D */
-  char *time;
-  long width, height, depth;	/* image dimensions */
-  double resx, resy, resz;      /* resolution */
-  char *interpolation;          /* interpolationMethod */
-  char *format;
-  char *exceptions;		/* exception MIME type, (default application=vnd.ogc.se_xml) */
-} wcsParamsObj;
-
-/* functions defined later in this source file */
-static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm );
 
 #ifdef notdef /* currently unused */
 /* value in a list (eg. is format valid) */
@@ -122,7 +91,7 @@ static char *msWCSConvertRangeSetToString(const char *value) {
 /************************************************************************/
 /*                           msWCSException()                           */
 /************************************************************************/
-static int msWCSException(mapObj *map, const char *version, const char *code, const char *locator) 
+int msWCSException(mapObj *map, const char *version, const char *code, const char *locator) 
 {
   char *pszEncodedVal = NULL;
   /* msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10); */
@@ -195,7 +164,7 @@ static wcsParamsObj *msWCSCreateParams()
 /************************************************************************/
 /*                          msWCSFreeParams()                           */
 /************************************************************************/
-static void msWCSFreeParams(wcsParamsObj *params)
+void msWCSFreeParams(wcsParamsObj *params)
 {
   if(params) {
     /* TODO */
@@ -216,7 +185,7 @@ static void msWCSFreeParams(wcsParamsObj *params)
 /*                       msWCSIsLayerSupported()                        */
 /************************************************************************/
 
-static int msWCSIsLayerSupported(layerObj *layer)
+int msWCSIsLayerSupported(layerObj *layer)
 {
     /* only raster layers, with 'DUMP TRUE' explicitly defined, are elligible to be served via WCS, WMS rasters are not ok */
     if(layer->dump && (layer->type == MS_LAYER_RASTER) && layer->connectiontype != MS_WMS) return MS_TRUE;
@@ -248,9 +217,9 @@ static const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name) 
 /*                  msWCSSetDefaultBandsRangeSetInfo()                  */
 /************************************************************************/
 
-static void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
-                                              coverageMetadataObj *cm,
-                                              layerObj *lp ) 
+void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
+                                       coverageMetadataObj *cm,
+                                       layerObj *lp ) 
 {
     
     /* This function will provide default rangeset information for the "special" */
@@ -314,8 +283,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
   if(request->NumParams > 0) {
     for(i=0; i<request->NumParams; i++) {
     
-       if(strcasecmp(request->ParamNames[i], "VERSION") == 0)
-	     params->version = strdup(request->ParamValues[i]);
+       if(strcasecmp(request->ParamNames[i], "VERSION") == 0) {
+           free( params->version );
+           params->version = strdup(request->ParamValues[i]);
+       } 
        else if(strcasecmp(request->ParamNames[i], "REQUEST") == 0)
 	     params->request = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "INTERPOLATION") == 0)
@@ -360,6 +331,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
        else if(strcasecmp(request->ParamNames[i], "RESPONSE_CRS") == 0)
            params->response_crs = strdup(request->ParamValues[i]);
 
+       /* WCS 1.1 DescribeCoverage and GetCoverage ... */
+       else if(strcasecmp(request->ParamNames[i], "IDENTIFIER") == 0
+               || strcasecmp(request->ParamNames[i], "IDENTIFIERS") == 0 )
+           params->coverages = CSLAddString(params->coverages, request->ParamValues[i]);
 	   
        /* and so on... */
     }
@@ -645,6 +620,13 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
 
 static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj *req)
 {
+/* -------------------------------------------------------------------- */
+/*      1.1.x is sufficiently different we have a whole case for        */
+/*      it.  The remainder of this function is for 1.0.0.               */
+/* -------------------------------------------------------------------- */
+    if( strncmp(params->version,"1.1",3) == 0 )
+        return msWCSGetCapabilities11( map, params, req );
+
   /* msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10); */
   msIO_printf("Content-type: text/xml%c%c",10,10);
 
@@ -952,6 +934,17 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 {
   int i,j;
  
+/* -------------------------------------------------------------------- */
+/*      1.1.x is sufficiently different we have a whole case for        */
+/*      it.  The remainder of this function is for 1.0.0.               */
+/* -------------------------------------------------------------------- */
+  if( strncmp(params->version,"1.1",3) == 0 )
+      return msWCSDescribeCoverage11( map, params );
+
+/* -------------------------------------------------------------------- */
+/*      Process 1.0.0...                                                */
+/* -------------------------------------------------------------------- */
+
   if(params->coverages) { /* use the list */
     for( j = 0; params->coverages[j]; j++ ) {
       i = msGetLayerIndex(map, params->coverages[j]);
@@ -1365,7 +1358,9 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   */
 
   /* version is optional, but we do set a default value of 1.0.0, make sure request isn't for something different */
-  if(strcmp(params->version, "1.0.0") != 0) {
+  if(strcmp(params->version, "1.0.0") != 0
+     && strcmp(params->version, "1.1.0") != 0
+     && strcmp(params->version, "1.1.1") != 0) {
     msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.", "msWCSDispatch()", params->version);
     msWCSException(map, params->version, "InvalidParameterValue", "version");
   
@@ -1398,12 +1393,15 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 /************************************************************************/
 
 #ifdef USE_WCS_SVR
-static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
+int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 {
+  char  *srs_urn = NULL;
   if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
 	return MS_FAILURE;
 
-  /* get information that is "data" independent */
+/* -------------------------------------------------------------------- */
+/*      Get the SRS in WCS 1.0 format (eg. EPSG:n)                      */
+/* -------------------------------------------------------------------- */
   if((cm->srs = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "COM", MS_TRUE)) == NULL) {
     if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "COM", MS_TRUE)) == NULL) {
       msSetError(MS_WCSERR, "Unable to determine the SRS for this layer, no projection defined and no metadata available.", "msWCSGetCoverageMetadata()");
@@ -1411,6 +1409,31 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     }
   }
 
+/* -------------------------------------------------------------------- */
+/*      Get the SRS in urn format.                                      */
+/* -------------------------------------------------------------------- */
+  if((srs_urn = msOWSGetProjURN(&(layer->projection), &(layer->metadata), 
+                                "COM", MS_TRUE)) == NULL) {
+      srs_urn = msOWSGetProjURN(&(layer->map->projection), 
+                                &(layer->map->web.metadata), 
+                                "COM", MS_TRUE);
+  }
+  
+  if( srs_urn != NULL )
+  {
+      if( strlen(srs_urn) > sizeof(cm->srs_urn) - 1 )
+      {
+          msSetError(MS_WCSERR, "SRS URN too long!", 
+                     "msWCSGetCoverageMetadata()");
+          return MS_FAILURE;
+      }
+          
+      strcpy( cm->srs_urn, srs_urn );
+      msFree( srs_urn );
+  }
+  else
+      cm->srs_urn[0] = '\0';
+          
   /* -------------------------------------------------------------------- */
   /*      If we have "virtual dataset" metadata on the layer, then use    */
   /*      that in preference to inspecting the file(s).                   */
