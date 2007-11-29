@@ -30,7 +30,7 @@
 #ifndef MAPLIBXML2_H
 #define MAPLIBXML2_H
 
-#ifdef USE_SOS_SVR
+#ifdef USE_LIBXML2
 
 #include<libxml/parser.h>
 #include<libxml/tree.h>
@@ -41,6 +41,6 @@ xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, x
 
 void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elname, const char *values, char delim);
 
-#endif /* defined(USE_SOS_SVR) */
+#endif /* defined(USE_LIBXML2) */
 
 #endif /* MAPLIBXML2_H */

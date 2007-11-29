@@ -29,7 +29,7 @@
 
 #include "mapserver.h"
 
-#ifdef USE_SOS_SVR
+#ifdef USE_LIBXML2
 
 #include<libxml/parser.h>
 #include<libxml/tree.h>
@@ -91,4 +91,4 @@ xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, x
   return result;
 }
 
-#endif /* defined(USE_SOS_SVR) */
+#endif /* defined(USE_LIBXML2) */

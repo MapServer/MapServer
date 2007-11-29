@@ -30,7 +30,7 @@
 #ifndef MAPOWSCOMMON_H
 #define MAPOWSCOMMON_H
 
-#ifdef USE_SOS_SVR
+#ifdef USE_LIBXML2
 
 #include<libxml/parser.h>
 #include<libxml/tree.h>
@@ -90,6 +90,6 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double 
 
 int _validateNamespace(xmlNsPtr psNsOws);
 
-#endif /* defined(USE_SOS_SVR) */
+#endif /* defined(USE_LIBXML2) */
 
 #endif /* MAPOWSCOMMON_H */

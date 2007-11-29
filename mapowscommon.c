@@ -30,7 +30,7 @@
 
 #include "mapserver.h"
 
-#ifdef USE_SOS_SVR
+#ifdef USE_LIBXML2
 
 #include<libxml/parser.h>
 #include<libxml/tree.h>
@@ -573,5 +573,4 @@ int _validateNamespace(xmlNsPtr psNsOws) {
     return MS_FAILURE;
 }
 
-#endif /* defined(USE_SOS_SVR) */
-
+#endif /* defined(USE_LIBXML2) */
