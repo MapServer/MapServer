@@ -1077,6 +1077,35 @@ int msLoadProjectionString(projectionObj *p, char *value)
       p->args[0] = strdup(value);
       p->numargs = 1;
   }
+  else if (strncasecmp(value, "EPSG:", 5) == 0)
+  {
+      char init_string[100];
+
+      /* translate into PROJ.4 format. */
+      sprintf( init_string, "init=epsg:%s", value+5 );
+
+      p->args = (char**)malloc(sizeof(char*));
+      p->args[0] = strdup(init_string);
+      p->numargs = 1;
+  }
+  else if (strncasecmp(value, "urn:ogc:def:crs:EPSG:",21) == 0)
+  { /* this is very preliminary urn support ... expand later */ 
+      char init_string[100];
+      const char *code;
+
+      code = value + 21;
+      while( *code != ':' && *code != '\0' )
+          code++;
+      if( *code == ':' )
+          code++;
+
+      /* translate into PROJ.4 format. */
+      sprintf( init_string, "init=epsg:%s", code );
+
+      p->args = (char**)malloc(sizeof(char*));
+      p->args[0] = strdup(init_string);
+      p->numargs = 1;
+  }
   /*
    * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
    */
