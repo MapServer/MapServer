@@ -1413,6 +1413,7 @@ int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map);
 
 MS_DLL_EXPORT int  hex2int(char *hex);
 
+MS_DLL_EXPORT void initJoin(joinObj *join);
 MS_DLL_EXPORT void initSymbol(symbolObj *s);
 MS_DLL_EXPORT int initMap(mapObj *map);
 MS_DLL_EXPORT layerObj *msGrowMapLayers( mapObj *map );
