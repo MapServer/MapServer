@@ -117,6 +117,10 @@ Current Version (5.1-dev, SVN trunk):
 
 - maplibxml2.c: Initial implementation of libxml2 convenience functions
 
+- configure: Modified so libxml2 support is requested for WCS and SOS, 
+  and is indicated by USE_LIBXML2 definition.  Use @ALL_ENABLED@ in 
+  DEFINEs and mapscriptvars generation.
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
