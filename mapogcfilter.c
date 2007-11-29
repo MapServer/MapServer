@@ -3799,15 +3799,12 @@ FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
 }
 #ifdef USE_SOS_SVR
 
-xmlNodePtr FLTGetCapabilities()
+xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsOgc)
 {
     xmlNodePtr   psRootNode = NULL, psNode = NULL;
-    xmlNsPtr     psNsOgc       = NULL;
     
-    psNsOgc = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, 
-                    BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX);
-    
-    psRootNode = xmlNewNode(xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX), BAD_CAST "Filter_Capabilities");
+    //psRootNode = xmlNewNode(xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX), BAD_CAST "Filter_Capabilities");
+    psRootNode = xmlNewNode(psNsOgc, BAD_CAST "Filter_Capabilities");
     
     psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Spatial_Capabilities", NULL);
     psNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "Spatial_Operators", NULL);

@@ -122,7 +122,7 @@ MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString);
 
 #ifdef USE_SOS_SVR
-MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities();
+MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsOgc);
 #endif
 
 #endif

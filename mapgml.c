@@ -1548,6 +1548,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
  *
  * returns an object of BoundedBy as per GML 3
  *
+ * @param xmlNsPtr psNs the namespace object
  * @param minx minx
  * @param miny miny
  * @param maxx maxx
@@ -1559,12 +1560,12 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
  *
  */
 
-xmlNodePtr msGML3BoundedBy(double minx, double miny, double maxx, double maxy, const char *psEpsg) {
+xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx, double maxy, const char *psEpsg) {
   xmlNodePtr psNode = NULL, psSubNode = NULL, psSubSubNode = NULL;
   char *pszTmp = NULL;
   char pszEpsg[11];
 
-  psNode = xmlNewNode(xmlNewNs(NULL, BAD_CAST MS_GML_NAMESPACE_URI, BAD_CAST MS_GML_NAMESPACE_PREFIX), BAD_CAST "boundedBy");
+  psNode = xmlNewNode(psNs, BAD_CAST "boundedBy");
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
 
   if (psEpsg) {
@@ -1598,6 +1599,7 @@ xmlNodePtr msGML3BoundedBy(double minx, double miny, double maxx, double maxy, c
  *
  * returns an object of Point as per GML 3
  *
+ * @param xmlNsPtr psNs the gml namespace object
  * @param pszSrsName EPSG code of geometry
  * @param id
  * @param x x coordinate
@@ -1608,19 +1610,16 @@ xmlNodePtr msGML3BoundedBy(double minx, double miny, double maxx, double maxy, c
  *
  */
 
-xmlNodePtr msGML3Point(const char *psSrsName, const char *id, double x, double y) {
+xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, double x, double y) {
   xmlNodePtr psNode = NULL, psSubNode = NULL;
-  xmlNsPtr psNsGml = NULL;
   char *pszTmp = NULL;
   int dimension = 2;
   char pszSrsName[11];
 
-  psNsGml = xmlNewNs(NULL, BAD_CAST MS_GML_NAMESPACE_URI, BAD_CAST MS_GML_NAMESPACE_PREFIX);
-
-  psNode = xmlNewNode(psNsGml, BAD_CAST "Point");
+  psNode = xmlNewNode(psNs, BAD_CAST "Point");
 
   if (id) {
-    xmlNewNsProp(psNode, psNsGml, BAD_CAST "id", BAD_CAST id);
+    xmlNewNsProp(psNode, psNs, BAD_CAST "id", BAD_CAST id);
   }
 
   if (psSrsName) {
@@ -1648,6 +1647,7 @@ xmlNodePtr msGML3Point(const char *psSrsName, const char *id, double x, double y
  *
  * returns an object of TimePeriod as per GML 3
  *
+ * @param xmlNsPtr psNs the gml namespace object
  * @param pszStart start time
  * @param pszEnd end time
  * 
@@ -1655,11 +1655,8 @@ xmlNodePtr msGML3Point(const char *psSrsName, const char *id, double x, double y
  *
  */
 
-xmlNodePtr msGML3TimePeriod(char *pszStart, char *pszEnd) {
+xmlNodePtr msGML3TimePeriod(xmlNsPtr psNs, char *pszStart, char *pszEnd) {
   xmlNodePtr psNode=NULL,psSubNode=NULL;
-  xmlNsPtr psNs;
-
-  psNs = xmlNewNs(NULL, BAD_CAST MS_GML_NAMESPACE_URI, BAD_CAST MS_GML_NAMESPACE_PREFIX);
 
   psNode = xmlNewNode(psNs, BAD_CAST "TimePeriod");
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
@@ -1677,17 +1674,15 @@ xmlNodePtr msGML3TimePeriod(char *pszStart, char *pszEnd) {
  *
  * returns an object of TimeInstant as per GML 3
  *
+ * @param xmlNsPtr psNs the gml namespace object
  * @param timeInstant time instant
  *
  * @return psNode xmlNodePtr of XML construct
  *
  */
 
-xmlNodePtr msGML3TimeInstant(char *pszTime) {
+xmlNodePtr msGML3TimeInstant(xmlNsPtr psNs, char *pszTime) {
   xmlNodePtr psNode=NULL,psSubNode=NULL;
-  xmlNsPtr psNs;
-
-  psNs = xmlNewNs(NULL, BAD_CAST MS_GML_NAMESPACE_URI, BAD_CAST MS_GML_NAMESPACE_PREFIX);
 
   psNode = xmlNewNode(psNs, BAD_CAST "TimeInstant");
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "timePosition", BAD_CAST pszTime);
