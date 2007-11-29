@@ -6,6 +6,7 @@
  * Language: C++
  * Purpose:  OGR Link
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
+ *           Frank Warmerdam (warmerdam@pobox.com)
  *
  **********************************************************************
  * Copyright (c) 2000-2005, Daniel Morissette, DM Solutions Group Inc
@@ -79,9 +80,7 @@ static int msOGRLayerIsOpen(layerObj *layer);
 static int msOGRLayerInitItemInfo(layerObj *layer);
 static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
                                   int tile, long record);
-
-// Undefine this if you are using a very old GDAL without OpenShared(). 
-#define USE_SHARED_ACCESS  
+static void msOGRCloseConnection( void *conn_handle );
 
 /* ==================================================================
  * Geometry conversion functions
@@ -836,65 +835,62 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   if( pszLayerDef == NULL )
       pszLayerDef = CPLStrdup("0");
 
-/* ------------------------------------------------------------------
- * Attempt to open OGR dataset
- * ------------------------------------------------------------------ */
-  char szPath[MS_MAXPATHLEN] = "";
+/* -------------------------------------------------------------------- */
+/*      Can we get an existing connection for this layer?               */
+/* -------------------------------------------------------------------- */
   OGRDataSource *poDS;
 
-  if( layer->debug )
-      msDebug("msOGRFileOpen(%s)...\n", connection);
+  poDS = (OGRDataSource *) msConnPoolRequest( layer );
 
-
-  CPLErrorReset();
-  if (msTryBuildPath3(szPath, layer->map->mappath, 
-                      layer->map->shapepath, pszDSName) != NULL ||
-      msTryBuildPath(szPath, layer->map->mappath, pszDSName) != NULL)
-  {
-      /* Use relative path */
-      if( layer->debug )
-          msDebug("OGROPen(%s)\n", szPath);
-
-      ACQUIRE_OGR_LOCK;
-#ifdef USE_SHARED_ACCESS
-      poDS = OGRSFDriverRegistrar::GetRegistrar()->OpenShared( szPath );
-#else
-      poDS = OGRSFDriverRegistrar::Open( szPath );
-#endif
-      RELEASE_OGR_LOCK;
-  }
-  else
-  {
-      /* pszDSName was succesful */
-      if( layer->debug )
-          msDebug("OGROPen(%s)\n", pszDSName);
-
-      ACQUIRE_OGR_LOCK;
-#ifdef USE_SHARED_ACCESS
-      poDS = OGRSFDriverRegistrar::GetRegistrar()->OpenShared( pszDSName );
-#else
-      poDS = OGRSFDriverRegistrar::Open( pszDSName );
-#endif
-      RELEASE_OGR_LOCK;
-  }
-
+/* -------------------------------------------------------------------- */
+/*      If not, open now, and register this connection with the         */
+/*      pool.                                                           */
+/* -------------------------------------------------------------------- */
   if( poDS == NULL )
   {
-      if( strlen(CPLGetLastErrorMsg()) == 0 )
-          msSetError(MS_OGRERR, 
-                     "Open failed for OGR connection `%s'.  "
-                     "File not found or unsupported format.", 
-                     "msOGRFileOpen()",
-                     pszDSName );
-      else
-          msSetError(MS_OGRERR, 
-                     "Open failed for OGR connection `%s'.\n%s\n",
-                     "msOGRFileOpen()", pszDSName, CPLGetLastErrorMsg() );
-      CPLFree( pszDSName );
-      CPLFree( pszLayerDef );
-      return NULL;
-  }
+      char szPath[MS_MAXPATHLEN] = "";
+      const char *pszDSSelectedName = pszDSName;
+      
+      if( layer->debug )
+          msDebug("msOGRFileOpen(%s)...\n", connection);
+      
+      CPLErrorReset();
+      if (msTryBuildPath3(szPath, layer->map->mappath, 
+                          layer->map->shapepath, pszDSName) != NULL ||
+          msTryBuildPath(szPath, layer->map->mappath, pszDSName) != NULL)
+      {
+          /* Use relative path */
+          pszDSSelectedName = szPath;
+      }
+      
+      if( layer->debug )
+          msDebug("OGROPen(%s)\n", pszDSSelectedName);
 
+      ACQUIRE_OGR_LOCK;
+      poDS = OGRSFDriverRegistrar::Open( pszDSSelectedName );
+      RELEASE_OGR_LOCK;
+      
+      if( poDS == NULL )
+      {
+          if( strlen(CPLGetLastErrorMsg()) == 0 )
+              msSetError(MS_OGRERR, 
+                         "Open failed for OGR connection `%s'.  "
+                         "File not found or unsupported format.", 
+                         "msOGRFileOpen()",
+                         pszDSSelectedName );
+          else
+              msSetError(MS_OGRERR, 
+                         "Open failed for OGR connection `%s'.\n%s\n",
+                         "msOGRFileOpen()", 
+                         pszDSSelectedName, CPLGetLastErrorMsg() );
+          CPLFree( pszDSName );
+          CPLFree( pszLayerDef );
+          return NULL;
+      }
+
+      msConnPoolRegister( layer, poDS, msOGRCloseConnection );
+  }
+      
   CPLFree( pszDSName );
   pszDSName = NULL;
 
@@ -978,6 +974,23 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   return psInfo;
 }
 
+/************************************************************************/
+/*                        msOGRCloseConnection()                        */
+/*                                                                      */
+/*      Callback for thread pool to actually release an OGR             */
+/*      connection.                                                     */
+/************************************************************************/
+
+static void msOGRCloseConnection( void *conn_handle )
+
+{
+    OGRDataSource *poDS = (OGRDataSource *) conn_handle;
+
+    ACQUIRE_OGR_LOCK;
+    OGRDataSource::DestroyDataSource( poDS );
+    RELEASE_OGR_LOCK;
+}
+
 /**********************************************************************
  *                     msOGRFileClose()
  **********************************************************************/
@@ -1000,27 +1013,11 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   if( psInfo->nLayerIndex == -1 )
       psInfo->poDS->ReleaseResultSet( psInfo->poLayer );
 
-  /* Destroying poDS automatically closes files, destroys the layer, etc. */
-#ifdef USE_SHARED_ACCESS 
-  const char *pszCloseConnection = 
-      CSLFetchNameValue( layer->processing, "CLOSE_CONNECTION" );
-  if( pszCloseConnection == NULL )
-      pszCloseConnection = "NORMAL";
-
-  if( EQUAL(pszCloseConnection,"NORMAL") )
-      OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( psInfo->poDS );
-  else if( EQUAL(pszCloseConnection,"DEFER") )
-      psInfo->poDS->Dereference();
-  else
-  {
-      msDebug( "msOGRFileClose(%s): Illegal CLOSE_CONNECTION value '%s'.", 
-               psInfo->pszFname, pszCloseConnection );
-      OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( psInfo->poDS );
-  }
-      
-#else
-  OGRDataSource::DestroyDataSource( psInfo->poDS );
-#endif
+  // Release (potentially close) the datasource connection.
+  // Make sure we aren't holding the lock when the callback may need it.
+  RELEASE_OGR_LOCK;
+  msConnPoolRelease( layer, psInfo->poDS );
+  ACQUIRE_OGR_LOCK;
 
   // Free current tile if there is one.
   if( psInfo->poCurTile != NULL )
