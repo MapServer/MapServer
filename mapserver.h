@@ -565,6 +565,7 @@ typedef struct {
     
   colorObj color;
   colorObj outlinecolor;
+  int outlinewidth;
   
   colorObj shadowcolor;
   int shadowsizex, shadowsizey;

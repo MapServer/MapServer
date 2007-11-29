@@ -1118,7 +1118,7 @@ void initLabel(labelObj *label)
 
   MS_INIT_COLOR(label->color, 0,0,0);  
   MS_INIT_COLOR(label->outlinecolor, -1,-1,-1); /* don't use it */
-
+  label->outlinewidth=1;
   MS_INIT_COLOR(label->shadowcolor, -1,-1,-1); /* don't use it */
   label->shadowsizex = label->shadowsizey = 1;
   
@@ -1277,7 +1277,10 @@ static int loadLabel(labelObj *label)
     case(OUTLINECOLOR):
       if(loadColor(&(label->outlinecolor), &(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR])) != MS_SUCCESS) return(-1);      
       if(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item) label->numbindings++;
-      break;    
+      break;
+    case(OUTLINEWIDTH):
+      if(getInteger(&(label->outlinewidth)) == -1) return(-1);
+      break;
     case(PARTIALS):
       if((label->partials = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
       break;
@@ -1421,7 +1424,8 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item)
     fprintf(stream, "  %sOUTLINECOLOR [%s]\n", tab, label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item);
   else writeColor(&(label->outlinecolor), stream, "  OUTLINECOLOR", tab);  
-
+  if (label->outlinewidth != 1)   /* MS_XY is an internal value used only for legend labels... never write it */
+      fprintf(stream, "  %sOUTLINEWIDTH %d\n", tab, label->outlinewidth);
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
   if (label->position != MS_XY)   /* MS_XY is an internal value used only for legend labels... never write it */
     fprintf(stream, "  %sPOSITION %s\n", tab, msPositionsText[label->position - MS_UL]);

@@ -703,8 +703,9 @@ public:
     ///     given x,y (false), or if the text should be centered on x,y (true).
     ///     when set to true, will only center the text if this one is a single character
     int renderGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor,
-            double size, char *font, char *thechars, double angle=0,
-            colorObj *shadowcolor=NULL, double shdx=1, double shdy=1) {
+            double size, char *font, char *thechars, double angle,
+            colorObj *shadowcolor, double shdx, double shdy,
+            int outlinewidth) {
         
         ras_aa.filling_rule(agg::fill_non_zero);
         agg::trans_affine mtx;
@@ -762,15 +763,22 @@ public:
         if(outlinecolor!=NULL && MS_VALID_COLOR(*outlinecolor)) {
             ras_aa.reset();
             ras_aa.filling_rule(agg::fill_non_zero);
+            if(outlinewidth==1) {
             //draw the text offset by one pixel in each direction (NW,W,SW,N,S,NE,E,SE)
-            for(int i=-1;i<=1;i++) {
-                for(int j=-1;j<=1;j++) {
-                    if(i||j) {
-                        agg::trans_affine_translation tr(i,j);
-                        agg::conv_transform<agg::path_storage, agg::trans_affine> tglyphs(glyphs,tr);
-                        ras_aa.add_path(tglyphs);
+                for(int i=-1;i<=1;i++) {
+                    for(int j=-1;j<=1;j++) {
+                        if(i||j) {
+                            agg::trans_affine_translation tr(i,j);
+                            agg::conv_transform<agg::path_storage, agg::trans_affine> tglyphs(glyphs,tr);
+                            ras_aa.add_path(tglyphs);
+                        }
                     }
                 }
+            }
+            else {
+                agg::conv_contour<agg::path_storage> cc(glyphs);
+                cc.width(outlinewidth);
+                ras_aa.add_path(cc);
             }
             ren_aa.color(msToAGGColor(outlinecolor));
             agg::render_scanlines(ras_aa, sl_line, ren_aa);
@@ -1194,7 +1202,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
         x = p->x + ox - bounds.minx - (bounds.maxx-bounds.minx)/2.;
         y = p->y + oy - bounds.maxy + (bounds.maxy-bounds.miny)/2.;
         ren->renderGlyphs(x,y,&(style->color),&(style->outlinecolor),
-                size,font,symbol->character,angle_radians,NULL,0,0);
+                size,font,symbol->character,angle_radians,NULL,0,0,style->width);
     }
     break;    
     case(MS_SYMBOL_PIXMAP): {
@@ -1485,7 +1493,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
         label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, NULL);
         ren->renderGlyphs(label_point.x,label_point.y,&(label.color),&(label.outlinecolor),label.size,
                           font,symbol->character,label.angle*MS_DEG_TO_RAD,
-                          NULL,0,0);
+                          NULL,0,0,style->width);
         current_length += label_width + gap;
         in = 1;
       }
@@ -1892,7 +1900,8 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
 
         ren->renderGlyphs(x,y,&(label->color),&(label->outlinecolor),size,
                 font,string,angle_radians,
-                &(label->shadowcolor),label->shadowsizex,label->shadowsizey);
+                &(label->shadowcolor),label->shadowsizex,label->shadowsizey,
+                label->outlinewidth);
 
 
         return 0;
@@ -1965,7 +1974,8 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
 
             ren->renderGlyphs(x,y,&(label->color),&(label->outlinecolor),
                     size,font,s,theta,&(label->shadowcolor),
-                    label->shadowsizex,label->shadowsizey);
+                    label->shadowsizex,label->shadowsizey,
+                    label->outlinewidth);
         }      
         return(0);
     }

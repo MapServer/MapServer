@@ -240,6 +240,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>offsite                               { return(OFFSITE); }
 <INITIAL,URL_STRING>opacity                    { return(OPACITY); }
 <INITIAL,URL_STRING>outlinecolor               { return(OUTLINECOLOR); }
+<INITIAL,URL_STRING>outlinewidth               { return(OUTLINEWIDTH); }
 <INITIAL>outputformat                          { return(OUTPUTFORMAT); }
 <INITIAL,URL_STRING>overlaybackgroundcolor     { return(OVERLAYBACKGROUNDCOLOR); }
 <INITIAL,URL_STRING>overlaycolor               { return(OVERLAYCOLOR); }

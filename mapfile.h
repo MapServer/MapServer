@@ -206,6 +206,8 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define MINWIDTH 1164
 #define MAXWIDTH 1165
 
+#define OUTLINEWIDTH 1165
+
  /* Color Range support (was Gradient Support)*/
 #define COLORRANGE 1170
 #define ALPHACOLORRANGE 1171
