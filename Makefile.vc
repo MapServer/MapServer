@@ -39,7 +39,8 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mappdf.obj mapcontext.obj mapdrawgdal.obj mapjoin.obj mapgraticule.obj \
 		mapmygis.obj mapimagemap.obj mapcopy.obj maprasterquery.obj \
 		mapogcfilter.obj mapogcsld.obj mapthread.obj mapobject.obj \
-		classobject.obj layerobject.obj mapwcs.obj mapgeos.obj strptime.obj \
+		classobject.obj layerobject.obj mapwcs.obj mapwcs11.obj \
+		mapgeos.obj strptime.obj \
 		mapcpl.obj mapio.obj mappool.obj mapsvg.obj mapregex.obj mappluginlayer.obj \
 		mapogcsos.obj mappostgresql.obj mapcrypto.obj mapowscommon.obj \
 		maplibxml2.obj mapdebug.obj mapchart.obj mapagg.obj maptclutf.obj \
