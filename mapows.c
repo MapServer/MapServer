@@ -1466,6 +1466,60 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
   return NULL;
 }
 
+/*
+** msOWSGetProjURN()
+**
+** Fetch an OGC URN for this layer or map.  Similar to msOWSGetEPSGProj()
+** but returns the result in the form "urn:ogc:def:crs:EPSG::27700".
+** The returned buffer is dynamically allocated, and must be freed by the
+** caller.
+*/
+char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne)
+{
+    char *result;
+    char **tokens;
+    int numtokens, i;
+
+    const char *oldStyle = msOWSGetEPSGProj( proj, metadata, namespaces, 
+                                             bReturnOnlyFirstOne );
+
+    if( strncmp(oldStyle,"EPSG:",5) != 0 )
+        return NULL;
+
+    result = strdup("");
+
+    tokens = msStringSplit(oldStyle, ' ', &numtokens);
+    for(i=0; tokens != NULL && i<numtokens; i++)
+    {
+        char urn[100];
+
+        if( strncmp(tokens[i],"EPSG:",5) != 0 )
+            continue;
+        
+        /* 
+        ** Should we eventually use OGC "epsg-like" coordinate systems
+        ** with our normal axis orientation?  Fix later.
+        */
+        sprintf( urn, "urn:ogc:def:crs:EPSG::%s", tokens[i]+5 );
+
+        result = (char *) realloc(result,strlen(result)+strlen(urn)+2);
+        
+        if( strlen(result) > 0 )
+            strcat( result, " " );
+        strcat( result, urn );
+    }
+
+    msFreeCharArray(tokens, numtokens);
+
+    if( strlen(result) == 0 )
+    {
+        msFree( result );
+        return NULL;
+    }
+    else
+        return result;
+}
+
 
 /*
 ** msOWSGetDimensionInfo()

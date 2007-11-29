@@ -222,6 +222,7 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
 char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL, 
                             const char *pszExt);
 const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
+char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 
 void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension, 
                            const char **pszDimUserValue, 
