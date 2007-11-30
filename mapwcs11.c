@@ -827,6 +827,58 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
 
 #endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
 
+/************************************************************************/
+/*                       msWCSReturnCoverage11()                        */
+/*                                                                      */
+/*      Return a render image as a coverage to the caller with WCS      */
+/*      1.1 "mime" wrapping.                                            */
+/************************************************************************/
+
+#if defined(USE_WCS_SVR)
+int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map, 
+                            imageObj *image )
+{
+    int status;
+
+    msIO_fprintf( 
+        stdout, 
+        "\n"
+        "--wcs\n"
+        "Content-Type: text/xml\n"
+        "Content-ID: wcs.xml%c%c"
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<Coverages\n"
+        "     xmlns=\"http://www.opengis.net/wcs/1.1\"\n"
+        "     xmlns:ows=\"http://www.opengis.net/ows\"\n"
+        "     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
+        "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+        "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
+        "  <Coverage>\n"
+        "    <Reference xlink:href=\"cid:coverage/wcs.%s\"/>\n"
+        "  </Coverage>\n"
+        "</Coverages>\n"
+        "--wcs\n"
+        "Content-Type: %s\n"
+        "Content-Description: coverage data\n"
+        "Content-Transfer-Encoding: binary\n"
+        "Content-ID: coverage/wcs.%s\n"
+        "Content-Disposition: INLINE%c%c",
+        10, 10,
+        MS_IMAGE_EXTENSION(map->outputformat),
+        MS_IMAGE_MIME_TYPE(map->outputformat),
+        MS_IMAGE_EXTENSION(map->outputformat),
+        10, 10 );
+
+      status = msSaveImage(map, image, NULL);
+      
+      if( status != MS_SUCCESS )
+      {
+          return msWCSException(map, params->version, NULL, NULL);
+      }
+
+      return MS_SUCCESS;
+}
+#endif
 
 /************************************************************************/
 /* ==================================================================== */

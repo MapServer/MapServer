@@ -275,7 +275,8 @@ void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
 
 static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapObj *map)
 {
-  int i;
+  int i, n;
+  char **tokens;
 
   if(!request || !params) /* nothing to do */
 	return MS_SUCCESS;
@@ -298,9 +299,6 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
 
        /* GetCoverage parameters. */
        else if(strcasecmp(request->ParamNames[i], "BBOX") == 0) {
-         char **tokens;
-         int n;
-          
          tokens = msStringSplit(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n != 4) {
            msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.", "msWCSParseRequest()");
@@ -335,6 +333,31 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
        else if(strcasecmp(request->ParamNames[i], "IDENTIFIER") == 0
                || strcasecmp(request->ParamNames[i], "IDENTIFIERS") == 0 )
            params->coverages = CSLAddString(params->coverages, request->ParamValues[i]);
+       /* WCS 1.1 style BOUNDINGBOX */
+       else if(strcasecmp(request->ParamNames[i], "BOUNDINGBOX") == 0) {
+         tokens = msStringSplit(request->ParamValues[i], ',', &n);
+         if(tokens==NULL || n < 5) {
+           msSetError(MS_WMSERR, "Wrong number of arguments for BOUNDINGBOX.", "msWCSParseRequest()");
+           return msWCSException(map, params->version, "InvalidParameterValue", "boundingbox");
+         }
+         params->bbox.minx = atof(tokens[0]);
+         params->bbox.miny = atof(tokens[1]);
+         params->bbox.maxx = atof(tokens[2]);
+         params->bbox.maxy = atof(tokens[3]);
+           
+         params->crs = strdup(tokens[4]);
+         msFreeCharArray(tokens, n);
+       } else if(strcasecmp(request->ParamNames[i], "GridOffsets") == 0) {
+         tokens = msStringSplit(request->ParamValues[i], ',', &n);
+         if(tokens==NULL || n < 2) {
+           msSetError(MS_WMSERR, "Wrong number of arguments for GridOffsets", 
+                      "msWCSParseRequest()");
+           return msWCSException(map, params->version, "InvalidParameterValue", "GridOffsets");
+         }
+         params->resx = atof(tokens[0]);
+         params->resy = atof(tokens[1]);
+         msFreeCharArray(tokens, n);
+       }
 	   
        /* and so on... */
     }
@@ -1044,27 +1067,24 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
 
   /* handle the response CRS, that is set the map object projection */
   if(params->response_crs || params->crs ) {
+    int iUnits;
     const char *crs_to_use = params->response_crs;
+
     if( crs_to_use == NULL )
       crs_to_use = params->crs;
 
-    if (strncasecmp(crs_to_use, "EPSG:", 5) == 0) {
-      /* RESPONSE_CRS=EPSG:xxxx */
-      char buffer[32];
-      int iUnits;
-
-      sprintf(buffer, "init=epsg:%.20s", crs_to_use+5);
-
-      if (msLoadProjectionString(&(map->projection), buffer) != 0)
+    if (strncasecmp(crs_to_use, "EPSG:", 5) == 0
+        || strncasecmp(crs_to_use,"urn:ogc:def:crs:",16) == 0 ) {
+      if (msLoadProjectionString(&(map->projection), (char *) crs_to_use) != 0)
         return msWCSException( map, params->version, NULL, NULL);
-        
-      iUnits = GetMapserverUnitUsingProj(&(map->projection));
-      if (iUnits != -1)
-        map->units = iUnits;
     } else {  /* should we support WMS style AUTO: projections? (not for now) */
       msSetError(MS_WMSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
       return msWCSException(map, params->version, "InvalidParameterValue", "srs");
     }
+
+    iUnits = GetMapserverUnitUsingProj(&(map->projection));
+    if (iUnits != -1)
+        map->units = iUnits;
   }
 
   /* did we get a TIME value (support only a single value for now) */
@@ -1178,7 +1198,16 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   }
     
   /* if necessary, project the BBOX */
-    
+
+  /* in WCS 1.1 the default is full resolution */
+  if( strncasecmp(params->version,"1.1",3) == 0 
+      && params->resx == 0.0 && params->resy == 0.0
+      && params->width == 0 && params->height == 0 ) {
+
+    params->resx = cm.geotransform[1];
+    params->resy = fabs(cm.geotransform[5]);
+  }
+
   /* compute width/height from BBOX and cellsize.  */
   if( (params->resx == 0.0 || params->resy == 0.0) && params->width != 0 && params->height != 0 ) {
     params->resx = (params->bbox.maxx - params->bbox.minx) / params->width;
@@ -1295,19 +1324,29 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   if( status != MS_SUCCESS ) {
     return msWCSException(map, params->version, NULL, NULL);
   }
-    
-  /* Emit back to client. */
-  msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
-  status = msSaveImage(map, image, NULL);
 
-  if( status != MS_SUCCESS )
+
+  if( strncmp(params->version, "1.1",3) == 0 )
   {
-      /* unfortunately, the image content type will have already been sent
-         but that is hard for us to avoid.  The main error that could happen
-         here is a misconfigured tmp directory or running out of space. */
-      return msWCSException(map, params->version, NULL, NULL);
+      msWCSReturnCoverage11( params, map, image );
   }
+  else /* WCS 1.0.0 - just return the binary data with a content type */
+  {
+      /* Emit back to client. */
+      msIO_printf("Content-type: %s%c%c", 
+                  MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
 
+      status = msSaveImage(map, image, NULL);
+      
+      if( status != MS_SUCCESS )
+      {
+          /* unfortunately, the image content type will have already been sent
+             but that is hard for us to avoid.  The main error that could happen
+             here is a misconfigured tmp directory or running out of space. */
+          return msWCSException(map, params->version, NULL, NULL);
+      }
+  }
+      
   /* Cleanup */
   msFreeImage(image);
   msApplyOutputFormat(&(map->outputformat), NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);

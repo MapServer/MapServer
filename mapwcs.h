@@ -85,5 +85,6 @@ void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
 int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params, 
                            cgiRequestObj *req);
 int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params );
+int msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map, imageObj *image);
 
 #endif /* nef MAPWCS_H */
