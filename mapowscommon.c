@@ -502,8 +502,8 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensi
   sprintf( dim_string, "%d", dimensions );
   xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dim_string);
 
-  sprintf(LowerCorner, "%g %g", minx, miny);
-  sprintf(UpperCorner, "%g %g", maxx, maxy);
+  sprintf(LowerCorner, "%.15g %.15g", minx, miny);
+  sprintf(UpperCorner, "%.15g %.15g", maxx, maxy);
 
   /* add child elements */
   xmlNewChild(psRootNode, psNsOws,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
@@ -543,8 +543,8 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double 
   sprintf( dim_string, "%d", dimensions );
   xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dim_string);
 
-  sprintf(LowerCorner, "%g %g", minx, miny);
-  sprintf(UpperCorner, "%g %g", maxx, maxy);
+  sprintf(LowerCorner, "%.15g %.15g", minx, miny);
+  sprintf(UpperCorner, "%.15g %.15g", maxx, maxy);
 
   /* add child elements */
   xmlNewChild(psRootNode, psNsOws,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
