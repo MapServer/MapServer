@@ -124,6 +124,9 @@ Current Version (5.1-dev, SVN trunk):
   and is indicated by USE_LIBXML2 definition.  Use @ALL_ENABLED@ in 
   DEFINEs and mapscriptvars generation.
 
+- mapresample.c: Fixed support for multi-band data in RAW mode for bilinear
+  and nearest neighbour resamplers (#2364).
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
