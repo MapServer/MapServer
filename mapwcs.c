@@ -340,6 +340,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
            msSetError(MS_WMSERR, "Wrong number of arguments for BOUNDINGBOX.", "msWCSParseRequest()");
            return msWCSException(map, params->version, "InvalidParameterValue", "boundingbox");
          }
+
+         /* NOTE: WCS 1.1 boundingbox is center of pixel oriented, not edge
+            like in WCS 1.0.  So bbox semantics are wonky till this is fixed
+            later in the GetCoverage processing. */
          params->bbox.minx = atof(tokens[0]);
          params->bbox.miny = atof(tokens[1]);
          params->bbox.maxx = atof(tokens[2]);
@@ -1191,10 +1195,19 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   }
     
   /* did we get BBOX values? if not use the exent stored in the coverageMetadataObj */
-  if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
-    params->bbox = cm.extent;
-    /* msSetError( MS_WCSERR, "Required parameter BBOX missing or specifies an empty region.", "msWCSGetCoverage()" ); */
-    /* return msWCSException(params->version); */
+  if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  
+      || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
+
+      params->bbox = cm.extent;
+
+      /* WCS 1.1 boundbox is center of pixel oriented. */
+      if( strncasecmp(params->version,"1.1",3) == 0 )
+      {
+          params->bbox.minx += cm.geotransform[1]/2 + cm.geotransform[2]/2;
+          params->bbox.maxx -= cm.geotransform[1]/2 + cm.geotransform[2]/2;
+          params->bbox.miny += cm.geotransform[4]/2 + cm.geotransform[5]/2;
+          params->bbox.maxy -= cm.geotransform[4]/2 + cm.geotransform[5]/2;
+      }
   }
     
   /* if necessary, project the BBOX */
@@ -1210,14 +1223,40 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
 
   /* compute width/height from BBOX and cellsize.  */
   if( (params->resx == 0.0 || params->resy == 0.0) && params->width != 0 && params->height != 0 ) {
-    params->resx = (params->bbox.maxx - params->bbox.minx) / params->width;
-    params->resy = (params->bbox.maxy - params->bbox.miny) / params->height;
+
+    /* WCS 1.1 boundbox is center of pixel oriented. */
+    if( strncasecmp(params->version,"1.1",3) == 0 )
+    {
+        params->resx = (params->bbox.maxx - params->bbox.minx) 
+            / (params->width-1);
+        params->resy = (params->bbox.maxy - params->bbox.miny) 
+            / (params->height-1);
+    }
+    else
+    {
+        params->resx = (params->bbox.maxx -params->bbox.minx) / params->width;
+        params->resy = (params->bbox.maxy -params->bbox.miny) / params->height;
+    }
   }
     
   /* compute cellsize/res from bbox and raster size. */
   if( (params->width == 0 || params->height == 0) && params->resx != 0 && params->resy != 0 ) {
-    params->width = (int) ((params->bbox.maxx - params->bbox.minx) / params->resx + 0.5);
-    params->height = (int) ((params->bbox.maxy - params->bbox.miny) / params->resy + 0.5);
+
+    /* WCS 1.1 boundbox is center of pixel oriented. */
+    if( strncasecmp(params->version,"1.1",3) == 0 )
+    {
+        params->width = (int) ((params->bbox.maxx - params->bbox.minx) 
+                               / params->resx + 1.5);
+        params->height = (int) ((params->bbox.maxy - params->bbox.miny) 
+                                / params->resy + 1.5);
+    }
+    else
+    {
+        params->width = (int) ((params->bbox.maxx - params->bbox.minx) 
+                               / params->resx + 0.5);
+        params->height = (int) ((params->bbox.maxy - params->bbox.miny) 
+                                / params->resy + 0.5);
+    }
   }
 
   /* are we still underspecified?  */
@@ -1259,10 +1298,14 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   map->height = params->height;
 
   /* adjust OWS BBOX to MapServer's pixel model */
-  params->bbox.minx += params->resx*0.5;
-  params->bbox.miny += params->resy*0.5;
-  params->bbox.maxx -= params->resx*0.5;
-  params->bbox.maxy -= params->resy*0.5;
+  if( strncasecmp(params->version,"1.0",3) == 0 )
+  {
+      params->bbox.minx += params->resx*0.5;
+      params->bbox.miny += params->resy*0.5;
+      params->bbox.maxx -= params->resx*0.5;
+      params->bbox.maxy -= params->resy*0.5;
+  }
+
   map->extent = params->bbox;
  
   map->cellsize = params->resx; /* pick one, MapServer only supports square cells (what about msAdjustExtent here!) */
