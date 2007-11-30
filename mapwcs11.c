@@ -231,7 +231,7 @@ static int msWCSGetCapabilities11_CoverageSummary(
     xmlAddChild( 
         psCSummary,
         msOWSCommonBoundingBox( psOwsNs, "urn:ogc:def:crs:OGC::imageCRS",
-                                2, 0, 0, cm.xsize, cm.ysize ));
+                                2, 0, 0, cm.xsize-1, cm.ysize-1 ));
 
 /* -------------------------------------------------------------------- */
 /*      native CRS bounding box.                                        */
@@ -551,7 +551,7 @@ msWCSDescribeCoverage_CoverageDescription11(
     xmlAddChild( 
         psSD,
         msOWSCommonBoundingBox( psOwsNs, "urn:ogc:def:crs:OGC::imageCRS",
-                                2, 0, 0, cm.xsize, cm.ysize ));
+                                2, 0, 0, cm.xsize-1, cm.ysize-1 ));
 
 /* -------------------------------------------------------------------- */
 /*      native CRS bounding box.                                        */
@@ -585,7 +585,8 @@ msWCSDescribeCoverage_CoverageDescription11(
                      "urn:ogc:def:method:WCS:1.1:2dSimpleGrid" );
 
         sprintf( format_buf, "%.15g %.15g", 
-                 cm.geotransform[0], cm.geotransform[3] );
+                 cm.geotransform[0]+cm.geotransform[1]/2+cm.geotransform[2]/2, 
+                 cm.geotransform[3]+cm.geotransform[4]/2+cm.geotransform[5]/2);
         xmlNewChild( psGridCRS, NULL, "GridOrigin", format_buf );
 
         sprintf( format_buf, "%.15g %.15g", 
@@ -871,7 +872,6 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         10, 10 );
 
       status = msSaveImage(map, image, NULL);
-      
       if( status != MS_SUCCESS )
       {
           return msWCSException(map, params->version, NULL, NULL);
