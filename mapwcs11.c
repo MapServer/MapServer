@@ -577,7 +577,7 @@ msWCSDescribeCoverage_CoverageDescription11(
     {
         char format_buf[500];
 
-        psGridCRS = xmlNewChild( psDomain, NULL, "GridCRS", NULL );
+        psGridCRS = xmlNewChild( psSD, NULL, "GridCRS", NULL );
 
         
         xmlNewChild( psGridCRS, NULL, "GridBaseCRS", cm.srs_urn );
@@ -842,7 +842,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 
     msIO_fprintf( 
         stdout, 
-        "\n"
+        "Content-Type: multipart/mixed; boundary=wcs%c%c"
         "--wcs\n"
         "Content-Type: text/xml\n"
         "Content-ID: wcs.xml%c%c"
@@ -863,6 +863,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         "Content-Transfer-Encoding: binary\n"
         "Content-ID: coverage/wcs.%s\n"
         "Content-Disposition: INLINE%c%c",
+        10, 10, 
         10, 10,
         MS_IMAGE_EXTENSION(map->outputformat),
         MS_IMAGE_MIME_TYPE(map->outputformat),
@@ -875,6 +876,8 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
       {
           return msWCSException(map, params->version, NULL, NULL);
       }
+
+      msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );
 
       return MS_SUCCESS;
 }
