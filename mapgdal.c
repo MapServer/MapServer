@@ -112,8 +112,24 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     msGDALInitialize();
 
 /* -------------------------------------------------------------------- */
+/*      Identify the proposed output driver.                            */
+/* -------------------------------------------------------------------- */
+    msAcquireLock( TLOCK_GDAL );
+    hOutputDriver = GDALGetDriverByName( format->driver+5 );
+    if( hOutputDriver == NULL )
+    {
+        msReleaseLock( TLOCK_GDAL );
+        msSetError( MS_MISCERR, "Failed to find %s driver.",
+                    "msSaveImageGDAL()", format->driver+5 );
+        return MS_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      We will need to write the output to a temporary file and        */
-/*      then stream to stdout if no filename is passed.                 */
+/*      then stream to stdout if no filename is passed.  If the         */
+/*      driver supports virtualio then we hold the temporary file in    */
+/*      memory, otherwise we try to put it in a reasonable temporary    */
+/*      file location.                                                  */
 /* -------------------------------------------------------------------- */
     if( filename == NULL )
     {
@@ -121,9 +137,16 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         if( pszExtension == NULL )
             pszExtension = "img.tmp";
 
-        if( map != NULL && map->web.imagepath != NULL )
+#ifdef GDAL_DCAP_VIRTUALIO
+        if( GDALGetMetadataItem( hOutputDriver, GDAL_DCAP_VIRTUALIO, NULL ) 
+            != NULL )
+        {
+            filename = msTmpFile( NULL, "/vsimem/", pszExtension );
+        }
+#endif
+        if( filename == NULL && map != NULL && map->web.imagepath != NULL )
             filename = msTmpFile(map->mappath,map->web.imagepath,pszExtension);
-        else
+        else if( filename == NULL )
         {
 #ifndef _WIN32
             filename = msTmpFile(NULL, "/tmp/", pszExtension );
@@ -175,7 +198,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 /*      Create a memory dataset which we can use as a source for a      */
 /*      CreateCopy().                                                   */
 /* -------------------------------------------------------------------- */
-    msAcquireLock( TLOCK_GDAL );
     hMemDriver = GDALGetDriverByName( "MEM" );
     if( hMemDriver == NULL )
     {
@@ -357,16 +379,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 /*      Create a disk image in the selected output format from the      */
 /*      memory image.                                                   */
 /* -------------------------------------------------------------------- */
-    hOutputDriver = GDALGetDriverByName( format->driver+5 );
-    if( hOutputDriver == NULL )
-    {
-        GDALClose( hMemDS );
-        msReleaseLock( TLOCK_GDAL );
-        msSetError( MS_MISCERR, "Failed to find %s driver.",
-                    "msSaveImageGDAL()", format->driver+5 );
-        return MS_FAILURE;
-    }
-
     papszOptions = (char**)calloc(sizeof(char *),(format->numformatoptions+1));
     memcpy( papszOptions, format->formatoptions, 
             sizeof(char *) * format->numformatoptions );
@@ -406,6 +418,26 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         if( msIO_needBinaryStdout() == MS_FAILURE )
             return MS_FAILURE;
 
+        /* We aren't sure how far back GDAL exports the VSI*L API, so 
+           we only use it if we suspect we need it.  But we do need it if
+           holding temporary file in memory. */
+#ifdef GDAL_DCAP_VIRTUALIO
+        fp = VSIFOpenL( filename, "rb" );
+        if( fp == NULL )
+        {
+            msSetError( MS_MISCERR, 
+                        "Failed to open %s for streaming to stdout.",
+                        "msSaveImageGDAL()", filename );
+            return MS_FAILURE;
+        }
+
+        while( (bytes_read = VSIFReadL(block, 1, sizeof(block), fp)) > 0 )
+            msIO_fwrite( block, 1, bytes_read, stdout );
+
+        VSIFCloseL( fp );
+
+        VSIUnlink( filename );
+#else
         fp = fopen( filename, "rb" );
         if( fp == NULL )
         {
@@ -421,6 +453,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         fclose( fp );
 
         unlink( filename );
+#endif
         free( filename );
     }
     
