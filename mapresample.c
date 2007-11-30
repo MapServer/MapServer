@@ -597,21 +597,21 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         psDstImage->img.raw_16bit[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (short) padfPixelSum[0];
+                            = (short) padfPixelSum[band];
                     }
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
                     {
                         psDstImage->img.raw_float[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (float) padfPixelSum[0];
+                            = (float) padfPixelSum[band];
                     }
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE )
                     {
                         psDstImage->img.raw_byte[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (unsigned char) padfPixelSum[0];
+                            = (unsigned char) padfPixelSum[band];
                     }
                 }
             }
@@ -863,21 +863,21 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         psDstImage->img.raw_16bit[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (short) padfPixelSum[0];
+                            = (short) padfPixelSum[band];
                     }
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
                     {
                         psDstImage->img.raw_float[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (float) padfPixelSum[0];
+                            = (float) padfPixelSum[band];
                     }
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE )
                     {
                         psDstImage->img.raw_byte[
                             nDstX + nDstY * psDstImage->width
                             + band*psDstImage->width*psDstImage->height] 
-                            = (unsigned char) padfPixelSum[0];
+                            = (unsigned char) padfPixelSum[band];
                     }
                 }
             }

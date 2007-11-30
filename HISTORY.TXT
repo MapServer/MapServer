@@ -47,6 +47,9 @@ Current Version (SVN branch-5-0)
 - mapogr.cpp: Use pooling api to ensure per-thread sharing of connections 
   only (#2408)
 
+- mapresample.c: Fixed support for multi-band data in RAW mode for bilinear
+  and nearest neighbour resamplers (#2364).
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
