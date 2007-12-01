@@ -31,6 +31,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
+#include "mapwcs.h"
 
 MS_CVSID("$Id: mapwcs.c 6637 2007-08-17 21:30:26Z warmerdam $")
 
