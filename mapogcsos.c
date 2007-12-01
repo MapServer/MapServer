@@ -75,14 +75,22 @@ void msSOSFreeParamsObj(sosParamsObj *sosparams);
 */
 
 static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
+  int size = 0;
+  char *errorString     = NULL;
+  char *errorMessage    = NULL;
+  char *schemasLocation = NULL;
+
   xmlDocPtr  psDoc      = NULL;   
   xmlNodePtr psRootNode = NULL;
   xmlChar *buffer       = NULL;
-  int size = 0;
+
+  errorString = msGetErrorString("\n");
+  errorMessage = msEncodeHTMLEntities(errorString);
+  schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-  psRootNode = msOWSCommonExceptionReport(msEncodeHTMLEntities(msOWSGetSchemasLocation(map)), pszSOSVersion, msOWSGetLanguage(map, "exception"), exceptionCode, locator, msEncodeHTMLEntities(msGetErrorString("\n")));
+  psRootNode = msOWSCommonExceptionReport(schemasLocation, pszSOSVersion, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
 
   xmlDocSetRootElement(psDoc, psRootNode);
   xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
@@ -93,6 +101,9 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
   msIO_printf("%s", buffer);
 
   /*free buffer and the document */
+  free(errorString);
+  free(errorMessage);
+  free(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
 
@@ -339,13 +350,10 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
                 else
                   xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST lp->items[i]);
 
-                xmlNewNsProp(psNode, 
-                             xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
-                                      BAD_CAST "xlink"),
-                             BAD_CAST "href", BAD_CAST pszValue);
+                //xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszValue);
+                xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszValue);
             }
         }
-    
     }	
 }
         
@@ -537,9 +545,8 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNodePtr psParent, layerObj *lp, 
 /*                                                                      */
 /*      Add a databalock used for GetObservation request.               */
 /************************************************************************/
-void msSOSAddDataBlockDefinition(xmlNodePtr psParent, layerObj *lp)
+void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj *lp)
 {
-    xmlNsPtr psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe");
     xmlNodePtr psNode, psRecordNode, psCompNode, psSubNode, psEncNode;
     const char *pszDefinition = NULL, *pszUom=NULL, *pszValue=NULL, *pszName=NULL;
     char szTmp[100];
@@ -646,10 +653,10 @@ void msSOSAddDataBlockDefinition(xmlNodePtr psParent, layerObj *lp)
 /*      Assuming that the layer is opened and msLayerGetItems is        */
 /*      called on it.                                                   */
 /************************************************************************/
-void msSOSAddMemberNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParent, mapObj *map, layerObj *lp, 
+void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParent, mapObj *map, layerObj *lp, 
                         int iFeatureId)
 {
-    xmlNodePtr psObsNode, psNode, psSubNode, psLayerNode;
+    xmlNodePtr psObsNode, psNode, psSubNode, psLayerNode = NULL;
     const char *pszEpsg = NULL, *pszValue = NULL;
     int status,i,j;
     shapeObj sShape;
@@ -661,9 +668,6 @@ void msSOSAddMemberNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParen
     char *pszValueShape = NULL;
     const char *pszFeatureId  = NULL;
 
-    xmlNsPtr psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
-    xmlNsPtr psNsOm = xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix);
-
     if (psParent)
     {
         msInitShape(&sShape);
@@ -672,7 +676,6 @@ void msSOSAddMemberNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParen
                                  lp->resultcache->results[iFeatureId].tileindex, 
                                  lp->resultcache->results[iFeatureId].shapeindex);
         if(status != MS_SUCCESS) {
-          xmlFreeNs(psNsGml);
           xmlFreeNs(psNsOm);
           return;
         }
@@ -735,9 +738,8 @@ void msSOSAddMemberNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParen
                     pszTmp = msStringConcatenate(pszTmp, pszValueShape);
             
                         psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
-                        xmlNewNsProp(psNode,
-                                     xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
-                                              BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+                        //xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+                        xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszTmp);
                         msFree(pszTmp);
                         pszTmp = NULL;
                         msFree(pszValueShape);
@@ -754,9 +756,8 @@ void msSOSAddMemberNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParen
             pszTmp = msStringConcatenate(pszTmp, (char *)pszValue);
             
             psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
-            xmlNewNsProp(psNode,
-                         xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
-                                  BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+            //xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+            xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszTmp);
             msFree(pszTmp);
             pszTmp = NULL;
         }
@@ -970,8 +971,6 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
         }
     }
     return pszFinalValue;
-    
-                        
 }       
 
 /************************************************************************/
@@ -980,19 +979,13 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
 /*      Add a member node used gor getObservation request using         */
 /*      Observation as the result format.                               */
 /************************************************************************/
-xmlNodePtr msSOSAddMemberNodeObservation(xmlNodePtr psParent, mapObj *map, 
+xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParent, mapObj *map, 
                                          layerObj *lp, const char *pszProcedure) 
 {
     char *pszTmp = NULL;
     xmlNodePtr psNode=NULL, psObsNode=NULL, psMemberNode=NULL;
     layerObj *lpfirst;
     const char *value = NULL;
-
-    xmlNsPtr psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
-    //xmlNsPtr psNsOm = xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix);
-    xmlNsPtr psNsSos = xmlNewNs(NULL, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix);
-    xmlNsPtr psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe");
-    xmlNsPtr psNsXLink = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
 
     /*always featch the first layer that has the same offering id and observered propery.
      This allows to only define all the attributes and componenets on the first layer if the user
@@ -1039,8 +1032,8 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNodePtr psParent, mapObj *map,
              pszTmp = msStringConcatenate(pszTmp, "urn:ogc:def:procedure:");
              pszTmp = msStringConcatenate(pszTmp, (char *)pszProcedure);
              psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
-             xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", 
-                                           BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+             //xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+             xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszTmp);
              msFree(pszTmp);
              pszTmp = NULL;
          }
@@ -1058,7 +1051,7 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNodePtr psParent, mapObj *map,
          
          /* result definition*/
          psNode = xmlNewChild(psObsNode, NULL, BAD_CAST "resultDefinition", NULL);
-         msSOSAddDataBlockDefinition(psNode, lpfirst);
+         msSOSAddDataBlockDefinition(psNsSwe, psNode, lpfirst);
          
     }   
 
@@ -1138,7 +1131,7 @@ char *msSOSParseTimeGML(char *pszGmlTime)
             }
         }
     }
-        
+    free(psRoot);
     return pszReturn;
 }
 
@@ -1518,7 +1511,6 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
                                    if (papsProcedures[k] != NULL)
                                      msFree(papsProcedures[k]);
                                  msFree(papsProcedures);
-                                 
                                  msLayerClose(lpTmp);
                                  
                              }
@@ -1668,6 +1660,9 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
      xmlFreeNs(psNsOgc);
      xmlFreeNs(psNsSwe);
 
+
+     free(script_url);
+     free(script_url_encoded);
      free(xsi_schemaLocation);
      free(schemalocation);
 
@@ -1733,6 +1728,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
   xmlNsPtr psNsOm = NULL;
   xmlNsPtr psNsSwe = NULL;
   xmlNsPtr psNsXLink = NULL;
+  xmlNsPtr psNsSos = NULL;
   char *pszBuffer = NULL;
   const char *pszProcedureItem = NULL;
   int bSpatialDB = 0;
@@ -1749,6 +1745,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     
   sBbox = map->extent;
 
+  psNsSos = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/sos/1.0", BAD_CAST "sos");
   psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
   psNsOm = xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix);
   psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe");
@@ -2010,6 +2007,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
           msLayerClose(lp);
         }
         FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
+        msFree(psFilterNode);
+        
       }
     }
   }
@@ -2140,7 +2139,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     xmlNewNsProp(psRootNode, psNsGml, BAD_CAST "id", BAD_CAST sosparams->pszOffering);
 
     /*schema fixed*/
-    schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
+    schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
     /*TODO : review this*/
     xsi_schemaLocation = strdup("http://www.opengis.net/om ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
@@ -2230,7 +2229,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
                 {
                     for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
                     {
-                        msSOSAddMemberNode(psNsSwe, psNsXLink, psRootNode, map, (GET_LAYER(map, i)), j);
+                        msSOSAddMemberNode(psNsGml, psNsOm, psNsSwe, psNsXLink, psRootNode, map, (GET_LAYER(map, i)), j);
                         if (j == n1-1) 
                           break;
                     }
@@ -2242,7 +2241,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
                     if (msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "procedure_item") == NULL)
                     {
                         pszProcedure = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
-                        psObservationNode = msSOSAddMemberNodeObservation(psRootNode, map, (GET_LAYER(map, i)),
+                        psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsSwe, psNsXLink, psRootNode, map, (GET_LAYER(map, i)),
                                                                       pszProcedure);
                         /*add a result node*/
                         psResultNode = xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
@@ -2302,7 +2301,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
                                                                                *nDiffrentProc);
 
                                 paDiffrentProc[nDiffrentProc-1].pszProcedure = strdup(pszProcedureValue);
-                                psObservationNode = msSOSAddMemberNodeObservation(psRootNode, map, 
+                                psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsSwe, psNsXLink, psRootNode, map, 
                                                                                   (GET_LAYER(map, i)),
                                                                                   pszProcedureValue);
                                 msFree(pszProcedureValue);
@@ -2334,6 +2333,9 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
      context = msIO_getHandler(stdout);
      xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
      msIO_contextWrite(context, buffer, size);
+     free(schemalocation);
+     free(xsi_schemaLocation);
+     xmlFreeNs(psNsSos);
      xmlFreeNs(psNsGml);
      xmlFreeNs(psNsOm);
      xmlFreeNs(psNsSwe);
@@ -2501,6 +2503,9 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
   if (paramsObj->pszService && strcasecmp(paramsObj->pszService, "SOS") == 0) { /* this is an SOS request */
     if (!paramsObj->pszRequest) {
       msSetError(MS_SOSERR, "Missing REQUEST Parameter", "msSOSDispatch()");
+      msSOSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
       return msSOSException(map, "request", "MissingParameterValue");
     }
 
@@ -2516,11 +2521,17 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
       /* check version */
       if (!paramsObj->pszVersion) {
         msSetError(MS_SOSERR, "Missing VERSION parameter", "msSOSDispatch()");
+        msSOSFreeParamsObj(paramsObj);
+        free(paramsObj);
+        paramsObj = NULL;
         return msSOSException(map, "version", "MissingParameterValue");
       }
 
       if (msOWSParseVersionString(paramsObj->pszVersion) != OWS_1_0_0) {
         msSetError(MS_SOSERR, "VERSION %s not supported.  Supported versions are: %s.", "msSOSDispatch()", paramsObj->pszVersion, pszSOSVersion);
+        msSOSFreeParamsObj(paramsObj);
+        free(paramsObj);
+        paramsObj = NULL;
         return msSOSException(map, "version", "InvalidParameterValue");
       }
 
@@ -2537,6 +2548,9 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
     }
     else {
       msSetError(MS_SOSERR, "Invalid REQUEST parameter: %s", "msSOSDispatch()", paramsObj->pszRequest);
+      msSOSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
       return msSOSException(map, "request", "InvalidParameterValue");
     }
   }
@@ -2759,6 +2773,8 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
 
 void msSOSFreeParamsObj(sosParamsObj *sosparams) {
   if (sosparams) {
+    if (sosparams->pszService)
+      free(sosparams->pszService);
     if (sosparams->pszVersion)
       free(sosparams->pszVersion);
     if (sosparams->pszUpdateSequence)

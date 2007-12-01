@@ -426,13 +426,15 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
   xmlNodePtr   psMainNode  = NULL;
   xmlNodePtr   psNode      = NULL;
 
-  psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+  //psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+  //psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
-  psRootNode = xmlNewNode(psNsOws, BAD_CAST "ExceptionReport");
+  //psRootNode = xmlNewNode(psNsOws, BAD_CAST "ExceptionReport");
+  psRootNode = xmlNewNode(NULL, BAD_CAST "ExceptionReport");
 
   psNsXsi = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
 
-  xmlSetNs(psRootNode,  psNsOws);
+  //xmlSetNs(psRootNode, psNsOws);
 
   /* add attributes to root element */
   xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST version);
@@ -463,7 +465,8 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
     psNode = xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST ExceptionText);
   }
 
-  xmlFreeNs(psNsOws);
+  free(xsi_schemaLocation);
+  //xmlFreeNs(psNsOws);
   return psRootNode;
 }
 

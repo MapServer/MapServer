@@ -1639,6 +1639,7 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
   pszTmp = msStringConcatenate(pszTmp, msDoubleToString(y));
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "pos", BAD_CAST pszTmp);
 
+  free(pszTmp);
   return psNode;
 }
 
