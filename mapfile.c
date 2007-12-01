@@ -360,6 +360,7 @@ int loadColor(colorObj *color, attributeBindingObj *binding) {
     }
 
     /* TODO: consider named colors here */
+    msSetError(MS_SYMERR, "Invalid hex color (%s):(line %d)", "loadColor()", msyytext, msyylineno); 
     return MS_FAILURE;
   } else {
     binding->item = strdup(msyytext);
