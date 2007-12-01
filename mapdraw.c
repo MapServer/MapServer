@@ -951,6 +951,12 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
    return(MS_SUCCESS); /* no data associated with this layer, not an error since layer may be used as a template from MapScript */
 
   if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_SUCCESS); /* query and tileindex layers simply can't be drawn, not an error */
+  
+  if( layer->type == MS_LAYER_RASTER ) {
+      msSetError( MS_QUERYERR, "Unable to draw raster layers (such as %s) as part of a query result.", "msDrawQueryLayer()", layer->name );
+      return MS_FAILURE;
+  }
+
 
   if(map->querymap.style == MS_HILITE) { /* first, draw normally, but don't return */
     status = msDrawLayer(map, layer, image);

@@ -127,6 +127,9 @@ Current Version (5.1-dev, SVN trunk):
 - mapresample.c: Fixed support for multi-band data in RAW mode for bilinear
   and nearest neighbour resamplers (#2364).
 
+- mapdraw.c: Improve error reporting if a raster layer requested in
+  a query map (#1842).
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
