@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security;
 
 //
 // General Information about an assembly is controlled through the following 
@@ -56,3 +57,9 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyDelaySign(false)]
 [assembly: AssemblyKeyFile("mapscript.snk")]
 [assembly: AssemblyKeyName("")]
+
+// The AllowPartiallyTrustedCallersAttribute requires the assembly to be signed with a strong name key.
+// This attribute is necessary since the control is called by either an intranet or Internet
+// Web page that should be running under restricted permissions.
+[assembly: AllowPartiallyTrustedCallers]
+
