@@ -1846,11 +1846,19 @@ Constructor:
                    the mapfile.
     double sizex;
     double sizey
-    int numpoints
+    int numpoints (Read-Only)
     int filled;
-    int patternlength;
-    int stylelength;  (Deprecated in v5.0, use patternlength instead.)
-
+    int patternlength; (Read-Only)
+    int stylelength;  (Deprecated in v5.0, use patternlength instead.) (Read-Only)
+    string imagepath; (Read-Only))
+    int transparent; 
+    int transparentcolor; 
+    string character; 
+    int antialias; 
+    string font; 
+    int gap; 
+    int position;
+ 
   Methods:
 
     int set(string property_name, new_value)
@@ -1886,7 +1894,9 @@ Constructor:
         Deprecated in v5.0, will be removed in a future release.
         Use getpatternarray() instead.
 
-    Example of usage : crete a symbol to be used as a dash line
+    Example of usage:  
+    
+      1- crete a symbol to be used as a dash line
 
         $nId = ms_newsymbolobj($gpoMap, "mydash");
         $oSymbol = $gpoMap->getsymbolobjectbyid($nId);
@@ -1907,7 +1917,14 @@ Constructor:
 
         $style->set("symbolname", "mydash");
 
-      
+      2- Create a TrueType symbol 
+
+         $nId = ms_newSymbolObj($gpoMap, "ttfSymbol"); 
+ 	 $oSymbol = $gpoMap->getSymbolObjectById($nId); 
+ 	 $oSymbol->set("type", MS_SYMBOL_TRUETYPE); 
+ 	 $oSymbol->set("filled", true); 
+ 	 $oSymbol->set("character", "&#68;"); 
+         $oSymbol->set("font", "ttfFontName"); 
 
   OwsrequestObj Class: 
   -------------------------

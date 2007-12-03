@@ -14454,12 +14454,21 @@ static long _phpms_build_symbol_object(symbolObj *psSymbol,
     /* TODO: stylelength deprecated in v5.0. To be removed in a later release*/
     add_property_long(return_value,   "stylelength", psSymbol->patternlength);
 
-    //PHPMS_ADD_PROP_STR(return_value,  "imagepath", psSymbol->imagepath);
-    //add_property_long(return_value,   "transparent",     psSymbol->transparent);
-    //add_property_long(return_value,   "transparentcolor", 
-    //                 psSymbol->transparentcolor);
+    /* MS_SYMBOL_PIXMAP */ 
+    PHPMS_ADD_PROP_STR(return_value,  "imagepath", psSymbol->imagepath);
+    add_property_long(return_value,   "transparent",     psSymbol->transparent);
+    add_property_long(return_value,   "transparentcolor", psSymbol->transparentcolor);
+
+    /* MS_SYMBOL_TRUETYPE */             
+    PHPMS_ADD_PROP_STR(return_value,  "character",  psSymbol->character); 
+    add_property_long(return_value,   "antialias",  psSymbol->antialias); 
+    PHPMS_ADD_PROP_STR(return_value,  "font",       psSymbol->font); 
+    add_property_long(return_value,   "gap",        psSymbol->gap); 
+    add_property_long(return_value,   "position",   psSymbol->position); 
+    
     //TODO : true type and cartoline parameters to add.
 
+    
     return symbol_id;
 }
     
@@ -14498,9 +14507,17 @@ DLEXPORT void php3_ms_symbol_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_DOUBLE(  "sizex",   self->sizex)
     else IF_SET_DOUBLE(  "sizey",   self->sizey)
     else IF_SET_LONG(  "filled",    self->filled)
+    else IF_SET_LONG(  "transparent", self->transparent) 
+    else IF_SET_LONG(  "transparentcolor", self->transparentcolor) 
+    else IF_SET_STRING("character",   self->character) 
+    else IF_SET_LONG(  "antialias",   self->antialias) 
+    else IF_SET_STRING("font",        self->font) 
+    else IF_SET_LONG(  "gap",         self->gap) 
+    else IF_SET_LONG(  "position",    self->position)        
     else if (strcmp( "numpoints", pPropertyName->value.str.val) == 0 ||
              strcmp( "patternlength", pPropertyName->value.str.val) == 0 ||
-             strcmp( "stylelength", pPropertyName->value.str.val) == 0)
+             strcmp( "stylelength", pPropertyName->value.str.val) == 0 ||
+             strcmp( "imagepath", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
                             pPropertyName->value.str.val);
