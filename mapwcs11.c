@@ -115,7 +115,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
 
         if( format_i == map->numoutputformats )
         {
-            msDebug("Failed to find outputformat info on format '%s', ignore.",
+            msDebug("Failed to find outputformat info on format '%s', ignore.\n",
                     tokens[i] );
             continue;
         }
@@ -123,7 +123,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
         mimetype = map->outputformatlist[format_i]->mimetype;
         if( mimetype == NULL || strlen(mimetype) == 0 )
         {
-            msDebug("No mimetime for format '%s', ignoring.",
+            msDebug("No mimetime for format '%s', ignoring.\n",
                     tokens[i] );
             continue;
         }
@@ -136,7 +136,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
 
         if( j < numformats )
         {
-            msDebug( "Format '%s' ignored since mimetype '%s' duplicates another outputFormatObj.", 
+            msDebug( "Format '%s' ignored since mimetype '%s' duplicates another outputFormatObj.\n", 
                      tokens[i], mimetype );
             continue;
         }
@@ -276,7 +276,7 @@ static int msWCSGetCapabilities11_CoverageSummary(
                                 "COM", MS_FALSE)) != NULL ) {
         /* ok */
     } else 
-        msDebug( "mapwcs.c: missing required information, no SRSs defined.");
+        msDebug( "mapwcs.c: missing required information, no SRSs defined.\n");
     
     if( owned_value != NULL && strlen(owned_value) > 0 ) 
         msLibXml2GenerateList( psCSummary, NULL, "SupportedCRS", 
@@ -690,7 +690,7 @@ msWCSDescribeCoverage_CoverageDescription11(
                                     "COM", MS_FALSE)) != NULL ) {
             /* ok */
         } else 
-            msDebug( "mapwcs.c: missing required information, no SRSs defined.");
+            msDebug( "mapwcs.c: missing required information, no SRSs defined.\n");
         
         if( owned_value != NULL && strlen(owned_value) > 0 ) 
             msLibXml2GenerateList( psCD, NULL, "SupportedCRS", 

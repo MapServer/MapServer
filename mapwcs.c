@@ -1271,7 +1271,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   if( fabs(params->resx/params->resy - 1.0) > 0.001 ) {
       map->gt.need_geotransform = MS_TRUE;
       if( map->debug )
-          msDebug( "RESX and RESY don't match.  Using geotransform/resample.");
+          msDebug( "RESX and RESY don't match.  Using geotransform/resample.\n");
   }
 
   /* Do we have a specified interpolation method */
