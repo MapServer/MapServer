@@ -1,0 +1,97 @@
+:Date: 2007/12/03
+:Author: Thomas Bonfort
+:Contact: thomas.bonfort@gmail.com
+:Last Edited: 2007/12/03
+:Status: Planning
+:Version: MapServer 5.2
+
+Overview
+--------
+
+MapServer 5.0 supports "hard" text wrapping, where the wrap character is unconditionally treated as a newline. This rfc proposes the addition of:
+ - conditional wrapping, i.e. newlines are only added when the current line length has met a user adjustable criteria
+ - line alignment, i.e. text aligned per user request, namely right, center and left
+ 
+These two additions are independant from one another, i.e. can be activated together or not.
+
+Line Wrapping
+------------------
+A new keyword, for example MAXLEN is added to the label object, and interacts with the label WRAP parameter as follows:
+ - the wrap character specifies what character can be replaced by a newline (no change w.r.t. the current meaning). Probably the most usefull wrap character will become ' ' (i.e. the space character)
+- the MAXLEN value specifies the maximum number of characters that can compose a line before a newline is inserted. A value of 0 specifies the current "hard" wrapping. A positive value triggers wrapping at the WRAP character for lines longer than MAXLEN. A Negative value triggers wrapping than is allowed to break words, i.e. not necessarily at the WRAP character.
+
+The WRAP / MAXLEN combinations are summarized here:
+
++----------------+-----------------+-----------------------------+-----------------+
+|                |   maxlen =0     |     maxlen > 0              |    maxlen < 0   |
++================+=================+=============================+=================+
+| wrap = 'char'  |  current way    | conditional wrap if current |                 |
+|                |                 |  length > maxlen            |                 |
++----------------+-----------------+-----------------------------+     hard wrap   |
+| no wrap        |  no processing  | skip label if  text is      |                 |
+|                |                 |  longer than maxlen         |                 |
++----------------+-----------------+-----------------------------+-----------------+
+
+Line Centering
+----------------
+A new keyword, for example ALIGN is added to the label object. It supports 3 values: left, center and right, 
+and controls how text lines should be aligned w.r.t. the label bounding box. Precise placement of text can only
+be done at the renderer level, by exactly defining the starting pixel of the current line. While this approach
+could be taken, it would considerably burden the renderer code.
+
+I propose to use a more generic though less precise way of doing, by padding the text lines with space characters
+to approximate indentation. The initial implementation will only rely on the number of characters in each
+text line:
+ * loop through text lines to find the line with the most characters l_max
+ * pad all the other lines with (l_max - l_cur)/2 space characters
+ 
+A more advanced implementation could be to use the exact line lengths as returned by the renderers with the
+msGetLabelSize function:
+ * compute the size in pixels of the "  " string (two spaces, accounts for kerning): l_2space
+ * loop through text lines to longest line of length pix_l_max
+ * pad all the other lines with (pix_l_max - pix_l_cur)/2 * 1/(2*l_2space) space characters
+ 
+Limitations: aligning text to the right will produce ugly results using this method, unless using a 
+monospace font.  
+
+Modifications to the source code
+--------------------------------
+
+* MAXLEN and ALIGN will be added to the LABEL object in map.h, in the mapfile parser/writer (mapfile.c) and in MapScript
+
+* msTransformLabelText() in maplabel.c will be updated to support the modifications proposed. No other modifications
+  should be required as the text itself is modified to fit the user's request (i.e. it is padded with spaces, and/or
+  newlines are added to it)
+
+MapScript Implications
+----------------------
+
+The labelObj will have a new maxlen property of type integer.
+
+Files affected
+--------------
+
+::
+
+ map.h
+ mapfile.c
+ maplabel.c
+ maplexer.l
+ maplexer.c
+
+Backwards compatibility issues
+------------------------------
+
+None.
+
+Bug ID
+------
+
+* 2383: https://trac.osgeo.org/mapserver/ticket/2383
+
+Voting history
+--------------
+
+
+Questions/Comments from the review period
+-----------------------------------------
