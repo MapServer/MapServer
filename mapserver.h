@@ -1552,7 +1552,7 @@ MS_DLL_EXPORT int msLoadQuery(mapObj *map, char *filename);
 MS_DLL_EXPORT int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex);
 MS_DLL_EXPORT int msQueryByIndexAdd(mapObj *map, int qlayer, int tileindex, int shapeindex);
 MS_DLL_EXPORT int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int mode);
-MS_DLL_EXPORT int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer);
+MS_DLL_EXPORT int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer, int maxresults);
 MS_DLL_EXPORT int msQueryByRect(mapObj *map, int qlayer, rectObj rect);
 MS_DLL_EXPORT int msQueryByFeatures(mapObj *map, int qlayer, int slayer);
 MS_DLL_EXPORT int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape);

@@ -272,7 +272,7 @@
         
         status = self->status;
         self->status = MS_ON;
-        retval = msQueryByPoint(map, self->index, mode, *point, buffer);
+        retval = msQueryByPoint(map, self->index, mode, *point, buffer, 0);
         self->status = status;
         return retval;
     }

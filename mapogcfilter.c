@@ -355,7 +355,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
             }
 
             msQueryByPoint(map, lp->index, MS_MULTIPLE, 
-                           psQueryShape->line[0].point[0], 0);
+                           psQueryShape->line[0].point[0], 0, 0);
         }
     }
     else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0

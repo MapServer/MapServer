@@ -797,7 +797,21 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   return(MS_FAILURE);
 }
 
-int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
+/* msQueryByPoint()
+ *
+ * With mode=MS_SINGLE:
+ *   Pass maxresults = 0 to have a single result across all layers (the closest
+ *   shape from the first layer that finds a match).
+ *   Pass maxresults = 1 to have up to one result per layer (the closest shape
+ *   from each layer).
+ *
+ * With mode=MS_MULTIPLE:
+ *   Pass maxresults = 0 to have an unlimited number of results.
+ *   Pass maxresults > 0 to limit the number of results per layer (the shapes
+ *   returned are the first ones found in each layer and are not necessarily
+ *   the closest ones).
+ */
+int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer, int maxresults)
 {
   int l;
   int start, stop=0;
@@ -937,15 +951,21 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 	}
       }
  
-      msFreeShape(&shape);	
+      msFreeShape(&shape);
+
+      if (mode == MS_MULTIPLE && maxresults > 0 && lp->resultcache->numresults == maxresults) {
+          status = MS_DONE;   /* got enough results for this layer */
+          break;
+      }
+
     } /* next shape */
 
     if(status != MS_DONE) return(MS_FAILURE);
 
     msLayerClose(lp);
 
-    if((lp->resultcache->numresults > 0) && (mode == MS_SINGLE)) /* no need to search any further */
-      break;
+    if((lp->resultcache->numresults > 0) && (mode == MS_SINGLE) && (maxresults == 0)) 
+      break;   /* no need to search any further */
   } /* next layer */
 
   /* was anything found? */

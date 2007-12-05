@@ -222,7 +222,7 @@
   }
 
   int queryByPoint(pointObj *point, int mode, double buffer) {
-    return msQueryByPoint(self, -1, mode, *point, buffer);
+    return msQueryByPoint(self, -1, mode, *point, buffer, 0);
   }
 
   int queryByRect(rectObj rect) {

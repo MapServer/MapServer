@@ -145,7 +145,7 @@ int mapObj_drawLabelCache(mapObj* self, imageObj *img) {
 
 int mapObj_queryByPoint(mapObj* self, pointObj *point, 
                          int mode, double buffer) {
-    return msQueryByPoint(self, -1, mode, *point, buffer);
+    return msQueryByPoint(self, -1, mode, *point, buffer, 0);
   }
 
 int mapObj_queryByRect(mapObj* self, rectObj rect) {
@@ -437,7 +437,7 @@ int layerObj_queryByPoint(layerObj *self, mapObj *map,
         
     status = self->status;
     self->status = MS_ON;
-    retval = msQueryByPoint(map, self->index, mode, *point, buffer);
+    retval = msQueryByPoint(map, self->index, mode, *point, buffer, 0);
     self->status = status;
 
     return retval;

@@ -1382,14 +1382,14 @@ int main(int argc, char *argv[]) {
             case FROMIMGPNT:
               msObj->Map->extent = msObj->ImgExt; /* use the existing map extent */    
               setCoordinate();
-              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_SINGLE, msObj->MapPnt, 0)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_SINGLE, msObj->MapPnt, 0, 0)) != MS_SUCCESS) writeError();
               break;
             case FROMUSERPNT: /* only a buffer makes sense */
               if(msObj->Buffer == -1) {
                 msSetError(MS_WEBERR, "Point given but no search buffer specified.", "mapserv()");
                 writeError();
               }
-              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_SINGLE, msObj->MapPnt, msObj->Buffer)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_SINGLE, msObj->MapPnt, msObj->Buffer, 0)) != MS_SUCCESS) writeError();
               break;
             default:
               msSetError(MS_WEBERR, "No way to the initial search, not enough information.", "mapserv()");
@@ -1401,12 +1401,12 @@ int main(int argc, char *argv[]) {
             case FROMIMGPNT:
               msObj->Map->extent = msObj->ImgExt; /* use the existing map extent */    
               setCoordinate();
-              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_MULTIPLE, msObj->MapPnt, 0)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_MULTIPLE, msObj->MapPnt, 0, 0)) != MS_SUCCESS) writeError();
               break;     
             case FROMIMGBOX:
               break;
             case FROMUSERPNT: /* only a buffer makes sense */
-              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_MULTIPLE, msObj->MapPnt, msObj->Buffer)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_MULTIPLE, msObj->MapPnt, msObj->Buffer, 0)) != MS_SUCCESS) writeError();
             default:
               setExtent(msObj);
               if((status = msQueryByRect(msObj->Map, SelectLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
@@ -1463,7 +1463,7 @@ int main(int argc, char *argv[]) {
               msObj->Map->width = msObj->ImgCols;
               msObj->Map->height = msObj->ImgRows;
               if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();     
-              if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_MULTIPLE, msObj->MapPnt, 0)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_MULTIPLE, msObj->MapPnt, 0, 0)) != MS_SUCCESS) writeError();
             }
             break;      
           case FROMIMGBOX:      
@@ -1509,7 +1509,7 @@ int main(int argc, char *argv[]) {
             break;      
           case FROMUSERPNT:
             if(msObj->Buffer == 0) {
-              if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_MULTIPLE, msObj->MapPnt, msObj->Buffer)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_MULTIPLE, msObj->MapPnt, msObj->Buffer, 0)) != MS_SUCCESS) writeError();
               setExtent(msObj);
             } else {
               setExtent(msObj);
@@ -1543,11 +1543,11 @@ int main(int argc, char *argv[]) {
             msObj->Map->width = msObj->ImgCols;
             msObj->Map->height = msObj->ImgRows;
             if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();           
-            if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_SINGLE, msObj->MapPnt, 0)) != MS_SUCCESS) writeError();
+            if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_SINGLE, msObj->MapPnt, 0, 0)) != MS_SUCCESS) writeError();
             break;
           case FROMUSERPNT: /* only a buffer makes sense, DOES IT? */    
             setExtent(msObj);    
-            if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_SINGLE, msObj->MapPnt, msObj->Buffer)) != MS_SUCCESS) writeError();
+            if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_SINGLE, msObj->MapPnt, msObj->Buffer, 0)) != MS_SUCCESS) writeError();
             break;
           default:
             msSetError(MS_WEBERR, "Query mode needs a point, imgxy and mapxy are not set.", "mapserv()");

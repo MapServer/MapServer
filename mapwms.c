@@ -2091,12 +2091,12 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   return(MS_SUCCESS);
 }
 
-int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, int feature_count)
+int msDumpResult(mapObj *map, int bFormatHtml, int nVersion)
 {
    int numresults=0;
    int i;
 
-   for(i=0; i<map->numlayers && numresults<feature_count; i++)
+   for(i=0; i<map->numlayers; i++)
    {
       int j, k, *itemvisible;
       char **incitems=NULL;
@@ -2157,7 +2157,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, int feature_count)
       /* Output selected shapes for this layer */
       msIO_printf("\nLayer '%s'\n", lp->name);
 
-      for(j=0; j<lp->resultcache->numresults && numresults<feature_count; j++) {
+      for(j=0; j<lp->resultcache->numresults; j++) {
         shapeObj shape;
 
         msInitShape(&shape);
@@ -2295,7 +2295,13 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   point.x = MS_IMAGE2MAP_X(point.x, map->extent.minx, cellx);
   point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
 
-  if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), point, 0) != MS_SUCCESS)
+  /* WMS 1.3.0 states that feature_count is *per layer*. 
+   * Its value is a positive integer, if omitted then the default is 1
+   */
+  if (feature_count < 1)
+      feature_count = 1;
+
+  if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), point, 0, feature_count) != MS_SUCCESS)
     if(ms_error->code != MS_NOTFOUND) return msWMSException(map, nVersion, NULL);
 
   /* Generate response */
@@ -2308,7 +2314,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     msIO_printf("Content-type: text/plain%c%c", 10,10);
     msIO_printf("GetFeatureInfo results:\n");
 
-    numresults = msDumpResult(map, 0, nVersion, feature_count);
+    numresults = msDumpResult(map, 0, nVersion);
 
     if (numresults == 0) msIO_printf("\n  Search returned no results.\n");
 
