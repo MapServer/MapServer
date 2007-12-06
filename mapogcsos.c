@@ -2660,28 +2660,20 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
 
     /* check for request */
 
-    /* this works with @request */
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetCapabilities");
 
-    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/*/@request");
-    //psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:*");
+    if (psXPathTmp)
+      sosparams->pszRequest = strdup("GetCapabilities");
 
-    if (psXPathTmp) {
-      nodeset = psXPathTmp->nodesetval;
-      sosparams->pszRequest = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
-    }
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeSensor");
 
-    /* this is a test for root val */
+    if (psXPathTmp)
+      sosparams->pszRequest = strdup("DescribeSensor");
 
-/*
-    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"//");
-    
-    if (psXPathTmp) {
-      //sosparams->pszRequest = "Foooo";
-      //nodeset = psXPathTmp->nodesetval;
-      //sosparams->pszRequest = (char *)nodeset->nodeTab[0]->name;
-      //sosparams->pszRequest = (char *)psXPathTmp->stringval;
-    } 
-*/
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation");
+
+    if (psXPathTmp)
+      sosparams->pszRequest = strdup("GetObservation");
 
     xmlXPathFreeObject(psXPathTmp);
 
