@@ -3258,68 +3258,157 @@ int msDrawLegendIconGD(mapObj *map, layerObj *lp, classObj *class, int width, in
   
   return MS_SUCCESS;
 }
-
-static int msImageCopyForcePaletteGD(gdImagePtr src, gdImagePtr dst) 
+/*
+ * copy src to dst using dst's palette
+ * src must be a truecolor image
+ * dst must be a paletted image
+ * method is to fine tune the caching used to lookup color values in the palette:
+ *  -0 is the default method, which allocates cache memory when needed
+ *  -1 is a memory conservative method, that uses very little caching but is much
+ *   slower
+ *  -2 is a memory hungry caching method (allocates 32MB on the heap) but is the 
+ *   fastest for large images
+ * 
+ * see bug #2422 for some benchmark timings of these methods
+ */
+static int msImageCopyForcePaletteGD(gdImagePtr src, gdImagePtr dst, int method) 
 {
-  int x, y;
-  int w, h;
-  int c, r, g, b;
-  int R[10], G[10], B[10], C[10];
-  int i, color, nCache = 0, iCache =0, maxCache=10;
-  
-  if(!src || !dst) return MS_FAILURE;
-  if(gdImageSX(src) != gdImageSX(dst) || gdImageSY(src) != gdImageSY(dst)) return MS_FAILURE;
-  if(!gdImageTrueColor(src) || gdImageTrueColor(dst)) return MS_FAILURE; /* 24-bit to 8-bit */
+    int x, y;
+    int w, h;
+    int c, r, g, b,color;
+    if(!src || !dst) return MS_FAILURE;
+    if(gdImageSX(src) != gdImageSX(dst) || gdImageSY(src) != gdImageSY(dst)) return MS_FAILURE;
+    if(!gdImageTrueColor(src) || gdImageTrueColor(dst)) return MS_FAILURE; /* 24-bit to 8-bit */
+    w = gdImageSX(src);
+    h = gdImageSY(src);
+    if(method==0) {
+        /*default caching strategy*/
+        
+        /*pointer to cache indexed by 'red' component*/
+        unsigned short ***cols=(unsigned short***)calloc(256,sizeof(unsigned short**));
+        
+        /*pointer to cache, pointed by red component, indexed by green component*/
+        unsigned short **data=(unsigned short**)calloc(256*256,sizeof(unsigned short*));
+        for(r=0;r<256;r++) {
+            /*populate the cache*/
+            cols[r]=&(data[r*256]);
+        }
 
-  w = gdImageSX(src);
-  h = gdImageSY(src);
+        for (y = 0; (y < h); y++) {
+            for (x = 0; (x < w); x++) {
+                c = gdImageGetPixel(src, x, y);  
+                r =  gdTrueColorGetRed(c);
+                g = gdTrueColorGetGreen(c);
+                b = gdTrueColorGetBlue(c);
+                
+                if(cols[r][g]==NULL) {
+                    /*this is the first time we see this r,g couple. 
+                     *allocate bytes for the blue component*/ 
+                    cols[r][g]=(unsigned short*)calloc(256,sizeof(unsigned short));
+                }
 
-  iCache = 0;
-
-  for (y = 0; (y < h); y++) {
-    for (x = 0; (x < w); x++) {
-      c = gdImageGetPixel(src, x, y);
-      r =  gdTrueColorGetRed(c);
-      g = gdTrueColorGetGreen(c);
-      b = gdTrueColorGetBlue(c);
-      color = -1;
-
-      /* adding a simple cache to keep colors instead of always calling gdImageColorClosest
-         seems to reduce significantly the time passed in this function 
-         spcially with large images (bug 2096)*/
-      for (i=0; i<nCache; i++)
-      {
-          if (R[i] == r)
-          {
-              if (G[i] == g && B[i] == b)
-              {
-                  color = C[i];
-                  break;
-              }
-          }
-      }
-
-      if (color == -1)
-      {
-          color = gdImageColorClosest(dst, r, g, b);
-          R[iCache] = r;
-          G[iCache] = g;
-          B[iCache] = b;
-          C[iCache] = color;
-          nCache++;
-          if (nCache >= maxCache)
-            nCache = maxCache;
-          
-          iCache++;
-          if (iCache == maxCache)
-            iCache = 0;
-      }
-
-      gdImageSetPixel(dst, x, y, color);
+                if(!cols[r][g][b]) {
+                    /*this r,g,b triplet was never seen before
+                     * compute its index in the palette and cache the result
+                     */
+                    color = gdImageColorClosest(dst, r, g, b);
+                    dst->pixels[y][x] = color;
+                    /*the cache data was calloc'ed to avoid initialization
+                     * store 'index+1' so we are sure the test for cols[r][g][b]
+                     * returns true, i.e that this color was cached*/
+                    cols[r][g][b]=color+1;
+                }
+                else {
+                    /*the cache data was calloc'ed to avoid initialization
+                     * the cache contains 'index+1' so we must subtract
+                     * 1 to get the real color index*/
+                    dst->pixels[y][x] = cols[r][g][b]-1;
+                }
+            }
+        }
+        for(r=0;r<256;r++) 
+            for(g=0;g<256;g++) 
+                if(cols[r][g]) /*only free the row if it was used*/
+                    free(cols[r][g]); 
+        free(data);
+        free(cols);
     }
-  }
-  return MS_SUCCESS;
-} 
+    else if(method==1) {
+        /*memory conservative method, does not allocate mem on the heap*/
+        int R[10], G[10], B[10], C[10];
+        int i, color, nCache = 0, iCache =0, maxCache=10;
+
+        for (y = 0; (y < h); y++) {
+            for (x = 0; (x < w); x++) {
+                c = gdImageGetPixel(src, x, y);
+                r =  gdTrueColorGetRed(c);
+                g = gdTrueColorGetGreen(c);
+                b = gdTrueColorGetBlue(c);
+                color = -1;
+
+                /* adding a simple cache to keep colors instead of always calling gdImageColorClosest
+               seems to reduce significantly the time passed in this function 
+               spcially with large images (bug 2096)*/
+                for (i=0; i<nCache; i++)
+                {
+                    if (R[i] == r)
+                    {
+                        if (G[i] == g && B[i] == b)
+                        {
+                            color = C[i];
+                            break;
+                        }
+                    }
+                }
+
+                if (color == -1)
+                {
+                    color = gdImageColorClosest(dst, r, g, b);
+                    R[iCache] = r;
+                    G[iCache] = g;
+                    B[iCache] = b;
+                    C[iCache] = color;
+                    nCache++;
+                    if (nCache >= maxCache)
+                        nCache = maxCache;
+
+                    iCache++;
+                    if (iCache == maxCache)
+                        iCache = 0;
+                }
+
+                gdImageSetPixel(dst, x, y, color);
+            }
+        }
+    }
+    else if(method==2) {
+        /*memory hungry method, fastest for very large images*/
+        
+        /*use a cache for every possible r,g,b triplet
+         * this is usually a full 32MB (when short is 2 bytes) */
+        short *cache=(short*)calloc(16777216,sizeof(short));
+
+        for (y = 0; (y < h); y++) {
+            for (x = 0; (x < w); x++) {
+                int index;
+                c = gdImageGetPixel(src, x, y);    
+                index=c&0xFFFFFF; /*use r,g,b for the cache index, i.e. remove alpha*/
+                if(!cache[index]) {
+                    r =  gdTrueColorGetRed(c);
+                    g = gdTrueColorGetGreen(c);
+                    b = gdTrueColorGetBlue(c);
+                    color = gdImageColorClosest(dst, r, g, b);
+                    cache[index]=color+1;
+                    dst->pixels[y][x] = color;
+                }
+                else
+                    dst->pixels[y][x] = cache[index]-1;
+            }
+        }
+        free(cache);
+    }
+    return MS_SUCCESS;
+}
 
 static gdImagePtr msImageCreateWithPaletteGD( gdImagePtr img24, const char *palette, int sx, int sy) 
 {
@@ -3482,33 +3571,37 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 
     if( force_palette ) {
       gdImagePtr gdPImg;
+      int method=0;
       const char *palette = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
-
+      const char *palette_method = msGetOutputFormatOption( format, "PALETTE_MEM", "0");
       gdPImg = msImageCreateWithPaletteGD(img, palette, gdImageSX(img), gdImageSY(img));
-
-      msImageCopyForcePaletteGD(img, gdPImg);
-
+      if(strcasecmp(palette_method,"conservative")==0)
+          method=1;
+      else if(strcasecmp(palette_method,"liberal")==0)
+          method=2;
+      msImageCopyForcePaletteGD(img, gdPImg, method);
 
       gdImagePngCtx(gdPImg, ctx);
       gdImageDestroy(gdPImg);
     } else if( force_pc256 ) {
-      gdImagePtr gdPImg;
-      int dither, i;
-      int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
-      const char *dither_string = msGetOutputFormatOption( format, "QUANTIZE_DITHER", "YES");
+        gdImagePtr gdPImg;
+        int dither, i;
+        int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
+        const char *dither_string = msGetOutputFormatOption( format, "QUANTIZE_DITHER", "YES");
 
-      if( strcasecmp(dither_string,"on") == 0 || strcasecmp(dither_string,"yes") == 0 || strcasecmp(dither_string,"true") == 0 )
-        dither = 1;
-      else
-        dither = 0;
-      
-      gdPImg = gdImageCreatePaletteFromTrueColor(img,dither,colorsWanted);
-      /* It seems there is a bug in gd 2.0.33 and earlier that leaves the 
+        if( strcasecmp(dither_string,"on") == 0 || strcasecmp(dither_string,"yes") == 0 || strcasecmp(dither_string,"true") == 0 )
+            dither = 1;
+        else
+            dither = 0;
+
+        gdPImg = gdImageCreatePaletteFromTrueColor(img,dither,colorsWanted);
+        /* It seems there is a bug in gd 2.0.33 and earlier that leaves the 
          colors open[] flag set to one. */
-      for( i = 0; i < gdPImg->colorsTotal; i++ )
-        gdPImg->open[i] = 0;
-      gdImagePngCtx( gdPImg, ctx );
-      gdImageDestroy( gdPImg );
+        for( i = 0; i < gdPImg->colorsTotal; i++ )
+            gdPImg->open[i] = 0;
+        gdImagePngCtx( gdPImg, ctx );
+        gdImageDestroy( gdPImg );
+
     } else
       gdImagePngCtx( img, ctx );
 #else
@@ -3585,11 +3678,16 @@ unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr, outputFormatOb
 
     if( force_palette ) {
       gdImagePtr gdPImg;
+      int method=0;
       const char *palette = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
+      const char *palette_method = msGetOutputFormatOption( format, "PALETTE_MEM", "0");
+      if(strcasecmp(palette_method,"conservative")==0)
+          method=1;
+      else if(strcasecmp(palette_method,"liberal")==0)
+          method=2;
 
       gdPImg = msImageCreateWithPaletteGD(img, palette, gdImageSX(img), gdImageSY(img));
-
-      msImageCopyForcePaletteGD(img, gdPImg);
+      msImageCopyForcePaletteGD(img, gdPImg, method);
       imgbytes = gdImagePngPtr(gdPImg, size_ptr);
     }
     else if ( force_pc256 ) {

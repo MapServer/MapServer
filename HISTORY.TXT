@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- Speed up forced palette rendering (#2422)
 
 - WMS GetFeatureInfo: honour FEATURE_COUNT for any INFO_FORMAT and 
   apply the FEATURE_COUNT per layer instead of globally (#2423, #1686)
