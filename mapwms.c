@@ -366,8 +366,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int formatfound = 0;
   int widthfound = 0;
   int heightfound = 0;
-  int stylesfound = 0;
-  int sldfound = 0;
 
   char *request = NULL;
 
@@ -392,7 +390,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     /* check if SLD is passed.  If yes, check for OGR support */
     if (strcasecmp(names[i], "SLD") == 0 || strcasecmp(names[i], "SLD_BODY") == 0)
     {
-      sldfound = 1;
       if (ogrEnabled == 0)
       {
         msSetError(MS_WMSERR, "OGR support is not available.", "msWMSLoadGetMapParams()");
@@ -464,7 +461,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       msFreeCharArray(layers, numlayers);
     }
     else if (strcasecmp(names[i], "STYLES") == 0) {
-        stylesfound = 1;
         styles = values[i];
 
     }
@@ -883,11 +879,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       return msWMSException(map, nVersion, "MissingParameterValue");
     }
   
-    if (stylesfound == 0 && sldfound == 0)
-    {
-      msSetError(MS_WMSERR, "Missing required parameter STYLES", "msWMSLoadGetMapParams()");
-      return msWMSException(map, nVersion, "MissingParameterValue");
-    }
   }
 
   return MS_SUCCESS;

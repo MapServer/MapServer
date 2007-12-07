@@ -12,6 +12,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+
+- Restored behavior of MS 4.10 and made WMS STYLES parameter optional
+  again in GetMap and GetFeatureInfo requests (#2427)
+
 - Speed up forced palette rendering (#2422)
 
 - WMS GetFeatureInfo: honour FEATURE_COUNT for any INFO_FORMAT and 
