@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-0)
 --------------------------------
 
+- Restored behavior of MS 4.10 and made WMS STYLES parameter optional
+  again in GetMap and GetFeatureInfo requests (#2427)
+
 - fixed symbolsetObj not to set the SWIG immutable flag permanently
   don't expose refcount and the symbol attributes (Ticket #2407)
 
