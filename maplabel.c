@@ -39,6 +39,62 @@
 
 MS_CVSID("$Id$")
 
+
+char *centerText(char *text) {
+    char *textptr=text;
+    char *newtext,*newtextptr;
+    int numlines=1,curline=0,curlen=0,maxlen=0,i,newlen;
+    int *lens;
+    char glyph[12];
+    //count number of newlines
+    while(*textptr) {
+        if(*(textptr++)=='\n')
+            numlines++;
+    }
+    if(numlines==1) return NULL;
+    lens=(int*)malloc(numlines*sizeof(int));
+    textptr=text;
+    while(*textptr) {
+        msGetNextGlyph((const char**)&textptr,glyph);
+        if(*glyph=='\n') {
+            lens[curline]=curlen;
+            curlen=0;
+            curline++;
+        }
+        else
+            curlen++;
+    }
+    lens[curline]=curlen; //last line isn't terminated with \n
+    for(i=0;i<numlines;i++) {
+        if(lens[i]>maxlen)
+            maxlen=lens[i];
+    }
+    newlen=strlen(text)+1;
+    for(i=0;i<numlines;i++) {
+        if(lens[i]!=maxlen) {
+            newlen+=ceil((maxlen-lens[i])*3/4.); //number of spaces needed for padding the current line
+        }
+    }
+    newtext=(char*)malloc(newlen);
+    textptr=text;
+    newtextptr=newtext;
+    for(i=0;i<numlines;i++) {
+        int nstart,j;
+        nstart=ceil((maxlen-lens[i])*3/4.);
+        for(j=0;j<nstart;j++) {
+            *(newtextptr++)=' ';
+        }
+        while(1) {
+            *(newtextptr++)=*(textptr);
+            if(*(textptr)=='\n' || *(textptr)=='\0')
+                {textptr++;break;}
+            else
+                textptr++;
+        }
+    }
+    free(lens);
+    return newtext;
+}
 /*
  * this function applies the label encoding and wrap parameters
  * to the supplied text
@@ -47,16 +103,32 @@ MS_CVSID("$Id$")
  */
 char *msTransformLabelText(labelObj *label, char *text)
 {
-    char *newtext;
+    int minwraplength=8;
+    int curlgth=0;
+    char glyph[12];
+    char *newtext,*newnewtext,*txtptr,*glyphptr;
     if(label->encoding)
         newtext = msGetEncodedString(text, label->encoding);
     else
         newtext=strdup(text);
     
     if(newtext && label->wrap!='\0') {
-        msReplaceChar(newtext, label->wrap, '\n');
+        txtptr=glyphptr=newtext;
+        while(msGetNextGlyph((const char**)&txtptr,glyph)!=-1) {
+            if(*glyph==label->wrap && curlgth>minwraplength) {
+                *glyphptr='\n';
+                curlgth=0;
+            } else
+                curlgth++;
+            glyphptr=txtptr;
+        }
     }
-    return newtext;
+    if((newnewtext=centerText(newtext))==NULL)
+        return newtext;
+    else {
+        free(newtext);
+        return newnewtext;
+    }
 }
 
 int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label )
