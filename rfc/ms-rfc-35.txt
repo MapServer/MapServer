@@ -5,8 +5,8 @@
 :Date: 2007/10/16
 :Author: Frank Warmerdam, Daniel Morissette
 :Contact: warmerdam@pobox.com, dmorissette@mapgears.com
-:Last Edited: 2007/11/01
-:Status: Development
+:Last Edited: 2007/12/07
+:Status: Withdrawn (2007/12/07)
 
 Overview
 --------
@@ -92,9 +92,9 @@ Implementation of this feature should restore backward compatible default behavi
 Bug ID
 ------
 
-None assigned.
+http://trac.osgeo.org/mapserver/ticket/2427
 
 Voting History
 --------------
 
-None
+There was a first vote around 2007/11/08 which was veto'd... and after further discussion the RFC has been withdrawn in favor of simply restoring the behavior of MapServer 4.10 with respect to the STYLES= parameter (i.e. make it optional again). See ticket #2427 about this.
