@@ -2073,8 +2073,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                                 cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
                                 p = get_metrics(&(cachePtr->point), pos, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
-                                if(MS_VALID_COLOR(labelPtr->backgroundcolor))
-                                    get_metrics_line(&(cachePtr->point), pos, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, 1, billboard.line);
                                 if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
                                     msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
@@ -2082,8 +2080,11 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                                 msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, 
                                         labelPtr->buffer + map_edge_buffer, cachePtr, priority, l);
 
-                                if(cachePtr->status) /* found a suitable place for this label */
+                                if(cachePtr->status) /* found a suitable place for this label */ {
+                                    if(MS_VALID_COLOR(labelPtr->backgroundcolor))
+                                        get_metrics_line(&(cachePtr->point), pos, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, 1, billboard.line);                                          
                                     break;
+                                }
 
                             } /* next position */
 
