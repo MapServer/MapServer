@@ -192,7 +192,7 @@ static int msWCSGetCapabilities11_CoverageSummary(
     status = msWCSGetCoverageMetadata(layer, &cm);
     if(status != MS_SUCCESS) return MS_FAILURE;
 
-    psCSummary = xmlNewChild( psContents, NULL, "CoverageSummary", NULL );
+    psCSummary = xmlNewChild( psContents, NULL, BAD_CAST "CoverageSummary", NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Title (from description)                                        */
@@ -200,12 +200,12 @@ static int msWCSGetCapabilities11_CoverageSummary(
     value = msOWSLookupMetadata( &(layer->metadata), "COM", "description");
     if( value == NULL )
         value = layer->name;
-    xmlNewChild( psCSummary, psOwsNs, "Title", value );
+    xmlNewChild( psCSummary, psOwsNs, BAD_CAST "Title", BAD_CAST value );
 
 /* -------------------------------------------------------------------- */
 /*      Identifier (layer name)                                         */
 /* -------------------------------------------------------------------- */
-    xmlNewChild( psCSummary, NULL, "Identifier", layer->name );
+    xmlNewChild( psCSummary, NULL, BAD_CAST "Identifier", BAD_CAST layer->name );
 
 /* -------------------------------------------------------------------- */
 /*      Keywords                                                        */
@@ -215,12 +215,12 @@ static int msWCSGetCapabilities11_CoverageSummary(
     if (value) {
         xmlNodePtr psNode;
 
-        psNode = xmlNewChild(psCSummary, psOwsNs, "Keywords", NULL);
+        psNode = xmlNewChild(psCSummary, psOwsNs, BAD_CAST "Keywords", NULL);
 
         tokens = msStringSplit(value, ',', &n);
         if (tokens && n > 0) {
             for (i=0; i<n; i++) {
-                xmlNewChild(psNode, NULL, "Keyword", tokens[i] );
+                xmlNewChild(psNode, NULL, BAD_CAST "Keyword", BAD_CAST tokens[i] );
             }
             msFreeCharArray(tokens, n);
         }
@@ -328,22 +328,22 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      Create document.                                                */
 /* -------------------------------------------------------------------- */
-    psDoc = xmlNewDoc("1.0");
+    psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-    psRootNode = xmlNewNode(NULL, "Capabilities");
+    psRootNode = xmlNewNode(NULL, BAD_CAST "Capabilities");
 
     xmlDocSetRootElement(psDoc, psRootNode);
 
 /* -------------------------------------------------------------------- */
 /*      Name spaces                                                     */
 /* -------------------------------------------------------------------- */
-    xmlSetNs(psRootNode, xmlNewNs(psRootNode, "http://www.opengis.net/wcs/1.1", NULL));
-    psOwsNs = xmlNewNs(psRootNode, MS_OWSCOMMON_OWS_NAMESPACE_URI, MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
-    psXLinkNs = xmlNewNs(psRootNode, MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
-    xmlNewNs(psRootNode, MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
-    xmlNewNs(psRootNode, MS_OWSCOMMON_OGC_NAMESPACE_URI, MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
+    xmlSetNs(psRootNode, xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/wcs/1.1", NULL));
+    psOwsNs = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+    psXLinkNs = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
+    xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
+    xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
 
-    xmlNewProp(psRootNode, "version", params->version );
+    xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->version );
 
 /* -------------------------------------------------------------------- */
 /*      Service metadata.                                               */
@@ -430,7 +430,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      Contents section.                                               */
 /* -------------------------------------------------------------------- */
-    psMainNode = xmlNewChild( psRootNode, NULL, "Contents", NULL );
+    psMainNode = xmlNewChild( psRootNode, NULL, BAD_CAST "Contents", NULL );
 
     for(i=0; i<map->numlayers; i++)
     {
@@ -511,7 +511,7 @@ msWCSDescribeCoverage_CoverageDescription11(
 /* -------------------------------------------------------------------- */
 /*      Create CoverageDescription node.                                */
 /* -------------------------------------------------------------------- */
-    psCD = xmlNewChild( psRootNode, NULL, "CoverageDescription", NULL );
+    psCD = xmlNewChild( psRootNode, NULL, BAD_CAST "CoverageDescription", NULL );
     
 /* -------------------------------------------------------------------- */
 /*      Title (from description)                                        */
@@ -519,12 +519,12 @@ msWCSDescribeCoverage_CoverageDescription11(
     value = msOWSLookupMetadata( &(layer->metadata), "COM", "description");
     if( value == NULL )
         value = layer->name;
-    xmlNewChild( psCD, psOwsNs, "Title", value );
+    xmlNewChild( psCD, psOwsNs, BAD_CAST "Title", BAD_CAST value );
 
 /* -------------------------------------------------------------------- */
 /*      Identifier (layer name)                                         */
 /* -------------------------------------------------------------------- */
-    xmlNewChild( psCD, NULL, "Identifier", layer->name );
+    xmlNewChild( psCD, NULL, BAD_CAST "Identifier", BAD_CAST layer->name );
 
 /* -------------------------------------------------------------------- */
 /*      Keywords                                                        */
@@ -533,18 +533,18 @@ msWCSDescribeCoverage_CoverageDescription11(
 
     if (value)
         msLibXml2GenerateList( 
-            xmlNewChild(psCD, psOwsNs, "Keywords", NULL),
+            xmlNewChild(psCD, psOwsNs, BAD_CAST "Keywords", NULL),
             NULL, "Keyword", value, ',' );
 
 /* -------------------------------------------------------------------- */
 /*      Domain                                                          */
 /* -------------------------------------------------------------------- */
-    psDomain = xmlNewChild( psCD, NULL, "Domain", NULL );
+    psDomain = xmlNewChild( psCD, NULL, BAD_CAST "Domain", NULL );
 
 /* -------------------------------------------------------------------- */
 /*      SpatialDomain                                                   */
 /* -------------------------------------------------------------------- */
-    psSD = xmlNewChild( psDomain, NULL, "SpatialDomain", NULL );
+    psSD = xmlNewChild( psDomain, NULL, BAD_CAST "SpatialDomain", NULL );
 
 /* -------------------------------------------------------------------- */
 /*      imageCRS bounding box.                                          */
@@ -578,24 +578,24 @@ msWCSDescribeCoverage_CoverageDescription11(
     {
         char format_buf[500];
 
-        psGridCRS = xmlNewChild( psSD, NULL, "GridCRS", NULL );
+        psGridCRS = xmlNewChild( psSD, NULL, BAD_CAST "GridCRS", NULL );
 
         
-        xmlNewChild( psGridCRS, NULL, "GridBaseCRS", cm.srs_urn );
-        xmlNewChild( psGridCRS, NULL, "GridType", 
-                     "urn:ogc:def:method:WCS:1.1:2dSimpleGrid" );
+        xmlNewChild( psGridCRS, NULL, BAD_CAST "GridBaseCRS", BAD_CAST cm.srs_urn );
+        xmlNewChild( psGridCRS, NULL, BAD_CAST "GridType", 
+                     BAD_CAST "urn:ogc:def:method:WCS:1.1:2dSimpleGrid" );
 
         sprintf( format_buf, "%.15g %.15g", 
                  cm.geotransform[0]+cm.geotransform[1]/2+cm.geotransform[2]/2, 
                  cm.geotransform[3]+cm.geotransform[4]/2+cm.geotransform[5]/2);
-        xmlNewChild( psGridCRS, NULL, "GridOrigin", format_buf );
+        xmlNewChild( psGridCRS, NULL, BAD_CAST "GridOrigin", BAD_CAST format_buf );
 
         sprintf( format_buf, "%.15g %.15g", 
                  cm.geotransform[1], cm.geotransform[5] );
-        xmlNewChild( psGridCRS, NULL, "GridOffsets", format_buf );
+        xmlNewChild( psGridCRS, NULL, BAD_CAST "GridOffsets", BAD_CAST format_buf );
 
-        xmlNewChild( psGridCRS, NULL, "GridCS", 
-                     "urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS" );
+        xmlNewChild( psGridCRS, NULL, BAD_CAST "GridCS", 
+                     BAD_CAST "urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS" );
     }
 
 
@@ -627,37 +627,37 @@ msWCSDescribeCoverage_CoverageDescription11(
 
         psField = 
             xmlNewChild(
-                xmlNewChild( psCD, NULL, "Range", NULL ),
-                NULL, "Field", NULL );
+                xmlNewChild( psCD, NULL, BAD_CAST "Range", NULL ),
+                NULL, BAD_CAST "Field", NULL );
         
         value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", 
                                         "rangeset_label", NULL );
         if( value )
-            xmlNewChild( psField, psOwsNs, "Title", value );
+            xmlNewChild( psField, psOwsNs, BAD_CAST "Title", BAD_CAST value );
 
         /* ows:Abstract? TODO */
 
         value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", 
                                         "rangeset_name", "bands" );
-        xmlNewChild( psField, NULL, "Identifier", value );
+        xmlNewChild( psField, NULL, BAD_CAST "Identifier", BAD_CAST value );
         
         /* <NullValue> TODO */
         
         psInterpMethods = 
-            xmlNewChild( psField, NULL, "InterpolationMethods", NULL );
+            xmlNewChild( psField, NULL, BAD_CAST "InterpolationMethods", NULL );
 
         xmlNewChild( psInterpMethods, NULL, 
-                     "DefaultMethod", "nearest neighbour" );
-        xmlNewChild( psInterpMethods, NULL, "OtherMethod", "bilinear" );
+                     BAD_CAST "DefaultMethod", BAD_CAST "nearest neighbour" );
+        xmlNewChild( psInterpMethods, NULL, BAD_CAST "OtherMethod", BAD_CAST "bilinear" );
 
 /* -------------------------------------------------------------------- */
 /*      Do axes properly later...                                       */
 /* -------------------------------------------------------------------- */
-        psAxis = xmlNewChild( psField, NULL, "Axis", NULL );
-        xmlNewProp( psAxis, "identifier", "Band" );
+        psAxis = xmlNewChild( psField, NULL, BAD_CAST "Axis", NULL );
+        xmlNewProp( psAxis, BAD_CAST "identifier", BAD_CAST "Band" );
 
         msLibXml2GenerateList( 
-            xmlNewChild(psAxis, NULL, "AvailableKeys", NULL),
+            xmlNewChild(psAxis, NULL, BAD_CAST "AvailableKeys", NULL),
             NULL, "Key", "1", ',' );
         
     }        
@@ -760,22 +760,22 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
 /* -------------------------------------------------------------------- */
 /*      Create document.                                                */
 /* -------------------------------------------------------------------- */
-    psDoc = xmlNewDoc("1.0");
+    psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-    psRootNode = xmlNewNode(NULL, "CoverageDescriptions");
+    psRootNode = xmlNewNode(NULL, BAD_CAST "CoverageDescriptions");
 
     xmlDocSetRootElement(psDoc, psRootNode);
 
 /* -------------------------------------------------------------------- */
 /*      Name spaces                                                     */
 /* -------------------------------------------------------------------- */
-    xmlSetNs(psRootNode, xmlNewNs(psRootNode, "http://www.opengis.net/wcs/1.1", NULL));
-    psOwsNs = xmlNewNs(psRootNode, MS_OWSCOMMON_OWS_NAMESPACE_URI, MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
-    psXLinkNs = xmlNewNs(psRootNode, MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
-    xmlNewNs(psRootNode, MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
-    xmlNewNs(psRootNode, MS_OWSCOMMON_OGC_NAMESPACE_URI, MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
+    xmlSetNs(psRootNode, xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/wcs/1.1", NULL));
+    psOwsNs = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+    psXLinkNs = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
+    xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
+    xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
 
-    xmlNewProp(psRootNode, "version", params->version );
+    xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->version );
 
 /* -------------------------------------------------------------------- */
 /*      Generate a CoverageDescription for each requested coverage.     */
