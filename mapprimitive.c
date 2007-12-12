@@ -209,13 +209,27 @@ void msComputeBounds(shapeObj *shape)
 static int isOuterRing(shapeObj *shape, int r) 
 {
   int i, status=MS_TRUE; 
+  int result1, result2;
 
   if(shape->numlines == 1) return(MS_TRUE);
 
   for(i=0; i<shape->numlines; i++) {
     if(i == r) continue;
-    if(msPointInPolygon(&(shape->line[r].point[0]), &(shape->line[i])) == MS_TRUE)
-      status = !status;
+
+    /*
+    ** We have to test 2, or perhaps 3 points on the shape against the ring because
+    ** it is possible that at most one point could touch the ring and the function
+    ** msPointInPolygon() is indeterminite in that case. (bug #2434)
+    */
+    result1 = msPointInPolygon(&(shape->line[r].point[0]), &(shape->line[i]));
+    result2 = msPointInPolygon(&(shape->line[r].point[1]), &(shape->line[i]));
+    if(result1 == result2) { /* same result twice, neither point was on the edge */
+      if(result1 == MS_TRUE) status = !status;
+    } else { /* one of the first 2 points were on the edge of the ring, the next one isn't */
+      if(msPointInPolygon(&(shape->line[r].point[2]), &(shape->line[i])) == MS_TRUE)
+	status = !status;
+    }
+
   }
 
   return(status);
