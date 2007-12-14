@@ -110,6 +110,120 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
 }
 
 /*
+ * Calculates the optimal size for the legend. If the optional layerObj
+ * argument is given, the legend size will be calculated for only that
+ * layer. Otherwise, the legend size is calculated for all layers that
+ * are not MS_OFF or of MS_LAYER_QUERY type.
+ *     
+ * Returns one of:
+ *   MS_SUCCESS
+ *   MS_FAILURE
+ */
+int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x,
+                     int *size_y, layerObj *psForLayer) {
+    int i, j;
+    int status, maxwidth=0, nLegendItems=0;
+    char *transformedText; // Label text after applying wrapping,
+                           // encoding if necessary
+    layerObj *lp;  
+    rectObj rect;
+    
+    /* Reset sizes */
+    *size_x = 0;
+    *size_y = 0;
+    
+    /* Enable scale-dependent calculations */
+    if (!scale_independent) {
+        map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
+        status = msCalculateScale(map->extent, map->units, map->width,
+                                  map->height, map->resolution, &map->scaledenom);
+        if (status != MS_SUCCESS) return MS_FAILURE;
+    }
+
+
+    /*
+     * step through all map classes, and for each one that will be displayed
+     * calculate the label size
+     */
+    for (i=0; i<map->numlayers; i++) 
+    {
+        if (psForLayer)
+        {
+            lp = psForLayer;
+            i = map->numlayers;
+        }
+        else
+          lp = (GET_LAYER(map, map->layerorder[i]));
+
+        if ((lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY)) /* skip it */
+            continue;
+            
+        if (!scale_independent && map->scaledenom > 0) {
+            if ((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom))
+                continue;
+            if ((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom))
+                continue;
+        }
+        
+        for (j=lp->numclasses-1; j>=0; j--) 
+        {
+            if (!lp->class[j]->name) continue; /* skip it */
+            
+            /* Verify class scale */
+            if (!scale_independent && map->scaledenom > 0) {
+                if (   (lp->class[j]->maxscaledenom > 0) 
+                    && (map->scaledenom > lp->class[j]->maxscaledenom))
+                    continue;
+                    
+                if (   (lp->class[j]->minscaledenom > 0)
+                    && (map->scaledenom <= lp->class[j]->minscaledenom))
+                    continue;
+            }
+            
+            /*
+             * apply encoding and line wrapping to the legend label if requested
+             * this is done conditionnally as the text transformation function
+             * does some memory allocations that can be avoided in most cases.
+             * the transformed text must be freed once finished, this must be done
+             * conditionnally by testing if the transformed text pointer is the
+             * same as the class name pointer
+             */
+            if (map->legend.label.encoding || map->legend.label.wrap)
+                transformedText = msTransformLabelText(&map->legend.label,
+                                                       lp->class[j]->name);
+            else
+              transformedText = strdup(lp->class[j]->name);
+
+            if (   transformedText == NULL
+                || msGetLabelSize(transformedText, &map->legend.label, 
+                                  &rect, &(map->fontset), 1.0, MS_FALSE) != 0)
+            { /* something bad happened */
+                if (transformedText)
+                  msFree(transformedText);
+
+                return MS_FAILURE;
+            }
+
+            msFree(transformedText);
+            maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
+            *size_y += MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
+            nLegendItems++;
+        }
+    }
+
+    /* Calculate the size of the legend: */
+    /*   - account for the Y keyspacing */
+    *size_y += (2*VMARGIN) + ((nLegendItems-1) * map->legend.keyspacingy);
+    /*   - determine the legend width */
+    *size_x = (2*HMARGIN) + maxwidth + map->legend.keyspacingx + map->legend.keysizex;
+    
+    if (*size_y <=0 ||  *size_x <=0)
+       return MS_FAILURE;
+
+    return MS_SUCCESS;
+}
+
+/*
 ** Creates a GD image of a legend for a specific map. msDrawLegend()
 ** respects the current scale, and classes without a name are not
 ** added to the legend.
@@ -121,14 +235,11 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
 */
 imageObj *msDrawLegend(mapObj *map, int scale_independent)
 {
-    int status;
-
     gdImagePtr img; /* image data structure */
     int i,j; /* loop counters */
     pointObj pnt;
     int size_x, size_y=0;
     layerObj *lp;  
-    int maxwidth=0,nLegendItems=0;
     rectObj rect;
     imageObj *image = NULL;
     outputFormatObj *format = NULL;
@@ -142,13 +253,11 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     typedef struct legend_struct legendlabel;
     legendlabel *head=NULL,*cur=NULL;
 
-    if (!scale_independent) {
-        map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-        status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
-        if(status != MS_SUCCESS) return(NULL);
-    }
+    
 
     if(msValidateContexts(map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
+
+    if(msLegendCalcSize(map, scale_independent, &size_x, &size_y, NULL) != MS_SUCCESS) return NULL;
 
     /*
      * step through all map classes, and for each one that will be displayed
@@ -201,18 +310,9 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
                 }
                 return(NULL); 
             }
-            maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
             cur->height = MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
-            size_y+=cur->height;
-            nLegendItems++;
         }
     }
-
-    /*
-     ** Calculate the optimal image size for the legend
-     */
-    size_y += (2*VMARGIN) + ((nLegendItems-1)*map->legend.keyspacingy); /*initial vertical size*/
-    size_x = (2*HMARGIN)+(maxwidth)+(map->legend.keyspacingx)+(map->legend.keysizex);
 
     /* ensure we have an image format representing the options for the legend. */
     msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);

@@ -1286,64 +1286,60 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                    }
                    if (classnameset)
                    {
-                       if (map->legend.keysizex > 0)
-                         sprintf(width, "%d", map->legend.keysizex);
-                       else
-                         sprintf(width, "%d", 20);/* default; */
+                       int size_x=0, size_y=0;
+                       if (msLegendCalcSize(map, 1, &size_x, &size_y, lp) == MS_SUCCESS)
+                       {
+                           sprintf(width,  "%d", size_x);
+                           sprintf(height, "%d", size_y);
 
-                       if (map->legend.keysizey > 0)
-                          sprintf(height, "%d", map->legend.keysizey);
-                       else
-                         sprintf(height, "%d", 20);/* default; */
-                   
-                       legendurl = (char*)malloc(strlen(script_url_encoded)+200);
+                           legendurl = (char*)malloc(strlen(script_url_encoded)+200);
 
 #ifdef USE_GD_PNG
-                       mimetype = strdup("image/png");
+                           mimetype = strdup("image/png");
 #endif
 #ifdef USE_GD_GIF
-                       if (!mimetype)
-                         mimetype = strdup("image/gif");
+                           if (!mimetype)
+                             mimetype = strdup("image/gif");
 #endif
 
 #ifdef USE_GD_JPEG
-                       if (!mimetype)
-                         mimetype = strdup("image/jpeg");
+                           if (!mimetype)
+                             mimetype = strdup("image/jpeg");
 #endif
 #ifdef USE_GD_WBMP
-                       if (!mimetype)
-                         mimetype = strdup("image/vnd.wap.wbmp");
+                           if (!mimetype)
+                             mimetype = strdup("image/vnd.wap.wbmp");
 #endif
-                       if (!mimetype)
-                         mimetype = MS_IMAGE_MIME_TYPE(map->outputformat);         
-                       mimetype = msEncodeHTMLEntities(mimetype);
+                           if (!mimetype)
+                             mimetype = MS_IMAGE_MIME_TYPE(map->outputformat);         
+                           mimetype = msEncodeHTMLEntities(mimetype);
 
-                       sprintf(legendurl, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s",  
-                               script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
-                               mimetype);
+                           sprintf(legendurl, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s",  
+                                   script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
+                                   mimetype);
                            
-                       msIO_fprintf(stdout, "        <Style>\n");
-                       msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
-                       msIO_fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+                           msIO_fprintf(stdout, "        <Style>\n");
+                           msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+                           msIO_fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
                       
-                       msOWSPrintURLType(stdout, NULL, 
-                                         "O", "ttt",
-                                         OWS_NOERR, NULL, 
-                                         "LegendURL", NULL, 
-                                         " width=\"%s\"", " height=\"%s\"", 
-                                         ">\n             <Format>%s</Format", 
-                                         "\n             <OnlineResource "
-                                         "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
-                                         " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
-                                         "          ",
-                                         MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, 
-                                         NULL, width, height, mimetype, legendurl, "          ");
+                           msOWSPrintURLType(stdout, NULL, 
+                                             "O", "ttt",
+                                             OWS_NOERR, NULL, 
+                                             "LegendURL", NULL, 
+                                             " width=\"%s\"", " height=\"%s\"", 
+                                             ">\n             <Format>%s</Format", 
+                                             "\n             <OnlineResource "
+                                             "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                                             " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                                             "          ",
+                                             MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, 
+                                             NULL, width, height, mimetype, legendurl, "          ");
                        
 
-                       msIO_fprintf(stdout, "        </Style>\n");
-                       msFree(legendurl);
-                       msFree(mimetype);
-
+                           msIO_fprintf(stdout, "        </Style>\n");
+                           msFree(legendurl);
+                           msFree(mimetype);
+                       }
                    }
                }       
            }
