@@ -58,16 +58,20 @@ MS_CVSID("$Id$")
 
 #ifdef USE_OGR
 
+#ifdef HAVE_OGRSTYLE_C
+#include "ogr_api.h"
+#else
 #include "ogrsf_frmts.h"
 #include "ogr_featurestyle.h"
+#endif /* HAVE_OGRSTYLE_C */
 
 typedef struct ms_ogr_file_info_t
 {
   char        *pszFname;
   int         nLayerIndex;
-  OGRDataSource *poDS;
-  OGRLayer    *poLayer;
-  OGRFeature  *poLastFeature;
+  OGRDataSourceH hDS;
+  OGRLayerH   hLayer;
+  OGRFeatureH hLastFeature;
 
   int         nTileId;                  /* applies on the tiles themselves. */
 
@@ -122,52 +126,36 @@ static void ogrPointsAddPoint(lineObj *line, double dX, double dY,
 /**********************************************************************
  *                     ogrGeomPoints()
  **********************************************************************/
-static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp) 
+static int ogrGeomPoints(OGRGeometryH hGeom, shapeObj *outshp) 
 {
   int   i;
   int   numpoints;
 
-  if (poGeom == NULL)   
+  if (hGeom == NULL)   
       return 0;
+
+  OGRwkbGeometryType eGType =  wkbFlatten( OGR_G_GetGeometryType( hGeom ) );
 
 /* -------------------------------------------------------------------- */
 /*      Container types result in recursive invocation on each          */
 /*      subobject to add a set of points to the current list.           */
 /* -------------------------------------------------------------------- */
-  switch( wkbFlatten(poGeom->getGeometryType()) )
+  switch( eGType )
   {
       case wkbGeometryCollection:
       case wkbMultiLineString:
       case wkbMultiPolygon:
+      case wkbPolygon:
       {
-          OGRGeometryCollection *poCollection = (OGRGeometryCollection *)
-              poGeom;
-          
-          for (int iGeom=0; iGeom < poCollection->getNumGeometries(); iGeom++ )
+          /* Treat it as GeometryCollection */
+          for (int iGeom=0; iGeom < OGR_G_GetGeometryCount( hGeom ); iGeom++ )
           {
-              if( ogrGeomPoints( poCollection->getGeometryRef( iGeom ), 
+              if( ogrGeomPoints( OGR_G_GetGeometryRef( hGeom, iGeom ), 
                                  outshp ) == -1 )
                   return -1;
           }
 
           return 0;							
-      }
-      break;
-
-      case wkbPolygon:
-      {
-          OGRPolygon *poPoly = (OGRPolygon *)poGeom;
-
-          if( ogrGeomPoints( poPoly->getExteriorRing(), outshp ) == -1 )
-              return -1;
-          
-          for (int iRing=0; iRing < poPoly->getNumInteriorRings(); iRing++)
-          {
-              if( ogrGeomPoints( poPoly->getInteriorRing(iRing), outshp )
-                  == -1 )
-                  return -1;
-          }
-          return 0;
       }
       break;
 
@@ -183,7 +171,7 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
           msSetError(MS_OGRERR, 
                      "OGRGeometry type `%s' not supported yet.", 
                      "ogrGeomPoints()",
-                     poGeom->getGeometryName() );
+                     OGR_G_GetGeometryName( hGeom ) );
           return(-1);
   }
 
@@ -191,25 +179,25 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
 /* ------------------------------------------------------------------
  * Count total number of points
  * ------------------------------------------------------------------ */
-  if ( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+  if ( eGType == wkbPoint )
   {
       numpoints = 1;
   }
-  else if ( wkbFlatten(poGeom->getGeometryType()) == wkbLineString 
-            || wkbFlatten(poGeom->getGeometryType()) == wkbLinearRing )
+  else if ( eGType == wkbLineString 
+            ||  eGType == wkbLinearRing )
   {
-      numpoints = ((OGRLineString*)poGeom)->getNumPoints();
+      numpoints = OGR_G_GetPointCount( hGeom );
   }
-  else if ( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
+  else if ( eGType == wkbMultiPoint )
   {
-      numpoints = ((OGRMultiPoint*)poGeom)->getNumGeometries();
+      numpoints = OGR_G_GetGeometryCount( hGeom );
   }
   else
   {
       msSetError(MS_OGRERR, 
                  "OGRGeometry type `%s' not supported yet.", 
                  "ogrGeomPoints()",
-                 poGeom->getGeometryName() );
+                 OGR_G_GetGeometryName( hGeom ) );
       return(-1);
   }
 
@@ -247,28 +235,24 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
 /* ------------------------------------------------------------------
  * alloc buffer and filter/transform points
  * ------------------------------------------------------------------ */
-  if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+  if( eGType == wkbPoint )
   {
-      OGRPoint *poPoint = (OGRPoint *)poGeom;
-      ogrPointsAddPoint(line, poPoint->getX(), poPoint->getY(), 
+      ogrPointsAddPoint(line, OGR_G_GetX(hGeom, 0), OGR_G_GetY(hGeom, 0), 
                         outshp->numlines-1, &(outshp->bounds));
   }
-  else if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString 
-           || wkbFlatten(poGeom->getGeometryType()) == wkbLinearRing )
+  else if( eGType == wkbLineString 
+           || eGType == wkbLinearRing )
   {
-      OGRLineString *poLine = (OGRLineString *)poGeom;
       for(i=0; i<numpoints; i++)
-          ogrPointsAddPoint(line, poLine->getX(i), poLine->getY(i),
+          ogrPointsAddPoint(line, OGR_G_GetX(hGeom, i), OGR_G_GetY(hGeom, i),
                             outshp->numlines-1, &(outshp->bounds));
   }
-  else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
+  else if( eGType == wkbMultiPoint )
   {
-      OGRPoint *poPoint;
-      OGRMultiPoint *poMultiPoint = (OGRMultiPoint *)poGeom;
       for(i=0; i<numpoints; i++)
       {
-          poPoint = (OGRPoint *)poMultiPoint->getGeometryRef( i );
-          ogrPointsAddPoint(line, poPoint->getX(), poPoint->getY(), 
+          OGRGeometryH hPoint = OGR_G_GetGeometryRef( hGeom, i );
+          ogrPointsAddPoint(line, OGR_G_GetX(hPoint, 0), OGR_G_GetY(hPoint, 0),
                             outshp->numlines-1, &(outshp->bounds));
       }
   }
@@ -285,52 +269,32 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
  * Recursively convert any OGRGeometry into a shapeObj.  Each part becomes
  * a line in the overall shapeObj.
  **********************************************************************/
-static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
+static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
                        int bCloseRings) 
 {
-  if (poGeom == NULL)
+  if (hGeom == NULL)
       return 0;
 
 /* ------------------------------------------------------------------
  * Use recursive calls for complex geometries
  * ------------------------------------------------------------------ */
-  OGRwkbGeometryType eGType = wkbFlatten(poGeom->getGeometryType());
+  OGRwkbGeometryType eGType =  wkbFlatten( OGR_G_GetGeometryType( hGeom ) );
 
   
-  if ( eGType == wkbPolygon )
+  if ( eGType == wkbPolygon
+       || eGType == wkbGeometryCollection
+       || eGType == wkbMultiLineString 
+       || eGType == wkbMultiPolygon )
   {
-      OGRPolygon *poPoly = (OGRPolygon *)poGeom;
-      OGRLinearRing *poRing;
-
-      if (outshp->type == MS_SHAPE_NULL)
+      if (eGType == wkbPolygon && outshp->type == MS_SHAPE_NULL)
           outshp->type = MS_SHAPE_POLYGON;
 
-      for (int iRing=-1; iRing < poPoly->getNumInteriorRings(); iRing++)
+      /* Treat it as GeometryCollection */
+      for (int iGeom=0; iGeom < OGR_G_GetGeometryCount( hGeom ); iGeom++ )
       {
-          if (iRing == -1)
-              poRing = poPoly->getExteriorRing();
-          else
-              poRing = poPoly->getInteriorRing(iRing);
-
-          if (ogrGeomLine(poRing, outshp, bCloseRings) == -1)
-          {
+          if( ogrGeomLine( OGR_G_GetGeometryRef( hGeom, iGeom ), 
+                           outshp, bCloseRings ) == -1 )
               return -1;
-          }
-      }
-  }
-  else if ( eGType == wkbGeometryCollection
-            || eGType == wkbMultiLineString 
-            || eGType == wkbMultiPolygon )
-  {
-      OGRGeometryCollection *poColl = (OGRGeometryCollection *)poGeom;
-
-      for (int iGeom=0; iGeom < poColl->getNumGeometries(); iGeom++)
-      {
-          if (ogrGeomLine(poColl->getGeometryRef(iGeom),
-                          outshp, bCloseRings) == -1)
-          {
-              return -1;
-          }
       }
   }
 /* ------------------------------------------------------------------
@@ -345,12 +309,11 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
  * ------------------------------------------------------------------ */
   else if ( eGType == wkbLineString )
   {
-      OGRLineString *poLine = (OGRLineString *)poGeom;
       int       j, numpoints;
       lineObj   line={0,NULL};
       double    dX, dY;
 
-      if ((numpoints = poLine->getNumPoints()) < 2)
+      if ((numpoints = OGR_G_GetPointCount( hGeom )) < 2)
           return 0;
 
       if (outshp->type == MS_SHAPE_NULL)
@@ -367,8 +330,8 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
 
       for(j=0; j<numpoints; j++)
       {
-          dX = line.point[j].x = poLine->getX(j); 
-          dY = line.point[j].y = poLine->getY(j);
+          dX = line.point[j].x = OGR_G_GetX( hGeom, j); 
+          dY = line.point[j].y = OGR_G_GetY( hGeom, j);
 
           /* Keep track of shape bounds */
           if (j == 0 && outshp->numlines == 0)
@@ -403,7 +366,7 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
       msSetError(MS_OGRERR, 
                  "OGRGeometry type `%s' not supported.",
                  "ogrGeomLine()",
-                 poGeom->getGeometryName() );
+                 OGR_G_GetGeometryName( hGeom ) );
       return(-1);
   }
 
@@ -420,7 +383,7 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
  * If layer type is incompatible with geometry, then shape is returned with
  * shape->type = MS_SHAPE_NULL
  **********************************************************************/
-static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
+static int ogrConvertGeometry(OGRGeometryH hGeom, shapeObj *outshp,
                               enum MS_LAYER_TYPE layertype) 
 {
 /* ------------------------------------------------------------------
@@ -428,7 +391,7 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
  * ------------------------------------------------------------------ */
   int nStatus = MS_SUCCESS;
 
-  if (poGeom == NULL)
+  if (hGeom == NULL)
   {
       // Empty geometry... this is not an error... we'll just skip it
       return MS_SUCCESS;
@@ -440,7 +403,7 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
  *      POINT layer - Any geometry can be converted to point/multipoint
  * ------------------------------------------------------------------ */
     case MS_LAYER_POINT:
-      if(ogrGeomPoints(poGeom, outshp) == -1)
+      if(ogrGeomPoints(hGeom, outshp) == -1)
       {
           nStatus = MS_FAILURE; // Error message already produced.
       }
@@ -449,7 +412,7 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
  *      LINE layer
  * ------------------------------------------------------------------ */
     case MS_LAYER_LINE:
-      if(ogrGeomLine(poGeom, outshp, MS_FALSE) == -1)
+      if(ogrGeomLine(hGeom, outshp, MS_FALSE) == -1)
       {
           nStatus = MS_FAILURE; // Error message already produced.
       }
@@ -460,7 +423,7 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
  *      POLYGON layer
  * ------------------------------------------------------------------ */
     case MS_LAYER_POLYGON:
-      if(ogrGeomLine(poGeom, outshp, MS_TRUE) == -1)
+      if(ogrGeomLine(hGeom, outshp, MS_TRUE) == -1)
       {
           nStatus = MS_FAILURE; // Error message already produced.
       }
@@ -473,13 +436,13 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
     case MS_LAYER_ANNOTATION:
     case MS_LAYER_CHART:
     case MS_LAYER_QUERY:
-      switch(poGeom->getGeometryType())
+      switch( OGR_G_GetGeometryType( hGeom ) )
       {
         case wkbPoint:
         case wkbPoint25D:
         case wkbMultiPoint:
         case wkbMultiPoint25D:
-          if(ogrGeomPoints(poGeom, outshp) == -1)
+          if(ogrGeomPoints(hGeom, outshp) == -1)
           {
               nStatus = MS_FAILURE; // Error message already produced.
           }
@@ -487,7 +450,7 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
         default:
           // Handle any non-point types as lines/polygons ... ogrGeomLine()
           // will decide the shape type
-          if(ogrGeomLine(poGeom, outshp, MS_FALSE) == -1)
+          if(ogrGeomLine(hGeom, outshp, MS_FALSE) == -1)
           {
               nStatus = MS_FAILURE; // Error message already produced.
           }
@@ -515,14 +478,11 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
     if (hGeometry && psShape && nType > 0)
     {
         if (nType == wkbPoint || nType == wkbMultiPoint )
-            return ogrConvertGeometry((OGRGeometry *)hGeometry,
-                                      psShape,  MS_LAYER_POINT);
+            return ogrConvertGeometry(hGeometry, psShape,  MS_LAYER_POINT);
         else if (nType == wkbLineString || nType == wkbMultiLineString)
-            return ogrConvertGeometry((OGRGeometry *)hGeometry,
-                                      psShape,  MS_LAYER_LINE);
+            return ogrConvertGeometry(hGeometry, psShape,  MS_LAYER_LINE);
         else if (nType == wkbPolygon || nType == wkbMultiPolygon)
-            return ogrConvertGeometry((OGRGeometry *)hGeometry,
-                                      psShape,  MS_LAYER_POLYGON);
+            return ogrConvertGeometry(hGeometry, psShape,  MS_LAYER_POLYGON);
         else
             return MS_FAILURE;
     }
@@ -556,7 +516,7 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
  *  "OGR:TextString"  OGRFeatureStyle's text string if present
  *  "OGR:TextAngle"   OGRFeatureStyle's text angle, or 0 if not set
  **********************************************************************/
-static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
+static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
 {
   char **values;
   int i;
@@ -574,8 +534,13 @@ static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
     return(NULL);
   }
 
+#ifdef HAVE_OGRSTYLE_C
+  OGRStyleMgrH  hStyleMgr = NULL;
+  OGRStyleToolH hLabelStyle = NULL;
+#else
   OGRStyleMgr *poStyleMgr = NULL;
   OGRStyleLabel *poLabelStyle = NULL;
+#endif
   int *itemindexes = (int*)layer->iteminfo;
 
   for(i=0;i<layer->numitems;i++)
@@ -583,15 +548,56 @@ static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
     if (itemindexes[i] >= 0)
     {
         // Extract regular attributes
-        values[i] = strdup(poFeature->GetFieldAsString(itemindexes[i]));
+        values[i] = strdup(OGR_F_GetFieldAsString( hFeature, itemindexes[i]));
     }
     else
+#ifdef HAVE_OGRSTYLE_C
     {
         // Handle special OGR attributes coming from StyleString
+        if (!hStyleMgr)
+        {
+            hStyleMgr = OGR_SM_Create(NULL);
+            OGR_SM_InitFromFeature(hStyleMgr, hFeature);
+            OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, 0, NULL);
+            if (hStylePart && OGR_ST_GetType(hStylePart) == OGRSTCLabel)
+                hLabelStyle = hStylePart;
+            else if (hStylePart)
+                OGR_ST_Destroy(hStylePart);
+        }
+        int bDefault;
+        if (hLabelStyle && itemindexes[i] == MSOGR_LABELTEXTINDEX)
+        {
+            values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
+                                                  OGRSTLabelTextString, 
+                                                  &bDefault));
+            //msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
+        }
+        else if (hLabelStyle && itemindexes[i] == MSOGR_LABELANGLEINDEX)
+        {
+            values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
+                                                  OGRSTLabelAngle, 
+                                                  &bDefault));
+            //msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
+        }
+        else if (hLabelStyle && itemindexes[i] == MSOGR_LABELSIZEINDEX)
+        {
+            values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
+                                                  OGRSTLabelSize, 
+                                                  &bDefault));
+            //msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
+        }
+        else
+        {
+          msSetError(MS_OGRERR,"Invalid field index!?!","msOGRGetValues()");
+          return(NULL);
+        }
+    }
+#else /* OGRStyle C++ */
+    {
         if (!poStyleMgr)
         {
             poStyleMgr = new OGRStyleMgr(NULL);
-            poStyleMgr->InitFromFeature(poFeature);
+            poStyleMgr->InitFromFeature((OGRFeature *)hFeature);
             OGRStyleTool *poStylePart = poStyleMgr->GetPart(0);
             if (poStylePart && poStylePart->GetType() == OGRSTCLabel)
                 poLabelStyle = (OGRStyleLabel*)poStylePart;
@@ -622,12 +628,16 @@ static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
           return(NULL);
         }
     }
+#endif /* HAVE_OGRSTYLE_C */
   }
 
-  if (poStyleMgr)
-      delete poStyleMgr;
-  if (poLabelStyle)
-      delete poLabelStyle;
+#ifdef HAVE_OGRSTYLE_C
+  OGR_SM_Destroy(hStyleMgr);
+  OGR_ST_Destroy(hLabelStyle);
+#else
+  delete poStyleMgr;
+  delete poLabelStyle;
+#endif
 
   return(values);
 }
@@ -644,14 +654,14 @@ static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-static int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
+static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
                                          projectionObj *proj, int debug_flag )
 {
 #ifdef USE_PROJ
   // First flush the "auto" name from the projargs[]... 
   msFreeProjection( proj );
 
-  if (poSRS == NULL || poSRS->IsLocal())
+  if (hSRS == NULL || OSRIsLocal( hSRS ) )
   {
       // Dataset had no set projection or is NonEarth (LOCAL_CS)... 
       // Nothing else to do. Leave proj empty and no reprojection will happen!
@@ -662,7 +672,7 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
   char *pszProj = NULL;
 
   ACQUIRE_OLD_OGR_LOCK;
-  if (poSRS->exportToProj4( &pszProj ) != OGRERR_NONE ||
+  if (OSRExportToProj4( hSRS, &pszProj ) != OGRERR_NONE ||
       pszProj == NULL || strlen(pszProj) == 0)
   {
       RELEASE_OLD_OGR_LOCK;
@@ -838,15 +848,15 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 /* -------------------------------------------------------------------- */
 /*      Can we get an existing connection for this layer?               */
 /* -------------------------------------------------------------------- */
-  OGRDataSource *poDS;
+  OGRDataSourceH hDS;
 
-  poDS = (OGRDataSource *) msConnPoolRequest( layer );
+  hDS = (OGRDataSourceH) msConnPoolRequest( layer );
 
 /* -------------------------------------------------------------------- */
 /*      If not, open now, and register this connection with the         */
 /*      pool.                                                           */
 /* -------------------------------------------------------------------- */
-  if( poDS == NULL )
+  if( hDS == NULL )
   {
       char szPath[MS_MAXPATHLEN] = "";
       const char *pszDSSelectedName = pszDSName;
@@ -867,10 +877,10 @@ msOGRFileOpen(layerObj *layer, const char *connection )
           msDebug("OGROPen(%s)\n", pszDSSelectedName);
 
       ACQUIRE_OGR_LOCK;
-      poDS = OGRSFDriverRegistrar::Open( pszDSSelectedName );
+      hDS = OGROpen( pszDSSelectedName, MS_FALSE, NULL );
       RELEASE_OGR_LOCK;
       
-      if( poDS == NULL )
+      if( hDS == NULL )
       {
           if( strlen(CPLGetLastErrorMsg()) == 0 )
               msSetError(MS_OGRERR, 
@@ -888,7 +898,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
           return NULL;
       }
 
-      msConnPoolRegister( layer, poDS, msOGRCloseConnection );
+      msConnPoolRegister( layer, hDS, msOGRCloseConnection );
   }
       
   CPLFree( pszDSName );
@@ -899,41 +909,41 @@ msOGRFileOpen(layerObj *layer, const char *connection )
  * ------------------------------------------------------------------ */
   
   int   nLayerIndex = 0;
-  OGRLayer    *poLayer = NULL;
+  OGRLayerH     hLayer = NULL;
 
   int  iLayer;
 
-  for( iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+  for( iLayer = 0; iLayer < OGR_DS_GetLayerCount(hDS); iLayer++ )
   {
-      poLayer = poDS->GetLayer( iLayer );
-      if( poLayer != NULL 
-          && EQUAL(poLayer->GetLayerDefn()->GetName(),pszLayerDef) )
+      hLayer = OGR_DS_GetLayer( hDS, iLayer );
+      if( hLayer != NULL 
+          && EQUAL(OGR_FD_GetName( OGR_L_GetLayerDefn(hLayer) ),pszLayerDef) )
       {
           nLayerIndex = iLayer;
           break;
       }
       else
-          poLayer = NULL;
+          hLayer = NULL;
   }
   
-  if( poLayer == NULL && (atoi(pszLayerDef) > 0 || EQUAL(pszLayerDef,"0")) )
+  if( hLayer == NULL && (atoi(pszLayerDef) > 0 || EQUAL(pszLayerDef,"0")) )
   {
       nLayerIndex = atoi(pszLayerDef);
-      if( nLayerIndex < poDS->GetLayerCount() )
-          poLayer = poDS->GetLayer( nLayerIndex );
+      if( nLayerIndex <  OGR_DS_GetLayerCount(hDS) )
+          hLayer = OGR_DS_GetLayer( hDS, nLayerIndex );
   }
 
-  if( poLayer == NULL && EQUALN(pszLayerDef,"SELECT",6) )
+  if( hLayer == NULL && EQUALN(pszLayerDef,"SELECT",6) )
   {
       ACQUIRE_OGR_LOCK;
-      poLayer = poDS->ExecuteSQL( pszLayerDef, NULL, NULL );
-      if( poLayer == NULL )
+      hLayer = OGR_DS_ExecuteSQL( hDS, pszLayerDef, NULL, NULL );
+      if( hLayer == NULL )
       {
           msSetError(MS_OGRERR, 
                      "ExecuteSQL(%s) failed.\n%s",
                      "msOGRFileOpen()", 
                      pszLayerDef, CPLGetLastErrorMsg() );
-          OGRDataSource::DestroyDataSource( poDS );
+          OGR_DS_Destroy( hDS );
           CPLFree( pszLayerDef );
           RELEASE_OGR_LOCK;
           return NULL;
@@ -942,14 +952,14 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       nLayerIndex = -1;
   }
 
-  if (poLayer == NULL)
+  if (hLayer == NULL)
   {
       msSetError(MS_OGRERR, "GetLayer(%s) failed for OGR connection `%s'.",
                  "msOGRFileOpen()", 
                  pszLayerDef, connection );
       CPLFree( pszLayerDef );
       ACQUIRE_OGR_LOCK;
-      OGRDataSource::DestroyDataSource( poDS );
+      OGR_DS_Destroy( hDS );
       RELEASE_OGR_LOCK;
       return NULL;
   }
@@ -961,10 +971,10 @@ msOGRFileOpen(layerObj *layer, const char *connection )
  * ------------------------------------------------------------------ */
   msOGRFileInfo *psInfo =(msOGRFileInfo*)CPLCalloc(1,sizeof(msOGRFileInfo));
 
-  psInfo->pszFname = CPLStrdup(poDS->GetName());
+  psInfo->pszFname = CPLStrdup(OGR_DS_GetName( hDS ));
   psInfo->nLayerIndex = nLayerIndex;
-  psInfo->poDS = poDS;
-  psInfo->poLayer = poLayer;
+  psInfo->hDS = hDS;
+  psInfo->hLayer = hLayer;
 
   psInfo->nTileId = 0;
   psInfo->poCurTile = NULL;
@@ -984,10 +994,10 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 static void msOGRCloseConnection( void *conn_handle )
 
 {
-    OGRDataSource *poDS = (OGRDataSource *) conn_handle;
+    OGRDataSourceH hDS = (OGRDataSourceH) conn_handle;
 
     ACQUIRE_OGR_LOCK;
-    OGRDataSource::DestroyDataSource( poDS );
+    OGR_DS_Destroy( hDS );
     RELEASE_OGR_LOCK;
 }
 
@@ -1006,17 +1016,17 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   CPLFree(psInfo->pszFname);
 
   ACQUIRE_OGR_LOCK;
-  if (psInfo->poLastFeature)
-      OGRFeature::DestroyFeature( psInfo->poLastFeature );
+  if (psInfo->hLastFeature)
+      OGR_F_Destroy( psInfo->hLastFeature );
 
   /* If nLayerIndex == -1 then the layer is an SQL result ... free it */
   if( psInfo->nLayerIndex == -1 )
-      psInfo->poDS->ReleaseResultSet( psInfo->poLayer );
+      OGR_DS_ReleaseResultSet( psInfo->hDS, psInfo->hLayer );
 
   // Release (potentially close) the datasource connection.
   // Make sure we aren't holding the lock when the callback may need it.
   RELEASE_OGR_LOCK;
-  msConnPoolRelease( layer, psInfo->poDS );
+  msConnPoolRelease( layer, psInfo->hDS );
   ACQUIRE_OGR_LOCK;
 
   // Free current tile if there is one.
@@ -1041,7 +1051,7 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
 static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
                                 msOGRFileInfo *psInfo ) 
 {
-  if (psInfo == NULL || psInfo->poLayer == NULL)
+  if (psInfo == NULL || psInfo->hLayer == NULL)
   {
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                "msOGRFileWhichShapes()");
@@ -1058,21 +1068,26 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
  * ------------------------------------------------------------------ */
   ACQUIRE_OGR_LOCK;
 
-  OGRPolygon oSpatialFilter;
-  OGRLinearRing oRing;
+  OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
+  OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
 
-  oRing.setNumPoints(5);
-  oRing.setPoint(0, rect.minx, rect.miny);
-  oRing.setPoint(1, rect.maxx, rect.miny);
-  oRing.setPoint(2, rect.maxx, rect.maxy);
-  oRing.setPoint(3, rect.minx, rect.maxy);
-  oRing.setPoint(4, rect.minx, rect.miny);
+  OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+  OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
+  OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
+  OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
+  OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
 
-  oSpatialFilter.addRing( &oRing );
+  OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
 
-  psInfo->poLayer->SetSpatialFilter( &oSpatialFilter );
+  OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
+
+  OGR_G_DestroyGeometry( hSpatialFilterPolygon );
 
   psInfo->rect = rect;
+
+  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+      msDebug("msOGRFileWhichShapes: Setting spatial filter to %f %f %f %f\n",
+              rect.minx, rect.miny, rect.maxx, rect.maxy );
 
 /* ------------------------------------------------------------------
  * Apply an attribute filter if we have one prefixed with a WHERE 
@@ -1082,7 +1097,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
   if( layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6) )
   {
       CPLErrorReset();
-      if( psInfo->poLayer->SetAttributeFilter( layer->filter.string+6 )
+      if( OGR_L_SetAttributeFilter( psInfo->hLayer, layer->filter.string+6 )
           != OGRERR_NONE )
       {
           msSetError(MS_OGRERR,
@@ -1095,12 +1110,12 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
       }
   }
   else
-      psInfo->poLayer->SetAttributeFilter( NULL );
+      OGR_L_SetAttributeFilter( psInfo->hLayer, NULL );
 
 /* ------------------------------------------------------------------
  * Reset current feature pointer
  * ------------------------------------------------------------------ */
-  psInfo->poLayer->ResetReading();
+  OGR_L_ResetReading( psInfo->hLayer );
 
   RELEASE_OGR_LOCK;
 
@@ -1114,12 +1129,12 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
  **********************************************************************/
 static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
 {
-  OGRFeatureDefn *poDefn;
+  OGRFeatureDefnH hDefn;
   int i, numitems;
   char **items;
 
-  if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL ||
-     (numitems = poDefn->GetFieldCount()) == 0) 
+  if((hDefn = OGR_L_GetLayerDefn( psInfo->hLayer )) == NULL ||
+     (numitems = OGR_FD_GetFieldCount( hDefn )) == 0) 
   {
     msSetError(MS_OGRERR, 
                "Layer %s,%d contains no fields.", 
@@ -1136,8 +1151,8 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
 
   for(i=0;i<numitems;i++)
   {
-      OGRFieldDefn *poField = poDefn->GetFieldDefn(i);
-      items[i] = strdup(poField->GetNameRef());
+      OGRFieldDefnH hField = OGR_FD_GetFieldDefn( hDefn, i );
+      items[i] = strdup( OGR_Fld_GetNameRef( hField ));
   }                                  
   items[numitems] = NULL;
 
@@ -1156,9 +1171,9 @@ static int
 msOGRFileNextShape(layerObj *layer, shapeObj *shape,
                    msOGRFileInfo *psInfo ) 
 {
-  OGRFeature *poFeature = NULL;
+  OGRFeatureH hFeature = NULL;
 
-  if (psInfo == NULL || psInfo->poLayer == NULL)
+  if (psInfo == NULL || psInfo->hLayer == NULL)
   {
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                "msOGRFileNextShape()");
@@ -1175,10 +1190,10 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
   ACQUIRE_OGR_LOCK;
   while (shape->type == MS_SHAPE_NULL)
   {
-      if( poFeature )
-          OGRFeature::DestroyFeature(poFeature);
+      if( hFeature )
+          OGR_F_Destroy( hFeature );
 
-      if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
+      if( (hFeature = OGR_L_GetNextFeature( psInfo->hLayer )) == NULL )
       {
           if( CPLGetLastErrorType() == CE_Failure )
           {
@@ -1190,17 +1205,19 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
           else
           {
               RELEASE_OGR_LOCK;
+              if (layer->debug >= MS_DEBUGLEVEL_VV)
+                  msDebug("msOGRFileNextShape: Returning MS_DONE (no more shapes)\n" );
               return MS_DONE;  // No more features to read
           }
       }
 
       if(layer->numitems > 0) 
       {
-          shape->values = msOGRGetValues(layer, poFeature);
+          shape->values = msOGRGetValues(layer, hFeature);
           shape->numvalues = layer->numitems;
           if(!shape->values)
           {
-              OGRFeature::DestroyFeature(poFeature);
+              OGR_F_Destroy( hFeature );
               RELEASE_OGR_LOCK;
               return(MS_FAILURE);
           }
@@ -1214,16 +1231,23 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
       {
           // Feature matched filter expression... process geometry
           // shape->type will be set if geom is compatible with layer type
-          if (ogrConvertGeometry(poFeature->GetGeometryRef(), shape,
+          if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
                                  layer->type) == MS_SUCCESS)
           {
               if (shape->type != MS_SHAPE_NULL)
                   break; // Shape is ready to be returned!
+
+              if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                  msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %d, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
+                          OGR_F_GetFID( hFeature ), psInfo->nTileId, 
+                          wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ), 
+                          layer->type);
+
           }
           else
           {
               msFreeShape(shape);
-              OGRFeature::DestroyFeature(poFeature);
+              OGR_F_Destroy( hFeature );
               RELEASE_OGR_LOCK;
               return MS_FAILURE; // Error message already produced.
           }
@@ -1234,13 +1258,17 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
       shape->type = MS_SHAPE_NULL;
   }
 
-  shape->index = poFeature->GetFID();
+  shape->index = OGR_F_GetFID( hFeature );
   shape->tileindex = psInfo->nTileId;
 
+  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+      msDebug("msOGRFileNextShape: Returning shape=%d, tile=%d\n",
+              shape->index, shape->tileindex );
+
   // Keep ref. to last feature read in case we need style info.
-  if (psInfo->poLastFeature)
-      OGRFeature::DestroyFeature(psInfo->poLastFeature);
-  psInfo->poLastFeature = poFeature;
+  if (psInfo->hLastFeature)
+      OGR_F_Destroy( psInfo->hLastFeature );
+  psInfo->hLastFeature = hFeature;
 
   RELEASE_OGR_LOCK;
 
@@ -1258,9 +1286,9 @@ static int
 msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
                   msOGRFileInfo *psInfo )
 {
-  OGRFeature *poFeature;
+  OGRFeatureH hFeature;
 
-  if (psInfo == NULL || psInfo->poLayer == NULL)
+  if (psInfo == NULL || psInfo->hLayer == NULL)
   {
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                "msOGRFileNextShape()");
@@ -1274,14 +1302,14 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
   shape->type = MS_SHAPE_NULL;
 
   ACQUIRE_OGR_LOCK;
-  if( (poFeature = psInfo->poLayer->GetFeature(record)) == NULL )
+  if( (hFeature = OGR_L_GetFeature( psInfo->hLayer, record )) == NULL )
   {
       RELEASE_OGR_LOCK;
       return MS_FAILURE;
   }
 
   // shape->type will be set if geom is compatible with layer type
-  if (ogrConvertGeometry(poFeature->GetGeometryRef(), shape,
+  if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
                          layer->type) != MS_SUCCESS)
   {
       RELEASE_OGR_LOCK;
@@ -1302,7 +1330,7 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
  * ------------------------------------------------------------------ */
   if(layer->numitems > 0) 
   {
-      shape->values = msOGRGetValues(layer, poFeature);
+      shape->values = msOGRGetValues(layer, hFeature);
       shape->numvalues = layer->numitems;
       if(!shape->values)
       {
@@ -1312,12 +1340,12 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
 
   }   
 
-  shape->index = poFeature->GetFID();
+  shape->index = OGR_F_GetFID( hFeature );
 
   // Keep ref. to last feature read in case we need style info.
-  if (psInfo->poLastFeature)
-      OGRFeature::DestroyFeature(psInfo->poLastFeature);
-  psInfo->poLastFeature = poFeature;
+  if (psInfo->hLastFeature)
+      OGR_F_Destroy( psInfo->hLastFeature );
+  psInfo->hLastFeature = hFeature;
 
   RELEASE_OGR_LOCK;
 
@@ -1359,13 +1387,13 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
     ACQUIRE_OGR_LOCK;
     if( targetTile == -2 )
     {
-        psInfo->poLayer->ResetReading();
+        OGR_L_ResetReading( psInfo->hLayer );
     }
         
 /* -------------------------------------------------------------------- */
 /*      Get the name (connection string really) of the next tile.       */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature;
+    OGRFeatureH hFeature;
     char       *connection = NULL;
     msOGRFileInfo *psTileInfo = NULL;
     int status;
@@ -1375,12 +1403,12 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
 #endif
 
     if( targetTile < 0 )
-        poFeature = psInfo->poLayer->GetNextFeature();
+        hFeature = OGR_L_GetNextFeature( psInfo->hLayer );
     
     else
-        poFeature = psInfo->poLayer->GetFeature( targetTile );
+        hFeature = OGR_L_GetFeature( psInfo->hLayer, targetTile );
 
-    if( poFeature == NULL )
+    if( hFeature == NULL )
     {
         RELEASE_OGR_LOCK;
         if( targetTile == -1 )
@@ -1390,11 +1418,12 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
         
     }
 
-    connection = strdup(poFeature->GetFieldAsString( layer->tileitem ));
+    connection = strdup( OGR_F_GetFieldAsString( hFeature, 
+                                                 layer->tileitemindex ));
     
-    nFeatureId = poFeature->GetFID();
+    nFeatureId = OGR_F_GetFID( hFeature );
 
-    OGRFeature::DestroyFeature(poFeature);
+    OGR_F_Destroy( hFeature );
                         
     RELEASE_OGR_LOCK;
 
@@ -1504,14 +1533,14 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
 
       // Identify TILEITEM
 
-      OGRFeatureDefn *poDefn = psInfo->poLayer->GetLayerDefn();
+      OGRFeatureDefnH hDefn = OGR_L_GetLayerDefn( psInfo->hLayer );
       for( layer->tileitemindex = 0; 
-           layer->tileitemindex < poDefn->GetFieldCount()
-           && !EQUAL(poDefn->GetFieldDefn(layer->tileitemindex)->GetNameRef(),
-                         layer->tileitem); 
+           layer->tileitemindex < OGR_FD_GetFieldCount( hDefn )
+           && !EQUAL( OGR_Fld_GetNameRef( OGR_FD_GetFieldDefn( hDefn, layer->tileitemindex) ),
+                      layer->tileitem); 
            layer->tileitemindex++ ) {}
 
-      if( layer->tileitemindex == poDefn->GetFieldCount() )
+      if( layer->tileitemindex == OGR_FD_GetFieldCount( hDefn ) )
       {
           msSetError(MS_OGRERR, 
                      "Can't identify TILEITEM %s field in TILEINDEX `%s'.",
@@ -1532,9 +1561,9 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
       EQUAL(layer->projection.args[0], "auto"))
   {
       ACQUIRE_OGR_LOCK;
-      OGRSpatialReference *poSRS = psInfo->poLayer->GetSpatialRef();
+      OGRSpatialReferenceH hSRS = OGR_L_GetSpatialRef( psInfo->hLayer );
 
-      if (msOGRSpatialRef2ProjectionObj(poSRS,
+      if (msOGRSpatialRef2ProjectionObj(hSRS,
                                         &(layer->projection),
                                         layer->debug ) != MS_SUCCESS)
       {
@@ -1577,7 +1606,7 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
  **********************************************************************/
 static int msOGRLayerOpenVT(layerObj *layer) 
 {
-	return msOGRLayerOpen(layer, NULL);
+    return msOGRLayerOpen(layer, NULL);
 }
 
 /**********************************************************************
@@ -1646,7 +1675,7 @@ int msOGRLayerWhichShapes(layerObj *layer, rectObj rect)
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int   status;
 
-  if (psInfo == NULL || psInfo->poLayer == NULL)
+  if (psInfo == NULL || psInfo->hLayer == NULL)
   {
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                "msOGRLayerWhichShapes()");
@@ -1728,7 +1757,7 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int   i;
-  OGRFeatureDefn *poDefn;
+  OGRFeatureDefnH hDefn;
 
   if (layer->numitems == 0)
       return MS_SUCCESS;
@@ -1742,14 +1771,14 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
       psInfo = psInfo->poCurTile;
   }
 
-  if (psInfo == NULL || psInfo->poLayer == NULL)
+  if (psInfo == NULL || psInfo->hLayer == NULL)
   {
       msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                  "msOGRLayerInitItemInfo()");
       return(MS_FAILURE);
   }
 
-  if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL) 
+  if((hDefn = OGR_L_GetLayerDefn( psInfo->hLayer )) == NULL) 
   {
     msSetError(MS_OGRERR, "Layer contains no fields.",  
                "msOGRLayerInitItemInfo()");
@@ -1776,7 +1805,7 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
       else if (EQUAL(layer->items[i], MSOGR_LABELSIZENAME))
           itemindexes[i] = MSOGR_LABELSIZEINDEX;
       else
-          itemindexes[i] = poDefn->GetFieldIndex(layer->items[i]);
+          itemindexes[i] = OGR_FD_GetFieldIndex( hDefn, layer->items[i] );
       if(itemindexes[i] == -1)
       {
           msSetError(MS_OGRERR, 
@@ -1839,7 +1868,7 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int  status;
 
-  if (psInfo == NULL || psInfo->poLayer == NULL)
+  if (psInfo == NULL || psInfo->hLayer == NULL)
   {
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                "msOGRLayerNextShape()");
@@ -1897,7 +1926,7 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
-  if (psInfo == NULL || psInfo->poLayer == NULL)
+  if (psInfo == NULL || psInfo->hLayer == NULL)
   {
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                "msOGRLayerNextShape()");
@@ -1942,7 +1971,7 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   OGREnvelope oExtent;
 
-  if (psInfo == NULL || psInfo->poLayer == NULL)
+  if (psInfo == NULL || psInfo->hLayer == NULL)
   {
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                "msOGRLayerGetExtent()");
@@ -1957,7 +1986,7 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
  * extents of the tile index.
  * ------------------------------------------------------------------ */
   ACQUIRE_OGR_LOCK;
-  if (psInfo->poLayer->GetExtent(&oExtent, TRUE) != OGRERR_NONE)
+  if (OGR_L_GetExtent( psInfo->hLayer, &oExtent, TRUE) != OGRERR_NONE)
   {
       RELEASE_OGR_LOCK;
     msSetError(MS_MISCERR, "Unable to get extents for this layer.", 
@@ -2041,7 +2070,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
-  if (psInfo == NULL || psInfo->poLayer == NULL)
+  if (psInfo == NULL || psInfo->hLayer == NULL)
   {
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
                "msOGRLayerGetAutoStyle()");
@@ -2061,13 +2090,13 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
  * Read shape or reuse ref. to last shape read.
  * ------------------------------------------------------------------ */
   ACQUIRE_OGR_LOCK;
-  if (psInfo->poLastFeature == NULL || 
-      psInfo->poLastFeature->GetFID() != record)
+  if (psInfo->hLastFeature == NULL || 
+      OGR_F_GetFID( psInfo->hLastFeature ) != record)
   {
-      if (psInfo->poLastFeature)
-          OGRFeature::DestroyFeature(psInfo->poLastFeature);
+      if (psInfo->hLastFeature)
+          OGR_F_Destroy( psInfo->hLastFeature );
 
-      psInfo->poLastFeature = psInfo->poLayer->GetFeature(record);
+      psInfo->hLastFeature = OGR_L_GetFeature( psInfo->hLayer, record );
   }
 
 /* ------------------------------------------------------------------
@@ -2086,21 +2115,35 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 /* ------------------------------------------------------------------
  * Handle each part
  * ------------------------------------------------------------------ */
-  if (psInfo->poLastFeature)
+  if (psInfo->hLastFeature)
   {
-      GBool bIsNull, bIsBrush=FALSE, bIsPen=FALSE;
+      GBool bIsNull, bIsBrush=MS_FALSE, bIsPen=MS_FALSE;
       int r=0,g=0,b=0,t=0;
 
+#ifdef HAVE_OGRSTYLE_C
+      OGRStyleMgrH hStyleMgr = OGR_SM_Create(NULL);
+      OGR_SM_InitFromFeature(hStyleMgr, psInfo->hLastFeature);
+      int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
+#else /* OGRStyle C++ */
       OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
-      poStyleMgr->InitFromFeature(psInfo->poLastFeature);
-      // msDebug("OGRStyle: %s\n", psInfo->poLastFeature->GetStyleString());
-
+      poStyleMgr->InitFromFeature((OGRFeature *)psInfo->hLastFeature);
       int numParts = poStyleMgr->GetPartCount();
+#endif /* HAVE_OGRSTYLE_C */
+
       for(int i=0; i<numParts; i++)
       {
+          OGRSTClassId eStylePartType;
+#ifdef HAVE_OGRSTYLE_C
+          OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
+          if (!hStylePart)
+              continue;
+          eStylePartType = OGR_ST_GetType(hStylePart);
+#else /* OGRStyle C++ */
           OGRStyleTool *poStylePart = poStyleMgr->GetPart(i);
           if (!poStylePart)
               continue;
+          eStylePartType = poStylePart->GetType();
+#endif /* HAVE_OGRSTYLE_C */
 
           // We want all size values returned in pixels.
           //
@@ -2112,13 +2155,86 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
           // as long as use the same assumptions everywhere)
           // That gives scale = cellsize*72*39.37
 
+#ifdef HAVE_OGRSTYLE_C
+          OGR_ST_SetUnit(hStylePart, OGRSTUPixel, map->cellsize*72.0*39.37);
+#else
           poStylePart->SetUnit(OGRSTUPixel, map->cellsize*72.0*39.37);
+#endif
 
-          if (poStylePart->GetType() == OGRSTCLabel)
+          if (eStylePartType == OGRSTCLabel)
+#ifdef HAVE_OGRSTYLE_C
+          {
+              OGRStyleToolH hLabelStyle = hStylePart;
+
+              // Enclose the text string inside quotes to make sure it is seen
+              // as a string by the parser inside loadExpression(). (bug185)
+              msLoadExpressionString(&(c->text), 
+                         (char*)CPLSPrintf("\"%s\"", 
+                                           OGR_ST_GetParamStr(hLabelStyle, 
+                                                              OGRSTLabelTextString, 
+                                                              &bIsNull)));
+
+              c->label.angle = OGR_ST_GetParamDbl(hLabelStyle, 
+                                                  OGRSTLabelAngle, &bIsNull);
+
+              c->label.size = OGR_ST_GetParamNum(hLabelStyle, 
+                                                 OGRSTLabelSize, &bIsNull);
+              if( c->label.size < 1 ) /* no point dropping to zero size */
+                  c->label.size = 1;
+
+              // OGR default is anchor point = LL, so label is at UR of anchor
+              c->label.position = MS_UR;
+
+              const char *pszColor = OGR_ST_GetParamStr(hLabelStyle, 
+                                                        OGRSTLabelFColor,
+                                                        &bIsNull);
+              if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
+                                                      &r, &g, &b, &t))
+              {
+                  MS_INIT_COLOR(c->label.color, r, g, b);
+              }
+
+              pszColor = OGR_ST_GetParamStr(hLabelStyle, 
+                                            OGRSTLabelBColor,
+                                            &bIsNull);
+              if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
+                                                      &r, &g, &b, &t))
+              {
+                  MS_INIT_COLOR(c->label.color, r, g, b);
+              }
+
+              // Label font... do our best to use TrueType fonts, otherwise
+              // fallback on bitmap fonts.
+#if defined(USE_GD_TTF) || defined (USE_GD_FT)
+              const char *pszName = OGR_ST_GetParamStr(hLabelStyle, 
+                                                       OGRSTLabelFontName,
+                                                       &bIsNull);
+              if (pszName != NULL && !bIsNull && pszName[0] != '\0' &&
+                  msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup(pszName);
+                  // msDebug("** Using '%s' TTF font **\n", pszName);
+              }
+              else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup("default");
+                  // msDebug("** Using 'default' TTF font **\n");
+              }
+              else
+#endif /* USE_GD_FT || USE_GD_FT */
+              {
+                  c->label.type = MS_BITMAP;
+                  c->label.size = MS_MEDIUM;
+                  // msDebug("** Using 'medium' BITMAP font **\n");
+              }
+          }
+#else /* OGR Style C++ */
           {
               OGRStyleLabel *poLabelStyle = (OGRStyleLabel*)poStylePart;
 
-              // Enclose the text sting inside quotes to make sure it is seen
+              // Enclose the text string inside quotes to make sure it is seen
               // as a string by the parser inside loadExpression(). (bug185)
               msLoadExpressionString(&(c->text), 
                          (char*)CPLSPrintf("\"%s\"", 
@@ -2129,8 +2245,6 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               c->label.size = (int)poLabelStyle->Size(bIsNull);
               if( c->label.size < 1 ) /* no point dropping to zero size */
                   c->label.size = 1;
-
-              // msDebug("** Label size=%d, angle=%f, string=%s **\n", c->label.size, c->label.angle, poLabelStyle->TextString(bIsNull));
 
               // OGR default is anchor point = LL, so label is at UR of anchor
               c->label.position = MS_UR;
@@ -2150,9 +2264,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               // Label font... do our best to use TrueType fonts, otherwise
               // fallback on bitmap fonts.
 #if defined(USE_GD_TTF) || defined (USE_GD_FT)
-              const char *pszName;
-              if ((pszName = poLabelStyle->FontName(bIsNull)) != NULL && 
-                  !bIsNull && pszName[0] != '\0' &&
+              const char *pszName = poLabelStyle->FontName(bIsNull);
+              if (pszName != NULL && !bIsNull && pszName[0] != '\0' &&
                   msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
               {
                   c->label.type = MS_TRUETYPE;
@@ -2166,14 +2279,102 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   // msDebug("** Using 'default' TTF font **\n");
               }
               else
-#endif
+#endif /* USE_GD_FT || USE_GD_FT */
               {
                   c->label.type = MS_BITMAP;
                   c->label.size = MS_MEDIUM;
                   // msDebug("** Using 'medium' BITMAP font **\n");
               }
           }
-          else if (poStylePart->GetType() == OGRSTCPen)
+#endif /* HAVE_OGRSTYLE_C */
+          else if (eStylePartType == OGRSTCPen)
+#ifdef HAVE_OGRSTYLE_C
+          {
+              OGRStyleToolH hPenStyle = hStylePart;
+              bIsPen = TRUE;
+
+              const char *pszPenName = OGR_ST_GetParamStr(hPenStyle, 
+                                                          OGRSTPenId, 
+                                                          &bIsNull);
+              if (bIsNull) pszPenName = NULL;
+              colorObj oPenColor;
+              int nPenSymbol = 0;
+              int nPenSize = 1;
+
+              // Make sure pen is always initialized
+              MS_INIT_COLOR(oPenColor, -1, -1, -1);
+
+              // Check for Pen Pattern "ogr-pen-1": the invisible pen
+              // If that's what we have then set pen color to -1
+              if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL)
+              {
+                  MS_INIT_COLOR(oPenColor, -1, -1, -1);
+              }
+              else
+              {
+                  const char *pszColor = OGR_ST_GetParamStr(hPenStyle, 
+                                                            OGRSTPenColor,
+                                                            &bIsNull);
+                  if (!bIsNull && OGR_ST_GetRGBFromString(hPenStyle, pszColor,
+                                                          &r, &g, &b, &t))
+                  {
+                      MS_INIT_COLOR(oPenColor, r, g, b);
+                      // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, nPenColor);
+                  }
+
+                  nPenSize = OGR_ST_GetParamNum(hPenStyle, 
+                                                OGRSTPenWidth, &bIsNull);
+                  if (bIsNull)
+                      nPenSize = 1;
+                  if (pszPenName!=NULL || nPenSize > 1)
+                  {
+                      // Thick line or patterned line style
+                      //
+                      // First try to match pen name in symbol file
+                      // If not found then look for a "default-circle" symbol
+                      // that we'll use for producing thick lines.  
+                      // Otherwise symbol will be set to 0 and line will 
+                      // be 1 pixel wide.
+                      nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
+                                                    pszPenName, 
+                                           (nPenSize>1)?"default-circle":NULL);
+                  }
+              }
+              //msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
+              if (bIsBrush || layer->type == MS_LAYER_POLYGON)
+              {
+                  // This is a multipart symbology, so pen defn goes in the
+                  // overlaysymbol params 
+                  if (msMaybeAllocateStyle(c, 1))
+                  {
+                      RELEASE_OGR_LOCK;
+                      return(MS_FAILURE);
+                  }
+
+                  c->styles[1]->outlinecolor = oPenColor;
+                  c->styles[1]->size = nPenSize;
+                  c->styles[1]->symbol = nPenSymbol;
+              }
+              else
+              {
+                  // Single part symbology
+                  if (msMaybeAllocateStyle(c, 0))
+                  {
+                      RELEASE_OGR_LOCK;
+                      return(MS_FAILURE);
+                  }
+
+                  if(layer->type == MS_LAYER_POLYGON)
+                      c->styles[0]->outlinecolor = c->styles[0]->color = 
+                          oPenColor;
+                  else
+                      c->styles[0]->color = oPenColor;
+                  c->styles[0]->symbol = nPenSymbol;
+                  c->styles[0]->size = nPenSize;
+              }
+
+          }
+#else /* OGR Style C++ */
           {
               OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
               bIsPen = TRUE;
@@ -2253,7 +2454,66 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               }
 
           }
-          else if (poStylePart->GetType() == OGRSTCBrush)
+#endif /* HAVE_OGRSTYLE_C */
+          else if (eStylePartType == OGRSTCBrush)
+#ifdef HAVE_OGRSTYLE_C
+          {
+              OGRStyleToolH hBrushStyle = hStylePart;
+
+              const char *pszBrushName = OGR_ST_GetParamStr(hBrushStyle, 
+                                                            OGRSTBrushId, 
+                                                            &bIsNull);
+              if (bIsNull) pszBrushName = NULL;
+
+              /* We need 1 style */
+              if (msMaybeAllocateStyle(c, 0))
+              {
+                  RELEASE_OGR_LOCK;
+                  return(MS_FAILURE);
+              }
+
+              // Check for Brush Pattern "ogr-brush-1": the invisible fill
+              // If that's what we have then set fill color to -1
+              if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL)
+              {
+                  MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1);
+              }
+              else
+              {
+                  bIsBrush = TRUE;
+                  const char *pszColor = OGR_ST_GetParamStr(hBrushStyle, 
+                                                            OGRSTBrushFColor,
+                                                            &bIsNull);
+                  if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle, 
+                                                          pszColor,
+                                                          &r, &g, &b, &t))
+                  {
+                      MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+                      // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
+                  }
+
+                  pszColor = OGR_ST_GetParamStr(hBrushStyle, 
+                                                OGRSTBrushBColor, &bIsNull);
+                  if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle, 
+                                                          pszColor,
+                                                          &r, &g, &b, &t))
+                  {
+                      MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b);
+                  }
+
+                  // Symbol name mapping:
+                  // First look for the native symbol name, then the ogr-...
+                  // generic name.  
+                  // If none provided or found then use 0: solid fill
+              
+                  const char *pszName = OGR_ST_GetParamStr(hBrushStyle, 
+                                                            OGRSTBrushId, 
+                                                            &bIsNull);
+                  c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset), 
+                                                         pszName, NULL);
+              }
+          }
+#else /* OGR Style C++ */
           {
               OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
 
@@ -2301,7 +2561,48 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                                          pszName, NULL);
               }
           }
-          else if (poStylePart->GetType() == OGRSTCSymbol)
+#endif /* HAVE_OGRSTYLE_C */
+          else if (eStylePartType == OGRSTCSymbol)
+#ifdef HAVE_OGRSTYLE_C
+          {
+              OGRStyleToolH hSymbolStyle = hStylePart;
+
+              /* We need 1 style */
+              if (msMaybeAllocateStyle(c, 0))
+              {
+                  RELEASE_OGR_LOCK;
+                  return(MS_FAILURE);
+              }
+
+              const char *pszColor = OGR_ST_GetParamStr(hSymbolStyle, 
+                                                        OGRSTSymbolColor,
+                                                        &bIsNull);
+              if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle, 
+                                                      pszColor,
+                                                      &r, &g, &b, &t))
+              {
+                  MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+              }
+
+              c->styles[0]->size = OGR_ST_GetParamNum(hSymbolStyle, 
+                                                      OGRSTSymbolSize, 
+                                                      &bIsNull);
+
+              // Symbol name mapping:
+              // First look for the native symbol name, then the ogr-...
+              // generic name, and in last resort try "default-marker" if
+              // provided by user.
+              const char *pszName = OGR_ST_GetParamStr(hSymbolStyle, 
+                                                       OGRSTSymbolId, 
+                                                       &bIsNull);
+              if (bIsNull)
+                  pszName = NULL;
+
+              c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
+                                                    pszName, 
+                                                    "default-marker");
+          }
+#else /* OGR Style C++ */
           {
               OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
 
@@ -2332,13 +2633,21 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                                     pszName, 
                                                     "default-marker");
           }
+#endif /* HAVE_OGRSTYLE_C */
 
+#ifdef HAVE_OGRSTYLE_C
+          OGR_ST_Destroy(hStylePart);
+#else
           delete poStylePart;
+#endif
 
       }
 
-      if (poStyleMgr)
-          delete poStyleMgr;
+#ifdef HAVE_OGRSTYLE_C
+      OGR_SM_Destroy(hStyleMgr);
+#else
+      delete poStyleMgr;
+#endif
 
   }
 
@@ -2367,8 +2676,7 @@ void msOGRCleanup( void )
     ACQUIRE_OGR_LOCK;
     if( bOGRDriversRegistered == MS_TRUE )
     {
-        delete OGRSFDriverRegistrar::GetRegistrar();
-        CPLFinderClean();
+        OGRCleanupAll();
         bOGRDriversRegistered = MS_FALSE;
     }
     RELEASE_OGR_LOCK;

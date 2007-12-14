@@ -1199,6 +1199,10 @@ dnl
 dnl ---------------------------------------------------------------------
 dnl Find GDAL only if requested (and not supplied by OGR)
 dnl ---------------------------------------------------------------------
+
+dnl Clear some cache variables
+unset ac_cv_lib_gdal_OGR_SM_Create
+
 AC_MSG_CHECKING(if GDAL support requested)
 
 AC_ARG_WITH(gdal,
@@ -1248,6 +1252,12 @@ if test -n "$GDAL_ENABLED" -o "$OGR_ENABLED"; then
 
   GDAL_LIB=`$GDAL_CONFIG --libs`' '`$GDAL_CONFIG --dep-libs`
   GDAL_INC=`$GDAL_CONFIG --cflags`
+
+  dnl
+  dnl If we have GDAL 1.5.0 or better then use OGR C API for style handling
+  dnl
+  AC_CHECK_LIB(gdal,OGR_SM_Create,OGRSTYLE="-DHAVE_OGRSTYLE_C",,$GDAL_LIB)
+  OGR_ENABLED="$OGR_ENABLED $OGRSTYLE"
 
 fi
 
