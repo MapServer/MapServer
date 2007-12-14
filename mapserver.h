@@ -104,6 +104,7 @@ typedef uint32_t        ms_uint32;
 
 
 #ifdef USE_OGR
+#define CPL_SUPRESS_CPLUSPLUS
 #include "ogr_api.h"
 #endif
 
