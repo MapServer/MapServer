@@ -36,11 +36,10 @@
 #include "mapthread.h"
 
 #if defined(USE_OGR) || defined(USE_GDAL)
-#  include "ogr_spatialref.h"
 #  include "gdal_version.h"
 #  include "cpl_conv.h"
 #  include "cpl_string.h"
-#  include "gdal_version.h"
+#  include "ogr_srs_api.h"
 #endif
 
 MS_CVSID("$Id$")
@@ -713,22 +712,26 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
 {
 #if defined(USE_OGR) || defined(USE_GDAL)
 
-    OGRSpatialReference		oSRS;
+    OGRSpatialReferenceH        hSRS;
     char			*pszAltWKT = (char *) pszWKT;
     OGRErr  eErr;
+    int     ms_result;
 
     ACQUIRE_OLD_OGR_LOCK;
+    hSRS = OSRNewSpatialReference( NULL );
+
     if( !EQUALN(pszWKT,"GEOGCS",6) 
         && !EQUALN(pszWKT,"PROJCS",6)
         && !EQUALN(pszWKT,"LOCAL_CS",8) )
-        eErr = oSRS.SetFromUserInput( pszWKT );
+        eErr = OSRSetFromUserInput( hSRS, pszWKT );
     else
-        eErr = oSRS.importFromWkt( &pszAltWKT );
+        eErr = OSRImportFromWkt( hSRS, &pszAltWKT );
 
     RELEASE_OLD_OGR_LOCK;
 
     if( eErr != OGRERR_NONE )
     {
+        OSRDestroySpatialReference( hSRS );
         msSetError(MS_OGRERR, 
                    "Ingestion of WKT string '%s' failed.",
                    "msOGCWKT2ProjectionObj()",
@@ -736,7 +739,10 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
         return MS_FAILURE;
     }
 
-    return msOGRSpatialRef2ProjectionObj( &oSRS, proj, debug_flag );
+    ms_result = msOGRSpatialRef2ProjectionObj( hSRS, proj, debug_flag );
+
+    OSRDestroySpatialReference( hSRS );
+    return ms_result;
 #else
     msSetError(MS_OGRERR, 
                "Not implemented since neither OGR nor GDAL is enabled.",
