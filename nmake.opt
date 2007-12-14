@@ -349,8 +349,14 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # NOTE: Both -DUSE_OGR and -DUSE_GDAL need to be defined if you 
 # want to use GDAL/OGR for both raster and vector support, but GDAL_DIR 
 # needs only be defined once.
+#
+# NOTE 2: If using GDAL/OGR 1.5.0 or more recent then use -DHAVE_OGRSTYLE_C
+#         to enable the use of the OGR C API and allow upgrading GDAL.DLL
+#         without having to recompile MapServer. Older versions of GDAL/OGR
+#         still work, but with only partial support for the C API 
+#         See ticket #545 at http://trac.osgeo.org/mapserver/ticket/545
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#OGR=-DUSE_OGR
+#OGR=-DUSE_OGR -DHAVE_OGRSTYLE_C
 #GDAL_DIR=$(MS_BASE)\..\gdal
 
 
