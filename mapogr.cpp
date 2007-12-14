@@ -58,12 +58,12 @@ MS_CVSID("$Id$")
 
 #ifdef USE_OGR
 
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
 #include "ogr_api.h"
-#else
+#else /* Use OGR Style C++ */
 #include "ogrsf_frmts.h"
 #include "ogr_featurestyle.h"
-#endif /* HAVE_OGRSTYLE_C */
+#endif
 
 typedef struct ms_ogr_file_info_t
 {
@@ -534,7 +534,7 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     return(NULL);
   }
 
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
   OGRStyleMgrH  hStyleMgr = NULL;
   OGRStyleToolH hLabelStyle = NULL;
 #else
@@ -551,7 +551,7 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
         values[i] = strdup(OGR_F_GetFieldAsString( hFeature, itemindexes[i]));
     }
     else
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
     {
         // Handle special OGR attributes coming from StyleString
         if (!hStyleMgr)
@@ -628,10 +628,10 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
           return(NULL);
         }
     }
-#endif /* HAVE_OGRSTYLE_C */
+#endif /* OGRStyle C API */
   }
 
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
   OGR_SM_Destroy(hStyleMgr);
   OGR_ST_Destroy(hLabelStyle);
 #else
@@ -2120,7 +2120,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
       GBool bIsNull, bIsBrush=MS_FALSE, bIsPen=MS_FALSE;
       int r=0,g=0,b=0,t=0;
 
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
       OGRStyleMgrH hStyleMgr = OGR_SM_Create(NULL);
       OGR_SM_InitFromFeature(hStyleMgr, psInfo->hLastFeature);
       int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
@@ -2128,12 +2128,12 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
       OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
       poStyleMgr->InitFromFeature((OGRFeature *)psInfo->hLastFeature);
       int numParts = poStyleMgr->GetPartCount();
-#endif /* HAVE_OGRSTYLE_C */
+#endif /* OGRStyle C API */
 
       for(int i=0; i<numParts; i++)
       {
           OGRSTClassId eStylePartType;
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
           OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
           if (!hStylePart)
               continue;
@@ -2143,7 +2143,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
           if (!poStylePart)
               continue;
           eStylePartType = poStylePart->GetType();
-#endif /* HAVE_OGRSTYLE_C */
+#endif /* OGRStyle C API */
 
           // We want all size values returned in pixels.
           //
@@ -2155,14 +2155,14 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
           // as long as use the same assumptions everywhere)
           // That gives scale = cellsize*72*39.37
 
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
           OGR_ST_SetUnit(hStylePart, OGRSTUPixel, map->cellsize*72.0*39.37);
 #else
           poStylePart->SetUnit(OGRSTUPixel, map->cellsize*72.0*39.37);
 #endif
 
           if (eStylePartType == OGRSTCLabel)
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
           {
               OGRStyleToolH hLabelStyle = hStylePart;
 
@@ -2286,9 +2286,9 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   // msDebug("** Using 'medium' BITMAP font **\n");
               }
           }
-#endif /* HAVE_OGRSTYLE_C */
+#endif /* OGRStyle C API */
           else if (eStylePartType == OGRSTCPen)
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
           {
               OGRStyleToolH hPenStyle = hStylePart;
               bIsPen = TRUE;
@@ -2454,9 +2454,9 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               }
 
           }
-#endif /* HAVE_OGRSTYLE_C */
+#endif /* OGRStyle C API */
           else if (eStylePartType == OGRSTCBrush)
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
           {
               OGRStyleToolH hBrushStyle = hStylePart;
 
@@ -2561,9 +2561,9 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                                          pszName, NULL);
               }
           }
-#endif /* HAVE_OGRSTYLE_C */
+#endif /* OGRStyle C API */
           else if (eStylePartType == OGRSTCSymbol)
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
           {
               OGRStyleToolH hSymbolStyle = hStylePart;
 
@@ -2633,9 +2633,9 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                                     pszName, 
                                                     "default-marker");
           }
-#endif /* HAVE_OGRSTYLE_C */
+#endif /* OGRStyle C API */
 
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
           OGR_ST_Destroy(hStylePart);
 #else
           delete poStylePart;
@@ -2643,7 +2643,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
       }
 
-#ifdef HAVE_OGRSTYLE_C
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
       OGR_SM_Destroy(hStyleMgr);
 #else
       delete poStyleMgr;
