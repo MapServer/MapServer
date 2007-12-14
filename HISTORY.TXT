@@ -14,7 +14,7 @@ Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
 - Converted mapogr.cpp to use OGR C API instead of C++ classes to allow
-  GDAL/OGR updates without having to recompile MapServer (545)
+  GDAL/OGR updates without having to recompile MapServer (#545, #697)
 
 - add missing space on dashed polygon outlines with svg (#2429) 
 
