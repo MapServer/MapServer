@@ -130,3 +130,88 @@ jstring JNU_NewStringNative(JNIEnv *env, const char *str) {
 %typemap(out) char * {
 	$result = JNU_NewStringNative(jenv, $1);
 }
+
+/*
+===============================================================================
+RFC-24 implementation follows
+===============================================================================
+   Modified constructor according to:
+   - cache population and sync, item 3.2
+*/
+%typemap(javaconstruct) layerObj(mapObj map) %{ {
+        this($imcall, true);
+        if (map != null) {
+                this.map=map;
+        }
+}
+%}
+
+%typemap(javaconstruct) classObj(layerObj layer) %{ {
+        this($imcall, true);
+        if (layer != null) {
+                this.layer=layer;
+        }
+}
+%}
+
+%typemap(javaout) int insertLayer {
+        // call the C API
+        int actualIndex=$jnicall;
+        /* Store parent reference, item 3.2 */
+        layer.map=this;
+        return actualIndex;
+}
+
+%typemap(javaout) layerObj* getLayer {
+        // call the C API
+        long cPtr=$jnicall;
+        layerObj layer = null;
+        if (cPtr != 0) {
+        	layer=new layerObj(cPtr, true);
+	        /* Store parent reference, item 3.2 */
+	        layer.map=this;
+        }
+        return layer;
+}
+
+%typemap(javaout) layerObj* getLayerByName {
+        // call the C API
+        long cPtr=$jnicall;
+        layerObj layer = null;
+        if (cPtr != 0) {
+        	layer=new layerObj(cPtr, true);
+	        /* Store parent reference, item 3.2 */
+	        layer.map=this;
+        }
+        return layer;
+}
+
+%typemap(javaout) int insertClass {
+        // call the C API
+        int actualIndex=$jnicall;
+        /* Store parent reference, item 3.2 */
+        classobj.layer=this;
+        return actualIndex;
+}
+
+%typemap(javaout) classObj* getClass {
+        // call the C API
+        long cPtr=$jnicall;
+        classObj clazz = null;
+        if (cPtr != 0) {
+        	clazz=new classObj(cPtr, true);
+	        /* Store parent reference, item 3.2 */
+	        clazz.layer=this;
+        }
+        return clazz;
+}
+                
+%typemap(javacode) layerObj %{
+        /* parent reference, RFC-24 item 3.2 */
+        mapObj map=null;
+%}
+
+%typemap(javacode) classObj %{
+        /* parent reference, RFC-24 item 3.2 */
+        layerObj layer=null;
+%}
