@@ -69,6 +69,8 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
 #else
         layer->_class[layer->numclasses]=classobj;
 #endif
+	/* set parent pointer */
+	classobj->layer=layer;
 	MS_REFCNT_INCR(classobj);
         layer->numclasses++;
         return layer->numclasses-1;
@@ -88,6 +90,8 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
         layer->_class[nIndex]=classobj;
 #endif
 
+	/* set parent pointer */
+	classobj->layer=layer;
 	MS_REFCNT_INCR(classobj);
         /* increment number of classes and return */
         layer->numclasses++;
