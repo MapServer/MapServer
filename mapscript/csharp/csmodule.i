@@ -48,6 +48,7 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 %exception
 {
 	errorObj *ms_error;
+	$action
     ms_error = msGetErrorObj();
     if (ms_error != NULL && ms_error->code != MS_NOERR) {
 	    if (ms_error->code != MS_NOTFOUND && ms_error->code != -1) {
@@ -71,6 +72,7 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 %exception
 {
 	errorObj *ms_error;
+	$action
     ms_error = msGetErrorObj();
     if (ms_error != NULL && ms_error->code != MS_NOERR) {
 	    if (ms_error->code != MS_NOTFOUND && ms_error->code != -1) {
