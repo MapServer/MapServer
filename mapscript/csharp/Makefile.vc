@@ -75,13 +75,14 @@ $(MAPSCRIPT_DLL): $(MAPSCRIPT_OBJS)
 	if exist $(MAPSCRIPT_DLL).manifest mt -manifest $(MAPSCRIPT_DLL).manifest -outputresource:$(MAPSCRIPT_DLL);2
 
 $(CSHARP_DLL)::
-	$(CSC) /t:library /out:mapscript_csharp.dll *.cs config\AssemblyInfo.cs
-	$(CSC) /r:mapscript_csharp.dll /out:shpdump.exe examples\shpdump.cs
-	$(CSC) /r:mapscript_csharp.dll /out:drawmap.exe examples\drawmap.cs
-	$(CSC) /r:mapscript_csharp.dll /out:shapeinfo.exe examples\shapeinfo.cs
-	$(CSC) /r:mapscript_csharp.dll /out:drawquery.exe examples\drawquery.cs
-	$(CSC) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe examples\getbytes.cs
-	$(CSC) /r:mapscript_csharp.dll /out:HTMLtemplate.exe examples\HTMLtemplate.cs
+	$(CSC) $(CSFLAGS) /t:library /out:mapscript_csharp.dll *.cs config\AssemblyInfo.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:shpdump.exe examples\shpdump.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:drawmap.exe examples\drawmap.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:shapeinfo.exe examples\shapeinfo.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:drawquery.exe examples\drawquery.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe examples\getbytes.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:HTMLtemplate.exe examples\HTMLtemplate.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:RFC24.exe examples\RFC24.cs
 
 test:
 !IFDEF MONO
@@ -101,8 +102,8 @@ test:
 !ENDIF
 	getbytes ../../tests/test.map test_csharp2.png
 !ENDIF
+	RFC24.exe ../../tests/test.map
 	
-
 clean:
 	del *.obj
 	del *.dll
