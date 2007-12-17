@@ -20,40 +20,6 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 //#define ALLOW_INNER_EXCEPTIONS
 //#endif
 
-/*Uncomment the following line if you want to use global lock around the method
-calls to test against potential thread safety problems */
-//#define USE_GLOBAL_LOCK
-
-#ifdef USE_GLOBAL_LOCK
-#ifndef WIN32
-%insert(runtime) %{
-#include "pthread.h"
-static pthread_mutex_t global_lock = -1;
-void GetLock() {
-if (!global_lock)
-    global_lock = PTHREAD_MUTEX_INITIALIZER 
-    pthread_mutex_lock( &global_lock );
-}
-void ReleaseLock() {
-    pthread_mutex_unlock( &global_lock );
-}
-%}
-#else
-%insert(runtime) %{
-#include <windows.h>
-static HANDLE global_lock = NULL;
-void GetLock() {
-if (!global_lock) 
-    global_lock = CreateMutex( NULL, TRUE, NULL );
-    WaitForSingleObject( global_lock, INFINITE );
-}
-void ReleaseLock() {
-    ReleaseMutex( global_lock );
-}
-%}
-#endif
-#endif
-
 %ignore fp;
 
 /******************************************************************************
@@ -82,13 +48,6 @@ void ReleaseLock() {
 %exception
 {
 	errorObj *ms_error;
-	#ifdef USE_GLOBAL_LOCK
-	GetLock();
-	#endif
-	$action
-	#ifdef USE_GLOBAL_LOCK
-	ReleaseLock();
-	#endif
     ms_error = msGetErrorObj();
     if (ms_error != NULL && ms_error->code != MS_NOERR) {
 	    if (ms_error->code != MS_NOTFOUND && ms_error->code != -1) {
@@ -112,13 +71,6 @@ void ReleaseLock() {
 %exception
 {
 	errorObj *ms_error;
-	#ifdef USE_GLOBAL_LOCK
-	GetLock();
-	#endif
-	$action
-	#ifdef USE_GLOBAL_LOCK
-	ReleaseLock();
-	#endif
     ms_error = msGetErrorObj();
     if (ms_error != NULL && ms_error->code != MS_NOERR) {
 	    if (ms_error->code != MS_NOTFOUND && ms_error->code != -1) {
