@@ -165,9 +165,14 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     msInitShape(cacheslot->markers[i].poly);
 
     /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
-    if(msGetMarkerSize(&map->symbolset, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
-      return(MS_FAILURE);
-
+    /* #2347: after RFC-24 classPtr->styles could be NULL so we check it */
+    if (classPtr->styles != NULL) {
+	    if(msGetMarkerSize(&map->symbolset, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
+    	  return(MS_FAILURE);
+    } else {
+    	msSetError(MS_MISCERR, "msAddLabel error: missing style definition for layer '%s'", "msAddLabel()", layerPtr->name);
+		return(MS_FAILURE);
+	}
     rect.minx = MS_NINT(point->x - .5 * w);
     rect.miny = MS_NINT(point->y - .5 * h);
     rect.maxx = rect.minx + (w-1);
