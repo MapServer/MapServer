@@ -333,7 +333,7 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
   else
   {
     va_start(args, routine);
-    vsprintf( ms_error->message, message_fmt, args );
+    vsnprintf( ms_error->message, MESSAGELENGTH, message_fmt, args );
     va_end(args);
   }
 
