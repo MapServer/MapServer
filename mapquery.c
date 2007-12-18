@@ -207,7 +207,7 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
     return(MS_FAILURE);
   }
 
-  shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
+  shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, NULL, 0);
   if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
     msSetError(MS_NOTFOUND, "Shape %d not valid against layer classification.", "msQueryByIndex()", shapeindex);
     msFreeShape(&shape);
@@ -258,6 +258,9 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   rectObj searchrect;
 
   shapeObj shape;
+  
+  int nclasses = 0;
+  int *classgroup = NULL;
 
   if(qlayer < 0 || qlayer >= map->numlayers) {
     msSetError(MS_MISCERR, "No query layer defined.", "msQueryByAttributes()"); 
@@ -335,9 +338,14 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   lp->resultcache->numresults = lp->resultcache->cachesize = 0;
   lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
   
+  nclasses = 0;
+  classgroup = NULL;
+  if (lp->classgroup && lp->numclasses > 0)
+      classgroup = msAllocateValidClassGroups(lp, &nclasses);
+
   while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-    shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);    
+    shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses );    
     if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
       msFreeShape(&shape);
       continue;
@@ -369,6 +377,9 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
       break;
     }
   }
+
+  if (classgroup)
+    msFree(classgroup);
 
   if(status != MS_DONE) return(MS_FAILURE);
 
@@ -411,6 +422,9 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
   char status;
   shapeObj shape, searchshape;
   rectObj searchrect;
+  
+  int nclasses = 0;
+  int *classgroup = NULL;
 
   msInitShape(&shape);
   msInitShape(&searchshape);
@@ -482,9 +496,14 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
+    nclasses = 0;
+    classgroup = NULL;
+    if (lp->classgroup && lp->numclasses > 0)
+      classgroup = msAllocateValidClassGroups(lp, &nclasses);
+
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
+      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
@@ -532,6 +551,9 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
       msFreeShape(&shape);
     } /* next shape */
       
+    if (classgroup)
+      msFree(classgroup);
+
     if(status != MS_DONE) return(MS_FAILURE);
 
     msLayerClose(lp);
@@ -569,6 +591,8 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 
   rectObj searchrect;
   shapeObj shape, selectshape;
+  int nclasses = 0;
+  int *classgroup = NULL;
 
   msInitShape(&shape);
   msInitShape(&selectshape);
@@ -703,12 +727,17 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;    
       }      
 
+      nclasses = 0;
+      classgroup = NULL;
+      if (lp->classgroup && lp->numclasses > 0)
+        classgroup = msAllocateValidClassGroups(lp, &nclasses);
+
       while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
 	/* check for dups when there are multiple selection shapes */
 	if(i > 0 && is_duplicate(lp->resultcache, shape.index, shape.tileindex)) continue;
 
-	shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
+	shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
 	if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	  msFreeShape(&shape);
 	  continue;
@@ -775,6 +804,9 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	msFreeShape(&shape);
       } /* next shape */
 
+      if (classgroup)
+        msFree(classgroup);
+
       if(status != MS_DONE) return(MS_FAILURE);
 
       msFreeShape(&selectshape);
@@ -824,6 +856,8 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
   char status;
   rectObj rect, searchrect;
   shapeObj shape;
+  int nclasses = 0;
+  int *classgroup = NULL;
 
   msInitShape(&shape);
 
@@ -915,9 +949,14 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
+    nclasses = 0;
+    classgroup = NULL;
+    if (lp->classgroup && lp->numclasses > 0)
+      classgroup = msAllocateValidClassGroups(lp, &nclasses);
+
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
+      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
@@ -960,6 +999,9 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
 
     } /* next shape */
 
+    if (classgroup)
+      msFree(classgroup);
+
     if(status != MS_DONE) return(MS_FAILURE);
 
     msLayerClose(lp);
@@ -986,6 +1028,9 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
   char status;
   double distance, tolerance, layer_tolerance;
   rectObj searchrect;
+
+  int nclasses = 0;
+  int *classgroup = NULL;
 
    msInitShape(&shape);
 
@@ -1085,9 +1130,14 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
+    nclasses = 0;
+    classgroup = NULL;
+    if (lp->classgroup && lp->numclasses > 0)
+      classgroup = msAllocateValidClassGroups(lp, &nclasses);
+
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
+      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
@@ -1177,6 +1227,9 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
     layerObj *lp;
     char status;
     rectObj searchrect;
+     
+    int nclasses = 0;
+    int *classgroup = NULL;
 
     msInitShape(&shape);
 
@@ -1265,9 +1318,13 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
       lp->resultcache->numresults = lp->resultcache->cachesize = 0;
       lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
+       classgroup = NULL;
+       if (lp->classgroup && lp->numclasses > 0)
+         classgroup = msAllocateValidClassGroups(lp, &nclasses);
+
       while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-        shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom);
+        shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
         if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
           msFreeShape(&shape);
           continue;

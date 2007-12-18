@@ -141,9 +141,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     const char *pszTmp = NULL;
     int bFreeTemplate = 0;
     int nLayerStatus = 0;
+    const char *pszSLDNotSupported = NULL;
 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
-
 
     if (pasLayers && nLayers > 0)
     {
@@ -174,29 +174,68 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                      strcasecmp(pasLayers[j].name, pszStyleLayerName) == 0))
                 {
                     bSuccess =1;
-/* -------------------------------------------------------------------- */
-/*      copy classes in reverse order : the Rule priority is the        */
-/*      first rule is the most important (mapserver uses the painter    */
-/*      model)                                                          */
-/* -------------------------------------------------------------------- */
-                    GET_LAYER(map, i)->type = pasLayers[j].type;
-                    /* TODO: Setting numclasses=0 here results in leaking the contents of any pre-existing classes!?! */
-                    GET_LAYER(map, i)->numclasses = 0;
-                    iClass = 0;
-                    for (k=0; k < pasLayers[j].numclasses; k++)
+#ifdef notdef
+                    /*this is a test code if we decide to flag some layers as not supporting SLD*/
+                    pszSLDNotSupported = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "M", "SLD_NOT_SUPPORTED");
+                    if (pszSLDNotSupported)
                     {
-                        if (msGrowLayerClasses(GET_LAYER(map, i)) == NULL)
-                            return MS_FAILURE;
-
-                        initClass(GET_LAYER(map, i)->class[iClass]);
-                        msCopyClass(GET_LAYER(map, i)->class[iClass],
-                                    pasLayers[j].class[k], NULL);
-                        GET_LAYER(map, i)->class[iClass]->layer = GET_LAYER(map, i);
-                        GET_LAYER(map, i)->class[iClass]->type = GET_LAYER(map, i)->type;
-                        GET_LAYER(map, i)->numclasses++;
-                        iClass++;
+                        msSetError(MS_WMSERR, "Layer %s does not support SLD", "msSLDApplySLD", pasLayers[j].name);
+                        return MS_FAILURE;
                     }
+#endif
 
+                    if ( pasLayers[j].numclasses > 0)
+                    {
+                        GET_LAYER(map, i)->type = pasLayers[j].type;
+
+                        /* TODO: Setting numclasses=0 here results in leaking the contents of any pre-existing classes!?! */
+                        GET_LAYER(map, i)->numclasses = 0;
+
+                        /*unset the classgroup on the layer if it was set. This allows the layer to render
+                          with all the classes defined in the SLD*/
+                        if (GET_LAYER(map, i)->classgroup)
+                          msFree(GET_LAYER(map, i)->classgroup);
+                        GET_LAYER(map, i)->classgroup = NULL;
+
+                        iClass = 0;
+                        for (k=0; k < pasLayers[j].numclasses; k++)
+                        {
+                            if (msGrowLayerClasses(GET_LAYER(map, i)) == NULL)
+                              return MS_FAILURE;
+
+                            initClass(GET_LAYER(map, i)->class[iClass]);
+                            msCopyClass(GET_LAYER(map, i)->class[iClass],
+                                        pasLayers[j].class[k], NULL);
+                            GET_LAYER(map, i)->class[iClass]->layer = GET_LAYER(map, i);
+                            GET_LAYER(map, i)->class[iClass]->type = GET_LAYER(map, i)->type;
+                            GET_LAYER(map, i)->numclasses++;
+                            iClass++;
+                        }
+                    }
+                    else
+                    {   
+                        /*this is probably an SLD that uses Named styles*/
+                        if (pasLayers[j].classgroup)
+                        {
+                            for (k=0; k<GET_LAYER(map, i)->numclasses; k++)
+                            {
+                                if (GET_LAYER(map, i)->class[k]->group &&
+                                    strcasecmp(GET_LAYER(map, i)->class[k]->group, 
+                                               pasLayers[j].classgroup) == 0)
+                                  break;
+                            }
+                            if (k < GET_LAYER(map, i)->numclasses)
+                            {
+                                if ( GET_LAYER(map, i)->classgroup)
+                                  msFree( GET_LAYER(map, i)->classgroup);
+                                GET_LAYER(map, i)->classgroup = strdup(pasLayers[j].classgroup);
+                            }   
+                            else
+                            {
+                                /* TODO  we throw an exception ?*/
+                            }
+                        }
+                    }
                     if (pasLayers[j].labelitem)
                     {
                         if (GET_LAYER(map, i)->labelitem)
@@ -261,8 +300,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
                         nLayerStatus =  GET_LAYER(map, i)->status;
                         GET_LAYER(map, i)->status = MS_ON;
-                        FLTApplySpatialFilterToLayer(psNode, map,  
-                                                     GET_LAYER(map, i)->index);
+                        //FLTApplySpatialFilterToLayer(psNode, map,  
+                        //                           GET_LAYER(map, i)->index);
+                        FLTApplyFilterToLayer(psNode, map,  
+                                              GET_LAYER(map, i)->index,
+                                              !FLTIsSimpleFilter(psNode));
+
                         GET_LAYER(map, i)->status = nLayerStatus;
                         FLTFreeFilterEncodingNode(psNode);
 
@@ -281,11 +324,8 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
     }
     
-    if (bSuccess)
-      return MS_SUCCESS;
+    return MS_SUCCESS;
 
-    return(MS_FAILURE);
-    
 
 #else
 /* ------------------------------------------------------------------
@@ -525,7 +565,8 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
 /************************************************************************/
 void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
-    CPLXMLNode *psFeatureTypeStyle, *psRule, *psUserStyle;
+    CPLXMLNode *psFeatureTypeStyle, *psRule, *psUserStyle; 
+    CPLXMLNode *psSLDName = NULL, *psNamedStyle=NULL;
     CPLXMLNode *psElseFilter = NULL, *psFilter=NULL;
     CPLXMLNode *psTmpNode = NULL;
     FilterEncodingNode *psNode = NULL;
@@ -673,6 +714,17 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                     psFeatureTypeStyle = psFeatureTypeStyle->psNext;
                 }
+            }
+        }
+        /* check for Named styles*/
+        else
+        {
+            psNamedStyle = CPLGetXMLNode(psRoot, "NamedStyle");
+            if (psNamedStyle)
+            {
+                psSLDName = CPLGetXMLNode(psNamedStyle, "Name");
+                if (psSLDName && psSLDName->psChild &&  psSLDName->psChild->pszValue)
+                  psLayer->classgroup = strdup(psSLDName->psChild->pszValue);
             }
         }
     }
@@ -2018,13 +2070,13 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
 
                         if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) == MS_SUCCESS)
                         {
-                            /* the lats parameter is used to set the GAP size in the symbol. 
+                            /* the last parameter is used to set the GAP size in the symbol. 
                                It is harcoded to be 2 * the size set for the symbol. This is
                                used when using graphic strokes with line symblizers (symbols
-                               along the line) */
+                               along the line). Set to be negative for ration purpose. */
                                
                             psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName, pszURL,
-                                                                    2 * psStyle->size);
+                                                                    -(2 * psStyle->size));
                             if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
                               psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol]->name);
 

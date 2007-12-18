@@ -428,9 +428,42 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
  * }
  */
 
-int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom)
+int *msAllocateValidClassGroups(layerObj *lp, int *nclasses)
 {
-  int i;
+    int *classgroup = NULL;
+    int nvalidclass = 0, i=0;
+
+    if (!lp || !lp->classgroup || lp->numclasses <=0 || !nclasses)
+      return NULL;
+
+    classgroup = (int *)malloc(sizeof(int)*lp->numclasses);       
+    nvalidclass = 0;
+    for (i=0; i<lp->numclasses; i++)
+    {
+        if (lp->class[i]->group && strcasecmp(lp->class[i]->group, lp->classgroup) == 0)
+        {
+            classgroup[nvalidclass] = i;
+            nvalidclass++;
+        }
+    }
+    if (nvalidclass > 0)
+    {
+        classgroup = (int *)realloc(classgroup, sizeof(int)*nvalidclass);
+        *nclasses = nvalidclass;
+        return classgroup;
+    }
+
+    if (classgroup)
+      msFree(classgroup);
+    
+    return NULL;
+        
+}       
+
+int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom, int *classgroup, int numclasses)
+{
+  int i, iclass;
+
 
   /* INLINE features do not work with expressions, allow the classindex */
   /* value set prior to calling this function to carry through. */
@@ -447,19 +480,37 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom)
     return(shape->classindex);
   }
 
-  for(i=0; i<layer->numclasses; i++) {
-    
-    if(scaledenom > 0) {  /* verify scaledenom here  */
-      if((layer->class[i]->maxscaledenom > 0) && (scaledenom > layer->class[i]->maxscaledenom))
-        continue; /* can skip this one, next class */
-      if((layer->class[i]->minscaledenom > 0) && (scaledenom <= layer->class[i]->minscaledenom))
-        continue; /* can skip this one, next class */
-    }
+  if (layer->numclasses > 0)
+  {
 
-    if(layer->class[i]->status != MS_DELETE && msEvalExpression(&(layer->class[i]->expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
-      return(i);
+      if (classgroup == NULL || numclasses <=0)
+        numclasses = layer->numclasses;
+
+      for(i=0; i<numclasses; i++) 
+      {
+          if (classgroup)
+            iclass = classgroup[i];
+          else
+            iclass = i;
+
+          if (iclass < 0 || iclass >= layer->numclasses)        
+            continue; /*this should never happen but just in case*/
+
+          if(scaledenom > 0) {  /* verify scaledenom here  */
+              if((layer->class[iclass]->maxscaledenom > 0) && (scaledenom > layer->class[iclass]->maxscaledenom))
+                continue; /* can skip this one, next class */
+              if((layer->class[iclass]->minscaledenom > 0) && (scaledenom <= layer->class[iclass]->minscaledenom))
+                continue; /* can skip this one, next class */
+          }
+
+          if(layer->class[iclass]->status != MS_DELETE && 
+             msEvalExpression(&(layer->class[iclass]->expression), 
+                              layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
+          {
+              return(iclass);
+          }
+      }
   }
-
   return(-1); /* no match */
 }
 

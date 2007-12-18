@@ -768,6 +768,8 @@ typedef struct class_obj{
   int debug;
 
   char *keyimage;
+  
+   char *group;
 } classObj;
 
 /************************************************************************/
@@ -1172,6 +1174,7 @@ typedef struct layer_obj {
 %mutable;
 #endif /* SWIG */
 
+  char *classgroup;
 } layerObj;
 
 /************************************************************************/
@@ -1954,7 +1957,7 @@ MS_DLL_EXPORT int msBindLayerToShape(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msValidateContexts(mapObj *map);
 MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
 MS_DLL_EXPORT int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems);
-MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom);
+MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom, int *classgroup, int numclasses);
 MS_DLL_EXPORT char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
 MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);
@@ -1999,7 +2002,7 @@ MS_DLL_EXPORT int msAlphaBlend (int dst, int src);
 
 MS_DLL_EXPORT int msCheckParentPointer(void* p, char* objname);
 
-
+MS_DLL_EXPORT int *msAllocateValidClassGroups(layerObj *lp, int *nclasses);
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */
 /* ==================================================================== */

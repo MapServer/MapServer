@@ -562,7 +562,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
         if (status != MS_SUCCESS)
           nClassIndex = -1;
         else
-          nClassIndex = msShapeGetClass(psLayer, &shape, map->scaledenom);
+          nClassIndex = msShapeGetClass(psLayer, &shape, map->scaledenom, NULL, 0);
         
         addResult(psLayer->resultcache, nClassIndex, anValues[i], -1);
 

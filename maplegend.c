@@ -155,7 +155,7 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x,
         else
           lp = (GET_LAYER(map, map->layerorder[i]));
 
-        if ((lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY)) /* skip it */
+        if ((lp->status == MS_OFF && lp != psForLayer) || (lp->type == MS_LAYER_QUERY)) /* skip it */
             continue;
             
         if (!scale_independent && map->scaledenom > 0) {
@@ -169,6 +169,11 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x,
         {
             if (!lp->class[j]->name) continue; /* skip it */
             
+            /* skip the class if the classgroup is defined*/
+            if (lp->classgroup && 
+                (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
+              continue;
+
             /* Verify class scale */
             if (!scale_independent && map->scaledenom > 0) {
                 if (   (lp->class[j]->maxscaledenom > 0) 
@@ -273,6 +278,11 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
             if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
         }
         for(j=lp->numclasses-1;j>=0;j--) {
+
+          /* skip the class if the classgroup is defined*/
+          if (lp->classgroup && 
+              (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
+            continue;
             if(!lp->class[j]->name) continue; /* skip it */
             if(!scale_independent && map->scaledenom > 0) {  /* verify class scale here */
                 if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom))

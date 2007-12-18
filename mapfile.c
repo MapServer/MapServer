@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+
 #include <stdarg.h>
 #include <assert.h>
 #include <ctype.h>
@@ -1982,6 +1983,8 @@ int initClass(classObj *class)
 
   class->keyimage = NULL;
 
+  class->group = NULL;
+
   return(0);
 }
 
@@ -1998,6 +2001,7 @@ int freeClass(classObj *class)
   msFree(class->name);
   msFree(class->title);
   msFree(class->template);
+    msFree(class->group);
   
   if (&(class->metadata)) msFreeHashItems(&(class->metadata));
   
@@ -2149,6 +2153,9 @@ int loadClass(classObj *class, char *templatepattern, layerObj *layer)
     case(EXPRESSION):
       if(loadExpression(&(class->expression)) == -1) return(-1);
       break;
+    case(GROUP):
+      if(getString(&class->group) == MS_FAILURE) return(-1);
+      break;      
     case(KEYIMAGE):
       if(getString(&class->keyimage) == MS_FAILURE) return(-1);
       break;
@@ -2335,6 +2342,7 @@ static void writeClass(classObj *class, FILE *stream)
 
   fprintf(stream, "    CLASS\n");
   if(class->name) fprintf(stream, "      NAME \"%s\"\n", class->name);
+  if(class->group) fprintf(stream, "      GROUP \"%s\"\n", class->group);
   if(class->debug) fprintf(stream, "      DEBUG %d\n", class->debug);
   if(class->expression.string) {
     fprintf(stream, "      EXPRESSION ");
@@ -2503,6 +2511,7 @@ int freeLayer(layerObj *layer) {
   msFree(layer->plugin_library_original);
   msFree(layer->connection);
   msFree(layer->vtable);
+  msFree(layer->classgroup);
 
   msFreeProjection(&(layer->projection));
 
@@ -2539,6 +2548,8 @@ int freeLayer(layerObj *layer) {
     freeJoin(&(layer->joins[i]));
   msFree(layer->joins);
   layer->numjoins = 0;
+
+  layer->classgroup = NULL;
 
   return MS_SUCCESS;
 }
@@ -2612,6 +2623,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(layer->class[layer->numclasses]->type == -1) layer->class[layer->numclasses]->type = layer->type;
       layer->numclasses++;
       break;
+    case(CLASSGROUP):
+      if(getString(&layer->classgroup) == MS_FAILURE) return(-1);
+      break;   
     case(CLASSITEM):
       if(getString(&layer->classitem) == MS_FAILURE) return(-1);
       break;
@@ -2979,6 +2993,8 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if (layer->type != -1)
     fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);
   fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);
+
+  if(layer->classgroup) fprintf(stream, "    CLASSGROUP \"%s\"\n", layer->classgroup);
 
   /* write potentially multiply occuring features last */
   for(i=0; i<layer->numclasses; i++) writeClass(layer->class[i], stream);

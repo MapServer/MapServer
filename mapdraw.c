@@ -766,6 +766,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   char        cache=MS_FALSE;
   int         maxnumstyles=1;
   featureListNodeObjPtr shpcache=NULL, current=NULL;
+  int nclasses = 0;
+  int *classgroup = NULL;
 
 /* ==================================================================== */
 /*      For Flash, we use a metadata called SWFOUTPUT that              */
@@ -821,6 +823,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     status = msLayerWhichItems(layer, MS_TRUE, annotate, msLookupHashTable(&(layer->metadata), "SWFDUMPATTRIBUTES"));                                
   else        
     status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL);
+
   if(status != MS_SUCCESS) {
     msLayerClose(layer);
     return MS_FAILURE;
@@ -852,9 +855,14 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* step through the target shapes */
   msInitShape(&shape);
   
+  nclasses = 0;
+  classgroup = NULL;
+  if (layer->classgroup && layer->numclasses > 0)
+      classgroup = msAllocateValidClassGroups(layer, &nclasses);
+
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
-    shape.classindex = msShapeGetClass(layer, &shape, map->scaledenom);
+      shape.classindex = msShapeGetClass(layer, &shape, map->scaledenom, classgroup, nclasses);
     if((shape.classindex == -1) || (layer->class[shape.classindex]->status == MS_OFF)) {
        msFreeShape(&shape);
        continue;
@@ -905,6 +913,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     msFreeShape(&shape);
   }
     
+  if (classgroup)
+    msFree(classgroup);
+
   if(status != MS_DONE) {
     msLayerClose(layer);
     return MS_FAILURE;

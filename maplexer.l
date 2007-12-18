@@ -146,6 +146,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>character                             { return(CHARACTER); }
 <INITIAL,URL_VARIABLE>class                    { return(CLASS); }
 <INITIAL>classitem                             { return(CLASSITEM); }
+<INITIAL,URL_STRING>classgroup                 { return(CLASSGROUP); }
 <INITIAL,URL_STRING>color                      { return(COLOR); }
 <INITIAL>config                                { return(CONFIG); }
 <INITIAL>connection                            { return(CONNECTION); }

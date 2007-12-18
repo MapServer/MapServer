@@ -368,6 +368,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int heightfound = 0;
 
   char *request = NULL;
+  int status = 0;
 
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
@@ -398,9 +399,15 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       else
       {
         if (strcasecmp(names[i], "SLD") == 0)
-           msSLDApplySLDURL(map, values[i], -1, NULL);
+        {
+            if ((status = msSLDApplySLDURL(map, values[i], -1, NULL)) != MS_SUCCESS)
+              return msWMSException(map, nVersion, NULL);
+        }
         if (strcasecmp(names[i], "SLD_BODY") == 0)
-           msSLDApplySLD(map, values[i], -1, NULL);
+        {
+            if ((status =msSLDApplySLD(map, values[i], -1, NULL)) != MS_SUCCESS)
+              return msWMSException(map, nVersion, NULL);
+        }
       }
     }
 
@@ -812,17 +819,70 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   if(styles && strlen(styles) > 0)
   {
       char **tokens;
-      int n=0, i=0;
-      
+      int n=0, i=0, k=0;
+      char **layers=NULL;
+      int numlayers =0;
+      layerObj *lp = NULL;
+
       tokens = msStringSplit(styles, ',' ,&n);
       for (i=0; i<n; i++)
       {
           if (tokens[i] && strlen(tokens[i]) > 0 && 
               strcasecmp(tokens[i],"default") != 0)
           {
-              msSetError(MS_WMSERR, "Invalid style (%s). Mapserver supports only default styles and is expecting an empty string for the STYLES : STYLES= or STYLES=,,, or using keyword default  STYLES=default,default, ...",
-                         "msWMSLoadGetMapParams()", styles);
-              return msWMSException(map, nVersion, "StyleNotDefined");
+              if (layers == NULL)
+              {
+                  for(j=0; j<numentries; j++)
+                  {     
+                      if (strcasecmp(names[j], "LAYERS") == 0)
+                      {
+                          layers = msStringSplit(values[j], ',', &numlayers);
+                      }
+                  }
+              }
+              if (layers && numlayers == n)
+              {
+                  for (j=0; j<map->numlayers; j++)
+                  {
+                      if ((GET_LAYER(map, j)->name &&
+                           strcasecmp(GET_LAYER(map, j)->name, layers[i]) == 0) ||
+                          (map->name && strcasecmp(map->name, layers[i]) == 0) ||
+                          (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[i]) == 0))
+                      {
+                          lp =   GET_LAYER(map, j);
+                          for (k=0; k<lp->numclasses; k++)
+                          {
+                              if (lp->class[k]->group && strcasecmp(lp->class[k]->group, tokens[i]) == 0)
+                              {
+                                  if (lp->classgroup)
+                                    msFree(lp->classgroup);
+                                  lp->classgroup = strdup( tokens[i]);
+                                  break;
+                              }
+                          }
+                          if (k == lp->numclasses)
+                          {
+                              msSetError(MS_WMSERR, "Style (%s) not defined on layer.",
+                                         "msWMSLoadGetMapParams()", tokens[i]);
+                              msFreeCharArray(tokens, n);
+                              msFreeCharArray(layers, numlayers);
+                              
+                              return msWMSException(map, nVersion, "StyleNotDefined");
+                          }
+                      }
+                                     
+                  }
+              }
+              else
+              {
+                  msSetError(MS_WMSERR, "Invalid style (%s). Mapserver is expecting an empty string for the STYLES : STYLES= or STYLES=,,, or using keyword default  STYLES=default,default, ...",
+                             "msWMSLoadGetMapParams()", styles);
+                  if (tokens && n > 0)
+                    msFreeCharArray(tokens, n);
+                  if (layers && numlayers > 0)
+                    msFreeCharArray(layers, numlayers);
+                  return msWMSException(map, nVersion, "StyleNotDefined");
+              }
           }
       }
       if (tokens && n > 0)
@@ -1040,7 +1100,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    const char *pszWmsTimeExtent, *pszWmsTimeDefault= NULL, *pszStyle=NULL;
    const char *pszLegendURL=NULL;
    char *pszMetadataName=NULL, *mimetype=NULL;
-   
+   char **classgroups = NULL;
+   int iclassgroups=0 ,j=0;
+  
    /* if the layer status is set to MS_DEFAULT, output a warning */
    if (lp->status == MS_DEFAULT)
      msIO_fprintf(stdout, "<!-- WARNING: This layer has its status set to DEFAULT and will always be displayed when doing a GetMap request even if it is not requested by the client. This is not in line with the expected behavior of a WMS server. Using status ON or OFF is recommended. -->\n");
@@ -1314,30 +1376,74 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                              mimetype = MS_IMAGE_MIME_TYPE(map->outputformat);         
                            mimetype = msEncodeHTMLEntities(mimetype);
 
-                           sprintf(legendurl, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s",  
-                                   script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
-                                   mimetype);
+                           /* -------------------------------------------------------------------- */
+                           /*      check if the group parameters for the classes are set. We       */
+                           /*      should then publish the deffrent class groups as diffrent styles.*/
+                           /* -------------------------------------------------------------------- */
+                           iclassgroups = 0;
+                           classgroups = NULL;
+                           for (i=0; i<lp->numclasses; i++)
+                           {
+                               if (lp->class[i]->name && lp->class[i]->group)
+                               {
+                                   if (!classgroups)
+                                   {
+                                       classgroups = (char **)malloc(sizeof(char *));
+                                       classgroups[iclassgroups++]= strdup(lp->class[i]->group);
+                                   }
+                                   else
+                                   {
+                                       for (j=0; j<iclassgroups; j++)
+                                       {
+                                           if (strcasecmp(classgroups[j], lp->class[i]->group) == 0)
+                                             break;
+                                       }
+                                       if (j == iclassgroups)
+                                       {
+                                           iclassgroups++;
+                                           classgroups = (char **)realloc(classgroups, sizeof(char *)*iclassgroups);
+                                           classgroups[iclassgroups-1]= strdup(lp->class[i]->group);
+                                       }
+                                   }
+                               }
+                           }
+                           if (classgroups == NULL)
+                           {
+                               classgroups = (char **)malloc(sizeof(char *));
+                               classgroups[0]= strdup("default");
+                               iclassgroups = 1;
+                           }
+                           for (i=0; i<iclassgroups; i++)
+                           {
+                               sprintf(legendurl, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=%s",  
+                                       script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
+                                       mimetype,  classgroups[i]);
                            
-                           msIO_fprintf(stdout, "        <Style>\n");
-                           msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
-                           msIO_fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+                               msIO_fprintf(stdout, "        <Style>\n");
+                               msIO_fprintf(stdout, "          <Name>%s</Name>\n",  classgroups[i]);
+                               msIO_fprintf(stdout, "          <Title>%s</Title>\n", classgroups[i]);
                       
-                           msOWSPrintURLType(stdout, NULL, 
-                                             "O", "ttt",
-                                             OWS_NOERR, NULL, 
-                                             "LegendURL", NULL, 
-                                             " width=\"%s\"", " height=\"%s\"", 
-                                             ">\n             <Format>%s</Format", 
-                                             "\n             <OnlineResource "
-                                             "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
-                                             " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
-                                             "          ",
-                                             MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, 
-                                             NULL, width, height, mimetype, legendurl, "          ");
+                               msOWSPrintURLType(stdout, NULL, 
+                                                 "O", "ttt",
+                                                 OWS_NOERR, NULL, 
+                                                 "LegendURL", NULL, 
+                                                 " width=\"%s\"", " height=\"%s\"", 
+                                                 ">\n             <Format>%s</Format", 
+                                                 "\n             <OnlineResource "
+                                                 "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                                                 " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                                                 "          ",
+                                                 MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, 
+                                                 NULL, width, height, mimetype, legendurl, "          ");
                        
 
-                           msIO_fprintf(stdout, "        </Style>\n");
+                               msIO_fprintf(stdout, "        </Style>\n");
+                           }
                            msFree(legendurl);
+                           for (i=0; i<iclassgroups; i++)
+                             msFree(classgroups[i]);
+                           msFree(classgroups);
+
                            msFree(mimetype);
                        }
                    }
@@ -2480,13 +2586,14 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
 {
     char *pszLayer = NULL;
     char *pszFormat = NULL;
-	  char *psRule = NULL;
+    char *psRule = NULL;
     char *psScale = NULL;
     int iLayerIndex = -1;
     outputFormatObj *psFormat = NULL;
     imageObj *img=NULL;
     int i = 0;
     int nWidth = -1, nHeight =-1;
+    char *pszStyle = NULL;
 
      for(i=0; map && i<numentries; i++)
      {
@@ -2515,14 +2622,11 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
                   values[i] && strlen(values[i]) > 0)
              msSLDApplySLD(map, values[i], -1, NULL);
          else if (strcasecmp(names[i], "RULE") == 0)
-         {
-             psRule = values[i];
-         }
+           psRule = values[i];
          else if (strcasecmp(names[i], "SCALE") == 0)
-         {
-             psScale = values[i];
-         }
-
+           psScale = values[i];
+         else if (strcasecmp(names[i], "STYLE") == 0)
+           pszStyle = values[i];
 #endif
      }
 
@@ -2575,6 +2679,32 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      msApplyOutputFormat(&(map->outputformat), psFormat, 0,
                           MS_NOOVERRIDE, MS_NOOVERRIDE );
 
+     /*if STYLE is set, check if it is a valid style (valid = at least one
+       of the classes have a the group value equals to the style */
+     if (pszStyle && strlen(pszStyle) > 0 && strcasecmp(pszStyle, "default") != 0)
+     {
+         for (i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++)
+         {
+              if (GET_LAYER(map, iLayerIndex)->class[i]->group &&
+                  strcasecmp(GET_LAYER(map, iLayerIndex)->class[i]->group, pszStyle) == 0)
+                break;
+         }
+              
+         if (i == GET_LAYER(map, iLayerIndex)->numclasses)
+         {
+             msSetError(MS_WMSERR, "style used in the STYLE parameter is not defined on the layer.", 
+                        "msWMSGetLegendGraphic()");
+             return msWMSException(map, nVersion, "StyleNotDefined");
+         }
+         else
+         {
+             if (GET_LAYER(map, iLayerIndex)->classgroup)
+               msFree(GET_LAYER(map, iLayerIndex)->classgroup);
+             GET_LAYER(map, iLayerIndex)->classgroup = strdup(pszStyle);
+             
+         }
+     }
+
      if ( psRule == NULL )
      {
          /* turn this layer on and all other layers off, required for msDrawLegend() */
@@ -2618,6 +2748,12 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          
          for (i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++)
          {
+             if (GET_LAYER(map, iLayerIndex)->classgroup && 
+                 (GET_LAYER(map, iLayerIndex)->class[i]->group == NULL ||
+                  strcasecmp(GET_LAYER(map, iLayerIndex)->class[i]->group, 
+                             GET_LAYER(map, iLayerIndex)->classgroup) != 0))
+               continue;
+
              if (GET_LAYER(map, iLayerIndex)->class[i]->name && 
                  strlen(GET_LAYER(map, iLayerIndex)->class[i]->name) > 0 &&
                  strcasecmp(GET_LAYER(map, iLayerIndex)->class[i]->name,psRule) == 0)
