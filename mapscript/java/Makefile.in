@@ -236,10 +236,10 @@ mapscript_so: mapscript_wrap.c
 	$(CC) -fpic -c $(CCFLAGS) $(JAVA_INCLUDE) -fno-strict-aliasing mapscript_wrap.c
 	$(CC) -fpic -shared mapscript_wrap.o -o libmapscript.so $(LDFLAGS)
 
-mapscript_java::
+mapscript_java: mapscript_wrap.c
 	$(JAVAC) edu/umn/gis/mapscript/*.java
 
-mapscript_javadoc::
+mapscript_javadoc: mapscript_wrap.c
 	$(JAVADOC) -d doc -sourcepath edu/umn/gis/mapscript/*.java
 
 mapscript_jar: mapscript_java mapscript_so
