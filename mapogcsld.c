@@ -141,7 +141,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     const char *pszTmp = NULL;
     int bFreeTemplate = 0;
     int nLayerStatus = 0;
-    const char *pszSLDNotSupported = NULL;
+    //const char *pszSLDNotSupported = NULL;
 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
 
