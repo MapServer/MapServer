@@ -1077,11 +1077,19 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
   OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
   OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
 
+#if GDAL_VERSION_NUM >= 1310
   OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
   OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
   OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
   OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
   OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+#else
+  OGR_G_AddPoint( hRing, rect.minx, rect.miny);
+  OGR_G_AddPoint( hRing, rect.maxx, rect.miny);
+  OGR_G_AddPoint( hRing, rect.maxx, rect.maxy);
+  OGR_G_AddPoint( hRing, rect.minx, rect.maxy);
+  OGR_G_AddPoint( hRing, rect.minx, rect.miny);
+#endif
 
   OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
 
@@ -2682,8 +2690,10 @@ void msOGRCleanup( void )
     ACQUIRE_OGR_LOCK;
     if( bOGRDriversRegistered == MS_TRUE )
     {
+#if GDAL_VERSION_NUM >= 1400
         OGRCleanupAll();
         bOGRDriversRegistered = MS_FALSE;
+#endif
     }
     RELEASE_OGR_LOCK;
 #endif
