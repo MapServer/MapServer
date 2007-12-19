@@ -1333,7 +1333,9 @@ typedef struct {
 %mutable;
 #endif
   int renderer;
+#ifndef SWIG
   int size;
+#endif
 
 #ifndef SWIG
   union {

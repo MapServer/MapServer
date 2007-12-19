@@ -224,6 +224,20 @@
 
         return buffer;
     }
-    
+
+    int getSize() {
+        gdBuffer buffer;
+	int size=0;
+        
+        buffer.data = msSaveImageBuffer(self, &buffer.size, self->format);
+	size = buffer.size;
+            
+        if( buffer.data == NULL || buffer.size == 0 ) {
+            buffer.data = NULL;
+            msSetError(MS_MISCERR, "Failed to get image buffer size", "getSize");
+        }
+	free(buffer.data);
+        return size;
+    }
 }
 

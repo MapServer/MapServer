@@ -859,8 +859,12 @@ renderer : int
     MS_RENDER_WITH_GD, MS_RENDER_WITH_SWF, MS_RENDER_WITH_RAWDATA,
     MS_RENDER_WITH_PDF, or MS_RENDER_WITH_IMAGEMAP.  Don't mess with this!
 
-size : int
-    I don't see where this is used.  Anyone?  --SG
+size : int immutable
+    To access this attribute use the getSize method.
+   
+.. note:: the getSize method is inefficient as it does a call to getBytes and then computes
+   the size of the byte array. The bytearray is then immediately discarded. In most
+   cases it is more efficient to call getBytes directly.
 
 width : int immutable
     Image width in pixels.
@@ -881,6 +885,13 @@ getBytes() : binary data
     Returns the image contents as a binary buffer.  The exact
     form of this buffer will vary by mapscript language (eg. string in Python,
     byte[] array in Java and C#, unhandled in perl)
+
+getSize() : int
+    Resturns the size of the binary buffer representing the image buffer.
+   
+.. note:: the getSize method is inefficient as it does a call to getBytes and then computes
+   the size of the byte array. The byte array is then immediately discarded. In most
+   cases it is more efficient to call getBytes directly.
 
 save( string filename [, mapObj_ parent_map=NULL ] ) : int
     Save image to *filename*.  The optional *parent_map* parameter must be

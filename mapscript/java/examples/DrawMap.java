@@ -36,6 +36,8 @@ public class DrawMap {
     int i=0;
     //for (i=0; i<100; i++) {
     	imageObj img = map.draw();
+    	System.out.println("Image size is: "+img.getSize());
+    	System.out.println("Image size from getBytes is: "+img.getBytes().length);
     	System.out.println(i+") the map will be drawn to:"+args[1]);
     	img.save(args[1], map);
     //}
