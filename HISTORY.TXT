@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- SLD using a single BBOX filter should generate an SQL ststement for 
+  oracle/postgis/ogr (#2450)
+
 - Accurate Calculation of legend size for WMS LegendURL (#2435)
 
 - Converted mapogr.cpp to use OGR C API instead of C++ classes to allow
