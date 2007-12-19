@@ -1084,11 +1084,11 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
   OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
   OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
 #else
-  OGR_G_AddPoint( hRing, rect.minx, rect.miny);
-  OGR_G_AddPoint( hRing, rect.maxx, rect.miny);
-  OGR_G_AddPoint( hRing, rect.maxx, rect.maxy);
-  OGR_G_AddPoint( hRing, rect.minx, rect.maxy);
-  OGR_G_AddPoint( hRing, rect.minx, rect.miny);
+  OGR_G_AddPoint( hRing, rect.minx, rect.miny, 0);
+  OGR_G_AddPoint( hRing, rect.maxx, rect.miny, 0);
+  OGR_G_AddPoint( hRing, rect.maxx, rect.maxy, 0);
+  OGR_G_AddPoint( hRing, rect.minx, rect.maxy, 0);
+  OGR_G_AddPoint( hRing, rect.minx, rect.miny, 0);
 #endif
 
   OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
