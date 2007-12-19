@@ -927,7 +927,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
         if (lp->connectiontype == MS_OGR)
           sprintf(pszBuffer, "WHERE %s", szExpression);
         else //POSTGIS OR ORACLE if (lp->connectiontype == MS_POSTGIS)
-          sprintf(pszBuffer, "%s", szExpression);
+          sprintf(pszBuffer, "(%s)", szExpression);
 
         msLoadExpressionString(&lp->filter, pszBuffer);
         free(szExpression);

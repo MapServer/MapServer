@@ -261,8 +261,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
                         nLayerStatus =  GET_LAYER(map, i)->status;
                         GET_LAYER(map, i)->status = MS_ON;
-                        FLTApplySpatialFilterToLayer(psNode, map,  
-                                                     GET_LAYER(map, i)->index);
+                        FLTApplyFilterToLayer(psNode, map,
+                                              GET_LAYER(map, i)->index,
+                                              !FLTIsSimpleFilter(psNode));
                         GET_LAYER(map, i)->status = nLayerStatus;
                         FLTFreeFilterEncodingNode(psNode);
 
