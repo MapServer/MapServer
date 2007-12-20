@@ -216,6 +216,7 @@ SDE_LIB = $(SDE_DIR)\lib\pe$(SDE_VERSION).lib \
 plugins:  
 		-del mapsde.obj
 		-del maporaclespatial.obj
+		-del mapmssql2008.obj
 
 !IFDEF SDE_OPT
 	$(CC) $(CFLAGS) -DUSE_SDE /c mapsde.c /Fomapsde.obj
@@ -227,6 +228,13 @@ plugins:
     link /dll /out:msplugin_oracle.dll maporaclespatial.obj $(ORACLE_LIB) mapserver_i.lib
     -del maporaclespatial.obj
 !ENDIF
+!IFDEF MSSQL2008
+	$(CC) $(CFLAGS) $(ODBC_INC) -DUSE_MSSQL2008 /c mapmssql2008.c /Fomapmssql2008.obj
+    link /dll /out:msplugin_mssql2008.dll mapmssql2008.obj $(ODBC_LIBS) mapserver_i.lib
+    -del mapmssql2008.obj
+!ENDIF
+
+
 !ELSE
 plugins:
 !ENDIF
