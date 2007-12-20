@@ -803,7 +803,9 @@ typedef struct {
 
   int status; /* has this label been drawn or not */
 
+#ifndef SWIG
   labelPathObj *labelpath;  /* Path & bounds of curved labels.  Bug #1620 implementation */
+#endif /* SWIG */
   
 } labelCacheMemberObj;
 
