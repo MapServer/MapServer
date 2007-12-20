@@ -1,7 +1,7 @@
 #ifndef MAPGML_H
 #define MAPGML_H
 
-#ifdef USE_SOS_SVR
+#ifdef USE_LIBXML2
 #include<libxml/parser.h>
 #include<libxml/tree.h>
 
@@ -13,6 +13,6 @@ xmlNodePtr msGML3TimePeriod(xmlNsPtr psNs, char *pszStart, char *pszEnd);
 xmlNodePtr msGML3TimeInstant(xmlNsPtr psNs, char *timeInstant);
 xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, double x, double y);
 
-#endif /* USE_SOS_SVR */
+#endif /* USE_LIBXML2 */
 
 #endif

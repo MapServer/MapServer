@@ -1541,7 +1541,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
 }
 
 
-#ifdef USE_SOS_SVR 
+#ifdef USE_LIBXML2
 
 /**
  * msGML3BoundedBy()
@@ -1690,4 +1690,4 @@ xmlNodePtr msGML3TimeInstant(xmlNsPtr psNs, char *pszTime) {
   return psNode;
 }
 
-#endif /* USE_SOS_SVR */
+#endif /* USE_LIBXML2 */
