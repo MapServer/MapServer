@@ -1329,7 +1329,9 @@ typedef struct {
   char *imagepath, *imageurl;
 
   outputFormatObj *format;
+#ifndef SWIG
   void *imageextra; //AGG specific
+#endif
   int buffer_format; //tells if the alpha channel is GD or AGG style  
 #ifdef SWIG
 %mutable;
