@@ -1274,7 +1274,7 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
     psTmpNode = xmlAddChild(psRootNode, FLTGetCapabilities(psNsOgc));
 
     /*Offerings */
-     psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Content", NULL);
+     psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Contents", NULL);
      psMainNode = xmlNewChild(psNode, NULL, BAD_CAST "ObservationOfferingList", NULL);
                                              
      
@@ -2799,5 +2799,5 @@ void msSOSFreeParamsObj(sosParamsObj *sosparams) {
       free(sosparams->pszFeatureOfInterest);
   }
 }
-#endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
+#endif /* defined(USE_SOS_SVR) && defined(USE_LIBXML2) */
 
