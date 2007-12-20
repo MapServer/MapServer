@@ -914,13 +914,18 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     /* TODO: Doesn't this code leak the contents of any pre-existing class
      * in the layer???
      */
-    if (lp->numclasses == 0 &&
-        msGrowLayerClasses(lp) == NULL)
-        return MS_FAILURE;
-    lp->numclasses = 1; /* set 1 so the query would work */
-    initClass(lp->class[0]);
-    lp->class[0]->type = lp->type;
-    lp->class[0]->template = strdup("ttt.html");
+    /* make sure that the layer can be queried*/
+    if (!lp->template)
+      lp->template = strdup("ttt.html");
+
+    /* if there is no class, create at least one, so that query by rect
+       would work*/
+    if (lp->numclasses == 0)
+    {
+        if (msGrowLayerClasses(lp) == NULL)
+          return MS_FAILURE;
+        initClass(lp->class[0]);
+    }
 
     bConcatWhere = 0;
     bHasAWhere = 0;
