@@ -27,7 +27,103 @@ class RFC24 {
 		testGetLayerObj();
 		testGetLayerObjByName();
 		testGetClassObj();
+		try { testlegendObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testlegendObj exception:" + e.Message); }
+		try { testreferenceMapObj(); } 
+		catch (Exception e) { Console.WriteLine("\t- testreferenceMapObj exception:" + e.Message); }
+		try { testwebObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testwebObj exception:" + e.Message); }
+		try { testqueryMapObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testqueryMapObj exception:" + e.Message); }
+		try { testmapObjHashTable(); }
+		catch (Exception e) { Console.WriteLine("\t- testmapObjHashTable exception:" + e.Message); }
+		try { testsymbolSetObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testsymbolSetObj exception:" + e.Message); }
+		try { testimageObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testimageObj exception:" + e.Message); }
 		Console.WriteLine("Finished RFC24");
+	}
+
+	public void testlegendObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		legendObj legend = map.legend;
+		legend.template = "This is a sample!";
+
+		map=null;
+		gc();	
+		assert(legend.template == "This is a sample!", "testlegendObj");
+	}
+
+	public void testmapObjHashTable() 
+	{
+		mapObj map=new mapObj(mapfile);
+		hashTableObj configoptions = map.configoptions;
+		configoptions.set("key", "test value");
+
+		map=null;
+		gc();
+	
+		assert(configoptions.get("key", "") == "test value", "testmapObjHashTable");
+	}
+
+	public void testsymbolSetObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		symbolSetObj symbolset = map.symbolset;
+		symbolset.filename = "filename";
+
+		map=null;
+		gc();
+	
+		assert(symbolset.filename == "filename", "testsymbolSetObj");
+	}
+
+	public void testreferenceMapObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		referenceMapObj refmap = map.reference;
+		refmap.markername = "This is a sample!";
+
+		map=null;
+		gc();
+	    assert(refmap.markername == "This is a sample!", "testreferenceMapObj");
+	}
+
+	public void testwebObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		webObj web = map.web;
+		web.template = "This is a sample!";
+
+		map=null;
+		gc();
+		assert(web.template == "This is a sample!", "testwebObj");
+	}
+
+	public void testqueryMapObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		queryMapObj querymap = map.querymap;
+		querymap.color.setHex( "#13ba88" );
+
+		Console.WriteLine(querymap.color.toHex());
+
+		map=null;
+		gc();
+		assert(querymap.color.toHex() == "#13ba88", "testqueryMapObj");
+	}
+
+	public void testimageObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		imageObj image = map.draw();
+		outputFormatObj format = image.format;
+		format.setOption( "INTERLACE", "OFF");
+
+		map=null;
+		gc();
+		assert(format.getOption("INTERLACE", "") == "OFF", "testimageObj");
 	}
 	
 	public void testLayerObj() {
@@ -77,6 +173,17 @@ class RFC24 {
 		assertNotNull(newClass.layer, "testClassObj");
 	}
 
+	public void testClassObjHashtable() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj newClass=new classObj(layer);
+		
+		map=null; layer=null;
+		gc();
+		assertNotNull(newClass.layer, "testClassObj");
+	}
+
 	public void testInsertClassObj() {
 		mapObj map=new mapObj(mapfile);
 		layerObj layer=map.getLayer(1);
@@ -108,6 +215,14 @@ class RFC24 {
 	
 	public void assertNotNull(object o, string test) {
 		if ( o != null )
+			Console.WriteLine("\t- "+test+" PASSED");
+		else
+			Console.WriteLine("\t- "+test+" FAILED");
+	}
+
+	public void assert(bool val, string test) 
+	{
+		if ( val )
 			Console.WriteLine("\t- "+test+" PASSED");
 		else
 			Console.WriteLine("\t- "+test+" FAILED");
