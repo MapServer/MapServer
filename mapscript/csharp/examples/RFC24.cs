@@ -107,8 +107,6 @@ class RFC24 {
 		queryMapObj querymap = map.querymap;
 		querymap.color.setHex( "#13ba88" );
 
-		Console.WriteLine(querymap.color.toHex());
-
 		map=null;
 		gc();
 		assert(querymap.color.toHex() == "#13ba88", "testqueryMapObj");
