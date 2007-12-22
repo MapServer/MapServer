@@ -133,10 +133,11 @@ class RFC24 {
 	public void testLayerObj() {
 		mapObj map=new mapObj(mapfile);
 		layerObj newLayer=new layerObj(map);
-		
+
 		map=null;
 		gc();
 		assertNotNull(newLayer.map, "testLayerObj");
+		assert(newLayer.refcount == 2, "testLayerObj refcount");
 	}
 	
 	public void testInsertLayerObj() {
@@ -147,6 +148,7 @@ class RFC24 {
 		map=null;
 		gc();
 		assertNotNull(newLayer.map, "testInsertLayerObj");
+		assert(newLayer.refcount == 2, "testInsertLayerObj refcount");
 	}
 	
 	public void testGetLayerObj() {
@@ -156,6 +158,7 @@ class RFC24 {
 		map=null;
 		gc();
 		assertNotNull(newLayer.map, "testGetLayerObj");
+		assert(newLayer.refcount == 2, "testGetLayerObj refcount");
 	}
 
 	public void testGetLayerObjByName() {
@@ -165,6 +168,7 @@ class RFC24 {
 		map=null;
 		gc();
 		assertNotNull(newLayer.map, "testGetLayerObjByName");
+		assert(newLayer.refcount == 2, "testGetLayerObjByName refcount");
 	}
 
 	public void testClassObj() {
@@ -175,6 +179,7 @@ class RFC24 {
 		map=null; layer=null;
 		gc();
 		assertNotNull(newClass.layer, "testClassObj");
+		assert(newClass.refcount == 2, "testClassObj refcount");
 	}
 
 	public void testStyleObj() 
@@ -199,6 +204,7 @@ class RFC24 {
 		map=null; layer=null;
 		gc();
 		assertNotNull(newClass.layer, "testInsertClassObj");
+		assert(newClass.refcount == 2, "testInsertClassObj refcount");
 	}
 
 	public void testInsertStyleObj() 
@@ -223,6 +229,7 @@ class RFC24 {
 		map=null; layer=null;
 		gc();
 		assertNotNull(newClass.layer, "testGetClassObj");
+		assert(newClass.refcount == 2, "testGetClassObj refcount");
 	}
 
 	public void testGetStyleObj() 

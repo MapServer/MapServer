@@ -328,15 +328,15 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
  * with parent objects (causing nullreference exception, Bug 1743)
  *****************************************************************************/
 
-%typemap(csconstruct, excode=SWIGEXCODE) layerObj(mapObj map) %{: this($imcall, (map == null) , map) {
+%typemap(csconstruct, excode=SWIGEXCODE) layerObj(mapObj map) %{: this($imcall, true , map) {
   $excode
 }
 %}
-%typemap(csconstruct, excode=SWIGEXCODE) classObj(layerObj layer) %{: this($imcall, (layer == null), layer) {
+%typemap(csconstruct, excode=SWIGEXCODE) classObj(layerObj layer) %{: this($imcall, true, layer) {
   $excode
 }
 %}
-%typemap(csconstruct, excode=SWIGEXCODE) styleObj(classObj parent_class) %{: this($imcall, (parent_class == null), parent_class) {
+%typemap(csconstruct, excode=SWIGEXCODE) styleObj(classObj parent_class) %{: this($imcall, true, parent_class) {
   $excode
 }
 %}
