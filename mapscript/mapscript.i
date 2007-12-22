@@ -32,6 +32,11 @@
 
 %module mapscript
 
+#ifdef SWIGCSHARP
+%ignore frompointer;
+%include swig_csharp_extensions.i
+#endif
+
 %{
 #include "../../mapserver.h"
 #include "../../maptemplate.h"

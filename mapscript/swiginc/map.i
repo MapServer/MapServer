@@ -63,10 +63,16 @@
         return dstMap;
     }
 
+#ifdef SWIGCSHARP
+%apply SWIGTYPE *DISOWN {layerObj *layer};
+#endif
     int insertLayer(layerObj *layer, int index=-1) 
     {
         return msInsertLayer(self, layer, index);  
     }
+#ifdef SWIGCSHARP
+%clear layerObj *layer;
+#endif
     
     %newobject removeLayer;
     layerObj *removeLayer(int index) 

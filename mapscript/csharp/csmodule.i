@@ -14,6 +14,8 @@
  *
  *****************************************************************************/
 
+
+
 /*Uncomment the following lines if you want to receive subsequent exceptions as
 inner exceptions. Otherwise the exception message will be concatenated*/
 //#if SWIG_VERSION >= 0x010329
@@ -169,7 +171,7 @@ inner exceptions. Otherwise the exception message will be concatenated*/
       outputFormatObj[] ret = new outputFormatObj[this.numoutputformats];
       for(int cx = 0; cx < this.numoutputformats; cx++) {
           objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-          ret[cx] = (objPtr == IntPtr.Zero) ? null : new outputFormatObj(objPtr, false);
+          ret[cx] = (objPtr == IntPtr.Zero) ? null : new outputFormatObj(objPtr, false, ThisOwn_false());
       }
       $excode
       return ret;
@@ -182,7 +184,7 @@ inner exceptions. Otherwise the exception message will be concatenated*/
       outputFormatObj[] ret = new outputFormatObj[this.numoutputformats];
       for(int cx = 0; cx < this.numoutputformats; cx++) {
           objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-          ret[cx] = (objPtr == IntPtr.Zero) ? null : new outputFormatObj(objPtr, false);
+          ret[cx] = (objPtr == IntPtr.Zero) ? null : new outputFormatObj(objPtr, false, ThisOwn_false());
       }
       $excode
       return ret;
@@ -326,15 +328,21 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
  * with parent objects (causing nullreference exception, Bug 1743)
  *****************************************************************************/
 
-%typemap(csconstruct, excode=SWIGEXCODE) layerObj(mapObj map) %{: this($imcall, true) {
-  if (map != null) this.swigCMemOwn = false;$excode
+%typemap(csconstruct, excode=SWIGEXCODE) layerObj(mapObj map) %{: this($imcall, (map == null) , map) {
+  $excode
 }
 %}
-%typemap(csconstruct, excode=SWIGEXCODE) classObj(layerObj layer) %{: this($imcall, true) {
-  if (layer != null) this.swigCMemOwn = false;$excode
+%typemap(csconstruct, excode=SWIGEXCODE) classObj(layerObj layer) %{: this($imcall, (layer == null), layer) {
+  $excode
 }
 %}
-%typemap(csconstruct, excode=SWIGEXCODE) styleObj(classObj parent_class) %{: this($imcall, true) {
-  if (parent_class != null) this.swigCMemOwn = false;$excode
+%typemap(csconstruct, excode=SWIGEXCODE) styleObj(classObj parent_class) %{: this($imcall, (parent_class == null), parent_class) {
+  $excode
 }
 %}
+
+%typemap(csout, excode=SWIGEXCODE) classObj* getClass, layerObj* getLayer, layerObj *getLayerByName, styleObj* getStyle {
+    IntPtr cPtr = $imcall;
+    $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner, ThisOwn_false());$excode
+    return ret;
+  }

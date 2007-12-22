@@ -122,10 +122,16 @@
         return msUpdateLayerFromString(self, snippet, MS_FALSE);
     }
 
+#ifdef SWIGCSHARP   
+%apply SWIGTYPE *DISOWN {classObj *classobj};
+#endif
     int insertClass(classObj *classobj, int index=-1)
     {
         return msInsertClass(self, classobj, index);
     }
+#ifdef SWIGCSHARP
+%clear classObj *classobj;
+#endif
     
     /* removeClass() */
     %newobject removeClass;

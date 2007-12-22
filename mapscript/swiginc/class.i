@@ -192,9 +192,15 @@
         }
     }
 
+#ifdef SWIGCSHARP
+%apply SWIGTYPE *DISOWN {styleObj *style};
+#endif
     int insertStyle(styleObj *style, int index=-1) {
         return msInsertStyle(self, style, index);
     }
+#ifdef SWIGCSHARP 
+%clear styleObj *style;
+#endif
 
     %newobject removeStyle;
     styleObj *removeStyle(int index) {
