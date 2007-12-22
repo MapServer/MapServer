@@ -41,6 +41,12 @@ class RFC24 {
 		catch (Exception e) { Console.WriteLine("\t- testsymbolSetObj exception:" + e.Message); }
 		try { testimageObj(); }
 		catch (Exception e) { Console.WriteLine("\t- testimageObj exception:" + e.Message); }
+		try { testStyleObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testStyleObj exception:" + e.Message); }
+		try { testInsertStyleObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testInsertStyleObj exception:" + e.Message); }
+		try { testGetStyleObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testGetStyleObj exception:" + e.Message); }
 		Console.WriteLine("Finished RFC24");
 	}
 
@@ -171,15 +177,16 @@ class RFC24 {
 		assertNotNull(newClass.layer, "testClassObj");
 	}
 
-	public void testClassObjHashtable() 
+	public void testStyleObj() 
 	{
 		mapObj map=new mapObj(mapfile);
 		layerObj layer=map.getLayer(1);
-		classObj newClass=new classObj(layer);
+		classObj classobj=layer.getClass(0);
+		styleObj newStyle=new styleObj(classobj);
 		
-		map=null; layer=null;
+		map=null; layer=null; classobj=null;
 		gc();
-		assertNotNull(newClass.layer, "testClassObj");
+		assert(newStyle.refcount == 2, "testStyleObj");
 	}
 
 	public void testInsertClassObj() {
@@ -194,6 +201,20 @@ class RFC24 {
 		assertNotNull(newClass.layer, "testInsertClassObj");
 	}
 
+	public void testInsertStyleObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj classobj=layer.getClass(0);
+		styleObj newStyle = new styleObj(null);
+		classobj.insertStyle(newStyle,-1);
+		
+		assert(newStyle.refcount == 2, "testInsertStyleObj precondition");
+		map=null; layer=null; classobj=null;
+		gc();
+		assert(newStyle.refcount == 2, "testInsertStyleObj");
+	}
+
 	public void testGetClassObj() {
 		mapObj map=new mapObj(mapfile);
 		layerObj layer=map.getLayer(1);
@@ -202,6 +223,18 @@ class RFC24 {
 		map=null; layer=null;
 		gc();
 		assertNotNull(newClass.layer, "testGetClassObj");
+	}
+
+	public void testGetStyleObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj classobj=layer.getClass(0);
+		styleObj style=classobj.getStyle(0);
+		
+		map=null; layer=null; classobj=null;
+		gc();
+		assert(style.refcount == 2, "testGetStyleObj");
 	}
 
 	public void gc() {
