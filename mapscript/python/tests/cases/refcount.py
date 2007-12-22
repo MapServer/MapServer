@@ -139,11 +139,12 @@ class ReferenceCountingTestCase(unittest.TestCase):
         index = self.map.insertLayer(layer,0)
         assert index == 0, index
 	self.map=None
-	assert layer.map == None, layer.map
+	assert layer.map != None, layer.map
 	exception=None
 	try:
 		layer.open()
 	except:
+		# must fail because the new layer is missing information
 		assert True
 		exception=True
 	if not exception:

@@ -156,5 +156,55 @@ MapServerError = _mapscript.MapServerError
 MapServerChildError = _mapscript.MapServerChildError
 %}
 
+%feature("pythonappend") layerObj %{if args and len(args)!=0:
+		self.p_map=args[0]
+	else:
+		self.p_map=None%}
 
+%feature("pythonappend") classObj %{if args and len(args)!=0:
+		self.p_layer=args[0]
+	else:
+		self.p_layer=None%}
+
+%feature("shadow") insertClass %{
+	def insertClass(*args):
+        actualIndex=$action(*args)
+        args[1].p_layer=args[0]
+        return actualIndex%}
+
+%feature("shadow") getClass %{
+	def getClass(*args):
+		clazz = $action(*args)
+		if clazz:
+			if args and len(args)!=0:
+				clazz.p_layer=args[0]
+			else:
+				clazz.p_layer=None
+		return clazz%}
+
+%feature("shadow") insertLayer %{
+	def insertLayer(*args):
+        actualIndex=$action(*args)
+        args[1].p_map=args[0]
+        return actualIndex%}
+
+%feature("shadow") getLayer %{
+	def getLayer(*args):
+		layer = $action(*args)
+		if layer:
+			if args and len(args)!=0:
+				layer.p_map=args[0]
+			else:
+				layer.p_map=None
+		return layer%}
+
+%feature("shadow") getLayerByName %{
+	def getLayerByName(*args):
+		layer = $action(*args)
+		if layer:
+			if args and len(args)!=0:
+				layer.p_map=args[0]
+			else:
+				layer.p_map=None
+		return layer%}
 
