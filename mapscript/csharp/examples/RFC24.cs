@@ -9,6 +9,7 @@ using OSGeo.MapServer;
 
 class RFC24 {
 	string mapfile;
+	int fails = 0;
 
 	public static void Main(string[] args) {
 		new RFC24(args[0]).run();
@@ -21,12 +22,29 @@ class RFC24 {
 	public void run() {
 		Console.WriteLine("Running RFC24");
 		testLayerObj();
+		testLayerObjDestroy();
 		testClassObj();
+		testClassObjDestroy();
 		testInsertLayerObj();
+		testInsertLayerObjDestroy();
 		testInsertClassObj();
+		testInsertClassObjDestroy();
 		testGetLayerObj();
+		testGetLayerObjDestroy();
 		testGetLayerObjByName();
+		testGetLayerObjByNameDestroy();
 		testGetClassObj();
+		testGetClassObjDestroy();
+		try { testStyleObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testStyleObj exception:" + e.Message); }
+		testStyleObjDestroy();
+		try { testInsertStyleObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testInsertStyleObj exception:" + e.Message); }
+		testInsertStyleObjDestroy();
+		try { testGetStyleObj(); }
+		catch (Exception e) { Console.WriteLine("\t- testGetStyleObj exception:" + e.Message); }
+		testGetStyleObjDestroy();
+
 		try { testlegendObj(); }
 		catch (Exception e) { Console.WriteLine("\t- testlegendObj exception:" + e.Message); }
 		try { testreferenceMapObj(); } 
@@ -41,12 +59,10 @@ class RFC24 {
 		catch (Exception e) { Console.WriteLine("\t- testsymbolSetObj exception:" + e.Message); }
 		try { testimageObj(); }
 		catch (Exception e) { Console.WriteLine("\t- testimageObj exception:" + e.Message); }
-		try { testStyleObj(); }
-		catch (Exception e) { Console.WriteLine("\t- testStyleObj exception:" + e.Message); }
-		try { testInsertStyleObj(); }
-		catch (Exception e) { Console.WriteLine("\t- testInsertStyleObj exception:" + e.Message); }
-		try { testGetStyleObj(); }
-		catch (Exception e) { Console.WriteLine("\t- testGetStyleObj exception:" + e.Message); }
+
+		if (fails > 0)
+			Console.WriteLine("\n     " + fails + " tests were FAILED!!!\n");
+
 		Console.WriteLine("Finished RFC24");
 	}
 
@@ -139,6 +155,18 @@ class RFC24 {
 		assertNotNull(newLayer.map, "testLayerObj");
 		assert(newLayer.refcount == 2, "testLayerObj refcount");
 	}
+
+	public void testLayerObjDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj newLayer=new layerObj(map);
+		layerObj reference = map.getLayer(map.numlayers-1);
+
+		assert(reference.refcount == 3, "testLayerObjDestroy precondition");
+		newLayer=null;
+		gc();
+		assert(reference.refcount == 2, "testLayerObjDestroy");
+	}
 	
 	public void testInsertLayerObj() {
 		mapObj map=new mapObj(mapfile);
@@ -149,6 +177,19 @@ class RFC24 {
 		gc();
 		assertNotNull(newLayer.map, "testInsertLayerObj");
 		assert(newLayer.refcount == 2, "testInsertLayerObj refcount");
+	}
+
+	public void testInsertLayerObjDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj newLayer=new layerObj(null);
+		map.insertLayer(newLayer,0);
+		layerObj reference = map.getLayer(0);
+
+		assert(reference.refcount == 3, "testInsertLayerObjDestroy precondition");
+		newLayer=null;
+		gc();
+		assert(reference.refcount == 2, "testInsertLayerObjDestroy");
 	}
 	
 	public void testGetLayerObj() {
@@ -161,6 +202,18 @@ class RFC24 {
 		assert(newLayer.refcount == 2, "testGetLayerObj refcount");
 	}
 
+	public void testGetLayerObjDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj newLayer=map.getLayer(1);
+		layerObj reference = map.getLayer(1);
+		
+		assert(reference.refcount == 3, "testGetLayerObjDestroy precondition");
+		newLayer=null;
+		gc();
+		assert(reference.refcount == 2, "testGetLayerObjDestroy");
+	}
+
 	public void testGetLayerObjByName() {
 		mapObj map=new mapObj(mapfile);
 		layerObj newLayer=map.getLayerByName("POLYGON");
@@ -169,6 +222,18 @@ class RFC24 {
 		gc();
 		assertNotNull(newLayer.map, "testGetLayerObjByName");
 		assert(newLayer.refcount == 2, "testGetLayerObjByName refcount");
+	}
+
+	public void testGetLayerObjByNameDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj newLayer=map.getLayerByName("POLYGON");
+		layerObj reference=map.getLayerByName("POLYGON");
+		
+		assert(reference.refcount == 3, "testGetLayerObjByNameDestroy precondition");
+		newLayer=null;
+		gc();
+		assert(reference.refcount == 2, "testGetLayerObjByNameDestroy");
 	}
 
 	public void testClassObj() {
@@ -180,6 +245,19 @@ class RFC24 {
 		gc();
 		assertNotNull(newClass.layer, "testClassObj");
 		assert(newClass.refcount == 2, "testClassObj refcount");
+	}
+
+	public void testClassObjDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj newClass=new classObj(layer);
+		classObj reference=layer.getClass(layer.numclasses-1);
+		
+		assert(reference.refcount == 3, "testClassObjDestroy precondition");
+		map=null; layer=null; newClass=null;
+		gc();
+		assert(reference.refcount == 2, "testClassObjDestroy precondition");
 	}
 
 	public void testStyleObj() 
@@ -194,6 +272,20 @@ class RFC24 {
 		assert(newStyle.refcount == 2, "testStyleObj");
 	}
 
+	public void testStyleObjDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj classobj=layer.getClass(0);
+		styleObj newStyle=new styleObj(classobj);
+		styleObj reference=classobj.getStyle(classobj.numstyles-1);
+		
+		assert(reference.refcount == 3, "testStyleObjDestroy");
+		map=null; layer=null; classobj=null; newStyle=null;
+		gc();
+		assert(reference.refcount == 2, "testStyleObjDestroy");
+	}
+
 	public void testInsertClassObj() {
 		mapObj map=new mapObj(mapfile);
 		layerObj layer=map.getLayer(1);
@@ -205,6 +297,20 @@ class RFC24 {
 		gc();
 		assertNotNull(newClass.layer, "testInsertClassObj");
 		assert(newClass.refcount == 2, "testInsertClassObj refcount");
+	}
+
+	public void testInsertClassObjDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj newClass=new classObj(null);
+		layer.insertClass(newClass,0);
+		classObj reference = layer.getClass(0);
+
+		assert(reference.refcount == 3, "testInsertClassObjDestroy precondition");
+		map=null; layer=null; newClass=null;
+		gc();
+		assert(reference.refcount == 2, "testInsertClassObjDestroy");
 	}
 
 	public void testInsertStyleObj() 
@@ -221,6 +327,21 @@ class RFC24 {
 		assert(newStyle.refcount == 2, "testInsertStyleObj");
 	}
 
+	public void testInsertStyleObjDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj classobj=layer.getClass(0);
+		styleObj newStyle = new styleObj(null);
+		classobj.insertStyle(newStyle,0);
+		styleObj reference = classobj.getStyle(0);
+		
+		assert(reference.refcount == 3, "testInsertStyleObjDestroy precondition");
+		map=null; layer=null; classobj=null; newStyle=null;
+		gc();
+		assert(reference.refcount == 2, "testInsertStyleObjDestroy");
+	}
+
 	public void testGetClassObj() {
 		mapObj map=new mapObj(mapfile);
 		layerObj layer=map.getLayer(1);
@@ -230,6 +351,19 @@ class RFC24 {
 		gc();
 		assertNotNull(newClass.layer, "testGetClassObj");
 		assert(newClass.refcount == 2, "testGetClassObj refcount");
+	}
+
+	public void testGetClassObjDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj newClass=layer.getClass(0);
+		classObj reference = layer.getClass(0);
+		
+		assert(reference.refcount == 3, "testGetClassObjDestroy precondition");
+		map=null; layer=null; newClass=null;
+		gc();
+		assert(reference.refcount == 2, "testGetClassObjDestroy");
 	}
 
 	public void testGetStyleObj() 
@@ -244,6 +378,20 @@ class RFC24 {
 		assert(style.refcount == 2, "testGetStyleObj");
 	}
 
+	public void testGetStyleObjDestroy() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj classobj=layer.getClass(0);
+		styleObj style=classobj.getStyle(0);
+		styleObj reference=classobj.getStyle(0);
+		
+		assert(reference.refcount == 3, "testGetStyleObjDestroy precondition");
+		map=null; layer=null; classobj=null; style=null;
+		gc();
+		assert(reference.refcount == 2, "testGetStyleObjDestroy");
+	}
+
 	public void gc() {
 		for (int i=0; i<100; i++) {
 			GC.Collect();
@@ -255,7 +403,10 @@ class RFC24 {
 		if ( o != null )
 			Console.WriteLine("\t- "+test+" PASSED");
 		else
+		{
 			Console.WriteLine("\t- "+test+" FAILED");
+			++fails;
+		}
 	}
 
 	public void assert(bool val, string test) 
@@ -263,6 +414,9 @@ class RFC24 {
 		if ( val )
 			Console.WriteLine("\t- "+test+" PASSED");
 		else
+		{
 			Console.WriteLine("\t- "+test+" FAILED");
+			++fails;
+		}
 	}
 }
