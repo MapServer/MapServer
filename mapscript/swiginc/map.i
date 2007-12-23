@@ -64,7 +64,7 @@
     }
 
 #ifdef SWIGCSHARP
-%apply SWIGTYPE *DISOWN {layerObj *layer};
+%apply SWIGTYPE *SETREFERENCE {layerObj *layer};
 #endif
     int insertLayer(layerObj *layer, int index=-1) 
     {

@@ -193,7 +193,7 @@
     }
 
 #ifdef SWIGCSHARP
-%apply SWIGTYPE *DISOWN {styleObj *style};
+%apply SWIGTYPE *SETREFERENCE {styleObj *style};
 #endif
     int insertStyle(styleObj *style, int index=-1) {
         return msInsertStyle(self, style, index);

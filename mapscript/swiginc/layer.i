@@ -123,7 +123,7 @@
     }
 
 #ifdef SWIGCSHARP   
-%apply SWIGTYPE *DISOWN {classObj *classobj};
+%apply SWIGTYPE *SETREFERENCE {classObj *classobj};
 #endif
     int insertClass(classObj *classobj, int index=-1)
     {

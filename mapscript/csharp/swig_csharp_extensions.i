@@ -1,6 +1,6 @@
 
 /******************************************************************************
- * $Id: swig_csharp_extensions.i 10898 2007-03-08 21:17:42Z tamas $
+ * $Id:  $
  *
  * Name:     swig_csharp_extensions.i
  * Purpose:  Fix for the SWIG Interface problems (early GC) 
@@ -58,9 +58,27 @@
     return (obj == null) ? new HandleRef(null, IntPtr.Zero) : obj.swigCPtr;
   }
   internal static HandleRef getCPtrAndDisown($csclassname obj, object parent) {
-    obj.swigCMemOwn = false;
-    obj.swigParentRef = parent;
-    return getCPtr(obj);
+    if (obj != null)
+    {
+      obj.swigCMemOwn = false;
+      obj.swigParentRef = parent;
+      return obj.swigCPtr;
+    }
+    else
+    {
+      return new HandleRef(null, IntPtr.Zero);
+    }
+  }
+  internal static HandleRef getCPtrAndSetReference($csclassname obj, object parent) {
+    if (obj != null)
+    {
+      obj.swigParentRef = parent;
+      return obj.swigCPtr;
+    }
+    else
+    {
+      return new HandleRef(null, IntPtr.Zero);
+    }
   }
 %}
 
@@ -75,10 +93,28 @@
   internal static HandleRef getCPtr($csclassname obj) {
     return (obj == null) ? new HandleRef(null, IntPtr.Zero) : obj.swigCPtr;
   }
-  internal static HandleRef getCPtrAndDisown($csclassname obj, bool cMemoryOwn, object parent) {
-    obj.swigCMemOwn = cMemoryOwn;
-    obj.swigParentRef = parent;
-    return getCPtr(obj);
+  internal static HandleRef getCPtrAndDisown($csclassname obj, object parent) {
+    if (obj != null)
+    {
+      obj.swigCMemOwn = false;
+      obj.swigParentRef = parent;
+      return obj.swigCPtr;
+    }
+    else
+    {
+      return new HandleRef(null, IntPtr.Zero);
+    }
+  }
+  internal static HandleRef getCPtrAndSetReference($csclassname obj, object parent) {
+    if (obj != null)
+    {
+      obj.swigParentRef = parent;
+      return obj.swigCPtr;
+    }
+    else
+    {
+      return new HandleRef(null, IntPtr.Zero);
+    }
   }
 %}
 
@@ -135,6 +171,7 @@
   }
 
 %typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput, ThisOwn_false())"
+%typemap(csin) SWIGTYPE *SETREFERENCE "$csclassname.getCPtrAndSetReference($csinput, ThisOwn_false())"
 
 %pragma(csharp) modulecode=%{
   internal class $moduleObject : IDisposable {
