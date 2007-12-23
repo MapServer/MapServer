@@ -27,8 +27,10 @@ class RFC24 {
 		testClassObjDestroy();
 		testInsertLayerObj();
 		testInsertLayerObjDestroy();
+		testRemoveLayerObj();
 		testInsertClassObj();
 		testInsertClassObjDestroy();
+		testRemoveClassObj();
 		testGetLayerObj();
 		testGetLayerObjDestroy();
 		testGetLayerObjByName();
@@ -41,6 +43,7 @@ class RFC24 {
 		try { testInsertStyleObj(); }
 		catch (Exception e) { Console.WriteLine("\t- testInsertStyleObj exception:" + e.Message); }
 		testInsertStyleObjDestroy();
+		testRemoveStyleObj();
 		try { testGetStyleObj(); }
 		catch (Exception e) { Console.WriteLine("\t- testGetStyleObj exception:" + e.Message); }
 		testGetStyleObjDestroy();
@@ -191,6 +194,18 @@ class RFC24 {
 		gc();
 		assert(reference.refcount == 2, "testInsertLayerObjDestroy");
 	}
+
+	public void testRemoveLayerObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj newLayer=new layerObj(null);
+		map.insertLayer(newLayer,0);
+		map.removeLayer(0);
+
+		map=null;
+		gc();
+		assert(newLayer.refcount == 1, "testRemoveLayerObj");
+	}
 	
 	public void testGetLayerObj() {
 		mapObj map=new mapObj(mapfile);
@@ -299,6 +314,19 @@ class RFC24 {
 		assert(newClass.refcount == 2, "testInsertClassObj refcount");
 	}
 
+	public void testRemoveClassObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj newClass=new classObj(null);
+		layer.insertClass(newClass,0);
+		layer.removeClass(0);
+		
+		map=null; layer=null;
+		gc();
+		assert(newClass.refcount == 1, "testRemoveClassObj");
+	}
+
 	public void testInsertClassObjDestroy() 
 	{
 		mapObj map=new mapObj(mapfile);
@@ -325,6 +353,20 @@ class RFC24 {
 		map=null; layer=null; classobj=null;
 		gc();
 		assert(newStyle.refcount == 2, "testInsertStyleObj");
+	}
+
+	public void testRemoveStyleObj() 
+	{
+		mapObj map=new mapObj(mapfile);
+		layerObj layer=map.getLayer(1);
+		classObj classobj=layer.getClass(0);
+		styleObj newStyle = new styleObj(null);
+		classobj.insertStyle(newStyle,0);
+		classobj.removeStyle(0);
+		
+		map=null; layer=null; classobj=null;
+		gc();
+		assert(newStyle.refcount == 1, "testRemoveStyleObj");
 	}
 
 	public void testInsertStyleObjDestroy() 
