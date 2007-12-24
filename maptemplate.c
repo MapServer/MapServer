@@ -962,6 +962,79 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
 }
 
 /*
+** function process a [include src="..."] tag.
+**
+** TODO's:
+**   - Allow URLs.
+*/
+static int processInclude(mapObj *map, char **line) 
+{
+  char *tag, *tagStart, *tagEnd;
+  hashTableObj *tagArgs=NULL;
+  int tagOffset, tagLength;
+
+  char *content=NULL, *src=NULL;
+
+  FILE *stream;
+  char buffer[MS_BUFFER_LENGTH], path[MS_MAXPATHLEN];
+
+  if(!*line) {
+    msSetError(MS_WEBERR, "Invalid line pointer.", "processInclude()");
+    return(MS_FAILURE);
+  }
+
+  tagStart = findTag(*line, "include");
+
+  /* It is OK to have no include tags, just return. */
+  if( !tagStart ) return MS_SUCCESS;
+
+  while( tagStart ) {
+    tagOffset = tagStart - *line;
+    
+    /* check for any tag arguments */
+    if(getTagArgs("include", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+    if(tagArgs) {
+      src = msLookupHashTable(tagArgs, "src");
+    }
+
+    if(!src) return(MS_SUCCESS); /* don't process the tag, could be something else so return MS_SUCCESS */
+
+    if((stream = fopen(msBuildPath(path, map->mappath, src), "r")) == NULL) {
+      msSetError(MS_IOERR, src, "processInclude()");
+      return MS_FAILURE;
+    } 
+    
+    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL)
+      content = msStringConcatenate(content, buffer);
+
+     /* find the end of the tag */
+    tagEnd = strchr(tagStart, ']');
+    tagEnd++;
+
+    /* build the complete tag so we can do substitution */
+    tagLength = tagEnd - tagStart;
+    tag = (char *) malloc(tagLength + 1);
+    strncpy(tag, tagStart, tagLength);
+    tag[tagLength] = '\0';
+
+    /* do the replacement */
+    *line = msReplaceSubstring(*line, tag, content);
+
+    /* clean up */
+    free(tag); tag = NULL;
+    msFreeHashTable(tagArgs); tagArgs=NULL;
+    free(content);
+
+    if((*line)[tagOffset] != '\0')
+      tagStart = findTag(*line+tagOffset+1, "include");
+    else
+      tagStart = NULL;
+	}
+
+  return(MS_SUCCESS);
+}
+
+/*
 ** Function to process a [shpxy ...] tag: line contains the tag, shape holds the coordinates. 
 **
 ** TODO's: 
@@ -2910,6 +2983,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     } /* next join */
 
   } /* end query mode specific substitutions */
+
+  if(processInclude(msObj->Map, &outstr) != MS_SUCCESS)
+    return(NULL);
 
   for(i=0;i<msObj->request->NumParams;i++) {
     /* Replace [variable] tags using values from URL. We cannot offer a
