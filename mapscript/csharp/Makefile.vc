@@ -93,6 +93,7 @@ test:
 	mono drawmap.exe ../../tests/test.map test_csharp_agg.png aggpng24
 !ENDIF
 	mono getbytes.exe ../../tests/test.map test_csharp2.png
+	mono RFC24.exe ../../tests/test.map
 !ELSE
 	shpdump ../../tests/point.shp
 	shapeinfo ../../tests/point.shp
@@ -101,8 +102,8 @@ test:
 	drawmap ../../tests/test.map test_csharp_agg.png aggpng24
 !ENDIF
 	getbytes ../../tests/test.map test_csharp2.png
-!ENDIF
 	RFC24.exe ../../tests/test.map
+!ENDIF
 	
 clean:
 	del *.obj
