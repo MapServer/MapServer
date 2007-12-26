@@ -272,7 +272,7 @@ class RFC24 {
 		assert(reference.refcount == 3, "testClassObjDestroy precondition");
 		map=null; layer=null; newClass=null;
 		gc();
-		assert(reference.refcount == 2, "testClassObjDestroy precondition");
+		assert(reference.refcount == 2, "testClassObjDestroy");
 	}
 
 	public void testStyleObj() 
