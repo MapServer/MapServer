@@ -21,7 +21,8 @@ class DrawQuery
     		  
     public static void Main(string[] args)
     {
-        if (args.Length < 3 || args.Length > 4) usage();
+        Console.WriteLine("");
+		if (args.Length < 3 || args.Length > 4) usage();
         
         bool ZoomToResults = (args.Length == 4 && args[3] == "-zoom");
 

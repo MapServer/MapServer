@@ -21,7 +21,8 @@ class DrawMap
 		  
   public static void Main(string[] args)
   {
-    if (args.Length < 2) usage();
+    Console.WriteLine("");
+	if (args.Length < 2) usage();
     
 	mapObj m_obj = new mapObj(args[0]);
 
