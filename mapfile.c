@@ -2446,7 +2446,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->plugin_library_original = NULL;
   layer->connectiontype = MS_SHAPEFILE;
   layer->vtable = NULL;
-
+  layer->classgroup = NULL;
 
   layer->layerinfo = NULL;
   layer->wfslayerinfo = NULL;
