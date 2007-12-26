@@ -90,7 +90,7 @@ test:
 	mono shapeinfo.exe ../../tests/point.shp
 	mono drawmap.exe ../../tests/test.map test_csharp.png
 !IFDEF AGG
-	mono drawmap.exe ../../tests/test.map aggpng24 test_csharp_agg.png
+	mono drawmap.exe ../../tests/test.map test_csharp_agg.png aggpng24
 !ENDIF
 	mono getbytes.exe ../../tests/test.map test_csharp2.png
 !ELSE
