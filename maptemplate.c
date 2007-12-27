@@ -967,13 +967,13 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
 ** TODO's:
 **   - Allow URLs.
 */
-static int processInclude(mapObj *map, char **line) 
+static int processInclude(mapservObj *ms, char **line, int mode) 
 {
   char *tag, *tagStart, *tagEnd;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 
-  char *content=NULL, *src=NULL;
+  char *content=NULL, *processedContent=NULL, *src=NULL;
 
   FILE *stream;
   char buffer[MS_BUFFER_LENGTH], path[MS_MAXPATHLEN];
@@ -999,7 +999,7 @@ static int processInclude(mapObj *map, char **line)
 
     if(!src) return(MS_SUCCESS); /* don't process the tag, could be something else so return MS_SUCCESS */
 
-    if((stream = fopen(msBuildPath(path, map->mappath, src), "r")) == NULL) {
+    if((stream = fopen(msBuildPath(path, ms->Map->mappath, src), "r")) == NULL) {
       msSetError(MS_IOERR, src, "processInclude()");
       return MS_FAILURE;
     } 
@@ -1017,13 +1017,18 @@ static int processInclude(mapObj *map, char **line)
     strncpy(tag, tagStart, tagLength);
     tag[tagLength] = '\0';
 
+    /* process any tags in the content */
+    processedContent = processLine(ms, content, mode);
+
     /* do the replacement */
-    *line = msReplaceSubstring(*line, tag, content);
+    *line = msReplaceSubstring(*line, tag, processedContent);
 
     /* clean up */
     free(tag); tag = NULL;
     msFreeHashTable(tagArgs); tagArgs=NULL;
     free(content);
+    free(processedContent);
+    
 
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, "include");
@@ -2984,7 +2989,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   } /* end query mode specific substitutions */
 
-  if(processInclude(msObj->Map, &outstr) != MS_SUCCESS)
+  if(processInclude(msObj, &outstr, mode) != MS_SUCCESS)
     return(NULL);
 
   for(i=0;i<msObj->request->NumParams;i++) {
