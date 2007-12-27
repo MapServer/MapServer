@@ -165,8 +165,9 @@ class RFC24 {
 		layerObj newLayer=new layerObj(map);
 		layerObj reference = map.getLayer(map.numlayers-1);
 
-		assert(reference.refcount == 3, "testLayerObjDestroy precondition");
-		newLayer=null;
+		assert(newLayer.refcount == 3, "testLayerObjDestroy precondition");
+		newLayer.Dispose(); // force the destruction for Mono on Windows because of the constructor overload
+		newLayer = null;
 		gc();
 		assert(reference.refcount == 2, "testLayerObjDestroy");
 	}
@@ -189,7 +190,8 @@ class RFC24 {
 		map.insertLayer(newLayer,0);
 		layerObj reference = map.getLayer(0);
 
-		assert(reference.refcount == 3, "testInsertLayerObjDestroy precondition");
+		assert(newLayer.refcount == 3, "testInsertLayerObjDestroy precondition");
+		newLayer.Dispose(); // force the destruction for Mono on Windows because of the constructor overload
 		newLayer=null;
 		gc();
 		assert(reference.refcount == 2, "testInsertLayerObjDestroy");
@@ -223,7 +225,8 @@ class RFC24 {
 		layerObj newLayer=map.getLayer(1);
 		layerObj reference = map.getLayer(1);
 		
-		assert(reference.refcount == 3, "testGetLayerObjDestroy precondition");
+		assert(newLayer.refcount == 3, "testGetLayerObjDestroy precondition");
+		//newLayer.Dispose(); // force the destruction needed for Mono on Windows
 		newLayer=null;
 		gc();
 		assert(reference.refcount == 2, "testGetLayerObjDestroy");
@@ -245,7 +248,8 @@ class RFC24 {
 		layerObj newLayer=map.getLayerByName("POLYGON");
 		layerObj reference=map.getLayerByName("POLYGON");
 		
-		assert(reference.refcount == 3, "testGetLayerObjByNameDestroy precondition");
+		assert(newLayer.refcount == 3, "testGetLayerObjByNameDestroy precondition");
+		//newLayer.Dispose(); // force the destruction needed for Mono on Windows
 		newLayer=null;
 		gc();
 		assert(reference.refcount == 2, "testGetLayerObjByNameDestroy");
@@ -269,7 +273,8 @@ class RFC24 {
 		classObj newClass=new classObj(layer);
 		classObj reference=layer.getClass(layer.numclasses-1);
 		
-		assert(reference.refcount == 3, "testClassObjDestroy precondition");
+		assert(newClass.refcount == 3, "testClassObjDestroy precondition");
+		newClass.Dispose(); // force the destruction for Mono on Windows because of the constructor overload
 		map=null; layer=null; newClass=null;
 		gc();
 		assert(reference.refcount == 2, "testClassObjDestroy");
@@ -295,7 +300,8 @@ class RFC24 {
 		styleObj newStyle=new styleObj(classobj);
 		styleObj reference=classobj.getStyle(classobj.numstyles-1);
 		
-		assert(reference.refcount == 3, "testStyleObjDestroy");
+		assert(newStyle.refcount == 3, "testStyleObjDestroy");
+		newStyle.Dispose(); // force the destruction for Mono on Windows because of the constructor overload
 		map=null; layer=null; classobj=null; newStyle=null;
 		gc();
 		assert(reference.refcount == 2, "testStyleObjDestroy");
@@ -335,7 +341,8 @@ class RFC24 {
 		layer.insertClass(newClass,0);
 		classObj reference = layer.getClass(0);
 
-		assert(reference.refcount == 3, "testInsertClassObjDestroy precondition");
+		assert(newClass.refcount == 3, "testInsertClassObjDestroy precondition");
+		newClass.Dispose(); // force the destruction for Mono on Windows because of the constructor overload
 		map=null; layer=null; newClass=null;
 		gc();
 		assert(reference.refcount == 2, "testInsertClassObjDestroy");
@@ -378,7 +385,8 @@ class RFC24 {
 		classobj.insertStyle(newStyle,0);
 		styleObj reference = classobj.getStyle(0);
 		
-		assert(reference.refcount == 3, "testInsertStyleObjDestroy precondition");
+		assert(newStyle.refcount == 3, "testInsertStyleObjDestroy precondition");
+		newStyle.Dispose(); // force the destruction for Mono on Windows because of the constructor overload
 		map=null; layer=null; classobj=null; newStyle=null;
 		gc();
 		assert(reference.refcount == 2, "testInsertStyleObjDestroy");
@@ -402,7 +410,7 @@ class RFC24 {
 		classObj newClass=layer.getClass(0);
 		classObj reference = layer.getClass(0);
 		
-		assert(reference.refcount == 3, "testGetClassObjDestroy precondition");
+		assert(newClass.refcount == 3, "testGetClassObjDestroy precondition");
 		map=null; layer=null; newClass=null;
 		gc();
 		assert(reference.refcount == 2, "testGetClassObjDestroy");
@@ -428,7 +436,7 @@ class RFC24 {
 		styleObj style=classobj.getStyle(0);
 		styleObj reference=classobj.getStyle(0);
 		
-		assert(reference.refcount == 3, "testGetStyleObjDestroy precondition");
+		assert(style.refcount == 3, "testGetStyleObjDestroy precondition");
 		map=null; layer=null; classobj=null; style=null;
 		gc();
 		assert(reference.refcount == 2, "testGetStyleObjDestroy");
