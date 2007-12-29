@@ -860,6 +860,53 @@ ALL_ENABLED="$AGG_ENABLED $ALL_ENABLED"
 ALL_INC="$AGG_INC $ALL_INC"
 ALL_LIB="$AGG_LIB $ALL_LIB"
 
+
+dnl ---------------------------------------------------------------------
+dnl Optional RGBA palette png output
+dnl ---------------------------------------------------------------------
+
+AC_MSG_CHECKING(if RGBA palette png support requested)
+AC_ARG_WITH(experimental-png,
+[  --with-experimental-png       Include experimental palette support for rgba png.],,)
+
+if test -z "$with_experimental_png" -o "$with_experimental_png" = "no" ; then
+  AC_MSG_RESULT([no])
+else
+  if test -z "$PNG_LIB" ; then
+     AC_MSG_ERROR([libpng required - please reconfigure --with-png.])
+  fi
+  if test -n "$PNG_DIR" ; then
+    test -f $PNG_DIR/include/png.h && PNG_INCLUDE="$PNG_DIR/include"
+    test -f $PNG_DIR/lib/png.h && PNG_INCLUDE="$PNG_DIR/lib"
+    test -f $PNG_DIR/png.h && PNG_INCLUDE="$PNG_DIR"
+    if test -n "$PNG_INCLUDE" ; then
+      AC_CHECK_HEADER([$PNG_INCLUDE/png.h],,
+        [AC_MSG_ERROR([cannot find png headers])])
+    else
+        AC_MSG_ERROR([cannot find png headers in $PNG_DIR])
+    fi
+  else
+    AC_CHECK_HEADER([png.h],,
+        [AC_MSG_ERROR([cannot find png headers in system path])])
+  fi
+  if test -n "$PNG_DIR" ; then
+    PNG_INC=-I$PNG_INCLUDE
+    AC_MSG_RESULT([ using libpng from $PNG_DIR.])
+  else
+    AC_MSG_RESULT([ using libpng from system libs.])
+  fi
+  AC_CHECK_HEADER([setjmp.h],,
+        [AC_MSG_ERROR([setjmp.h is required with libpng])])
+  RGBA_PNG_ENABLED=-DUSE_RGBA_PNG
+fi
+
+AC_SUBST(RGBA_PNG_ENABLED, $RGBA_PNG_ENABLED)
+AC_SUBST(PNG_INC,    $PNG_INC)
+AC_SUBST(PNG_LIB,    $PNG_LIB)
+
+ALL_ENABLED="$RGBA_PNG_ENABLED $ALL_ENABLED"
+ALL_INC="$PNG_INC $ALL_INC"
+
 dnl ---------------------------------------------------------------------
 dnl EPPL7 support (included by default)
 dnl ---------------------------------------------------------------------
@@ -2372,6 +2419,7 @@ AC_MSG_RESULT()
 AC_MSG_RESULT([ -------------- Renderer Settings --------- ])
 AC_MSG_RESULT([  zlib support:              ${ZLIB_ENABLED}])
 AC_MSG_RESULT([  png support:               ${PNG_SETTING}])
+AC_MSG_RESULT([  palette rgba png support:  ${RGBA_PNG_ENABLED}])
 AC_MSG_RESULT([  jpeg support:              ${JPEG_ENABLED}])
 AC_MSG_RESULT([  iconv support:             ${ICONV_ENABLED}])
 AC_MSG_RESULT([  AGG support:               ${AGG_ENABLED}])

@@ -2240,6 +2240,18 @@ MS_DLL_EXPORT int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo,
 /*      End of prototypes for functions in mappdf.c                     */
 /* ==================================================================== */
 
+
+/* ==================================================================== */
+/*      prototypes for functions in maprgbapng.c                        */
+/* ==================================================================== */
+#ifdef USE_RGBA_PNG
+int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format);
+int msSaveImageRGBAPalette(gdImagePtr img, gdIOCtx *ctx ,outputFormatObj *format);
+#endif /*USE_RGBA_PNG*/
+/* ==================================================================== */
+/*      end of prototypes for functions in maprgbapng.c                 */
+/* ==================================================================== */
+
 #endif
 
 #ifdef __cplusplus

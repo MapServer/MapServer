@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- Support for quantization and forced palette png output with RGBA images
+  (#2436)
 
 - SLD using a single BBOX filter should generate an SQL ststement for 
   oracle/postgis/ogr (#2450)

@@ -36,7 +36,6 @@
 
 #include "mapserver.h"
 #include "mapthread.h"
-
 #include <time.h>
 
 #ifdef _WIN32
@@ -3568,7 +3567,14 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
       if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
         force_palette = MS_TRUE;
     }
-
+#ifdef USE_RGBA_PNG
+    if( format->imagemode == MS_IMAGEMODE_RGBA ) {
+        if( force_palette )
+            return msSaveImageRGBAPalette(img, ctx ,format);
+        else if( force_pc256 )
+            return msSaveImageRGBAQuantized(img, ctx ,format);
+    }
+#endif /*USE_RGBA_PNG*/
     if( force_palette ) {
       gdImagePtr gdPImg;
       int method=0;
