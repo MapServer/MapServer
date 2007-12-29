@@ -26,7 +26,7 @@ LINK=   link
 #
 MS_DLL = libmap.dll
 
-MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
+MS_OBJS = maprgbapng.obj mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapparser.obj maplexer.obj maptree.obj \
 		mapsearch.obj mapstring.obj mapsymbol.obj mapfile.obj \
 		maplegend.obj maputil.obj mapscale.obj mapquery.obj \

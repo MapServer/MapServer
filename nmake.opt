@@ -254,6 +254,14 @@ ANNOTATION_FT=-DUSE_GD_FT
 FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 !ENDIF
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Optional RGBA palette png output
+# ----------------------------------------------------------------------
+# Enable support for quantization of rgba pngs
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!IFDEF PNG_DIR
+#RGBA_PNG_ENABLED=-DUSE_RGBA_PNG
+!ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MING (Macromedia Flash SWF output support) 
@@ -790,7 +798,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(USE_POINT_Z_M) $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
-          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(AGG)
+          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(AGG) $(RGBA_PNG_ENABLED)
 
 !IFDEF WIN64
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
