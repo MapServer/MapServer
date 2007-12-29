@@ -533,6 +533,9 @@ char *msGetVersion() {
 #ifdef USE_POINT_Z_M
   strcat(version, " SUPPORTS=POINT_Z_M");
 #endif
+#ifdef USE_RGBA_PNG
+  strcat(version, " SUPPORTS=RGBA_PNG");
+#endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");
 #endif
