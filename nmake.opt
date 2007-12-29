@@ -629,6 +629,7 @@ JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
 !IFNDEF PNG_LIB
 PNG_LIB=$(PNG_DIR)\projects\visualc71\Win32_LIB_Release\libpng.lib $(ZLIB_DIR)/zdll.lib
 !ENDIF
+PNG_INC=-I$(PNG_DIR)
 !ENDIF
 
 !IFDEF GEOS_DIR
@@ -788,7 +789,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
-         $(AGG_INC)
+         $(AGG_INC) $(PNG_INC)
         
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
