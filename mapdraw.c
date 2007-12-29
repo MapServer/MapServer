@@ -1262,6 +1262,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   rectObj cliprect;
   pointObj annopnt, *point;
   double angle, length = 0.0;
+  int bLabelNoClip = MS_FALSE;
+  int annocallret; /* Retvals for find-label-pnt calls */
  
   pointObj center; /* circle origin */
   double r; /* circle radius */
@@ -1368,17 +1370,41 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
     switch(shape->type) {
     case(MS_SHAPE_LINE):
+
+      /* No-clip labeling support. For lines we copy the shape, though this is */
+      /* inefficient. msPolylineLabelPath/msPolylineLabelPoint require that    */
+      /* the shape is transformed prior to calling them                        */
+      if(msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
+        shapeObj annoshape;
+        bLabelNoClip = MS_TRUE;
+
+        msInitShape(&annoshape);
+        msCopyShape(shape, &annoshape);
+        msTransformShape(&annoshape, map->extent, map->cellsize, image);
+
+        if(layer->class[c]->label.autofollow == MS_TRUE ) {
+          annopath = msPolylineLabelPath(&annoshape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+        } else {
+          annocallret = msPolylineLabelPoint(&annoshape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length);
+        }
+
+        msFreeShape(&annoshape);
+      }
+    
       if(layer->transform == MS_TRUE) {
         msClipPolylineRect(shape, cliprect);
         if(shape->numlines == 0) return(MS_SUCCESS);
         msTransformShape(shape, map->extent, map->cellsize, image);
       } else
-	msOffsetShapeRelativeTo(shape, layer);
+        msOffsetShapeRelativeTo(shape, layer);
 
       /* Bug #1620 implementation */
       if ( layer->class[c]->label.autofollow == MS_TRUE ) {
 
-        annopath = msPolylineLabelPath(shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+        /* Determine the label path iff it has not been computed above */
+        if(bLabelNoClip == MS_FALSE)
+          annopath = msPolylineLabelPath(shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+
         if( annopath ) {
           labelObj label = layer->class[c]->label;
           
@@ -1408,8 +1434,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
       if ( layer->class[c]->label.autofollow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
 
-        /* Regular labels */
-        if(msPolylineLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
+        /* Regular labels: Only attempt to find the label point if we have not */
+        /* succesfully calculated it previously                                */
+        if ((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) ||
+            (msPolylineLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length) == MS_SUCCESS)) {
         labelObj label = layer->class[c]->label;
           
         if(label.angle != 0)
@@ -1433,6 +1461,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
       break;
     case(MS_SHAPE_POLYGON):
+      /* No-clip labeling support */
+      if(shape->text && msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
+        bLabelNoClip = MS_TRUE;
+        annocallret = msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize);
+        annopnt.x = MS_MAP2IMAGE_X(annopnt.x, map->extent.minx, map->cellsize);
+        annopnt.y = MS_MAP2IMAGE_Y(annopnt.y, map->extent.maxy, map->cellsize);
+      }
 
       if(layer->transform == MS_TRUE) {
         msClipPolygonRect(shape, cliprect);
@@ -1441,7 +1476,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       } else
 	msOffsetShapeRelativeTo(shape, layer);
 
-      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS) {
+      if ((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) ||
+          (msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS)) {
         labelObj label = layer->class[c]->label;
 
         if(label.angle != 0)
@@ -1542,6 +1578,27 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       layer->project = MS_FALSE;
 #endif
 
+    /* No-clip labeling support. For lines we copy the shape, though this is */
+    /* inefficient. msPolylineLabelPath/msPolylineLabelPoint require that    */
+    /* the shape is transformed prior to calling them                        */
+    if(shape->text && msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
+      shapeObj annoshape;
+      bLabelNoClip = MS_TRUE;
+
+      msInitShape(&annoshape);
+      msCopyShape(shape, &annoshape);
+      msTransformShape(&annoshape, map->extent, map->cellsize, image);
+
+      if(layer->class[c]->label.autofollow == MS_TRUE) {
+        annopath = msPolylineLabelPath(&annoshape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+      } else {
+        annocallret = msPolylineLabelPoint(&annoshape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length);
+      }
+
+      msFreeShape(&annoshape);
+    }
+
+
     if(layer->transform == MS_TRUE) {
       msClipPolylineRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
@@ -1561,7 +1618,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       /* Bug #1620 implementation */
       if(layer->class[c]->label.autofollow == MS_TRUE) {
 
-        annopath = msPolylineLabelPath(shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+        if (bLabelNoClip == MS_FALSE)
+          annopath = msPolylineLabelPath(shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+
         if(annopath) {
           labelObj label = layer->class[c]->label;
 
@@ -1585,7 +1644,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       /* Use regular label algorithm if angle is AUTO or a number, or if ANGLE FOLLOW failed */
       if ( layer->class[c]->label.autofollow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
 
-      if(msPolylineLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
+      if((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) || 
+         (msPolylineLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length) == MS_SUCCESS)) {
         labelObj label = layer->class[c]->label;
 
         if(label.angle != 0)
@@ -1622,6 +1682,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       layer->project = MS_FALSE;
 #endif
 
+    /* No-clip labeling support */
+    if(shape->text && msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
+      bLabelNoClip = MS_TRUE;
+      annocallret = msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize);
+      annopnt.x = MS_MAP2IMAGE_X(annopnt.x, map->extent.minx, map->cellsize);
+      annopnt.y = MS_MAP2IMAGE_Y(annopnt.y, map->extent.maxy, map->cellsize);
+    }
+
     if(layer->transform == MS_TRUE) {
       /*
        * add a small buffer around the cliping rectangle to
@@ -1644,7 +1712,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msDrawShadeSymbol(&map->symbolset, image, shape, (layer->class[c]->styles[s]), layer->scalefactor);
 
     if(shape->text) {
-      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS) {	
+      if((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) ||
+         (msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS)) {
         labelObj label = layer->class[c]->label;
 
         if(label.angle != 0)
