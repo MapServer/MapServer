@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- Support for labeling features (polygon & line) prior to clipping. This
+results in stable label positions regardless of map extent. (#2447)
+
 - Support for quantization and forced palette png output with RGBA images
   (#2436)
 
