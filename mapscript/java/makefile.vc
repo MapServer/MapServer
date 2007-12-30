@@ -30,8 +30,9 @@ LDFLAGS =	/NODEFAULTLIB:"MSVCRTD" /NODEFAULTLIB:libcd /NODEFAULTLIB:libcmtd /NOD
 all: interface_release mapscript_java mapscript_lib mapscript_jar
 
 interface_release: 
-        -mkdir edu\umn\gis\mapscript
+        -md edu\umn\gis\mapscript
         $(SWIG) -java -package edu.umn.gis.mapscript -outdir edu/umn/gis/mapscript -o mapscript_wrap.c ../mapscript.i
+
 
 mapscript_java:
 	$(JAVAC) edu\umn\gis\mapscript\*.java
@@ -46,6 +47,7 @@ mapscript_lib: mapscript_wrap.obj
         link /dll /debug \
 		mapscript_wrap.obj $(EXTERNAL_LIBS) ..\..\mapserver_i.lib $(LDFLAGS) /def:..\..\mapserver.def \
                 /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
+	if exist $(MS_DLL).manifest mt -manifest $(MS_DLL).manifest -outputresource:$(MS_DLL);2
 
 mapscript_javadoc:
 	$(JAVADOC) -d doc -sourcepath edu/umn/gis/mapscript/*.java
@@ -53,15 +55,20 @@ mapscript_javadoc:
 mapscript_jar:
 	$(JAR) cf mapscript.jar edu
 test:
-	$(JAVAC) -classpath d:\cvs\mapserver\mapscript\java\mapscript.jar -d examples\ examples\*.java
+	$(JAVAC) -classpath ./mapscript.jar -d examples\ examples\*.java
 	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. DumpShp ../../tests/point.shp
 	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. ShapeInfo ..\..\tests\point.shp ..\..\tests\point.dbf
 	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. DrawMap ..\..\tests\test.map .\map.png
+	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. RFC24 ..\..\tests\test.map .\map.png
 
 clean:
 	-del *.obj
 	-del *.lib
 	-rmdir /s /q edu
-	del libmapscript.dll
+	del $(MS_DLL)
+	del $(MS_DLL).manifest
 	del mapscript_wrap.c
-
+	del mapscript.jar
+	del *.ilk
+	del *.pdb
+	del *.exp
