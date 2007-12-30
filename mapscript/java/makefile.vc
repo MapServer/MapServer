@@ -59,7 +59,15 @@ test:
 	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. DumpShp ../../tests/point.shp
 	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. ShapeInfo ..\..\tests\point.shp ..\..\tests\point.dbf
 	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. DrawMap ..\..\tests\test.map .\map.png
-	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. RFC24 ..\..\tests\test.map .\map.png
+	$(JAVA)  -cp ./;examples/;./mapscript.jar -Djava.library.path=. RFC24 ..\..\tests\test.map
+
+threadtests:
+	$(JAVAC) -cp ./mapscript.jar -d tests/threadtest/ tests/threadtest/*.java
+	@echo "-------------------------------------------------------------------------"
+	@echo "   You can use your own map! Copy the following command in your shell"
+	@echo "        and change the file to the map file (the last argument)"
+	@echo "-------------------------------------------------------------------------"
+	$(JAVA) -cp tests/threadtest/;./mapscript.jar -Djava.library.path=. MapTest -t 10 -i 5 ../../tests/test.map
 
 clean:
 	-del *.obj
