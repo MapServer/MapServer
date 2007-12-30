@@ -1683,7 +1683,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       
       k = 0; /* point counter */
       for(j=0;j < symbol->numpoints;j++) {
-        if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) { /* new polygon (PENUP) */
+        if((symbol->points[j].x == -99) && (symbol->points[j].x == -99)) { /* new polygon (PENUP) */
 	  if(k>2) {
             if(fc >= 0)
 	      gdImageFilledPolygon(img, mPoints, k, fc);
@@ -1714,11 +1714,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       gdImageSetThickness(img, width);
       
       for(j=1;j < symbol->numpoints;j++) { /* step through the marker */
-	if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) {
-	  oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
-	  oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
-	} else {
-	  if((symbol->points[j-1].x < 0) && (symbol->points[j-1].y < 0)) { /* Last point was PENUP, now a new beginning */
+	if((symbol->points[j].x != -99) || (symbol->points[j].x != -99)) {
+	  if((symbol->points[j-1].x == -99) && (symbol->points[j-1].y == -99)) { /* Last point was PENUP, now a new beginning */
 	    oldpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
 	    oldpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
 	  } else {
@@ -1933,7 +1930,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       if (symbol->filled) {
 	k = 0; /* point counter */
 	for(i=0;i < symbol->numpoints;i++) {
-	  if((symbol->points[i].x < 0) && (symbol->points[i].x < 0)) { /* new polygon (PENUP) */
+	  if((symbol->points[i].x == -99) && (symbol->points[i].x == -99)) { /* new polygon (PENUP) */
 	    if(k>2) gdImageFilledPolygon(brush, points, k, brush_fc);
 	    k = 0; /* reset point counter */
 	  } else {
@@ -1949,10 +1946,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 	
 	/* draw in the brush image */
 	for (i=1;i < symbol->numpoints;i++) {
-	  if((symbol->points[i].x == -99.) && (symbol->points[i].y == -99.)) {
-	    oldpnt.x = MS_NINT(symbol->points[i].x*d);
-	    oldpnt.y = MS_NINT(symbol->points[i].y*d);
-	  } else {
+	  if((symbol->points[i].x != -99.) || (symbol->points[i].y != -99.)) {
 	    if ((symbol->points[i-1].x == -99.) && (symbol->points[i-1].y == -99.)) {
 	      /* Last point was PENUP, now a new beginning */
 	      oldpnt.x = MS_NINT(symbol->points[i].x*d);
@@ -2279,7 +2273,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
       k = 0; /* point counter */
       for(i=0;i < symbol->numpoints;i++) {
-        if((symbol->points[i].x < 0) && (symbol->points[i].x < 0)) { /* new polygon (PENUP) */
+        if((symbol->points[i].x == -99 ) && (symbol->points[i].x == -99)) { /* new polygon (PENUP) */
           if(k>2) gdImageFilledPolygon(tile, sPoints, k, tile_fc);      
           k = 0; /* reset point counter */
         } else {
@@ -2299,11 +2293,8 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
       /* step through the shade sy */
       for(i=1;i < symbol->numpoints;i++) {
-	if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) {
-	  oldpnt.x = MS_NINT(d*symbol->points[i].x);
-	  oldpnt.y = MS_NINT(d*symbol->points[i].y);
-	} else {
-	  if((symbol->points[i-1].x < 0) && (symbol->points[i-1].y < 0)) { /* Last point was PENUP, now a new beginning */
+	if((symbol->points[i].x != -99) || (symbol->points[i].y != -99)) {
+	  if((symbol->points[i-1].x == -99) && (symbol->points[i-1].y == -99)) { /* Last point was PENUP, now a new beginning */
 	    oldpnt.x = MS_NINT(d*symbol->points[i].x);
 	    oldpnt.y = MS_NINT(d*symbol->points[i].y);
 	  } else {

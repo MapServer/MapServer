@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+
+- enforce (-99 -99) to be the penup value for vector symbols (#1036)
+
 - Support for labeling features (polygon & line) prior to clipping. This
 results in stable label positions regardless of map extent. (#2447)
 

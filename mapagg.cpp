@@ -955,7 +955,7 @@ static agg::path_storage imageVectorSymbolAGG(symbolObj *symbol, double scale) {
     agg::path_storage path;
     bool is_new=true;
     for(int i=0;i < symbol->numpoints;i++) {
-        if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) { // (PENUP) 
+        if((symbol->points[i].x == -99) && (symbol->points[i].y == -99)) { // (PENUP) 
             is_new=true;
         } else {
             if(is_new) {
