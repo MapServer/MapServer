@@ -1263,7 +1263,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   pointObj annopnt, *point;
   double angle, length = 0.0;
   int bLabelNoClip = MS_FALSE;
-  int annocallret; /* Retvals for find-label-pnt calls */
+  int annocallret = MS_FAILURE; /* Retvals for find-label-pnt calls */
  
   pointObj center; /* circle origin */
   double r; /* circle radius */
