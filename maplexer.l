@@ -217,8 +217,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>maxboxsize                            { return(MAXBOXSIZE); }
 <INITIAL>maxfeatures                           { return(MAXFEATURES); }
 <INITIAL>maxinterval                           { return(MAXINTERVAL); }
-<INITIAL>maxscale                              { return(MAXSCALE); }
-<INITIAL>maxscaledenom                         { return(MAXSCALEDENOM); }
+<INITIAL,URL_STRING>maxscale                   { return(MAXSCALE); }
+<INITIAL,URL_STRING>maxscaledenom              { return(MAXSCALEDENOM); }
 <INITIAL>maxsize                               { return(MAXSIZE); }
 <INITIAL>maxsubdivide                          { return(MAXSUBDIVIDE); }
 <INITIAL>maxtemplate                           { return(MAXTEMPLATE); }
@@ -230,8 +230,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>mindistance                           { return(MINDISTANCE); }
 <INITIAL>minfeaturesize                        { return(MINFEATURESIZE); }
 <INITIAL>mininterval                           { return(MININTERVAL); }
-<INITIAL>minscale                              { return(MINSCALE); }
-<INITIAL>minscaledenom                         { return(MINSCALEDENOM); }
+<INITIAL,URL_STRING>minscale                   { return(MINSCALE); }
+<INITIAL,URL_STRING>minscaledenom              { return(MINSCALEDENOM); }
 <INITIAL>minsize                               { return(MINSIZE); }
 <INITIAL>minsubdivide                          { return(MINSUBDIVIDE); }
 <INITIAL>mintemplate                           { return(MINTEMPLATE); }
