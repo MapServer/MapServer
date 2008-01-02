@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- set shapeObj bounds from WKT (#2087)
+
 - fixed issue where path following labels sometimes used the supplied
 setting for position. In all cases with ANGLE FOLLOW we want to force
 position MS_CC regardless of what is set in the mapfile.
