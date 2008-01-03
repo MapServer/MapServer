@@ -3802,7 +3802,7 @@ FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
     }
     return NULL;
 }
-#ifdef USE_SOS_SVR
+#ifdef USE_LIBXML2
 
 xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsOgc)
 {

@@ -35,7 +35,7 @@
 /* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
 
-#ifdef USE_SOS_SVR
+#ifdef USE_LIBXML2
 
 #include<libxml/parser.h>
 #include<libxml/tree.h>
@@ -121,7 +121,7 @@ MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString);
 
-#ifdef USE_SOS_SVR
+#ifdef USE_LIBXML2
 MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsOgc);
 #endif
 
