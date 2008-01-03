@@ -65,29 +65,6 @@ void msGEOSCleanup()
 }
 
 /*
-** utility functions
-*/
-
-/*
-** msGEOSEnvelope: utility function to derive the envelope
-of a GEOSGeom and set shapeObj.bounds
-*/
-static void msGEOSEnvelope(GEOSGeom g, shapeObj *shape)
-{
-  GEOSCoordSeq coords;
-  GEOSGeom ring;
-  GEOSGeom envelope;
-
-  envelope = (GEOSGeom) GEOSEnvelope(g);
-  ring = (GEOSGeom) GEOSGetExteriorRing(envelope);
-  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
-  GEOSCoordSeq_getX(coords, 0, &(shape->bounds.minx));
-  GEOSCoordSeq_getY(coords, 0, &(shape->bounds.miny));
-  GEOSCoordSeq_getX(coords, 2, &(shape->bounds.maxx));
-  GEOSCoordSeq_getY(coords, 2, &(shape->bounds.maxy));
-}
-
-/*
 ** Translation functions
 */
 static GEOSGeom msGEOSShape2Geometry_point(pointObj *point)
@@ -362,8 +339,8 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(GEOSGeom g)
     GEOSCoordSeq_getY(coords, 0, &(shape->line[0].point[i].y));
     /* GEOSCoordSeq_getZ(coords, 0, &(shape->line[0].point[i].z)); */
   }
-  
-  msGEOSEnvelope(g, shape);
+ 
+  msComputeBounds(shape); 
 
   return shape;
 }
@@ -396,7 +373,7 @@ static shapeObj *msGEOSGeometry2Shape_line(GEOSGeom g)
     /* GEOSCoordSeq_getZ(coords, i, &(shape->line[0].point[i].z)); */
   }
 
-  msGEOSEnvelope(g, shape);
+  msComputeBounds(shape); 
 
   return shape;
 }
@@ -437,7 +414,7 @@ static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
     msAddLineDirectly(shape, &line);
   }
 
-  msGEOSEnvelope(g, shape);
+  msComputeBounds(shape); 
 
   return shape;
 }
@@ -494,7 +471,7 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
     msAddLineDirectly(shape, &line);
   }
 
-  msGEOSEnvelope(g, shape);
+  msComputeBounds(shape); 
 
   return shape;
 }
@@ -557,7 +534,7 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(GEOSGeom g)
     }
   } /* next polygon */
 
-  msGEOSEnvelope(g, shape);
+  msComputeBounds(shape); 
 
   return shape; 
 }
