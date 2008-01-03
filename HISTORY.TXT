@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- clean up naming conventions of Shapefile API (#599)
+
 - use msComputeBounds() instead, since it's already in the codebase (#2087)
 
 - set shapeObj bounds from WKT (#2087)
