@@ -716,10 +716,10 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 /*      Open tile index if we have one.                                 */
 /* -------------------------------------------------------------------- */
     if(layer->tileindex) { /* we have in index file */
-        if(msSHPOpenFile(&tilefile, "rb", 
+        if(msShapefileOpen(&tilefile, "rb", 
                          msBuildPath3(szPath, map->mappath, map->shapepath, 
                                       layer->tileindex)) == -1) 
-            if(msSHPOpenFile(&tilefile, "rb", msBuildPath(szPath, map->mappath, layer->tileindex)) == -1) 
+            if(msShapefileOpen(&tilefile, "rb", msBuildPath(szPath, map->mappath, layer->tileindex)) == -1) 
                 return(MS_FAILURE);    
 
         tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem);
@@ -732,7 +732,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
         if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
             msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
 #endif
-        status = msSHPWhichShapes(&tilefile, searchrect, layer->debug);
+        status = msShapefileWhichShapes(&tilefile, searchrect, layer->debug);
         if(status != MS_SUCCESS) 
             numtiles = 0; /* could be MS_DONE or MS_FAILURE */
         else
@@ -842,7 +842,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     } /* next tile */
 
     if(layer->tileindex) /* tiling clean-up */
-        msSHPCloseFile(&tilefile);    
+        msShapefileClose(&tilefile);    
 
 /* -------------------------------------------------------------------- */
 /*      On failure, or empty result set, cleanup the rlinfo since we    */

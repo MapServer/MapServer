@@ -176,10 +176,10 @@ typedef struct {
 
 
 /* shapefileObj function prototypes  */
-MS_DLL_EXPORT int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename);
-MS_DLL_EXPORT int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type);
-MS_DLL_EXPORT void msSHPCloseFile(shapefileObj *shpfile);
-MS_DLL_EXPORT int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, int debug);
+MS_DLL_EXPORT int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename);
+MS_DLL_EXPORT int msShapefileCreate(shapefileObj *shpfile, char *filename, int type);
+MS_DLL_EXPORT void msShapefileClose(shapefileObj *shpfile);
+MS_DLL_EXPORT int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug);
 
 /* SHP/SHX function prototypes */
 MS_DLL_EXPORT SHPHandle msSHPOpen( const char * pszShapeFile, const char * pszAccess );

@@ -42,14 +42,14 @@
             return NULL;
 
         if (type == -1)
-            status = msSHPOpenFile(shapefile, "rb", filename);
+            status = msShapefileOpen(shapefile, "rb", filename);
         else if (type == -2)
-            status = msSHPOpenFile(shapefile, "rb+", filename);
+            status = msShapefileOpen(shapefile, "rb+", filename);
         else
-            status = msSHPCreateFile(shapefile, filename, type);
+            status = msShapefileCreate(shapefile, filename, type);
 
         if (status == -1) {
-            msSHPCloseFile(shapefile);
+            msShapefileClose(shapefile);
             free(shapefile);
             return NULL;
         }
@@ -59,7 +59,7 @@
 
     ~shapefileObj() 
     {
-        msSHPCloseFile(self);
+        msShapefileClose(self);
         free(self);  
     }
 

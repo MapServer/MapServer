@@ -706,7 +706,7 @@ int msCopyLegend(legendObj *dst, legendObj *src, mapObj *map)
  * msCopyLayer()                                                       *
  *                                                                     *
  * Copy a layerObj, using mapfile.c:initClass(), msCopyClass(),        *
- * msCopyColor(), msCopyProjection(), msSHPOpenFile(),                 *
+ * msCopyColor(), msCopyProjection(), msShapefileOpen(),                 *
  * msCreateHashTable(), msCopyHashTable(), msCopyExpression()          *
  *                                                                     *
  * As it stands, we are not copying a layer's resultcache              *

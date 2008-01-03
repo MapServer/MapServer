@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
       byte_order = MS_NEW_MSB_ORDER; 
   }
     
-  if(msSHPOpenFile(&shapefile, "rb", argv[1]) == -1) {
+  if(msShapefileOpen(&shapefile, "rb", argv[1]) == -1) {
     fprintf(stdout, "Error opening shapefile %s.\n", argv[1]);
     exit(0);
   }
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
   /*
   ** Clean things up
   */
-  msSHPCloseFile(&shapefile);
+  msShapefileClose(&shapefile);
 
   return(0);
 }
