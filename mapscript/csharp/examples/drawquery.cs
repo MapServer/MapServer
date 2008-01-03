@@ -96,8 +96,13 @@ class DrawQuery
                 }
             }
             // setting the map extent to the result bounds
-            if (zoomToResults)
-                map.setExtent(query_bounds.minx, query_bounds.miny, query_bounds.maxx, query_bounds.maxy);
+			if (query_bounds != null) 
+			{
+				if (zoomToResults)
+					map.setExtent(query_bounds.minx, query_bounds.miny, query_bounds.maxx, query_bounds.maxy);
+			}
+			else
+				Console.WriteLine("The query returned 0 results ...");
         }
         catch (Exception e)
         {
