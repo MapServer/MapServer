@@ -2522,6 +2522,9 @@ draw( mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, string text )
     of *layer*.  The rectangle is labeled with the string *text*.  Returns 
     MS_SUCCESS or MS_FAILURE.
 
+getCenter() : pointObj_
+    Return the center point of the rectagle.
+
 project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
     Reproject rectangle from *proj_in* to *proj_out*.  Transformation
     is done in place.  Returns MS_SUCCESS or MS_FAILURE.
