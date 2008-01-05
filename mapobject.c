@@ -256,6 +256,65 @@ int msMapSetExtent( mapObj *map,
 }
 
 /************************************************************************/
+/*                           msMapOffsetExtent()                        */
+/************************************************************************/
+
+int msMapOffsetExtent( mapObj *map, double x, double y) 
+{ 
+	return msMapSetExtent( map, 
+                        map->extent.minx + x, map->extent.miny + y, 
+		                map->extent.maxx + x, map->extent.maxy + y);
+}
+
+/************************************************************************/
+/*                           msMapScaleExtent()                         */
+/************************************************************************/
+
+int msMapScaleExtent( mapObj *map, double zoomfactor, 
+					 double minscaledenom, double maxscaledenom) 
+{ 
+	double geo_width, geo_height, center_x, center_y, md;
+
+	if (zoomfactor <= 0.0) {
+		msSetError(MS_MISCERR, "The given zoomfactor is invalid", "msMapScaleExtent()"); 
+	}
+
+	geo_width = map->extent.maxx - map->extent.minx;
+    geo_height = map->extent.maxy - map->extent.miny;
+
+    center_x = map->extent.minx + geo_width * 0.5;
+    center_y = map->extent.miny + geo_height * 0.5;
+
+	geo_width *= zoomfactor;
+
+	if (minscaledenom > 0 || maxscaledenom > 0) {
+		/* ensure we are within the valid scale domain */
+		md = (map->width-1)/(map->resolution * msInchesPerUnit(map->units, center_y));
+		if (minscaledenom > 0 && geo_width < minscaledenom * md)
+			geo_width = minscaledenom * md;
+		if (maxscaledenom > 0 && geo_width > maxscaledenom * md)
+			geo_width = maxscaledenom * md;
+	}
+
+	geo_width *= 0.5;
+	geo_height = geo_width * map->height / map->width;
+	
+	return msMapSetExtent( map, 
+                        center_x - geo_width, center_y - geo_height, 
+		                center_x + geo_width, center_y + geo_height);
+}
+
+/************************************************************************/
+/*                           msMapSetCenter()                           */
+/************************************************************************/
+
+int msMapSetCenter( mapObj *map, pointObj *center) 
+{ 
+	return msMapOffsetExtent(map, center->x - (map->extent.minx + map->extent.maxx) * 0.5,
+		                          center->y - (map->extent.miny + map->extent.maxy) * 0.5);
+}
+
+/************************************************************************/
 /*                           msMapSetRotation()                         */
 /************************************************************************/
 
