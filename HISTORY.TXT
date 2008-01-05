@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- Implement mapObj.setCenter, mapObj.offsetExtent, mapObj.scaleExtent, 
+  rectObj.getCenter at the SWIG API (#2346)
 
 - mapogcfilter.c: use USE_LIBXML2 in ifdefs (#2416)
 

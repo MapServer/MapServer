@@ -2129,6 +2129,21 @@ setConfigOption( string key, string value ) : void
 
 setExtent( float minx, float miny, float miny, float maxy ) : int
     Set the map extent, returns MS_SUCCESS or MS_FAILURE.
+    
+offsetExtent( float x, float y) : int
+    Offset the map extent based on the given distances in map coordinates, 
+    returns MS_SUCCESS or MS_FAILURE.
+    
+scaleExtent( float zoomfactor, float minscaledenom, float maxscaledenom) : int
+    Scale the map extent using the zoomfactor and ensure the extent
+    within the minscaledenom and maxscaledenom domain.
+    If minscaledenom and/or maxscaledenom is 0 then the parameter is
+    not taken into account.
+    returns MS_SUCCESS or MS_FAILURE.
+    
+setCenter( pointObj_ center ) : int
+    Set the map center to the given map point,
+    returns MS_SUCCESS or MS_FAILURE.
 
 setFontSet( string filename ) : int
     Load fonts defined in *filename* into map fontset.  The existing

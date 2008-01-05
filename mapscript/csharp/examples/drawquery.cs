@@ -98,8 +98,12 @@ class DrawQuery
             // setting the map extent to the result bounds
 			if (query_bounds != null) 
 			{
-				if (zoomToResults)
+				if (zoomToResults) 
+				{
 					map.setExtent(query_bounds.minx, query_bounds.miny, query_bounds.maxx, query_bounds.maxy);
+					map.scaleExtent(1.2, 0, 0); // increasing the visible area
+					Console.WriteLine("Current map scale: 1:" + (int)map.scaledenom);
+				}
 			}
 			else
 				Console.WriteLine("The query returned 0 results ...");

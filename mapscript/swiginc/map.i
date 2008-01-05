@@ -85,6 +85,19 @@
     int setExtent(double minx, double miny, double maxx, double maxy) {	
 	return msMapSetExtent( self, minx, miny, maxx, maxy );
     }
+    
+    int offsetExtent(double x, double y) {	
+	return msMapOffsetExtent( self, x, y );
+    }
+    
+    int scaleExtent(double zoomfactor, 
+					 double minscaledenom, double maxscaledenom) {	
+	return msMapScaleExtent( self, zoomfactor, minscaledenom, maxscaledenom );
+    }
+    
+    int setCenter(pointObj *center) {	
+	return msMapSetCenter( self, center );
+    }
 
     /* recent rotation work makes setSize the only reliable 
        method for changing the image size.  direct access is deprecated. */

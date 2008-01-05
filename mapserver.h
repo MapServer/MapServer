@@ -1488,6 +1488,10 @@ MS_DLL_EXPORT void msMapGeorefToPixel( mapObj *map, double *x, double *y );
 
 MS_DLL_EXPORT int msMapSetExtent(mapObj *map, double minx, double miny, 
                                  double maxx, double maxy);
+MS_DLL_EXPORT int msMapOffsetExtent( mapObj *map, double x, double y);
+MS_DLL_EXPORT int msMapScaleExtent( mapObj *map, double zoomfactor, 
+					 double minscaledenom, double maxscaledenom);
+MS_DLL_EXPORT int msMapSetCenter( mapObj *map, pointObj *center);
 MS_DLL_EXPORT int msMapSetRotation( mapObj *map, double rotation_angle );
 MS_DLL_EXPORT int msMapSetSize( mapObj *map, int width, int height );
 MS_DLL_EXPORT int msMapSetSize( mapObj *map, int width, int height );

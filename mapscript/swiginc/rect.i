@@ -69,6 +69,21 @@
     
         return MS_SUCCESS;
     }
+    
+    %newobject getCenter;
+    pointObj *getCenter() 
+    {
+		pointObj *center;
+        center = (pointObj *)calloc(1, sizeof(pointObj));
+        if (!center) {
+            msSetError(2, "Failed to allocate memory for point", "getCenter()");
+            return NULL;
+        }
+        center->x = (self->minx + self->maxx)/2;
+        center->y = (self->miny + self->maxy)/2;
+        
+        return center;
+    }
 
     %newobject toPolygon;
     shapeObj *toPolygon() 
