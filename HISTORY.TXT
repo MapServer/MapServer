@@ -12,9 +12,6 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-0)
 --------------------------------
-- Implement mapObj.setCenter, mapObj.offsetExtent, mapObj.scaleExtent, 
-  rectObj.getCenter at the SWIG API (#2346)
-
 - SLD using a single BBOX filter should generate an SQL ststement for 
   oracle/postgis/ogr (#2450)
 
