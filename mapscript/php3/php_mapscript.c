@@ -851,6 +851,7 @@ function_entry php_shape_class_functions[] = {
     {"boundary",        php3_ms_shape_boundary,         NULL},
     {"containsshape",   php3_ms_shape_contains_geos,    NULL},
     {"union_geos",      php3_ms_shape_Union,            NULL},
+    {"union",           php3_ms_shape_Union,            NULL},
     {"intersection",    php3_ms_shape_intersection,     NULL},
     {"difference",      php3_ms_shape_difference,       NULL},
     {"symdifference",   php3_ms_shape_symdifference,    NULL},

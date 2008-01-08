@@ -1344,8 +1344,13 @@ Constructor:
         Only available if php/mapscript is built with GEOS 
         library.
 
+   shapeobj union(shapeobj shape)
+        Returns a shape object representing the union of the shape object 
+        with the one passed as parameter. 
+        Only available if php/mapscript is built with GEOS 
+        library
 
-   shapeobj union_geos(shapeobj shape)
+   shapeobj union_geos(shapeobj shape) : (Deprecated in v5.2. Use union instead)
         Returns a shape object representing the union of the shape object 
         with the one passed as parameter. 
         Only available if php/mapscript is built with GEOS 
