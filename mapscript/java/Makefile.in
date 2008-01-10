@@ -197,6 +197,9 @@ EXE_LDFLAGS =	$(RUNPATHS) -L. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 LDFLAGS= $(RUNPATHS) -L../.. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
+LIBMAPSCRIPT_SHARED= libmapscript.@SO_EXT@
+LD_SHARED= @LD_SHARED@
+
 # END OF CONFIGURE----
 
 #
@@ -234,7 +237,7 @@ mapscript_wrap.c: ../mapscript.i
 
 mapscript_so: mapscript_wrap.c
 	$(CC) -fpic -c $(CCFLAGS) $(JAVA_INCLUDE) -fno-strict-aliasing mapscript_wrap.c
-	$(CC) -fpic -shared mapscript_wrap.o -o libmapscript.so $(LDFLAGS)
+	$(LD_SHARED) -fpic mapscript_wrap.o -o $(LIBMAPSCRIPT_SHARED) $(LDFLAGS)
 
 mapscript_java: mapscript_wrap.c
 	$(JAVAC) edu/umn/gis/mapscript/*.java
@@ -246,7 +249,7 @@ mapscript_jar: mapscript_java mapscript_so
 	$(JAR) cf mapscript.jar edu
 
 clean:
-	rm -rf edu *.o *.c *.so *.java *.jar *.png
+	rm -rf edu *.o *.c *.@SO_EXT@ *.java *.jar *.png
 	rm -rf examples/*.class
 	rm -rf tests/threadtest/*.class
 
