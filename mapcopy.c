@@ -255,6 +255,7 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     MS_COPYSTRING(dst->bindings[i].item, src->bindings[i].item);
     dst->bindings[i].index = src->bindings[i].index; /* no way to use the macros */
   }
+  MS_COPYSTELEM(numbindings);
 
     MS_COPYSTRING(dst->font, src->font);
     MS_COPYSTELEM(type);
@@ -355,6 +356,7 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTRING(dst->bindings[i].item, src->bindings[i].item);
     dst->bindings[i].index = src->bindings[i].index; /* no way to use the macros */
   }
+  MS_COPYSTELEM(numbindings);
 
     MS_COPYCOLOR(&(dst->color), &(src->color));
     MS_COPYCOLOR(&(dst->outlinecolor),&(src->outlinecolor));
