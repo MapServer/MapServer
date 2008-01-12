@@ -197,7 +197,7 @@ int msWCSIsLayerSupported(layerObj *layer)
 /*                      msWCSGetRequestParameter()                      */
 /************************************************************************/
 
-static const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name) {
+const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name) {
   int i;
 
   if(!request || !name) /* nothing to do */
@@ -359,7 +359,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
            return msWCSException(map, params->version, "InvalidParameterValue", "GridOffsets");
          }
          params->resx = atof(tokens[0]);
-         params->resy = atof(tokens[1]);
+         params->resy = fabs(atof(tokens[1]));
          msFreeCharArray(tokens, n);
        }
 	   
@@ -1017,6 +1017,66 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 }
 
 /************************************************************************/
+/*                       msWCSGetCoverageBands10()                      */
+/************************************************************************/
+
+static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request, 
+                                    wcsParamsObj *params, layerObj *lp,
+                                    char **p_bandlist )
+
+{
+  const char *value;
+  int i;
+
+  /* Are there any non-spatio/temporal ranges to do subsetting on (e.g. bands) */
+  value = msOWSLookupMetadata(&(lp->metadata), "COM", "rangeset_axes"); /* this will get all the compound range sets */
+  if(value) { 
+    char **tokens;
+    int numtokens;
+    char tag[100];
+    const char *rangeitem;
+
+    tokens = msStringSplit(value, ',', &numtokens);
+    for(i=0; i<numtokens; i++) {
+      if((value = msWCSGetRequestParameter(request, tokens[i])) == NULL) continue; /* next rangeset parameter */
+       
+      if(msWCSValidateRangeSetParam(&(lp->metadata), tokens[i], "COM", value) != MS_SUCCESS) {
+        msSetError( MS_WCSERR, "Error specifying \"%s\" parameter value(s).", "msWCSGetCoverage()", tokens[i]);
+        return msWCSException(map, params->version, NULL, NULL);
+      }
+       
+      /* xxxxx_rangeitem tells us how to subset */
+      snprintf(tag, 100, "%s_rangeitem", tokens[i]);
+      if((rangeitem = msOWSLookupMetadata(&(lp->metadata), "COM", tag)) == NULL) {
+        msSetError( MS_WCSERR, "Missing required metadata element \"%s\", unable to process %s=%s.", "msWCSGetCoverage()", tag, tokens[i], value);
+        return msWCSException(map, params->version, NULL, NULL);
+      }
+         
+      if(strcasecmp(rangeitem, "_bands") == 0) { /* special case, subset bands */
+        *p_bandlist = msWCSConvertRangeSetToString(value);
+           
+        if(!*p_bandlist) {
+          msSetError( MS_WCSERR, "Error specifying \"%s\" paramter value(s).", "msWCSGetCoverage()", tokens[i]);
+          return msWCSException(map, params->version, NULL, NULL);
+        }          
+      } else if(strcasecmp(rangeitem, "_pixels") == 0) { /* special case, subset pixels */
+        msSetError( MS_WCSERR, "Arbitrary range sets based on pixel values are not yet supported.", "msWCSGetCoverage()" );
+        return msWCSException(map, params->version, NULL, NULL);
+      } else {
+        msSetError( MS_WCSERR, "Arbitrary range sets based on tile (i.e. image) attributes are not yet supported.", "msWCSGetCoverage()" );
+        return msWCSException(map, params->version, NULL, NULL);
+      }
+    }
+       
+    /* clean-up */
+    msFreeCharArray(tokens, numtokens);
+  }
+
+  return MS_SUCCESS;
+}    
+
+
+/************************************************************************/
 /*                          msWCSGetCoverage()                          */
 /************************************************************************/
 
@@ -1150,50 +1210,13 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     msLoadExpressionString(&tlp->filter, params->time);
   }
            
-  /* Are there any non-spatio/temporal ranges to do subsetting on (e.g. bands) */
-  value = msOWSLookupMetadata(&(lp->metadata), "COM", "rangeset_axes"); /* this will get all the compound range sets */
-  if(value) { 
-    char **tokens;
-    int numtokens;
-    char tag[100];
-    const char *rangeitem;
+  if( strncasecmp(params->version,"1.0",3) == 0 )
+      status = msWCSGetCoverageBands10( map, request, params, lp, &bandlist );
+  else
+      status = msWCSGetCoverageBands11( map, request, params, lp, &bandlist );
+  if( status != MS_SUCCESS )
+      return status;
 
-    tokens = msStringSplit(value, ',', &numtokens);
-    for(i=0; i<numtokens; i++) {
-      if((value = msWCSGetRequestParameter(request, tokens[i])) == NULL) continue; /* next rangeset parameter */
-       
-      if(msWCSValidateRangeSetParam(&(lp->metadata), tokens[i], "COM", value) != MS_SUCCESS) {
-        msSetError( MS_WCSERR, "Error specifying \"%s\" parameter value(s).", "msWCSGetCoverage()", tokens[i]);
-        return msWCSException(map, params->version, NULL, NULL);
-      }
-       
-      /* xxxxx_rangeitem tells us how to subset */
-      snprintf(tag, 100, "%s_rangeitem", tokens[i]);
-      if((rangeitem = msOWSLookupMetadata(&(lp->metadata), "COM", tag)) == NULL) {
-        msSetError( MS_WCSERR, "Missing required metadata element \"%s\", unable to process %s=%s.", "msWCSGetCoverage()", tag, tokens[i], value);
-        return msWCSException(map, params->version, NULL, NULL);
-      }
-         
-      if(strcasecmp(rangeitem, "_bands") == 0) { /* special case, subset bands */
-        bandlist = msWCSConvertRangeSetToString(value);
-           
-        if(!bandlist) {
-          msSetError( MS_WCSERR, "Error specifying \"%s\" paramter value(s).", "msWCSGetCoverage()", tokens[i]);
-          return msWCSException(map, params->version, NULL, NULL);
-        }          
-      } else if(strcasecmp(rangeitem, "_pixels") == 0) { /* special case, subset pixels */
-        msSetError( MS_WCSERR, "Arbitrary range sets based on pixel values are not yet supported.", "msWCSGetCoverage()" );
-        return msWCSException(map, params->version, NULL, NULL);
-      } else {
-        msSetError( MS_WCSERR, "Arbitrary range sets based on tile (i.e. image) attributes are not yet supported.", "msWCSGetCoverage()" );
-        return msWCSException(map, params->version, NULL, NULL);
-      }
-    }
-       
-    /* clean-up */
-    msFreeCharArray(tokens, numtokens);
-  }
-    
   /* did we get BBOX values? if not use the exent stored in the coverageMetadataObj */
   if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  
       || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
@@ -1361,6 +1384,9 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
     return msWCSException(map, params->version, NULL, NULL);
   }
+
+  if( image == NULL )
+    return msWCSException(map, params->version, NULL, NULL);
 
   /* Actually produce the "grid". */
   status = msDrawRasterLayerLow( map, lp, image );

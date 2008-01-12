@@ -78,6 +78,7 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm );
 void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
                                        coverageMetadataObj *cm,
                                        layerObj *lp );
+const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name);
 
 /* -------------------------------------------------------------------- */
 /*      Some WCS 1.1 specific functions from mapwcs11.c                 */
@@ -86,5 +87,8 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
                            cgiRequestObj *req);
 int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params );
 int msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map, imageObj *image);
+int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request, 
+                             wcsParamsObj *params, layerObj *lp,
+                             char **p_bandlist );
 
 #endif /* nef MAPWCS_H */

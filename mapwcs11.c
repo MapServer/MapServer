@@ -638,7 +638,7 @@ msWCSDescribeCoverage_CoverageDescription11(
         /* ows:Abstract? TODO */
 
         value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", 
-                                        "rangeset_name", "bands" );
+                                        "rangeset_name", "raster" );
         xmlNewChild( psField, NULL, BAD_CAST "Identifier", BAD_CAST value );
         
         /* <NullValue> TODO */
@@ -651,29 +651,31 @@ msWCSDescribeCoverage_CoverageDescription11(
         xmlNewChild( psInterpMethods, NULL, BAD_CAST "OtherMethod", BAD_CAST "bilinear" );
 
 /* -------------------------------------------------------------------- */
-/*      Do axes properly later...                                       */
+/*      Bands axis.                                                     */
 /* -------------------------------------------------------------------- */
-        psAxis = xmlNewChild( psField, NULL, BAD_CAST "Axis", NULL );
-        xmlNewProp( psAxis, BAD_CAST "identifier", BAD_CAST "Band" );
+        {
+            xmlNodePtr psKeys;
+            int iBand;
 
-        msLibXml2GenerateList( 
-            xmlNewChild(psAxis, NULL, BAD_CAST "AvailableKeys", NULL),
-            NULL, "Key", "1", ',' );
-        
+            value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", 
+                                            "bands_name", "bands" );
+            psAxis = xmlNewChild( psField, NULL, BAD_CAST "Axis", NULL );
+            xmlNewProp( psAxis, BAD_CAST "identifier", BAD_CAST value );
+            
+            psKeys = xmlNewChild( psAxis, NULL, BAD_CAST 
+                                  "AvailableKeys",  NULL );
+            
+            for( iBand = 0; iBand < cm.bandcount; iBand++ )
+            {
+                char szBandName[32];
+
+                sprintf( szBandName, "%d", iBand+1 );
+                xmlNewChild( psKeys, NULL, BAD_CAST "Key", 
+                             BAD_CAST szBandName );
+            }
+        }
     }        
         
-#ifdef notdef
-  /* compound range sets */
-  if((value = msOWSLookupMetadata(&(layer->metadata), "COM", "rangeset_axes")) != NULL) {
-     tokens = msStringSplit(value, ',', &numtokens);
-     if(tokens && numtokens > 0) {
-       for(i=0; i<numtokens; i++)
-         msWCSDescribeCoverage_AxisDescription(layer, tokens[i]);
-       msFreeCharArray(tokens, numtokens);
-     }
-  }
-#endif  
-
 /* -------------------------------------------------------------------- */
 /*      SupportedCRS                                                    */
 /* -------------------------------------------------------------------- */
@@ -828,6 +830,107 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
 }
 
 #endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
+
+/************************************************************************/
+/*                      msWCSGetCoverageBands11()                       */
+/*                                                                      */
+/*      We expect input to be of the form:                              */
+/*      RangeSubset=raster[bands[1]].                                   */
+/*                                                                      */
+/*      We really need to support pulling interpolation out of this     */
+/*      as well.  eg.                                                   */
+/*                                                                      */
+/*      RangeSet=raster:bilinear[bands[1,2]]                            */
+/*       or                                                              */
+/*      RangeSet=raster:bilinear                                        */
+/************************************************************************/
+
+int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request, 
+                             wcsParamsObj *params, layerObj *lp,
+                             char **p_bandlist )
+
+{
+    char *rangesubset, *field_id;
+    const char *axis_id, *value;
+    int i;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the RangeSubset from the parameters, skip building a      */
+/*      bands list if not found.                                        */
+/* -------------------------------------------------------------------- */
+    value = msWCSGetRequestParameter(request, "RangeSubset");
+    if( value == NULL )
+        return MS_SUCCESS;
+
+    rangesubset = strdup(value);
+
+/* -------------------------------------------------------------------- */
+/*      What is the <Field identifier=...> (rangeset_name)?             */
+/* -------------------------------------------------------------------- */
+    value = msOWSLookupMetadata( &(lp->metadata), "COM", "rangeset_name" );
+    if( value == NULL )
+        value = "raster";
+    field_id = strdup(value);
+
+/* -------------------------------------------------------------------- */
+/*      What is the <Axis identifier=...> (bands_name)?                 */
+/* -------------------------------------------------------------------- */
+    axis_id = msOWSLookupMetadata( &(lp->metadata), "COM", "bands_name" );
+    if( axis_id == NULL )
+        axis_id = "bands";
+
+/* -------------------------------------------------------------------- */
+/*      Parse out the field identifier from the request and verify.     */
+/* -------------------------------------------------------------------- */
+    if( strlen(rangesubset) <= strlen(field_id)+1 
+        || strncasecmp(rangesubset,field_id,strlen(field_id)) != 0 
+        || rangesubset[strlen(field_id)] != '[' )
+    {
+        msSetError( MS_WCSERR, 
+                    "RangeSubset field name malformed, expected '%s', got RangeSubset=%s",
+                    "msWCSGetCoverageBands11()", 
+                    field_id, rangesubset );
+        return msWCSException(map, params->version, NULL, NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse out the axis name, and verify.                            */
+/* -------------------------------------------------------------------- */
+    value = rangesubset + strlen(field_id)+1;
+
+    free( field_id );
+    field_id = NULL;
+    
+    if( strlen(value) <= strlen(axis_id)+1
+        || strncasecmp(value,axis_id,strlen(axis_id)) != 0
+        || value[strlen(axis_id)] != '[' )
+    {
+        msSetError( MS_WCSERR, 
+                    "RangeSubset axis name malformed, expected '%s', got RangeSubset=%s",
+                    "msWCSGetCoverageBands11()", 
+                    axis_id, rangesubset );
+        return msWCSException(map, params->version, NULL, NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse the band list.  Basically assuming the band list is       */
+/*      everything from here to a close ';'.                            */
+/* -------------------------------------------------------------------- */
+    value += strlen(axis_id) + 1;
+
+    *p_bandlist = strdup(value);
+
+    for( i = 0; (*p_bandlist)[i] != '\0'; i++ )
+    {
+        if( (*p_bandlist)[i] == '[' )
+        {
+            (*p_bandlist)[i] = '\0';
+            break;
+        }
+    }
+
+    return MS_SUCCESS;
+}    
 
 /************************************************************************/
 /*                       msWCSReturnCoverage11()                        */
