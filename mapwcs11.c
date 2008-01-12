@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <assert.h>
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
@@ -835,14 +836,15 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
 /*                      msWCSGetCoverageBands11()                       */
 /*                                                                      */
 /*      We expect input to be of the form:                              */
-/*      RangeSubset=raster[bands[1]].                                   */
+/*      RangeSubset=raster:interpolation[bands[1]].                     */
 /*                                                                      */
-/*      We really need to support pulling interpolation out of this     */
-/*      as well.  eg.                                                   */
-/*                                                                      */
-/*      RangeSet=raster:bilinear[bands[1,2]]                            */
-/*       or                                                              */
+/*      RangeSet=raster:[bands[1,2]]                                    */
+/*       or                                                             */
 /*      RangeSet=raster:bilinear                                        */
+/*                                                                      */
+/*      This function tries to return a bandlist if found, and will     */
+/*      also push an INTERPOLATION keyword into the parameters list     */
+/*      if found in the RangeSubset.                                    */
 /************************************************************************/
 
 int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request, 
@@ -882,9 +884,11 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
 /* -------------------------------------------------------------------- */
 /*      Parse out the field identifier from the request and verify.     */
 /* -------------------------------------------------------------------- */
+    value = rangesubset + strlen(field_id);
+
     if( strlen(rangesubset) <= strlen(field_id)+1 
         || strncasecmp(rangesubset,field_id,strlen(field_id)) != 0 
-        || rangesubset[strlen(field_id)] != '[' )
+        || (*value != '[' && *value != ':') )
     {
         msSetError( MS_WCSERR, 
                     "RangeSubset field name malformed, expected '%s', got RangeSubset=%s",
@@ -893,14 +897,36 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
         return msWCSException(map, params->version, NULL, NULL );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Parse out the axis name, and verify.                            */
-/* -------------------------------------------------------------------- */
-    value = rangesubset + strlen(field_id)+1;
-
     free( field_id );
     field_id = NULL;
     
+/* -------------------------------------------------------------------- */
+/*      Parse out the interpolation, if found.                          */
+/* -------------------------------------------------------------------- */
+    if( *value == ':' )
+    {
+        assert( params->interpolation == NULL );
+        params->interpolation = strdup(value+1);
+        for( i = 0; params->interpolation[i] != '\0'; i++ )
+        {
+            if( params->interpolation[i] == '[' )
+            {
+                params->interpolation[i] = '\0';
+                break;
+            }
+        }
+
+        value += strlen(params->interpolation) + 1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse out the axis name, and verify.                            */
+/* -------------------------------------------------------------------- */
+    if( *value != '[' )
+        return MS_SUCCESS;
+
+    value++;
+
     if( strlen(value) <= strlen(axis_id)+1
         || strncasecmp(value,axis_id,strlen(axis_id)) != 0
         || value[strlen(axis_id)] != '[' )
