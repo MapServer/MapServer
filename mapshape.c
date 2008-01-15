@@ -1289,7 +1289,7 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
       return MS_FAILURE;
     } 
     
-    if( psSHP->nShapeType != SHP_POINT ) {
+    if( psSHP->nShapeType != SHP_POINT && psSHP->nShapeType != SHP_POINTZ && psSHP->nShapeType != SHP_POINTM) {
       fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity]+12, 0 );
       fread( padBounds, sizeof(double)*4, 1, psSHP->fpSHP );
 
