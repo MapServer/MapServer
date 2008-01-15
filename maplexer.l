@@ -179,7 +179,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>group                                 { return(GROUP); }
 <INITIAL,URL_STRING>header                     { return(HEADER); }
 <INITIAL>image                                 { return(IMAGE); }
-<INITIAL,URL_VARIABLE>imagecolor               { return(IMAGECOLOR); }
+<INITIAL,URL_STRING,URL_VARIABLE>imagecolor    { return(IMAGECOLOR); }
 <INITIAL,URL_VARIABLE>imagetype                { return(IMAGETYPE); }
 <INITIAL>imagequality                          { return(IMAGEQUALITY); }
 <INITIAL>imagemode                             { return(IMAGEMODE); }
