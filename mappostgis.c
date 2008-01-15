@@ -212,6 +212,11 @@ int msPOSTGISLayerOpen(layerObj *layer)
             msDebug("MSPOSTGISLayerOpen -- shared connection not available.\n");
         }
 
+        if(!layer->connection) {
+          msSetError(MS_MISCERR, "Missing CONNECTION keyword.", "msPOSTGISLayerOpen()");
+          return MS_FAILURE;
+        }
+
         /* Decrypt any encrypted token in connection and attempt to connect */
         conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
         if (conn_decrypted == NULL) {
@@ -237,7 +242,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
               }
             }
             
-            msSetError(MS_QUERYERR, "couldnt make connection to DB with connect string '%s'.\n\nError reported was '%s'.\n\n\nThis error occured when trying to make a connection to the specified postgresql server.  \n\nMost commonly this is caused by \n(1) incorrect connection string \n(2) you didnt specify a 'user=...' in your connection string \n(3) the postmaster (postgresql server) isnt running \n(4) you are not allowing TCP/IP connection to the postmaster \n(5) your postmaster is not running on the correct port - if its not on 5432 you must specify a 'port=...' \n (6) the security on your system does not allow the webserver (usually user 'nobody') to make socket connections to the postmaster \n(7) you forgot to specify a 'host=...' if the postmaster is on a different machine\n(8) you made a typo \n  ", "msPOSTGISLayerOpen()", maskeddata,PQerrorMessage(layerinfo->conn));
+            msSetError(MS_QUERYERR, "Couldn't make connection to DB with connect string '%s'.\n\nError reported was '%s'.\n\n\nThis error occured when trying to make a connection to the specified postgresql server.  \n\nMost commonly this is caused by \n(1) incorrect connection string \n(2) you didnt specify a 'user=...' in your connection string \n(3) the postmaster (postgresql server) isnt running \n(4) you are not allowing TCP/IP connection to the postmaster \n(5) your postmaster is not running on the correct port - if its not on 5432 you must specify a 'port=...' \n (6) the security on your system does not allow the webserver (usually user 'nobody') to make socket connections to the postmaster \n(7) you forgot to specify a 'host=...' if the postmaster is on a different machine\n(8) you made a typo \n  ", "msPOSTGISLayerOpen()", maskeddata, PQerrorMessage(layerinfo->conn));
 
             free(maskeddata);
             free(layerinfo);
