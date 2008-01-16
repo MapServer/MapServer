@@ -467,6 +467,9 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
  *
  * returns an object of BoundingBox as per subclause 10.2.1
  *
+ * If necessary (ie. an EPSG URN GCS such as 4326) the tuple axes will be
+ * reoriented to match the EPSG coordinate system expectations.
+ *
  * @param psNsOws OWS namespace object
  * @param crs the CRS / EPSG code
  * @param dimensions number of dimensions of the coordinates
@@ -482,6 +485,19 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensi
   char LowerCorner[100];
   char UpperCorner[100];
   char dim_string[100];
+
+  /* Do we need to reorient tuple axes? */
+  {
+      projectionObj proj;
+
+      msInitProjection( &proj );
+      if( msLoadProjectionString( &proj, (char *) crs ) == 0 )
+      {
+          msAxisNormalizePoints( &proj, 1, &minx, &miny );
+          msAxisNormalizePoints( &proj, 1, &maxx, &maxy );
+      }
+      msFreeProjection( &proj );
+  }
 
   xmlNodePtr psRootNode = NULL;
 

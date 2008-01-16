@@ -950,3 +950,64 @@ char *msGetProjectionString(projectionObj *proj)
     return pszProjString;
 }
 
+/************************************************************************/
+/*                       msAxisNormalizePoints()                        */
+/*                                                                      */
+/*      Convert the passed points to "easting, northing" axis           */
+/*      orientation if they are not already.                            */
+/************************************************************************/
+
+void msAxisNormalizePoints( projectionObj *proj, int count, 
+                            double *x, double *y )
+
+{
+    int i;
+    const char *axis = NULL;
+
+    for( i = 0; i < proj->numargs; i++ )
+    {
+        if( strstr(proj->args[i],"epsgaxis=") != NULL )
+        {
+            axis = strstr(proj->args[i],"=") + 1;
+            break;
+        }
+    }
+
+    if( axis == NULL )
+        return;
+
+    if( strcasecmp(axis,"en") == 0 )
+        return;
+
+    if( strcasecmp(axis,"ne") != 0 )
+    {
+        msDebug( "msAxisNormalizePoints(): odd +epsgaxis= value: '%s'.",
+                 axis );
+        return;
+    }
+
+    /* Switch axes */
+    for( i = 0; i < count; i++ )
+    {
+        double tmp;
+
+        tmp = x[i];
+        x[i] = y[i];
+        y[i] = tmp;
+    }
+}
+
+/************************************************************************/
+/*                      msAxisDenormalizePoints()                       */
+/*                                                                      */
+/*      Convert points from easting,northing orientation to the         */
+/*      preferred epsg orientation of this projectionObj.               */
+/************************************************************************/
+
+void msAxisDenormalizePoints( projectionObj *proj, int count, 
+                              double *x, double *y )
+
+{
+    /* For how this is essentially identical to normalizing */
+    msAxisNormalizePoints( proj, count, x, y );
+}

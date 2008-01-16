@@ -1086,7 +1086,7 @@ int msLoadProjectionString(projectionObj *p, char *value)
       /* translate into PROJ.4 format. */
       sprintf( init_string, "init=epsg:%s", value+5 );
 
-      p->args = (char**)malloc(sizeof(char*));
+      p->args = (char**)malloc(sizeof(char*) * 2);
       p->args[0] = strdup(init_string);
       p->numargs = 1;
   }
@@ -1104,9 +1104,15 @@ int msLoadProjectionString(projectionObj *p, char *value)
       /* translate into PROJ.4 format. */
       sprintf( init_string, "init=epsg:%s", code );
 
-      p->args = (char**)malloc(sizeof(char*));
+      p->args = (char**)malloc(sizeof(char*) * 2);
       p->args[0] = strdup(init_string);
       p->numargs = 1;
+
+      if( atoi(code) >= 4000 && atoi(code) < 5000 )
+      {
+          p->args[1] = strdup("+epsgaxis=ne");
+          p->numargs = 2;
+      }
   }
   /*
    * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
