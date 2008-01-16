@@ -898,6 +898,9 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
 /* -------------------------------------------------------------------- */
     value = rangesubset + strlen(field_id);
 
+    if( strcasecmp(rangesubset,field_id) == 0 )
+        return MS_SUCCESS; /* we only got field ... default options */
+
     if( strlen(rangesubset) <= strlen(field_id)+1 
         || strncasecmp(rangesubset,field_id,strlen(field_id)) != 0 
         || (*value != '[' && *value != ':') )
