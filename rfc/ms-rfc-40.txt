@@ -1,120 +1,97 @@
-=========================================================
-  MS RFC 40: Support of WCS 1.1.x Protocol
-=========================================================
-
-:Date: 2007/11/13
-:Author: Frank Warmerdam
-:Contact: warmerdam@pobox.com
-:Status: Development
-
+:Date: 2007/12/03
+:Author: Thomas Bonfort
+:Contact: thomas.bonfort@gmail.com
+:Last Edited: 2007/12/03
+:Status: Planning
+:Version: MapServer 5.2
 
 Overview
 --------
 
-It is proposed to extend MapServer to support the WCS 1.1 protocol.  MapServer already supports the WCS 1.0 protocol, but WCS 1.1 is significantly different. 
+MapServer 5.0 supports "hard" text wrapping, where the wrap character is unconditionally treated as a newline. This rfc proposes the addition of:
+ - conditional wrapping, i.e. newlines are only added when the current line length has met a user adjustable criteria
+ - line alignment, i.e. text aligned per user request, namely right, center and left
+ 
+These two additions are independant from one another, i.e. can be activated together or not.
 
+Line Wrapping
+------------------
+A new keyword, for example MAXLEN is added to the label object, and interacts with the label WRAP parameter as follows:
+ - the wrap character specifies what character can be replaced by a newline (no change w.r.t. the current meaning). Probably the most usefull wrap character will become ' ' (i.e. the space character)
+ - the MAXLEN value specifies the maximum number of characters that can compose a line before a newline is inserted. A value of 0 specifies the current "hard" wrapping. A positive value triggers wrapping at the WRAP character for lines longer than MAXLEN. A Negative value triggers wrapping than is allowed to break words, i.e. not necessarily at the WRAP character.
 
-Implementation Methodology
---------------------------
+The WRAP / MAXLEN combinations are summarized here:
 
-WCS 1.1 is closed based on OWS Common metadata (unlike WCS 1.0), and implementation of the WCS service will take advantage of the OWS metadata services in mapowscommon.c.  However, mapowscommon.c is based on libxml for xml serialization (unlike the printf() based WCS 1.0 service).  For this reason, WCS 1.1 GetCapabilities and DescribeCoverage implementations will be largely separate from WCS 1.0 implementations and will be implemented using libxml.  
++----------------+-----------------+-----------------------------+------------------+
+|                |   maxlen =0     |     maxlen > 0              |     maxlen < 0   |
++================+=================+=============================+==================+
+| wrap = 'char'  |  current way    | conditional wrap if current |     hard wrap    |
+|                |                 |  length > maxlen            |     i.e. always  |
++----------------+-----------------+-----------------------------+ break at exactly |
+| no wrap        |  no processing  | skip label if  text is      |  maxlen chars    |
+|                |                 |  longer than maxlen         |                  |
++----------------+-----------------+-----------------------------+------------------+
 
-It should be noted that the format and organization of the WCS 1.1 capabilities and coverage description methods are so different that separate implementations would have been pretty much necessary anyways. 
-
-The key entry points in mapwcs.c for WCS services will be updated to "call out" to WCS 1.1 versions of the services in mapwcs11.c.  
-
-It is anticipated that the bulk of the WCS 1.0 GetCoverage implementation will be shared with WCS 1.1 with special WCS 1.1 implementations to handle specific issues in the request (RangeSet processing, and multi-part mime return results for instance). 
-
-
-WCS 1.1 Protocol Limitations
-----------------------------
-
-- Only one <Field> may be associated with the Range of Coverage when served through mapserver.
-- Only two types of Axis will be supported, a "Bands" axis, and a "Time" axis. 
-- WCS 1.1 (as WCS 1.0) will for the time being only support returning results as a single file even though in WCS 1.1 the result is actually encoded as a multi-part mime result.  At some point in the future it is desirable to support multi-file resultsets (eg png+worldfile).
-
-
-Metadata Mapping
+Line Centering
 ----------------
+A new keyword, for example ALIGN is added to the label object. It supports 3 values: left, center and right, 
+and controls how text lines should be aligned w.r.t. the label bounding box. Precise placement of text can only
+be done at the renderer level, by exactly defining the starting pixel of the current line. While this approach
+could be taken, it would considerably burden the renderer code.
 
-The current WCS metadata items are tightly related to the WCS 1.0 protocol, while the WCS 1.1 protocol used a substantially different form and conventions for service, and coverage descriptions as well as for the getcoverage request.  The following table indicates which WCS metadata items are mapped to what coverage XML elements in WCS 1.0 and WCS 1.1.  
+I propose to use a more generic though less precise way of doing, by padding the text lines with space characters
+to approximate indentation. The initial implementation will only rely on the number of characters in each
+text line:
+* loop through text lines to find the line with the most characters l_max
+* pad all the other lines with (l_max - l_cur)/2 space characters
+ 
+A more advanced implementation could be to use the exact line lengths as returned by the renderers with the
+msGetLabelSize function:
+* compute the size in pixels of the "  " string (two spaces, accounts for kerning): l_2space
+* loop through text lines to longest line of length pix_l_max
+* pad all the other lines with (pix_l_max - pix_l_cur)/2 * 1/(2*l_2space) space characters
+ 
+Limitations: aligning text to the right will produce ugly results using this method, unless using a 
+monospace font.  
 
- MapServer                   WCS 1.1                  WCS 1.0
- ---------                   -------                  -------
- <x>_keywordlist             ows:Keywords             keywords
- <x>_label                   (unused)                 label
- <x>_description             ows:Title                description
- <x>_abstract (new)          ows:Abstract             (unused)
- <x>_metadatalink_href       (unused)                 metadataLink
- <x>_nativeformat            (unused)                 nativeFormat
- <x>_rangeset_name           Field.Identifier         RangeSet.name
- <x>_rangeset_label          Field.Title              Rangeset.label
- <x>_bands_name              Axis.identifier          AxisDescription.name
+Modifications to the source code
+--------------------------------
 
+* MAXLEN and ALIGN will be added to the LABEL object in map.h, in the mapfile parser/writer (mapfile.c) and in MapScript
 
-(incomplete)
+* msTransformLabelText() in maplabel.c will be updated to support the modifications proposed. No other modifications
+  should be required as the text itself is modified to fit the user's request (i.e. it is padded with spaces, and/or
+  newlines are added to it)
 
-URNs / Coordinate Systems and Axis Orientation
-----------------------------------------------
+MapScript Implications
+----------------------
 
-WCS 1.1 uses URNs like "urn:ogc:def:crs:EPSG::4326" or 
-"urn:ogc:def:crs:OGC::CRS84".  In addition the WCS protocol is required to 
-honour EPSG axis conventions when using coordinate systems within the EPSG
-authority space.  This means, for instance, that any coordinates in
-the urn:ogc:def:crs:EPSG::4326 coordinate system must be provided in lat,long
-ordering instead of the conventional long,lat.  
+The labelObj will have a new maxlen property of type integer.
 
-In order to implement these requirements, several changes are planned:
+Files affected
+--------------
 
-- msLoadProjectionString() will be updated to expand URNs in the EPSG and OGC name spaces.  
-- msLoadProjectionString() will add the "+epsgaxis=ne" parameter for URNs for
-  GCS codes in the EPSG name space. 
-- New msAxisNormalizePoints() and msAxisDenormalizePoints() will be added for
-  converting between normalized (easting,northing) axis orientation and
-  EPSG preferred (denormalized) axis orientation (sometimes northing,easting).
-  These functions will scan the p->args[] list for the +epsgaxis=ne to decide.
-- msOWSCommonBoundingBox() will be modified to use these axis denormalization
-  function to denormalize axis ordering for EPSG GCS URNs. 
-- the WCS 1.1 GetCoverage call will use msAxisNormalizePoints() to fix up 
-  orientation of request axes when needed.
+::
 
-MapScript
----------
+ map.h
+ mapfile.c
+ maplabel.c
+ maplexer.l
+ maplexer.c
 
-No changes to mapscript are anticipated. 
+Backwards compatibility issues
+------------------------------
 
-
-Backwards Compatibility
------------------------
-
-No alterations to WCS 1.0 support are expected, and it is not expected that the mechanisms for specifying 
-services metadata will be changed though it is possible a few metadata items used only in WCS 1.1 will be added. 
-
-Documentation
--------------
-
-The WCS Servers with MapServer HOWTO (http://mapserver.gis.umn.edu/docs/howto/wcs_server) will be extended to discuss WCS 1.1 related issues. 
-
-Implementation Resources
-------------------------
-
-Implementation will be done by Frank Warmerdam with financial support from Noetix Research Inc. and the Geoconnections program of the Canadian Government.  Preliminary implementation is already operational in svn trunk, and work completion is anticipated by March 1st. 
-
-Testing
--------
-
-Tests will be added to msautotest/wxs for the WCS 1.1 protocol.  Additional assistance with WCS 1.1 validation from other contributors would be welcome.
-
+None.
 
 Bug ID
 ------
 
-None Yet.
+* 2383: https://trac.osgeo.org/mapserver/ticket/2383
 
-
-Voting History
+Voting history
 --------------
 
-None Yet.
 
-
+Questions/Comments from the review period
+-----------------------------------------
