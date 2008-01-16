@@ -204,6 +204,12 @@ static int msWCSGetCapabilities11_CoverageSummary(
     xmlNewChild( psCSummary, psOwsNs, BAD_CAST "Title", BAD_CAST value );
 
 /* -------------------------------------------------------------------- */
+/*      Abstract                                                        */
+/* -------------------------------------------------------------------- */
+    value = msOWSLookupMetadata( &(layer->metadata), "COM", "abstract");
+    xmlNewChild( psCSummary, psOwsNs, BAD_CAST "Abstract", BAD_CAST value );
+
+/* -------------------------------------------------------------------- */
 /*      Identifier (layer name)                                         */
 /* -------------------------------------------------------------------- */
     xmlNewChild( psCSummary, NULL, BAD_CAST "Identifier", BAD_CAST layer->name );
@@ -521,6 +527,12 @@ msWCSDescribeCoverage_CoverageDescription11(
     if( value == NULL )
         value = layer->name;
     xmlNewChild( psCD, psOwsNs, BAD_CAST "Title", BAD_CAST value );
+
+/* -------------------------------------------------------------------- */
+/*      Abstract                                                        */
+/* -------------------------------------------------------------------- */
+    value = msOWSLookupMetadata( &(layer->metadata), "COM", "abstract");
+    xmlNewChild( psCD, psOwsNs, BAD_CAST "Abstract", BAD_CAST value );
 
 /* -------------------------------------------------------------------- */
 /*      Identifier (layer name)                                         */

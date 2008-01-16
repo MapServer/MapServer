@@ -1104,6 +1104,30 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
                 "msWCSGetCoverage()");
     return msWCSException(map, params->version, "MissingParameterValue", "coverage");
   }
+
+  /* For WCS 1.1, we need to normalize the axis order of the BBOX and
+     resolution values some coordinate systems (eg. EPSG geographic) */
+  if( strncasecmp(params->version,"1.0",3) != 0 
+      && params->crs != NULL 
+      && strncasecmp(params->crs,"urn:",4) == 0 )
+  {
+      projectionObj proj;
+
+      msInitProjection( &proj );
+      if( msLoadProjectionString( &proj, (char *) params->crs ) == 0 )
+      {
+          msAxisNormalizePoints( &proj, 1, 
+                                 &(params->bbox.minx), 
+                                 &(params->bbox.miny) );
+          msAxisNormalizePoints( &proj, 1, 
+                                 &(params->bbox.maxx), 
+                                 &(params->bbox.maxy) );
+          msAxisNormalizePoints( &proj, 1, 
+                                 &(params->resx), 
+                                 &(params->resy) );
+      }
+      msFreeProjection( &proj );
+  }
   
   /* find the layer we are working with.  */
   lp = NULL;
