@@ -122,7 +122,7 @@ MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString);
 
 #ifdef USE_LIBXML2
-MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsOgc);
+MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc);
 #endif
 
 #endif
