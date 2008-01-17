@@ -76,6 +76,7 @@ static char *msStatus[5]={"OFF", "ON", "DEFAULT", "EMBED"};
 static char *msTrueFalse[2]={"FALSE", "TRUE"};
 /* static char *msYesNo[2]={"NO", "YES"}; */
 static char *msJoinType[2]={"ONE-TO-ONE", "ONE-TO-MANY"};
+static char *msAlignValue[3]={"LEFT","CENTER","RIGHT"};
 
 int msEvalRegex(char *e, char *s) {
   ms_regex_t re;
@@ -3538,6 +3539,7 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->transparent = MS_NOOVERRIDE; /* no transparency */
   scalebar->interlace = MS_NOOVERRIDE;
   scalebar->postlabelcache = MS_FALSE; /* draw with labels */
+  scalebar->align = MS_ALIGN_CENTER;
 }
 
 void freeScalebar(scalebarObj *scalebar) {
@@ -3548,6 +3550,9 @@ int loadScalebar(scalebarObj *scalebar)
 {
   for(;;) {
     switch(msyylex()) {
+    case(ALIGN):
+      if((scalebar->align = getSymbol(3, MS_ALIGN_LEFT,MS_ALIGN_CENTER,MS_ALIGN_RIGHT)) == -1) return(-1);
+      break;
     case(BACKGROUNDCOLOR):            
       if(loadColor(&(scalebar->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
       break;
@@ -3645,6 +3650,7 @@ int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_stri
 static void writeScalebar(scalebarObj *scalebar, FILE *stream)
 {
   fprintf(stream, "  SCALEBAR\n");
+  fprintf(stream, "    ALIGN %s\n", msAlignValue[scalebar->align]);
   writeColor(&(scalebar->backgroundcolor), stream, "BACKGROUNDCOLOR", "    ");
   writeColor(&(scalebar->color), stream, "COLOR", "    ");
   writeColor(&(scalebar->imagecolor), stream, "IMAGECOLOR", "    ");

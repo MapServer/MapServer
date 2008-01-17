@@ -134,6 +134,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>datarange                             { return(DATARANGE); }
 <INITIAL>rangeitem                             { return(RANGEITEM); }
 
+<INITIAL,URL_STRING>align                       { return(ALIGN); }
 <INITIAL>alphacolor                            { return(ALPHACOLOR); }
 <INITIAL,URL_VARIABLE,URL_STRING>angle         { return(ANGLE); }
 <INITIAL,URL_STRING>antialias                  { return(ANTIALIAS); }
@@ -306,6 +307,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>butt                                  { return(MS_CJC_BUTT); }
 <INITIAL>cartoline                             { return(MS_SYMBOL_CARTOLINE); }
 <INITIAL,URL_STRING>cc                         { return(MS_CC); }
+<INITIAL,URL_STRING>center                     { return(MS_ALIGN_CENTER); }
 <INITIAL>chart                                 { return(MS_LAYER_CHART); }
 <INITIAL>circle                                { return(MS_LAYER_CIRCLE); }
 <INITIAL,URL_STRING>cl                         { return(MS_CL); }
@@ -327,6 +329,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>kilometers                 { return(MS_KILOMETERS); }
 <INITIAL>large                                 { return(MS_LARGE); }
 <INITIAL,URL_STRING>lc                         { return(MS_LC); }
+<INITIAL,URL_STRING>left                       { return(MS_ALIGN_LEFT); }
 <INITIAL>line                                  { return(MS_LAYER_LINE); }
 <INITIAL,URL_STRING>ll                         { return(MS_LL); }
 <INITIAL,URL_STRING>lr                         { return(MS_LR); }
@@ -353,6 +356,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>plugin                                { return(MS_PLUGIN); }
 <INITIAL>query                                 { return(MS_LAYER_QUERY); }
 <INITIAL>raster                                { return(MS_LAYER_RASTER); }
+<INITIAL,URL_STRING>right                      { return(MS_ALIGN_RIGHT); }
 <INITIAL>round                                 { return(MS_CJC_ROUND); }
 <INITIAL>sde                                   { return(MS_SDE); }
 <INITIAL>selected                              { return(MS_SELECTED); }

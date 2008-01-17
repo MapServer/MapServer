@@ -275,7 +275,16 @@ imageObj *msDrawScalebar(mapObj *map)
 
   if (map->outputformat->imagemode == MS_IMAGEMODE_RGB || map->outputformat->imagemode == MS_IMAGEMODE_RGBA) gdImageAlphaBlending(image->img.gd, 1);
 
-  ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); /* center the computed scalebar */
+  switch(map->scalebar.align) {
+  case(MS_ALIGN_LEFT):
+    ox = HMARGIN;
+    break;
+  case(MS_ALIGN_RIGHT):
+    ox = MS_NINT((map->scalebar.width - sx) + fontPtr->w);
+    break;
+  default:
+    ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); /* center the computed scalebar */
+  }
   oy = VMARGIN;
 
   /* turn RGB colors into indexed values */

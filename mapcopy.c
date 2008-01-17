@@ -656,6 +656,7 @@ int msCopyScalebar(scalebarObj *dst, scalebarObj *src)
     MS_COPYSTELEM(transparent);
     MS_COPYSTELEM(interlace);
     MS_COPYSTELEM(postlabelcache);
+    MS_COPYSTELEM(align);
 
     return MS_SUCCESS;
 }
