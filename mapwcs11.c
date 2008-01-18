@@ -312,6 +312,8 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     int size = 0, i;
     msIOContext *context = NULL;
 
+    int ows_version = OWS_1_0_0;
+
 /* -------------------------------------------------------------------- */
 /*      Build list of layer identifiers available.                      */
 /* -------------------------------------------------------------------- */
@@ -386,9 +388,9 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 
     xmlAddChild(psMainNode, psNode);
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "service", "WCS"));
+                    ows_version, psOwsNs, "Parameter", "service", "WCS"));
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "version", (char *)params->version));
+                    ows_version, psOwsNs, "Parameter", "version", (char *)params->version));
 
 /* -------------------------------------------------------------------- */
 /*      DescribeCoverage                                                */
@@ -399,11 +401,11 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 
     xmlAddChild(psMainNode, psNode);
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "service", "WCS"));
+                    ows_version, psOwsNs, "Parameter", "service", "WCS"));
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "version", (char *)params->version));
+                    ows_version, psOwsNs, "Parameter", "version", (char *)params->version));
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "identifiers", identifier_list ));
+                    ows_version, psOwsNs, "Parameter", "identifiers", identifier_list ));
 
 /* -------------------------------------------------------------------- */
 /*      GetCoverage                                                     */
@@ -416,20 +418,20 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     
     xmlAddChild(psMainNode, psNode);
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "service", "WCS"));
+                    ows_version, psOwsNs, "Parameter", "service", "WCS"));
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "version", (char *)params->version));
+                    ows_version, psOwsNs, "Parameter", "version", (char *)params->version));
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "Identifier", identifier_list ));
+                    ows_version, psOwsNs, "Parameter", "Identifier", identifier_list ));
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "InterpolationType", 
+                    ows_version, psOwsNs, "Parameter", "InterpolationType", 
                     "NEAREST_NEIGHBOUR,BILINEAR" ));
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "format", format_list ));
+                    ows_version, psOwsNs, "Parameter", "format", format_list ));
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "store", "false" ));
+                    ows_version, psOwsNs, "Parameter", "store", "false" ));
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    psOwsNs, "Parameter", "GridBaseCRS", 
+                    ows_version, psOwsNs, "Parameter", "GridBaseCRS", 
                     "urn:ogc:def:crs:epsg::4326" ));
 
     msFree( format_list );
