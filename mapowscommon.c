@@ -3,6 +3,9 @@
  * Name:     mapowscommon.c
  * Project:  MapServer
  * Purpose:  OGC OWS Common Implementation for use by MapServer OGC code
+ *           versions:
+ *           1.0.0 (OGC Document 05-008c1)
+ *           1.1.0 (OGC document 06-121r3)
  *           
  * Author:   Tom Kralidis (tomkralidis@hotmail.com)
  *
@@ -29,6 +32,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
+#include "mapows.h"
 
 #ifdef USE_LIBXML2
 
@@ -43,7 +47,10 @@ MS_CVSID("$Id$")
 /**
  * msOWSCommonServiceIdentification()
  *
- * returns an object of ServiceIdentification as per subclause 7.4.3
+ * returns an object of ServiceIdentification as per:
+ *
+ * 1.0.0 subclause 7.4.3
+ * 1.1.1 subclause 7.4.4
  *
  * @param map mapObj used to fetch WEB/METADATA
  * @param servicetype the OWS type
@@ -135,7 +142,11 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
 /**
  * msOWSCommonServiceProvider()
  *
- * returns an object of ServiceProvider as per subclause 7.4.4
+ * returns an object of ServiceProvider as per:
+ * 
+ *
+ * 1.0.0 subclause 7.4.4
+ * 1.1.0 subclause 7.4.5
  *
  * @param map mapObj to fetch MAP/WEB/METADATA
  *
@@ -311,7 +322,10 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 /**
  * msOWSCommonOperationsMetadata()
  *
- * returns the root element of OperationsMetadata as per subclause 7.4.5
+ * returns the root element of OperationsMetadata as per:
+ *
+ * 1.0.0 subclause 7.4.5
+ * 1.1.0 subclause 7.4.6
  *
  * @return psRootNode xmlNodePtr pointer of XML construct
  *
@@ -330,7 +344,10 @@ xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws) {
 /**
  * msOWSCommonOperationsMetadataOperation()
  *
- * returns an Operation element of OperationsMetadata as per subclause 7.4.5
+ * returns an Operation element of OperationsMetadata as per:
+ * 
+ * 1.0.0 subclause 7.4.5
+ * 1.1.0 subclause 7.4.6
  *
  * @param name name of the Operation
  * @param method HTTP method: OWS_METHOD_GET, OWS_METHOD_POST or OWS_METHOD_GETPOST)
@@ -376,8 +393,12 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psX
  * msOWSCommonOperationsMetadataDomainType()
  *
  * returns a Parameter or Constraint element (which are of type ows:DomainType)
- * of OperationsMetadata as per subclause 7.4.5
+ * of OperationsMetadata as per:
  *
+ * 1.0.0 subclause 7.4.5
+ * 1.1.0 subclause 7.4.6
+ *
+ * @param version the integerized x.y.z version of OWS Common to use
  * @param elname name of the element (Parameter | Constraint)
  * @param name name of the Parameter
  * @param values list of values (comma seperated list) or NULL if none
@@ -386,8 +407,9 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psX
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elname, char *name, char *values) {
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws, char *elname, char *name, char *values) {
   xmlNodePtr psRootNode = NULL;
+  xmlNodePtr psNode = NULL;
 
   if (_validateNamespace(psNsOws) == MS_FAILURE)
     psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
@@ -396,7 +418,13 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elnam
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
-  msLibXml2GenerateList(psRootNode, psNsOws, "Value", values, ',');
+  if (version == OWS_1_0_0) {
+    msLibXml2GenerateList(psRootNode, psNsOws, "Value", values, ',');
+  }
+  if (version == OWS_1_1_0) {
+    psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "AllowedValues", NULL);
+    msLibXml2GenerateList(psNode, psNsOws, "Value", values, ',');
+  }
 
   return psRootNode;
 }
@@ -406,6 +434,7 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elnam
  *
  * returns an object of ExceptionReport as per clause 8
  *
+ * @param ows_version the version of OWS Common to use
  * @param schemas_location URL to OGC Schemas Location base
  * @param version the version of the calling specification
  * @param language ISO3166 code of language
@@ -417,15 +446,16 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elnam
  *
  */
 
-xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText) {
+xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText) {
   char *xsi_schemaLocation = NULL;
+  char *ows_version_string = NULL;
 
   xmlNsPtr     psNsXsi     = NULL;
   xmlNodePtr   psRootNode  = NULL;
   xmlNodePtr   psMainNode  = NULL;
   xmlNodePtr   psNode      = NULL;
 
-  psRootNode = xmlNewNode(NULL, BAD_CAST "ExceptionReport");
+  psRootNode = xmlNewNode(psNsOws, BAD_CAST "ExceptionReport");
 
   psNsXsi = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
 
@@ -433,13 +463,22 @@ xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *
   xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST version);
 
   if (language !=  "undefined") {
-    xmlNewProp(psRootNode, BAD_CAST "language", BAD_CAST language);
+    if (ows_version == OWS_1_0_0) {
+      ows_version_string = strdup("1.0.0");
+      xmlNewProp(psRootNode, BAD_CAST "language", BAD_CAST language);
+    }
+    if (ows_version == OWS_1_1_0) {
+      ows_version_string = strdup("1.1.0");
+      xmlNewProp(psRootNode, BAD_CAST "xml:lang", BAD_CAST language);
+    }
   }
 
-  xsi_schemaLocation = strdup(MS_OWSCOMMON_OWS_NAMESPACE_URI);
+  xsi_schemaLocation = strdup((char *)psNsOws->href);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *)schemas_location);
-  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/ows/1.0.0/owsExceptionReport.xsd");
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/ows/");
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *)ows_version_string);
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/owsExceptionReport.xsd");
 
   /* add namespace'd attributes to root element */
   xmlNewNsProp(psRootNode, psNsXsi, BAD_CAST "schemaLocation", BAD_CAST xsi_schemaLocation);
@@ -526,7 +565,7 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensi
 /**
  * msOWSCommonWGS84BoundingBox()
  *
- * returns an object of BoundingBox as per subclause 10.2.2
+ * returns an object of WGS84BoundingBox as per subclause 10.2.2
  *
  * @param psNsOws OWS namespace object
  * @param dimensions number of dimensions of the coordinates

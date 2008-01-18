@@ -54,6 +54,8 @@
 #define MS_OWSCOMMON_OWS_NAMESPACE_URI      "http://www.opengis.net/ows"
 #define MS_OWSCOMMON_OWS_NAMESPACE_PREFIX   "ows"
 
+#define MS_OWSCOMMON_OWS_110_NAMESPACE_URI      "http://www.opengis.net/ows/1.1"
+
 /* OGC URNs */
 
 #define MS_OWSCOMMON_URN_OGC_CRS_4326 "urn:opengis:def:crs:OGC:2:84"
@@ -80,9 +82,9 @@ xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws);
 
 xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, char *name, int method, char *url);
 
-xmlNodePtr msOWSCommonOperationsMetadataDomainType(xmlNsPtr psNsOws, char *elname, char *name, char *values);
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws, char *elname, char *name, char *values);
 
-xmlNodePtr msOWSCommonExceptionReport(const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText);
+xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText);
 
 xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensions, double minx, double miny, double maxx, double maxy);
 
