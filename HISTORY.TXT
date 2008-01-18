@@ -12,6 +12,11 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+
+- mapowscommon.c: support OWS Common 1.1.0 as well (#2071)
+
+- mapogcsos.c: support SOS 1.0.0 (#2246)
+
 - Implement mapObj.setCenter, mapObj.offsetExtent, mapObj.scaleExtent, 
   rectObj.getCenter at the SWIG API (#2346)
 
