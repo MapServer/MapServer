@@ -82,7 +82,10 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
 
   xmlDocPtr  psDoc      = NULL;   
   xmlNodePtr psRootNode = NULL;
+  xmlNsPtr   psNsOws    = NULL;
   xmlChar *buffer       = NULL;
+
+  psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
   errorString = msGetErrorString("\n");
   errorMessage = msEncodeHTMLEntities(errorString);
@@ -90,10 +93,11 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
 
   psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-  psRootNode = msOWSCommonExceptionReport(schemasLocation, pszSOSVersion, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
+  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_1_0, schemasLocation, pszSOSVersion, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
 
   xmlDocSetRootElement(psDoc, psRootNode);
-  xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
+
+  psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
   msIO_printf("Content-type: text/xml%c%c",10,10);
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
@@ -314,7 +318,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
     if (psParent && lp)
     {
         psNode = xmlNewChild(psParent, NULL, BAD_CAST "observedProperty", NULL);
-        psCompNode = xmlNewChild(psNode, NULL, BAD_CAST "CompositePhenomenon", NULL);
+        psCompNode = xmlNewChild(psNode, psNsSwe, BAD_CAST "CompositePhenomenon", NULL);
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
                                        "observedProperty_id");
         if (pszValue)/*should always be true */
@@ -1186,6 +1190,8 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
     int size = 0;
     msIOContext *context = NULL;
 
+    int ows_version = OWS_1_1_0;
+
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
     psRootNode = xmlNewNode(NULL, BAD_CAST "Capabilities");
@@ -1195,16 +1201,16 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
     psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
     psNsSos = xmlNewNs(NULL, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix);
     psNsOgc = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX);
-    psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe");
+    psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe/1.0.1", BAD_CAST "swe");
 
     /* name spaces */
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om", BAD_CAST "om"));
 
-    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
     xmlSetNs(psRootNode, psNsOws );
 
-    xmlSetNs(psRootNode,xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe"));
+    xmlSetNs(psRootNode,xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/swe/1.0.1", BAD_CAST "swe"));
     
     psNsXLink = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
     xmlSetNs(psRootNode, psNsXLink );
@@ -1243,35 +1249,35 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
     psMainNode = xmlAddChild(psRootNode, msOWSCommonOperationsMetadata(psNsOws));
 
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetCapabilities", OWS_METHOD_GET, script_url_encoded));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "service", "SOS"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "version", (char *)pszSOSVersion));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
 
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"DescribeSensor", OWS_METHOD_GET, script_url_encoded));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "service", "SOS"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "version", (char *)pszSOSVersion));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "sensorid", "urn:ogc:object:procedure"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "outputFormat", (char *)pszSOSDescribeSensorMimeType));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "sensorid", "urn:ogc:object:procedure"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "outputFormat", (char *)pszSOSDescribeSensorMimeType));
 
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetObservation", OWS_METHOD_GET, script_url_encoded));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "service", "SOS"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "version", (char *)pszSOSVersion));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "offering", "urn:ogc:object:offering"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "observedproperty", "urn:ogc:object:observedproperty"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "eventtime", "sos:time"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "procedure", "urn:ogc:object:sensor"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "featureofinterest", "gml:location"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "result", "ogc:Filter"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "responseFormat", (char *)pszSOSGetObservationMimeType));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Parameter", "resultModel", "Observation,Measurement"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "offering", "urn:ogc:object:offering"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "observedproperty", "urn:ogc:object:observedproperty"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "eventtime", "sos:time"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "procedure", "urn:ogc:object:sensor"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "featureofinterest", "gml:location"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "result", "ogc:Filter"));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "responseFormat", (char *)pszSOSGetObservationMimeType));
+    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "resultModel", "Observation,Measurement"));
 
     value = msOWSLookupMetadata(&(map->web.metadata), "SO", "maxfeatures");
 
     if (value) {
-      psNode  = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataDomainType(psNsOws,"Constraint", "DefaultMaxFeatures", (char *)value));
+      psNode  = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Constraint", "DefaultMaxFeatures", (char *)value));
     }
 
     /*<ogc:Filter_Capabilities> */
-    psTmpNode = xmlAddChild(psRootNode, FLTGetCapabilities(psNsOgc));
+    psTmpNode = xmlAddChild(psRootNode, FLTGetCapabilities(psNsSos, psNsOgc));
 
     /*Offerings */
      psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Contents", NULL);
@@ -1344,7 +1350,10 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
                  {
                      psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "name", BAD_CAST value);
                  }
-                 
+
+                 /* srsName */                 
+                 psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "srsName", BAD_CAST "EPSG:4326");
+
                  /*bounding box */
                  /*TODO : if sos_offering_extent does not exist compute extents 
                           Check also what happen if epsg not present */
@@ -1748,7 +1757,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
   psNsSos = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/sos/1.0", BAD_CAST "sos");
   psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
   psNsOm = xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix);
-  psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe");
+  psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe/1.0.1", BAD_CAST "swe");
   psNsXLink = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
 
   /* validates mandatory request elements */
@@ -2129,8 +2138,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     psRootNode = xmlNewNode(NULL, BAD_CAST "ObservationCollection");
     xmlDocSetRootElement(psDoc, psRootNode);
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/swe", BAD_CAST "swe"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/swe/1.0.1", BAD_CAST "swe"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix));
@@ -2624,7 +2633,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     }
 
     /* register namespaces */
-    if(xmlXPathRegisterNs(context, (xmlChar *)"sos", (xmlChar *)"http://www.opengis.net/sos/1.0") != 0 || xmlXPathRegisterNs(context, (xmlChar *)"ows", (xmlChar *)"http://www.opengis.net/ows") != 0) {
+    if(xmlXPathRegisterNs(context, (xmlChar *)"sos", (xmlChar *)"http://www.opengis.net/sos/1.0") != 0 || xmlXPathRegisterNs(context, (xmlChar *)"ows", (xmlChar *)"http://www.opengis.net/ows/1.1") != 0) {
       return;
     }
 
