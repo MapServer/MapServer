@@ -52,7 +52,7 @@ MS_CVSID("$Id$")
 const char *pszSOSVersion                = "1.0.0";
 const char *pszSOSNamespaceUri           = "http://www.opengis.net/sos/1.0";
 const char *pszSOSNamespacePrefix        = "sos";
-const char *pszOMNamespaceUri            = "http://www.opengis.net/om/0.0";
+const char *pszOMNamespaceUri            = "http://www.opengis.net/om/1.0";
 const char *pszOMNamespacePrefix         = "om";
 const char *pszSOSDescribeSensorMimeType = "text/xml; subtype=sensorML/1.0.0";
 const char *pszSOSGetObservationMimeType = "text/xml; subtype=om/1.0.0";
@@ -322,7 +322,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
                                        "observedProperty_id");
         if (pszValue)/*should always be true */
-          xmlNewNsProp(psNode, psNsGml,
+          xmlNewNsProp(psCompNode, psNsGml,
                        BAD_CAST "id", BAD_CAST pszValue);
 
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
@@ -332,7 +332,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
                                  BAD_CAST "name", BAD_CAST pszValue);
 
         /* add componenets */
-        /*  Componenets are exposed 
+        /*  Components are exposed 
             using the metadata sos_%s_componenturl "url value" where 
             the %s is the name of the  attribute. */
         
@@ -354,10 +354,10 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
                 else
                   xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST lp->items[i]);
 
-                //xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszValue);
                 xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszValue);
             }
         }
+        xmlNewNsProp(psCompNode, NULL, BAD_CAST "dimension", BAD_CAST msIntToString(i));
     }	
 }
         
@@ -1205,7 +1205,7 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
 
     /* name spaces */
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om", BAD_CAST "om"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om/1.0", BAD_CAST "om"));
 
     psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
     xmlSetNs(psRootNode, psNsOws );
@@ -1221,6 +1221,8 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
 
     /*version fixed for now*/
     xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST pszSOSVersion);
+
+    //xmlNewProp(psRootNode, BAD_CAST "updateSequence", BAD_CAST "1234567890");
 
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
@@ -1352,7 +1354,12 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
                  }
 
                  /* srsName */                 
-                 psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "srsName", BAD_CAST "EPSG:4326");
+                 value = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE);
+
+                 if (value)
+                     psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "srsName", BAD_CAST value);
+                 else
+                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_srs\" missing for gml:srsName"));
 
                  /*bounding box */
                  /*TODO : if sos_offering_extent does not exist compute extents 
@@ -1577,50 +1584,8 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
                    free(papszProperties[j]);
                  free(papszProperties);
 
-                 /*TODO <sos:featureOfInterest> : we will use the offering_extent that was used
-                  for the bbox. I Think we should generate a gml:FeatureCollection which 
-                  gathers the extents on each layer associate with the offering : something like :
-                  <sos:featureOfInterest>
-                    <gml:FeatureCollection>
-	              <gml:featureMember xlink:href="foi_ahlen">
-	                  <om:Station xsi:type="om:StationType">
-	                     <om:position>
-	                        <gml:Point srsName="EPSG:31467">
-                                     <gml:coordinates>342539 573506</gml:coordinates>
-                                </gml:Point>
-                             </om:position>
-                              <om:procedureHosted xlink:href="urn:ogc:def:procedure:ifgi-sensor-1b"/>
-                           </om:Station>
-                      </gml:featureMember>
-                      <gml:featureMember xlink:href="foi_ahlen_2">
-                     ...
-                     </gml:FeatureCollection>
-                     </sos:featureOfInterest> */
-
-                 value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_extent");
-                 if (value)
-                 {
-                     char **tokens;
-                     int n;
-                     tokens = msStringSplit(value, ',', &n);
-                     if (tokens==NULL || n != 4) {
-                         msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
-                                    "msSOSGetCapabilities()");
-                         return msSOSException(map, "offering_extent", "InvalidParameterValue");
-                     }
-                     value = msOWSGetEPSGProj(&(lp->projection),
-                                              &(lp->metadata), "SO", MS_TRUE);
-                     if (value)
-                     {
-                         psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "featureOfInterest", 
-                                              NULL);
-
-                         psTmpNode = xmlAddChild(psNode, msGML3BoundedBy(psNsGml, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), value));
-                     }
-
-                     msFreeCharArray(tokens, n);
-                       
-                 }
+                 psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "featureOfInterest", NULL);
+                 xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST "urn:ogc:def:feature:OGC-SWE:3:transient");
                  
                  psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "responseFormat", 
                                       BAD_CAST pszSOSGetObservationMimeType);
@@ -2143,14 +2108,14 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix));
-    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om", BAD_CAST "om"));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om/1.0", BAD_CAST "om"));
  
     xmlNewNsProp(psRootNode, psNsGml, BAD_CAST "id", BAD_CAST sosparams->pszOffering);
 
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
     /*TODO : review this*/
-    xsi_schemaLocation = strdup("http://www.opengis.net/om ");
+    xsi_schemaLocation = strdup("http://www.opengis.net/om/1.0 ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/om/1.0.0/om.xsd");
     xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
