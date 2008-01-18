@@ -94,8 +94,8 @@ static char *msWCSConvertRangeSetToString(const char *value) {
 int msWCSException(mapObj *map, const char *version, const char *code, const char *locator) 
 {
   char *pszEncodedVal = NULL;
-  /* msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10); */
-  msIO_printf("Content-type: text/xml%c%c",10,10);
+   msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+  /* msIO_printf("Content-type: text/xml%c%c",10,10); */
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
 
