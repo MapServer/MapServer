@@ -4772,6 +4772,8 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       return msUpdateReferenceMapFromString(&(map->reference), string, MS_TRUE);
     case(RESOLUTION):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
+      msyylex();
+
       if(getDouble(&(map->resolution)) == -1) break;      
       break;
     case(SCALEBAR):
