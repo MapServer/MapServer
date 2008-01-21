@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- mapwcs.c: change error token to MS_WCSERR instead of MS_WMSERR (#2474)
+
 - mapwcs.c: set exception MIME type to application/vnd.ogc.se_xml for 1.0.0 (#2470)
 
 - mapowscommon.c: support OWS Common 1.1.0 as well (#2071)
