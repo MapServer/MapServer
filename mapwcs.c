@@ -155,9 +155,6 @@ static wcsParamsObj *msWCSCreateParams()
   wcsParamsObj *params;
  
   params = (wcsParamsObj *) calloc(1, sizeof(wcsParamsObj));
-  if(params) { /* initialize a few things to default values */
-    params->version = strdup("1.0.0");
-  }
   
   return params;
 }
@@ -1591,6 +1588,19 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   /*
   ** ok, it's a WCS request, check what we can at a global level and then dispatch to the various request handlers
   */
+
+  /* if either DescribeCoverage or GetCoverage, and version not passed
+     then return an exception */
+  if (((strcasecmp(params->request, "DescribeCoverage") == 0) ||
+     (strcasecmp(params->request, "GetCoverage") == 0)) &&
+     (!params->version)) {
+    msSetError(MS_WCSERR, "Missing VERSION parameter", "msWCSDispatch()");
+    msWCSException(map, params->version, "MissingParameterValue", "version");
+    msWCSFreeParams(params); /* clean up */
+    free(params);
+    params = NULL;
+    return MS_FAILURE;
+  }
 
   /* version is optional, but we do set a default value of 1.0.0, make sure request isn't for something different */
   if(strcmp(params->version, "1.0.0") != 0

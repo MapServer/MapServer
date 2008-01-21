@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- mapwcs.c: require VERSION parameter for DescribeCoverage and GetCoverage (#2473)
+
 - mapwcs.c: change error token to MS_WCSERR instead of MS_WMSERR (#2474)
 
 - mapwcs.c: set exception MIME type to application/vnd.ogc.se_xml for 1.0.0 (#2470)
