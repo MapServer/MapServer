@@ -29,6 +29,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
+#include <assert.h>
 
 MS_CVSID("$Id$")
 
@@ -351,6 +352,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
            
          params->crs = strdup(tokens[4]);
          msFreeCharArray(tokens, n);
+         /* normalize imageCRS urns to simply "imageCRS" */
+         if( strncasecmp(params->crs,"urn:ogc:def:crs:",16) == 0 
+             && strncasecmp(params->crs+strlen(params->crs)-8,"imageCRS",8)==0)
+             strcpy( params->crs, "imageCRS" );
        } else if(strcasecmp(request->ParamNames[i], "GridOffsets") == 0) {
          tokens = msStringSplit(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n < 2) {
@@ -361,12 +366,21 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
          params->resx = atof(tokens[0]);
          params->resy = fabs(atof(tokens[1]));
          msFreeCharArray(tokens, n);
+       } else if(strcasecmp(request->ParamNames[i], "GridOrigin") == 0) {
+         tokens = msStringSplit(request->ParamValues[i], ',', &n);
+         if(tokens==NULL || n < 2) {
+           msSetError(MS_WMSERR, "Wrong number of arguments for GridOrigin", 
+                      "msWCSParseRequest()");
+           return msWCSException(map, params->version, "InvalidParameterValue", "GridOffsets");
+         }
+         params->originx = atof(tokens[0]);
+         params->originy = atof(tokens[1]);
+         msFreeCharArray(tokens, n);
        }
 	   
        /* and so on... */
     }
   }
-
   /* we are not dealing with an XML encoded request at this point */
   return MS_SUCCESS;
 }
@@ -1075,6 +1089,77 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
   return MS_SUCCESS;
 }    
 
+/************************************************************************/
+/*                   msWCSGetCoverage_ImageCRSSetup()                   */
+/*                                                                      */
+/*      The request was in imageCRS - update the map projection to      */
+/*      map the native projection of the layer, and reset the           */
+/*      bounding box to match the projected bounds corresponding to     */
+/*      the imageCRS request.                                           */
+/************************************************************************/
+
+static int msWCSGetCoverage_ImageCRSSetup(
+    mapObj *map, cgiRequestObj *request, wcsParamsObj *params,
+    coverageMetadataObj *cm, layerObj *layer )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Load map with the layer (coverage) coordinate system.  We       */
+/*      really need a set projectionObj from projectionObj function!    */
+/* -------------------------------------------------------------------- */
+    char *layer_proj = msGetProjectionString( &(layer->projection) );
+
+    if (msLoadProjectionString(&(map->projection), layer_proj) != 0)
+        return msWCSException( map, params->version, NULL, NULL);
+
+    free( layer_proj );
+    layer_proj = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Reset bounding box.                                             */
+/* -------------------------------------------------------------------- */
+    if( params->bbox.maxx != params->bbox.minx )
+    {
+        rectObj orig_bbox = params->bbox;
+        
+        params->bbox.minx = 
+            cm->geotransform[0]
+            + orig_bbox.minx * cm->geotransform[1]
+            + orig_bbox.miny * cm->geotransform[2];
+        params->bbox.maxy = 
+            cm->geotransform[3]
+            + orig_bbox.minx * cm->geotransform[4]
+            + orig_bbox.miny * cm->geotransform[5];
+        params->bbox.maxx = 
+            cm->geotransform[0]
+            + (orig_bbox.maxx+1) * cm->geotransform[1]
+            + (orig_bbox.maxy+1) * cm->geotransform[2];
+        params->bbox.miny = 
+            cm->geotransform[3]
+            + (orig_bbox.maxx+1) * cm->geotransform[4]
+            + (orig_bbox.maxy+1) * cm->geotransform[5];
+
+      /* WCS 1.1 boundbox is center of pixel oriented. */
+      if( strncasecmp(params->version,"1.1",3) == 0 )
+      {
+          params->bbox.minx += cm->geotransform[1]/2 + cm->geotransform[2]/2;
+          params->bbox.maxx -= cm->geotransform[1]/2 + cm->geotransform[2]/2;
+          params->bbox.maxy += cm->geotransform[4]/2 + cm->geotransform[5]/2;
+          params->bbox.miny -= cm->geotransform[4]/2 + cm->geotransform[5]/2;
+      }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Reset resolution.                                               */
+/* -------------------------------------------------------------------- */
+    if( params->resx != 0.0 )
+    {
+        params->resx = cm->geotransform[1] * params->resx;
+        params->resy = fabs(cm->geotransform[5] * params->resy);
+    }
+
+    return MS_SUCCESS;
+}
 
 /************************************************************************/
 /*                          msWCSGetCoverage()                          */
@@ -1125,6 +1210,9 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
           msAxisNormalizePoints( &proj, 1, 
                                  &(params->resx), 
                                  &(params->resy) );
+          msAxisNormalizePoints( &proj, 1, 
+                                 &(params->originx), 
+                                 &(params->originy) );
       }
       msFreeProjection( &proj );
   }
@@ -1165,6 +1253,11 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
         || strncasecmp(crs_to_use,"urn:ogc:def:crs:",16) == 0 ) {
       if (msLoadProjectionString(&(map->projection), (char *) crs_to_use) != 0)
         return msWCSException( map, params->version, NULL, NULL);
+    } else if( strcasecmp(crs_to_use,"imageCRS") == 0 ) {
+        /* use layer native CRS, and rework bounding box accordingly */
+        if( msWCSGetCoverage_ImageCRSSetup( map, request, params, &cm, lp )
+            != MS_SUCCESS )
+            return MS_FAILURE;
     } else {  /* should we support WMS style AUTO: projections? (not for now) */
       msSetError(MS_WCSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
       return msWCSException(map, params->version, "InvalidParameterValue", "srs");
@@ -1252,57 +1345,67 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       {
           params->bbox.minx += cm.geotransform[1]/2 + cm.geotransform[2]/2;
           params->bbox.maxx -= cm.geotransform[1]/2 + cm.geotransform[2]/2;
-          params->bbox.miny += cm.geotransform[4]/2 + cm.geotransform[5]/2;
-          params->bbox.maxy -= cm.geotransform[4]/2 + cm.geotransform[5]/2;
+          params->bbox.maxy += cm.geotransform[4]/2 + cm.geotransform[5]/2;
+          params->bbox.miny -= cm.geotransform[4]/2 + cm.geotransform[5]/2;
       }
+  }
+
+  /* WCS 1.1+ GridOrigin is effectively resetting the minx/maxy 
+     BOUNDINGBOX values, so apply that here */
+  if( params->originx != 0.0 || params->originy != 0.0 )
+  {
+      /* should never be 1.0 in this logic. */
+      assert( strncasecmp(params->version,"1.0",3) != 0 );
+      params->bbox.minx = params->originx;
+      params->bbox.maxy = params->originy;
   }
     
   /* if necessary, project the BBOX */
 
   /* in WCS 1.1 the default is full resolution */
   if( strncasecmp(params->version,"1.1",3) == 0 
-      && params->resx == 0.0 && params->resy == 0.0
-      && params->width == 0 && params->height == 0 ) {
+      && params->resx == 0.0 && params->resy == 0.0 ) {
 
     params->resx = cm.geotransform[1];
     params->resy = fabs(cm.geotransform[5]);
   }
 
   /* compute width/height from BBOX and cellsize.  */
-  if( (params->resx == 0.0 || params->resy == 0.0) && params->width != 0 && params->height != 0 ) {
+  if( (params->resx == 0.0 || params->resy == 0.0) 
+      && params->width != 0 && params->height != 0 ) {
 
-    /* WCS 1.1 boundbox is center of pixel oriented. */
-    if( strncasecmp(params->version,"1.1",3) == 0 )
-    {
-        params->resx = (params->bbox.maxx - params->bbox.minx) 
-            / (params->width-1);
-        params->resy = (params->bbox.maxy - params->bbox.miny) 
-            / (params->height-1);
-    }
-    else
-    {
-        params->resx = (params->bbox.maxx -params->bbox.minx) / params->width;
-        params->resy = (params->bbox.maxy -params->bbox.miny) / params->height;
-    }
+    /* should always be 1.0 in this logic. */
+    assert( strncasecmp(params->version,"1.0",3) == 0 );
+
+    params->resx = (params->bbox.maxx -params->bbox.minx) / params->width;
+    params->resy = (params->bbox.maxy -params->bbox.miny) / params->height;
   }
     
   /* compute cellsize/res from bbox and raster size. */
-  if( (params->width == 0 || params->height == 0) && params->resx != 0 && params->resy != 0 ) {
+  if( (params->width == 0 || params->height == 0) 
+      && params->resx != 0 && params->resy != 0 ) {
 
-    /* WCS 1.1 boundbox is center of pixel oriented. */
-    if( strncasecmp(params->version,"1.1",3) == 0 )
-    {
-        params->width = (int) ((params->bbox.maxx - params->bbox.minx) 
-                               / params->resx + 1.5);
-        params->height = (int) ((params->bbox.maxy - params->bbox.miny) 
-                                / params->resy + 1.5);
-    }
-    else
+    /* WCS 1.0 boundbox is edge of pixel oriented. */
+    if( strncasecmp(params->version,"1.0",3) == 0 )
     {
         params->width = (int) ((params->bbox.maxx - params->bbox.minx) 
                                / params->resx + 0.5);
         params->height = (int) ((params->bbox.maxy - params->bbox.miny) 
                                 / params->resy + 0.5);
+    }
+    else
+    {
+        params->width = (int) ((params->bbox.maxx - params->bbox.minx) 
+                               / params->resx + 1.000001);
+        params->height = (int) ((params->bbox.maxy - params->bbox.miny) 
+                                / params->resy + 1.000001);
+
+        /* recompute bounding box so we get exactly the origin and
+           resolution requested. */
+        params->bbox.maxx = params->bbox.minx 
+            + (params->width-1) * params->resx;
+        params->bbox.miny = params->bbox.maxy 
+            - (params->height-1) * params->resy;
     }
   }
 

@@ -58,6 +58,7 @@ typedef struct {
   rectObj bbox;		    /* subset bounding box (3D), although we'll only use 2D */
   char *time;
   long width, height, depth;	/* image dimensions */
+  double originx, originy;      /* WCS 1.1 GridOrigin */
   double resx, resy, resz;      /* resolution */
   char *interpolation;          /* interpolationMethod */
   char *format;
