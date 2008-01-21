@@ -301,7 +301,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
        else if(strcasecmp(request->ParamNames[i], "BBOX") == 0) {
          tokens = msStringSplit(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n != 4) {
-           msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.", "msWCSParseRequest()");
+           msSetError(MS_WCSERR, "Wrong number of arguments for BBOX.", "msWCSParseRequest()");
            return msWCSException(map, params->version, "InvalidParameterValue", "bbox");
          }
          params->bbox.minx = atof(tokens[0]);
@@ -337,7 +337,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
        else if(strcasecmp(request->ParamNames[i], "BOUNDINGBOX") == 0) {
          tokens = msStringSplit(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n < 5) {
-           msSetError(MS_WMSERR, "Wrong number of arguments for BOUNDINGBOX.", "msWCSParseRequest()");
+           msSetError(MS_WCSERR, "Wrong number of arguments for BOUNDINGBOX.", "msWCSParseRequest()");
            return msWCSException(map, params->version, "InvalidParameterValue", "boundingbox");
          }
 
@@ -354,7 +354,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
        } else if(strcasecmp(request->ParamNames[i], "GridOffsets") == 0) {
          tokens = msStringSplit(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n < 2) {
-           msSetError(MS_WMSERR, "Wrong number of arguments for GridOffsets", 
+           msSetError(MS_WCSERR, "Wrong number of arguments for GridOffsets", 
                       "msWCSParseRequest()");
            return msWCSException(map, params->version, "InvalidParameterValue", "GridOffsets");
          }
@@ -1166,7 +1166,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       if (msLoadProjectionString(&(map->projection), (char *) crs_to_use) != 0)
         return msWCSException( map, params->version, NULL, NULL);
     } else {  /* should we support WMS style AUTO: projections? (not for now) */
-      msSetError(MS_WMSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
+      msSetError(MS_WCSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
       return msWCSException(map, params->version, "InvalidParameterValue", "srs");
     }
 
@@ -1664,7 +1664,7 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
       }
     }
   } else if( layer->data == NULL ) { /* no virtual metadata, not ok unless we're talking 1 image, hopefully we can fix that */
-    msSetError( MS_WMSERR, "RASTER Layer with no DATA statement and no WCS virtual dataset metadata.  Tileindexed raster layers not supported for WCS without virtual dataset metadata (cm->extent, wcs_res, wcs_size).", "msWCSGetCoverageDomain()" );
+    msSetError( MS_WCSERR, "RASTER Layer with no DATA statement and no WCS virtual dataset metadata.  Tileindexed raster layers not supported for WCS without virtual dataset metadata (cm->extent, wcs_res, wcs_size).", "msWCSGetCoverageDomain()" );
     return MS_FAILURE;
   } else { /* work from the file (e.g. DATA) */
     GDALDatasetH hDS;
@@ -1698,7 +1698,7 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
         
     if( cm->bandcount == 0 ) {
       msReleaseLock( TLOCK_GDAL );
-      msSetError( MS_WMSERR, "Raster file %s has no raster bands.  This cannot be used in a layer.", "msWCSGetCoverageMetadata()", layer->data );
+      msSetError( MS_WCSERR, "Raster file %s has no raster bands.  This cannot be used in a layer.", "msWCSGetCoverageMetadata()", layer->data );
       return MS_FAILURE;
     }
 
