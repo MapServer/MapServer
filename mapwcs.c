@@ -1602,7 +1602,13 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
     return MS_FAILURE;
   }
 
-  /* version is optional, but we do set a default value of 1.0.0, make sure request isn't for something different */
+  /* For GetCapabilities, if version is not set, then set to the highest
+     version supported.  This should be cleaned up once #996 gets implemented */
+  if (!params->version) { /* this is a GetCapabilities request, set version */
+    params->version = strdup("1.0.0");
+  }
+
+  /* version is optional, but we do set a default value of 1.1.1, make sure request isn't for something different */
   if(strcmp(params->version, "1.0.0") != 0
      && strcmp(params->version, "1.1.0") != 0
      && strcmp(params->version, "1.1.1") != 0) {
