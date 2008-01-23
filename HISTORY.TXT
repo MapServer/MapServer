@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-0)
 --------------------------------
 
+- PDF: Set linecaps to round to fix disjoint lines. 
+
 - PHP/Mapscript: on a shape object union_geos function should be called union
   (#2466)
 

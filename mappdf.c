@@ -242,6 +242,7 @@ void drawPolylinePDF(PDF *pdf, shapeObj *p, colorObj  *c, double width)
     if (width)
     {
         PDF_setlinejoin(pdf,1);
+         PDF_setlinecap(pdf,1); 
         PDF_setlinewidth(pdf,(float)width);
     }
 
