@@ -1516,7 +1516,7 @@ int msWMSIsSubGroup(char** currentGroups, int currentLevel, char** otherGroups, 
       return MS_FALSE;
    }
    /* compare all groups below the current level */
-   for (i = 0; i < currentLevel; i++)
+   for (i = 0; i <= currentLevel; i++)
    {
       if (strncmp(currentGroups[i], otherGroups[i], strlen(currentGroups[i])) != 0)
       {
