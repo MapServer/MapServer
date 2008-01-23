@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+
+- shp2img.c/shp2pdf.c: clean up usage text, check for invalid layers (#2066)
+
 - completed implementation of RFC24 (#2442, #2032)
 
 - mapwcs.c: require VERSION parameter for DescribeCoverage and GetCoverage (#2473)

@@ -72,6 +72,9 @@ int main(int argc, char *argv[])
   char **layers=NULL;
   int num_layers=0;
 
+  int layer_found=0;
+  char *invalid_layer=NULL;
+
   char *outfile=NULL; /* no -o sends image to STDOUT */
 
   /* A4 Portrait */
@@ -86,7 +89,13 @@ int main(int argc, char *argv[])
 
   /* ---- check the number of arguments, return syntax if not correct ---- */
   if( argc < 3 ) {
-    fprintf(stdout,"Syntax: shp2pdf -m [mapfile] -o [pdf] -l [layers]\n" );
+    fprintf(stdout, "\nPurpose: convert a mapfile to a PDF document\n\n");
+    fprintf(stdout,"Syntax: shp2pdf -m [mapfile] -o [pdf] [-e minx miny maxx maxy] -l [layers] -t\n" );
+    fprintf(stdout,"  -m mapfile: Map file to operate on - required.\n" );
+    fprintf(stdout,"  -o pdf: output filename (stdout if not provided)\n");
+    fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
+    fprintf(stdout,"  -l layers: layers to enable - make sure they are quoted and space seperated if more than one listed.\n" );
+    fprintf(stdout,"  -t : turn on transparency\n");
     exit(0);
   }
 
@@ -143,20 +152,31 @@ int main(int argc, char *argv[])
 
     if(strncmp(argv[i],"-l",2) == 0) { /* load layer list */
       layers = msStringSplit(argv[i+1], ' ', &(num_layers));
+      layer_found=0;
 
       for(j=0; j<map->numlayers; j++) {
-    if(GET_LAYER(map, j)->status == MS_DEFAULT)
-      continue;
-    else {
-      GET_LAYER(map, j)->status = MS_OFF;
-      for(k=0; k<num_layers; k++) {
-        if(strcmp(GET_LAYER(map, j)->name, layers[k]) == 0) {
-          GET_LAYER(map, j)->status = MS_ON;
-          break;
+        if(GET_LAYER(map, j)->status == MS_DEFAULT)
+          continue;
+        else {
+          GET_LAYER(map, j)->status = MS_OFF;
+          for(k=0; k<num_layers; k++) {
+            if(strcmp(GET_LAYER(map, j)->name, layers[k]) == 0) {
+              GET_LAYER(map, j)->status = MS_ON;
+              layer_found=1;
+              break;
+            }
+            else {
+              invalid_layer = strdup(layers[k]);
+            }
+          }
         }
       }
-    }
+      if (layer_found == 0) {
+        fprintf(stderr, "Layer (-l) %s not found\n", invalid_layer);
+        msCleanup();
+        exit(0);
       }
+
       msFreeCharArray(layers, num_layers);
 
       i+=1;

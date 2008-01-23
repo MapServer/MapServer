@@ -40,6 +40,9 @@ int main(int argc, char *argv[])
   char **layers=NULL;
   int num_layers=0;
 
+  int layer_found=0;
+  char *invalid_layer=NULL;
+
   char *outfile=NULL; /* no -o sends image to STDOUT */
 
   int iterations = 1;
@@ -62,6 +65,7 @@ int main(int argc, char *argv[])
 
   /* ---- check the number of arguments, return syntax if not correct ---- */
   if( argc < 3 ) {
+    fprintf(stdout, "\nPurpose: convert a mapfile to an image\n\n");
     fprintf(stdout,
             "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
             "               [-l \"layer1 [layers2...]\"] [-i format]\n"
@@ -229,6 +233,7 @@ int main(int argc, char *argv[])
 
     if(strcmp(argv[i],"-l") == 0) { /* load layer list */
       layers = msStringSplit(argv[i+1], ' ', &(num_layers));
+      layer_found=0;
 
       for(j=0; j<map->numlayers; j++) {
 	if(GET_LAYER(map, j)->status == MS_DEFAULT)
@@ -238,11 +243,21 @@ int main(int argc, char *argv[])
 	  for(k=0; k<num_layers; k++) {
 	    if(GET_LAYER(map, j)->name && strcmp(GET_LAYER(map, j)->name, layers[k]) == 0) {
 	      GET_LAYER(map, j)->status = MS_ON;
+              layer_found=1;
 	      break;
 	    }
+            else {
+              invalid_layer = strdup(layers[k]);
+            }
 	  }
 	}
       }
+      if (layer_found == 0) {
+        fprintf(stderr, "Layer (-l) %s not found\n", invalid_layer);
+        msCleanup();
+        exit(0);
+      }
+
       msFreeCharArray(layers, num_layers);
 
       i+=1;
