@@ -279,6 +279,47 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
   if(!request || !params) /* nothing to do */
 	return MS_SUCCESS;
 
+/* -------------------------------------------------------------------- */
+/*      Check if this appears to be an XML POST WCS request.            */
+/* -------------------------------------------------------------------- */
+  if( request->type == MS_POST_REQUEST 
+      && request->postrequest )
+  {
+      const char *pszSERVICE = request->postrequest;
+
+      while( *pszSERVICE != '\0' )
+      {
+          if( (*pszSERVICE == 's' || *pszSERVICE == 'S') 
+              && strncasecmp(pszSERVICE,"SERVICE",7) == 0 )
+          {
+              pszSERVICE += 7;
+              break;
+          }
+              
+          pszSERVICE++;
+      }
+
+      while( *pszSERVICE == '"' 
+             || *pszSERVICE == '\''
+             || *pszSERVICE == ' '
+             || *pszSERVICE == '=' )
+          pszSERVICE++;
+      
+      /* apparently not a WCS request? */
+      if( strncasecmp(pszSERVICE,"WCS",3) != 0 )
+          return MS_SUCCESS;
+
+      msSetError(MS_WCSERR, 
+                 "WCS Server does not support XML POST requests, please use KVP.", 
+                 "msWCSParseRequest()" );
+      msWCSException(map, "1.0.0", NULL, NULL );
+
+      return MS_FAILURE;
+  }
+
+/* -------------------------------------------------------------------- */
+/*      Extract WCS KVP Parameters.                                     */
+/* -------------------------------------------------------------------- */
   if(request->NumParams > 0) {
     for(i=0; i<request->NumParams; i++) {
     
@@ -360,7 +401,9 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
                       "msWCSParseRequest()");
            return msWCSException(map, params->version, "InvalidParameterValue", "GridOffsets");
          }
-         params->resx = atof(tokens[0]);
+         /* take absolute values to convert to positive RESX/RESY style
+            WCS 1.0 behavior.  *but* this does break some possibilities! */
+         params->resx = fabs(atof(tokens[0])); 
          params->resy = fabs(atof(tokens[1]));
          msFreeCharArray(tokens, n);
        } else if(strcasecmp(request->ParamNames[i], "GridOrigin") == 0) {
