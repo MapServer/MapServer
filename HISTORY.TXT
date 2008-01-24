@@ -71,6 +71,8 @@ Version 5.0.1 (2008-01-23)
 - Fixed generation of nested layers in WMS Capabilities when using 
   wms_layer_group metadata (#2312)
 
+- Fixed a problem copying attribute bindings between style and labels (#2465)
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
