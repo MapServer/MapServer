@@ -312,7 +312,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
 {
     const char *pszValue = NULL, *pszFullName = NULL;
     xmlNodePtr psCompNode, psNode;
-    int i;
+    int i, j=0;
     char szTmp[256];
 
     if (psParent && lp)
@@ -349,15 +349,16 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
                 /* check if there is an alias/full name used*/
                 sprintf(szTmp, "%s_alias", lp->items[i]);
                 pszFullName = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
-                if (pszFullName)
-                  xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST pszFullName);
-                else
-                  xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST lp->items[i]);
+                //if (pszFullName)
+                //  xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST pszFullName);
+                //else
+                //  xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST lp->items[i]);
 
                 xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszValue);
+                j++;
             }
         }
-        xmlNewNsProp(psCompNode, NULL, BAD_CAST "dimension", BAD_CAST msIntToString(i));
+        xmlNewNsProp(psCompNode, NULL, BAD_CAST "dimension", BAD_CAST msIntToString(j));
     }	
 }
         
@@ -1051,7 +1052,6 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xml
          }
          else
            msSOSAddPropertyNode(psNsSwe, psNsXLink, psObsNode, lpfirst, psNsGml);
-         
          
          /* result definition*/
          psNode = xmlNewChild(psObsNode, NULL, BAD_CAST "resultDefinition", NULL);
@@ -2155,27 +2155,27 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     }
 
     /* time */
-    pszTmp = msOWSLookupMetadata(&(lp->metadata), "S","offering_timeextent");
-    if (pszTmp)
-    {
-        char **tokens;
-        int n;
-        char *pszEndTime = NULL;
-        tokens = msStringSplit(pszTmp, '/', &n);
-        if (tokens==NULL || (n != 1 && n!=2)) {
-            msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
-                       "msSOSGetCapabilities()");
-            return msSOSException(map, "offering_timeextent", "InvalidParameterValue");
-        }
-
-        if (n == 2) /* end time is empty. It is going to be set as "now*/
-          pszEndTime = tokens[1];
-
+    //pszTmp = msOWSLookupMetadata(&(lp->metadata), "S","offering_timeextent");
+    //if (pszTmp)
+    //{
+    //    char **tokens;
+    //    int n;
+    //    char *pszEndTime = NULL;
+    //    tokens = msStringSplit(pszTmp, '/', &n);
+    //    if (tokens==NULL || (n != 1 && n!=2)) {
+    //        msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
+    //                   "msSOSGetCapabilities()");
+    //        return msSOSException(map, "offering_timeextent", "InvalidParameterValue");
+    //    }
+    //
+    //    if (n == 2) /* end time is empty. It is going to be set as "now*/
+    //      pszEndTime = tokens[1];
+    //
         //psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix), tokens[0], pszEndTime));
-        psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(psNsOm, psNsGml, tokens[0], pszEndTime));
-        msFreeCharArray(tokens, n);
-                     
-    }
+    //    psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(psNsOm, psNsGml, tokens[0], pszEndTime));
+    //    msFreeCharArray(tokens, n);
+    //                 
+    //}
 
     if (sosparams->pszResultModel && strcasecmp(sosparams->pszResultModel, "om:Measurement") != 0 &&
         strcasecmp(sosparams->pszResultModel, "om:Observation") != 0)
