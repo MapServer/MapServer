@@ -88,10 +88,6 @@ test:
 !IFDEF MONO
 	mono shpdump.exe ../../tests/point.shp
 	mono shapeinfo.exe ../../tests/point.shp
-	mono drawmap.exe ../../tests/test.map test_csharp.png
-!IFDEF AGG
-	mono drawmap.exe ../../tests/test.map test_csharp_agg.png aggpng24
-!ENDIF
 	mono getbytes.exe ../../tests/test.map test_csharp2.png
 	mono RFC24.exe ../../tests/test.map
 !ELSE
