@@ -10,9 +10,12 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (SVN branch-5-0)
---------------------------------
+Version 5.0.2 (2008-01-28)
+--------------------------
 
+- Solve a build problem with 5.0.1: generated new maplexer.c with 
+  maplexer.l's changes from ticket #2331 to support setting WEB object's 
+  minscale/maxscale properties via a URL.
 
 
 Version 5.0.1 (2008-01-23)
