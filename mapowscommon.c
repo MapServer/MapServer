@@ -524,6 +524,7 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensi
   char LowerCorner[100];
   char UpperCorner[100];
   char dim_string[100];
+  xmlNodePtr psRootNode = NULL;
 
   /* Do we need to reorient tuple axes? */
   {
@@ -538,7 +539,6 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensi
       msFreeProjection( &proj );
   }
 
-  xmlNodePtr psRootNode = NULL;
 
   if (_validateNamespace(psNsOws) == MS_FAILURE)
     psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
