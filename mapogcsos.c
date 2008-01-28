@@ -981,7 +981,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
 /************************************************************************/
 /*                      msSOSAddMemberNodeObservation                   */
 /*                                                                      */
-/*      Add a member node used gor getObservation request using         */
+/*      Add a member node used for getObservation request using         */
 /*      Observation as the result format.                               */
 /************************************************************************/
 xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParent, mapObj *map, 
@@ -1574,8 +1574,13 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
                              {
                                  papszProperties[nProperties] = strdup(value);
                                  nProperties++;
-                                 msSOSAddPropertyNode(psNsSwe, psNsXLink, psOfferingNode, 
-                                                         (GET_LAYER(map, j)), psNsGml);
+                                 lpTmp = GET_LAYER(map, j);
+                                 if (msLayerOpen(lpTmp) == MS_SUCCESS && msLayerGetItems(lpTmp) == MS_SUCCESS)
+                                 {
+                                     msSOSAddPropertyNode(psNsSwe, psNsXLink, psOfferingNode, 
+                                                          lpTmp, psNsGml);
+                                     msLayerClose(lpTmp);
+                                 }
                              }
                          }
                      }
