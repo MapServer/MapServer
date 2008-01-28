@@ -90,12 +90,13 @@ int main(int argc, char *argv[])
   /* ---- check the number of arguments, return syntax if not correct ---- */
   if( argc < 3 ) {
     fprintf(stdout, "\nPurpose: convert a mapfile to a PDF document\n\n");
-    fprintf(stdout,"Syntax: shp2pdf -m [mapfile] -o [pdf] [-e minx miny maxx maxy] -l [layers] -t\n" );
-    fprintf(stdout,"  -m mapfile: Map file to operate on - required.\n" );
+    fprintf(stdout,"Syntax: shp2pdf -m mapfile -o pdf [-e minx miny maxx maxy] [-l \"layer1 [layers2...]\"] [-t] [-d layername datavalue]\n" );
+    fprintf(stdout,"  -m mapfile: Map file to operate on - required\n" );
     fprintf(stdout,"  -o pdf: output filename (stdout if not provided)\n");
     fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
-    fprintf(stdout,"  -l layers: layers to enable - make sure they are quoted and space seperated if more than one listed.\n" );
+    fprintf(stdout,"  -l layers: layers to enable - make sure they are quoted and space seperated if more than one listed\n" );
     fprintf(stdout,"  -t : turn on transparency\n");
+    fprintf(stdout,"  -d layername datavalue: change DATA value for a layer\n" );
     exit(0);
   }
 

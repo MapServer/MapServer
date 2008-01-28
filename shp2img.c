@@ -69,20 +69,21 @@ int main(int argc, char *argv[])
     fprintf(stdout,
             "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
             "               [-l \"layer1 [layers2...]\"] [-i format]\n"
-            "               [-all_debug n] [-map_debug n] [-layer_debug n] [-p n] [-c n]\n");
+            "               [-all_debug n] [-map_debug n] [-layer_debug n] [-p n] [-c n] [-d layername datavalue]\n");
 
 
-    fprintf(stdout,"  -m mapfile: Map file to operate on - required.\n" );
-    fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format.\n" );
+    fprintf(stdout,"  -m mapfile: Map file to operate on - required\n" );
+    fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format\n" );
     fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
     fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
     fprintf(stdout,"  -s sizex sizey: output image size\n");
-    fprintf(stdout,"  -l layers: layers to enable - make sure they are quoted and space seperated if more than one listed.\n" );
-    fprintf(stdout,"  -all_debug n: Set debug level for map and all layers.\n" );
-    fprintf(stdout,"  -map_debug n: Set map debug level.\n" );
-    fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level.\n" );
-    fprintf(stdout,"  -c n: draw map n number of times.\n" );
+    fprintf(stdout,"  -l layers: layers to enable - make sure they are quoted and space seperated if more than one listed\n" );
+    fprintf(stdout,"  -all_debug n: Set debug level for map and all layers\n" );
+    fprintf(stdout,"  -map_debug n: Set map debug level\n" );
+    fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level\n" );
+    fprintf(stdout,"  -c n: draw map n number of times\n" );
     fprintf(stdout,"  -p n: pause for n seconds after reading the map\n" );
+    fprintf(stdout,"  -d layername datavalue: change DATA value for layer\n" );
 
 
     exit(0);
