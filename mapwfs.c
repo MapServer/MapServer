@@ -56,7 +56,7 @@ static int msWFSException(mapObj *map, const char *wmtversion)
     msIO_printf("xmlns=\"http://www.opengis.net/ogc\" ");
     msIO_printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
     schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
-    msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc %s/wms/1.1.1/OGC-exception.xsd\">\n", schemalocation);
+    msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc %s/wfs/1.0.0/OGC-exception.xsd\">\n", schemalocation);
     free(schemalocation);
     msIO_printf("  <ServiceException>\n");
     /* Optional <Locator> element currently unused. */
