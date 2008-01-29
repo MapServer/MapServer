@@ -532,7 +532,7 @@ static void msWCSGetCapabilities_Service_ResponsibleParty(mapObj *map)
 static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
 {
   /* start the Service section, only need the full start tag if this is the only section requested */
-  if(!params->section) 
+  if(!params->section || (params->section && strcasecmp(params->section, "/") == 0))
     msIO_printf("<Service>\n");
   else
     msIO_printf("<Service\n"
@@ -584,7 +584,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   }
 
   /* start the Capabilty section, only need the full start tag if this is the only section requested */
-  if(!params->section) 
+  if(!params->section || (params->section && strcasecmp(params->section, "/") == 0))
     msIO_printf("<Capability>\n");
   else
     msIO_printf("<Capability\n"
@@ -674,7 +674,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
 
   /* start the ContentMetadata section, only need the full start tag if this is the only section requested */
   /* TODO: add Xlink attributes for other sources of this information  */
-  if(!params->section)
+  if(!params->section || (params->section && strcasecmp(params->section, "/") == 0))
     msIO_printf("<ContentMetadata>\n");
   else
     msIO_printf("<ContentMetadata\n"
