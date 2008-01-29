@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- mapwcs.c: better section parameter handling for CITE (#2485)
+
 - mapwfs.c: point to the correct schema for exceptions (#2480)
 
 - shp2img.c/shp2pdf.c: clean up usage text, check for invalid layers (#2066)

@@ -708,35 +708,55 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
     if( strncmp(params->version,"1.1",3) == 0 )
         return msWCSGetCapabilities11( map, params, req );
 
-  /* msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10); */
-  msIO_printf("Content-type: text/xml%c%c",10,10);
+  /* if a bum section param is passed, throw exception */
+  if (params->section &&
+      strcasecmp(params->section, "/WCS_Capabilities/Service") != 0 &&
+      strcasecmp(params->section, "/WCS_Capabilities/Capability") != 0 &&
+      strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata") != 0 &&
+      strcasecmp(params->section, "/") != 0) {
+      msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+      msSetError( MS_WCSERR,
+        "Invalid SECTION parameter \"%s\"",
+        "msWCSGetCapabilities()", params->section);
+      return msWCSException(map, params->section, "InvalidParameterValue", "section");
+  }
 
-  /* print common capability elements  */
-  /* TODO: DocType? */
+  else {
+    msIO_printf("Content-type: text/xml%c%c",10,10);
   
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n", "ISO-8859-1");
-
-  if(!params->section) msIO_printf("<WCS_Capabilities\n"
-                              "   version=\"%s\" \n"
-                              "   updateSequence=\"0\" \n"
-                              "   xmlns=\"http://www.opengis.net/wcs\" \n" 
-                              "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n" 
-                              "   xmlns:gml=\"http://www.opengis.net/gml\" \n" 
-                              "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
-                              "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
-         
-  /* print the various capability sections */
-  if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/Service") == 0)
-    msWCSGetCapabilities_Service(map, params);
-
-  if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/Capability")  == 0)
-    msWCSGetCapabilities_Capability(map, params, req);
-
-  if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata")  == 0)
-    msWCSGetCapabilities_ContentMetadata(map, params);
-
-  /* done */
-  if(!params->section) msIO_printf("</WCS_Capabilities>\n");
+    /* print common capability elements  */
+    /* TODO: DocType? */
+    
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n", "ISO-8859-1");
+  
+    if(!params->section || (params->section && strcasecmp(params->section, "/")  == 0)) msIO_printf("<WCS_Capabilities\n"
+                                "   version=\"%s\" \n"
+                                "   updateSequence=\"0\" \n"
+                                "   xmlns=\"http://www.opengis.net/wcs\" \n" 
+                                "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n" 
+                                "   xmlns:gml=\"http://www.opengis.net/gml\" \n" 
+                                "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
+                                "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
+           
+    /* print the various capability sections */
+    if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/Service") == 0)
+      msWCSGetCapabilities_Service(map, params);
+  
+    if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/Capability")  == 0)
+      msWCSGetCapabilities_Capability(map, params, req);
+  
+    if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata")  == 0)
+      msWCSGetCapabilities_ContentMetadata(map, params);
+  
+    if(params->section && strcasecmp(params->section, "/")  == 0) {
+      msWCSGetCapabilities_Service(map, params);
+      msWCSGetCapabilities_Capability(map, params, req);
+      msWCSGetCapabilities_ContentMetadata(map, params);
+    }
+  
+    /* done */
+    if(!params->section || (params->section && strcasecmp(params->section, "/")  == 0)) msIO_printf("</WCS_Capabilities>\n");
+  }
 
   /* clean up */
   /* msWCSFreeParams(params); */
