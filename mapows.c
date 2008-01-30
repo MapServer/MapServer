@@ -160,6 +160,37 @@ int msOWSMakeAllLayersUnique(mapObj *map)
   return MS_SUCCESS;
 }
 
+/*
+** msOWSNegotiateVersion()
+**
+** returns the most suitable version an OWS is to support given a client
+** version parameter.
+**
+** supported_versions must be ordered from highest to lowest
+**
+** Returns a version integer of the supported version
+**
+*/
+
+int msOWSNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions) {
+  int i;
+
+  /* if version is not set return highest version */
+  if (! requested_version)
+    return supported_versions[0];
+
+  /* if the requested version is lower than the lowest version return the lowest version  */
+  if (requested_version < supported_versions[num_supported_versions-1])
+    return supported_versions[num_supported_versions-1];
+
+  /* return the first entry that's lower than or equal to the requested version */
+  for (i = 0; i < num_supported_versions; i++) {
+    if (supported_versions[i] <= requested_version)
+      return supported_versions[i];
+  }
+
+  return requested_version;
+}
 
 /*
 ** msOWSTerminateOnlineResource()

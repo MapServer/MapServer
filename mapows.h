@@ -66,6 +66,7 @@ typedef  struct
 
 typedef struct {
   char *pszVersion;
+  char *pszAcceptVersions;
   char *pszUpdateSequence;
   char *pszRequest;
   char *pszService;
@@ -116,6 +117,7 @@ MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
+MS_DLL_EXPORT int msOWSNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
 MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
