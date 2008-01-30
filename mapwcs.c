@@ -104,7 +104,7 @@ int msWCSException(mapObj *map, const char *version, const char *code, const cha
   msIO_printf("xmlns=\"http://www.opengis.net/ogc\" "); 
   msIO_printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "); 
   pszEncodedVal = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
-  msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc %s/wms/1.1.1/OGC-exception.xsd\">\n", 
+  msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc %s/wcs/1.0.0/OGC-exception.xsd\">\n", 
               pszEncodedVal);
   msFree(pszEncodedVal);
   msIO_printf("  <ServiceException");

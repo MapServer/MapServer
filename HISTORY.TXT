@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- mapwcs.c: point to correct exception schema (#2481)
+
 - mapows.c: add version negotiation (#996)
 
 - mapwfs.c: return default GML2 when invalid OUTPUTFORMAT passed (#2479)
