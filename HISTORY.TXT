@@ -9,6 +9,10 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Version 5.0.3 (2008-01-30)
+--------------------------
+
+- fix segfault in mapserv if STYLE is not definied (#2347)
 
 Version 5.0.2 (2008-01-28)
 --------------------------
