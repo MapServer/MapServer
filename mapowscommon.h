@@ -70,6 +70,8 @@
 
 /* function prototypes */
 
+int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
+
 xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version);
 
 xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, mapObj *map);
