@@ -2556,6 +2556,8 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
         sosparams->pszService = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "VERSION") == 0)
         sosparams->pszVersion = strdup(request->ParamValues[i]);
+      else if (strcasecmp(request->ParamNames[i], "ACCEPT_VERSIONS") == 0)
+        sosparams->pszAcceptVersions = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
         sosparams->pszRequest = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "UPDATESEQUENCE") == 0)
@@ -2748,6 +2750,8 @@ void msSOSFreeParamsObj(sosParamsObj *sosparams) {
       free(sosparams->pszService);
     if (sosparams->pszVersion)
       free(sosparams->pszVersion);
+    if (sosparams->pszAcceptVersions)
+      free(sosparams->pszAcceptVersions);
     if (sosparams->pszUpdateSequence)
       free(sosparams->pszUpdateSequence);
     if (sosparams->pszRequest)
