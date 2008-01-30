@@ -1087,10 +1087,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       outputformat = OWS_GML3;
       output_schema_format = "SFE_XMLSCHEMA";
     } else {
-      msSetError(MS_WFSERR, 
-		 "Unsupported GetFeature outputFormat (%s). Only GML2 and GML3 are supported.", 
-		 "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
-      return msWFSException(map, paramsObj->pszVersion);
+      outputformat = OWS_GML2;
+      output_schema_format = "XMLSCHEMA";
     }
   }
 
