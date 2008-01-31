@@ -323,10 +323,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
   if(request->NumParams > 0) {
     for(i=0; i<request->NumParams; i++) {
     
-       if(strcasecmp(request->ParamNames[i], "VERSION") == 0) {
-           free( params->version );
+       if(strcasecmp(request->ParamNames[i], "VERSION") == 0)
            params->version = strdup(request->ParamValues[i]);
-       } 
        else if(strcasecmp(request->ParamNames[i], "REQUEST") == 0)
 	     params->request = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "INTERPOLATION") == 0)
@@ -409,7 +407,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
        } else if(strcasecmp(request->ParamNames[i], "GridOrigin") == 0) {
          tokens = msStringSplit(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n < 2) {
-           msSetError(MS_WMSERR, "Wrong number of arguments for GridOrigin", 
+           msSetError(MS_WCSERR, "Wrong number of arguments for GridOrigin", 
                       "msWCSParseRequest()");
            return msWCSException(map, params->version, "InvalidParameterValue", "GridOffsets");
          }
@@ -701,6 +699,23 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
 
 static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj *req)
 {
+  char tmpString[OWS_VERSION_MAXLEN];
+  int tmpInt = 0;
+  int wcsSupportedVersions[] = {OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
+  int wcsNumSupportedVersions = 3;
+
+ /* if version is not passed/set, set it to 1.1.1, this will trigger
+    msOWSNegotiateVersion to handle accordingly
+ */
+  //if (!params->version || params->version == NULL || strcasecmp(params->version, "") == 0)
+  //  params->version= strdup("1.1.1");
+
+  /* negotiate version */
+  tmpInt = msOWSNegotiateVersion(msOWSParseVersionString(params->version), wcsSupportedVersions, wcsNumSupportedVersions);
+
+  /* set result as string and carry on */
+  params->version = strdup(msOWSGetVersionString(tmpInt, tmpString));
+
 /* -------------------------------------------------------------------- */
 /*      1.1.x is sufficiently different we have a whole case for        */
 /*      it.  The remainder of this function is for 1.0.0.               */
@@ -1678,14 +1693,15 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 
   /* For GetCapabilities, if version is not set, then set to the highest
      version supported.  This should be cleaned up once #996 gets implemented */
-  if (!params->version) { /* this is a GetCapabilities request, set version */
-    params->version = strdup("1.0.0");
+  if (!params->version || strcasecmp(params->version, "") == 0 || params->version == NULL) { /* this is a GetCapabilities request, set version */
+    params->version = strdup("1.1.1");
   }
 
   /* version is optional, but we do set a default value of 1.1.1, make sure request isn't for something different */
-  if(strcmp(params->version, "1.0.0") != 0
+  if((strcmp(params->version, "1.0.0") != 0
      && strcmp(params->version, "1.1.0") != 0
-     && strcmp(params->version, "1.1.1") != 0) {
+     && strcmp(params->version, "1.1.1") != 0)
+     && strcmp(params->request, "GetCapabilities") != 0) {
     msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.", "msWCSDispatch()", params->version);
     msWCSException(map, params->version, "InvalidParameterValue", "version");
   
