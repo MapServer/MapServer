@@ -1652,6 +1652,17 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   ** ok, it's a WCS request, check what we can at a global level and then dispatch to the various request handlers
   */
 
+  /* check for existence of REQUEST parameter */
+  if (!params->request) {
+    msSetError(MS_WCSERR, "Missing REQUEST parameter", "msWCSDispatch()");
+    msWCSException(map, params->request, "MissingParameterValue", "request");
+    msWCSFreeParams(params); /* clean up */
+    free(params);
+    params = NULL;
+    return MS_FAILURE;
+  }
+
+
   /* if either DescribeCoverage or GetCoverage, and version not passed
      then return an exception */
   if (((strcasecmp(params->request, "DescribeCoverage") == 0) ||
@@ -1694,6 +1705,14 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
     return msWCSDescribeCoverage(map, params);
   else if(strcasecmp(params->request, "GetCoverage") == 0)    
     return msWCSGetCoverage(map, request, params);
+  else {
+    msSetError(MS_WCSERR, "Invalid REQUEST parameter \"%s\"", "msWCSDispatch()", params->request);
+    msWCSException(map, params->request, "InvalidParameterValue", "request");
+    msWCSFreeParams(params); /* clean up */
+    free(params);
+    params = NULL;
+    return MS_FAILURE;
+  }  
 
   return MS_DONE; /* not a WCS request, let MapServer take it */
 #else
