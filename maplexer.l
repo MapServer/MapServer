@@ -189,7 +189,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>include                               { BEGIN(INCLUDE); }
 <INITIAL>index                                 { return(INDEX); }
 <INITIAL>interlace                             { return(INTERLACE); }
-<INITIAL>intervals                             { return(INTERVALS); } 
+<INITIAL,URL_STRING>intervals                  { return(INTERVALS); } 
 <INITIAL>join                                  { return(JOIN); }
 <INITIAL>keyimage                              { return(KEYIMAGE); }
 <INITIAL>keysize                               { return(KEYSIZE); }
