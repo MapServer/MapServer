@@ -381,8 +381,8 @@ void msRectToPolygon(rectObj rect, shapeObj *poly)
 }
 
 /*
-** Private implementation of the Sutherland-Cohen algorithm. Taken in part
-** from "Getting Graphic: Programming Fundamentals in C and C++" by Mark Finlay
+** Private implementation of the Sutherland-Cohen algorithm. Inspired by
+** "Getting Graphic: Programming Fundamentals in C and C++" by Mark Finlay
 ** and John Petritis. (pages 179-182)
 */
 static int clipLine(double *x1, double *y1, double *x2, double *y2, rectObj rect)
