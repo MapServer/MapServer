@@ -5,7 +5,7 @@
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************
- * Copyright (c) 1996-2005 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2008 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,9 +41,9 @@ typedef enum {CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT} CLIP_STATE;
 #define EDGE_CHECK( x0, x, x1) ((x) < MS_MIN( (x0), (x1)) ? CLIP_LEFT : ((x) > MS_MAX( (x0), (x1)) ? CLIP_RIGHT : CLIP_MIDDLE ))
 
 #ifndef INFINITY
-#define INFINITY	(1.0e+30)
+#define INFINITY (1.0e+30)
 #endif
-#define NEARZERO	(1.0e-30)	/* 1/INFINITY */
+#define NEARZERO (1.0e-30) /* 1/INFINITY */
 
 void msPrintShape(shapeObj *p) 
 {
@@ -167,22 +167,19 @@ void msFreeLabelPathObj(labelPathObj *path)
 }
 
 void msShapeDeleteLine( shapeObj *shape, int line )
-
 {
-    if( line < 0 || line >= shape->numlines )
-    {
-        assert( 0 );
-        return;
-    }
+  if( line < 0 || line >= shape->numlines ) {
+    assert( 0 );
+    return;
+  }
 
-    free( shape->line[line].point );
-    if( line < shape->numlines - 1 )
-    {
-        memmove( shape->line + line, 
-                 shape->line + line + 1, 
-                 sizeof(lineObj) * (shape->numlines - line - 1) );
-    }
-    shape->numlines--;
+  free( shape->line[line].point );
+  if( line < shape->numlines - 1 ) {
+    memmove( shape->line + line, 
+             shape->line + line + 1, 
+             sizeof(lineObj) * (shape->numlines - line - 1) );
+  }
+  shape->numlines--;
 }
 
 void msComputeBounds(shapeObj *shape)
@@ -227,7 +224,7 @@ static int isOuterRing(shapeObj *shape, int r)
       if(result1 == MS_TRUE) status = !status;
     } else { /* one of the first 2 points were on the edge of the ring, the next one isn't */
       if(msPointInPolygon(&(shape->line[r].point[2]), &(shape->line[i])) == MS_TRUE)
-	status = !status;
+      status = !status;
     }
 
   }
@@ -288,32 +285,28 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist)
 
 int msAddPointToLine(lineObj *line, pointObj *point )
 {
-    line->numpoints += 1;
+  line->numpoints += 1;
     
-    line->point = (pointObj *) 
-        realloc(line->point, sizeof(pointObj) * line->numpoints);
+  line->point = (pointObj *) realloc(line->point, sizeof(pointObj) * line->numpoints);
+  line->point[line->numpoints-1] = *point;
 
-    line->point[line->numpoints-1] = *point;
-
-    return MS_SUCCESS;
+  return MS_SUCCESS;
 }
 
 int msAddLine(shapeObj *p, lineObj *new_line)
 {
-    lineObj lineCopy;
+  lineObj lineCopy;
 
-    lineCopy.numpoints = new_line->numpoints;
-    lineCopy.point = (pointObj *) malloc(new_line->numpoints*sizeof(pointObj));
-    if( lineCopy.point == NULL )
-    {
-        msSetError(MS_MEMERR, NULL, "msAddLine()");
-        return(MS_FAILURE);
-    }
+  lineCopy.numpoints = new_line->numpoints;
+  lineCopy.point = (pointObj *) malloc(new_line->numpoints*sizeof(pointObj));
+  if( lineCopy.point == NULL ) {
+    msSetError(MS_MEMERR, NULL, "msAddLine()");
+    return(MS_FAILURE);
+  }
     
-    memcpy( lineCopy.point, new_line->point, 
-            sizeof(pointObj) * new_line->numpoints );
+  memcpy( lineCopy.point, new_line->point, sizeof(pointObj) * new_line->numpoints );
 
-    return msAddLineDirectly( p, &lineCopy );
+  return msAddLineDirectly( p, &lineCopy );
 }
 
 /*
@@ -325,9 +318,9 @@ int msAddLineDirectly(shapeObj *p, lineObj *new_line)
   int c;
 
   if( p->numlines == 0 )
-      p->line = (lineObj *) malloc(sizeof(lineObj));
+    p->line = (lineObj *) malloc(sizeof(lineObj));
   else
-      p->line = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
+    p->line = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
   
   /* Copy the new line onto the end of the extended line array */
   c= p->numlines;
@@ -497,22 +490,22 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect)
       y2 = shape->line[i].point[j].y;
 
       if(clipLine(&x1,&y1,&x2,&y2,rect) == MS_TRUE) {
-	if(line.numpoints == 0) { /* first segment, add both points */
-	  line.point[0].x = x1;
-	  line.point[0].y = y1;
-	  line.point[1].x = x2;
-	  line.point[1].y = y2;
-	  line.numpoints = 2;
-	} else { /* add just the last point */
-	  line.point[line.numpoints].x = x2;
-	  line.point[line.numpoints].y = y2;
-	  line.numpoints++;	  
-	}
+        if(line.numpoints == 0) { /* first segment, add both points */
+          line.point[0].x = x1;
+          line.point[0].y = y1;
+          line.point[1].x = x2;
+          line.point[1].y = y2;
+          line.numpoints = 2;
+        } else { /* add just the last point */
+          line.point[line.numpoints].x = x2;
+          line.point[line.numpoints].y = y2;
+          line.numpoints++;      
+        }
 
-	if((x2 != shape->line[i].point[j].x) || (y2 != shape->line[i].point[j].y)) {
-	  msAddLine(&tmp, &line);
-	  line.numpoints = 0; /* new line */
-	}
+        if((x2 != shape->line[i].point[j].x) || (y2 != shape->line[i].point[j].y)) {
+          msAddLine(&tmp, &line);
+          line.numpoints = 0; /* new line */
+        }
       }
 
       x1 = shape->line[i].point[j].x;
@@ -579,94 +572,92 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
       
       deltax = x2-x1;
       if (deltax == 0) { /* bump off of the vertical */
-	deltax = (x1 > rect.minx) ? -NEARZERO : NEARZERO ;
+        deltax = (x1 > rect.minx) ? -NEARZERO : NEARZERO ;
       }
       deltay = y2-y1;
       if (deltay == 0) { /* bump off of the horizontal */
-	deltay = (y1 > rect.miny) ? -NEARZERO : NEARZERO ;
+        deltay = (y1 > rect.miny) ? -NEARZERO : NEARZERO ;
       }
       
-      if (deltax > 0) {		/*  points to right */
-	xin = rect.minx;
-	xout = rect.maxx;
+      if (deltax > 0) { /*  points to right */
+        xin = rect.minx;
+        xout = rect.maxx;
+      } else {
+        xin = rect.maxx;
+        xout = rect.minx;
       }
-      else {
-	xin = rect.maxx;
-	xout = rect.minx;
-      }
-      if (deltay > 0) {		/*  points up */
-	yin = rect.miny;
-	yout = rect.maxy;
-      }
-      else {
-	yin = rect.maxy;
-	yout = rect.miny;
+      if (deltay > 0) { /*  points up */
+        yin = rect.miny;
+        yout = rect.maxy;
+      } else {
+        yin = rect.maxy;
+        yout = rect.miny;
       }
       
       tinx = (xin - x1)/deltax;
       tiny = (yin - y1)/deltay;
       
-      if (tinx < tiny) {	/* hits x first */
-	tin1 = tinx;
-	tin2 = tiny;
-      } else {			/* hits y first */
-	tin1 = tiny;
-	tin2 = tinx;
+      if (tinx < tiny) { /* hits x first */
+        tin1 = tinx;
+        tin2 = tiny;
+      } else {            /* hits y first */
+        tin1 = tiny;
+        tin2 = tinx;
       }
       
       if (1 >= tin1) {
-	if (0 < tin1) {
-	  line.point[line.numpoints].x = xin;
-	  line.point[line.numpoints].y = yin;
-	  line.numpoints++;
-	}
-	if (1 >= tin2) {
-	  toutx = (xout - x1)/deltax;
-	  touty = (yout - y1)/deltay;
-	  
-	  tout = (toutx < touty) ? toutx : touty ;
-	  
-	  if (0 < tin2 || 0 < tout) {
-	    if (tin2 <= tout) {
-	      if (0 < tin2) {
-		if (tinx > tiny) {
-		  line.point[line.numpoints].x = xin;
-		  line.point[line.numpoints].y = y1 + tinx*deltay;
-		  line.numpoints++;
-		} else {
-		  line.point[line.numpoints].x = x1 + tiny*deltax;
-		  line.point[line.numpoints].y = yin;
-		  line.numpoints++;
-		}
-	      }
-	      if (1 > tout) {
-		if (toutx < touty) {
-		  line.point[line.numpoints].x = xout;
-		  line.point[line.numpoints].y = y1 + toutx*deltay;
-		  line.numpoints++;
-		} else {
-		  line.point[line.numpoints].x = x1 + touty*deltax;
-		  line.point[line.numpoints].y = yout;
-		  line.numpoints++;
-		}
-	      }	else {
-		line.point[line.numpoints].x = x2;
-		line.point[line.numpoints].y = y2;
-		line.numpoints++;
-	      }
-	    } else {
-	      if (tinx > tiny) {
-		line.point[line.numpoints].x = xin;
-		line.point[line.numpoints].y = yout;
-		line.numpoints++;
-	      } else {
-		line.point[line.numpoints].x = xout;
-		line.point[line.numpoints].y = yin;
-		line.numpoints++;
-	      }
-	    }
-	  }
-	}
+        if (0 < tin1) {
+          line.point[line.numpoints].x = xin;
+          line.point[line.numpoints].y = yin;
+          line.numpoints++;
+        }
+        if (1 >= tin2) {
+          toutx = (xout - x1)/deltax;
+          touty = (yout - y1)/deltay;
+      
+          tout = (toutx < touty) ? toutx : touty ;
+      
+          if (0 < tin2 || 0 < tout) {
+            if (tin2 <= tout) {
+              if (0 < tin2) {
+                if (tinx > tiny) {
+                  line.point[line.numpoints].x = xin;
+                  line.point[line.numpoints].y = y1 + tinx*deltay;
+                  line.numpoints++;
+                } else {
+                  line.point[line.numpoints].x = x1 + tiny*deltax;
+                  line.point[line.numpoints].y = yin;
+                  line.numpoints++;
+                }
+              }
+              if (1 > tout) {
+                if (toutx < touty) {
+                  line.point[line.numpoints].x = xout;
+                  line.point[line.numpoints].y = y1 + toutx*deltay;
+                  line.numpoints++;
+                } else {
+                  line.point[line.numpoints].x = x1 + touty*deltax;
+                  line.point[line.numpoints].y = yout;
+                  line.numpoints++;
+                }
+              } else {
+                line.point[line.numpoints].x = x2;
+                line.point[line.numpoints].y = y2;
+                line.numpoints++;
+              }
+            } else {
+              if (tinx > tiny) {
+                line.point[line.numpoints].x = xin;
+                line.point[line.numpoints].y = yout;
+                line.numpoints++;
+              } else {
+                line.point[line.numpoints].x = xout;
+                line.point[line.numpoints].y = yin;
+                line.numpoints++;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -696,7 +687,7 @@ void msOffsetPointRelativeTo(pointObj *point, layerObj *layer)
 {
   double x=0, y=0;
   if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
-	return;
+    return;
   
 
   if(layer->transform == MS_TRUE) return; /* nothing to do */
@@ -759,7 +750,7 @@ void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer)
 
   if(layer->transform == MS_TRUE) return; /* nothing to do */
   if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
-	return;
+    return;
   
 
   if(layer->units == MS_PERCENTAGES) {
@@ -829,60 +820,55 @@ void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
   if(shape->numlines == 0) return; /* nothing to transform */
 
   if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove duplicate vertices */
-      for(i=0; i<shape->numlines; i++) { /* for each part */
-          shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[0].x, extent.minx, inv_cs);
-          shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[0].y, extent.maxy, inv_cs);
-          for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
-              shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
-              shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
-              if(shape->line[i].point[k].x!=shape->line[i].point[k-1].x ||
-                      shape->line[i].point[k].y!=shape->line[i].point[k-1].y)
-                  k++;
-          }
-          shape->line[i].numpoints = k; /* save actual number kept */
+    for(i=0; i<shape->numlines; i++) { /* for each part */
+      shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[0].x, extent.minx, inv_cs);
+      shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[0].y, extent.maxy, inv_cs);
+      for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
+        shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
+        shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
+        if(shape->line[i].point[k].x!=shape->line[i].point[k-1].x || shape->line[i].point[k].y!=shape->line[i].point[k-1].y)
+          k++;
       }
+      shape->line[i].numpoints = k; /* save actual number kept */
+    }
   } else { /* points or untyped shapes */
     for(i=0; i<shape->numlines; i++) { /* for each part */
       for(j=1; j < shape->line[i].numpoints; j++ ) {
-	shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
-	shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
-	  }
-	}
+        shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
+        shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
+      }
+    }
   }
 }
+
 /*
 ** Converts from map coordinates to image coordinates
 */
 void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize)
 {
-	int i,j; /* loop counters */
+  int i,j; /* loop counters */
 
-	if(shape->numlines == 0) return; /* nothing to transform */
+  if(shape->numlines == 0) return; /* nothing to transform */
 
-	if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON)  /* remove co-linear vertices */
-	{
-		for(i=0; i<shape->numlines; i++)  /* for each part */
-		{ 
-			for(j=0; j < shape->line[i].numpoints; j++ ) 
-			{
-				shape->line[i].point[j].x = MS_IMAGE2MAP_X(shape->line[i].point[j].x, extent.minx, cellsize);
-				shape->line[i].point[j].y = MS_IMAGE2MAP_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
-			}
-		}
-	}
-	else  /* points or untyped shapes */
-	{
-		for(i=0; i<shape->numlines; i++)  /* for each part */
-		{
-			for(j=1; j < shape->line[i].numpoints; j++ ) 
-			{
-				shape->line[i].point[j].x = MS_IMAGE2MAP_X(shape->line[i].point[j].x, extent.minx, cellsize);
-				shape->line[i].point[j].y = MS_IMAGE2MAP_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
-			}
-		}
-	}
+  if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove co-linear vertices */
 
-	return;
+    for(i=0; i<shape->numlines; i++) { /* for each part */         
+      for(j=0; j < shape->line[i].numpoints; j++ ) {
+        shape->line[i].point[j].x = MS_IMAGE2MAP_X(shape->line[i].point[j].x, extent.minx, cellsize);
+        shape->line[i].point[j].y = MS_IMAGE2MAP_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
+      }
+    }
+  } else { /* points or untyped shapes */
+
+    for(i=0; i<shape->numlines; i++) { /* for each part */
+      for(j=1; j < shape->line[i].numpoints; j++ ) {
+        shape->line[i].point[j].x = MS_IMAGE2MAP_X(shape->line[i].point[j].x, extent.minx, cellsize);
+        shape->line[i].point[j].y = MS_IMAGE2MAP_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
+      }
+    }
+  }
+
+  return;
 }
 
 /*
@@ -946,11 +932,11 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
 
       angle = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2.0) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2.0))));
       if(p->line[i].point[j-1].x < p->line[i].point[j].x)
-	dy = sin(angle) * (w/2);
+        dy = sin(angle) * (w/2);
       else
-	dy = -sin(angle) * (w/2);
+        dy = -sin(angle) * (w/2);
       if(p->line[i].point[j-1].y < p->line[i].point[j].y)
-	dx = -cos(angle) * (w/2);
+        dx = -cos(angle) * (w/2);
       else
         dx = cos(angle) * (w/2);
 
@@ -1058,25 +1044,25 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
     lo_y = y + 1;
     for(j=0; j<p->numlines; j++) {
       if((lo_y < y) && (hi_y >= y)) 
-	break; /* already initialized */
+    break; /* already initialized */
       for(i=0; i < p->line[j].numpoints; i++) {
-	if((lo_y < y) && (hi_y >= y)) 
-	  break; /* already initialized */
-	if(p->line[j].point[i].y < y)
-	  lo_y = p->line[j].point[i].y;
-	if(p->line[j].point[i].y >= y)
-	  hi_y = p->line[j].point[i].y;
+    if((lo_y < y) && (hi_y >= y)) 
+      break; /* already initialized */
+    if(p->line[j].point[i].y < y)
+      lo_y = p->line[j].point[i].y;
+    if(p->line[j].point[i].y >= y)
+      hi_y = p->line[j].point[i].y;
       }
     }
 
     n=0;
     for(j=0; j<p->numlines; j++) {
       for(i=0; i < p->line[j].numpoints; i++) {
-	if((p->line[j].point[i].y < y) && ((y - p->line[j].point[i].y) < (y - lo_y)))
-	  lo_y = p->line[j].point[i].y;
-	if((p->line[j].point[i].y >= y) && ((p->line[j].point[i].y - y) < (hi_y - y)))
-	  hi_y = p->line[j].point[i].y;
-      }      
+        if((p->line[j].point[i].y < y) && ((y - p->line[j].point[i].y) < (y - lo_y)))
+          lo_y = p->line[j].point[i].y;
+        if((p->line[j].point[i].y >= y) && ((p->line[j].point[i].y - y) < (hi_y - y)))
+          hi_y = p->line[j].point[i].y;
+      }
     }
 
     if(lo_y == hi_y) 
@@ -1089,20 +1075,20 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
       
       point1 = &( p->line[j].point[p->line[j].numpoints-1] );
       for(i=0; i < p->line[j].numpoints; i++) {
-	point2 = &( p->line[j].point[i] );
-	
-	if(EDGE_CHECK(point1->y, y, point2->y) == CLIP_MIDDLE) {
-	  
-	  if(point1->y == point2->y)
-	    continue; /* ignore horizontal edges */
-	  else	  
-	    slope = (point2->x - point1->x) / (point2->y - point1->y);
-	  
-	  x = point1->x + (y - point1->y)*slope;
-	  xintersect[nfound++] = x;
-	} /* End of checking this edge */
-	
-	point1 = point2;  /* Go on to next edge */
+        point2 = &( p->line[j].point[i] );
+    
+        if(EDGE_CHECK(point1->y, y, point2->y) == CLIP_MIDDLE) {
+      
+          if(point1->y == point2->y)
+            continue; /* ignore horizontal edges */
+          else      
+            slope = (point2->x - point1->x) / (point2->y - point1->y);
+      
+          x = point1->x + (y - point1->y)*slope;
+          xintersect[nfound++] = x;
+        } /* End of checking this edge */
+    
+        point1 = point2;  /* Go on to next edge */
       }
     } /* Finished the scanline */
     
@@ -1110,10 +1096,10 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
     do {
       wrong_order = 0;
       for(i=0; i < nfound-1; i++) {
-	if(xintersect[i] > xintersect[i+1]) {
-	  wrong_order = 1;
-	  SWAP(xintersect[i], xintersect[i+1], temp);
-	}
+        if(xintersect[i] > xintersect[i+1]) {
+          wrong_order = 1;
+          SWAP(xintersect[i], xintersect[i+1], temp);
+        }
       }
     } while(wrong_order);
     
@@ -1121,9 +1107,9 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
     for(i=0; i < nfound; i += 2) {
       len = fabs(xintersect[i] - xintersect[i+1]);
       if(len > max_len) {
-	max_len = len;
-	lp->x = (xintersect[i] + xintersect[i+1])/2;
-	lp->y = y;
+        max_len = len;
+        lp->x = (xintersect[i] + xintersect[i+1])/2;
+        lp->y = y;
       }
     }
   }
@@ -1159,8 +1145,8 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
       segment_length = sqrt((pow((p->line[i].point[j].x-p->line[i].point[j-1].x),2.0) + pow((p->line[i].point[j].y-p->line[i].point[j-1].y),2.0)));
       line_length += segment_length;
       if(segment_length > max_segment_length) {
-	max_segment_length = segment_length;
-	temp_segment_index = j;
+        max_segment_length = segment_length;
+        temp_segment_index = j;
       }
     }
 
@@ -1600,20 +1586,16 @@ FAILURE:
    Pretty printing of primitive objects
    ======================================================================== */
 
-void msRectToFormattedString(rectObj *rect, char *format, char *buffer, 
-                             int buffer_length) 
+void msRectToFormattedString(rectObj *rect, char *format, char *buffer, int buffer_length) 
 {
-    snprintf(buffer, buffer_length, format,
-             rect->minx, rect->miny, rect->maxx, rect->maxy);
+  snprintf(buffer, buffer_length, format, rect->minx, rect->miny, rect->maxx, rect->maxy);
 }
 
-void msPointToFormattedString(pointObj *point, const char *format, 
-                              char *buffer, int buffer_length) 
+void msPointToFormattedString(pointObj *point, const char *format, char *buffer, int buffer_length) 
 {
 #ifdef USE_POINT_Z_M
-    snprintf(buffer, buffer_length, format, point->x, point->y, point->z, point->m);
+  snprintf(buffer, buffer_length, format, point->x, point->y, point->z, point->m);
 #else
-    snprintf(buffer, buffer_length, format, point->x, point->y);
+  snprintf(buffer, buffer_length, format, point->x, point->y);
 #endif
 }
-
