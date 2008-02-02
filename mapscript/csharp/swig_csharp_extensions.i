@@ -1,6 +1,6 @@
 
 /******************************************************************************
- * $Id:  $
+ * $Id$
  *
  * Name:     swig_csharp_extensions.i
  * Purpose:  Fix for the SWIG Interface problems (early GC) 
