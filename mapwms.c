@@ -1602,6 +1602,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   const char *pszMimeType=NULL;
   char szVersionBuf[OWS_VERSION_MAXLEN];
   char *schemalocation = NULL;
+  const char *updatesequence=NULL;
 
    schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
 
@@ -1662,8 +1663,15 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
   msIO_printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
 
-  msIO_printf("<WMT_MS_Capabilities version=\"%s\">\n",
+  msIO_printf("<WMT_MS_Capabilities version=\"%s\"",
          msOWSGetVersionString(nVersion, szVersionBuf));
+
+  updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
+
+  if (updatesequence)
+    msIO_printf(" updateSequence=\"%s\"",updatesequence);
+
+  msIO_printf(">\n",updatesequence);
 
   /* Report MapServer Version Information */
   msIO_printf("\n<!-- %s -->\n\n", msGetVersion());

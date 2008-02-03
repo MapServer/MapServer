@@ -1145,7 +1145,7 @@ char *msSOSParseTimeGML(char *pszGmlTime)
 /*                                                                      */
 /*      getCapabilities request handler.                                */
 /************************************************************************/
-int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
+int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req) {
     xmlDocPtr psDoc = NULL;       /* document pointer */
     xmlNodePtr psRootNode, psMainNode, psNode;
     xmlNodePtr psOfferingNode;
@@ -1222,7 +1222,10 @@ int msSOSGetCapabilities(mapObj *map, char *pszVersion, cgiRequestObj *req) {
     /*version fixed for now*/
     xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST pszSOSVersion);
 
-    //xmlNewProp(psRootNode, BAD_CAST "updateSequence", BAD_CAST "1234567890");
+    value = msOWSLookupMetadata(&(map->web.metadata), "SO", "updatesequence");
+
+    if (value) 
+      xmlNewProp(psRootNode, BAD_CAST "updateSequence", BAD_CAST value);
 
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
@@ -2489,7 +2492,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
     }
 
     if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0) {
-      returnvalue = msSOSGetCapabilities(map, paramsObj->pszVersion, req);
+      returnvalue = msSOSGetCapabilities(map, paramsObj, req);
       msSOSFreeParamsObj(paramsObj);
       free(paramsObj);
       paramsObj = NULL;

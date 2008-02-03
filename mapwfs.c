@@ -288,6 +288,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
 int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req) 
 {
   char *script_url=NULL, *script_url_encoded;
+  const char *updatesequence=NULL;
   int i;
 
   /* Decide which version we're going to return... only 1.0.0 for now */
@@ -300,6 +301,12 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
       return msWFSException(map, wmtver);
   }
 
+  updatesequence = msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
+
+  if (!updatesequence)
+    updatesequence = strdup("0");
+
+
   msIO_printf("Content-type: text/xml%c%c",10,10); 
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
@@ -308,12 +315,12 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
 
   msIO_printf("<WFS_Capabilities \n"
          "   version=\"%s\" \n"
-         "   updateSequence=\"0\" \n"
+         "   updateSequence=\"%s\" \n"
          "   xmlns=\"http://www.opengis.net/wfs\" \n"
          "   xmlns:ogc=\"http://www.opengis.net/ogc\" \n"
          "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
          "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-capabilities.xsd\">\n",
-         wmtver,
+         wmtver, updatesequence,
          msOWSGetSchemasLocation(map), wmtver);
 
   /* Report MapServer Version Information */

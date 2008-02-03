@@ -703,6 +703,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   int tmpInt = 0;
   int wcsSupportedVersions[] = {OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
   int wcsNumSupportedVersions = 3;
+  const char *updatesequence=NULL;
 
  /* if version is not passed/set, set it to 1.1.1, this will trigger
     msOWSNegotiateVersion to handle accordingly
@@ -742,16 +743,21 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
     /* print common capability elements  */
     /* TODO: DocType? */
     
+  updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
+
+  if (!updatesequence)
+    updatesequence = strdup("0");
+
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n", "ISO-8859-1");
   
     if(!params->section || (params->section && strcasecmp(params->section, "/")  == 0)) msIO_printf("<WCS_Capabilities\n"
                                 "   version=\"%s\" \n"
-                                "   updateSequence=\"0\" \n"
+                                "   updateSequence=\"%s\" \n"
                                 "   xmlns=\"http://www.opengis.net/wcs\" \n" 
                                 "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n" 
                                 "   xmlns:gml=\"http://www.opengis.net/gml\" \n" 
                                 "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
-                                "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
+                                "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, updatesequence, msOWSGetSchemasLocation(map), params->version); 
            
     /* print the various capability sections */
     if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/Service") == 0)

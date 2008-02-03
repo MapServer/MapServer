@@ -304,6 +304,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     xmlNodePtr psRootNode, psMainNode, psNode;
     xmlNodePtr psTmpNode;
     char *identifier_list = NULL, *format_list = NULL;
+    const char *updatesequence=NULL;
     xmlNsPtr psOwsNs, psXLinkNs;
 
     char *script_url=NULL, *script_url_encoded=NULL;
@@ -353,6 +354,11 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
 
     xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->version );
+
+    updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
+
+    if (updatesequence)
+      xmlNewProp(psRootNode, BAD_CAST "updateSequence", BAD_CAST updatesequence);
 
 /* -------------------------------------------------------------------- */
 /*      Service metadata.                                               */
