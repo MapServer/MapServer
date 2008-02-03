@@ -91,6 +91,30 @@ void msGDALCleanup( void )
     }
 }
 
+/************************************************************************/
+/*                            CleanVSIDir()                             */
+/*                                                                      */
+/*      For the temporary /vsimem/msout directory we need to be sure    */
+/*      things are clean before we start, and after we are done.        */
+/************************************************************************/
+
+static void CleanVSIDir( const char *pszDir )
+
+{
+    char **papszFiles = CPLReadDir( pszDir );
+    int i, nFileCount = CSLCount( papszFiles );
+
+    for( i = 0; i < nFileCount; i++ )
+    {
+        if( strcasecmp(papszFiles[i],".") == 0 
+            || strcasecmp(papszFiles[i],"..") == 0 )
+            continue;
+
+        VSIUnlink( papszFiles[i] );
+    }
+
+    CSLDestroy( papszFiles );
+}
 
 /************************************************************************/
 /*                          msSaveImageGDAL()                           */
@@ -141,7 +165,8 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         if( GDALGetMetadataItem( hOutputDriver, GDAL_DCAP_VIRTUALIO, NULL ) 
             != NULL )
         {
-            filename = msTmpFile( NULL, "/vsimem/", pszExtension );
+            CleanVSIDir( "/vsimem/msout" );
+            filename = msTmpFile( NULL, "/vsimem/msout/", pszExtension );
         }
 #endif
         if( filename == NULL && map != NULL && map->web.imagepath != NULL )
@@ -437,6 +462,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         VSIFCloseL( fp );
 
         VSIUnlink( filename );
+        CleanVSIDir( "/vsimem/msout" );
 #else
         fp = fopen( filename, "rb" );
         if( fp == NULL )

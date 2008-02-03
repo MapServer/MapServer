@@ -986,8 +986,50 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
 int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map, 
                             imageObj *image )
 {
-    int status;
+    int status, i;
+    char *filename = NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Fetch the driver we will be using and check if it supports      */
+/*      VSIL IO.                                                        */
+/* -------------------------------------------------------------------- */
+#ifdef GDAL_DCAP_VIRTUALIO
+    {
+        GDALDriverH hDriver;
+        const char *pszExtension = image->format->extension;
+
+        msAcquireLock( TLOCK_GDAL );
+        hDriver = GDALGetDriverByName( image->format->driver+5 );
+        if( hDriver == NULL )
+        {
+            msReleaseLock( TLOCK_GDAL );
+            msSetError( MS_MISCERR, "Failed to find %s driver.",
+                        "msWCSReturnCoverage11()", image->format->driver+5 );
+            return MS_FAILURE;
+        }
+        
+        if( pszExtension == NULL )
+            pszExtension = "img.tmp";
+
+        if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL ) 
+            != NULL )
+        {
+/*            CleanVSIDir( "/vsimem/wcsout" ); */
+            filename = strdup(CPLFormFilename("/vsimem/wcsout", 
+                                              "out", pszExtension ));
+
+            msReleaseLock( TLOCK_GDAL );
+            status = msSaveImage(map, image, filename);
+            if( status != MS_SUCCESS )
+                return msWCSException(map, params->version, NULL, NULL);
+        }
+        msReleaseLock( TLOCK_GDAL );
+    }
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Output stock header.                                            */
+/* -------------------------------------------------------------------- */
     msIO_fprintf( 
         stdout, 
         "Content-Type: multipart/mixed; boundary=wcs%c%c"
@@ -1001,34 +1043,140 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         "     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
         "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
         "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
-        "  <Coverage>\n"
-        "    <Reference xlink:href=\"cid:coverage/wcs.%s\"/>\n"
-        "  </Coverage>\n"
-        "</Coverages>\n"
-        "--wcs\n"
-        "Content-Type: %s\n"
-        "Content-Description: coverage data\n"
-        "Content-Transfer-Encoding: binary\n"
-        "Content-ID: coverage/wcs.%s\n"
-        "Content-Disposition: INLINE%c%c",
-        10, 10, 
+        "  <Coverage>\n",
         10, 10,
-        MS_IMAGE_EXTENSION(map->outputformat),
-        MS_IMAGE_MIME_TYPE(map->outputformat),
-        MS_IMAGE_EXTENSION(map->outputformat),
         10, 10 );
 
-      status = msSaveImage(map, image, NULL);
-      if( status != MS_SUCCESS )
-      {
-          return msWCSException(map, params->version, NULL, NULL);
-      }
+/* -------------------------------------------------------------------- */
+/*      If we weren't able to write data under /vsimem, then we just    */
+/*      output a single "stock" filename.                               */
+/* -------------------------------------------------------------------- */
+    if( filename == NULL )
+    {
+        msIO_fprintf( 
+            stdout,
+            "    <Reference xlink:href=\"cid:coverage/wcs.%s\"/>\n",
+            "  </Coverage>\n"
+            "</Coverages>\n"
+            "--wcs\n"
+            "Content-Type: %s\n"
+            "Content-Description: coverage data\n"
+            "Content-Transfer-Encoding: binary\n"
+            "Content-ID: coverage/wcs.%s\n"
+            "Content-Disposition: INLINE%c%c",
+            MS_IMAGE_EXTENSION(map->outputformat),
+            MS_IMAGE_MIME_TYPE(map->outputformat),
+            MS_IMAGE_EXTENSION(map->outputformat),
+            10, 10 );
 
-      msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );
+        status = msSaveImage(map, image, NULL);
+        if( status != MS_SUCCESS )
+        {
+            return msWCSException(map, params->version, NULL, NULL);
+        }
 
-      return MS_SUCCESS;
+        msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );
+        return MS_SUCCESS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      When potentially listing multiple files, we take great care     */
+/*      to identify the "primary" file and list it first.  In fact      */
+/*      it is the only file listed in the coverages document.           */
+/* -------------------------------------------------------------------- */
+#ifdef GDAL_DCAP_VIRTUALIO
+    {
+        char **all_files = CPLReadDir( "/vsimem/wcsout" );
+        int count = CSLCount(all_files);
+
+        if( msIO_needBinaryStdout() == MS_FAILURE )
+            return MS_FAILURE;
+
+        msAcquireLock( TLOCK_GDAL );
+        for( i = count-1; i >= 0; i-- )
+        {
+            const char *this_file = all_files[i];
+
+            if( EQUAL(this_file,".") || EQUAL(this_file,"..") )
+            {
+                all_files = CSLRemoveStrings( all_files, i, 1, NULL );
+                continue;
+            }
+
+            if( i > 0 && EQUAL(this_file,CPLGetFilename(filename)) )
+            {
+                all_files = CSLRemoveStrings( all_files, i, 1, NULL );
+                all_files = CSLInsertString(all_files,0,CPLGetFilename(filename));
+                i++;
+            }
+        }
+        
+        msIO_fprintf( 
+            stdout,
+            "    <Reference xlink:href=\"cid:coverage/%s\"/>\n"
+            "  </Coverage>\n"
+            "</Coverages>\n",
+            CPLGetFilename(filename) );
+
+/* -------------------------------------------------------------------- */
+/*      Dump all the files in the memory directory as mime sections.    */
+/* -------------------------------------------------------------------- */
+        count = CSLCount(all_files);
+
+        for( i = 0; i < count; i++ )
+        {
+            const char *mimetype = NULL;
+            FILE *fp; 
+            unsigned char block[4000];
+            int bytes_read;
+
+            if( i == 0 )
+                mimetype = MS_IMAGE_MIME_TYPE(map->outputformat);
+            
+            if( mimetype == NULL )
+                mimetype = "application/octet-stream";
+
+            msIO_fprintf( 
+                stdout, 
+                "--wcs\n"
+                "Content-Type: %s\n"
+                "Content-Description: coverage data\n"
+                "Content-Transfer-Encoding: binary\n"
+                "Content-ID: coverage/%s\n"
+                "Content-Disposition: INLINE%c%c",
+                mimetype, 
+                all_files[i], 
+                10, 10 );
+
+            fp = VSIFOpenL( 
+                CPLFormFilename("/vsimem/wcsout", all_files[i], NULL),
+                "rb" );
+            if( fp == NULL )
+            {
+                msReleaseLock( TLOCK_GDAL );
+                msSetError( MS_MISCERR, 
+                            "Failed to open %s for streaming to stdout.",
+                            "msWCSReturnCoverage11()", all_files[i] );
+                return MS_FAILURE;
+            }
+            
+            while( (bytes_read = VSIFReadL(block, 1, sizeof(block), fp)) > 0 )
+                msIO_fwrite( block, 1, bytes_read, stdout );
+
+            VSIFCloseL( fp );
+
+            VSIUnlink( all_files[i] );
+        }
+
+        CSLDestroy( all_files );
+        msReleaseLock( TLOCK_GDAL );
+
+        msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );
+        return MS_SUCCESS;
+    }
+#endif /* def GDAL_DCAP_VIRTUALIO */    
 }
-#endif
+#endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
 
 /************************************************************************/
 /* ==================================================================== */
