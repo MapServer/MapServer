@@ -1524,20 +1524,28 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
     {
         char urn[100];
 
-        if( strncmp(tokens[i],"EPSG:",5) != 0 )
-            continue;
-        
-        /* 
-        ** Should we eventually use OGC "epsg-like" coordinate systems
-        ** with our normal axis orientation?  Fix later.
-        */
-        sprintf( urn, "urn:ogc:def:crs:EPSG::%s", tokens[i]+5 );
+        if( strncmp(tokens[i],"EPSG:",5) == 0 )
+            sprintf( urn, "urn:ogc:def:crs:EPSG::%s", tokens[i]+5 );
+        else if( strcasecmp(tokens[i],"imageCRS") == 0 )
+            sprintf( urn, "urn:ogc:def:crs:OGC::imageCRS" );
+        else if( strncmp(tokens[i],"urn:ogc:def:crs:",16) == 0 )
+            sprintf( urn, tokens[i] );
+        else
+            strcpy( urn, "" );
 
-        result = (char *) realloc(result,strlen(result)+strlen(urn)+2);
-        
-        if( strlen(result) > 0 )
-            strcat( result, " " );
-        strcat( result, urn );
+        if( strlen(urn) > 0 )
+        {
+            result = (char *) realloc(result,strlen(result)+strlen(urn)+2);
+            
+            if( strlen(result) > 0 )
+                strcat( result, " " );
+            strcat( result, urn );
+        }
+        else
+        {
+            msDebug( "msOWSGetProjURN(): Failed to process SRS '%s', ignored.", 
+                     tokens[i] );
+        }
     }
 
     msFreeCharArray(tokens, numtokens);
