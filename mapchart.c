@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id:$
  *
  * Project:  MapServer
  * Purpose:  Implementation of dynamic charting (MS-RFC-29)
