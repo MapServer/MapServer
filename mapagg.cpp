@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id:$
  *
  * Project:  MapServer
  * Purpose:  AGG rendering and other AGG related functions.
