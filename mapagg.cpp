@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  AGG rendering and other AGG related functions.
@@ -121,8 +121,6 @@ typedef agg::renderer_scanline_bin_solid<renderer_base> renderer_bin;
 typedef agg::rasterizer_outline_aa<renderer_oaa> rasterizer_outline_aa;
 typedef agg::rasterizer_outline <renderer_prim> rasterizer_outline;
 typedef agg::rasterizer_scanline_aa<> rasterizer_scanline;
-
-MS_CVSID("$Id$")
 
 ///apply line styling functions. applies the line joining and capping
 ///parameters from the symbolobj to the given stroke
@@ -1208,7 +1206,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     break;    
     case(MS_SYMBOL_PIXMAP): {
         GDpixfmt img_pixf = loadSymbolPixmap(symbol);
-        ren->renderPixmapBGRA(img_pixf,p->x,p->y,angle_radians,d);
+        ren->renderPixmapBGRA(img_pixf,p->x+ox,p->y+oy,angle_radians,d);
     }
     break;    
     case(MS_SYMBOL_ELLIPSE): {
