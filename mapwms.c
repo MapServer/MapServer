@@ -2894,7 +2894,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
 {
 #ifdef USE_WMS_SVR
   int i, status, nVersion=-1;
-  const char *request=NULL, *service=NULL, *format=NULL;
+  const char *version=NULL, *request=NULL, *service=NULL, *format=NULL;
 
   /*
   ** Process Params common to all requests
@@ -2902,11 +2902,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
   /* VERSION (WMTVER in 1.0.0) and REQUEST must be present in a valid request */
   for(i=0; i<req->NumParams; i++) {
       if(strcasecmp(req->ParamNames[i], "VERSION") == 0)
-      {
-        nVersion = msOWSParseVersionString(req->ParamValues[i]);
-        if (nVersion == -1)
-            return msWMSException(map, OWS_1_1_1, NULL); /* Invalid format */
-      }
+        version = req->ParamValues[i];
       else if (strcasecmp(req->ParamNames[i], "WMTVER") == 0 && nVersion == -1)
       {
         nVersion = msOWSParseVersionString(req->ParamValues[i]);
@@ -2926,6 +2922,10 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
   /* If SERVICE is specified then it MUST be "WMS" */
   if (service != NULL && strcasecmp(service, "WMS") != 0)
       return MS_DONE;  /* Not a WMS request */
+
+  nVersion = msOWSParseVersionString(version);
+  if (nVersion == -1)
+    return msWMSException(map, OWS_1_1_1, NULL); /* Invalid format */
 
   /*
   ** GetCapbilities request needs the service parametr defined as WMS:
