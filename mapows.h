@@ -44,9 +44,10 @@ typedef struct http_request_info
     FILE      * fp;            /* FILE * used during download */
 } httpRequestObj;
 
-typedef  struct
+typedef struct
 {
   char *pszVersion;
+  char *pszUpdateSequence;
   char *pszRequest;
   char *pszService;
   char *pszTypeName;
