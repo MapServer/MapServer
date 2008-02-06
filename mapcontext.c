@@ -1,9 +1,7 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     mapcontext.c
  * Project:  MapServer
- * Language: C
  * Purpose:  OGC Web Map Context implementation
  * Author:   Julien-Samuel Lacroix, DM Solutions Group (lacroix@dmsolutions.ca)
  *
