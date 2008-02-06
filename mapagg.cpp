@@ -1126,7 +1126,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
         GDpixfmt img_pixf(thepixmap);
         //the image comes from GD, we must premultiply it before sending it to AGG
         img_pixf.premultiply();
-        ren->renderPixmapBGRA(img_pixf,p->x,p->y,angle,d);
+        ren->renderPixmapBGRA(img_pixf,p->x+ox,p->y+oy,angle,d);
         delete[](thepixmap.buf());
     }
     break;    
