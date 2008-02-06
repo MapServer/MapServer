@@ -5,7 +5,6 @@
  * Purpose:  AGG template library types.
  * Author:   John Novak (jnovak@novacell.com) 
  *
- *
  ******************************************************************************
  * Copyright (c) 1996-2007 Regents of the University of Minnesota.
  *
