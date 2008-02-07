@@ -1429,3 +1429,30 @@ int msGetUnicodeEntity(const char *inptr, int *unicode) {
     }
     return 0;
 }
+
+/**
+ * msStringIsInteger()
+ *
+ * determines whether a given string is an integer
+ *
+ * @param string the string to be tested
+ *
+ * @return MS_SUCCESS or MS_FAILURE
+ */
+
+int msStringIsInteger(const char *string) {
+  int length, i;
+
+  length = strlen(string);
+
+  if (length == 0)
+    return MS_FAILURE;
+
+  for(i=0;i<length;i++) {
+    if (!isdigit(string[i]))
+      return MS_FAILURE;
+  }
+
+  return MS_SUCCESS;
+}
+

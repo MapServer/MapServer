@@ -1620,6 +1620,7 @@ MS_DLL_EXPORT char *msConvertWideStringToUTF8 (const wchar_t* string, const char
 MS_DLL_EXPORT int msGetNextGlyph(const char **in_ptr, char *out_string);
 MS_DLL_EXPORT int msGetNumGlyphs(const char *in_ptr);
 MS_DLL_EXPORT int msGetUnicodeEntity(const char *inptr, int *unicode);
+MS_DLL_EXPORT int msStringIsInteger(const char *string);
 MS_DLL_EXPORT int msUTF8ToUniChar(const char *str, int *chPtr); /* maptclutf.c */
 
 #ifdef NEED_STRDUP
