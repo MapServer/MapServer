@@ -43,6 +43,58 @@ MS_CVSID("$Id: mapwcs.c 6637 2007-08-17 21:30:26Z warmerdam $")
 #include "gdal.h"
 #include "cpl_string.h" /* GDAL string handling */
 
+/*
+** msWCSException11()
+**
+** Report current MapServer error in XML exception format.
+** Wrapper function around msOWSCommonExceptionReport. Merely
+** passes WCS specific info.
+** 
+*/
+
+static int msWCSException11(mapObj *map, char *locator, char *exceptionCode, const char *version) {
+  int size = 0;
+  char *errorString     = NULL;
+  char *errorMessage    = NULL;
+  char *schemasLocation = NULL;
+
+  xmlDocPtr  psDoc      = NULL;   
+  xmlNodePtr psRootNode = NULL;
+  xmlNsPtr   psNsOws    = NULL;
+  xmlChar *buffer       = NULL;
+
+  psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
+
+  errorString = msGetErrorString("\n");
+  errorMessage = msEncodeHTMLEntities(errorString);
+  schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
+
+  psDoc = xmlNewDoc(BAD_CAST "1.0");
+
+  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_1_0, schemasLocation, version, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
+
+  xmlDocSetRootElement(psDoc, psRootNode);
+
+  psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
+
+  msIO_printf("Content-type: text/xml%c%c",10,10);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+    
+  msIO_printf("%s", buffer);
+
+  /*free buffer and the document */
+  free(errorString);
+  free(errorMessage);
+  free(schemasLocation);
+  xmlFree(buffer);
+  xmlFreeDoc(psDoc);
+
+  /* clear error since we have already reported it */
+  msResetErrorList();
+
+  return MS_FAILURE;
+}
+
 /************************************************************************/
 /*                       msWCSGetFormatsList11()                        */
 /*                                                                      */
@@ -316,6 +368,26 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     int ows_version = OWS_1_0_0;
 
 /* -------------------------------------------------------------------- */
+/*      Handle updatesequence                                           */
+/* -------------------------------------------------------------------- */
+
+    updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
+
+    if (params->updatesequence != NULL) {
+      i = msOWSNegotiateUpdateSequence(params->updatesequence, updatesequence);
+      if (i == 0) { // current
+          msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWCSGetCapabilities11()", params->updatesequence, updatesequence);
+          return msWCSException11(map, "updatesequence", "CurrentUpdateSequence", params->version);
+      }
+      if (i > 0) { // invalid
+          msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWCSGetCapabilities11()", params->updatesequence, updatesequence);
+          return msWCSException11(map, "updatesequence", "InvalidUpdateSequence", params->version);
+      }
+    }
+
+
+
+/* -------------------------------------------------------------------- */
 /*      Build list of layer identifiers available.                      */
 /* -------------------------------------------------------------------- */
     identifier_list = strdup("");
@@ -375,8 +447,8 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     if ((script_url=msOWSGetOnlineResource(map, "COM", "onlineresource", req)) == NULL 
         || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
     {
-        return msWCSException(map, params->version, 
-                              "NoApplicableCode", "NoApplicableCode");
+        msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities11()");
+        return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
     }
     free( script_url );
 
@@ -775,7 +847,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
                 msSetError( MS_WCSERR,
                             "COVERAGE %s cannot be opened / does not exist",
                             "msWCSDescribeCoverage()", params->coverages[j]);
-                return msWCSException(map, params->coverages[j], "CoverageNotDefined", "coverage");
+                return msWCSException11(map, "coverage", "CoverageNotDefined", params->version);
             }
         }
     }
@@ -917,7 +989,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
                     "RangeSubset field name malformed, expected '%s', got RangeSubset=%s",
                     "msWCSGetCoverageBands11()", 
                     field_id, rangesubset );
-        return msWCSException(map, params->version, NULL, NULL );
+        return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
     }
 
     free( field_id );
@@ -958,7 +1030,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
                     "RangeSubset axis name malformed, expected '%s', got RangeSubset=%s",
                     "msWCSGetCoverageBands11()", 
                     axis_id, rangesubset );
-        return msWCSException(map, params->version, NULL, NULL );
+        return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1027,7 +1099,8 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
             msReleaseLock( TLOCK_GDAL );
             status = msSaveImage(map, image, filename);
             if( status != MS_SUCCESS )
-                return msWCSException(map, params->version, NULL, NULL);
+                msSetError(MS_MISCERR, "msSaveImage() failed", "msWCSReturnCoverage11()");
+                return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
         }
         msReleaseLock( TLOCK_GDAL );
     }
@@ -1078,7 +1151,8 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         status = msSaveImage(map, image, NULL);
         if( status != MS_SUCCESS )
         {
-            return msWCSException(map, params->version, NULL, NULL);
+            msSetError( MS_MISCERR, "msSaveImage() failed", "msWCSReturnCoverage11()");
+            return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
         }
 
         msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );
@@ -1203,9 +1277,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
     msSetError( MS_WCSERR,
                 "WCS 1.1 request made, but mapserver requires libxml2 for WCS 1.1 services and this is not configured.",
                 "msWCSDescribeCoverage11()", "NoApplicableCode" );
-
-    return msWCSException(map, params->version, 
-                          "NoApplicableCode", "NoApplicableCode");
+    return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
 }
 
 /* ==================================================================== */
@@ -1218,8 +1290,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
                 "WCS 1.1 request made, but mapserver requires libxml2 for WCS 1.1 services and this is not configured.",
                 "msWCSGetCapabilities11()", "NoApplicableCode" );
 
-    return msWCSException(map, params->version, 
-                          "NoApplicableCode", "NoApplicableCode");
+    return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
 }
 
 #endif /* defined(USE_WCS_SVR) && !defined(USE_LIBXML2) */

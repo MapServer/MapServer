@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
+#include "maptime.h"
 
 #include <ctype.h> /* isalnum() */
 #include <stdarg.h> 
@@ -1649,6 +1650,82 @@ void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension,
     free(pszDimensionItem);
 
     return;
+}
+
+/**
+ * msOWSNegotiateUpdateSequence()
+ *
+ * returns the updateSequence value for an OWS
+ *
+ * @param requested_updatesequence the updatesequence passed by the client
+ * @param updatesequence the updatesequence set by the server
+ *
+ * @return result of comparison (-1, 0, 1)
+ * -1: lower / higher OR values not set by client or server
+ *  1: higher / lower
+ *  0: equal
+ */
+
+int msOWSNegotiateUpdateSequence(const char *requested_updatesequence, const char *updatesequence) {
+  int i;
+  int valtype1 = 1; // default datatype for updatesequence passed by client
+  int valtype2 = 1; // default datatype for updatesequence set by server
+  struct tm tm_requested_updatesequence, tm_updatesequence;
+
+  /* if not specified by client, or set by server,
+     server responds with latest Capabilities XML */
+  if (! requested_updatesequence || ! updatesequence)
+    return -1; 
+
+  // test to see if server value is an integer (1), string (2) or timestamp (3)
+  if (msStringIsInteger(updatesequence) == MS_FAILURE)
+    valtype1 = 2;
+
+  if (valtype1 == 2) { // test if timestamp
+    msTimeInit(&tm_updatesequence);
+    if (msParseTime(updatesequence, &tm_updatesequence) == MS_TRUE)
+      valtype1 = 3;
+    msResetErrorList();
+  }
+
+  // test to see if client value is an integer (1), string (2) or timestamp (3)
+  if (msStringIsInteger(requested_updatesequence) == MS_FAILURE)
+    valtype2 = 2;
+
+  if (valtype2 == 2) { // test if timestamp
+    msTimeInit(&tm_requested_updatesequence);
+    if (msParseTime(requested_updatesequence, &tm_requested_updatesequence) == MS_TRUE)
+      valtype2 = 3;
+    msResetErrorList();
+  }
+
+  // if the datatypes do not match, do not compare, 
+  if (valtype1 != valtype2)
+    return -1;
+
+  if (valtype1 == 1) { // integer
+    if (atoi(requested_updatesequence) < atoi(updatesequence))
+      return -1;
+
+    if (atoi(requested_updatesequence) > atoi(updatesequence))
+      return 1;
+
+    if (atoi(requested_updatesequence) == atoi(updatesequence))
+      return 0;
+  }
+
+  if (valtype1 == 2) // string
+    return strcasecmp(requested_updatesequence, updatesequence);
+
+  if (valtype1 == 3) { // timestamp
+    // compare timestamps
+    i = msDateCompare(&tm_requested_updatesequence, &tm_updatesequence) +
+        msTimeCompare(&tm_requested_updatesequence, &tm_updatesequence);
+    return i;
+  }
+
+  // return default -1
+  return -1;
 }
 
 #endif /* USE_WMS_SVR || USE_WFS_SVR  || USE_WCS_SVR */

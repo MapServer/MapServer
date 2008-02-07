@@ -49,6 +49,7 @@ typedef struct {
 
 typedef struct {
   char *version;		/* 1.0.0 for now */
+  char *updatesequence;		/* string, int or timestampe */
   char *request;		/* GetCapabilities|DescribeCoverage|GetCoverage */
   char *service;		/* MUST be WCS */
   char *section;		/* of capabilities document: /WCS_Capabilities/Service|/WCS_Capabilities/Capability|/WCS_Capabilities/ContentMetadata */
@@ -72,8 +73,7 @@ typedef struct {
 /*      since they are for internal use within the core.                */
 /* -------------------------------------------------------------------- */
 void msWCSFreeParams(wcsParamsObj *params);
-int msWCSException(mapObj *map, const char *version, const char *code, 
-                   const char *locator);
+int msWCSException(mapObj *map, const char *code, const char *locator);
 int msWCSIsLayerSupported(layerObj *layer);
 int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm );
 void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,

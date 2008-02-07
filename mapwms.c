@@ -1595,7 +1595,7 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
 /*
 ** msWMSGetCapabilities()
 */
-int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
+int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const char *requested_updatesequence)
 {
   char *dtd_url = NULL;
   char *script_url=NULL, *script_url_encoded=NULL;
@@ -1603,8 +1603,23 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   char szVersionBuf[OWS_VERSION_MAXLEN];
   char *schemalocation = NULL;
   const char *updatesequence=NULL;
+  int i;
 
-   schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
+  updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
+
+  if (requested_updatesequence != NULL) {
+      i = msOWSNegotiateUpdateSequence(requested_updatesequence, updatesequence);
+      if (i == 0) { // current
+          msSetError(MS_WMSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWMSGetCapabilities()", requested_updatesequence, updatesequence);
+          return msWMSException(map, nVersion, "CurrentUpdateSequence");
+      }
+      if (i > 0) { // invalid
+          msSetError(MS_WMSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWMSGetCapabilities()", requested_updatesequence, updatesequence);
+          return msWMSException(map, nVersion, "InvalidUpdateSequence");
+      }
+  }
+
+  schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
 
   if (nVersion < 0)
       nVersion = OWS_1_1_1;     /* Default to 1.1.1 */
@@ -2894,7 +2909,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
 {
 #ifdef USE_WMS_SVR
   int i, status, nVersion=-1;
-  const char *version=NULL, *request=NULL, *service=NULL, *format=NULL;
+  const char *version=NULL, *request=NULL, *service=NULL, *format=NULL, *updatesequence=NULL;
 
   /*
   ** Process Params common to all requests
@@ -2909,6 +2924,8 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
         if (nVersion == -1)
             return msWMSException(map, OWS_1_1_1, NULL); /* Invalid format */
       }
+      else if (strcasecmp(req->ParamNames[i], "UPDATESEQUENCE") == 0)
+        updatesequence = req->ParamValues[i];
       else if (strcasecmp(req->ParamNames[i], "REQUEST") == 0)
         request = req->ParamValues[i];
       else if (strcasecmp(req->ParamNames[i], "EXCEPTIONS") == 0)
@@ -2951,7 +2968,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
           nVersion = OWS_1_1_1;/* VERSION is optional with getCapabilities only */
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
           return msWMSException(map, nVersion, NULL);
-      return msWMSGetCapabilities(map, nVersion, req);
+      return msWMSGetCapabilities(map, nVersion, req, updatesequence);
   }
   else if (request && (strcasecmp(request, "context") == 0 ||
                        strcasecmp(request, "GetContext") == 0) )

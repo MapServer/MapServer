@@ -235,6 +235,8 @@ void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension,
                            const char **pszDimUnitSymbol, 
                            const char **pszDimMultiValue);
 
+int msOWSNegotiateUpdateSequence(const char *requested_updateSequence, const char *updatesequence);
+
 #endif
 
 /*====================================================================

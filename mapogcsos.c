@@ -1154,6 +1154,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
     char *schemalocation = NULL;
     char *xsi_schemaLocation = NULL;
     char *script_url=NULL, *script_url_encoded=NULL;
+    const char *updatesequence=NULL;
 
     int i,j,k;
     layerObj *lp = NULL, *lpTmp = NULL;
@@ -1191,6 +1192,20 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
     msIOContext *context = NULL;
 
     int ows_version = OWS_1_1_0;
+
+    updatesequence = msOWSLookupMetadata(&(map->web.metadata), "SO", "updatesequence");
+
+    if (sosparams->pszUpdateSequence != NULL) {
+      i = msOWSNegotiateUpdateSequence(sosparams->pszUpdateSequence, updatesequence);
+      if (i == 0) { // current
+          msSetError(MS_SOSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msSOSGetCapabilities()", sosparams->pszUpdateSequence, updatesequence);
+          return msSOSException(map, "updatesequence", "CurrentUpdateSequence");
+      }
+      if (i > 0) { // invalid
+          msSetError(MS_SOSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msSOSGetCapabilities()", sosparams->pszUpdateSequence, updatesequence);
+          return msSOSException(map, "updatesequence", "InvalidUpdateSequence");
+      }
+    }
 
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 

@@ -45,20 +45,23 @@ MS_CVSID("$Id$")
 ** Report current MapServer error in XML exception format.
 */
 
-static int msWFSException(mapObj *map, const char *wmtversion) 
+static int msWFSException(mapObj *map, const char *locator, const char *code)
 {
     char *schemalocation = NULL;
     /* In WFS, exceptions are always XML.
     */
     msIO_printf("Content-type: text/xml%c%c",10,10);
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
+                "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
 
-    msIO_printf("<ServiceExceptionReport\n");
+    msIO_printf("<ServiceExceptionReport ");
+    msIO_printf("version=\"1.2.0\" ");
     msIO_printf("xmlns=\"http://www.opengis.net/ogc\" ");
     msIO_printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
     schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
     msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc %s/wfs/1.0.0/OGC-exception.xsd\">\n", schemalocation);
     free(schemalocation);
-    msIO_printf("  <ServiceException>\n");
+    msIO_printf("  <ServiceException code=\"%s\" locator=\"%s\">\n", code, locator);
     /* Optional <Locator> element currently unused. */
     /* msIO_printf("    <Message>\n"); */
     msWriteErrorXML(stdout);
@@ -279,26 +282,26 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    return MS_SUCCESS;
 }
 
-
-
-
 /*
 ** msWFSGetCapabilities()
 */
-int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req) 
+int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *req) 
 {
   char *script_url=NULL, *script_url_encoded;
   const char *updatesequence=NULL;
-  int i;
+  const char *wmtver=NULL;
+
+  int i=0;
 
   /* Decide which version we're going to return... only 1.0.0 for now */
-  wmtver = "1.0.0";
+  wmtver = strdup("1.0.0");
 
   /* We need this server's onlineresource. */
   if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL ||
       (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
   {
-      return msWFSException(map, wmtver);
+      msSetError(MS_WFSERR, "Server URL not found", "msWFSGetCapabilities()");
+      return msWFSException(map, "mapserv", "NoApplicableCode");
   }
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
@@ -306,12 +309,23 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
   if (!updatesequence)
     updatesequence = strdup("0");
 
+  if (wfsparams->pszUpdateSequence != NULL) {
+      i = msOWSNegotiateUpdateSequence(wfsparams->pszUpdateSequence, updatesequence);
+      if (i == 0) { // current
+          msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWFSGetCapabilities()", wfsparams->pszUpdateSequence, updatesequence);
+          return msWFSException(map, "updatesequence", "CurrentUpdateSequence");
+      }
+      if (i > 0) { // invalid
+          msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWFSGetCapabilities()", wfsparams->pszUpdateSequence, updatesequence);
+          return msWFSException(map, "updatesequence", "InvalidUpdateSequence");
+      }
+  }
 
-  msIO_printf("Content-type: text/xml%c%c",10,10); 
-
+  msIO_printf("Content-type: text/xml%c%c",10,10);
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n",
                 "ISO-8859-1");
+
 
   msIO_printf("<WFS_Capabilities \n"
          "   version=\"%s\" \n"
@@ -688,7 +702,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       outputformat = OWS_SFE_SCHEMA;
     else {
       msSetError(MS_WFSERR, "Unsupported DescribeFeatureType outputFormat (%s).", "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
-      return msWFSException(map, paramsObj->pszVersion);
+      return msWFSException(map, "outputformat", "InvalidParameterValue");
     }
   }
 
@@ -697,7 +711,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     for (i=0; i<numlayers; i++) {
       if (msGetLayerIndex(map, layers[i]) < 0) {
 	      msSetError(MS_WFSERR, "Invalid typename (%s).", "msWFSDescribeFeatureType()", layers[i]);/* paramsObj->pszTypeName); */
-        return msWFSException(map, paramsObj->pszVersion);
+        return msWFSException(map, "typename", "InvalidParameterValue");
       }
     }
   }
@@ -967,7 +981,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: TYPENAME parameter missing", 
                  "msWFSGetFeature()");
-      return msWFSException(map, paramsObj->pszVersion);
+      return msWFSException(map, "typename", "MissingParameterValue");
   }
 
 
@@ -993,7 +1007,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     
     if (layers==NULL || numlayers < 1) {
       msSetError(MS_WFSERR, "At least one type name required in TYPENAME parameter.", "msWFSGetFeature()");
-      return msWFSException(map, paramsObj->pszVersion);
+      return msWFSException(map, "typename", "InvalidParameterValue");
     }
     
     tokens = msStringSplit(layers[0], ':', &n);
@@ -1053,7 +1067,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	    msSetError(MS_WFSERR, 
 		       "Server config error: SRS must be set at least at the map or at the layer level.",
 		       "msWFSGetFeature()");
-	    return msWFSException(map, paramsObj->pszVersion);
+	    return msWFSException(map, "mapserv", "NoApplicableCode");
 	  }
 
 	  /* Keep track of output SRS.  If different from value */
@@ -1066,7 +1080,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	    msSetError(MS_WFSERR, 
 		       "Invalid GetFeature Request: All TYPENAMES in a single GetFeature request must have been advertized in the same SRS.  Please check the capabilities and reformulate your request.",
 		       "msWFSGetFeature()");
-	    return msWFSException(map, paramsObj->pszVersion);
+	    return msWFSException(map, "typename", "InvalidParameterValue");
 	  }
 	}
 	
@@ -1079,7 +1093,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	msSetError(MS_WFSERR, 
 		   "TYPENAME '%s' doesn't exist in this server.  Please check the capabilities and reformulate your request.",
 		   "msWFSGetFeature()", layers[k]);
-	return msWFSException(map, paramsObj->pszVersion);
+	return msWFSException(map, "typename", "InvalidParameterValue");
       }
     }
   }
@@ -1127,7 +1141,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     tokens = msStringSplit(paramsObj->pszBbox, ',', &n);
     if (tokens==NULL || n != 4) {
       msSetError(MS_WFSERR, "Wrong number of arguments for BBOX.", "msWFSGetFeature()");
-      return msWFSException(map, paramsObj->pszVersion);
+      return msWFSException(map, "bbox", "InvalidParameterValue");
     }
     bbox.minx = atof(tokens[0]);
     bbox.miny = atof(tokens[1]);
@@ -1162,21 +1176,21 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	msSetError(MS_WFSERR, 
                    "Required TYPENAME parameter missing for GetFeature with a FILTER parameter.", 
                    "msWFSGetFeature()");
-	return msWFSException(map, paramsObj->pszVersion);
+	return msWFSException(map, "typename", "MissingParameterValue");
       }
        
       if (bBBOXSet) {
 	msSetError(MS_WFSERR, 
                    "BBOX parameter and FILTER parameter are mutually exclusive in GetFeature.", 
                    "msWFSGetFeature()");
-	return msWFSException(map, paramsObj->pszVersion);
+	return msWFSException(map, "mapserv", "NoApplicableCode");
       }
 
       if (bFeatureIdSet) {
 	msSetError(MS_WFSERR, 
                    "FEATUREID parameter and FILTER parameter are mutually exclusive in GetFeature.", 
                    "msWFSGetFeature()");
-	return msWFSException(map, paramsObj->pszVersion);
+	return msWFSException(map, "mapserv", "NoApplicableCode");
       }
 
       /* -------------------------------------------------------------------- */
@@ -1196,7 +1210,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	if (tokens == NULL || nFilters <=0 || nFilters != numlayers) {
 	  msSetError(MS_WFSERR, "Wrong number of FILTER attributes",
 		     "msWFSGetFeature()");
-	  return msWFSException(map, paramsObj->pszVersion);
+	  return msWFSException(map, "filter", "InvalidParameterValue");
 	}
          
 	paszFilter = (char **)malloc(sizeof(char *)*nFilters);
@@ -1220,7 +1234,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	iLayerIndex = msGetLayerIndex(map, layers[i]);
 	if (iLayerIndex < 0) {
 	  msSetError(MS_WFSERR, "Invalid Typename in GetFeature : %s", "msWFSGetFeature()", layers[i]);
-	  return msWFSException(map, paramsObj->pszVersion);
+	  return msWFSException(map, "typename", "InvalidParameterValue");
 	}
 	psNode = FLTParseFilterEncoding(paszFilter[i]);
 	
@@ -1228,11 +1242,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	  msSetError(MS_WFSERR, 
 		     "Invalid or Unsupported FILTER in GetFeature : %s", 
 		     "msWFSGetFeature()", pszFilter);
-	  return msWFSException(map, paramsObj->pszVersion);
+	  return msWFSException(map, "filter", "InvalidParameterValue");
 	}
 
-	if( FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE) != MS_SUCCESS )
-	  return msWFSException(map, paramsObj->pszVersion);
+	if( FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE) != MS_SUCCESS ) {
+          msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()", pszFilter);
+	  return msWFSException(map, "mapserv", "NoApplicableCode");
+        }
 
         FLTFreeFilterEncodingNode( psNode );
         psNode = NULL;
@@ -1298,7 +1314,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                        msFreeCharArray(tokens, nTokens);
                      if (tokens1)
                        msFreeCharArray(tokens1, nTokens1);
-                     return msWFSException(map, paramsObj->pszVersion);
+                     return msWFSException(map, "featureid", "InvalidParameterValue");
                  }
                  if (tokens1)
                     msFreeCharArray(tokens1, nTokens1);
@@ -1323,8 +1339,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                      }
                      psNode = FLTCreateFeatureIdFilterEncoding(aFIDValues[j]);
 
-                     if( FLTApplyFilterToLayer(psNode, map, lp->index, MS_FALSE) != MS_SUCCESS )
-                       return msWFSException(map, paramsObj->pszVersion);
+                     if( FLTApplyFilterToLayer(psNode, map, lp->index, MS_FALSE) != MS_SUCCESS ) {
+                       msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature");
+                       return msWFSException(map, "mapserv", "InvalidMapfile");
+                     }
 
                      FLTFreeFilterEncodingNode( psNode );
                      psNode = NULL;
@@ -1347,7 +1365,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                      msFree(aFIDLayers);
                      msFree(aFIDValues);
                  }
-                 return msWFSException(map, paramsObj->pszVersion);
+                 return msWFSException(map, "featureid", "InvalidParameterValue");
              }
          }
 
@@ -1373,8 +1391,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       char szBuf[32];
       sprintf(szBuf, "init=epsg:%.10s", pszOutputSRS+5);
       
-      if (msLoadProjectionString(&(map->projection), szBuf) != 0)
-	return msWFSException(map, paramsObj->pszVersion);
+      if (msLoadProjectionString(&(map->projection), szBuf) != 0) {
+        msSetError(MS_WFSERR, "msLoadProjectionString() failed", "msWFSGetFeature()");
+	return msWFSException(map, "mapserv", "NoApplicableCode");
+      }
     }
 
     /*
@@ -1387,8 +1407,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	errorObj   *ms_error;
 	ms_error = msGetErrorObj();
 	
-	if(ms_error->code != MS_NOTFOUND) 
-	  return msWFSException(map, paramsObj->pszVersion);
+	if(ms_error->code != MS_NOTFOUND) {
+          msSetError(MS_WFSERR, "ms_error->code not found", "msWFSGetFeature()");
+	  return msWFSException(map, "mapserv", "NoApplicableCode");
+        }
       }
     }
 
@@ -1398,7 +1420,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     if ((script_url=msOWSGetOnlineResource(map,"FO","onlineresource",req)) ==NULL ||
         (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
-      return msWFSException(map, paramsObj->pszVersion);
+      msSetError(MS_WFSERR, "Server URL not found", "msWFSGetFeature()");
+      return msWFSException(map, "mapserv", "NoApplicableCode");
     }
 
     /*
@@ -1576,7 +1599,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
                  "Incomplete WFS request: VERSION parameter missing", 
                  "msWFSDispatch()");
        
-      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, "version", "MissingParameterValue");
       msWFSFreeParamsObj(paramsObj);
       free(paramsObj);
       paramsObj = NULL;
@@ -1588,7 +1611,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: REQUEST parameter missing", 
                  "msWFSDispatch()");
-      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, "request", "MissingParameterValue");
       msWFSFreeParamsObj(paramsObj);
       free(paramsObj);
       paramsObj = NULL;
@@ -1601,7 +1624,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
                  "Incomplete WFS request: SERVICE parameter missing", 
                  "msWFSDispatch()");
        
-      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, "service", "MissingParameterValue");
       msWFSFreeParamsObj(paramsObj);
       free(paramsObj);
       paramsObj = NULL;
@@ -1610,7 +1633,8 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
 
   if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
   {
-      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      msSetError(MS_WFSERR, "msOWSMakeAllLayersUnique() failed", "msWFSDispatch()");
+      returnvalue = msWFSException(map, "mapserv", "NoApplicableCode");
       msWFSFreeParamsObj(paramsObj);
       free(paramsObj);
       paramsObj = NULL;
@@ -1621,8 +1645,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
   */
   if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0 ) 
   {
-      returnvalue = 
-        msWFSGetCapabilities(map, paramsObj->pszVersion, requestobj);
+      returnvalue = msWFSGetCapabilities(map, paramsObj, requestobj);
       msWFSFreeParamsObj(paramsObj);
       free(paramsObj);
       paramsObj = NULL;
@@ -1638,7 +1661,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       msSetError(MS_WFSERR, 
                  "WFS Server does not support VERSION %s.", 
                  "msWFSDispatch()", paramsObj->pszVersion);
-      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, "version", "InvalidParameterValue");
       msWFSFreeParamsObj(paramsObj);
       free(paramsObj);
       paramsObj = NULL;
@@ -1663,14 +1686,14 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       /* Unsupported WFS request */
       msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
                  paramsObj->pszRequest);
-      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, "request", "InvalidParameterValue");
   }
   else if (strcasecmp(paramsObj->pszService, "WFS") == 0)
   {
       /* Invalid WFS request */
       msSetError(MS_WFSERR, "Invalid WFS request: %s", "msWFSDispatch()",
                  paramsObj->pszRequest);
-      returnvalue = msWFSException(map, paramsObj->pszVersion);
+      returnvalue = msWFSException(map, "request", "InvalidParameterValue");
   }
 
   /* This was not detected as a WFS request... let MapServer handle it */
@@ -1751,6 +1774,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 if (strcasecmp(request->ParamNames[i], "VERSION") == 0)
                   wfsparams->pszVersion = strdup(request->ParamValues[i]);
 
+                else if (strcasecmp(request->ParamNames[i], "UPDATESEQUENCE") == 0)
+                  wfsparams->pszUpdateSequence = strdup(request->ParamValues[i]);
+
                 else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
                   wfsparams->pszRequest = strdup(request->ParamValues[i]);
                 
@@ -1817,6 +1843,11 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                     else if(strcasecmp(psOperation->pszValue,"GetCapabilities")==0)
                     {
                         psGetCapabilities = psOperation;
+                        pszValue = (char*)CPLGetXMLValue(psGetFeature,  "updateSequence", NULL);
+
+                        if (pszValue)
+                            wfsparams->pszUpdateSequence = strdup(pszValue);
+
                         break;
                     }
                     else if(strcasecmp(psOperation->pszValue,
