@@ -1594,6 +1594,7 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
                            double *padfGeoTransform )
 
 {
+    const char *extent_priority = NULL;
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
     rectObj  rect;
 #endif
@@ -1608,6 +1609,23 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
     padfGeoTransform[4] = 0.0;
     padfGeoTransform[5] = -1.0;
     
+/* -------------------------------------------------------------------- */
+/*      Do we want to override GDAL with a worldfile if one is present? */
+/* -------------------------------------------------------------------- */
+    extent_priority = CSLFetchNameValue( layer->processing, 
+                                         "EXTENT_PRIORITY" );
+
+    if( extent_priority != NULL
+        && EQUALN(extent_priority,"WORLD",5) )
+    {
+	        if( GDALGetDescription(hDS) != NULL 
+            && GDALReadWorldFile(GDALGetDescription(hDS), "wld", 
+                                 padfGeoTransform) )
+        {
+            return MS_SUCCESS;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try GDAL.                                                       */
 /*                                                                      */
