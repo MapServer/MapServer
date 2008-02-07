@@ -2918,12 +2918,8 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
   for(i=0; i<req->NumParams; i++) {
       if(strcasecmp(req->ParamNames[i], "VERSION") == 0)
         version = req->ParamValues[i];
-      else if (strcasecmp(req->ParamNames[i], "WMTVER") == 0 && nVersion == -1)
-      {
-        nVersion = msOWSParseVersionString(req->ParamValues[i]);
-        if (nVersion == -1)
-            return msWMSException(map, OWS_1_1_1, NULL); /* Invalid format */
-      }
+      else if (strcasecmp(req->ParamNames[i], "WMTVER") == 0 && version == NULL)
+        version = req->ParamValues[i];
       else if (strcasecmp(req->ParamNames[i], "UPDATESEQUENCE") == 0)
         updatesequence = req->ParamValues[i];
       else if (strcasecmp(req->ParamNames[i], "REQUEST") == 0)
@@ -2935,6 +2931,10 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
       else if (strcasecmp(req->ParamNames[i], "FORMAT") == 0)
         format = req->ParamValues[i];
   }
+
+  /* if SERVICE is not specified, this is not a WMS request */
+  if (service == NULL)
+    return MS_DONE;
 
   /* If SERVICE is specified then it MUST be "WMS" */
   if (service != NULL && strcasecmp(service, "WMS") != 0)
