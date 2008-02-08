@@ -91,5 +91,6 @@ int msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map, imageObj *image);
 int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request, 
                              wcsParamsObj *params, layerObj *lp,
                              char **p_bandlist );
+int msWCSException11(mapObj *map, char *locator, char *exceptionCode, const char *version);
 
 #endif /* nef MAPWCS_H */

@@ -52,7 +52,7 @@ MS_CVSID("$Id: mapwcs.c 6637 2007-08-17 21:30:26Z warmerdam $")
 ** 
 */
 
-static int msWCSException11(mapObj *map, char *locator, char *exceptionCode, const char *version) {
+int msWCSException11(mapObj *map, char *locator, char *exceptionCode, const char *version) {
   int size = 0;
   char *errorString     = NULL;
   char *errorMessage    = NULL;
