@@ -550,12 +550,12 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
   else
     msIO_printf("<Service\n"
            "   version=\"%s\" \n"
-           "   updateSequence=\"0\" \n"
+           "   updateSequence=\"%s\" \n"
            "   xmlns=\"http://www.opengis.net/wcs\" \n" 
            "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n" 
            "   xmlns:gml=\"http://www.opengis.net/gml\" \n" 
            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
-           "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
+           "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->updatesequence, msOWSGetSchemasLocation(map), params->version); 
 
   /* optional metadataLink */
   msOWSPrintURLType(stdout, &(map->web.metadata), "COM", "metadatalink", 
@@ -602,12 +602,12 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   else
     msIO_printf("<Capability\n"
            "   version=\"%s\" \n"
-           "   updateSequence=\"0\" \n"
+           "   updateSequence=\"%s\" \n"
            "   xmlns=\"http://www.opengis.net/wcs\" \n" 
            "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n" 
            "   xmlns:gml=\"http://www.opengis.net/gml\" \n" 
            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
-           "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
+           "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->updatesequence, msOWSGetSchemasLocation(map), params->version); 
 
   /* describe the types of requests the server can handle */
   msIO_printf("  <Request>\n");
@@ -692,12 +692,12 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
   else
     msIO_printf("<ContentMetadata\n"
            "   version=\"%s\" \n"
-           "   updateSequence=\"0\" \n"
+           "   updateSequence=\"%s\" \n"
            "   xmlns=\"http://www.opengis.net/wcs\" \n" 
            "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n" 
            "   xmlns:gml=\"http://www.opengis.net/gml\" \n" 
            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
-           "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
+           "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->updatesequence, msOWSGetSchemasLocation(map), params->version); 
 
   for(i=0; i<map->numlayers; i++)
     msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params);
@@ -753,6 +753,12 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
             return msWCSException(map, "InvalidUpdateSequence", 
                                   "updatesequence", params->version );
         }
+    }
+
+    else { // set default updatesequence
+      if(!updatesequence)
+        updatesequence = strdup("0");
+      params->updatesequence = strdup(updatesequence);
     }
 
   /* if a bum section param is passed, throw exception */
@@ -1085,6 +1091,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 {
   int i,j;
+  const char *updatesequence=NULL;
  
 /* -------------------------------------------------------------------- */
 /*      1.1.x is sufficiently different we have a whole case for        */
@@ -1110,6 +1117,11 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
     }
   }
  
+
+  updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
+  if (!updatesequence)
+    updatesequence = strdup("0");
+
   /* printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10); */
   msIO_printf("Content-type: text/xml%c%c",10,10);
 
@@ -1119,12 +1131,12 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
   /* start the DescribeCoverage section */
   msIO_printf("<CoverageDescription\n"
          "   version=\"%s\" \n"
-         "   updateSequence=\"0\" \n"
+         "   updateSequence=\"%s\" \n"
          "   xmlns=\"http://www.opengis.net/wcs\" \n" 
          "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n" 
          "   xmlns:gml=\"http://www.opengis.net/gml\" \n" 
          "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
-         "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/describeCoverage.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version); 
+         "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/describeCoverage.xsd\">\n", params->version, updatesequence, msOWSGetSchemasLocation(map), params->version); 
   
   if(params->coverages) { /* use the list */
     for( j = 0; params->coverages[j]; j++ ) {
