@@ -52,7 +52,8 @@ MS_CVSID("$Id: mapwcs.c 6637 2007-08-17 21:30:26Z warmerdam $")
 ** 
 */
 
-int msWCSException11(mapObj *map, char *locator, char *exceptionCode, const char *version) {
+int msWCSException11(mapObj *map, const char *locator, 
+                     const char *exceptionCode, const char *version) {
   int size = 0;
   char *errorString     = NULL;
   char *errorMessage    = NULL;
@@ -1291,6 +1292,11 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
                 "msWCSGetCapabilities11()", "NoApplicableCode" );
 
     return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
+}
+
+int msWCSException11(mapObj *map, char *locator, char *exceptionCode, const char *version) {
+    /* fallback to reporting using 1.0 style exceptions. */
+    return msWCSException( map, locator, exceptionCode, "1.0.0" );
 }
 
 #endif /* defined(USE_WCS_SVR) && !defined(USE_LIBXML2) */

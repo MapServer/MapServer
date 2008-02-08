@@ -73,7 +73,8 @@ typedef struct {
 /*      since they are for internal use within the core.                */
 /* -------------------------------------------------------------------- */
 void msWCSFreeParams(wcsParamsObj *params);
-int msWCSException(mapObj *map, const char *code, const char *locator);
+int msWCSException(mapObj *map, const char *code, const char *locator, 
+                   const char *version);
 int msWCSIsLayerSupported(layerObj *layer);
 int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm );
 void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
@@ -91,6 +92,7 @@ int msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map, imageObj *image);
 int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request, 
                              wcsParamsObj *params, layerObj *lp,
                              char **p_bandlist );
-int msWCSException11(mapObj *map, char *locator, char *exceptionCode, const char *version);
+int msWCSException11(mapObj *map, const char *locator, 
+                     const char *exceptionCode, const char *version);
 
 #endif /* nef MAPWCS_H */

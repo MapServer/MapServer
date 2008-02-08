@@ -92,10 +92,19 @@ static char *msWCSConvertRangeSetToString(const char *value) {
 /************************************************************************/
 /*                           msWCSException()                           */
 /************************************************************************/
-int msWCSException(mapObj *map, const char *code, const char *locator) 
+int msWCSException(mapObj *map, const char *code, const char *locator,
+                   const char *version )
 {
   char *pszEncodedVal = NULL;
-   msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+
+  if( version == NULL )
+      version = "1.0.0";
+
+  if( msOWSParseVersionString(version) >=
+      msOWSParseVersionString("1.1.0") )
+      return msWCSException11( map, code, locator, version );
+
+  msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
   /* msIO_printf("Content-type: text/xml%c%c",10,10); */
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
@@ -312,7 +321,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
       msSetError(MS_WCSERR, 
                  "WCS Server does not support XML POST requests, please use KVP.", 
                  "msWCSParseRequest()" );
-      msWCSException(map, NULL, NULL );
+      msWCSException(map, NULL, NULL, params->version );
 
       return MS_FAILURE;
   }
@@ -341,7 +350,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
          tokens = msStringSplit(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n != 4) {
            msSetError(MS_WCSERR, "Wrong number of arguments for BBOX.", "msWCSParseRequest()");
-           return msWCSException(map, "InvalidParameterValue", "bbox");
+           return msWCSException(map, "InvalidParameterValue", "bbox",
+                                 params->version );
          }
          params->bbox.minx = atof(tokens[0]);
          params->bbox.miny = atof(tokens[1]);
@@ -377,7 +387,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
          tokens = msStringSplit(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n < 5) {
            msSetError(MS_WCSERR, "Wrong number of arguments for BOUNDINGBOX.", "msWCSParseRequest()");
-           return msWCSException(map, "InvalidParameterValue", "boundingbox");
+           return msWCSException(map, "InvalidParameterValue", "boundingbox",
+                                 params->version );
          }
 
          /* NOTE: WCS 1.1 boundingbox is center of pixel oriented, not edge
@@ -399,7 +410,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
          if(tokens==NULL || n < 2) {
            msSetError(MS_WCSERR, "Wrong number of arguments for GridOffsets", 
                       "msWCSParseRequest()");
-           return msWCSException(map, "InvalidParameterValue", "GridOffsets");
+           return msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                                 params->version );
          }
          /* take absolute values to convert to positive RESX/RESY style
             WCS 1.0 behavior.  *but* this does break some possibilities! */
@@ -411,7 +423,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
          if(tokens==NULL || n < 2) {
            msSetError(MS_WCSERR, "Wrong number of arguments for GridOrigin", 
                       "msWCSParseRequest()");
-           return msWCSException(map, "InvalidParameterValue", "GridOffsets");
+           return msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                                 params->version );
          }
          params->originx = atof(tokens[0]);
          params->originy = atof(tokens[1]);
@@ -580,7 +593,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
 
    /* we need this server's onlineresource for the request section */
   if((script_url=msOWSGetOnlineResource(map, "CO", "onlineresource", req)) == NULL || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
-    return msWCSException(map, NULL, NULL);
+      return msWCSException(map, NULL, NULL, params->version );
   }
 
   /* start the Capabilty section, only need the full start tag if this is the only section requested */
@@ -732,11 +745,13 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
         i = msOWSNegotiateUpdateSequence(params->updatesequence, updatesequence);
         if (i == 0) { // current
             msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWCSGetCapabilities()", params->updatesequence, updatesequence);
-            return msWCSException(map, "CurrentUpdateSequence", "updatesequence");
+            return msWCSException(map, "CurrentUpdateSequence", 
+                                  "updatesequence", params->version );
         }
         if (i > 0) { // invalid
             msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWCSGetCapabilities()", params->updatesequence, updatesequence);
-            return msWCSException(map, "InvalidUpdateSequence", "updatesequence");
+            return msWCSException(map, "InvalidUpdateSequence", 
+                                  "updatesequence", params->version );
         }
     }
 
@@ -750,7 +765,8 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
       msSetError( MS_WCSERR,
         "Invalid SECTION parameter \"%s\"",
         "msWCSGetCapabilities()", params->section);
-      return msWCSException(map, "InvalidParameterValue", "section");
+      return msWCSException(map, "InvalidParameterValue", "section", 
+                            params->version );
   }
 
   else {
@@ -1088,7 +1104,8 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
         msSetError( MS_WCSERR,
                 "COVERAGE %s cannot be opened / does not exist",
                 "msWCSDescribeCoverage()", params->coverages[j]);
-        return msWCSException(map, "CoverageNotDefined", "coverage");
+        return msWCSException(map, "CoverageNotDefined", "coverage",
+                              params->version );
       }
     }
   }
@@ -1151,14 +1168,14 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
        
       if(msWCSValidateRangeSetParam(&(lp->metadata), tokens[i], "COM", value) != MS_SUCCESS) {
         msSetError( MS_WCSERR, "Error specifying \"%s\" parameter value(s).", "msWCSGetCoverage()", tokens[i]);
-        return msWCSException(map, NULL, NULL);
+        return msWCSException(map, NULL, NULL, params->version );
       }
        
       /* xxxxx_rangeitem tells us how to subset */
       snprintf(tag, 100, "%s_rangeitem", tokens[i]);
       if((rangeitem = msOWSLookupMetadata(&(lp->metadata), "COM", tag)) == NULL) {
         msSetError( MS_WCSERR, "Missing required metadata element \"%s\", unable to process %s=%s.", "msWCSGetCoverage()", tag, tokens[i], value);
-        return msWCSException(map, NULL, NULL);
+        return msWCSException(map, NULL, NULL, params->version);
       }
          
       if(strcasecmp(rangeitem, "_bands") == 0) { /* special case, subset bands */
@@ -1166,14 +1183,14 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
            
         if(!*p_bandlist) {
           msSetError( MS_WCSERR, "Error specifying \"%s\" paramter value(s).", "msWCSGetCoverage()", tokens[i]);
-          return msWCSException(map, NULL, NULL);
+          return msWCSException(map, NULL, NULL, params->version );
         }          
       } else if(strcasecmp(rangeitem, "_pixels") == 0) { /* special case, subset pixels */
         msSetError( MS_WCSERR, "Arbitrary range sets based on pixel values are not yet supported.", "msWCSGetCoverage()" );
-        return msWCSException(map, NULL, NULL);
+        return msWCSException(map, NULL, NULL, params->version);
       } else {
         msSetError( MS_WCSERR, "Arbitrary range sets based on tile (i.e. image) attributes are not yet supported.", "msWCSGetCoverage()" );
-        return msWCSException(map, NULL, NULL);
+        return msWCSException(map, NULL, NULL, params->version );
       }
     }
        
@@ -1205,7 +1222,7 @@ static int msWCSGetCoverage_ImageCRSSetup(
     char *layer_proj = msGetProjectionString( &(layer->projection) );
 
     if (msLoadProjectionString(&(map->projection), layer_proj) != 0)
-        return msWCSException( map, NULL, NULL);
+        return msWCSException( map, NULL, NULL, params->version );
 
     free( layer_proj );
     layer_proj = NULL;
@@ -1275,14 +1292,15 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* make sure all required parameters are available (at least the easy ones) */
   if(!params->crs) {
     msSetError( MS_WCSERR, "Required parameter CRS was not supplied.", "msWCSGetCoverage()");
-    return msWCSException(map, "MissingParameterValue", "crs");
+    return msWCSException(map, "MissingParameterValue", "crs", params->version);
   }
 
   if( params->coverages == NULL || params->coverages[0] == NULL ) {
     msSetError( MS_WCSERR, 
                 "Required parameter COVERAGE was not supplied.", 
                 "msWCSGetCoverage()");
-    return msWCSException(map, "MissingParameterValue", "coverage");
+    return msWCSException(map, "MissingParameterValue", "coverage", 
+                          params->version);
   }
 
   /* For WCS 1.1, we need to normalize the axis order of the BBOX and
@@ -1323,7 +1341,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
 
   if(lp == NULL) {
     msSetError( MS_WCSERR, "COVERAGE=%s not found, not in supported layer list.", "msWCSGetCoverage()", params->coverages[0] );
-    return msWCSException(map, "InvalidParameterValue", "coverage");
+    return msWCSException(map, "InvalidParameterValue", "coverage", 
+                          params->version);
   }
 
   /* make sure the layer is on */
@@ -1347,7 +1366,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     if (strncasecmp(crs_to_use, "EPSG:", 5) == 0
         || strncasecmp(crs_to_use,"urn:ogc:def:crs:",16) == 0 ) {
       if (msLoadProjectionString(&(map->projection), (char *) crs_to_use) != 0)
-        return msWCSException( map, NULL, NULL);
+          return msWCSException( map, NULL, NULL,params->version);
     } else if( strcasecmp(crs_to_use,"imageCRS") == 0 ) {
         /* use layer native CRS, and rework bounding box accordingly */
         if( msWCSGetCoverage_ImageCRSSetup( map, request, params, &cm, lp )
@@ -1355,7 +1374,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
             return MS_FAILURE;
     } else {  /* should we support WMS style AUTO: projections? (not for now) */
       msSetError(MS_WCSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
-      return msWCSException(map, "InvalidParameterValue", "srs");
+      return msWCSException(map, "InvalidParameterValue", "srs",params->version);
     }
 
     iUnits = GetMapserverUnitUsingProj(&(map->projection));
@@ -1373,33 +1392,37 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     /* check format of TIME parameter */
     if(strchr(params->time, ',')) {
       msSetError( MS_WCSERR, "Temporal lists are not supported, only individual values.", "msWCSGetCoverage()" );
-      return msWCSException(map, "InvalidParameterValue", "time");
+      return msWCSException(map, "InvalidParameterValue", "time",
+                            params->version);
     }
     if(strchr(params->time, '/')) {
       msSetError( MS_WCSERR, "Temporal ranges are not supported, only individual values.", "msWCSGetCoverage()" );
-      return msWCSException(map, "InvalidParameterValue", "time");
+      return msWCSException(map, "InvalidParameterValue", "time",
+                            params->version);
     }
       
     /* TODO: will need to expand this check if a time period is supported */
     value = msOWSLookupMetadata(&(lp->metadata), "COM", "timeposition");
     if(!value) {
       msSetError( MS_WCSERR, "The coverage does not support temporal subsetting.", "msWCSGetCoverage()" );
-      return msWCSException(map, "InvalidParameterValue", "time");
+      return msWCSException(map, "InvalidParameterValue", "time", 
+                            params->version );
     }
     if(!strstr(value, params->time)) { /* this is likely too simple a test */
       msSetError( MS_WCSERR, "The coverage does not have a time position of %s.", "msWCSGetCoverage()", params->time );
-      return msWCSException(map, "InvalidParameterValue", "time");
+      return msWCSException(map, "InvalidParameterValue", "time",
+                            params->version);
     }
       
     /* make sure layer is tiled appropriately */
     if(!lp->tileindex) {
       msSetError( MS_WCSERR, "Underlying layer is not tiled, unable to do temporal subsetting.", "msWCSGetCoverage()" );
-      return msWCSException(map, NULL, NULL);
+      return msWCSException(map, NULL, NULL, params->version);
     }
     tli = msGetLayerIndex(map, lp->tileindex);
     if(tli == -1) {
       msSetError( MS_WCSERR, "Underlying layer does not use appropriate tiling mechanism.", "msWCSGetCoverage()" );
-      return msWCSException(map, NULL, NULL);
+      return msWCSException(map, NULL, NULL, params->version);
     }
 
     tlp = (GET_LAYER(map, tli));
@@ -1408,7 +1431,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     value = msOWSLookupMetadata(&(lp->metadata), "COM", "timeitem");
     if(!tlp->filteritem && !value) {
       msSetError( MS_WCSERR, "Not enough information available to filter.", "msWCSGetCoverage()" );
-      return msWCSException(map, NULL, NULL);
+      return msWCSException(map, NULL, NULL, params->version);
     }
       
     /* override filteritem if specified in metadata */
@@ -1507,7 +1530,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* are we still underspecified?  */
   if( params->width == 0 || params->height == 0 || params->resx == 0.0 || params->resy == 0.0 ) {
     msSetError( MS_WCSERR, "A non-zero RESX/RESY or WIDTH/HEIGHT is required but neither was provided.", "msWCSGetCoverage()" );
-    return msWCSException(map, "MissingParameterValue", "width/height/resx/resy");
+    return msWCSException(map, "MissingParameterValue", "width/height/resx/resy", params->version);
   }
 
   map->cellsize = params->resx;
@@ -1534,7 +1557,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
                       "INTERPOLATION=%s specifies an unsupported interpolation method.",
                       "msWCSGetCoverage()",
                       params->interpolation );
-          return msWCSException(map, "InvalidParameterValue", "interpolation");
+          return msWCSException(map, "InvalidParameterValue", "interpolation", params->version);
       }
   }
    
@@ -1566,11 +1589,12 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* check and make sure there is a format, and that it's valid (TODO: make sure in the layer metadata) */
   if(!params->format) {
     msSetError( MS_WCSERR,  "Missing required FORMAT parameter.", "msWCSGetCoverage()" );
-    return msWCSException(map, "MissingParameterValue", "format");
+    return msWCSException(map, "MissingParameterValue", "format", params->version);
   }
   if(msGetOutputFormatIndex(map,params->format) == -1) {
     msSetError( MS_WCSERR,  "Unrecognized value for the FORMAT parameter.", "msWCSGetCoverage()" );
-    return msWCSException(map, "InvalidParameterValue", "format");
+    return msWCSException(map, "InvalidParameterValue", "format", 
+                          params->version );
   }
 
   /* create a temporary outputformat (we likely will need to tweak parts) */
@@ -1591,7 +1615,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* create the image object  */
   if(!map->outputformat) {
     msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
-    return msWCSException(map, NULL, NULL);
+    return msWCSException(map, NULL, NULL, params->version );
   } else if( MS_RENDERER_GD(map->outputformat) ) {
     image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
     if( image != NULL ) msImageInitGD( image, &map->imagecolor );
@@ -1604,16 +1628,16 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map);
   } else {
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
-    return msWCSException(map, NULL, NULL);
+    return msWCSException(map, NULL, NULL, params->version );
   }
 
   if( image == NULL )
-    return msWCSException(map, NULL, NULL);
+      return msWCSException(map, NULL, NULL, params->version );
 
   /* Actually produce the "grid". */
   status = msDrawRasterLayerLow( map, lp, image );
   if( status != MS_SUCCESS ) {
-    return msWCSException(map, NULL, NULL);
+      return msWCSException(map, NULL, NULL, params->version );
   }
 
 
@@ -1634,7 +1658,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
           /* unfortunately, the image content type will have already been sent
              but that is hard for us to avoid.  The main error that could happen
              here is a misconfigured tmp directory or running out of space. */
-          return msWCSException(map, NULL, NULL);
+          return msWCSException(map, NULL, NULL, params->version );
       }
   }
       
@@ -1690,7 +1714,8 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   /* check for existence of REQUEST parameter */
   if (!params->request) {
     msSetError(MS_WCSERR, "Missing REQUEST parameter", "msWCSDispatch()");
-    msWCSException(map, "MissingParameterValue", "request");
+    msWCSException(map, "MissingParameterValue", "request", 
+                   params->version );
     msWCSFreeParams(params); /* clean up */
     free(params);
     params = NULL;
@@ -1704,7 +1729,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
      (strcasecmp(params->request, "GetCoverage") == 0)) &&
      (!params->version)) {
     msSetError(MS_WCSERR, "Missing VERSION parameter", "msWCSDispatch()");
-    msWCSException(map, "MissingParameterValue", "version");
+    msWCSException(map, "MissingParameterValue", "version", params->version);
     msWCSFreeParams(params); /* clean up */
     free(params);
     params = NULL;
@@ -1723,7 +1748,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
      && strcmp(params->version, "1.1.1") != 0)
      && strcmp(params->request, "GetCapabilities") != 0) {
     msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.", "msWCSDispatch()", params->version);
-    msWCSException(map, "InvalidParameterValue", "version");
+    msWCSException(map, "InvalidParameterValue", "version", params->version);
   
     msWCSFreeParams(params); /* clean up */
     free(params);
@@ -1743,7 +1768,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
     return msWCSGetCoverage(map, request, params);
   else {
     msSetError(MS_WCSERR, "Invalid REQUEST parameter \"%s\"", "msWCSDispatch()", params->request);
-    msWCSException(map, "InvalidParameterValue", "request");
+    msWCSException(map, "InvalidParameterValue", "request", params->version);
     msWCSFreeParams(params); /* clean up */
     free(params);
     params = NULL;
