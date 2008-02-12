@@ -3,8 +3,9 @@
  * Project:  MapServer
  * Purpose:  msDrawRasterLayer(): generic raster layer drawing, including
  *           implementation of non-GDAL raster layer renderers.
- * Author:   Steve Lime 
- *           Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *           Pete Olson (LMIC)            
+ *           Steve Lime
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
