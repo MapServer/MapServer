@@ -12,9 +12,11 @@ For a complete change history, please see the Subversion log comments.
 Version 5.0.3 (2008-01-30)
 --------------------------
 
+- mapwms.c: make GetLegendGraphic listen to TRANSPARENT in OUTPUTFORMAT (#2494)
+
 - fix offsets on pixmap marker symbols (#2493)
 
-- fix segfault in mapserv if STYLE is not definied (#2347)
+- fix segfault in mapserv if STYLE is not defined (#2347)
 
 Version 5.0.2 (2008-01-28)
 --------------------------

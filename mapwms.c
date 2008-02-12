@@ -2570,7 +2570,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
                     pszFormat);
          return msWMSException(map, nVersion, "InvalidFormat");
      }
-     msApplyOutputFormat(&(map->outputformat), psFormat, 0,
+     msApplyOutputFormat(&(map->outputformat), psFormat, MS_NOOVERRIDE,
                           MS_NOOVERRIDE, MS_NOOVERRIDE );
 
      if ( psRule == NULL )
