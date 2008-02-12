@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- mapwcs.c: test for either resx/resy OR width/height (#2505)
+
 - mapwcs.c: make GetCoverage demand one of TIME or BBOX (#2504)
 
 - mapwms.c: make GetLegendGraphic listen to TRANSPARENT in OUTPUTFORMAT (#2494)

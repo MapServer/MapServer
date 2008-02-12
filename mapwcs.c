@@ -1546,7 +1546,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   }
 
   /* are we still underspecified?  */
-  if( params->width == 0 || params->height == 0 || params->resx == 0.0 || params->resy == 0.0 ) {
+  if( (params->width == 0 || params->height == 0) && (params->resx == 0.0 || params->resy == 0.0 )) {
     msSetError( MS_WCSERR, "A non-zero RESX/RESY or WIDTH/HEIGHT is required but neither was provided.", "msWCSGetCoverage()" );
     return msWCSException(map, "MissingParameterValue", "width/height/resx/resy", params->version);
   }
