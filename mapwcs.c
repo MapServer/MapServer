@@ -624,7 +624,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   msIO_printf("  </Exception>\n");
 
   /* describe any vendor specific capabilities */
-   msIO_printf("  <VendorSpecificCapabilities />\n"); /* none yet */
+  // msIO_printf("  <VendorSpecificCapabilities />\n"); /* none yet */
 
   /* done */
   msIO_printf("</Capability>\n");
