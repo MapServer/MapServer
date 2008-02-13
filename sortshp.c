@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  MapServer
- * Purpose:  Commandline utility to ... sort shapes?  Not sure what its for.
+ * Purpose:  Command line utility to sort a shapefile based on a single attribute.
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************
