@@ -1090,8 +1090,10 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 
 static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 {
-  int i,j;
+  int i = 0,j = 0, k = 0;
   const char *updatesequence=NULL;
+  char **coverages=NULL;
+  int numcoverages=0;
  
 /* -------------------------------------------------------------------- */
 /*      1.1.x is sufficiently different we have a whole case for        */
@@ -1105,19 +1107,21 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 /* -------------------------------------------------------------------- */
 
   if(params->coverages) { /* use the list */
-    for( j = 0; params->coverages[j]; j++ ) {
-      i = msGetLayerIndex(map, params->coverages[j]);
-      if(i == -1) {
-        msSetError( MS_WCSERR,
-                "COVERAGE %s cannot be opened / does not exist",
-                "msWCSDescribeCoverage()", params->coverages[j]);
-        return msWCSException(map, "CoverageNotDefined", "coverage",
+      for( j = 0; params->coverages[j]; j++ ) {
+          coverages = msStringSplit(params->coverages[j], ',', &numcoverages);
+          for(k=0;k<numcoverages;k++) {
+              i = msGetLayerIndex(map, coverages[k]);
+              if(i == -1) { // one coverage
+                  msSetError( MS_WCSERR,
+                      "COVERAGE %s cannot be opened / does not exist",
+                      "msWCSDescribeCoverage()", coverages[k]);
+                       return msWCSException(map, "CoverageNotDefined", "coverage",
                               params->version );
+              }
+          }
       }
-    }
   }
  
-
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
   if (!updatesequence)
     updatesequence = strdup("0");
@@ -1137,17 +1141,21 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
          "   xmlns:gml=\"http://www.opengis.net/gml\" \n" 
          "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
          "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/describeCoverage.xsd\">\n", params->version, updatesequence, msOWSGetSchemasLocation(map), params->version); 
-  
   if(params->coverages) { /* use the list */
     for( j = 0; params->coverages[j]; j++ ) {
-      i = msGetLayerIndex(map, params->coverages[j]);
-      msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
+      coverages = msStringSplit(params->coverages[j], ',', &numcoverages);
+      for(k=0;k<numcoverages;k++) {
+        i = msGetLayerIndex(map, coverages[k]);
+        msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
+      }
     }
   } else { /* return all layers */
     for(i=0; i<map->numlayers; i++)
       msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
   }
-  
+
+ 
+ 
   /* done */
   msIO_printf("</CoverageDescription>\n");
   
