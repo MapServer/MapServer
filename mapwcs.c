@@ -1318,7 +1318,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   if(!params->time && !params->bbox.minx && !params->bbox.miny
      && !params->bbox.maxx && !params->bbox.maxy) {
     msSetError(MS_WCSERR, "One of BBOX or TIME is required", "msWCSGetCoverage()");
-    return msWCSException(map, "MissingParameterValue", "coverage", params->version);
+    return msWCSException(map, "MissingParameterValue", "bbox/time", params->version);
   }
 
   if( params->coverages == NULL || params->coverages[0] == NULL ) {
