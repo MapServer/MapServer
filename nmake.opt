@@ -424,6 +424,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # libs and includes must be set to be able to build the plugin.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+#MSSQL2008 = YES
 #ODBC_DIR="C:\progra~1\micros~1.net\vc7\platformsdk"
 #ODBC_LIBS=$(ODBC_DIR)\lib\odbc32.lib $(ODBC_DIR)\lib\odbccp32.lib $(ODBC_DIR)\lib\user32.lib
 #ODBC_INC=-I"C:\progra~1\micros~1.net\vc7\platformsdk\include"
