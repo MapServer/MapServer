@@ -2651,7 +2651,7 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     doc = xmlParseDoc((xmlChar *)request->postrequest);
     if (doc == NULL ) {
       msSetError(MS_SOSERR, "Invalid POST request.  XML is not well-formed", "msSOSParseRequest()");
-      return msSOSException(map, "request", "NoApplicableCode");
+      return msSOSException(map, "request", "InvalidRequest");
     }
 
     /* load context */
