@@ -62,7 +62,7 @@ typedef struct {
   xmlNodePtr psResultNode;
 } SOSProcedureNode;
 
-void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams);
+int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sosparams);
 void msSOSFreeParamsObj(sosParamsObj *sosparams);
 
 /*
@@ -2530,7 +2530,8 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
   int returnvalue = MS_DONE;
   sosParamsObj *paramsObj = (sosParamsObj *)calloc(1, sizeof(sosParamsObj));
 
-  msSOSParseRequest(req, paramsObj);
+  if (msSOSParseRequest(map, req, paramsObj) == MS_FAILURE)
+    return MS_FAILURE;
 
   /* SERVICE must be specified and be SOS */
   if (paramsObj->pszService && strcasecmp(paramsObj->pszService, "SOS") == 0) { /* this is an SOS request */
@@ -2597,7 +2598,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
 
 #if defined(USE_SOS_SVR) && defined(USE_LIBXML2)
 
-void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
+int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sosparams) {
   int i;
   xmlDocPtr doc;
   xmlXPathContextPtr context;
@@ -2649,18 +2650,21 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     /* load document */
     doc = xmlParseDoc((xmlChar *)request->postrequest);
     if (doc == NULL ) {
-      return;
+      msSetError(MS_SOSERR, "Invalid POST request.  XML is not well-formed", "msSOSParseRequest()");
+      return msSOSException(map, "request", "NoApplicableCode");
     }
 
     /* load context */
     context = xmlXPathNewContext(doc);
     if (context == NULL) {
-      return;
+      msSetError(MS_SOSERR, "Could not create context (xmlXPathNewContext)", "msSOSParseRequest()");
+      return msSOSException(map, "request", "NoApplicableCode");
     }
 
     /* register namespaces */
     if(xmlXPathRegisterNs(context, (xmlChar *)"sos", (xmlChar *)"http://www.opengis.net/sos/1.0") != 0 || xmlXPathRegisterNs(context, (xmlChar *)"ows", (xmlChar *)"http://www.opengis.net/ows/1.1") != 0) {
-      return;
+      msSetError(MS_SOSERR, "Could not register namespaces (xmlXPathRegisterNs)", "msSOSParseRequest()");
+      return msSOSException(map, "request", "NoApplicableCode");
     }
 
     /* check for service */
@@ -2795,7 +2799,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
     xmlFreeDoc(doc);
     xmlCleanupParser();
   }
-  return;
+  return MS_SUCCESS;
 }
 
 void msSOSFreeParamsObj(sosParamsObj *sosparams) {

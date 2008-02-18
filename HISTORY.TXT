@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- mapogcsos.c: handle invalid POST requests (#2521)
+
 - mapogcsos.c: handle ACCEPTVERSIONS parameter (#2515)
 
 - mapwcs.c/mapwcs11.c: s/neighbour/neighbor/g (#2518)
