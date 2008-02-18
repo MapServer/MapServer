@@ -741,7 +741,7 @@ msWCSDescribeCoverage_CoverageDescription11(
             xmlNewChild( psField, NULL, BAD_CAST "InterpolationMethods", NULL );
 
         xmlNewChild( psInterpMethods, NULL, 
-                     BAD_CAST "DefaultMethod", BAD_CAST "nearest neighbour" );
+                     BAD_CAST "DefaultMethod", BAD_CAST "nearest neighbor" );
         xmlNewChild( psInterpMethods, NULL, BAD_CAST "OtherMethod", BAD_CAST "bilinear" );
 
 /* -------------------------------------------------------------------- */

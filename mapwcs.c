@@ -1071,7 +1071,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   }
   msIO_printf("    </supportedFormats>\n");
   
-  msIO_printf("    <supportedInterpolations default=\"nearest neighbour\">\n");
+  msIO_printf("    <supportedInterpolations default=\"nearest neighbor\">\n");
   msIO_printf("      <interpolationMethod>nearest neighbor</interpolationMethod>\n" );
   msIO_printf("      <interpolationMethod>bilinear</interpolationMethod>\n" );
 /*  msIO_printf("      <interpolationMethod>bicubic</interpolationMethod>\n" ); */
