@@ -1193,6 +1193,42 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
 
     int ows_version = OWS_1_1_0;
 
+    int sosSupportedVersions[] = {OWS_1_0_0};
+    int sosNumSupportedVersions = 1;
+
+    // acceptversions: do OWS Common style of version negotiation
+    if (sosparams->pszAcceptVersions) {
+      char **tokens;
+      int i, j, k=-1;
+
+      tokens = msStringSplit(sosparams->pszAcceptVersions, ',', &j);
+
+      for (i=0; i<j;i++) {
+        int iVersion = 0;
+
+        iVersion = msOWSParseVersionString(tokens[i]);
+
+        if (iVersion == -1) {
+          msSetError(MS_SOSERR, "Invalid version format.", "msSOSGetCapabilities()", tokens[i]);
+          msFreeCharArray(tokens, j);
+          return msSOSException(map, "acceptversions", "VersionNegotiationFailed");
+        }
+
+        /* negotiate version */
+        k = msOWSCommonNegotiateVersion(iVersion, sosSupportedVersions, sosNumSupportedVersions);
+
+        if (k != -1)
+          break;
+      }
+      msFreeCharArray(tokens, j);
+
+      if(k == -1){
+          msSetError(MS_SOSERR, "ACCEPTVERSIONS list (%s) does not match supported versions (%s)", "msSOSGetCapabilities()", sosparams->pszAcceptVersions, pszSOSVersion);
+          return msSOSException(map, "acceptversions", "VersionNegotiationFailed");
+      }
+    }
+
+    // updateSequence
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "SO", "updatesequence");
 
     if (sosparams->pszUpdateSequence != NULL) {
@@ -2574,7 +2610,7 @@ void msSOSParseRequest(cgiRequestObj *request, sosParamsObj *sosparams) {
         sosparams->pszService = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "VERSION") == 0)
         sosparams->pszVersion = strdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "ACCEPT_VERSIONS") == 0)
+      else if (strcasecmp(request->ParamNames[i], "ACCEPTVERSIONS") == 0)
         sosparams->pszAcceptVersions = strdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
         sosparams->pszRequest = strdup(request->ParamValues[i]);
