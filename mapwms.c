@@ -921,7 +921,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       return msWMSException(map, nVersion, "MissingParameterValue");
     }  
 
-    if (formatfound == 0)
+    if (formatfound == 0 && (strcasecmp(request, "GetMap") == 0 || strcasecmp(request, "map") == 0))
     {
       msSetError(MS_WMSERR, "Missing required parameter FORMAT", "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, "MissingParameterValue");
