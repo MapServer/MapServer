@@ -528,6 +528,7 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
     psNode = xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST ExceptionText);
   }
 
+  free(ows_version_string);
   free(xsi_schemaLocation);
   return psRootNode;
 }

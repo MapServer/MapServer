@@ -1739,6 +1739,8 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
     {
         if (wfsparams->pszVersion)
           free(wfsparams->pszVersion);
+        if (wfsparams->pszUpdateSequence)
+          free(wfsparams->pszUpdateSequence);
         if (wfsparams->pszRequest)
           free(wfsparams->pszRequest);
         if (wfsparams->pszService)
@@ -1749,6 +1751,8 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
           free(wfsparams->pszFilter);
         if (wfsparams->pszFeatureId)
           free(wfsparams->pszFeatureId);
+        if (wfsparams->pszOutputFormat)
+          free(wfsparams->pszOutputFormat);
     }
 }
 

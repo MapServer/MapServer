@@ -176,6 +176,7 @@ void msWCSFreeParams(wcsParamsObj *params)
   if(params) {
     /* TODO */
     if(params->version) free(params->version);
+    if(params->updatesequence) free(params->updatesequence);
     if(params->request) free(params->request);
     if(params->service) free(params->service);
     if(params->section) free(params->section);
