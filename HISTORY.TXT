@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Version 5.0.3 (2008-01-30)
 --------------------------
 
+- mapwms.c: relax FORMAT parameter restrictions for GetFeatureInfo (#2517)
+
 - mapwms.c: make GetLegendGraphic listen to TRANSPARENT in OUTPUTFORMAT (#2494)
 
 - fix offsets on pixmap marker symbols (#2493)
