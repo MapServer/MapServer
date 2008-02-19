@@ -78,7 +78,8 @@ extern "C" {
 #define MS_SOSERR 37
 #define MS_NULLPARENTERR 38
 #define MS_AGGERR 39
-#define MS_NUMERRORCODES 40
+#define MS_OWSERR 40
+#define MS_NUMERRORCODES 41
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64

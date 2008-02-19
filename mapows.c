@@ -393,8 +393,8 @@ int msOWSParseVersionString(const char *pszVersion)
         digits = msStringSplit(pszVersion, '.', &numDigits);
         if (digits == NULL || numDigits < 2 || numDigits > 3)
         {
-            msSetError(MS_WMSERR, 
-                       "Invalid version (%s). OWS version must be in the "
+            msSetError(MS_OWSERR, 
+                       "Invalid version (%s). Version must be in the "
                        "format 'x.y' or 'x.y.z'",
                        "msOWSParseVersionString()", pszVersion);
             if (digits)

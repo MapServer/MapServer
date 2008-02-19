@@ -81,7 +81,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"GML encoding error.",
             "SOS server error.",
 						"NULL parent pointer error.",
-            "AGG library error."
+            "AGG library error.",
+            "OWS error."
 };
 
 #ifndef USE_THREAD
