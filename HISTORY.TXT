@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- Fixed gdImagePtr gdPImg memory leak in msSaveImageBufferGD() (#2525)
+
 - mapogcsos.c: handle invalid POST requests (#2521)
 
 - mapogcsos.c: handle ACCEPTVERSIONS parameter (#2515)
