@@ -3686,6 +3686,7 @@ unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr, outputFormatOb
       gdPImg = msImageCreateWithPaletteGD(img, palette, gdImageSX(img), gdImageSY(img));
       msImageCopyForcePaletteGD(img, gdPImg, method);
       imgbytes = gdImagePngPtr(gdPImg, size_ptr);
+      gdImageDestroy(gdPImg);
     }
     else if ( force_pc256 ) {
       gdImagePtr gdPImg;
@@ -3704,6 +3705,7 @@ unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr, outputFormatOb
       for( i = 0; i < gdPImg->colorsTotal; i++ )
         gdPImg->open[i] = 0;
       imgbytes = gdImagePngPtr(gdPImg, size_ptr);
+      gdImageDestroy(gdPImg);
     }
     else
       imgbytes = gdImagePngPtr(img, size_ptr);
