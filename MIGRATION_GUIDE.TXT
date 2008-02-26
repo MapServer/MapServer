@@ -242,7 +242,7 @@ OGC Web Feature Service (WFS)
 ----------------------------------------------------
 OGC Sensor Observation Service (SOS)
 ----------------------------------------------------
-The format of MAP/LAYER/WEB/METADATA/sos_describesensor_url
+- The format of MAP/LAYER/METADATA/sos_describesensor_url
 has been changed such that users now must format the value
 per:
 
@@ -250,6 +250,14 @@ per:
 
 This change has been made to clarify and unify the meaning of procedure
 within SOS Server's context of a DescribeSensor request.
+
+- Metadata associated with an observedProperty element's
+swe:component value have been changed to support a URN
+scheme, instead of the previous "sos_componenturl" metadata.  The
+"sos_componenturl" metadata is no longer supported.  Instead,
+"sos_observedproperty_authority" and "sos_observedproperty_version"
+should be used to format the swe:component value.
+
 
 ----------------------------------------------------
 Build Changes

@@ -310,10 +310,12 @@ xmlNodePtr msSOSAddTimeNode(xmlNsPtr psNs, xmlNsPtr psNsGml, char *pszStart, cha
 
 void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psParent, layerObj *lp,  xmlNsPtr psNsGml)
 {
-    const char *pszValue = NULL, *pszFullName = NULL;
+    const char *pszValue = NULL;
+    char *pszTmpVal = NULL, *pszFullName = NULL;
     xmlNodePtr psCompNode, psNode;
     int i, j=0;
     char szTmp[256];
+    const char *pszComponentBase = "urn:ogc:def:property:";
 
     if (psParent && lp)
     {
@@ -331,32 +333,54 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
           psNode = xmlNewChild(psCompNode, psNsGml, 
                                  BAD_CAST "name", BAD_CAST pszValue);
 
-        /* add componenets */
-        /*  Components are exposed 
-            using the metadata sos_%s_componenturl "url value" where 
-            the %s is the name of the  attribute. */
-        
+        /* add components */
+ 
         /*assuming that the layer is opened and msLayerGetItems called*/ 
         for(i=0; i<lp->numitems; i++) 
         {
-            sprintf(szTmp, "%s_componenturl", lp->items[i]);
-            pszValue = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
+            pszValue = msOWSLookupMetadata(&(lp->metadata), "S", "observedproperty_authority");
+
             if (pszValue)
-            {
-                psNode = xmlNewChild(psCompNode, psNsSwe,
-                                     BAD_CAST "component", NULL);
+              pszTmpVal = strdup(pszValue);
+            else
+              pszTmpVal = strdup("OGC-SWE");
 
-                /* check if there is an alias/full name used*/
-                sprintf(szTmp, "%s_alias", lp->items[i]);
-                pszFullName = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
-                //if (pszFullName)
-                //  xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST pszFullName);
-                //else
-                //  xmlNewNsProp(psNode, NULL, BAD_CAST "name", BAD_CAST lp->items[i]);
+            pszFullName = strdup(pszComponentBase);
 
-                xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszValue);
-                j++;
-            }
+            pszFullName = msStringConcatenate(pszFullName, pszTmpVal);
+
+            free(pszTmpVal);
+
+            pszFullName = msStringConcatenate(pszFullName, ":");
+
+            pszValue = msOWSLookupMetadata(&(lp->metadata), "S", "observedproperty_version");
+
+            if (pszValue)
+              pszTmpVal = strdup(pszValue);
+            else 
+              pszTmpVal = strdup("1");
+
+            pszFullName = msStringConcatenate(pszFullName, pszTmpVal);
+
+            free(pszTmpVal);
+
+            pszFullName = msStringConcatenate(pszFullName, ":");
+
+            sprintf(szTmp, "%s_alias", lp->items[i]);
+            pszValue = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
+
+            if (pszValue)
+              pszTmpVal = strdup(pszValue);
+            else
+              pszTmpVal = strdup(lp->items[i]);
+
+            pszFullName = msStringConcatenate(pszFullName, pszTmpVal);
+
+            psNode = xmlNewChild(psCompNode, psNsSwe, BAD_CAST "component", NULL);
+
+            xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszFullName);
+            free(pszFullName);
+            j++;
         }
         xmlNewNsProp(psCompNode, NULL, BAD_CAST "dimension", BAD_CAST msIntToString(j));
     }	
@@ -583,7 +607,7 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
         /*assuming that the layer is open */       
         for(i=0; i<lp->numitems; i++) 
         {
-            sprintf(szTmp, "%s_componenturl", lp->items[i]);
+            sprintf(szTmp, "%s_alias", lp->items[i]);
             pszValue = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
             if (pszValue)
             {
@@ -599,7 +623,6 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
 
                 psNode = xmlNewChild(psNode, NULL, BAD_CAST "Quantity", NULL);
 
-                /*TODO : are definition and uom manadtory?*/
                 /*get definition and uom*/
                 sprintf(szTmp, "%s_definition", lp->items[i]);
                 pszDefinition =  msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
@@ -828,7 +851,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         msSOSAddGeometryNode(psNsGml, psLayerNode, lp, &sShape, pszEpsg);
 
         /*attributes */
-        /* TODO only output attributes where there is a sos_%s_componenturl (to be discussed)*/
+        /* TODO only output attributes where there is a sos_%s_alias (to be discussed)*/
         /* the first layer is the one that has to have all the metadata defined */
         lpfirst = msSOSGetFirstLayerForOffering(map, 
                                                 msOWSLookupMetadata(&(lp->metadata), "S", 
@@ -841,7 +864,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         {
             for(i=0; i<lpfirst->numitems; i++) 
             {
-                sprintf(szTmp, "%s_componenturl", lpfirst->items[i]);
+                sprintf(szTmp, "%s_alias", lpfirst->items[i]);
                 pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
                 if (pszValue)
                 {
@@ -949,7 +972,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
                                      "encoding_tokenSeparator");
         for(i=0; i<lpfirst->numitems; i++) 
         {
-            sprintf(szTmp, "%s_componenturl", lpfirst->items[i]);
+            sprintf(szTmp, "%s_alias", lpfirst->items[i]);
             pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
             if (pszValue)
             {
@@ -993,7 +1016,7 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xml
     const char *value = NULL;
 
     /*always featch the first layer that has the same offering id and observered propery.
-     This allows to only define all the attributes and componenets on the first layer if the user
+     This allows to only define all the attributes and components on the first layer if the user
     wants to present several mapserver layers as the same offering.*/
     lpfirst = msSOSGetFirstLayerForOffering(map, 
                                             msOWSLookupMetadata(&(lp->metadata), "S", 
@@ -1603,9 +1626,8 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                  /*observed property */
                  /* observed property are equivalent to layers. We can group 
                     sevaral layers using the same sos_observedproperty_id. The 
-                    components are the attributes. Componenets are exposed 
-                    using the metadata sos_%s_componenturl "url value" where 
-                    the %s is the name of the  attribute.We need at least one.*/
+                    components are the attributes. Components are exposed 
+                    using the metadata sos_%s_aliasl */
                  
                  nProperties = 0;
                  papszProperties = 

@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- support URN scheme for components of observed property elements (#2522)
+
 - Fixed gdImagePtr gdPImg memory leak in msSaveImageBufferGD() (#2525)
 
 - mapogcsos.c: handle invalid POST requests (#2521)
