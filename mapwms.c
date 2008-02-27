@@ -2941,8 +2941,8 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
       return MS_DONE;  /* Not a WMS request */
 
   nVersion = msOWSParseVersionString(version);
-  if (nVersion == -1)
-    return msWMSException(map, OWS_1_1_1, NULL); /* Invalid format */
+  //if (nVersion == -1)
+  //  return msWMSException(map, OWS_1_1_1, NULL); /* Invalid format */
 
   /*
   ** GetCapbilities request needs the service parametr defined as WMS:
