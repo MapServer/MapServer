@@ -2441,9 +2441,9 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
     return msSOSException(map, "outputformat", "InvalidParameterValue");
   }
 
-  if (!sosparams->pszSensorId) {
-    msSetError(MS_SOSERR, "Missing mandatory parameter sensorid", "msSOSDescribeSensor()");
-    return msSOSException(map, "sensorid", "MissingParameterValue");
+  if (!sosparams->pszProcedure) {
+    msSetError(MS_SOSERR, "Missing mandatory parameter procedure", "msSOSDescribeSensor()");
+    return msSOSException(map, "procedure", "MissingParameterValue");
   }
 
   for (i=0; i<map->numlayers; i++) {
@@ -2456,7 +2456,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       int bFound = 0;
       tokens = msStringSplit(pszId, ' ', &n);
       for (k=0; k<n; k++) {
-        if (tokens[k] && strlen(tokens[k]) > 0 && strcasecmp(tokens[k], sosparams->pszSensorId) == 0) {
+        if (tokens[k] && strlen(tokens[k]) > 0 && strcasecmp(tokens[k], sosparams->pszProcedure) == 0) {
           bFound = 1; 
           msFreeCharArray(tokens, n);
           break;
@@ -2472,7 +2472,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
           tmpstr = (char *)malloc(sizeof(char)*strlen("procedure") + 3);
           sprintf(tmpstr,"%%%s%%", "procedure");
           if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
-            pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszSensorId);
+            pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszProcedure);
           msFree(tmpstr);
 
           pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
@@ -2512,7 +2512,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
             if(status != MS_SUCCESS) 
               continue;
 
-            if (sShape.values[iItemPosition] && strcasecmp(sShape.values[iItemPosition], sosparams->pszSensorId) == 0) {
+            if (sShape.values[iItemPosition] && strcasecmp(sShape.values[iItemPosition], sosparams->pszProcedure) == 0) {
               pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
               if (pszUrl) {   
                 pszTmp = strdup(pszUrl);
@@ -2522,7 +2522,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
                 tmpstr = (char *)malloc(sizeof(char)*strlen("procedure") + 3);
                 sprintf(tmpstr,"%%%s%%", "procedure");
                 if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
-                  pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszSensorId);
+                  pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszProcedure);
                 msFree(tmpstr);
 
                 pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
@@ -2541,8 +2541,8 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       }
     }
   }
-  msSetError(MS_SOSERR, "sensorid %s not found.", "msSOSDescribeSensor()", sosparams->pszSensorId);
-  return msSOSException(map, "sensorid", "InvalidParameterValue");
+  msSetError(MS_SOSERR, "procedure %s not found.", "msSOSDescribeSensor()", sosparams->pszProcedure);
+  return msSOSException(map, "procedure", "InvalidParameterValue");
 }
 
 #endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
@@ -2753,12 +2753,12 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
 
     xmlXPathFreeObject(psXPathTmp);
 
-    /* check for SensorId */
-    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeSensor/sos:SensorId");
+    /* check for Procedure */
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeSensor/sos:procedure");
     
     if (psXPathTmp) { 
       nodeset = psXPathTmp->nodesetval;
-      sosparams->pszSensorId = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+      sosparams->pszProcedure = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
     }
 
     xmlXPathFreeObject(psXPathTmp);
