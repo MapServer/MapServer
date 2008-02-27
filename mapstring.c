@@ -1113,6 +1113,9 @@ char *msGetEncodedString(const char *string, const char *encoding)
 
   return out;
 #else
+  if (*string == '\0' || (encoding && strcasecmp(encoding, "UTF-8")==0))
+      return strdup(string);    /* Nothing to do: string already in UTF-8 */
+
   msSetError(MS_MISCERR, "Not implemeted since Iconv is not enabled.", "msGetEncodedString()");
   return NULL;
 #endif
