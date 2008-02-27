@@ -1827,6 +1827,11 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     return msSOSException(map, "responseformat", "InvalidParameterValue");
   }
 
+  if (sosparams->pszResponseMode && strcasecmp(sosparams->pszResponseMode, "inline") != 0) {
+    msSetError(MS_SOSERR, "Invalid RESPONSEMODE parameter %s.  Allowable values are: \"inline\"", "msSOSGetObservation()", sosparams->pszResponseMode);
+    return msSOSException(map, "responsemode", "InvalidParameterValue");
+  }
+
   /*validate if offering exists*/
   for (i=0; i<map->numlayers; i++) {
     pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
@@ -2426,11 +2431,6 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
   int status;
   char *tmpstr = NULL, *pszTmp = NULL;
 
-  if (!sosparams->pszSensorId) {
-    msSetError(MS_SOSERR, "Missing mandatory parameter sensorid", "msSOSDescribeSensor()");
-    return msSOSException(map, "sensorid", "MissingParameterValue");
-  }
-
   if (!sosparams->pszOutputFormat) {
     msSetError(MS_SOSERR, "Missing mandatory parameter outputFormat.", "msSOSDescribeSensor()");
     return msSOSException(map, "outputformat", "MissingParameterValue");
@@ -2440,7 +2440,12 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
     msSetError(MS_SOSERR, "Invalid outputformat parameter %s.  Allowable values are: %s", "msSOSDescribeSensor()", sosparams->pszOutputFormat, pszSOSDescribeSensorMimeType);
     return msSOSException(map, "outputformat", "InvalidParameterValue");
   }
- 
+
+  if (!sosparams->pszSensorId) {
+    msSetError(MS_SOSERR, "Missing mandatory parameter sensorid", "msSOSDescribeSensor()");
+    return msSOSException(map, "sensorid", "MissingParameterValue");
+  }
+
   for (i=0; i<map->numlayers; i++) {
     lp = GET_LAYER(map, i);
     pszId = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
@@ -2804,6 +2809,16 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
       sosparams->pszResultModel = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for responseMode */
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:responseMode");
+
+    if (psXPathTmp) {
+      nodeset = psXPathTmp->nodesetval;
+      sosparams->pszResponseMode = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
     }
 
     xmlXPathFreeObject(psXPathTmp);
