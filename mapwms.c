@@ -2908,7 +2908,7 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
 int msWMSDispatch(mapObj *map, cgiRequestObj *req)
 {
 #ifdef USE_WMS_SVR
-  int i, status, nVersion=-1;
+  int i, status, nVersion=OWS_VERSION_NOTSET;
   const char *version=NULL, *request=NULL, *service=NULL, *format=NULL, *updatesequence=NULL;
 
   /*
@@ -2941,6 +2941,13 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
       return MS_DONE;  /* Not a WMS request */
 
   nVersion = msOWSParseVersionString(version);
+  if (nVersion == OWS_VERSION_BADFORMAT)
+  {
+       /* Invalid version format. msSetError() has been called by 
+        * msOWSParseVersionString() and we return the error as an exception 
+        */
+      return msWMSException(map, OWS_VERSION_NOTSET, NULL);
+  }
 
   /*
   ** GetCapbilities request needs the service parametr defined as WMS:
@@ -2949,7 +2956,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
   if (request && service == NULL && 
       (strcasecmp(request, "capabilities") == 0 ||
        strcasecmp(request, "GetCapabilities") == 0) &&
-      (nVersion >= OWS_1_0_7 || nVersion == -1))
+      (nVersion >= OWS_1_0_7 || nVersion == OWS_VERSION_NOTSET))
   {
       msSetError(MS_WMSERR, "Required SERVICE parameter missing.", "msWMSDispatch");
       return msWMSException(map, nVersion, "ServiceNotDefined");
@@ -2962,7 +2969,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
   if (request && (strcasecmp(request, "capabilities") == 0 ||
                   strcasecmp(request, "GetCapabilities") == 0) )
   {
-      if (nVersion == -1)
+      if (nVersion == OWS_VERSION_NOTSET)
           nVersion = OWS_1_1_1;/* VERSION is optional with getCapabilities only */
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
           return msWMSException(map, nVersion, NULL);
@@ -2980,7 +2987,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
       getcontext_enabled = msOWSLookupMetadata(&(map->web.metadata),
                                                "MO", "getcontext_enabled");
 
-      if (nVersion != -1)
+      if (nVersion != OWS_VERSION_NOTSET)
       {
           /* VERSION, if specified, is Map Context version, not WMS version */
           /* Pass it via wms_context_version metadata */
@@ -3033,16 +3040,16 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
   }
 
   /* If SERVICE, VERSION and REQUEST not included than this isn't a WMS req*/
-  if (service == NULL && nVersion == -1 && request==NULL)
+  if (service == NULL && nVersion == OWS_VERSION_NOTSET && request==NULL)
       return MS_DONE;  /* Not a WMS request */
 
   /* VERSION *and* REQUEST required by both getMap and getFeatureInfo */
-  if (nVersion == -1)
+  if (nVersion == OWS_VERSION_NOTSET)
   {
       msSetError(MS_WMSERR,
                  "Incomplete WMS request: VERSION parameter missing",
                  "msWMSDispatch()");
-      return msWMSException(map, nVersion, NULL);
+      return msWMSException(map, OWS_VERSION_NOTSET, NULL);
   }
 
   if (request==NULL)

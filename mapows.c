@@ -380,7 +380,8 @@ const char *msOWSGetLanguage(mapObj *map, const char *context)
 ** Parse a version string in the format "a.b.c" or "a.b" and return an
 ** integer in the format 0x0a0b0c suitable for regular integer comparisons.
 **
-** Returns -1 if version could not be parsed.
+** Returns one of OWS_VERSION_NOTSET or OWS_VERSION_BADFORMAT if version 
+** could not be parsed.
 */
 int msOWSParseVersionString(const char *pszVersion)
 {
@@ -399,7 +400,7 @@ int msOWSParseVersionString(const char *pszVersion)
                        "msOWSParseVersionString()", pszVersion);
             if (digits)
                 msFreeCharArray(digits, numDigits);
-            return -1;
+            return OWS_VERSION_BADFORMAT;
         }
 
         nVersion = atoi(digits[0])*0x010000;
@@ -412,7 +413,7 @@ int msOWSParseVersionString(const char *pszVersion)
         return nVersion;
     }
 
-    return -1;
+    return OWS_VERSION_NOTSET;
 }
 
 /* msOWSGetVersionString()

@@ -137,6 +137,8 @@ MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 #define OWS_1_1_0   0x010100
 #define OWS_1_1_1   0x010101
 #define OWS_VERSION_MAXLEN   20  /* Buffer size for msOWSGetVersionString() */
+#define OWS_VERSION_NOTSET    -1
+#define OWS_VERSION_BADFORMAT -2
 
 MS_DLL_EXPORT int msOWSParseVersionString(const char *pszVersion);
 MS_DLL_EXPORT const char *msOWSGetVersionString(int nVersion, char *pszBuffer);

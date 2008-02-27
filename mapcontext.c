@@ -1439,7 +1439,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
   char *pszStyle, *pszCurrent, *pszStyleItem, *pszSLDBody;
   char *pszEncodedVal;
-  int i, nValue, nVersion=-1;
+  int i, nValue, nVersion=OWS_VERSION_NOTSET;
   /* Dimension element */
   char *pszDimension;
   const char *pszDimUserValue=NULL, *pszDimUnits=NULL, *pszDimDefault=NULL;
@@ -1453,7 +1453,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
     version = "1.1.0";
 
   nVersion = msOWSParseVersionString(version);
-  if (nVersion < 0)
+  if (nVersion == OWS_VERSION_BADFORMAT)
       return MS_FAILURE;  /* msSetError() already called. */
 
   /* Make sure this is a supported version */

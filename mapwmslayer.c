@@ -425,7 +425,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     char *pszEPSG = NULL;
     const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam;
     rectObj bbox;
-    int nVersion=0;
+    int nVersion=OWS_VERSION_NOTSET;
     
     if (lp->connectiontype != MS_WMS)
     {

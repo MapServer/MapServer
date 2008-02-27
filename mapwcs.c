@@ -100,8 +100,7 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
   if( version == NULL )
       version = "1.0.0";
 
-  if( msOWSParseVersionString(version) >=
-      msOWSParseVersionString("1.1.0") )
+  if( msOWSParseVersionString(version) >= OWS_1_1_0 )
       return msWCSException11( map, code, locator, version );
 
   msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
