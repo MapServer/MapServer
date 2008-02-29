@@ -1,9 +1,10 @@
 /******************************************************************************
+ * $Id:$
  *
  * Project:  MapServer
- * Purpose:  .qix spatial index implementation.  
+ * Purpose:  .qix spatial index implementation.  Derived from shapelib, and 
+ *           relicensed with permission of Frank Warmerdam (shapelib author).
  * Author:   Steve Lime
- *           Derived from code in shapelib.
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.

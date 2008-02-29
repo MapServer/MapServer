@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id:$
  *
  * Project:  MapServer
  * Purpose:  Encryption functions (see MS-RFC-18)

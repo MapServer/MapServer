@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id:$
  *
  * Project:  MapServer
  * Purpose:  Functions for operating on a mapObj that don't belong in a

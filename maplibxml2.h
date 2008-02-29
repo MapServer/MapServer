@@ -1,6 +1,6 @@
 /******************************************************************************
+ * $Id:$
  *
- * Name:     maplibxml2.h
  * Project:  MapServer
  * Purpose:  libxml2 convenience wrapper functions include file
  * Author:   Tom Kralidis (tomkralidis@hotmail.com)

@@ -1,6 +1,6 @@
 /******************************************************************************
+ * $Id:$
  *
- * Name:     mapowscommon.h
  * Project:  MapServer
  * Purpose:  OGC OWS Common Implementation include file
  * Author:   Tom Kralidis (tomkralidis@hotmail.com)

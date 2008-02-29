@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id:$
  *
  * Project:  MapServer
  * Purpose:  Implements the MySQL/"MyGIS" connection type support.

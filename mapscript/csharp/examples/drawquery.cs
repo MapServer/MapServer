@@ -1,8 +1,9 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  MapServer
- * Purpose:  A C# based mapscript example to use the arribute query an highlight the results.
+ * Purpose:  A C# based mapscript example to use the atribute query and 
+ *           highlight the results.
  * Author:   Tamas Szekeres, szekerest@gmail.com
  *
  ******************************************************************************

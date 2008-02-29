@@ -1,4 +1,5 @@
 /**********************************************************************
+ * $Id:$
  *
  * Project:  MapServer
  * Purpose:  Implementation of WFS CONNECTIONTYPE - client to WFS servers

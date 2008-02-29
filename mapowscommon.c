@@ -1,6 +1,6 @@
 /******************************************************************************
+ * $Id$
  *
- * Name:     mapowscommon.c
  * Project:  MapServer
  * Purpose:  OGC OWS Common Implementation for use by MapServer OGC code
  *           versions:

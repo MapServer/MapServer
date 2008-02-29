@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id:$
  *
  * Project:  MapServer
  * Purpose:  Declarations for rectObj, pointObj, lineObj, shapeObj, etc.

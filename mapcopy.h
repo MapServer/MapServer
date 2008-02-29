@@ -2,12 +2,10 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  Declarations related to copyng mapObjs.
+ * Purpose:  Declarations related to copyng mapObjs.  Provided by Mladen Turk 
+ *           for resolution of bug 701 
+ *           http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=701.
  * Author:   Mladen Turk (and Sean Gilles?) 
- *
- * Provided by Mladen Turk for resolution of bug 701.
- *
- *   http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=701
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.

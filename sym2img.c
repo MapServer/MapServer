@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Commandline utility to render symbols to a raster.

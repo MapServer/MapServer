@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Code for drawing GDAL raster layers.  Called from 

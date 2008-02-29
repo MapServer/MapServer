@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  MapScript CSharp Assembly Information

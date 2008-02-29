@@ -1,9 +1,12 @@
 /******************************************************************************
+ * $Id:$
+ *
  * Project: MapServer
  * Purpose: Functions to allow copying/cloning of maps
  * Author:  Sean Gillies, sgillies@frii.com
  *
- * Notes: These functions are not in mapfile.c because that file is 
+ * Notes: 
+ * These functions are not in mapfile.c because that file is 
  * cumbersome enough as it is.  There is agreement that this code and
  * that in mapfile.c should eventually be split up by object into 
  * mapobj.c, layerobj.c, etc.  Or something like that.  

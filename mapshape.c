@@ -1,12 +1,15 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implements support for shapefile access.
- * Author:   Steve Lime and Frank Warmerdam
+ * Authors:  Steve Lime and Frank Warmerdam
  *
+ * Note:
  * This code is entirely based on the previous work of Frank Warmerdam. It is
  * essentially shapelib 1.1.5. However, there were enough changes that it was
- * incorporated into the MapServer source to avoid confusion. See the README 
+ * incorporated into the MapServer source to avoid confusion. Relicensed with 
+ * permission of Frank Warmerdam (shapelib author). See the README 
  * for licence details.
  *
  ******************************************************************************

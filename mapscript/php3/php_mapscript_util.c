@@ -1,11 +1,9 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     php_mapscript_util.c
- * Project:  PHP/MapScript extension for MapServer : Utility functions
- * Language: ANSI C
- * Purpose:  Utility functions
- * Author:   Daniel Morissette, morissette@dmsolutions.ca
+ * Project:  MapServer
+ * Purpose:  PHP/MapScript extension for MapServer : Utility functions
+ * Author:   Daniel Morissette, DM Solutions Group (dmorissette@dmsolutions.ca)
  *
  **********************************************************************
  * Copyright (c) 2000-2005, DM Solutions Group

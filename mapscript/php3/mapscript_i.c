@@ -1,13 +1,14 @@
-/*
- * mapscript_i.c: interface file for MapServer PHP scripting extension 
- *                called MapScript.
- *
- * This file was originally based on the SWIG interface file mapscript.i
- *
+/******************************************************************************
  * $Id$
  *
+ * Project:  MapServer
+ * Purpose:  Interface file for MapServer PHP scripting extension 
+ *           called MapScript. This file was originally based on 
+ *           the SWIG interface file mapscript.i
+ * Author:   Daniel Morissette, DM Solutions Group (dmorissette@dmsolutions.ca)
+ *
  **********************************************************************
- * Copyright (c) 2000, 2007, Daniel Morissette, DM Solutions Group
+ * Copyright (c) 2000, 2007, Daniel Morissette, DM Solutions Group Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

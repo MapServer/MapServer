@@ -1,9 +1,7 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     mapogr.cpp
  * Project:  MapServer
- * Language: C++
  * Purpose:  OGR Link
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *           Frank Warmerdam (warmerdam@pobox.com)

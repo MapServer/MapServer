@@ -1,9 +1,7 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     mapogcfilter.c
  * Project:  MapServer
- * Language: C
  * Purpose:  OGC Filter Encoding implementation
  * Author:   Y. Assefa, DM Solutions Group (assefa@dmsolutions.ca)
  *

@@ -1,8 +1,9 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  MapServer
- * Purpose:  A C# based based mapscript example to dump information from a shapefile.
+ * Purpose:  A C# based based mapscript example to dump information from 
+ *           a shapefile.
  * Author:   Tamas Szekeres, szekerest@gmail.com
  *           Yew K Choo, ykchoo@geozervice.com 
  *

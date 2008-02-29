@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id:$
  *
  * Project:  MapServer
  * Purpose:  OpenGIS Web Coverage Server (WCS) 1.1.0 Implementation.  This

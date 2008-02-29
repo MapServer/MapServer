@@ -1,8 +1,9 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  MapServer
- * Purpose:  A C# based mapscript example to show the usage of imageObj.getBytes.
+ * Purpose:  A C# based mapscript example to show the usage of 
+ *           imageObj.getBytes.
  * Author:   Tamas Szekeres, szekerest@gmail.com
  *
  ******************************************************************************

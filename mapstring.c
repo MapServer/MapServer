@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Various string handling functions.

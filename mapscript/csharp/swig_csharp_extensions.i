@@ -1,6 +1,6 @@
 
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Fix for the SWIG Interface problems (early GC)

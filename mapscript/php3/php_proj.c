@@ -1,14 +1,12 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     php_proj.c
- * Project:  PHP wraper function to PROJ4 projection module
- * Language: ANSI C
- * Purpose:  External interface functions
- * Author:   Assefa Yewondwossen (assefa@dmsolutions.on.ca)
+ * Project:  MapServer
+ * Purpose:  PHP wraper function to PROJ4 projection module.
+ * Author:   Yewondwossen Assefa, DM Solutions Group (assefa@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2000-2005, DM Solutions Group inc.
+ * Copyright (c) 2000-2005, Y. Assefa, DM Solutions Group inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

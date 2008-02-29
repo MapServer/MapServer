@@ -1,9 +1,7 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     mapwfs.c
  * Project:  MapServer
- * Language: C
  * Purpose:  WFS server implementation
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *

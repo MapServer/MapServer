@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  GD rendering and other GD related functions.

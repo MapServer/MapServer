@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  C#-specific enhancements to MapScript

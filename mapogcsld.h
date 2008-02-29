@@ -1,9 +1,7 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     mapogcsld.h
  * Project:  MapServer
- * Language: C
  * Purpose:  OGC SLD implementation
  * Author:   Y. Assefa, DM Solutions Group (assefa@dmsolutions.ca)
  *

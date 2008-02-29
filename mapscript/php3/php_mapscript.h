@@ -1,14 +1,13 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     php_mapscript.c
- * Project:  PHP/MapScript extension for MapServer.
- * Language: ANSI C
- * Purpose:  Header file - prototypes / module definitions
- * Author:   Daniel Morissette, morissette@dmsolutions.ca
+ * Project:  MapServer
+ * Purpose:  PHP/MapScript extension for MapServer. Header file 
+ *           - prototypes / module definitions
+ * Author:   Daniel Morissette, DM Solutions Group (dmorissette@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2000-2005, Daniel Morissette, DM Solutions Group
+ * Copyright (c) 2000-2005, Daniel Morissette, DM Solutions Group Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  A C# based mapscript example to create an image given a mapfile.

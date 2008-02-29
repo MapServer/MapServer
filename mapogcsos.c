@@ -1,8 +1,7 @@
 /**********************************************************************
+ * $Id$
  *
- * Name:     mapogcsos.c
  * Project:  MapServer
- * Language: C
  * Purpose:  OGC SOS implementation
  * Author:   Y. Assefa, DM Solutions Group (assefa@dmsolutions.ca)
  *

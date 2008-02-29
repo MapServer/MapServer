@@ -1,13 +1,12 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     mapswf.c
  * Project:  MapServer
- * Language: C
  * Purpose:  Macromedia flash output
- * Author:  DM Solutions Group (assefa@dmsolutions.ca)
+ * Author:   Y. Assefa, DM Solutions Group (assefa@dmsolutions.ca)
  *
- * Note : this api is based on the ming swf library :
+ * Note: 
+ * This api is based on the ming swf library :
  *     http://www.opaque.net/ming/
  *
  ******************************************************************************

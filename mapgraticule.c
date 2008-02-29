@@ -1,9 +1,7 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     mapgraticule.c
  * Project:  MapServer
- * Language: C
  * Purpose:  Graticule Renderer
  * Author:   John Novak, Novacell Technologies (jnovak@novacell.com)
  *

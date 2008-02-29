@@ -1,8 +1,9 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  MapServer
- * Purpose:  Tests for RFC24 implementation. (http://mapserver.gis.umn.edu/development/rfc/ms-rfc-24/).
+ * Purpose:  Tests for RFC24 implementation. 
+ *           (http://mapserver.gis.umn.edu/development/rfc/ms-rfc-24/).
  * Author:   Tamas Szekeres, szekerest@gmail.com
  *           Umberto Nicoletti, umberto.nicoletti@gmail.com
  *

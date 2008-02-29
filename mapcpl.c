@@ -1,15 +1,18 @@
 /******************************************************************************
+ * $Id$ 
  *
  * Project:  MapServer
- * Purpose:  Functions copied from GDAL's CPL.
+ * Purpose:  Functions copied from GDAL's CPL. This file contain utility 
+ *           functions that come from the GDAL/OGR cpl library. The idea
+ *           behind it is to have access in mapserver to all these
+ *           utilities, without being constrained to link with GDAL/OGR.
  * Author:   Y. Assefa, DM Solutions Group (assefa@dmsolutions.ca)
  * 
- * This file contain utility functions that come from the GDAL/OGR cpl
- * library. The idea behind it is to have access in mapserver to all these
- * utilities, without being constarined to link with GDAL/OGR.
- * Note : Names of functions used here are the same as those in the cpl
- *         library with the exception the the CPL prefix is changed to ms
- *         (eg : CPLGetBasename() would become msGetBasename())
+ * 
+ * Note: 
+ * Names of functions used here are the same as those in the cpl
+ * library with the exception the the CPL prefix is changed to ms
+ * (eg : CPLGetBasename() would become msGetBasename())
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.

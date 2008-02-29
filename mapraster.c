@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  msDrawRasterLayer(): generic raster layer drawing, including

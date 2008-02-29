@@ -1,10 +1,10 @@
 /******************************************************************************
+ * $Id:$
  *
  * Project:  MapServer
- * Purpose:  .dbf access API.
+ * Purpose:  .dbf access API.  Derived from shapelib, and relicensed with 
+ *           permission of Frank Warmerdam (shapelib author).
  * Author:   Steve Lime and the MapServer team.
- *
- * Derived from shapelib, and relicensed with permission.
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.

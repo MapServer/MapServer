@@ -1,11 +1,9 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     mapsvg.c
  * Project:  MapServer
- * Language: C
  * Purpose:  SVG output
- * Author:  DM Solutions Group (assefa@dmsolutions.ca)
+ * Author:   Y. Assefa, DM Solutions Group (assefa@dmsolutions.ca)
  *
  *
  ******************************************************************************

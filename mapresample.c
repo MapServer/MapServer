@@ -1,6 +1,7 @@
 /******************************************************************************
+ * $Id:$
  *
- * Project:  CFS OGC MapServer
+ * Project:  MapServer
  * Purpose:  Assorted code related to resampling rasters.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

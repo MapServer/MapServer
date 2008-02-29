@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  A C# based mapscript example to show the usage of HTML templates.
