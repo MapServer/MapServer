@@ -43,6 +43,7 @@ char path[MS_MAXPATHLEN];
 %s URL_VARIABLE
 %s URL_STRING
 %s EXPRESSION_STRING
+%s EXPRESSION_STRING_REGEX
 %s INCLUDE
 %s MSSTR
 
@@ -108,7 +109,7 @@ char path[MS_MAXPATHLEN];
          break;
        }
 
-<INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
+<INITIAL,URL_STRING,EXPRESSION_STRING,EXPRESSION_STRING_REGEX,INCLUDE>[ \t\r]+             ;
 
 <INITIAL>#.*                                   { if (msyyreturncomments) return(MS_COMMENT); }
 
@@ -122,7 +123,10 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>lt|<                        { return(LT); }
 <EXPRESSION_STRING>ge|>=                       { return(GE); }
 <EXPRESSION_STRING>le|<=                       { return(LE); }
-<EXPRESSION_STRING>=~                          { return(RE); }
+<EXPRESSION_STRING>=~                          { 
+                                                 BEGIN(EXPRESSION_STRING_REGEX);
+                                                 return(RE); 
+                                               }
 <EXPRESSION_STRING>in                          { return(IN); }
 <EXPRESSION_STRING>not|!                       { return(NOT); }
 
@@ -419,10 +423,11 @@ char path[MS_MAXPATHLEN];
                                                  return(MS_IREGEX);
                                                }
 
-<EXPRESSION_STRING>\/[^\/]*\/i                 {
+<EXPRESSION_STRING_REGEX>\/[^\/]*\/i           {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
                                                  msyylval.strval = strdup(msyytext);
+                                                 BEGIN(EXPRESSION_STRING);
                                                  return(IREGEX);
                                                }
 
@@ -432,10 +437,11 @@ char path[MS_MAXPATHLEN];
                                                  return(MS_REGEX);
                                                }
 
-<EXPRESSION_STRING>\/[^\/]*\/                  {
+<EXPRESSION_STRING_REGEX>\/[^\/]*\/            {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  msyylval.strval = strdup(msyytext);
+                                                 BEGIN(EXPRESSION_STRING);
                                                  return(REGEX);
                                                }
 
