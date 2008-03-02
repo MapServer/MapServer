@@ -31,6 +31,7 @@
 
 #include "mapserver.h"
 #include "mapparser.h"
+#include "mapfile.h"
 
 MS_CVSID("$Id$")
 
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
 
   status = msyyparse();
   if(status != 0) 
-    printf("Error parsing expression.\n");
+    printf("Error parsing expression near %s.\n", msyytext);
   else
     printf("Expression evalulated to: %d.\n", msyyresult);
 
