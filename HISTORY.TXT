@@ -9,8 +9,12 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Version 5.0.3 (2008-01-30)
---------------------------
+
+Version 5.0.3 (svn branch-5-0)
+------------------------------
+
+- Fixed problem with two division signs in an expression being treated
+  as a regex (#2527)
 
 - Fixed gdImagePtr gdPImg memory leak in msSaveImageBufferGD() (#2525)
 
@@ -21,6 +25,7 @@ Version 5.0.3 (2008-01-30)
 - fix offsets on pixmap marker symbols (#2493)
 
 - fix segfault in mapserv if STYLE is not defined (#2347)
+
 
 Version 5.0.2 (2008-01-28)
 --------------------------
