@@ -10,8 +10,8 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Version 5.0.3 (svn branch-5-0)
-------------------------------
+Current Version (future 5.0.3, svn branch-5-0)
+----------------------------------------------
 
 - Fixed problem with large imagemaps generating no output (#2526)
 
