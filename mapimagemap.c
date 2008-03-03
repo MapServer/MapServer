@@ -2029,7 +2029,7 @@ DEBUG_IF printf("FLEN %d<BR>\n", (int)strlen(img->img.imagemap));
               {
                   snprintf(workbuffer, sizeof(workbuffer), "%s", img->img.imagemap+iIndice );
                   workbuffer[nSize-1] = '\0';
-                  msIO_fprintf(stream, workbuffer);
+                  msIO_fwrite(workbuffer, strlen(workbuffer), 1, stream);
                   iIndice +=nSize-1;
               }
               if (iIndice < size)
@@ -2039,7 +2039,7 @@ DEBUG_IF printf("FLEN %d<BR>\n", (int)strlen(img->img.imagemap));
               }
           }
           else
-            msIO_fprintf(stream, img->img.imagemap);
+              msIO_fwrite(img->img.imagemap, size, 1, stream);
 	  if( strcasecmp("OFF",msGetOutputFormatOption( format, "SKIPENDTAG", "OFF" )) == 0){
 		  if (dxf == 2)
 			  msIO_fprintf(stream, "END");
