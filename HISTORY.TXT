@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- Fixed problem with large imagemaps generating no output (#2526)
+
 - mapwms.c: make version optional for GetCapabilities again (#2528)
 
 - support URN scheme for components of observed property elements (#2522)
