@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Assorted code related to resampling rasters.
@@ -29,6 +29,7 @@
 
 #include <assert.h>
 #include "mapresample.h"
+#include "mapthread.h"
 
 MS_CVSID("$Id$")
 
@@ -1038,10 +1039,16 @@ int msProjTransformer( void *pCBData, int nPoints,
     if( psPTInfo->bUseProj )
     {
         double *z;
+        int tr_result;
         
         z = (double *) calloc(sizeof(double),nPoints);
-        if( pj_transform( psPTInfo->psDstProj, psPTInfo->psSrcProj, 
-                          nPoints, 1, x, y,  z) != 0 )
+
+        msAcquireLock( TLOCK_PROJ );
+        tr_result = pj_transform( psPTInfo->psDstProj, psPTInfo->psSrcProj, 
+                                  nPoints, 1, x, y,  z);
+        msReleaseLock( TLOCK_PROJ );
+
+        if( tr_result != 0 )
         {
             free( z );
             for( i = 0; i < nPoints; i++ )
@@ -1322,6 +1329,8 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 /* -------------------------------------------------------------------- */
     if( psDstProj->proj && psSrcProj->proj )
     {
+        int tr_result;
+
         if( pj_is_latlong(psDstProj->proj) )
         {
             for( i = 0; i < nSamples; i++ )
@@ -1331,11 +1340,13 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
             }
         }
         
-        if( pj_transform( psDstProj->proj, psSrcProj->proj,
-                          nSamples, 1, x, y, z ) != 0 )
-        {
+        msAcquireLock( TLOCK_PROJ );
+        tr_result = pj_transform( psDstProj->proj, psSrcProj->proj,
+                                  nSamples, 1, x, y, z );
+        msReleaseLock( TLOCK_PROJ );
+
+        if( tr_result != 0 )
             return MS_FALSE;
-        }
         
         if( pj_is_latlong(psSrcProj->proj) )
         {

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  projectionObj / PROJ.4 interface.
@@ -29,6 +29,7 @@
 
 #include "mapserver.h"
 #include "mapproject.h"
+#include "mapthread.h"
 #include <assert.h>
 
 MS_CVSID("$Id$")
@@ -87,8 +88,10 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
           point->y *= DEG_TO_RAD;
       }
 
+      msAcquireLock( TLOCK_PROJ );
       error = pj_transform( in->proj, out->proj, 1, 0, 
                             &(point->x), &(point->y), &z );
+      msReleaseLock( TLOCK_PROJ );
 
       if( error || point->x == HUGE_VAL || point->y == HUGE_VAL )
           return MS_FAILURE;
