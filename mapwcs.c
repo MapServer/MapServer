@@ -1633,12 +1633,10 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   covextent.maxy = cm.extent.maxy;
 
   if(msRectOverlap(&reqextent, &covextent) == MS_FALSE) {
-      msSetError(MS_WCSERR, "\nBBOX NATIVE    = %.15g,%.15g,%.15g,%.15g\nEXTENT NATIVE  = %.15g,%.15g,%.15g,%.15g\nBBOXLL         = %.15g,%.15g,%.15g,%.15g\nEXTENTLL       = %.15g,%.15g,%.15g,%.15g",
+      msSetError(MS_WCSERR, "Requested BBOX (%.15g,%.15g,%.15g,%.15g) is outside requested coverage BBOX (%.15g,%.15g,%.15g,%.15g)",
                             "msWCSGetCoverage()",
                             reqextent.minx, reqextent.miny, reqextent.maxx, reqextent.maxy,
-                            cm.extent.minx, cm.extent.miny, cm.extent.maxx, cm.extent.maxy,
-                            params->bbox.minx, params->bbox.miny, params->bbox.maxx, params->bbox.maxy,
-                            cm.llextent.minx, cm.llextent.miny, cm.llextent.maxx, cm.llextent.maxy);
+                            covextent.minx, covextent.miny, covextent.maxx, covextent.maxy);
       return msWCSException(map, "NoApplicableCode", "bbox", params->version);
   }
 
