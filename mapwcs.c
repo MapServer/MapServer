@@ -1309,6 +1309,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   char *bandlist=NULL;
   char numbands[8]; /* should be large enough to hold the number of bands in the bandlist */
   coverageMetadataObj cm;
+  rectObj reqextent;
+  rectObj covextent;
 
   /* make sure all required parameters are available (at least the easy ones) */
   if(!params->crs) {
@@ -1612,6 +1614,33 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       msMapSetFakedExtent( map ); 
 
   map->projection.gt = map->gt;
+
+  // check for overlap
+
+  // get extent of bbox passed, and reproject
+  reqextent.minx = map->extent.minx;
+  reqextent.miny = map->extent.miny;
+  reqextent.maxx = map->extent.maxx;
+  reqextent.maxy = map->extent.maxy;
+
+  // reproject incoming bbox
+  msProjectRect(&map->projection, &lp->projection, &(reqextent));
+
+  // get extent of layer
+  covextent.minx = cm.extent.minx;
+  covextent.miny = cm.extent.miny;
+  covextent.maxx = cm.extent.maxx;
+  covextent.maxy = cm.extent.maxy;
+
+  if(msRectOverlap(&reqextent, &covextent) == MS_FALSE) {
+      msSetError(MS_WCSERR, "\nBBOX NATIVE    = %.15g,%.15g,%.15g,%.15g\nEXTENT NATIVE  = %.15g,%.15g,%.15g,%.15g\nBBOXLL         = %.15g,%.15g,%.15g,%.15g\nEXTENTLL       = %.15g,%.15g,%.15g,%.15g",
+                            "msWCSGetCoverage()",
+                            reqextent.minx, reqextent.miny, reqextent.maxx, reqextent.maxy,
+                            cm.extent.minx, cm.extent.miny, cm.extent.maxx, cm.extent.maxy,
+                            params->bbox.minx, params->bbox.miny, params->bbox.maxx, params->bbox.maxy,
+                            cm.llextent.minx, cm.llextent.miny, cm.llextent.maxx, cm.llextent.maxy);
+      return msWCSException(map, "NoApplicableCode", "bbox", params->version);
+  }
 
   /* check and make sure there is a format, and that it's valid (TODO: make sure in the layer metadata) */
   if(!params->format) {
