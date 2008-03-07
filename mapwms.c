@@ -2315,7 +2315,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   const char *info_format="MIME";
   double cellx, celly;
   errorObj *ms_error = msGetErrorObj();
-  int status;
+  int query_status=MS_NOERR;
   const char *pszMimeType=NULL;
   int query_layer = 0;
 
@@ -2419,7 +2419,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       feature_count = 1;
 
   if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), point, 0, feature_count) != MS_SUCCESS)
-    if(ms_error->code != MS_NOTFOUND) return msWMSException(map, nVersion, NULL);
+      if((query_status=ms_error->code) != MS_NOTFOUND) return msWMSException(map, nVersion, NULL);
 
   /* Generate response */
   if (strcasecmp(info_format, "MIME") == 0 ||
@@ -2463,7 +2463,12 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
      msObj->MapPnt.x = point.x;
      msObj->MapPnt.y = point.y;
 
-     if ((status = msReturnTemplateQuery(msObj, (char*)pszMimeType,NULL)) != MS_SUCCESS)
+     if (query_status == MS_NOTFOUND && msObj->Map->web.empty)
+     {
+         if(msReturnURL(msObj, msObj->Map->web.empty, BROWSE) != MS_SUCCESS)
+             return msWMSException(map, nVersion, NULL);
+     }
+     else if (msReturnTemplateQuery(msObj, (char*)pszMimeType,NULL) != MS_SUCCESS)
          return msWMSException(map, nVersion, NULL);
 
      /* We don't want to free the map, and param names/values since they */
