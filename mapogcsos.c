@@ -1796,7 +1796,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
   int nDiffrentProc = 0;
   SOSProcedureNode *paDiffrentProc = NULL;
   char *pszProcedureValue = NULL;
-    
+
   sBbox = map->extent;
 
   psNsSos = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/sos/1.0", BAD_CAST "sos");
@@ -2428,7 +2428,9 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
   int iItemPosition = -1;
   shapeObj sShape;
   int status;
-  char *tmpstr = NULL, *pszTmp = NULL;
+  char *tmpstr = NULL, *pszTmp = NULL, *pszProcedureURI = NULL, *pszProcedureId = NULL;
+
+  pszProcedureURI = strdup("urn:ogc:def:procedure:");
 
   if (!sosparams->pszOutputFormat) {
     msSetError(MS_SOSERR, "Missing mandatory parameter outputFormat.", "msSOSDescribeSensor()");
@@ -2455,10 +2457,14 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       int bFound = 0;
       tokens = msStringSplit(pszId, ' ', &n);
       for (k=0; k<n; k++) {
-        if (tokens[k] && strlen(tokens[k]) > 0 && strcasecmp(tokens[k], sosparams->pszProcedure) == 0) {
-          bFound = 1; 
-          msFreeCharArray(tokens, n);
-          break;
+        if (tokens[k] && strlen(tokens[k]) > 0) {
+          pszProcedureURI = msStringConcatenate(pszProcedureURI, tokens[k]);
+          if (strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) {
+            bFound = 1; 
+            pszProcedureId = strdup(tokens[k]);
+            msFreeCharArray(tokens, n);
+            break;
+          }
         }
       }
       if (bFound) {
@@ -2471,7 +2477,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
           tmpstr = (char *)malloc(sizeof(char)*strlen("procedure") + 3);
           sprintf(tmpstr,"%%%s%%", "procedure");
           if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
-            pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszProcedure);
+            pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, pszProcedureId);
           msFree(tmpstr);
 
           pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
@@ -2511,27 +2517,31 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
             if(status != MS_SUCCESS) 
               continue;
 
-            if (sShape.values[iItemPosition] && strcasecmp(sShape.values[iItemPosition], sosparams->pszProcedure) == 0) {
-              pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
-              if (pszUrl) {   
-                pszTmp = strdup(pszUrl);
+            if (sShape.values[iItemPosition]) {
+              pszProcedureURI = msStringConcatenate(pszProcedureURI, sShape.values[iItemPosition]);
+              if (strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) {
+                pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
+                pszProcedureId = strdup(sShape.values[iItemPosition]);
+                if (pszUrl) {   
+                  pszTmp = strdup(pszUrl);
 
-                /* %procedure% is the hardcoded variable names to use
-                   within sos_describesensor_url */
-                tmpstr = (char *)malloc(sizeof(char)*strlen("procedure") + 3);
-                sprintf(tmpstr,"%%%s%%", "procedure");
-                if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
-                  pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, sosparams->pszProcedure);
-                msFree(tmpstr);
+                  /* %procedure% is the hardcoded variable names to use
+                     within sos_describesensor_url */
+                  tmpstr = (char *)malloc(sizeof(char)*strlen("procedure") + 3);
+                  sprintf(tmpstr,"%%%s%%", "procedure");
+                  if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
+                    pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, pszProcedureId);
+                  msFree(tmpstr);
 
-                pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
-                msIO_printf("Location: %s\n\n", pszEncodedUrl);
-                msFree(pszTmp);
-                return(MS_SUCCESS);
-              }
-              else {
-                msSetError(MS_SOSERR, "Missing mandatory metadata sos_describesensor_url on layer %s", "msSOSDescribeSensor()", lp->name);
-                return msSOSException(map, "sos_describesensor_url", "MissingValue");
+                  pszEncodedUrl = msEncodeHTMLEntities(pszTmp); 
+                  msIO_printf("Location: %s\n\n", pszEncodedUrl);
+                  msFree(pszTmp);
+                  return(MS_SUCCESS);
+                }
+                else {
+                  msSetError(MS_SOSERR, "Missing mandatory metadata sos_describesensor_url on layer %s", "msSOSDescribeSensor()", lp->name);
+                  return msSOSException(map, "sos_describesensor_url", "MissingValue");
+                }
               }
             }
           }
