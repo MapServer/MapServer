@@ -765,7 +765,6 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                     pszTmp = msStringConcatenate(pszTmp, pszValueShape);
             
                         psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
-                        //xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
                         xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszTmp);
                         msFree(pszTmp);
                         pszTmp = NULL;
@@ -783,7 +782,6 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
             pszTmp = msStringConcatenate(pszTmp, (char *)pszValue);
             
             psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
-            //xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
             xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszTmp);
             msFree(pszTmp);
             pszTmp = NULL;
@@ -2430,8 +2428,6 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
   int status;
   char *tmpstr = NULL, *pszTmp = NULL, *pszProcedureURI = NULL, *pszProcedureId = NULL;
 
-  pszProcedureURI = strdup("urn:ogc:def:procedure:");
-
   if (!sosparams->pszOutputFormat) {
     msSetError(MS_SOSERR, "Missing mandatory parameter outputFormat.", "msSOSDescribeSensor()");
     return msSOSException(map, "outputformat", "MissingParameterValue");
@@ -2458,6 +2454,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       tokens = msStringSplit(pszId, ' ', &n);
       for (k=0; k<n; k++) {
         if (tokens[k] && strlen(tokens[k]) > 0) {
+          pszProcedureURI = strdup("urn:ogc:def:procedure:");
           pszProcedureURI = msStringConcatenate(pszProcedureURI, tokens[k]);
           if (strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) {
             bFound = 1; 
@@ -2518,6 +2515,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
               continue;
 
             if (sShape.values[iItemPosition]) {
+              pszProcedureURI = strdup("urn:ogc:def:procedure:");
               pszProcedureURI = msStringConcatenate(pszProcedureURI, sShape.values[iItemPosition]);
               if (strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) {
                 pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
@@ -2550,7 +2548,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       }
     }
   }
-  msSetError(MS_SOSERR, "procedure %s not found.", "msSOSDescribeSensor()", sosparams->pszProcedure);
+  msSetError(MS_SOSERR, "procedure %s (%s)not found.", "msSOSDescribeSensor()", sosparams->pszProcedure, pszProcedureURI);
   return msSOSException(map, "procedure", "InvalidParameterValue");
 }
 
