@@ -56,8 +56,8 @@ extern int enter_string;
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
 */
-int numModes = 26;
-static char *modeStrings[26] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","REFERENCE","SCALEBAR","COORDINATE",
+int numModes = 27;
+static char *modeStrings[27] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
                                 "QUERY","QUERYMAP","NQUERY","NQUERYMAP",
 			        "ITEMQUERY","ITEMQUERYMAP","ITEMNQUERY","ITEMNQUERYMAP",
 				"FEATUREQUERY","FEATUREQUERYMAP","FEATURENQUERY","FEATURENQUERYMAP",
