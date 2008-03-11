@@ -61,12 +61,13 @@ typedef struct
    /* should the query and/or map be saved */
    int SaveMap, SaveQuery;
 
-  cgiRequestObj *request;
+   cgiRequestObj *request;
 
    mapObj *Map;
 
    char **Layers;
-   
+	 char *icon; /* layer:class combination that defines a legend icon */
+  
    /* number of layers specfied by a use */
    int NumLayers;
    /* Allocated size of Layers[] array */

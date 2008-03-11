@@ -862,11 +862,11 @@ static int processItem(layerObj *layer, char **line, shapeObj *shape)
       return(MS_FAILURE);
     }
 
-    for(i=0; i<layer->numitems; i++)
+    for(i=0; i<layer->numitems; i++)			
       if(strcasecmp(name, layer->items[i]) == 0) break;
 
     if(i == layer->numitems) {
-      msSetError(MS_WEBERR, "Item name not found in layer item list.", "processItem()");
+      msSetError(MS_WEBERR, "Item name (%s) not found in layer item list.", "processItem()", name);
       return(MS_FAILURE);
     }    
 
@@ -3339,6 +3339,8 @@ mapservObj *msAllocMapServObj()
   mapserv->MaxLayers=0; /* allocated size of Layers[] array */
   mapserv->Layers = NULL;
 
+  mapserv->icon = NULL;
+
   mapserv->RawExt.minx=-1;
   mapserv->RawExt.miny=-1;
   mapserv->RawExt.maxx=-1;
@@ -3408,6 +3410,8 @@ void msFreeMapServObj(mapservObj* mapserv)
     for(i=0;i<mapserv->NumLayers;i++) 
       msFree(mapserv->Layers[i]);
     msFree(mapserv->Layers);
+
+    msFree(mapserv->icon);
 
     msFree(mapserv);
   }
