@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  MapServer CGI mainline.
@@ -286,6 +286,12 @@ void loadForm(void)
     if(strlen(msObj->request->ParamValues[i]) == 0)
       continue;
     
+    
+    if(strcasecmp(msObj->request->ParamNames[i],"icon") == 0) {      
+      msObj->icon = strdup(msObj->request->ParamValues[i]);
+      continue;
+    }
+
     if(strcasecmp(msObj->request->ParamNames[i],"queryfile") == 0) {      
       QueryFile = strdup(msObj->request->ParamValues[i]);
       continue;
@@ -1324,6 +1330,73 @@ int main(int argc, char *argv[]) {
 
         msFreeImage(img);
       }
+    } else if(msObj->Mode == LEGENDICON) {
+			char **tokens;
+      int numtokens=0;
+      int layerindex=-1, classindex=0;
+      outputFormatObj *format = NULL;
+
+      /* TODO: do we want to set scale here? */
+
+      /* do we have enough information */
+			if(!msObj->icon) {
+        msSetError(MS_WEBERR, "Mode=LEGENDICON requires an icon parameter.", "mapserv()");
+        writeError();
+      }
+
+      /* process the icon definition */
+      tokens = msStringSplit(msObj->icon, ',', &numtokens);
+
+      if(numtokens != 1 && numtokens != 2) {
+        msSetError(MS_WEBERR, "%d Malformed icon parameter, should be 'layer,class' or just 'layer' if the layer has only 1 class defined.", "mapserv()", numtokens);
+        writeError();
+      }
+
+      if((layerindex = msGetLayerIndex(msObj->Map, tokens[0])) == -1) {
+        msSetError(MS_WEBERR, "Icon layer=%s not found in mapfile.", "mapserv()", GET_LAYER(msObj->Map, layerindex)->name);
+        writeError();
+      }
+
+      if(numtokens == 2) { /* check the class index */
+        classindex = atoi(tokens[1]);
+        if(classindex >= GET_LAYER(msObj->Map, layerindex)->numclasses) {
+          msSetError(MS_WEBERR, "Icon class=%d not found in layer=%s.", "mapserv()", classindex, GET_LAYER(msObj->Map, layerindex)->name);
+          writeError();
+        }
+      }
+
+      /* ensure we have an image format representing the options for the legend. */
+      msApplyOutputFormat(&format, msObj->Map->outputformat, msObj->Map->legend.transparent, msObj->Map->legend.interlace, MS_NOOVERRIDE);
+
+      /* initialize the legend image */
+#ifdef USE_AGG
+      if(MS_RENDERER_AGG(msObj->Map->outputformat))
+        img = msImageCreateAGG(msObj->Map->legend.keysizex, msObj->Map->legend.keysizey, format, msObj->Map->web.imagepath, msObj->Map->web.imageurl);        
+      else
+#endif
+        img = msImageCreateGD(msObj->Map->legend.keysizex, msObj->Map->legend.keysizey, format, msObj->Map->web.imagepath, msObj->Map->web.imageurl);
+
+  /* allocate the background color */
+#ifdef USE_AGG
+      if(MS_RENDERER_AGG(msObj->Map->outputformat))
+        msImageInitAGG(img, &(msObj->Map->legend.imagecolor));
+      else
+#endif
+        msImageInitGD(img, &(msObj->Map->legend.imagecolor));
+
+      /* drop this reference to output format */
+      msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+
+      if(msDrawLegendIcon(msObj->Map, GET_LAYER(msObj->Map, layerindex), GET_LAYER(msObj->Map, layerindex)->class[classindex], msObj->Map->legend.keysizex,  msObj->Map->legend.keysizey, img, 0, 0) != MS_SUCCESS)
+        writeError();
+
+      msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+      status = msSaveImage(NULL, img, NULL);
+      if(status != MS_SUCCESS) writeError();
+
+      msFreeCharArray(tokens, numtokens);
+      msFreeImage(img);
+
     } else if(msObj->Mode >= QUERY) { /* query modes */
 
       if(QueryFile) { /* already got a completed query */
