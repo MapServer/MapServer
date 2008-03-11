@@ -196,7 +196,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>intervals                  { return(INTERVALS); } 
 <INITIAL>join                                  { return(JOIN); }
 <INITIAL>keyimage                              { return(KEYIMAGE); }
-<INITIAL>keysize                               { return(KEYSIZE); }
+<INITIAL,URL_STRING>keysize                    { return(KEYSIZE); }
 <INITIAL>keyspacing                            { return(KEYSPACING); }
 <INITIAL,URL_STRING>label                      { return(LABEL); }
 <INITIAL>labelcache                            { return(LABELCACHE); }
