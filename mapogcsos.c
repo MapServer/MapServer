@@ -2548,7 +2548,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       }
     }
   }
-  msSetError(MS_SOSERR, "procedure %s (%s)not found.", "msSOSDescribeSensor()", sosparams->pszProcedure, pszProcedureURI);
+  msSetError(MS_SOSERR, "procedure %s not found.", "msSOSDescribeSensor()", sosparams->pszProcedure);
   return msSOSException(map, "procedure", "InvalidParameterValue");
 }
 
