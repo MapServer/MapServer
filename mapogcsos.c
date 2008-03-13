@@ -2835,7 +2835,7 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
 
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
-      sosparams->pszResultModel = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+      sosparams->pszSrsName = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
     }
 
     xmlXPathFreeObject(psXPathTmp);
