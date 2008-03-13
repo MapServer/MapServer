@@ -54,7 +54,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
 
     for( i=0; i<request->NumParams; i++ ) 
     {
-        if(strcasecmp(request->ParamNames[i], "VERSION") == 0)
+        if(strcasecmp(request->ParamNames[i], "SERVICE") == 0)
             service = request->ParamValues[i];
     }
 
