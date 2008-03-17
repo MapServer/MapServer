@@ -34,6 +34,11 @@ MS_CVSID("$Id$")
 
 #include <ctype.h>
 
+#ifdef USE_FRIBIDI
+#include <fribidi/fribidi.h>
+#define MAX_STR_LEN 65000
+#endif
+
 #ifdef USE_ICONV
 #include <iconv.h>
 #include <wchar.h>
@@ -1063,6 +1068,103 @@ int msHexToInt(char *hex) {
 
 
 /*
+** Use FRIBIDI to encode the string.
+** The return value must be freed by the caller.
+*/
+#ifdef USE_FRIBIDI
+char *msGetFriBidiEncodedString(const char *string, const char *encoding)
+{
+  FriBidiChar logical[MAX_STR_LEN];
+  FriBidiCharType base = FRIBIDI_TYPE_ON;
+  size_t len;
+  
+#ifdef FRIBIDI_NO_CHARSETS
+  iconv_t to_ucs4, from_ucs4;
+#else
+  int to_char_set_num;
+  int from_char_set_num;
+#endif
+
+  len = strlen(string);
+
+#ifdef FRIBIDI_NO_CHARSETS
+  to_ucs4 = iconv_open ("WCHAR_T", encoding);
+  from_ucs4 = iconv_open ("UTF-8", "WCHAR_T");
+#else
+  to_char_set_num = fribidi_parse_charset ((char*)encoding);
+  from_char_set_num = fribidi_parse_charset ("UTF-8");
+#endif
+
+#ifdef FRIBIDI_NO_CHARSETS
+  if (to_ucs4 == (iconv_t) (-1) || from_ucs4 == (iconv_t) (-1))
+#else
+  if (!to_char_set_num || !from_char_set_num)
+#endif
+  {
+    msSetError(MS_IDENTERR, "Encoding not supported (%s).", 
+               "msGetFriBidiEncodedString()", encoding);
+    return NULL;
+  }
+
+#ifdef FRIBIDI_NO_CHARSETS
+  {
+    char *st = string, *ust = (char *) logical;
+    int in_len = (int) len;
+    len = sizeof logical;
+    iconv (to_ucs4, &st, &in_len, &ust, (int *) &len);
+    len = (FriBidiChar *) ust - logical;
+  }
+#else
+  len = fribidi_charset_to_unicode (to_char_set_num, (char*)string, len, logical);
+#endif
+
+  {
+    FriBidiChar *visual;
+    char outstring[MAX_STR_LEN];
+    FriBidiStrIndex *ltov, *vtol;
+    FriBidiLevel *levels;
+    FriBidiStrIndex new_len;
+    fribidi_boolean log2vis;
+
+    visual = (FriBidiChar *) malloc (sizeof (FriBidiChar) * (len + 1));
+    ltov = NULL;
+    vtol = NULL;
+    levels = NULL;
+
+    /* Create a bidi string. */
+    log2vis = fribidi_log2vis (logical, len, &base,
+       /* output */
+       visual, ltov, vtol, levels);
+
+    if (!log2vis) {
+      msSetError(MS_IDENTERR, "Failed to create bidi string.", 
+             "msGetFriBidiEncodedString()");
+      return NULL;
+    }
+
+    new_len = len;
+
+    /* Convert it to utf-8 for display. */
+#ifdef FRIBIDI_NO_CHARSETS
+    {
+      char *str = outstring, *ust = (char *) visual;
+      int in_len = len * sizeof visual[0];
+      new_len = sizeof outstring;
+      iconv (from_ucs4, &ust, &in_len, &str, (int *) &new_len);
+      *str = '\0';
+      new_len = str - outstring;
+     }
+#else
+     new_len =
+       fribidi_unicode_to_charset (from_char_set_num,
+           visual, len, outstring);
+#endif
+     return strdup(outstring);
+  }
+}
+#endif
+
+/*
 ** Simple charset converter. Converts string from specified encoding to UTF-8.
 ** The return value must be freed by the caller.
 */
@@ -1074,6 +1176,10 @@ char *msGetEncodedString(const char *string, const char *encoding)
   char *outp, *out = NULL;
   size_t len, bufsize, bufleft, status;
 
+#ifdef USE_FRIBIDI
+  if(fribidi_parse_charset ((char*)encoding))
+    return msGetFriBidiEncodedString(string, encoding);
+#endif 
   len = strlen(string);
 
   if (len == 0 || (encoding && strcasecmp(encoding, "UTF-8")==0))

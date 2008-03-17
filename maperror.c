@@ -505,6 +505,12 @@ char *msGetVersion() {
 #ifdef USE_GD_FT
   strcat(version, " SUPPORTS=FREETYPE");
 #endif
+#ifdef USE_ICONV
+  strcat(version, " SUPPORTS=ICONV");
+#endif
+#ifdef USE_FRIBIDI
+  strcat(version, " SUPPORTS=FRIBIDI");
+#endif
 #ifdef USE_WMS_SVR
   strcat(version, " SUPPORTS=WMS_SERVER");
 #endif
