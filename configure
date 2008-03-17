@@ -742,16 +742,16 @@ WCS_SVR_ENABLED
 LIBCURL_CONFIG
 CURL_INC
 CURL_LIB
-FRIBIDI_CONFIG
-FRIBIDI_ENABLED
-FRIBIDI_INC
-FRIBIDI_LIB
 LIBXML2_CONFIG
 XML2_INC
 XML2_LIB
 WMS_LYR_ENABLED
 WFS_LYR_ENABLED
 SOS_SVR_ENABLED
+FRIBIDI_CONFIG
+FRIBIDI_ENABLED
+FRIBIDI_INC
+FRIBIDI_LIB
 FASTCGI_ENABLED
 FASTCGI_INC
 FASTCGI_LIB
@@ -1432,9 +1432,9 @@ Optional Packages:
   --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and
                           OGR required).
   --with-curl-config=PATH Specify path to curl-config.
+  --with-xml2-config=PATH Specify path to xml2-config.
   --with-fribidi-config[=ARG] Include FriBidi Support (ARG=yes/path to
                           fribidi-config)
-  --with-xml2-config=PATH Specify path to xml2-config.
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
   --with-httpd            Specify path to 'httpd' executable.
   --with-warnings[=flags] Enable strict warnings (or user defined warnings)
@@ -11480,92 +11480,6 @@ ALL_LIB="$CURL_LIB $ALL_LIB"
 
 
 
-{ echo "$as_me:$LINENO: checking if FriBidi support requested" >&5
-echo $ECHO_N "checking if FriBidi support requested... $ECHO_C" >&6; }
-
-
-# Check whether --with-fribidi-config was given.
-if test "${with_fribidi_config+set}" = set; then
-  withval=$with_fribidi_config;
-fi
-
-
-if test "$with_fribidi_config" = "no" -o "$with_fribidi_config" = "" ; then
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-  FRIBIDI_CONFIG="no"
-elif test "$with_fribidi_config" = "yes" ; then
-  { echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6; }
-  # Extract the first word of "fribidi-config", so it can be a program name with args.
-set dummy fribidi-config; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_FRIBIDI_CONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $FRIBIDI_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_FRIBIDI_CONFIG="$FRIBIDI_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_FRIBIDI_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_FRIBIDI_CONFIG" && ac_cv_path_FRIBIDI_CONFIG="no"
-  ;;
-esac
-fi
-FRIBIDI_CONFIG=$ac_cv_path_FRIBIDI_CONFIG
-if test -n "$FRIBIDI_CONFIG"; then
-  { echo "$as_me:$LINENO: result: $FRIBIDI_CONFIG" >&5
-echo "${ECHO_T}$FRIBIDI_CONFIG" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-else
-  FRIBIDI_CONFIG=$with_fribidi_config
-fi
-
-if test "$FRIBIDI_CONFIG" = "no" ; then
-  FRIBIDI_ENABLED=
-  FRIBIDI_INC=
-  FRIBIDI_LIB=
-else
-  { echo "$as_me:$LINENO: result: yes, user supplied fribidi-config" >&5
-echo "${ECHO_T}yes, user supplied fribidi-config" >&6; }
-  FRIBIDI_ENABLED=-DUSE_FRIBIDI
-  FRIBIDI_LIB=`$FRIBIDI_CONFIG --libs`
-  FRIBIDI_INC=`$FRIBIDI_CONFIG --cflags`
-fi
-
-FRIBIDI_ENABLED=$FRIBIDI_ENABLED
-
-FRIBIDI_INC=$FRIBIDI_INC
-
-FRIBIDI_LIB=$FRIBIDI_LIB
-
-
-ALL_ENABLED="$FRIBIDI_ENABLED $ALL_ENABLED"
-ALL_INC="$FRIBIDI_INC $ALL_INC"
-ALL_LIB="$FRIBIDI_LIB $ALL_LIB"
-
-
 { echo "$as_me:$LINENO: checking for libxml2" >&5
 echo $ECHO_N "checking for libxml2... $ECHO_C" >&6; }
 
@@ -11687,6 +11601,94 @@ SOS_SVR_ENABLED=$SOS_SVR_ENABLED
 
 
 ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $SOS_SVR_ENABLED $XML2_ENABLED $CURL_ENABLED $ALL_ENABLED"
+
+
+
+{ echo "$as_me:$LINENO: checking if FriBidi support requested" >&5
+echo $ECHO_N "checking if FriBidi support requested... $ECHO_C" >&6; }
+
+
+# Check whether --with-fribidi-config was given.
+if test "${with_fribidi_config+set}" = set; then
+  withval=$with_fribidi_config;
+fi
+
+
+if test "$with_fribidi_config" = "no" -o "$with_fribidi_config" = "" ; then
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+  FRIBIDI_CONFIG="no"
+elif test "$with_fribidi_config" = "yes" ; then
+  { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+  # Extract the first word of "fribidi-config", so it can be a program name with args.
+set dummy fribidi-config; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_FRIBIDI_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $FRIBIDI_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_FRIBIDI_CONFIG="$FRIBIDI_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_FRIBIDI_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_FRIBIDI_CONFIG" && ac_cv_path_FRIBIDI_CONFIG="no"
+  ;;
+esac
+fi
+FRIBIDI_CONFIG=$ac_cv_path_FRIBIDI_CONFIG
+if test -n "$FRIBIDI_CONFIG"; then
+  { echo "$as_me:$LINENO: result: $FRIBIDI_CONFIG" >&5
+echo "${ECHO_T}$FRIBIDI_CONFIG" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+else
+  FRIBIDI_CONFIG=$with_fribidi_config
+fi
+
+if test "$FRIBIDI_CONFIG" = "no" ; then
+  FRIBIDI_ENABLED=
+  FRIBIDI_INC=
+  FRIBIDI_LIB=
+else
+  { echo "$as_me:$LINENO: result: yes, user supplied fribidi-config" >&5
+echo "${ECHO_T}yes, user supplied fribidi-config" >&6; }
+  FRIBIDI_ENABLED=-DUSE_FRIBIDI
+  FRIBIDI_LIB=`$FRIBIDI_CONFIG --libs`
+  FRIBIDI_INC=`$FRIBIDI_CONFIG --cflags`
+fi
+
+FRIBIDI_ENABLED=$FRIBIDI_ENABLED
+
+FRIBIDI_INC=$FRIBIDI_INC
+
+FRIBIDI_LIB=$FRIBIDI_LIB
+
+
+ALL_ENABLED="$FRIBIDI_ENABLED $ALL_ENABLED"
+ALL_INC="$FRIBIDI_INC $ALL_INC"
+ALL_LIB="$FRIBIDI_LIB $ALL_LIB"
+
 
 { echo "$as_me:$LINENO: checking FastCGI support" >&5
 echo $ECHO_N "checking FastCGI support... $ECHO_C" >&6; }
@@ -13578,16 +13580,16 @@ WCS_SVR_ENABLED!$WCS_SVR_ENABLED$ac_delim
 LIBCURL_CONFIG!$LIBCURL_CONFIG$ac_delim
 CURL_INC!$CURL_INC$ac_delim
 CURL_LIB!$CURL_LIB$ac_delim
-FRIBIDI_CONFIG!$FRIBIDI_CONFIG$ac_delim
-FRIBIDI_ENABLED!$FRIBIDI_ENABLED$ac_delim
-FRIBIDI_INC!$FRIBIDI_INC$ac_delim
-FRIBIDI_LIB!$FRIBIDI_LIB$ac_delim
 LIBXML2_CONFIG!$LIBXML2_CONFIG$ac_delim
 XML2_INC!$XML2_INC$ac_delim
 XML2_LIB!$XML2_LIB$ac_delim
 WMS_LYR_ENABLED!$WMS_LYR_ENABLED$ac_delim
 WFS_LYR_ENABLED!$WFS_LYR_ENABLED$ac_delim
 SOS_SVR_ENABLED!$SOS_SVR_ENABLED$ac_delim
+FRIBIDI_CONFIG!$FRIBIDI_CONFIG$ac_delim
+FRIBIDI_ENABLED!$FRIBIDI_ENABLED$ac_delim
+FRIBIDI_INC!$FRIBIDI_INC$ac_delim
+FRIBIDI_LIB!$FRIBIDI_LIB$ac_delim
 FASTCGI_ENABLED!$FASTCGI_ENABLED$ac_delim
 FASTCGI_INC!$FASTCGI_INC$ac_delim
 FASTCGI_LIB!$FASTCGI_LIB$ac_delim
