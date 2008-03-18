@@ -1,48 +1,39 @@
-/*****************************************************************************
- *             -- Oracle Spatial (SDO) support for MapServer --              *
- *                                                                           *
- *  Authors: Fernando Simon (fsimon@univali.br)                              *
- *           Rodrigo Becke Cabral (cabral@univali.br)                        *
- *  Collaborator: Adriana Gomes Alves                                        *
- *  MapServer: MapServer 4.8-rc1 (cvs)                                       *
- *  Oracle: Oracle 9.2 Spatial Cartridge 9.2 release 9.0.1                   *
- *                                                                           *
- *****************************************************************************
- = This piece for MapServer was originally developed under the funding of
- = agreement n.45/00 between CTTMAR/UNIVALI (www.cttmar.univali.br)
- = and CEPSUL/IBAMA (www.ibama.gov.br).
- *****************************************************************************
- = Current development is funded by CNPq (www.cnpq.br) under
- = process 401263.03-7
- = and FUNCITEC (www.funcitec.rct-sc.br) under process FCTP1523-031.
- *****************************************************************************
- * $Id$
- *****************************************************************************
- * Last five fixed bugs:
- *  #1662, #1736, #1845, #1961, #2056
- * Unsolved bugs yet:
- *  #1846, #2129, #2179
+/******************************************************************************
+ * Project: MapServer
+ * Purpose: Native access to Oracle Spatial (SDO) data.  
+ * Author:  Fernando Simon (fsimon@univali.br)
+ *          Rodrigo Becke Cabral
+ *          Adriana Gomes Alves
  *
- * Using OracleSpatial:
- * - CONNECTIONTYPE oraclespatial
- * - CONNECTION 'username/password@database'
- * - DATA 'geometry_column FROM <table>'
- *   or
- *   DATA 'geometry_column FROM <table> [USING UNIQUE <column>' SRID #srid <function> VERSION <vcode>]'
- *       <function> can be:
- *           'FILTER', 'RELATE', GEOMRELATE' or 'NONE'
- *       <vcode> can be:
- *           '8i', '9i' or '10g'
+ * Notes: Developed under several funding agreements:
  *
- *       <table> can be:
- *            One database table name
- *       or:
- *            (SELECT stmt)
- * - Parts of the CONNECTION string may be encrypted, see MS-RFC-18
+ *   1) n.45/00 between CTTMAR/UNIVALI (www.cttmar.univali.br) 
+ *      and CEPSUL/IBAMA (www.ibama.gov.br)
  *
- *****************************************************************************
- * Notices above shall be included in all copies or portions of the software.
- * This piece is provided "AS IS", without warranties of any kind. Got it?
+ *   2) CNPq (www.cnpq.br) under process 401263.03-7
+ *
+ *   3) FUNCITEC (www.funcitec.rct-sc.br) under process FCTP1523-031
+ *
+ ******************************************************************************
+ * Copyright (c) 1996-2008 Regents of the University of Minnesota.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies of this Software or works derived from this Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
 #include "mapserver.h"
