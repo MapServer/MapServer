@@ -2196,7 +2196,13 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
     img = msDrawMap(map, MS_FALSE);
   if (img == NULL)
       return msWMSException(map, nVersion, NULL);
-
+  
+  /* Set the HTTP Cache-control headers if they are defined
+     in the map object */
+  const char *http_max_age;
+  if( (http_max_age = msOWSLookupMetadata(&(map->web.metadata), "MO", "http_max_age")) ) {
+    msIO_printf("Cache-Control: max-age=%s\n", http_max_age , 10, 10);
+  }
   
   msIO_printf("Content-type: %s%c%c",
               MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
