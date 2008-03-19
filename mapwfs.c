@@ -43,7 +43,7 @@ MS_CVSID("$Id$")
 ** Report current MapServer error in XML exception format.
 */
 
-static int msWFSException(mapObj *map, const char *locator, const char *code)
+int msWFSException(mapObj *map, const char *locator, const char *code)
 {
     char *schemalocation = NULL;
     /* In WFS, exceptions are always XML.
@@ -122,7 +122,7 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
 ** Returns true (1) is this layer meets the requirements to be served as
 ** a WFS feature type.
 */
-static int msWFSIsLayerSupported(layerObj *lp)
+int msWFSIsLayerSupported(layerObj *lp)
 {
     /* In order to be supported, lp->type must be specified, even for 
     ** layers that are OGR, SDE, SDO, etc connections.
@@ -290,6 +290,11 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   const char *wmtver=NULL;
 
   int i=0;
+
+  //TODO Add version negociation. Default version to be switched to 1.1.0 when complete
+
+  if( strncmp(wfsparams->pszVersion,"1.1",3) == 0 )
+    return msWFSGetCapabilities11( map, wfsparams, req );
 
   /* Decide which version we're going to return... only 1.0.0 for now */
   wmtver = strdup("1.0.0");

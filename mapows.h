@@ -367,6 +367,8 @@ MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              const char *pszInfoFormat); 
 
 
+
+
 /*====================================================================
  *   mapwfs.c
  *====================================================================*/
@@ -379,11 +381,18 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj);
 void msWFSParseRequest(cgiRequestObj *, wfsParamsObj *);
 wfsParamsObj *msWFSCreateParamsObj(void);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
+int msWFSIsLayerSupported(layerObj *lp);
+int msWFSException(mapObj *map, const char *locator, const char *code);
 
 #ifdef USE_WFS_SVR
 const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp);
-#endif
 
+int msWFSException11(mapObj *map, const char *locator, 
+                     const char *exceptionCode, const char *version);
+int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *wfsparams, 
+                           cgiRequestObj *req); 
+
+#endif
 
 /*====================================================================
  *   mapwfslayer.c
