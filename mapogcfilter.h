@@ -26,6 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  ****************************************************************************/
 
+#ifndef MAPOGCFILTER_H
+#define MAPOGCFILTER_H
 
 #ifdef USE_OGR
 
@@ -120,7 +122,10 @@ MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString);
 
 #ifdef USE_LIBXML2
-MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc);
+MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal);
 #endif
+
+#endif
+
 
 #endif

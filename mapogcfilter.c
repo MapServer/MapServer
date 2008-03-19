@@ -3802,7 +3802,7 @@ FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
 }
 #ifdef USE_LIBXML2
 
-xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc)
+xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal)
 {
     xmlNodePtr psRootNode = NULL, psNode = NULL, psSubNode = NULL, psSubSubNode = NULL;
     
@@ -3836,19 +3836,23 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc)
     xmlNewProp(psSubSubNode, BAD_CAST "name", BAD_CAST "Contains");
     psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "SpatialOperator", NULL);
     xmlNewProp(psSubSubNode, BAD_CAST "name", BAD_CAST "DWithin");
+    psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "SpatialOperator", NULL);
+    xmlNewProp(psSubSubNode, BAD_CAST "name", BAD_CAST "Beyond");
 #endif
     psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "SpatialOperator", NULL);
     xmlNewProp(psSubSubNode, BAD_CAST "name", BAD_CAST "BBOX");
 
-    psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Temporal_Capabilities", NULL);
-    psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "TemporalOperands", NULL);
-    psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimePeriod");
-    psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimeInstant");
+    if (bTemporal)
+    {
+        psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Temporal_Capabilities", NULL);
+        psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "TemporalOperands", NULL);
+        psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimePeriod");
+        psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimeInstant");
 
-    psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "TemporalOperators", NULL);
-    psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperator", NULL);
-    xmlNewProp(psSubSubNode, BAD_CAST "name", BAD_CAST "TM_Equals");
-
+        psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "TemporalOperators", NULL);
+        psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperator", NULL);
+        xmlNewProp(psSubSubNode, BAD_CAST "name", BAD_CAST "TM_Equals");
+    }
     psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Scalar_Capabilities", NULL);
     xmlNewChild(psNode, psNsOgc, BAD_CAST "LogicalOperators", NULL);
     psNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperators", NULL);

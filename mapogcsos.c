@@ -1353,7 +1353,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
     }
 
     /*<ogc:Filter_Capabilities> */
-    psTmpNode = xmlAddChild(psRootNode, FLTGetCapabilities(psNsSos, psNsOgc));
+    psTmpNode = xmlAddChild(psRootNode, FLTGetCapabilities(psNsSos, psNsOgc, MS_TRUE));
 
     /*Offerings */
      psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Contents", NULL);
