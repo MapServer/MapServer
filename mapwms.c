@@ -2120,6 +2120,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   imageObj *img;
   int i = 0;
   int sldrequested = MS_FALSE,  sldspatialfilter = MS_FALSE;
+  const char *http_max_age;
 
   /* __TODO__ msDrawMap() will try to adjust the extent of the map */
   /* to match the width/height image ratio. */
@@ -2199,7 +2200,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   
   /* Set the HTTP Cache-control headers if they are defined
      in the map object */
-  const char *http_max_age;
+  
   if( (http_max_age = msOWSLookupMetadata(&(map->web.metadata), "MO", "http_max_age")) ) {
     msIO_printf("Cache-Control: max-age=%s\n", http_max_age , 10, 10);
   }
