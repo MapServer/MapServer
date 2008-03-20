@@ -29,9 +29,9 @@
 #ifndef MAPOGCFILTER_H
 #define MAPOGCFILTER_H
 
+#include "mapserver.h"
 #ifdef USE_OGR
 
-#include "mapserver.h"
 /* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
 
