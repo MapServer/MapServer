@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- mapagg.cpp: AGG: add opacity at the style level (#1155)
 
 - mapwms.c: add Cache-Control max-age HTTP header support (#2551)
 
