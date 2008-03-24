@@ -35,7 +35,11 @@ MS_CVSID("$Id$")
 #include <ctype.h>
 
 #ifdef USE_FRIBIDI
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include "fribidi.h"
+#else
 #include <fribidi/fribidi.h>
+#endif
 #define MAX_STR_LEN 65000
 #endif
 

@@ -442,6 +442,17 @@ JPEG_INC = -I$(JPEG_DIR)
 #EPPL_OBJ=c:/my_path/epplib.obj
 
 
+# ----------------------------------------------------------------------
+# Use of fribidi
+# GNU FriBidi is an implementation of the Unicode Bidirectional Algorithm (bidi).
+# http://fribidi.freedesktop.org/wiki/
+# Unncomment out the following flags to build with fribidi
+#---------------------------------------------------------------------
+#FRIBIDI=-DUSE_FRIBIDI
+#FRIBIDI_DIR=$(MS_BASE)\..\fribidi-0.10.9
+
+
+
 ########################################################################
 # Section IV: Mapserver OGC Configuration
 ########################################################################
@@ -747,6 +758,13 @@ ICONV_INC= -I$(ICONV_DIR)\include
 FCGILIB=$(FCGIDIR)\libfcgi\Release\libfcgi.lib
 FCGIINC=-I$(FCGIDIR)\include
 !ENDIF
+
+#fribidi support
+!IFDEF FRIBIDI
+FRIBIDI_INC=-I$(FRIBIDI_DIR)
+FRIBIDI_LIB=$(FRIBIDI_DIR)\fribidi.lib
+!ENDIF
+
 ########################################################################
 # Section VIII: UMN GIS System Support
 ########################################################################
@@ -780,7 +798,7 @@ EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
      $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
-     $(LIBXML_LIB) $(AGG_LIB)
+     $(LIBXML_LIB) $(AGG_LIB) $(FRIBIDI_LIB)
         
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
@@ -790,7 +808,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
-         $(AGG_INC) $(PNG_INC)
+         $(AGG_INC) $(PNG_INC) $(FRIBIDI_INC)
         
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
@@ -800,7 +818,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(USE_POINT_Z_M) $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
-          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(AGG) $(RGBA_PNG_ENABLED)
+          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(AGG) $(RGBA_PNG_ENABLED) $(FRIBIDI)
 
 !IFDEF WIN64
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
