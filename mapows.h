@@ -382,7 +382,8 @@ void msWFSParseRequest(cgiRequestObj *, wfsParamsObj *);
 wfsParamsObj *msWFSCreateParamsObj(void);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
 int msWFSIsLayerSupported(layerObj *lp);
-int msWFSException(mapObj *map, const char *locator, const char *code);
+int msWFSException(mapObj *map, const char *locator, const char *code, 
+                   const char *version);
 
 #ifdef USE_WFS_SVR
 const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp);

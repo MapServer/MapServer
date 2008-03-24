@@ -27,14 +27,15 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  ****************************************************************************/
 
-#include "mapogcfilter.h"
-#include "mapowscommon.h"
+#include "mapserver.h"
 #include "mapows.h"
-#include "maplibxml2.h"
 
 MS_CVSID("$Id: $")
 
 #if defined(USE_WFS_SVR) && defined(USE_LIBXML2)
+#include "maplibxml2.h"
+#include "mapowscommon.h"
+#include "mapogcfilter.h"
 
 
 int msWFSException11(mapObj *map, const char *locator, 
@@ -49,6 +50,11 @@ int msWFSException11(mapObj *map, const char *locator,
     xmlNodePtr psRootNode = NULL;
     xmlNsPtr   psNsOws    = NULL;
     xmlChar *buffer       = NULL;
+    
+
+    if (version == NULL)
+       version = "1.1.0";
+
 
     psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
@@ -322,7 +328,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
      /*output format*/
       xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psOwsNs, 
                                                                   "Parameter", "outputFormat", 
-                                                                  "text/gml; subtype=gml/3.1.1"));
+                                                                  "XMLSCHEMA,text/xml; subtype=gml/2.1.2,text/gml; subtype=gml/3.1.1"));
 
 /* -------------------------------------------------------------------- */
 /*      GetFeatureType                                                  */
