@@ -96,7 +96,7 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psOwsNs)
 {
     rectObj ext;
    
-    xmlNodePtr   psRootNode, psNode, psSubNode;
+    xmlNodePtr psRootNode, psNode;
     const char *value    = NULL;
 
     psRootNode = xmlNewNode(NULL, BAD_CAST "FeatureType");
@@ -121,25 +121,12 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psOwsNs)
       psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Abstract", BAD_CAST value);
 
 
-    value = msOWSLookupMetadata(&(lp->metadata), "O", "keywordlist");
+    value = msOWSLookupMetadata(&(lp->metadata), "FO", "keywordlist");
 
-    if (value) 
-    {
-        char **tokens = NULL;
-        int n = 0;
-        int i = 0;
-
-        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Keywords", NULL);
-
-        tokens = msStringSplit(value, ',', &n);
-        if (tokens && n > 0) 
-        {
-            for (i=0; i<n; i++) 
-              psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "Keyword", BAD_CAST tokens[i]);
-          
-            msFreeCharArray(tokens, n);
-        }
-    }
+    if (value)
+        msLibXml2GenerateList(
+            xmlNewChild(psRootNode, psOwsNs, BAD_CAST "Keywords", NULL),
+            NULL, "Keyword", value, ',' );
 
     /*srs only supposrt DefaultSRS with the same logic as for wfs1.0
       TODO support OtherSRS*/
@@ -179,13 +166,30 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psOwsNs)
         xmlNewChild(psRootNode, psOwsNs, BAD_CAST "WGS84BoundingBox", NULL);
         xmlAddSibling(psNode,
                       xmlNewComment(BAD_CAST "WARNING: Mandatory WGS84BoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wfs_extent metadata."));
+    }
 
-        
+    value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href");
+
+    if (value)
+    {
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", BAD_CAST value);
+
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_format");
+
+        if (!value)
+          value = strdup("text/html"); // default
+
+        xmlNewProp(psNode, BAD_CAST "format", BAD_CAST value);
+
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_type");
+
+        if (!value)
+          value = strdup("FGDC"); // default
+
+        xmlNewProp(psNode, BAD_CAST "type", BAD_CAST value);
     }
 
     return psRootNode;
-
-
 }
 
 /************************************************************************/
