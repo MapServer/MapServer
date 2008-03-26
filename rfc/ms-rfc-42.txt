@@ -1,0 +1,120 @@
+=========================================================
+  MS RFC 42: Support of Cookies Forwarding
+=========================================================
+
+:Date: 2008/03/26
+:Author: Julien-Samuel Lacroix
+:Contact: jlacroix@mapgears.com 
+:Status: Development
+
+
+==============================================================================
+Overview
+==============================================================================
+
+This RFC propose to extend MapServer to forward HTTP Cookies when doing OWS requests. 
+
+One method of authentication in distributed server environment is the use of HTTP Cookies. HTTP cookies are used by Web servers to differentiate users and to maintain data related to the user during navigation, possibly across multiple visits and for state information. Technically, cookies are arbitrary pieces of data chosen by the Web server and sent to the browser. The browser returns them unchanged to the server. The enhancement to MapServer would allow the application to forward any HTTP cookie (either from a http or https request for get or post) received from a client to any other server or service that MapServer would request information from.
+
+This would require MapServer to receive and forward any cookies to new services during requests for operations (cascades) such as (but not limited to) WMS requests for: getmaps, getfeatureinfo and WFS requests for GetFeature.
+
+
+==============================================================================
+Implementation Methodology
+==============================================================================
+
+A new metadata (http_cookie_data) will be added at the mapfile level to temporarily store HTTP cookie data. Another metadata (ows_http_cookie) will also be added at the layer and mapfile level to control the use of cookies. The later will be set to either "forward", to forward the cookie stored in the http_cookie_data metadata, or to a hardcoded cookie value, to forward this hardcoded value only.
+
+Example of ows_http_cookie in the metadata:
+
+::
+
+  LAYER
+    ...
+    METADATA
+      "ows_http_cookie" "forward" # This will forward the cookie sent to MapServer
+    END
+    ...
+
+The user can also pass direct cookie values instead of the cookies behing passed to MapServer. To pass multiple cookies, use the following syntax: 
+
+::
+
+  LAYER
+    ...
+    METADATA
+      "ows_http_cookie" "cookie1=my_value; cookie2=myvalue; " # This will forward the metadata value
+    END
+    ...
+
+
+
+By using the metadata configuration, a MapScript application will be able to forward a HTTP Cookie by setting the correct metadata.
+
+Currently only WMS and WFS code will use this since they are the only places where MapServer request an outside webserver.
+
+
+==============================================================================
+Modifications to the Source Code
+==============================================================================
+
+The HTTP Cookie data will need to be stored in cgiRequestObj in a new member variable to be able to pass it to the mapfile. If HTTP Cookies are present the cookies will always be stored there. The msOWSDispatch function will then be responsible of the HTTP Cookies in the mapfile if the ows_http_cookie metadata is set. The WMS and WFS code will set the newly created variable in the httpRequestObj when it prepares the URL for a server request.
+
+The WMS/WFS msPrepareWMSLayerRequest function will check for the ows_http_cookie metadata in the layer and the map objects. If the value is set to forward, the content of the http_cookie_data metadata will be forwarded as HTTP Cookie to the WMS/WFS server.
+
+Curl as an option in the curl_easy_setopt() function when doing a request called CURLOPT_COOKIE to send cookies with a request.
+
+
+==============================================================================
+MapScript
+==============================================================================
+
+By storing the HTTP Cookie data in a mapfile metadata MapScript will be able to use this new functionality. Here's an example of a PHP/MapScript use of HTTP Cookie:
+
+::
+
+  foreach($_COOKIE as $szKey => $szValue)
+  {
+      $szHTTPCookies .= "$szKey=$szValue; ";
+  }
+  $oMap->setMetadata("http_cookie_data", $szHTTPCookies);
+  $oMap->setMetadata("ows_http_cookie", "forward");
+  $oMap->draw();
+
+
+==============================================================================
+File Affected
+==============================================================================
+
+::
+
+ cgiutil.h           (add http_cookies in cgiRequestObj)
+ cgiutil.c           (read and store the http cookies data in cgiRequestObj)
+ maphttp.c           (send cookies with the request via curl option)
+ mapows.h            (add http_cookies to httpRequestObj)
+ mapows.c            (store cookies in mapfile metadata)
+ mapwmslayer.c       (set cookies in httpRequestObj)
+ mapwfslayer.c       (set cookies in httpRequestObj)
+
+
+==============================================================================
+Backwards Compatibility
+==============================================================================
+
+None.
+
+
+==============================================================================
+Bug ID
+==============================================================================
+
+None Yet.
+
+
+==============================================================================
+Voting History
+==============================================================================
+
+None Yet.
+
+
