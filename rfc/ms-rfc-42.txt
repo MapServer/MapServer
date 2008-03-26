@@ -58,7 +58,7 @@ Currently only WMS and WFS code will use this since they are the only places whe
 Modifications to the Source Code
 ==============================================================================
 
-The HTTP Cookie data will need to be stored in cgiRequestObj in a new member variable to be able to pass it to the mapfile. If HTTP Cookies are present the cookies will always be stored there. The msOWSDispatch function will then be responsible of the HTTP Cookies in the mapfile if the ows_http_cookie metadata is set. The WMS and WFS code will set the newly created variable in the httpRequestObj when it prepares the URL for a server request.
+The HTTP Cookie data will need to be stored in cgiRequestObj in a new member variable to be able to pass it to the mapfile. If HTTP Cookies are present the cookies will always be stored there. The mapserv.c main function will then be responsible of the HTTP Cookies in the mapfile just after the loadMap() function and before msOWSDispatch() if the ows_http_cookie metadata is set. The WMS and WFS code will set the newly created variable in the httpRequestObj when it prepares the URL for a server request.
 
 The WMS/WFS msPrepareWMSLayerRequest function will check for the ows_http_cookie metadata in the layer and the map objects. If the value is set to forward, the content of the http_cookie_data metadata will be forwarded as HTTP Cookie to the WMS/WFS server.
 
@@ -92,7 +92,7 @@ File Affected
  cgiutil.c           (read and store the http cookies data in cgiRequestObj)
  maphttp.c           (send cookies with the request via curl option)
  mapows.h            (add http_cookies to httpRequestObj)
- mapows.c            (store cookies in mapfile metadata)
+ mapserv.c            (store cookies in mapfile metadata)
  mapwmslayer.c       (set cookies in httpRequestObj)
  mapwfslayer.c       (set cookies in httpRequestObj)
 
