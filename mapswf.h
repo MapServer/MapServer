@@ -24,6 +24,20 @@ typedef struct  {
   int nCurrentLayerIdx;
   int nCurrentShapeIdx;
   
+  SWFFont *Fonts; /* keep tracks of the fonts used to properly free them */
+  int nFonts;
+  SWFText *Texts; /* keep tracks of the texts used to properly free them */
+  int nTexts;
+  SWFShape *Shapes; /* keep tracks of the shapes used to properly free them */
+  int nShapes;
+  SWFButton *Buttons; /* keep tracks of the buttons used to properly free them */
+  int nButtons;
+  SWFBitmap *Bitmaps; /* keep tracks of the bitmaps used to properly free them */
+  int nBitmaps;
+  SWFInput *Inputs; /* keep tracks of the input buffers used to properly free them */
+  int nInputs;
+  unsigned char **DblDatas; /* keep tracks of the DblDatas used to properly free them */
+  int nDblDatas;
   
   void    *imagetmp;  /*used when the output format is SINGLE */
                       /*(one movie for the whole map)*/

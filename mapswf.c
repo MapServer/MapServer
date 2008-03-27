@@ -56,7 +56,187 @@ static char gszTmp[256];
 /* -------------------------------------------------------------------- */
 SWFMovie GetCurrentMovie(mapObj *map, imageObj *image);
 
+/************************************************************************/
+/*                       void StoreDblData                              */
+/*                                                                      */
+/*      Keep tracks of the DblData allocated to properly free them      */
+/*                        Ticket #2555                                  */
+/************************************************************************/
+void StoreDblData(unsigned char *oDblData, imageObj *image)
+{
+	int nDblData;
+        
+	((SWFObj *)image->img.swf)->nDblDatas += 1;
+	nDblData = ((SWFObj *)image->img.swf)->nDblDatas;
+	if (!((SWFObj *)image->img.swf)->DblDatas)
+	{
+		((SWFObj *)image->img.swf)->DblDatas =
+			(unsigned char **)malloc(sizeof(oDblData)*1);
+	}
+    else
+    {
+        ((SWFObj *)image->img.swf)->DblDatas =
+        	(unsigned char **)realloc(((SWFObj *)image->img.swf)->DblDatas,
+        			sizeof(oDblData)*nDblData);
+	}
+	((SWFObj *)image->img.swf)->DblDatas[nDblData-1] = oDblData;
+}
 
+/************************************************************************/
+/*                       void StoreShape                                */
+/*                                                                      */
+/*      Keep tracks of the SWFShape allocated to properly free them     */
+/*                        Ticket #2555                                  */
+/************************************************************************/
+void StoreShape(SWFShape oShape, imageObj *image)
+{
+	int nShape;
+
+	((SWFObj *)image->img.swf)->nShapes += 1;
+	nShape = ((SWFObj *)image->img.swf)->nShapes;
+	if (!((SWFObj *)image->img.swf)->Shapes)
+	{
+		((SWFObj *)image->img.swf)->Shapes =
+	        	(SWFShape *)malloc(sizeof(SWFShape));
+	}
+	else
+    {
+        ((SWFObj *)image->img.swf)->Shapes =
+        	(SWFShape *)realloc(((SWFObj *)image->img.swf)->Shapes,
+        			sizeof(SWFShape)*nShape);
+	}
+	((SWFObj *)image->img.swf)->Shapes[nShape-1] = oShape;
+}
+
+/************************************************************************/
+/*                       void StoreInput                                */
+/*                                                                      */
+/*      Keep tracks of the SWFInput allocated to properly free them     */
+/*                        Ticket #2555                                  */
+/************************************************************************/
+void StoreInput(SWFInput oInput, imageObj *image)
+{
+	int nInput;
+
+	((SWFObj *)image->img.swf)->nInputs += 1;
+	nInput = ((SWFObj *)image->img.swf)->nInputs;
+	if (!((SWFObj *)image->img.swf)->Inputs)
+	{
+		((SWFObj *)image->img.swf)->Inputs =
+	        	(SWFInput *)malloc(sizeof(SWFInput));
+	}
+	else
+    {
+        ((SWFObj *)image->img.swf)->Inputs =
+        	(SWFInput *)realloc(((SWFObj *)image->img.swf)->Inputs,
+        			sizeof(SWFInput)*nInput);
+	}
+	((SWFObj *)image->img.swf)->Inputs[nInput-1] = oInput;
+}
+
+/************************************************************************/
+/*                       void StoreBitmap                               */
+/*                                                                      */
+/*      Keep tracks of the SWFBitmap allocated to properly free them    */
+/*                        Ticket #2555                                  */
+/************************************************************************/
+void StoreBitmap(SWFBitmap oBitmap, imageObj *image)
+{
+	int nBitmap;
+
+	((SWFObj *)image->img.swf)->nBitmaps += 1;
+	nBitmap = ((SWFObj *)image->img.swf)->nBitmaps;
+	if (!((SWFObj *)image->img.swf)->Bitmaps)
+	{
+		((SWFObj *)image->img.swf)->Bitmaps =
+	        	(SWFBitmap *)malloc(sizeof(SWFBitmap));
+	}
+	else
+    {
+        ((SWFObj *)image->img.swf)->Bitmaps =
+        	(SWFBitmap *)realloc(((SWFObj *)image->img.swf)->Bitmaps,
+        			sizeof(SWFBitmap)*nBitmap);
+	}
+	((SWFObj *)image->img.swf)->Bitmaps[nBitmap-1] = oBitmap;
+}
+
+/************************************************************************/
+/*                       void StoreButton                               */
+/*                                                                      */
+/*      Keep tracks of the SWFButton allocated to properly free them    */
+/*                        Ticket #2555                                  */
+/************************************************************************/
+void StoreButton(SWFButton oButton, imageObj *image)
+{
+	int nButton;
+
+	((SWFObj *)image->img.swf)->nButtons += 1;
+	nButton = ((SWFObj *)image->img.swf)->nButtons;
+	if (!((SWFObj *)image->img.swf)->Buttons)
+	{
+		((SWFObj *)image->img.swf)->Buttons =
+			(SWFButton *)malloc(sizeof(oButton));
+	}
+	else
+	{
+		((SWFObj *)image->img.swf)->Buttons =
+			(SWFButton *)realloc(((SWFObj *)image->img.swf)->Buttons,
+					sizeof(oButton)*nButton);
+	}
+	((SWFObj *)image->img.swf)->Buttons[nButton-1] = oButton;
+}
+
+/************************************************************************/
+/*                       void StoreFont                                 */
+/*                                                                      */
+/*      Keep tracks of the SWFFont allocated to properly free them      */
+/*                        Ticket #2555                                  */
+/************************************************************************/
+void StoreFont(SWFFont oFont, imageObj *image)
+{
+	int nFont;
+        
+	((SWFObj *)image->img.swf)->nFonts += 1;
+	nFont = ((SWFObj *)image->img.swf)->nFonts;
+	if (!((SWFObj *)image->img.swf)->Fonts)
+	{
+		((SWFObj *)image->img.swf)->Fonts =
+			(SWFFont *)malloc(sizeof(oFont));
+	}
+	else
+	{
+		((SWFObj *)image->img.swf)->Fonts =
+			(SWFFont *)realloc(((SWFObj *)image->img.swf)->Fonts,
+					sizeof(oFont)*nFont);
+	}
+	((SWFObj *)image->img.swf)->Fonts[nFont-1] = oFont;
+}
+
+/************************************************************************/
+/*                       void StoreText                                 */
+/*                                                                      */
+/*      Keep tracks of the SWFText allocated to properly free them      */
+/*                        Ticket #2555                                  */
+/************************************************************************/
+void StoreText(SWFText oText, imageObj *image)
+{
+	int nText;
+        
+	((SWFObj *)image->img.swf)->nTexts += 1;
+	nText = ((SWFObj *)image->img.swf)->nTexts;
+	if (!((SWFObj *)image->img.swf)->Texts)
+	{
+		((SWFObj *)image->img.swf)->Texts =
+			(SWFText *)malloc(sizeof(oText));
+	}
+	else
+	{
+		((SWFObj *)image->img.swf)->Texts =
+			(SWFText *)realloc(((SWFObj *)image->img.swf)->Texts,
+					sizeof(oText)*nText);
+	}
+	((SWFObj *)image->img.swf)->Texts[nText-1] = oText;
+}
 
 /************************************************************************/
 /*                    gdImagePtr getTileImageFromSymbol                 */
@@ -299,12 +479,13 @@ gdImagePtr getTileImageFromSymbol(mapObj *map, symbolSetObj *symbolset,
 /************************************************************************/
 /*                          SWFShape bitmap2shape                       */
 /*                                                                      */
-/*      Return a fillef polygon shape using a bitmap.                   */
+/*      Return a filled polygon shape using a bitmap.                   */
 /************************************************************************/
 SWFShape bitmap2shape(unsigned char *data,unsigned long size,int width,
-                      int height, byte flags)
+                      int height, byte flags, imageObj *image)
 {
     SWFShape oShape;
+    SWFInput oBuffer;
     SWFFill oFill;
     SWFBitmap oBitmap;
 
@@ -312,19 +493,21 @@ SWFShape bitmap2shape(unsigned char *data,unsigned long size,int width,
         return NULL;
 
     oShape = newSWFShape();
-    oBitmap = newSWFBitmap_fromInput(newSWFInput_buffer(data,size));
-
+    oBuffer = newSWFInput_buffer(data,size);
+    StoreInput(oBuffer, image);
+    oBitmap = newSWFBitmap_fromInput(oBuffer);
+    StoreBitmap(oBitmap, image);
+    
     oFill = SWFShape_addBitmapFill(oShape, oBitmap, flags);
     /* oFill = SWFShape_addBitmapFill(oShape, oBitmap, 0); */
-                              
+    
     SWFShape_setRightFill(oShape, oFill);
-
+    destroySWFFill(oFill);
+    
     SWFShape_drawLine(oShape, (float)width, 0.0);
     SWFShape_drawLine(oShape, 0.0, (float)height);
     SWFShape_drawLine(oShape, (float)-width, 0.0);
     SWFShape_drawLine(oShape, 0.0, (float)-height);
-
-    /* destroySWFBitmap(oBitmap); */
 
     return oShape;
 }
@@ -333,7 +516,7 @@ SWFShape bitmap2shape(unsigned char *data,unsigned long size,int width,
 /************************************************************************/
 /*                        unsigned char *bitmap2dbl                     */
 /*                                                                      */
-/*      Coverts a bitmap to dbl bitmap suitable for ming.               */
+/*      Converts a bitmap to dbl bitmap suitable for ming.              */
 /************************************************************************/
 unsigned char *bitmap2dbl(unsigned char *data,int *size, int *bytesPerColor) 
 {
@@ -357,6 +540,7 @@ unsigned char *bitmap2dbl(unsigned char *data,int *size, int *bytesPerColor)
         dbldata[i] = data[j];
     }
     *size = outsize + 14;
+    
     return(dbldata);
 }
 
@@ -421,7 +605,6 @@ unsigned char *gd2bitmap(gdImagePtr img,int *size, int *bytesPerColor)
     return(data);
 }
 
-
 /************************************************************************/
 /*                          SWFShape gdImage2Shape                      */
 /*                                                                      */
@@ -431,7 +614,7 @@ unsigned char *gd2bitmap(gdImagePtr img,int *size, int *bytesPerColor)
 /*      Conversion functions were provided by :                         */
 /*            Jan Hartmann <jhart@frw.uva.nl>                           */
 /************************************************************************/
-SWFShape gdImage2Shape(gdImagePtr img)
+SWFShape gdImage2Shape(gdImagePtr img, imageObj *image)
 {
     unsigned char *data, *dbldata;
     int size;
@@ -443,18 +626,18 @@ SWFShape gdImage2Shape(gdImagePtr img)
 
     data = gd2bitmap(img, &size, &bytesPerColor);
     dbldata = bitmap2dbl(data,&size,&bytesPerColor);
-    oShape = bitmap2shape(dbldata, size, img->sx, img->sy, SWFFILL_SOLID);
-
+    free(data); //memory leak cf ticket #2555
+    oShape = bitmap2shape(dbldata, size, img->sx, img->sy, SWFFILL_SOLID, image);
+    StoreDblData(dbldata, image); //memory leak cf ticket #2555
     return oShape;
 }
     
-
 /************************************************************************/
 /*                       SWFButton BuildButtonFromGD                    */
 /*                                                                      */
 /*      Return a button object using a GD image.                        */
 /************************************************************************/
-SWFButton BuildButtonFromGD(gdImagePtr img)/* , colorObj *psHighlightColor) */
+SWFButton BuildButtonFromGD(gdImagePtr img, imageObj *image)/* , colorObj *psHighlightColor) */
 {
     SWFShape oShape;
     SWFButton oButton;
@@ -464,7 +647,8 @@ SWFButton BuildButtonFromGD(gdImagePtr img)/* , colorObj *psHighlightColor) */
     if (!img)
         return NULL;
 
-    oShape = gdImage2Shape(img);
+    oShape = gdImage2Shape(img, image);
+    StoreShape(oShape, image);
     
     oButton = newSWFButton();
     SWFButton_addShape(oButton, oShape, 
@@ -472,8 +656,6 @@ SWFButton BuildButtonFromGD(gdImagePtr img)/* , colorObj *psHighlightColor) */
 
     return oButton;
 }
-
-
 
 /************************************************************************/
 /*                        SWFShape BuildEllipseShape                    */
@@ -485,6 +667,7 @@ SWFShape BuildEllipseShape(int nX, int nY, int nWidth, int nHeight,
                            colorObj *psFillColor, colorObj *psOutlineColor)
 {
     SWFShape oShape;
+    SWFFill oFill;
 
     oShape = newSWFShape();
 
@@ -495,14 +678,16 @@ SWFShape BuildEllipseShape(int nX, int nY, int nWidth, int nHeight,
         SWFShape_setLine(oShape, 0, (byte)psOutlineColor->red, 
                          (byte)psOutlineColor->green, (byte)psOutlineColor->blue, 0xff);
     
-    if (psFillColor)
-        SWFShape_setRightFill(oShape, 
-                              SWFShape_addSolidFill(oShape, 
-                                                    (byte)psFillColor->red, 
-                                                    (byte)psFillColor->green, 
-                                                    (byte)psFillColor->blue, 
-                                                    0xff));
-
+    if (psFillColor) {
+    	/* correct memory leak  by catching the SWFFill*/
+    	oFill = SWFShape_addSolidFill(oShape, (byte)psFillColor->red, 
+    			(byte)psFillColor->green, 
+    	        (byte)psFillColor->blue, 
+    	        0xff);
+        SWFShape_setRightFill(oShape, oFill);
+        /* and destroying it */
+        destroySWFFill(oFill);
+    }
     SWFShape_movePenTo(oShape, (float)(nX-(nWidth/2)), (float)nY);
 
 
@@ -538,7 +723,7 @@ SWFShape BuildEllipseShape(int nX, int nY, int nWidth, int nHeight,
 SWFButton BuildEllipseButton(int nX, int nY, int nWidth, int nHeight,
                              colorObj *psFillColor, colorObj *psOutlineColor,
                              colorObj *psHightlightColor,
-                             int nLayerIndex, int nShapeIndex)
+                             int nLayerIndex, int nShapeIndex, imageObj *image)
 {
     SWFShape oShape;
     SWFButton oButton;
@@ -550,14 +735,18 @@ SWFButton BuildEllipseButton(int nX, int nY, int nWidth, int nHeight,
         
     oShape = BuildEllipseShape(nX, nY, nWidth, nHeight, psFillColor,
                                psOutlineColor);
-
+    StoreShape(oShape, image);
+    
     oButton = newSWFButton();
     SWFButton_addShape(oButton, oShape, 
                        SWFBUTTON_UP | SWFBUTTON_HIT | SWFBUTTON_DOWN);
 
     if (psHightlightColor)
+    {
         oShape = BuildEllipseShape(nX, nY, nWidth, nHeight, psHightlightColor,
                                    NULL);
+        StoreShape(oShape, image);
+    }
     SWFButton_addShape(oButton, oShape, SWFBUTTON_OVER);
     
     if (nLayerIndex >=0 && nShapeIndex >= 0)
@@ -598,6 +787,7 @@ SWFShape BuildPolygonShape(shapeObj *p, colorObj *psFillColor,
 {
     int i, j;
     SWFShape oShape;
+    SWFFill oFill;
 
     if (p && p->numlines > 0 && (psFillColor !=NULL || psOutlineColor != NULL))
     {
@@ -606,13 +796,15 @@ SWFShape BuildPolygonShape(shapeObj *p, colorObj *psFillColor,
             SWFShape_setLine(oShape, width, (byte)psOutlineColor->red, 
                              (byte)psOutlineColor->green, (byte)psOutlineColor->blue, 0xff);
         if (psFillColor)
-            SWFShape_setRightFill(oShape,
-                                  SWFShape_addSolidFill(oShape, 
-                                                        (byte)psFillColor->red, 
-                                                        (byte)psFillColor->green, 
-                                                        (byte)psFillColor->blue,
-                                                        0xff));
-
+        {
+        	oFill = SWFShape_addSolidFill(oShape, 
+        			(byte)psFillColor->red, 
+                    (byte)psFillColor->green, 
+                    (byte)psFillColor->blue,
+                    0xff);
+            SWFShape_setRightFill(oShape, oFill);
+            destroySWFFill(oFill);
+       }
        for (i = 0; i < p->numlines; i++)
        {
            if (p->line[i].numpoints)
@@ -642,6 +834,7 @@ SWFShape  BuildShape(gdPoint adfPoints[], int nPoints,
                      colorObj *psOutlineColor)
 {
     SWFShape oShape = newSWFShape();
+    SWFFill oFill;
     int i = 0;
 
     if (psFillColor == NULL && psOutlineColor == NULL)
@@ -652,13 +845,13 @@ SWFShape  BuildShape(gdPoint adfPoints[], int nPoints,
         if (psOutlineColor)
             SWFShape_setLine(oShape, 0, (byte)psOutlineColor->red, 
                              (byte)psOutlineColor->green, (byte)psOutlineColor->blue, 0xff);
-
-        SWFShape_setRightFill(oShape, 
-                              SWFShape_addSolidFill(oShape, 
-                                                    (byte)psFillColor->red, 
-                                                    (byte)psFillColor->green, 
-                                                    (byte)psFillColor->blue, 
-                                                    0xff));
+        oFill = SWFShape_addSolidFill(oShape, 
+        		(byte)psFillColor->red, 
+                (byte)psFillColor->green, 
+                (byte)psFillColor->blue, 
+                0xff);
+        SWFShape_setRightFill(oShape, oFill);
+        destroySWFFill(oFill);
         /*SWFShape_setRightFill(oShape, 
                               SWFShape_addSolidFill(oShape, 0xFF, 
                                                     0, 
@@ -733,55 +926,60 @@ SWFButton   BuildButtonPolygon(gdPoint adfPoints[], int nPoints,
                                colorObj *psFillColor, 
                                colorObj *psOutlineColor,
                                colorObj *psHighlightColor,
-                               int nLayerIndex, int nShapeIndex)
+                               int nLayerIndex, int nShapeIndex, imageObj *image)
                                
 {
-    SWFButton b;
+    SWFButton oButton;
+    SWFShape oShape;
     /* int bFill = 0; */
 
 
-    b = newSWFButton();
-
-    SWFButton_addShape(b, BuildShape(adfPoints, nPoints,  
-                                     psFillColor, psOutlineColor), 
+    oButton = newSWFButton();
+    oShape = BuildShape(adfPoints, nPoints, psFillColor, psOutlineColor);
+    StoreShape(oShape, image);
+    SWFButton_addShape(oButton, oShape, 
                        SWFBUTTON_UP | SWFBUTTON_HIT | SWFBUTTON_DOWN);
 
     if (psHighlightColor)
     {
-        if(psFillColor)
-            SWFButton_addShape(b, BuildShape(adfPoints, nPoints, 
-                                             psHighlightColor, NULL), 
-                               SWFBUTTON_OVER);
+        if(psFillColor) 
+        {
+        	oShape = BuildShape(adfPoints, nPoints, psHighlightColor, NULL);
+        	StoreShape(oShape, image);
+            SWFButton_addShape(oButton, oShape, SWFBUTTON_OVER);
+        }
         else if (psOutlineColor)
-             SWFButton_addShape(b, BuildShape(adfPoints, nPoints, 
-                                              NULL, psHighlightColor), 
-                                SWFBUTTON_OVER);
+        {
+        	oShape = BuildShape(adfPoints, nPoints, NULL, psHighlightColor);
+        	StoreShape(oShape, image);
+            SWFButton_addShape(oButton, oShape, SWFBUTTON_OVER);
+        }
     }
     
     if (nLayerIndex >=0 && nShapeIndex >= 0)
     {
         sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
                 nShapeIndex, MOUSEUP);
-        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEUP);
 
         sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
                 nShapeIndex, MOUSEDOWN);
-        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEDOWN);
 
         sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
                 nShapeIndex, MOUSEOVER);
-        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOVER);
         
         sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
                 nShapeIndex, MOUSEOUT);
-        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOUT);
     }
 
-    return b;
+    return oButton;
 }
 
 
@@ -877,11 +1075,32 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     ((SWFObj *)image->img.swf)->map = map;
 
     ((SWFObj *)image->img.swf)->nCurrentLayerIdx = -1;
-     ((SWFObj *)image->img.swf)->nCurrentShapeIdx = -1;
+    ((SWFObj *)image->img.swf)->nCurrentShapeIdx = -1;
 
     ((SWFObj *)image->img.swf)->nLayerMovies = 0;
     ((SWFObj *)image->img.swf)->pasMovies = NULL;
     ((SWFObj *)image->img.swf)->nCurrentMovie = -1;
+
+    ((SWFObj *)image->img.swf)->nFonts = 0;
+    ((SWFObj *)image->img.swf)->Fonts = NULL;
+
+    ((SWFObj *)image->img.swf)->nTexts = 0;
+    ((SWFObj *)image->img.swf)->Texts = NULL;
+
+    ((SWFObj *)image->img.swf)->nShapes = 0;
+    ((SWFObj *)image->img.swf)->Shapes = NULL;
+    
+    ((SWFObj *)image->img.swf)->nBitmaps = 0;
+    ((SWFObj *)image->img.swf)->Bitmaps = NULL;
+
+    ((SWFObj *)image->img.swf)->nInputs = 0;
+    ((SWFObj *)image->img.swf)->Inputs = NULL;
+
+    ((SWFObj *)image->img.swf)->nButtons = 0;
+    ((SWFObj *)image->img.swf)->Buttons = NULL;
+
+    ((SWFObj *)image->img.swf)->nDblDatas = 0;
+    ((SWFObj *)image->img.swf)->DblDatas = NULL;
 
     ((SWFObj *)image->img.swf)->panLayerIndex = NULL;
     ((SWFObj *)image->img.swf)->nTmpCount = 0;
@@ -928,6 +1147,7 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
                           msCreateDefaultOutputFormat(map, driver),
                           map->web.imagepath, map->web.imageurl);
     }
+    free(driver);
     return image;
 }
     
@@ -1309,7 +1529,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             gdImageStringFT(imgtmp, bbox, ((symbol->antialias)?(fc):-(fc)), 
                             font, size, 0, 1, 1, symbol->character);
             /* oShape = gdImage2Shape(imgtmp); */
-            oButton = BuildButtonFromGD(imgtmp);/* , NULL); */
+            oButton = BuildButtonFromGD(imgtmp, image);/* , NULL); */
+            StoreButton(oButton, image);
             AddMouseActions(oButton, nLayerIndex, nShapeIndex);
             oDisplay = SWFMovie_add(GetCurrentMovie(map, image),
                                     oButton);
@@ -1327,8 +1548,9 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 offset_y = MS_NINT(p->y - .5*symbol->img->sy);
                 /* gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0,  */
                 /* symbol->img->sx, symbol->img->sy); */
-                oButton = BuildButtonFromGD(symbol->img);/* , NULL); */
-                AddMouseActions(oButton, nLayerIndex, nShapeIndex);
+                oButton = BuildButtonFromGD(symbol->img, image);/* , NULL); */
+                StoreButton(oButton, image);
+		AddMouseActions(oButton, nLayerIndex, nShapeIndex);
 
                 oDisplay = SWFMovie_add(GetCurrentMovie(map, image),
                                         oButton);
@@ -1354,8 +1576,9 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 /* And save the image  -- could also use gdImageJpeg */
                 /* gdImageJpeg(imgtmp, out, 0); */
 
-                oButton = BuildButtonFromGD(imgtmp);/* , NULL); */
-                AddMouseActions(oButton, nLayerIndex, nShapeIndex);
+                oButton = BuildButtonFromGD(imgtmp, image);/* , NULL); */
+                StoreButton(oButton, image);
+		AddMouseActions(oButton, nLayerIndex, nShapeIndex);
 
                 oDisplay = SWFMovie_add(GetCurrentMovie(map, image),
                                         oButton);
@@ -1402,8 +1625,10 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                      MS_NINT(scale*symbol->points[0].y),
                                      psFillColor, psOutlineColor,
                                      &sColorHighlightObj,
-                                     nLayerIndex, nShapeIndex);
-                oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
+                                     nLayerIndex, nShapeIndex, image);
+		// Ticket #2555 memory leak : need to store buttons to properly destroy them
+                StoreButton(oButton, image);
+		oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
                
 
                 
@@ -1418,8 +1643,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                            MS_NINT(scale*symbol->points[0].y),
                                            psFillColor, NULL, 
                                            &sColorHighlightObj,
-                                           nLayerIndex, nShapeIndex);
-
+                                           nLayerIndex, nShapeIndex, image);
+		    StoreButton(oButton, image);
                     oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
                 }
             }
@@ -1464,8 +1689,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 oButton = BuildButtonPolygon(mPoints, symbol->numpoints,  
                                              psFillColor,  psOutlineColor,
                                              &sColorHighlightObj,
-                                             nLayerIndex, nShapeIndex);
-                    
+                                             nLayerIndex, nShapeIndex, image);
+                StoreButton(oButton, image);    
                 oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
                 
 
@@ -1490,6 +1715,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                           psFillColor,
                                           &sColorHighlightObj,
                                           nLayerIndex, nShapeIndex);
+		StoreButton(oButton, image);
                 oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
 
             } /* end if-then-else */
@@ -1641,7 +1867,7 @@ SWFButton DrawButtonPolyline(shapeObj *p, colorObj *psColor,
 /*      nX,nY using the font pszFontFile.                               */
 /************************************************************************/
 SWFText DrawText(char *string, int nX, int nY, char *pszFontFile, 
-                 double dfSize, colorObj *psColor)
+                 double dfSize, colorObj *psColor, imageObj *image)
 {
     SWFText     oText = NULL;
     SWFFont     oFont = NULL;
@@ -1658,7 +1884,10 @@ SWFText DrawText(char *string, int nX, int nY, char *pszFontFile,
         fclose(f); 
         if (oFont)
         {     
-            oText = newSWFText();
+            // ticket #2555 memory leak
+            StoreFont(oFont, image);
+	    
+	    oText = newSWFText();
             SWFText_setFont(oText, oFont);
             SWFText_moveTo(oText, (float)nX, (float)nY);
             SWFText_setColor(oText, (byte)psColor->red, (byte)psColor->green, (byte)psColor->blue, 
@@ -1778,18 +2007,18 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         if (nLayerIndex < 0 || nShapeIndex < 0)
         {
             oShape = DrawShapePolyline(p, &sFc, width);
+            StoreShape(oShape, image);
             SWFMovie_add(GetCurrentMovie(map, image), oShape);
-            /* destroySWFShape(oShape); */
         }
         else
         {
             oButton = DrawButtonPolyline(p, &sFc, &sColorHighlightObj, nLayerIndex, 
                                          nShapeIndex, width);
-            oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
-             sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
-             ((SWFObj *)image->img.swf)->nTmpCount++;
-             SWFDisplayItem_setName(oDisplay, gszTmp);
-            /* destroySWFButton(oButton); */
+	    StoreButton(oButton, image);
+	    oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
+            sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+            ((SWFObj *)image->img.swf)->nTmpCount++;
+            SWFDisplayItem_setName(oDisplay, gszTmp);
             
         }
         return;
@@ -1919,6 +2148,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
         {
             oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor, 
                                             width);
+            StoreShape(oShape, image);
             SWFMovie_add(GetCurrentMovie(map, image), oShape);
         }
         else
@@ -1926,6 +2156,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             oButton = DrawButtonFilledPolygon(p, psFillColor, psOutlineColor,
                                               &sColorHighlightObj, nLayerIndex, 
                                               nShapeIndex, width);
+            StoreButton(oButton, image);
             oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
             sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
             ((SWFObj *)image->img.swf)->nTmpCount++;
@@ -1957,7 +2188,8 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
         data = gd2bitmap(tile, &size, &bytesPerColor);
         dbldata = bitmap2dbl(data,&size,&bytesPerColor);
         oShape = bitmap2shape(dbldata, size, tile->sx, tile->sy, 
-                              SWFFILL_SOLID);/* SWFFILL_TILED_BITMAP); */
+                              SWFFILL_SOLID, image);/* SWFFILL_TILED_BITMAP); */
+        StoreShape(oShape, image);
     }
     else
     {
@@ -1967,6 +2199,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             {
                 oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor,
                                                 width);
+                StoreShape(oShape, image);
                 SWFMovie_add(GetCurrentMovie(map, image), oShape);
             }
             else
@@ -1974,7 +2207,8 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 oButton = DrawButtonFilledPolygon(p, psFillColor, psOutlineColor,
                                                   &sColorHighlightObj, nLayerIndex, 
                                                   nShapeIndex, width);
-                oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
+                StoreButton(oButton, image);
+		oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
                 sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
                 ((SWFObj *)image->img.swf)->nTmpCount++;
                 SWFDisplayItem_setName(oDisplay, gszTmp);
@@ -2005,6 +2239,9 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     double         size = 0;
     int         drawShadow=0;
     char szPath[MS_MAXPATHLEN];
+    SWFDisplayItem oShadowDisplay;
+    SWFDisplayItem oDisplay; 
+
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
@@ -2091,35 +2328,35 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 /*      axis.... We will then move the text SWFDisplayItem_moveTo       */
 /*      and rotate it.                                                  */
 /* ==================================================================== */
-    /* first  draw the shadow with a x+1,y+1 position or using the shadowsize if defined*/
+    /* first draw the shadow with a x+1,y+1 position or using the shadowsize if defined*/
     if (drawShadow) 
     {
-        oShadowText = DrawText(string, 0, 0, msBuildPath(szPath, fontset->filename, font), size, &sShadowColor);
+        oShadowText = DrawText(string, 0, 0, msBuildPath(szPath, fontset->filename, font), size, &sShadowColor, image);
         if (oShadowText)
         {
-            SWFDisplayItem oShadowDisplay;
+        	StoreText(oShadowText, image);
             /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
             oShadowDisplay = SWFMovie_add(GetCurrentMovie(map, image), oShadowText);
             if (label->shadowsizex > 0 && label->shadowsizey > 0)
-              SWFDisplayItem_moveTo(oShadowDisplay, (float)x + label->shadowsizex, 
+            	SWFDisplayItem_moveTo(oShadowDisplay, (float)x + label->shadowsizex, 
                                     (float)y + label->shadowsizey);
             else
-               SWFDisplayItem_moveTo(oShadowDisplay, (float)x + 1, (float)y + 1);
+            	SWFDisplayItem_moveTo(oShadowDisplay, (float)x + 1, (float)y + 1);
 
             SWFDisplayItem_rotate(oShadowDisplay, (float)label->angle);
         }
     } 
     /* oText = DrawText(string, x, y, msBuildPath(szPath, fontset->filename, font), size, &sColor); */
-    oText = DrawText(string, 0, 0, msBuildPath(szPath, fontset->filename, font), size, &sColor);
+    oText = DrawText(string, 0, 0, msBuildPath(szPath, fontset->filename, font), size, &sColor, image);
     if (oText)
     {
-         SWFDisplayItem oDisplay; 
+    	StoreText(oText, image);
         /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
         oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oText);
         SWFDisplayItem_moveTo(oDisplay, (float)x, (float)y);
         SWFDisplayItem_rotate(oDisplay, (float)label->angle);
     }
-
+    
     return 0;
 }
 
@@ -2133,7 +2370,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect, 
                       fontSetObj *fontset, double scalefactor)
 {
-    SWFText    oText = NULL;
+    SWFText     oText = NULL;
     SWFFont     oFont = NULL;
     char        *font;
     double      dfWidth = 0.0;
@@ -2165,7 +2402,7 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
         fclose(f);
         if (oFont)
         {   
-            oText = newSWFText();
+        	oText = newSWFText();
             SWFText_setFont(oText, oFont);
             /* SWFText_addString(oText, string, NULL); */
             dfWidth = 0.0;
@@ -2174,8 +2411,8 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
             if (dfWidth <=0)
               return -1;
 
-            /* destroySWFText(oText); */
-            /* destroySWFFont(oFont); */
+            destroySWFText(oText);
+            destroySWFFont(oFont);
         }
     }
 
@@ -2279,7 +2516,8 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         image->format->renderer = MS_RENDER_WITH_GD;
         msDrawLabelCache(imagetmp, map);
         image->format->renderer = orig_renderer;
-        oShape = gdImage2Shape(imagetmp->img.gd);
+        oShape = gdImage2Shape(imagetmp->img.gd, image);
+        StoreShape(oShape, image);
         /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
         return 0;
@@ -2581,8 +2819,9 @@ int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo,
     if (msDrawWMSLayerLow(nLayerId, pasReqInfo, numRequests, map, layer, 
                           image_tmp) != -1)
     {
-        oShape = gdImage2Shape(image_tmp->img.gd);
+        oShape = gdImage2Shape(image_tmp->img.gd, image);
         /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
+        StoreShape(oShape, image);
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
         
         if (bFreeImage)
@@ -2635,8 +2874,9 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 
     if (msDrawRasterLayerLow(map, layer, image_tmp) != -1)
     {
-        oShape = gdImage2Shape(image_tmp->img.gd);
+        oShape = gdImage2Shape(image_tmp->img.gd, image);
         /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
+        StoreShape(oShape, image);
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
         if (bFreeImage)
           msFreeImage( image_tmp );
@@ -2971,7 +3211,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
         sprintf(szAction, "stop();");
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
-        
+
 #ifdef MING_VERSION_03
         SWFMovie_save(((SWFObj *)image->img.swf)->sMainMovie, filename, -1); 
 #else
@@ -2979,7 +3219,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
 #endif
         /* test */
         /* SWFMovie_save(((SWFObj *)image->img.swf)->sMainMovie, "c:/tmp/ms_tmp/main.swf");   */
-  
+
         if( bFileIsTemporary )
         {
           fp = fopen( filename, "rb" );
@@ -3030,13 +3270,55 @@ void msFreeImageSWF(imageObj *image)
     int i = 0;
     if (image && MS_DRIVER_SWF(image->format) )
     {
-        destroySWFMovie(((SWFObj *)image->img.swf)->sMainMovie);
-        for (i=0; i<((SWFObj *)image->img.swf)->nLayerMovies; i++)
-            destroySWFMovie(((SWFObj *)image->img.swf)->pasMovies[i]);
-
+    	/* fonts */
+    	for (i=0; i<((SWFObj *)image->img.swf)->nFonts; i++)
+    		destroySWFFont(((SWFObj *)image->img.swf)->Fonts[i]);
+    	free(((SWFObj *)image->img.swf)->Fonts);
+    	((SWFObj *)image->img.swf)->nFonts = 0;
+    	/* texts */
+    	for (i=0; i<((SWFObj *)image->img.swf)->nTexts; i++)
+    		destroySWFText(((SWFObj *)image->img.swf)->Texts[i]);
+    	free(((SWFObj *)image->img.swf)->Texts);
+    	((SWFObj *)image->img.swf)->nFonts = 0;
+    	/* bitmaps */
+    	for (i=0; i<((SWFObj *)image->img.swf)->nBitmaps; i++)
+    		destroySWFBitmap(((SWFObj *)image->img.swf)->Bitmaps[i]);
+    	free(((SWFObj *)image->img.swf)->Bitmaps);
+    	((SWFObj *)image->img.swf)->nBitmaps = 0;
+    	/* inputs */
+    	for (i=0; i<((SWFObj *)image->img.swf)->nInputs; i++)
+    		destroySWFInput(((SWFObj *)image->img.swf)->Inputs[i]);
+    	free(((SWFObj *)image->img.swf)->Inputs);
+    	((SWFObj *)image->img.swf)->nInputs = 0;
+    	/* shapes */
+    	for (i=0; i<((SWFObj *)image->img.swf)->nShapes; i++)
+    		destroySWFShape(((SWFObj *)image->img.swf)->Shapes[i]);
+    	free(((SWFObj *)image->img.swf)->Shapes);
+    	((SWFObj *)image->img.swf)->nShapes = 0;
+    	/* buttons */
+    	for (i=0; i<((SWFObj *)image->img.swf)->nButtons; i++)
+    		// need to check if some of the buttons disappeared or couldn't be created ! */
+    		if (((SWFObj *)image->img.swf)->Buttons[i])
+    			destroySWFButton(((SWFObj *)image->img.swf)->Buttons[i]);
+    	free(((SWFObj *)image->img.swf)->Buttons);
+    	((SWFObj *)image->img.swf)->nButtons = 0;
+    	/* movies */
+    	for (i=0; i<((SWFObj *)image->img.swf)->nLayerMovies; i++)
+    		destroySWFMovie(((SWFObj *)image->img.swf)->pasMovies[i]);
+    	free(((SWFObj *)image->img.swf)->pasMovies);
+    	destroySWFMovie(((SWFObj *)image->img.swf)->sMainMovie);
         ((SWFObj *)image->img.swf)->nLayerMovies = 0;
         ((SWFObj *)image->img.swf)->nCurrentMovie = -1;
+
+        /* DblData images */
+        for (i=0; i<((SWFObj *)image->img.swf)->nDblDatas; i++)
+        	free(((SWFObj *)image->img.swf)->DblDatas[i]);
+        ((SWFObj *)image->img.swf)->nDblDatas = 0;
+        free(((SWFObj *)image->img.swf)->DblDatas);
+        
         ((SWFObj *)image->img.swf)->map = NULL;
+        free(((SWFObj *)image->img.swf)->panLayerIndex);
+        free(image->img.swf);
     }
 }
 
@@ -3126,8 +3408,9 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
         /* msLoadPalette(imagetmp->img.gd, &(map->palette), map->imagecolor); */
         msDrawVectorLayer(map, layer, imagetmp);
         
-        oShape = gdImage2Shape(imagetmp->img.gd);
+        oShape = gdImage2Shape(imagetmp->img.gd, image);
         /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
+        StoreShape(oShape, image);
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
         
         if (bFreeImage)
