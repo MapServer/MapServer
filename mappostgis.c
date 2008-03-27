@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  PostGIS CONNECTIONTYPE support.
@@ -174,8 +174,6 @@ int msPOSTGISLayerOpen(layerObj *layer)
 {
     msPOSTGISLayerInfo  *layerinfo;
     int                 order_test = 1;
-    char                *index, *maskeddata;
-    int                 i, count;
 
     if(layer->debug) {
         msDebug("msPOSTGISLayerOpen called datastatement: %s\n", layer->data);
@@ -224,21 +222,22 @@ int msPOSTGISLayerOpen(layerObj *layer)
           return(MS_FAILURE);  /* An error should already have been produced */
         }
    
-        layerinfo->conn = PQconnectdb(layer->connection);
+        layerinfo->conn = PQconnectdb(conn_decrypted);
 
         msFree(conn_decrypted);
         conn_decrypted = NULL;
 
         if(!layerinfo->conn || PQstatus(layerinfo->conn) == CONNECTION_BAD) {
-            msDebug("FAILURE!!!");
-            maskeddata = (char *)malloc(strlen(layer->connection) + 1);
-            strcpy(maskeddata, layer->connection);
+            char *index, *maskeddata;
+            if (layer->debug)
+                msDebug("msPOSTGISLayerOpen() FAILURE!!!\n");
+
+            maskeddata = strdup(layer->connection);
             index = strstr(maskeddata, "password=");
             if(index != NULL) {
               index = (char *)(index + 9);
-              count = (int)(strstr(index, " ") - index);
-              for(i = 0; i < count; i++) {
-                  strncpy(index, "*", (int)1);
+              while(*index != '\0' && *index != ' ') {
+                  *index = '*';
                   index++;
               }
             }
