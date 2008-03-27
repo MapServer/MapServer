@@ -736,7 +736,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         }
         /*TODO add location*/
 
-        /*precedure*/
+        /*procedure*/
         /* if a procedure_item is defined, we should extract the value for the
            attributes. If not dump what is found in the procedure metadata bug 2054*/
         if ((pszValue =  msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item")))
@@ -777,6 +777,9 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         }
         else if ((pszValue = msOWSLookupMetadata(&(lp->metadata), "S", "procedure")))
         {
+            if (! msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item"))
+                xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_procedure_item\" missing for sos:procedure.  If you have more than 1 procedures, sos:procedure will output them incorrectly."));
+
             sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
             pszTmp = msStringConcatenate(pszTmp, szTmp);
             pszTmp = msStringConcatenate(pszTmp, (char *)pszValue);
@@ -787,7 +790,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
             pszTmp = NULL;
         }
 
-        /*observed propery*/
+        /*observed property*/
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
                                        "observedProperty_id");
         if (pszValue)
@@ -1052,8 +1055,9 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xml
          /* procedure */
          if (pszProcedure) /*this should always be true since procedure is a manadtory element*/
          {
-             
-             //sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+             if (! msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item") && msOWSLookupMetadata(&(lp->metadata), "S", "procedure"))
+                xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_procedure_item\" missing for sos:procedure.  If you have more than 1 procedures, sos:procedure will output them incorrectly."));
+
              pszTmp = msStringConcatenate(pszTmp, "urn:ogc:def:procedure:");
              pszTmp = msStringConcatenate(pszTmp, (char *)pszProcedure);
              psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
@@ -1886,6 +1890,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
      by the  offering,observedproperty filter done above */
 
   if (sosparams->pszProcedure) {
+    bLayerFound = 0;
     tokens = msStringSplit(sosparams->pszProcedure, ',', &n);
         
     if (tokens && n > 0) {
@@ -1899,8 +1904,10 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
                         
             for (j=0; j<n; j++) {
               for (k=0; k<n1; k++) {
-                if (strcasecmp(tokens1[k], tokens[j]) == 0)
+                if (strcasecmp(tokens1[k], tokens[j]) == 0) { /* found */
+                  bLayerFound = 1;
                   break;
+                }
               }
               if (k<n1)
                 break;
@@ -2304,7 +2311,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
                         psResultNode = xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
                         for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
                         {
-                            /*add a block serarator*/
+                            /*add a block separator*/
                             if (j > 0)
                             {
                                 pszBlockSep = msOWSLookupMetadata(&(map->web.metadata), "S", 
