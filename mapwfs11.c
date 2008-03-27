@@ -92,7 +92,7 @@ int msWFSException11(mapObj *map, const char *locator,
 /************************************************************************/
 /*                             msWFSDumpLayer11                         */
 /************************************************************************/
-static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psOwsNs)
+static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
 {
     rectObj ext;
    
@@ -125,7 +125,7 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psOwsNs)
 
     if (value)
         msLibXml2GenerateList(
-            xmlNewChild(psRootNode, psOwsNs, BAD_CAST "Keywords", NULL),
+            xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL),
             NULL, "Keyword", value, ',' );
 
     /*srs only supposrt DefaultSRS with the same logic as for wfs1.0
@@ -157,13 +157,13 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psOwsNs)
           msProjectRect(&map->projection, NULL, &ext);
 
         xmlAddChild(psRootNode,
-                    msOWSCommonWGS84BoundingBox( psOwsNs, 2,
+                    msOWSCommonWGS84BoundingBox( psNsOws, 2,
                                                  ext.minx, ext.miny,
                                                  ext.maxx, ext.maxy));
     }
     else
     {
-        xmlNewChild(psRootNode, psOwsNs, BAD_CAST "WGS84BoundingBox", NULL);
+        xmlNewChild(psRootNode, psNsOws, BAD_CAST "WGS84BoundingBox", NULL);
         xmlAddSibling(psNode,
                       xmlNewComment(BAD_CAST "WARNING: Mandatory WGS84BoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wfs_extent metadata."));
     }
@@ -204,7 +204,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     xmlNodePtr psRootNode, psMainNode, psNode, psFtNode;
     xmlNodePtr psTmpNode;
     const char *updatesequence=NULL;
-    xmlNsPtr psOwsNs, psXLinkNs, psNsOgc, psWfsNs;
+    xmlNsPtr psNsOws, psNsXLink, psNsOgc, psNsWfs;
     char *schemalocation = NULL;
     char *xsi_schemaLocation = NULL;
 
@@ -247,7 +247,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      Name spaces                                                     */
 /* -------------------------------------------------------------------- */
-    psWfsNs = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/wfs", BAD_CAST "wfs");
+    psNsWfs = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/wfs", BAD_CAST "wfs");
 
     /*default name space*/      
     xmlNewProp(psRootNode, BAD_CAST "xmlns", BAD_CAST "http://www.opengis.net/wfs");
@@ -255,8 +255,8 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     xmlSetNs(psRootNode, xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
     xmlSetNs(psRootNode, xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/wfs", BAD_CAST "wfs"));
     
-    psOwsNs = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
-    psXLinkNs = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+    psNsXLink = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
 
@@ -272,7 +272,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     xsi_schemaLocation = strdup("http://www.opengis.net/wfs");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
-    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/wfs/1.1.0/");
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/wfs/1.1.0/wfs.xsd");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "wfs.xsd");
     xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
 
@@ -281,11 +281,11 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 /* -------------------------------------------------------------------- */
 
     psTmpNode = xmlAddChild(psRootNode, 
-                            msOWSCommonServiceIdentification(psOwsNs, map, "OGC WFS", params->pszVersion));
+                            msOWSCommonServiceIdentification(psNsOws, map, "OGC WFS", params->pszVersion));
 
     /*service provider*/
     psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(
-                                psOwsNs, psXLinkNs, map));
+                                psNsOws, psNsXLink, map));
 
     /*operation metadata */
     if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL 
@@ -299,24 +299,24 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      Operations metadata.                                            */
 /* -------------------------------------------------------------------- */
-    psMainNode= xmlAddChild(psRootNode,msOWSCommonOperationsMetadata(psOwsNs));
+    psMainNode= xmlAddChild(psRootNode,msOWSCommonOperationsMetadata(psNsOws));
 
 /* -------------------------------------------------------------------- */
 /*      GetCapabilities                                                 */
 /* -------------------------------------------------------------------- */
     psNode = xmlAddChild(psMainNode, 
-                         msOWSCommonOperationsMetadataOperation(psOwsNs,psXLinkNs,"GetCapabilities", 
+                         msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetCapabilities", 
                                                                 OWS_METHOD_GETPOST, script_url_encoded));
     
     xmlAddChild(psMainNode, psNode);
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "service", "WFS"));
+                    ows_version, psNsOws, "Parameter", "service", "WFS"));
     /*accept version*/
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psOwsNs, 
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                 "Parameter", "AcceptVersions", 
                                                                 "1.0.0, 1.1.0"));
     /*format*/
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psOwsNs, 
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                 "Parameter", "AcceptFormats", 
                                                                 "text/xml"));
 
@@ -325,12 +325,12 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 /*      DescribeFeatureType                                             */
 /* -------------------------------------------------------------------- */
      psNode = xmlAddChild(psMainNode, 
-                          msOWSCommonOperationsMetadataOperation(psOwsNs,psXLinkNs,"DescribeFeatureType", 
+                          msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"DescribeFeatureType", 
                                                                  OWS_METHOD_GETPOST, script_url_encoded));
      xmlAddChild(psMainNode, psNode);
 
      /*output format*/
-      xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psOwsNs, 
+      xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                   "Parameter", "outputFormat", 
                                                                   "XMLSCHEMA,text/xml; subtype=gml/2.1.2,text/gml; subtype=gml/3.1.1"));
 
@@ -338,20 +338,20 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 /*      GetFeatureType                                                  */
 /* -------------------------------------------------------------------- */
       psNode = xmlAddChild(psMainNode, 
-                          msOWSCommonOperationsMetadataOperation(psOwsNs,psXLinkNs,"GetFeature", 
+                          msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetFeature", 
                                                                  OWS_METHOD_GETPOST, script_url_encoded));
      xmlAddChild(psMainNode, psNode);
 
      /*resultType: TODO support hits*/
-     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psOwsNs, 
+     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                 "Parameter", "resultType", 
                                                                 "results"));
      /*
-     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psOwsNs, 
+     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                  "Parameter", "resultType", 
                                                                  "results, hits"));
      */
-     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psOwsNs, 
+     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                   "Parameter", "outputFormat", 
                                                                   "text/gml; subtype=gml/3.1.1"));
 
@@ -371,7 +371,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
          /* List only vector layers in which DUMP=TRUE */
          if (msWFSIsLayerSupported(lp))
-           xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psOwsNs));
+           xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws));
      }
      
      
