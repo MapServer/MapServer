@@ -55,6 +55,16 @@ Currently only WMS and WFS code will use this since they are the only places whe
 
 
 ==============================================================================
+Implementation Issues
+==============================================================================
+It was pointed out during the RFC review period that passing and storing the cookie data using an "http_cookie_data" metadata is a poor use of MapServer's metadata mechanism.
+
+Since MapServer currently lacks a mechanism to associate application state information to a mapObj, there is currently no better mechanism in place to store the cookie data received from the client and pass it to the rendering code that calls the remote WMS. Due to lack of a better solution, for the time being we will use the "http_cookie_data" metadata as proposed in this RFC, with the knowledge that this is a poor use of metadata and that we as soon as a better mechanism is in place to store and pass application state in a mapObj then this metadata will be deprecated and replaced by this new mechanism. Developers of MapScript applications setting this "http_cookie_data" metadata should be aware of this and be prepared to change their code in future revisions of MapServer. 
+
+Another issue is that no encoding currently is planned to be made with the http_cookie_data metadata. Poorly formated metadata could break the HTTP header of a request. If it is found that Curl doesn't encode the cookie value, only character with a value between 32 and 126 (printable ascii characters) will be allowed.
+
+
+==============================================================================
 Modifications to the Source Code
 ==============================================================================
 
@@ -92,7 +102,7 @@ File Affected
  cgiutil.c           (read and store the http cookies data in cgiRequestObj)
  maphttp.c           (send cookies with the request via curl option)
  mapows.h            (add http_cookies to httpRequestObj)
- mapserv.c            (store cookies in mapfile metadata)
+ mapserv.c           (store cookies in mapfile metadata)
  mapwmslayer.c       (set cookies in httpRequestObj)
  mapwfslayer.c       (set cookies in httpRequestObj)
 
