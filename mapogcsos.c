@@ -2047,36 +2047,6 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
       msFree(pszTimeString);
   }
 
-  /* apply filter */
-  if (sosparams->pszResult) {
-    psFilterNode = FLTParseFilterEncoding(sosparams->pszResult);
-
-    if (!psFilterNode) {
-      msSetError(MS_SOSERR, "Invalid or Unsupported FILTER in GetObservation", "msSOSGetObservation()");
-      return msSOSException(map, "filter", "InvalidParameterValue");
-    }
-    /* apply the filter to all layers thar are on*/
-    for (i=0; i<map->numlayers; i++) {
-      lp = GET_LAYER(map, i);
-      if (lp->status == MS_ON) {
-        //preparse parser so that alias for fields can be used
-        msSOSPreParseFilterForAlias(psFilterNode, map, i);
-        //vaidate that the property names used are valid 
-        //(there is a corresponding layer attribute)
-        if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
-          if (msSOSValidateFilter(psFilterNode, lp)== MS_FALSE) {
-            msSetError(MS_SOSERR, "Invalid component name in ogc filter statement", "msSOSGetObservation()");
-            return msSOSException(map, "filter", "InvalidParameterValue");
-          }
-          msLayerClose(lp);
-        }
-        FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
-        msFree(psFilterNode);
-        
-      }
-    }
-  }
-
   /*bbox*/
   /* this is a gml feature
   <gml:Envelope xmlns:gml="http://www.opengis.net/gml">
@@ -2085,7 +2055,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
   </gml:Envelope>
   */
 
-  if (sosparams->pszFeatureOfInterest) {
+  if (sosparams->pszFeatureOfInterest) 
+  {
     CPLXMLNode *psRoot=NULL, *psChild=NULL; 
     CPLXMLNode *psUpperCorner=NULL, *psLowerCorner=NULL;
     char *pszLowerCorner=NULL, *pszUpperCorner=NULL;
@@ -2153,7 +2124,44 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
             msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest .", "msSOSGetObservation()");
             return msSOSException(map, "featureofinterest", "InvalidParameterValue");
         }
+        map->extent.minx = sBbox.minx;
+        map->extent.miny = sBbox.miny;
+        map->extent.maxx = sBbox.maxx;
+        map->extent.maxy = sBbox.maxy;
+        
       }
+
+  /* apply filter */
+  if (sosparams->pszResult) {
+    psFilterNode = FLTParseFilterEncoding(sosparams->pszResult);
+
+    if (!psFilterNode) {
+      msSetError(MS_SOSERR, "Invalid or Unsupported FILTER in GetObservation", "msSOSGetObservation()");
+      return msSOSException(map, "filter", "InvalidParameterValue");
+    }
+    /* apply the filter to all layers thar are on*/
+    for (i=0; i<map->numlayers; i++) {
+      lp = GET_LAYER(map, i);
+      if (lp->status == MS_ON) {
+        //preparse parser so that alias for fields can be used
+        msSOSPreParseFilterForAlias(psFilterNode, map, i);
+        //vaidate that the property names used are valid 
+        //(there is a corresponding layer attribute)
+        if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
+          if (msSOSValidateFilter(psFilterNode, lp)== MS_FALSE) {
+            msSetError(MS_SOSERR, "Invalid component name in ogc filter statement", "msSOSGetObservation()");
+            return msSOSException(map, "filter", "InvalidParameterValue");
+          }
+          msLayerClose(lp);
+        }
+        FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
+        msFree(psFilterNode);
+        
+      }
+    }
+  }
+
+  
 
       /* this is just a fall back if bbox is enetered. The bbox parameter is not supported
          by the sos specs */
@@ -2173,8 +2181,9 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
         msFreeCharArray(tokens, n);
       }
 
-      /* do the query. use the same logic (?) as wfs. bbox and filer are incomaptible since bbox
-        can be given inside a filter*/
+      /* do the query if the filter encoding (pszResult) is not part of the request.
+         If pszResult is available, the query on the layers will be done when the filter
+         is parsed*/
       if (!sosparams->pszResult) {
         msQueryByRect(map, -1, sBbox);
       }
