@@ -118,13 +118,13 @@ None.
 Bug ID
 ==============================================================================
 
-None Yet.
+http://trac.osgeo.org/mapserver/ticket/2566
 
 
 ==============================================================================
 Voting History
 ==============================================================================
 
-None Yet.
+Adopted on 2008/04/01 with +1 from FrankW, DanielM, TomK and AssefaY, and +0 from JeffM and PericlesN.
 
 

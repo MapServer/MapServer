@@ -35,6 +35,7 @@ typedef struct http_request_info
     char    *pszPostRequest;    /* post request content (NULL for GET) */
     char    *pszPostContentType;/* post request MIME type */
     char    *pszUserAgent;      /* User-Agent, auto-generated if not set */
+    char    *pszHTTPCookieData; /* HTTP Cookie data */
 
     /* For debugging/profiling */
     int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
@@ -96,6 +97,7 @@ typedef  struct
   char        *onlineresource;
   hashTableObj *params;
   int          numparams;
+  char         *httpcookiedata;
 } wmsParamsObj;
 
 int msHTTPInit(void);

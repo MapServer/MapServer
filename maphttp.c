@@ -136,6 +136,7 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         pasReqInfo[i].pszContentType = NULL;
         pasReqInfo[i].pszErrBuf = NULL;
         pasReqInfo[i].pszUserAgent = NULL;
+        pasReqInfo[i].pszHTTPCookieData = NULL;
 
         pasReqInfo[i].debug = MS_FALSE;
 
@@ -182,6 +183,10 @@ void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         if (pasReqInfo[i].pszUserAgent)
             free(pasReqInfo[i].pszUserAgent);
         pasReqInfo[i].pszUserAgent = NULL;
+
+        if (pasReqInfo[i].pszHTTPCookieData)
+            free(pasReqInfo[i].pszHTTPCookieData);
+        pasReqInfo[i].pszHTTPCookieData = NULL;
 
         pasReqInfo[i].curl_handle = NULL;
     }
@@ -405,6 +410,29 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
             /* curl_slist_free_all(headers); */ /* free the header list */
         }
+
+        /* Added by RFC-42 HTTP Cookie Forwarding */
+        if(pasReqInfo[i].pszHTTPCookieData != NULL)
+        {
+            /* Check if there's no end of line in the Cookie string */
+            /* This could break the HTTP Header */
+            int nPos;
+
+            for(nPos=0; nPos<strlen(pasReqInfo[i].pszHTTPCookieData); nPos++)
+            {
+                if(pasReqInfo[i].pszHTTPCookieData[nPos] == '\n')
+                {
+                    msSetError(MS_HTTPERR, "Can't open output file %s.", 
+                       "msHTTPExecuteRequests()", pasReqInfo[i].pszOutputFile);
+                    return(MS_FAILURE);
+                }
+            }
+
+            // Set the Curl option to send Cookie
+            curl_easy_setopt(http_handle, CURLOPT_COOKIE, 
+                             pasReqInfo[i].pszHTTPCookieData);
+        }
+
         /* Add to multi handle */
         curl_multi_add_handle(multi_handle, http_handle);
 

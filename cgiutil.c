@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  cgiRequestObj and CGI parameter parsing. 
@@ -202,7 +202,8 @@ int loadParams(cgiRequestObj *request) {
 
   /* check for any available cookies */
   s = getenv("HTTP_COOKIE");
-  if(s != NULL) {    
+  if(s != NULL) {
+    request->httpcookiedata = strdup(s);
     for(x=0;s[0] != '\0';x++) {
       if(m >= MS_MAX_CGI_PARAMS) {
         msIO_printf("Too many name/value pairs, aborting.\n");
@@ -396,6 +397,7 @@ cgiRequestObj *msAllocCgiObj() {
   request->type = -1;
   request->contenttype = NULL;
   request->postrequest = NULL;
+  request->httpcookiedata = NULL;
 
   return request;
 }
@@ -409,8 +411,10 @@ void msFreeCgiObj(cgiRequestObj *request) {
   request->type = -1;
   msFree(request->contenttype);
   msFree(request->postrequest);
+  msFree(request->httpcookiedata);
   request->contenttype = NULL;
   request->postrequest = NULL;
+  request->httpcookiedata = NULL;
 
   msFree(request);
 }

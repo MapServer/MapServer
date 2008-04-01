@@ -49,6 +49,7 @@ int msInitWmsParamsObj(wmsParamsObj *wmsparams)
     wmsparams->onlineresource = NULL;
     wmsparams->params = msCreateHashTable();
     wmsparams->numparams=0;
+    wmsparams->httpcookiedata = NULL;
 
     return MS_SUCCESS;
 }
@@ -65,6 +66,8 @@ void msFreeWmsParamsObj(wmsParamsObj *wmsparams)
 
     msFreeHashTable(wmsparams->params);
     wmsparams->params = NULL;
+
+    msFree(wmsparams->httpcookiedata);
 
     wmsparams->numparams=0;
 }
@@ -762,7 +765,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                              httpRequestObj *pasReqInfo, int *numRequests) 
 {
 #ifdef USE_WMS_LYR
-    char *pszURL = NULL;
+    char *pszURL = NULL, *pszHTTPCookieData = NULL;
     const char *pszTmp;
     rectObj bbox;
     int nTimeout, bOkToMerge, bForceSeparateRequest;
@@ -885,6 +888,56 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         }
     }
 
+/*------------------------------------------------------------------
+ * Check to see if there's a HTTP Cookie to forward
+ * If Cookie differ between the two connection, it's NOT OK to merge
+ * the connection
+ * ------------------------------------------------------------------ */
+    if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
+                                      "MO", "http_cookie")) != NULL)
+    {
+        if(strcasecmp(pszTmp, "forward") == 0)
+        {
+            pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
+            if(pszTmp != NULL)
+            {
+                pszHTTPCookieData = strdup(pszTmp);
+            }
+        }
+        else
+        {
+            pszHTTPCookieData = strdup(pszTmp);
+        }
+    }
+    else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata), 
+                                           "MO", "http_cookie")) != NULL)
+    {
+        if(strcasecmp(pszTmp, "forward") == 0)
+        {
+            pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
+            if(pszTmp != NULL)
+            {
+                pszHTTPCookieData = strdup(pszTmp);
+            }
+        }
+        else
+        {
+            pszHTTPCookieData = strdup(pszTmp);
+        }
+    }
+
+    if(bOkToMerge && pszHTTPCookieData != sThisWMSParams.httpcookiedata)
+    {
+        if(pszHTTPCookieData == NULL || sThisWMSParams.httpcookiedata == NULL)
+        {
+            bOkToMerge = MS_FALSE;
+        }
+        if(strcmp(pszHTTPCookieData, sThisWMSParams.httpcookiedata) != 0)
+        {
+            bOkToMerge = MS_FALSE;
+        }
+    }
+
     if (bOkToMerge)
     {
         /* Merge both requests into sThisWMSParams
@@ -956,6 +1009,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                        "msPrepareWMSLayerRequest()");
             return MS_FAILURE;
         }
+        pasReqInfo[(*numRequests)].pszHTTPCookieData = pszHTTPCookieData;
+        pszHTTPCookieData = NULL;
         pasReqInfo[(*numRequests)].pszOutputFile =msTmpFile(map->mappath,
                                                             map->web.imagepath,
                                                             "img.tmp");

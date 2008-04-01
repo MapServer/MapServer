@@ -1148,6 +1148,21 @@ int main(int argc, char *argv[]) {
 #endif
 
     /*
+     * RFC-42 HTTP Cookie Forwarding
+     * Here we set the http_cookie_data metadata to handle the 
+     * HTTP Cookie Forwarding. The content of this metadata is the cookie 
+     * content. In the future, this metadata will probably be replaced
+     * by an object that is part of the mapObject that would contain 
+     * information on the application status (such as cookie).
+     */
+    if( msObj->request->httpcookiedata != NULL && 
+        msOWSLookupMetadata(&(msObj->Map->web.metadata), "OMF", "http_cookie"))
+    {
+        msInsertHashTable( &(msObj->Map->web.metadata), "http_cookie_data",
+                           msObj->request->httpcookiedata );
+    }
+
+    /*
     ** Start by calling the WMS/WFS/WCS Dispatchers.  If they fail then we'll 
     ** process this as a regular MapServer request.
     */

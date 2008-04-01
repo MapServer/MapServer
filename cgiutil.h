@@ -63,6 +63,8 @@ typedef struct
   char *contenttype;
 
   char *postrequest;
+
+  char *httpcookiedata;
 } cgiRequestObj;
       
 

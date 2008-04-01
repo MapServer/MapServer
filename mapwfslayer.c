@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementation of WFS CONNECTIONTYPE - client to WFS servers
@@ -517,6 +517,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     char *pszHashFileName = NULL;
     int bPostRequest = 0;
     wfsParamsObj *psParams = NULL;
+    char *pszHTTPCookieData = NULL;
     
 
     if (lp->connectiontype != MS_WFS || lp->connection == NULL)
@@ -576,6 +577,44 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         nTimeout = atoi(pszTmp);
     }
 
+/*------------------------------------------------------------------
+ * Check to see if there's a HTTP Cookie to forward
+ * If Cookie differ between the two connection, it's NOT OK to merge
+ * the connection
+ * ------------------------------------------------------------------ */
+    if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
+                                      "MO", "http_cookie")) != NULL)
+    {
+        if(strcasecmp(pszTmp, "forward") == 0)
+        {
+            pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
+            if(pszTmp != NULL)
+            {
+                pszHTTPCookieData = strdup(pszTmp);
+            }
+        }
+        else
+        {
+            pszHTTPCookieData = strdup(pszTmp);
+        }
+    }
+    else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata), 
+                                           "MO", "http_cookie")) != NULL)
+    {
+        if(strcasecmp(pszTmp, "forward") == 0)
+        {
+            pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
+            if(pszTmp != NULL)
+            {
+                pszHTTPCookieData = strdup(pszTmp);
+            }
+        }
+        else
+        {
+            pszHTTPCookieData = strdup(pszTmp);
+        }
+    }
+
 /* ------------------------------------------------------------------
  * If nLayerId == -1 then we need to figure it
  * ------------------------------------------------------------------ */
@@ -624,6 +663,8 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         msOWSBuildURLFilename(map->web.imagepath, 
                               pszHashFileName,".tmp.gml");
     free(pszHashFileName);
+    pasReqInfo[(*numRequests)].pszHTTPCookieData = pszHTTPCookieData;
+    pszHTTPCookieData = NULL;
     pasReqInfo[(*numRequests)].nStatus = 0;
     pasReqInfo[(*numRequests)].nTimeout = nTimeout;
     pasReqInfo[(*numRequests)].bbox = bbox;
