@@ -1155,8 +1155,7 @@ int main(int argc, char *argv[]) {
      * by an object that is part of the mapObject that would contain 
      * information on the application status (such as cookie).
      */
-    if( msObj->request->httpcookiedata != NULL && 
-        msOWSLookupMetadata(&(msObj->Map->web.metadata), "OMF", "http_cookie"))
+    if( msObj->request->httpcookiedata != NULL )
     {
         msInsertHashTable( &(msObj->Map->web.metadata), "http_cookie_data",
                            msObj->request->httpcookiedata );
