@@ -2057,12 +2057,9 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
 
   if (sosparams->pszFeatureOfInterest) 
   {
-    CPLXMLNode *psRoot=NULL, *psChild=NULL; 
-    CPLXMLNode *psUpperCorner=NULL, *psLowerCorner=NULL;
-    char *pszLowerCorner=NULL, *pszUpperCorner=NULL;
     int bValid = 0;
-    char **tokens;
-    int n;
+    CPLXMLNode *psRoot=NULL;
+    char *pszSRS = NULL;
 
     psRoot = CPLParseXMLString(sosparams->pszFeatureOfInterest);
     if(!psRoot) {       
@@ -2070,57 +2067,12 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
       return msSOSException(map, "featureofinterest", "InvalidParameterValue");
     }
 
+
     CPLStripXMLNamespace(psRoot, "gml", 1);
-    bValid = 0;
-    if (psRoot->eType == CXT_Element && EQUAL(psRoot->pszValue,"Envelope")) {
-      psLowerCorner = psRoot->psChild;
-      if (psLowerCorner)
-        psUpperCorner=  psLowerCorner->psNext;
+    bValid = FTLParseGMLEnvelope(psRoot, &sBbox, &pszSRS);
 
-      if (psLowerCorner && psUpperCorner && EQUAL(psLowerCorner->pszValue,"lowerCorner") && EQUAL(psUpperCorner->pszValue,"upperCorner")) {
-        /*get the values*/
-        psChild = psLowerCorner->psChild;
-        while (psChild != NULL) {
-          if (psChild->eType != CXT_Text)
-            psChild = psChild->psNext;
-          else
-            break;
-          }
-          if (psChild && psChild->eType == CXT_Text)
-            pszLowerCorner = psChild->pszValue;
-
-          psChild = psUpperCorner->psChild;
-          while (psChild != NULL) {
-            if (psChild->eType != CXT_Text)
-              psChild = psChild->psNext;
-            else
-              break;
-            }
-            if (psChild && psChild->eType == CXT_Text)
-              pszUpperCorner = psChild->pszValue;
-
-            if (pszLowerCorner && pszUpperCorner) {
-              tokens = msStringSplit(pszLowerCorner, ' ', &n);
-              if (tokens && n == 2) {
-                sBbox.minx = atof(tokens[0]);
-                sBbox.miny = atof(tokens[1]);
-
-                msFreeCharArray(tokens, n);
-
-                tokens = msStringSplit(pszUpperCorner, ' ', &n);
-                if (tokens && n == 2) {
-                  sBbox.maxx = atof(tokens[0]);
-                  sBbox.maxy = atof(tokens[1]);
-                  msFreeCharArray(tokens, n);
-
-                  bValid = 1;
-                }
-              }
-            }
-          }
-        }
-
-        if (!bValid) {
+    /*TODO we should reproject the bbox to the map projection if there is an srs defined*/
+    if (!bValid) {
             msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest .", "msSOSGetObservation()");
             return msSOSException(map, "featureofinterest", "InvalidParameterValue");
         }
@@ -2129,7 +2081,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
         map->extent.maxx = sBbox.maxx;
         map->extent.maxy = sBbox.maxy;
         
-      }
+  }
 
   /* apply filter */
   if (sosparams->pszResult) {

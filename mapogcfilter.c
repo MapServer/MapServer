@@ -1530,17 +1530,10 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
             if (strcasecmp(psXMLNode->pszValue, "BBOX") == 0)
             {
                 char *pszSRS = NULL;
-                char *pszTS = NULL;
-                char *pszCS = NULL;
                 CPLXMLNode *psPropertyName = NULL;
-                CPLXMLNode *psBox = NULL;
-                CPLXMLNode *psCoordinates = NULL, *psCoordChild=NULL;
-                CPLXMLNode *psCoord1 = NULL, *psCoord2 = NULL;
-                CPLXMLNode *psX = NULL, *psY = NULL;
-                char **szCoords=NULL, **szMin=NULL, **szMax = NULL;
-                char  *szCoords1=NULL, *szCoords2 = NULL;
-                int nCoords = 0;
-                char *pszTmpCoord = NULL;
+                CPLXMLNode *psBox = NULL, *psEnvelope=NULL;
+                rectObj sBox;
+                
                 int bCoordinatesValid = 0;
 
                 psPropertyName = CPLGetXMLNode(psXMLNode, "PropertyName");
@@ -1548,81 +1541,12 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 if (!psBox)
                   psBox = CPLGetXMLNode(psXMLNode, "BoxType");
 
+                /*FE 1.0 used box FE1.1 uses envelop*/
                 if (psBox)
-                {
-                    pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
-            
-                    psCoordinates = CPLGetXMLNode(psBox, "coordinates");
-                    pszTS = (char *)CPLGetXMLValue(psCoordinates, "ts", NULL);
-                    pszCS = (char *)CPLGetXMLValue(psCoordinates, "cs", NULL);
+                  bCoordinatesValid = FTLParseGMLBox(psBox, &sBox, &pszSRS);
+                else if ((psEnvelope = CPLGetXMLNode(psXMLNode, "Envelope")))
+                  bCoordinatesValid = FTLParseGMLEnvelope(psEnvelope, &sBox, &pszSRS);
 
-                    psCoordChild =  psCoordinates->psChild;
-                    while (psCoordinates && psCoordChild && psCoordChild->eType != CXT_Text)
-                    {
-                            psCoordChild = psCoordChild->psNext;
-                    }
-                    if (psCoordChild && psCoordChild->pszValue)
-                    {
-                        pszTmpCoord = psCoordChild->pszValue;
-                        if (pszTS)
-                          szCoords = msStringSplit(pszTmpCoord, pszTS[0], &nCoords);
-                        else
-                          szCoords = msStringSplit(pszTmpCoord, ' ', &nCoords);
-                        if (szCoords && nCoords == 2)
-                        {
-                            szCoords1 = strdup(szCoords[0]);
-                            szCoords2 = strdup(szCoords[1]);
-                            if (pszCS)
-                              szMin = msStringSplit(szCoords1, pszCS[0], &nCoords);
-                            else
-                              szMin = msStringSplit(szCoords1, ',', &nCoords);
-                            if (szMin && nCoords == 2)
-                            {
-                              if (pszCS)
-                                szMax = msStringSplit(szCoords2, pszCS[0], &nCoords);
-                              else
-                                szMax = msStringSplit(szCoords2, ',', &nCoords);
-                            }
-                            if (szMax && nCoords == 2)
-                              bCoordinatesValid =1;
-
-                            free(szCoords1);        
-                            free(szCoords2);
-                        }
-                    }
-                    else
-                    {
-                        psCoord1 = CPLGetXMLNode(psBox, "coord");
-                        if (psCoord1 && psCoord1->psNext && 
-                            psCoord1->psNext->pszValue && 
-                            strcmp(psCoord1->psNext->pszValue, "coord") ==0)
-                        {
-                            szMin = (char **)malloc(sizeof(char *)*2);
-                            szMax = (char **)malloc(sizeof(char *)*2);
-                            psCoord2 = psCoord1->psNext;
-                            psX =  CPLGetXMLNode(psCoord1, "X");
-                            psY =  CPLGetXMLNode(psCoord1, "Y");
-                            if (psX && psY && psX->psChild && psY->psChild &&
-                                psX->psChild->pszValue && psY->psChild->pszValue)
-                            {
-                                szMin[0] = psX->psChild->pszValue;
-                                szMin[1] = psY->psChild->pszValue;
-
-                                psX =  CPLGetXMLNode(psCoord2, "X");
-                                psY =  CPLGetXMLNode(psCoord2, "Y");
-                                if (psX && psY && psX->psChild && psY->psChild &&
-                                    psX->psChild->pszValue && psY->psChild->pszValue)
-                                {
-                                    szMax[0] = psX->psChild->pszValue;
-                                    szMax[1] = psY->psChild->pszValue;
-                                    bCoordinatesValid = 1;
-                                }
-                            }
-                        }
-                    
-                    }
-                }
-            
                 if (psPropertyName == NULL || !bCoordinatesValid)
                   psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
 
@@ -1645,22 +1569,14 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BBOX;
                     /* srs might be empty */
                     if (pszSRS)
-                      psFilterNode->psRightNode->pszValue = strdup(pszSRS);
+                      psFilterNode->psRightNode->pszValue = pszSRS;
 
                     psFilterNode->psRightNode->pOther =     
                       (rectObj *)malloc(sizeof(rectObj));
-                    ((rectObj *)psFilterNode->psRightNode->pOther)->minx = 
-                      atof(szMin[0]);
-                    ((rectObj *)psFilterNode->psRightNode->pOther)->miny = 
-                      atof(szMin[1]);
-
-                    ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = 
-                      atof(szMax[0]);
-                    ((rectObj *)psFilterNode->psRightNode->pOther)->maxy = 
-                      atof(szMax[1]);
-
-                    free(szMin);
-                    free(szMax);
+                    ((rectObj *)psFilterNode->psRightNode->pOther)->minx = sBox.minx; 
+                    ((rectObj *)psFilterNode->psRightNode->pOther)->miny = sBox.miny; 
+                    ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = sBox.maxx; 
+                    ((rectObj *)psFilterNode->psRightNode->pOther)->maxy =  sBox.maxy; 
                 }
             }
             else if (strcasecmp(psXMLNode->pszValue, "DWithin") == 0 ||
@@ -2079,25 +1995,35 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /*      FeatureId Filter                                                */
 /*                                                                      */
 /*      <ogc:Filter>                                                    */
-/*      <ogc:FeatureId fid="INWATERA_1M.1013"/>                          */
-/*      <ogc:FeatureId fid="INWATERA_1M.10"/>                            */
-/*      <ogc:FeatureId fid="INWATERA_1M.13"/>                            */
-/*      <ogc:FeatureId fid="INWATERA_1M.140"/>                           */
-/*      <ogc:FeatureId fid="INWATERA_1M.5001"/>                          */
-/*      <ogc:FeatureId fid="INWATERA_1M.2001"/>                          */
+/*      <ogc:FeatureId fid="INWATERA_1M.1013"/>                         */
+/*      <ogc:FeatureId fid="INWATERA_1M.10"/>                           */
+/*      <ogc:FeatureId fid="INWATERA_1M.13"/>                           */
+/*      <ogc:FeatureId fid="INWATERA_1M.140"/>                          */
+/*      <ogc:FeatureId fid="INWATERA_1M.5001"/>                         */
+/*      <ogc:FeatureId fid="INWATERA_1M.2001"/>                         */
 /*      </ogc:Filter>                                                   */
+/*                                                                      */
+/*                                                                      */
+/*      Note that for FES1.1.0 the featureid has been depricated in     */
+/*      favor of GmlObjectId                                            */
+/*      <GmlObjectId gml:id="TREESA_1M.1234"/>                          */
 /* -------------------------------------------------------------------- */
         else if (FLTIsFeatureIdFilterType(psXMLNode->pszValue))
         {
             psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
             pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "fid", NULL);
+            /*for FE 1.1.0 GmlObjectId */
+            if (pszFeatureId == NULL)
+              pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "id", NULL);
             pszFeatureIdList = NULL;
             
             psFeatureIdNode = psXMLNode;
             while (psFeatureIdNode)
             {
                 pszFeatureId = (char *)CPLGetXMLValue(psFeatureIdNode, "fid", NULL);
-                
+                if (!pszFeatureId)
+                   pszFeatureId = (char *)CPLGetXMLValue(psFeatureIdNode, "id", NULL);
+
                 if (pszFeatureId)
                 {
                     if (pszFeatureIdList)
@@ -2196,7 +2122,9 @@ int FLTIsComparisonFilterType(char *pszValue)
 /************************************************************************/
 int FLTIsFeatureIdFilterType(char *pszValue)
 {
-    if (pszValue && strcasecmp(pszValue, "FeatureId") == 0)
+    if (pszValue && (strcasecmp(pszValue, "FeatureId") == 0 ||
+                     strcasecmp(pszValue, "GmlObjectId") == 0))
+                     
       return MS_TRUE;
 
      return MS_FALSE;
@@ -3800,6 +3728,204 @@ FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
     }
     return NULL;
 }
+
+
+/************************************************************************/
+/*                              FTLParseGMLBox                          */
+/*                                                                      */
+/*      Parse gml box. Used for FE 1.0                                  */
+/************************************************************************/
+int FTLParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
+{
+    int bCoordinatesValid = 0;
+    CPLXMLNode *psCoordinates = NULL, *psCoordChild=NULL;
+    CPLXMLNode *psCoord1 = NULL, *psCoord2 = NULL;
+    CPLXMLNode *psX = NULL, *psY = NULL;
+    char **szCoords=NULL, **szMin=NULL, **szMax = NULL;
+    char  *szCoords1=NULL, *szCoords2 = NULL;
+    int nCoords = 0;
+    char *pszTmpCoord = NULL;
+    char *pszSRS = NULL;
+    char *pszTS = NULL;
+    char *pszCS = NULL;
+
+    if (psBox)
+    {
+        pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
+        if (ppszSRS)
+          *ppszSRS = strdup(pszSRS);
+
+        psCoordinates = CPLGetXMLNode(psBox, "coordinates");
+        pszTS = (char *)CPLGetXMLValue(psCoordinates, "ts", NULL);
+        pszCS = (char *)CPLGetXMLValue(psCoordinates, "cs", NULL);
+
+        psCoordChild =  psCoordinates->psChild;
+        while (psCoordinates && psCoordChild && psCoordChild->eType != CXT_Text)
+        {
+            psCoordChild = psCoordChild->psNext;
+        }
+        if (psCoordChild && psCoordChild->pszValue)
+        {
+            pszTmpCoord = psCoordChild->pszValue;
+            if (pszTS)
+              szCoords = msStringSplit(pszTmpCoord, pszTS[0], &nCoords);
+            else
+              szCoords = msStringSplit(pszTmpCoord, ' ', &nCoords);
+            if (szCoords && nCoords == 2)
+            {
+                szCoords1 = strdup(szCoords[0]);
+                szCoords2 = strdup(szCoords[1]);
+                if (pszCS)
+                  szMin = msStringSplit(szCoords1, pszCS[0], &nCoords);
+                else
+                  szMin = msStringSplit(szCoords1, ',', &nCoords);
+                if (szMin && nCoords == 2)
+                {
+                    if (pszCS)
+                      szMax = msStringSplit(szCoords2, pszCS[0], &nCoords);
+                    else
+                      szMax = msStringSplit(szCoords2, ',', &nCoords);
+                }
+                if (szMax && nCoords == 2)
+                  bCoordinatesValid =1;
+
+                free(szCoords1);        
+                free(szCoords2);
+            }
+        }
+        else
+        {
+            psCoord1 = CPLGetXMLNode(psBox, "coord");
+            if (psCoord1 && psCoord1->psNext && 
+                psCoord1->psNext->pszValue && 
+                strcmp(psCoord1->psNext->pszValue, "coord") ==0)
+            {
+                szMin = (char **)malloc(sizeof(char *)*2);
+                szMax = (char **)malloc(sizeof(char *)*2);
+                psCoord2 = psCoord1->psNext;
+                psX =  CPLGetXMLNode(psCoord1, "X");
+                psY =  CPLGetXMLNode(psCoord1, "Y");
+                if (psX && psY && psX->psChild && psY->psChild &&
+                    psX->psChild->pszValue && psY->psChild->pszValue)
+                {
+                    szMin[0] = psX->psChild->pszValue;
+                    szMin[1] = psY->psChild->pszValue;
+
+                    psX =  CPLGetXMLNode(psCoord2, "X");
+                    psY =  CPLGetXMLNode(psCoord2, "Y");
+                    if (psX && psY && psX->psChild && psY->psChild &&
+                        psX->psChild->pszValue && psY->psChild->pszValue)
+                    {
+                        szMax[0] = psX->psChild->pszValue;
+                        szMax[1] = psY->psChild->pszValue;
+                        bCoordinatesValid = 1;
+                    }
+                }
+            }
+                    
+        }
+    }
+
+    if (bCoordinatesValid)
+    {
+        psBbox->minx =  atof(szMin[0]);
+        psBbox->miny =  atof(szMin[1]);
+
+        psBbox->maxx =  atof(szMax[0]);
+        psBbox->maxy =  atof(szMax[1]);
+
+        if (szMin)
+          msFree(szMin);
+        if (szMax)
+          msFree(szMax);
+    }
+
+    return bCoordinatesValid;
+}
+/************************************************************************/
+/*                           FTLParseGMLEnvelope                        */
+/*                                                                      */
+/*      Utility function to parse a gml:Enevelop (used for SOS and FE1.1)*/
+/************************************************************************/
+int FTLParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
+{
+    CPLXMLNode *psChild=NULL; 
+    CPLXMLNode *psUpperCorner=NULL, *psLowerCorner=NULL;
+    char *pszLowerCorner=NULL, *pszUpperCorner=NULL;
+    int bValid = 0;
+    char **tokens;
+    int n;
+
+    if (psRoot && psBbox && psRoot->eType == CXT_Element && 
+        EQUAL(psRoot->pszValue,"Envelope")) 
+    {
+        /*Get the srs if available*/
+        if (ppszSRS)
+        {
+            psChild = psRoot->psChild;
+            while (psChild != NULL) 
+            {
+               if (psChild->eType == CXT_Attribute && psChild->pszValue &&
+                   EQUAL(psChild->pszValue, "srsName") && psChild->psChild &&
+                   psChild->psChild->pszValue)
+               {
+                   *ppszSRS = strdup(psChild->psChild->pszValue);
+                   break;
+               } 
+               psChild = psChild->psNext;
+            }
+        }
+        psLowerCorner = CPLSearchXMLNode(psRoot, "lowerCorner");
+        psUpperCorner = CPLSearchXMLNode(psRoot, "upperCorner");
+
+        if (psLowerCorner && psUpperCorner && EQUAL(psLowerCorner->pszValue,"lowerCorner") && 
+            EQUAL(psUpperCorner->pszValue,"upperCorner")) 
+        {
+                /*get the values*/
+            psChild = psLowerCorner->psChild;
+            while (psChild != NULL) {
+                if (psChild->eType != CXT_Text)
+                  psChild = psChild->psNext;
+                else
+                  break;
+            }
+            if (psChild && psChild->eType == CXT_Text)
+              pszLowerCorner = psChild->pszValue;
+
+            psChild = psUpperCorner->psChild;
+            while (psChild != NULL) {
+                if (psChild->eType != CXT_Text)
+                  psChild = psChild->psNext;
+                else
+                  break;
+            }
+            if (psChild && psChild->eType == CXT_Text)
+              pszUpperCorner = psChild->pszValue;
+
+            if (pszLowerCorner && pszUpperCorner) {
+                tokens = msStringSplit(pszLowerCorner, ' ', &n);
+                if (tokens && n >= 2) {
+                    psBbox->minx = atof(tokens[0]);
+                    psBbox->miny = atof(tokens[1]);
+
+                    msFreeCharArray(tokens, n);
+
+                    tokens = msStringSplit(pszUpperCorner, ' ', &n);
+                    if (tokens && n >= 2) {
+                        psBbox->maxx = atof(tokens[0]);
+                        psBbox->maxy = atof(tokens[1]);
+                        msFreeCharArray(tokens, n);
+
+                        bValid = 1;
+                    }
+                }
+            }
+        }
+    }
+    return bValid;
+}
+
+
 #ifdef USE_LIBXML2
 
 xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal)
