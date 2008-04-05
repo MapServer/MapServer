@@ -131,6 +131,10 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
         tokens = (char **) calloc(map->numoutputformats,sizeof(char*));
         for( i = 0; i < map->numoutputformats; i++ )
         {
+            /* Only GDAL based formats supported. */
+            if( !EQUALN(map->outputformatlist[i]->driver,"GDAL/",5) )
+                continue;
+
             switch( map->outputformatlist[i]->renderer )
             {
                 /* seeminly normal raster format */
@@ -377,11 +381,11 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 
     if (params->updatesequence != NULL) {
       i = msOWSNegotiateUpdateSequence(params->updatesequence, updatesequence);
-      if (i == 0) { // current
+      if (i == 0) { /* current */
           msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWCSGetCapabilities11()", params->updatesequence, updatesequence);
           return msWCSException11(map, "updatesequence", "CurrentUpdateSequence", params->version);
       }
-      if (i > 0) { // invalid
+      if (i > 0) { /* invalid */
           msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWCSGetCapabilities11()", params->updatesequence, updatesequence);
           return msWCSException11(map, "updatesequence", "InvalidUpdateSequence", params->version);
       }
@@ -1078,14 +1082,28 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         GDALDriverH hDriver;
         const char *pszExtension = image->format->extension;
 
+        if( !EQUALN(image->format->driver,"GDAL/",5) )
+        {
+            msSetError( MS_MISCERR, 
+                        "Format %s (%s) inappropriate for WCS, only GDAL based outputformats supported.",
+                        "msWCSReturnCoverage11()", 
+                        image->format->driver,
+                        image->format->mimetype );
+            return msWCSException11(map, "mapserv", "NoApplicableCode", 
+                                    params->version);
+        }
+
         msAcquireLock( TLOCK_GDAL );
         hDriver = GDALGetDriverByName( image->format->driver+5 );
         if( hDriver == NULL )
         {
             msReleaseLock( TLOCK_GDAL );
-            msSetError( MS_MISCERR, "Failed to find %s driver.",
-                        "msWCSReturnCoverage11()", image->format->driver+5 );
-            return MS_FAILURE;
+            msSetError( MS_MISCERR, 
+                        "Failed to find %s driver.",
+                        "msWCSReturnCoverage11()", 
+                        image->format->driver+5 );
+            return msWCSException11(map, "mapserv", "NoApplicableCode", 
+                                    params->version);
         }
         
         if( pszExtension == NULL )
