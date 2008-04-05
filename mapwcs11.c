@@ -35,7 +35,7 @@
 #include "mapthread.h"
 #include "mapwcs.h"
 
-MS_CVSID("$Id: mapwcs.c 6637 2007-08-17 21:30:26Z warmerdam $")
+MS_CVSID("$Id$")
 
 #if defined(USE_WCS_SVR) && defined(USE_LIBXML2)
 

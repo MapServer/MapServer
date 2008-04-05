@@ -89,7 +89,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id:  $")
+MS_CVSID("$Id$")
 
 
 /* The source code of Tcl_UtfToUniChar() was borrowed from tclUtf.c

@@ -53,7 +53,7 @@
 #define vsnprintf _vsnprintf
 #endif 
 
-MS_CVSID("$Id: $")
+MS_CVSID("$Id$")
 
 
 #ifndef USE_THREAD

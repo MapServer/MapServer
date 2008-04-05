@@ -34,7 +34,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS 1
 
-/* $Id: mapmssql2008.c,v 1.0.0.0 2007/7/1 20:24:00 richard Exp $ */
+/* $Id$ */
 #include <assert.h>
 #include "mapserver.h"
 #include "maptime.h"
@@ -49,7 +49,7 @@
 #include <string.h>
 #include <ctype.h> /* tolower() */
 
-MS_CVSID("$Id: mapmssql2008.c,v 1.0.0.0 2007/7/1 20:24:00 richard Exp $")
+MS_CVSID("$Id$")
 
 // Structure for connection to an ODBC database (Microsoft preferred way to connect to SQL Server 2005 from c/c++)
 typedef struct msODBCconn_t
