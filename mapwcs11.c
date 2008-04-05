@@ -1101,8 +1101,12 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
             msReleaseLock( TLOCK_GDAL );
             status = msSaveImage(map, image, filename);
             if( status != MS_SUCCESS )
-                msSetError(MS_MISCERR, "msSaveImage() failed", "msWCSReturnCoverage11()");
-                return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
+            {
+                msSetError(MS_MISCERR, "msSaveImage() failed", 
+                           "msWCSReturnCoverage11()");
+                return msWCSException11(map, "mapserv", "NoApplicableCode", 
+                                        params->version);
+            }
         }
         msReleaseLock( TLOCK_GDAL );
     }
