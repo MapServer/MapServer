@@ -362,7 +362,7 @@ const char *msOWSGetLanguage(mapObj *map, const char *context)
     /* if this is an exception, MapServer always returns Exception
        messages in en-US
     */
-    if (context == "exception") {
+    if (strcmp(context,"exception") == 0) {
       language = MS_ERROR_LANGUAGE;
     }
     /* if not, fetch language from mapfile metadata */
