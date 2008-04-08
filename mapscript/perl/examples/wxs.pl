@@ -2,14 +2,11 @@
 ############################################################################
 # $Id: $
 #
-# Name:     wxs.pl
 # Project:  MapServer
 # Purpose:  MapScript WxS example
-#           
 # Author:   Tom Kralidis (tomkralidis@hotmail.com)
 #
 ##############################################################################
-#
 # Copyright (c) 2007, Tom Kralidis
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
