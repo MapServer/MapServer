@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  OGC SLD implementation
@@ -93,7 +93,10 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
                 unlink(pszSLDTmpFile);
             }
         }
-
+        else
+        {
+            msSetError(MS_WMSERR, "Could not open SLD %s and save it in temporary file %s. Please make sure that the sld url is valid and that imagepath and imageurl are set properly in the map file", "msSLDApplySLDURL", szURL, pszSLDTmpFile);
+        }
         if (pszSLDbuf)
           nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName);
     }
