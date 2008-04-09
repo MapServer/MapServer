@@ -393,7 +393,15 @@ void loadForm(void)
         msFreeCharArray(tokens, 4);
     
 #ifdef USE_PROJ
-        /* make sure both coordinates are in range! */
+        /* 
+         * If there is a projection in the map file, and it is not lon/lat, and the 
+         * extents "look like" they *are* lon/lat, based on their size,
+         * then convert the extents to the map file projection.
+         *
+         * DANGER: If the extents are legitimately in the mapfile projection
+         *         and coincidentally fall in the lon/lat range, bad things
+         *         will ensue.
+         */
         if(msObj->Map->projection.proj && !pj_is_latlong(msObj->Map->projection.proj)
            && (msObj->Map->extent.minx >= -180.0 && msObj->Map->extent.minx <= 180.0) 
            && (msObj->Map->extent.miny >= -90.0 && msObj->Map->extent.miny <= 90.0)
