@@ -855,11 +855,10 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     char **tokens = NULL;
     int nTokens = 0, nEpsgTmp = 0;
     projectionObj sProjTmp;
-    int msErr;
-
     char *pszBuffer = NULL;
     int bConcatWhere = 0;
     int bHasAWhere =0;
+    char *pszFilterItem=NULL;
 
     lp = (GET_LAYER(map, iLayerIndex));
 
@@ -956,7 +955,19 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 	}
     }
     else
-      szExpression = FLTGetNodeExpression(psNode);
+    {
+        szExpression = FLTGetNodeExpression(psNode);
+        /*if there is a filter item set it (this is only for propertislike with 
+          non db layers*/
+        pszFilterItem = FLTGetMapserverExpressionClassItem(psNode);
+        if (pszFilterItem)
+        {
+            if (lp->filteritem)
+              free (lp->filteritem);
+            lp->filteritem = strdup(pszFilterItem);
+        }
+    }
+   
 
     if (szExpression)
     {
@@ -983,21 +994,22 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 	if(lp->filter.string && lp->filter.type == MS_EXPRESSION)
 	  pszBuffer = msStringConcatenate(pszBuffer, ")");
         
+        
         msLoadExpressionString(&lp->filter, pszBuffer);
         free(szExpression);
     }
 
-    msErr = msQueryByRect(map, lp->index, sQueryRect);
+    msQueryByRect(map, lp->index, sQueryRect);
 
     if (pszBuffer)
       free(pszBuffer);
 
-    return msErr;
+    return MS_SUCCESS;
 }
 
 int FLTIsSimpleFilter(FilterEncodingNode *psNode)
 {
-    if (FLTValidForBBoxFilter(psNode))
+  if (FLTValidForBBoxFilter(psNode) && FLTValidForPropertyIsLikeFilter(psNode))
     {
         if (FLTNumberOfFilterType(psNode, "DWithin") == 0 &&
             FLTNumberOfFilterType(psNode, "Intersect") == 0 &&
@@ -2209,9 +2221,9 @@ int FLTNumberOfFilterType(FilterEncodingNode *psFilterNode, const char *szType)
     
 
 /************************************************************************/
-/*                      FLTValidForPropertyIsLikeFilter                 */
+/*                     FLTValidForPropertyIsLikeFilter                  */
 /*                                                                      */
-/*      Valdate if there is only one ProperyIsLike Filter.              */
+/*      Check if there is only none or one PropertyIsLikeFilter.        */
 /************************************************************************/
 int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
 {
@@ -2222,23 +2234,17 @@ int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
 
     nCount = FLTNumberOfFilterType(psFilterNode, "PropertyIsLike");
 
+    if (nCount == 0)
+       return 1;
+
     if (nCount > 1)
       return 0;
-    else if (nCount == 0)
-      return 1;
-    
-    /* nCount ==1  */
-    if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
+
+    /*make sure that if there is properyisequal, it is the only one*/
+    if (psFilterNode->psLeftNode == NULL && psFilterNode->psRightNode == NULL)
       return 1;
 
-    /*    if (strcasecmp(psFilterNode->pszValue, "OR") == 0)
-    {
-        if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") ==0 ||
-            strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") ==0)
-          return 1;
-    }
-    */
-    return 1;
+    return 0;
 }
 
 int FLTIsPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
