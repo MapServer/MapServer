@@ -1356,6 +1356,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
                                  &(params->originx), 
                                  &(params->originy) );
       }
+      else
+          msResetErrorList();
       msFreeProjection( &proj );
   }
   
