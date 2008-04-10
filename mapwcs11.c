@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  OpenGIS Web Coverage Server (WCS) 1.1.0 Implementation.  This
@@ -131,10 +131,6 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
         tokens = (char **) calloc(map->numoutputformats,sizeof(char*));
         for( i = 0; i < map->numoutputformats; i++ )
         {
-            /* Only GDAL based formats supported. */
-            if( !EQUALN(map->outputformatlist[i]->driver,"GDAL/",5) )
-                continue;
-
             switch( map->outputformatlist[i]->renderer )
             {
                 /* seeminly normal raster format */
@@ -1078,20 +1074,10 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 /*      VSIL IO.                                                        */
 /* -------------------------------------------------------------------- */
 #ifdef GDAL_DCAP_VIRTUALIO
+    if( EQUALN(image->format->driver,"GDAL/",5) )
     {
         GDALDriverH hDriver;
         const char *pszExtension = image->format->extension;
-
-        if( !EQUALN(image->format->driver,"GDAL/",5) )
-        {
-            msSetError( MS_MISCERR, 
-                        "Format %s (%s) inappropriate for WCS, only GDAL based outputformats supported.",
-                        "msWCSReturnCoverage11()", 
-                        image->format->driver,
-                        image->format->mimetype );
-            return msWCSException11(map, "mapserv", "NoApplicableCode", 
-                                    params->version);
-        }
 
         msAcquireLock( TLOCK_GDAL );
         hDriver = GDALGetDriverByName( image->format->driver+5 );
