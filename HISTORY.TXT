@@ -257,6 +257,8 @@ results in stable label positions regardless of map extent. (#2447)
 - mapdraw.c: Improve error reporting if a raster layer requested in
   a query map (#1842).
 
+- mapfile.c: add simple urn:ogc:def:crs:OGC::CRS84 support.
+
 
 Version 5.0.0 (2007-09-17)
 --------------------------
