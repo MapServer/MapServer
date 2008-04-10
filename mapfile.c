@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  High level Map file parsing code.
@@ -1115,6 +1115,35 @@ int msLoadProjectionString(projectionObj *p, char *value)
           p->args[1] = strdup("+epsgaxis=ne");
           p->numargs = 2;
       }
+  }
+  else if (strncasecmp(value, "urn:ogc:def:crs:OGC:",20) == 0 )
+  { /* this is very preliminary urn support ... expand later */ 
+      char init_string[100];
+      const char *id;
+
+      id = value + 20;
+      while( *id != ':' && *id == '\0' )
+          id++;
+
+      if( *id == ':' )
+          id++;
+
+      init_string[0] = '\0';
+
+      if( strcasecmp(id,"CRS84") == 0 )
+          strcpy( init_string, "init=epsg:4326" );
+      else
+      {
+          msSetError( MS_PROJERR, 
+                      "Unrecognised OGC CRS def '%s'.",
+                      "msLoadProjectionString()", 
+                      value );
+          return -1;
+      }
+
+      p->args = (char**)malloc(sizeof(char*) * 2);
+      p->args[0] = strdup(init_string);
+      p->numargs = 1;
   }
   /*
    * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
