@@ -273,7 +273,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/wfs/1.1.0/wfs.xsd");
-    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "wfs.xsd");
     xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
 
 /* -------------------------------------------------------------------- */
