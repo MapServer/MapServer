@@ -791,8 +791,6 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 
   encoded = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
   if(outputformat == OWS_SFE_SCHEMA) /* reference GML 3.1.1 schema */
-    //msIO_printf("\n  <import namespace=\"http://www.opengis.net/gml\"\n"
-    //	"          schemaLocation=\"%s/gml/3.1.1/base/feature.xsd\" />\n", encoded);
     msIO_printf("\n  <import namespace=\"http://www.opengis.net/gml\"\n"
 		"          schemaLocation=\"%s/gml/3.1.1/base/gml.xsd\" />\n", encoded);
   else /* default GML 2.1.x schema */
@@ -813,8 +811,10 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     }
   }
 
-  /* output definition for the default feature container, can't use wfs:FeatureCollection with GML3 */
-  if(outputformat == OWS_SFE_SCHEMA) {
+  /* output definition for the default feature container, can't use wfs:FeatureCollection with GML3:
+     kept here so that the behaviour with whs1.0 and gml3 output is preserved.
+     We can use the wfs:FeatureCollection for wfs1.1*/
+  if(outputformat == OWS_SFE_SCHEMA && strncmp(paramsObj->pszVersion,"1.1",3) != 0) {
     value = msOWSLookupMetadata(&(map->web.metadata), "FO", "feature_collection");
     if(value) collection_name = value;
     
@@ -1142,7 +1142,15 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       output_schema_format = "XMLSCHEMA";
     }
   }
-
+  else
+  {
+      /*set the output format using the version if available*/
+      if(paramsObj->pszVersion == NULL || strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
+      {
+          outputformat = OWS_GML3;
+          output_schema_format = "text/gml; subtype=gml/3.1.1";
+      }
+  }
   /* else if (strcasecmp(names[i], "PROPERTYNAME") == 0) */
   /* { */
   /*  */
@@ -1509,15 +1517,29 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 		  "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
 		  encoded_schema, encoded, user_namespace_uri_encoded, 
 		  script_url_encoded, encoded, encoded_typename, output_schema_format);
-    } else { 
-      msIO_printf("<%s:%s\n"
+    } 
+    else 
+    {
+      if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
+      {
+      msIO_printf("<wfs:FeatureCollection\n"
+		  "   xmlns:%s=\"%s\"\n"  
+		  "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+		  "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
+		  "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
+      "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n",
+                  user_namespace_prefix, user_namespace_uri_encoded);
+      }
+      else
+      {
+         msIO_printf("<%s:%s\n"
       "   version=\"1.0.0\"\n"
 		  "   xmlns:%s=\"%s\"\n"  
 		  "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
 		  "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
       "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n",
       user_namespace_prefix, collection_name, user_namespace_prefix, user_namespace_uri_encoded);
-
+      }
       /* any additional namespaces */
       for(i=0; i<namespaceList->numnamespaces; i++) {
         if(namespaceList->namespaces[i].uri) {
@@ -1529,7 +1551,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
         }
       }
 
-		  msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
+      if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
+        msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\">\n",
+		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format);
+      else
+        msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
 		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format);
     }
 
@@ -1555,7 +1581,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     if(outputformat == OWS_GML2)
       msIO_printf("</wfs:FeatureCollection>\n\n");
     else
-      msIO_printf("</%s:%s>\n\n", user_namespace_prefix, collection_name);
+    {
+      if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0)
+        msIO_printf("</wfs:FeatureCollection>\n\n", user_namespace_prefix, collection_name);
+      else
+        msIO_printf("</%s:%s>\n\n", user_namespace_prefix, collection_name);
+    }
 
     /*
     ** Done! Now a bit of clean-up.
