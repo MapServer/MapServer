@@ -85,7 +85,33 @@ static int msSetWMSParamString(wmsParamsObj *psWMSParams,
     if (urlencode)
     {
         char *pszTmp;
-        pszTmp = msEncodeUrl(value);
+
+        /*
+         *  Special case handling for characters the WMS specification
+         *  says should not be encoded, when they occur in certain
+         *  parameters.
+         *  
+         *  TODO: WMS 1.3 removes SRS and FORMAT from the set of 
+         *        exceptional cases.
+         */
+        if( strcmp(name,"LAYERS") == 0 ||
+            strcmp(name,"STYLES") == 0 ||
+            strcmp(name,"BBOX") == 0 )
+        {
+            pszTmp = msEncodeUrlExcept(value,',');
+        }
+        else if ( strcmp(name,"SRS") == 0 )
+        {
+            pszTmp = msEncodeUrlExcept(value,':');
+        }
+        else if ( strcmp(name,"FORMAT") == 0 )
+        {
+            pszTmp = msEncodeUrlExcept(value,'/');
+        }
+        else {
+            pszTmp = msEncodeUrl(value);
+        }
+
         msInsertHashTable(psWMSParams->params, name, pszTmp);
         msFree(pszTmp);
     }
@@ -172,6 +198,7 @@ static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams)
     /* Get rid of trailing '&'*/
     pszURL[nLen-1] = '\0';
 
+
     return pszURL;
 }
 
@@ -235,7 +262,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 
     psWMSParams->onlineresource = strdup(pszOnlineResource);
 
-    if (strncmp(pszVersion, "1.0.7", 5) < 0)
+    if (strncmp(pszVersion, "1.0.7", 5) < 0) 
         pszVersionKeyword = "WMTVER";
     else
         pszVersionKeyword = "VERSION";
@@ -979,7 +1006,6 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * Build new request URL
  * ------------------------------------------------------------------ */
     pszURL = msBuildURLFromWMSParams(&sThisWMSParams);
-
 
     if (bOkToMerge && (*numRequests)>0)
     {

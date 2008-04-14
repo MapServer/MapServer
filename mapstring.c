@@ -607,7 +607,54 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
   return(token);
 }
 
+/**********************************************************************
+ *                       msEncodeChar()
+ *
+ * Return 1 if the character argument should be encoded for safety
+ * in URL use and 0 otherwise. Specific character map taken from 
+ * http://www.ietf.org/rfc/rfc2396.txt
+ *
+ **********************************************************************/
+
+int msEncodeChar(const char c)
+{
+  if ( 
+       (c >= 0x61 && c <= 0x7A ) ||   /* Letters a-z */
+       (c >= 0x41 && c <= 0x5A ) ||   /* Letters A-Z */
+       (c >= 0x30 && c <= 0x39 ) ||   /* Numbers 0-9 */
+       (c >= 0x27 && c <= 0x2A ) ||   /* * ' ( )     */
+       (c >= 0x2D && c <= 0x2E ) ||   /* - .         */
+       (c == 0x5F ) ||                /* _           */
+       (c == 0x21 ) ||                /* !           */
+       (c == 0x7E ) )                 /* ~           */
+  {
+    return(0);
+  }
+  else 
+  {
+    return(1);
+  }
+}
+
 char *msEncodeUrl(const char *data)
+{
+       /*
+        * Delegate to msEncodeUrlExcept, with a null second argument
+        * to render the except handling moot.
+        */ 
+	return(msEncodeUrlExcept(data, '\0'));
+}
+
+/**********************************************************************
+ *                       msEncodeCharExcept()
+ *
+ * URL encoding, applies RFP2396 encoding to all characters 
+ * except the one exception character. An exception character
+ * of '\0' implies no exception handling.
+ *
+ **********************************************************************/
+ 
+char *msEncodeUrlExcept(const char *data, const char except)
 {
   char *hex = "0123456789ABCDEF";
   const char *i;
@@ -616,7 +663,7 @@ char *msEncodeUrl(const char *data)
   unsigned char ch;
 
   for (inc=0, i=data; *i!='\0'; i++)
-    if (!isalnum(*i))
+    if (msEncodeChar(*i))
       inc += 2;
   
   if (!(code = (char*)malloc(strlen(data)+inc+1)))
@@ -627,11 +674,16 @@ char *msEncodeUrl(const char *data)
       if (*i == ' ')
 	*j = '+';
       else
-      if (!isalnum(*i))
+      if ( except != '\0' && *i == except )
+        {
+	  *j = except;
+        }
+      else 
+      if (msEncodeChar(*i))
 	{
 	  ch = *i;
-	  *j++ = '%';
-	  *j++ = hex[ch/16];
+	  *j++ = '%'; 
+	  *j++ = hex[ch/16]; 
 	  *j   = hex[ch%16];
 	}
       else
