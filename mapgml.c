@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  shapeObj to GML output via MapServer queries.
@@ -86,8 +86,8 @@ static int gmlWriteBounds_GML3(FILE *stream, rectObj *rect, const char *srsname,
   } else
     msIO_fprintf(stream, "%s\t<gml:Envelope>\n", tab);
 
-  msIO_fprintf(stream, "%s\t\t<gml:pos>%.6f %.6f</gml:pos>\n", tab, rect->minx, rect->miny);
-  msIO_fprintf(stream, "%s\t\t<gml:pos>%.6f %.6f</gml:pos>\n", tab, rect->maxx, rect->maxy);
+  msIO_fprintf(stream, "%s\t\t<gml:lowerCorner>%.6f %.6f</gml:lowerCorner>\n", tab, rect->minx, rect->miny);
+  msIO_fprintf(stream, "%s\t\t<gml:upperCorner>%.6f %.6f</gml:upperCorner>\n", tab, rect->maxx, rect->maxy);
   
   msIO_fprintf(stream, "%s\t</gml:Envelope>\n", tab);
   msIO_fprintf(stream, "%s</gml:boundedBy>\n", tab);
