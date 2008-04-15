@@ -140,7 +140,8 @@ int msWFSIsLayerSupported(layerObj *lp)
         (lp->type == MS_LAYER_POINT ||
          lp->type == MS_LAYER_LINE ||
          lp->type == MS_LAYER_POLYGON ) &&
-        lp->connectiontype != MS_WMS )
+        lp->connectiontype != MS_WMS && 
+        lp->connectiontype != MS_GRATICULE)
     {
         return 1; /* true */
     }
