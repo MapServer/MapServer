@@ -121,12 +121,16 @@ MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString);
 
-MS_DLL_EXPORT int FTLParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS);
-MS_DLL_EXPORT  int FTLParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS);
+MS_DLL_EXPORT int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS);
+MS_DLL_EXPORT  int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS);
 
 #ifdef USE_LIBXML2
 MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal);
 #endif
+
+
+void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode, 
+                               mapObj *map, int i, const char *namespaces);
 
 #endif
 

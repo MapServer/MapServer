@@ -1283,6 +1283,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	  return msWFSException(map, "filter", "InvalidParameterValue", paramsObj->pszVersion);
 	}
 
+        /*preparse the filter for gml aliases*/
+        FLTPreParseFilterForAlias(psNode, map, iLayerIndex, "G");
+
 	if( FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE) != MS_SUCCESS ) {
           msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()", pszFilter);
 	  return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);

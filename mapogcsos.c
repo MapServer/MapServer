@@ -29,6 +29,7 @@
 
 #include "mapserver.h"
 
+
 MS_CVSID("$Id$")
 
 #if defined(USE_SOS_SVR) && defined(USE_LIBXML2)
@@ -168,57 +169,8 @@ static int msSOSValidateFilter(FilterEncodingNode *psFilterNode,
     return MS_TRUE;
 }
 
-static void msSOSReplacePropertyName(FilterEncodingNode *psFilterNode,
-                                     const char *pszOldName, char *pszNewName)
-{
-    if (psFilterNode && pszOldName && pszNewName)
-    {
-        if (psFilterNode->eType == FILTER_NODE_TYPE_PROPERTYNAME)
-        {
-            if (psFilterNode->pszValue && 
-                strcasecmp(psFilterNode->pszValue, pszOldName) == 0)
-            {
-                msFree(psFilterNode->pszValue);
-                psFilterNode->pszValue = strdup(pszNewName);
-            }
-        }
-        if (psFilterNode->psLeftNode)
-          msSOSReplacePropertyName(psFilterNode->psLeftNode, pszOldName,
-                                   pszNewName);
-        if (psFilterNode->psRightNode)
-          msSOSReplacePropertyName(psFilterNode->psRightNode, pszOldName,
-                                   pszNewName);
-    }
-}
 
-static void msSOSPreParseFilterForAlias(FilterEncodingNode *psFilterNode, 
-                                        mapObj *map, int i)
-{
-    layerObj *lp=NULL;
-    char szTmp[256];
-    const char *pszFullName = NULL;
 
-    if (psFilterNode && map && i>=0 && i<map->numlayers)
-    {
-        lp = GET_LAYER(map, i);
-        if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
-        {
-            for(i=0; i<lp->numitems; i++) 
-            {
-                if (!lp->items[i] || strlen(lp->items[i]) <= 0)
-                    continue;
-                sprintf(szTmp, "%s_alias", lp->items[i]);
-                pszFullName = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
-                if (pszFullName)
-                {
-                    msSOSReplacePropertyName(psFilterNode, pszFullName, 
-                                             lp->items[i]);
-                }
-            }
-            msLayerClose(lp);
-        }
-    }    
-}
 /************************************************************************/
 /*                        msSOSAddMetadataChildNode                     */
 /*                                                                      */
@@ -2069,7 +2021,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
 
 
     CPLStripXMLNamespace(psRoot, "gml", 1);
-    bValid = FTLParseGMLEnvelope(psRoot, &sBbox, &pszSRS);
+    bValid = FLTParseGMLEnvelope(psRoot, &sBbox, &pszSRS);
 
     /*TODO we should reproject the bbox to the map projection if there is an srs defined*/
     if (!bValid) {
@@ -2096,7 +2048,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
       lp = GET_LAYER(map, i);
       if (lp->status == MS_ON) {
         //preparse parser so that alias for fields can be used
-        msSOSPreParseFilterForAlias(psFilterNode, map, i);
+        FLTPreParseFilterForAlias(psFilterNode, map, i, "S");
         //vaidate that the property names used are valid 
         //(there is a corresponding layer attribute)
         if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {

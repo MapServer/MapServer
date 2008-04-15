@@ -1555,9 +1555,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
                 /*FE 1.0 used box FE1.1 uses envelop*/
                 if (psBox)
-                  bCoordinatesValid = FTLParseGMLBox(psBox, &sBox, &pszSRS);
+                  bCoordinatesValid = FLTParseGMLBox(psBox, &sBox, &pszSRS);
                 else if ((psEnvelope = CPLGetXMLNode(psXMLNode, "Envelope")))
-                  bCoordinatesValid = FTLParseGMLEnvelope(psEnvelope, &sBox, &pszSRS);
+                  bCoordinatesValid = FLTParseGMLEnvelope(psEnvelope, &sBox, &pszSRS);
 
                 if (psPropertyName == NULL || !bCoordinatesValid)
                   psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
@@ -3737,11 +3737,11 @@ FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
 
 
 /************************************************************************/
-/*                              FTLParseGMLBox                          */
+/*                              FLTParseGMLBox                          */
 /*                                                                      */
 /*      Parse gml box. Used for FE 1.0                                  */
 /************************************************************************/
-int FTLParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
+int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
 {
     int bCoordinatesValid = 0;
     CPLXMLNode *psCoordinates = NULL, *psCoordChild=NULL;
@@ -3849,11 +3849,11 @@ int FTLParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
     return bCoordinatesValid;
 }
 /************************************************************************/
-/*                           FTLParseGMLEnvelope                        */
+/*                           FLTParseGMLEnvelope                        */
 /*                                                                      */
 /*      Utility function to parse a gml:Enevelop (used for SOS and FE1.1)*/
 /************************************************************************/
-int FTLParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
+int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
 {
     CPLXMLNode *psChild=NULL; 
     CPLXMLNode *psUpperCorner=NULL, *psLowerCorner=NULL;
@@ -3929,6 +3929,60 @@ int FTLParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
         }
     }
     return bValid;
+}
+
+
+static void FLTReplacePropertyName(FilterEncodingNode *psFilterNode,
+                                   const char *pszOldName, char *pszNewName)
+{
+    if (psFilterNode && pszOldName && pszNewName)
+    {
+        if (psFilterNode->eType == FILTER_NODE_TYPE_PROPERTYNAME)
+        {
+            if (psFilterNode->pszValue && 
+                strcasecmp(psFilterNode->pszValue, pszOldName) == 0)
+            {
+                msFree(psFilterNode->pszValue);
+                psFilterNode->pszValue = strdup(pszNewName);
+            }
+        }
+        if (psFilterNode->psLeftNode)
+          FLTReplacePropertyName(psFilterNode->psLeftNode, pszOldName,
+                                   pszNewName);
+        if (psFilterNode->psRightNode)
+          FLTReplacePropertyName(psFilterNode->psRightNode, pszOldName,
+                                 pszNewName);
+    }
+}
+
+
+void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode, 
+                               mapObj *map, int i, const char *namespaces)
+{
+    layerObj *lp=NULL;
+    char szTmp[256];
+    const char *pszFullName = NULL;
+
+    if (psFilterNode && map && i>=0 && i<map->numlayers)
+    {
+        lp = GET_LAYER(map, i);
+        if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
+        {
+            for(i=0; i<lp->numitems; i++) 
+            {
+                if (!lp->items[i] || strlen(lp->items[i]) <= 0)
+                    continue;
+                sprintf(szTmp, "%s_alias", lp->items[i]);
+                pszFullName = msOWSLookupMetadata(&(lp->metadata), namespaces, szTmp);
+                if (pszFullName)
+                {
+                    FLTReplacePropertyName(psFilterNode, pszFullName, 
+                                           lp->items[i]);
+                }
+            }
+            msLayerClose(lp);
+        }
+    }    
 }
 
 
