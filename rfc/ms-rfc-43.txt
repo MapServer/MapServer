@@ -1,0 +1,98 @@
+======================================================
+MS RFC 43: Direct tile generation for Google Maps API
+======================================================
+
+:Date: 2008/04/08
+:Author: Paul Ramsey
+:Contact: pramsey@cleverelephant.ca
+:Last Edited: 2008/04/09
+:Status: Open
+
+Overview
+--------
+
+ 
+
+Technical Solution
+------------------
+
+The GMaps API defines a GTileLayer which can be used as an overlay or base map.  The GTileLayer supports a GTileLayerOption, tileUrlTemplate, which allows the TileLayer to be accessed using a simple URL pattern that substitutes Google's x/y/z coordinates into the request::
+
+ http://host/tile?x={X}&y={Y}&z={Z}.png
+
+See http://code.google.com/apis/maps/documentation/reference.html#GTileLayer
+
+For Mapserver, the simple URL pattern will be::
+
+ http://host/cgi-bin/mapserv?map=/the.map&layers=foo,bar&mode=tile&tilemode=spheremerc&tile={X}+{Y}+{Z}
+
+The change will add in new handling in the loadForm function for the mode, interface, version, x, y and z parameters.  Like the WMS interface, GMaps API will require PROJ to be specified, and the existence of PROJECTION defines for all layers being accessed.  Google X/Y/Z coordinates will be converted to "spherical mercator" coordinates and fed into the extent. 
+
+The result will make a Google-with-Mapserver map as easy as::
+
+ var myLayer = new GTileLayer(null,null,null,{ 
+  tileUrlTemplate: ' http://host/cgi-bin/mapserv?map=/the.map&layers=foo,bar&mode=tile&tilemode=spheremerc&tile={X}+{Y}+{Z}', 
+  isPng:true, 
+  opacity:0.5 }); 
+ var map = new GMap2(document.getElementById("map")); 
+ map.addOverlay(new GTileLayerOverlay(myLayer)); 
+
+A tile mode with interface of gmap implies the following:
+
+* The output CRS will be set to "spherical mercator" (EPSG:900913)
+* The service bounds be global in extent. The top level (0) will have 1 tile.
+* The "levels" will run from 0 upwards
+* The y axis of the tile coordinates will run from top to bottom
+* The output tiles will be 256x256 in size
+* Each zoom level will be related to parent and children by powers of two
+
+The Mapserver tile mode API will *not* explicitly attempt to address issues of meta-tiling or cross-tile labeling. However, the following steps will be taken to try to minimize these issues:
+
+* If PARTIALS is not set in labeling directives, it will be turned on automatically.
+* PROCESSING LABEL_NO_CLIP will be turned on automatically.
+* Future phases will render into a target slightly larger than the tile and then clip off the extra border pixels.
+
+Mapscript Implications
+----------------------
+
+None. This affects only the CGI interface and mapserv CGI.
+
+Files Affected
+--------------
+
+::
+
+ mapserv.c
+ maptile.c <new>
+
+* Documentation will be updated to reflect the new feature
+
+  * Mapserver CGI Reference
+  * Mapserver Tile HOWTO <new>
+
+* Test suite will be updated to exercise the new features
+
+  * Frank Warmerdam has volunteered to do this
+
+Backwards Compatibility Issues
+------------------------------
+
+None. This functionality is net new and requires no changes to existing behavior.
+
+Bug ID
+------
+
+* http://trac.osgeo.org/mapserver/ticket/2581
+
+Voting History
+--------------
+
+No vote yet.
+
+References
+----------
+
+* http://code.google.com/apis/maps/documentation/reference.html#GTileLayer
+* http://www.worldwindcentral.com/wiki/TileService
+
+
