@@ -3561,10 +3561,10 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
     }
 #ifdef USE_RGBA_PNG
     if( format->imagemode == MS_IMAGEMODE_RGBA ) {
-        if( force_palette )
-            return msSaveImageRGBAPalette(img, ctx ,format);
-        else if( force_pc256 )
-            return msSaveImageRGBAQuantized(img, ctx ,format);
+      if( force_palette )
+        return msSaveImageRGBAPalette(img, ctx ,format);
+      else if( force_pc256 )
+        return msSaveImageRGBAQuantized(img, ctx ,format);
     }
 #endif /*USE_RGBA_PNG*/
     if( force_palette ) {
@@ -3572,11 +3572,14 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
       int method=0;
       const char *palette = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
       const char *palette_method = msGetOutputFormatOption( format, "PALETTE_MEM", "0");
+
       gdPImg = msImageCreateWithPaletteGD(img, palette, gdImageSX(img), gdImageSY(img));
+      if(!gdPImg) return MS_FAILURE; /* most likely a bad palette */
+
       if(strcasecmp(palette_method,"conservative")==0)
-          method=1;
+        method=1;
       else if(strcasecmp(palette_method,"liberal")==0)
-          method=2;
+        method=2;
       msImageCopyForcePaletteGD(img, gdPImg, method);
 
       gdImagePngCtx(gdPImg, ctx);
@@ -3685,6 +3688,8 @@ unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr, outputFormatOb
           method=2;
 
       gdPImg = msImageCreateWithPaletteGD(img, palette, gdImageSX(img), gdImageSY(img));
+      if(!gdPImg) return NULL; /* most likely a bad palette */
+
       msImageCopyForcePaletteGD(img, gdPImg, method);
       imgbytes = gdImagePngPtr(gdPImg, size_ptr);
       gdImageDestroy(gdPImg);
