@@ -3595,9 +3595,9 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
       const char *palette = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
 
       gdPImg = msImageCreateWithPaletteGD(img, palette, gdImageSX(img), gdImageSY(img));
+      if(!gdPImg) return MS_FAILURE;
 
       msImageCopyForcePaletteGD(img, gdPImg);
-
 
       gdImagePngCtx(gdPImg, ctx);
       gdImageDestroy(gdPImg);
@@ -3698,6 +3698,7 @@ unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr, outputFormatOb
       const char *palette = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
 
       gdPImg = msImageCreateWithPaletteGD(img, palette, gdImageSX(img), gdImageSY(img));
+      if(!gdPImg) return NULL;
 
       msImageCopyForcePaletteGD(img, gdPImg);
       imgbytes = gdImagePngPtr(gdPImg, size_ptr);
