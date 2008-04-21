@@ -1178,7 +1178,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
             else
                 return;
             //draw only the outline
-            ren->renderPathSolid(path,&(style->color),&(style->outlinecolor),width);
+            ren->renderPathSolid(path,NULL,c,width);
         }
     }
     break;
@@ -1305,7 +1305,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
                         else
                             return;
                         //draw only the outline
-                        ren->renderPathSolid(rotsym,&(style->color),&(style->outlinecolor),outlinewidth);
+                        ren->renderPathSolid(rotsym,NULL,c,outlinewidth);
                     }
                 }
                 break;

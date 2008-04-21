@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (future 5.0.3, svn branch-5-0)
 ----------------------------------------------
 
+- mapagg.cpp: Fixed rendering of non filled vector symbols (#2585)
+
 - Fixed handling of encrypted connection strings in postgis driver (#2563)
 
 - Fixed problem with large imagemaps generating no output (#2526)
