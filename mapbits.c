@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementation of bit array functions.
@@ -51,6 +51,47 @@ int msGetBit(char *array, int index)
 {
   array += index / CHAR_BIT;
   return (*array & (1 << (index % CHAR_BIT))) != 0;    /* 0 or 1 */
+}
+
+/*
+** msGetNextBit( status, start, size)
+**
+** Quickly find the next bit set. If start == 0 and 0 is set, will return 0.
+** If hits end of bitmap without finding set bit, will return -1.
+**
+*/
+int msGetNextBit(char *array, int index, int size) { 
+  char *ptr;
+  ptr = array;
+  int i = 0;
+  
+  ptr += index / CHAR_BIT;
+  
+  /* Check the starting byte for set bits, if necessary. */
+  if(*ptr & (0xff << (index % CHAR_BIT))) {
+    /* a bit in this byte is set, figure out which one */
+    for( i = index; i < index + CHAR_BIT - (index % CHAR_BIT); i++ ) {
+      if ( msGetBit( array, i ) )
+        return i;
+    }
+  }
+
+  /* scroll forwards bytewise to the next byte with a bit set */
+  do {
+    ptr++;
+  } while( ((CHAR_BIT * (ptr - array)) < size) && *ptr == 0 ) ;
+
+  /* check the first non-zero byte for the location of the set bit */
+  if( *ptr ) {
+    /* a bit in this byte is set, figure out which one */
+    for( i = CHAR_BIT * (ptr - array); i < CHAR_BIT * (ptr - array) + CHAR_BIT; i++ ) {
+      if ( msGetBit( array, i ) )
+        return i;
+    }
+  }
+  
+  /* got to the last byte with no hits! */
+  return -1;
 }
 
 void msSetBit(char *array, int index, int value)

@@ -339,17 +339,23 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   /* -------------------------------------------------------------------- */
   psSHP->nMaxRecords = psSHP->nRecords;
   
+  /* Our in-memory cache of offset information */
   psSHP->panRecOffset = (int *) malloc(sizeof(int) * psSHP->nMaxRecords );
+  /* Our in-memory cache of size information */
   psSHP->panRecSize = (int *) malloc(sizeof(int) * psSHP->nMaxRecords );
+  /* The completeness information for our in-memory cache */
+  psSHP->panRecLoaded = msAllocBitArray( 1 + (psSHP->nMaxRecords / SHX_BUFFER_PAGE) ) ;
+  /* Is our in-memory cache completely populated? */
+  psSHP->panRecAllLoaded = 0; 
   
-  pabyBuf = (uchar *) malloc(8 * psSHP->nRecords );
+  /* malloc failed? clean up and shut down */  
   if (psSHP->panRecOffset == NULL ||
       psSHP->panRecSize == NULL ||
-      pabyBuf == NULL)
+      psSHP->panRecLoaded == NULL)
   {
     free(psSHP->panRecOffset);
-    free(psSHP->panRecOffset);
-    free( pabyBuf );
+    free(psSHP->panRecSize);
+    free(psSHP->panRecLoaded);
     fclose( psSHP->fpSHP );
     fclose( psSHP->fpSHX );
     free( psSHP );
@@ -357,21 +363,6 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     return( NULL );
   }
 
-  fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX );
-  
-  for( i = 0; i < psSHP->nRecords; i++ ) {
-    ms_int32 nOffset, nLength;
-    
-    memcpy( &nOffset, pabyBuf + i * 8, 4 );
-    if( !bBigEndian ) SwapWord( 4, &nOffset );
-    
-    memcpy( &nLength, pabyBuf + i * 8 + 4, 4 );
-    if( !bBigEndian ) SwapWord( 4, &nLength );
-    
-    psSHP->panRecOffset[i] = nOffset*2;
-    psSHP->panRecSize[i] = nLength*2;
-  }
-  free( pabyBuf );
   
   return( psSHP );
 }
@@ -394,6 +385,8 @@ void msSHPClose(SHPHandle psSHP )
   /* -------------------------------------------------------------------- */
   free( psSHP->panRecOffset );
   free( psSHP->panRecSize );
+  free( psSHP->panRecLoaded );
+  
   
   if(psSHP->pabyRec) free(psSHP->pabyRec);
   if(psSHP->panParts) free(psSHP->panParts);
@@ -571,6 +564,9 @@ int msSHPWritePoint(SHPHandle psSHP, pointObj *point )
 
   psSHP->bUpdated = MS_TRUE;
 
+  /* Fill the SHX buffer if it is not already full. */
+  if( ! psSHP->panRecAllLoaded ) msSHXLoadAll( psSHP );
+
   /* -------------------------------------------------------------------- */
   /*      Add the new entity to the in memory index.                      */
   /* -------------------------------------------------------------------- */
@@ -659,6 +655,9 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   double dfMMin, dfMMax = 0;
 #endif
   psSHP->bUpdated = MS_TRUE;
+  
+  /* Fill the SHX buffer if it is not already full. */
+  if( ! psSHP->panRecAllLoaded ) msSHXLoadAll( psSHP );
   
   /* -------------------------------------------------------------------- */
   /*      Add the new entity to the in memory index.                      */
@@ -962,7 +961,8 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
  */
 static int msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char* pszCallingFunction)
 {
-  int nEntitySize = psSHP->panRecSize[hEntity]+8;
+
+  int nEntitySize = msSHXReadSize(psSHP, hEntity) + 8;
   /* -------------------------------------------------------------------- */
   /*      Ensure our record buffer is large enough.                       */
   /* -------------------------------------------------------------------- */
@@ -1010,9 +1010,9 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
     return(MS_FAILURE);
   }
 
-  nEntitySize = psSHP->panRecSize[hEntity]+8;
+  nEntitySize = msSHXReadSize( psSHP, hEntity) + 8;
 
-  if( psSHP->panRecSize[hEntity] == 4 ) {
+  if( msSHXReadSize( psSHP, hEntity) == 4 ) {
     msSetError(MS_SHPERR, "NULL feature encountered.", "msSHPReadPoint()");
     return(MS_FAILURE);
   }
@@ -1030,7 +1030,7 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
   /* -------------------------------------------------------------------- */
   /*      Read the record.                                                */
   /* -------------------------------------------------------------------- */
-  fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 );
+  fseek( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity), 0 );
   fread( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP );
       
   memcpy( &(point->x), psSHP->pabyRec + 12, 8 );
@@ -1043,6 +1043,118 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 
   return(MS_SUCCESS);
 }
+
+/*
+** msSHXLoadPage() 
+**
+** The SHX tells us what the byte offsets of the shapes in the SHP file are.
+** We read the SHX file in ~8K pages and store those pages in memory for 
+** successive accesses during the reading cycle (first bounds are read, 
+** then entire shapes). Each time we read a page, we mark it as read.
+*/
+int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
+{
+  /*  Validate the page number. */
+  if( shxBufferPage < 0  )
+    return(MS_FAILURE);
+
+  /* Each SHX record is 8 bytes long (two ints), hence our buffer size. */
+  char buffer[SHX_BUFFER_PAGE * 8];
+
+  /* The SHX file starts with 100 bytes of header, skip that. */
+  fseek( psSHP->fpSHX, 100 + shxBufferPage * SHX_BUFFER_PAGE * 8, 0 );
+  fread( buffer, 8, SHX_BUFFER_PAGE, psSHP->fpSHX );
+
+  /* Copy the buffer contents out into the working arrays. */
+  /* TODO: need to check end case so we don't memcpy too far. */
+  int i = 0;
+  for( i = 0; i < SHX_BUFFER_PAGE; i++ ) {
+    int tmpOffset, tmpSize;
+    
+    /* Don't write information past the end of the arrays, please. */
+    if(psSHP->nRecords <= (shxBufferPage * SHX_BUFFER_PAGE + i) )
+      break;
+    
+    memcpy( &tmpOffset, (buffer + (8*i)), 4);
+    memcpy( &tmpSize, (buffer + (8*i) + 4), 4);
+  
+    /* SHX uses big endian numbers for the offsets, so we have to flip them */
+    /* if we are a little endian machine. */
+    if( !bBigEndian ) SwapWord( 4, &tmpOffset );
+    if( !bBigEndian ) SwapWord( 4, &tmpSize );
+
+    /* SHX stores the offsets in 2 byte units, so we double them to get */
+    /* an offset in bytes. */
+    tmpOffset = tmpOffset * 2;
+    tmpSize = tmpSize * 2;
+
+    /* Write the answer into the working arrays on the SHPHandle */
+    psSHP->panRecOffset[shxBufferPage * SHX_BUFFER_PAGE + i] = tmpOffset;
+    psSHP->panRecSize[shxBufferPage * SHX_BUFFER_PAGE + i] = tmpSize;
+  }
+    
+  msSetBit(psSHP->panRecLoaded, shxBufferPage, 1);
+  
+  return(MS_SUCCESS);
+}
+
+int msSHXLoadAll( SHPHandle psSHP ) {
+
+  uchar	*pabyBuf;
+  pabyBuf = (uchar *) malloc(8 * psSHP->nRecords );
+  fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX );
+  int i = 0;
+  for( i = 0; i < psSHP->nRecords; i++ ) {
+    ms_int32 nOffset, nLength;
+    
+    memcpy( &nOffset, pabyBuf + i * 8, 4 );
+    if( !bBigEndian ) SwapWord( 4, &nOffset );
+    
+    memcpy( &nLength, pabyBuf + i * 8 + 4, 4 );
+    if( !bBigEndian ) SwapWord( 4, &nLength );
+    
+    psSHP->panRecOffset[i] = nOffset*2; 
+    psSHP->panRecSize[i] = nLength*2; 
+  }
+  free(pabyBuf);
+  
+  return(MS_SUCCESS);
+
+}
+
+int msSHXReadOffset( SHPHandle psSHP, int hEntity ) {
+
+  /*  Validate the record/entity number. */
+  if( hEntity < 0 || hEntity >= psSHP->nRecords )
+    return(MS_FAILURE);
+
+  int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
+
+  if( ! msGetBit(psSHP->panRecLoaded, shxBufferPage) ) {
+    msSHXLoadPage( psSHP, shxBufferPage );
+  }
+
+  return psSHP->panRecOffset[hEntity];
+
+}
+
+int msSHXReadSize( SHPHandle psSHP, int hEntity ) {
+
+  /*  Validate the record/entity number. */
+  if( hEntity < 0 || hEntity >= psSHP->nRecords )
+    return(MS_FAILURE);
+
+  int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
+
+  if( ! msGetBit(psSHP->panRecLoaded, shxBufferPage) ) {
+    msSHXLoadPage( psSHP, shxBufferPage );
+  }
+
+  return psSHP->panRecSize[hEntity];
+
+}
+
+
 
 /*
 ** msSHPReadShape() - Reads the vertices for one shape from a shape file.
@@ -1063,12 +1175,12 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
     return;
 
-  if( psSHP->panRecSize[hEntity] == 4 ) {      
+  if( msSHXReadSize(psSHP, hEntity) == 4 ) {      
     shape->type = MS_SHAPE_NULL;
     return;
   }
 
-  nEntitySize = psSHP->panRecSize[hEntity]+8;
+  nEntitySize = msSHXReadSize(psSHP, hEntity) + 8;
   if (msSHPReadAllocateBuffer(psSHP, hEntity, "msSHPReadShape()") == MS_FAILURE)
   {
     shape->type = MS_SHAPE_NULL;
@@ -1078,7 +1190,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   /*      Read the record.                                                */
   /* -------------------------------------------------------------------- */
-  fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 );
+  fseek( psSHP->fpSHP, msSHXReadOffset(psSHP, hEntity), 0 );
   fread( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP );
 
   /* -------------------------------------------------------------------- */
@@ -1264,8 +1376,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     if (nEntitySize < 44 + 4)
     {
       shape->type = MS_SHAPE_NULL;
-      msSetError(MS_SHPERR, "Corrupted feature encountered.  psSHP->panRecSize[%d]=%d", "msSHPReadShape()",
-                 hEntity, psSHP->panRecSize[hEntity]);
+      msSetError(MS_SHPERR, "Corrupted feature encountered.  recSize of feature %d=%d", "msSHPReadShape()",
+                 hEntity, msSHXReadSize(psSHP, hEntity));
       return;
     }
 
@@ -1371,8 +1483,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     if (nEntitySize < 20 + 8)
     {
       shape->type = MS_SHAPE_NULL;
-      msSetError(MS_SHPERR, "Corrupted feature encountered.  psSHP->panRecSize[%d]=%d", "msSHPReadShape()",
-                 hEntity, psSHP->panRecSize[hEntity]);
+      msSetError(MS_SHPERR, "Corrupted feature encountered.  recSize of feature %d=%d", "msSHPReadShape()",
+                 hEntity, msSHXReadSize(psSHP, hEntity));
       return;
     }
 
@@ -1453,13 +1565,14 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
     padBounds->maxx = psSHP->adBoundsMax[0];
     padBounds->maxy = psSHP->adBoundsMax[1];
   } else {    
-    if( psSHP->panRecSize[hEntity] == 4 ) { /* NULL shape */
+    
+    if( msSHXReadSize(psSHP, hEntity) == 4 ) { /* NULL shape */
       padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
       return MS_FAILURE;
     } 
     
     if( psSHP->nShapeType != SHP_POINT && psSHP->nShapeType != SHP_POINTZ && psSHP->nShapeType != SHP_POINTM) {
-      fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity]+12, 0 );
+      fseek( psSHP->fpSHP, msSHXReadOffset(psSHP, hEntity) + 12, 0 );
       fread( padBounds, sizeof(double)*4, 1, psSHP->fpSHP );
 
       if( bBigEndian ) {
@@ -1479,7 +1592,7 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
       /*      minimum and maximum bound.                                      */
       /* -------------------------------------------------------------------- */
       
-      fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity]+12, 0 );
+      fseek( psSHP->fpSHP, msSHXReadOffset(psSHP, hEntity) + 12, 0 );
       fread( padBounds, sizeof(double)*2, 1, psSHP->fpSHP );
       
       if( bBigEndian ) {
@@ -1632,8 +1745,9 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
     shpfile->status = msSearchDiskTree(filename, rect, debug);
     free(filename);
 
-    if(shpfile->status) /* index  */
+    if(shpfile->status) { /* index  */
       msFilterTreeSearch(shpfile, shpfile->status, rect);
+    }
     else { /* no index  */
       shpfile->status = msAllocBitArray(shpfile->numshapes);
       if(!shpfile->status) {
@@ -2303,18 +2417,15 @@ int msShapeFileLayerWhichShapes(layerObj *layer, rectObj rect)
 
   /* now apply the maxshapes criteria (NOTE: this ignores the filter so you could get less than maxfeatures) */
   if(layer->maxfeatures > 0) {
-    for(i=0; i<shpfile->numshapes; i++) {
-      n1 += msGetBit(shpfile->status,i);
-    }
 
-    if(n1 > layer->maxfeatures) {
-      for(i=0; i<shpfile->numshapes; i++) {
-        if(msGetBit(shpfile->status,i) && (n2 < (n1 - layer->maxfeatures))) {
-          msSetBit(shpfile->status,i,0);
-          n2++;
-        }
+    for( i = (shpfile->numshapes - 1); i >= 0; i-- ) {
+      n2 = msGetBit(shpfile->status, i);
+      n1 += n2;
+      if( n2 && n1 > layer->maxfeatures ) {
+        msSetBit(shpfile->status, i, 0);
       }
     }
+
   }
     
   return MS_SUCCESS;
@@ -2331,14 +2442,14 @@ int msShapeFileLayerNextShape(layerObj *layer, shapeObj *shape)
   if(!shpfile) {
     msSetError(MS_SHPERR, "Shapefile layer has not been opened.", "msLayerNextShape()");
     return MS_FAILURE;
-  }
-
+  }    
+  
   do {
-    i = shpfile->lastshape + 1;
-    while(i<shpfile->numshapes && !msGetBit(shpfile->status,i)) i++; /* next "in" shape */
+    i = msGetNextBit(shpfile->status, shpfile->lastshape + 1, shpfile->numshapes);
+
     shpfile->lastshape = i;
 
-    if(i == shpfile->numshapes) return(MS_DONE); /* nothing else to read */
+    if(i == -1) return(MS_DONE); /* nothing else to read */
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
     if(layer->numitems > 0 && layer->iteminfo) {

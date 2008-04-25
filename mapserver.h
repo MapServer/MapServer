@@ -1722,6 +1722,7 @@ MS_DLL_EXPORT char *msAllocBitArray(int numbits);
 MS_DLL_EXPORT int msGetBit(char *array, int index);
 MS_DLL_EXPORT void msSetBit(char *array, int index, int value);
 MS_DLL_EXPORT void msFlipBit(char *array, int index);
+MS_DLL_EXPORT int msGetNextBit(char *array, int index, int size);
 
 MS_DLL_EXPORT int msLayerInitItemInfo(layerObj *layer);
 MS_DLL_EXPORT void msLayerFreeItemInfo(layerObj *layer); 

@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- Improve performance for large shape files (#2282)
+
 - encode WMS parameters correctly (#1296)
 
 - Added alignment option within a scalebar (#2468)

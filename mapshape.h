@@ -37,6 +37,8 @@
 extern "C" {
 #endif
 
+#define SHX_BUFFER_PAGE 1024
+
 #ifndef SWIG
 #define MS_PATH_LENGTH 1024
 
@@ -84,8 +86,11 @@ typedef	struct {
 
     int		nRecords;
     int		nMaxRecords;
+
     int		*panRecOffset;
     int		*panRecSize;
+    char  *panRecLoaded;
+    int   panRecAllLoaded;
 
     double	adBoundsMin[4];
     double	adBoundsMax[4];
@@ -100,6 +105,8 @@ typedef	struct {
 } SHPInfo;
 typedef SHPInfo * SHPHandle;
 #endif
+
+
 
 typedef	struct
 {
@@ -175,7 +182,6 @@ typedef struct {
   int tilelayerindex;
 } msTiledSHPLayerInfo;
 
-
 /* shapefileObj function prototypes  */
 MS_DLL_EXPORT int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename);
 MS_DLL_EXPORT int msShapefileCreate(shapefileObj *shpfile, char *filename, int type);
@@ -192,6 +198,12 @@ MS_DLL_EXPORT void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape
 MS_DLL_EXPORT int msSHPReadPoint(SHPHandle psSHP, int hEntity, pointObj *point );
 MS_DLL_EXPORT int msSHPWriteShape( SHPHandle psSHP, shapeObj *shape );
 MS_DLL_EXPORT int msSHPWritePoint(SHPHandle psSHP, pointObj *point );
+/* SHX reading */
+MS_DLL_EXPORT int msSHXLoadAll( SHPHandle psSHP );
+MS_DLL_EXPORT int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage );
+MS_DLL_EXPORT int msSHXReadOffset( SHPHandle psSHP, int hEntity );
+MS_DLL_EXPORT int msSHXReadSize( SHPHandle psSHP, int hEntity );
+
 
 /* tiledShapefileObj function prototypes are in mapserver.h */
 

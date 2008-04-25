@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  .qix spatial index implementation.  Derived from shapelib, and 
@@ -768,10 +768,14 @@ void msFilterTreeSearch(shapefileObj *shp, char *status, rectObj search_rect)
   int i;
   rectObj shape_rect;
 
-  for(i=0;i<shp->numshapes;i++) { /* for each shape */
-    if(msGetBit(status, i)) {
-      if(msSHPReadBounds(shp->hSHP, i, &shape_rect) == MS_SUCCESS)
-	if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE) msSetBit(status, i, 0);
+  i = msGetNextBit(status, 0, shp->numshapes);
+  while(i >= 0) {
+    if(msSHPReadBounds(shp->hSHP, i, &shape_rect) == MS_SUCCESS) {
+	    if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE) {
+	      msSetBit(status, i, 0);
+      }
     }
+    i = msGetNextBit(status, i+1, shp->numshapes);
   }
+
 }
