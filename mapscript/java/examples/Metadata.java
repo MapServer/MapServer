@@ -16,15 +16,6 @@ public class Metadata {
 
   public static void main(String[] args) {
     if (args.length != 1) usage();
-	try
-	{
-	  System.loadLibrary("mapscript");
-	}
-	catch(UnsatisfiedLinkError ule)
-	{
-	  System.err.println(ule);
-	  System.exit(-1);
-	}    
    
     mapObj map = new mapObj(args[0]);
     

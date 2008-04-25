@@ -31,15 +31,6 @@ public class ShapeInfo {
 
     if (args.length != 2) usage();
 
-	try
-	{
-	  System.loadLibrary("mapscript");
-	}
-	catch(UnsatisfiedLinkError ule)
-	{
-	  System.err.println(ule);
-	  System.exit(-1);
-	}    
     shapefileObj shapefile = new shapefileObj (args[0],-1);
 
     System.out.println ("Shapefile name = " + args[0]);

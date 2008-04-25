@@ -27,15 +27,6 @@ public class DumpShp {
 
   public static void main(String[] args) {
     if (args.length != 1) usage();
-	try
-	{
-	  System.loadLibrary("mapscript");
-	}
-	catch(UnsatisfiedLinkError ule)
-	{
-	  System.err.println(ule);
-	  System.exit(-1);
-	}
 
     shapefileObj shapefile = new shapefileObj (args[0],-1);
     System.out.println ("Shapefile opened (type = "  + getShapeType(shapefile.getType()) +

@@ -9,8 +9,6 @@ import edu.umn.gis.mapscript.*;
 */
 public class RunTimeBuiltWMSClient {
 	public static void main(String[] args)  {
-	   // Not needed anymore since mapserver 4.4.x
-	   //System.loadLibrary("mapscript");
 	   System.out.println(mapscript.msGetVersion());
 	   mapObj  map;
 	   webObj web;
