@@ -166,6 +166,78 @@ static void msPOSTGISCloseConnection(void *conn_handle)
     PQfinish((PGconn*) conn_handle);
 }
 
+/* takes a connection and ensures that it is in a valid transactional state */
+/* performing PQreset(), ROLLBACK, and/or BEGIN on it as necessary */
+int msPOSTGISSanitizeConnection(PGconn *conn)
+{
+    int conn_bad = 0;
+
+    if (PQstatus(conn) == CONNECTION_BAD)
+    {
+        msDebug("Warning: resetting bad database connection due to PQstatus(conn) == CONNECTION_BAD in msPOSTGISSanitizeConnection()\n");
+        conn_bad = 1;
+    }
+    else if (PQtransactionStatus(conn) == PQTRANS_UNKNOWN)
+    {
+	msDebug("Warning: resetting bad database connection due to PQtransactionStatus(conn) == PQTRANS_UNKNOWN in msPOSTGISSanitizeConnection()\n");
+        conn_bad = 1;
+    }
+
+    // if connection is in bad, PQreset() it
+    if (conn_bad)
+    {
+        PQreset(conn);
+        if (PQstatus(conn) == CONNECTION_BAD)
+        {
+            msSetError(MS_QUERYERR, "Database connection status is CONNECTION_BAD even after attempt to PQreset() it: %s", "msPOSTGISSanitizeConnection()", PQerrorMessage(conn));
+            return MS_FAILURE;
+        }
+        else if (PQtransactionStatus(conn) == PQTRANS_UNKNOWN) 
+        {
+            msSetError(MS_QUERYERR, "Database connection transaction status is PQTRANS_UNKNOWN even after attempt to PQreset() it: %s", "msPOSTGISSanitizeConnection()", PQerrorMessage(conn)); 
+            return MS_FAILURE;
+        }
+    }
+
+    if (PQtransactionStatus(conn) == PQTRANS_ACTIVE) // no connection should have an active async call
+    {
+        msSetError(MS_QUERYERR, "Refusing to sanitize a database connection with a pending asynchronous query (transaction status of PQTRANS_ACTIVE).", "msPOSTGISSanitizeConnection()");
+	return MS_FAILURE;
+    }
+
+    if (PQtransactionStatus(conn) == PQTRANS_INERROR) // idle, in a failed transaction block
+    {
+        PGresult *rb_res = PQexec(conn, "ROLLBACK");
+        if (!rb_res || PQresultStatus(rb_res) != PGRES_COMMAND_OK) {
+            msSetError(MS_QUERYERR, "Error executing POSTGIS ROLLBACK statement: %s", "msPOSTGISSanitizeConnection()", PQerrorMessage(conn));
+
+            if(rb_res) {
+                PQclear(rb_res);
+            }
+
+            return MS_FAILURE;
+        }
+        PQclear(rb_res);
+    }
+ 
+    if (PQtransactionStatus(conn) == PQTRANS_IDLE) // idle, but not in a transaction block
+    {
+        PGresult *beg_res = PQexec(conn, "BEGIN");
+        if (!beg_res || PQresultStatus(beg_res) != PGRES_COMMAND_OK) {
+            msSetError(MS_QUERYERR, "Error executing POSTGIS BEGIN statement: %s", "msPOSTGISSanitizeConnection()", PQerrorMessage(conn));
+  
+            if(beg_res) {
+                PQclear(beg_res);
+            }
+  
+            return MS_FAILURE;
+        }
+        PQclear(beg_res);
+    }
+
+    return MS_SUCCESS;
+}
+
 /*static int gBYTE_ORDER = 0;*/
 
 /* open up a connection to the postgresql database using the connection string in layer->connection */
@@ -247,6 +319,12 @@ int msPOSTGISLayerOpen(layerObj *layer)
             free(maskeddata);
             free(layerinfo);
             return MS_FAILURE;
+        }
+
+        /* start a transaction, since it's required by all subsequent (DECLARE CURSOR) queries */
+        if (msPOSTGISSanitizeConnection(layerinfo->conn) != MS_SUCCESS)
+        {
+          return MS_FAILURE;
         }
 
         msConnPoolRegister(layer, layerinfo->conn, msPOSTGISCloseConnection);
@@ -345,10 +423,6 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
     int         t;
     size_t      length;
     char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
-
-    char        *tmp2 = 0;
-    char        *error_message = 0;
-    char        *postgresql_error;
 
     layerinfo =  getPostGISLayerInfo(layer);
 
@@ -485,28 +559,6 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
     free(f_table_name);
     free(columns_wanted);
 
-    /* start transaction required by cursor */
-
-    result = PQexec(layerinfo->conn, "BEGIN");
-    if(!result || PQresultStatus(result) != PGRES_COMMAND_OK) {
-        msSetError(MS_QUERYERR, "Error executing POSTGIS BEGIN statement.", "prepare_database()");
-
-        if(result) {
-            PQclear(result);
-        }
-		if(layerinfo->query_result) {
-			PQclear(layerinfo->query_result);
-		}
-        layerinfo->query_result = NULL;
-        PQreset(layerinfo->conn);
-
-        free(query_string_0_6);
-
-        return MS_FAILURE;     /* totally screwed */
-    }
-
-    PQclear(result);
-
     /* set enable_seqscan=off not required (already done) */
 
     if(layer->debug) {
@@ -514,65 +566,25 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
     }
     result = PQexec(layerinfo->conn, query_string_0_6);
 
-    if(result && PQresultStatus(result) == PGRES_COMMAND_OK)
-    {
-        *sql_results = result;
-
-        *query_string = (char *) malloc(strlen(query_string_0_6) + 1);
-        strcpy(*query_string, query_string_0_6);
-
-        free(query_string_0_6);
-
-        return MS_SUCCESS;
-    }
-
-    /* Save PostgreSQL Error Message */
-    postgresql_error = PQerrorMessage(layerinfo->conn);
-    error_message = (char *) malloc(strlen(postgresql_error) + 1);
-    strcpy(error_message, postgresql_error);
-
-    /* okay, that command didnt work.  Its probably a 0.5 database */
-    /* We have to everything again, after performing a rollback. */
-
-    if(result) {
-        PQclear(result);
-    }
-    result = PQexec(layerinfo->conn, "rollback" );
-    if(result) {
-        PQclear(result);
-    }
-    result = PQexec(layerinfo->conn, "begin" );
-
     if(!result || PQresultStatus(result) != PGRES_COMMAND_OK)
     {
-        msSetError(MS_QUERYERR, "Couldnt recover from a bad query: \n'%s'\n", "prepare_database()", query_string_0_6);
-
-        if(result) {
-            PQclear(result);
-        }
-        layerinfo->query_result = NULL;
-        PQreset(layerinfo->conn);
-
-        free(error_message);
+        msSetError(MS_QUERYERR, "Error declaring cursor: %s\nWith query string: %s\n", "prepare_database()", PQerrorMessage(layerinfo->conn), query_string_0_6);
         free(query_string_0_6);
-
-        return MS_FAILURE;     /* totally screwed */
+        if (result)
+        {
+	    PQclear(result);
+        }
+        return MS_FAILURE;
     }
+        
+    *sql_results = result;
 
-    PQclear(result);
-    layerinfo->query_result = NULL;
-    PQreset(layerinfo->conn);
+    *query_string = (char *) malloc(strlen(query_string_0_6) + 1);
+    strcpy(*query_string, query_string_0_6);
 
-    /* TODO Rename tmp2 to something meaningful */
-    tmp2 = (char *) malloc(149 + strlen(query_string_0_6) + strlen(error_message) + 1);
-    sprintf(tmp2, "Error executing POSTGIS DECLARE (the actual query) statement: '%s' \n\nPostgresql reports the error as '%s'\n\nMore Help:\n\n", query_string_0_6, error_message);
-    msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "prepare_database()", tmp2, "check your .map file");
-
-    free(tmp2);
-    free(error_message);
     free(query_string_0_6);
 
-    return MS_FAILURE;     /* totally screwed */
+    return MS_SUCCESS;
 }
 
 
@@ -642,7 +654,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
           PQclear(layerinfo->query_result);
         }
         layerinfo->query_result = NULL;
-        PQreset(layerinfo->conn);
+        msPOSTGISSanitizeConnection(layerinfo->conn);
 
         return MS_FAILURE;
     }
@@ -1201,21 +1213,6 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     free(geom_column_name);
     free(table_name);
 
-    query_result = PQexec(layerinfo->conn, "BEGIN");
-    if(!query_result || PQresultStatus(query_result) != PGRES_COMMAND_OK) {
-        msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement.", "msPOSTGISLayerGetShape()");
-
-        if(query_result) {
-            PQclear(query_result);
-        }
-        PQreset(layerinfo->conn);
-
-        free(query_str);
-
-        return MS_FAILURE;
-    }
-    PQclear(query_result);
-
     query_result = PQexec(layerinfo->conn, query_str);
 
     if(!query_result || PQresultStatus(query_result) != PGRES_COMMAND_OK) {
@@ -1224,7 +1221,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
         if(query_result) {
           PQclear(query_result);
         }
-        PQreset(layerinfo->conn);
+        msPOSTGISSanitizeConnection(layerinfo->conn);
 
         free(query_str);
 
@@ -1240,7 +1237,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
         if(query_result) {
           PQclear(query_result);
         }
-        PQreset(layerinfo->conn);
+        msPOSTGISSanitizeConnection(layerinfo->conn);
 
         free(query_str);
 
@@ -1311,20 +1308,21 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	        PQclear(query_result);
 
             query_result = PQexec(layerinfo->conn, "CLOSE mycursor2");
-            if(query_result) {
-                PQclear(query_result);
-            }
 
-            query_result = PQexec(layerinfo->conn, "ROLLBACK");
-            if(!query_result || PQresultStatus(query_result) != PGRES_COMMAND_OK) {
-                msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement.", "msPOSTGISLayerGetShape()");
-
-                if(query_result) {
+            if(!query_result || PQresultStatus(query_result) !=  PGRES_COMMAND_OK)
+            {
+                msFreeShape(shape);
+                if (query_result)
+                {
                     PQclear(query_result);
                 }
-                PQreset(layerinfo->conn);
 
-                msFreeShape(shape);
+                if (msPOSTGISSanitizeConnection(layerinfo->conn) != MS_SUCCESS)
+                {
+                    return MS_FAILURE;
+                }
+
+                msSetError(MS_QUERYERR, "Error executing POSTGIS CLOSE statement on query (which returned one or more tuples).", "msPOSTGISLayerGetShape()");
 
                 return MS_FAILURE;
             }
@@ -1339,18 +1337,20 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
         PQclear(query_result);
 
         query_result = PQexec(layerinfo->conn, "CLOSE mycursor2");
-        if(query_result) {
-            PQclear(query_result);
-        }
 
-        query_result = PQexec(layerinfo->conn, "ROLLBACK");
-        if(!query_result || PQresultStatus(query_result) != PGRES_COMMAND_OK) {
-            msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement.", "msPOSTGISLayerGetShape()");
-
-            if(query_result) {
-                PQclear(query_result);
+        if (!query_result || PQresultStatus(query_result) != PGRES_COMMAND_OK)
+        {
+            if (query_result)
+            {
+              PQclear(query_result);
             }
-            PQreset(layerinfo->conn);
+
+            if (msPOSTGISSanitizeConnection(layerinfo->conn) != MS_SUCCESS)
+            {
+              return MS_FAILURE;
+            }
+
+            msSetError(MS_QUERYERR, "Error executing POSTGIS CLOSE statement on query (which returned zero tuples).", "msPOSTGISLayerGetShape()");
 
             return MS_FAILURE;
         }
