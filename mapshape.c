@@ -1054,12 +1054,14 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 */
 int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
 {
-  /*  Validate the page number. */
-  if( shxBufferPage < 0  )
-    return(MS_FAILURE);
+  int i;
 
   /* Each SHX record is 8 bytes long (two ints), hence our buffer size. */
   char buffer[SHX_BUFFER_PAGE * 8];
+
+  /*  Validate the page number. */
+  if( shxBufferPage < 0  )
+    return(MS_FAILURE);
 
   /* The SHX file starts with 100 bytes of header, skip that. */
   fseek( psSHP->fpSHX, 100 + shxBufferPage * SHX_BUFFER_PAGE * 8, 0 );
@@ -1067,7 +1069,6 @@ int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
 
   /* Copy the buffer contents out into the working arrays. */
   /* TODO: need to check end case so we don't memcpy too far. */
-  int i;
   for( i = 0; i < SHX_BUFFER_PAGE; i++ ) {
     int tmpOffset, tmpSize;
     
@@ -1124,11 +1125,11 @@ int msSHXLoadAll( SHPHandle psSHP ) {
 
 int msSHXReadOffset( SHPHandle psSHP, int hEntity ) {
 
+  int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
+
   /*  Validate the record/entity number. */
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
     return(MS_FAILURE);
-
-  int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
 
   if( ! msGetBit(psSHP->panRecLoaded, shxBufferPage) ) {
     msSHXLoadPage( psSHP, shxBufferPage );
@@ -1140,11 +1141,11 @@ int msSHXReadOffset( SHPHandle psSHP, int hEntity ) {
 
 int msSHXReadSize( SHPHandle psSHP, int hEntity ) {
 
+  int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
+
   /*  Validate the record/entity number. */
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
     return(MS_FAILURE);
-
-  int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
 
   if( ! msGetBit(psSHP->panRecLoaded, shxBufferPage) ) {
     msSHXLoadPage( psSHP, shxBufferPage );
