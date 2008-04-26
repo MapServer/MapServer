@@ -1067,7 +1067,7 @@ int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
 
   /* Copy the buffer contents out into the working arrays. */
   /* TODO: need to check end case so we don't memcpy too far. */
-  int i = 0;
+  int i;
   for( i = 0; i < SHX_BUFFER_PAGE; i++ ) {
     int tmpOffset, tmpSize;
     
@@ -1103,7 +1103,7 @@ int msSHXLoadAll( SHPHandle psSHP ) {
   uchar	*pabyBuf;
   pabyBuf = (uchar *) malloc(8 * psSHP->nRecords );
   fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX );
-  int i = 0;
+  int i;
   for( i = 0; i < psSHP->nRecords; i++ ) {
     ms_int32 nOffset, nLength;
     
