@@ -1101,10 +1101,11 @@ int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
 
 int msSHXLoadAll( SHPHandle psSHP ) {
 
+  int i;
   uchar	*pabyBuf;
+
   pabyBuf = (uchar *) malloc(8 * psSHP->nRecords );
   fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX );
-  int i;
   for( i = 0; i < psSHP->nRecords; i++ ) {
     ms_int32 nOffset, nLength;
     
