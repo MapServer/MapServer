@@ -1119,6 +1119,7 @@ int msSHXLoadAll( SHPHandle psSHP ) {
     psSHP->panRecSize[i] = nLength*2; 
   }
   free(pabyBuf);
+  psSHP->panRecAllLoaded = 1;
   
   return(MS_SUCCESS);
 
