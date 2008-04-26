@@ -1133,7 +1133,7 @@ int msSHXReadOffset( SHPHandle psSHP, int hEntity ) {
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
     return(MS_FAILURE);
 
-  if( ! msGetBit(psSHP->panRecLoaded, shxBufferPage) ) {
+  if( ! (psSHP->panRecAllLoaded || msGetBit(psSHP->panRecLoaded, shxBufferPage)) ) {
     msSHXLoadPage( psSHP, shxBufferPage );
   }
 
@@ -1149,7 +1149,7 @@ int msSHXReadSize( SHPHandle psSHP, int hEntity ) {
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
     return(MS_FAILURE);
 
-  if( ! msGetBit(psSHP->panRecLoaded, shxBufferPage) ) {
+  if( ! (psSHP->panRecAllLoaded || msGetBit(psSHP->panRecLoaded, shxBufferPage)) ) {
     msSHXLoadPage( psSHP, shxBufferPage );
   }
 
