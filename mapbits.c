@@ -62,9 +62,13 @@ int msGetBit(char *array, int index)
 */
 int msGetNextBit(char *array, int i, int size) { 
 
+  char b;
+
   while(i < size) {
-    if( (i % CHAR_BIT) || *(array + (i/CHAR_BIT)) ) {
+    b = *(array + (i/CHAR_BIT));
+    if( b && (b >> (i % CHAR_BIT)) ) {
       /* There is something in this byte */
+      /* And it is not to the right of us */
       if( msGetBit( array, i ) ) {
         return i;
       }
@@ -73,8 +77,8 @@ int msGetNextBit(char *array, int i, int size) {
       }
     }
     else {
-      /* Nothing in this byte, move on */
-      i += CHAR_BIT;
+      /* Nothing in this byte, move to start of next byte */
+      i += CHAR_BIT - (i % CHAR_BIT);
     }
   }
   
