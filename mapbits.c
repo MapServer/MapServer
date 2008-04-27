@@ -60,42 +60,28 @@ int msGetBit(char *array, int index)
 ** If hits end of bitmap without finding set bit, will return -1.
 **
 */
-int msGetNextBit(char *array, int index, int size) { 
+int msGetNextBit(char *array, int i, int size) { 
 
-  char *ptr;
-  int i = 0;
-
-  ptr = array;
-  
-  ptr += index / CHAR_BIT;
-  
-  /* Check the starting byte for set bits, if necessary. */
-  if(*ptr) {
-    /* a bit in this byte is set, figure out which one */
-    for( i = index; i < index + CHAR_BIT - (index % CHAR_BIT); i++ ) {
-      if ( msGetBit( array, i ) )
+  while(i < size) {
+    if( (i % CHAR_BIT) || *(array + (i/CHAR_BIT)) ) {
+      /* There is something in this byte */
+      if( msGetBit( array, i ) ) {
         return i;
+      }
+      else {
+        i++;
+      }
     }
-  }
-
-  /* scroll forwards bytewise to the next byte with a bit set */
-  do {
-    ptr++;
-  } while( ((CHAR_BIT * (ptr - array)) < size) && *ptr == 0 ) ;
-
-  /* check the first non-zero byte for the location of the set bit */
-  if( *ptr ) {
-    /* a bit in this byte is set, figure out which one */
-    for( i = CHAR_BIT * (ptr - array); i < CHAR_BIT * (ptr - array) + CHAR_BIT; i++ ) {
-      if ( msGetBit( array, i ) )
-        return i;
+    else {
+      /* Nothing in this byte, move on */
+      i += CHAR_BIT;
     }
   }
   
-  /* got to the last byte with no hits! */
+  /* Got to the last byte with no hits! */
   return -1;
 }
-
+  
 void msSetBit(char *array, int index, int value)
 {
   array += index / CHAR_BIT;
