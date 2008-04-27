@@ -61,16 +61,16 @@ int msGetBit(char *array, int index)
 **
 */
 int msGetNextBit(char *array, int index, int size) { 
-  char *ptr;
-  int i;
 
-  i = 0;
+  char *ptr;
+  int i = 0;
+
   ptr = array;
   
   ptr += index / CHAR_BIT;
   
   /* Check the starting byte for set bits, if necessary. */
-  if(*ptr & (0xff << (index % CHAR_BIT))) {
+  if(*ptr) {
     /* a bit in this byte is set, figure out which one */
     for( i = index; i < index + CHAR_BIT - (index % CHAR_BIT); i++ ) {
       if ( msGetBit( array, i ) )
