@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Encryption functions (see MS-RFC-18)
@@ -603,7 +603,7 @@ int main(int argc, char *argv[])
     {
         char *pszBuf;
         mapObj *map;
-        //map = msNewMapObj();
+        /* map = msNewMapObj(); */
         map = msLoadMap("/tmp/test.map", NULL);
 
         sprintf(string_buf2, "string with a {%s} encrypted token", string_buf);

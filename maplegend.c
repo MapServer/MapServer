@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Legend generation.
@@ -124,8 +124,7 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x,
                      int *size_y, layerObj *psForLayer) {
     int i, j;
     int status, maxwidth=0, nLegendItems=0;
-    char *transformedText; // Label text after applying wrapping,
-                           // encoding if necessary
+    char *transformedText; /* Label text after applying wrapping, encoding if necessary */
     layerObj *lp;  
     rectObj rect;
     

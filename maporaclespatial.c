@@ -836,11 +836,11 @@ static void osFilteritem(layerObj *layer, int function, char *query_str, int mod
         if (layer->filteritem != NULL)
         {
             sprintf (query_str + strlen(query_str), " %s = ", layer->filteritem);
-            //snprintf (query_str + strlen(query_str), " %s = ", layer->filteritem);
+            /* snprintf (query_str + strlen(query_str), " %s = ", layer->filteritem); */
         }
 
         sprintf (query_str + strlen(query_str), " %s ", layer->filter.string);
-        //snprintf(buffer, n, "gfdg %s %s %s", layer->filter.string, (layer->filteritem != NULL ? layer->filteritem : ""), );
+        /* snprintf(buffer, n, "gfdg %s %s %s", layer->filter.string, (layer->filteritem != NULL ? layer->filteritem : ""), ); */
 
         if (function != FUNCTION_NONE)
             sprintf (query_str + strlen(query_str), " AND ");

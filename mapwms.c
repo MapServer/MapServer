@@ -1610,11 +1610,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
 
   if (requested_updatesequence != NULL) {
       i = msOWSNegotiateUpdateSequence(requested_updatesequence, updatesequence);
-      if (i == 0) { // current
+      if (i == 0) { /* current */
           msSetError(MS_WMSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWMSGetCapabilities()", requested_updatesequence, updatesequence);
           return msWMSException(map, nVersion, "CurrentUpdateSequence");
       }
-      if (i > 0) { // invalid
+      if (i > 0) { /* invalid */
           msSetError(MS_WMSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWMSGetCapabilities()", requested_updatesequence, updatesequence);
           return msWMSException(map, nVersion, "InvalidUpdateSequence");
       }
@@ -2702,9 +2702,9 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          (psFormat->renderer != MS_RENDER_WITH_GD
                  &&
           psFormat->renderer != MS_RENDER_WITH_AGG)) 
-          //msDrawLegend and msCreateLegendIcon both switch the alpha channel to gd
-          //after creation, so they can be called here without going through
-          //the msAlphaGD2AGG functions
+          /* msDrawLegend and msCreateLegendIcon both switch the alpha channel to gd
+          ** after creation, so they can be called here without going through
+          ** the msAlphaGD2AGG functions */
      {
          msSetError(MS_IMGERR,
                     "Unsupported output format (%s).",

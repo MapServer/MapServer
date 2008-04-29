@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *    
  * Project:  MapServer
  * Purpose:  Implements SDE CONNECTIONTYPE.
@@ -209,9 +209,11 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
     full_column_name = (char*) malloc(SE_QUALIFIED_COLUMN_LEN+1);
     full_column_name[0]='\0';
     
-    // if the state_id is the SE_DEFAULT_STATE_ID, we are 
-    // assuming no versioned queries are happening at all 
-    // and we are using the hardcoded row_id column.
+    /*
+    ** if the state_id is the SE_DEFAULT_STATE_ID, we are 
+    ** assuming no versioned queries are happening at all 
+    ** and we are using the hardcoded row_id column.
+    */
     if (sde->state_id == SE_DEFAULT_STATE_ID) {
         if(layer->debug) {
             msDebug("msSDELayerGetRowIDColumn(): State ID was "
@@ -221,9 +223,11 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         strcpy(column_name,MS_SDE_ROW_ID_COLUMN);
     } 
     
-    // if the state_id was not set to SE_DEFAULT_STATE_ID,
-    // check if the table is registered, and if so, use the 
-    // registration info to tell us what the row_id column is.
+    /*
+    ** if the state_id was not set to SE_DEFAULT_STATE_ID,
+    ** check if the table is registered, and if so, use the 
+    ** registration info to tell us what the row_id column is.
+    */
     status = SE_reginfo_create (&registration);
     if(status != SE_SUCCESS) {
         sde_error(  status, 
@@ -254,10 +258,10 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         SE_reginfo_free(registration);
         return(NULL);
     }
-    // Free up the reginfo now that we're done with it
+    /* Free up the reginfo now that we're done with it */
     SE_reginfo_free(registration);
 
-    // if the table wasn't registered, return the hard-coded row_id column.
+    /* if the table wasn't registered, return the hard-coded row_id column. */
     if (column_type == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE){
         if(layer->debug) {
             msDebug("msSDELayerGetRowIDColumn(): Table was not registered, "
@@ -320,7 +324,7 @@ long msSDELCacheAdd( layerObj *layer,
                  tableName, columnName, connectionString);
     }
 
-    // Ensure the cache is large enough to hold the new item.
+    /* Ensure the cache is large enough to hold the new item. */
     if(lcacheCount == lcacheMax)
     {
         lcacheMax += 10;
@@ -333,7 +337,7 @@ long msSDELCacheAdd( layerObj *layer,
         }
     }
 
-    // Population the new lcache object.
+    /* Population the new lcache object. */
     lid = lcache + lcacheCount;
     lcacheCount++;
 
@@ -370,7 +374,7 @@ long msSDEGetLayerInfo(layerObj *layer,
     long status;
     layerId *lid = NULL;
   
-    // If table or column are null, nothing can be done.
+    /* If table or column are null, nothing can be done. */
     if(tableName == NULL)
     {
         msSetError( MS_MISCERR,
@@ -401,7 +405,7 @@ long msSDEGetLayerInfo(layerObj *layer,
                 connectionString);
     }
 
-    // Search the lcache for the layer id.
+    /* Search the lcache for the layer id. */
     for(i = 0; i < lcacheCount; i++)
     {
         lid = lcache + i;
@@ -426,7 +430,7 @@ long msSDEGetLayerInfo(layerObj *layer,
         msDebug("%s: No cached layerid found.\n", "msSDEGetLayerInfo()");
     }
 
-    // No matches found, create one.
+    /* No matches found, create one. */
     status = SE_layer_get_info( conn, tableName, columnName, layerinfo );
     if(status != SE_SUCCESS) {
         sde_error(status, "msSDEGetLayerInfo()", "SE_layer_get_info()");
@@ -634,7 +638,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     itemdefs = layer->iteminfo;
     for(i=0; i<layer->numitems; i++) {
 
-        // do something special 
+        /* do something special */
         if(strcmp(layer->items[i],sde->row_id_column) == 0) {
             status = SE_stream_get_integer(sde->connPoolInfo->stream, (short)(i+1), &shape->index);
             if(status != SE_SUCCESS) {
@@ -821,8 +825,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                         "sdeGetRecord()");
           return(MS_FAILURE);
           break;
-        } // switch(itemdefs[i].sde_type) 
-    } //     for(i=0; i<layer->numitems; i++) {
+        } /* switch(itemdefs[i].sde_type) */
+    } /*     for(i=0; i<layer->numitems; i++) { */
 
     if(SE_shape_is_nil(shapeval)) return(MS_SUCCESS);
   
@@ -853,9 +857,11 @@ static SE_QUERYINFO getSDEQueryInfo(layerObj *layer)
     
     sde = layer->layerinfo;
 
-    /* See http://forums.esri.com/Thread.asp?c=2&f=59&t=108929&mc=4#msgid310273 */
-    /* SE_queryinfo is a new SDE struct in ArcSDE 8.x that is a bit easier  */
-    /* (and faster) to use.  HCB */
+    /* 
+    ** See http://forums.esri.com/Thread.asp?c=2&f=59&t=108929&mc=4#msgid310273 
+    ** SE_queryinfo is a new SDE struct in ArcSDE 8.x that is a bit easier  
+    ** (and faster) to use.  HCB 
+    */
     status = SE_queryinfo_create (&query_info);
     if(status != SE_SUCCESS) {
         sde_error(  status, 
@@ -950,11 +956,11 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer, long* id)
         return(NULL);       
     }
 
-    strcpy(sql->tables[0], sde->table); // main table
-    strcpy(sql->tables[1], sde->join_table); // join table 
+    strcpy(sql->tables[0], sde->table); /* main table */
+    strcpy(sql->tables[1], sde->join_table); /* join table */
       
-    // If we were given an ID *and* we have a join, we need to 
-    // set our FILTER statement to reflect this.
+    /* If we were given an ID *and* we have a join, we need to 
+       set our FILTER statement to reflect this. */
     if ((sde->join_table) && (id != NULL)) {
         pszId = msLongToString(*id);
         strcat(full_filter, layer->filter.string);
@@ -1131,7 +1137,7 @@ int msSDELayerOpen(layerObj *layer) {
         /* instances using it */
         msConnPoolRegister(layer, poolinfo, msSDECloseConnection);
         msFreeCharArray(params, numparams); /* done with parameter list */
-    } // !poolinfo
+    } /* !poolinfo */
 
     /* Split the DATA member into its parameters using the comma */
     /* Periods (.) are used to denote table names and schemas in SDE,  */
@@ -1157,7 +1163,7 @@ int msSDELayerOpen(layerObj *layer) {
     join_table = msLayerGetProcessingKey(layer,"JOINTABLE");
     if (join_table) {
         sde->join_table = strdup(join_table);
-        //msFree(join_table);
+        /* msFree(join_table); */
     }
     if (numparams < 3){ 
         /* User didn't specify a version, we won't use one */
@@ -1169,8 +1175,8 @@ int msSDELayerOpen(layerObj *layer) {
         sde->state_id = SE_DEFAULT_STATE_ID;
     } 
     else {
-        // A version was specified... obtain the state_id
-        // for it.
+        /* A version was specified... obtain the state_id */
+        /* for it. */
         if (layer->debug) {
             msDebug("msSDELayerOpen(): Layer %s specified version %s.\n", 
                     layer->name, 
@@ -1200,9 +1206,9 @@ int msSDELayerOpen(layerObj *layer) {
                 SE_versioninfo_free(version);
                 return(MS_FAILURE);
             }
-        } // couldn't get version info
+        } /* couldn't get version info */
   
-    } // version was specified
+    } /* version was specified */
 
     /* Get the STATEID from the given version and set the stream to  */
     /* that if we didn't already set it to SE_DEFAULT_STATE_ID.   */
@@ -1244,7 +1250,7 @@ int msSDELayerOpen(layerObj *layer) {
     } /* if (!(sde->state_id == SE_DEFAULT_STATE_ID)) */
  
 
-    // done with the DATA stuff now 
+    /* done with the DATA stuff now */
     msFreeCharArray(data_params, numparams);  
   
     status = SE_layerinfo_create(NULL, &(sde->layerinfo));
@@ -1278,7 +1284,7 @@ int msSDELayerOpen(layerObj *layer) {
         return(MS_FAILURE);
     }
 
-    // Get the layer extent and hang it on the layerinfo
+    /* Get the layer extent and hang it on the layerinfo */
     status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
     if(status != SE_SUCCESS) {
         sde_error(status, 
@@ -1373,7 +1379,7 @@ int msSDELayerCloseConnection(layerObj *layer)
   msSDELayerInfo *sde=NULL;
 
     if(!msSDELayerIsOpen(layer)) {
-        return MS_SUCCESS;  // already closed
+        return MS_SUCCESS;  /* already closed */
     }
 
     sde = layer->layerinfo;
@@ -1423,7 +1429,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
     sde = layer->layerinfo;
 
-    // use the cached layer's extent.
+    /* use the cached layer's extent. */
     /* there is NO overlap, return MS_DONE */
     /* (FIX: use this in ALL which shapes functions) */
     if(sde->extent->minx > rect.maxx) return(MS_DONE); 
@@ -1535,7 +1541,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
                       "SE_stream_query()");
             return(MS_FAILURE);
         }
-        // Free up the sql now that we've queried
+        /* Free up the sql now that we've queried */
         SE_sql_construct_free(sql);
     }  
     proc_value = msLayerGetProcessingKey(layer,"QUERYORDER");
@@ -1646,8 +1652,7 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 
     sde = layer->layerinfo;
     
-    // copy our cached extent members into the 
-    // caller's extent
+    /* copy our cached extent members into the caller's extent */
     extent->minx = sde->extent->minx;
     extent->miny = sde->extent->miny;
     extent->maxx = sde->extent->maxx;
@@ -1729,7 +1734,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
             return(MS_FAILURE);
         }
         
-        // Free up the sql now that we've queried
+        /* Free up the sql now that we've queried */
         SE_sql_construct_free(sql);
   
         /* *should* be ready to step through shapes now */
@@ -1814,14 +1819,14 @@ msSDELayerInitItemInfo(layerObj *layer)
 #ifdef USE_SDE
 
     int i,j;
-//    short nBaseColumns, nJoinColumns;
+/*    short nBaseColumns, nJoinColumns; */
     long status;
 short nbasecol, njoincol;
     SE_COLUMN_DEF *all_itemdefs = NULL;
 
     msSDELayerInfo *sde = NULL;
-//    nBaseColumns = 0;
-//    nJoinColumns = 0;
+/*    nBaseColumns = 0; */
+/*    nJoinColumns = 0; */
  
     if (!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR,
@@ -1832,26 +1837,28 @@ short nbasecol, njoincol;
     
     sde = layer->layerinfo;
     
-    // This insanity is because we keep around the number of 
-    // columns we have along with the layer info.  If the total 
-    // number of columns that we have doesn't match when we're 
-    // called the second time around, we have to throw an error or
-    // msWhichShape will add an item onto our layer->items list, which 
-    // in turn doesn't match the layer->iteminfo list of SDE column definitions.
+    /*
+    ** This insanity is because we keep around the number of 
+    ** columns we have along with the layer info.  If the total 
+    ** number of columns that we have doesn't match when we're 
+    ** called the second time around, we have to throw an error or
+    ** msWhichShape will add an item onto our layer->items list, which 
+    ** in turn doesn't match the layer->iteminfo list of SDE column definitions.
+    */
 
     nbasecol =*(sde->nBaseColumns);
     njoincol =*(sde->nJoinColumns);
 
-    // Hop right out again if we've already gotten the layer->iteminfo
+    /* Hop right out again if we've already gotten the layer->iteminfo */
     if (layer->iteminfo && layer->items) {
         if (layer->debug)
             msDebug("Column information has already been gotten..." 
                     " returning from msSDELayerInitItemInfo\n");
         if (layer->numitems != ( nbasecol+ njoincol)) {
-           // if someone has modified the size of the items list,
-           // it is because it didn't find a column name (and we have 
-           // already given them all because we have iteminfo and items
-           // If this is the case, we can't continue.
+           /* if someone has modified the size of the items list, 
+           ** it is because it didn't find a column name (and we have 
+           ** already given them all because we have iteminfo and items
+           ** If this is the case, we can't continue. */
 
             msSetError( MS_SDEERR,
                         "A specified CLASSITEM, FILTERITEM, or expression key cannot be found",
@@ -1867,7 +1874,7 @@ short nbasecol, njoincol;
         
         sde->row_id_column = msSDELayerGetRowIDColumn(layer);   
     } else {
-        // Don't think this should happen.  If it does, it'd be good to know why.
+        /* Don't think this should happen.  If it does, it'd be good to know why. */
         if (layer->debug)
             msDebug ("RowID column has already been gotten... msSDELayerInitItemInfo\n");
     }
@@ -1899,7 +1906,7 @@ short nbasecol, njoincol;
 
     layer->numitems = nbasecol + njoincol;
 
-    // combine the itemdefs of both tables into one
+    /* combine the itemdefs of both tables into one */
     all_itemdefs = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
 
     for(i=0;i<nbasecol;i++) all_itemdefs[i] = sde->basedefs[i];
@@ -1919,13 +1926,13 @@ short nbasecol, njoincol;
             return(MS_FAILURE);
         }
     } else {
-        // Don't think this should happen.  If it does, it'd be good to know why.
+        /* Don't think this should happen.  If it does, it'd be good to know why. */
     if (layer->debug)
         msDebug ("layer->iteminfo has already been initialized... msSDELayerInitItemInfo\n");
     }
     
     if (!(layer->items)) {
-        // gather up all of the column names and put them onto layer->items
+        /* gather up all of the column names and put them onto layer->items */
         layer->items = (char **)malloc(layer->numitems*sizeof(char *)+10);
         if(!layer->items) {
             msSetError( MS_MEMERR, 
@@ -1969,7 +1976,7 @@ short nbasecol, njoincol;
   
         }    
     }
-    // Tell the user which columns we've gotten
+    /* Tell the user which columns we've gotten */
     if (layer->debug)
         for(i=0; i<layer->numitems; i++) 
             msDebug("msSDELayerInitItemInfo(): getting info for %s\n", layer->items[i]);
@@ -1996,7 +2003,7 @@ short nbasecol, njoincol;
 /* -------------------------------------------------------------------- */
 int msSDELayerCreateItems(layerObj *layer, int nt){    
     int status;    
-    //status = msSDELayerCreateItems(layer, 0);    
+    /* status = msSDELayerCreateItems(layer, 0);    */
     status = msSDELayerInitItemInfo(layer);
     if (status != MS_SUCCESS) {        
         msSetError( MS_MISCERR,                    

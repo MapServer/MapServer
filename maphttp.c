@@ -428,7 +428,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                 }
             }
 
-            // Set the Curl option to send Cookie
+            /* Set the Curl option to send Cookie */
             curl_easy_setopt(http_handle, CURLOPT_COOKIE, 
                              pasReqInfo[i].pszHTTPCookieData);
         }

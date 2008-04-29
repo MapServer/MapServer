@@ -102,7 +102,7 @@ typedef struct {
   */
 #ifndef SWIG
   gdImagePtr img;
-  void *renderer_cache; //AGG storage
+  void *renderer_cache; /* AGG storage */
 #endif /* SWIG */
 
 #ifdef SWIG

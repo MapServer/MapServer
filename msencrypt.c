@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Command-line encryption utility (see MS-RFC-18)
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     if (argc == 3 && strcmp(argv[1], "-keygen")==0)
     {
 
-// TODO: Move this to a function
+/* TODO: Move this to a function */
         unsigned char pabyKey[16];
         char szKeyEncoded[50];
         FILE *fp;

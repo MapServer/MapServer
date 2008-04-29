@@ -334,11 +334,11 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
 
   if (wfsparams->pszUpdateSequence != NULL) {
       i = msOWSNegotiateUpdateSequence(wfsparams->pszUpdateSequence, updatesequence);
-      if (i == 0) { // current
+      if (i == 0) { /* current */
           msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWFSGetCapabilities()", wfsparams->pszUpdateSequence, updatesequence);
           return msWFSException(map, "updatesequence", "CurrentUpdateSequence", wmtver);
       }
-      if (i > 0) { // invalid
+      if (i > 0) { /* invalid */
           msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWFSGetCapabilities()", wfsparams->pszUpdateSequence, updatesequence);
           return msWFSException(map, "updatesequence", "InvalidUpdateSequence", wmtver);
       }

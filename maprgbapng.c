@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  PNG related functions for use with RGBA imagetypes
@@ -339,7 +339,7 @@ static void pam_freeacolorhash (acolorhash_table acht);
 
 int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 {
-    apixel **apixels=NULL,*datapixels=NULL; //pointer to the gd truecolor pixels
+    apixel **apixels=NULL,*datapixels=NULL; /* pointer to the gd truecolor pixels */
     register apixel *pP;
     register int col;
     register int ind;

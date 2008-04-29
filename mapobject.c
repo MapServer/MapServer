@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Functions for operating on a mapObj that don't belong in a
@@ -566,18 +566,18 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex)
     }
     else {
     	layer=GET_LAYER(map, nIndex);
-        //msCopyLayer(layer, (GET_LAYER(map, nIndex)));
+        /* msCopyLayer(layer, (GET_LAYER(map, nIndex))); */
         
         /* Iteratively copy the higher index layers down one index */
         for (i=nIndex; i<map->numlayers-1; i++) {
-            //freeLayer((GET_LAYER(map, i)));
-            //initLayer((GET_LAYER(map, i)), map);
-            //msCopyLayer(GET_LAYER(map, i), GET_LAYER(map, i+1));
+            /* freeLayer((GET_LAYER(map, i))); */
+            /* initLayer((GET_LAYER(map, i)), map); */
+            /* msCopyLayer(GET_LAYER(map, i), GET_LAYER(map, i+1)); */
 	    GET_LAYER(map, i)=GET_LAYER(map, i+1);
             GET_LAYER(map, i)->index = i;
         }
         /* Free the extra layer at the end */
-        //freeLayer((GET_LAYER(map, map->numlayers-1)));
+        /* freeLayer((GET_LAYER(map, map->numlayers-1))); */
         GET_LAYER(map, map->numlayers-1)=NULL;
         
         /* Adjust drawing order */

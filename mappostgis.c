@@ -183,7 +183,7 @@ int msPOSTGISSanitizeConnection(PGconn *conn)
         conn_bad = 1;
     }
 
-    // if connection is in bad, PQreset() it
+    /* if connection is in bad, PQreset() it */
     if (conn_bad)
     {
         PQreset(conn);
@@ -199,13 +199,13 @@ int msPOSTGISSanitizeConnection(PGconn *conn)
         }
     }
 
-    if (PQtransactionStatus(conn) == PQTRANS_ACTIVE) // no connection should have an active async call
+    if (PQtransactionStatus(conn) == PQTRANS_ACTIVE) /* no connection should have an active async call */
     {
         msSetError(MS_QUERYERR, "Refusing to sanitize a database connection with a pending asynchronous query (transaction status of PQTRANS_ACTIVE).", "msPOSTGISSanitizeConnection()");
 	return MS_FAILURE;
     }
 
-    if (PQtransactionStatus(conn) == PQTRANS_INERROR) // idle, in a failed transaction block
+    if (PQtransactionStatus(conn) == PQTRANS_INERROR) /* idle, in a failed transaction block */
     {
         PGresult *rb_res = PQexec(conn, "ROLLBACK");
         if (!rb_res || PQresultStatus(rb_res) != PGRES_COMMAND_OK) {
@@ -220,7 +220,7 @@ int msPOSTGISSanitizeConnection(PGconn *conn)
         PQclear(rb_res);
     }
  
-    if (PQtransactionStatus(conn) == PQTRANS_IDLE) // idle, but not in a transaction block
+    if (PQtransactionStatus(conn) == PQTRANS_IDLE) /* idle, but not in a transaction block */
     {
         PGresult *beg_res = PQexec(conn, "BEGIN");
         if (!beg_res || PQresultStatus(beg_res) != PGRES_COMMAND_OK) {

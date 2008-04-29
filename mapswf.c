@@ -626,9 +626,9 @@ SWFShape gdImage2Shape(gdImagePtr img, imageObj *image)
 
     data = gd2bitmap(img, &size, &bytesPerColor);
     dbldata = bitmap2dbl(data,&size,&bytesPerColor);
-    free(data); //memory leak cf ticket #2555
+    free(data); /* memory leak cf ticket #2555 */
     oShape = bitmap2shape(dbldata, size, img->sx, img->sy, SWFFILL_SOLID, image);
-    StoreDblData(dbldata, image); //memory leak cf ticket #2555
+    StoreDblData(dbldata, image); /* memory leak cf ticket #2555 */
     return oShape;
 }
     
@@ -1626,7 +1626,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                      psFillColor, psOutlineColor,
                                      &sColorHighlightObj,
                                      nLayerIndex, nShapeIndex, image);
-		// Ticket #2555 memory leak : need to store buttons to properly destroy them
+		/* Ticket #2555 memory leak : need to store buttons to properly destroy them */
                 StoreButton(oButton, image);
 		oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
                
@@ -1880,11 +1880,11 @@ SWFText DrawText(char *string, int nX, int nY, char *pszFontFile,
     if (f)
     {
         oFont  = loadSWFFontFromFile(f);
-        //oFont = newSWFFont("_sans"); 
+        /* oFont = newSWFFont("_sans"); */
         fclose(f); 
         if (oFont)
         {     
-            // ticket #2555 memory leak
+            /* ticket #2555 memory leak */
             StoreFont(oFont, image);
 	    
 	    oText = newSWFText();
@@ -3009,7 +3009,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
               
                 msIO_printf("<OBJECT classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0\" WIDTH=%d HEIGHT=%d> <PARAM NAME=movie VALUE=\"%s\"><PARAM NAME=quality VALUE=medium><EMBED src=\"%s\" quality=medium  WIDTH=%d HEIGHT=%d TYPE=\"application/x-shockwave-flash\" PLUGINSPAGE=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\"></EMBED></OBJECT>", map->width, map->height, pszURL, pszURL,  map->width, map->height);
               
-                // unlink( filename );
+                // unlink( filename ); 
                 free( filename );
         */      
             }
@@ -3297,7 +3297,7 @@ void msFreeImageSWF(imageObj *image)
     	((SWFObj *)image->img.swf)->nShapes = 0;
     	/* buttons */
     	for (i=0; i<((SWFObj *)image->img.swf)->nButtons; i++)
-    		// need to check if some of the buttons disappeared or couldn't be created ! */
+    		/* need to check if some of the buttons disappeared or couldn't be created ! */
     		if (((SWFObj *)image->img.swf)->Buttons[i])
     			destroySWFButton(((SWFObj *)image->img.swf)->Buttons[i]);
     	free(((SWFObj *)image->img.swf)->Buttons);

@@ -2500,7 +2500,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->requires = layer->labelrequires = NULL;
 
-  //layer->metadata = NULL; 
+  /* layer->metadata = NULL; */
   initHashTable(&(layer->metadata));
   
   layer->dump = MS_FALSE;
@@ -2530,8 +2530,9 @@ int freeLayer(layerObj *layer) {
   int i;
   if (!layer) return MS_FAILURE;
   if( MS_REFCNT_DECR_IS_NOT_ZERO(layer) ) { return MS_FAILURE; }
-//  if (layer->debug)
-//     msDebug("freeLayer(): freeing layer at %p.\n",layer);
+/*  if (layer->debug)
+     msDebug("freeLayer(): freeing layer at %p.\n",layer); 
+*/
 
   msFree(layer->name);
   msFree(layer->group);
@@ -4848,8 +4849,8 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
     break;
   }
 
-  // msyystate = 3; /* restore lexer state */
-  // msyylex();
+  /* msyystate = 3; */ /* restore lexer state */
+  /* msyylex(); */
 
   if(ms_error->code != MS_NOERR) return(MS_FAILURE);
 

@@ -177,14 +177,14 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
         value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_format");
 
         if (!value)
-          value = strdup("text/html"); // default
+          value = strdup("text/html"); /* default */
 
         xmlNewProp(psNode, BAD_CAST "format", BAD_CAST value);
 
         value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_type");
 
         if (!value)
-          value = strdup("FGDC"); // default
+          value = strdup("FGDC"); /* default */
 
         xmlNewProp(psNode, BAD_CAST "type", BAD_CAST value);
     }
@@ -224,11 +224,11 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
     if (params->pszUpdateSequence != NULL) {
       i = msOWSNegotiateUpdateSequence(params->pszUpdateSequence, updatesequence);
-      if (i == 0) { // current
+      if (i == 0) { /* current */
           msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWFSGetCapabilities11()", params->pszUpdateSequence, updatesequence);
           return msWFSException11(map, "updatesequence", "CurrentUpdateSequence", params->pszVersion);
       }
-      if (i > 0) { // invalid
+      if (i > 0) { /* invalid */
           msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWFSGetCapabilities11()", params->pszUpdateSequence, updatesequence);
           return msWFSException11(map, "updatesequence", "InvalidUpdateSequence", params->pszVersion);
       }

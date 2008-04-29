@@ -625,7 +625,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   msIO_printf("  </Exception>\n");
 
   /* describe any vendor specific capabilities */
-  // msIO_printf("  <VendorSpecificCapabilities />\n"); /* none yet */
+  /* msIO_printf("  <VendorSpecificCapabilities />\n"); */ /* none yet */
 
   /* done */
   msIO_printf("</Capability>\n");
@@ -721,11 +721,12 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   int wcsNumSupportedVersions = 3;
   const char *updatesequence=NULL;
 
- /* if version is not passed/set, set it to 1.1.1, this will trigger
+/* if version is not passed/set, set it to 1.1.1, this will trigger
     msOWSNegotiateVersion to handle accordingly
- */
-  //if (!params->version || params->version == NULL || strcasecmp(params->version, "") == 0)
-  //  params->version= strdup("1.1.1");
+ 
+  if (!params->version || params->version == NULL || strcasecmp(params->version, "") == 0)
+    params->version= strdup("1.1.1");
+*/
 
   /* negotiate version */
   tmpInt = msOWSNegotiateVersion(msOWSParseVersionString(params->version), wcsSupportedVersions, wcsNumSupportedVersions);
@@ -744,19 +745,19 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 
     if (params->updatesequence != NULL) {
         i = msOWSNegotiateUpdateSequence(params->updatesequence, updatesequence);
-        if (i == 0) { // current
+        if (i == 0) { /* current */
             msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWCSGetCapabilities()", params->updatesequence, updatesequence);
             return msWCSException(map, "CurrentUpdateSequence", 
                                   "updatesequence", params->version );
         }
-        if (i > 0) { // invalid
+        if (i > 0) { /* invalid */
             msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWCSGetCapabilities()", params->updatesequence, updatesequence);
             return msWCSException(map, "InvalidUpdateSequence", 
                                   "updatesequence", params->version );
         }
     }
 
-    else { // set default updatesequence
+    else { /* set default updatesequence */
       if(!updatesequence)
         updatesequence = strdup("0");
       params->updatesequence = strdup(updatesequence);
@@ -1112,7 +1113,7 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
           coverages = msStringSplit(params->coverages[j], ',', &numcoverages);
           for(k=0;k<numcoverages;k++) {
               i = msGetLayerIndex(map, coverages[k]);
-              if(i == -1) { // one coverage
+              if(i == -1) { /* one coverage */
                   msSetError( MS_WCSERR,
                       "COVERAGE %s cannot be opened / does not exist",
                       "msWCSDescribeCoverage()", coverages[k]);
@@ -1617,18 +1618,18 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
 
   map->projection.gt = map->gt;
 
-  // check for overlap
+  /* check for overlap */
 
-  // get extent of bbox passed, and reproject
+  /* get extent of bbox passed, and reproject */
   reqextent.minx = map->extent.minx;
   reqextent.miny = map->extent.miny;
   reqextent.maxx = map->extent.maxx;
   reqextent.maxy = map->extent.maxy;
 
-  // reproject incoming bbox
+  /* reproject incoming bbox */
   msProjectRect(&map->projection, &lp->projection, &(reqextent));
 
-  // get extent of layer
+  /* get extent of layer */
   covextent.minx = cm.extent.minx;
   covextent.miny = cm.extent.miny;
   covextent.maxx = cm.extent.maxx;

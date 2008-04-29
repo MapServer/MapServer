@@ -564,7 +564,7 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
             {
                 psNode = xmlNewChild(psRecordNode, NULL, BAD_CAST "field", NULL);
 
-                //check if there is an alias/full name used
+                /* check if there is an alias/full name used */
                 sprintf(szTmp, "%s_alias", lp->items[i]);
                 pszName = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
                 if (!pszName)
@@ -574,7 +574,7 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
 
                 psNode = xmlNewChild(psNode, NULL, BAD_CAST "Quantity", NULL);
 
-                /*get definition and uom*/
+                /* get definition and uom */
                 sprintf(szTmp, "%s_definition", lp->items[i]);
                 pszDefinition =  msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
                     
@@ -981,7 +981,7 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xml
          psObsNode = xmlNewChild(psMemberNode, NULL, BAD_CAST "Observation", NULL);
 
         /*time*/
-         //??TODO : sampling time is a manadatory element but uses a non manadtor metada offering_timeextent
+         /* ??TODO : sampling time is a manadatory element but uses a non manadtor metada offering_timeextent */
          value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_timeextent");
          if (value)
          {
@@ -1013,7 +1013,7 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xml
              pszTmp = msStringConcatenate(pszTmp, "urn:ogc:def:procedure:");
              pszTmp = msStringConcatenate(pszTmp, (char *)pszProcedure);
              psNode =  xmlNewChild(psObsNode, NULL, BAD_CAST "procedure", NULL);
-             //xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+             /* xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp); */
              xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszTmp);
              msFree(pszTmp);
              pszTmp = NULL;
@@ -1172,7 +1172,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
     int sosSupportedVersions[] = {OWS_1_0_0};
     int sosNumSupportedVersions = 1;
 
-    // acceptversions: do OWS Common style of version negotiation
+    /* acceptversions: do OWS Common style of version negotiation */
     if (sosparams->pszAcceptVersions) {
       char **tokens;
       int i, j, k=-1;
@@ -1204,16 +1204,16 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
       }
     }
 
-    // updateSequence
+    /* updateSequence */
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "SO", "updatesequence");
 
     if (sosparams->pszUpdateSequence != NULL) {
       i = msOWSNegotiateUpdateSequence(sosparams->pszUpdateSequence, updatesequence);
-      if (i == 0) { // current
+      if (i == 0) { /* current */
           msSetError(MS_SOSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msSOSGetCapabilities()", sosparams->pszUpdateSequence, updatesequence);
           return msSOSException(map, "updatesequence", "CurrentUpdateSequence");
       }
-      if (i > 0) { // invalid
+      if (i > 0) { /* invalid */
           msSetError(MS_SOSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msSOSGetCapabilities()", sosparams->pszUpdateSequence, updatesequence);
           return msSOSException(map, "updatesequence", "InvalidUpdateSequence");
       }
@@ -1467,7 +1467,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
 
                                  psNode = 
                                    xmlNewChild(psOfferingNode, NULL, BAD_CAST "procedure", NULL);
-                                 //xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp);
+                                 /* xmlNewNsProp(psNode, xmlNewNs(NULL, BAD_CAST "http://www.w3.org/1999/xlink", BAD_CAST "xlink"), BAD_CAST "href", BAD_CAST pszTmp); */
                                  xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszTmp);
                                  msFree(pszTmp);
                                  pszTmp = NULL;
@@ -2043,14 +2043,14 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
       msSetError(MS_SOSERR, "Invalid or Unsupported FILTER in GetObservation", "msSOSGetObservation()");
       return msSOSException(map, "filter", "InvalidParameterValue");
     }
-    /* apply the filter to all layers thar are on*/
+    /* apply the filter to all layers that are on */
     for (i=0; i<map->numlayers; i++) {
       lp = GET_LAYER(map, i);
       if (lp->status == MS_ON) {
-        //preparse parser so that alias for fields can be used
+        /* preparse parser so that alias for fields can be used */
         FLTPreParseFilterForAlias(psFilterNode, map, i, "S");
-        //vaidate that the property names used are valid 
-        //(there is a corresponding layer attribute)
+        /* validate that the property names used are valid 
+          (there is a corresponding layer attribute) */
         if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
           if (msSOSValidateFilter(psFilterNode, lp)== MS_FALSE) {
             msSetError(MS_SOSERR, "Invalid component name in ogc filter statement", "msSOSGetObservation()");
@@ -2157,28 +2157,29 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
        msFreeCharArray(tokens, n);
     }
 
-    /* time */
-    //pszTmp = msOWSLookupMetadata(&(lp->metadata), "S","offering_timeextent");
-    //if (pszTmp)
-    //{
-    //    char **tokens;
-    //    int n;
-    //    char *pszEndTime = NULL;
-    //    tokens = msStringSplit(pszTmp, '/', &n);
-    //    if (tokens==NULL || (n != 1 && n!=2)) {
-    //        msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
-    //                   "msSOSGetCapabilities()");
-    //        return msSOSException(map, "offering_timeextent", "InvalidParameterValue");
-    //    }
-    //
-    //    if (n == 2) /* end time is empty. It is going to be set as "now*/
-    //      pszEndTime = tokens[1];
-    //
-        //psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix), tokens[0], pszEndTime));
-    //    psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(psNsOm, psNsGml, tokens[0], pszEndTime));
-    //    msFreeCharArray(tokens, n);
-    //                 
-    //}
+    /* time 
+    pszTmp = msOWSLookupMetadata(&(lp->metadata), "S","offering_timeextent");
+    if (pszTmp)
+    {
+        char **tokens;
+        int n;
+        char *pszEndTime = NULL;
+        tokens = msStringSplit(pszTmp, '/', &n);
+        if (tokens==NULL || (n != 1 && n!=2)) {
+            msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
+                       "msSOSGetCapabilities()");
+            return msSOSException(map, "offering_timeextent", "InvalidParameterValue");
+        }
+    
+        if (n == 2) // end time is empty. It is going to be set as "now
+          pszEndTime = tokens[1];
+    
+          psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix), tokens[0], pszEndTime));
+        psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(psNsOm, psNsGml, tokens[0], pszEndTime));
+        msFreeCharArray(tokens, n);
+                     
+    }
+    */
 
     if (sosparams->pszResultModel && strcasecmp(sosparams->pszResultModel, "om:Measurement") != 0 &&
         strcasecmp(sosparams->pszResultModel, "om:Observation") != 0)

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  High level msDrawMap() implementation and related functions.
@@ -332,7 +332,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   /* Pre-download all WMS/WFS layers in parallel before starting to draw map */
   lastconnectiontype = MS_SHAPEFILE;
   for(i=0; i<map->numlayers; i++) {
-    //if(map->layerorder[i] == -1 || !msLayerIsVisible(map, &(map->layers[map->layerorder[i]])))
+    /* if(map->layerorder[i] == -1 || !msLayerIsVisible(map, &(map->layers[map->layerorder[i]]))) */
     if(map->layerorder[i] == -1 || !msLayerIsVisible(map, GET_LAYER(map,map->layerorder[i])))
       continue;
 
@@ -1274,8 +1274,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   
   labelPathObj *annopath = NULL; /* Curved label path. Bug #1620 implementation */
 
-/* Steve's original code
-  cliprect.minx = map->extent.minx - 2*map->cellsize; // set clipping rectangle just a bit larger than the map extent
+
+  /* set clipping rectangle just a bit larger than the map extent */
+/* Steve's original code 
+  cliprect.minx = map->extent.minx - 2*map->cellsize; 
   cliprect.miny = map->extent.miny - 2*map->cellsize;
   cliprect.maxx = map->extent.maxx + 2*map->cellsize;
   cliprect.maxy = map->extent.maxy + 2*map->cellsize;

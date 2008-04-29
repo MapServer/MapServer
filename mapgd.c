@@ -3455,7 +3455,7 @@ static gdImagePtr msImageCreateWithPaletteGD( gdImagePtr img24, const char *pale
   for (i=0; i<ncolors;i++)
   {
       sscanf(abuffer[i],"%d,%d,%d", &r, &g, &b);
-      //msAddColorGD(img, 1, r, g, b);
+      /* msAddColorGD(img, 1, r, g, b); */
       msFree(abuffer[i]);
       gdImageColorAllocate(img, r, g, b);
   }

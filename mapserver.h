@@ -1333,9 +1333,9 @@ typedef struct {
 
   outputFormatObj *format;
 #ifndef SWIG
-  void *imageextra; //AGG specific
+  void *imageextra; /* AGG specific */
 #endif
-  int buffer_format; //tells if the alpha channel is GD or AGG style  
+  int buffer_format; /* tells if the alpha channel is GD or AGG style  */
 #ifdef SWIG
 %mutable;
 #endif

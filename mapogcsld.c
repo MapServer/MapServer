@@ -2502,7 +2502,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
             {
                 while (psTmpNode)
                 {
-                    //open bracket to get valid expression
+                    /* open bracket to get valid expression */
                     if (pszClassText == NULL)
                       pszClassText = msStringConcatenate(pszClassText, "(");
                     
@@ -2521,13 +2521,13 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                     psTmpNode = psTmpNode->psNext;
                 
                 }
-                //close bracket to get valid expression
+                /* close bracket to get valid expression */
                 if (pszClassText != NULL)
                   pszClassText = msStringConcatenate(pszClassText, ")");
             }
             else
             {
-                //supports  - <TextSymbolizer><Label>MY_COLUMN</Label>
+                /* supports  - <TextSymbolizer><Label>MY_COLUMN</Label> */
                 if (psLabel->psChild && psLabel->psChild->pszValue)
                 {
                     pszClassText = msStringConcatenate(pszClassText, "([");
@@ -2543,11 +2543,12 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
             else if (psLabel->psChild && psLabel->psChild->pszValue)
               pszItem = psLabel->psChild->pszValue;
             */
-            if (pszClassText)//pszItem)
+            if (pszClassText) /* pszItem) */
             {
-                //if (psLayer->labelitem)
-                //  free (psLayer->labelitem);
-                //psLayer->labelitem = strdup(pszItem);
+                /* if (psLayer->labelitem)
+                   free (psLayer->labelitem);
+                   psLayer->labelitem = strdup(pszItem);
+                */
 
                 
 

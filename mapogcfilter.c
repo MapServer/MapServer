@@ -221,7 +221,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                     initClass(lp->class[1]);
                     
                     lp->class[1]->type = lp->type;
-                    // TODO: if numclasses was already > 1 then this increment is wrong and leaves class[numclasses] non-initialized
+                    /* TODO: if numclasses was already > 1 then this increment is wrong and leaves class[numclasses] non-initialized */
                     lp->numclasses++;
                     msLoadExpressionString(&lp->class[1]->expression, 
                                          szExpression);
@@ -315,7 +315,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         (bOnlySpatialFilter && !bIsBBoxFilter && !bPointQuery && !bShapeQuery))
       msQueryByRect(map, lp->index, sQueryRect);
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
-             && psQueryShape->line[0].numpoints > 0)// && dfDistance >=0)
+             && psQueryShape->line[0].numpoints > 0) /* && dfDistance >=0) */
     {
         if (bUseGeos)
         {

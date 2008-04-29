@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementation of plug-in layer functionality
@@ -30,7 +30,7 @@
 #include "mapserver.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$");
+MS_CVSID("$Id$")
 
 typedef struct {
     char *name;
