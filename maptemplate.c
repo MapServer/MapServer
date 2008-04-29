@@ -786,7 +786,62 @@ static char *getPostTagText(const char *string1, const char *string2)
 }
 
 /*
-** Function to process an [resultset ...] tag.
+** Function to process a [features ...] tag. This tag can *only* be found within
+** a [resultset ...][/resultset] block.
+*/
+static int processFeaturesTag(mapservObj *mapserv, char **line, layerObj *layer) 
+{
+  char *preTag, *postTag; /* text before and after the tag */
+
+  char *tag, *tagStart, *tagEnd;
+  hashTableObj *tagArgs=NULL;
+
+  int i, j;
+
+  if(!*line) {
+    msSetError(MS_WEBERR, "Invalid line pointer.", "processFeaturesTag()");
+    return(MS_FAILURE);
+  }
+
+  tagStart = findTag(*line, "features");
+  if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
+
+  /* check for any tag arguments */
+  if(getTagArgs("features", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+  if(tagArgs) {
+    /* todo */
+  }
+
+  if(strstr(*line, "[/features]") == NULL) { /* we know the closing tag must be here, if not throw an error */
+    msSetError(MS_WEBERR, "[features] tag found without closing [/features].", "processFeaturesTag()");
+    return(MS_FAILURE);
+  }
+
+  if(getInlineTag("features", *line, &tag) != MS_SUCCESS) {
+    msSetError(MS_WEBERR, "Malformed features tag.", "processResultSetTag()");
+    return MS_FAILURE;
+  }
+
+  preTag = getPreTagText(*line, "[features");
+  postTag = getPostTagText(*line, "[/featres]");
+
+  /* start rebuilding **line */
+  free(*line); *line = preTag;
+
+  /* we know the layer has query results or we wouldn't be in this code */
+
+  *line = msStringConcatenate(*line, postTag);
+
+  /*
+  ** clean up 
+  */
+  free(postTag);
+
+  return(MS_SUCCESS);
+}
+
+/*
+** Function to process a [resultset ...] tag.
 */
 static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream) 
 {
@@ -843,7 +898,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   }
 
   if(getInlineTag("resultset", *line, &tag) != MS_SUCCESS) {
-    msSetError(MS_WEBERR, "Malformed then resultset tag.", "processResultSetTag()");
+    msSetError(MS_WEBERR, "Malformed resultset tag.", "processResultSetTag()");
     return MS_FAILURE;
   }
 
