@@ -797,11 +797,11 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 
   char *tag, *tagStart, *tagEnd;
   hashTableObj *tagArgs=NULL;
-  int tagOffset, tagLength;
-
-  char *argValue;
 
   char *layerName=NULL;
+
+  int layerIndex=-1;
+  layerObj *lp;
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processResultSetTag()");
@@ -811,6 +811,24 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   tagStart = findTag(*line, "resultset");
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
+  /* check for any tag arguments */
+  if(getTagArgs("resultset", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+  if(tagArgs) {
+    layerName = msLookupHashTable(tagArgs, "layer");
+  }
+
+  if(!layerName) {
+    msSetError(MS_WEBERR, "[resultset] tag missing required 'layer' argument.", "processResultSetTag()");
+    return(MS_FAILURE);
+  }
+
+  layerIndex = msGetLayerIndex(mapserv->Map, layerName);
+  if(layerIndex>=mapserv->Map->numlayers || layerIndex<0) {
+    msSetError(MS_MISCERR, "Layer named '%s' does not exist.", "processResultSetTag()", layerName);
+    return MS_FAILURE;
+  }
+  lp = GET_LAYER(mapserv->Map, layerIndex);
+
   if(strstr(*line, "[/resultset]") == NULL) { /* read ahead */
     foundTagEnd = MS_FALSE;
     while((fgets(lineBuffer, MS_BUFFER_LENGTH, stream) != NULL) && !foundTagEnd) {
@@ -819,12 +837,10 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
         foundTagEnd = MS_TRUE;
     }
     if(foundTagEnd == MS_FALSE) {
-      msSetError(MS_WEBERR, "[resultset] tag found without closing [/resultset]..", "processResultSetTag()");
+      msSetError(MS_WEBERR, "[resultset] tag found without closing [/resultset].", "processResultSetTag()");
       return(MS_FAILURE);
     }
   }
-
-  tagStart = findTag(*line, "resultset"); /* redo since **line may have changed */
 
   if(getInlineTag("resultset", *line, &tag) != MS_SUCCESS) {
     msSetError(MS_WEBERR, "Malformed then resultset tag.", "processResultSetTag()");
@@ -834,15 +850,14 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   preTag = getPreTagText(*line, "[resultset");
   postTag = getPostTagText(*line, "[/resultset]");
 
-  printf("*****************************************************************\n");
+  /* start rebuilding **line */
+  free(*line); *line = preTag;
 
-  printf("line: %s\n", *line);
-  printf("tagStart: %s\n", tagStart);
-  printf("tag: %s\n", tag);
-  printf("preTag: %s\n", preTag);
-  printf("postTag: %s\n", postTag);
+  if(lp->resultcache && lp->resultcache->numresults > 0) {
+    /* output the tag content */
+  }
 
-  printf("*****************************************************************\n");
+  *line = msStringConcatenate(*line, postTag);
 
   return(MS_SUCCESS);
 }
