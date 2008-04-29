@@ -527,7 +527,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
 }   
 
 /*
-** Return a substring from instr beetween [tag] and [/tag]
+** Return a substring from instr between [tag] and [/tag]
 ** char * returned must be freed by caller.
 ** pszNextInstr will be a pointer at the end of the 
 ** first occurence found.
@@ -758,11 +758,41 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
    return MS_SUCCESS;
 }
 
+/* Helper function to return the text before the supplied string2 in string1. */
+static char *getPreTagText(const char *string1, const char *string2)
+{
+  int n;
+  char *result, *tmpstr;
+
+  if((tmpstr = strstr(string1, string2)) == NULL) return strdup(""); /* return an empty string */
+
+  n = strlen(string1) - strlen(tmpstr);
+  result = (char *) malloc(n + 1);
+  result[n] = '\0';
+  strncpy(result, string1, n);
+
+  return result;
+}
+
+/* Helper function to retunr the text after the supplied string2 in string1. */
+static char *getPostTagText(const char *string1, const char *string2)
+{
+  char *tmpstr;
+
+  if((tmpstr = strstr(string1, string2)) == NULL) return strdup(""); /* return an empty string */
+
+  tmpstr += strlen(string2); /* skip string2 */
+  return strdup(tmpstr); 
+}
+
 /*
 ** Function to process an [resultset ...] tag.
 */
 static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream) 
 {
+  char lineBuffer[MS_BUFFER_LENGTH];
+  int foundTagEnd;
+
   char *preTag, *postTag; /* text before and after the tag */
 
   char *tag, *tagStart, *tagEnd;
@@ -779,11 +809,40 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   }
 
   tagStart = findTag(*line, "resultset");
-
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
+
+  if(strstr(*line, "[/resultset]") == NULL) { /* read ahead */
+    foundTagEnd = MS_FALSE;
+    while((fgets(lineBuffer, MS_BUFFER_LENGTH, stream) != NULL) && !foundTagEnd) {
+      *line = msStringConcatenate(*line, lineBuffer);
+      if(strstr(*line, "[/resultset]") != NULL)
+        foundTagEnd = MS_TRUE;
+    }
+    if(foundTagEnd == MS_FALSE) {
+      msSetError(MS_WEBERR, "[resultset] tag found without closing [/resultset]..", "processResultSetTag()");
+      return(MS_FAILURE);
+    }
+  }
+
+  tagStart = findTag(*line, "resultset"); /* redo since **line may have changed */
+
+  if(getInlineTag("resultset", *line, &tag) != MS_SUCCESS) {
+    msSetError(MS_WEBERR, "Malformed then resultset tag.", "processResultSetTag()");
+    return MS_FAILURE;
+  }
+
+  preTag = getPreTagText(*line, "[resultset");
+  postTag = getPostTagText(*line, "[/resultset]");
+
+  printf("*****************************************************************\n");
 
   printf("line: %s\n", *line);
   printf("tagStart: %s\n", tagStart);
+  printf("tag: %s\n", tag);
+  printf("preTag: %s\n", preTag);
+  printf("postTag: %s\n", postTag);
+
+  printf("*****************************************************************\n");
 
   return(MS_SUCCESS);
 }
