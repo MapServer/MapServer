@@ -114,16 +114,19 @@ int msTileSetExtent(mapservObj* msObj) {
   mapObj *map = msObj->Map;
 
   if( msObj->TileMode == SPHEREMERC ) {
-    
+
+    double	dx, dy;
+
     int x = msObj->TileCoords[0];
     int y = msObj->TileCoords[1];
     int zoom = msObj->TileCoords[2];
+
     double zoomfactor = pow(2.0, (double)zoom);
     
     /*
      * Calculate the ground extents of the tile request.
      */
-//    printf("X: %i  Y: %i  Z: %i\n",x,y,zoom);
+    /* printf("X: %i  Y: %i  Z: %i\n",x,y,zoom); */
     double tilesize = SPHEREMERC_GROUND_SIZE / zoomfactor;
     double xmin = (x * tilesize) - (SPHEREMERC_GROUND_SIZE / 2.0);
     double xmax = ((x + 1) * tilesize) - (SPHEREMERC_GROUND_SIZE / 2.0);
@@ -148,7 +151,6 @@ int msTileSetExtent(mapservObj* msObj) {
      * center-of-pixel to center-of-pixel, instead of edge-to-edge.
      * This is the way mapserver does it.
      */
-    double	dx, dy;
     dx = (map->extent.maxx - map->extent.minx) / map->width;
     map->extent.minx += dx*0.5;
     map->extent.maxx -= dx*0.5;
@@ -179,7 +181,8 @@ int msTileSetExtent(mapservObj* msObj) {
 int msTileSetProjections(mapObj* map) {
 
   char *mapProjStr = NULL;
-  
+  int i;
+    
   if (map->projection.numargs <= 0) {
     msSetError(MS_WMSERR, "Cannot set new SRS on a map that doesn't "
                           "have any projection set. Please make sure your mapfile "
@@ -187,7 +190,7 @@ int msTileSetProjections(mapObj* map) {
                           "msTileSetExtent()");
     return(MS_FAILURE);
   }
-  int i;
+
   for(i=0; i<map->numlayers; i++) {
     /* This layer is turned on and needs a projection? */
     if (GET_LAYER(map, i)->projection.numargs <= 0 &&
