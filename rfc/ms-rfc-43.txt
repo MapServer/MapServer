@@ -6,7 +6,8 @@ MS RFC 43: Direct tile generation for Google Maps API
 :Author: Paul Ramsey
 :Contact: pramsey@cleverelephant.ca
 :Last Edited: 2008/04/09
-:Status: Open
+:Status: Adopted on 2008/04/29 - Under development
+:Version: MapServer 5.2
 
 Overview
 --------
@@ -87,7 +88,7 @@ Bug ID
 Voting History
 --------------
 
-No vote yet.
+Adopted on 2008/04/29 with +1 from SteveL, DanielM, JeffM, SteveW, TomK, PericlesN and AssefaY.
 
 References
 ----------
