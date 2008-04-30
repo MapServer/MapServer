@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- Tiling API (RFC 43) mode=tile, tilemode=spheremerc, tile=x y zoom (#2581)
+
 - Remove C++-style comments and most other warnings thrown by -pedantic (#2598)
 
 - Fix PostGIS transaction behavior in fcgi situations (#2497)

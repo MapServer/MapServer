@@ -329,8 +329,8 @@ legend: $(LIBMAP_STATIC)  legend.o mapserver.h
 scalebar: $(LIBMAP_STATIC)  scalebar.o mapserver.h
 	$(LD) $(CFLAGS) scalebar.o $(EXE_LDFLAGS) -o scalebar
 
-mapserv: mapserv.h $(LIBMAP_STATIC)  mapserv.o cgiutil.o mapserver.h
-	$(LD) $(CFLAGS) mapserv.o cgiutil.o $(EXE_LDFLAGS) -o mapserv
+mapserv: mapserv.h maptile.h $(LIBMAP_STATIC)  mapserv.o cgiutil.o maptile.o mapserver.h
+	$(LD) $(CFLAGS) mapserv.o cgiutil.o maptile.o $(EXE_LDFLAGS) -o mapserv
 
 shpindex: $(LIBMAP_STATIC) shpindex.o mapserver.h
 	$(LD) $(CFLAGS) shpindex.o $(EXE_LDFLAGS) -o shpindex

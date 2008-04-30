@@ -38,6 +38,7 @@
 #include <time.h>
 
 #include "maptemplate.h"
+#include "maptile.h"
 
 #include "cgiutil.h"
 /*
@@ -56,13 +57,13 @@ extern int enter_string;
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
 */
-int numModes = 27;
-static char *modeStrings[27] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
+int numModes = 28;
+static char *modeStrings[28] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
                                 "QUERY","QUERYMAP","NQUERY","NQUERYMAP",
 			        "ITEMQUERY","ITEMQUERYMAP","ITEMNQUERY","ITEMNQUERYMAP",
 				"FEATUREQUERY","FEATUREQUERYMAP","FEATURENQUERY","FEATURENQUERYMAP",
 				"ITEMFEATUREQUERY","ITEMFEATUREQUERYMAP","ITEMFEATURENQUERY","ITEMFEATURENQUERYMAP",
-				"INDEXQUERY","INDEXQUERYMAP"};
+				"INDEXQUERY","INDEXQUERYMAP","TILE"};
 
 /*
 ** Global variables

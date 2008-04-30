@@ -843,6 +843,40 @@ void loadForm(void)
       continue;
     }
 
+    /* -------------------------------------------------------------------- 
+     *   The following code is used to support mode=tile                    
+     * -------------------------------------------------------------------- */ 
+
+    if(strcasecmp(msObj->request->ParamNames[i], "tilemode") == 0) { 
+      /* currently, only valid tilemode is "spheremerc" */
+      if( strcasecmp(msObj->request->ParamValues[i], "spheremerc") != 0) {
+        msSetError(MS_WEBERR, "Invalid tilemode. Use one of: spheremerc", "loadForm()");
+        writeError();
+      }
+      msObj->TileMode = SPHEREMERC;
+      continue;
+    }
+
+    if(strcasecmp(msObj->request->ParamNames[i],"tile") == 0) { 
+
+      int num_coords = 0;
+      char **coords = NULL;
+      int l = 0;
+      
+      msObj->CoordSource = FROMTILE;
+      coords = msStringSplit(msObj->request->ParamValues[i], ' ', &(num_coords));
+      if( num_coords != 3 ) {
+        msSetError(MS_WEBERR, "Invalid number of tile coordinates (should be three).", "loadForm()");
+        writeError();
+      }
+
+      msObj->TileCoords = (long *) malloc(sizeof(long) * 3);
+      for(l = 0; l < num_coords; l++) {
+        *(msObj->TileCoords + l) = strtol(coords[l], NULL, 10);
+      }
+      continue;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      The following code is used to support the rosa applet (for      */
     /*      more information on Rosa, please consult :                      */
@@ -1258,6 +1292,16 @@ int main(int argc, char *argv[]) {
     if(msObj->CoordSource == FROMREFPNT) /* force browse mode if the reference coords are set */
       msObj->Mode = BROWSE;
 
+    /*
+    ** Tile mode:
+    ** Set the projection up and test the parameters for legality.
+    */
+    if(msObj->Mode == TILE) {
+      if( msTileSetup(msObj) != MS_SUCCESS ) {
+        writeError();
+      }
+    }
+
     if(msObj->Mode == BROWSE) {
 
       if(!msObj->Map->web.template) {
@@ -1297,10 +1341,19 @@ int main(int argc, char *argv[]) {
         }
       }
 
-    } else if(msObj->Mode == MAP || msObj->Mode == SCALEBAR || msObj->Mode == REFERENCE) { /* "image" only modes */
+    } else if(msObj->Mode == MAP || msObj->Mode == SCALEBAR || msObj->Mode == REFERENCE || msObj->Mode == TILE) { /* "image" only modes */
+
       setExtent(msObj);
       checkWebScale(msObj);
       
+      /*
+      ** We set tile extents here instead of setExtent so that all the 
+      ** non-CGI utilities don't require maptile.o in their build.
+      */
+      if( msObj->Mode == TILE ) {
+        msTileSetExtent(msObj);
+      }
+            
       switch(msObj->Mode) {
       case MAP:
         if(QueryFile) {
@@ -1317,12 +1370,25 @@ int main(int argc, char *argv[]) {
       case SCALEBAR:
         img = msDrawScalebar(msObj->Map);
         break;
+      case TILE:
+        /* TODO: we may need an msDrawTile for doing "draw large then clip" tricks */
+        img = msDrawMap(msObj->Map, MS_FALSE);
+        break;
       }
       
       if(!img) writeError();
       
+      /*
+      ** Set the Cache control headers if the option is set. 
+      */
+      if( msLookupHashTable(&(msObj->Map->web.metadata), "http_max_age") ) {
+        msIO_printf("Cache-Control: max-age=%s%c", msLookupHashTable(&(msObj->Map->web.metadata), "http_max_age"), 10);
+      }
+
       msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
-      if( msObj->Mode == MAP )
+      
+      
+      if( msObj->Mode == MAP || msObj->Mode == TILE )
         status = msSaveImage(msObj->Map,img, NULL);
       else
         status = msSaveImage(NULL,img, NULL);
@@ -1699,7 +1765,7 @@ int main(int argc, char *argv[]) {
     if(QueryLayer) free(QueryLayer);
     if(SelectLayer) free(SelectLayer);
     if(QueryFile) free(QueryFile);
-   
+
     msFreeMapServObj(msObj);
 
 #ifdef USE_FASTCGI
