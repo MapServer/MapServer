@@ -40,11 +40,13 @@ MS_CVSID("$Id$")
 ** msOWSDispatch() is the entry point for any OWS request (WMS, WFS, ...)
 ** - If this is a valid request then it is processed and MS_SUCCESS is returned
 **   on success, or MS_FAILURE on failure.
-** - If this does not appear to be a valid OWS request then MS_DONE
-**   is returned and MapServer is expected to process this as a regular
-**   MapServer request.
+** - If force_ows_mode is true then an exception will be produced if the
+**   request is not recognized as a valid request.
+** - If force_ows_mode is false and this does not appear to be a valid OWS 
+**   request then MS_DONE is returned and MapServer is expected to process 
+**   this as a regular MapServer (traditional CGI) request.
 */
-int msOWSDispatch(mapObj *map, cgiRequestObj *request)
+int msOWSDispatch(mapObj *map, cgiRequestObj *request, int force_ows_mode)
 {
     int i, status = MS_DONE;
     const char *service=NULL;
@@ -59,6 +61,9 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
     }
 
 #ifdef USE_WMS_SVR
+    /* Note: SERVICE param did not exist in WMS 1.0.0, it was added only in WMS 1.1.0,
+     * so we need to let msWMSDispatch check for known REQUESTs even if SERVICE is not set.
+     */
     if ((status = msWMSDispatch(map, request)) != MS_DONE )
         return status;
 #else
@@ -69,6 +74,9 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
 #endif
 
 #ifdef USE_WFS_SVR
+    /* Note: WFS supports POST requests, so the SERVICE param may only be in the post data
+     * and not be present in the GET URL
+     */
     if ((status = msWFSDispatch(map, request)) != MS_DONE )
         return status;
 #else
@@ -98,7 +106,32 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
                     "msOWSDispatch()" );
 #endif
 
-    return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it */
+    if (force_ows_mode) {
+        if (service == NULL)
+            /* Here we should return real OWS Common exceptions... once 
+             * we have a proper exception handler in mapowscommon.c 
+             */
+            msSetError( MS_MISCERR,
+                        "OWS Common exception: exceptionCode=MissingParameterValue, locator=SERVICE, ExceptionText=SERVICE parameter missing.", 
+                        "msOWSDispatch()");
+        else
+            /* Here we should return real OWS Common exceptions... once 
+             * we have a proper exception handler in mapowscommon.c 
+             */
+            msSetError( MS_MISCERR,
+                        "OWS Common exception: exceptionCode=InvalidParameterValue, locator=SERVICE, ExceptionText=SERVICE parameter value invalid.", 
+                        "msOWSDispatch()");
+        
+        /* Force mapserv to report the error by returning MS_FAILURE. 
+         * The day we have a proper exception handler here then we should 
+         * return MS_SUCCESS since the exception will have been processed 
+         * the OWS way, which is a success as far as mapserv is concerned 
+         */
+        return MS_FAILURE; 
+    }
+
+    return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it 
+                      * since we're not in force_ows_mode*/
 }
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)

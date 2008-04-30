@@ -452,7 +452,7 @@
 
     int OWSDispatch( cgiRequestObj *req )
     {
-	return msOWSDispatch( self, req );
+	return msOWSDispatch( self, req, TRUE );
     }
 
 }

@@ -274,11 +274,49 @@ mapObj *loadMap(void)
 }
 
 /*
+** Set operation mode. First look in MS_MODE env. var. as a
+** default value that can be overridden by the mode=... CGI param.
+** Returns silently, leaving msObj->Mode unchanged if mode param not set.
+*/
+static int setMode(void)
+{
+    const char *mode = NULL;
+    int i, j;
+
+
+    mode = getenv("MS_MODE");
+    for( i=0; i<msObj->request->NumParams; i++ ) 
+    {
+        if(strcasecmp(msObj->request->ParamNames[i], "mode") == 0)
+        {
+            mode = msObj->request->ParamValues[i];
+            break;
+        }
+    }
+
+    if (mode) {
+      for(j=0; j<numModes; j++) {
+        if(strcasecmp(mode, modeStrings[j]) == 0) {
+          msObj->Mode = j;
+          break;
+        }
+      }
+
+      if(j == numModes) {
+        msSetError(MS_WEBERR, "Invalid mode.", "setMode()");
+        return MS_FAILURE;
+      }
+    }
+
+    return MS_SUCCESS;
+}
+
+/*
 ** Process CGI parameters.
 */
 void loadForm(void)
 {
-  int i,j,n;
+  int i,n;
   char **tokens=NULL;
   int rosa_type=0;
 
@@ -817,32 +855,6 @@ void loadForm(void)
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"mode") == 0) { /* set operation mode */
-      for(j=0; j<numModes; j++) {
-        if(strcasecmp(msObj->request->ParamValues[i], modeStrings[j]) == 0) {
-          msObj->Mode = j;
-
-          if(msObj->Mode == ZOOMIN) {
-            msObj->ZoomDirection = 1;
-            msObj->Mode = BROWSE;
-          }
-          if(msObj->Mode == ZOOMOUT) {
-            msObj->ZoomDirection = -1;
-            msObj->Mode = BROWSE;
-          }
-
-          break;
-        }
-      }
-
-      if(j == numModes) {
-        msSetError(MS_WEBERR, "Invalid mode.", "loadForm()");
-        writeError();
-      }
-
-      continue;
-    }
-
     /* -------------------------------------------------------------------- 
      *   The following code is used to support mode=tile                    
      * -------------------------------------------------------------------- */ 
@@ -939,6 +951,15 @@ void loadForm(void)
     /* -------------------------------------------------------------------- */
 
   } /* next parameter */
+
+  if(msObj->Mode == ZOOMIN) {
+    msObj->ZoomDirection = 1;
+    msObj->Mode = BROWSE;
+  }     
+  if(msObj->Mode == ZOOMOUT) {
+    msObj->ZoomDirection = -1;
+    msObj->Mode = BROWSE;
+  }
 
   if(ZoomSize != 0) { /* use direction and magnitude to calculate zoom */
     if(msObj->ZoomDirection == 0) {
@@ -1048,6 +1069,7 @@ void returnCoordinate(pointObj pnt)
 
   writeError();
 }
+
 
 /************************************************************************/
 /*                      FastCGI cleanup functions.                      */
@@ -1204,11 +1226,22 @@ int main(int argc, char *argv[]) {
     }
 
     /*
+    ** Determine 'mode': Check for MS_MODE env. var. and mode=... CGI param
+    */
+    msObj->Mode = -1; /* Not set */
+    if( setMode() != MS_SUCCESS)
+        writeError();
+
+    /*
     ** Start by calling the WMS/WFS/WCS Dispatchers.  If they fail then we'll 
     ** process this as a regular MapServer request.
     */
-    if((status = msOWSDispatch(msObj->Map, msObj->request)) != MS_DONE  )  {
+    if((msObj->Mode == -1 || msObj->Mode == OWS) &&
+       (status = msOWSDispatch(msObj->Map, msObj->request,
+                               (msObj->Mode == OWS))) != MS_DONE  )  {
       /*
+      ** OWSDispatch returned either MS_SUCCESS or MS_FAILURE
+      **
       ** Normally if the OWS service fails it will issue an exception,
       ** and clear the error stack but still return MS_FAILURE.  But in
       ** a few situations it can't issue the exception and will instead 
@@ -1222,7 +1255,7 @@ int main(int argc, char *argv[]) {
       }
         
       /* 
-			** This was a WMS/WFS request... cleanup and exit 
+      ** This was a WMS/WFS request... cleanup and exit 
       ** At this point any error has already been handled
       ** as an XML exception by the OGC service.
       */
@@ -1266,6 +1299,8 @@ int main(int argc, char *argv[]) {
     /*
     ** Do "traditional" mode processing.
     */
+    if (msObj->Mode == -1)
+        msObj->Mode = BROWSE;
 
     loadForm();
  
