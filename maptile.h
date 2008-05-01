@@ -30,14 +30,15 @@
 #include "mapserver.h"
 #include "maptemplate.h"
 
-/* TODO: add this to build environment */
+#ifdef USE_PROJ
 #define USE_TILE_API 1
+#endif 
 
 #define SPHEREMERC_PROJ4 "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +units=m +k=1.0 +nadgrids=@null"
 #define SPHEREMERC_GROUND_SIZE (20037508.34*2)
 #define SPHEREMERC_IMAGE_SIZE 256
 
-enum tileModes {SPHEREMERC};
+enum tileModes { TILE_GMAP, TILE_VE };
  
 MS_DLL_EXPORT int msTileSetup(mapservObj *msObj); 
 MS_DLL_EXPORT int msTileSetExtent(mapservObj *msObj); 

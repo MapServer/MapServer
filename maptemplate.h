@@ -94,10 +94,10 @@ typedef struct
    /* can be BROWSE, QUERY, etc. */
    int Mode; 
    
-   /* can be SPHEREMERC */
+   /* can be GMAP, VE */
    int TileMode;
-   /* three integral coordinates, X, Y, Zoom */
-   long *TileCoords;
+   /* for GMAP: 0 0 1; for VE: 013021023 */
+   char *TileCoords;
    
    /* big enough for time + pid */
    char Id[IDSIZE]; 

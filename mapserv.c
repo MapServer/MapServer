@@ -861,31 +861,22 @@ void loadForm(void)
 
     if(strcasecmp(msObj->request->ParamNames[i], "tilemode") == 0) { 
       /* currently, only valid tilemode is "spheremerc" */
-      if( strcasecmp(msObj->request->ParamValues[i], "spheremerc") != 0) {
-        msSetError(MS_WEBERR, "Invalid tilemode. Use one of: spheremerc", "loadForm()");
+      if( strcasecmp(msObj->request->ParamValues[i], "gmap") == 0) {
+        msObj->TileMode = TILE_GMAP;
+      } else if ( strcasecmp(msObj->request->ParamValues[i], "ve") == 0 ) {
+        msObj->TileMode = TILE_VE;
+      } else {
+        msSetError(MS_WEBERR, "Invalid tilemode. Use one of: gmap, ve", "loadForm()");
         writeError();
       }
-      msObj->TileMode = SPHEREMERC;
       continue;
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"tile") == 0) { 
 
-      int num_coords = 0;
-      char **coords = NULL;
-      int l = 0;
-      
       msObj->CoordSource = FROMTILE;
-      coords = msStringSplit(msObj->request->ParamValues[i], ' ', &(num_coords));
-      if( num_coords != 3 ) {
-        msSetError(MS_WEBERR, "Invalid number of tile coordinates (should be three).", "loadForm()");
-        writeError();
-      }
-
-      msObj->TileCoords = (long *) malloc(sizeof(long) * 3);
-      for(l = 0; l < num_coords; l++) {
-        *(msObj->TileCoords + l) = strtol(coords[l], NULL, 10);
-      }
+      msObj->TileCoords = strdup(msObj->request->ParamValues[i]);
+      
       continue;
     }
 

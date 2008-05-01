@@ -43,62 +43,74 @@ int msTileSetup(mapservObj* msObj) {
 
   /* 
   ** Ensure all the LAYERs have a projection. 
-  **/  
+  */  
   if( msTileSetProjections(msObj->Map) != 0 ) {
     return(MS_FAILURE);
   }
 
   /* 
   ** Set the projection string for this mode. 
-  **/
-  if( msObj->TileMode == SPHEREMERC ) {
+  */
+  if( msObj->TileMode == TILE_GMAP || msObj->TileMode == TILE_VE ) {
     outProjStr = SPHEREMERC_PROJ4;
   } else {
     return(MS_FAILURE); /* Huh? No mode? */
   }
   if( msLoadProjectionString(&(msObj->Map->projection), outProjStr) != 0 ) {
-    msSetError(MS_CGIERR, "Unable to load projection string.", "msTileSetExtent()");
+    msSetError(MS_CGIERR, "Unable to load projection string.", "msTileSetup()");
     return(MS_FAILURE);
   }
   
   /*
   ** Set up the output extents for this tilemode and tile coordinates 
-  **/
-  if( msObj->TileMode == SPHEREMERC ) {
+  */
+  if( msObj->TileMode == TILE_GMAP ) {
+
+    int num_coords = 0;
+    char **coords = NULL;
+    int x, y, zoom;
+    double zoomfactor;
     
-    int x = msObj->TileCoords[0];
-    int y = msObj->TileCoords[1];
-    int zoom = msObj->TileCoords[2];
-    double zoomfactor = pow(2.0, (double)zoom);
+    coords = msStringSplit(msObj->TileCoords, ' ', &(num_coords));
+    if( num_coords != 3 ) {
+      msSetError(MS_WEBERR, "Invalid number of tile coordinates (should be three).", "msTileSetup()");
+      return(MS_FAILURE);
+    }
+    
+    x = strtol(coords[0], NULL, 10);
+    y = strtol(coords[1], NULL, 10);
+    zoom = strtol(coords[2], NULL, 10);
+
+    zoomfactor = pow(2.0, (double)zoom);
     
     /*
     ** Check the input request for sanity.
-    **/
+    */
     if( x >= zoomfactor || y >= zoomfactor ) {
-      msSetError(MS_CGIERR, "Tile coordinates are too large for supplied zoom.", "msTileSetExtent()");
+      msSetError(MS_CGIERR, "GMap tile coordinates are too large for supplied zoom.", "msTileSetup()");
       return(MS_FAILURE);
     }
     if( x < 0 || y < 0 ) {
-      msSetError(MS_CGIERR, "Tile coordinates should not be less than zero.", "msTileSetExtent()");
+      msSetError(MS_CGIERR, "GMap tile coordinates should not be less than zero.", "msTileSetup()");
       return(MS_FAILURE);
     }
 
-    /* 
-    ** Set the output tile size.
-    **/
-    msObj->ImgCols = SPHEREMERC_IMAGE_SIZE;
-    msObj->ImgRows = SPHEREMERC_IMAGE_SIZE;
-    msObj->Map->width = SPHEREMERC_IMAGE_SIZE;
-    msObj->Map->height = SPHEREMERC_IMAGE_SIZE;
+  }
+  else if ( msObj->TileMode == TILE_VE ) {
+    
+    if( strspn( msObj->TileCoords, "0123" ) < strlen( msObj->TileCoords ) ) {
+      msSetError(MS_CGIERR, "VE tile name should only include characters 0, 1, 2 and 3.", "msTileSetup()");
+      return(MS_FAILURE);
+    }
 
   }
   else {
     return(MS_FAILURE); /* Huh? Should have a mode. */
   }
-  
+     
   return MS_SUCCESS;
 #else
-  msSetError(MS_CGIERR, "Tile API is not available.", "msTileSetExtent()");
+  msSetError(MS_CGIERR, "Tile API is not available.", "msTileSetup()");
   return(MS_FAILURE);
 #endif
 }
@@ -112,56 +124,93 @@ int msTileSetExtent(mapservObj* msObj) {
 #ifdef USE_TILE_API 
   
   mapObj *map = msObj->Map;
+  double	dx, dy;
 
-  if( msObj->TileMode == SPHEREMERC ) {
+  if( msObj->TileMode == TILE_GMAP ) {
 
-    double	dx, dy;
+    int num_coords = 0;
+    char **coords = NULL;
+    int x, y, zoom;
+    double zoomfactor, tilesize, xmin, xmax, ymin, ymax;
+    
+    coords = msStringSplit(msObj->TileCoords, ' ', &(num_coords));
+    if( num_coords != 3 ) {
+      msSetError(MS_WEBERR, "Invalid number of tile coordinates (should be three).", "msTileSetExtent()");
+      return(MS_FAILURE);
+    }
+    
+    x = strtol(coords[0], NULL, 10);
+    y = strtol(coords[1], NULL, 10);
+    zoom = strtol(coords[2], NULL, 10);
 
-    int x = msObj->TileCoords[0];
-    int y = msObj->TileCoords[1];
-    int zoom = msObj->TileCoords[2];
-
-    double zoomfactor = pow(2.0, (double)zoom);
+    zoomfactor = pow(2.0, (double)zoom);
     
     /*
      * Calculate the ground extents of the tile request.
      */
     /* printf("X: %i  Y: %i  Z: %i\n",x,y,zoom); */
-    double tilesize = SPHEREMERC_GROUND_SIZE / zoomfactor;
-    double xmin = (x * tilesize) - (SPHEREMERC_GROUND_SIZE / 2.0);
-    double xmax = ((x + 1) * tilesize) - (SPHEREMERC_GROUND_SIZE / 2.0);
-    double ymin = (SPHEREMERC_GROUND_SIZE / 2.0) - ((y + 1) * tilesize);
-    double ymax = (SPHEREMERC_GROUND_SIZE / 2.0) - (y * tilesize);
+    tilesize = SPHEREMERC_GROUND_SIZE / zoomfactor;
+    xmin = (x * tilesize) - (SPHEREMERC_GROUND_SIZE / 2.0);
+    xmax = ((x + 1) * tilesize) - (SPHEREMERC_GROUND_SIZE / 2.0);
+    ymin = (SPHEREMERC_GROUND_SIZE / 2.0) - ((y + 1) * tilesize);
+    ymax = (SPHEREMERC_GROUND_SIZE / 2.0) - (y * tilesize);
     
     map->extent.minx = xmin;
     map->extent.maxx = xmax;
     map->extent.miny = ymin;
     map->extent.maxy = ymax;
+  
+  }
+  else if( msObj->TileMode == TILE_VE ) {
 
-    /* 
-     * Set the output tile size.
-     */
-    msObj->ImgCols = SPHEREMERC_IMAGE_SIZE;
-    msObj->ImgRows = SPHEREMERC_IMAGE_SIZE;
-    map->width = SPHEREMERC_IMAGE_SIZE;
-    map->height = SPHEREMERC_IMAGE_SIZE;
-
-    /* 
-     * Adjust the extents inwards by 1/2 pixel so they are from
-     * center-of-pixel to center-of-pixel, instead of edge-to-edge.
-     * This is the way mapserver does it.
-     */
-    dx = (map->extent.maxx - map->extent.minx) / map->width;
-    map->extent.minx += dx*0.5;
-    map->extent.maxx -= dx*0.5;
-    dy = (map->extent.maxy - map->extent.miny) / map->height;
-    map->extent.miny += dy*0.5;
-    map->extent.maxy -= dy*0.5;
+    double minx = SPHEREMERC_GROUND_SIZE / -2.0;
+    double miny = SPHEREMERC_GROUND_SIZE / -2.0;
+    double maxx = SPHEREMERC_GROUND_SIZE / 2.0;
+    double maxy = SPHEREMERC_GROUND_SIZE / 2.0;
+    double zoom = 2.0;
+    double tsize;
+    int i = 0;
+    char j = 0;
     
+    for( i = 0; i < strlen( msObj->TileCoords ); i++ ) {
+      j = msObj->TileCoords[i];
+      tsize = SPHEREMERC_GROUND_SIZE / zoom;
+      if( j == '1' || j == '3' ) minx += tsize;
+      if( j == '0' || j == '2' ) maxx -= tsize;
+      if( j == '2' || j == '3' ) maxy -= tsize;
+      if( j == '0' || j == '1' ) miny += tsize;
+      zoom *= 2.0;
+    }
+    
+    map->extent.minx = minx;
+    map->extent.maxx = maxx;
+    map->extent.miny = miny;
+    map->extent.maxy = maxy;
+
   }
   else {
     return(MS_FAILURE); /* Huh? Should have a mode. */
   }
+  
+  /* 
+  ** Adjust the extents inwards by 1/2 pixel so they are from
+  ** center-of-pixel to center-of-pixel, instead of edge-to-edge.
+  ** This is the way mapserver does it.
+  */
+  dx = (map->extent.maxx - map->extent.minx) / map->width;
+  map->extent.minx += dx*0.5;
+  map->extent.maxx -= dx*0.5;
+  dy = (map->extent.maxy - map->extent.miny) / map->height;
+  map->extent.miny += dy*0.5;
+  map->extent.maxy -= dy*0.5;
+  
+  /* 
+  ** Set the output tile size.
+  */
+  msObj->ImgCols = SPHEREMERC_IMAGE_SIZE;
+  msObj->ImgRows = SPHEREMERC_IMAGE_SIZE;
+  map->width = SPHEREMERC_IMAGE_SIZE;
+  map->height = SPHEREMERC_IMAGE_SIZE;
   
   return MS_SUCCESS;
 #else
@@ -169,6 +218,7 @@ int msTileSetExtent(mapservObj* msObj) {
   return(MS_FAILURE);
 #endif
 }
+
 
 /************************************************************************
  *                            msTileSetProjections                      *
@@ -187,7 +237,7 @@ int msTileSetProjections(mapObj* map) {
     msSetError(MS_WMSERR, "Cannot set new SRS on a map that doesn't "
                           "have any projection set. Please make sure your mapfile "
                           "has a PROJECTION defined at the top level.", 
-                          "msTileSetExtent()");
+                          "msTileSetProjectionst()");
     return(MS_FAILURE);
   }
 
@@ -203,7 +253,7 @@ int msTileSetProjections(mapObj* map) {
       
       /* Set the projection to the map file projection */  
       if (msLoadProjectionString(&(GET_LAYER(map, i)->projection), mapProjStr) != 0) {
-        msSetError(MS_CGIERR, "Unable to set projection on layer.", "msTileSetExtent()");
+        msSetError(MS_CGIERR, "Unable to set projection on layer.", "msTileSetProjectionst()");
         return(MS_FAILURE);
       }
       GET_LAYER(map, i)->project = MS_TRUE;
