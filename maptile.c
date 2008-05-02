@@ -71,9 +71,15 @@ int msTileSetup(mapservObj* msObj) {
     int x, y, zoom;
     double zoomfactor;
     
-    coords = msStringSplit(msObj->TileCoords, ' ', &(num_coords));
-    if( num_coords != 3 ) {
-      msSetError(MS_WEBERR, "Invalid number of tile coordinates (should be three).", "msTileSetup()");
+    if( msObj->TileCoords ) {
+      coords = msStringSplit(msObj->TileCoords, ' ', &(num_coords));
+      if( num_coords != 3 ) {
+        msSetError(MS_WEBERR, "Invalid number of tile coordinates (should be three).", "msTileSetup()");
+        return(MS_FAILURE);
+      }
+    } 
+    else {
+      msSetError(MS_WEBERR, "Tile parameter not set.", "msTileSetup()");
       return(MS_FAILURE);
     }
     
@@ -133,12 +139,18 @@ int msTileSetExtent(mapservObj* msObj) {
     int x, y, zoom;
     double zoomfactor, tilesize, xmin, xmax, ymin, ymax;
     
-    coords = msStringSplit(msObj->TileCoords, ' ', &(num_coords));
-    if( num_coords != 3 ) {
-      msSetError(MS_WEBERR, "Invalid number of tile coordinates (should be three).", "msTileSetExtent()");
+    if( msObj->TileCoords ) {
+      coords = msStringSplit(msObj->TileCoords, ' ', &(num_coords));
+      if( num_coords != 3 ) {
+        msSetError(MS_WEBERR, "Invalid number of tile coordinates (should be three).", "msTileSetExtent()");
+        return(MS_FAILURE);
+      }
+    } 
+    else {
+      msSetError(MS_WEBERR, "Tile parameter not set.", "msTileSetup()");
       return(MS_FAILURE);
-    }
-    
+    }    
+
     x = strtol(coords[0], NULL, 10);
     y = strtol(coords[1], NULL, 10);
     zoom = strtol(coords[2], NULL, 10);

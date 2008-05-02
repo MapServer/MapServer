@@ -874,6 +874,10 @@ void loadForm(void)
 
     if(strcasecmp(msObj->request->ParamNames[i],"tile") == 0) { 
 
+      if( strlen(msObj->request->ParamValues[i]) < 1 ) {
+        msSetError(MS_WEBERR, "Empty tile parameter.", "loadForm()");
+        writeError();
+      }
       msObj->CoordSource = FROMTILE;
       msObj->TileCoords = strdup(msObj->request->ParamValues[i]);
       
