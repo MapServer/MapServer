@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Various geospatial search operations.
@@ -180,12 +180,15 @@ int msIntersectPointPolygon(pointObj *point, shapeObj *poly) {
   return(status);  
 }
 
-int msIntersectMultipointPolygon(multipointObj *points, shapeObj *poly) {
-  int i;
+int msIntersectMultipointPolygon(shapeObj *multipoint, shapeObj *poly) {
+  int i,j;
   
-  for(i=0; i<points->numpoints; i++) {
-    if(msIntersectPointPolygon(&(points->point[i]), poly) == MS_TRUE)
-      return(MS_TRUE);
+  for(i=0; i<multipoint->numlines; i++ ) {
+    lineObj points = multipoint->line[i];
+    for(j=0; j<points.numpoints; j++) {
+          if(msIntersectPointPolygon(&(points.point[j]), poly) == MS_TRUE)
+        return(MS_TRUE);
+    }
   }
     
   return(MS_FALSE);

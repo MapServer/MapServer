@@ -755,7 +755,8 @@ static int  force_to_points(char *wkb, shapeObj *shape)
     shape->type = MS_SHAPE_NULL;  /* nothing in it */
 
     memcpy(&ngeoms, &wkb[5], 4);
-    offset = 9;  /* were the first geometry is */
+    offset = 9;  /* where the first geometry is */
+ 
     for(t=0; t < ngeoms; t++) {
         memcpy(&type, &wkb[offset + 1], 4);  /* type of this geometry */
 
@@ -809,7 +810,7 @@ static int  force_to_points(char *wkb, shapeObj *shape)
             }
         }
     }
-
+    
     return MS_SUCCESS;
 }
 

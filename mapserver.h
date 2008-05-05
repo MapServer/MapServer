@@ -1559,7 +1559,7 @@ MS_DLL_EXPORT double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, poin
 MS_DLL_EXPORT double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2);
 MS_DLL_EXPORT int msIntersectSegments(pointObj *a, pointObj *b, pointObj *c, pointObj *d);
 MS_DLL_EXPORT int msPointInPolygon(pointObj *p, lineObj *c);
-MS_DLL_EXPORT int msIntersectMultipointPolygon(multipointObj *points, shapeObj *polygon);
+MS_DLL_EXPORT int msIntersectMultipointPolygon(shapeObj *multipoint, shapeObj *polygon);
 MS_DLL_EXPORT int msIntersectPointPolygon(pointObj *p, shapeObj *polygon);
 MS_DLL_EXPORT int msIntersectPolylinePolygon(shapeObj *line, shapeObj *poly);
 MS_DLL_EXPORT int msIntersectPolygons(shapeObj *p1, shapeObj *p2);

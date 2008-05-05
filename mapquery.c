@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  layer query support.
@@ -506,13 +506,13 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
       shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
-	msFreeShape(&shape);
-	continue;
+	      msFreeShape(&shape);
+	      continue;
       }
 
       if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
-	msFreeShape(&shape);
-	continue;
+        msFreeShape(&shape);
+	      continue;
       }
 
 #ifdef USE_PROJ
@@ -523,11 +523,11 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 #endif
 
       if(msRectContained(&shape.bounds, &rect) == MS_TRUE) { /* if the whole shape is in, don't intersect */	
-	status = MS_TRUE;
+	      status = MS_TRUE;
       } else {
 	switch(shape.type) { /* make sure shape actually intersects the rect (ADD FUNCTIONS SPECIFIC TO RECTOBJ) */
 	case MS_SHAPE_POINT:
-	  status = msIntersectMultipointPolygon(&shape.line[0], &searchshape);
+	  status = msIntersectMultipointPolygon(&shape, &searchshape);
 	  break;
 	case MS_SHAPE_LINE:
 	  status = msIntersectPolylinePolygon(&shape, &searchshape);
@@ -762,7 +762,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	  switch(shape.type) { /* make sure shape actually intersects the selectshape */
 	  case MS_SHAPE_POINT:
 	    if(tolerance == 0) /* just test for intersection */
-	      status = msIntersectMultipointPolygon(&shape.line[0], &selectshape);
+	      status = msIntersectMultipointPolygon(&shape, &selectshape);
 	    else { /* check distance, distance=0 means they intersect */
 	      distance = msDistanceShapeToShape(&selectshape, &shape);
 	      if(distance < tolerance) status = MS_TRUE;
@@ -1159,7 +1159,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
       switch(shape.type) { /* make sure shape actually intersects the shape */
       case MS_SHAPE_POINT:
         if(tolerance == 0) /* just test for intersection */
-	  status = msIntersectMultipointPolygon(&shape.line[0], selectshape);
+	  status = msIntersectMultipointPolygon(&shape, selectshape);
 	else { /* check distance, distance=0 means they intersect */
 	  distance = msDistanceShapeToShape(selectshape, &shape);
 	  if(distance < tolerance) status = MS_TRUE;
@@ -1454,8 +1454,9 @@ int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
 {
   int i, found=0;
   rectObj tmpBounds;
-  
+
   for(i=0; i<map->numlayers; i++) {
+
     layerObj *lp;
     lp = (GET_LAYER(map, i));
 
