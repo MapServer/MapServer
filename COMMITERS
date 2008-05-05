@@ -8,7 +8,7 @@ assefa       Assefa Yewondwossen    assefa at dmsolutions.ca             OGC Web
 julien       Julien-Samuel Lacroix  jlacroix at dmsolutions.ca           OGC Web Services
 frank        Frank Warmerdam        warmerdam@pobox.com                  Raster, outputFormatObj, 
 hobu         Howard Butler          hobu at iastate.edu                  mapsde.c
-pramsey      Paul Ramsey            pramsey at refractions.net           mappostgis.c
+pramsey      Paul Ramsey            pramsey at cleverelephant.ca         mappostgis.c, maptile.c
 jerryp       Jerry Pisk             jerry.pisk at gmail.com             
 ned          Ned Harding            nharding at extendthereach.com      
 attila       Attila Csipa           plists at prometheus.org.yu          imagemap, mygis
