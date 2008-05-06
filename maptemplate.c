@@ -793,10 +793,10 @@ static int processFeaturesTag(mapservObj *mapserv, char **line, layerObj *layer)
 {
   char *preTag, *postTag; /* text before and after the tag */
 
-  char *tag, *tagStart, *tagEnd;
+  char *tag, *tagInstance, *tagStart;
   hashTableObj *tagArgs=NULL;
 
-  int i, j;
+  int i, j, status;
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processFeaturesTag()");
@@ -818,7 +818,7 @@ static int processFeaturesTag(mapservObj *mapserv, char **line, layerObj *layer)
   }
 
   if(getInlineTag("features", *line, &tag) != MS_SUCCESS) {
-    msSetError(MS_WEBERR, "Malformed features tag.", "processResultSetTag()");
+    msSetError(MS_WEBERR, "Malformed features tag.", "processFeaturesTag()");
     return MS_FAILURE;
   }
 
@@ -830,12 +830,59 @@ static int processFeaturesTag(mapservObj *mapserv, char **line, layerObj *layer)
 
   /* we know the layer has query results or we wouldn't be in this code */
 
+  status = msLayerOpen(layer); /* open the layer */
+  if(status != MS_SUCCESS) return status;
+  
+  status = msLayerGetItems(layer); /* retrieve all the item names */
+  if(status != MS_SUCCESS) return status;
+
+  if(layer->numjoins > 0) { /* initialize necessary JOINs here */
+    for(j=0; j<layer->numjoins; j++) {
+      status = msJoinConnect(layer, &(layer->joins[j]));
+      if(status != MS_SUCCESS) return status;
+    }
+  }
+
+  mapserv->LRN = 1; /* layer result counter */
+  msInitShape(&(mapserv->ResultShape));
+
+  for(i=0; i<layer->resultcache->numresults; i++) {
+    status = msLayerGetShape(layer, &(mapserv->ResultShape), layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
+    if(status != MS_SUCCESS) return status;
+
+    /* prepare any necessary JOINs here (one-to-one only) */
+    if(layer->numjoins > 0) {
+      for(j=0; j<layer->numjoins; j++) {
+        if(layer->joins[j].type == MS_JOIN_ONE_TO_ONE) {
+          msJoinPrepare(&(layer->joins[j]), &(mapserv->ResultShape));
+          msJoinNext(&(layer->joins[j])); /* fetch the first row */
+        }
+      }
+    }
+
+    /* process the tag */
+    tagInstance = strdup(tag); /* work from a copy */
+    tagInstance = processLine(mapserv, tagInstance, NULL, QUERY); /* do substitutions */
+
+    *line = msStringConcatenate(*line, tagInstance); /* grow the line */
+
+    free(tagInstance);
+    msFreeShape(&(mapserv->ResultShape)); /* init too */
+
+    mapserv->RN++; /* increment counters */
+    mapserv->LRN++;
+  }
+
+  msLayerClose(layer);
+  mapserv->ResultLayer = NULL; /* necessary? */
+
   *line = msStringConcatenate(*line, postTag);
 
   /*
   ** clean up 
   */
   free(postTag);
+  free(tag);
 
   return(MS_SUCCESS);
 }
