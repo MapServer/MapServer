@@ -1460,7 +1460,8 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
 
     /* deal with case where sourcename is of the form 'file.shp' */
     sourcename = strdup(shpfile->source);
-    s = strcasestr(sourcename, ".shp");
+    /* TODO: need to handle this case insensitively */
+    s = strstr(sourcename, ".shp");
     if( s ) *s = '\0';
 
     if((filename = (char *)malloc(strlen(sourcename)+strlen(MS_INDEX_EXTENSION)+1)) == NULL) {
