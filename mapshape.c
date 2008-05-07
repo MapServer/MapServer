@@ -1433,6 +1433,9 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
   int i;
   rectObj shaperect;
   char *filename;
+  char *sourcename = 0; /* shape file source string from map file */
+  char *s = 0; /* pointer to start of '.shp' in source string */
+
 
   if(shpfile->status) {
     free(shpfile->status);
@@ -1454,14 +1457,21 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
     for(i=0;i<shpfile->numshapes;i++) 
       msSetBit(shpfile->status, i, 1);
   } else {
-    if((filename = (char *)malloc(strlen(shpfile->source)+strlen(MS_INDEX_EXTENSION)+1)) == NULL) {
+
+    /* deal with case where sourcename is of the form 'file.shp' */
+    sourcename = strdup(shpfile->source);
+    s = strcasestr(sourcename, ".shp");
+    if( s ) *s = '\0';
+
+    if((filename = (char *)malloc(strlen(sourcename)+strlen(MS_INDEX_EXTENSION)+1)) == NULL) {
       msSetError(MS_MEMERR, NULL, "msSHPWhichShapes()");    
       return(MS_FAILURE);
     }
-    sprintf(filename, "%s%s", shpfile->source, MS_INDEX_EXTENSION);
+    sprintf(filename, "%s%s", sourcename, MS_INDEX_EXTENSION);
     
     shpfile->status = msSearchDiskTree(filename, rect, debug);
     free(filename);
+    free(sourcename);
 
     if(shpfile->status) /* index  */
       msFilterTreeSearch(shpfile, shpfile->status, rect);
