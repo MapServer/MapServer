@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- Don't ignore .qix file when DATA reference includes .shp extension (#590)
+
 - CGI able to alter layers with space and underscores (#2516)
 
 - WFS Multipoint query with PostGIS bug fixed (#2443)
