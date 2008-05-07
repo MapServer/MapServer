@@ -277,15 +277,16 @@ extern "C" {
 #define MS_DRIVER_IMAGEMAP(format)  (strncasecmp((format)->driver,"imagemap",8)==0)
 #define MS_DRIVER_SVG(format) (strncasecmp((format)->driver,"svg",3)==0)
 #define MS_DRIVER_AGG(format) (strncasecmp((format)->driver,"agg/",3)==0)
+#define MS_DRIVER_TEMPLATE(format) (strncasecmp((format)->driver,"template",8)==0)
 
-
-#define MS_RENDER_WITH_GD 1
+#define MS_RENDER_WITH_GD       1
 #define MS_RENDER_WITH_SWF      2
 #define MS_RENDER_WITH_RAWDATA  3
-#define MS_RENDER_WITH_PDF  4
+#define MS_RENDER_WITH_PDF      4
 #define MS_RENDER_WITH_IMAGEMAP 5
 #define MS_RENDER_WITH_SVG      6
 #define MS_RENDER_WITH_AGG      7
+#define MS_RENDER_WITH_TEMPLATE 8 /* query results only */
 
 #define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
@@ -294,6 +295,7 @@ extern "C" {
 #define MS_RENDERER_IMAGEMAP(format) ((format)->renderer == MS_RENDER_WITH_IMAGEMAP)
 #define MS_RENDERER_SVG(format) ((format)->renderer == MS_RENDER_WITH_SVG)
 #define MS_RENDERER_AGG(format) ((format)->renderer == MS_RENDER_WITH_AGG)
+#define MS_RENDERER_TEMPLATE(format) ((format)->renderer == MS_RENDER_WITH_TEMPLATE)
 
 #define MS_CELLSIZE(min,max,d) ((max - min)/(d-1)) /* where min/max are from an MapServer pixel center-to-pixel center extent */
 #define MS_OWS_CELLSIZE(min,max,d) ((max - min)/d) /* where min/max are from an OGC pixel outside edge-to-pixel outside edge extent */

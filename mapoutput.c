@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Various support code related to the outputFormatObj.
@@ -272,8 +272,17 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->extension = strdup("svg");
         format->renderer = MS_RENDER_WITH_SVG;
     }
+
+    if( strcasecmp(driver,"template") == 0 ) {
+      format = msAllocOutputFormat( map, "template", driver );
+      format->mimetype = strdup("text/html");
+      format->extension = strdup("html");
+      format->imagemode = 0;
+      format->renderer = MS_RENDER_WITH_TEMPLATE;
+    }
+
     if( format != NULL )
-        format->inmapfile = MS_FALSE;
+      format->inmapfile = MS_FALSE;
 
     return format;
 }
