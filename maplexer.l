@@ -380,7 +380,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>wms                                   { return(MS_WMS); }
 <INITIAL>alpha                                 { return(MS_GD_ALPHA); }
 
-<URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=]*\]     {
+<URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=_ ]*\]     {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_STRING);
