@@ -2464,7 +2464,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                              psTmpNode->psChild &&
                              psTmpNode->psChild->pszValue)
                     {
-                        sprintf(szTmp, "[%s]", psTmpNode->psChild->pszValue);
+                        sprintf(szTmp, "[%s]", CPLGetXMLValue(psTmpNode, NULL, NULL));
                         pszClassText = msStringConcatenate(pszClassText, szTmp);
                     }
                     psTmpNode = psTmpNode->psNext;
