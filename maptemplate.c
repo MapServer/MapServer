@@ -191,53 +191,58 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
     return MS_FAILURE;
   }
 
-  /* does the format reference an outputFormatObj */
   if((outputFormat = msSelectOutputFormat( mapserv->Map, queryFormat)) != NULL) {
 
-    printf("got an output format!\n");
+    if( !MS_RENDERER_TEMPLATE(outputFormat) ) { /* got an image format, return the query results that way */
 
-  } else {
-    if(mapserv->Map->querymap.status) {
-      checkWebScale(mapserv);
+    }
+  }
 
-      img = msDrawMap(mapserv->Map, MS_TRUE);
+  /* 
+  ** At this point we know we have a template of some sort, either the new style that references a or the old
+  ** style made up of external files slammed together. Either way we may have to compute a query map.
+  */ 
+  if(mapserv->Map->querymap.status) {
+    checkWebScale(mapserv);
+
+    img = msDrawMap(mapserv->Map, MS_TRUE);
+    if(!img) return MS_FAILURE;
+    snprintf(buffer, 1024, "%s%s%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
+    status = msSaveImage(mapserv->Map, img, buffer);
+    if(status != MS_SUCCESS) return status;
+    msFreeImage(img);
+
+    if((mapserv->Map->legend.status == MS_ON || mapserv->UseShapes) && mapserv->Map->legend.template == NULL) {
+      img = msDrawLegend(mapserv->Map, MS_FALSE);
       if(!img) return MS_FAILURE;
-
-      snprintf(buffer, 1024, "%s%s%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-
+      snprintf(buffer, 1024, "%s%sleg%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
       status = msSaveImage(mapserv->Map, img, buffer);
       if(status != MS_SUCCESS) return status;
-
       msFreeImage(img);
-
-      if((mapserv->Map->legend.status == MS_ON || mapserv->UseShapes) && mapserv->Map->legend.template == NULL) {
-        img = msDrawLegend(mapserv->Map, MS_FALSE);
-        if(!img) return MS_FAILURE;
-        snprintf(buffer, 1024, "%s%sleg%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-        status = msSaveImage(mapserv->Map, img, buffer);
-        if(status != MS_SUCCESS) return status;
-        msFreeImage(img);
-      }
-  
-      if(mapserv->Map->scalebar.status == MS_ON) {
-        img = msDrawScalebar(mapserv->Map);
-        if(!img) return MS_FAILURE;
-        snprintf(buffer, 1024, "%s%ssb%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-        status = msSaveImage( mapserv->Map, img, buffer);
-        if(status != MS_SUCCESS) return status;
-        msFreeImage(img);
-      }
-  
-      if(mapserv->Map->reference.status == MS_ON) {
-        img = msDrawReferenceMap(mapserv->Map);
-        if(!img) return MS_FAILURE;
-        snprintf(buffer, 1024, "%s%sref%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-        status = msSaveImage(mapserv->Map, img, buffer);
-        if(status != MS_SUCCESS) return status;
-        msFreeImage(img);
-      }
     }
+  
+    if(mapserv->Map->scalebar.status == MS_ON) {
+      img = msDrawScalebar(mapserv->Map);
+      if(!img) return MS_FAILURE;
+      snprintf(buffer, 1024, "%s%ssb%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
+      status = msSaveImage( mapserv->Map, img, buffer);
+      if(status != MS_SUCCESS) return status;
+      msFreeImage(img);
+    }
+  
+    if(mapserv->Map->reference.status == MS_ON) {
+      img = msDrawReferenceMap(mapserv->Map);
+      if(!img) return MS_FAILURE;
+      snprintf(buffer, 1024, "%s%sref%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
+      status = msSaveImage(mapserv->Map, img, buffer);
+      if(status != MS_SUCCESS) return status;
+      msFreeImage(img);
+    }
+  }
    
+  if(outputFormat) {
+    printf("got an output format!\n");
+  } else {
     if((status = msReturnQuery(mapserv, queryFormat, papszBuffer)) != MS_SUCCESS)
       return status;
   }
@@ -795,10 +800,10 @@ static char *getPostTagText(const char *string1, const char *string2)
 }
 
 /*
-** Function to process a [features ...] tag. This tag can *only* be found within
+** Function to process a [feature ...] tag. This tag can *only* be found within
 ** a [resultset ...][/resultset] block.
 */
-static int processFeaturesTag(mapservObj *mapserv, char **line, layerObj *layer) 
+static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer) 
 {
   char *preTag, *postTag; /* text before and after the tag */
 
@@ -808,31 +813,31 @@ static int processFeaturesTag(mapservObj *mapserv, char **line, layerObj *layer)
   int i, j, status;
 
   if(!*line) {
-    msSetError(MS_WEBERR, "Invalid line pointer.", "processFeaturesTag()");
+    msSetError(MS_WEBERR, "Invalid line pointer.", "processFeatureTag()");
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "features");
+  tagStart = findTag(*line, "feature");
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
   /* check for any tag arguments */
-  if(getTagArgs("features", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+  if(getTagArgs("feature", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
   if(tagArgs) {
     /* todo */
   }
 
-  if(strstr(*line, "[/features]") == NULL) { /* we know the closing tag must be here, if not throw an error */
-    msSetError(MS_WEBERR, "[features] tag found without closing [/features].", "processFeaturesTag()");
+  if(strstr(*line, "[/feature]") == NULL) { /* we know the closing tag must be here, if not throw an error */
+    msSetError(MS_WEBERR, "[feature] tag found without closing [/feature].", "processFeatureTag()");
     return(MS_FAILURE);
   }
 
-  if(getInlineTag("features", *line, &tag) != MS_SUCCESS) {
-    msSetError(MS_WEBERR, "Malformed features tag.", "processFeaturesTag()");
+  if(getInlineTag("feature", *line, &tag) != MS_SUCCESS) {
+    msSetError(MS_WEBERR, "Malformed feature tag.", "processFeatureTag()");
     return MS_FAILURE;
   }
 
-  preTag = getPreTagText(*line, "[features");
-  postTag = getPostTagText(*line, "[/featres]");
+  preTag = getPreTagText(*line, "[feature");
+  postTag = getPostTagText(*line, "[/feature]");
 
   /* start rebuilding **line */
   free(*line); *line = preTag;
