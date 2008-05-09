@@ -181,20 +181,29 @@ int checkWebScale(mapservObj *mapserv)
 int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBuffer)
 {
   imageObj *img = NULL;
-  int status;
+  int i, status;
   char buffer[1024];
 
-  outputFormatObj *outputFormat;
+  outputFormatObj *outputFormat=NULL;
 
   if(!queryFormat) {
     msSetError(MS_WEBERR, "Return format/mime-type not specified.", "msReturnTemplateQuery()");
     return MS_FAILURE;
   }
 
-  if((outputFormat = msSelectOutputFormat( mapserv->Map, queryFormat)) != NULL) {
+  /*
+  ** The functions in mapoutput.c rely on mime-type too and we don't want that with queries. So
+  ** we do a name search only.
+  */
+  for( i = 0; i < mapserv->Map->numoutputformats; i++ ) {
+    if( strcasecmp(queryFormat, mapserv->Map->outputformatlist[i]->name) == 0 )
+      outputFormat = mapserv->Map->outputformatlist[i];
+  }
 
-    if( !MS_RENDERER_TEMPLATE(outputFormat) ) { /* got an image format, return the query results that way */
-
+  if(outputFormat) {
+     if( !MS_RENDERER_TEMPLATE(outputFormat) ) { /* got an image format, return the query results that way */
+      printf("got an image output format\n");
+      return MS_SUCCESS;
     }
   }
 
@@ -241,7 +250,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
   }
    
   if(outputFormat) {
-    printf("got an output format!\n");
+    printf("got a template output format!\n");
   } else {
     if((status = msReturnQuery(mapserv, queryFormat, papszBuffer)) != MS_SUCCESS)
       return status;
