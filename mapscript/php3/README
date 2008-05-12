@@ -576,6 +576,10 @@ Currently supported classes, properties and methods:
     using the msIO services (ie. ms_ioinstallstdouttobuffer() and 
     ms_iogetstdoutbufferstring())
 
+  int insertLayer( layerObj layer [, int nIndex=-1 ] )
+    Insert a copy of *layer* into the Map at index *nIndex*.  The default
+    value of *nIndex* is -1, which means the last possible index.  Returns
+    the index of the new Layer, or -1 in the case of a failure.
 
  LayerObj Class:
  ---------------
@@ -885,6 +889,7 @@ Currently supported classes, properties and methods:
        Returns MS_TRUE/MS_FALSE depending on whether the layer is 
        currently visible in the map (i.e. turned on, in scale, etc.). 
 
+ 
 
  ClassObj Class:
  ---------------

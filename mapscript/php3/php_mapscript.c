@@ -168,6 +168,8 @@ DLEXPORT void php3_ms_map_applyConfigOptions(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_loadOWSParameters(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_OWSDispatch(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_map_insertLayer(INTERNAL_FUNCTION_PARAMETERS);
+
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -696,6 +698,7 @@ function_entry php_map_class_functions[] = {
     {"applyconfigoptions", php3_ms_map_applyConfigOptions,      NULL},
     {"loadowsparameters",  php3_ms_map_loadOWSParameters,       NULL},
     {"owsdispatch",     php3_ms_map_OWSDispatch,        NULL},
+    {"insertlayer",     php3_ms_map_insertLayer,        NULL},
     {NULL, NULL, NULL}
 };
 
@@ -5985,6 +5988,71 @@ DLEXPORT void php3_ms_map_loadOWSParameters(INTERNAL_FUNCTION_PARAMETERS)
      RETURN_LONG(nReturn);
 }
 
+
+
+
+/**********************************************************************
+ *                        map->insertLayer(layerobj)
+ * 
+ **********************************************************************/
+
+/* {{{ proto int map.insertLayer(layerObj layer, index)
+   Returns the index where the layer had been inserted*/
+
+DLEXPORT void php3_ms_map_insertLayer(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+  pval  *pLyrIndex, *pLyr, *pThis;
+  mapObj *self=NULL;
+  layerObj *poLayer=NULL;
+  int nLyrIndex = -1, iReturn=-1;
+  int nArgs;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+    nArgs = ARG_COUNT(ht);
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        (nArgs != 1 && nArgs != 2) ||
+        getParameters(ht, nArgs, &pLyr, &pLyrIndex) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+    
+
+    if (nArgs == 2)
+    {
+        convert_to_long(pLyrIndex);
+        nLyrIndex = pLyrIndex->value.lval;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    poLayer = (layerObj *)_phpms_fetch_handle(pLyr, 
+                                              PHPMS_GLOBAL(le_mslayer),
+                                              list TSRMLS_CC);
+
+    if (self == NULL || poLayer == NULL ||
+        (iReturn =  mapObj_insertLayer(self, poLayer, nLyrIndex) ) < 0)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    /* Update mapObj members */
+    _phpms_set_property_long(pThis, "numlayers",
+                             self->numlayers, E_ERROR TSRMLS_CC); 
+
+    
+    /* Return layer object */
+    RETURN_LONG(iReturn);
+}
+/* }}} */
 
 /* }}} */
 

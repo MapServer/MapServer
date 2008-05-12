@@ -335,6 +335,14 @@ int mapObj_OWSDispatch(mapObj *self, cgiRequestObj *req )
     return msOWSDispatch( self, req, TRUE);
 }
 
+int mapObj_insertLayer(mapObj *self, layerObj *layer, int index)
+{
+    if (self && layer)
+      return msInsertLayer(self, layer, index);
+
+    return -1;
+}
+
 /**********************************************************************
  * class extensions for layerObj, always within the context of a map
  **********************************************************************/
