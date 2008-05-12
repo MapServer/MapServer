@@ -226,14 +226,29 @@ static GDpixfmt loadSymbolPixmap(symbolObj *sym) {
  * selection from the list of raster fonts provided with agg
  * that best corresponds to the ones provided with GD. This 
  * selection was done visually, first by looking at charcter 
- * size, then resemblance.
+ * size, then resemblance. The chosen fonts are more or less
+ * monospaced as this is what is assumed when calculating label 
+ * sizes
  */
 const agg::int8u* rasterfonts[]= { 
         agg::gse5x7, /*gd tiny. gse5x7 is a bit less high than gd tiny*/
-        agg::mcs6x11_mono, /*gd small*/
+        agg::gse7x11, /*gd small*/
         agg::gse7x11_bold, /*gd medium*/
-        agg::verdana16, /*gd large*/
+        agg::gse7x15, /*gd large*/
         agg::gse8x16_bold /*gd huge*/
+};
+
+typedef struct {
+    int width;
+    int height;
+} font_size_struct;
+
+const font_size_struct rasterfont_sizes[] = {
+        {5,7},
+        {7,11},
+        {7,11},
+        {7,15}, //the width here is an approximation. (not a fixed width font)
+        {8,16}
 };
 
 ///base rendering class for AGG.
@@ -1996,23 +2011,42 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
 
 }
 
-int msGetLabelSizeAGG(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
-{
-    AGGMapserverRenderer* ren = getAGGRenderer(img);
-    int size;
-    size = MS_NINT(label->size*scalefactor);
-    size = MS_MAX(size, label->minsize);
-    size = MS_MIN(size, label->maxsize);
-    char * font = msLookupHashTable(&(fontset->fonts), label->font);
-    if(!font) {
-        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSizeAGG()", label->font);
-        return MS_FAILURE;
-    }
-    if(ren->getLabelSize(string, font, label->size, rect) != MS_SUCCESS)
-        return MS_FAILURE;
-    if(adjustBaseline) {
-        label->offsety += MS_NINT(((rect->miny+rect->maxy) + size) / 2);
-        label->offsetx += MS_NINT(rect->minx / 2);
+int msGetLabelSizeAGG(imageObj *img, char *string, labelObj *label,
+        rectObj *rect, fontSetObj *fontset, double scalefactor,
+        int adjustBaseline) {
+    if (label->type==MS_TRUETYPE) {
+        AGGMapserverRenderer* ren = getAGGRenderer(img);
+        int size;
+        size = MS_NINT(label->size*scalefactor);
+        size = MS_MAX(size, label->minsize);
+        size = MS_MIN(size, label->maxsize);
+        char * font = msLookupHashTable(&(fontset->fonts), label->font);
+        if (!font) {
+            msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSizeAGG()", label->font);
+            return MS_FAILURE;
+        }
+        if (ren->getLabelSize(string, font, label->size, rect) != MS_SUCCESS)
+            return MS_FAILURE;
+        if (adjustBaseline) {
+            label->offsety += MS_NINT(((rect->miny+rect->maxy) + size) / 2);
+            label->offsetx += MS_NINT(rect->minx / 2);
+        }
+    } else {
+        char **token=NULL;
+        int t, num_tokens, max_token_length=0;
+        if ((token = msStringSplit(string, '\n', &(num_tokens))) == NULL)
+            return (0);
+
+        for (t=0; t<num_tokens; t++)
+            /* what's the longest token */
+            max_token_length = MS_MAX(max_token_length, (int) strlen(token[t]));
+
+        rect->minx = 0;
+        rect->miny = -(rasterfont_sizes[label->size].height * num_tokens);
+        rect->maxx = rasterfont_sizes[label->size].width * max_token_length;
+        rect->maxy = 0;
+
+        msFreeCharArray(token, num_tokens);
     }
     return MS_SUCCESS;
 }
