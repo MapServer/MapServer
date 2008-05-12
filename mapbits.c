@@ -62,7 +62,7 @@ int msGetBit(char *array, int index)
 */
 int msGetNextBit(char *array, int i, int size) { 
 
-  char b;
+  register char b;
 
   while(i < size) {
     b = *(array + (i/CHAR_BIT));
