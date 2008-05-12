@@ -291,21 +291,9 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   enum MS_CONNECTION_TYPE lastconnectiontype;
-  httpRequestObj *pasOWSReqInfo;
-  int numOWSRequests=0;
+  httpRequestObj *pasOWSReqInfo=NULL;
+  int numOWSLayers=0, numOWSRequests=0;
   wmsParamsObj sLastWMSParams;
-
-  /* Alloc and init pasOWSReqInfo... for now we alloc numlayers+1 entries
-   * but this could definitely be optimized
-   */
-  pasOWSReqInfo = (httpRequestObj *)malloc((map->numlayers+1)*sizeof(httpRequestObj));
-  if (pasOWSReqInfo == NULL) {
-    msSetError(MS_MEMERR, "Allocation of httpRequestObj failed.", "msDrawMap()");
-    return NULL;
-  }
-
-  msHTTPInitRequestObj(pasOWSReqInfo, map->numlayers+1);
-  msInitWmsParamsObj(&sLastWMSParams);
 #endif
 
   if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&mapstarttime, NULL);
@@ -321,51 +309,70 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
   if(!image) {
     msSetError(MS_IMGERR, "Unable to initialize image.", "msDrawMap()");
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-    msFreeWmsParamsObj(&sLastWMSParams);
-    msFree(pasOWSReqInfo);
-#endif
     return(NULL);
   }
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-  /* Pre-download all WMS/WFS layers in parallel before starting to draw map */
-  lastconnectiontype = MS_SHAPEFILE;
+  /* How many OWS (WMS/WFS) layers do we have to draw?
+   * Note: numOWSLayers is the number of actual layers and numOWSRequests is
+   * the number of HTTP requests which could be lower if multiple layers 
+   * are merged into the same request.
+   */
+  numOWSLayers=0;
   for(i=0; i<map->numlayers; i++) {
-    /* if(map->layerorder[i] == -1 || !msLayerIsVisible(map, &(map->layers[map->layerorder[i]]))) */
-    if(map->layerorder[i] == -1 || !msLayerIsVisible(map, GET_LAYER(map,map->layerorder[i])))
-      continue;
+    if(map->layerorder[i] != -1 && 
+       msLayerIsVisible(map, GET_LAYER(map,map->layerorder[i])))
+        numOWSLayers++;
+  }
 
-    lp = GET_LAYER(map,map->layerorder[i]);
+  if (numOWSLayers > 0) {
+    /* Alloc and init pasOWSReqInfo...
+     */
+    pasOWSReqInfo = (httpRequestObj *)malloc((numOWSLayers+1)*sizeof(httpRequestObj));
+    if (pasOWSReqInfo == NULL) {
+      msSetError(MS_MEMERR, "Allocation of httpRequestObj failed.", "msDrawMap()");
+      return NULL;
+    }
+    msHTTPInitRequestObj(pasOWSReqInfo, numOWSLayers+1);
+    msInitWmsParamsObj(&sLastWMSParams);
+
+    /* Pre-download all WMS/WFS layers in parallel before starting to draw map */
+    lastconnectiontype = MS_SHAPEFILE;
+    for(i=0; numOWSLayers && i<map->numlayers; i++) {
+      if(map->layerorder[i] == -1 || !msLayerIsVisible(map, GET_LAYER(map,map->layerorder[i])))
+        continue;
+
+      lp = GET_LAYER(map,map->layerorder[i]);
 
 #ifdef USE_WMS_LYR
-    if(lp->connectiontype == MS_WMS) {
-      if(msPrepareWMSLayerRequest(map->layerorder[i], map, lp, lastconnectiontype, &sLastWMSParams, pasOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
-        msFreeWmsParamsObj(&sLastWMSParams);
-        msFreeImage(image);
-        msFree(pasOWSReqInfo);
-        return NULL;
+      if(lp->connectiontype == MS_WMS) {
+        if(msPrepareWMSLayerRequest(map->layerorder[i], map, lp, lastconnectiontype, &sLastWMSParams, pasOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
+          msFreeWmsParamsObj(&sLastWMSParams);
+          msFreeImage(image);
+          msFree(pasOWSReqInfo);
+          return NULL;
+        }
       }
-    }
 #endif
 
 #ifdef USE_WFS_LYR
-    if(lp->connectiontype == MS_WFS) {
-      if(msPrepareWFSLayerRequest(map->layerorder[i], map, lp, pasOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
-        msFreeWmsParamsObj(&sLastWMSParams);
-        msFreeImage(image);
-        msFree(pasOWSReqInfo);
-        return NULL;
+      if(lp->connectiontype == MS_WFS) {
+        if(msPrepareWFSLayerRequest(map->layerorder[i], map, lp, pasOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
+          msFreeWmsParamsObj(&sLastWMSParams);
+          msFreeImage(image);
+          msFree(pasOWSReqInfo);
+          return NULL;
+        }
       }
-    }
 #endif
 
-    lastconnectiontype = lp->connectiontype;
-  }
+      lastconnectiontype = lp->connectiontype;
+    }
 
 #ifdef USE_WMS_LYR
   msFreeWmsParamsObj(&sLastWMSParams);
 #endif
+  } /* if numOWSLayers > 0 */
 
   if(numOWSRequests && msOWSExecuteRequests(pasOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE) {
     msFreeImage(image);
@@ -436,8 +443,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
           msSetError(MS_IMGERR, "Failed to draw layer named '%s'.", "msDrawMap()", lp->name);
           msFreeImage(image);
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-          msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
-          msFree(pasOWSReqInfo);
+          if (pasOWSReqInfo) {
+            msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+            msFree(pasOWSReqInfo);
+          }
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
           return(NULL);
         }
@@ -481,8 +490,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   if(msDrawLabelCache(image, map) == -1) {
     msFreeImage(image);
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-    msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
-    msFree(pasOWSReqInfo);
+    if (pasOWSReqInfo) {
+      msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+      msFree(pasOWSReqInfo);
+    }
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
     return(NULL);
   }
@@ -533,8 +544,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     if(status == MS_FAILURE) {
       msFreeImage(image);
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-      msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
-      msFree(pasOWSReqInfo);
+      if (pasOWSReqInfo) {
+        msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+        msFree(pasOWSReqInfo);
+      }
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
       return(NULL);
     }
@@ -571,8 +584,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   /* Cleanup WMS/WFS Request stuff */
-  msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
-  msFree(pasOWSReqInfo);
+  if (pasOWSReqInfo) {
+    msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+    msFree(pasOWSReqInfo);
+  }
 #endif
 
   if(map->debug >= MS_DEBUGLEVEL_TUNING) {
