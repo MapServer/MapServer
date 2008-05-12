@@ -535,24 +535,41 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
      }
 
     /* Allocate buffer to fit the largest query string */
-    query_string_0_6 = (char *) malloc(113 + 42 + strlen(columns_wanted) + strlen(data_source) + (layer->filter.string ? strlen(layer->filter.string) : 0) + 2 * strlen(geom_column) + strlen(box3d) + strlen(f_table_name) + strlen(user_srid) + 1);
+    query_string_0_6 = (char *) malloc(113 + 42 + 7 + 12 + strlen(columns_wanted) + strlen(data_source) + (layer->filter.string ? strlen(layer->filter.string) : 0) + 2 * strlen(geom_column) + strlen(box3d) + strlen(f_table_name) + strlen(user_srid) + 1);
     
     assert( layerinfo->cursor_name[0] == '\0' );
     strcpy( layerinfo->cursor_name, "mycursor" );
 
-    if(!layer->filter.string) {
+    if( layer->maxfeatures > 0 ) {
+      if(!layer->filter.string) {
         if(!strlen(user_srid)) {
-            sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )", columns_wanted, data_source, geom_column, box3d, f_table_name, geom_column);
+          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') ) limit %d", columns_wanted, data_source, geom_column, box3d, f_table_name, geom_column, layer->maxfeatures);
         } else {
-            /* use the user specified version */
-            sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )", columns_wanted, data_source, geom_column, box3d, user_srid);
+          /* use the user specified version */
+          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s ) limit %d", columns_wanted, data_source, geom_column, box3d, user_srid, layer->maxfeatures);
         }
+      } else {
+        if(!strlen(user_srid)) {
+          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') )) limit %d", columns_wanted, data_source, layer->filter.string, geom_column, box3d, f_table_name, geom_column, layer->maxfeatures);
+        } else {
+          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) ) limit %d", columns_wanted, data_source, layer->filter.string, geom_column, box3d, user_srid, layer->maxfeatures);
+        }
+      }
     } else {
+      if(!layer->filter.string) {
         if(!strlen(user_srid)) {
-            sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))", columns_wanted, data_source, layer->filter.string, geom_column, box3d, f_table_name, geom_column);
+          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )", columns_wanted, data_source, geom_column, box3d, f_table_name, geom_column);
         } else {
-            sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )", columns_wanted, data_source, layer->filter.string, geom_column, box3d, user_srid);
+          /* use the user specified version */
+          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )", columns_wanted, data_source, geom_column, box3d, user_srid);
         }
+      } else {
+        if(!strlen(user_srid)) {
+          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))", columns_wanted, data_source, layer->filter.string, geom_column, box3d, f_table_name, geom_column);
+        } else {
+          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )", columns_wanted, data_source, layer->filter.string, geom_column, box3d, user_srid);
+        }
+      }
     }
 
     free(data_source);
@@ -700,7 +717,12 @@ int msPOSTGISLayerClose(layerObj *layer)
             query_result = PQexec(layerinfo->conn, cmd_buffer );
             if(query_result) {
                 PQclear(query_result);
-            }
+            } else {
+              if (msPOSTGISSanitizeConnection(layerinfo->conn) != MS_SUCCESS)
+	      {
+                return MS_FAILURE;
+	      }
+	    }
 
             layerinfo->cursor_name[0] = '\0';
         }
@@ -1434,7 +1456,9 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 
         if(query_result) {
             PQclear(query_result);
-        }
+        } else {
+            msPOSTGISSanitizeConnection(layerinfo->conn);
+	}
 
         free(sql);
         free(geom_column_name);
@@ -1612,6 +1636,7 @@ int msPOSTGISLayerRetrievePGVersion(layerObj *layer, int debug, int *major, int 
           msDebug("msPOSTGISLayerRetrievePGVersion: No results returned.\n");
         }
         free(tmp2);
+        msPOSTGISSanitizeConnection(layerinfo->conn);
         return(MS_FAILURE);
 
     }
@@ -1759,6 +1784,7 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
       msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePK()");
       free(tmp2);
       free(sql);
+      msPOSTGISSanitizeConnection(layerinfo->conn);
       return(MS_FAILURE);
 
     }

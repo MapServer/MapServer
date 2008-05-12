@@ -25,7 +25,7 @@ Current Version (5.1-dev, SVN trunk):
 
 - Remove C++-style comments and most other warnings thrown by -pedantic (#2598)
 
-- Fix PostGIS transaction behavior in fcgi situations (#2497)
+- Fix PostGIS transaction behavior in fcgi situations (#2497, #2613)
 
 - Improve performance for large shape files (#2282)
 
