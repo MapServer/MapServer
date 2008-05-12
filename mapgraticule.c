@@ -655,7 +655,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
     if( pLayer->transform ) 
 		msTransformShapeToPixel( pShape, pLayer->map->extent, pLayer->map->cellsize );
 
-	if (msGetLabelSize( pShape->text, &pLayer->class[0]->label, &rectLabel, &pLayer->map->fontset, 1.0, MS_FALSE) != 0)
+	if (msGetLabelSizeGD( pShape->text, &pLayer->class[0]->label, &rectLabel, &pLayer->map->fontset, 1.0, MS_FALSE) != 0)
         return MS_FAILURE;  /* msSetError already called */
 
 	switch( ePosition )

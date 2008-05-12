@@ -1947,6 +1947,26 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
 
 }
 
+int msGetLabelSizeAGG(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
+{
+    AGGMapserverRenderer* ren = getAGGRenderer(img);
+    int size;
+    size = MS_NINT(label->size*scalefactor);
+    size = MS_MAX(size, label->minsize);
+    size = MS_MIN(size, label->maxsize);
+    char * font = msLookupHashTable(&(fontset->fonts), label->font);
+    if(!font) {
+        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSizeAGG()", label->font);
+        return MS_FAILURE;
+    }
+    if(ren->getLabelSize(string, font, label->size, rect) != MS_SUCCESS)
+        return MS_FAILURE;
+    if(adjustBaseline) {
+        label->offsety += MS_NINT(((rect->miny+rect->maxy) + size) / 2);
+        label->offsetx += MS_NINT(rect->minx / 2);
+    }
+    return MS_SUCCESS;
+}
 // ---------------------------------------------------------------------------
 // Draw a label curved along a line
 // ---------------------------------------------------------------------------

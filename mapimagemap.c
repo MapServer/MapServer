@@ -1850,7 +1850,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
     if(cachePtr->label.type == MS_TRUETYPE)
       cachePtr->label.size = (int)(cachePtr->label.size*layerPtr->scalefactor);
 
-    if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
+    if(msGetLabelSize(img,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
       return(-1);
 
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))

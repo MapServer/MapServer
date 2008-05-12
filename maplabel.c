@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Labeling Implementation.
@@ -396,6 +396,17 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 #endif
 }
 
+
+int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
+{
+#ifdef USE_AGG
+    if(MS_RENDERER_AGG(img->format))
+        return msGetLabelSizeAGG(img,string,label,rect,fontset,scalefactor,adjustBaseline);
+    else
+#endif
+        return msGetLabelSizeGD(string,label,rect,fontset,scalefactor,adjustBaseline);
+}
+
 /*
 ** Note: All these routines assume a reference point at the LL corner of the text. GD's
 ** bitmapped fonts use UL and this is compensated for. Note the rect is relative to the
@@ -403,7 +414,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 */
 
 /* assumes an angle of 0 regardless of what's in the label object */
-int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
+int msGetLabelSizeGD(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
 {
   int size;
   if(label->type == MS_TRUETYPE) {
@@ -802,7 +813,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   label.outlinecolor = style->outlinecolor;
   label.antialias = symbol->antialias;
   
-  if(msGetLabelSize(symbol->character, &label, &label_rect, symbolset->fontset, scalefactor, MS_FALSE) == -1)
+  if(msGetLabelSizeGD(symbol->character, &label, &label_rect, symbolset->fontset, scalefactor, MS_FALSE) == -1)
     return(-1);
 
   label_width = (int) label_rect.maxx - (int) label_rect.minx;
