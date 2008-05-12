@@ -121,9 +121,7 @@ void msHTTPCleanup()
 void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests) 
 {
     int i;
-    if (!gbCurlInitialized)
-        msHTTPInit();
-  
+
     for(i=0; i<numRequests; i++)
     {
         pasReqInfo[i].pszGetUrl = NULL;
@@ -244,6 +242,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     if (numRequests == 0)
         return MS_SUCCESS;  /* Nothing to do */
 
+    if (!gbCurlInitialized)
+        msHTTPInit();
+  
     /* Establish the timeout (seconds) for how long we are going to wait 
      * for a response. 
      * We use the longest timeout value in the array of requests 
