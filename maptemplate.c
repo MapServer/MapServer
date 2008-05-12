@@ -967,6 +967,8 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     }
   }
 
+  *line = processLine(mapserv, *line, NULL, BROWSE); /* do substitutions, non-query tags only yet */
+
   if(getInlineTag("resultset", *line, &tag) != MS_SUCCESS) {
     msSetError(MS_WEBERR, "Malformed resultset tag.", "processResultSetTag()");
     return MS_FAILURE;
@@ -978,8 +980,10 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   /* start rebuilding **line */
   free(*line); *line = preTag;
 
-  if(lp->resultcache && lp->resultcache->numresults > 0) {
-    /* output the tag content */
+  if(lp->resultcache && lp->resultcache->numresults > 0) {    
+    /* probably will need a while-loop here to handle multiple instances of [feature ...] tags */
+    if(processFeatureTag(mapserv, &tag, lp) != MS_SUCCESS)
+      return(MS_FAILURE); /* TODO: how to handle */ 
     *line = msStringConcatenate(*line, tag);
   }
 
