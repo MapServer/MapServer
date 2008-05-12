@@ -699,7 +699,12 @@ int msPOSTGISLayerClose(layerObj *layer)
             query_result = PQexec(layerinfo->conn, cmd_buffer );
             if(query_result) {
                 PQclear(query_result);
-            }
+            } else {
+              if (msPOSTGISSanitizeConnection(layerinfo->conn) != MS_SUCCESS)
+	      {
+                return MS_FAILURE;
+	      }
+	    }
 
             layerinfo->cursor_name[0] = '\0';
         }
@@ -1433,7 +1438,9 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 
         if(query_result) {
             PQclear(query_result);
-        }
+        } else {
+            msPOSTGISSanitizeConnection(layerinfo->conn);
+	}
 
         free(sql);
         free(geom_column_name);
@@ -1611,6 +1618,7 @@ int msPOSTGISLayerRetrievePGVersion(layerObj *layer, int debug, int *major, int 
           msDebug("msPOSTGISLayerRetrievePGVersion: No results returned.\n");
         }
         free(tmp2);
+        msPOSTGISSanitizeConnection(layerinfo->conn);
         return(MS_FAILURE);
 
     }
@@ -1758,6 +1766,7 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
       msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePK()");
       free(tmp2);
       free(sql);
+      msPOSTGISSanitizeConnection(layerinfo->conn);
       return(MS_FAILURE);
 
     }
