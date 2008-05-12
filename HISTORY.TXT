@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- AGG: enable offset lines of type x -99 (#2588)
+
 - AGG: use an agg specific label size calculation function where possible (#2357)
 
 - mapogcsld.c: fetch TextSymbolizer/Label/ogc:PropertyName correctly (#2611)

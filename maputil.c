@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Various utility functions ... a real hodgepodge.
@@ -1441,6 +1441,105 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
 #endif
 
     msTransformShapeToPixel(shape, extent, cellsize);
+}
+
+shapeObj* msOffsetPolyline(shapeObj *p, int offsetx, int offsety) {
+    int i, j, first,idx;
+    int ox=0, oy=0, limit;
+    double dx,dy,dx0=0, dy0=0,x, y, x0=0.0, y0=0.0, k=0.0, k0=0.0, q=0.0, q0=0.0;
+    float par=(float)0.71;
+    shapeObj *ret = (shapeObj*)malloc(sizeof(shapeObj));
+    msInitShape(ret);
+    ret->numlines = p->numlines;
+    ret->line=(lineObj*)malloc(sizeof(lineObj)*ret->numlines);
+    for(i=0;i<ret->numlines;i++) {
+        ret->line[i].numpoints=p->line[i].numpoints;
+        ret->line[i].point=(pointObj*)malloc(sizeof(pointObj)*ret->line[i].numpoints);
+    }
+    if(offsety == -99) {
+        limit = offsetx*offsetx/4;
+        for (i = 0; i < p->numlines; i++) {
+            idx=0;
+            first = 1;
+            for(j=1; j<p->line[i].numpoints; j++) {        
+                ox=0; oy=0;
+                dx = (p->line[i].point[j].x - p->line[i].point[j-1].x);
+                dy = (p->line[i].point[j].y - p->line[i].point[j-1].y);
+
+                /* offset setting - quick approximation, may be changed with goniometric functions */
+                if(dx==0) { /* vertical line */
+                    if(dy==0) {
+                        continue; /* checking unique points */
+                    }
+                    ox=(dy>0) ? -offsetx : offsetx;
+                } else {
+                    k = (double)dy/(double)dx;
+                    if(MS_ABS(k)<0.5) {
+                        oy = (dx>0) ? offsetx : -offsetx;
+                    } else {
+                        if (MS_ABS(k)<2.1) {
+                            oy = (int) ((dx>0) ? offsetx*par : -offsetx*par);
+                            ox = (int) ((dy>0) ? -offsetx*par : offsetx*par);
+                        } else
+                            ox = (int)((dy>0) ? -offsetx : offsetx);
+                    }
+                    q = p->line[i].point[j-1].y+oy - k*(p->line[i].point[j-1].x+ox);
+                }
+
+                /* offset line points computation */
+                if(first==1) { /* first point */
+                    first = 0;
+                    ret->line[i].point[idx].x = p->line[i].point[j-1].x+ox;
+                    ret->line[i].point[idx].y = p->line[i].point[j-1].y+oy;
+                    idx++;
+                } else { /* middle points */
+                    if((dx*dx+dy*dy)>limit){ /* if the points are too close */
+                        if(dx0==0) { /* checking verticals */
+                            if(dx==0) {
+                                continue;
+                            }
+                            x = x0;
+                            y = k*x + q;
+                        } else {
+                            if(dx==0) {
+                                x = p->line[i].point[j-1].x+ox;
+                                y = k0*x + q0;
+                            } else {
+                                if(k==k0) continue; /* checking equal direction */
+                                x = (q-q0)/(k0-k);
+                                y = k*x+q;
+                            }
+                        }
+                    }else{/* need to be refined */
+                        x = p->line[i].point[j-1].x+ox;
+                        y = p->line[i].point[j-1].y+oy;
+                    }
+                    ret->line[i].point[idx].x=x;
+                    ret->line[i].point[idx].y=y;
+                    idx++;
+                }
+                dx0 = dx; dy0 = dy; x0 = x, y0 = y; k0 = k; q0=q;
+            }
+            /* last point */
+            if(first==0) {
+                ret->line[i].point[idx].x=p->line[i].point[p->line[i].numpoints-1].x+ox;
+                ret->line[i].point[idx].y=p->line[i].point[p->line[i].numpoints-1].y+oy;
+                idx++;
+            }
+            if(idx!=p->line[i].numpoints) {
+                /*printf("shouldn't happen :(\n");*/
+                ret->line[i].numpoints=idx;
+                ret->line=realloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
+            }
+        }
+    } else { /* normal offset (eg. drop shadow) */
+        for (i = 0; i < p->numlines; i++)
+            for(j=1; j<p->line[i].numpoints; j++) {
+                ret->line[i].point[j-1].x=p->line[i].point[j-1].x+offsetx;
+                ret->line[i].point[j-1].y=p->line[i].point[j-1].y+offsety;
+            }
+    }
+    return ret;
 }
 
 /*

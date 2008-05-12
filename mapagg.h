@@ -153,7 +153,7 @@ public:
  */
 class line_adaptor {
 public:
-    line_adaptor(shapeObj *shape, double ox, double oy):s(shape),ox(ox),oy(oy)
+    line_adaptor(shapeObj *shape):s(shape)
     {
         m_line=s->line; /*first line*/
         m_point=m_line->point; /*current vertex is first vertex of first line*/
@@ -167,14 +167,14 @@ public:
         m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
     }
     
-    unsigned vertex(double* x, double* y)
+    virtual unsigned vertex(double* x, double* y)
     {
         if(m_point < m_pend)
         {
             /*here we treat the case where a real vertex is returned*/
             bool first = m_point == m_line->point; /*is this the first vertex of a line*/
-            *x = m_point->x+ox;
-            *y = m_point->y+oy;
+            *x = m_point->x;
+            *y = m_point->y;
             m_point++;
             return first ? agg::path_cmd_move_to : agg::path_cmd_line_to;
         }
@@ -194,16 +194,34 @@ public:
     }
 private:
     shapeObj *s;
-    double ox,oy;
     lineObj *m_line, /*current line pointer*/
     *m_lend; /*points to after the last line*/
     pointObj *m_point, /*current point*/
     *m_pend; /*points to after last point of current line*/
 };
 
+class offset_line_adaptor: public line_adaptor  {
+public:
+    offset_line_adaptor(shapeObj *shape, double ox, double oy):line_adaptor(shape),ox(ox),oy(oy)
+    {
+    }
+    
+    unsigned vertex(double* x, double* y)
+    {
+        unsigned ret = line_adaptor::vertex(x,y);
+        *x+=ox;
+        *y+=oy;
+        return ret;
+    }
+private:
+    double ox,oy;
+};
+
+
+
 class polygon_adaptor {
 public:
-    polygon_adaptor(shapeObj *shape, double ox, double oy):s(shape),ox(ox),oy(oy),m_stop(false)
+    polygon_adaptor(shapeObj *shape):s(shape),m_stop(false)
     {
         m_line=s->line; /*first lines*/
         m_point=m_line->point; /*first vertex of first line*/
@@ -219,14 +237,14 @@ public:
         m_pend=&(m_line->point[m_line->numpoints]);
     }
     
-    unsigned vertex(double* x, double* y)
+    virtual unsigned vertex(double* x, double* y)
     {
         if(m_point < m_pend)
         {
             /*if here, we have a real vertex*/
             bool first = m_point == m_line->point;
-            *x = m_point->x+ox;
-            *y = m_point->y+oy;
+            *x = m_point->x;
+            *y = m_point->y;
             m_point++;
             return first ? agg::path_cmd_move_to : agg::path_cmd_line_to;
         }
@@ -262,6 +280,25 @@ private:
     *m_pend; /*pointer to after last vertex of current line*/
     bool m_stop; /*should next call return stop command*/ 
 };
+
+class offset_polygon_adaptor: public polygon_adaptor  {
+public:
+    offset_polygon_adaptor(shapeObj *shape, double ox, double oy):polygon_adaptor(shape),ox(ox),oy(oy)
+    {
+    }
+    
+    unsigned vertex(double* x, double* y)
+    {
+        unsigned ret = polygon_adaptor::vertex(x,y);
+        *x+=ox;
+        *y+=oy;
+        return ret;
+    }
+private:
+    double ox,oy;
+};
+
+
 
 
 
