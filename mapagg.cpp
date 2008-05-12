@@ -1780,11 +1780,24 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             //translate the hatch so it overlaps the current shape
             hatch.transform(agg::trans_affine_translation(p->bounds.minx, p->bounds.miny));
             
-            agg::conv_stroke <agg::path_storage > stroke(hatch);
-            stroke.width(style->width);
             
-            //render the hatch clipped by the shape
-            ren->renderPathSolidClipped(stroke,*polygons,agg_color);
+            
+            if(symbol->patternlength>1) {
+                //dash the hatch and render it clipped by the shape
+                agg::conv_dash<agg::path_storage > dash(hatch);
+                agg::conv_stroke<agg::conv_dash<agg::path_storage> > stroke_dash(dash);  
+                for (int i=0; i<symbol->patternlength; i+=2) {
+                    if (i < symbol->patternlength-1)
+                        dash.add_dash(symbol->pattern[i], symbol->pattern[i+1]);
+                }
+                stroke_dash.width(style->width);
+                ren->renderPathSolidClipped(stroke_dash,*polygons,agg_color);
+            } else {
+                //render the hatch clipped by the shape
+                agg::conv_stroke <agg::path_storage > stroke(hatch);
+                stroke.width(style->width);
+                ren->renderPathSolidClipped(stroke,*polygons,agg_color);
+            }
             
             //render the optional outline
             ren->renderPathSolid(*polygons,AGG_NO_COLOR,agg_ocolor,1);
