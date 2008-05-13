@@ -44,7 +44,7 @@ int msTileSetup(mapservObj* msObj) {
   /* 
   ** Ensure all the LAYERs have a projection. 
   */  
-  if( msTileSetProjections(msObj->Map) != 0 ) {
+  if( msTileSetProjections(msObj->map) != 0 ) {
     return(MS_FAILURE);
   }
 
@@ -56,7 +56,7 @@ int msTileSetup(mapservObj* msObj) {
   } else {
     return(MS_FAILURE); /* Huh? No mode? */
   }
-  if( msLoadProjectionString(&(msObj->Map->projection), outProjStr) != 0 ) {
+  if( msLoadProjectionString(&(msObj->map->projection), outProjStr) != 0 ) {
     msSetError(MS_CGIERR, "Unable to load projection string.", "msTileSetup()");
     return(MS_FAILURE);
   }
@@ -129,7 +129,7 @@ int msTileSetup(mapservObj* msObj) {
 int msTileSetExtent(mapservObj* msObj) {
 #ifdef USE_TILE_API 
   
-  mapObj *map = msObj->Map;
+  mapObj *map = msObj->map;
   double	dx, dy;
 
   if( msObj->TileMode == TILE_GMAP ) {
