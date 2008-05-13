@@ -825,8 +825,11 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 {
   char *preTag, *postTag; /* text before and after the tag */
 
+  char *argValue;
   char *tag, *tagInstance, *tagStart;
   hashTableObj *tagArgs=NULL;
+
+  int limit = -1;
 
   int i, j, status;
 
@@ -841,7 +844,8 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   /* check for any tag arguments */
   if(getTagArgs("feature", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
   if(tagArgs) {
-    /* todo */
+    argValue = msLookupHashTable(tagArgs, "limit");
+    if(argValue) limit = atoi(argValue);
   }
 
   if(strstr(*line, "[/feature]") == NULL) { /* we know the closing tag must be here, if not throw an error */
@@ -879,7 +883,12 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   mapserv->resultlayer = layer;
   msInitShape(&(mapserv->resultshape));
 
-  for(i=0; i<layer->resultcache->numresults; i++) {
+  if(limit == -1) /* return all */
+    limit = layer->resultcache->numresults;
+  else
+    limit = MS_MIN(limit, layer->resultcache->numresults);
+
+  for(i=0; i<limit; i++) {
     status = msLayerGetShape(layer, &(mapserv->resultshape), layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
     if(status != MS_SUCCESS) return status;
 
