@@ -71,54 +71,54 @@ int setExtent(mapservObj *mapserv)
    case FROMIMGBOX: /* fully interactive web, most likely with java front end */
      cellx = MS_CELLSIZE(mapserv->ImgExt.minx, mapserv->ImgExt.maxx, mapserv->ImgCols);
      celly = MS_CELLSIZE(mapserv->ImgExt.miny, mapserv->ImgExt.maxy, mapserv->ImgRows);
-     mapserv->Map->extent.minx = MS_IMAGE2MAP_X(mapserv->ImgBox.minx, mapserv->ImgExt.minx, cellx);
-     mapserv->Map->extent.maxx = MS_IMAGE2MAP_X(mapserv->ImgBox.maxx, mapserv->ImgExt.minx, cellx);
-     mapserv->Map->extent.maxy = MS_IMAGE2MAP_Y(mapserv->ImgBox.miny, mapserv->ImgExt.maxy, celly); /* y's are flip flopped because img/map coordinate systems are */
-     mapserv->Map->extent.miny = MS_IMAGE2MAP_Y(mapserv->ImgBox.maxy, mapserv->ImgExt.maxy, celly);
+     mapserv->map->extent.minx = MS_IMAGE2MAP_X(mapserv->ImgBox.minx, mapserv->ImgExt.minx, cellx);
+     mapserv->map->extent.maxx = MS_IMAGE2MAP_X(mapserv->ImgBox.maxx, mapserv->ImgExt.minx, cellx);
+     mapserv->map->extent.maxy = MS_IMAGE2MAP_Y(mapserv->ImgBox.miny, mapserv->ImgExt.maxy, celly); /* y's are flip flopped because img/map coordinate systems are */
+     mapserv->map->extent.miny = MS_IMAGE2MAP_Y(mapserv->ImgBox.maxy, mapserv->ImgExt.maxy, celly);
      break;
    case FROMIMGPNT:
      cellx = MS_CELLSIZE(mapserv->ImgExt.minx, mapserv->ImgExt.maxx, mapserv->ImgCols);
      celly = MS_CELLSIZE(mapserv->ImgExt.miny, mapserv->ImgExt.maxy, mapserv->ImgRows);
-     mapserv->MapPnt.x = MS_IMAGE2MAP_X(mapserv->ImgPnt.x, mapserv->ImgExt.minx, cellx);
-     mapserv->MapPnt.y = MS_IMAGE2MAP_Y(mapserv->ImgPnt.y, mapserv->ImgExt.maxy, celly);
+     mapserv->mappnt.x = MS_IMAGE2MAP_X(mapserv->ImgPnt.x, mapserv->ImgExt.minx, cellx);
+     mapserv->mappnt.y = MS_IMAGE2MAP_Y(mapserv->ImgPnt.y, mapserv->ImgExt.maxy, celly);
 
-     mapserv->Map->extent.minx = mapserv->MapPnt.x - .5*((mapserv->ImgExt.maxx - mapserv->ImgExt.minx)/mapserv->fZoom); /* create an extent around that point */
-     mapserv->Map->extent.miny = mapserv->MapPnt.y - .5*((mapserv->ImgExt.maxy - mapserv->ImgExt.miny)/mapserv->fZoom);
-     mapserv->Map->extent.maxx = mapserv->MapPnt.x + .5*((mapserv->ImgExt.maxx - mapserv->ImgExt.minx)/mapserv->fZoom);
-     mapserv->Map->extent.maxy = mapserv->MapPnt.y + .5*((mapserv->ImgExt.maxy - mapserv->ImgExt.miny)/mapserv->fZoom);
+     mapserv->map->extent.minx = mapserv->mappnt.x - .5*((mapserv->ImgExt.maxx - mapserv->ImgExt.minx)/mapserv->fZoom); /* create an extent around that point */
+     mapserv->map->extent.miny = mapserv->mappnt.y - .5*((mapserv->ImgExt.maxy - mapserv->ImgExt.miny)/mapserv->fZoom);
+     mapserv->map->extent.maxx = mapserv->mappnt.x + .5*((mapserv->ImgExt.maxx - mapserv->ImgExt.minx)/mapserv->fZoom);
+     mapserv->map->extent.maxy = mapserv->mappnt.y + .5*((mapserv->ImgExt.maxy - mapserv->ImgExt.miny)/mapserv->fZoom);
      break;
    case FROMREFPNT:
-     cellx = MS_CELLSIZE(mapserv->Map->reference.extent.minx, mapserv->Map->reference.extent.maxx, mapserv->Map->reference.width);
-     celly = MS_CELLSIZE(mapserv->Map->reference.extent.miny, mapserv->Map->reference.extent.maxy, mapserv->Map->reference.height);
-     mapserv->MapPnt.x = MS_IMAGE2MAP_X(mapserv->RefPnt.x, mapserv->Map->reference.extent.minx, cellx);
-     mapserv->MapPnt.y = MS_IMAGE2MAP_Y(mapserv->RefPnt.y, mapserv->Map->reference.extent.maxy, celly);  
+     cellx = MS_CELLSIZE(mapserv->map->reference.extent.minx, mapserv->map->reference.extent.maxx, mapserv->map->reference.width);
+     celly = MS_CELLSIZE(mapserv->map->reference.extent.miny, mapserv->map->reference.extent.maxy, mapserv->map->reference.height);
+     mapserv->mappnt.x = MS_IMAGE2MAP_X(mapserv->RefPnt.x, mapserv->map->reference.extent.minx, cellx);
+     mapserv->mappnt.y = MS_IMAGE2MAP_Y(mapserv->RefPnt.y, mapserv->map->reference.extent.maxy, celly);  
 
-     mapserv->Map->extent.minx = mapserv->MapPnt.x - .5*(mapserv->ImgExt.maxx - mapserv->ImgExt.minx); /* create an extent around that point */
-     mapserv->Map->extent.miny = mapserv->MapPnt.y - .5*(mapserv->ImgExt.maxy - mapserv->ImgExt.miny);
-     mapserv->Map->extent.maxx = mapserv->MapPnt.x + .5*(mapserv->ImgExt.maxx - mapserv->ImgExt.minx);
-     mapserv->Map->extent.maxy = mapserv->MapPnt.y + .5*(mapserv->ImgExt.maxy - mapserv->ImgExt.miny);
+     mapserv->map->extent.minx = mapserv->mappnt.x - .5*(mapserv->ImgExt.maxx - mapserv->ImgExt.minx); /* create an extent around that point */
+     mapserv->map->extent.miny = mapserv->mappnt.y - .5*(mapserv->ImgExt.maxy - mapserv->ImgExt.miny);
+     mapserv->map->extent.maxx = mapserv->mappnt.x + .5*(mapserv->ImgExt.maxx - mapserv->ImgExt.minx);
+     mapserv->map->extent.maxy = mapserv->mappnt.y + .5*(mapserv->ImgExt.maxy - mapserv->ImgExt.miny);
      break;
    case FROMBUF:
-     mapserv->Map->extent.minx = mapserv->MapPnt.x - mapserv->Buffer; /* create an extent around that point, using the buffer */
-     mapserv->Map->extent.miny = mapserv->MapPnt.y - mapserv->Buffer;
-     mapserv->Map->extent.maxx = mapserv->MapPnt.x + mapserv->Buffer;
-     mapserv->Map->extent.maxy = mapserv->MapPnt.y + mapserv->Buffer;
+     mapserv->map->extent.minx = mapserv->mappnt.x - mapserv->Buffer; /* create an extent around that point, using the buffer */
+     mapserv->map->extent.miny = mapserv->mappnt.y - mapserv->Buffer;
+     mapserv->map->extent.maxx = mapserv->mappnt.x + mapserv->Buffer;
+     mapserv->map->extent.maxy = mapserv->mappnt.y + mapserv->Buffer;
      break;
    case FROMSCALE: 
-     cellsize = (mapserv->ScaleDenom/mapserv->Map->resolution)/msInchesPerUnit(mapserv->Map->units,0); /* user supplied a point and a scale denominator */
-     mapserv->Map->extent.minx = mapserv->MapPnt.x - cellsize*(mapserv->Map->width-1)/2.0;
-     mapserv->Map->extent.miny = mapserv->MapPnt.y - cellsize*(mapserv->Map->height-1)/2.0;
-     mapserv->Map->extent.maxx = mapserv->MapPnt.x + cellsize*(mapserv->Map->width-1)/2.0;
-     mapserv->Map->extent.maxy = mapserv->MapPnt.y + cellsize*(mapserv->Map->height-1)/2.0;
+     cellsize = (mapserv->ScaleDenom/mapserv->map->resolution)/msInchesPerUnit(mapserv->map->units,0); /* user supplied a point and a scale denominator */
+     mapserv->map->extent.minx = mapserv->mappnt.x - cellsize*(mapserv->map->width-1)/2.0;
+     mapserv->map->extent.miny = mapserv->mappnt.y - cellsize*(mapserv->map->height-1)/2.0;
+     mapserv->map->extent.maxx = mapserv->mappnt.x + cellsize*(mapserv->map->width-1)/2.0;
+     mapserv->map->extent.maxy = mapserv->mappnt.y + cellsize*(mapserv->map->height-1)/2.0;
      break;
    default: /* use the default in the mapfile if it exists */
-     if((mapserv->Map->extent.minx == mapserv->Map->extent.maxx) && (mapserv->Map->extent.miny == mapserv->Map->extent.maxy)) {
+     if((mapserv->map->extent.minx == mapserv->map->extent.maxx) && (mapserv->map->extent.miny == mapserv->map->extent.maxy)) {
        msSetError(MS_WEBERR, "No way to generate map extent.", "mapserv()");
        return MS_FAILURE;
      }
   }
 
-  mapserv->RawExt = mapserv->Map->extent; /* save unaltered extent */
+  mapserv->RawExt = mapserv->map->extent; /* save unaltered extent */
    
   return MS_SUCCESS;
 }
@@ -132,45 +132,45 @@ int checkWebScale(mapservObj *mapserv)
 {
   int status;
 
-  mapserv->Map->cellsize = msAdjustExtent(&(mapserv->Map->extent), mapserv->Map->width, mapserv->Map->height); /* we do this cause we need a scale */
-  if((status = msCalculateScale(mapserv->Map->extent, mapserv->Map->units, mapserv->Map->width, mapserv->Map->height, mapserv->Map->resolution, &mapserv->Map->scaledenom)) != MS_SUCCESS) return status;
+  mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height); /* we do this cause we need a scale */
+  if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) return status;
 
-  if((mapserv->Map->scaledenom < mapserv->Map->web.minscaledenom) && (mapserv->Map->web.minscaledenom > 0)) {
-    if(mapserv->Map->web.mintemplate) { /* use the template provided */
-      if(TEMPLATE_TYPE(mapserv->Map->web.mintemplate) == MS_FILE) {
-        if((status = msReturnPage(mapserv, mapserv->Map->web.mintemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
+  if((mapserv->map->scaledenom < mapserv->map->web.minscaledenom) && (mapserv->map->web.minscaledenom > 0)) {
+    if(mapserv->map->web.mintemplate) { /* use the template provided */
+      if(TEMPLATE_TYPE(mapserv->map->web.mintemplate) == MS_FILE) {
+        if((status = msReturnPage(mapserv, mapserv->map->web.mintemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
       } else {
-        if((status = msReturnURL(mapserv, mapserv->Map->web.mintemplate, BROWSE)) != MS_SUCCESS) return status;
+        if((status = msReturnURL(mapserv, mapserv->map->web.mintemplate, BROWSE)) != MS_SUCCESS) return status;
       }
     } else { /* force zoom = 1 (i.e. pan) */
       mapserv->fZoom = mapserv->Zoom = 1;
       mapserv->ZoomDirection = 0;
       mapserv->CoordSource = FROMSCALE;
-      mapserv->ScaleDenom = mapserv->Map->web.minscaledenom;
-      mapserv->MapPnt.x = (mapserv->Map->extent.maxx + mapserv->Map->extent.minx)/2; /* use center of bad extent */
-      mapserv->MapPnt.y = (mapserv->Map->extent.maxy + mapserv->Map->extent.miny)/2;
+      mapserv->ScaleDenom = mapserv->map->web.minscaledenom;
+      mapserv->mappnt.x = (mapserv->map->extent.maxx + mapserv->map->extent.minx)/2; /* use center of bad extent */
+      mapserv->mappnt.y = (mapserv->map->extent.maxy + mapserv->map->extent.miny)/2;
       setExtent(mapserv);
-      mapserv->Map->cellsize = msAdjustExtent(&(mapserv->Map->extent), mapserv->Map->width, mapserv->Map->height);      
-      if((status = msCalculateScale(mapserv->Map->extent, mapserv->Map->units, mapserv->Map->width, mapserv->Map->height, mapserv->Map->resolution, &mapserv->Map->scaledenom)) != MS_SUCCESS) return status;
+      mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);      
+      if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) return status;
     }
   } else { 
-    if((mapserv->Map->scaledenom > mapserv->Map->web.maxscaledenom) && (mapserv->Map->web.maxscaledenom > 0)) {
-      if(mapserv->Map->web.maxtemplate) { /* use the template provided */
-        if(TEMPLATE_TYPE(mapserv->Map->web.maxtemplate) == MS_FILE) {
-          if((status = msReturnPage(mapserv, mapserv->Map->web.maxtemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
+    if((mapserv->map->scaledenom > mapserv->map->web.maxscaledenom) && (mapserv->map->web.maxscaledenom > 0)) {
+      if(mapserv->map->web.maxtemplate) { /* use the template provided */
+        if(TEMPLATE_TYPE(mapserv->map->web.maxtemplate) == MS_FILE) {
+          if((status = msReturnPage(mapserv, mapserv->map->web.maxtemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
         } else {
-          if((status = msReturnURL(mapserv, mapserv->Map->web.maxtemplate, BROWSE)) != MS_SUCCESS) return status;
+          if((status = msReturnURL(mapserv, mapserv->map->web.maxtemplate, BROWSE)) != MS_SUCCESS) return status;
         }
       } else { /* force zoom = 1 (i.e. pan) */
         mapserv->fZoom = mapserv->Zoom = 1;
         mapserv->ZoomDirection = 0;
         mapserv->CoordSource = FROMSCALE;
-        mapserv->ScaleDenom = mapserv->Map->web.maxscaledenom;
-        mapserv->MapPnt.x = (mapserv->Map->extent.maxx + mapserv->Map->extent.minx)/2; /* use center of bad extent */
-        mapserv->MapPnt.y = (mapserv->Map->extent.maxy + mapserv->Map->extent.miny)/2;
+        mapserv->ScaleDenom = mapserv->map->web.maxscaledenom;
+        mapserv->mappnt.x = (mapserv->map->extent.maxx + mapserv->map->extent.minx)/2; /* use center of bad extent */
+        mapserv->mappnt.y = (mapserv->map->extent.maxy + mapserv->map->extent.miny)/2;
         setExtent(mapserv);
-        mapserv->Map->cellsize = msAdjustExtent(&(mapserv->Map->extent), mapserv->Map->width, mapserv->Map->height);
-        if((status = msCalculateScale(mapserv->Map->extent, mapserv->Map->units, mapserv->Map->width, mapserv->Map->height, mapserv->Map->resolution, &mapserv->Map->scaledenom)) != MS_SUCCESS) return status;
+        mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);
+        if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) return status;
       }
     }
   }
@@ -195,9 +195,9 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
   ** The functions in mapoutput.c rely on mime-type too and we don't want that with queries. So
   ** we do a name search only.
   */
-  for( i = 0; i < mapserv->Map->numoutputformats; i++ ) {
-    if( strcasecmp(queryFormat, mapserv->Map->outputformatlist[i]->name) == 0 )
-      outputFormat = mapserv->Map->outputformatlist[i];
+  for( i = 0; i < mapserv->map->numoutputformats; i++ ) {
+    if( strcasecmp(queryFormat, mapserv->map->outputformatlist[i]->name) == 0 )
+      outputFormat = mapserv->map->outputformatlist[i];
   }
 
   if(outputFormat) {
@@ -209,48 +209,57 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
 
   /* 
   ** At this point we know we have a template of some sort, either the new style that references a or the old
-  ** style made up of external files slammed together. Either way we may have to compute a query map.
+  ** style made up of external files slammed together. Either way we may have to compute a query map and other
+  ** images potentially.
   */ 
-  if(mapserv->Map->querymap.status) {
+  if(mapserv->map->querymap.status) {
     checkWebScale(mapserv);
 
-    img = msDrawMap(mapserv->Map, MS_TRUE);
+    img = msDrawMap(mapserv->map, MS_TRUE);
     if(!img) return MS_FAILURE;
-    snprintf(buffer, 1024, "%s%s%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-    status = msSaveImage(mapserv->Map, img, buffer);
+    snprintf(buffer, 1024, "%s%s%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+    status = msSaveImage(mapserv->map, img, buffer);
     if(status != MS_SUCCESS) return status;
     msFreeImage(img);
 
-    if((mapserv->Map->legend.status == MS_ON || mapserv->UseShapes) && mapserv->Map->legend.template == NULL) {
-      img = msDrawLegend(mapserv->Map, MS_FALSE);
+    if((mapserv->map->legend.status == MS_ON || mapserv->UseShapes) && mapserv->map->legend.template == NULL) {
+      img = msDrawLegend(mapserv->map, MS_FALSE);
       if(!img) return MS_FAILURE;
-      snprintf(buffer, 1024, "%s%sleg%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-      status = msSaveImage(mapserv->Map, img, buffer);
+      snprintf(buffer, 1024, "%s%sleg%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+      status = msSaveImage(mapserv->map, img, buffer);
       if(status != MS_SUCCESS) return status;
       msFreeImage(img);
     }
   
-    if(mapserv->Map->scalebar.status == MS_ON) {
-      img = msDrawScalebar(mapserv->Map);
+    if(mapserv->map->scalebar.status == MS_ON) {
+      img = msDrawScalebar(mapserv->map);
       if(!img) return MS_FAILURE;
-      snprintf(buffer, 1024, "%s%ssb%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-      status = msSaveImage( mapserv->Map, img, buffer);
+      snprintf(buffer, 1024, "%s%ssb%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+      status = msSaveImage( mapserv->map, img, buffer);
       if(status != MS_SUCCESS) return status;
       msFreeImage(img);
     }
   
-    if(mapserv->Map->reference.status == MS_ON) {
-      img = msDrawReferenceMap(mapserv->Map);
+    if(mapserv->map->reference.status == MS_ON) {
+      img = msDrawReferenceMap(mapserv->map);
       if(!img) return MS_FAILURE;
-      snprintf(buffer, 1024, "%s%sref%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-      status = msSaveImage(mapserv->Map, img, buffer);
+      snprintf(buffer, 1024, "%s%sref%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+      status = msSaveImage(mapserv->map, img, buffer);
       if(status != MS_SUCCESS) return status;
       msFreeImage(img);
     }
   }
    
   if(outputFormat) {
-    printf("got a template output format!\n");
+    const char *file = msGetOutputFormatOption( outputFormat, "FILE", NULL );
+    if(!file) {
+      msSetError(MS_WEBERR, "Template driver requires \"FILE\" format option be set.", "msReturnTemplateQuery()");
+      return MS_FAILURE;
+    }
+
+    msIO_printf("Content-type: %s%c%c\n", outputFormat->mimetype, 10, 10);
+    if((status = msReturnPage(mapserv, (char *) file, BROWSE, papszBuffer)) != MS_SUCCESS)
+      return status;
   } else {
     if((status = msReturnQuery(mapserv, queryFormat, papszBuffer)) != MS_SUCCESS)
       return status;
@@ -867,6 +876,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   }
 
   mapserv->LRN = 1; /* layer result counter */
+  mapserv->resultlayer = layer;
   msInitShape(&(mapserv->resultshape));
 
   for(i=0; i<layer->resultcache->numresults; i++) {
@@ -884,9 +894,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     }
 
     /* process the tag */
-    tagInstance = strdup(tag); /* work from a copy */
-    tagInstance = processLine(mapserv, tagInstance, NULL, QUERY); /* do substitutions */
-
+    tagInstance = processLine(mapserv, tag, NULL, QUERY); /* do substitutions */
     *line = msStringConcatenate(*line, tagInstance); /* grow the line */
 
     free(tagInstance);
@@ -897,7 +905,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   }
 
   msLayerClose(layer);
-  mapserv->ResultLayer = NULL; /* necessary? */
+  mapserv->resultlayer = NULL; /* necessary? */
 
   *line = msStringConcatenate(*line, postTag);
 
@@ -920,7 +928,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 
   char *preTag, *postTag; /* text before and after the tag */
 
-  char *tag, *tagStart, *tagEnd;
+  char *tag, *tagStart;
   hashTableObj *tagArgs=NULL;
 
   char *layerName=NULL;
@@ -936,6 +944,11 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   tagStart = findTag(*line, "resultset");
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
+  if(!stream) {
+    msSetError(MS_WEBERR, "Invalid file pointer.", "processResultSetTag()");
+    return(MS_FAILURE);
+  }
+
   /* check for any tag arguments */
   if(getTagArgs("resultset", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
   if(tagArgs) {
@@ -947,12 +960,12 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     return(MS_FAILURE);
   }
 
-  layerIndex = msGetLayerIndex(mapserv->Map, layerName);
-  if(layerIndex>=mapserv->Map->numlayers || layerIndex<0) {
+  layerIndex = msGetLayerIndex(mapserv->map, layerName);
+  if(layerIndex>=mapserv->map->numlayers || layerIndex<0) {
     msSetError(MS_MISCERR, "Layer named '%s' does not exist.", "processResultSetTag()", layerName);
     return MS_FAILURE;
   }
-  lp = GET_LAYER(mapserv->Map, layerIndex);
+  lp = GET_LAYER(mapserv->map, layerIndex);
 
   if(strstr(*line, "[/resultset]") == NULL) { /* read ahead */
     foundTagEnd = MS_FALSE;
@@ -967,14 +980,12 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     }
   }
 
-  *line = processLine(mapserv, *line, NULL, BROWSE); /* do substitutions, non-query tags only yet */
-
   if(getInlineTag("resultset", *line, &tag) != MS_SUCCESS) {
     msSetError(MS_WEBERR, "Malformed resultset tag.", "processResultSetTag()");
     return MS_FAILURE;
   }
 
-  preTag = getPreTagText(*line, "[resultset");
+  preTag = getPreTagText(*line, "[resultset"); /* TODO: need to handle tags in these */
   postTag = getPostTagText(*line, "[/resultset]");
 
   /* start rebuilding **line */
@@ -1203,7 +1214,7 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
 
     if(!src) return(MS_SUCCESS); /* don't process the tag, could be something else so return MS_SUCCESS */
 
-    if((includeStream = fopen(msBuildPath(path, mapserv->Map->mappath, src), "r")) == NULL) {
+    if((includeStream = fopen(msBuildPath(path, mapserv->map->mappath, src), "r")) == NULL) {
       msSetError(MS_IOERR, src, "processIncludeTag()");
       return MS_FAILURE;
     } 
@@ -2182,7 +2193,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
       return NULL;
    }
 
-   if(ms_regexec(&re, mapserv->Map->legend.template, 0, NULL, 0) != 0) { /* no match */
+   if(ms_regexec(&re, mapserv->map->legend.template, 0, NULL, 0) != 0) { /* no match */
       msSetError(MS_IOERR, "Invalid template file name.", "generateLegendTemplate()");      
      ms_regfree(&re);
      return NULL;
@@ -2193,15 +2204,15 @@ char *generateLegendTemplate(mapservObj *mapserv)
 /*      Save the current drawing order. The drawing order is reset      */
 /*      at the end of the function.                                     */
 /* -------------------------------------------------------------------- */
-   if(mapserv && mapserv->Map && mapserv->Map->numlayers > 0)
+   if(mapserv && mapserv->map && mapserv->map->numlayers > 0)
    {
        panCurrentDrawingOrder = 
-           (int *)malloc(sizeof(int)*mapserv->Map->numlayers); 
+           (int *)malloc(sizeof(int)*mapserv->map->numlayers); 
       
-       for (i=0; i<mapserv->Map->numlayers; i++)
+       for (i=0; i<mapserv->map->numlayers; i++)
        {
-           if(mapserv->Map->layerorder)
-               panCurrentDrawingOrder[i] = mapserv->Map->layerorder[i];
+           if(mapserv->map->layerorder)
+               panCurrentDrawingOrder[i] = mapserv->map->layerorder[i];
            else
              panCurrentDrawingOrder[i] = i;  
        }
@@ -2233,13 +2244,13 @@ char *generateLegendTemplate(mapservObj *mapserv)
        {
            int nLen;
 
-           nLen = (mapserv->Map->name?strlen(mapserv->Map->name):0)  + 50;
+           nLen = (mapserv->map->name?strlen(mapserv->map->name):0)  + 50;
            pszPrefix = (char*)malloc((nLen+1) * sizeof(char));
            if(pszPrefix == NULL) {
 
            }
            snprintf(pszPrefix, nLen, "%s_%ld_%ld", 
-                    mapserv->Map->name,
+                    mapserv->map->name,
                     (long) tmpStat.st_size, 
                     (long) tmpStat.st_mtime);
            pszPrefix[nLen] = '\0';
@@ -2261,7 +2272,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
    }
 
        /* open template */
-   if((stream = fopen(msBuildPath(szPath, mapserv->Map->mappath, mapserv->Map->legend.template), "r")) == NULL) {
+   if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, mapserv->map->legend.template), "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening template file.", "generateLegendTemplate()");
       return NULL;
    } 
@@ -2283,7 +2294,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
    fread(file, 1, length, stream);
    file[length] = '\0';
 
-   if(msValidateContexts(mapserv->Map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
+   if(msValidateContexts(mapserv->map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
 
    /*
     * Seperate header/footer, groups, layers and class
@@ -2310,12 +2321,12 @@ char *generateLegendTemplate(mapservObj *mapserv)
        return NULL;
 
       
-   mapserv->Map->cellsize = msAdjustExtent(&(mapserv->Map->extent), 
-                                         mapserv->Map->width, 
-                                         mapserv->Map->height);
-   if(msCalculateScale(mapserv->Map->extent, mapserv->Map->units, 
-                       mapserv->Map->width, mapserv->Map->height, 
-                       mapserv->Map->resolution, &mapserv->Map->scaledenom) != MS_SUCCESS)
+   mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), 
+                                         mapserv->map->width, 
+                                         mapserv->map->height);
+   if(msCalculateScale(mapserv->map->extent, mapserv->map->units, 
+                       mapserv->map->width, mapserv->map->height, 
+                       mapserv->map->resolution, &mapserv->map->scaledenom) != MS_SUCCESS)
      return(NULL);
    
    /* start with the header if present */
@@ -2329,7 +2340,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
     */
    pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
       
-   if(sortLayerByMetadata(mapserv->Map, pszOrderMetadata) != MS_SUCCESS)
+   if(sortLayerByMetadata(mapserv->map, pszOrderMetadata) != MS_SUCCESS)
      goto error;
    
 /* -------------------------------------------------------------------- */
@@ -2340,17 +2351,17 @@ char *generateLegendTemplate(mapservObj *mapserv)
    if(pszOrder && ((strcasecmp(pszOrder, "ASCENDING") == 0) ||
                     (strcasecmp(pszOrder, "DESCENDING") == 0)))
    {
-       if(sortLayerByOrder(mapserv->Map, pszOrder) != MS_SUCCESS)
+       if(sortLayerByOrder(mapserv->map, pszOrder) != MS_SUCCESS)
          goto error;
    }
    
    if(legGroupHtml) {
       /* retrieve group names */
-      papszGroups = msGetAllGroupNames(mapserv->Map, &nGroupNames);
+      papszGroups = msGetAllGroupNames(mapserv->map, &nGroupNames);
 
       for (i=0; i<nGroupNames; i++) {
          /* process group tags */
-         if(generateGroupTemplate(legGroupHtml, mapserv->Map, papszGroups[i], groupArgs, &legGroupHtmlCopy, pszPrefix) != MS_SUCCESS)
+         if(generateGroupTemplate(legGroupHtml, mapserv->map, papszGroups[i], groupArgs, &legGroupHtmlCopy, pszPrefix) != MS_SUCCESS)
          {
             if(pszResult)
               free(pszResult);
@@ -2379,14 +2390,14 @@ char *generateLegendTemplate(mapservObj *mapserv)
          
          /* for all layers in group */
          if(legLayerHtml) {
-           for (j=0; j<mapserv->Map->numlayers; j++) {
+           for (j=0; j<mapserv->map->numlayers; j++) {
               /*
                * if order_metadata is set and the order
                * value is less than 0, dont display it
                */
               pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
               if(pszOrderMetadata) {
-                 pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->metadata), pszOrderMetadata);
+                 pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
                  if(pszOrderValue) {
                     nLegendOrder = atoi(pszOrderValue);
                     if(nLegendOrder < 0)
@@ -2394,9 +2405,9 @@ char *generateLegendTemplate(mapservObj *mapserv)
                  }
               }
 
-              if(GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->group && strcmp(GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->group, papszGroups[i]) == 0) {
+              if(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group && strcmp(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group, papszGroups[i]) == 0) {
                  /* process all layer tags */
-                 if(generateLayerTemplate(legLayerHtml, mapserv->Map, mapserv->Map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
+                 if(generateLayerTemplate(legLayerHtml, mapserv->map, mapserv->map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
                  {
                     if(pszResult)
                       free(pszResult);
@@ -2417,12 +2428,12 @@ char *generateLegendTemplate(mapservObj *mapserv)
             
                  /* for all classes in layer */
                  if(legClassHtml) {
-                    for (k=0; k<GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->numclasses; k++) {
+                    for (k=0; k<GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->numclasses; k++) {
                        /* process all class tags */
-                       if(!GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->class[k]->name)
+                       if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
                          continue;
 
-                       if(generateClassTemplate(legClassHtml, mapserv->Map, mapserv->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
+                       if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
                        {
                           if(pszResult)
                             free(pszResult);
@@ -2445,14 +2456,14 @@ char *generateLegendTemplate(mapservObj *mapserv)
          }
          else
          if(legClassHtml){ /* no layer template specified but class and group template */
-           for (j=0; j<mapserv->Map->numlayers; j++) {
+           for (j=0; j<mapserv->map->numlayers; j++) {
               /*
                * if order_metadata is set and the order
                * value is less than 0, dont display it
                */
               pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
               if(pszOrderMetadata) {
-                 pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->metadata), pszOrderMetadata);
+                 pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
                  if(pszOrderValue) {
                     nLegendOrder = atoi(pszOrderValue);
                     if(nLegendOrder < 0)
@@ -2460,15 +2471,15 @@ char *generateLegendTemplate(mapservObj *mapserv)
                  }
               }
 
-              if(GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->group && strcmp(GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->group, papszGroups[i]) == 0) {
+              if(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group && strcmp(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group, papszGroups[i]) == 0) {
                  /* for all classes in layer */
                  if(legClassHtml) {
-                    for (k=0; k<GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->numclasses; k++) {
+                    for (k=0; k<GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->numclasses; k++) {
                        /* process all class tags */
-                       if(!GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->class[k]->name)
+                       if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
                          continue;
 
-                       if(generateClassTemplate(legClassHtml, mapserv->Map, mapserv->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
+                       if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
                        {
                           if(pszResult)
                             free(pszResult);
@@ -2494,14 +2505,14 @@ char *generateLegendTemplate(mapservObj *mapserv)
    else {
       /* if no group template specified */
       if(legLayerHtml) {
-         for (j=0; j<mapserv->Map->numlayers; j++) {
+         for (j=0; j<mapserv->map->numlayers; j++) {
             /*
              * if order_metadata is set and the order
              * value is less than 0, dont display it
              */
             pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
             if(pszOrderMetadata) {
-               pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->metadata), pszOrderMetadata);
+               pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
                if(pszOrderValue) {
                   nLegendOrder = atoi(pszOrderValue);
                   if(nLegendOrder < 0)
@@ -2512,7 +2523,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
             }
 
             /* process a layer tags */
-            if(generateLayerTemplate(legLayerHtml, mapserv->Map, mapserv->Map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
+            if(generateLayerTemplate(legLayerHtml, mapserv->map, mapserv->map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
             {
                if(pszResult)
                  free(pszResult);
@@ -2530,12 +2541,12 @@ char *generateLegendTemplate(mapservObj *mapserv)
             
             /* for all classes in layer */
             if(legClassHtml) {
-               for (k=0; k<GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->numclasses; k++) {
+               for (k=0; k<GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->numclasses; k++) {
                   /* process all class tags */
-                  if(!GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->class[k]->name)
+                  if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
                     continue;
 
-                  if(generateClassTemplate(legClassHtml, mapserv->Map, mapserv->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
+                  if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
                   {
                      if(pszResult)
                        free(pszResult);
@@ -2557,14 +2568,14 @@ char *generateLegendTemplate(mapservObj *mapserv)
       }
       else { /* if no group and layer template specified */
          if(legClassHtml) {
-            for (j=0; j<mapserv->Map->numlayers; j++) {
+            for (j=0; j<mapserv->map->numlayers; j++) {
                /*
                 * if order_metadata is set and the order
                 * value is less than 0, dont display it
                 */
                pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
                if(pszOrderMetadata) {
-                  pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->metadata), pszOrderMetadata);
+                  pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
                   if(pszOrderValue) {
                      nLegendOrder = atoi(pszOrderValue);
                      if(nLegendOrder < 0)
@@ -2572,11 +2583,11 @@ char *generateLegendTemplate(mapservObj *mapserv)
                   }
                }
 
-               for (k=0; k<GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->numclasses; k++) {
-                  if(!GET_LAYER(mapserv->Map, mapserv->Map->layerorder[j])->class[k]->name)
+               for (k=0; k<GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->numclasses; k++) {
+                  if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
                     continue;
                   
-                  if(generateClassTemplate(legClassHtml, mapserv->Map, mapserv->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
+                  if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
                   {
                      if(pszResult)
                        free(pszResult);
@@ -2644,10 +2655,10 @@ char *generateLegendTemplate(mapservObj *mapserv)
 /* -------------------------------------------------------------------- */
 /*      Reset the layerdrawing order.                                   */
 /* -------------------------------------------------------------------- */
-   if(panCurrentDrawingOrder && mapserv->Map->layerorder)
+   if(panCurrentDrawingOrder && mapserv->map->layerorder)
    {
-       for (i=0; i<mapserv->Map->numlayers; i++)
-          mapserv->Map->layerorder[i] =  panCurrentDrawingOrder[i];
+       for (i=0; i<mapserv->map->numlayers; i++)
+          mapserv->map->layerorder[i] =  panCurrentDrawingOrder[i];
 
        free(panCurrentDrawingOrder);
    }
@@ -2671,7 +2682,7 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
     /* want to do this if there are joined records. */
     if(records == MS_FALSE) { 
       if(join->header != NULL) {
-        if((stream = fopen(msBuildPath(szPath, mapserv->Map->mappath, join->header), "r")) == NULL) {
+        if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, join->header), "r")) == NULL) {
           msSetError(MS_IOERR, "Error while opening join header file %s.", "processOneToManyJoin()", join->header);
           return(NULL);
         }
@@ -2682,7 +2693,7 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
         fclose(stream);
       }
 
-      if((stream = fopen(msBuildPath(szPath, mapserv->Map->mappath, join->template), "r")) == NULL) {
+      if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, join->template), "r")) == NULL) {
         msSetError(MS_IOERR, "Error while opening join template file %s.", "processOneToManyJoin()", join->template);
         return(NULL);
       }      
@@ -2704,7 +2715,7 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
   } /* next record */
 
   if(records==MS_TRUE && join->footer) {    
-    if((stream = fopen(msBuildPath(szPath, mapserv->Map->mappath, join->footer), "r")) == NULL) {
+    if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, join->footer), "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening join footer file %s.", "processOneToManyJoin()", join->footer);
       return(NULL);
     }
@@ -2743,9 +2754,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   if(strstr(outstr, "[version]")) outstr = msReplaceSubstring(outstr, "[version]",  msGetVersion());
 
-  snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.%s", mapserv->Map->web.imageurl, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
+  snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.%s", mapserv->map->web.imageurl, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
   outstr = msReplaceSubstring(outstr, "[img]", repstr);
-  snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sref%s.%s", mapserv->Map->web.imageurl, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
+  snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sref%s.%s", mapserv->map->web.imageurl, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
   outstr = msReplaceSubstring(outstr, "[ref]", repstr);
 
   if(strstr(outstr, "[errmsg")) {
@@ -2760,7 +2771,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   
   if(strstr(outstr, "[legend]")) {
      /* if there's a template legend specified, use it */
-     if(mapserv->Map->legend.template) {
+     if(mapserv->map->legend.template) {
         char *legendTemplate;
 
         legendTemplate = generateLegendTemplate(mapserv);
@@ -2773,21 +2784,21 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
           return NULL;
      }
      else { /* if not display gif image with all legend icon */
-        snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sleg%s.%s", mapserv->Map->web.imageurl, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
+        snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sleg%s.%s", mapserv->map->web.imageurl, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
         outstr = msReplaceSubstring(outstr, "[legend]", repstr);
      }
   }
    
-  snprintf(repstr, PROCESSLINE_BUFLEN, "%s%ssb%s.%s", mapserv->Map->web.imageurl, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
+  snprintf(repstr, PROCESSLINE_BUFLEN, "%s%ssb%s.%s", mapserv->map->web.imageurl, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
   outstr = msReplaceSubstring(outstr, "[scalebar]", repstr);
 
-  if(mapserv->SaveQuery) {
-    snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_QUERY_EXTENSION);
+  if(mapserv->savequery) {
+    snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_QUERY_EXTENSION);
     outstr = msReplaceSubstring(outstr, "[queryfile]", repstr);
   }
   
-  if(mapserv->SaveMap) {
-    snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.map", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id);
+  if(mapserv->savemap) {
+    snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.map", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id);
     outstr = msReplaceSubstring(outstr, "[map]", repstr);
   }
 
@@ -2813,9 +2824,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   strcpy(repstr, ""); /* list of ALL layers that can be toggled */
   repstr[0] = '\0';
-  for(i=0;i<mapserv->Map->numlayers;i++) {
-    if(GET_LAYER(mapserv->Map, i)->status != MS_DEFAULT && GET_LAYER(mapserv->Map, i)->name != NULL) {
-      strlcat(repstr, GET_LAYER(mapserv->Map, i)->name, sizeof(repstr));
+  for(i=0;i<mapserv->map->numlayers;i++) {
+    if(GET_LAYER(mapserv->map, i)->status != MS_DEFAULT && GET_LAYER(mapserv->map, i)->name != NULL) {
+      strlcat(repstr, GET_LAYER(mapserv->map, i)->name, sizeof(repstr));
       strlcat(repstr, " ", sizeof(repstr));
     }
   }
@@ -2826,31 +2837,31 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   outstr = msReplaceSubstring(outstr, "[toggle_layers_esc]", encodedstr);
   free(encodedstr);
   
-  for(i=0;i<mapserv->Map->numlayers;i++) { /* Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here */
-    if(isOn(mapserv, GET_LAYER(mapserv->Map, i)->name, GET_LAYER(mapserv->Map, i)->group) == MS_TRUE) {
-      if(GET_LAYER(mapserv->Map, i)->group) {
-        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", GET_LAYER(mapserv->Map, i)->group);
+  for(i=0;i<mapserv->map->numlayers;i++) { /* Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here */
+    if(isOn(mapserv, GET_LAYER(mapserv->map, i)->name, GET_LAYER(mapserv->map, i)->group) == MS_TRUE) {
+      if(GET_LAYER(mapserv->map, i)->group) {
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", GET_LAYER(mapserv->map, i)->group);
         outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
-        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", GET_LAYER(mapserv->Map, i)->group);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", GET_LAYER(mapserv->map, i)->group);
         outstr = msReplaceSubstring(outstr, substr, "checked=\"checked\"");
       }
-      if(GET_LAYER(mapserv->Map, i)->name) {
-        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", GET_LAYER(mapserv->Map, i)->name);
+      if(GET_LAYER(mapserv->map, i)->name) {
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", GET_LAYER(mapserv->map, i)->name);
         outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
-        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", GET_LAYER(mapserv->Map, i)->name);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", GET_LAYER(mapserv->map, i)->name);
         outstr = msReplaceSubstring(outstr, substr, "checked=\"checked\"");
       }
     } else {
-      if(GET_LAYER(mapserv->Map, i)->group) {
-        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", GET_LAYER(mapserv->Map, i)->group);
+      if(GET_LAYER(mapserv->map, i)->group) {
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", GET_LAYER(mapserv->map, i)->group);
         outstr = msReplaceSubstring(outstr, substr, "");
-        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", GET_LAYER(mapserv->Map, i)->group);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", GET_LAYER(mapserv->map, i)->group);
         outstr = msReplaceSubstring(outstr, substr, "");
       }
-      if(GET_LAYER(mapserv->Map, i)->name) {
-        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", GET_LAYER(mapserv->Map, i)->name);
+      if(GET_LAYER(mapserv->map, i)->name) {
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_select]", GET_LAYER(mapserv->map, i)->name);
         outstr = msReplaceSubstring(outstr, substr, "");
-        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", GET_LAYER(mapserv->Map, i)->name);
+        snprintf(substr, PROCESSLINE_BUFLEN, "[%s_check]", GET_LAYER(mapserv->map, i)->name);
         outstr = msReplaceSubstring(outstr, substr, "");
       }
     }
@@ -2890,10 +2901,10 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
    * reworked by SG to use HashTable methods
    */
   
-  if(&(mapserv->Map->web.metadata) && strstr(outstr, "web_")) {
+  if(&(mapserv->map->web.metadata) && strstr(outstr, "web_")) {
     for (j=0; j<MS_HASHSIZE; j++) {
-      if(mapserv->Map->web.metadata.items[j] != NULL) {
-        for(tp=mapserv->Map->web.metadata.items[j]; tp!=NULL; tp=tp->next) {
+      if(mapserv->map->web.metadata.items[j] != NULL) {
+        for(tp=mapserv->map->web.metadata.items[j]; tp!=NULL; tp=tp->next) {
           snprintf(substr, PROCESSLINE_BUFLEN, "[web_%s]", tp->key);
           outstr = msReplaceSubstring(outstr, substr, tp->data);  
           snprintf(substr, PROCESSLINE_BUFLEN, "[web_%s_esc]", tp->key);
@@ -2907,18 +2918,18 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   }
 
   /* allow layer metadata access in template */
-  for(i=0;i<mapserv->Map->numlayers;i++) {
-    if(&(GET_LAYER(mapserv->Map, i)->metadata) && GET_LAYER(mapserv->Map, i)->name && strstr(outstr, GET_LAYER(mapserv->Map, i)->name)) {
+  for(i=0;i<mapserv->map->numlayers;i++) {
+    if(&(GET_LAYER(mapserv->map, i)->metadata) && GET_LAYER(mapserv->map, i)->name && strstr(outstr, GET_LAYER(mapserv->map, i)->name)) {
       for(j=0; j<MS_HASHSIZE; j++) {
-        if(GET_LAYER(mapserv->Map, i)->metadata.items[j] != NULL) {
-          for(tp=GET_LAYER(mapserv->Map, i)->metadata.items[j]; tp!=NULL; tp=tp->next) {
-            snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s]", GET_LAYER(mapserv->Map, i)->name, tp->key);
-            if(GET_LAYER(mapserv->Map, i)->status == MS_ON)
+        if(GET_LAYER(mapserv->map, i)->metadata.items[j] != NULL) {
+          for(tp=GET_LAYER(mapserv->map, i)->metadata.items[j]; tp!=NULL; tp=tp->next) {
+            snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s]", GET_LAYER(mapserv->map, i)->name, tp->key);
+            if(GET_LAYER(mapserv->map, i)->status == MS_ON)
               outstr = msReplaceSubstring(outstr, substr, tp->data);
             else
               outstr = msReplaceSubstring(outstr, substr, "");
-            snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s_esc]", GET_LAYER(mapserv->Map, i)->name, tp->key);
-            if(GET_LAYER(mapserv->Map, i)->status == MS_ON) {
+            snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s_esc]", GET_LAYER(mapserv->map, i)->name, tp->key);
+            if(GET_LAYER(mapserv->map, i)->status == MS_ON) {
               encodedstr = msEncodeUrl(tp->data);
               outstr = msReplaceSubstring(outstr, substr, encodedstr);
               free(encodedstr);
@@ -2930,29 +2941,29 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     }
   }
 
-  sprintf(repstr, "%f", mapserv->MapPnt.x);
+  sprintf(repstr, "%f", mapserv->mappnt.x);
   outstr = msReplaceSubstring(outstr, "[mapx]", repstr);
-  sprintf(repstr, "%f", mapserv->MapPnt.y);
+  sprintf(repstr, "%f", mapserv->mappnt.y);
   outstr = msReplaceSubstring(outstr, "[mapy]", repstr);
   
-  sprintf(repstr, "%f", mapserv->Map->extent.minx); /* Individual mapextent elements for spatial query building  */
+  sprintf(repstr, "%f", mapserv->map->extent.minx); /* Individual mapextent elements for spatial query building  */
   outstr = msReplaceSubstring(outstr, "[minx]", repstr);
-  sprintf(repstr, "%f", mapserv->Map->extent.maxx);
+  sprintf(repstr, "%f", mapserv->map->extent.maxx);
   outstr = msReplaceSubstring(outstr, "[maxx]", repstr);
-  sprintf(repstr, "%f", mapserv->Map->extent.miny);
+  sprintf(repstr, "%f", mapserv->map->extent.miny);
   outstr = msReplaceSubstring(outstr, "[miny]", repstr);
-  sprintf(repstr, "%f", mapserv->Map->extent.maxy);
+  sprintf(repstr, "%f", mapserv->map->extent.maxy);
   outstr = msReplaceSubstring(outstr, "[maxy]", repstr);
-  sprintf(repstr, "%f %f %f %f", mapserv->Map->extent.minx, mapserv->Map->extent.miny,  mapserv->Map->extent.maxx, mapserv->Map->extent.maxy);
+  sprintf(repstr, "%f %f %f %f", mapserv->map->extent.minx, mapserv->map->extent.miny,  mapserv->map->extent.maxx, mapserv->map->extent.maxy);
   outstr = msReplaceSubstring(outstr, "[mapext]", repstr);
    
   encodedstr =  msEncodeUrl(repstr);
   outstr = msReplaceSubstring(outstr, "[mapext_esc]", encodedstr);
   free(encodedstr);
   
-  sprintf(repstr, "%f", (mapserv->Map->extent.maxx-mapserv->Map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
+  sprintf(repstr, "%f", (mapserv->map->extent.maxx-mapserv->map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
   outstr = msReplaceSubstring(outstr, "[dx]", repstr);
-  sprintf(repstr, "%f", (mapserv->Map->extent.maxy-mapserv->Map->extent.miny));
+  sprintf(repstr, "%f", (mapserv->map->extent.maxy-mapserv->map->extent.miny));
   outstr = msReplaceSubstring(outstr, "[dy]", repstr);
 
   sprintf(repstr, "%f", mapserv->RawExt.minx); /* Individual raw extent elements for spatial query building */
@@ -2972,12 +2983,12 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     
 #ifdef USE_PROJ
   if((strstr(outstr, "lat]") || strstr(outstr, "lon]") || strstr(outstr, "lon_esc]"))
-     && mapserv->Map->projection.proj != NULL
-     && !pj_is_latlong(mapserv->Map->projection.proj) ) {
-    llextent=mapserv->Map->extent;
-    llpoint=mapserv->MapPnt;
-    msProjectRect(&(mapserv->Map->projection), &(mapserv->Map->latlon), &llextent);
-    msProjectPoint(&(mapserv->Map->projection), &(mapserv->Map->latlon), &llpoint);
+     && mapserv->map->projection.proj != NULL
+     && !pj_is_latlong(mapserv->map->projection.proj) ) {
+    llextent=mapserv->map->extent;
+    llpoint=mapserv->mappnt;
+    msProjectRect(&(mapserv->map->projection), &(mapserv->map->latlon), &llextent);
+    msProjectPoint(&(mapserv->map->projection), &(mapserv->map->latlon), &llpoint);
 
     sprintf(repstr, "%f", llpoint.x);
     outstr = msReplaceSubstring(outstr, "[maplon]", repstr);
@@ -3002,16 +3013,16 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 #endif
 
   /* submitted by J.F (bug 1102) */
-  if(mapserv->Map->reference.status == MS_ON) {
-    sprintf(repstr, "%f", mapserv->Map->reference.extent.minx); /* Individual reference map extent elements for spatial query building */
+  if(mapserv->map->reference.status == MS_ON) {
+    sprintf(repstr, "%f", mapserv->map->reference.extent.minx); /* Individual reference map extent elements for spatial query building */
     outstr = msReplaceSubstring(outstr, "[refminx]", repstr);
-    sprintf(repstr, "%f", mapserv->Map->reference.extent.maxx);
+    sprintf(repstr, "%f", mapserv->map->reference.extent.maxx);
     outstr = msReplaceSubstring(outstr, "[refmaxx]", repstr);
-    sprintf(repstr, "%f", mapserv->Map->reference.extent.miny);
+    sprintf(repstr, "%f", mapserv->map->reference.extent.miny);
     outstr = msReplaceSubstring(outstr, "[refminy]", repstr);
-    sprintf(repstr, "%f", mapserv->Map->reference.extent.maxy);
+    sprintf(repstr, "%f", mapserv->map->reference.extent.maxy);
     outstr = msReplaceSubstring(outstr, "[refmaxy]", repstr);
-    sprintf(repstr, "%f %f %f %f", mapserv->Map->reference.extent.minx, mapserv->Map->reference.extent.miny, mapserv->Map->reference.extent.maxx, mapserv->Map->reference.extent.maxy);
+    sprintf(repstr, "%f %f %f %f", mapserv->map->reference.extent.minx, mapserv->map->reference.extent.miny, mapserv->map->reference.extent.maxx, mapserv->map->reference.extent.maxy);
     outstr = msReplaceSubstring(outstr, "[refext]", repstr);
 
     encodedstr =  msEncodeUrl(repstr);
@@ -3019,29 +3030,29 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     free(encodedstr); 
   }
 
-  sprintf(repstr, "%d %d", mapserv->Map->width, mapserv->Map->height);
+  sprintf(repstr, "%d %d", mapserv->map->width, mapserv->map->height);
   outstr = msReplaceSubstring(outstr, "[mapsize]", repstr);
    
   encodedstr = msEncodeUrl(repstr);
   outstr = msReplaceSubstring(outstr, "[mapsize_esc]", encodedstr);
   free(encodedstr);
 
-  sprintf(repstr, "%d", mapserv->Map->width);
+  sprintf(repstr, "%d", mapserv->map->width);
   outstr = msReplaceSubstring(outstr, "[mapwidth]", repstr);
-  sprintf(repstr, "%d", mapserv->Map->height);
+  sprintf(repstr, "%d", mapserv->map->height);
   outstr = msReplaceSubstring(outstr, "[mapheight]", repstr);
   
-  sprintf(repstr, "%f", mapserv->Map->scaledenom);
+  sprintf(repstr, "%f", mapserv->map->scaledenom);
   outstr = msReplaceSubstring(outstr, "[scale]", repstr);
   outstr = msReplaceSubstring(outstr, "[scaledenom]", repstr);
-  sprintf(repstr, "%f", mapserv->Map->cellsize);
+  sprintf(repstr, "%f", mapserv->map->cellsize);
   outstr = msReplaceSubstring(outstr, "[cellsize]", repstr);
   
-  sprintf(repstr, "%.1f %.1f", (mapserv->Map->width)/2.0, (mapserv->Map->height)/2.0); /* not subtracting 1 from image dimensions (see bug 633) */
+  sprintf(repstr, "%.1f %.1f", (mapserv->map->width)/2.0, (mapserv->map->height)/2.0); /* not subtracting 1 from image dimensions (see bug 633) */
   outstr = msReplaceSubstring(outstr, "[center]", repstr);
-  sprintf(repstr, "%.1f", (mapserv->Map->width)/2.0);
+  sprintf(repstr, "%.1f", (mapserv->map->width)/2.0);
   outstr = msReplaceSubstring(outstr, "[center_x]", repstr);
-  sprintf(repstr, "%.1f", (mapserv->Map->height)/2.0);
+  sprintf(repstr, "%.1f", (mapserv->map->height)/2.0);
   outstr = msReplaceSubstring(outstr, "[center_y]", repstr);      
 
   /* These are really for situations with multiple result sets only, but often used in header/footer   */
@@ -3050,11 +3061,11 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   sprintf(repstr, "%d", mapserv->NL); /* total number of layers with results */
   outstr = msReplaceSubstring(outstr, "[nl]", repstr);
 
-  if(mapserv->ResultLayer) {    
+  if(mapserv->resultlayer) {    
     if(strstr(outstr, "[items]") != NULL) {
       char *itemstr=NULL;
 
-      itemstr = msJoinStrings(mapserv->ResultLayer->items, mapserv->ResultLayer->numitems, ",");
+      itemstr = msJoinStrings(mapserv->resultlayer->items, mapserv->resultlayer->numitems, ",");
       outstr = msReplaceSubstring(outstr, "[items]", itemstr);
       free(itemstr);
     }
@@ -3065,8 +3076,8 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     outstr = msReplaceSubstring(outstr, "[rn]", repstr);
     sprintf(repstr, "%d", mapserv->LRN); /* sequential (eg. 1..n) result number within this layer */
     outstr = msReplaceSubstring(outstr, "[lrn]", repstr);
-    outstr = msReplaceSubstring(outstr, "[cl]", mapserv->ResultLayer->name); /* current layer name     */
-    /* if(ResultLayer->description) outstr = msReplaceSubstring(outstr, "[cd]", ResultLayer->description); // current layer description     */
+    outstr = msReplaceSubstring(outstr, "[cl]", mapserv->resultlayer->name); /* current layer name     */
+    /* if(resultlayer->description) outstr = msReplaceSubstring(outstr, "[cd]", resultlayer->description); // current layer description     */
   }
 
   if(processResultSetTag(mapserv, &outstr, stream) != MS_SUCCESS)
@@ -3075,10 +3086,10 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   if(mode == QUERY) { /* return shape and/or values  */
 
     /* allow layer metadata access in a query template, within the context of a query no layer name is necessary */
-    if(&(mapserv->ResultLayer->metadata) && strstr(outstr, "[metadata_")) {
+    if(&(mapserv->resultlayer->metadata) && strstr(outstr, "[metadata_")) {
       for(i=0; i<MS_HASHSIZE; i++) {
-        if(mapserv->ResultLayer->metadata.items[i] != NULL) {
-          for(tp=mapserv->ResultLayer->metadata.items[i]; tp!=NULL; tp=tp->next) {
+        if(mapserv->resultlayer->metadata.items[i] != NULL) {
+          for(tp=mapserv->resultlayer->metadata.items[i]; tp!=NULL; tp=tp->next) {
             snprintf(substr, PROCESSLINE_BUFLEN, "[metadata_%s]", tp->key);
             outstr = msReplaceSubstring(outstr, substr, tp->data);
      
@@ -3108,7 +3119,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     sprintf(repstr, "%d", mapserv->resultshape.classindex);
     outstr = msReplaceSubstring(outstr, "[shpclass]", repstr);
 
-    if(processShpxyTag(mapserv->ResultLayer, &outstr, &mapserv->resultshape) != MS_SUCCESS)
+    if(processShpxyTag(mapserv->resultlayer, &outstr, &mapserv->resultshape) != MS_SUCCESS)
       return(NULL);
 
     sprintf(repstr, "%f", mapserv->resultshape.bounds.minx);
@@ -3129,14 +3140,14 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     if(strstr(outstr, "[values]") != NULL) {
       char *valuestr=NULL;
 
-      valuestr = msJoinStrings(mapserv->resultshape.values, mapserv->ResultLayer->numitems, ",");
+      valuestr = msJoinStrings(mapserv->resultshape.values, mapserv->resultlayer->numitems, ",");
       outstr = msReplaceSubstring(outstr, "[values]", valuestr);
       free(valuestr);
     }
 
-    for(i=0;i<mapserv->ResultLayer->numitems;i++) {
+    for(i=0;i<mapserv->resultlayer->numitems;i++) {
       /* by default let's encode attributes for HTML presentation */
-      snprintf(substr, PROCESSLINE_BUFLEN, "[%s]", mapserv->ResultLayer->items[i]);
+      snprintf(substr, PROCESSLINE_BUFLEN, "[%s]", mapserv->resultlayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeHTMLEntities(mapserv->resultshape.values[i]);
         outstr = msReplaceSubstring(outstr, substr, encodedstr);
@@ -3144,7 +3155,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       }
 
       /* of course you might want to embed that data in URLs */
-      snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", mapserv->ResultLayer->items[i]);
+      snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", mapserv->resultlayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeUrl(mapserv->resultshape.values[i]);
         outstr = msReplaceSubstring(outstr, substr, encodedstr);
@@ -3152,45 +3163,45 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       }
 
       /* or you might want to access the attributes unaltered */
-      snprintf(substr, PROCESSLINE_BUFLEN, "[%s_raw]", mapserv->ResultLayer->items[i]);
+      snprintf(substr, PROCESSLINE_BUFLEN, "[%s_raw]", mapserv->resultlayer->items[i]);
       if(strstr(outstr, substr) != NULL)
         outstr = msReplaceSubstring(outstr, substr, mapserv->resultshape.values[i]);
     }
     
-    if(processItemTag(mapserv->ResultLayer, &outstr, &mapserv->resultshape) != MS_SUCCESS)
+    if(processItemTag(mapserv->resultlayer, &outstr, &mapserv->resultshape) != MS_SUCCESS)
       return(NULL);
 
     /* handle joins in this next section */
-    for(i=0; i<mapserv->ResultLayer->numjoins; i++) {
-      if(mapserv->ResultLayer->joins[i].values) { /* join has data */
-        for(j=0;j<mapserv->ResultLayer->joins[i].numitems;j++) {
+    for(i=0; i<mapserv->resultlayer->numjoins; i++) {
+      if(mapserv->resultlayer->joins[i].values) { /* join has data */
+        for(j=0;j<mapserv->resultlayer->joins[i].numitems;j++) {
           /* by default let's encode attributes for HTML presentation */
-          snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s]", mapserv->ResultLayer->joins[i].name, mapserv->ResultLayer->joins[i].items[j]);        
+          snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s]", mapserv->resultlayer->joins[i].name, mapserv->resultlayer->joins[i].items[j]);        
           if(strstr(outstr, substr) != NULL) {
-            encodedstr = msEncodeHTMLEntities(mapserv->ResultLayer->joins[i].values[j]);
+            encodedstr = msEncodeHTMLEntities(mapserv->resultlayer->joins[i].values[j]);
             outstr = msReplaceSubstring(outstr, substr, encodedstr);
             free(encodedstr);
           }
 
           /* of course you might want to embed that data in URLs */
-          snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s_esc]", mapserv->ResultLayer->joins[i].name, mapserv->ResultLayer->joins[i].items[j]);
+          snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s_esc]", mapserv->resultlayer->joins[i].name, mapserv->resultlayer->joins[i].items[j]);
           if(strstr(outstr, substr) != NULL) {
-            encodedstr = msEncodeUrl(mapserv->ResultLayer->joins[i].values[j]);
+            encodedstr = msEncodeUrl(mapserv->resultlayer->joins[i].values[j]);
             outstr = msReplaceSubstring(outstr, substr, encodedstr);
             free(encodedstr);
           }
 
           /* or you might want to access the attributes unaltered */
-          snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s_raw]", mapserv->ResultLayer->joins[i].name, mapserv->ResultLayer->joins[i].items[j]);
+          snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s_raw]", mapserv->resultlayer->joins[i].name, mapserv->resultlayer->joins[i].items[j]);
           if(strstr(outstr, substr) != NULL)
-            outstr = msReplaceSubstring(outstr, substr, mapserv->ResultLayer->joins[i].values[j]);
+            outstr = msReplaceSubstring(outstr, substr, mapserv->resultlayer->joins[i].values[j]);
         }
-      } else if(mapserv->ResultLayer->joins[i].type ==  MS_JOIN_ONE_TO_MANY){ /* one-to-many join */
+      } else if(mapserv->resultlayer->joins[i].type ==  MS_JOIN_ONE_TO_MANY){ /* one-to-many join */
         char *joinTemplate=NULL;
 
-        snprintf(substr, PROCESSLINE_BUFLEN, "[join_%s]", mapserv->ResultLayer->joins[i].name);        
+        snprintf(substr, PROCESSLINE_BUFLEN, "[join_%s]", mapserv->resultlayer->joins[i].name);        
         if(strstr(outstr, substr) != NULL) {
-          joinTemplate = processOneToManyJoin(mapserv, &(mapserv->ResultLayer->joins[i]));
+          joinTemplate = processOneToManyJoin(mapserv, &(mapserv->resultlayer->joins[i]));
           if(joinTemplate) {
             outstr = msReplaceSubstring(outstr, substr, joinTemplate);     
             free(joinTemplate);
@@ -3225,7 +3236,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
 #define MS_TEMPLATE_BUFFER 1024 /* 1k */
 
-int msReturnPage(mapservObj* mapserv, char* html, int mode, char **papszBuffer)
+int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
 {
   FILE *stream;
   char line[MS_BUFFER_LENGTH], *tmpline;
@@ -3248,7 +3259,7 @@ int msReturnPage(mapservObj* mapserv, char* html, int mode, char **papszBuffer)
   }
   ms_regfree(&re);
 
-  if((stream = fopen(msBuildPath(szPath, mapserv->Map->mappath, html), "r")) == NULL) {
+  if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, html), "r")) == NULL) {
     msSetError(MS_IOERR, html, "msReturnPage()");
     return MS_FAILURE;
   } 
@@ -3362,8 +3373,8 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
 
   if((mapserv->Mode == ITEMQUERY) || (mapserv->Mode == QUERY)) { /* may need to handle a URL result set */
 
-    for(i=(mapserv->Map->numlayers-1); i>=0; i--) {
-      lp = (GET_LAYER(mapserv->Map, i));
+    for(i=(mapserv->map->numlayers-1); i>=0; i--) {
+      lp = (GET_LAYER(mapserv->map, i));
 
       if(!lp->resultcache) continue;
       if(lp->resultcache->numresults > 0) break;
@@ -3382,7 +3393,7 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
       }
 
       if(TEMPLATE_TYPE(template) == MS_URL) {
-        mapserv->ResultLayer = lp;
+        mapserv->resultlayer = lp;
 
         status = msLayerOpen(lp);
         if(status != MS_SUCCESS) return status;
@@ -3410,7 +3421,7 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
 
         msFreeShape(&(mapserv->resultshape));
         msLayerClose(lp);
-        mapserv->ResultLayer = NULL;
+        mapserv->resultlayer = NULL;
           
         return MS_SUCCESS;
       }
@@ -3418,8 +3429,8 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
   }
 
   mapserv->NR = mapserv->NL = 0;
-  for(i=0; i<mapserv->Map->numlayers; i++) { /* compute some totals */
-    lp = (GET_LAYER(mapserv->Map, i));
+  for(i=0; i<mapserv->map->numlayers; i++) { /* compute some totals */
+    lp = (GET_LAYER(mapserv->map, i));
 
     if(!lp->resultcache) continue;
 
@@ -3431,7 +3442,7 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
 
   if(papszBuffer && pszMimeType) {
     sprintf(buffer, "Content-type: %s%c%c\n", pszMimeType, 10, 10);
-    /* sprintf(buffer, "<!-- %s -->\n",  msGetVersion());      */
+    /* sprintf(buffer, "<!-- %s -->\n",  msGetVersion()); */
 
     if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
       nExpandBuffer++;
@@ -3446,13 +3457,13 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
     fflush(stdout);
   }
 
-  if(mapserv->Map->web.header) {
-    if(msReturnPage(mapserv, mapserv->Map->web.header, BROWSE, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
+  if(mapserv->map->web.header) {
+    if(msReturnPage(mapserv, mapserv->map->web.header, BROWSE, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
   }
 
   mapserv->RN = 1; /* overall result number */
-  for(i=(mapserv->Map->numlayers-1); i>=0; i--) {
-    mapserv->ResultLayer = lp = (GET_LAYER(mapserv->Map, i));
+  for(i=(mapserv->map->numlayers-1); i>=0; i--) {
+    mapserv->resultlayer = lp = (GET_LAYER(mapserv->map, i));
 
     if(!lp->resultcache) continue;
     if(lp->resultcache->numresults <= 0) continue;
@@ -3512,11 +3523,11 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
     }
 
     msLayerClose(lp);
-    mapserv->ResultLayer = NULL;
+    mapserv->resultlayer = NULL;
   }
 
-  if(mapserv->Map->web.footer) 
-    return msReturnPage(mapserv, mapserv->Map->web.footer, BROWSE, papszBuffer);
+  if(mapserv->map->web.footer) 
+    return msReturnPage(mapserv, mapserv->map->web.footer, BROWSE, papszBuffer);
 
   return MS_SUCCESS;
 }
@@ -3526,12 +3537,12 @@ mapservObj *msAllocMapServObj()
 {
   mapservObj *mapserv = malloc(sizeof(mapservObj));
    
-  mapserv->SaveMap=MS_FALSE;
-  mapserv->SaveQuery=MS_FALSE; /* should the query and/or map be saved  */
+  mapserv->savemap=MS_FALSE;
+  mapserv->savequery=MS_FALSE; /* should the query and/or map be saved  */
 
   mapserv->request = msAllocCgiObj();
 
-  mapserv->Map=NULL;
+  mapserv->map=NULL;
 
   mapserv->NumLayers=0; /* number of layers specfied by a user */
   mapserv->MaxLayers=0; /* allocated size of Layers[] array */
@@ -3547,12 +3558,12 @@ mapservObj *msAllocMapServObj()
   mapserv->fZoom=1;
   mapserv->Zoom=1; /* default for browsing */
    
-  mapserv->ResultLayer=NULL;
+  mapserv->resultlayer=NULL;
    
   mapserv->UseShapes=MS_FALSE;
 
-  mapserv->MapPnt.x=-1;
-  mapserv->MapPnt.y=-1;
+  mapserv->mappnt.x=-1;
+  mapserv->mappnt.y=-1;
 
   mapserv->ZoomDirection=0; /* whether zooming in or out, default is pan or 0 */
 
@@ -3600,7 +3611,7 @@ void msFreeMapServObj(mapservObj* mapserv)
   int i;
 
   if(mapserv) {
-    msFreeMap(mapserv->Map);
+    msFreeMap(mapserv->map);
 
     msFreeCgiObj(mapserv->request);
     mapserv->request = NULL;
@@ -3658,27 +3669,24 @@ int msGrowMapservLayers( mapservObj* mapserv )
 **
 ** Parameters:
 **   - mapserv: mapserv object (used to extract the map object).
-**   - szQuery: query file used my mapserv cgi. Set to NULL if not needed.
-**   - bReturnOnError: if set to TRUE, the function will return on the first error. Else it will try to generate all the images.
-**/
-int msGenerateImages(mapservObj *mapserv, char *szQuery, int bReturnOnError)
+**   - bQueryMap: if set to TRUE a query map will be created instead of a regular map.
+**   - bReturnOnError: if set to TRUE, the function will return on the first error, else it will try to generate all the images.
+*/
+int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
 {
   char buffer[1024];
     
   if(mapserv) {
 
-    /* render the map */
-    if(mapserv->Map->status == MS_ON) {
+    /* render the map OR query map */
+    if((!bQueryMap && mapserv->map->status == MS_ON) || (bQueryMap && mapserv->map->querymap.status == MS_ON)) {
       imageObj *image = NULL;
-      if(szQuery)
-        image = msDrawMap(mapserv->Map, MS_TRUE);
-      else
-        image = msDrawMap(mapserv->Map, MS_FALSE);
+      image = msDrawMap(mapserv->map, bQueryMap);
 
       if(image) { 
-        sprintf(buffer, "%s%s%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
+        sprintf(buffer, "%s%s%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
 
-        if(msSaveImage(mapserv->Map, image, buffer) != MS_SUCCESS && bReturnOnError) {
+        if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
           return MS_FALSE;
         }
@@ -3688,13 +3696,13 @@ int msGenerateImages(mapservObj *mapserv, char *szQuery, int bReturnOnError)
     }
 
     /* render the legend */
-    if(mapserv->Map->legend.status == MS_ON) {
+    if(mapserv->map->legend.status == MS_ON) {
       imageObj *image = NULL;
-      image = msDrawLegend(mapserv->Map, MS_FALSE);
+      image = msDrawLegend(mapserv->map, MS_FALSE);
       if(image) { 
-        sprintf(buffer, "%s%sleg%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
+        sprintf(buffer, "%s%sleg%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
                 
-        if(msSaveImage(mapserv->Map, image, buffer) != MS_SUCCESS && bReturnOnError) {
+        if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
           return MS_FALSE;
         }
@@ -3704,12 +3712,12 @@ int msGenerateImages(mapservObj *mapserv, char *szQuery, int bReturnOnError)
     }
 
     /* render the scalebar */
-    if(mapserv->Map->scalebar.status == MS_ON) {
+    if(mapserv->map->scalebar.status == MS_ON) {
       imageObj *image = NULL;
-      image = msDrawScalebar(mapserv->Map);
+      image = msDrawScalebar(mapserv->map);
       if(image) {
-        sprintf(buffer, "%s%ssb%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-        if(msSaveImage(mapserv->Map, image, buffer) != MS_SUCCESS && bReturnOnError) {
+        sprintf(buffer, "%s%ssb%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+        if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
           return MS_FALSE;
         }
@@ -3719,12 +3727,12 @@ int msGenerateImages(mapservObj *mapserv, char *szQuery, int bReturnOnError)
     }
 
     /* render the reference map */
-    if(mapserv->Map->reference.status == MS_ON) {
+    if(mapserv->map->reference.status == MS_ON) {
       imageObj *image;
-      image = msDrawReferenceMap(mapserv->Map);
+      image = msDrawReferenceMap(mapserv->map);
       if(image) { 
-        sprintf(buffer, "%s%sref%s.%s", mapserv->Map->web.imagepath, mapserv->Map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->Map->outputformat));
-        if(msSaveImage(mapserv->Map, image, buffer) != MS_SUCCESS && bReturnOnError) {
+        sprintf(buffer, "%s%sref%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+        if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
           return MS_FALSE;
         }
@@ -3754,7 +3762,7 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages, char **names, char **v
     mapservObj  *mapserv  = NULL;
     mapserv = msAllocMapServObj();
 
-    mapserv->Map = map;
+    mapserv->map = map;
     mapserv->Mode = BROWSE;
 
     if(names && values && numentries > 0) {
@@ -3770,20 +3778,20 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages, char **names, char **v
     */
 
     if(bGenerateImages)
-      msGenerateImages(mapserv, NULL, MS_FALSE);
+      msGenerateImages(mapserv, MS_FALSE, MS_FALSE);
 
     /*
     ** Process the template.
     **
     ** TODO : use web minscaledenom/maxscaledenom depending on the scale.
     */
-    if(msReturnPage(mapserv, mapserv->Map->web.template, BROWSE, &pszBuffer) != MS_SUCCESS) {
+    if(msReturnPage(mapserv, mapserv->map->web.template, BROWSE, &pszBuffer) != MS_SUCCESS) {
       msFree(pszBuffer);
       pszBuffer = NULL;
     }
 
     /* Don't free the map and names and values arrays since they were passed by reference. */
-    mapserv->Map = NULL;
+    mapserv->map = NULL;
     mapserv->request->ParamNames = mapserv->request->ParamValues = NULL;
     mapserv->request->NumParams = 0;
     msFreeMapServObj(mapserv);
@@ -3805,7 +3813,7 @@ char *msProcessLegendTemplate(mapObj *map, char **names, char **values, int nume
     mapservObj  *mapserv  = NULL;
     mapserv = msAllocMapServObj();
 
-    mapserv->Map = map;
+    mapserv->map = map;
     mapserv->Mode = BROWSE;
 
     if(names && values && numentries > 0) {
@@ -3817,7 +3825,7 @@ char *msProcessLegendTemplate(mapObj *map, char **names, char **values, int nume
     pszOutBuf = generateLegendTemplate(mapserv);
 
     /* Don't free the map and names and values arrays since they were passed by reference. */
-    mapserv->Map = NULL;
+    mapserv->map = NULL;
     mapserv->request->ParamNames = mapserv->request->ParamValues = NULL;
     mapserv->request->NumParams = 0;
     msFreeMapServObj(mapserv);
@@ -3840,7 +3848,7 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, char **names, cha
     mapservObj *mapserv = NULL;
     mapserv = msAllocMapServObj();
 
-    mapserv->Map = map;
+    mapserv->map = map;
     mapserv->Mode = QUERY;
 
     if(names && values && numentries > 0) {
@@ -3850,11 +3858,11 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, char **names, cha
     }
 
     if(bGenerateImages)
-      msGenerateImages(mapserv, NULL, MS_FALSE);
+      msGenerateImages(mapserv, MS_FALSE, MS_FALSE); /* second parameter should be MS_TRUE I believe - SDL - */
 
     msReturnQuery(mapserv, NULL, &pszBuffer );
 
-    mapserv->Map = NULL;
+    mapserv->map = NULL;
     mapserv->request->ParamNames = mapserv->request->ParamValues = NULL;
     mapserv->request->NumParams = 0;
     msFreeMapServObj(mapserv);

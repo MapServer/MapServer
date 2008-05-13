@@ -60,21 +60,21 @@ enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, LEGENDICON, REFERENCE, SCALEBA
 typedef struct
 {
    /* should the query and/or map be saved */
-   int SaveMap, SaveQuery;
+   int savemap, savequery;
 
    cgiRequestObj *request;
 
-   mapObj *Map;
+   mapObj *map;
 
    char **Layers;
-	 char *icon; /* layer:class combination that defines a legend icon */
+   char *icon; /* layer:class combination that defines a legend icon */
   
    /* number of layers specfied by a use */
    int NumLayers;
    /* Allocated size of Layers[] array */
    int MaxLayers;
 
-   layerObj *ResultLayer;
+   layerObj *resultlayer;
    
    int UseShapes; /* are results of a query to be used in calculating an extent of some sort */
 
@@ -83,7 +83,7 @@ typedef struct
 
    rectObj RawExt;
 
-   pointObj MapPnt;
+   pointObj mappnt;
 
    /* default for browsing */
    double fZoom, Zoom;
@@ -155,7 +155,7 @@ MS_DLL_EXPORT int msRedirect(char* url);
 
 MS_DLL_EXPORT char *generateLegendTemplate(mapservObj *msObj);
 
-MS_DLL_EXPORT int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError);
+MS_DLL_EXPORT int msGenerateImages(mapservObj *msObj, int bQueryMap, int bReturnOnError);
 
 
 MS_DLL_EXPORT char *msProcessTemplate(mapObj *map, int bGenerateImages, 

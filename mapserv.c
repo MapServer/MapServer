@@ -41,7 +41,7 @@
 MS_CVSID("$Id$")
 
 
-mapservObj* msObj;
+mapservObj* mapserv;
 
 int writeLog(int show_error)
 {
@@ -50,13 +50,13 @@ int writeLog(int show_error)
   time_t t;
   char szPath[MS_MAXPATHLEN];
 
-  if(!msObj) return(0);
-  if(!msObj->Map) return(0);
-  if(!msObj->Map->web.log) return(0);
+  if(!mapserv) return(0);
+  if(!mapserv->map) return(0);
+  if(!mapserv->map->web.log) return(0);
   
-  if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, 
-                                   msObj->Map->web.log),"a")) == NULL) {
-    msSetError(MS_IOERR, msObj->Map->web.log, "writeLog()");
+  if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, 
+                                   mapserv->map->web.log),"a")) == NULL) {
+    msSetError(MS_IOERR, mapserv->map->web.log, "writeLog()");
     return(-1);
   }
 
@@ -69,15 +69,15 @@ int writeLog(int show_error)
   else
     fprintf(stream,"NULL,");
  
-  fprintf(stream,"%s,",msObj->Map->name);
-  fprintf(stream,"%d,",msObj->Mode);
+  fprintf(stream,"%s,",mapserv->map->name);
+  fprintf(stream,"%d,",mapserv->Mode);
 
-  fprintf(stream,"%f %f %f %f,", msObj->Map->extent.minx, msObj->Map->extent.miny, msObj->Map->extent.maxx, msObj->Map->extent.maxy);
+  fprintf(stream,"%f %f %f %f,", mapserv->map->extent.minx, mapserv->map->extent.miny, mapserv->map->extent.maxx, mapserv->map->extent.maxy);
 
-  fprintf(stream,"%f %f,", msObj->MapPnt.x, msObj->MapPnt.y);
+  fprintf(stream,"%f %f,", mapserv->mappnt.x, mapserv->mappnt.y);
 
-  for(i=0;i<msObj->NumLayers;i++)
-    fprintf(stream, "%s ", msObj->Layers[i]);
+  for(i=0;i<mapserv->NumLayers;i++)
+    fprintf(stream, "%s ", mapserv->Layers[i]);
   fprintf(stream,",");
 
   if(show_error == MS_TRUE)
@@ -97,7 +97,7 @@ void writeError(void)
 
   writeLog(MS_TRUE);
 
-  if(!msObj || !msObj->Map) {
+  if(!mapserv || !mapserv->map) {
     msIO_printf("Content-type: text/html%c%c",10,10);
     msIO_printf("<HTML>\n");
     msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -105,15 +105,15 @@ void writeError(void)
     msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
     msWriteErrorXML(stdout);
     msIO_printf("</BODY></HTML>");
-    if(msObj) 
-      msFreeMapServObj(msObj);
+    if(mapserv) 
+      msFreeMapServObj(mapserv);
     msCleanup();
     exit(0);
   }
 
-  if((ms_error->code == MS_NOTFOUND) && (msObj->Map->web.empty)) {
-    /* msRedirect(msObj->Map->web.empty); */
-    if(msReturnURL(msObj, msObj->Map->web.empty, BROWSE) != MS_SUCCESS) {
+  if((ms_error->code == MS_NOTFOUND) && (mapserv->map->web.empty)) {
+    /* msRedirect(mapserv->map->web.empty); */
+    if(msReturnURL(mapserv, mapserv->map->web.empty, BROWSE) != MS_SUCCESS) {
       msIO_printf("Content-type: text/html%c%c",10,10);
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -123,9 +123,9 @@ void writeError(void)
       msIO_printf("</BODY></HTML>");
     }
   } else {
-    if(msObj->Map->web.error) {      
-      /* msRedirect(msObj->Map->web.error); */
-      if(msReturnURL(msObj, msObj->Map->web.error, BROWSE) != MS_SUCCESS) {
+    if(mapserv->map->web.error) {      
+      /* msRedirect(mapserv->map->web.error); */
+      if(msReturnURL(mapserv, mapserv->map->web.error, BROWSE) != MS_SUCCESS) {
         msIO_printf("Content-type: text/html%c%c",10,10);
         msIO_printf("<HTML>\n");
         msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -145,14 +145,14 @@ void writeError(void)
     }
   }
 
-  /* Clean-up (the following are not stored as part of the msObj) */
+  /* Clean-up (the following are not stored as part of the mapserv) */
   if(QueryItem) free(QueryItem);
   if(QueryString) free(QueryString);
   if(QueryLayer) free(QueryLayer);
   if(SelectLayer) free(SelectLayer);
   if(QueryFile) free(QueryFile);
 
-  msFreeMapServObj(msObj);
+  msFreeMapServObj(mapserv);
   msCleanup();
 
   exit(0); /* bail */
@@ -185,10 +185,10 @@ mapObj *loadMap(void)
   mapObj *map = NULL;
   char *tmpstr, *key, *value=NULL;
   
-  for(i=0;i<msObj->request->NumParams;i++) /* find the mapfile parameter first */
-    if(strcasecmp(msObj->request->ParamNames[i], "map") == 0) break;
+  for(i=0;i<mapserv->request->NumParams;i++) /* find the mapfile parameter first */
+    if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
   
-  if(i == msObj->request->NumParams) {
+  if(i == mapserv->request->NumParams) {
     if(getenv("MS_MAPFILE")) /* has a default file has not been set */
       map = msLoadMap(getenv("MS_MAPFILE"), NULL);
     else {
@@ -196,58 +196,58 @@ mapObj *loadMap(void)
       writeError();
     }
   } else {
-    if(getenv(msObj->request->ParamValues[i])) /* an environment references the actual file to use */
-      map = msLoadMap(getenv(msObj->request->ParamValues[i]), NULL);
+    if(getenv(mapserv->request->ParamValues[i])) /* an environment references the actual file to use */
+      map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
     else
-      map = msLoadMap(msObj->request->ParamValues[i], NULL);
+      map = msLoadMap(mapserv->request->ParamValues[i], NULL);
   }
 
   if(!map) writeError();
 
   /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
   /* services can take advantage of these "vendor specific" extensions */
-  for(i=0;i<msObj->request->NumParams;i++) {
+  for(i=0;i<mapserv->request->NumParams;i++) {
     /*
 		** a few CGI variables should be skipped altogether
     **
     ** qstring: there is separate per layer validation for attribute queries and the substitution checks
     **          below conflict with that so we avoid it here
     */
-    if(strncasecmp(msObj->request->ParamNames[i],"qstring",7) == 0) continue;
+    if(strncasecmp(mapserv->request->ParamNames[i],"qstring",7) == 0) continue;
 
-    if(strncasecmp(msObj->request->ParamNames[i],"map_",4) == 0 || strncasecmp(msObj->request->ParamNames[i],"map.",4) == 0) { /* check to see if there are any additions to the mapfile */
-      if(msUpdateMapFromURL(map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) != MS_SUCCESS) writeError();
+    if(strncasecmp(mapserv->request->ParamNames[i],"map_",4) == 0 || strncasecmp(mapserv->request->ParamNames[i],"map.",4) == 0) { /* check to see if there are any additions to the mapfile */
+      if(msUpdateMapFromURL(map, mapserv->request->ParamNames[i], mapserv->request->ParamValues[i]) != MS_SUCCESS) writeError();
       continue;
     }
 
     /* runtime subtitution string */
-    tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->request->ParamNames[i]) + 3);
-    sprintf(tmpstr,"%%%s%%", msObj->request->ParamNames[i]);
+    tmpstr = (char *)malloc(sizeof(char)*strlen(mapserv->request->ParamNames[i]) + 3);
+    sprintf(tmpstr,"%%%s%%", mapserv->request->ParamNames[i]);
 
     /* validation pattern metadata key */
-    key = (char *)malloc(sizeof(char)*strlen(msObj->request->ParamNames[i]) + 20);
-    sprintf(key,"%s_validation_pattern", msObj->request->ParamNames[i]);
+    key = (char *)malloc(sizeof(char)*strlen(mapserv->request->ParamNames[i]) + 20);
+    sprintf(key,"%s_validation_pattern", mapserv->request->ParamNames[i]);
         
     for(j=0; j<map->numlayers; j++) {
       value = msLookupHashTable(&(GET_LAYER(map, j)->metadata), key);
       if(value) { /* validate parameter value */
-        if(msEvalRegex(value, msObj->request->ParamValues[i]) == MS_FALSE) {
-          msSetError(MS_WEBERR, "Parameter '%s' value fails to validate.", "loadMap()", msObj->request->ParamNames[i]);
+        if(msEvalRegex(value, mapserv->request->ParamValues[i]) == MS_FALSE) {
+          msSetError(MS_WEBERR, "Parameter '%s' value fails to validate.", "loadMap()", mapserv->request->ParamNames[i]);
           writeError();
         }
       }
 
       if(GET_LAYER(map, j)->data && (strstr(GET_LAYER(map, j)->data, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->data = msReplaceSubstring(GET_LAYER(map, j)->data, tmpstr, msObj->request->ParamValues[i]);
+        GET_LAYER(map, j)->data = msReplaceSubstring(GET_LAYER(map, j)->data, tmpstr, mapserv->request->ParamValues[i]);
       if(GET_LAYER(map, j)->tileindex && (strstr(GET_LAYER(map, j)->tileindex, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->tileindex = msReplaceSubstring(GET_LAYER(map, j)->tileindex, tmpstr, msObj->request->ParamValues[i]);
+        GET_LAYER(map, j)->tileindex = msReplaceSubstring(GET_LAYER(map, j)->tileindex, tmpstr, mapserv->request->ParamValues[i]);
       if(GET_LAYER(map, j)->connection && (strstr(GET_LAYER(map, j)->connection, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->connection = msReplaceSubstring(GET_LAYER(map, j)->connection, tmpstr, msObj->request->ParamValues[i]);
+        GET_LAYER(map, j)->connection = msReplaceSubstring(GET_LAYER(map, j)->connection, tmpstr, mapserv->request->ParamValues[i]);
       if(GET_LAYER(map, j)->filter.string && (strstr(GET_LAYER(map, j)->filter.string, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->filter.string = msReplaceSubstring(GET_LAYER(map, j)->filter.string, tmpstr, msObj->request->ParamValues[i]);
+        GET_LAYER(map, j)->filter.string = msReplaceSubstring(GET_LAYER(map, j)->filter.string, tmpstr, mapserv->request->ParamValues[i]);
       for(k=0; k<GET_LAYER(map, j)->numclasses; k++) {
         if(GET_LAYER(map, j)->class[k]->expression.string && (strstr(GET_LAYER(map, j)->class[k]->expression.string, tmpstr) != NULL)) 
-          GET_LAYER(map, j)->class[k]->expression.string = msReplaceSubstring(GET_LAYER(map, j)->class[k]->expression.string, tmpstr, msObj->request->ParamValues[i]);
+          GET_LAYER(map, j)->class[k]->expression.string = msReplaceSubstring(GET_LAYER(map, j)->class[k]->expression.string, tmpstr, mapserv->request->ParamValues[i]);
       }
     }
     
@@ -258,14 +258,14 @@ mapObj *loadMap(void)
   /* check to see if a ogc map context is passed as argument. if there */
   /* is one load it */
 
-  for(i=0;i<msObj->request->NumParams;i++) {
-    if(strcasecmp(msObj->request->ParamNames[i],"context") == 0) {
-      if(msObj->request->ParamValues[i] && strlen(msObj->request->ParamValues[i]) > 0) {
-        if(strncasecmp(msObj->request->ParamValues[i],"http",4) == 0) {
+  for(i=0;i<mapserv->request->NumParams;i++) {
+    if(strcasecmp(mapserv->request->ParamNames[i],"context") == 0) {
+      if(mapserv->request->ParamValues[i] && strlen(mapserv->request->ParamValues[i]) > 0) {
+        if(strncasecmp(mapserv->request->ParamValues[i],"http",4) == 0) {
           if(msGetConfigOption(map, "CGI_CONTEXT_URL"))
-            msLoadMapContextURL(map, msObj->request->ParamValues[i], MS_FALSE);
+            msLoadMapContextURL(map, mapserv->request->ParamValues[i], MS_FALSE);
         } else
-            msLoadMapContext(map, msObj->request->ParamValues[i], MS_FALSE); 
+            msLoadMapContext(map, mapserv->request->ParamValues[i], MS_FALSE); 
       }
     }
   } 
@@ -276,7 +276,7 @@ mapObj *loadMap(void)
 /*
 ** Set operation mode. First look in MS_MODE env. var. as a
 ** default value that can be overridden by the mode=... CGI param.
-** Returns silently, leaving msObj->Mode unchanged if mode param not set.
+** Returns silently, leaving mapserv->Mode unchanged if mode param not set.
 */
 static int setMode(void)
 {
@@ -285,11 +285,11 @@ static int setMode(void)
 
 
     mode = getenv("MS_MODE");
-    for( i=0; i<msObj->request->NumParams; i++ ) 
+    for( i=0; i<mapserv->request->NumParams; i++ ) 
     {
-        if(strcasecmp(msObj->request->ParamNames[i], "mode") == 0)
+        if(strcasecmp(mapserv->request->ParamNames[i], "mode") == 0)
         {
-            mode = msObj->request->ParamValues[i];
+            mode = mapserv->request->ParamValues[i];
             break;
         }
     }
@@ -297,7 +297,7 @@ static int setMode(void)
     if (mode) {
       for(j=0; j<numModes; j++) {
         if(strcasecmp(mode, modeStrings[j]) == 0) {
-          msObj->Mode = j;
+          mapserv->Mode = j;
           break;
         }
       }
@@ -320,53 +320,53 @@ void loadForm(void)
   char **tokens=NULL;
   int rosa_type=0;
 
-  for(i=0;i<msObj->request->NumParams;i++) { /* now process the rest of the form variables */
-    if(strlen(msObj->request->ParamValues[i]) == 0)
+  for(i=0;i<mapserv->request->NumParams;i++) { /* now process the rest of the form variables */
+    if(strlen(mapserv->request->ParamValues[i]) == 0)
       continue;
     
     
-    if(strcasecmp(msObj->request->ParamNames[i],"icon") == 0) {      
-      msObj->icon = strdup(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"icon") == 0) {      
+      mapserv->icon = strdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"queryfile") == 0) {      
-      QueryFile = strdup(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"queryfile") == 0) {      
+      QueryFile = strdup(mapserv->request->ParamValues[i]);
       continue;
     }
     
-    if(strcasecmp(msObj->request->ParamNames[i],"savequery") == 0) {
-      msObj->SaveQuery = MS_TRUE;
+    if(strcasecmp(mapserv->request->ParamNames[i],"savequery") == 0) {
+      mapserv->savequery = MS_TRUE;
       continue;
     }
     
     /* Insecure as implemented, need to save someplace non accessible by everyone in the universe
-        if(strcasecmp(msObj->request->ParamNames[i],"savemap") == 0) {      
-         msObj->SaveMap = MS_TRUE;
+        if(strcasecmp(mapserv->request->ParamNames[i],"savemap") == 0) {      
+         mapserv->savemap = MS_TRUE;
          continue;
         }
     */
 
-    if(strcasecmp(msObj->request->ParamNames[i],"zoom") == 0) {
-      msObj->Zoom = getNumeric(msObj->request->ParamValues[i]);      
-      if((msObj->Zoom > MAXZOOM) || (msObj->Zoom < MINZOOM)) {
+    if(strcasecmp(mapserv->request->ParamNames[i],"zoom") == 0) {
+      mapserv->Zoom = getNumeric(mapserv->request->ParamValues[i]);      
+      if((mapserv->Zoom > MAXZOOM) || (mapserv->Zoom < MINZOOM)) {
         msSetError(MS_WEBERR, "Zoom value out of range.", "loadForm()");
         writeError();
       }
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"zoomdir") == 0) {
-      msObj->ZoomDirection = (int)getNumeric(msObj->request->ParamValues[i]);
-      if((msObj->ZoomDirection != -1) && (msObj->ZoomDirection != 1) && (msObj->ZoomDirection != 0)) {
+    if(strcasecmp(mapserv->request->ParamNames[i],"zoomdir") == 0) {
+      mapserv->ZoomDirection = (int)getNumeric(mapserv->request->ParamValues[i]);
+      if((mapserv->ZoomDirection != -1) && (mapserv->ZoomDirection != 1) && (mapserv->ZoomDirection != 0)) {
         msSetError(MS_WEBERR, "Zoom direction must be 1, 0 or -1.", "loadForm()");
         writeError();
       }
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"zoomsize") == 0) { /* absolute zoom magnitude */
-      ZoomSize = (int) getNumeric(msObj->request->ParamValues[i]);      
+    if(strcasecmp(mapserv->request->ParamNames[i],"zoomsize") == 0) { /* absolute zoom magnitude */
+      ZoomSize = (int) getNumeric(mapserv->request->ParamValues[i]);      
       if((ZoomSize > MAXZOOM) || (ZoomSize < 1)) {
         msSetError(MS_WEBERR, "Invalid zoom size.", "loadForm()");
         writeError();
@@ -374,8 +374,8 @@ void loadForm(void)
       continue;
     }
     
-    if(strcasecmp(msObj->request->ParamNames[i],"imgext") == 0) { /* extent of an existing image in a web application */
-      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+    if(strcasecmp(mapserv->request->ParamNames[i],"imgext") == 0) { /* extent of an existing image in a web application */
+      tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -387,31 +387,31 @@ void loadForm(void)
         writeError();
       }
 
-      msObj->ImgExt.minx = getNumeric(tokens[0]);
-      msObj->ImgExt.miny = getNumeric(tokens[1]);
-      msObj->ImgExt.maxx = getNumeric(tokens[2]);
-      msObj->ImgExt.maxy = getNumeric(tokens[3]);
+      mapserv->ImgExt.minx = getNumeric(tokens[0]);
+      mapserv->ImgExt.miny = getNumeric(tokens[1]);
+      mapserv->ImgExt.maxx = getNumeric(tokens[2]);
+      mapserv->ImgExt.maxy = getNumeric(tokens[3]);
 
       msFreeCharArray(tokens, 4);
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"searchmap") == 0) {      
+    if(strcasecmp(mapserv->request->ParamNames[i],"searchmap") == 0) {      
       SearchMap = MS_TRUE;
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"id") == 0) {
-      strncpy(msObj->Id, msObj->request->ParamValues[i], IDSIZE);
+    if(strcasecmp(mapserv->request->ParamNames[i],"id") == 0) {
+      strncpy(mapserv->Id, mapserv->request->ParamValues[i], IDSIZE);
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"mapext") == 0) { /* extent of the new map or query */
+    if(strcasecmp(mapserv->request->ParamNames[i],"mapext") == 0) { /* extent of the new map or query */
 
-      if(strncasecmp(msObj->request->ParamValues[i],"shape",5) == 0)
-        msObj->UseShapes = MS_TRUE;
+      if(strncasecmp(mapserv->request->ParamValues[i],"shape",5) == 0)
+        mapserv->UseShapes = MS_TRUE;
       else {
-        tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+        tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
     
         if(!tokens) {
           msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -423,10 +423,10 @@ void loadForm(void)
           writeError();
         }
     
-        msObj->Map->extent.minx = getNumeric(tokens[0]);
-        msObj->Map->extent.miny = getNumeric(tokens[1]);
-        msObj->Map->extent.maxx = getNumeric(tokens[2]);
-        msObj->Map->extent.maxy = getNumeric(tokens[3]);    
+        mapserv->map->extent.minx = getNumeric(tokens[0]);
+        mapserv->map->extent.miny = getNumeric(tokens[1]);
+        mapserv->map->extent.maxx = getNumeric(tokens[2]);
+        mapserv->map->extent.maxy = getNumeric(tokens[3]);    
     
         msFreeCharArray(tokens, 4);
     
@@ -440,17 +440,17 @@ void loadForm(void)
          *         and coincidentally fall in the lon/lat range, bad things
          *         will ensue.
          */
-        if(msObj->Map->projection.proj && !pj_is_latlong(msObj->Map->projection.proj)
-           && (msObj->Map->extent.minx >= -180.0 && msObj->Map->extent.minx <= 180.0) 
-           && (msObj->Map->extent.miny >= -90.0 && msObj->Map->extent.miny <= 90.0)
-           && (msObj->Map->extent.maxx >= -180.0 && msObj->Map->extent.maxx <= 180.0) 
-           && (msObj->Map->extent.maxy >= -90.0 && msObj->Map->extent.maxy <= 90.0)) {
-          msProjectRect(&(msObj->Map->latlon), &(msObj->Map->projection), &(msObj->Map->extent)); /* extent is a in lat/lon */
+        if(mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
+           && (mapserv->map->extent.minx >= -180.0 && mapserv->map->extent.minx <= 180.0) 
+           && (mapserv->map->extent.miny >= -90.0 && mapserv->map->extent.miny <= 90.0)
+           && (mapserv->map->extent.maxx >= -180.0 && mapserv->map->extent.maxx <= 180.0) 
+           && (mapserv->map->extent.maxy >= -90.0 && mapserv->map->extent.maxy <= 90.0)) {
+          msProjectRect(&(mapserv->map->latlon), &(mapserv->map->projection), &(mapserv->map->extent)); /* extent is a in lat/lon */
         }
 #endif
 
-        if((msObj->Map->extent.minx != msObj->Map->extent.maxx) && (msObj->Map->extent.miny != msObj->Map->extent.maxy)) { /* extent seems ok */
-          msObj->CoordSource = FROMUSERBOX;
+        if((mapserv->map->extent.minx != mapserv->map->extent.maxx) && (mapserv->map->extent.miny != mapserv->map->extent.maxy)) { /* extent seems ok */
+          mapserv->CoordSource = FROMUSERBOX;
           QueryCoordSource = FROMUSERBOX;
         }
       }
@@ -458,31 +458,31 @@ void loadForm(void)
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"minx") == 0) { /* extent of the new map, in pieces */
-      msObj->Map->extent.minx = getNumeric(msObj->request->ParamValues[i]);      
+    if(strcasecmp(mapserv->request->ParamNames[i],"minx") == 0) { /* extent of the new map, in pieces */
+      mapserv->map->extent.minx = getNumeric(mapserv->request->ParamValues[i]);      
       continue;
     }
-    if(strcasecmp(msObj->request->ParamNames[i],"maxx") == 0) {      
-      msObj->Map->extent.maxx = getNumeric(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"maxx") == 0) {      
+      mapserv->map->extent.maxx = getNumeric(mapserv->request->ParamValues[i]);
       continue;
     }
-    if(strcasecmp(msObj->request->ParamNames[i],"miny") == 0) {
-      msObj->Map->extent.miny = getNumeric(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"miny") == 0) {
+      mapserv->map->extent.miny = getNumeric(mapserv->request->ParamValues[i]);
       continue;
     }
-    if(strcasecmp(msObj->request->ParamNames[i],"maxy") == 0) {
-      msObj->Map->extent.maxy = getNumeric(msObj->request->ParamValues[i]);
-      msObj->CoordSource = FROMUSERBOX;
+    if(strcasecmp(mapserv->request->ParamNames[i],"maxy") == 0) {
+      mapserv->map->extent.maxy = getNumeric(mapserv->request->ParamValues[i]);
+      mapserv->CoordSource = FROMUSERBOX;
       QueryCoordSource = FROMUSERBOX;
       continue;
     } 
 
-    if(strcasecmp(msObj->request->ParamNames[i],"mapxy") == 0) { /* user map coordinate */
+    if(strcasecmp(mapserv->request->ParamNames[i],"mapxy") == 0) { /* user map coordinate */
       
-      if(strncasecmp(msObj->request->ParamValues[i],"shape",5) == 0) {
-        msObj->UseShapes = MS_TRUE;    
+      if(strncasecmp(mapserv->request->ParamValues[i],"shape",5) == 0) {
+        mapserv->UseShapes = MS_TRUE;    
       } else {
-        tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+        tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
         if(!tokens) {
           msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -494,33 +494,33 @@ void loadForm(void)
           writeError();
         }
     
-        msObj->MapPnt.x = getNumeric(tokens[0]);
-        msObj->MapPnt.y = getNumeric(tokens[1]);
+        mapserv->mappnt.x = getNumeric(tokens[0]);
+        mapserv->mappnt.y = getNumeric(tokens[1]);
     
         msFreeCharArray(tokens, 2);
 
 #ifdef USE_PROJ
-        if(msObj->Map->projection.proj && !pj_is_latlong(msObj->Map->projection.proj)
-           && (msObj->MapPnt.x >= -180.0 && msObj->MapPnt.x <= 180.0) 
-           && (msObj->MapPnt.y >= -90.0 && msObj->MapPnt.y <= 90.0)) {
-          msProjectPoint(&(msObj->Map->latlon), &(msObj->Map->projection), &msObj->MapPnt); /* point is a in lat/lon */
+        if(mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
+           && (mapserv->mappnt.x >= -180.0 && mapserv->mappnt.x <= 180.0) 
+           && (mapserv->mappnt.y >= -90.0 && mapserv->mappnt.y <= 90.0)) {
+          msProjectPoint(&(mapserv->map->latlon), &(mapserv->map->projection), &mapserv->mappnt); /* point is a in lat/lon */
         }
 #endif
 
-        if(msObj->CoordSource == NONE) { /* don't override previous settings (i.e. buffer or scale ) */
-          msObj->CoordSource = FROMUSERPNT;
+        if(mapserv->CoordSource == NONE) { /* don't override previous settings (i.e. buffer or scale ) */
+          mapserv->CoordSource = FROMUSERPNT;
           QueryCoordSource = FROMUSERPNT;
         }
       }
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"mapshape") == 0) { /* query shape */
+    if(strcasecmp(mapserv->request->ParamNames[i],"mapshape") == 0) { /* query shape */
       lineObj line={0,NULL};
       char **tmp=NULL;
       int n, j;
       
-      tmp = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+      tmp = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
       if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -528,23 +528,23 @@ void loadForm(void)
       }
       line.numpoints = n/2;
 
-      msInitShape(&(msObj->SelectShape));
-      msObj->SelectShape.type = MS_SHAPE_POLYGON;
+      msInitShape(&(mapserv->SelectShape));
+      mapserv->SelectShape.type = MS_SHAPE_POLYGON;
 
       for(j=0; j<n/2; j++) {
         line.point[j].x = atof(tmp[2*j]);
         line.point[j].y = atof(tmp[2*j+1]);
 
 #ifdef USE_PROJ
-        if(msObj->Map->projection.proj && !pj_is_latlong(msObj->Map->projection.proj)
+        if(mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
            && (line.point[j].x >= -180.0 && line.point[j].x <= 180.0) 
            && (line.point[j].y >= -90.0 && line.point[j].y <= 90.0)) {
-          msProjectPoint(&(msObj->Map->latlon), &(msObj->Map->projection), &line.point[j]); /* point is a in lat/lon */
+          msProjectPoint(&(mapserv->map->latlon), &(mapserv->map->projection), &line.point[j]); /* point is a in lat/lon */
         }
 #endif
       }
 
-      if(msAddLine(&msObj->SelectShape, &line) == -1) writeError();
+      if(msAddLine(&mapserv->SelectShape, &line) == -1) writeError();
 
       msFree(line.point);    
       msFreeCharArray(tmp, n);
@@ -553,32 +553,32 @@ void loadForm(void)
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"img.x") == 0) { /* mouse click, in pieces */
-      msObj->ImgPnt.x = getNumeric(msObj->request->ParamValues[i]);
-      if((msObj->ImgPnt.x > (2*msObj->Map->maxsize)) || (msObj->ImgPnt.x < (-2*msObj->Map->maxsize))) {
+    if(strcasecmp(mapserv->request->ParamNames[i],"img.x") == 0) { /* mouse click, in pieces */
+      mapserv->ImgPnt.x = getNumeric(mapserv->request->ParamValues[i]);
+      if((mapserv->ImgPnt.x > (2*mapserv->map->maxsize)) || (mapserv->ImgPnt.x < (-2*mapserv->map->maxsize))) {
         msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
         writeError();
       }
-      msObj->CoordSource = FROMIMGPNT;
+      mapserv->CoordSource = FROMIMGPNT;
       QueryCoordSource = FROMIMGPNT;
       continue;
     }
-    if(strcasecmp(msObj->request->ParamNames[i],"img.y") == 0) {
-      msObj->ImgPnt.y = getNumeric(msObj->request->ParamValues[i]);      
-      if((msObj->ImgPnt.y > (2*msObj->Map->maxsize)) || (msObj->ImgPnt.y < (-2*msObj->Map->maxsize))) {
+    if(strcasecmp(mapserv->request->ParamNames[i],"img.y") == 0) {
+      mapserv->ImgPnt.y = getNumeric(mapserv->request->ParamValues[i]);      
+      if((mapserv->ImgPnt.y > (2*mapserv->map->maxsize)) || (mapserv->ImgPnt.y < (-2*mapserv->map->maxsize))) {
         msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
         writeError();
       }
-      msObj->CoordSource = FROMIMGPNT;
+      mapserv->CoordSource = FROMIMGPNT;
       QueryCoordSource = FROMIMGPNT;
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"imgxy") == 0) { /* mouse click, single variable */
-      if(msObj->CoordSource == FROMIMGPNT)
+    if(strcasecmp(mapserv->request->ParamNames[i],"imgxy") == 0) { /* mouse click, single variable */
+      if(mapserv->CoordSource == FROMIMGPNT)
         continue;
 
-      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+      tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -590,25 +590,25 @@ void loadForm(void)
         writeError();
       }
 
-      msObj->ImgPnt.x = getNumeric(tokens[0]);
-      msObj->ImgPnt.y = getNumeric(tokens[1]);
+      mapserv->ImgPnt.x = getNumeric(tokens[0]);
+      mapserv->ImgPnt.y = getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
 
-      if((msObj->ImgPnt.x > (2*msObj->Map->maxsize)) || (msObj->ImgPnt.x < (-2*msObj->Map->maxsize)) || (msObj->ImgPnt.y > (2*msObj->Map->maxsize)) || (msObj->ImgPnt.y < (-2*msObj->Map->maxsize))) {
+      if((mapserv->ImgPnt.x > (2*mapserv->map->maxsize)) || (mapserv->ImgPnt.x < (-2*mapserv->map->maxsize)) || (mapserv->ImgPnt.y > (2*mapserv->map->maxsize)) || (mapserv->ImgPnt.y < (-2*mapserv->map->maxsize))) {
         msSetError(MS_WEBERR, "Reference map coordinate out of range.", "loadForm()");
         writeError();
       }
 
-      if(msObj->CoordSource == NONE) { /* override nothing since this parameter is usually used to hold a default value */
-        msObj->CoordSource = FROMIMGPNT;
+      if(mapserv->CoordSource == NONE) { /* override nothing since this parameter is usually used to hold a default value */
+        mapserv->CoordSource = FROMIMGPNT;
         QueryCoordSource = FROMIMGPNT;
       }
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"imgbox") == 0) { /* selection box (eg. mouse drag) */
-      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+    if(strcasecmp(mapserv->request->ParamNames[i],"imgbox") == 0) { /* selection box (eg. mouse drag) */
+      tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
       
       if(!tokens) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -620,26 +620,26 @@ void loadForm(void)
         writeError();
       }
       
-      msObj->ImgBox.minx = getNumeric(tokens[0]);
-      msObj->ImgBox.miny = getNumeric(tokens[1]);
-      msObj->ImgBox.maxx = getNumeric(tokens[2]);
-      msObj->ImgBox.maxy = getNumeric(tokens[3]);
+      mapserv->ImgBox.minx = getNumeric(tokens[0]);
+      mapserv->ImgBox.miny = getNumeric(tokens[1]);
+      mapserv->ImgBox.maxx = getNumeric(tokens[2]);
+      mapserv->ImgBox.maxy = getNumeric(tokens[3]);
       
       msFreeCharArray(tokens, 4);
 
-      if((msObj->ImgBox.minx != msObj->ImgBox.maxx) && (msObj->ImgBox.miny != msObj->ImgBox.maxy)) { /* must not degenerate into a point */
-        msObj->CoordSource = FROMIMGBOX;
+      if((mapserv->ImgBox.minx != mapserv->ImgBox.maxx) && (mapserv->ImgBox.miny != mapserv->ImgBox.maxy)) { /* must not degenerate into a point */
+        mapserv->CoordSource = FROMIMGBOX;
         QueryCoordSource = FROMIMGBOX;
       }
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"imgshape") == 0) { /* shape given in image coordinates */
+    if(strcasecmp(mapserv->request->ParamNames[i],"imgshape") == 0) { /* shape given in image coordinates */
       lineObj line={0,NULL};
       char **tmp=NULL;
       int n, j;
       
-      tmp = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+      tmp = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
       if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -647,15 +647,15 @@ void loadForm(void)
       }
       line.numpoints = n/2;
 
-      msInitShape(&msObj->SelectShape);
-      msObj->SelectShape.type = MS_SHAPE_POLYGON;
+      msInitShape(&mapserv->SelectShape);
+      mapserv->SelectShape.type = MS_SHAPE_POLYGON;
 
       for(j=0; j<n/2; j++) {
         line.point[j].x = atof(tmp[2*j]);
         line.point[j].y = atof(tmp[2*j+1]);
       }
 
-      if(msAddLine(&msObj->SelectShape, &line) == -1) writeError();
+      if(msAddLine(&mapserv->SelectShape, &line) == -1) writeError();
 
       msFree(line.point);
       msFreeCharArray(tmp, n);
@@ -664,27 +664,27 @@ void loadForm(void)
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"ref.x") == 0) { /* mouse click in reference image, in pieces */
-      msObj->RefPnt.x = getNumeric(msObj->request->ParamValues[i]);      
-      if((msObj->RefPnt.x > (2*msObj->Map->maxsize)) || (msObj->RefPnt.x < (-2*msObj->Map->maxsize))) {
+    if(strcasecmp(mapserv->request->ParamNames[i],"ref.x") == 0) { /* mouse click in reference image, in pieces */
+      mapserv->RefPnt.x = getNumeric(mapserv->request->ParamValues[i]);      
+      if((mapserv->RefPnt.x > (2*mapserv->map->maxsize)) || (mapserv->RefPnt.x < (-2*mapserv->map->maxsize))) {
         msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
         writeError();
       }
-      msObj->CoordSource = FROMREFPNT;
+      mapserv->CoordSource = FROMREFPNT;
       continue;
     }
-    if(strcasecmp(msObj->request->ParamNames[i],"ref.y") == 0) {
-      msObj->RefPnt.y = getNumeric(msObj->request->ParamValues[i]); 
-      if((msObj->RefPnt.y > (2*msObj->Map->maxsize)) || (msObj->RefPnt.y < (-2*msObj->Map->maxsize))) {
+    if(strcasecmp(mapserv->request->ParamNames[i],"ref.y") == 0) {
+      mapserv->RefPnt.y = getNumeric(mapserv->request->ParamValues[i]); 
+      if((mapserv->RefPnt.y > (2*mapserv->map->maxsize)) || (mapserv->RefPnt.y < (-2*mapserv->map->maxsize))) {
         msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
         writeError();
       }
-      msObj->CoordSource = FROMREFPNT;
+      mapserv->CoordSource = FROMREFPNT;
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"refxy") == 0) { /* mouse click in reference image, single variable */
-      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+    if(strcasecmp(mapserv->request->ParamNames[i],"refxy") == 0) { /* mouse click in reference image, single variable */
+      tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -696,40 +696,40 @@ void loadForm(void)
         writeError();
       }
 
-      msObj->RefPnt.x = getNumeric(tokens[0]);
-      msObj->RefPnt.y = getNumeric(tokens[1]);
+      mapserv->RefPnt.x = getNumeric(tokens[0]);
+      mapserv->RefPnt.y = getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
       
-      if((msObj->RefPnt.x > (2*msObj->Map->maxsize)) || (msObj->RefPnt.x < (-2*msObj->Map->maxsize)) || (msObj->RefPnt.y > (2*msObj->Map->maxsize)) || (msObj->RefPnt.y < (-2*msObj->Map->maxsize))) {
+      if((mapserv->RefPnt.x > (2*mapserv->map->maxsize)) || (mapserv->RefPnt.x < (-2*mapserv->map->maxsize)) || (mapserv->RefPnt.y > (2*mapserv->map->maxsize)) || (mapserv->RefPnt.y < (-2*mapserv->map->maxsize))) {
         msSetError(MS_WEBERR, "Reference map coordinate out of range.", "loadForm()");
         writeError();
       }
       
-      msObj->CoordSource = FROMREFPNT;
+      mapserv->CoordSource = FROMREFPNT;
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"buffer") == 0) { /* radius (map units), actually 1/2 square side */
-      msObj->Buffer = getNumeric(msObj->request->ParamValues[i]);      
-      msObj->CoordSource = FROMBUF;
+    if(strcasecmp(mapserv->request->ParamNames[i],"buffer") == 0) { /* radius (map units), actually 1/2 square side */
+      mapserv->Buffer = getNumeric(mapserv->request->ParamValues[i]);      
+      mapserv->CoordSource = FROMBUF;
       QueryCoordSource = FROMUSERPNT;
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"scale") == 0 || strcasecmp(msObj->request->ParamNames[i],"scaledenom") == 0) { /* scale for new map */
-      msObj->ScaleDenom = getNumeric(msObj->request->ParamValues[i]);      
-      if(msObj->ScaleDenom <= 0) {
+    if(strcasecmp(mapserv->request->ParamNames[i],"scale") == 0 || strcasecmp(mapserv->request->ParamNames[i],"scaledenom") == 0) { /* scale for new map */
+      mapserv->ScaleDenom = getNumeric(mapserv->request->ParamValues[i]);      
+      if(mapserv->ScaleDenom <= 0) {
         msSetError(MS_WEBERR, "Scale out of range.", "loadForm()");
         writeError();
       }
-      msObj->CoordSource = FROMSCALE;
+      mapserv->CoordSource = FROMSCALE;
       QueryCoordSource = FROMUSERPNT;
       continue;
     }
     
-    if(strcasecmp(msObj->request->ParamNames[i],"imgsize") == 0) { /* size of existing image (pixels) */
-      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+    if(strcasecmp(mapserv->request->ParamNames[i],"imgsize") == 0) { /* size of existing image (pixels) */
+      tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -741,12 +741,12 @@ void loadForm(void)
         writeError();
       }
 
-      msObj->ImgCols = (int)getNumeric(tokens[0]);
-      msObj->ImgRows = (int)getNumeric(tokens[1]);
+      mapserv->ImgCols = (int)getNumeric(tokens[0]);
+      mapserv->ImgRows = (int)getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
       
-      if(msObj->ImgCols > msObj->Map->maxsize || msObj->ImgRows > msObj->Map->maxsize || msObj->ImgCols < 0 || msObj->ImgRows < 0) {
+      if(mapserv->ImgCols > mapserv->map->maxsize || mapserv->ImgRows > mapserv->map->maxsize || mapserv->ImgCols < 0 || mapserv->ImgRows < 0) {
         msSetError(MS_WEBERR, "Image size out of range.", "loadForm()");
         writeError();
       }
@@ -754,8 +754,8 @@ void loadForm(void)
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"mapsize") == 0) { /* size of new map (pixels) */
-      tokens = msStringSplit(msObj->request->ParamValues[i], ' ', &n);
+    if(strcasecmp(mapserv->request->ParamNames[i],"mapsize") == 0) { /* size of new map (pixels) */
+      tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
         msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -767,48 +767,48 @@ void loadForm(void)
         writeError();
       }
 
-      msObj->Map->width = (int)getNumeric(tokens[0]);
-      msObj->Map->height = (int)getNumeric(tokens[1]);
+      mapserv->map->width = (int)getNumeric(tokens[0]);
+      mapserv->map->height = (int)getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
       
-      if(msObj->Map->width > msObj->Map->maxsize || msObj->Map->height > msObj->Map->maxsize || msObj->Map->width < 0 || msObj->Map->height < 0) {
+      if(mapserv->map->width > mapserv->map->maxsize || mapserv->map->height > mapserv->map->maxsize || mapserv->map->width < 0 || mapserv->map->height < 0) {
         msSetError(MS_WEBERR, "Image size out of range.", "loadForm()");
         writeError();
       }
       continue;
     }
 
-    if(strncasecmp(msObj->request->ParamNames[i],"layers", 6) == 0) { /* turn a set of layers, delimited by spaces, on */
+    if(strncasecmp(mapserv->request->ParamNames[i],"layers", 6) == 0) { /* turn a set of layers, delimited by spaces, on */
 
       /* If layers=all then turn on all layers */
-      if (strcasecmp(msObj->request->ParamValues[i], "all") == 0 && msObj->Map != NULL) {
+      if (strcasecmp(mapserv->request->ParamValues[i], "all") == 0 && mapserv->map != NULL) {
         int l;
 
         /* Reset NumLayers=0. If individual layers were already selected then free the previous values.  */
-        for(l=0; l<msObj->NumLayers; l++)
-          msFree(msObj->Layers[l]);
-        msObj->NumLayers=0;
+        for(l=0; l<mapserv->NumLayers; l++)
+          msFree(mapserv->Layers[l]);
+        mapserv->NumLayers=0;
 
-        for(msObj->NumLayers=0; msObj->NumLayers < msObj->Map->numlayers; msObj->NumLayers++) {
-          if(msGrowMapservLayers(msObj) == MS_FAILURE)
+        for(mapserv->NumLayers=0; mapserv->NumLayers < mapserv->map->numlayers; mapserv->NumLayers++) {
+          if(msGrowMapservLayers(mapserv) == MS_FAILURE)
             writeError();
 
-          if(GET_LAYER(msObj->Map, msObj->NumLayers)->name) {
-            msObj->Layers[msObj->NumLayers] = strdup(GET_LAYER(msObj->Map, msObj->NumLayers)->name);
+          if(GET_LAYER(mapserv->map, mapserv->NumLayers)->name) {
+            mapserv->Layers[mapserv->NumLayers] = strdup(GET_LAYER(mapserv->map, mapserv->NumLayers)->name);
           } else {
-            msObj->Layers[msObj->NumLayers] = strdup("");
+            mapserv->Layers[mapserv->NumLayers] = strdup("");
           }
         }
       } else {
         int num_layers=0, l;
         char **layers=NULL;
 
-        layers = msStringSplit(msObj->request->ParamValues[i], ' ', &(num_layers));
+        layers = msStringSplit(mapserv->request->ParamValues[i], ' ', &(num_layers));
         for(l=0; l<num_layers; l++) {
-          if(msGrowMapservLayers(msObj) == MS_FAILURE)
+          if(msGrowMapservLayers(mapserv) == MS_FAILURE)
             writeError();
-          msObj->Layers[msObj->NumLayers++] = strdup(layers[l]);
+          mapserv->Layers[mapserv->NumLayers++] = strdup(layers[l]);
         }
 
         msFreeCharArray(layers, num_layers);
@@ -818,40 +818,40 @@ void loadForm(void)
       continue;
     }
 
-    if(strncasecmp(msObj->request->ParamNames[i],"layer", 5) == 0) { /* turn a single layer/group on */
-      if(msGrowMapservLayers(msObj) == MS_FAILURE)
+    if(strncasecmp(mapserv->request->ParamNames[i],"layer", 5) == 0) { /* turn a single layer/group on */
+      if(msGrowMapservLayers(mapserv) == MS_FAILURE)
         writeError();
-      msObj->Layers[msObj->NumLayers] = strdup(msObj->request->ParamValues[i]);
-      msObj->NumLayers++;
+      mapserv->Layers[mapserv->NumLayers] = strdup(mapserv->request->ParamValues[i]);
+      mapserv->NumLayers++;
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"qlayer") == 0) { /* layer to query (i.e search) */
-      QueryLayer = strdup(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"qlayer") == 0) { /* layer to query (i.e search) */
+      QueryLayer = strdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"qitem") == 0) { /* attribute to query on (optional) */
-      QueryItem = strdup(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"qitem") == 0) { /* attribute to query on (optional) */
+      QueryItem = strdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"qstring") == 0) { /* attribute query string */
-      QueryString = strdup(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"qstring") == 0) { /* attribute query string */
+      QueryString = strdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"slayer") == 0) { /* layer to select (for feature based search) */
-      SelectLayer = strdup(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"slayer") == 0) { /* layer to select (for feature based search) */
+      SelectLayer = strdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"shapeindex") == 0) { /* used for index queries */
-      ShapeIndex = (int)getNumeric(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"shapeindex") == 0) { /* used for index queries */
+      ShapeIndex = (int)getNumeric(mapserv->request->ParamValues[i]);
       continue;
     }
-    if(strcasecmp(msObj->request->ParamNames[i],"tileindex") == 0) {
-      TileIndex = (int)getNumeric(msObj->request->ParamValues[i]);
+    if(strcasecmp(mapserv->request->ParamNames[i],"tileindex") == 0) {
+      TileIndex = (int)getNumeric(mapserv->request->ParamValues[i]);
       continue;
     }
 
@@ -859,12 +859,12 @@ void loadForm(void)
      *   The following code is used to support mode=tile                    
      * -------------------------------------------------------------------- */ 
 
-    if(strcasecmp(msObj->request->ParamNames[i], "tilemode") == 0) { 
+    if(strcasecmp(mapserv->request->ParamNames[i], "tilemode") == 0) { 
       /* currently, only valid tilemode is "spheremerc" */
-      if( strcasecmp(msObj->request->ParamValues[i], "gmap") == 0) {
-        msObj->TileMode = TILE_GMAP;
-      } else if ( strcasecmp(msObj->request->ParamValues[i], "ve") == 0 ) {
-        msObj->TileMode = TILE_VE;
+      if( strcasecmp(mapserv->request->ParamValues[i], "gmap") == 0) {
+        mapserv->TileMode = TILE_GMAP;
+      } else if ( strcasecmp(mapserv->request->ParamValues[i], "ve") == 0 ) {
+        mapserv->TileMode = TILE_VE;
       } else {
         msSetError(MS_WEBERR, "Invalid tilemode. Use one of: gmap, ve", "loadForm()");
         writeError();
@@ -872,14 +872,14 @@ void loadForm(void)
       continue;
     }
 
-    if(strcasecmp(msObj->request->ParamNames[i],"tile") == 0) { 
+    if(strcasecmp(mapserv->request->ParamNames[i],"tile") == 0) { 
 
-      if( strlen(msObj->request->ParamValues[i]) < 1 ) {
+      if( strlen(mapserv->request->ParamValues[i]) < 1 ) {
         msSetError(MS_WEBERR, "Empty tile parameter.", "loadForm()");
         writeError();
       }
-      msObj->CoordSource = FROMTILE;
-      msObj->TileCoords = strdup(msObj->request->ParamValues[i]);
+      mapserv->CoordSource = FROMTILE;
+      mapserv->TileCoords = strdup(mapserv->request->ParamValues[i]);
       
       continue;
     }
@@ -895,47 +895,47 @@ void loadForm(void)
     /*                                                                      */
     /* -------------------------------------------------------------------- */
 
-    if(strcasecmp(msObj->request->ParamNames[i],"INPUT_TYPE") == 0)
+    if(strcasecmp(mapserv->request->ParamNames[i],"INPUT_TYPE") == 0)
     { /* Rosa input type */
-        if(strcasecmp(msObj->request->ParamValues[i],"auto_rect") == 0) 
+        if(strcasecmp(mapserv->request->ParamValues[i],"auto_rect") == 0) 
         {
             rosa_type=1; /* rectangle */
             continue;
         }
             
-        if(strcasecmp(msObj->request->ParamValues[i],"auto_point") == 0) 
+        if(strcasecmp(mapserv->request->ParamValues[i],"auto_point") == 0) 
         {
             rosa_type=2; /* point */
             continue;
         }
     }
-    if(strcasecmp(msObj->request->ParamNames[i],"INPUT_COORD") == 0) 
+    if(strcasecmp(mapserv->request->ParamNames[i],"INPUT_COORD") == 0) 
     { /* Rosa coordinates */
  
        switch(rosa_type)
        {
          case 1:
-             sscanf(msObj->request->ParamValues[i],"%lf,%lf;%lf,%lf",
-                    &msObj->ImgBox.minx,&msObj->ImgBox.miny,&msObj->ImgBox.maxx,
-                    &msObj->ImgBox.maxy);
-             if((msObj->ImgBox.minx != msObj->ImgBox.maxx) && 
-                (msObj->ImgBox.miny != msObj->ImgBox.maxy)) 
+             sscanf(mapserv->request->ParamValues[i],"%lf,%lf;%lf,%lf",
+                    &mapserv->ImgBox.minx,&mapserv->ImgBox.miny,&mapserv->ImgBox.maxx,
+                    &mapserv->ImgBox.maxy);
+             if((mapserv->ImgBox.minx != mapserv->ImgBox.maxx) && 
+                (mapserv->ImgBox.miny != mapserv->ImgBox.maxy)) 
              {
-                 msObj->CoordSource = FROMIMGBOX;
+                 mapserv->CoordSource = FROMIMGBOX;
                  QueryCoordSource = FROMIMGBOX;
              }
              else 
              {
-                 msObj->CoordSource = FROMIMGPNT;
+                 mapserv->CoordSource = FROMIMGPNT;
                  QueryCoordSource = FROMIMGPNT;
-                 msObj->ImgPnt.x=msObj->ImgBox.minx;
-                 msObj->ImgPnt.y=msObj->ImgBox.miny;
+                 mapserv->ImgPnt.x=mapserv->ImgBox.minx;
+                 mapserv->ImgPnt.y=mapserv->ImgBox.miny;
        }
            break;
          case 2:
-           sscanf(msObj->request->ParamValues[i],"%lf,%lf",&msObj->ImgPnt.x,
-                   &msObj->ImgPnt.y);
-           msObj->CoordSource = FROMIMGPNT;
+           sscanf(mapserv->request->ParamValues[i],"%lf,%lf",&mapserv->ImgPnt.x,
+                   &mapserv->ImgPnt.y);
+           mapserv->CoordSource = FROMIMGPNT;
            QueryCoordSource = FROMIMGPNT;
            break;
          }
@@ -947,38 +947,38 @@ void loadForm(void)
 
   } /* next parameter */
 
-  if(msObj->Mode == ZOOMIN) {
-    msObj->ZoomDirection = 1;
-    msObj->Mode = BROWSE;
+  if(mapserv->Mode == ZOOMIN) {
+    mapserv->ZoomDirection = 1;
+    mapserv->Mode = BROWSE;
   }     
-  if(msObj->Mode == ZOOMOUT) {
-    msObj->ZoomDirection = -1;
-    msObj->Mode = BROWSE;
+  if(mapserv->Mode == ZOOMOUT) {
+    mapserv->ZoomDirection = -1;
+    mapserv->Mode = BROWSE;
   }
 
   if(ZoomSize != 0) { /* use direction and magnitude to calculate zoom */
-    if(msObj->ZoomDirection == 0) {
-      msObj->fZoom = 1;
+    if(mapserv->ZoomDirection == 0) {
+      mapserv->fZoom = 1;
     } else {
-      msObj->fZoom = ZoomSize*msObj->ZoomDirection;
-      if(msObj->fZoom < 0)
-        msObj->fZoom = 1.0/MS_ABS(msObj->fZoom);
+      mapserv->fZoom = ZoomSize*mapserv->ZoomDirection;
+      if(mapserv->fZoom < 0)
+        mapserv->fZoom = 1.0/MS_ABS(mapserv->fZoom);
     }
   } else { /* use single value for zoom */
-    if((msObj->Zoom >= -1) && (msObj->Zoom <= 1)) {
-      msObj->fZoom = 1; /* pan */
+    if((mapserv->Zoom >= -1) && (mapserv->Zoom <= 1)) {
+      mapserv->fZoom = 1; /* pan */
     } else {
-      if(msObj->Zoom < 0)
-        msObj->fZoom = 1.0/MS_ABS(msObj->Zoom);
+      if(mapserv->Zoom < 0)
+        mapserv->fZoom = 1.0/MS_ABS(mapserv->Zoom);
       else
-        msObj->fZoom = msObj->Zoom;
+        mapserv->fZoom = mapserv->Zoom;
     }
   }
 
-  if(msObj->ImgRows == -1) msObj->ImgRows = msObj->Map->height;
-  if(msObj->ImgCols == -1) msObj->ImgCols = msObj->Map->width;  
-  if(msObj->Map->height == -1) msObj->Map->height = msObj->ImgRows;
-  if(msObj->Map->width == -1) msObj->Map->width = msObj->ImgCols;  
+  if(mapserv->ImgRows == -1) mapserv->ImgRows = mapserv->map->height;
+  if(mapserv->ImgCols == -1) mapserv->ImgCols = mapserv->map->width;  
+  if(mapserv->map->height == -1) mapserv->map->height = mapserv->ImgRows;
+  if(mapserv->map->width == -1) mapserv->map->width = mapserv->ImgCols;  
 }
 
 void setExtentFromShapes(void) {
@@ -988,7 +988,7 @@ void setExtentFromShapes(void) {
   rectObj tmpext={-1.0,-1.0,-1.0,-1.0};
   pointObj tmppnt={-1.0,-1.0};
 
-  found = msGetQueryResultBounds(msObj->Map, &(tmpext));
+  found = msGetQueryResultBounds(mapserv->map, &(tmpext));
 
   dx = tmpext.maxx - tmpext.minx;
   dy = tmpext.maxy - tmpext.miny;
@@ -1000,35 +1000,35 @@ void setExtentFromShapes(void) {
   tmpext.miny -= dy*EXTENT_PADDING/2.0;
   tmpext.maxy += dy*EXTENT_PADDING/2.0;
 
-  if(msObj->ScaleDenom != 0) { /* apply the scale around the center point (tmppnt) */
-    cellsize = (msObj->ScaleDenom/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); /* user supplied a point and a scale */
-    tmpext.minx = tmppnt.x - cellsize*msObj->Map->width/2.0;
-    tmpext.miny = tmppnt.y - cellsize*msObj->Map->height/2.0;
-    tmpext.maxx = tmppnt.x + cellsize*msObj->Map->width/2.0;
-    tmpext.maxy = tmppnt.y + cellsize*msObj->Map->height/2.0;
-  } else if(msObj->Buffer != 0) { /* apply the buffer around the center point (tmppnt) */
-    tmpext.minx = tmppnt.x - msObj->Buffer;
-    tmpext.miny = tmppnt.y - msObj->Buffer;
-    tmpext.maxx = tmppnt.x + msObj->Buffer;
-    tmpext.maxy = tmppnt.y + msObj->Buffer;
+  if(mapserv->ScaleDenom != 0) { /* apply the scale around the center point (tmppnt) */
+    cellsize = (mapserv->ScaleDenom/mapserv->map->resolution)/msInchesPerUnit(mapserv->map->units,0); /* user supplied a point and a scale */
+    tmpext.minx = tmppnt.x - cellsize*mapserv->map->width/2.0;
+    tmpext.miny = tmppnt.y - cellsize*mapserv->map->height/2.0;
+    tmpext.maxx = tmppnt.x + cellsize*mapserv->map->width/2.0;
+    tmpext.maxy = tmppnt.y + cellsize*mapserv->map->height/2.0;
+  } else if(mapserv->Buffer != 0) { /* apply the buffer around the center point (tmppnt) */
+    tmpext.minx = tmppnt.x - mapserv->Buffer;
+    tmpext.miny = tmppnt.y - mapserv->Buffer;
+    tmpext.maxx = tmppnt.x + mapserv->Buffer;
+    tmpext.maxy = tmppnt.y + mapserv->Buffer;
   }
 
   /* in case we don't get  usable extent at this point (i.e. single point result) */
   if(!MS_VALID_EXTENT(tmpext)) {
-    if(msObj->Map->web.minscaledenom > 0) { /* try web object minscale first */
-      cellsize = (msObj->Map->web.minscaledenom/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); /* user supplied a point and a scale */
-      tmpext.minx = tmppnt.x - cellsize*msObj->Map->width/2.0;
-      tmpext.miny = tmppnt.y - cellsize*msObj->Map->height/2.0;
-      tmpext.maxx = tmppnt.x + cellsize*msObj->Map->width/2.0;
-      tmpext.maxy = tmppnt.y + cellsize*msObj->Map->height/2.0;
+    if(mapserv->map->web.minscaledenom > 0) { /* try web object minscale first */
+      cellsize = (mapserv->map->web.minscaledenom/mapserv->map->resolution)/msInchesPerUnit(mapserv->map->units,0); /* user supplied a point and a scale */
+      tmpext.minx = tmppnt.x - cellsize*mapserv->map->width/2.0;
+      tmpext.miny = tmppnt.y - cellsize*mapserv->map->height/2.0;
+      tmpext.maxx = tmppnt.x + cellsize*mapserv->map->width/2.0;
+      tmpext.maxy = tmppnt.y + cellsize*mapserv->map->height/2.0;
     } else {
       msSetError(MS_WEBERR, "No way to generate a valid map extent from selected shapes.", "mapserv()");
       writeError();
     }
   }
 
-  msObj->MapPnt = tmppnt;
-  msObj->Map->extent = msObj->RawExt = tmpext; /* save unadjusted extent */
+  mapserv->mappnt = tmppnt;
+  mapserv->map->extent = mapserv->RawExt = tmpext; /* save unadjusted extent */
 
   return;
 }
@@ -1039,11 +1039,11 @@ void setCoordinate(void)
 {
   double cellx,celly;
 
-  cellx = MS_CELLSIZE(msObj->ImgExt.minx, msObj->ImgExt.maxx, msObj->ImgCols);
-  celly = MS_CELLSIZE(msObj->ImgExt.miny, msObj->ImgExt.maxy, msObj->ImgRows);
+  cellx = MS_CELLSIZE(mapserv->ImgExt.minx, mapserv->ImgExt.maxx, mapserv->ImgCols);
+  celly = MS_CELLSIZE(mapserv->ImgExt.miny, mapserv->ImgExt.maxy, mapserv->ImgRows);
 
-  msObj->MapPnt.x = MS_IMAGE2MAP_X(msObj->ImgPnt.x, msObj->ImgExt.minx, cellx);
-  msObj->MapPnt.y = MS_IMAGE2MAP_Y(msObj->ImgPnt.y, msObj->ImgExt.maxy, celly);
+  mapserv->mappnt.x = MS_IMAGE2MAP_X(mapserv->ImgPnt.x, mapserv->ImgExt.minx, cellx);
+  mapserv->mappnt.y = MS_IMAGE2MAP_Y(mapserv->ImgPnt.y, mapserv->ImgExt.maxy, celly);
 
   return;
 }
@@ -1052,12 +1052,12 @@ void returnCoordinate(pointObj pnt)
 {
   msSetError(MS_NOERR, 
              "Your \"<i>click</i>\" corresponds to (approximately): (%g, %g).",
-             NULL, msObj->MapPnt.x, msObj->MapPnt.y);
+             NULL, mapserv->mappnt.x, mapserv->mappnt.y);
 
 #ifdef USE_PROJ
-  if(msObj->Map->projection.proj != NULL && !pj_is_latlong(msObj->Map->projection.proj) ) {
-    pointObj p=msObj->MapPnt;
-    msProjectPoint(&(msObj->Map->projection), &(msObj->Map->latlon), &p);
+  if(mapserv->map->projection.proj != NULL && !pj_is_latlong(mapserv->map->projection.proj) ) {
+    pointObj p=mapserv->mappnt;
+    msProjectPoint(&(mapserv->map->projection), &(mapserv->map->latlon), &p);
     msSetError( MS_NOERR, "%s Computed lat/lon value is (%g, %g).\n", NULL, p.x, p.y);
   }
 #endif
@@ -1173,17 +1173,17 @@ int main(int argc, char *argv[]) {
     /* -------------------------------------------------------------------- */
     /*      Process a request.                                              */
     /* -------------------------------------------------------------------- */
-    msObj = msAllocMapServObj();
+    mapserv = msAllocMapServObj();
 
-    msObj->request->ParamNames = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
-    msObj->request->ParamValues = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
-    if(msObj->request->ParamNames==NULL || msObj->request->ParamValues==NULL) {
+    mapserv->request->ParamNames = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
+    mapserv->request->ParamValues = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
+    if(mapserv->request->ParamNames==NULL || mapserv->request->ParamValues==NULL) {
       msSetError(MS_MEMERR, NULL, "mapserv()");
       writeError();
     }
 
-    msObj->request->NumParams = loadParams(msObj->request);
-    if( msObj->request->NumParams == -1 ) {
+    mapserv->request->NumParams = loadParams(mapserv->request);
+    if( mapserv->request->NumParams == -1 ) {
 #ifdef USE_FASTCGI
       /* FCGI_ --- return to top of loop */
       msResetErrorList();
@@ -1195,10 +1195,10 @@ int main(int argc, char *argv[]) {
 #endif
     }
 
-    msObj->Map = loadMap();
+    mapserv->map = loadMap();
 
 #ifdef USE_FASTCGI
-    if( msObj->Map->debug ) {
+    if( mapserv->map->debug ) {
       static int nRequestCounter = 1;
 
       msDebug( "CGI Request %d on process %d\n", nRequestCounter, getpid() );
@@ -1214,16 +1214,16 @@ int main(int argc, char *argv[]) {
      * by an object that is part of the mapObject that would contain 
      * information on the application status (such as cookie).
      */
-    if( msObj->request->httpcookiedata != NULL )
+    if( mapserv->request->httpcookiedata != NULL )
     {
-        msInsertHashTable( &(msObj->Map->web.metadata), "http_cookie_data",
-                           msObj->request->httpcookiedata );
+        msInsertHashTable( &(mapserv->map->web.metadata), "http_cookie_data",
+                           mapserv->request->httpcookiedata );
     }
 
     /*
     ** Determine 'mode': Check for MS_MODE env. var. and mode=... CGI param
     */
-    msObj->Mode = -1; /* Not set */
+    mapserv->Mode = -1; /* Not set */
     if( setMode() != MS_SUCCESS)
         writeError();
 
@@ -1231,9 +1231,9 @@ int main(int argc, char *argv[]) {
     ** Start by calling the WMS/WFS/WCS Dispatchers.  If they fail then we'll 
     ** process this as a regular MapServer request.
     */
-    if((msObj->Mode == -1 || msObj->Mode == OWS) &&
-       (status = msOWSDispatch(msObj->Map, msObj->request,
-                               (msObj->Mode == OWS))) != MS_DONE  )  {
+    if((mapserv->Mode == -1 || mapserv->Mode == OWS) &&
+       (status = msOWSDispatch(mapserv->map, mapserv->request,
+                               (mapserv->Mode == OWS))) != MS_DONE  )  {
       /*
       ** OWSDispatch returned either MS_SUCCESS or MS_FAILURE
       **
@@ -1254,7 +1254,7 @@ int main(int argc, char *argv[]) {
       ** At this point any error has already been handled
       ** as an XML exception by the OGC service.
       */
-      msFreeMapServObj(msObj);
+      msFreeMapServObj(mapserv);
       
 #ifdef USE_FASTCGI
       /* FCGI_ --- return to top of loop */
@@ -1273,9 +1273,9 @@ int main(int argc, char *argv[]) {
     {
       const char *service = NULL;
 
-      for(i=0; i<msObj->request->NumParams; i++) {
-        if(strcasecmp(msObj->request->ParamNames[i], "SERVICE") == 0)
-          service = msObj->request->ParamValues[i];
+      for(i=0; i<mapserv->request->NumParams; i++) {
+        if(strcasecmp(mapserv->request->ParamNames[i], "SERVICE") == 0)
+          service = mapserv->request->ParamValues[i];
       }
 
       if( service != NULL 
@@ -1294,47 +1294,47 @@ int main(int argc, char *argv[]) {
     /*
     ** Do "traditional" mode processing.
     */
-    if (msObj->Mode == -1)
-        msObj->Mode = BROWSE;
+    if (mapserv->Mode == -1)
+        mapserv->Mode = BROWSE;
 
     loadForm();
  
-    if(msObj->SaveMap) {
-      sprintf(buffer, "%s%s%s.map", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id);
-      if(msSaveMap(msObj->Map, buffer) == -1) writeError();
+    if(mapserv->savemap) {
+      sprintf(buffer, "%s%s%s.map", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id);
+      if(msSaveMap(mapserv->map, buffer) == -1) writeError();
     }
 
-    if((msObj->CoordSource == FROMIMGPNT) || (msObj->CoordSource == FROMIMGBOX)) /* make sure extent of existing image matches shape of image */
-      msObj->Map->cellsize = msAdjustExtent(&msObj->ImgExt, msObj->ImgCols, msObj->ImgRows);
+    if((mapserv->CoordSource == FROMIMGPNT) || (mapserv->CoordSource == FROMIMGBOX)) /* make sure extent of existing image matches shape of image */
+      mapserv->map->cellsize = msAdjustExtent(&mapserv->ImgExt, mapserv->ImgCols, mapserv->ImgRows);
 
     /*
     ** For each layer let's set layer status
     */
-    for(i=0;i<msObj->Map->numlayers;i++) {
-      if((GET_LAYER(msObj->Map, i)->status != MS_DEFAULT)) {
-        if(isOn(msObj,  GET_LAYER(msObj->Map, i)->name, GET_LAYER(msObj->Map, i)->group) == MS_TRUE) /* Set layer status */
-          GET_LAYER(msObj->Map, i)->status = MS_ON;
+    for(i=0;i<mapserv->map->numlayers;i++) {
+      if((GET_LAYER(mapserv->map, i)->status != MS_DEFAULT)) {
+        if(isOn(mapserv,  GET_LAYER(mapserv->map, i)->name, GET_LAYER(mapserv->map, i)->group) == MS_TRUE) /* Set layer status */
+          GET_LAYER(mapserv->map, i)->status = MS_ON;
         else
-          GET_LAYER(msObj->Map, i)->status = MS_OFF;
+          GET_LAYER(mapserv->map, i)->status = MS_OFF;
       }
     }
 
-    if(msObj->CoordSource == FROMREFPNT) /* force browse mode if the reference coords are set */
-      msObj->Mode = BROWSE;
+    if(mapserv->CoordSource == FROMREFPNT) /* force browse mode if the reference coords are set */
+      mapserv->Mode = BROWSE;
 
     /*
     ** Tile mode:
     ** Set the projection up and test the parameters for legality.
     */
-    if(msObj->Mode == TILE) {
-      if( msTileSetup(msObj) != MS_SUCCESS ) {
+    if(mapserv->Mode == TILE) {
+      if( msTileSetup(mapserv) != MS_SUCCESS ) {
         writeError();
       }
     }
 
-    if(msObj->Mode == BROWSE) {
+    if(mapserv->Mode == BROWSE) {
 
-      if(!msObj->Map->web.template) {
+      if(!mapserv->map->web.template) {
         msSetError(MS_WEBERR, 
                    "Traditional BROWSE mode requires a TEMPLATE in the WEB section, but none was provided.", 
                    "mapserv()");
@@ -1342,67 +1342,67 @@ int main(int argc, char *argv[]) {
       }
 
       if(QueryFile) {
-        status = msLoadQuery(msObj->Map, QueryFile);
+        status = msLoadQuery(mapserv->map, QueryFile);
         if(status != MS_SUCCESS) writeError();
       }
       
-      setExtent(msObj);
-      checkWebScale(msObj);
+      setExtent(mapserv);
+      checkWebScale(mapserv);
        
       /* -------------------------------------------------------------------- */
       /*      generate map, legend, scalebar and refernce images.             */
       /* -------------------------------------------------------------------- */
-      if(msGenerateImages(msObj, QueryFile, MS_TRUE) == MS_FALSE)
+      if(msGenerateImages(mapserv, MS_TRUE, MS_TRUE) == MS_FALSE)
         writeError();
       
       if(QueryFile) {
-        if(msReturnQuery(msObj, msObj->Map->web.queryformat, NULL) != MS_SUCCESS)
+        if(msReturnQuery(mapserv, mapserv->map->web.queryformat, NULL) != MS_SUCCESS)
           writeError();
       } else {
-        if(TEMPLATE_TYPE(msObj->Map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
-          msIO_printf("Content-type: %s%c%c",  msObj->Map->web.browseformat, 10, 10); /* write MIME header */
+        if(TEMPLATE_TYPE(mapserv->map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
+          msIO_printf("Content-type: %s%c%c",  mapserv->map->web.browseformat, 10, 10); /* write MIME header */
           /* msIO_printf("<!-- %s -->\n", msGetVersion()); */
           fflush(stdout);
-          if(msReturnPage(msObj, msObj->Map->web.template, BROWSE, NULL) != MS_SUCCESS)
+          if(msReturnPage(mapserv, mapserv->map->web.template, BROWSE, NULL) != MS_SUCCESS)
             writeError();
         } else {    
-          if(msReturnURL(msObj, msObj->Map->web.template, BROWSE) != MS_SUCCESS)
+          if(msReturnURL(mapserv, mapserv->map->web.template, BROWSE) != MS_SUCCESS)
             writeError();
         }
       }
 
-    } else if(msObj->Mode == MAP || msObj->Mode == SCALEBAR || msObj->Mode == REFERENCE || msObj->Mode == TILE) { /* "image" only modes */
+    } else if(mapserv->Mode == MAP || mapserv->Mode == SCALEBAR || mapserv->Mode == REFERENCE || mapserv->Mode == TILE) { /* "image" only modes */
 
-      setExtent(msObj);
-      checkWebScale(msObj);
+      setExtent(mapserv);
+      checkWebScale(mapserv);
       
       /*
       ** We set tile extents here instead of setExtent so that all the 
       ** non-CGI utilities don't require maptile.o in their build.
       */
-      if( msObj->Mode == TILE ) {
-        msTileSetExtent(msObj);
+      if( mapserv->Mode == TILE ) {
+        msTileSetExtent(mapserv);
       }
             
-      switch(msObj->Mode) {
+      switch(mapserv->Mode) {
       case MAP:
         if(QueryFile) {
-          status = msLoadQuery(msObj->Map, QueryFile);
+          status = msLoadQuery(mapserv->map, QueryFile);
           if(status != MS_SUCCESS) writeError();
-          img = msDrawMap(msObj->Map, MS_TRUE);
+          img = msDrawMap(mapserv->map, MS_TRUE);
         } else
-          img = msDrawMap(msObj->Map, MS_FALSE);
+          img = msDrawMap(mapserv->map, MS_FALSE);
         break;
       case REFERENCE:
-        msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
-        img = msDrawReferenceMap(msObj->Map);
+        mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);
+        img = msDrawReferenceMap(mapserv->map);
         break;      
       case SCALEBAR:
-        img = msDrawScalebar(msObj->Map);
+        img = msDrawScalebar(mapserv->map);
         break;
       case TILE:
         /* TODO: we may need an msDrawTile for doing "draw large then clip" tricks */
-        img = msDrawMap(msObj->Map, MS_FALSE);
+        img = msDrawMap(mapserv->map, MS_FALSE);
         break;
       }
       
@@ -1411,44 +1411,44 @@ int main(int argc, char *argv[]) {
       /*
       ** Set the Cache control headers if the option is set. 
       */
-      if( msLookupHashTable(&(msObj->Map->web.metadata), "http_max_age") ) {
-        msIO_printf("Cache-Control: max-age=%s%c", msLookupHashTable(&(msObj->Map->web.metadata), "http_max_age"), 10);
+      if( msLookupHashTable(&(mapserv->map->web.metadata), "http_max_age") ) {
+        msIO_printf("Cache-Control: max-age=%s%c", msLookupHashTable(&(mapserv->map->web.metadata), "http_max_age"), 10);
       }
 
-      msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+      msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
       
       
-      if( msObj->Mode == MAP || msObj->Mode == TILE )
-        status = msSaveImage(msObj->Map,img, NULL);
+      if( mapserv->Mode == MAP || mapserv->Mode == TILE )
+        status = msSaveImage(mapserv->map,img, NULL);
       else
         status = msSaveImage(NULL,img, NULL);
           
       if(status != MS_SUCCESS) writeError();
       
       msFreeImage(img);
-    } else if(msObj->Mode == LEGEND) {
-      if(msObj->Map->legend.template) {
+    } else if(mapserv->Mode == LEGEND) {
+      if(mapserv->map->legend.template) {
         char *legendTemplate;
 
-        legendTemplate = generateLegendTemplate(msObj);
+        legendTemplate = generateLegendTemplate(mapserv);
         if(legendTemplate) {
-          msIO_printf("Content-type: %s%c%c", msObj->Map->web.legendformat, 10, 10);
+          msIO_printf("Content-type: %s%c%c", mapserv->map->web.legendformat, 10, 10);
           msIO_fwrite(legendTemplate, strlen(legendTemplate), 1, stdout);
 
           free(legendTemplate);
         } else /* error already generated by (generateLegendTemplate()) */
           writeError();
       } else {
-        img = msDrawLegend(msObj->Map, MS_FALSE);
+        img = msDrawLegend(mapserv->map, MS_FALSE);
         if(!img) writeError();
 
-        msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+        msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
         status = msSaveImage(NULL, img, NULL);
         if(status != MS_SUCCESS) writeError();
 
         msFreeImage(img);
       }
-    } else if(msObj->Mode == LEGENDICON) {
+    } else if(mapserv->Mode == LEGENDICON) {
 			char **tokens;
       int numtokens=0;
       int layerindex=-1, classindex=0;
@@ -1457,86 +1457,86 @@ int main(int argc, char *argv[]) {
       /* TODO: do we want to set scale here? */
 
       /* do we have enough information */
-			if(!msObj->icon) {
+			if(!mapserv->icon) {
         msSetError(MS_WEBERR, "Mode=LEGENDICON requires an icon parameter.", "mapserv()");
         writeError();
       }
 
       /* process the icon definition */
-      tokens = msStringSplit(msObj->icon, ',', &numtokens);
+      tokens = msStringSplit(mapserv->icon, ',', &numtokens);
 
       if(numtokens != 1 && numtokens != 2) {
         msSetError(MS_WEBERR, "%d Malformed icon parameter, should be 'layer,class' or just 'layer' if the layer has only 1 class defined.", "mapserv()", numtokens);
         writeError();
       }
 
-      if((layerindex = msGetLayerIndex(msObj->Map, tokens[0])) == -1) {
-        msSetError(MS_WEBERR, "Icon layer=%s not found in mapfile.", "mapserv()", GET_LAYER(msObj->Map, layerindex)->name);
+      if((layerindex = msGetLayerIndex(mapserv->map, tokens[0])) == -1) {
+        msSetError(MS_WEBERR, "Icon layer=%s not found in mapfile.", "mapserv()", GET_LAYER(mapserv->map, layerindex)->name);
         writeError();
       }
 
       if(numtokens == 2) { /* check the class index */
         classindex = atoi(tokens[1]);
-        if(classindex >= GET_LAYER(msObj->Map, layerindex)->numclasses) {
-          msSetError(MS_WEBERR, "Icon class=%d not found in layer=%s.", "mapserv()", classindex, GET_LAYER(msObj->Map, layerindex)->name);
+        if(classindex >= GET_LAYER(mapserv->map, layerindex)->numclasses) {
+          msSetError(MS_WEBERR, "Icon class=%d not found in layer=%s.", "mapserv()", classindex, GET_LAYER(mapserv->map, layerindex)->name);
           writeError();
         }
       }
 
       /* ensure we have an image format representing the options for the legend. */
-      msApplyOutputFormat(&format, msObj->Map->outputformat, msObj->Map->legend.transparent, msObj->Map->legend.interlace, MS_NOOVERRIDE);
+      msApplyOutputFormat(&format, mapserv->map->outputformat, mapserv->map->legend.transparent, mapserv->map->legend.interlace, MS_NOOVERRIDE);
 
       /* initialize the legend image */
 #ifdef USE_AGG
-      if(MS_RENDERER_AGG(msObj->Map->outputformat))
-        img = msImageCreateAGG(msObj->Map->legend.keysizex, msObj->Map->legend.keysizey, format, msObj->Map->web.imagepath, msObj->Map->web.imageurl);        
+      if(MS_RENDERER_AGG(mapserv->map->outputformat))
+        img = msImageCreateAGG(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format, mapserv->map->web.imagepath, mapserv->map->web.imageurl);        
       else
 #endif
-        img = msImageCreateGD(msObj->Map->legend.keysizex, msObj->Map->legend.keysizey, format, msObj->Map->web.imagepath, msObj->Map->web.imageurl);
+        img = msImageCreateGD(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format, mapserv->map->web.imagepath, mapserv->map->web.imageurl);
 
   /* allocate the background color */
 #ifdef USE_AGG
-      if(MS_RENDERER_AGG(msObj->Map->outputformat))
-        msImageInitAGG(img, &(msObj->Map->legend.imagecolor));
+      if(MS_RENDERER_AGG(mapserv->map->outputformat))
+        msImageInitAGG(img, &(mapserv->map->legend.imagecolor));
       else
 #endif
-        msImageInitGD(img, &(msObj->Map->legend.imagecolor));
+        msImageInitGD(img, &(mapserv->map->legend.imagecolor));
 
       /* drop this reference to output format */
       msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
-      if(msDrawLegendIcon(msObj->Map, GET_LAYER(msObj->Map, layerindex), GET_LAYER(msObj->Map, layerindex)->class[classindex], msObj->Map->legend.keysizex,  msObj->Map->legend.keysizey, img, 0, 0) != MS_SUCCESS)
+      if(msDrawLegendIcon(mapserv->map, GET_LAYER(mapserv->map, layerindex), GET_LAYER(mapserv->map, layerindex)->class[classindex], mapserv->map->legend.keysizex,  mapserv->map->legend.keysizey, img, 0, 0) != MS_SUCCESS)
         writeError();
 
-      msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+      msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
       status = msSaveImage(NULL, img, NULL);
       if(status != MS_SUCCESS) writeError();
 
       msFreeCharArray(tokens, numtokens);
       msFreeImage(img);
 
-    } else if(msObj->Mode >= QUERY) { /* query modes */
+    } else if(mapserv->Mode >= QUERY) { /* query modes */
 
       if(QueryFile) { /* already got a completed query */
-        status = msLoadQuery(msObj->Map, QueryFile);
+        status = msLoadQuery(mapserv->map, QueryFile);
         if(status != MS_SUCCESS) writeError();
       } else {
 
-        if((QueryLayerIndex = msGetLayerIndex(msObj->Map, QueryLayer)) != -1) /* force the query layer on */
-          GET_LAYER(msObj->Map, QueryLayerIndex)->status = MS_ON;
+        if((QueryLayerIndex = msGetLayerIndex(mapserv->map, QueryLayer)) != -1) /* force the query layer on */
+          GET_LAYER(mapserv->map, QueryLayerIndex)->status = MS_ON;
 
-        switch(msObj->Mode) {
+        switch(mapserv->Mode) {
         case ITEMFEATUREQUERY:
         case ITEMFEATURENQUERY:
         case ITEMFEATUREQUERYMAP:
         case ITEMFEATURENQUERYMAP:
-          if((SelectLayerIndex = msGetLayerIndex(msObj->Map, SelectLayer)) == -1) { /* force the selection layer on */
+          if((SelectLayerIndex = msGetLayerIndex(mapserv->map, SelectLayer)) == -1) { /* force the selection layer on */
             msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
             writeError();
           }
-          GET_LAYER(msObj->Map, SelectLayerIndex)->status = MS_ON;
+          GET_LAYER(mapserv->map, SelectLayerIndex)->status = MS_ON;
 
-          value = msLookupHashTable(&(GET_LAYER(msObj->Map, SelectLayerIndex)->metadata), "qstring_validation_pattern");
+          value = msLookupHashTable(&(GET_LAYER(mapserv->map, SelectLayerIndex)->metadata), "qstring_validation_pattern");
           if(value) { /* validate qstring value */
             if(msEvalRegex(value, QueryString) == MS_FALSE) {
               msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
@@ -1547,41 +1547,41 @@ int main(int argc, char *argv[]) {
             writeError();
           }
 
-          if(QueryCoordSource != NONE && !msObj->UseShapes)
-            setExtent(msObj); /* set user area of interest */
+          if(QueryCoordSource != NONE && !mapserv->UseShapes)
+            setExtent(mapserv); /* set user area of interest */
 
-          if(msObj->Mode == ITEMFEATUREQUERY || msObj->Mode == ITEMFEATUREQUERYMAP) {
-            if((status = msQueryByAttributes(msObj->Map, SelectLayerIndex, QueryItem, QueryString, MS_SINGLE)) != MS_SUCCESS) writeError();
+          if(mapserv->Mode == ITEMFEATUREQUERY || mapserv->Mode == ITEMFEATUREQUERYMAP) {
+            if((status = msQueryByAttributes(mapserv->map, SelectLayerIndex, QueryItem, QueryString, MS_SINGLE)) != MS_SUCCESS) writeError();
           } else {
-            if((status = msQueryByAttributes(msObj->Map, SelectLayerIndex, QueryItem, QueryString, MS_MULTIPLE)) != MS_SUCCESS) writeError();
+            if((status = msQueryByAttributes(mapserv->map, SelectLayerIndex, QueryItem, QueryString, MS_MULTIPLE)) != MS_SUCCESS) writeError();
           }
 
-          if(msQueryByFeatures(msObj->Map, QueryLayerIndex, SelectLayerIndex) != MS_SUCCESS) writeError();
+          if(msQueryByFeatures(mapserv->map, QueryLayerIndex, SelectLayerIndex) != MS_SUCCESS) writeError();
 
           break;
         case FEATUREQUERY:
         case FEATURENQUERY:
         case FEATUREQUERYMAP:
         case FEATURENQUERYMAP:
-          if((SelectLayerIndex = msGetLayerIndex(msObj->Map, SelectLayer)) == -1) { /* force the selection layer on */
+          if((SelectLayerIndex = msGetLayerIndex(mapserv->map, SelectLayer)) == -1) { /* force the selection layer on */
             msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
             writeError();
           }
-          GET_LAYER(msObj->Map, SelectLayerIndex)->status = MS_ON;
+          GET_LAYER(mapserv->map, SelectLayerIndex)->status = MS_ON;
       
-          if(msObj->Mode == FEATUREQUERY || msObj->Mode == FEATUREQUERYMAP) {
+          if(mapserv->Mode == FEATUREQUERY || mapserv->Mode == FEATUREQUERYMAP) {
             switch(QueryCoordSource) {
             case FROMIMGPNT:
-              msObj->Map->extent = msObj->ImgExt; /* use the existing map extent */    
+              mapserv->map->extent = mapserv->ImgExt; /* use the existing map extent */    
               setCoordinate();
-              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_SINGLE, msObj->MapPnt, 0, 0)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(mapserv->map, SelectLayerIndex, MS_SINGLE, mapserv->mappnt, 0, 0)) != MS_SUCCESS) writeError();
               break;
             case FROMUSERPNT: /* only a buffer makes sense */
-              if(msObj->Buffer == -1) {
+              if(mapserv->Buffer == -1) {
                 msSetError(MS_WEBERR, "Point given but no search buffer specified.", "mapserv()");
                 writeError();
               }
-              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_SINGLE, msObj->MapPnt, msObj->Buffer, 0)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(mapserv->map, SelectLayerIndex, MS_SINGLE, mapserv->mappnt, mapserv->Buffer, 0)) != MS_SUCCESS) writeError();
               break;
             default:
               msSetError(MS_WEBERR, "No way to the initial search, not enough information.", "mapserv()");
@@ -1591,34 +1591,34 @@ int main(int argc, char *argv[]) {
           } else { /* FEATURENQUERY/FEATURENQUERYMAP */
             switch(QueryCoordSource) {
             case FROMIMGPNT:
-              msObj->Map->extent = msObj->ImgExt; /* use the existing map extent */    
+              mapserv->map->extent = mapserv->ImgExt; /* use the existing map extent */    
               setCoordinate();
-              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_MULTIPLE, msObj->MapPnt, 0, 0)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(mapserv->map, SelectLayerIndex, MS_MULTIPLE, mapserv->mappnt, 0, 0)) != MS_SUCCESS) writeError();
               break;     
             case FROMIMGBOX:
               break;
             case FROMUSERPNT: /* only a buffer makes sense */
-              if((status = msQueryByPoint(msObj->Map, SelectLayerIndex, MS_MULTIPLE, msObj->MapPnt, msObj->Buffer, 0)) != MS_SUCCESS) writeError();
+              if((status = msQueryByPoint(mapserv->map, SelectLayerIndex, MS_MULTIPLE, mapserv->mappnt, mapserv->Buffer, 0)) != MS_SUCCESS) writeError();
             default:
-              setExtent(msObj);
-              if((status = msQueryByRect(msObj->Map, SelectLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
+              setExtent(mapserv);
+              if((status = msQueryByRect(mapserv->map, SelectLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
               break;
             }
           }
     
-          if(msQueryByFeatures(msObj->Map, QueryLayerIndex, SelectLayerIndex) != MS_SUCCESS) writeError();
+          if(msQueryByFeatures(mapserv->map, QueryLayerIndex, SelectLayerIndex) != MS_SUCCESS) writeError();
       
           break;
         case ITEMQUERY:
         case ITEMNQUERY:
         case ITEMQUERYMAP:
         case ITEMNQUERYMAP:
-          if(QueryLayerIndex < 0 || QueryLayerIndex >= msObj->Map->numlayers) {
+          if(QueryLayerIndex < 0 || QueryLayerIndex >= mapserv->map->numlayers) {
             msSetError(MS_WEBERR, "Query layer not set or references an invalid layer.", "mapserv()"); 
             writeError();
           }
 
-          value = msLookupHashTable(&(GET_LAYER(msObj->Map, QueryLayerIndex)->metadata), "qstring_validation_pattern");
+          value = msLookupHashTable(&(GET_LAYER(mapserv->map, QueryLayerIndex)->metadata), "qstring_validation_pattern");
           if(value) { /* validate qstring value */
             if(msEvalRegex(value, QueryString) == MS_FALSE) {
               msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
@@ -1629,13 +1629,13 @@ int main(int argc, char *argv[]) {
             writeError();
           }
 
-          if(QueryCoordSource != NONE && !msObj->UseShapes)
-            setExtent(msObj); /* set user area of interest */
+          if(QueryCoordSource != NONE && !mapserv->UseShapes)
+            setExtent(mapserv); /* set user area of interest */
 
-          if(msObj->Mode == ITEMQUERY || msObj->Mode == ITEMQUERYMAP) {
-            if((status = msQueryByAttributes(msObj->Map, QueryLayerIndex, QueryItem, QueryString, MS_SINGLE)) != MS_SUCCESS) writeError();
+          if(mapserv->Mode == ITEMQUERY || mapserv->Mode == ITEMQUERYMAP) {
+            if((status = msQueryByAttributes(mapserv->map, QueryLayerIndex, QueryItem, QueryString, MS_SINGLE)) != MS_SUCCESS) writeError();
           } else {
-            if((status = msQueryByAttributes(msObj->Map, QueryLayerIndex, QueryItem, QueryString, MS_MULTIPLE)) != MS_SUCCESS) writeError();
+            if((status = msQueryByAttributes(mapserv->map, QueryLayerIndex, QueryItem, QueryString, MS_MULTIPLE)) != MS_SUCCESS) writeError();
           }
 
           break;
@@ -1646,83 +1646,83 @@ int main(int argc, char *argv[]) {
             setCoordinate();
       
             if(SearchMap) { /* compute new extent, pan etc then search that extent */
-              setExtent(msObj);
-              msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
-              if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
-              if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
+              setExtent(mapserv);
+              mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);
+              if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
+              if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
             } else {
-              msObj->Map->extent = msObj->ImgExt; /* use the existing image parameters */
-              msObj->Map->width = msObj->ImgCols;
-              msObj->Map->height = msObj->ImgRows;
-              if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();     
-              if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_MULTIPLE, msObj->MapPnt, 0, 0)) != MS_SUCCESS) writeError();
+              mapserv->map->extent = mapserv->ImgExt; /* use the existing image parameters */
+              mapserv->map->width = mapserv->ImgCols;
+              mapserv->map->height = mapserv->ImgRows;
+              if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();     
+              if((status = msQueryByPoint(mapserv->map, QueryLayerIndex, MS_MULTIPLE, mapserv->mappnt, 0, 0)) != MS_SUCCESS) writeError();
             }
             break;      
           case FROMIMGBOX:      
             if(SearchMap) { /* compute new extent, pan etc then search that extent */
-              setExtent(msObj);
-              if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
-              msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
-              if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
+              setExtent(mapserv);
+              if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
+              mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);
+              if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
             } else {
               double cellx, celly;
         
-              msObj->Map->extent = msObj->ImgExt; /* use the existing image parameters */
-              msObj->Map->width = msObj->ImgCols;
-              msObj->Map->height = msObj->ImgRows;
-              if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();      
+              mapserv->map->extent = mapserv->ImgExt; /* use the existing image parameters */
+              mapserv->map->width = mapserv->ImgCols;
+              mapserv->map->height = mapserv->ImgRows;
+              if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();      
         
-              cellx = MS_CELLSIZE(msObj->ImgExt.minx, msObj->ImgExt.maxx, msObj->ImgCols); /* calculate the new search extent */
-              celly = MS_CELLSIZE(msObj->ImgExt.miny, msObj->ImgExt.maxy, msObj->ImgRows);
-              msObj->RawExt.minx = MS_IMAGE2MAP_X(msObj->ImgBox.minx, msObj->ImgExt.minx, cellx);          
-              msObj->RawExt.maxx = MS_IMAGE2MAP_X(msObj->ImgBox.maxx, msObj->ImgExt.minx, cellx);
-              msObj->RawExt.maxy = MS_IMAGE2MAP_Y(msObj->ImgBox.miny, msObj->ImgExt.maxy, celly); /* y's are flip flopped because img/map coordinate systems are */
-              msObj->RawExt.miny = MS_IMAGE2MAP_Y(msObj->ImgBox.maxy, msObj->ImgExt.maxy, celly);
+              cellx = MS_CELLSIZE(mapserv->ImgExt.minx, mapserv->ImgExt.maxx, mapserv->ImgCols); /* calculate the new search extent */
+              celly = MS_CELLSIZE(mapserv->ImgExt.miny, mapserv->ImgExt.maxy, mapserv->ImgRows);
+              mapserv->RawExt.minx = MS_IMAGE2MAP_X(mapserv->ImgBox.minx, mapserv->ImgExt.minx, cellx);          
+              mapserv->RawExt.maxx = MS_IMAGE2MAP_X(mapserv->ImgBox.maxx, mapserv->ImgExt.minx, cellx);
+              mapserv->RawExt.maxy = MS_IMAGE2MAP_Y(mapserv->ImgBox.miny, mapserv->ImgExt.maxy, celly); /* y's are flip flopped because img/map coordinate systems are */
+              mapserv->RawExt.miny = MS_IMAGE2MAP_Y(mapserv->ImgBox.maxy, mapserv->ImgExt.maxy, celly);
 
-              if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->RawExt)) != MS_SUCCESS) writeError();
+              if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->RawExt)) != MS_SUCCESS) writeError();
             }
             break;
           case FROMIMGSHAPE:
-            msObj->Map->extent = msObj->ImgExt; /* use the existing image parameters */
-            msObj->Map->width = msObj->ImgCols;
-            msObj->Map->height = msObj->ImgRows;
-            msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
-            if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
+            mapserv->map->extent = mapserv->ImgExt; /* use the existing image parameters */
+            mapserv->map->width = mapserv->ImgCols;
+            mapserv->map->height = mapserv->ImgRows;
+            mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);
+            if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
       
             /* convert from image to map coordinates here (see setCoordinate) */
-            for(i=0; i<msObj->SelectShape.numlines; i++) {
-              for(j=0; j<msObj->SelectShape.line[i].numpoints; j++) {
-                msObj->SelectShape.line[i].point[j].x = MS_IMAGE2MAP_X(msObj->SelectShape.line[i].point[j].x, msObj->Map->extent.minx, msObj->Map->cellsize);
-                msObj->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_Y(msObj->SelectShape.line[i].point[j].y, msObj->Map->extent.maxy, msObj->Map->cellsize);
+            for(i=0; i<mapserv->SelectShape.numlines; i++) {
+              for(j=0; j<mapserv->SelectShape.line[i].numpoints; j++) {
+                mapserv->SelectShape.line[i].point[j].x = MS_IMAGE2MAP_X(mapserv->SelectShape.line[i].point[j].x, mapserv->map->extent.minx, mapserv->map->cellsize);
+                mapserv->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_Y(mapserv->SelectShape.line[i].point[j].y, mapserv->map->extent.maxy, mapserv->map->cellsize);
               }
             }
       
-            if((status = msQueryByShape(msObj->Map, QueryLayerIndex, &msObj->SelectShape)) != MS_SUCCESS) writeError();
+            if((status = msQueryByShape(mapserv->map, QueryLayerIndex, &mapserv->SelectShape)) != MS_SUCCESS) writeError();
             break;      
           case FROMUSERPNT:
-            if(msObj->Buffer == 0) {
-              if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_MULTIPLE, msObj->MapPnt, msObj->Buffer, 0)) != MS_SUCCESS) writeError();
-              setExtent(msObj);
+            if(mapserv->Buffer == 0) {
+              if((status = msQueryByPoint(mapserv->map, QueryLayerIndex, MS_MULTIPLE, mapserv->mappnt, mapserv->Buffer, 0)) != MS_SUCCESS) writeError();
+              setExtent(mapserv);
             } else {
-              setExtent(msObj);
+              setExtent(mapserv);
               if(SearchMap) { /* the extent should be tied to a map, so we need to "adjust" it */
-                if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
-                msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); 
+                if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
+                mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height); 
               }
-              if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
+              if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
             }
             break;
           case FROMUSERSHAPE:
-            setExtent(msObj);        
-            if((status = msQueryByShape(msObj->Map, QueryLayerIndex, &msObj->SelectShape)) != MS_SUCCESS) writeError();
+            setExtent(mapserv);        
+            if((status = msQueryByShape(mapserv->map, QueryLayerIndex, &mapserv->SelectShape)) != MS_SUCCESS) writeError();
             break;      
           default: /* from an extent of some sort */
-            setExtent(msObj);
+            setExtent(mapserv);
             if(SearchMap) { /* the extent should be tied to a map, so we need to "adjust" it */
-              if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();
-              msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); 
+              if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
+              mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height); 
             }        
-            if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
+            if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
             break;
 			    }      
           break;
@@ -1731,15 +1731,15 @@ int main(int argc, char *argv[]) {
           switch(QueryCoordSource) {
           case FROMIMGPNT:
             setCoordinate();
-            msObj->Map->extent = msObj->ImgExt; /* use the existing image parameters */
-            msObj->Map->width = msObj->ImgCols;
-            msObj->Map->height = msObj->ImgRows;
-            if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scaledenom)) != MS_SUCCESS) writeError();           
-            if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_SINGLE, msObj->MapPnt, 0, 0)) != MS_SUCCESS) writeError();
+            mapserv->map->extent = mapserv->ImgExt; /* use the existing image parameters */
+            mapserv->map->width = mapserv->ImgCols;
+            mapserv->map->height = mapserv->ImgRows;
+            if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();           
+            if((status = msQueryByPoint(mapserv->map, QueryLayerIndex, MS_SINGLE, mapserv->mappnt, 0, 0)) != MS_SUCCESS) writeError();
             break;
           case FROMUSERPNT: /* only a buffer makes sense, DOES IT? */    
-            setExtent(msObj);    
-            if((status = msQueryByPoint(msObj->Map, QueryLayerIndex, MS_SINGLE, msObj->MapPnt, msObj->Buffer, 0)) != MS_SUCCESS) writeError();
+            setExtent(mapserv);    
+            if((status = msQueryByPoint(mapserv->map, QueryLayerIndex, MS_SINGLE, mapserv->mappnt, mapserv->Buffer, 0)) != MS_SUCCESS) writeError();
             break;
           default:
             msSetError(MS_WEBERR, "Query mode needs a point, imgxy and mapxy are not set.", "mapserv()");
@@ -1749,54 +1749,54 @@ int main(int argc, char *argv[]) {
           break;
         case INDEXQUERY:
         case INDEXQUERYMAP:
-          if((status = msQueryByIndex(msObj->Map, QueryLayerIndex, TileIndex, ShapeIndex)) != MS_SUCCESS) writeError();
+          if((status = msQueryByIndex(mapserv->map, QueryLayerIndex, TileIndex, ShapeIndex)) != MS_SUCCESS) writeError();
           break;
         } /* end mode switch */
       }
       
-      if(msObj->Map->querymap.width != -1) msObj->Map->width = msObj->Map->querymap.width; /* make sure we use the right size */
-      if(msObj->Map->querymap.height != -1) msObj->Map->height = msObj->Map->querymap.height;
+      if(mapserv->map->querymap.width != -1) mapserv->map->width = mapserv->map->querymap.width; /* make sure we use the right size */
+      if(mapserv->map->querymap.height != -1) mapserv->map->height = mapserv->map->querymap.height;
 
-      if(msObj->UseShapes)
+      if(mapserv->UseShapes)
         setExtentFromShapes();
 
-      /* just return the image */
-      if(msObj->Mode == QUERYMAP || msObj->Mode == NQUERYMAP || msObj->Mode == ITEMQUERYMAP || msObj->Mode == ITEMNQUERYMAP || msObj->Mode == FEATUREQUERYMAP || msObj->Mode == FEATURENQUERYMAP || msObj->Mode == ITEMFEATUREQUERYMAP || msObj->Mode == ITEMFEATURENQUERYMAP || msObj->Mode == INDEXQUERYMAP) {
+      /* just return the image, should be able to depricate these */
+      if(mapserv->Mode == QUERYMAP || mapserv->Mode == NQUERYMAP || mapserv->Mode == ITEMQUERYMAP || mapserv->Mode == ITEMNQUERYMAP || mapserv->Mode == FEATUREQUERYMAP || mapserv->Mode == FEATURENQUERYMAP || mapserv->Mode == ITEMFEATUREQUERYMAP || mapserv->Mode == ITEMFEATURENQUERYMAP || mapserv->Mode == INDEXQUERYMAP) {
 
-        checkWebScale(msObj);
+        checkWebScale(mapserv);
 
-        img = msDrawMap(msObj->Map, MS_TRUE);
+        img = msDrawMap(mapserv->map, MS_TRUE);
         if(!img) writeError();
 
-        msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
-        status = msSaveImage(msObj->Map, img, NULL);
+        msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
+        status = msSaveImage(mapserv->map, img, NULL);
         if(status != MS_SUCCESS) writeError();
         msFreeImage(img);
 
       } else { /* process the query through templates */
-        if(msReturnTemplateQuery(msObj, msObj->Map->web.queryformat, NULL) != MS_SUCCESS) writeError();
+        if(msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, NULL) != MS_SUCCESS) writeError();
           
-        if(msObj->SaveQuery) {
-          sprintf(buffer, "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);
-          if((status = msSaveQuery(msObj->Map, buffer)) != MS_SUCCESS) return status;
+        if(mapserv->savequery) {
+          sprintf(buffer, "%s%s%s%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_QUERY_EXTENSION);
+          if((status = msSaveQuery(mapserv->map, buffer)) != MS_SUCCESS) return status;
         }
       }
 
-    } else if(msObj->Mode == COORDINATE) {
+    } else if(mapserv->Mode == COORDINATE) {
       setCoordinate(); /* mouse click => map coord */
-      returnCoordinate(msObj->MapPnt);
+      returnCoordinate(mapserv->mappnt);
     }
 
     writeLog(MS_FALSE);
    
-    /* Clean-up (the following are not stored as part of the msObj) */
+    /* Clean-up (the following are not stored as part of the mapserv) */
     if(QueryItem) free(QueryItem);
     if(QueryString) free(QueryString);
     if(QueryLayer) free(QueryLayer);
     if(SelectLayer) free(SelectLayer);
     if(QueryFile) free(QueryFile);
 
-    msFreeMapServObj(msObj);
+    msFreeMapServObj(mapserv);
 
 #ifdef USE_FASTCGI
     msResetErrorList();
