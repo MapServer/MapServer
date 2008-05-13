@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  An api for PDF format output using the pdflib library
@@ -451,7 +451,7 @@ int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string,
         pointObj p;
         rectObj r;
 
-        if(msGetLabelSize(string, label, &r, fontset, scalefactor, MS_FALSE) == -1) return(-1);
+        if(msGetLabelSize(image,string, label, &r, fontset, scalefactor, MS_FALSE) == -1) return(-1);
         p = get_metrics(&labelPnt, label->position, r,
                                    label->offsetx,
                                    label->offsety,
@@ -534,7 +534,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         if(strlen(cachePtr->text) == 0)
             continue; /* not an error, just don't want to do anything */
 
-        if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
+        if(msGetLabelSize(image,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
             return(-1);
 
         if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
