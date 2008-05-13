@@ -2462,25 +2462,25 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
      /* Translate some vars from WMS to mapserv */
      msTranslateWMS2Mapserv(names, values, &numentries);
 
-     msObj->Map = map;
+     msObj->map = map;
      msObj->request->ParamNames = names;
      msObj->request->ParamValues = values;
      msObj->Mode = QUERY;
      msObj->request->NumParams = numentries;
-     msObj->MapPnt.x = point.x;
-     msObj->MapPnt.y = point.y;
+     msObj->mappnt.x = point.x;
+     msObj->mappnt.y = point.y;
 
-     if (query_status == MS_NOTFOUND && msObj->Map->web.empty)
+     if (query_status == MS_NOTFOUND && msObj->map->web.empty)
      {
-         if(msReturnURL(msObj, msObj->Map->web.empty, BROWSE) != MS_SUCCESS)
+         if(msReturnURL(msObj, msObj->map->web.empty, BROWSE) != MS_SUCCESS)
              return msWMSException(map, nVersion, NULL);
      }
-     else if (msReturnTemplateQuery(msObj, (char*)pszMimeType,NULL) != MS_SUCCESS)
+     else if (msReturnTemplateQuery(msObj, (char*)pszMimeType, NULL) != MS_SUCCESS)
          return msWMSException(map, nVersion, NULL);
 
      /* We don't want to free the map, and param names/values since they */
      /* belong to the caller, set them to NULL before freeing the mapservObj */
-     msObj->Map = NULL;
+     msObj->map = NULL;
      msObj->request->ParamNames = NULL;
      msObj->request->ParamValues = NULL;
      msObj->request->NumParams = 0;
