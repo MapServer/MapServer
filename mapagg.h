@@ -161,6 +161,9 @@ public:
         m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
     }
     
+    //a class with virtual functions should also provide a virtual destructor
+    virtual ~line_adaptor() {}
+    
     void rewind(unsigned) {
         m_line=s->line; /*first line*/
         m_point=m_line->point; /*current vertex is first vertex of first line*/
@@ -228,6 +231,9 @@ public:
         m_lend=&(s->line[s->numlines]); /*pointer to after last line*/
         m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
     }
+    
+    //a class with virtual functions should also provide a virtual destructor
+    virtual ~polygon_adaptor() {}
     
     void rewind(unsigned) {
         /*reset pointers*/
