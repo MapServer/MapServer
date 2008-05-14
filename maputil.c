@@ -1463,8 +1463,8 @@ shapeObj* msOffsetPolyline(shapeObj *p, int offsetx, int offsety) {
             first = 1;
             for(j=1; j<p->line[i].numpoints; j++) {        
                 ox=0; oy=0;
-                dx = (p->line[i].point[j].x - p->line[i].point[j-1].x);
-                dy = (p->line[i].point[j].y - p->line[i].point[j-1].y);
+                x = dx = (p->line[i].point[j].x - p->line[i].point[j-1].x);
+                y = dy = (p->line[i].point[j].y - p->line[i].point[j-1].y);
 
                 /* offset setting - quick approximation, may be changed with goniometric functions */
                 if(dx==0) { /* vertical line */
