@@ -1323,7 +1323,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           maxsize=MS_MAX(
                   layer->class[c]->styles[0]->size,
                   layer->class[c]->styles[0]->width);
-      csz = MS_NINT((maxsize*layer->scalefactor)/2.0);
+      csz = MS_NINT((maxsize*layer->scalefactor));
   } else {
       csz = 0;
   }
