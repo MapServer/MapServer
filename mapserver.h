@@ -151,7 +151,7 @@ extern "C" {
 /* General defines, not wrapable */
 #ifndef SWIG
 #define MS_DEFAULT_MAPFILE_PATTERN "\\.map$"
-#define MS_TEMPLATE_EXPR "\\.(jsp|asp|cfm|xml|wml|html|htm|shtml|phtml|php|svg)$"
+#define MS_TEMPLATE_EXPR "\\.(jsp|asp|cfm|xml|wml|html|htm|shtml|phtml|php|svg|kml|gml|js|tpl)$"
 
 #define MS_INDEX_EXTENSION ".qix"
 #define MS_QUERY_EXTENSION ".qy"
