@@ -1132,6 +1132,11 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_XY",         MS_XY,          const_flag);
     REGISTER_LONG_CONSTANT("MS_FOLLOW",     MS_FOLLOW,      const_flag);
 
+    /* alignment constants*/
+    REGISTER_LONG_CONSTANT("MS_ALIGN_LEFT",  MS_ALIGN_LEFT,  const_flag);
+    REGISTER_LONG_CONSTANT("MS_ALIGN_CENTER",MS_ALIGN_CENTER,const_flag);
+    REGISTER_LONG_CONSTANT("MS_ALIGN_RIGHT", MS_ALIGN_RIGHT, const_flag);
+
     /* shape type constants*/
     REGISTER_LONG_CONSTANT("MS_SHAPE_POINT",MS_SHAPE_POINT, const_flag);
     REGISTER_LONG_CONSTANT("MS_SHAPE_LINE",  MS_SHAPE_LINE, const_flag);
@@ -13298,13 +13303,7 @@ static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
                                          HashTable *list, pval *return_value TSRMLS_DC)
 {
     int         scalebar_id;
-#ifdef PHP4
     pval        *new_obj_ptr;
-#else
-    pval        new_obj_param;  /* No, it's not a pval * !!! */
-    pval        *new_obj_ptr;
-    new_obj_ptr = &new_obj_param;
-#endif
 
     if (pscalebar == NULL)
         return 0;
@@ -13326,17 +13325,14 @@ static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
     add_property_long(return_value,  "interlace",       pscalebar->interlace);
     add_property_long(return_value,  "postlabelcache",  
                       pscalebar->postlabelcache);
+    add_property_long(return_value,  "align",           pscalebar->align);
+
     
-    
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
-#endif
     _phpms_build_label_object(&(pscalebar->label), list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR TSRMLS_CC);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
     _phpms_build_color_object(&(pscalebar->imagecolor),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
@@ -13370,15 +13366,9 @@ DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     scalebarObj *self;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -13404,16 +13394,17 @@ DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pPropertyName);
 
     
-    IF_SET_LONG(       "height",         self->height)
-    else IF_SET_LONG(  "width",   self->width)
-    else IF_SET_LONG(  "style",   self->style)
-    else IF_SET_LONG(  "intervals",   self->intervals)
-    else IF_SET_LONG(  "units",   self->units)
-    else IF_SET_LONG(  "status",   self->status)
-    else IF_SET_LONG(  "position",   self->position)
+    IF_SET_LONG(       "height",        self->height)
+    else IF_SET_LONG(  "width",         self->width)
+    else IF_SET_LONG(  "style",         self->style)
+    else IF_SET_LONG(  "intervals",     self->intervals)
+    else IF_SET_LONG(  "units",         self->units)
+    else IF_SET_LONG(  "status",        self->status)
+    else IF_SET_LONG(  "position",      self->position)
     else IF_SET_LONG(  "transparent",   self->transparent)
-    else IF_SET_LONG(  "interlace",   self->interlace)
-    else IF_SET_LONG(  "postlabelcache",   self->postlabelcache)
+    else IF_SET_LONG(  "interlace",     self->interlace)
+    else IF_SET_LONG(  "postlabelcache",self->postlabelcache)
+    else IF_SET_LONG(  "align",         self->align)
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
@@ -13436,15 +13427,9 @@ DLEXPORT void php3_ms_scalebar_setImageColor(INTERNAL_FUNCTION_PARAMETERS)
     scalebarObj *self;
     pval        *pThis, *pR, *pG, *pB;
     int         r, g, b = 0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 3, &pR, &pG, &pB) != SUCCESS)

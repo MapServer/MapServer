@@ -42,10 +42,10 @@ Currently supported classes, properties and methods:
   The following MapServer constants are available:
 
     Boolean values:
-    MS_TRUE, MS_FALSE, MS_ON, MS_OFF, MS_YES, MS_NO
+        MS_TRUE, MS_FALSE, MS_ON, MS_OFF, MS_YES, MS_NO
 
     Map units:
-    MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD,
+        MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD,
         MS_PIXELS
 
     Layer types:
@@ -101,19 +101,22 @@ Currently supported classes, properties and methods:
         MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE
 
     Image Mode types (outputFormatObj):
-
         MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, 
         MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, 
         MS_IMAGEMODE_NULL
 
-    Style/Attribue binding
+    Style/Attribue binding:
         MS_STYLE_BINDING_SIZE,  MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR,
         MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL
 
-    Label/Attribute binding
+    Label/Attribute binding:
         MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR,
         MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, 
         MS_LABEL_BINDING_PRIORITY 
+
+    Alignment:
+        MS_ALIGN_LEFT, MS_ALIGN_CENTER, MS_ALIGN_RIGHT
+
 
  Functions:
  ----------
@@ -1576,7 +1579,8 @@ Constructor:
    int postlabelcache;
    labelObj label;
    colorObj imagecolor;
-     
+   int align;
+
  Methods:
 
       int set(string property_name, new_value)
