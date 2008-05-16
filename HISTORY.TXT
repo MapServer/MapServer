@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
+- AGG: enable ellipse symbol rotation for POINT/ANNOTATION layers (#2617)
 
 - RFC36: add more extensions to support templates (#2576)
 

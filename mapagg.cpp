@@ -285,11 +285,19 @@ public:
     ///@param color the fill color of the ellipse, or NULL for no fill
     ///@param outlinecolor the color of the outline, or NULL for no outline
     ///@param outlinewidth the width of the optional outline
-    void renderEllipse(double x, double y, double w, double h, agg::rgba8 &color,
+    void renderEllipse(double x, double y, double w, double h, double angle, agg::rgba8 &color,
             agg::rgba8 &outlinecolor, double outlinewidth=1) {
         agg::path_storage path;
         agg::ellipse ellipse(x,y,w/2.,h/2.0);
         path.concat_path(ellipse);
+        if( (fabs(angle)>_EPSILON) || (fabs(MS_2PI-angle)>_EPSILON)) {
+            agg::trans_affine mtx;
+            mtx *= agg::trans_affine_translation(-x,-y);
+            /*agg angles are antitrigonometric*/
+            mtx *= agg::trans_affine_rotation(-angle);
+            mtx *= agg::trans_affine_translation(x,y);
+            path.transform(mtx);
+        }
         renderPathSolid(path,color,outlinecolor,outlinewidth);      
     }
     
@@ -1208,7 +1216,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
     agg_bcolor=getAGGColor(&style->backgroundcolor,style->opacity);
     if(style->symbol == 0) { // simply draw a circle of the specified color
-        ren->renderEllipse(p->x+ox,p->y+oy,size,size,agg_color,agg_ocolor,width);
+        ren->renderEllipse(p->x+ox,p->y+oy,size,size,0,agg_color,agg_ocolor,width);
         return;
     }  
 
@@ -1240,7 +1248,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
 
         if(symbol->filled) {
             //draw an optionnally filled and/or outlined ellipse
-            ren->renderEllipse(x,y,w,h,agg_color,agg_ocolor,width);
+            ren->renderEllipse(x,y,w,h,angle_radians,agg_color,agg_ocolor,width);
         }
         else {
             agg::rgba8 *c;
@@ -1251,7 +1259,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
             else
                 return;
             //draw only the outline
-            ren->renderEllipse(x,y,w,h,AGG_NO_COLOR,*c,width);
+            ren->renderEllipse(x,y,w,h,angle_radians,AGG_NO_COLOR,*c,width);
         }
     }
     break;    
@@ -1375,7 +1383,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
                 case MS_SYMBOL_ELLIPSE:
                     if(symbol->filled) {
                         //draw an optionnally filled and/or outlined vector symbol
-                        ren->renderEllipse(point.x,point.y,sw,sh,agg_color,agg_ocolor,outlinewidth);
+                        ren->renderEllipse(point.x,point.y,sw,sh,0,agg_color,agg_ocolor,outlinewidth);
                     }
                     else {
                         agg::rgba8 *c;
@@ -1386,7 +1394,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
                         else
                             return;
                         //draw only the outline
-                        ren->renderEllipse(point.x,point.y,sw,sh,AGG_NO_COLOR,*c,outlinewidth);
+                        ren->renderEllipse(point.x,point.y,sw,sh,0,AGG_NO_COLOR,*c,outlinewidth);
                     }
                     break;
                 case MS_SYMBOL_VECTOR: {
