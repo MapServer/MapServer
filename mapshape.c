@@ -40,6 +40,10 @@
 
 MS_CVSID("$Id$")
 
+#define SWAP_FOUR_BYTES(data) \
+  ( ((data >> 24) & 0x000000FF) | ((data >>  8) & 0x0000FF00) | \
+    ((data <<  8) & 0x00FF0000) | ((data << 24) & 0xFF000000) )
+
 
 #define ByteCopy( a, b, c )     memcpy( b, a, c )
 
@@ -101,16 +105,16 @@ static void writeHeader( SHPHandle psSHP )
   
   i32 = psSHP->nFileSize/2;				/* file size */
   ByteCopy( &i32, abyHeader+24, 4 );
-  if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
-  
+  if( !bBigEndian ) *(abyHeader+24) = SWAP_FOUR_BYTES(*(abyHeader+24));
+    
   i32 = 1000;						/* version */
   ByteCopy( &i32, abyHeader+28, 4 );
-  if( bBigEndian ) SwapWord( 4, abyHeader+28 );
-  
+  if( bBigEndian ) *(abyHeader+28) = SWAP_FOUR_BYTES(*(abyHeader+28));
+    
   i32 = psSHP->nShapeType;				/* shape type */
   ByteCopy( &i32, abyHeader+32, 4 );
-  if( bBigEndian ) SwapWord( 4, abyHeader+32 );
-  
+  if( bBigEndian ) *(abyHeader+32) = SWAP_FOUR_BYTES(*(abyHeader+32));
+    
   dValue = psSHP->adBoundsMin[0];			/* set bounds */
   ByteCopy( &dValue, abyHeader+36, 8 );
   if( bBigEndian ) SwapWord( 8, abyHeader+36 );
@@ -155,8 +159,8 @@ static void writeHeader( SHPHandle psSHP )
   /* -------------------------------------------------------------------- */
   i32 = (psSHP->nRecords * 2 * sizeof(ms_int32) + 100)/2;   /* file size */
   ByteCopy( &i32, abyHeader+24, 4 );
-  if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
-  
+  if( !bBigEndian ) *(abyHeader+24) = SWAP_FOUR_BYTES(*(abyHeader+24));
+    
   fseek( psSHP->fpSHX, 0, 0 );
   fwrite( abyHeader, 100, 1, psSHP->fpSHX );
   
@@ -168,8 +172,10 @@ static void writeHeader( SHPHandle psSHP )
   for( i = 0; i < psSHP->nRecords; i++ ) {
     panSHX[i*2  ] = psSHP->panRecOffset[i]/2;
     panSHX[i*2+1] = psSHP->panRecSize[i]/2;
-    if( !bBigEndian ) SwapWord( 4, panSHX+i*2 );
-    if( !bBigEndian ) SwapWord( 4, panSHX+i*2+1 );
+    if( !bBigEndian ) {
+      *(panSHX+i*2) = SWAP_FOUR_BYTES(*(panSHX+i*2));
+      *(panSHX+i*2+1) = SWAP_FOUR_BYTES(*(panSHX+i*2+1));
+    }
   }
   
   fwrite( panSHX, sizeof(ms_int32) * 2, psSHP->nRecords, psSHP->fpSHX );
@@ -475,16 +481,16 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   
   i32 = 50;						/* file size */
   ByteCopy( &i32, abyHeader+24, 4 );
-  if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
+  if( !bBigEndian ) *(abyHeader+24) = SWAP_FOUR_BYTES(*(abyHeader+24));
   
   i32 = 1000;						/* version */
   ByteCopy( &i32, abyHeader+28, 4 );
-  if( bBigEndian ) SwapWord( 4, abyHeader+28 );
-  
+  if( bBigEndian ) *(abyHeader+28) = SWAP_FOUR_BYTES(*(abyHeader+28));
+    
   i32 = nShapeType;					/* shape type */
   ByteCopy( &i32, abyHeader+32, 4 );
-  if( bBigEndian ) SwapWord( 4, abyHeader+32 );
-  
+  if( bBigEndian ) *(abyHeader+32) = SWAP_FOUR_BYTES(*(abyHeader+32));
+    
   dValue = 0.0;					/* set bounds */
   ByteCopy( &dValue, abyHeader+36, 8 );
   ByteCopy( &dValue, abyHeader+44, 8 );
@@ -501,8 +507,8 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   /* -------------------------------------------------------------------- */
   i32 = 50;						/* file size */
   ByteCopy( &i32, abyHeader+24, 4 );
-  if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
-  
+  if( !bBigEndian ) *(abyHeader+24) = SWAP_FOUR_BYTES(*(abyHeader+24));
+    
   fwrite( abyHeader, 100, 1, fpSHX );
   
   /* -------------------------------------------------------------------- */
@@ -609,15 +615,15 @@ int msSHPWritePoint(SHPHandle psSHP, pointObj *point )
   /*      Set the shape type, record number, and record size.             */
   /* -------------------------------------------------------------------- */
   i32 = psSHP->nRecords-1+1;					/* record # */
-  if( !bBigEndian ) SwapWord( 4, &i32 );
+  if( !bBigEndian ) i32 = SWAP_FOUR_BYTES(i32);
   ByteCopy( &i32, pabyRec, 4 );
   
   i32 = nRecordSize/2;				/* record size */
-  if( !bBigEndian ) SwapWord( 4, &i32 );
+  if( !bBigEndian ) i32 = SWAP_FOUR_BYTES(i32);
   ByteCopy( &i32, pabyRec + 4, 4 );
   
   i32 = psSHP->nShapeType;				/* shape type */
-  if( bBigEndian ) SwapWord( 4, &i32 );
+  if( bBigEndian ) i32 = SWAP_FOUR_BYTES(i32);
   ByteCopy( &i32, pabyRec + 8, 4 );
   
   /* -------------------------------------------------------------------- */
@@ -701,8 +707,8 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
     writeBounds( pabyRec + 12, shape, t_nPoints );
     
     if( bBigEndian ) { 
-      SwapWord( 4, &nPoints );
-      SwapWord( 4, &nParts );
+      nPoints = SWAP_FOUR_BYTES(nPoints);
+      nParts = SWAP_FOUR_BYTES(nParts);
     }
     
     ByteCopy( &nPoints, pabyRec + 40 + 8, 4 );
@@ -710,12 +716,12 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 
     partSize = 0; /* first part always starts at 0 */
     ByteCopy( &partSize, pabyRec + 44 + 8 + 4*0, 4 );
-    if( bBigEndian ) SwapWord( 4, pabyRec + 44 + 8 + 4*0);
-
+    if( bBigEndian ) *(pabyRec + 44 + 8 + 4*0) = SWAP_FOUR_BYTES(*(pabyRec + 44 + 8 + 4*0));
+    
     for( i = 1; i < t_nParts; i++ ) {
       partSize += shape->line[i-1].numpoints;
       ByteCopy( &partSize, pabyRec + 44 + 8 + 4*i, 4 );
-      if( bBigEndian ) SwapWord( 4, pabyRec + 44 + 8 + 4*i);
+      if( bBigEndian ) *(pabyRec + 44 + 8 + 4*i) = SWAP_FOUR_BYTES(*(pabyRec + 44 + 8 + 4*i));
     }
     
     k = 0; /* overall point counter */
@@ -803,7 +809,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
     
     writeBounds( pabyRec + 12, shape, nPoints );
     
-    if( bBigEndian ) SwapWord( 4, &nPoints );
+    if( bBigEndian ) nPoints = SWAP_FOUR_BYTES(nPoints);
     ByteCopy( &nPoints, pabyRec + 44, 4 );
     
     for( i = 0; i < shape->line[0].numpoints; i++ ) {
@@ -903,15 +909,15 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   /*      Set the shape type, record number, and record size.             */
   /* -------------------------------------------------------------------- */
   i32 = psSHP->nRecords-1+1;					/* record # */
-  if( !bBigEndian ) SwapWord( 4, &i32 );
+  if( !bBigEndian ) i32 = SWAP_FOUR_BYTES(i32);
   ByteCopy( &i32, pabyRec, 4 );
   
   i32 = nRecordSize/2;				/* record size */
-  if( !bBigEndian ) SwapWord( 4, &i32 );
+  if( !bBigEndian ) i32 = SWAP_FOUR_BYTES(i32);
   ByteCopy( &i32, pabyRec + 4, 4 );
   
   i32 = psSHP->nShapeType;				/* shape type */
-  if( bBigEndian ) SwapWord( 4, &i32 );
+  if( bBigEndian ) i32 = SWAP_FOUR_BYTES(i32);
   ByteCopy( &i32, pabyRec + 8, 4 );
   
   /* -------------------------------------------------------------------- */
@@ -1068,7 +1074,6 @@ int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
   fread( buffer, 8, SHX_BUFFER_PAGE, psSHP->fpSHX );
 
   /* Copy the buffer contents out into the working arrays. */
-  /* TODO: need to check end case so we don't memcpy too far. */
   for( i = 0; i < SHX_BUFFER_PAGE; i++ ) {
     int tmpOffset, tmpSize;
     
@@ -1081,9 +1086,11 @@ int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
   
     /* SHX uses big endian numbers for the offsets, so we have to flip them */
     /* if we are a little endian machine. */
-    if( !bBigEndian ) SwapWord( 4, &tmpOffset );
-    if( !bBigEndian ) SwapWord( 4, &tmpSize );
-
+    if( !bBigEndian ) {
+      tmpOffset = SWAP_FOUR_BYTES(tmpOffset);
+      tmpSize = SWAP_FOUR_BYTES(tmpSize);
+    }
+    
     /* SHX stores the offsets in 2 byte units, so we double them to get */
     /* an offset in bytes. */
     tmpOffset = tmpOffset * 2;
@@ -1110,10 +1117,12 @@ int msSHXLoadAll( SHPHandle psSHP ) {
     ms_int32 nOffset, nLength;
     
     memcpy( &nOffset, pabyBuf + i * 8, 4 );
-    if( !bBigEndian ) SwapWord( 4, &nOffset );
-    
     memcpy( &nLength, pabyBuf + i * 8 + 4, 4 );
-    if( !bBigEndian ) SwapWord( 4, &nLength );
+
+    if( !bBigEndian ) {
+      nOffset = SWAP_FOUR_BYTES( nOffset );
+      nLength = SWAP_FOUR_BYTES( nLength );
+    }
     
     psSHP->panRecOffset[i] = nOffset*2; 
     psSHP->panRecSize[i] = nLength*2; 
@@ -1230,8 +1239,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     memcpy( &nParts, psSHP->pabyRec + 36 + 8, 4 );
       
     if( bBigEndian ) {
-      SwapWord( 4, &nPoints );
-      SwapWord( 4, &nParts );
+      nPoints = SWAP_FOUR_BYTES(nPoints);
+      nParts = SWAP_FOUR_BYTES(nParts);    
     }
 
     if (nPoints < 0 || nParts < 0 || 
@@ -1279,8 +1288,11 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     }
       
     memcpy( psSHP->panParts, psSHP->pabyRec + 44 + 8, 4 * nParts );
-    for( i = 0; i < nParts; i++ )
-      if( bBigEndian ) SwapWord( 4, psSHP->panParts+i );
+    if( bBigEndian ) {
+      for( i = 0; i < nParts; i++ ) {
+        *(psSHP->panParts+i) = SWAP_FOUR_BYTES(*(psSHP->panParts+i));
+      }
+    }
       
     /* -------------------------------------------------------------------- */
     /*      Fill the shape structure.                                       */
@@ -1398,7 +1410,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     }
 
     memcpy( &nPoints, psSHP->pabyRec + 44, 4 );
-    if( bBigEndian ) SwapWord( 4, &nPoints );
+    if( bBigEndian ) nPoints = SWAP_FOUR_BYTES(nPoints);
     
     /* -------------------------------------------------------------------- */
     /*      Fill the shape structure.                                       */

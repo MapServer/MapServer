@@ -36,7 +36,7 @@
 #include<libxml/xpath.h>
 #include<libxml/xpathInternals.h>
 
-MS_CVSID("$Id$");
+MS_CVSID("$Id$")
 
 /**
  * msLibXml2GenerateList()

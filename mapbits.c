@@ -35,6 +35,10 @@ MS_CVSID("$Id$")
 
 /* originally found at http://www.snippets.org/ */
 
+
+/* #define msGetBit(array, index) (*((array) + (index)/CHAR_BIT) & ( 1 << ((index) % CHAR_BIT))) */
+
+
 size_t msGetBitArraySize(int numbits)
 {
   return((numbits + CHAR_BIT - 1) / CHAR_BIT);
@@ -53,6 +57,7 @@ int msGetBit(char *array, int index)
   return (*array & (1 << (index % CHAR_BIT))) != 0;    /* 0 or 1 */
 }
 
+
 /*
 ** msGetNextBit( status, start, size)
 **
@@ -69,7 +74,8 @@ int msGetNextBit(char *array, int i, int size) {
     if( b && (b >> (i % CHAR_BIT)) ) {
       /* There is something in this byte */
       /* And it is not to the right of us */
-      if( msGetBit( array, i ) ) {
+      if( b & ( 1 << (i % CHAR_BIT)) ) {
+        /* There is something at this bit! */
         return i;
       }
       else {
