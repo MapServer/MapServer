@@ -1362,9 +1362,12 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       msFreeProjection( &proj );
   }
   
-  /* find the layer we are working with.  */
+  /* find the layer we are working with */
   lp = NULL;
   for(i=0; i<map->numlayers; i++) {
+    /* char *name;
+       name = msOWSGetEncodeMetadata(GET_LAYER(map, i)->metadata, "COM", "name", GET_LAYER(map, i)->name); */
+
     if( EQUAL(GET_LAYER(map, i)->name, params->coverages[0]) ) {
       lp = GET_LAYER(map, i);
       break;
