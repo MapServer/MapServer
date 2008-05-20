@@ -440,8 +440,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                   (map->name && strcasecmp(map->name, layers[k]) == 0) ||
                   (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0))
               {
-                  GET_LAYER(map, j)->status = MS_ON;
-                  map->layerorder[nLayerOrder++] = j;
+                  if (GET_LAYER(map, j)->status != MS_DEFAULT)
+                  {
+                      GET_LAYER(map, j)->status = MS_ON;
+                      map->layerorder[nLayerOrder++] = j;
+                  }
                   validlayers++;
                   layerfound = 1;
               }
