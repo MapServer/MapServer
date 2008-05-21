@@ -215,8 +215,10 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
     pInfo->pboundinglines[0].point[1].y = rectMapCoordinates.maxy;
 
 #ifdef USE_PROJ
-    if( layer->map->projection.numargs > 0 && layer->projection.numargs > 0 )
-      msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[0] );
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+      msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[0]);
+    else
+      layer->project = MS_FALSE;
 #endif
 
     /*
@@ -230,8 +232,10 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
     pInfo->pboundinglines[1].point[1].y = rectMapCoordinates.miny;
 
 #ifdef USE_PROJ
-    if( layer->map->projection.numargs > 0 && layer->projection.numargs > 0 )
-      msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[1] );
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+      msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[1]);
+    else
+      layer->project = MS_FALSE;
 #endif
 
     /*
@@ -245,8 +249,10 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
     pInfo->pboundinglines[2].point[1].y   = rectMapCoordinates.maxy;
 
 #ifdef USE_PROJ
-    if( layer->map->projection.numargs > 0 && layer->projection.numargs > 0 )
-      msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[2] );
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+      msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[2]);
+    else
+      layer->project = MS_FALSE;
 #endif
 
     /*
@@ -260,8 +266,10 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
     pInfo->pboundinglines[3].point[1].y = rectMapCoordinates.maxy;
 
 #ifdef USE_PROJ
-    if( layer->map->projection.numargs > 0 && layer->projection.numargs > 0 )
-      msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[3] );
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+      msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[3]);
+    else
+      layer->project = MS_FALSE;
 #endif
   }
 
