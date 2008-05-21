@@ -174,10 +174,7 @@ int msOWSMakeAllLayersUnique(mapObj *map)
       {
           if (GET_LAYER(map, i)->name == NULL || GET_LAYER(map, j)->name == NULL)
           {
-              msSetError(MS_MISCERR, 
-                         "At least one layer is missing a name in map file.", 
-                         "msOWSMakeAllLayersUnique()");
-              return MS_FAILURE;
+              continue;
           }
           if (strcasecmp(GET_LAYER(map, i)->name, GET_LAYER(map, j)->name) == 0 &&
               msRenameLayer((GET_LAYER(map, j)), ++count) != MS_SUCCESS)

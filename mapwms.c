@@ -1134,7 +1134,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
      msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
                         "invalid characters or may start with a number. This could lead to potential problems. -->\n", 
                   lp->name);
-   msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_WARN,
+   msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_NOERR,
                          "        <Name>%s</Name>\n", NULL);
 
    /* the majority of this section is dependent on appropriately named metadata in the LAYER object */
