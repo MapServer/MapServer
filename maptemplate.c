@@ -829,7 +829,8 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   char *tag, *tagInstance, *tagStart;
   hashTableObj *tagArgs=NULL;
 
-  int limit = -1;
+  int limit=-1;
+  char *trimLast=NULL;
 
   int i, j, status;
 
@@ -846,6 +847,9 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   if(tagArgs) {
     argValue = msLookupHashTable(tagArgs, "limit");
     if(argValue) limit = atoi(argValue);
+
+    argValue = msLookupHashTable(tagArgs, "trimlast");
+    if(argValue) trimLast = argValue;
   }
 
   if(strstr(*line, "[/feature]") == NULL) { /* we know the closing tag must be here, if not throw an error */
@@ -900,6 +904,15 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
           msJoinNext(&(layer->joins[j])); /* fetch the first row */
         }
       }
+    }
+
+    /*
+    ** if necessary trim a few characters off the end of the tag
+    */
+    if(trimLast && (i == limit-1)) {    
+      char *ptr;
+      if((ptr = strrstr(tag, trimLast)) != NULL)
+        *ptr = '\0';
     }
 
     /* process the tag */
@@ -3336,10 +3349,10 @@ int msReturnURL(mapservObj* ms, char* url, int mode)
     return MS_FAILURE;
   }
 
-  tmpurl = processLine(ms, url, NULL, mode); /* URL templates can't handle multi-line tags, hence the NULL */
+  tmpurl = processLine(ms, url, NULL, mode); /* URL templates can't handle multi-line tags, hence the NULL file pointer */
  
   if(!tmpurl)
-     return MS_FAILURE;
+   return MS_FAILURE;
    
   msRedirect(tmpurl);
   free(tmpurl);
@@ -3352,9 +3365,9 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
   int status;
   int i,j,k;
   char buffer[1024];
-  int   nBufferSize =0;
-  int   nCurrentSize = 0;
-  int   nExpandBuffer = 0;
+  int nBufferSize =0;
+  int nCurrentSize = 0;
+  int nExpandBuffer = 0;
 
   char *template;
 

@@ -1631,6 +1631,10 @@ MS_DLL_EXPORT int msUTF8ToUniChar(const char *str, int *chPtr); /* maptclutf.c *
 MS_DLL_EXPORT char *strdup(char *s);
 #endif /* NEED_STRDUP */
 
+#ifdef NEED_STRRSTR
+MS_DLL_EXPORT char *strrstr(char *string, char *find);
+#endif /* NEED_STRRSTR */
+
 #ifdef NEED_STRNCASECMP
 MS_DLL_EXPORT int strncasecmp(const char *s1, const char *s2, int len);
 #endif /* NEED_STRNCASECMP */

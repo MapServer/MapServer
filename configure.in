@@ -67,6 +67,7 @@ dnl ---------------------------------------------------------------------
 AC_CHECK_FUNC(strcasecmp, ,  STRINGS="-DNEED_STRCASECMP $STRINGS")
 AC_CHECK_FUNC(strncasecmp, , STRINGS="-DNEED_STRNCASECMP $STRINGS")
 AC_CHECK_FUNC(strdup, ,      STRINGS="-DNEED_STRDUP $STRINGS")
+AC_CHECK_FUNC(strrstr, ,      STRINGS="-DNEED_STRRSTR $STRINGS")
 AC_CHECK_FUNC(strlcat, ,      STRINGS="-DNEED_STRLCAT $STRINGS")
 AC_CHECK_FUNC(vsnprintf, STRINGS="-DHAVE_VSNPRINTF $STRINGS", )
 AC_SUBST(STRINGS, $STRINGS)

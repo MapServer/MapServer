@@ -291,6 +291,8 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
     return(MS_FAILURE);
   }
 
+  printf("ready to query...\n");
+
   /* save any previously defined filter */
   if(lp->filter.string) {
     old_filtertype = lp->filter.type;
@@ -324,6 +326,9 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   else
     lp->project = MS_FALSE;
 #endif
+
+  printf("search rect: %g,%g %g,%g\n", searchrect.minx,searchrect.miny, searchrect.maxx,searchrect.maxy);
+
   status = msLayerWhichShapes(lp, searchrect);
   if(status == MS_DONE) { /* no overlap */
     msLayerClose(lp);
@@ -346,12 +351,16 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
 
   while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
+    printf("next shape\n");
+
     shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses );    
     if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
       msFreeShape(&shape);
       continue;
     }
     
+    printf("next shape (class ok)\n");
+
     if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
       msFreeShape(&shape);
       continue;
