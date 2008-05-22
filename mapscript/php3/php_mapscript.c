@@ -5593,7 +5593,7 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self=NULL;
     HashTable   *list=NULL;
     int         nStatus = MS_SUCCESS;
-    pval       **pOutputformat;
+    pval        *new_obj_ptr;
 
     pThis = getThis();
 
@@ -5606,7 +5606,7 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
     {
         WRONG_PARAM_COUNT;
     }
-
+    
     convert_to_string(pImageType);
    
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
@@ -5627,30 +5627,15 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
     {
         if(self->imagetype)
           _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR TSRMLS_CC);
+  
+
+        zend_hash_del(Z_OBJPROP_P(pThis), "outputformat", 
+                      sizeof("outputformat"));
+      
+        MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+        _phpms_build_outputformat_object(self->outputformat, list, new_obj_ptr TSRMLS_CC);
+        _phpms_add_property_object(pThis, "outputformat", new_obj_ptr, E_ERROR TSRMLS_CC);
         
-        if (zend_hash_find(Z_OBJPROP_P(pThis), "outputformat", 
-                           sizeof("outputformat"), 
-                           (void *)&pOutputformat) == SUCCESS)
-        {
-            _phpms_set_property_string((*pOutputformat),"name", 
-                                       self->outputformat->name,
-                                       E_ERROR TSRMLS_CC);
-            _phpms_set_property_string((*pOutputformat),"mimetype", 
-                                       self->outputformat->mimetype,
-                                        E_ERROR TSRMLS_CC);
-            _phpms_set_property_string((*pOutputformat),"driver", 
-                                       self->outputformat->driver,
-                                       E_ERROR TSRMLS_CC);
-            _phpms_set_property_string((*pOutputformat),"extension", 
-                                       self->outputformat->extension,
-                                       E_ERROR TSRMLS_CC);
-            _phpms_set_property_long((*pOutputformat),"renderer", 
-                                     self->outputformat->renderer, E_ERROR TSRMLS_CC); 
-            _phpms_set_property_long((*pOutputformat),"imagemode", 
-                                     self->outputformat->imagemode, E_ERROR TSRMLS_CC);
-            _phpms_set_property_long((*pOutputformat),"transparent", 
-                                     self->outputformat->transparent, E_ERROR TSRMLS_CC);
-        }
     }
 
     RETURN_LONG(nStatus);
