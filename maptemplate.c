@@ -3562,6 +3562,8 @@ mapservObj *msAllocMapServObj()
   mapserv->savemap=MS_FALSE;
   mapserv->savequery=MS_FALSE; /* should the query and/or map be saved  */
 
+  mapserv->sendheaders = MS_TRUE;
+
   mapserv->request = msAllocCgiObj();
 
   mapserv->map=NULL;

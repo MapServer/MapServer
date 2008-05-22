@@ -48,8 +48,8 @@ enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, LEGENDICON, REFERENCE, SCALEBA
             INDEXQUERY, INDEXQUERYMAP, TILE, OWS};
 
 
-/*! \srtuct mapservObj
- *  \brief Global structur used by template and mapserv
+/* struct mapservObj
+ * Global structure used by templates and mapserver CGI interface.
  * 
  * This structur was created to seperate template functionality
  * from the main mapserv file. Instead of moving all template
@@ -59,71 +59,61 @@ enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, LEGENDICON, REFERENCE, SCALEBA
 */
 typedef struct
 {
-   /* should the query and/or map be saved */
-   int savemap, savequery;
+  /* should the query and/or map be saved */
+  int savemap, savequery;
 
-   cgiRequestObj *request;
+  cgiRequestObj *request;
 
-   mapObj *map;
+  int sendheaders; /* should mime-type header be output, default will be MS_TRUE */
 
-   char **Layers;
-   char *icon; /* layer:class combination that defines a legend icon */
+  mapObj *map;
+
+  char **Layers;
+  char *icon; /* layer:class combination that defines a legend icon */
+    
+  int NumLayers; /* number of layers specfied by a use */
+  int MaxLayers; /* Allocated size of Layers[] array */
+
+  layerObj *resultlayer;
+   
+  int UseShapes; /* are results of a query to be used in calculating an extent of some sort */
+
+  shapeObj SelectShape, resultshape;
+
+  rectObj RawExt;
+
+  pointObj mappnt;
   
-   /* number of layers specfied by a use */
-   int NumLayers;
-   /* Allocated size of Layers[] array */
-   int MaxLayers;
+  double fZoom, Zoom;     
+  int ZoomDirection; /* whether zooming in or out, default is pan or 0 */
 
-   layerObj *resultlayer;
+  int Mode; /* can be BROWSE, QUERY, etc. */
    
-   int UseShapes; /* are results of a query to be used in calculating an extent of some sort */
-
-
-   shapeObj SelectShape, resultshape;
-
-   rectObj RawExt;
-
-   pointObj mappnt;
-
-   /* default for browsing */
-   double fZoom, Zoom;
+  int TileMode; /* can be GMAP, VE */
+  char *TileCoords; /* for GMAP: 0 0 1; for VE: 013021023 */
    
-   /* whether zooming in or out, default is pan or 0 */
-   int ZoomDirection; 
-
-   /* can be BROWSE, QUERY, etc. */
-   int Mode; 
+  char Id[IDSIZE]; /* big enough for time + pid */
    
-   /* can be GMAP, VE */
-   int TileMode;
-   /* for GMAP: 0 0 1; for VE: 013021023 */
-   char *TileCoords;
-   
-   /* big enough for time + pid */
-   char Id[IDSIZE]; 
-   
-   int CoordSource;
-   double ScaleDenom; /* used to create a map extent around a point */
+  int CoordSource;
+  double ScaleDenom; /* used to create a map extent around a point */
 
-   int ImgRows, ImgCols;
-   rectObj ImgExt; /* Existing image's mapextent */
-   rectObj ImgBox;
+  int ImgRows, ImgCols;
+  rectObj ImgExt; /* Existing image's mapextent */
+  rectObj ImgBox;
    
-   pointObj RefPnt;
-   pointObj ImgPnt;
+  pointObj RefPnt;
+  pointObj ImgPnt;
 
-   double Buffer;
-
-
-   
-   /* 
-    ** variables for multiple query results processing 
-    */
-   int RN; /* overall result number */
-   int LRN; /* result number within a layer */
-   int NL; /* total number of layers with results */
-   int NR; /* total number or results */
-   int NLR; /* number of results in a layer */
+  double Buffer;
+ 
+  /* 
+  ** variables for multiple query results processing 
+  */
+  int RN; /* overall result number */
+  int LRN; /* result number within a layer */
+  int NL; /* total number of layers with results */
+  int NR; /* total number or results */
+  int NLR; /* number of results in a layer */
 } mapservObj;
    
    
