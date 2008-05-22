@@ -1108,6 +1108,8 @@ int main(int argc, char *argv[]) {
   imageObj *img=NULL;
   int status;
 
+  int sendheaders = MS_TRUE;
+
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if( msDebugInitFromEnv() != MS_SUCCESS ) {
     writeError();
@@ -1125,6 +1127,8 @@ int main(int argc, char *argv[]) {
       printf("%s\n", msGetVersion());
       fflush(stdout);
       exit(0);
+    } else if( iArg < argc-1 && strcmp(argv[iArg], "-nh") == 0) {
+      sendheaders = MS_FALSE;
     } else if( iArg < argc-1 && strcmp(argv[iArg], "-tmpbase") == 0) {
       msForceTmpFileBase( argv[++iArg] );
     } else if( iArg < argc-1 && strcmp(argv[iArg], "-t") == 0) {
@@ -1174,6 +1178,7 @@ int main(int argc, char *argv[]) {
     /*      Process a request.                                              */
     /* -------------------------------------------------------------------- */
     mapserv = msAllocMapServObj();
+    mapserv->sendheaders = sendheaders; /* override the default if necessary (via command line -nh switch) */
 
     mapserv->request->ParamNames = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
     mapserv->request->ParamValues = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
