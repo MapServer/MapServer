@@ -13,6 +13,12 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- WCS: respect wcs_name metadata for GetCoverage and DescribeCoverage requests
+  (#2036)
+
+- CGI: added -nh option to allow for the suppression of content headers from
+  the command line (#2594)
+
 - PostGIS: fix postgis idle-in-transaction problem (#2626)
 
 - AGG: enable ellipse symbol rotation for POINT/ANNOTATION layers (#2617)
