@@ -1127,7 +1127,7 @@ int main(int argc, char *argv[]) {
       printf("%s\n", msGetVersion());
       fflush(stdout);
       exit(0);
-    } else if( iArg < argc-1 && strcmp(argv[iArg], "-nh") == 0) {
+    } else if(strcmp(argv[iArg], "-nh") == 0) {
       sendheaders = MS_FALSE;
     } else if( iArg < argc-1 && strcmp(argv[iArg], "-tmpbase") == 0) {
       msForceTmpFileBase( argv[++iArg] );
@@ -1148,7 +1148,7 @@ int main(int argc, char *argv[]) {
     } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0) {
       /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );
-      putenv( argv[1] );
+      putenv( argv[iArg] );
     } else {
       /* we don't produce a usage message as some web servers pass junk arguments */
     }
@@ -1365,7 +1365,7 @@ int main(int argc, char *argv[]) {
           writeError();
       } else {
         if(TEMPLATE_TYPE(mapserv->map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
-          msIO_printf("Content-type: %s%c%c",  mapserv->map->web.browseformat, 10, 10); /* write MIME header */
+          if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c",  mapserv->map->web.browseformat, 10, 10); /* write MIME header */
           /* msIO_printf("<!-- %s -->\n", msGetVersion()); */
           fflush(stdout);
           if(msReturnPage(mapserv, mapserv->map->web.template, BROWSE, NULL) != MS_SUCCESS)
@@ -1420,7 +1420,7 @@ int main(int argc, char *argv[]) {
         msIO_printf("Cache-Control: max-age=%s%c", msLookupHashTable(&(mapserv->map->web.metadata), "http_max_age"), 10);
       }
 
-      msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
+      if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
       
       
       if( mapserv->Mode == MAP || mapserv->Mode == TILE )
@@ -1437,7 +1437,7 @@ int main(int argc, char *argv[]) {
 
         legendTemplate = generateLegendTemplate(mapserv);
         if(legendTemplate) {
-          msIO_printf("Content-type: %s%c%c", mapserv->map->web.legendformat, 10, 10);
+          if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", mapserv->map->web.legendformat, 10, 10);
           msIO_fwrite(legendTemplate, strlen(legendTemplate), 1, stdout);
 
           free(legendTemplate);
@@ -1447,7 +1447,7 @@ int main(int argc, char *argv[]) {
         img = msDrawLegend(mapserv->map, MS_FALSE);
         if(!img) writeError();
 
-        msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
+        if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
         status = msSaveImage(NULL, img, NULL);
         if(status != MS_SUCCESS) writeError();
 
@@ -1462,7 +1462,7 @@ int main(int argc, char *argv[]) {
       /* TODO: do we want to set scale here? */
 
       /* do we have enough information */
-			if(!mapserv->icon) {
+      if(!mapserv->icon) {
         msSetError(MS_WEBERR, "Mode=LEGENDICON requires an icon parameter.", "mapserv()");
         writeError();
       }
@@ -1513,7 +1513,7 @@ int main(int argc, char *argv[]) {
       if(msDrawLegendIcon(mapserv->map, GET_LAYER(mapserv->map, layerindex), GET_LAYER(mapserv->map, layerindex)->class[classindex], mapserv->map->legend.keysizex,  mapserv->map->legend.keysizey, img, 0, 0) != MS_SUCCESS)
         writeError();
 
-      msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
+      if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
       status = msSaveImage(NULL, img, NULL);
       if(status != MS_SUCCESS) writeError();
 
@@ -1773,7 +1773,7 @@ int main(int argc, char *argv[]) {
         img = msDrawMap(mapserv->map, MS_TRUE);
         if(!img) writeError();
 
-        msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
+        if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
         status = msSaveImage(mapserv->map, img, NULL);
         if(status != MS_SUCCESS) writeError();
         msFreeImage(img);
