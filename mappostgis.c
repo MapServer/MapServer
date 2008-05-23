@@ -167,7 +167,7 @@ static void msPOSTGISCloseConnection(void *conn_handle)
 }
 
 /* takes a connection and ensures that it is in a valid transactional state */
-/* performing PQreset(), ROLLBACK, and/or BEGIN on it as necessary */
+/* performing PQreset() and/or ROLLBACK on it as necessary */
 int msPOSTGISSanitizeConnection(PGconn *conn)
 {
     int conn_bad = 0;
@@ -205,7 +205,8 @@ int msPOSTGISSanitizeConnection(PGconn *conn)
 	return MS_FAILURE;
     }
 
-    if (PQtransactionStatus(conn) == PQTRANS_INERROR) /* idle, in a failed transaction block */
+    const PGTransactionStatusType trans_status = PQtransactionStatus(conn);
+    if (trans_status == PQTRANS_INTRANS || trans_status == PQTRANS_INERROR) /* idle, in a transaction block or a failed transaction block */
     {
         PGresult *rb_res = PQexec(conn, "ROLLBACK");
         if (!rb_res || PQresultStatus(rb_res) != PGRES_COMMAND_OK) {
@@ -220,21 +221,6 @@ int msPOSTGISSanitizeConnection(PGconn *conn)
         PQclear(rb_res);
     }
  
-    if (PQtransactionStatus(conn) == PQTRANS_IDLE) /* idle, but not in a transaction block */
-    {
-        PGresult *beg_res = PQexec(conn, "BEGIN");
-        if (!beg_res || PQresultStatus(beg_res) != PGRES_COMMAND_OK) {
-            msSetError(MS_QUERYERR, "Error executing POSTGIS BEGIN statement: %s", "msPOSTGISSanitizeConnection()", PQerrorMessage(conn));
-  
-            if(beg_res) {
-                PQclear(beg_res);
-            }
-  
-            return MS_FAILURE;
-        }
-        PQclear(beg_res);
-    }
-
     return MS_SUCCESS;
 }
 
@@ -319,12 +305,6 @@ int msPOSTGISLayerOpen(layerObj *layer)
             free(maskeddata);
             free(layerinfo);
             return MS_FAILURE;
-        }
-
-        /* start a transaction, since it's required by all subsequent (DECLARE CURSOR) queries */
-        if (msPOSTGISSanitizeConnection(layerinfo->conn) != MS_SUCCESS)
-        {
-          return MS_FAILURE;
         }
 
         msConnPoolRegister(layer, layerinfo->conn, msPOSTGISCloseConnection);
@@ -413,7 +393,7 @@ int msPOSTGISLayerInitItemInfo(layerObj *layer)
 static int prepare_database(const char *geom_table, const char *geom_column, layerObj *layer, PGresult **sql_results, rectObj rect, char **query_string, const char *urid_name, const char *user_srid)
 {
     msPOSTGISLayerInfo *layerinfo;
-    PGresult    *result = 0;
+    PGresult    *result = 0, *beg_res = 0;
     char        *temp = 0;
     char        *columns_wanted = 0;
     char        *data_source = 0;
@@ -425,6 +405,18 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
     char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
 
     layerinfo =  getPostGISLayerInfo(layer);
+    
+    beg_res = PQexec(layerinfo->conn, "BEGIN");
+    if (!beg_res || PQresultStatus(beg_res) != PGRES_COMMAND_OK)
+    {
+        msSetError(MS_QUERYERR, "Error executing PostgreSQL BEGIN statement: %s", "prepare_database()", PQerrorMessage(layerinfo->conn));
+        if(beg_res) {
+            PQclear(beg_res);
+        }
+        msPOSTGISSanitizeConnection(layerinfo->conn);
+        return MS_FAILURE;
+    }
+    PQclear(beg_res);
 
     /* Set the urid name */
     layerinfo->urid_name = (char *) malloc(strlen(urid_name) + 1);
@@ -725,6 +717,20 @@ int msPOSTGISLayerClose(layerObj *layer)
 	    }
 
             layerinfo->cursor_name[0] = '\0';
+
+            PGresult *rollb_res = PQexec(layerinfo->conn, "ROLLBACK");
+            if (!rollb_res || PQresultStatus(rollb_res) != PGRES_COMMAND_OK) {
+                msSetError(MS_QUERYERR, "Error executing PostgreSQL ROLLBACK statement: %s", "msPOSTGISLayerClose()", PQerrorMessage(layerinfo->conn));
+        
+                if(rollb_res) {
+                    PQclear(rollb_res);
+                }
+                msPOSTGISSanitizeConnection(layerinfo->conn);
+        
+                return MS_FAILURE;
+            }
+            PQclear(rollb_res);
+
         }
 
         msConnPoolRelease(layer, layerinfo->conn);
@@ -1169,7 +1175,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     size_t  length;
     char    *temp;
 
-    PGresult            *query_result;
+    PGresult            *query_result, *beg_res, *rollb_res;
     msPOSTGISLayerInfo  *layerinfo;
     char                *wkb;
     int                 result, t, size;
@@ -1187,6 +1193,19 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
         return MS_FAILURE;
     }
+    
+    beg_res = PQexec(layerinfo->conn, "BEGIN");
+    if (!beg_res || PQresultStatus(beg_res) != PGRES_COMMAND_OK)
+    {
+        msSetError(MS_QUERYERR, "Error executing PostgreSQL BEGIN statement: %s", "msPOSTGISLayerGetShape()", PQerrorMessage(layerinfo->conn));
+        if(beg_res)
+	{
+            PQclear(beg_res);
+        }
+        msPOSTGISSanitizeConnection(layerinfo->conn);
+        return MS_FAILURE;
+    }
+    PQclear(beg_res);
 
     if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
 		return MS_FAILURE;
@@ -1273,7 +1292,8 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     /* query has been done, so we can retreive the results */
     shape->type = MS_SHAPE_NULL;
 
-    if(0 < PQntuples(query_result)) {
+    const int num_tuples = PQntuples(query_result);
+    if(0 < num_tuples) {
         /* only need to get one shape */
         /* retreive an item */
         wkb = (char *) PQgetvalue(query_result, 0, layer->numitems);  
@@ -1327,65 +1347,43 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
             shape->numvalues = layer->numitems;
 
             find_bounds(shape);
-
-	        PQclear(query_result);
-
-            query_result = PQexec(layerinfo->conn, "CLOSE mycursor2");
-
-            if(!query_result || PQresultStatus(query_result) !=  PGRES_COMMAND_OK)
-            {
-                msFreeShape(shape);
-                if (query_result)
-                {
-                    PQclear(query_result);
-                }
-
-                if (msPOSTGISSanitizeConnection(layerinfo->conn) != MS_SUCCESS)
-                {
-                    return MS_FAILURE;
-                }
-
-                msSetError(MS_QUERYERR, "Error executing POSTGIS CLOSE statement on query (which returned one or more tuples).", "msPOSTGISLayerGetShape()");
-
-                return MS_FAILURE;
-            }
-
-            PQclear(query_result);
-
-            return MS_SUCCESS;
         }
-
-        PQclear(query_result);
-    } else {
-        PQclear(query_result);
-
-        query_result = PQexec(layerinfo->conn, "CLOSE mycursor2");
-
-        if (!query_result || PQresultStatus(query_result) != PGRES_COMMAND_OK)
-        {
-            if (query_result)
-            {
-              PQclear(query_result);
-            }
-
-            if (msPOSTGISSanitizeConnection(layerinfo->conn) != MS_SUCCESS)
-            {
-              return MS_FAILURE;
-            }
-
-            msSetError(MS_QUERYERR, "Error executing POSTGIS CLOSE statement on query (which returned zero tuples).", "msPOSTGISLayerGetShape()");
-
-            return MS_FAILURE;
-        }
-
-        PQclear(query_result);
-
-        return MS_DONE;
     }
 
-    msFreeShape(shape);
+    PQclear(query_result);
 
-    return MS_FAILURE;
+    PGresult *close_res = PQexec(layerinfo->conn, "CLOSE mycursor2");
+    if (!close_res || PQresultStatus(close_res) != PGRES_COMMAND_OK)
+    {
+        msSetError(MS_QUERYERR, "Error executing PostgreSQL CLOSE statement.", "msPOSTGISLayerGetShape()");
+        if (num_tuples > 0 && shape->type != MS_SHAPE_NULL)
+        {
+            msFreeShape(shape);
+        }
+        if (close_res)
+        {
+            PQclear(close_res);
+        }
+        msPOSTGISSanitizeConnection(layerinfo->conn);
+        return MS_FAILURE;
+    }
+    PQclear(close_res);
+
+    rollb_res = PQexec(layerinfo->conn, "ROLLBACK");
+    if (!rollb_res || PQresultStatus(rollb_res) != PGRES_COMMAND_OK)
+    {
+        msSetError(MS_QUERYERR, "Error executing PostgreSQL ROLLBACK statement: %s", "msPOSTGISLayerClose()", PQerrorMessage(layerinfo->conn));
+        if(rollb_res)
+	{
+            PQclear(rollb_res);
+        }
+        msPOSTGISSanitizeConnection(layerinfo->conn);
+        return MS_FAILURE;
+    }
+    PQclear(rollb_res);
+
+    return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : ( (num_tuples > 0) ? MS_SUCCESS : MS_DONE );
+
 }
 
 
