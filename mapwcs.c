@@ -1096,7 +1096,9 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
   const char *updatesequence=NULL;
   char **coverages=NULL;
   int numcoverages=0;
- 
+
+  char *coverageName=NULL; 
+
 /* -------------------------------------------------------------------- */
 /*      1.1.x is sufficiently different we have a whole case for        */
 /*      it.  The remainder of this function is for 1.0.0.               */
@@ -1108,20 +1110,23 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 /*      Process 1.0.0...                                                */
 /* -------------------------------------------------------------------- */
 
-  if(params->coverages) { /* use the list */
-      for( j = 0; params->coverages[j]; j++ ) {
-          coverages = msStringSplit(params->coverages[j], ',', &numcoverages);
-          for(k=0;k<numcoverages;k++) {
-              i = msGetLayerIndex(map, coverages[k]);
-              if(i == -1) { /* one coverage */
-                  msSetError( MS_WCSERR,
-                      "COVERAGE %s cannot be opened / does not exist",
-                      "msWCSDescribeCoverage()", coverages[k]);
-                       return msWCSException(map, "CoverageNotDefined", "coverage",
-                              params->version );
-              }
-          }
-      }
+  if(params->coverages) { /* use the list, but validate it first */
+    for(j=0; params->coverages[j]; j++) {
+      coverages = msStringSplit(params->coverages[j], ',', &numcoverages);
+      for(k=0; k<numcoverages; k++) {
+          
+        for(i=0; i<map->numlayers; i++) {
+          coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "COM", "name", GET_LAYER(map, i)->name);
+          if( EQUAL(coverageName, coverages[k]) ) break;
+        }
+
+        /* i = msGetLayerIndex(map, coverages[k]); */
+        if(i == map->numlayers) { /* coverage not found */
+          msSetError( MS_WCSERR, "COVERAGE %s cannot be opened / does not exist", "msWCSDescribeCoverage()", coverages[k]);
+          return msWCSException(map, "CoverageNotDefined", "coverage", params->version );
+        }
+      } /* next coverage */
+    }
   }
  
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
@@ -1147,7 +1152,10 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
     for( j = 0; params->coverages[j]; j++ ) {
       coverages = msStringSplit(params->coverages[j], ',', &numcoverages);
       for(k=0;k<numcoverages;k++) {
-        i = msGetLayerIndex(map, coverages[k]);
+        for(i=0; i<map->numlayers; i++) {
+          coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "COM", "name", GET_LAYER(map, i)->name);
+          if( EQUAL(coverageName, coverages[k]) ) break;
+        }        
         msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
       }
     }
@@ -1313,6 +1321,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   rectObj reqextent;
   rectObj covextent;
 
+  char *coverageName;
+
   /* make sure all required parameters are available (at least the easy ones) */
   if(!params->crs) {
     msSetError( MS_WCSERR, "Required parameter CRS was not supplied.", "msWCSGetCoverage()");
@@ -1329,8 +1339,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     msSetError( MS_WCSERR, 
                 "Required parameter COVERAGE was not supplied.", 
                 "msWCSGetCoverage()");
-    return msWCSException(map, "MissingParameterValue", "coverage", 
-                          params->version);
+    return msWCSException(map, "MissingParameterValue", "coverage", params->version);
   }
 
   /* For WCS 1.1, we need to normalize the axis order of the BBOX and
@@ -1365,10 +1374,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* find the layer we are working with */
   lp = NULL;
   for(i=0; i<map->numlayers; i++) {
-    /* char *name;
-       name = msOWSGetEncodeMetadata(GET_LAYER(map, i)->metadata, "COM", "name", GET_LAYER(map, i)->name); */
-
-    if( EQUAL(GET_LAYER(map, i)->name, params->coverages[0]) ) {
+     coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "COM", "name", GET_LAYER(map, i)->name);
+    if( EQUAL(coverageName, params->coverages[0]) ) {
       lp = GET_LAYER(map, i);
       break;
     }
@@ -1376,8 +1383,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
 
   if(lp == NULL) {
     msSetError( MS_WCSERR, "COVERAGE=%s not found, not in supported layer list.", "msWCSGetCoverage()", params->coverages[0] );
-    return msWCSException(map, "InvalidParameterValue", "coverage", 
-                          params->version);
+    return msWCSException(map, "InvalidParameterValue", "coverage", params->version);
   }
 
   /* make sure the layer is on */
