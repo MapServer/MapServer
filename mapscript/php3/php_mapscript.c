@@ -1174,11 +1174,13 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_SDE",        MS_SDE,         const_flag);
     REGISTER_LONG_CONSTANT("MS_OGR",        MS_OGR,         const_flag);
     REGISTER_LONG_CONSTANT("MS_POSTGIS",    MS_POSTGIS,     const_flag);
-    REGISTER_LONG_CONSTANT("MS_MYGIS",      MS_MYGIS,       const_flag);
     REGISTER_LONG_CONSTANT("MS_WMS",        MS_WMS,         const_flag);
-    REGISTER_LONG_CONSTANT("MS_WFS",        MS_WFS,         const_flag);
     REGISTER_LONG_CONSTANT("MS_ORACLESPATIAL", MS_ORACLESPATIAL,const_flag);
-    REGISTER_LONG_CONSTANT("MS_GRATICULE", MS_GRATICULE,const_flag);
+    REGISTER_LONG_CONSTANT("MS_WFS",        MS_WFS,         const_flag);
+    REGISTER_LONG_CONSTANT("MS_GRATICULE",  MS_GRATICULE,   const_flag);
+    REGISTER_LONG_CONSTANT("MS_MYGIS",      MS_MYGIS,       const_flag);
+    REGISTER_LONG_CONSTANT("MS_RASTER",     MS_RASTER,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_PLUGIN",     MS_PLUGIN,      const_flag);
  
     /* output image type constants*/
     /*
