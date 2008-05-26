@@ -840,9 +840,9 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   if( pszDSName == NULL )
   {
       msSetError(MS_OGRERR, 
-                 "Error parsing OGR connection information:%s", 
+                 "Error parsing OGR connection information in layer `%s'", 
                  "msOGRFileOpen()",
-                 (connection?connection:"(null)") );
+                 layer->name?layer->name:"(null)" );
       return NULL;
   }
 
@@ -888,15 +888,16 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       {
           if( strlen(CPLGetLastErrorMsg()) == 0 )
               msSetError(MS_OGRERR, 
-                         "Open failed for OGR connection `%s'.  "
+                         "Open failed for OGR connection in layer `%s'.  "
                          "File not found or unsupported format.", 
                          "msOGRFileOpen()",
-                         pszDSSelectedName );
+                         layer->name?layer->name:"(null)" );
           else
               msSetError(MS_OGRERR, 
-                         "Open failed for OGR connection `%s'.\n%s\n",
+                         "Open failed for OGR connection in layer `%s'.\n%s\n",
                          "msOGRFileOpen()", 
-                         pszDSSelectedName, CPLGetLastErrorMsg() );
+                         layer->name?layer->name:"(null)", 
+                         CPLGetLastErrorMsg() );
           CPLFree( pszDSName );
           CPLFree( pszLayerDef );
           return NULL;
@@ -1115,7 +1116,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
           msSetError(MS_OGRERR,
                      "SetAttributeFilter(%s) failed on layer %s.\n%s", 
                      "msOGRFileWhichShapes()",
-                     layer->filter.string+6, layer->name, 
+                     layer->filter.string+6, layer->name?layer->name:"(null)", 
                      CPLGetLastErrorMsg() );
           RELEASE_OGR_LOCK;
           return MS_FAILURE;
@@ -1149,9 +1150,9 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
      (numitems = OGR_FD_GetFieldCount( hDefn )) == 0) 
   {
     msSetError(MS_OGRERR, 
-               "Layer %s,%d contains no fields.", 
+               "OGR Connection for layer `%s' contains no fields.", 
                "msOGRFileGetItems()",
-               psInfo->pszFname, psInfo->nLayerIndex );
+               layer->name?layer->name:"(null)" );
     return NULL;
   }
 
@@ -1585,11 +1586,10 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
           msSetError(MS_OGRERR, 
                      "%s  "
                      "PROJECTION AUTO cannot be used for this "
-                     "OGR connection (`%s').",
+                     "OGR connection (in layer `%s').",
                      "msOGRLayerOpen()",
                      ms_error->message, 
-                     (pszOverrideConnection ? pszOverrideConnection:
-                                              layer->connection) );
+                     layer->name?layer->name:"(null)" );
           msOGRFileClose( layer, psInfo );
           layer->layerinfo = NULL;
           return(MS_FAILURE);
