@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (future 5.0.3, svn branch-5-0)
 ----------------------------------------------
 
+- Avoid displaying OGR connection strings in error messages (#2629)
+
 - mappostgis.c: fix postgis idle-in-transaction problem (#2626)
 
 - mapogcsld.c: fetch TextSymbolizer/Label/ogc:PropertyName correctly (#2611) 
