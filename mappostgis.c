@@ -170,7 +170,8 @@ static void msPOSTGISCloseConnection(void *conn_handle)
 int msPOSTGISSanitizeConnection(PGconn *conn)
 {
     int conn_bad = 0;
-
+    PGTransactionStatusType trans_status;
+    
     if (PQstatus(conn) == CONNECTION_BAD)
     {
         msDebug("Warning: resetting bad database connection due to PQstatus(conn) == CONNECTION_BAD in msPOSTGISSanitizeConnection()\n");
@@ -182,7 +183,7 @@ int msPOSTGISSanitizeConnection(PGconn *conn)
         conn_bad = 1;
     }
 
-    // if connection is in bad, PQreset() it
+    /* if connection is in bad, PQreset() it */
     if (conn_bad)
     {
         PQreset(conn);
@@ -198,13 +199,13 @@ int msPOSTGISSanitizeConnection(PGconn *conn)
         }
     }
 
-    if (PQtransactionStatus(conn) == PQTRANS_ACTIVE) // no connection should have an active async call
+    if (PQtransactionStatus(conn) == PQTRANS_ACTIVE) /* no connection should have an active async call */
     {
         msSetError(MS_QUERYERR, "Refusing to sanitize a database connection with a pending asynchronous query (transaction status of PQTRANS_ACTIVE).", "msPOSTGISSanitizeConnection()");
 	return MS_FAILURE;
     }
 
-    const PGTransactionStatusType trans_status = PQtransactionStatus(conn);
+    trans_status = PQtransactionStatus(conn);
     if (trans_status == PQTRANS_INTRANS || trans_status == PQTRANS_INERROR) /* idle, in a transaction block or a failed transaction block */
     {
         PGresult *rb_res = PQexec(conn, "ROLLBACK");
@@ -659,7 +660,8 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 int msPOSTGISLayerClose(layerObj *layer)
 {
     msPOSTGISLayerInfo  *layerinfo;
-
+    PGresult *rollb_res;
+    
     layerinfo = getPostGISLayerInfo(layer);
 
     if(layer->debug) {
@@ -700,7 +702,7 @@ int msPOSTGISLayerClose(layerObj *layer)
 
             layerinfo->cursor_name[0] = '\0';
 
-            PGresult *rollb_res = PQexec(layerinfo->conn, "ROLLBACK");
+            rollb_res = PQexec(layerinfo->conn, "ROLLBACK");
             if (!rollb_res || PQresultStatus(rollb_res) != PGRES_COMMAND_OK) {
                 msSetError(MS_QUERYERR, "Error executing PostgreSQL ROLLBACK statement: %s", "msPOSTGISLayerClose()", PQerrorMessage(layerinfo->conn));
         
@@ -1157,10 +1159,10 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     size_t  length;
     char    *temp;
 
-    PGresult            *query_result, *beg_res, *rollb_res;
+    PGresult            *query_result, *beg_res, *rollb_res, *close_res;
     msPOSTGISLayerInfo  *layerinfo;
     char                *wkb;
-    int                 result, t, size;
+    int                 result, t, size, num_tuples;
     char                *temp1, *temp2;
 
     if(layer->debug) {
@@ -1274,7 +1276,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     /* query has been done, so we can retreive the results */
     shape->type = MS_SHAPE_NULL;
 
-    const int num_tuples = PQntuples(query_result);
+    num_tuples = PQntuples(query_result);
     if(0 < num_tuples) {
         /* only need to get one shape */
         /* retreive an item */
@@ -1334,7 +1336,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
     PQclear(query_result);
 
-    PGresult *close_res = PQexec(layerinfo->conn, "CLOSE mycursor2");
+    close_res = PQexec(layerinfo->conn, "CLOSE mycursor2");
     if (!close_res || PQresultStatus(close_res) != PGRES_COMMAND_OK)
     {
         msSetError(MS_QUERYERR, "Error executing PostgreSQL CLOSE statement.", "msPOSTGISLayerGetShape()");
