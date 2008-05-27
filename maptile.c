@@ -124,7 +124,8 @@ int msTileSetup(mapservObj* msObj) {
 /************************************************************************
  *                            msTileSetExtent                           *
  *                                                                      * 
- *  Called from setExtent() in maptemplate.c.                           *
+ *  Based on the input parameters, set the output extent for this       *
+ *  tile.                                                               *
  ************************************************************************/
 int msTileSetExtent(mapservObj* msObj) {
 #ifdef USE_TILE_API 
