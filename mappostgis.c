@@ -494,6 +494,12 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
         }
     }
 
+    /* UGLY HACK (for issue #2420) turn zeroed bounding box into very large bounding box */
+    if( rect.minx == -1 && rect.miny == -1 && rect.minx == rect.maxx && rect.miny == rect.maxy) {
+      rect.minx = rect.miny = -1 * FLT_MAX;
+      rect.maxx = rect.maxy = FLT_MAX;
+    }
+
     sprintf(box3d, "'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D", rect.minx, rect.miny, rect.maxx, rect.maxy);
 
     /* substitute token '!BOX!' in geom_table with the box3d - do an unlimited # of subs */

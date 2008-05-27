@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- Return results even when extents are missing (#2420)
+
 - Avoid displaying OGR connection strings in error messages (#2629)
 
 - WCS: respect wcs_name metadata for GetCoverage and DescribeCoverage requests
