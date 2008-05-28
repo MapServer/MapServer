@@ -3084,7 +3084,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   sprintf(repstr, "%f", mapserv->mappnt.y);
   outstr = msReplaceSubstring(outstr, "[mapy]", repstr);
   
-  sprintf(repstr, "%f", mapserv->map->extent.minx); /* Individual mapextent elements for spatial query building, depricated. */
+  sprintf(repstr, "%f", mapserv->map->extent.minx); /* Individual mapextent elements for spatial query building, deprecated. */
   outstr = msReplaceSubstring(outstr, "[minx]", repstr);
   sprintf(repstr, "%f", mapserv->map->extent.maxx);
   outstr = msReplaceSubstring(outstr, "[maxx]", repstr);
@@ -3097,7 +3097,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     return(NULL);
    
   encodedstr =  msEncodeUrl(repstr);
-  outstr = msReplaceSubstring(outstr, "[mapext_esc]", encodedstr); /* depricated */
+  outstr = msReplaceSubstring(outstr, "[mapext_esc]", encodedstr); /* deprecated */
   free(encodedstr);
   
   sprintf(repstr, "%f", (mapserv->map->extent.maxx-mapserv->map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
@@ -3105,7 +3105,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   sprintf(repstr, "%f", (mapserv->map->extent.maxy-mapserv->map->extent.miny));
   outstr = msReplaceSubstring(outstr, "[dy]", repstr);
 
-  sprintf(repstr, "%f", mapserv->RawExt.minx); /* Individual raw extent elements for spatial query building, depricated. */
+  sprintf(repstr, "%f", mapserv->RawExt.minx); /* Individual raw extent elements for spatial query building, deprecated. */
   outstr = msReplaceSubstring(outstr, "[rawminx]", repstr);
   sprintf(repstr, "%f", mapserv->RawExt.maxx);
   outstr = msReplaceSubstring(outstr, "[rawmaxx]", repstr);
@@ -3118,7 +3118,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     return(NULL);
   
   encodedstr = msEncodeUrl(repstr);
-  outstr = msReplaceSubstring(outstr, "[rawext_esc]", encodedstr); /* depricated */
+  outstr = msReplaceSubstring(outstr, "[rawext_esc]", encodedstr); /* deprecated */
   free(encodedstr);
     
 #ifdef USE_PROJ
@@ -3148,7 +3148,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       return(NULL);
      
     encodedstr = msEncodeUrl(repstr);
-    outstr = msReplaceSubstring(outstr, "[mapext_latlon_esc]", encodedstr); /* depricated */
+    outstr = msReplaceSubstring(outstr, "[mapext_latlon_esc]", encodedstr); /* deprecated */
     free(encodedstr);
   }
 #endif
@@ -3168,7 +3168,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       return(NULL);
 
     encodedstr =  msEncodeUrl(repstr);
-    outstr = msReplaceSubstring(outstr, "[refext_esc]", encodedstr); /* depricated */
+    outstr = msReplaceSubstring(outstr, "[refext_esc]", encodedstr); /* deprecated */
     free(encodedstr); 
   }
 
