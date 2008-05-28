@@ -257,7 +257,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       return MS_FAILURE;
     }
 
-    msIO_printf("Content-type: %s%c%c\n", outputFormat->mimetype, 10, 10);
+    if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c\n", outputFormat->mimetype, 10, 10);
     if((status = msReturnPage(mapserv, (char *) file, BROWSE, papszBuffer)) != MS_SUCCESS)
       return status;
   } else {
@@ -1031,6 +1031,86 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 }
 
 /*
+** Function process a [include src="..."] tag.
+**
+** TODO's:
+**   - allow URLs
+*/
+static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int mode)
+{
+  char *tag, *tagStart, *tagEnd;
+  hashTableObj *tagArgs=NULL;
+  int tagOffset, tagLength;
+
+  char *content=NULL, *processedContent=NULL, *src=NULL;
+
+  FILE *includeStream;
+  char buffer[MS_BUFFER_LENGTH], path[MS_MAXPATHLEN];
+
+  if(!*line) {
+    msSetError(MS_WEBERR, "Invalid line pointer.", "processIncludeTag()");
+    return(MS_FAILURE);
+  }
+
+  tagStart = findTag(*line, "include");
+
+  /* It is OK to have no include tags, just return. */
+  if( !tagStart ) return MS_SUCCESS;
+
+  while( tagStart ) {
+    tagOffset = tagStart - *line;
+    
+    /* check for any tag arguments */
+    if(getTagArgs("include", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+    if(tagArgs) {
+      src = msLookupHashTable(tagArgs, "src");
+    }
+
+    if(!src) return(MS_SUCCESS); /* don't process the tag, could be something else so return MS_SUCCESS */
+
+    if((includeStream = fopen(msBuildPath(path, mapserv->map->mappath, src), "r")) == NULL) {
+      msSetError(MS_IOERR, src, "processIncludeTag()");
+      return MS_FAILURE;
+    } 
+    
+    while(fgets(buffer, MS_BUFFER_LENGTH, includeStream) != NULL)
+      content = msStringConcatenate(content, buffer);
+
+    /* done with included file handle */
+    fclose(includeStream);
+
+     /* find the end of the tag */
+    tagEnd = strchr(tagStart, ']');
+    tagEnd++;
+
+    /* build the complete tag so we can do substitution */
+    tagLength = tagEnd - tagStart;
+    tag = (char *) malloc(tagLength + 1);
+    strncpy(tag, tagStart, tagLength);
+    tag[tagLength] = '\0';
+
+    /* process any other tags in the content */
+    processedContent = processLine(mapserv, content, stream, mode);
+
+    /* do the replacement */
+    *line = msReplaceSubstring(*line, tag, processedContent);
+
+    /* clean up */
+    free(tag); tag = NULL;
+    msFreeHashTable(tagArgs); tagArgs=NULL;
+    free(content);
+    free(processedContent);
+    
+    if((*line)[tagOffset] != '\0')
+      tagStart = findTag(*line+tagOffset+1, "include");
+    else
+      tagStart = NULL;
+  }
+
+  return(MS_SUCCESS);
+}
+
+/*
 ** Function to process an [item ...] tag: line contains the tag, shape holds the attributes.
 */
 enum ITEM_ESCAPING {ESCAPE_HTML, ESCAPE_URL, ESCAPE_NONE};
@@ -1199,53 +1279,79 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 }
 
 /*
-** Function process a [include src="..."] tag.
+** Function process any number of MapServer extent tags (e.g. shpext, mapext, etc...).
 **
-** TODO's:
-**   - allow URLs
+** TODO: Add projection support (see shpxy tag).
+**       Allow percentage expansion (e.g. 10%).
 */
-static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int mode)
+static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectObj *extent)
 {
+  char *argValue;
+
   char *tag, *tagStart, *tagEnd;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 
-  char *content=NULL, *processedContent=NULL, *src=NULL;
+  char *encodedTagValue=NULL, *tagValue=NULL;
 
-  FILE *includeStream;
-  char buffer[MS_BUFFER_LENGTH], path[MS_MAXPATHLEN];
+  rectObj tempExtent;
+  double expand=0;
+
+  char number[64]; /* holds a single number in the extent */
+  char numberFormat[16]="%f";
+  char *format="$minx $miny $maxx $maxy";
+
+  int precision=-1;
+  int escape=ESCAPE_HTML;
 
   if(!*line) {
-    msSetError(MS_WEBERR, "Invalid line pointer.", "processIncludeTag()");
+    msSetError(MS_WEBERR, "Invalid line pointer.", "processExtentTag()");
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "include");
+  tagStart = findTag(*line, name); /* this supports any extent */
 
   /* It is OK to have no include tags, just return. */
-  if( !tagStart ) return MS_SUCCESS;
+  if(!tagStart) return MS_SUCCESS;
 
-  while( tagStart ) {
+  while(tagStart) {
     tagOffset = tagStart - *line;
     
     /* check for any tag arguments */
-    if(getTagArgs("include", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+    if(getTagArgs(name, tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
-      src = msLookupHashTable(tagArgs, "src");
+      argValue = msLookupHashTable(tagArgs, "expand");
+      if(argValue) expand = atof(argValue);
+
+      argValue = msLookupHashTable(tagArgs, "escape");
+      if(argValue && strcasecmp(argValue, "url") == 0) escape = ESCAPE_URL;
+      else if(argValue && strcasecmp(argValue, "none") == 0) escape = ESCAPE_NONE;
+
+      argValue = msLookupHashTable(tagArgs, "format");
+      if(argValue) format = argValue;
+
+      argValue = msLookupHashTable(tagArgs, "precision");
+      if(argValue) precision = atoi(argValue);
     }
 
-    if(!src) return(MS_SUCCESS); /* don't process the tag, could be something else so return MS_SUCCESS */
+    tempExtent.minx = extent->minx - expand;
+    tempExtent.miny = extent->miny - expand;
+    tempExtent.maxx = extent->maxx + expand;
+    tempExtent.maxy = extent->maxy + expand;
 
-    if((includeStream = fopen(msBuildPath(path, mapserv->map->mappath, src), "r")) == NULL) {
-      msSetError(MS_IOERR, src, "processIncludeTag()");
-      return MS_FAILURE;
-    } 
-    
-    while(fgets(buffer, MS_BUFFER_LENGTH, includeStream) != NULL)
-      content = msStringConcatenate(content, buffer);
+    tagValue = strdup(format);
 
-    /* done with included file handle */
-    fclose(includeStream);
+    if(precision != -1)
+      snprintf(numberFormat, 16, "%%.%dlf", precision);
+
+    snprintf(number, 64, numberFormat, tempExtent.minx);
+    tagValue = msReplaceSubstring(tagValue, "$minx", number);
+    snprintf(number, 64, numberFormat, tempExtent.miny);
+    tagValue = msReplaceSubstring(tagValue, "$miny", number);
+    snprintf(number, 64, numberFormat, tempExtent.maxx);
+    tagValue = msReplaceSubstring(tagValue, "$maxx", number);
+    snprintf(number, 64, numberFormat, tempExtent.miny);
+    tagValue = msReplaceSubstring(tagValue, "$maxy", number);
 
      /* find the end of the tag */
     tagEnd = strchr(tagStart, ']');
@@ -1257,17 +1363,28 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
     strncpy(tag, tagStart, tagLength);
     tag[tagLength] = '\0';
 
-    /* process any other tags in the content */
-    processedContent = processLine(mapserv, content, stream, mode);
-
     /* do the replacement */
-    *line = msReplaceSubstring(*line, tag, processedContent);
+    switch(escape) {
+    case ESCAPE_HTML:
+      encodedTagValue = msEncodeHTMLEntities(tagValue);
+      *line = msReplaceSubstring(*line, tag, encodedTagValue);
+      break;
+    case ESCAPE_URL:
+      encodedTagValue = msEncodeUrl(tagValue);
+      *line = msReplaceSubstring(*line, tag, encodedTagValue);
+      break;
+    case ESCAPE_NONE:
+      *line = msReplaceSubstring(*line, tag, tagValue);
+      break;
+    default:
+      break;
+    }
 
     /* clean up */
     free(tag); tag = NULL;
     msFreeHashTable(tagArgs); tagArgs=NULL;
-    free(content);
-    free(processedContent);
+    msFree(tagValue); tagValue=NULL;
+    msFree(encodedTagValue); encodedTagValue=NULL;
     
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, "include");
@@ -1322,7 +1439,6 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   if( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
   return MS_FAILURE;
   
-
   tagStart = findTag(*line, "shpxy");
 
   /* It is OK to have no shpxy tags, just return. */
@@ -2968,7 +3084,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   sprintf(repstr, "%f", mapserv->mappnt.y);
   outstr = msReplaceSubstring(outstr, "[mapy]", repstr);
   
-  sprintf(repstr, "%f", mapserv->map->extent.minx); /* Individual mapextent elements for spatial query building  */
+  sprintf(repstr, "%f", mapserv->map->extent.minx); /* Individual mapextent elements for spatial query building, depricated. */
   outstr = msReplaceSubstring(outstr, "[minx]", repstr);
   sprintf(repstr, "%f", mapserv->map->extent.maxx);
   outstr = msReplaceSubstring(outstr, "[maxx]", repstr);
@@ -2976,11 +3092,12 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   outstr = msReplaceSubstring(outstr, "[miny]", repstr);
   sprintf(repstr, "%f", mapserv->map->extent.maxy);
   outstr = msReplaceSubstring(outstr, "[maxy]", repstr);
-  sprintf(repstr, "%f %f %f %f", mapserv->map->extent.minx, mapserv->map->extent.miny,  mapserv->map->extent.maxx, mapserv->map->extent.maxy);
-  outstr = msReplaceSubstring(outstr, "[mapext]", repstr);
+
+  if(processExtentTag(mapserv, &outstr, "mapext", &(mapserv->map->extent)) != MS_SUCCESS)
+    return(NULL);
    
   encodedstr =  msEncodeUrl(repstr);
-  outstr = msReplaceSubstring(outstr, "[mapext_esc]", encodedstr);
+  outstr = msReplaceSubstring(outstr, "[mapext_esc]", encodedstr); /* depricated */
   free(encodedstr);
   
   sprintf(repstr, "%f", (mapserv->map->extent.maxx-mapserv->map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
@@ -2988,7 +3105,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   sprintf(repstr, "%f", (mapserv->map->extent.maxy-mapserv->map->extent.miny));
   outstr = msReplaceSubstring(outstr, "[dy]", repstr);
 
-  sprintf(repstr, "%f", mapserv->RawExt.minx); /* Individual raw extent elements for spatial query building */
+  sprintf(repstr, "%f", mapserv->RawExt.minx); /* Individual raw extent elements for spatial query building, depricated. */
   outstr = msReplaceSubstring(outstr, "[rawminx]", repstr);
   sprintf(repstr, "%f", mapserv->RawExt.maxx);
   outstr = msReplaceSubstring(outstr, "[rawmaxx]", repstr);
@@ -2996,11 +3113,12 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   outstr = msReplaceSubstring(outstr, "[rawminy]", repstr);
   sprintf(repstr, "%f", mapserv->RawExt.maxy);
   outstr = msReplaceSubstring(outstr, "[rawmaxy]", repstr);
-  sprintf(repstr, "%f %f %f %f", mapserv->RawExt.minx, mapserv->RawExt.miny,  mapserv->RawExt.maxx, mapserv->RawExt.maxy);
-  outstr = msReplaceSubstring(outstr, "[rawext]", repstr);
+
+  if(processExtentTag(mapserv, &outstr, "rawext", &(mapserv->RawExt)) != MS_SUCCESS)
+    return(NULL);
   
   encodedstr = msEncodeUrl(repstr);
-  outstr = msReplaceSubstring(outstr, "[rawext_esc]", encodedstr);
+  outstr = msReplaceSubstring(outstr, "[rawext_esc]", encodedstr); /* depricated */
   free(encodedstr);
     
 #ifdef USE_PROJ
@@ -3025,11 +3143,12 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     outstr = msReplaceSubstring(outstr, "[minlat]", repstr);
     sprintf(repstr, "%f", llextent.maxy);
     outstr = msReplaceSubstring(outstr, "[maxlat]", repstr);    
-    sprintf(repstr, "%f %f %f %f", llextent.minx, llextent.miny,  llextent.maxx, llextent.maxy);
-    outstr = msReplaceSubstring(outstr, "[mapext_latlon]", repstr);
+
+    if(processExtentTag(mapserv, &outstr, "mapext_latlon", &(llextent)) != MS_SUCCESS)
+      return(NULL);
      
     encodedstr = msEncodeUrl(repstr);
-    outstr = msReplaceSubstring(outstr, "[mapext_latlon_esc]", encodedstr);
+    outstr = msReplaceSubstring(outstr, "[mapext_latlon_esc]", encodedstr); /* depricated */
     free(encodedstr);
   }
 #endif
@@ -3044,11 +3163,12 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     outstr = msReplaceSubstring(outstr, "[refminy]", repstr);
     sprintf(repstr, "%f", mapserv->map->reference.extent.maxy);
     outstr = msReplaceSubstring(outstr, "[refmaxy]", repstr);
-    sprintf(repstr, "%f %f %f %f", mapserv->map->reference.extent.minx, mapserv->map->reference.extent.miny, mapserv->map->reference.extent.maxx, mapserv->map->reference.extent.maxy);
-    outstr = msReplaceSubstring(outstr, "[refext]", repstr);
+
+    if(processExtentTag(mapserv, &outstr, "refext", &(mapserv->map->reference.extent)) != MS_SUCCESS)
+      return(NULL);
 
     encodedstr =  msEncodeUrl(repstr);
-    outstr = msReplaceSubstring(outstr, "[refext_esc]", encodedstr);
+    outstr = msReplaceSubstring(outstr, "[refext_esc]", encodedstr); /* depricated */
     free(encodedstr); 
   }
 
@@ -3131,9 +3251,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     sprintf(repstr, "%f", (mapserv->resultshape.bounds.maxy + mapserv->resultshape.bounds.miny)/2);
     outstr = msReplaceSubstring(outstr, "[shpmidy]", repstr);
     
-    sprintf(repstr, "%f %f %f %f", mapserv->resultshape.bounds.minx, mapserv->resultshape.bounds.miny,  mapserv->resultshape.bounds.maxx, mapserv->resultshape.bounds.maxy);
-    outstr = msReplaceSubstring(outstr, "[shpext]", repstr);
-     
+    if(processExtentTag(mapserv, &outstr, "shpext", &(mapserv->resultshape.bounds)) != MS_SUCCESS)
+      return(NULL);
+
     encodedstr = msEncodeUrl(repstr);
     outstr = msReplaceSubstring(outstr, "[shpext_esc]", encodedstr);
     free(encodedstr);
