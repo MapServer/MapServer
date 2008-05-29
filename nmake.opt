@@ -449,7 +449,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # Unncomment out the following flags to build with fribidi
 #---------------------------------------------------------------------
 #FRIBIDI=-DUSE_FRIBIDI
-#FRIBIDI_DIR=$(MS_BASE)\..\fribidi-0.10.9
+#FRIBIDI_DIR=$(MS_BASE)\..\fribidi-0.19.1
 
 
 
@@ -761,7 +761,7 @@ FCGIINC=-I$(FCGIDIR)\include
 
 #fribidi support
 !IFDEF FRIBIDI
-FRIBIDI_INC=-I$(FRIBIDI_DIR)
+FRIBIDI_INC=-I$(FRIBIDI_DIR)\lib -I$(FRIBIDI_DIR)\charset
 FRIBIDI_LIB=$(FRIBIDI_DIR)\fribidi.lib
 !ENDIF
 
