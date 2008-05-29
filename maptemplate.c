@@ -1300,7 +1300,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   char *encodedTagValue=NULL, *tagValue=NULL;
 
   rectObj tempExtent;
-  double expand=0;
+  double xExpand=0, yExpand=0;
 
   char number[64]; /* holds a single number in the extent */
   char numberFormat[16]="%f";
@@ -1326,7 +1326,17 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     if(getTagArgs(name, tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
       argValue = msLookupHashTable(tagArgs, "expand");
-      if(argValue) expand = atof(argValue);
+      if(argValue) {
+        if(strchr(argValue, '%') != NULL) {
+          float f;
+          sscanf(argValue, "%f%%", &f);
+          xExpand = ((f/100.0)*(extent->maxx-extent->minx))/2;
+          yExpand = ((f/100.0)*(extent->maxy-extent->miny))/2;          
+        } else {
+          xExpand = atof(argValue);
+          yExpand = xExpand;
+        }
+      }
 
       argValue = msLookupHashTable(tagArgs, "escape");
       if(argValue && strcasecmp(argValue, "url") == 0) escape = ESCAPE_URL;
@@ -1339,10 +1349,10 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
       if(argValue) precision = atoi(argValue);
     }
 
-    tempExtent.minx = extent->minx - expand;
-    tempExtent.miny = extent->miny - expand;
-    tempExtent.maxx = extent->maxx + expand;
-    tempExtent.maxy = extent->maxy + expand;
+    tempExtent.minx = extent->minx - xExpand;
+    tempExtent.miny = extent->miny - yExpand;
+    tempExtent.maxx = extent->maxx + xExpand;
+    tempExtent.maxy = extent->maxy + yExpand;
 
     tagValue = strdup(format);
 
