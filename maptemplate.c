@@ -411,32 +411,37 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
 ** 
 ** Tag can be [TAG] or [TAG something]
 */
-char *findTag(char* pszInstr, char* pszTag)
+char *findTag(char *pszInstr, char *pszTag)
 {
-   char *pszTag1, *pszTag2, *pszStart;
+   char *pszTag1, *pszStart=NULL;
+   char *pszTemp;
+   int done=MS_FALSE;
+   int length;
 
    if(!pszInstr || !pszTag) {
      msSetError(MS_WEBERR, "Invalid pointer.", "findTag()");
      return NULL;
    }
 
-   pszTag1 = (char*)malloc(strlen(pszTag) + 3);
-   pszTag2 = (char*)malloc(strlen(pszTag) + 3);
+   length = strlen(pszTag) + 1; /* adding [ character to the beginning */
+   pszTag1 = (char*) malloc(length+1);
 
    strcpy(pszTag1, "[");   
    strcat(pszTag1, pszTag);
-   strcat(pszTag1, " ");
 
-   strcpy(pszTag2, "[");      
-   strcat(pszTag2, pszTag);
-   strcat(pszTag2, "]");
+   pszTemp = pszInstr;
+   while(!done) {
+     pszStart = strstr(pszTemp, pszTag1);
 
-   pszStart = strstr(pszInstr, pszTag1);
-   if(pszStart == NULL)
-      pszStart = strstr(pszInstr, pszTag2);
+     if(pszStart == NULL)
+       done = MS_TRUE; /* tag not found */
+     else if((*(pszStart+length) == ']' || *(pszStart+length) == ' '))
+       done = MS_TRUE; /* valid tag */
+     else
+       pszTemp += length; /* skip ahead and start over */
+   }
 
    free(pszTag1);
-   free(pszTag2);
    
    return pszStart;
 }
@@ -1316,8 +1321,8 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 
   while(tagStart) {
     tagOffset = tagStart - *line;
-    
-    /* check for any tag arguments */
+
+     /* check for any tag arguments */
     if(getTagArgs(name, tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
       argValue = msLookupHashTable(tagArgs, "expand");
@@ -1387,7 +1392,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     msFree(encodedTagValue); encodedTagValue=NULL;
     
     if((*line)[tagOffset] != '\0')
-      tagStart = findTag(*line+tagOffset+1, "include");
+      tagStart = findTag(*line+tagOffset+1, name);
     else
       tagStart = NULL;
   }
