@@ -78,6 +78,14 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
     if (map && szURL)
     {
         pszSLDTmpFile = msTmpFile(map->mappath, map->web.imagepath, "sld.xml");
+        if (pszSLDTmpFile == NULL)
+        {
+#ifndef _WIN32
+            pszSLDTmpFile = msTmpFile(NULL, "/tmp/", "sld.xml" );
+#else
+            pszSLDTmpFile = msTmpFile(NULL, "C:\\", "sld.xml");
+#endif
+        }
         if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS)
         {
             if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL)
@@ -144,6 +152,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     int bFreeTemplate = 0;
     int nLayerStatus = 0;
     /*const char *pszSLDNotSupported = NULL;*/
+    char *tmpfilename = NULL;
 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
 
@@ -323,7 +332,24 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
         }
 
     }
-    
+    if(map->debug == MS_DEBUGLEVEL_VVV)
+    {
+        tmpfilename = msTmpFile(map->mappath, map->web.imagepath, "_sld.map");
+        if (tmpfilename == NULL)
+        {
+#ifndef _WIN32
+            tmpfilename = msTmpFile(NULL, "/tmp/", "_sld.map" );
+#else
+            tmpfilename = msTmpFile(NULL, "C:\\", "_sld.map");
+#endif
+        }
+        if (tmpfilename)
+        {
+            msSaveMap(map,tmpfilename);
+            msDebug("msApplySLD(): Map file after SLD was applied %s", tmpfilename);
+            msFree(tmpfilename);
+        }
+    }
     return MS_SUCCESS;
 
 
@@ -2512,8 +2538,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                     }
                     else if (psTmpNode->eType == CXT_Element && 
                              strcasecmp(psTmpNode->pszValue,"PropertyName") ==0 &&
-                             psTmpNode->psChild &&
-                             psTmpNode->psChild->pszValue)
+                             CPLGetXMLValue(psTmpNode, NULL, NULL))
                     {
                         sprintf(szTmp, "[%s]", CPLGetXMLValue(psTmpNode, NULL, NULL));
                         pszClassText = msStringConcatenate(pszClassText, szTmp);
