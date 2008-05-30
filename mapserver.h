@@ -1228,8 +1228,8 @@ typedef struct map_obj{ /* structure for a map */
 
 #ifndef SWIG
   geotransformObj gt; /* rotation / geotransform */
-#endif /*SWIG*/
   rectObj saved_extent;
+#endif /*SWIG*/
 
   enum MS_UNITS units; /* units of the projection */
   double scaledenom; /* scale of the output image */
