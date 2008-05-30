@@ -2955,10 +2955,14 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     outstr = msReplaceSubstring(outstr, "[map]", repstr);
   }
 
-  snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("HTTP_HOST")); 
-  outstr = msReplaceSubstring(outstr, "[host]", repstr);
-  snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("SERVER_PORT"));
-  outstr = msReplaceSubstring(outstr, "[port]", repstr);
+  if(getenv("HTTP_HOST")) {
+    snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("HTTP_HOST")); 
+    outstr = msReplaceSubstring(outstr, "[host]", repstr);
+  }
+  if(getenv("SERVER_PORT")) { 
+    snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("SERVER_PORT"));
+    outstr = msReplaceSubstring(outstr, "[port]", repstr);
+  }
   
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s", mapserv->Id);
   outstr = msReplaceSubstring(outstr, "[id]", repstr);
