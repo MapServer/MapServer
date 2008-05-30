@@ -161,10 +161,10 @@ char path[MS_MAXPATHLEN];
 <INITIAL>debug                                 { return(DEBUG); }
 <INITIAL>driver                                { return(DRIVER); }
 <INITIAL>dump                                  { return(DUMP); }
-<INITIAL>empty                                 { return(EMPTY); }
+<INITIAL,URL_STRING>empty                      { return(EMPTY); }
 <INITIAL>encoding                              { return(ENCODING); }
 <INITIAL,URL_STRING>end                        { return(END); }
-<INITIAL>error                                 { return(ERROR); }
+<INITIAL,URL_STRING>error                      { return(ERROR); }
 <INITIAL>expression                            { return(EXPRESSION); }
 <INITIAL,URL_VARIABLE,URL_STRING>extent        { return(EXTENT); }
 <INITIAL>extension                             { return(EXTENSION); }
