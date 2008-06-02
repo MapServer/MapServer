@@ -1633,8 +1633,14 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
              }/*end of offerings*/
          }
      
-         free(papsOfferings);
-         free(panOfferingLayers);        
+         if (papsOfferings && nOfferings > 0)
+         {
+             for (i=0; i<nOfferings; i++)
+               msFree(papsOfferings[i]);
+             msFree(papsOfferings);
+         }
+         if(panOfferingLayers)
+           msFree(panOfferingLayers);        
 
      }/* end of offerings */
 
