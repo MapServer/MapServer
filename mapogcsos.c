@@ -331,9 +331,12 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
 
             xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszFullName);
             free(pszFullName);
+            free(pszTmpVal);
             j++;
         }
-        xmlNewNsProp(psCompNode, NULL, BAD_CAST "dimension", BAD_CAST msIntToString(j));
+        pszTmpVal = msIntToString(j); 
+        xmlNewNsProp(psCompNode, NULL, BAD_CAST "dimension", BAD_CAST pszTmpVal);
+        free(pszTmpVal);
     }	
 }
         
@@ -2383,9 +2386,10 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
         if (tokens[k] && strlen(tokens[k]) > 0) {
           pszProcedureURI = strdup("urn:ogc:def:procedure:");
           pszProcedureURI = msStringConcatenate(pszProcedureURI, tokens[k]);
-          if (strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) {
+          if (pszProcedureURI && strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) {
             bFound = 1; 
             pszProcedureId = strdup(tokens[k]);
+            msFree(pszProcedureURI);
             msFreeCharArray(tokens, n);
             break;
           }
@@ -2408,6 +2412,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
           msIO_printf("Location: %s\n\n", pszEncodedUrl);
           msFree(pszTmp);
           msFree(pszEncodedUrl);
+          msFree(pszProcedureId);
           return(MS_SUCCESS);
         }
         else {

@@ -1564,6 +1564,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
 xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx, double maxy, const char *psEpsg) {
   xmlNodePtr psNode = NULL, psSubNode = NULL, psSubSubNode = NULL;
   char *pszTmp = NULL;
+  char *pszTmp2 = NULL;
   char pszEpsg[11];
 
   psNode = xmlNewNode(psNs, BAD_CAST "boundedBy");
@@ -1583,15 +1584,19 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
 
   pszTmp = msDoubleToString(minx);
   pszTmp = msStringConcatenate(pszTmp, " ");
-  pszTmp = msStringConcatenate(pszTmp, msDoubleToString(miny));
+  pszTmp2 = msDoubleToString(miny);
+  pszTmp = msStringConcatenate(pszTmp, pszTmp2);
   psSubSubNode = xmlNewChild(psSubNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
   free(pszTmp);
+  free(pszTmp2);
 
   pszTmp = msDoubleToString(maxx);
   pszTmp = msStringConcatenate(pszTmp, " ");
-  pszTmp = msStringConcatenate(pszTmp, msDoubleToString(maxy));
+  pszTmp2 = msDoubleToString(maxy); 
+  pszTmp = msStringConcatenate(pszTmp, pszTmp2);
   psSubSubNode = xmlNewChild(psSubNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
   free(pszTmp);
+  free(pszTmp2);
   return psNode;
 }
 
