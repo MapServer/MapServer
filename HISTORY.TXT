@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (future 5.0.3, svn branch-5-0)
 ----------------------------------------------
 
+- Exposed ERROR and EMPTY webObj properties to URL-based configuration. (#2634)
+
 - Avoid displaying OGR connection strings in error messages (#2629)
 
 - mappostgis.c: fix postgis idle-in-transaction problem (#2626)
