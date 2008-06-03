@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- mapwcs.c: handle PARAMETER values correctly (#2509)
+
 - SOS: fix various memory leaks (#2412)
 
 - mapwcs.c: advertise temporal support in GetCapabilities (#2487)

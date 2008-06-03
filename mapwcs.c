@@ -41,18 +41,42 @@ MS_CVSID("$Id$")
 #include "gdal.h"
 #include "cpl_string.h" /* GDAL string handling */
 
-#ifdef notdef /* currently unused */
-/* value in a list (eg. is format valid) */
-static int msWCSValidateParam(hashTableObj *metadata, char *name, const char *namespace, const char *value)
-{
-  return MS_SUCCESS; /* take their word for it at the moment */
-}
-#endif
+/************************************************************************/
+/*                    msWCSValidateRangeSetParam()                      */
+/************************************************************************/
+static int msWCSValidateRangeSetParam(layerObj *lp, char *name, const char *value) {
+  char **tokens;
+  int numtokens, i, match = 0;;
+  char *tmpname = NULL;
+  const char *tmpvalue = NULL;
 
-/* RangeSets can be quite complex */
-static int msWCSValidateRangeSetParam(hashTableObj *metadata, char *name, const char *namespace, const char *value)
-{
-  return MS_SUCCESS; /* take their word for it at the moment */
+  if (name) {
+    tmpname = (char *)malloc(sizeof(char)*strlen(name) + 10);
+
+    /* set %s_values */
+    sprintf(tmpname,"%s_values", name);
+
+    /* fetch value of tmpname (%s_values)*/
+    tmpvalue = msOWSLookupMetadata(&(lp->metadata), "COM", tmpname);
+
+    /* split tmpvalue and loop through to find match */
+    tokens = msStringSplit(tmpvalue, ',', &numtokens);
+    if(tokens && numtokens > 0) {
+      for(i=0; i<numtokens; i++) {
+        if(strcasecmp(tokens[i], value) == 0) { /* we have a match */
+          match = 1;
+          break;
+        }
+      }
+      msFreeCharArray(tokens, numtokens);
+    }
+  }
+
+  if (tmpname) free(tmpname);
+
+  if (match == 0) return MS_FAILURE;
+
+  return MS_SUCCESS;
 }
 
 /************************************************************************/
@@ -203,6 +227,7 @@ int msWCSIsLayerSupported(layerObj *layer)
 
 /************************************************************************/
 /*                      msWCSGetRequestParameter()                      */
+/*                                                                      */
 /************************************************************************/
 
 const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name) {
@@ -1187,7 +1212,7 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
                                     char **p_bandlist )
 
 {
-  const char *value;
+  const char *value = NULL;
   int i;
 
   /* Are there any non-spatio/temporal ranges to do subsetting on (e.g. bands) */
@@ -1199,12 +1224,14 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
     const char *rangeitem;
 
     tokens = msStringSplit(value, ',', &numtokens);
+
     for(i=0; i<numtokens; i++) {
       if((value = msWCSGetRequestParameter(request, tokens[i])) == NULL) continue; /* next rangeset parameter */
-       
-      if(msWCSValidateRangeSetParam(&(lp->metadata), tokens[i], "COM", value) != MS_SUCCESS) {
+      
+      /* ok, a parameter has been passed which matches a token in wcs_rangeset_axes */ 
+      if(msWCSValidateRangeSetParam(lp, tokens[i], value) != MS_SUCCESS) {
         msSetError( MS_WCSERR, "Error specifying \"%s\" parameter value(s).", "msWCSGetCoverage()", tokens[i]);
-        return msWCSException(map, NULL, NULL, params->version );
+        return msWCSException(map, "InvalidParameterValue", tokens[i], params->version );
       }
        
       /* xxxxx_rangeitem tells us how to subset */
@@ -1218,7 +1245,7 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
         *p_bandlist = msWCSConvertRangeSetToString(value);
            
         if(!*p_bandlist) {
-          msSetError( MS_WCSERR, "Error specifying \"%s\" paramter value(s).", "msWCSGetCoverage()", tokens[i]);
+          msSetError( MS_WCSERR, "Error specifying \"%s\" parameter value(s).", "msWCSGetCoverage()", tokens[i]);
           return msWCSException(map, NULL, NULL, params->version );
         }          
       } else if(strcasecmp(rangeitem, "_pixels") == 0) { /* special case, subset pixels */
@@ -1229,7 +1256,6 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
         return msWCSException(map, NULL, NULL, params->version );
       }
     }
-       
     /* clean-up */
     msFreeCharArray(tokens, numtokens);
   }
