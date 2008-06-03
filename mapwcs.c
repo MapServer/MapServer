@@ -59,6 +59,9 @@ static int msWCSValidateRangeSetParam(layerObj *lp, char *name, const char *valu
     /* fetch value of tmpname (%s_values)*/
     tmpvalue = msOWSLookupMetadata(&(lp->metadata), "COM", tmpname);
 
+    if (tmpvalue == NULL) 
+      return MS_FAILURE;
+
     /* split tmpvalue and loop through to find match */
     tokens = msStringSplit(tmpvalue, ',', &numtokens);
     if(tokens && numtokens > 0) {
