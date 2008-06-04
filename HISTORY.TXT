@@ -10,8 +10,8 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (future 5.0.3, svn branch-5-0)
-----------------------------------------------
+Version 5.0.3 (2008-06-04)
+--------------------------
 
 - Exposed ERROR and EMPTY webObj properties to URL-based configuration. (#2634)
 
