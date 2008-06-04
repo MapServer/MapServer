@@ -453,7 +453,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 {
 #ifdef USE_WMS_LYR
     char *pszEPSG = NULL;
-    const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam;
+    const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam, *pszQueryLayers=NULL;
     rectObj bbox;
     int nVersion=OWS_VERSION_NOTSET;
     
@@ -527,8 +527,12 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
          strstr(psWMSParams->onlineresource, "query_layers=") == NULL &&
          msLookupHashTable(psWMSParams->params, "QUERY_LAYERS") == NULL)
     {
-        msSetError(MS_WMSCONNERR, "WMS Connection String must contain the QUERY_LAYERS parameter to support GetFeatureInfo requests (with name in uppercase).", "msBuildWMSLayerURL()");
-        return MS_FAILURE;
+        pszQueryLayers = msOWSLookupMetadata(&(lp->metadata), "MO", "name");
+
+        if (pszQueryLayers == NULL) {
+             msSetError(MS_WMSCONNERR, "wms_name not set or WMS Connection String must contain the QUERY_LAYERS parameter to support GetFeatureInfo requests (with name in uppercase).", "msBuildWMSLayerURL()");
+             return MS_FAILURE;
+        }
     }
 
 
@@ -660,7 +664,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  *   FORMAT
  *   TRANSPARENT
  *   STYLES
- *   QUERY_LAYERS (for queriable layers only)
+ *   QUERY_LAYERS (for queryable layers only)
  * ------------------------------------------------------------------ */
 
     if (nRequestType == WMS_GETFEATUREINFO)
@@ -692,7 +696,11 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msSetWMSParamInt(   psWMSParams, "Y",       nClickY);
  
         msSetWMSParamString(psWMSParams, "EXCEPTIONS", pszExceptionsParam, MS_FALSE);
-        msSetWMSParamString(psWMSParams, "INFO_FORMAT",pszInfoFormat, MS_TRUE);
+        msSetWMSParamString(psWMSParams, "INFO_FORMAT", pszInfoFormat, MS_TRUE);
+
+        if (pszQueryLayers) { /* not set in CONNECTION string */
+          msSetWMSParamString(psWMSParams, "QUERY_LAYERS", pszQueryLayers, MS_FALSE);
+        }
 
         /* If FEATURE_COUNT <= 0 then don't pass this parameter */
         /* The spec states that FEATURE_COUNT must be greater than zero */
