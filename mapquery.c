@@ -248,14 +248,6 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
     return _msQueryByIndex(map, qlayer, tileindex, shapeindex, 0);
 }
 
-/*
-** Query using an OGC filter (in XML). Leverages the code written to support the WFS specs.
-*/
-int msQueryByFilter(mapObj *map, int qlayer, char *qfilter)
-{
-
-}
-
 int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int mode)
 {
   layerObj *lp;
