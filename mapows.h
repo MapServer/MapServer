@@ -45,6 +45,21 @@
 
 #define MS_HTTP_SUCCESS(status)  (status == 200 || status == 242)
 
+typedef enum
+{
+    HTTP,
+    SOCKS5
+} MS_HTTP_PROXY_TYPE;
+
+typedef enum
+{
+    BASIC,
+    DIGEST,
+    NTLM,
+    ANY,
+    ANYSAFE
+} MS_HTTP_AUTH_TYPE;
+
 typedef struct http_request_info
 {
     int     nLayerId;
@@ -59,6 +74,17 @@ typedef struct http_request_info
     char    *pszPostContentType;/* post request MIME type */
     char    *pszUserAgent;      /* User-Agent, auto-generated if not set */
     char    *pszHTTPCookieData; /* HTTP Cookie data */
+    
+    char    *pszProxyAddress;   /* The address (IP or hostname) of proxy svr */
+    long     nProxyPort;        /* The proxy's port                          */
+    enum MS_HTTP_PROXY_TYPE eProxyType; /* The type of proxy                 */
+    enum MS_HTTP_AUTH_TYPE  eProxyAuthType; /* Auth method against proxy     */
+    char    *pszProxyUsername;  /* Proxy authentication username             */
+    char    *pszProxyPassword;  /* Proxy authentication password             */
+    
+    enum MS_HTTP_AUTH_TYPE eHttpAuthType; /* HTTP Authentication type        */
+    char    *pszHttpUsername;   /* HTTP Authentication username              */
+    char    *pszHttpPassword;   /* HTTP Authentication password              */
 
     /* For debugging/profiling */
     int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
@@ -180,6 +206,10 @@ MS_DLL_EXPORT const char *msOWSGetVersionString(int nVersion, char *pszBuffer);
 
 MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj *metadata, 
                                     const char *namespaces, const char *name);
+MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
+                                                hashTableObj *sec,
+                                                const char *namespaces,
+                                                const char *name);
 MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata, 
                        const char *namespaces, const char *name, 
                        int action_if_not_found, const char *format, 

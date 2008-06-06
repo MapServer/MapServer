@@ -217,6 +217,30 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
     return fwrite(buffer, size, nmemb, psReq->fp);
 }
 
+/**********************************************************************
+ *                          msGetCURLAuthType()
+ *
+ * Returns the equivalent CURL CURLAUTH_ constant given a
+ * MS_HTTP_AUTH_TYPE, or CURLAUTH_BASIC if no match is found.
+ **********************************************************************/
+long msGetCURLAuthType(MS_HTTP_AUTH_TYPE authType)
+{
+    switch (authType)
+    {
+        case BASIC:
+            return CURLAUTH_BASIC;
+        case DIGEST:
+            return CURLAUTH_DIGEST;
+        case NTLM:
+            return CURLAUTH_NTLM;
+        case ANY:
+            return CURLAUTH_ANY;
+        case ANYSAFE:
+            return CURLAUTH_ANYSAFE;
+        default:
+            return CURLAUTH_BASIC;    
+    }
+}
 
 /**********************************************************************
  *                          msHTTPExecuteRequests()
@@ -365,6 +389,71 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
         /* Set timeout.*/
         curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, nTimeout );
+        
+        /* Set proxying settings */
+        if (pasReqInfo[i].pszProxyAddress != NULL
+            && strlen(pasReqInfo[i].pszProxyAddress) > 0)
+        {
+            long    nProxyType     = CURLPROXY_HTTP;
+            long    nProxyAuthType = CURLAUTH_BASIC;
+            char    szUsernamePasswd[128];    
+            
+            curl_easy_setopt(http_handle, CURLOPT_PROXY,
+                             pasReqInfo[i].pszProxyAddress);
+            
+            if (pasReqInfo[i].nProxyPort > 0
+                && pasReqInfo[i].nProxyPort < 65535)
+            {
+                curl_easy_setopt(http_handle, CURLOPT_PROXYPORT,
+                                 pasReqInfo[i].nProxyPort);
+            }
+            
+            switch (pasReqInfo[i].eProxyType)
+            {
+                case HTTP:
+                    nProxyType = CURLPROXY_HTTP;
+                    break;
+                case SOCKS5:
+                    nProxyType = CURLPROXY_SOCKS5;
+                    break;
+            }
+            curl_easy_setopt(http_handle, CURLOPT_PROXYTYPE, nProxyType);
+            
+            /* If there is proxy authentication information, set it */
+            if (pasReqInfo[i].pszProxyUsername != NULL
+                && pasReqInfo[i].pszProxyPassword != NULL
+                && strlen(pasReqInfo[i].pszProxyUsername) > 0
+                && strlen(pasReqInfo[i].pszProxyPassword) > 0)
+            {
+                nProxyAuthType = msGetCURLAuthType(pasReqInfo[i].eProxyAuthType);
+                curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, nProxyAuthType);
+                
+                snprintf(szUsernamePasswd, 127, "%s:%s",
+                         pasReqInfo[i].pszProxyUsername,
+                         pasReqInfo[i].pszProxyPassword);
+                curl_easy_setopt(http_handle, CURLOPT_PROXYUSERPWD,
+                                 szUsernamePasswd);
+            }
+        }
+        
+        /* Set HTTP Authentication settings */
+        if (pasReqInfo[i].pszHttpUsername != NULL
+            && pasReqInfo[i].pszHttpPassword != NULL
+            && strlen(pasReqInfo[i].pszHttpUsername) > 0
+            && strlen(pasReqInfo[i].pszHttpPassword) > 0)
+        {
+            char    szUsernamePasswd[128];
+            long    nHttpAuthType = CURLAUTH_BASIC;
+            
+            snprintf(szUsernamePasswd, 127, "%s:%s",
+                     pasReqInfo[i].pszHttpUsername,
+                     pasReqInfo[i].pszHttpPassword);
+            curl_easy_setopt(http_handle, CURLOPT_USERPWD,
+                             szUsernamePasswd);
+                                 
+            nHttpAuthType = msGetCURLAuthType(pasReqInfo[i].eHttpAuthType);
+            curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, nHttpAuthType);
+        }
 
         /* NOSIGNAL should be set to true for timeout to work in multithread
          * environments on Unix, requires libcurl 7.10 or more recent.

@@ -545,6 +545,35 @@ const char *msOWSLookupMetadata(hashTableObj *metadata,
 }
 
 /*
+** msOWSLookupMetadata2()
+**
+** Attempts to lookup a given metadata name in multiple hashTables, and
+** in multiple OWS namespaces within each. First searches the primary
+** table and if no result is found, attempts the search using the 
+** secondary (fallback) table.
+**
+** 'namespaces' is a string with a letter for each namespace to lookup 
+** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
+** If namespaces is NULL then this function just does a regular metadata
+** lookup.
+*/
+const char *msOWSLookupMetadata2(hashTableObj *pri,
+                                        hashTableObj *sec,
+                                        const char *namespaces,
+                                        const char *name)
+{
+    const char *result;
+    
+    if ((result = msOWSLookupMetadata(pri, namespaces, name)) == NULL)
+    {
+        // Try the secondary table
+        result = msOWSLookupMetadata(sec, namespaces, name);
+    }
+
+    return result;
+}
+
+/*
 ** msOWSPrintMetadata()
 **
 ** Attempt to output a capability item.  If corresponding metadata is not 
