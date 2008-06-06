@@ -223,19 +223,19 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
  * Returns the equivalent CURL CURLAUTH_ constant given a
  * MS_HTTP_AUTH_TYPE, or CURLAUTH_BASIC if no match is found.
  **********************************************************************/
-long msGetCURLAuthType(MS_HTTP_AUTH_TYPE authType)
+long msGetCURLAuthType(enum MS_HTTP_AUTH_TYPE authType)
 {
     switch (authType)
     {
-        case BASIC:
+        case MS_BASIC:
             return CURLAUTH_BASIC;
-        case DIGEST:
+        case MS_DIGEST:
             return CURLAUTH_DIGEST;
-        case NTLM:
+        case MS_NTLM:
             return CURLAUTH_NTLM;
-        case ANY:
+        case MS_ANY:
             return CURLAUTH_ANY;
-        case ANYSAFE:
+        case MS_ANYSAFE:
             return CURLAUTH_ANYSAFE;
         default:
             return CURLAUTH_BASIC;    
@@ -410,10 +410,10 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             
             switch (pasReqInfo[i].eProxyType)
             {
-                case HTTP:
+                case MS_HTTP:
                     nProxyType = CURLPROXY_HTTP;
                     break;
-                case SOCKS5:
+                case MS_SOCKS5:
                     nProxyType = CURLPROXY_SOCKS5;
                     break;
             }

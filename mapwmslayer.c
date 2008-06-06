@@ -810,9 +810,9 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     long     nProxyPort=0;
     char    *pszProxyUsername=NULL, *pszProxyPassword=NULL;
     char    *pszHttpAuthUsername=NULL, *pszHttpAuthPassword=NULL;
-    MS_HTTP_AUTH_TYPE eHttpAuthType;
-    MS_HTTP_AUTH_TYPE eProxyAuthType;
-    MS_HTTP_PROXY_TYPE eProxyType;
+    enum MS_HTTP_AUTH_TYPE eHttpAuthType = MS_BASIC;
+    enum MS_HTTP_AUTH_TYPE eProxyAuthType = MS_BASIC;
+    enum MS_HTTP_PROXY_TYPE eProxyType = MS_HTTP;
 
     if (lp->connectiontype != MS_WMS)
         return MS_FAILURE;
@@ -908,9 +908,9 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     {
         
         if (strcasecmp(pszTmp, "HTTP") == 0)
-            eProxyType = HTTP;
+            eProxyType = MS_HTTP;
         else if (strcasecmp(pszTmp, "SOCKS5") == 0)
-            eProxyType = SOCKS5;
+            eProxyType = MS_SOCKS5;
         else
         {
             msSetError(MS_WMSERR, "Invalid proxy_type metadata '%s' specified",
@@ -923,15 +923,15 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                                        "MO", "proxy_auth_type")) != NULL)
     {
         if (strcasecmp(pszTmp, "BASIC") == 0)
-            eProxyAuthType = BASIC;
+            eProxyAuthType = MS_BASIC;
         else if (strcasecmp(pszTmp, "DIGEST") == 0)
-            eProxyAuthType = DIGEST;
+            eProxyAuthType = MS_DIGEST;
         else if (strcasecmp(pszTmp, "NTLM") == 0)
-            eProxyAuthType = NTLM;
+            eProxyAuthType = MS_NTLM;
         else if (strcasecmp(pszTmp, "ANY") == 0)
-            eProxyAuthType = ANY;
+            eProxyAuthType = MS_ANY;
         else if (strcasecmp(pszTmp, "ANYSAFE") == 0)
-            eProxyAuthType = ANYSAFE;
+            eProxyAuthType = MS_ANYSAFE;
         else
         {
             msSetError(MS_WMSERR, "Invalid proxy_auth_type metadata '%s' specified",
@@ -960,15 +960,15 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                                        "MO", "auth_type")) != NULL)
     {
         if (strcasecmp(pszTmp, "BASIC") == 0)
-            eHttpAuthType = BASIC;
+            eHttpAuthType = MS_BASIC;
         else if (strcasecmp(pszTmp, "DIGEST") == 0)
-            eHttpAuthType = DIGEST;
+            eHttpAuthType = MS_DIGEST;
         else if (strcasecmp(pszTmp, "NTLM") == 0)
-            eHttpAuthType = NTLM;
+            eHttpAuthType = MS_NTLM;
         else if (strcasecmp(pszTmp, "ANY") == 0)
-            eHttpAuthType = ANY;
+            eHttpAuthType = MS_ANY;
         else if (strcasecmp(pszTmp, "ANYSAFE") == 0)
-            eHttpAuthType = ANYSAFE;
+            eHttpAuthType = MS_ANYSAFE;
         else
         {
             msSetError(MS_WMSERR, "Invalid auth_type metadata '%s' specified",

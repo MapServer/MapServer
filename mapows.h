@@ -45,20 +45,20 @@
 
 #define MS_HTTP_SUCCESS(status)  (status == 200 || status == 242)
 
-typedef enum
+enum MS_HTTP_PROXY_TYPE
 {
-    HTTP,
-    SOCKS5
-} MS_HTTP_PROXY_TYPE;
+    MS_HTTP,
+    MS_SOCKS5
+};
 
-typedef enum
+enum MS_HTTP_AUTH_TYPE
 {
-    BASIC,
-    DIGEST,
-    NTLM,
-    ANY,
-    ANYSAFE
-} MS_HTTP_AUTH_TYPE;
+    MS_BASIC,
+    MS_DIGEST,
+    MS_NTLM,
+    MS_ANY,
+    MS_ANYSAFE
+};
 
 typedef struct http_request_info
 {
