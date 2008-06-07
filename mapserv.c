@@ -841,6 +841,12 @@ void loadForm(void)
       continue;
     }
 
+    if(strcasecmp(mapserv->request->ParamNames[i],"qformat") == 0) { /* format to apply to query results (shortcut instead of having to use "map.web=QUERYFORMAT+foo") */
+      if(mapserv->map->web.queryformat) free(mapserv->map->web.queryformat); /* avoid leak */
+      mapserv->map->web.queryformat = strdup(mapserv->request->ParamValues[i]);
+      continue;
+    }
+
     if(strcasecmp(mapserv->request->ParamNames[i],"slayer") == 0) { /* layer to select (for feature based search) */
       SelectLayer = strdup(mapserv->request->ParamValues[i]);
       continue;
