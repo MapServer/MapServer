@@ -1421,6 +1421,9 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   int centroid=MS_FALSE; /* output just the centroid */
   int precision=0;
 
+  double buffer=0; /* no buffer */
+  int bufferUnits=-1;
+
   shapeObj tShape;
 
   char *projectionString=NULL;
@@ -1476,6 +1479,12 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       argValue = msLookupHashTable(tagArgs, "sf");
       if(argValue) sf = argValue;
 
+      argValue = msLookupHashTable(tagArgs, "buffer");
+      if(argValue) {
+        buffer = atof(argValue);
+        if(strstr(argValue, "px")) bufferUnits = MS_PIXELS; /* may support others at some point */
+      }
+
       argValue = msLookupHashTable(tagArgs, "precision");
       if(argValue) precision = atoi(argValue);
 
@@ -1509,13 +1518,24 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       tShape.line[0].numpoints = 0;
 
       msAddPointToLine(&(tShape.line[0]), &p);      
-    } else {
+    } 
+#ifdef USE_GEOS
+    else if(buffer != 0 && bufferUnits != MS_PIXELS) {
+      shapeObj bufferShape=NULL;
+
+      bufferShape = msGEOSBuffer(shape, buffer);
+      if(!bufferShape) return(MS_FAILURE); /* buffer failed */
+      msCopyShape(bufferShape, &tShape);
+      msFreeShape(bufferShape);
+    } 
+#endif 
+    else {
       status = msCopyShape(shape, &tShape);
       if(status != 0) return(MS_FAILURE); /* copy failed */
     }
 
     /* no big deal to convert from file to image coordinates, but what are the image parameters */
-    if(projectionString && strcasecmp(projectionString,"image") ==0) {
+    if(projectionString && strcasecmp(projectionString,"image") == 0) {
       precision = 0;
 
       /* if necessary, project the shape to match the map */
@@ -1540,6 +1560,19 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
         break;
       }
       msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize);
+
+#ifdef USE_GEOS
+      if(buffer != 0 && bufferUnits == MS_PIXELS) {
+        shapeObj bufferShape=NULL;
+
+	bufferShape = msGEOSBuffer(tShape, buffer);
+	if(!bufferShape) return(MS_FAILURE); /* buffer failed */
+	msFreeShape(&tShape); /* avoid memory leak */
+	msCopyShape(bufferShape, &tShape);
+	msFreeShape(bufferShape);
+      }
+#endif
+
     } else if(projectionString) {
        projectionObj projection;
        msInitProjection(&projection);
