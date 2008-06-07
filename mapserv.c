@@ -1361,7 +1361,7 @@ int main(int argc, char *argv[]) {
         writeError();
       
       if(QueryFile) {
-        if(msReturnQuery(mapserv, mapserv->map->web.queryformat, NULL) != MS_SUCCESS)
+        if(msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, NULL) != MS_SUCCESS)
           writeError();
       } else {
         if(TEMPLATE_TYPE(mapserv->map->web.template) == MS_FILE) { /* if thers's an html template, then use it */

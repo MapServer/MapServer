@@ -182,7 +182,6 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
 {
   imageObj *img = NULL;
   int i, status;
-  char buffer[1024];
 
   outputFormatObj *outputFormat=NULL;
 
@@ -202,53 +201,34 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
 
   if(outputFormat) {
      if( !MS_RENDERER_TEMPLATE(outputFormat) ) { /* got an image format, return the query results that way */
-      printf("got an image output format\n");
-      return MS_SUCCESS;
+       outputFormatObj *tempOutputFormat = mapserv->map->outputformat; /* save format */
+
+       checkWebScale(mapserv);
+
+       mapserv->map->outputformat = outputFormat; /* override what was given for IMAGETYPE */
+       img = msDrawMap(mapserv->map, MS_TRUE);
+       if(!img) return MS_FAILURE;
+       mapserv->map->outputformat = tempOutputFormat; /* restore format */
+
+       if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(outputFormat), 10,10);
+       status = msSaveImage(mapserv->map, img, NULL);
+       msFreeImage(img);
+
+       return status;
     }
   }
 
   /* 
   ** At this point we know we have a template of some sort, either the new style that references a or the old
   ** style made up of external files slammed together. Either way we may have to compute a query map and other
-  ** images potentially.
+  ** images. We only create support images IF the querymap has status=MS_ON.
   */ 
   if(mapserv->map->querymap.status) {
     checkWebScale(mapserv);
-
-    img = msDrawMap(mapserv->map, MS_TRUE);
-    if(!img) return MS_FAILURE;
-    snprintf(buffer, 1024, "%s%s%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
-    status = msSaveImage(mapserv->map, img, buffer);
-    if(status != MS_SUCCESS) return status;
-    msFreeImage(img);
-
-    if((mapserv->map->legend.status == MS_ON || mapserv->UseShapes) && mapserv->map->legend.template == NULL) {
-      img = msDrawLegend(mapserv->map, MS_FALSE);
-      if(!img) return MS_FAILURE;
-      snprintf(buffer, 1024, "%s%sleg%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
-      status = msSaveImage(mapserv->map, img, buffer);
-      if(status != MS_SUCCESS) return status;
-      msFreeImage(img);
-    }
-  
-    if(mapserv->map->scalebar.status == MS_ON) {
-      img = msDrawScalebar(mapserv->map);
-      if(!img) return MS_FAILURE;
-      snprintf(buffer, 1024, "%s%ssb%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
-      status = msSaveImage( mapserv->map, img, buffer);
-      if(status != MS_SUCCESS) return status;
-      msFreeImage(img);
-    }
-  
-    if(mapserv->map->reference.status == MS_ON) {
-      img = msDrawReferenceMap(mapserv->map);
-      if(!img) return MS_FAILURE;
-      snprintf(buffer, 1024, "%s%sref%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
-      status = msSaveImage(mapserv->map, img, buffer);
-      if(status != MS_SUCCESS) return status;
-      msFreeImage(img);
-    }
+    msGenerateImages(mapserv, MS_FALSE, MS_TRUE);
   }
+
+  /* initialize the buffer if necessary */
    
   if(outputFormat) {
     const char *file = msGetOutputFormatOption( outputFormat, "FILE", NULL );
@@ -261,7 +241,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
     if((status = msReturnPage(mapserv, (char *) file, BROWSE, papszBuffer)) != MS_SUCCESS)
       return status;
   } else {
-    if((status = msReturnQuery(mapserv, queryFormat, papszBuffer)) != MS_SUCCESS)
+    if((status = msReturnNestedTemplateQuery(mapserv, queryFormat, papszBuffer)) != MS_SUCCESS)
       return status;
   }
 
@@ -3499,7 +3479,10 @@ int msReturnURL(mapservObj* ms, char* url, int mode)
   return MS_SUCCESS;
 }
 
-int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
+/*
+** Legacy query template parsing where you use headers, footers and such...
+*/
+int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
 {
   int status;
   int i,j,k;
@@ -3518,7 +3501,7 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
   /* -------------------------------------------------------------------- */
 
   /* if(!pszMimeType) {
-    msSetError(MS_WEBERR, "Mime type not specified.", "msReturnQuery()");
+    msSetError(MS_WEBERR, "Mime type not specified.", "msReturnNestedTemplateQuery()");
     return MS_FAILURE;
   } */
 
@@ -3549,7 +3532,7 @@ int msReturnQuery(mapservObj* mapserv, char* pszMimeType, char **papszBuffer)
         template = lp->template;
 
       if( template == NULL ) {
-        msSetError(MS_WEBERR, "No template for layer %s or it's classes.", "msReturnQuery()", lp->name );
+        msSetError(MS_WEBERR, "No template for layer %s or it's classes.", "msReturnNestedTemplateQuery()", lp->name );
         return MS_FAILURE;
       }
 
@@ -3999,7 +3982,7 @@ char *msProcessLegendTemplate(mapObj *map, char **names, char **values, int nume
 
 /*
 ** Utility function that process a template file(s) used in the
-** query and retrun the processed template(s) in a bufffer.
+** query and return the processed template(s) in a buffer.
 */
 char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, char **names, char **values, int numentries)
 {
@@ -4021,9 +4004,9 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, char **names, cha
     }
 
     if(bGenerateImages)
-      msGenerateImages(mapserv, MS_FALSE, MS_FALSE); /* second parameter should be MS_TRUE I believe - SDL - */
+      msGenerateImages(mapserv, MS_FALSE, MS_TRUE);
 
-    msReturnQuery(mapserv, NULL, &pszBuffer );
+    msReturnTemplateQuery(mapserv, NULL, &pszBuffer );
 
     mapserv->map = NULL;
     mapserv->request->ParamNames = mapserv->request->ParamValues = NULL;

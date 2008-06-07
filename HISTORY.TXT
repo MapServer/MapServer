@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.1-dev, SVN trunk):
 -------------------------------------
 
+- WMS/WFS layers can now specify a proxy servert (#571)
+
 - mapwmslayer.c: set QUERY_LAYERS correctly (#2001)
 
 - mapwcs.c: handle PARAMETER values correctly (#2509)
