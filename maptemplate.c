@@ -1521,7 +1521,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     } 
 #ifdef USE_GEOS
     else if(buffer != 0 && bufferUnits != MS_PIXELS) {
-      shapeObj bufferShape=NULL;
+      shapeObj *bufferShape=NULL;
 
       bufferShape = msGEOSBuffer(shape, buffer);
       if(!bufferShape) return(MS_FAILURE); /* buffer failed */
@@ -1563,9 +1563,9 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
 #ifdef USE_GEOS
       if(buffer != 0 && bufferUnits == MS_PIXELS) {
-        shapeObj bufferShape=NULL;
+        shapeObj *bufferShape=NULL;
 
-	bufferShape = msGEOSBuffer(tShape, buffer);
+	bufferShape = msGEOSBuffer(&tShape, buffer);
 	if(!bufferShape) return(MS_FAILURE); /* buffer failed */
 	msFreeShape(&tShape); /* avoid memory leak */
 	msCopyShape(bufferShape, &tShape);
