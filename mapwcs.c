@@ -46,7 +46,7 @@ MS_CVSID("$Id$")
 /************************************************************************/
 static int msWCSValidateRangeSetParam(layerObj *lp, char *name, const char *value) {
   char **tokens;
-  int numtokens, i, match = 0;;
+  int numtokens, i, match = 0;
   char *tmpname = NULL;
   const char *tmpvalue = NULL;
 
