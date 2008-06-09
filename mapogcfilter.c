@@ -117,9 +117,9 @@ int FLTIsGeosNode(char *pszValue)
 /*      Assuming here that the node is not a logical node but           */
 /*      spatial or comparaison.                                         */
 /************************************************************************/
-int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map, 
-                               int iLayerIndex, int *pnResults,
-                               int bOnlySpatialFilter)
+int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map, 
+                              int iLayerIndex, int **ppanResults, int *pnResults,
+                              int bOnlySpatialFilter)
 {
     char *szExpression = NULL;
     int bIsBBoxFilter =0, nEpsgTmp = 0, i=0;
@@ -130,7 +130,6 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     char **tokens = NULL;
     int nTokens = 0;
     projectionObj sProjTmp;
-    int *panResults = NULL;
     int bPointQuery = 0, bShapeQuery=0;
     shapeObj *psQueryShape = NULL;
     double dfDistance = -1;
@@ -139,10 +138,12 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     int bUseGeos = 0;
     int geos_operator = -1;
     shapeObj *psTmpShape = NULL;
+    int *panResults=NULL;
+    int status = MS_SUCCESS;
 
     if (!psNode || !map || iLayerIndex < 0 ||
         iLayerIndex > map->numlayers-1)
-      return NULL;
+      return status;
   
     lp = GET_LAYER(map, iLayerIndex);
 
@@ -172,7 +173,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 
     if (!szExpression && !szEPSG && !bIsBBoxFilter 
         && !bPointQuery && !bShapeQuery && (bOnlySpatialFilter == MS_FALSE))
-      return NULL;
+      return status;
 
 
     if (szExpression)
@@ -184,7 +185,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
          */
         if (lp->numclasses == 0 &&
             msGrowLayerClasses(lp) == NULL)
-            return NULL;
+            return MS_FAILURE;
        	initClass(lp->class[0]);
 
         lp->class[0]->type = lp->type;
@@ -217,7 +218,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                      */
                     if (lp->numclasses <2 &&
                         msGrowLayerClasses(lp) == NULL)
-                        return NULL;
+                        return MS_FAILURE;
                     initClass(lp->class[1]);
                     
                     lp->class[1]->type = lp->type;
@@ -313,7 +314,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 
     if (szExpression || bIsBBoxFilter || 
         (bOnlySpatialFilter && !bIsBBoxFilter && !bPointQuery && !bShapeQuery))
-      msQueryByRect(map, lp->index, sQueryRect);
+      status = msQueryByRect(map, lp->index, sQueryRect);
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0) /* && dfDistance >=0) */
     {
@@ -329,7 +330,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                 psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
                 if (psTmpShape)
                 {
-                    msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
+                    status = msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
                     msFreeShape(psTmpShape);
                 }
 #ifdef USE_GEOS
@@ -337,7 +338,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 #endif
             }
             else
-              msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
+              status = msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
         } 
         else
         {
@@ -352,8 +353,8 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                   lp->toleranceunits = nUnit;
             }
 
-            msQueryByPoint(map, lp->index, MS_MULTIPLE, 
-                           psQueryShape->line[0].point[0], 0, 0);
+            status = msQueryByPoint(map, lp->index, MS_MULTIPLE, 
+                                    psQueryShape->line[0].point[0], 0, 0);
         }
     }
     else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0
@@ -371,7 +372,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                 psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
                 if (psTmpShape)
                 {
-                    msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
+                    status = msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
                     msFreeShape(psTmpShape);
                 }
 #ifdef USE_GEOS
@@ -379,7 +380,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 #endif
             } 
             else
-              msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
+              status = msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
         }
         else
         {
@@ -396,7 +397,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                 if (nUnit >=0)
                   lp->toleranceunits = nUnit;
             }
-            msQueryByShape(map, lp->index,  psQueryShape);
+            status = msQueryByShape(map, lp->index,  psQueryShape);
       
             lp->tolerance = dfCurrentTolerance;
         }
@@ -415,10 +416,11 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
               sizeof(int), compare_ints);
 
         *pnResults = lp->resultcache->numresults;
+        *ppanResults = panResults;
         
     }
 
-    return panResults;
+    return status;
 
 }
  
@@ -611,8 +613,8 @@ int FLTIsInArray(int *panArray, int nSize, int nValue)
 /*      Return the list of all shape id's in a layer that are not in    */
 /*      the array.                                                      */
 /************************************************************************/
-int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
-                  int iLayerIndex, int *pnResult)
+int FLTArraysNot(int *panArray, int nSize, mapObj *map,
+                  int iLayerIndex, int **ppanResults, int *pnResult)
 {
     layerObj *psLayer = NULL;
     int *panResults = NULL;
@@ -620,7 +622,7 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
     int i = 0, iResult = 0;
     
     if (!map || iLayerIndex < 0 || iLayerIndex > map->numlayers-1)
-      return NULL;
+      return MS_SUCCESS;
 
      psLayer = (GET_LAYER(map, iLayerIndex));
      if (psLayer->template == NULL)
@@ -632,7 +634,7 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
      psLayer->template = NULL;
 
      if (!psLayer->resultcache || psLayer->resultcache->numresults <= 0)
-       return NULL;
+       return MS_SUCCESS;
 
      panResults = (int *)malloc(sizeof(int)*psLayer->resultcache->numresults);
      
@@ -659,9 +661,11 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
           panResults = (int *)realloc(panResults, sizeof(int)*iResult);
           qsort(panResults, iResult, sizeof(int), compare_ints);
           *pnResult = iResult;
+
+          *ppanResults = panResults;
       }
 
-      return panResults;
+      return MS_SUCCESS;
 }
  
 /************************************************************************/
@@ -669,17 +673,17 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
 /*                                                                      */
 /*      Utility function to do an OR on 2 arrays.                       */
 /************************************************************************/
-int *FLTArraysOr(int *aFirstArray, int nSizeFirst, 
+int FLTArraysOr(int *aFirstArray, int nSizeFirst, 
                  int *aSecondArray, int nSizeSecond,
-                 int *pnResult)
+                 int **ppanResults, int *pnResult)
 {
     int nResultSize = 0;
     int *panResults = 0;
     int iResult = 0;
     int i, j;
-
+    
     if (aFirstArray == NULL && aSecondArray == NULL)
-      return NULL;
+      return MS_SUCCESS;
 
     if (aFirstArray == NULL || aSecondArray == NULL)
     {
@@ -690,8 +694,9 @@ int *FLTArraysOr(int *aFirstArray, int nSizeFirst,
               panResults[i] = aFirstArray[i];
             if (pnResult)
               *pnResult = nSizeFirst;
-
-            return panResults;
+            if (ppanResults)
+              *ppanResults = panResults;
+            return MS_SUCCESS;
         }
         else if (aSecondArray && nSizeSecond)
         {
@@ -700,8 +705,9 @@ int *FLTArraysOr(int *aFirstArray, int nSizeFirst,
               panResults[i] = aSecondArray[i];
             if (pnResult)
               *pnResult = nSizeSecond;
-
-            return panResults;
+            if (ppanResults)
+              *ppanResults = panResults;
+            return MS_SUCCESS;
         }
     }
             
@@ -761,12 +767,12 @@ int *FLTArraysOr(int *aFirstArray, int nSizeFirst,
             panResults = (int *)realloc(panResults, sizeof(int)*iResult);
             qsort(panResults, iResult, sizeof(int), compare_ints);
             *pnResult = iResult;
-            return panResults;
+            *ppanResults = panResults;
         }
 
     }
 
-    return NULL;
+    return MS_SUCCESS;
 }
 
 /************************************************************************/
@@ -774,9 +780,9 @@ int *FLTArraysOr(int *aFirstArray, int nSizeFirst,
 /*                                                                      */
 /*      Utility function to do an AND on 2 arrays.                      */
 /************************************************************************/
-int *FLTArraysAnd(int *aFirstArray, int nSizeFirst, 
+int FLTArraysAnd(int *aFirstArray, int nSizeFirst, 
                   int *aSecondArray, int nSizeSecond,
-                  int *pnResult)
+                  int **ppanResults, int *pnResult)
 {
     int *panResults = NULL;
     int nResultSize =0;
@@ -833,12 +839,12 @@ int *FLTArraysAnd(int *aFirstArray, int nSizeFirst,
             panResults = (int *)realloc(panResults, sizeof(int)*iResult);
             qsort(panResults, iResult, sizeof(int), compare_ints);
             *pnResult = iResult;
-            return panResults;
+            *ppanResults = panResults;
         }
 
     }
 
-    return NULL;
+    return MS_SUCCESS;
 }
 
 /************************************************************************/
@@ -999,12 +1005,12 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
         free(szExpression);
     }
 
-    msQueryByRect(map, lp->index, sQueryRect);
-
     if (pszBuffer)
       free(pszBuffer);
 
-    return MS_SUCCESS;
+    return msQueryByRect(map, lp->index, sQueryRect);
+
+    //return MS_SUCCESS;
 }
 
 int FLTIsSimpleFilter(FilterEncodingNode *psNode)
@@ -1035,47 +1041,44 @@ int FLTIsSimpleFilter(FilterEncodingNode *psNode)
 /*      Return an arry of shpe id's after a filetr node was applied     */
 /*      on a layer.                                                     */
 /************************************************************************/
-int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map, 
-                        int iLayerIndex, int *pnResults,
-                        int bOnlySpatialFilter)
+int FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map, 
+                       int iLayerIndex,  int **ppanResults, int *pnResults,
+                       int bOnlySpatialFilter)
 {
     int *panResults = NULL, *panLeftResults=NULL, *panRightResults=NULL;
     int nLeftResult=0, nRightResult=0, nResults = 0;
-
+    int status = MS_SUCCESS;
 
     if (psNode->eType == FILTER_NODE_TYPE_LOGICAL)
     {
         if (psNode->psLeftNode)
-          panLeftResults =  FLTGetQueryResults(psNode->psLeftNode, map, 
-                                               iLayerIndex, &nLeftResult,
-                                               bOnlySpatialFilter);
+          status = FLTGetQueryResults(psNode->psLeftNode, map, 
+                                      iLayerIndex, &panLeftResults, &nLeftResult,
+                                      bOnlySpatialFilter);
 
-       if (psNode->psRightNode)
-          panRightResults =  FLTGetQueryResults(psNode->psRightNode, map,
-                                               iLayerIndex, &nRightResult,
-                                                bOnlySpatialFilter);
+        if (psNode->psRightNode)
+          status = FLTGetQueryResults(psNode->psRightNode, map,
+                                      iLayerIndex, &panRightResults, &nRightResult,
+                                      bOnlySpatialFilter);
 
         if (psNode->pszValue && strcasecmp(psNode->pszValue, "AND") == 0)
-          panResults = FLTArraysAnd(panLeftResults, nLeftResult, 
-                                  panRightResults, nRightResult, &nResults);
+          FLTArraysAnd(panLeftResults, nLeftResult, 
+                       panRightResults, nRightResult, ppanResults, pnResults);
         else if (psNode->pszValue && strcasecmp(psNode->pszValue, "OR") == 0)
-          panResults = FLTArraysOr(panLeftResults, nLeftResult, 
-                                 panRightResults, nRightResult, &nResults);
+          FLTArraysOr(panLeftResults, nLeftResult, 
+                      panRightResults, nRightResult, ppanResults, pnResults);
 
         else if (psNode->pszValue && strcasecmp(psNode->pszValue, "NOT") == 0)
-          panResults = FLTArraysNot(panLeftResults, nLeftResult, map, 
-                                   iLayerIndex, &nResults);
+          FLTArraysNot(panLeftResults, nLeftResult, map, iLayerIndex, ppanResults, 
+                       pnResults);
     }
     else
     {
-        panResults = FLTGetQueryResultsForNode(psNode, map, iLayerIndex, 
-                                               &nResults, bOnlySpatialFilter);
+        status = FLTGetQueryResultsForNode(psNode, map, iLayerIndex, 
+                                           ppanResults, pnResults , bOnlySpatialFilter);
     }
 
-    if (pnResults)
-      *pnResults = nResults;
-
-    return panResults;
+    return status;
 }
 
 int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
@@ -1137,7 +1140,8 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     int *panResults = NULL;
     int nResults = 0;
     layerObj *psLayer = NULL;
-
+    errorObj   *ms_error;
+    int status;
 
 /* ==================================================================== */
 /*      Check here to see if it is a simple filter and if that is       */
@@ -1151,8 +1155,8 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 
     
     psLayer = (GET_LAYER(map, iLayerIndex));
-    panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
-                                    &nResults, bOnlySpatialFilter);
+    status = FLTGetQueryResults(psNode, map, iLayerIndex,
+                                &panResults, &nResults, bOnlySpatialFilter);
     if (panResults) 
         FLTAddToLayerResultCache(panResults, nResults, map, iLayerIndex);
     /* clear the cache if the results is NULL to make sure there aren't */
@@ -1170,9 +1174,9 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     }
 
     if (panResults)
-        free(panResults);
-
-    return MS_SUCCESS;
+      free(panResults);
+    
+    return status;
 }
 
 
@@ -1204,7 +1208,7 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
 
     /* strip namespaces */
     CPLStripXMLNamespace(psRoot, "ogc", 1); 
-    CPLStripXMLNamespace(psRoot, "gml", 1); 
+    CPLStripXMLNamespace(psRoot, "gml", 1);
 
 /* -------------------------------------------------------------------- */
 /*      get the root element (Filter).                                  */
