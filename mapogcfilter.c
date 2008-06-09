@@ -1045,8 +1045,8 @@ int FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map,
                        int iLayerIndex,  int **ppanResults, int *pnResults,
                        int bOnlySpatialFilter)
 {
-    int *panResults = NULL, *panLeftResults=NULL, *panRightResults=NULL;
-    int nLeftResult=0, nRightResult=0, nResults = 0;
+    int *panLeftResults=NULL, *panRightResults=NULL;
+    int nLeftResult=0, nRightResult=0;
     int status = MS_SUCCESS;
 
     if (psNode->eType == FILTER_NODE_TYPE_LOGICAL)
@@ -1140,7 +1140,6 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     int *panResults = NULL;
     int nResults = 0;
     layerObj *psLayer = NULL;
-    errorObj   *ms_error;
     int status;
 
 /* ==================================================================== */
