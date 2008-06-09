@@ -332,7 +332,7 @@ int mapObj_loadOWSParameters(mapObj *self, cgiRequestObj *request,
 
 int mapObj_OWSDispatch(mapObj *self, cgiRequestObj *req )
 {
-    return msOWSDispatch( self, req, TRUE);
+    return msOWSDispatch( self, req, MS_TRUE);
 }
 
 int mapObj_insertLayer(mapObj *self, layerObj *layer, int index)
