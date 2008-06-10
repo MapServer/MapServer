@@ -135,6 +135,11 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         pasReqInfo[i].pszErrBuf = NULL;
         pasReqInfo[i].pszUserAgent = NULL;
         pasReqInfo[i].pszHTTPCookieData = NULL;
+        pasReqInfo[i].pszProxyAddress = NULL;
+        pasReqInfo[i].pszProxyUsername = NULL;
+        pasReqInfo[i].pszProxyPassword = NULL;
+        pasReqInfo[i].pszHttpUsername = NULL;
+        pasReqInfo[i].pszHttpPassword = NULL;
 
         pasReqInfo[i].debug = MS_FALSE;
 
