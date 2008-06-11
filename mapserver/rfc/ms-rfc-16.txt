@@ -1,0 +1,321 @@
+=================================
+MS RFC 16: MapScript WxS Services
+=================================
+
+:Date:  2006/05/10
+:Author: Frank Warmerdam
+:Contact: warmerdam@pobox.com
+:Last Edited: May 22, 2006
+:Status: adopted
+:Version: MapServer 4.9
+
+Purpose
+--------
+
+The general intention is that a WMS or WCS service should be able to 
+be setup via mapscript.  The web request would be turned over to a 
+mapscript script (Python, Perl, Java, etc) which can then manipulate
+the request and a map as needed. Then it can invoke the low level mapserver
+request function (ie. GetMap, GetCapabilities), and if desired manipulate
+the returned information before returning to the client.  This will provide
+a means to do customizations such as:
+
+* Implement security policy. 
+* Use dynamically created maps from a database, etc. 
+* Flesh out capabilities documents with auxilary information not settable
+  via the .map METADATA tags. 
+* Adjust error behaviors. 
+
+
+Technical Solution
+-------------------
+
+* GetCapabilities, GetFeatureInfo and GetMap calls for WMS callable from 
+  MapScript, and results capturable for processing.
+
+* GetCapabilities, DescribeCoverage and GetCoverage calls for WCS callable
+  from MapScript and results capturable for processing.
+
+* GetCapabilities, DescribeFeatureType and GetFeature calls for WFS callable
+  from MapScript and results capturable for processing. 
+
+* Any other OWS services dispatched through OWSDispatch (such as SOS) would
+  also be accessable from MapScript. 
+
+* IO hooking to capture various output from mapserver services will be
+  accomplished via mapio.c services, the same as is used to capture output
+  for FastCGI services. 
+
+* All SWIG based MapScript languages will be supported (Perl, Python, Ruby,
+  C#, Java).  PHP (non SWIG) may be supported if the PHP MapScript maintainers
+  do a similar implementation. 
+
+* A MapScript WxS HOWTO will be written, including simple examples of 
+  customized services. 
+
+WxS Functions
+-------------
+
+Add the following methods on the mapObj in mapscript/swiginc/map.i.
+
+::
+
+ int OWSDispatch( OWSRequest *req );
+
+We can't call the lower level functions, like msWMSGetCapabilities() 
+directly very easily because these functions require some pre-processing 
+done by msWMSDispatch().  
+
+* Note that the OWSDispatch() reconfigures the map it is invoked on to match 
+  the request.  
+* Note that the results of the OWSRequest are still written out via the 
+  normal stdout stream handling, so separate msIO hooking is needed to capture
+  the results. 
+
+
+OWSRequest
+----------
+
+This object is already defined to mapscript in mapscript/swiginc/owsrequest.i
+but it seems to lack a means of setting it from cgi arguments or directly
+by parsing a provided url.  I propose to add the following method on the
+OWSRequest:
+
+::
+
+ loadParams();
+
+* Loads the parameters from the normal sources (QUERY_STRING env. variable
+  for instance).  
+
+::
+
+ loadParams( const char * url );
+
+* Loads the parameters from the given url portion as would have appeared in 
+  QUERY_STRING if REQUEST_METHOD was GET.  
+
+  
+IO Hooking
+----------
+
+Currently output from functions such as msWMSGetCapabilities() is directed 
+through the msIO services (in mapio.c), such as msIO_printf().  In order to 
+capture this output and make it available for further processing it will be 
+necessary to provide a means for mapscript applications to insert their own 
+IO handlers of some sort.  
+
+Additionally, currently the msIO layer has a concept of io handlers, but
+they are global to the application.  For non-trivial use of WxS mapscript
+services in Java, c# and other multithreaded environments it is desirable
+for it to be possible to insert per-thread IO handlers. 
+
+* Need to make at least current_stdin/stdout/stderr_context variables thread 
+  local.  Possibly using the same approach as maperror.c.  A new mutex will 
+  be required for this. 
+* Consider thread safe output to shared stdin/stdout/stderr handles for all
+  threads? ie. protect with a mutex.
+* We need to provide a convenent way to install "to buffer" and "from buffer"
+  io handlers. 
+* We need to always use msIO redirection.  Currently in the default case of
+  not using FastCGI, USE_MAPIO is not defined in mapio.h and msIO_printf()
+  and similar functions are actually just #define'ed to printf().  But if
+  we want to be able to capture output all the time for mapscript, we will
+  actually always need the msIO layer.  So USE_MAPIO will always have to 
+  be defined.
+
+::
+
+ msIO_resetHandlers();
+
+* Resets msIO handlers to defaults (using stdin, stdout, stderr). 
+
+* Clears buffer data if buffered handlers were installed. 
+
+::
+
+ msIO_installStdoutToBuffer();
+
+* Install handler to send stdout to a buffer, clear buffer. 
+
+::
+
+ msIO_installStdinFromBuffer();
+
+* Install handler to get stdin from a buffer, clear buffer. 
+
+::
+
+ msIO_setStdinBuffer( unsigned char *data, int length );
+
+* Set data for stdin buffer.  
+
+::
+
+ gdBuffer msIO_getStdoutBufferBytes();
+
+* Fetch stdout buffer pointer and length.
+* gdBuffer already provides language specific bindings to get byte data.
+
+:: 
+
+  const char *msIO_getStdoutBufferString();
+
+* Fetch stdout buffer as a string.  Appropriate for XML and HTML results for
+  instance.
+
+The installed "buffer" handlers will manage their own buffer and concept
+of current read/write position.   
+
+My objective is that folks should be able to do something like this in 
+Python MapScript. 
+
+::
+
+  mapscript.msIO_installStdoutToBuffer()
+  if map.OWSDispatch( req ) == mapscript.MS_SUCCESS:
+    result = mapscript.msIO_getStdoutBufferString()
+    mapscript.msIO_resetHandlers()
+
+Questions:
+
+1) Should we be "pushing" handlers instead of installing them and losing
+track of the previous handler?  Then we could just pop them off.  
+
+2) Should we make the whole msIOContext thing more visible to mapscript?  It 
+seems like it would be complicated.
+
+gdBuffer
+--------
+
+The msIO_getStdoutBufferBytes() returns a gdBuffer since most language
+bindings already have a way of using this as a "array of raw bytes" buffer.
+It is normally used for fetched gdImage buffers.  But because the msIO
+function returns a gdBuffer referring to an internally memory array not
+"owned" by the gdBuffer we need to add a owns_data flag. 
+
+::
+
+ typedef struct {
+    unsigned char *data;
+    int size;							
+    int owns_data;
+ } gdBuffer;
+
+Likewise, each of the language bindings needs to be modified to only 
+call gdFree() on data if owns_data is true.
+
+This::
+
+ %typemap(out) gdBuffer {
+    $result = PyString_FromStringAndSize($1.data, $1.size); 
+    gdFree($1.data);
+ }
+
+becomes this::
+
+ %typemap(out) gdBuffer {
+    $result = PyString_FromStringAndSize($1.data, $1.size); 
+    if( $1.owns_data )
+	gdFree($1.data);
+ }
+
+And similarly for the other bindings. 
+
+
+Files and objects affected
+--------------------------
+
+::
+
+ mapio.c
+ mapio.h
+ mapscript/mapscript.i
+ mapscript/swiginc/owsrequest.i
+ mapscript/swiginc/image.i
+ mapscript/swiginc/msio.i (new)
+ mapscript/python/pymodule.i (gdBuffer)
+
+
+Backwards compatibility issues
+------------------------------
+
+There are no apparent backward compatibility problems with existing
+mapscript scripts.
+
+
+Implementation Issues
+---------------------
+
+* the gdBuffer stuff likely ought to be generalized.
+* some mapscript languages lack gdBuffer typemaps (ie. perl).
+* some performance testing should be done to verify that USE_MAPIO isn't
+  going to slow down normal operations significantly.  This is specially
+  a concern once the mapio.c statics are actually handled as thread local 
+  as each msIO call will need to search for the appropriate thread local 
+  context. 
+* the msIO "buffer" approach is predicated on streaming output results into
+  a memory buffer.  For very large return results this may use an unreasonable 
+  amount of memory.  For instance a WFS request with a 250MB response document.
+  But such results aren't necessarily reasonable in web services context 
+  anyways.
+* The set of functions will need to be exposed separately in the PHP bindings.
+
+
+Test suite
+----------
+
+The msautotest/mspython and python unit tests will be extended with at
+least rudimentary testing of a few of these services.  
+
+As we have no automated tests for other mapscript languages, no automated
+tests will be added, but I will endevour to prepare simple scripts to test
+things.  Currently this has been done for Python and Perl MapScript.
+
+
+Example
+-------
+
+This shows a very simple Python MapScript script that invokes a 
+passed in OWSRequest passed via normal cgi means, but adding a text/plain
+content type ahead of the regular content type so we can see the results.
+The script could easily have done extra manipulation on the URL parameters,
+and on the map object.
+
+Example::
+
+ #!/usr/bin/env python
+
+ import sys
+ import mapscript
+
+ req = mapscript.OWSRequest()
+ req.loadParams()
+
+ mapscript.msIO_installStdoutToBuffer()
+
+ map.OWSDispatch( req )
+
+ print 'Content-type: text/plain'
+ print
+ print mapscript.msIO_getStdoutBufferString()
+
+
+Bug ID
+------
+
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1788
+
+
+Voting history
+--------------
+
++1: FrankW, SteveW. 
+
+
+
+Open questions
+--------------
+
+None
+
