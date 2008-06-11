@@ -119,7 +119,7 @@ extern "C" {
 
 /* General defines, wrapable */
 
-#define MS_VERSION "5.1-dev"
+#define MS_VERSION "5.2.0-beta1"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

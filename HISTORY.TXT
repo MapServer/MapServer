@@ -10,8 +10,8 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (5.1-dev, SVN trunk):
--------------------------------------
+Current Version (5.2.0-beta1, SVN trunk):
+-----------------------------------------
 
 - WMS/WFS layers can now specify a proxy servert (#571)
 
