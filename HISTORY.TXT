@@ -10,8 +10,12 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (5.2.0-beta1, SVN trunk):
------------------------------------------
+Current Version (SVN trunk):
+----------------------------
+
+
+Version 5.2.0-beta1 (2008-06-11):
+---------------------------------
 
 - WMS/WFS layers can now specify a proxy servert (#571)
 
@@ -23,15 +27,15 @@ Current Version (5.2.0-beta1, SVN trunk):
 
 - mapwcs.c: advertise temporal support in GetCapabilities (#2487)
 
-- Fixed flaw in findTag() in maptemplate.c that prevented multiple tags on the same line 
-  being processed under certain conditions. (#2633)
+- Fixed flaw in findTag() in maptemplate.c that prevented multiple tags 
+  on the same line being processed under certain conditions. (#2633)
 
 - Return results even when extents are missing (#2420)
 
 - Avoid displaying OGR connection strings in error messages (#2629)
 
-- WCS: respect wcs_name metadata for GetCoverage and DescribeCoverage requests
-  (#2036)
+- WCS: respect wcs_name metadata for GetCoverage and DescribeCoverage 
+  requests (#2036)
 
 - CGI: added -nh option to allow for the suppression of content headers from
   the command line (#2594)
@@ -46,7 +50,8 @@ Current Version (5.2.0-beta1, SVN trunk):
 
 - AGG: enable offset lines of type x -99 (#2588)
 
-- AGG: use an agg specific label size calculation function where possible (#2357)
+- AGG: use an agg specific label size calculation function where 
+  possible (#2357)
 
 - mapogcsld.c: fetch TextSymbolizer/Label/ogc:PropertyName correctly (#2611)
 
@@ -136,11 +141,13 @@ Current Version (5.2.0-beta1, SVN trunk):
 
 - completed implementation of RFC24 (#2442, #2032)
 
-- mapwcs.c: require VERSION parameter for DescribeCoverage and GetCoverage (#2473)
+- mapwcs.c: require VERSION parameter for DescribeCoverage and 
+  GetCoverage (#2473)
 
 - mapwcs.c: change error token to MS_WCSERR instead of MS_WMSERR (#2474)
 
-- mapwcs.c: set exception MIME type to application/vnd.ogc.se_xml for 1.0.0 (#2470)
+- mapwcs.c: set exception MIME type to application/vnd.ogc.se_xml 
+  for 1.0.0 (#2470)
 
 - mapwcs.c: Generate a decently formatted exception if an WCS XML POST request
   is received (#2476).
@@ -229,7 +236,8 @@ results in stable label positions regardless of map extent. (#2447)
 
 - don't remove points that are checked as being colinear (#2366)
 
-- add initial(?) support for reading a pie chart's size from an attribute (#2136)
+- add initial(?) support for reading a pie chart's size from an 
+  attribute (#2136)
 
 - don't bail out in map parsing if the outputformat had to be modified
   (bug #2321)
@@ -245,8 +253,8 @@ results in stable label positions regardless of map extent. (#2447)
 
 - AGG: allow for fast and aliased rendering of simple lines and polygons
   thick lines and patterns (i.e. dashes)aren't supported.
-  this is triggered when the symbol is of TYPE SYMBOL *and* its ANTIALIAS is off
-  (wating to find a better solution to trigger this).
+  this is triggered when the symbol is of TYPE SYMBOL *and* its ANTIALIAS
+  is off (wating to find a better solution to trigger this).
 
 - AGG: the pixmap of pixmap symbols is now cached in an agg-compatible state
   the first time it is accessed. this avoids rereading and retransforming 
