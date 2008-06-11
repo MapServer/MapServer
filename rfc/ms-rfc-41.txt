@@ -1,0 +1,120 @@
+=========================================================
+  MS RFC 41: Support of WCS 1.1.x Protocol
+=========================================================
+
+:Date: 2007/11/13
+:Author: Frank Warmerdam
+:Contact: warmerdam@pobox.com
+:Status: Development
+
+
+Overview
+--------
+
+It is proposed to extend MapServer to support the WCS 1.1 protocol.  MapServer already supports the WCS 1.0 protocol, but WCS 1.1 is significantly different. 
+
+
+Implementation Methodology
+--------------------------
+
+WCS 1.1 is closed based on OWS Common metadata (unlike WCS 1.0), and implementation of the WCS service will take advantage of the OWS metadata services in mapowscommon.c.  However, mapowscommon.c is based on libxml for xml serialization (unlike the printf() based WCS 1.0 service).  For this reason, WCS 1.1 GetCapabilities and DescribeCoverage implementations will be largely separate from WCS 1.0 implementations and will be implemented using libxml.  
+
+It should be noted that the format and organization of the WCS 1.1 capabilities and coverage description methods are so different that separate implementations would have been pretty much necessary anyways. 
+
+The key entry points in mapwcs.c for WCS services will be updated to "call out" to WCS 1.1 versions of the services in mapwcs11.c.  
+
+It is anticipated that the bulk of the WCS 1.0 GetCoverage implementation will be shared with WCS 1.1 with special WCS 1.1 implementations to handle specific issues in the request (RangeSet processing, and multi-part mime return results for instance). 
+
+
+WCS 1.1 Protocol Limitations
+----------------------------
+
+- Only one <Field> may be associated with the Range of Coverage when served through mapserver.
+- Only two types of Axis will be supported, a "Bands" axis, and a "Time" axis. 
+- WCS 1.1 (as WCS 1.0) will for the time being only support returning results as a single file even though in WCS 1.1 the result is actually encoded as a multi-part mime result.  At some point in the future it is desirable to support multi-file resultsets (eg png+worldfile).
+
+
+Metadata Mapping
+----------------
+
+The current WCS metadata items are tightly related to the WCS 1.0 protocol, while the WCS 1.1 protocol used a substantially different form and conventions for service, and coverage descriptions as well as for the getcoverage request.  The following table indicates which WCS metadata items are mapped to what coverage XML elements in WCS 1.0 and WCS 1.1.  
+
+ MapServer                   WCS 1.1                  WCS 1.0
+ ---------                   -------                  -------
+ <x>_keywordlist             ows:Keywords             keywords
+ <x>_label                   (unused)                 label
+ <x>_description             ows:Title                description
+ <x>_abstract (new)          ows:Abstract             (unused)
+ <x>_metadatalink_href       (unused)                 metadataLink
+ <x>_nativeformat            (unused)                 nativeFormat
+ <x>_rangeset_name           Field.Identifier         RangeSet.name
+ <x>_rangeset_label          Field.Title              Rangeset.label
+ <x>_bands_name              Axis.identifier          AxisDescription.name
+
+
+(incomplete)
+
+URNs / Coordinate Systems and Axis Orientation
+----------------------------------------------
+
+WCS 1.1 uses URNs like "urn:ogc:def:crs:EPSG::4326" or 
+"urn:ogc:def:crs:OGC::CRS84".  In addition the WCS protocol is required to 
+honour EPSG axis conventions when using coordinate systems within the EPSG
+authority space.  This means, for instance, that any coordinates in
+the urn:ogc:def:crs:EPSG::4326 coordinate system must be provided in lat,long
+ordering instead of the conventional long,lat.  
+
+In order to implement these requirements, several changes are planned:
+
+- msLoadProjectionString() will be updated to expand URNs in the EPSG and OGC name spaces.  
+- msLoadProjectionString() will add the "+epsgaxis=ne" parameter for URNs for
+  GCS codes in the EPSG name space. 
+- New msAxisNormalizePoints() and msAxisDenormalizePoints() will be added for
+  converting between normalized (easting,northing) axis orientation and
+  EPSG preferred (denormalized) axis orientation (sometimes northing,easting).
+  These functions will scan the p->args[] list for the +epsgaxis=ne to decide.
+- msOWSCommonBoundingBox() will be modified to use these axis denormalization
+  function to denormalize axis ordering for EPSG GCS URNs. 
+- the WCS 1.1 GetCoverage call will use msAxisNormalizePoints() to fix up 
+  orientation of request axes when needed.
+
+MapScript
+---------
+
+No changes to mapscript are anticipated. 
+
+
+Backwards Compatibility
+-----------------------
+
+No alterations to WCS 1.0 support are expected, and it is not expected that the mechanisms for specifying 
+services metadata will be changed though it is possible a few metadata items used only in WCS 1.1 will be added. 
+
+Documentation
+-------------
+
+The WCS Servers with MapServer HOWTO (http://mapserver.gis.umn.edu/docs/howto/wcs_server) will be extended to discuss WCS 1.1 related issues. 
+
+Implementation Resources
+------------------------
+
+Implementation will be done by Frank Warmerdam with financial support from Noetix Research Inc. and the Geoconnections program of the Canadian Government.  Preliminary implementation is already operational in svn trunk, and work completion is anticipated by March 1st. 
+
+Testing
+-------
+
+Tests will be added to msautotest/wxs for the WCS 1.1 protocol.  Additional assistance with WCS 1.1 validation from other contributors would be welcome.
+
+
+Bug ID
+------
+
+None Yet.
+
+
+Voting History
+--------------
+
+None Yet.
+
+
