@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapwfs.c: set layer extent to map extent for default
+  GetFeature requests with no spatial predicates (#1287)
 
 Version 5.2.0-beta1 (2008-06-11):
 ---------------------------------

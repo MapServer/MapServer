@@ -1080,7 +1080,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	
 	if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, layers[k]) == 0) {
 	  const char *pszThisLayerSRS;
-	  
+          char szBuf[32];
+          rectObj ext;
 	  bLayerFound = MS_TRUE;
 	  
 	  lp->status = MS_ON;
@@ -1113,8 +1114,29 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 		       "msWFSGetFeature()");
 	    return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
 	  }
-	}
-	
+
+          /* set the map extent to the layer extent */
+
+          /* get the extent of the layer (bbox will get further filtered later */
+          /* if the client specifies BBOX or a spatial filter */
+
+          if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
+            sprintf(szBuf, "init=epsg:%.10s", pszMapSRS+5);
+
+            if (szBuf != NULL) {
+              if (msLoadProjectionString(&(map->projection), szBuf) != 0) {
+                 msSetError(MS_WFSERR, "msLoadProjectionString() failed2: %s", "msWFSGetFeature()", szBuf);
+                 return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
+              }
+            }
+
+            if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
+               msProjectRect(&lp->projection, &map->projection, &(ext));
+            }
+
+            bbox = map->extent = ext;
+          }
+        }
       }
 
       if (!bLayerFound) {
