@@ -331,7 +331,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
      /*output format*/
       xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                   "Parameter", "outputFormat", 
-                                                                  "XMLSCHEMA,text/xml; subtype=gml/2.1.2,text/gml; subtype=gml/3.1.1"));
+                                                                  "XMLSCHEMA,text/xml; subtype=gml/2.1.2,text/xml; subtype=gml/3.1.1"));
 
 /* -------------------------------------------------------------------- */
 /*      GetFeatureType                                                  */
@@ -352,7 +352,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
      */
      xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                   "Parameter", "outputFormat", 
-                                                                  "text/gml; subtype=gml/3.1.1"));
+                                                                  "text/xml; subtype=gml/3.1.1"));
 
 /* -------------------------------------------------------------------- */
 /*      FeatureTypeList                                                 */

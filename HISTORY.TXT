@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapwfs.c/mapwfs11.c: set GML MIME type correctly
+
 - mapogcsos.c: advertise supported SRS list via
   MAP.WEB.METADATA.sos_srs (#2414)
 

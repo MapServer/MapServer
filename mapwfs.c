@@ -1125,7 +1125,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
             if (szBuf != NULL) {
               if (msLoadProjectionString(&(map->projection), szBuf) != 0) {
-                 msSetError(MS_WFSERR, "msLoadProjectionString() failed2: %s", "msWFSGetFeature()", szBuf);
+                 msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s", "msWFSGetFeature()", szBuf);
                  return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
               }
             }
@@ -1171,7 +1171,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       if(paramsObj->pszVersion == NULL || strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
       {
           outputformat = OWS_GML3;
-          output_schema_format = "text/gml; subtype=gml/3.1.1";
+          output_schema_format = "text/xml; subtype=gml/3.1.1";
       }
   }
   /* else if (strcasecmp(names[i], "PROPERTYNAME") == 0) */
