@@ -1267,6 +1267,8 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/sosGetCapabilities.xsd");
     xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
 
+    psTmpNode = xmlAddChild(psRootNode, xmlNewComment(BAD_CAST msGetVersion()));
+
     /*service identification*/
     psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(psNsOws, map, "SOS", pszSOSVersion));
 
@@ -1374,24 +1376,24 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                  value = msOWSLookupMetadata(&(lp->metadata), "S",
                                              "offering_description");
                  if (value)
-                 {
                      psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "description", BAD_CAST value);
-                 }
+                 else
+                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_offering_description\" missing for gml:description"));
 
                  /*name*/
                  lp = (GET_LAYER(map, j)); /*first layer*/
                  value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_name");
                  if (value)
-                 {
                      psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "name", BAD_CAST value);
-                 }
+                 else
+                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_name\" missing for gml:name"));
 
                  /* srsName */                 
-                 value = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE);
+                 value = msOWSLookupMetadata(&(map->web.metadata), "SO", "srs");
 
                  if (value)
-                     psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "srsName", BAD_CAST value);
-                 else
+                     msLibXml2GenerateList(psOfferingNode, psNsGml, "srsName", value, ' ');
+                 else                  
                      xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_srs\" missing for gml:srsName"));
 
                  /*bounding box */
@@ -1416,14 +1418,14 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                        
                  }
 
-
                  /* intended application */
 
                  value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_intendedapplication");
 
-                 if (value) {
-                   psNode = xmlNewChild(psOfferingNode, psNsSos, BAD_CAST "intendedApplication", BAD_CAST value);
-                 }
+                 if (value)
+                     psNode = xmlNewChild(psOfferingNode, psNsSos, BAD_CAST "intendedApplication", BAD_CAST value);
+                 else
+                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_intendedapplication\" missing for sos:intendedApplication"));
 
                  /*time*/
                  value = msOWSLookupMetadata(&(lp->metadata), "S", 
@@ -2044,6 +2046,11 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
         
   }
 
+  if (sosparams->pszSrsName) {
+    // validate SRS
+    // reproject output to this SRS later on..
+  }
+
   /* apply filter */
   if (sosparams->pszResult) {
     psFilterNode = FLTParseFilterEncoding(sosparams->pszResult);
@@ -2194,6 +2201,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
         strcasecmp(sosparams->pszResultModel, "om:Observation") != 0)
     {
         msSetError(MS_SOSERR, "resultModel should be om:Measurement or om:Observation", "msSOSGetObservation()");
+        free(xsi_schemaLocation);
+        free(schemalocation);
         return msSOSException(map, "resultModel", "InvalidParameterValue");
     }
 
