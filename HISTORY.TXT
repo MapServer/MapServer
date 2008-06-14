@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapogcsos.c: advertise supported SRS list via
+  MAP.WEB.METADATA.sos_srs (#2414)
+
 - mapwfs.c: set layer extent to map extent for default
   GetFeature requests with no spatial predicates (#1287)
 
