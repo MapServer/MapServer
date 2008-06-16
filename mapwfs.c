@@ -1309,10 +1309,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
         /*preparse the filter for gml aliases*/
         FLTPreParseFilterForAlias(psNode, map, iLayerIndex, "G");
 
-	if( FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE) != MS_SUCCESS ) {
-          msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()", pszFilter);
-	  return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
-        }
+        /* run filter.  If no results are found, do not throw exception */
+        /* this is a null result */
+	FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE);
 
         FLTFreeFilterEncodingNode( psNode );
         psNode = NULL;
@@ -1405,7 +1404,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
                      if( FLTApplyFilterToLayer(psNode, map, lp->index, MS_FALSE) != MS_SUCCESS ) {
                        msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature");
-                       return msWFSException(map, "mapserv", "InvalidMapfile", paramsObj->pszVersion);
+                       return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
                      }
 
                      FLTFreeFilterEncodingNode( psNode );

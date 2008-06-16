@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapwfs.c: do not return error for empty query results (#2444)
+
 - Remove C++-style comments and most other warnings thrown by -pedantic (#2598)
 
 - mapwfs.c/mapwfs11.c: set GML MIME type correctly
