@@ -75,7 +75,7 @@ public:
 		}
 	}
 
-        //--------------------------------------------------------------------
+        /*-------------------------------------------------------------------*/
         AGG_INLINE       T* buf()          { return m_buf;    }
         AGG_INLINE const T* buf()    const { return m_buf;    }
         AGG_INLINE unsigned width()  const { return m_width;  }
@@ -86,7 +86,7 @@ public:
             return (m_stride < 0) ? unsigned(-m_stride) : unsigned(m_stride); 
         }
 
-        //--------------------------------------------------------------------
+        /*-------------------------------------------------------------------*/
         AGG_INLINE       T* row_ptr(int, int y, unsigned) 
         { 
             return m_rows[y]; 
@@ -98,10 +98,10 @@ public:
             return row_data(0, m_width-1, m_rows[y]); 
         }
 
-        //--------------------------------------------------------------------
+        /*-------------------------------------------------------------------*/
         T const* const* rows() const { return &m_rows[0]; }
 
-        //--------------------------------------------------------------------
+        /*-------------------------------------------------------------------*/
         template<class RenBuf>
         void copy_from(const RenBuf& src)
         {
@@ -121,7 +121,7 @@ public:
             }
         }
 
-        //--------------------------------------------------------------------
+        /*-------------------------------------------------------------------*/
         void clear(T value)
         {
             unsigned y;
@@ -139,12 +139,12 @@ public:
         }
 
     private:
-        //--------------------------------------------------------------------
-        T*            m_buf;        // Pointer to rendering buffer
-        agg::pod_array<T*> m_rows;       // Pointers to each row of the buffer
-        unsigned      m_width;      // Width in pixels
-        unsigned      m_height;     // Height in pixels
-        int           m_stride;     // Number of bytes per row. Can be < 0
+        /*-------------------------------------------------------------------*/
+        T*            m_buf;        /* Pointer to rendering buffer */
+        agg::pod_array<T*> m_rows;  /* Pointers to each row of the buffer */
+        unsigned      m_width;      /* Width in pixels */
+        unsigned      m_height;     /* Height in pixels */
+        int           m_stride;     /* Number of bytes per row. Can be < 0 */
 };
 
 /*
@@ -161,7 +161,7 @@ public:
         m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
     }
     
-    //a class with virtual functions should also provide a virtual destructor
+    /* a class with virtual functions should also provide a virtual destructor */
     virtual ~line_adaptor() {}
     
     void rewind(unsigned) {
@@ -232,7 +232,7 @@ public:
         m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
     }
     
-    //a class with virtual functions should also provide a virtual destructor
+    /* a class with virtual functions should also provide a virtual destructor */
     virtual ~polygon_adaptor() {}
     
     void rewind(unsigned) {

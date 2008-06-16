@@ -1497,7 +1497,7 @@ yyreduce:
 					   bufferp=delim+1;
 					 }
 
-					 if(strcmp(yyvsp[-2].strval,bufferp) == 0) // is this test necessary?
+					 if(strcmp(yyvsp[-2].strval,bufferp) == 0) /* is this test necessary? */
 					   yyval.intval = MS_TRUE;
 					   free(yyvsp[-2].strval);
 					   free(yyvsp[0].strval);
@@ -1522,7 +1522,7 @@ yyreduce:
 					   bufferp=delim+1;
 					 }
 
-					 if(yyvsp[-2].dblval == atof(bufferp)) // is this test necessary?
+					 if(yyvsp[-2].dblval == atof(bufferp)) /* is this test necessary? */
 					   yyval.intval = MS_TRUE;
 					   
 					   free(yyvsp[0].strval);

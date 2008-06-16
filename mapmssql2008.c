@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  MS SQL 2008 (Katmai) Layer Connector
@@ -51,7 +51,7 @@
 
 MS_CVSID("$Id$")
 
-// Structure for connection to an ODBC database (Microsoft preferred way to connect to SQL Server 2005 from c/c++)
+/* Structure for connection to an ODBC database (Microsoft preferred way to connect to SQL Server 2005 from c/c++) */
 typedef struct msODBCconn_t
 {
     SQLHENV     henv;               /* ODBC HENV */
@@ -84,7 +84,7 @@ typedef struct ms_MSSQL2008_layer_info_t
     "For more help, please see http://www.mapdotnet.com \n\n<br><br>" \
     "mapmssql2008.c - version of 2007/7/1.\n"
 
-// Little dummy buffer used to clean up memory allocation
+/* Little dummy buffer used to clean up memory allocation */
 char dummyBuffer[1];
 
 msMSSQL2008LayerInfo *getMSSQL2008LayerInfo(const layerObj *layer)
@@ -164,7 +164,7 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
 
 static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, char **index_name, int debug);
 
-// Close connection and handles
+/* Close connection and handles */
 static void msMSSQL2008CloseConnection(void *conn_handle)
 {
     msODBCconn * conn = (msODBCconn *) conn_handle;
@@ -191,7 +191,7 @@ static void msMSSQL2008CloseConnection(void *conn_handle)
 	free(conn);
 }
 
-// Set the error string for the connection
+/* Set the error string for the connection */
 static void setConnError(msODBCconn *conn)
 {
     SQLSMALLINT len;
@@ -201,7 +201,7 @@ static void setConnError(msODBCconn *conn)
     conn->errorMessage[len] = 0;
 }
 
-// Connect to db
+/* Connect to db */
 static msODBCconn * mssql2008Connect(const char * connString)
 {
     char fullConnString[1024];
@@ -242,7 +242,7 @@ static msODBCconn * mssql2008Connect(const char * connString)
     return conn;
 }
 
-// Set the error string for the statement execution
+/* Set the error string for the statement execution */
 static void setStmntError(msODBCconn *conn)
 {
     SQLSMALLINT len;
@@ -252,7 +252,7 @@ static void setStmntError(msODBCconn *conn)
     conn->errorMessage[len] = 0;
 }
 
-// Execute SQL against connection. Set error string  if failed
+/* Execute SQL against connection. Set error string  if failed */
 static int executeSQL(msODBCconn *conn, const char * sql)
 {
     SQLRETURN rc;
@@ -272,7 +272,7 @@ static int executeSQL(msODBCconn *conn, const char * sql)
     }
 }
 
-// Get columns name from query results
+/* Get columns name from query results */
 static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLength)
 {
     SQLRETURN rc;
@@ -474,7 +474,7 @@ int msMSSQL2008LayerInitItemInfo(layerObj *layer)
     return MS_SUCCESS;
 }
 
-// Prepare and execute the SQL statement for this layer
+/* Prepare and execute the SQL statement for this layer */
 static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 {
     msMSSQL2008LayerInfo *layerinfo;
@@ -489,7 +489,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 		Plus SRID + comma - if SRID is a long...we'll be safe with 10 chars 
 	*/
 	char        box3d[40 + 10 * 17 + 11];
-    char        query_string_temp[10000];       // Should be big enough
+    char        query_string_temp[10000];       /* Should be big enough */
     int         t;
 
     char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
@@ -564,7 +564,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
         columns_wanted = _strdup(buffer);
     }
 
-	sprintf(box3d, "Geometry::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", // %s.STSrid)",
+	sprintf(box3d, "Geometry::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
 		rect.minx, rect.miny, 
 		rect.maxx, rect.miny, 
 		rect.maxx, rect.maxy, 
@@ -608,10 +608,10 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
         data_source = (char *)geom_table;
     }
 
-	// use the index hint if provided
+	/* use the index hint if provided */
 	if ( layerinfo->index_name )
 	{
-		// given the template - figure out how much to malloc and malloc it
+		/* given the template - figure out how much to malloc and malloc it */
 		char *with_template = "%s WITH (INDEX(%s))";
 		int need_len = strlen(data_source) + strlen(with_template) + strlen(layerinfo->index_name);
 		char *tmp = (char*) malloc( need_len + 1 );
@@ -653,7 +653,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     }
 }
 
-// Execute SQL query for this layer
+/* Execute SQL query for this layer */
 int msMSSQL2008LayerWhichShapes(layerObj *layer, rectObj rect)
 {
     msMSSQL2008LayerInfo  *layerinfo = 0;
@@ -1213,11 +1213,11 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 	char dummyBuffer[1];
 	char *wkbBuffer;
 	char *valueBuffer;
-	char oidBuffer[ 16 ];		// assuming the OID will always be a long this should be enough
+	char oidBuffer[ 16 ];		/* assuming the OID will always be a long this should be enough */
     long record_oid;
 	int t;
 
-    // for coercing single types into geometry collections
+    /* for coercing single types into geometry collections */
     char *wkbTemp;
     int geomType;
 
@@ -1239,12 +1239,12 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
     while(shape->type == MS_SHAPE_NULL) 
     {
-        // SQLRETURN rc = SQLFetchScroll(layerinfo->conn->hstmt, SQL_FETCH_ABSOLUTE, (SQLINTEGER) (*record) + 1);
+        /* SQLRETURN rc = SQLFetchScroll(layerinfo->conn->hstmt, SQL_FETCH_ABSOLUTE, (SQLINTEGER) (*record) + 1); */
 
-        // We only do forward fetches. the parameter 'record' is ignored, but is incremented
+        /* We only do forward fetches. the parameter 'record' is ignored, but is incremented */
         SQLRETURN rc = SQLFetch(layerinfo->conn->hstmt);
 
-        // Any error assume out of recordset bounds
+        /* Any error assume out of recordset bounds */
         if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
         {
             return MS_DONE;
@@ -1259,10 +1259,10 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
             for(t=0; t < layer->numitems; t++)
 			{
-				// figure out how big the buffer needs to be
+				/* figure out how big the buffer needs to be */
                 rc = SQLGetData(layerinfo->conn->hstmt, t + 1, SQL_C_BINARY, dummyBuffer, 0, &needLen);
 
-				// allocate the buffer - this will be a null-terminated string so alloc for the null too
+				/* allocate the buffer - this will be a null-terminated string so alloc for the null too */
 				valueBuffer = (char*) malloc( needLen + 1 );
 				if ( valueBuffer == NULL )
 				{
@@ -1270,25 +1270,25 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 					return MS_FAILURE;
 				}
 
-				// Now grab the data
+				/* Now grab the data */
                 rc = SQLGetData(layerinfo->conn->hstmt, t + 1, SQL_C_BINARY, valueBuffer, needLen, &retLen);
 
-				// Terminate the buffer
+				/* Terminate the buffer */
                 valueBuffer[retLen] = 0; /* null terminate it */
 
-				// Pop the value into the shape's value array
+				/* Pop the value into the shape's value array */
                 shape->values[t] = valueBuffer;
             }
 
-            // Get shape geometry
+            /* Get shape geometry */
             {
-				// Set up to request the size of the buffer needed
+				/* Set up to request the size of the buffer needed */
                 rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 1, SQL_C_BINARY, dummyBuffer, 0, &needLen);
 
-                // allow space for coercion to geometry collection if needed
+                /* allow space for coercion to geometry collection if needed
                 wkbTemp = (char*)malloc(needLen+9);  
 
-                // write data above space allocated for geometry collection coercion
+                /* write data above space allocated for geometry collection coercion */
                 wkbBuffer = wkbTemp + 9; 
 
 				if ( wkbBuffer == NULL )
@@ -1297,25 +1297,25 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 					return MS_FAILURE;
 				}
 
-				// Grab the WKB
+				/* Grab the WKB */
                 rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 1, SQL_C_BINARY, wkbBuffer, needLen, &retLen);
 
                 memcpy(&geomType, wkbBuffer + 1, 4);
 
-                // is this a single type?
+                /* is this a single type? */
                 if (geomType < 4)
                 {
-                    // copy byte order marker (although we don't check it)
+                    /* copy byte order marker (although we don't check it) */
                     wkbTemp[0] = wkbBuffer[0];
                     wkbBuffer = wkbTemp;
 
-                    // indicate type is geometry collection (although geomType + 3 would also work)
+                    /* indicate type is geometry collection (although geomType + 3 would also work) */
                     wkbBuffer[1] = (char)7;
                     wkbBuffer[2] = (char)0;
                     wkbBuffer[3] = (char)0;
                     wkbBuffer[4] = (char)0;
 
-                    // indicate 1 shape
+                    /* indicate 1 shape */
                     wkbBuffer[5] = (char)1;
                     wkbBuffer[6] = (char)0;
                     wkbBuffer[7] = (char)0;
@@ -1358,7 +1358,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
                 free(wkbTemp);
             }
 
-            // Next get unique id for row - since the OID shouldn't be larger than a long we'll assume billions as a limit
+            /* Next get unique id for row - since the OID shouldn't be larger than a long we'll assume billions as a limit */
             rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 2, SQL_C_BINARY, oidBuffer, sizeof(oidBuffer) - 1, &retLen);
 			oidBuffer[retLen] = 0;
             record_oid = strtol(oidBuffer, NULL, 10);
@@ -1376,7 +1376,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
             {
                 msDebug("msMSSQL2008LayerGetShapeRandom bad shape: %d\n", *record);
             }
-            // if (layer->type == MS_LAYER_POINT) {return MS_DONE;}
+            /* if (layer->type == MS_LAYER_POINT) {return MS_DONE;} */
         }
     }
 
@@ -1448,7 +1448,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
         columns_wanted = _strdup(buffer);
     }
 
-	// index_name is ignored here since the hint should be for the spatial index, not the PK index
+	/* index_name is ignored here since the hint should be for the spatial index, not the PK index */
     snprintf(buffer, sizeof(buffer), "select %s from %s where %s = %d", columns_wanted, layerinfo->geom_table, layerinfo->urid_name, record);
 
     query_str = _strdup(buffer);
@@ -1568,7 +1568,7 @@ int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
     return MS_SUCCESS;
 }
 
-// Get primary key column of table
+/* Get primary key column of table */
 int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_name, int debug) 
 {
 
@@ -1601,7 +1601,7 @@ int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_na
       return(MS_FAILURE);
     }
 
-    // error somewhere above here in this method 
+    /* error somewhere above here in this method */
 
     if(!executeSQL(layerinfo->conn, sql)) 
     {

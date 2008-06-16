@@ -566,7 +566,7 @@ const char *msOWSLookupMetadata2(hashTableObj *pri,
     
     if ((result = msOWSLookupMetadata(pri, namespaces, name)) == NULL)
     {
-        // Try the secondary table
+        /* Try the secondary table */
         result = msOWSLookupMetadata(sec, namespaces, name);
     }
 
