@@ -3761,7 +3761,7 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
     if (psBox)
     {
         pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
-        if (ppszSRS)
+        if (*ppszSRS)
           *ppszSRS = strdup(pszSRS);
 
         psCoordinates = CPLGetXMLNode(psBox, "coordinates");
