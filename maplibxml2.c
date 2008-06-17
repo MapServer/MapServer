@@ -75,10 +75,9 @@ void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elnam
  *
  * @return result xmlXPathObjectPtr pointer
  *
- *
  */
 
-xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath){
+xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath) {
   xmlXPathObjectPtr result;
   result = xmlXPathEval(xpath, context);
   if (result == NULL) {
@@ -88,6 +87,34 @@ xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, x
     xmlXPathFreeObject(result);
     return NULL;
   }
+  return result;
+}
+
+/**
+ * msLibXml2GetXPathTree
+ *
+ * Convenience function to fetch an XPath and children
+ *
+ * @param xmlDocPtr doc the XML doc pointer
+ * @param xmlXPathObjectPtr the xpath object
+ *
+ * @return result string
+ *
+ */
+
+const char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath) {
+  xmlBufferPtr xbuf;
+  const char *result = NULL;
+
+  xbuf = xmlBufferCreate();
+
+  if (xpath) {
+    if (xmlNodeDump(xbuf, doc, xpath->nodesetval->nodeTab[0], 0, 0) == -1) {
+      return NULL;
+    }
+    result = strdup((char *)xbuf->content);
+  }
+  xmlBufferFree(xbuf);
   return result;
 }
 

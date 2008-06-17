@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  libxml2 convenience wrapper functions include file
@@ -40,6 +40,8 @@
 xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath);
 
 void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elname, const char *values, char delim);
+
+const char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath);
 
 #endif /* defined(USE_LIBXML2) */
 
