@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapogcsos.c: fix POST support (#2379)
+
 - maplibxml2.c: helper functions XML POST fix (#2379)
 
 - mapwfs.c: fix segfault when srsName is not passed on BBOX Filter (#2644)

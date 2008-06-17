@@ -1978,7 +1978,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
       msFreeCharArray(apszTimes, numtimes);
     }
     if (!pszTimeString) {
-      msSetError(MS_SOSERR, "Invalid time value given for the eventTime parameter", "msSOSGetObservation()", sosparams->pszObservedProperty);
+      msSetError(MS_SOSERR, "Invalid time value given for the eventTime parameter %s", "msSOSGetObservation()", sosparams->pszEventTime);
       return msSOSException(map, "eventtime", "InvalidParameterValue");
     }
     for (i=0; i<map->numlayers; i++) {
@@ -2030,25 +2030,18 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
       return msSOSException(map, "featureofinterest", "InvalidParameterValue");
     }
 
-
     CPLStripXMLNamespace(psRoot, "gml", 1);
     bValid = FLTParseGMLEnvelope(psRoot, &sBbox, &pszSRS);
 
-    /*TODO we should reproject the bbox to the map projection if there is an srs defined*/
+    /* TODO we should reproject the bbox to the map projection if there is an srs defined */
     if (!bValid) {
-            msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest .", "msSOSGetObservation()");
+            msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest %s.", "msSOSGetObservation()", sosparams->pszEventTime);
             return msSOSException(map, "featureofinterest", "InvalidParameterValue");
         }
         map->extent.minx = sBbox.minx;
         map->extent.miny = sBbox.miny;
         map->extent.maxx = sBbox.maxx;
         map->extent.maxy = sBbox.maxy;
-        
-  }
-
-  if (sosparams->pszSrsName) {
-    // validate SRS
-    // reproject output to this SRS later on..
   }
 
   /* apply filter */
@@ -2056,8 +2049,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     psFilterNode = FLTParseFilterEncoding(sosparams->pszResult);
 
     if (!psFilterNode) {
-      msSetError(MS_SOSERR, "Invalid or Unsupported FILTER in GetObservation", "msSOSGetObservation()");
-      return msSOSException(map, "filter", "InvalidParameterValue");
+      msSetError(MS_SOSERR, "Invalid or Unsupported RESULT in GetObservation: %s", "msSOSGetObservation()", sosparams->pszResult);
+      return msSOSException(map, "result", "InvalidParameterValue");
     }
     /* apply the filter to all layers that are on */
     for (i=0; i<map->numlayers; i++) {
@@ -2069,8 +2062,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
           (there is a corresponding layer attribute) */
         if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
           if (msSOSValidateFilter(psFilterNode, lp)== MS_FALSE) {
-            msSetError(MS_SOSERR, "Invalid component name in ogc filter statement", "msSOSGetObservation()");
-            return msSOSException(map, "filter", "InvalidParameterValue");
+            msSetError(MS_SOSERR, "Invalid component name in RESULT statement", "msSOSGetObservation()");
+            return msSOSException(map, "result", "InvalidParameterValue");
           }
           msLayerClose(lp);
         }
@@ -2126,7 +2119,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/swe/1.0.1", BAD_CAST "swe"));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX));
-    xmlSetNs(psRootNode,   xmlNewNs(psRootNode, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix));
+    xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST pszSOSNamespaceUri, BAD_CAST pszSOSNamespacePrefix));
     xmlSetNs(psRootNode,  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/om/1.0", BAD_CAST "om"));
  
     xmlNewNsProp(psRootNode, psNsGml, BAD_CAST "id", BAD_CAST sosparams->pszOffering);
@@ -2579,6 +2572,7 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
   xmlXPathContextPtr context;
   xmlNodeSetPtr nodeset;
   xmlXPathObjectPtr psXPathTmp;
+  char *pszTmp = NULL;
 
   if (request->NumParams) { /* this is a GET request */
     for(i=0; i<request->NumParams; i++) {
@@ -2637,7 +2631,10 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     }
 
     /* register namespaces */
-    if(xmlXPathRegisterNs(context, (xmlChar *)"sos", (xmlChar *)"http://www.opengis.net/sos/1.0") != 0 || xmlXPathRegisterNs(context, (xmlChar *)"ows", (xmlChar *)"http://www.opengis.net/ows/1.1") != 0) {
+    if(xmlXPathRegisterNs(context, (xmlChar *)"sos", (xmlChar *)"http://www.opengis.net/sos/1.0") != 0 ||
+       xmlXPathRegisterNs(context, (xmlChar *)"ows", (xmlChar *)"http://www.opengis.net/ows/1.1") != 0 ||
+       xmlXPathRegisterNs(context, (xmlChar *)"ogc", (xmlChar *)"http://www.opengis.net/ogc") != 0 ||
+       xmlXPathRegisterNs(context, (xmlChar *)"gml", (xmlChar *)"http://www.opengis.net/gml") != 0) {
       msSetError(MS_SOSERR, "Could not register namespaces (xmlXPathRegisterNs)", "msSOSParseRequest()");
       return msSOSException(map, "request", "NoApplicableCode");
     }
@@ -2777,6 +2774,39 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     if (psXPathTmp) {
       nodeset = psXPathTmp->nodesetval;
       sosparams->pszSrsName = (char *)xmlNodeListGetString(doc, nodeset->nodeTab[0]->xmlChildrenNode, 1);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for result (chunk of XML) */
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:result/child::*");
+
+    if (psXPathTmp) {
+      sosparams->pszResult = strdup(msLibXml2GetXPathTree(doc, psXPathTmp));
+      pszTmp = msStringConcatenate(pszTmp, "<ogc:Filter>");
+      pszTmp = msStringConcatenate(pszTmp, sosparams->pszResult);
+      pszTmp = msStringConcatenate(pszTmp, "</ogc:Filter>");
+      msFree(sosparams->pszResult); 
+      sosparams->pszResult = strdup(pszTmp);
+      msFree(pszTmp);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for featureOfInterest (chunk of XML) */
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:featureOfInterest/ogc:BBOX/gml:Envelope");
+
+    if (psXPathTmp) {
+      sosparams->pszFeatureOfInterest = (char *)msLibXml2GetXPathTree(doc, psXPathTmp);
+    }
+
+    xmlXPathFreeObject(psXPathTmp);
+
+    /* check for eventTime (chunk of XML) */
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:eventTime/ogc:TM_Equals/gml:TimeInstant|/sos:GetObservation/sos:eventTime/ogc:TM_Equals/gml:TimePeriod");
+
+    if (psXPathTmp) {
+      sosparams->pszEventTime = (char *)msLibXml2GetXPathTree(doc, psXPathTmp);
     }
 
     xmlXPathFreeObject(psXPathTmp);
