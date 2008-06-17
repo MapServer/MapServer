@@ -541,7 +541,6 @@ typedef struct {
 } queryMapObj;
 
 /* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
-#ifndef SWIG
 #define MS_STYLE_BINDING_LENGTH 5
 enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR, MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL};
 #define MS_LABEL_BINDING_LENGTH 6
@@ -550,7 +549,7 @@ enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_L
 /************************************************************************/
 /*                         attributeBindingObj                          */
 /************************************************************************/
-
+#ifndef SWIG
 typedef struct {
   char *item;
   int index;
