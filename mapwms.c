@@ -1361,24 +1361,23 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                            legendurl = (char*)malloc(strlen(script_url_encoded)+200);
 
 #ifdef USE_GD_PNG
-                           mimetype = strdup("image/png");
+                           mimetype = msEncodeHTMLEntities("image/png");
 #endif
 #ifdef USE_GD_GIF
                            if (!mimetype)
-                             mimetype = strdup("image/gif");
+                             mimetype = msEncodeHTMLEntities("image/gif");
 #endif
 
 #ifdef USE_GD_JPEG
                            if (!mimetype)
-                             mimetype = strdup("image/jpeg");
+                             mimetype = msEncodeHTMLEntities("image/jpeg");
 #endif
 #ifdef USE_GD_WBMP
                            if (!mimetype)
-                             mimetype = strdup("image/vnd.wap.wbmp");
+                             mimetype = msEncodeHTMLEntities("image/vnd.wap.wbmp");
 #endif
                            if (!mimetype)
-                             mimetype = MS_IMAGE_MIME_TYPE(map->outputformat);         
-                           mimetype = msEncodeHTMLEntities(mimetype);
+                               mimetype = msEncodeHTMLEntities(MS_IMAGE_MIME_TYPE(map->outputformat));
 
                            /* -------------------------------------------------------------------- */
                            /*      check if the group parameters for the classes are set. We       */
@@ -1419,10 +1418,12 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                            }
                            for (i=0; i<iclassgroups; i++)
                            {
+                               char *name_encoded = msEncodeHTMLEntities(lp->name);
                                sprintf(legendurl, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=%s",  
-                                       script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
+                                       script_url_encoded,"1.1.1",name_encoded,
                                        mimetype,  classgroups[i]);
-                           
+                               msFree(name_encoded);
+
                                msIO_fprintf(stdout, "        <Style>\n");
                                msIO_fprintf(stdout, "          <Name>%s</Name>\n",  classgroups[i]);
                                msIO_fprintf(stdout, "          <Title>%s</Title>\n", classgroups[i]);
