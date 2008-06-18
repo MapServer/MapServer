@@ -12093,6 +12093,8 @@ static long _phpms_build_web_object(webObj *pweb,
     add_property_double(return_value, "maxscale",       pweb->maxscaledenom);
 
     PHPMS_ADD_PROP_STR(return_value,  "queryformat",    pweb->queryformat);
+    PHPMS_ADD_PROP_STR(return_value,  "legendformat",   pweb->legendformat);
+    PHPMS_ADD_PROP_STR(return_value,  "browseformat",   pweb->browseformat);
     
     
 #ifdef PHP4
@@ -12159,6 +12161,8 @@ DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING(  "mintemplate",   self->mintemplate) 
     else IF_SET_STRING(  "maxtemplate",   self->maxtemplate) 
     else IF_SET_STRING(  "queryformat",   self->queryformat) 
+    else IF_SET_STRING(  "legendformat",  self->legendformat) 
+    else IF_SET_STRING(  "browseformat",  self->browseformat) 
     else IF_SET_LONG(    "minscaledenom", self->minscaledenom)
     else IF_SET_LONG(    "maxscaledenom", self->maxscaledenom)  
     /* TODO: *scale deprecated in v5.0. Remove in future release */

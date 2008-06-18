@@ -1122,6 +1122,8 @@ Currently supported classes, properties and methods:
    double maxscale  (Deprecated in v5.0, use maxscaledenom instead)
    rectObj extent   (read-only)
    string queryformat
+   string legendformat
+   string browseformat
 
  Methods:
 
