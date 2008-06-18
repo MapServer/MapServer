@@ -384,6 +384,7 @@ dnl Iconv can come either as libiconv.so or as part of glibc
 dnl ---------------------------------------------------------------------
 
 unset ac_cv_lib_iconv_libiconv_open
+unset ac_cv_lib_iconv_iconv_open
 unset ac_cv_lib_c_iconv_open
 
 AC_ARG_WITH(libiconv,
@@ -410,6 +411,7 @@ if test -n "$ICONV_DIR" ; then
   dnl Just doing the AC_CHECK_LIB(iconv ...) last does the trick.
   AC_CHECK_LIB(c, iconv_open, ICONV_LIB="-L$ICONV_LIBDIR -lc",,"-L$ICONV_LIBDIR")
   AC_CHECK_LIB(iconv, libiconv_open, ICONV_LIB="-L$ICONV_LIBDIR -liconv",,"-L$ICONV_LIBDIR")
+  AC_CHECK_LIB(iconv, iconv_open, ICONV_LIB="-L$ICONV_LIBDIR -liconv",,"-L$ICONV_LIBDIR")
 
 fi
 
@@ -428,6 +430,7 @@ else
   unset ac_cv_lib_c_iconv_open
   AC_CHECK_LIB(c, iconv_open, ICONV_LIB="-lc",,)
   AC_CHECK_LIB(iconv, libiconv_open, ICONV_LIB="-liconv",,)
+  AC_CHECK_LIB(iconv, iconv_open, ICONV_LIB="-liconv",,)
 
   if test -n "$ICONV_LIB" ; then
     AC_MSG_RESULT([        using libiconv from system libs.])

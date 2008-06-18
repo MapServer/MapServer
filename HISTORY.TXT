@@ -13,11 +13,15 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed libiconv detection in configure for OSX 10.5 64 bit (#2396)
+
 - mapstring.c: possible buffer overflow in msGetPath (#2649)
 
-- maputil.c: Correct expression evaluation with text containing apostrophes (#2641)
+- maputil.c: Correct expression evaluation with text containing 
+  apostrophes (#2641)
 
-- mapwfs.c: Genrate possibly an error message when applying filter encoding (#2444)
+- mapwfs.c: Possibly generate an error message when applying filter 
+  encoding (#2444)
 
 - Added MS_LABEL_BINDING constants for SWIG MapScript (#2643)
 
