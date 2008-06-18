@@ -478,13 +478,15 @@ char *msGetPath(char *fn)
     }
   }
 
+  if(strcmp(str, fn) == 0)
+  {
+    msFree(str);
 #if defined(_WIN32) && !defined(__CYGWIN__)  
-  if(strcmp(str, fn) == 0)
-    strcpy(str, ".\\");
+    str = strdup(".\\");
 #else
-  if(strcmp(str, fn) == 0)
-    strcpy(str, "./");
+    str= strdup("./");
 #endif  
+  }
 
   return(str);
 }
