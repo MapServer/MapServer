@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+-  mapwfs.c: Genrate possibly an error message when applying filter encoding (#2444)
+
 - Added MS_LABEL_BINDING constants for SWIG MapScript (#2643)
 
 - mapogcsos.c: fix POST support (#2379)

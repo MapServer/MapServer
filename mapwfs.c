@@ -1224,6 +1224,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       FilterEncodingNode *psNode = NULL;
       int iLayerIndex =1;
       char **paszFilter = NULL;
+      errorObj   *ms_error;
       
       /* -------------------------------------------------------------------- */
       /*      Validate the parameters. When a FILTER parameter is given,      */
@@ -1311,7 +1312,16 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
         /* run filter.  If no results are found, do not throw exception */
         /* this is a null result */
-	FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE);
+        if( FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE) != MS_SUCCESS ) 
+        {
+            ms_error = msGetErrorObj();
+	
+            if(ms_error->code != MS_NOTFOUND)
+            {
+                msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()", pszFilter);
+                return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
+            }
+        }
 
         FLTFreeFilterEncodingNode( psNode );
         psNode = NULL;
