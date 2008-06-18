@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementations for MapServer IO redirection capability.
@@ -240,37 +240,127 @@ int msIO_contextWrite( msIOContext *context, const void *data, int byteCount )
 /* ==================================================================== */
 
 /************************************************************************/
+/*                            _ms_vsprintf()                            */
+/************************************************************************/
+
+static int _ms_vsprintf(char **workBufPtr, const char *format, va_list ap )
+
+{
+    int     ret_val;
+    int   workBufSize = 16000;
+
+    *workBufPtr = (char*)malloc(workBufSize * sizeof(char));
+    if (*workBufPtr == NULL)
+    {
+        msSetError( MS_MEMERR, NULL, "_ms_vsprintf()");
+        return -1;
+    }
+
+#if defined(HAVE_VSNPRINTF)
+    /* This should grow a big enough buffer to hold any formatted result. */
+    {
+        va_list wrk_args;
+
+#ifdef va_copy
+        va_copy( wrk_args, ap );
+#else
+        wrk_args = ap;
+#endif
+
+        while( (ret_val = vsnprintf( *workBufPtr, workBufSize, 
+                                     format, wrk_args)) >= workBufSize-1 
+               || ret_val == -1 )
+        {
+            workBufSize *= 4;
+            *workBufPtr = (char *) realloc(*workBufPtr, workBufSize );
+            if (*workBufPtr == NULL)
+            {
+                msSetError( MS_MEMERR, NULL, "_ms_vsprintf()");
+                va_end( wrk_args );
+                return -1;
+            }
+#ifdef va_copy
+            va_end( wrk_args );
+            va_copy( wrk_args, ap );
+#else
+            wrk_args = ap;
+#endif
+        }
+        va_end( wrk_args );
+    }
+#else
+    /* We do not have vsnprintf()... there is a risk of buffer overrun */
+    ret_val = vsprintf( *workBufPtr, format, ap );
+
+    if( ret_val < 0 || ret_val >= workBufSize )
+    {
+        msSetError(MS_MISCERR, "Possible buffer overrun.", "_ms_vsprintf()");
+        msFree(*workBufPtr);
+        *workBufPtr = NULL;
+        return -1;
+    }
+#endif
+
+    return ret_val;
+}
+
+
+/************************************************************************/
 /*                            msIO_printf()                             */
 /************************************************************************/
 
 int msIO_printf( const char *format, ... )
 
 {
-    va_list args;
+    va_list args, args_copy;
     int     return_val;
     msIOContext *context;
-    char workBuf[8000];
+    char workBuf[8000], *largerBuf = NULL;
 
     va_start( args, format );
-#if defined(HAVE_VSNPRINTF)
-    return_val = vsnprintf( workBuf, sizeof(workBuf), format, args );
-#else
-    return_val = vsprintf( workBuf, format, args);
-#endif
 
-    va_end( args );
+#if !defined(HAVE_VSNPRINTF)
+    return_val = vsprintf( workBuf, format, args);
 
     if( return_val < 0 || return_val >= sizeof(workBuf) )
     {
+        va_end( args );
         msSetError(MS_MISCERR, "Possible buffer overrun.", "msIO_printf()");
         return -1;
     }
+
+#else
+
+#ifdef va_copy
+    va_copy( args_copy, args );
+#else
+    args_copy = args;
+#endif /* va_copy */
+
+    return_val = vsnprintf( workBuf, sizeof(workBuf), format, args );
+    if (return_val == -1 || return_val >= sizeof(workBuf)-1)
+    {
+        return_val = _ms_vsprintf(&largerBuf, format, args_copy );
+    }
+    va_end(args_copy);
+
+#endif /* HAVE_VSNPRINTF */
+
+    va_end( args );
+
+    if (return_val < 0)
+        return -1;
 
     context = msIO_getHandler( stdout );
     if( context == NULL )
         return -1;
 
-    return msIO_contextWrite( context, workBuf, return_val );
+    return_val = msIO_contextWrite( context, 
+                                    largerBuf?largerBuf:workBuf, 
+                                    return_val );
+    msFree(largerBuf);
+
+    return return_val;
 }
 
 /************************************************************************/
@@ -280,31 +370,56 @@ int msIO_printf( const char *format, ... )
 int msIO_fprintf( FILE *fp, const char *format, ... )
 
 {
-    va_list args;
+    va_list args, args_copy;
     int     return_val;
     msIOContext *context;
-    char workBuf[8000];
+    char workBuf[8000], *largerBuf = NULL;
 
     va_start( args, format );
-#if defined(HAVE_VSNPRINTF)
-    return_val = vsnprintf( workBuf, sizeof(workBuf), format, args );
-#else
-    return_val = vsprintf( workBuf, format, args);
-#endif
 
-    va_end( args );
+#if !defined(HAVE_VSNPRINTF)
+    return_val = vsprintf( workBuf, format, args);
 
     if( return_val < 0 || return_val >= sizeof(workBuf) )
     {
+        va_end( args );
         msSetError(MS_MISCERR, "Possible buffer overrun.", "msIO_fprintf()");
         return -1;
     }
 
+#else
+
+#ifdef va_copy
+    va_copy( args_copy, args );
+#else
+    args_copy = args;
+#endif /* va_copy */
+
+    return_val = vsnprintf( workBuf, sizeof(workBuf), format, args );
+    if (return_val == -1 || return_val >= sizeof(workBuf)-1)
+    {
+        return_val = _ms_vsprintf(&largerBuf, format, args_copy );
+    }
+    va_end(args_copy);
+
+#endif /* HAVE_VSNPRINTF */
+
+    va_end( args );
+
+    if (return_val < 0)
+        return -1;
+
     context = msIO_getHandler( fp );
     if( context == NULL )
-        return fwrite( workBuf, 1, return_val, fp );
+        return_val = fwrite( largerBuf?largerBuf:workBuf, 1, return_val, fp );
     else
-        return msIO_contextWrite( context, workBuf, return_val );
+        return_val =  msIO_contextWrite( context, 
+                                         largerBuf?largerBuf:workBuf, 
+                                         return_val );
+
+    msFree(largerBuf);
+
+    return return_val;
 }
 
 /************************************************************************/
@@ -314,15 +429,13 @@ int msIO_fprintf( FILE *fp, const char *format, ... )
 int msIO_vfprintf( FILE *fp, const char *format, va_list ap )
 
 {
+    va_list args_copy;
     int     return_val;
     msIOContext *context;
-    char workBuf[8000];
+    char workBuf[8000], *largerBuf = NULL;
 
-#if defined(HAVE_VSNPRINTF)
-    return_val = vsnprintf( workBuf, sizeof(workBuf), format, ap );
-#else
-    return_val = vsprintf( workBuf, format, ap );
-#endif
+#if !defined(HAVE_VSNPRINTF)
+    return_val = vsprintf( workBuf, format, ap);
 
     if( return_val < 0 || return_val >= sizeof(workBuf) )
     {
@@ -330,11 +443,37 @@ int msIO_vfprintf( FILE *fp, const char *format, va_list ap )
         return -1;
     }
 
+#else
+
+#ifdef va_copy
+    va_copy( args_copy, ap );
+#else
+    args_copy = ap;
+#endif /* va_copy */
+
+    return_val = vsnprintf( workBuf, sizeof(workBuf), format, ap );
+    if (return_val == -1 || return_val >= sizeof(workBuf)-1)
+    {
+        return_val = _ms_vsprintf(&largerBuf, format, args_copy );
+    }
+    va_end(args_copy);
+
+#endif /* HAVE_VSNPRINTF */
+
+    if (return_val < 0)
+        return -1;
+
     context = msIO_getHandler( fp );
     if( context == NULL )
-        return fwrite( workBuf, 1, return_val, fp );
+        return_val = fwrite( largerBuf?largerBuf:workBuf, 1, return_val, fp );
     else
-        return msIO_contextWrite( context, workBuf, return_val );
+        return_val =  msIO_contextWrite( context, 
+                                         largerBuf?largerBuf:workBuf, 
+                                         return_val );
+
+    msFree(largerBuf);
+
+    return return_val;
 }
 
 /************************************************************************/

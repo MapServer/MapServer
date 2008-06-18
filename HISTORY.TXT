@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Removed static buffer size limit in msIO_*printf() functions (#2214)
+
 - Fixed libiconv detection in configure for OSX 10.5 64 bit (#2396)
 
 - mapstring.c: possible buffer overflow in msGetPath (#2649)
