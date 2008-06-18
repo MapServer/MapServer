@@ -88,8 +88,7 @@ int FLTGetGeosOperator(char *pszValue)
       return MS_GEOS_TOUCHES;
      else if (strcasecmp(pszValue, "Crosses") == 0)
       return MS_GEOS_CROSSES;
-     else if (strcasecmp(pszValue, "Within") == 0 ||
-              strcasecmp(pszValue, "DWithin") == 0)
+     else if (strcasecmp(pszValue, "Within") == 0)
       return MS_GEOS_WITHIN;
      else if (strcasecmp(pszValue, "Contains") == 0)
       return MS_GEOS_CONTAINS;
@@ -97,6 +96,8 @@ int FLTGetGeosOperator(char *pszValue)
       return MS_GEOS_OVERLAPS;
      else if (strcasecmp(pszValue, "Beyond") == 0)
       return MS_GEOS_BEYOND;
+    else if (strcasecmp(pszValue, "DWithin") == 0)
+      return MS_GEOS_DWITHIN;
 
     return -1;
 }
@@ -318,7 +319,8 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0) /* && dfDistance >=0) */
     {
-        if (bUseGeos)
+
+      if (bUseGeos)
         {
             if ((strcasecmp(psNode->pszValue, "DWithin") == 0 ||
                  strcasecmp(psNode->pszValue, "Beyond") == 0 ) &&

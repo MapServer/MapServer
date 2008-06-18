@@ -1217,7 +1217,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
 /************************************************************************/
 /*                            msQueryByOperator                         */
 /*                                                                      */
-/*      uary using a shape and a valid operator : all queries are       */
+/*      query using a shape and a valid operator : all queries are       */
 /*      done using geos.                                                */
 /************************************************************************/
 int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
@@ -1227,11 +1227,12 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
     int start, stop=0, l;
     shapeObj shape;
     layerObj *lp;
-    char status;
+    int status;
     rectObj searchrect;
      
     int nclasses = 0;
     int *classgroup = NULL;
+    double dfValue;
 
     msInitShape(&shape);
 
@@ -1394,14 +1395,22 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
               status = MS_FALSE;
             break;
 
-            /*beyond is opposite of dwith use in filter encoding
-              see ticket 2105*/
+            /*beyond is opposite of dwithin use in filter encoding
+              see ticket 2105, 2564*/
           case MS_GEOS_BEYOND:
-            status = msGEOSWithin(&shape, selectshape);
-            if (status != MS_TRUE && status != MS_FALSE)
-              status = MS_FALSE;
-            else
-              status = !status;
+            status = MS_FALSE;
+            dfValue = msGEOSDistance(&shape, selectshape);
+            if (dfValue > 0.0)
+               status = MS_TRUE;
+          break;
+
+          /*dwithin is used with filter encoding (#2564)*/
+          case MS_GEOS_DWITHIN:
+            status = MS_FALSE;
+            dfValue = msGEOSDistance(&shape, selectshape);
+            if (dfValue == 0.0)
+              status = MS_TRUE;
+
           break;
 
           default:
