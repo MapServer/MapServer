@@ -333,7 +333,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems)
 {
   int i;
-  char *tmpstr=NULL;
+  char *tmpstr=NULL, *tmpstr2=NULL;
   int status;
   int expresult;  /* result of logical expression parsing operation */
   
@@ -359,9 +359,10 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     tmpstr = strdup(expression->string);
 
     for(i=0; i<expression->numitems; i++) {
-        items[expression->indexes[i]] = msReplaceSubstring( items[expression->indexes[i]], "\'", "\\\'");
-        items[expression->indexes[i]] = msReplaceSubstring( items[expression->indexes[i]], "\"", "\\\"");
-        tmpstr = msReplaceSubstring(tmpstr, expression->items[i], items[expression->indexes[i]]);
+      tmpstr2 = strdup(items[expression->indexes[i]]);
+      tmpstr2 = msReplaceSubstring(tmpstr2, "\'", "\\\'");
+      tmpstr2 = msReplaceSubstring(tmpstr2, "\"", "\\\"");
+      tmpstr = msReplaceSubstring(tmpstr, expression->items[i], tmpstr2);
     }
     msAcquireLock( TLOCK_PARSER );
     msyystate = MS_TOKENIZE_EXPRESSION;
@@ -374,9 +375,14 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     {
         msSetError(MS_PARSEERR, "Failed to parse expression: %s", "msEvalExpression", tmpstr);
         free(tmpstr);
+        if(tmpstr2)
+          free(tmpstr2);
+            
         return MS_FALSE;
     }
     free(tmpstr);
+    if(tmpstr2)
+      free(tmpstr2);
     return expresult;
     
     break;
