@@ -281,7 +281,7 @@ static int msSplitData( char *data, char *geometry_column_name, char *table_name
     char *tok_unique = "unique";
     char *tok_srid = "srid";
     char *tok_version = "version";
-    char data_version[3] = "";
+    char data_version[4] = "";
     char tok_function[11] = "";
     int parenthesis, i;
     char *src = data, *tgt;
