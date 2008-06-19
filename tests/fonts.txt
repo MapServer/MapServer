@@ -1,0 +1,2 @@
+Vera    ./vera/Vera.ttf
+VeraBd  ./vera/VeraBd.ttf
