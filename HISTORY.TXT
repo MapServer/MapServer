@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapogcsos.c: support srsName in GetObservation (#2414)
+
 - Filter Encoding: Modify DWithin definition (#2564)
 
 - Added webObj legendformat and browseformat mapping in PHP MapScript (#2309)

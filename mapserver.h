@@ -1602,7 +1602,7 @@ MS_DLL_EXPORT char *msTryBuildPath3(char *szReturnPath, const char *abs_path, co
 MS_DLL_EXPORT char **msStringSplit(const char *string, char cd, int *num_tokens);
 MS_DLL_EXPORT int msCountChars(char *str, char ch);
 MS_DLL_EXPORT char *msLongToString(long value);
-MS_DLL_EXPORT char *msDoubleToString(double value);
+MS_DLL_EXPORT char *msDoubleToString(double value, int force_f);
 MS_DLL_EXPORT char *msIntToString(int value);
 MS_DLL_EXPORT void msStringToUpper(char *string);
 MS_DLL_EXPORT void msStringToLower(char *string);

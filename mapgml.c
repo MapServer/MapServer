@@ -1582,17 +1582,17 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
     free(pszTmp);
   }
 
-  pszTmp = msDoubleToString(minx);
+  pszTmp = msDoubleToString(minx, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, " ");
-  pszTmp2 = msDoubleToString(miny);
+  pszTmp2 = msDoubleToString(miny, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, pszTmp2);
   psSubSubNode = xmlNewChild(psSubNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
   free(pszTmp);
   free(pszTmp2);
 
-  pszTmp = msDoubleToString(maxx);
+  pszTmp = msDoubleToString(maxx, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, " ");
-  pszTmp2 = msDoubleToString(maxy); 
+  pszTmp2 = msDoubleToString(maxy,MS_TRUE); 
   pszTmp = msStringConcatenate(pszTmp, pszTmp2);
   psSubSubNode = xmlNewChild(psSubNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
   free(pszTmp);
@@ -1640,9 +1640,9 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
     free(pszTmp);
   }
 
-  pszTmp = msDoubleToString(x);
+  pszTmp = msDoubleToString(x, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, " ");
-  pszTmp = msStringConcatenate(pszTmp, msDoubleToString(y));
+  pszTmp = msStringConcatenate(pszTmp, msDoubleToString(y, MS_TRUE));
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "pos", BAD_CAST pszTmp);
 
   free(pszTmp);

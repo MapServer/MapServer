@@ -244,10 +244,13 @@ char *msLongToString(long value) {
   return(strdup(buffer));
 }
 
-char *msDoubleToString(double value) {
+char *msDoubleToString(double value, int force_f) {
   char buffer[256]; /* plenty of space */
 
-  sprintf(buffer, "%g", value);
+  if (force_f == MS_TRUE)
+    sprintf(buffer, "%f", value);
+  else
+    sprintf(buffer, "%g", value);
   return(strdup(buffer));
 }
 

@@ -347,7 +347,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
 /*      from gmlWriteGeometry_GML2. Should be merged at one point if    */
 /*      possible.                                                       */
 /************************************************************************/
-void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNodePtr psParent, layerObj *lp, shapeObj *psShape, 
+void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNodePtr psParent, mapObj *map, layerObj *lp, shapeObj *psShape, 
                            const char *pszEpsg)
 {
     char *pszTmp = NULL;
@@ -357,6 +357,11 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNodePtr psParent, layerObj *lp, 
 
     if (psParent && psShape)
     {
+      if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) 
+      {
+        msProjectShape(&lp->projection, &map->projection, psShape);
+        pszEpsg = msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE);
+      }
         switch(psShape->type) 
         {
             case(MS_SHAPE_POINT):
@@ -423,10 +428,10 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNodePtr psParent, layerObj *lp, 
                   for(j=0; j<psShape->line[i].numpoints; j++)
                   {
                       pszTmp = msStringConcatenate(pszTmp, 
-                                           msDoubleToString(psShape->line[i].point[j].x));
+                                           msDoubleToString(psShape->line[i].point[j].x, MS_TRUE));
                       pszTmp = msStringConcatenate(pszTmp, ",");
                       pszTmp = msStringConcatenate(pszTmp, 
-                                           msDoubleToString(psShape->line[i].point[j].y));
+                                           msDoubleToString(psShape->line[i].point[j].y, MS_TRUE));
                       pszTmp = msStringConcatenate(pszTmp, " ");
                   }
                   psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
@@ -492,11 +497,11 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNodePtr psParent, layerObj *lp, 
   
                       pszTmp = 
                         msStringConcatenate(pszTmp, 
-                                    msDoubleToString(psShape->line[i].point[j].x));
+                                    msDoubleToString(psShape->line[i].point[j].x, MS_TRUE));
                       pszTmp = msStringConcatenate(pszTmp, ",");
                       pszTmp = 
                         msStringConcatenate(pszTmp, 
-                                    msDoubleToString(psShape->line[i].point[j].y));
+                                    msDoubleToString(psShape->line[i].point[j].y, MS_TRUE));
                       pszTmp = msStringConcatenate(pszTmp, " ");
                   }
                   psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
@@ -796,14 +801,17 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         
         /*bbox*/
 #ifdef USE_PROJ
-        pszEpsg = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "SO", MS_TRUE);
+        pszEpsg = msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE);
         if (!pszEpsg)
           pszEpsg = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE);
+
+        if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE)
+              msProjectRect(&lp->projection, &map->projection, &sShape.bounds);
 #endif        
         psNode = xmlAddChild(psLayerNode, msGML3BoundedBy(psNsGml, sShape.bounds.minx, sShape.bounds.miny, sShape.bounds.maxx, sShape.bounds.maxy, pszEpsg));
 
         /*geometry*/
-        msSOSAddGeometryNode(psNsGml, psLayerNode, lp, &sShape, pszEpsg);
+        msSOSAddGeometryNode(psNsGml, psLayerNode, map, lp, &sShape, pszEpsg);
 
         /*attributes */
         /* TODO only output attributes where there is a sos_%s_alias (to be discussed)*/
@@ -2044,6 +2052,64 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
         map->extent.maxy = sBbox.maxy;
   }
 
+  if (sosparams->pszSrsName) { /* validate against MAP.WEB.METADATA.sos_srs */
+    int iUnits = -1;
+    char **tokens = NULL;
+    const char *pszSRSList = NULL;
+    int n = 0;
+    int bFound = 0;
+    int k;
+    char srsbuffer[100];
+    projectionObj po;
+
+    pszSRSList = msOWSLookupMetadata(&(map->web.metadata), "SO", "srs");
+
+    if (pszSRSList) {
+      tokens = msStringSplit(pszSRSList, ' ', &n);
+
+      if (tokens && n > 0) {
+        for (k=0; k<n; k++) {
+          if (strcasecmp(sosparams->pszSrsName, tokens[k]) == 0) { /* match */
+            bFound = 1;
+
+            /* project MAP.EXTENT to this SRS */
+            msInitProjection(&po);
+
+            sprintf(srsbuffer, "+init=epsg:%.20s", sosparams->pszSrsName+5);
+
+            if (msLoadProjectionString(&po, srsbuffer) != 0) {
+              msSetError(MS_SOSERR, "Could not set output projection to \"%s\"", "msSOSGetObservation()", sosparams->pszSrsName);
+              return msSOSException(map, "mapserv", "NoApplicableCode");
+            }
+
+            if (msProjectionsDiffer(&map->projection, &po) == MS_TRUE) {
+              msProjectRect(&map->projection, &po, &map->extent);
+              sBbox = map->extent;
+            }
+
+            /* set map->projection to this SRS */
+            if (msLoadProjectionString(&(map->projection), srsbuffer) != 0) {
+              msSetError(MS_SOSERR, "Could not set output projection to \"%s\"", "msSOSGetObservation()", sosparams->pszSrsName);
+              return msSOSException(map, "mapserv", "NoApplicableCode");
+            }
+                 
+            iUnits = GetMapserverUnitUsingProj(&(map->projection));
+            if (iUnits != -1)
+              map->units = iUnits;
+                
+            msFreeProjection(&po);
+            break;
+          }
+        }
+        msFreeCharArray(tokens, n);
+      }
+      if (bFound == 0) {
+        msSetError(MS_SOSERR, "srsName value \"%s\" unsupported / invalid", "msSOSGetObservation()", sosparams->pszSrsName);
+        return msSOSException(map, "srsName", "InvalidParameterValue");
+      }
+    }
+  }
+
   /* apply filter */
   if (sosparams->pszResult) {
     psFilterNode = FLTParseFilterEncoding(sosparams->pszResult);
@@ -2155,14 +2221,34 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     {
        char **tokens;
        int n;
-       pszTmp2 = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE);
+       rectObj envelope;
+
+       pszTmp2 = msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE);
+
        tokens = msStringSplit(pszTmp, ',', &n);
        if (tokens==NULL || n != 4) {
           msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
           "msSOSGetCapabilities()");
           return msSOSException(map, "offering_extent", "InvalidParameterValue");
        }
-       psNode = xmlAddChild(psRootNode, msGML3BoundedBy(psNsGml, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), pszTmp2));
+
+       envelope.minx = atof(tokens[0]);
+       envelope.miny = atof(tokens[1]);
+       envelope.maxx = atof(tokens[2]);
+       envelope.maxy = atof(tokens[3]);
+
+       if (map && msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
+         if (msProjectRect(&lp->projection, &map->projection, &envelope) == MS_FAILURE){ 
+           msSetError(MS_SOSERR, "Coordinates transformation failed.  Raised in msProjectRect() of file %s line %d", "msSOSGetCapabilities()", __FILE__, __LINE__);
+           return msSOSException(map, "offering_extent", "InvalidParameterValue");
+         }
+       }
+
+       //msSetError(MS_SOSERR, "%f %f %f %f", "msSOSGetCapabilities()", envelope.minx, envelope.miny, envelope.maxx, envelope.maxy);
+       //return msSOSException(map, "offering_extent", "InvalidParameterValue");
+
+       //psNode = xmlAddChild(psRootNode, msGML3BoundedBy(psNsGml, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), pszTmp2));
+       psNode = xmlAddChild(psRootNode, msGML3BoundedBy(psNsGml, envelope.minx, envelope.miny, envelope.maxx, envelope.maxy, pszTmp2));
        msFreeCharArray(tokens, n);
     }
 
@@ -2803,7 +2889,7 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     xmlXPathFreeObject(psXPathTmp);
 
     /* check for eventTime (chunk of XML) */
-    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:eventTime/ogc:TM_Equals/gml:TimeInstant|/sos:GetObservation/sos:eventTime/ogc:TM_Equals/gml:TimePeriod");
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:eventTime/*/gml:TimeInstant|/sos:GetObservation/sos:eventTime/*/gml:TimePeriod");
 
     if (psXPathTmp) {
       sosparams->pszEventTime = (char *)msLibXml2GetXPathTree(doc, psXPathTmp);

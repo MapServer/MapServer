@@ -688,7 +688,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                                             (short)(i+1), 
                                             &floatval); 
             if(status == SE_SUCCESS)
-                shape->values[i] = msDoubleToString(floatval);
+                shape->values[i] = msDoubleToString(floatval, MS_FALSE);
             else if(status == SE_NULL_VALUE)
                 shape->values[i] = strdup(MS_SDE_NULLSTRING);
             else {     
@@ -703,7 +703,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                                             (short) (i+1), 
                                             &doubleval);
             if(status == SE_SUCCESS)
-                shape->values[i] = msDoubleToString(doubleval);
+                shape->values[i] = msDoubleToString(doubleval, MS_FALSE);
             else if(status == SE_NULL_VALUE)
                 shape->values[i] = strdup(MS_SDE_NULLSTRING);
             else {     
