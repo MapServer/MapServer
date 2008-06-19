@@ -3384,6 +3384,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
     char *pszSLD = NULL;
     char szHexColor[7];
     char *pszGraphicSLD = NULL;
+    int nSize;
 
     sprintf(szTmp, "%s\n",  "<PolygonSymbolizer>");
     pszSLD = msStringConcatenate(pszSLD, szTmp);
@@ -3465,6 +3466,17 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
         sprintf(szTmp, 
                 "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
                 szHexColor);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
+
+        nSize = 1;
+        if (psStyle->size > 0)
+          nSize = psStyle->size;
+        else if (psStyle->width > 0)
+          nSize = psStyle->width;
+            
+        sprintf(szTmp, 
+            "<CssParameter name=\"stroke-width\">%d</CssParameter>\n",
+            nSize);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "</Stroke>");
