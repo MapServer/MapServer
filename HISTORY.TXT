@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed possible buffer overrun with Oracle Spatial driver (#2572)
+
 - mapogcsos.c: support srsName in GetObservation (#2414)
 
 - Filter Encoding: Modify DWithin definition (#2564)
