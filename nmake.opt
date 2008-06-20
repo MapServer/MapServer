@@ -510,6 +510,7 @@ JPEG_INC = -I$(JPEG_DIR)
 #are built with it 
 #http://xmlsoft.org/index.html
 #SOS=-DUSE_SOS_SVR
+#XML2_ENABLED=-DUSE_LIBXML2
 #LIBXML_DIR=$(MS_BASE)\..\libxml2-2.6.13.win32
 
 
@@ -818,7 +819,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(USE_POINT_Z_M) $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
-          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(AGG) $(RGBA_PNG_ENABLED) $(FRIBIDI)
+          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) $(RGBA_PNG_ENABLED) $(FRIBIDI)
 
 !IFDEF WIN64
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
