@@ -1430,6 +1430,12 @@ Constructor:
    string toWkt()
         Returns WKT representation of the shape's geometry.
 
+   int setBounds()    
+    Updates the bounds property of the shape.
+    Must be called to calculate new bounding box after new parts have been
+    added.   Returns true if successful. Else return false.
+
+  
  RectObj Class:
  --------------
 

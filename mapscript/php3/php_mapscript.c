@@ -276,6 +276,7 @@ DLEXPORT void php3_ms_shape_intersects(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getvalue(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_setbounds(INTERNAL_FUNCTION_PARAMETERS);
 
 /*geos related functions*/
 DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS);
@@ -869,6 +870,7 @@ function_entry php_shape_class_functions[] = {
     {"towkt",           php3_ms_shape_towkt,            NULL},
     {"free",            php3_ms_shape_free,             NULL},
     {"getlabelpoint",   php3_ms_shape_getlabelpoint,    NULL},
+    {"setbounds",       php3_ms_shape_setbounds,    NULL},
     {NULL, NULL, NULL}
 };
 
@@ -12048,6 +12050,54 @@ DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        shape->setbounds()
+ **********************************************************************/
+
+/* {{{ proto int shape.project(projectionObj in, projectionObj out)
+   calculate new bounding . Returns MS_SUCCESS/MS_FAILURE*/
+
+DLEXPORT void php3_ms_shape_setbounds(INTERNAL_FUNCTION_PARAMETERS)
+{
+  pval                *pThis;
+    shapeObj            *self;
+    int                 status=MS_FAILURE;
+
+    HashTable   *list=NULL;
+    pval   **pBounds;
+
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+      RETURN_FALSE;
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    shapeObj_setBounds(self);
+   
+
+    if (zend_hash_find(Z_OBJPROP_P(pThis), "bounds", 
+                       sizeof("bounds"), (void *)&pBounds) == SUCCESS)
+    {
+        _phpms_set_property_double((*pBounds),"minx", self->bounds.minx, 
+                                   E_ERROR TSRMLS_CC);
+        _phpms_set_property_double((*pBounds),"miny", self->bounds.miny, 
+                                   E_ERROR TSRMLS_CC);
+        _phpms_set_property_double((*pBounds),"maxx", self->bounds.maxx, 
+                                   E_ERROR TSRMLS_CC);
+        _phpms_set_property_double((*pBounds),"maxy", self->bounds.maxy, 
+                                   E_ERROR TSRMLS_CC);
+    }
+    
+    RETURN_TRUE;
+}
+/* }}} */
 
 /*=====================================================================
  *                 PHP function wrappers - webObj class
