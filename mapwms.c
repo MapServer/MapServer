@@ -1224,6 +1224,10 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                   &(map->web.metadata), "MO" );
        }
    }
+   else
+   {
+       msIO_printf("        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wms_extent metadata. -->\n");
+   }
 
    /* time support */
    pszWmsTimeExtent = msOWSLookupMetadata(&(lp->metadata), "MO", "timeextent");

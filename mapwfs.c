@@ -277,7 +277,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    }
    else
    {
-       msIO_printf("<!-- WARNING: Mandatory LatLongBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wfs_extent metadata. -->\n");
+       msIO_printf("<!-- WARNING: Optional LatLongBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wfs_extent metadata. -->\n");
    }
 
    msOWSPrintURLType(stdout, &(lp->metadata), "FO", "metadataurl", 
