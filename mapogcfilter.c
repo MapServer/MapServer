@@ -1750,7 +1750,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
             if (FLTIsBinaryComparisonFilterType(psXMLNode->pszValue))
             {
                 psTmpNode = CPLSearchXMLNode(psXMLNode,  "PropertyName");
-                if (psTmpNode &&  psXMLNode->psChild && 
+                if (psTmpNode &&  psTmpNode->psChild && 
                     psTmpNode->psChild->pszValue && 
                     strlen(psTmpNode->psChild->pszValue) > 0)
                 {
@@ -1760,66 +1760,44 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                       strdup(psTmpNode->psChild->pszValue);
                     
                     psTmpNode = CPLSearchXMLNode(psXMLNode,  "Literal");
-                    if (psTmpNode &&  psXMLNode->psChild && 
-                        psTmpNode->psChild && 
-                        psTmpNode->psChild->pszValue && 
-                        strlen(psTmpNode->psChild->pszValue) > 0)
+                    if (psTmpNode)
                     {
                         psFilterNode->psRightNode = FLTCreateBinaryCompFilterEncodingNode();
-                
                         psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
-                        psFilterNode->psRightNode->pszValue = 
-                          strdup(psTmpNode->psChild->pszValue);
-
-                        /*check if the matchCase attribute is set*/
-                        if (psXMLNode->psChild && 
-                            psXMLNode->psChild->eType == CXT_Attribute  &&
-                            psXMLNode->psChild->pszValue && 
-                            strcasecmp(psXMLNode->psChild->pszValue, "matchCase") == 0 &&
-                            psXMLNode->psChild->psChild &&  
-                            psXMLNode->psChild->psChild->pszValue &&
-                            strcasecmp( psXMLNode->psChild->psChild->pszValue, "false") == 0)
+                    
+                        if (psTmpNode && 
+                            psTmpNode->psChild && 
+                            psTmpNode->psChild->pszValue &&
+                            strlen(psTmpNode->psChild->pszValue) > 0)
                         {
-                            (*(int *)psFilterNode->psRightNode->pOther) = 1;
+                        
+                            psFilterNode->psRightNode->pszValue = 
+                              strdup(psTmpNode->psChild->pszValue);
+
+                            /*check if the matchCase attribute is set*/
+                            if (psXMLNode->psChild && 
+                                psXMLNode->psChild->eType == CXT_Attribute  &&
+                                psXMLNode->psChild->pszValue && 
+                                strcasecmp(psXMLNode->psChild->pszValue, "matchCase") == 0 &&
+                                psXMLNode->psChild->psChild &&  
+                                psXMLNode->psChild->psChild->pszValue &&
+                                strcasecmp( psXMLNode->psChild->psChild->pszValue, "false") == 0)
+                            {
+                                (*(int *)psFilterNode->psRightNode->pOther) = 1;
+                            }
+                        
                         }
-                        
+                        /* special case where the user puts an empty value */
+                        /* for the Literal so it can end up as an empty  */
+                        /* string query in the expression */
+                        else
+                          psFilterNode->psRightNode->pszValue = NULL;
                     }
                 }
-            }
-                            /*
-                    if (psXMLNode->psChild->psChild &&
-                        psXMLNode->psChild->psChild->pszValue &&
-                        strlen(psXMLNode->psChild->psChild->pszValue) > 0)
-                    {
-                        psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
-                        psFilterNode->psLeftNode->pszValue = 
-                          strdup(psXMLNode->psChild->psChild->pszValue);
-                    }
-
-                    psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
-
-                            */
-                    /* special case where the user puts an empty value */
-                    /* for the Literal so it can end up as an empty  */
-                    /* string query in the expression */
-            /*
-                    psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
-                    if (psXMLNode->psChild->psNext->psChild &&
-                        psXMLNode->psChild->psNext->psChild->pszValue &&
-                        strlen(psXMLNode->psChild->psNext->psChild->pszValue) > 0)
-                    {
-                        psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
-                        psFilterNode->psRightNode->pszValue = 
-                          strdup(psXMLNode->psChild->psNext->psChild->pszValue);
-                    }
-                    else
-                      psFilterNode->psRightNode->pszValue = NULL;
-                }
-                else
+                if (psFilterNode->psLeftNode == NULL || psFilterNode->psRightNode == NULL)
                   psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
-                        
             }
-            */
+ 
 /* -------------------------------------------------------------------- */
 /*      PropertyIsBetween filter : extract property name and boudary    */
 /*      values. The boundary  values are stored in the right            */

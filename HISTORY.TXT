@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- SOS: generate error for some invalid filters (#2604)
+
 - SLD: Use style's width paramater when generating sld (#1192)
 
 Version 5.2.0-beta2 (2008-06-18):
