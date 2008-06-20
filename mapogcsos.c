@@ -689,6 +689,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                         pszTime = msStringConcatenate(pszTime, sShape.values[i]);
                         psNode = xmlNewChild(psObsNode, psNsOm, BAD_CAST "samplingTime", NULL);
                         psSubNode = xmlAddChild(psNode, msGML3TimeInstant(psNsGml, pszTime));
+                        msFree(pszTime);
                     }
                     break;
                 }
@@ -1519,7 +1520,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                                  {
                                      msSetError(MS_SOSERR, "procedure_item %s could not be found on the layer %s",
                                     "msSOSGetCapabilities()", value, lpTmp->name);
-                                     return msSOSException(map, "procedure_item", "InvalidValue");
+                                     return msSOSException(map, "mapserv", "NoApplicableCode");
                                  }
 
                                  /*for each selected feature, grab the value of the prodedire_item*/
@@ -1575,16 +1576,15 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                              }
                              else
                              {  
-                                 msSetError(MS_SOSERR, "procedure_item %s could not be found on the layer %s",
-                                            "msSOSGetCapabilities()", value, lpTmp->name);
-                                 return msSOSException(map, "procedure_item", "InvalidValue");
+                                 msSetError(MS_SOSERR, "Invalid procedure %s", "msSOSGetCapabilities()", value);
+                                 return msSOSException(map, "procedure", "InvalidParameterValue");
                              }
                          }
                          else
                          {
                               msSetError(MS_SOSERR, "Mandatory metadata procedure_item could not be found on the layer %s",
                                             "msSOSGetCapabilities()", GET_LAYER(map,j)->name);
-                                 return msSOSException(map, "procedure_item", "MissingValue");
+                                 return msSOSException(map, "mapserv", "NoApplicableCode");
                          }
                          
                      }
@@ -1769,6 +1769,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
   int nDiffrentProc = 0;
   SOSProcedureNode *paDiffrentProc = NULL;
   char *pszProcedureValue = NULL;
+  int iItemPosition, status;
+  shapeObj sShape;
 
   sBbox = map->extent;
 
@@ -1888,13 +1890,80 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
 
             if (tokens1)
               msFreeCharArray(tokens1, n1);
+
+            if (bLayerFound == 0) {
+              msSetError(MS_SOSERR, "Procedure %s not found.", "msSOSGetObservation()", sosparams->pszProcedure);
+              msFreeCharArray(tokens, n);
+              return msSOSException(map, "procedure", "InvalidParameterValue");
+            }
           }
                     
-          /* if there is a procedure_item defined on the layer, we will 
-             use it to set the filter parameter of the layer*/
+          /* if there is a procedure_item defined on the layer, we will */
+          /* use it to set the filter parameter of the layer */
 
           if ((GET_LAYER(map, i)->status == MS_ON) && (pszProcedureItem =  msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "procedure_item"))) {
+
             lp = GET_LAYER(map, i);
+
+/* HACK BEGIN */
+
+            if (msOWSLookupMetadata(&(GET_LAYER(map,i)->metadata), "S", "procedure") == NULL) {
+              /* if sos_procedure_item is used, and sos_procedure is not, it means that */
+              /* the procedure or sensor) need to be extracted from the data. Thus we */
+              /* need to query the layer and get the values from each feature */
+
+              if (lp->template == NULL)
+                lp->template = strdup("ttt");
+              msQueryByRect(map, i, map->extent);
+
+              /*check if the attribute specified in the procedure_item is available */
+              /*on the layer*/
+              iItemPosition = -1;
+              if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS && lp->resultcache && lp->resultcache->numresults > 0) {
+                for(k=0; k<lp->numitems; k++) {
+                  if (strcasecmp(lp->items[k], pszProcedureItem) == 0) {
+                    iItemPosition = k;
+                    break;
+                  }
+                }
+                if (iItemPosition == -1) {
+                  msSetError(MS_SOSERR, "sos_procedure_item %s could not be found on the layer %s",
+                  "msSOSGetCapabilities()", pszProcedureItem, lp->name);
+                  return msSOSException(map, "mapserv", "NoApplicableCode");
+                }
+
+                /*for each selected feature, grab the value of the procedure_item*/
+                bLayerFound = 0;
+
+                for(k=0; k<lp->resultcache->numresults; k++) {      
+                  msInitShape(&sShape);
+                  status = msLayerGetShape(lp, &sShape, lp->resultcache->results[k].tileindex, lp->resultcache->results[k].shapeindex);
+                  if(status != MS_SUCCESS) 
+                    continue;
+ 
+                  if (sShape.values[iItemPosition]) {
+                    tokens = msStringSplit(sosparams->pszProcedure, ',', &n);
+                    for (j=0; j<n; j++) {
+                      if (strcasecmp(sShape.values[iItemPosition], tokens[j]) == 0) { /* found */
+                        bLayerFound = 1;
+                        break;
+                      }
+                    }
+                  }
+                          
+                  if (bLayerFound)
+                    break;
+                }
+                msLayerClose(lp);
+
+               if (bLayerFound == 0) {  
+                 msSetError(MS_SOSERR, "Invalid procedure value %s", "msSOSGetCapabilities()", sosparams->pszProcedure);
+                 return msSOSException(map, "procedure", "InvalidParameterValue");
+               }
+             }
+            }
+/* HACK END */
+
             pszBuffer = NULL;
             if (&lp->filter) {
               if (lp->filter.string && strlen(lp->filter.string) > 0)
@@ -2244,10 +2313,6 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
          }
        }
 
-       //msSetError(MS_SOSERR, "%f %f %f %f", "msSOSGetCapabilities()", envelope.minx, envelope.miny, envelope.maxx, envelope.maxy);
-       //return msSOSException(map, "offering_extent", "InvalidParameterValue");
-
-       //psNode = xmlAddChild(psRootNode, msGML3BoundedBy(psNsGml, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), pszTmp2));
        psNode = xmlAddChild(psRootNode, msGML3BoundedBy(psNsGml, envelope.minx, envelope.miny, envelope.maxx, envelope.maxy, pszTmp2));
        msFreeCharArray(tokens, n);
     }
@@ -2558,7 +2623,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
                 }
                 else {
                   msSetError(MS_SOSERR, "Missing mandatory metadata sos_describesensor_url on layer %s", "msSOSDescribeSensor()", lp->name);
-                  return msSOSException(map, "sos_describesensor_url", "MissingValue");
+                  return msSOSException(map, "mapserv", "NoApplicableCode");
                 }
               }
             }
