@@ -12061,7 +12061,6 @@ DLEXPORT void php3_ms_shape_setbounds(INTERNAL_FUNCTION_PARAMETERS)
 {
   pval                *pThis;
     shapeObj            *self;
-    int                 status=MS_FAILURE;
 
     HashTable   *list=NULL;
     pval   **pBounds;
