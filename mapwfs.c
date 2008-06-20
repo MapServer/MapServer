@@ -205,6 +205,9 @@ static const char *msWFSGetGeomType(layerObj *lp)
 int msWFSDumpLayer(mapObj *map, layerObj *lp)
 {
    rectObj ext;
+   const char *pszWfsSrs = NULL;
+   projectionObj poWfs;
+   int result = 0;
    
    msIO_printf("    <FeatureType>\n");
 
@@ -242,31 +245,35 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    if (msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE) != NULL)
    {
        /* Map has a SRS.  Use it for all layers. */
-       msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
-                  msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE),
-                  OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
+       pszWfsSrs = msOWSGetEPSGProj(&(map->projection),&(map->web.metadata), "FO", MS_TRUE);
    }
    else
    {
        /* Map has no SRS.  Use layer SRS or produce a warning. */
-       msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
-                  msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE),
-                  OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
+       pszWfsSrs = msOWSGetEPSGProj(&(map->projection),&(map->web.metadata), "FO", MS_TRUE);
    }
+
+   msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
+                  pszWfsSrs, OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
 
    /* If layer has no proj set then use map->proj for bounding box. */
    if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS)
    {
+       msInitProjection(&poWfs);
+       if (pszWfsSrs != NULL)
+           result = msLoadProjectionString(&(poWfs), (char *)pszWfsSrs);
+       
        if(lp->projection.numargs > 0) 
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
-                                       &(lp->projection), OWS_WFS);
+                                       &(lp->projection), &(poWfs), OWS_WFS);
        } 
        else 
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
-                                       &(map->projection), OWS_WFS);
+                                       &(map->projection), &(poWfs), OWS_WFS);
        }
+       msFreeProjection(&poWfs);
    }
    else
    {

@@ -265,7 +265,7 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
                               const char *default_value);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
                                  rectObj *extent, projectionObj *srcproj,
-                                 int nService);
+                                 projectionObj *wfsproj, int nService);
 void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
                            rectObj *extent, 
                            projectionObj *srcproj,

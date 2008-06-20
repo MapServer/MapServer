@@ -1212,14 +1212,14 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
        if(lp->projection.numargs > 0)
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
-                                       &(lp->projection), OWS_WMS);
+                                       &(lp->projection), NULL, OWS_WMS);
            msOWSPrintBoundingBox( stdout,"        ", &(ext), &(lp->projection),
                                   &(lp->metadata), "MO" );
        }
        else
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
-                                       &(map->projection), OWS_WMS);
+                                       &(map->projection), NULL, OWS_WMS);
            msOWSPrintBoundingBox(stdout,"        ", &(ext), &(map->projection),
                                   &(map->web.metadata), "MO" );
        }
@@ -1907,7 +1907,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                             OWS_WARN, "    <SRS>%s</SRS>\n", "");
 
   msOWSPrintLatLonBoundingBox(stdout, "    ", &(map->extent),
-                              &(map->projection), OWS_WMS);
+                              &(map->projection), NULL, OWS_WMS);
   msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
                          &(map->web.metadata), "MO" );
 

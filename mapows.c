@@ -1169,22 +1169,29 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
 */
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
                                  rectObj *extent, projectionObj *srcproj,
-                                 int nService)
+                                 projectionObj *wfsproj, int nService)
 {
   const char *pszTag = "LatLonBoundingBox";  /* The default for WMS */
-  rectObj ll_ext;
+  rectObj ext;
 
-  ll_ext = *extent;
+  ext = *extent;
 
-  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
-    msProjectRect(srcproj, NULL, &ll_ext);
+  if (nService == OWS_WMS) { /* always project to lat long */
+    if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
+      msProjectRect(srcproj, NULL, &ext);
+    }
   }
 
-  if (nService == OWS_WFS)
+  if (nService == OWS_WFS) {
       pszTag = "LatLongBoundingBox";
+      if (wfsproj) {
+          if (msProjectionsDiffer(srcproj, wfsproj) == MS_TRUE)
+              msProjectRect(srcproj, wfsproj, &ext);
+      }
+  }
 
   msIO_fprintf(stream, "%s<%s minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 
-         tabspace, pszTag, ll_ext.minx, ll_ext.miny, ll_ext.maxx, ll_ext.maxy);
+         tabspace, pszTag, ext.minx, ext.miny, ext.maxx, ext.maxy);
 }
 
 /*

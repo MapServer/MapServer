@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- WFS: project LatLongBoundingBox if required (#2579)
+
 - SOS: generate error for some invalid filters (#2604)
 
 - SLD: Use style's width paramater when generating sld (#1192)
