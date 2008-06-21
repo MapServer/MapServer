@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapserv.c, maptemplate.c: fixed problem with arguments to msGenerateImages(). (#2655)
+
 - WMS: produce warning if layer extent is null (#1396)
 
 - WFS: project LatLongBoundingBox if required (#2579)
