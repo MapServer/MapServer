@@ -1345,7 +1345,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     tagValue = msReplaceSubstring(tagValue, "$miny", number);
     snprintf(number, 64, numberFormat, tempExtent.maxx);
     tagValue = msReplaceSubstring(tagValue, "$maxx", number);
-    snprintf(number, 64, numberFormat, tempExtent.miny);
+    snprintf(number, 64, numberFormat, tempExtent.maxy);
     tagValue = msReplaceSubstring(tagValue, "$maxy", number);
 
      /* find the end of the tag */
