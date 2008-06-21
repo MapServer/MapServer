@@ -225,7 +225,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
   */ 
   if(mapserv->map->querymap.status) {
     checkWebScale(mapserv);
-    msGenerateImages(mapserv, MS_FALSE, MS_TRUE);
+    msGenerateImages(mapserv, MS_TRUE, MS_TRUE);
   }
 
   /* initialize the buffer if necessary */
@@ -4037,7 +4037,7 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, char **names, cha
     }
 
     if(bGenerateImages)
-      msGenerateImages(mapserv, MS_FALSE, MS_TRUE);
+      msGenerateImages(mapserv, MS_TRUE, MS_FALSE);
 
     msReturnTemplateQuery(mapserv, NULL, &pszBuffer );
 

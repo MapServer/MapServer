@@ -1346,9 +1346,7 @@ int main(int argc, char *argv[]) {
     if(mapserv->Mode == BROWSE) {
 
       if(!mapserv->map->web.template) {
-        msSetError(MS_WEBERR, 
-                   "Traditional BROWSE mode requires a TEMPLATE in the WEB section, but none was provided.", 
-                   "mapserv()");
+        msSetError(MS_WEBERR, "Traditional BROWSE mode requires a TEMPLATE in the WEB section, but none was provided.", "mapserv()");
         writeError();
       }
 
@@ -1363,7 +1361,7 @@ int main(int argc, char *argv[]) {
       /* -------------------------------------------------------------------- */
       /*      generate map, legend, scalebar and refernce images.             */
       /* -------------------------------------------------------------------- */
-      if(msGenerateImages(mapserv, MS_TRUE, MS_TRUE) == MS_FALSE)
+      if(msGenerateImages(mapserv, MS_FALSE, MS_TRUE) == MS_FALSE)
         writeError();
       
       if(QueryFile) {
@@ -1427,10 +1425,9 @@ int main(int argc, char *argv[]) {
       }
 
       if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
-      
-      
+            
       if( mapserv->Mode == MAP || mapserv->Mode == TILE )
-        status = msSaveImage(mapserv->map,img, NULL);
+        status = msSaveImage(mapserv->map, img, NULL);
       else
         status = msSaveImage(NULL,img, NULL);
           
