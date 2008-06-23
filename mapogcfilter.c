@@ -958,13 +958,13 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 	    }
 	    else
 	    {
-		szExpression = FLTGetNodeExpression(psNode);
+              szExpression = FLTGetMapserverExpression(psNode, lp);
 	    }
 	}
     }
     else
     {
-        szExpression = FLTGetNodeExpression(psNode);
+      szExpression = FLTGetMapserverExpression(psNode, lp);
         /*if there is a filter item set it (this is only for propertislike with 
           non db layers*/
         pszFilterItem = FLTGetMapserverExpressionClassItem(psNode);
