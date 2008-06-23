@@ -2049,7 +2049,23 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
     int numtimes = 0;
     char *pszTimeString = NULL, *pszTmp = NULL;
 
-    apszTimes = msStringSplit (sosparams->pszEventTime, ',', &numtimes);
+    /* Because SOS has specific TemporalOperator which extends FES 1.1, the time filter  */
+    /* passed is different than what mapogcfilter (per 1.0.0) supports.                  */
+    /*                                                                                   */
+    /* Because, in XML POST mode, we traverse directly to gml:TimePeriod|gml:TimeInstant */
+    /* this is passed directly to mapogcfilter.                                          */
+    /* for GET requests, we strip the parent element before passing                      */
+
+    pszTmp = strdup(sosparams->pszEventTime);
+
+    pszTmp = msCaseReplaceSubstring(pszTmp, "<ogc:TM_Equals>", "");
+    pszTmp = msCaseReplaceSubstring(pszTmp, "<TM_Equals>", "");
+    pszTmp = msCaseReplaceSubstring(pszTmp, "</ogc:TM_Equals>", "");
+    pszTmp = msCaseReplaceSubstring(pszTmp, "</TM_Equals>", "");
+
+    apszTimes = msStringSplit (pszTmp, ',', &numtimes);
+    msFree(pszTmp);
+
     if (numtimes >=1) {
       for (i=0; i<numtimes; i++) {
         pszTmp = msSOSParseTimeGML(apszTimes[i]);
