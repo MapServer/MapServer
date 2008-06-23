@@ -1403,7 +1403,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                  if (value)
                      msLibXml2GenerateList(psOfferingNode, psNsGml, "srsName", value, ' ');
                  else                  
-                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_srs\" missing for gml:srsName"));
+                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Required metadata \"sos_srs\" missing for gml:srsName"));
 
                  /*bounding box */
                  /*TODO : if sos_offering_extent does not exist compute extents 
@@ -2176,6 +2176,10 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
         msSetError(MS_SOSERR, "srsName value \"%s\" unsupported / invalid", "msSOSGetObservation()", sosparams->pszSrsName);
         return msSOSException(map, "srsName", "InvalidParameterValue");
       }
+    }
+    else {
+      msSetError(MS_SOSERR, "MAP.WEB.METADATA.sos_srs not set", "msSOSGetObservation()");
+      return msSOSException(map, "mapserv", "NoApplicableCode");
     }
   }
 
