@@ -1074,6 +1074,7 @@ char *msSOSParseTimeGML(char *pszGmlTime)
     char *pszReturn = NULL, *pszBegin = NULL, *pszEnd = NULL;
     CPLXMLNode *psRoot=NULL, *psChild=NULL;
     CPLXMLNode *psTime=NULL, *psBegin=NULL, *psEnd=NULL;
+    struct tm tm_struct;
 
     if (pszGmlTime)
     {
@@ -1093,7 +1094,10 @@ char *msSOSParseTimeGML(char *pszGmlTime)
                 {
                     psTime = psChild->psNext;
                     if (psTime && psTime->pszValue && psTime->eType == CXT_Text)
-                      pszReturn = strdup(psTime->pszValue);
+                    {
+                        if (msParseTime(psTime->pszValue, &tm_struct) == MS_TRUE)
+                          pszReturn = strdup(psTime->pszValue);
+                    }
                 }
             }
             else
@@ -1115,9 +1119,13 @@ char *msSOSParseTimeGML(char *pszGmlTime)
 
                     if (pszBegin && pszEnd)
                     {
-                        pszReturn = strdup(pszBegin);
-                        pszReturn = msStringConcatenate(pszReturn, "/");
-                        pszReturn = msStringConcatenate(pszReturn, pszEnd);
+                        if (msParseTime(pszBegin, &tm_struct) == MS_TRUE &&
+                            msParseTime(pszEnd, &tm_struct) == MS_TRUE)
+                        {
+                            pszReturn = strdup(pszBegin);
+                            pszReturn = msStringConcatenate(pszReturn, "/");
+                            pszReturn = msStringConcatenate(pszReturn, pszEnd);
+                        }
                     }
                 }
             }
