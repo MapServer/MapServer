@@ -941,6 +941,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
 /*      if found in the RangeSubset.                                    */
 /************************************************************************/
 
+#if defined(USE_WCS_SVR)
 int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request, 
                              wcsParamsObj *params, layerObj *lp,
                              char **p_bandlist )
@@ -1054,6 +1055,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
 
     return MS_SUCCESS;
 }    
+#endif
 
 /************************************************************************/
 /*                       msWCSReturnCoverage11()                        */

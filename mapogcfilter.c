@@ -3946,6 +3946,8 @@ void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
     char szTmp[256];
     const char *pszFullName = NULL;
 
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+
     if (psFilterNode && map && i>=0 && i<map->numlayers)
     {
         lp = GET_LAYER(map, i);
@@ -3965,7 +3967,12 @@ void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
             }
             msLayerClose(lp);
         }
-    }    
+    } 
+#else
+    msSetError(MS_MISCERR, "OWS support is not available.", 
+               "FLTPreParseFilterForAlias()");
+    
+#endif   
 }
 
 
