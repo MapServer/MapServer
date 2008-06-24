@@ -329,6 +329,9 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 #ifdef USE_GEOS
                 msGEOSSetup();
 #endif
+                if (nUnit >=0 && nUnit != map->units)
+                  dfDistance *= msInchesPerUnit(nUnit,0)/msInchesPerUnit(map->units,0);
+
                 psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
                 if (psTmpShape)
                 {
@@ -371,6 +374,12 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 #ifdef USE_GEOS
                 msGEOSSetup();   
 #endif         
+/* -------------------------------------------------------------------- */
+/*      if units is set, covert value from unit to map unit.            */
+/* -------------------------------------------------------------------- */
+                if (nUnit >=0 && nUnit != map->units)
+                  dfDistance *= msInchesPerUnit(nUnit,0)/msInchesPerUnit(map->units,0);
+
                 psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
                 if (psTmpShape)
                 {
@@ -2454,15 +2463,23 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
                             else
                               szUnit = tokens[1];
 
-                            if (strcasecmp(szUnit,"m") == 0)
+                            if (strcasecmp(szUnit,"m") == 0 ||
+                                strcasecmp(szUnit,"meters") == 0 )
                               *pnUnit = MS_METERS;
-                            else if (strcasecmp(szUnit,"km") == 0)
+                            else if (strcasecmp(szUnit,"km") == 0 || 
+                                     strcasecmp(szUnit,"kilometers") == 0)
                               *pnUnit = MS_KILOMETERS;
-                            else if (strcasecmp(szUnit,"mi") == 0)
+                            else if (strcasecmp(szUnit,"mi") == 0 || 
+                                     strcasecmp(szUnit,"miles") == 0)
                               *pnUnit = MS_MILES;
-                           else if (strcasecmp(szUnit,"in") == 0)
+                            else if (strcasecmp(szUnit,"in") == 0 ||
+                                    strcasecmp(szUnit,"inches") == 0)
                               *pnUnit = MS_INCHES;
-                           else if (strcasecmp(szUnit,"deg") == 0)
+                           else if (strcasecmp(szUnit,"ft") == 0 ||
+                                    strcasecmp(szUnit,"feet") == 0)
+                             *pnUnit = MS_FEET;
+                           else if (strcasecmp(szUnit,"deg") == 0 ||
+                                    strcasecmp(szUnit,"dd") == 0)
                               *pnUnit = MS_DD;
                              else if (strcasecmp(szUnit,"px") == 0)
                               *pnUnit = MS_PIXELS;
