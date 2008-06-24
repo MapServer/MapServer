@@ -1297,10 +1297,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
 #ifdef USE_PROJ
           if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) { /* use the map projection first */
-            gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t");
+            gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), NULL, namespaces, MS_TRUE), "\t\t\t");
             gmlWriteGeometry(stream, NULL, OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
           } else { /* then use the layer projection and/or metadata */
-            gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), "\t\t\t");
+            gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t<B>");
             gmlWriteGeometry(stream, NULL, OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
           }
 #else

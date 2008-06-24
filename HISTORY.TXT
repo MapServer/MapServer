@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- WMS: set srsName correctly for GetFeatureInfo (#2502)
+
 - SOS: detect invalid time strings (#2560)
 
 - SOS: more srsName support (#2558)
