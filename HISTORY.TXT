@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- WFS: correct OGC Contains filter  (#2306)
+
 - WMS: set srsName correctly for GetFeatureInfo (#2502)
 
 - SOS: detect invalid time strings (#2560)

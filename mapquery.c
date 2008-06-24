@@ -1390,7 +1390,7 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
             break;
           
           case MS_GEOS_CONTAINS:
-            status = msGEOSContains(&shape, selectshape);
+            status = msGEOSContains(selectshape, &shape);
             if (status != MS_TRUE && status != MS_FALSE)
               status = MS_FALSE;
             break;
