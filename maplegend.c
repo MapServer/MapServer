@@ -43,12 +43,12 @@ MS_CVSID("$Id$")
 int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int height, imageObj *img, int dstX, int dstY)
 {
 #ifdef USE_AGG
-    if(MS_RENDERER_AGG(map->outputformat))
-        return msDrawLegendIconAGG(map,lp,class,width,height,img,dstX,dstY);
-    else
+  if(MS_RENDERER_AGG(map->outputformat))
+    return msDrawLegendIconAGG(map,lp,class,width,height,img,dstX,dstY);
+  else
 #endif
-        /*default is to draw with GD*/
-        return msDrawLegendIconGD(map,lp,class,width,height,img->img.gd,dstX,dstY);
+    /*default is to draw with GD*/
+    return msDrawLegendIconGD(map,lp,class,width,height,img->img.gd,dstX,dstY);
 }
 
 imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height)
@@ -67,11 +67,11 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
 
   /* create image */
 #ifdef USE_AGG
-  if( MS_RENDERER_AGG(map->outputformat) )
-      image = msImageCreateAGG(width, height, map->outputformat, map->web.imagepath, map->web.imageurl);        
+  if(MS_RENDERER_AGG(map->outputformat))
+    image = msImageCreateAGG(width, height, map->outputformat, map->web.imagepath, map->web.imageurl);        
   else
 #endif
-      image = msImageCreateGD(width, height, map->outputformat, map->web.imagepath, map->web.imageurl);
+    image = msImageCreateGD(width, height, map->outputformat, map->web.imagepath, map->web.imageurl);
 
   /* drop this reference to output format */
   msApplyOutputFormat( &format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
@@ -83,11 +83,11 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
 
   /* allocate the background color */
 #ifdef USE_AGG
-  if( MS_RENDERER_AGG(map->outputformat) )
-      msImageInitAGG( image, &(map->legend.imagecolor));
+  if(MS_RENDERER_AGG(map->outputformat))
+    msImageInitAGG( image, &(map->legend.imagecolor));
   else
 #endif
-  msImageInitGD( image, &(map->legend.imagecolor));
+    msImageInitGD( image, &(map->legend.imagecolor));
 
   /* Call drawLegendIcon with destination (0, 0) */
   /* Return an empty image if lp==NULL || class=NULL  */
@@ -104,8 +104,8 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
     }
   }
 #ifdef USE_AGG
-  if( MS_RENDERER_AGG(map->outputformat) )
-      msAlphaAGG2GD(image);
+  if(MS_RENDERER_AGG(map->outputformat))
+    msAlphaAGG2GD(image);
 #endif
   return image;
 }
@@ -120,112 +120,98 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
  *   MS_SUCCESS
  *   MS_FAILURE
  */
-int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x,
-                     int *size_y, layerObj *psForLayer) {
-    int i, j;
-    int status, maxwidth=0, nLegendItems=0;
-    char *transformedText; /* Label text after applying wrapping, encoding if necessary */
-    layerObj *lp;  
-    rectObj rect;
+int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_y, layerObj *psForLayer) 
+{
+  int i, j;
+  int status, maxwidth=0, nLegendItems=0;
+  char *transformedText; /* Label text after applying wrapping, encoding if necessary */
+  layerObj *lp;  
+  rectObj rect;
     
-    /* Reset sizes */
-    *size_x = 0;
-    *size_y = 0;
+  /* Reset sizes */
+  *size_x = 0;
+  *size_y = 0;
     
-    /* Enable scale-dependent calculations */
-    if (!scale_independent) {
-        map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-        status = msCalculateScale(map->extent, map->units, map->width,
-                                  map->height, map->resolution, &map->scaledenom);
-        if (status != MS_SUCCESS) return MS_FAILURE;
-    }
+  /* Enable scale-dependent calculations */
+  if(!scale_independent) {
+    map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
+    status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
+    if(status != MS_SUCCESS) return MS_FAILURE;
+  }
 
 
-    /*
-     * step through all map classes, and for each one that will be displayed
-     * calculate the label size
-     */
-    for (i=0; i<map->numlayers; i++) 
-    {
-        if (psForLayer)
-        {
-            lp = psForLayer;
-            i = map->numlayers;
-        }
-        else
-          lp = (GET_LAYER(map, map->layerorder[i]));
+  /*
+   * step through all map classes, and for each one that will be displayed
+   * calculate the label size
+   */
+  for(i=0; i<map->numlayers; i++) {
+    if(psForLayer) {
+      lp = psForLayer;
+      i = map->numlayers;
+    } else
+      lp = (GET_LAYER(map, map->layerorder[i]));
 
-        if ((lp->status == MS_OFF && lp != psForLayer) || (lp->type == MS_LAYER_QUERY)) /* skip it */
-            continue;
+    if((lp->status == MS_OFF && lp != psForLayer) || (lp->type == MS_LAYER_QUERY)) /* skip it */
+      continue;
             
-        if (!scale_independent && map->scaledenom > 0) {
-            if ((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom))
-                continue;
-            if ((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom))
-                continue;
-        }
+    if(!scale_independent && map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom))
+        continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom))
+        continue;
+    }
         
-        for (j=lp->numclasses-1; j>=0; j--) 
-        {
-            if (!lp->class[j]->name) continue; /* skip it */
+    for(j=lp->numclasses-1; j>=0; j--) {
+      if(!lp->class[j]->name) continue; /* skip it */
             
-            /* skip the class if the classgroup is defined*/
-            if (lp->classgroup && 
-                (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
-              continue;
+      /* skip the class if the classgroup is defined */
+      if(lp->classgroup && (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
+        continue;
 
-            /* Verify class scale */
-            if (!scale_independent && map->scaledenom > 0) {
-                if (   (lp->class[j]->maxscaledenom > 0) 
-                    && (map->scaledenom > lp->class[j]->maxscaledenom))
-                    continue;
+       /* verify class scale */
+       if(!scale_independent && map->scaledenom > 0) {
+         if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom))
+           continue;
                     
-                if (   (lp->class[j]->minscaledenom > 0)
-                    && (map->scaledenom <= lp->class[j]->minscaledenom))
-                    continue;
-            }
+         if((lp->class[j]->minscaledenom > 0) && (map->scaledenom <= lp->class[j]->minscaledenom))
+           continue;
+       }
             
-            /*
-             * apply encoding and line wrapping to the legend label if requested
-             * this is done conditionnally as the text transformation function
-             * does some memory allocations that can be avoided in most cases.
-             * the transformed text must be freed once finished, this must be done
-             * conditionnally by testing if the transformed text pointer is the
-             * same as the class name pointer
-             */
-            if (map->legend.label.encoding || map->legend.label.wrap)
-                transformedText = msTransformLabelText(&map->legend.label,
-                                                       lp->class[j]->name);
-            else
-              transformedText = strdup(lp->class[j]->name);
+       /*
+        * apply encoding and line wrapping to the legend label if requested
+        * this is done conditionally as the text transformation function
+        * does some memory allocations that can be avoided in most cases.
+        * the transformed text must be freed once finished, this must be done
+        * conditionnally by testing if the transformed text pointer is the
+        * same as the class name pointer
+        */
+       if(map->legend.label.encoding || map->legend.label.wrap)
+         transformedText = msTransformLabelText(&map->legend.label, lp->class[j]->name);
+       else
+         transformedText = strdup(lp->class[j]->name);
 
-            if (   transformedText == NULL
-                || msGetLabelSizeGD(transformedText, &map->legend.label, 
-                                  &rect, &(map->fontset), 1.0, MS_FALSE) != 0)
-            { /* something bad happened */
-                if (transformedText)
-                  msFree(transformedText);
+       if(transformedText == NULL || msGetLabelSizeGD(transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0) { /* something bad happened */
+         if(transformedText) msFree(transformedText);
+         return MS_FAILURE;
+       }
 
-                return MS_FAILURE;
-            }
-
-            msFree(transformedText);
-            maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
-            *size_y += MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
-            nLegendItems++;
-        }
+       msFree(transformedText);
+       maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
+       *size_y += MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
+       nLegendItems++;
     }
+  }
 
-    /* Calculate the size of the legend: */
-    /*   - account for the Y keyspacing */
-    *size_y += (2*VMARGIN) + ((nLegendItems-1) * map->legend.keyspacingy);
-    /*   - determine the legend width */
-    *size_x = (2*HMARGIN) + maxwidth + map->legend.keyspacingx + map->legend.keysizex;
+  /* Calculate the size of the legend: */
+  /*   - account for the Y keyspacing */
+  *size_y += (2*VMARGIN) + ((nLegendItems-1) * map->legend.keyspacingy);
+  /*   - determine the legend width */
+  *size_x = (2*HMARGIN) + maxwidth + map->legend.keyspacingx + map->legend.keysizex;
     
-    if (*size_y <=0 ||  *size_x <=0)
-       return MS_FAILURE;
+  if(*size_y <=0 ||  *size_x <=0)
+    return MS_FAILURE;
 
-    return MS_SUCCESS;
+  return MS_SUCCESS;
 }
 
 /*
@@ -240,177 +226,167 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x,
 */
 imageObj *msDrawLegend(mapObj *map, int scale_independent)
 {
-    gdImagePtr img; /* image data structure */
-    int i,j; /* loop counters */
-    pointObj pnt;
-    int size_x, size_y=0;
-    layerObj *lp;  
-    rectObj rect;
-    imageObj *image = NULL;
-    outputFormatObj *format = NULL;
-    struct legend_struct {
-        int height;
-        char *transformedText;
-        layerObj *layer;
-        classObj *theclass;
-        struct legend_struct* pred;
-    };
-    typedef struct legend_struct legendlabel;
-    legendlabel *head=NULL,*cur=NULL;
+  gdImagePtr img; /* image data structure */
+  int i,j; /* loop counters */
+  pointObj pnt;
+  int size_x, size_y=0;
+  layerObj *lp;  
+  rectObj rect;
+  imageObj *image = NULL;
+  outputFormatObj *format = NULL;
+  struct legend_struct {
+    int height;
+    char *transformedText;
+    layerObj *layer;
+    classObj *theclass;
+    struct legend_struct* pred;
+  };
+  typedef struct legend_struct legendlabel;
+  legendlabel *head=NULL,*cur=NULL;
 
-    
+  if(msValidateContexts(map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
+  if(msLegendCalcSize(map, scale_independent, &size_x, &size_y, NULL) != MS_SUCCESS) return NULL;
 
-    if(msValidateContexts(map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
+  /*
+   * step through all map classes, and for each one that will be displayed
+   * keep a reference to its label size and text
+   */
+  for(i=0; i<map->numlayers; i++) {
+    lp = (GET_LAYER(map, map->layerorder[i]));
 
-    if(msLegendCalcSize(map, scale_independent, &size_x, &size_y, NULL) != MS_SUCCESS) return NULL;
+    if((lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY)) /* skip it */
+      continue;
+        
+    if(!scale_independent && map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
+    }
 
-    /*
-     * step through all map classes, and for each one that will be displayed
-     * keep a reference to its label size and text
-     */
-    for(i=0; i<map->numlayers; i++) {
-        lp = (GET_LAYER(map, map->layerorder[i]));
+    for(j=lp->numclasses-1;j>=0;j--) {
 
-        if((lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY)) /* skip it */
-            continue;
-        if(!scale_independent && map->scaledenom > 0) {
-            if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
-            if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
-        }
-        for(j=lp->numclasses-1;j>=0;j--) {
-
-          /* skip the class if the classgroup is defined*/
-          if (lp->classgroup && 
-              (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
-            continue;
-            if(!lp->class[j]->name) continue; /* skip it */
-            if(!scale_independent && map->scaledenom > 0) {  /* verify class scale here */
-                if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom))
-                    continue;
-                if((lp->class[j]->minscaledenom > 0) && (map->scaledenom <= lp->class[j]->minscaledenom))
-                    continue;
-            }
-            cur=(legendlabel*)malloc(sizeof(legendlabel));
+      /* skip the class if the classgroup is defined */
+      if(lp->classgroup && (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
+        continue;
+      if(!lp->class[j]->name) continue; /* skip it */
+      if(!scale_independent && map->scaledenom > 0) {  /* verify class scale here */
+        if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom)) continue;
+        if((lp->class[j]->minscaledenom > 0) && (map->scaledenom <= lp->class[j]->minscaledenom)) continue;
+      }
+      cur = (legendlabel*) malloc(sizeof(legendlabel));
             
-            /*
-             * apply encoding and line wrapping to the legend label if requested
-             * this is done conditionnally as the text transformation function
-             * does some memory allocations that can be avoided in most cases.
-             * the transformed text must be freed once finished, this must be done
-             * conditionnally by testing if the transformed text pointer is the
-             * same as the class name pointer
-             */
-            if(map->legend.label.encoding || map->legend.label.wrap)
-                cur->transformedText= msTransformLabelText(&map->legend.label,lp->class[j]->name);
-            else
-                cur->transformedText=lp->class[j]->name;
-            cur->theclass=lp->class[j];
-            cur->layer=lp;
-            cur->pred=head;
-            head=cur;
-            if(cur->transformedText==NULL||
-                    msGetLabelSizeGD(cur->transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0)
-            { /* something bad happened, free allocated mem */
-                while(cur) {
-                    if(cur->transformedText!=cur->theclass->name)
-                        free(cur->transformedText);
-                    head=cur;
-                    cur=cur->pred;
-                    free(head);
-                }
-                return(NULL); 
-            }
-            cur->height = MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
-        }
-    }
+      /*
+       * apply encoding and line wrapping to the legend label if requested
+       * this is done conditionnally as the text transformation function
+       * does some memory allocations that can be avoided in most cases.
+       * the transformed text must be freed once finished, this must be done
+       * conditionnally by testing if the transformed text pointer is the
+       * same as the class name pointer
+       */
+      if(map->legend.label.encoding || map->legend.label.wrap)
+        cur->transformedText = msTransformLabelText(&map->legend.label,lp->class[j]->name);
+      else
+        cur->transformedText = lp->class[j]->name;
 
-    /* ensure we have an image format representing the options for the legend. */
-    msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
+      cur->theclass = lp->class[j];
+      cur->layer = lp;
+      cur->pred = head;
+      head = cur;
 
-    /* initialize the legend image */
-#ifdef USE_AGG
-    if( MS_RENDERER_AGG(map->outputformat) )
-        image = msImageCreateAGG(size_x, size_y, format, map->web.imagepath, map->web.imageurl);        
-    else
-#endif
-        image = msImageCreateGD(size_x, size_y, format, map->web.imagepath, map->web.imageurl);
-
-    /* drop this reference to output format */
-    msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
-
-    if (image)
-        img = image->img.gd;
-    else {
-        msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLegend()");
-        return(NULL);
-    }
-
-    /* Set background */
-#ifdef USE_AGG
-    if( MS_RENDERER_AGG(map->outputformat) )
-        msImageInitAGG( image, &(map->legend.imagecolor));
-    else
-#endif
-        msImageInitGD(image, &(map->legend.imagecolor));
-
-
-    msClearPenValues(map); /* just in case the mapfile has already been processed */
-    pnt.y = VMARGIN;
-    pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
-
-    while(cur) { /*cur initially points on the last legend item, i.e. the one that should be at the top*/
-        int number_of_newlines=0, offset=0;
-
-        /*set the scale factor so that scale dependant symbols are drawn in the legend with their default size*/
-        if(cur->layer->sizeunits != MS_PIXELS)
-            cur->layer->scalefactor = (msInchesPerUnit(cur->layer->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
-
-        if(msDrawLegendIcon(map, cur->layer, cur->theclass,  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y) != MS_SUCCESS)
-            return NULL;
-        
-        /*
-         * adjust the baseline for multiline truetype labels. the label point is the bottom left 
-         * corner of the *first* line, which we do not know exactly as we only have the
-         * bounding box of the whole label. current approach is to suppose that all lines
-         * mostly have the same height, and offset the starting point by the mean hight of 
-         * one line. This isn't perfect but still much better than the previous approach
-         */
-        
-        if(map->legend.label.type==MS_TRUETYPE &&
-                (number_of_newlines=msCountChars(cur->transformedText,'\n'))>0) {
-            offset=cur->height/(number_of_newlines+1);
-            pnt.y += offset;
-        }
-        else
-            pnt.y +=  cur->height;
-        /* TODO: 
-         * note tbonfort: if this todo concerned treating the individual heights of the legend labels,
-         * then this is now done
-         * */
-
-        msDrawLabel(image, pnt, cur->transformedText, &(map->legend.label), &map->fontset, 1.0);
-        if(offset) {
-            /* if we had multiple lines, adjust the current position so it points
-             * to the bottom of the current label
-             */
-            pnt.y += cur->height-offset;
-        }
-        pnt.y += map->legend.keyspacingy; /* bump y for next label */
-        
-        /*free the transformed text if needed*/
-        if(cur->transformedText!=cur->theclass->name)
+      if(cur->transformedText==NULL || msGetLabelSizeGD(cur->transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0) { /* something bad happened, free allocated mem */
+        while(cur) {
+          if(cur->transformedText!=cur->theclass->name)
             free(cur->transformedText);
-        head=cur;
-        cur=cur->pred;
-        free(head);
-    } /* next legend */
+          head = cur;
+          cur = cur->pred;
+          free(head);
+        }
+        return(NULL); 
+      }
+            
+      cur->height = MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
+    }
+  }
 
+  /* ensure we have an image format representing the options for the legend. */
+  msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
+
+  /* initialize the legend image */
+#ifdef USE_AGG
+  if(MS_RENDERER_AGG(map->outputformat))
+    image = msImageCreateAGG(size_x, size_y, format, map->web.imagepath, map->web.imageurl);        
+  else
+#endif
+    image = msImageCreateGD(size_x, size_y, format, map->web.imagepath, map->web.imageurl);
+
+  /* drop this reference to output format */
+  msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+
+  if(image)
+    img = image->img.gd;
+  else {
+    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLegend()");
+    return(NULL);
+  }
+
+  /* Set background */
+#ifdef USE_AGG
+  if(MS_RENDERER_AGG(map->outputformat))
+    msImageInitAGG( image, &(map->legend.imagecolor));
+  else
+#endif
+    msImageInitGD(image, &(map->legend.imagecolor));
+
+
+  msClearPenValues(map); /* just in case the mapfile has already been processed */
+  pnt.y = VMARGIN;
+  pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
+
+  while(cur) { /* cur initially points on the last legend item, i.e. the one that should be at the top */
+    int number_of_newlines=0, offset=0;
+
+    /* set the scale factor so that scale dependant symbols are drawn in the legend with their default size */
+    if(cur->layer->sizeunits != MS_PIXELS)
+      cur->layer->scalefactor = (msInchesPerUnit(cur->layer->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
+
+    if(msDrawLegendIcon(map, cur->layer, cur->theclass,  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y) != MS_SUCCESS)
+      return NULL;
+        
+    /*
+     * adjust the baseline for multiline truetype labels. the label point is the bottom left 
+     * corner of the *first* line, which we do not know exactly as we only have the
+     * bounding box of the whole label. current approach is to suppose that all lines
+     * mostly have the same height, and offset the starting point by the mean hight of 
+     * one line. This isn't perfect but still much better than the previous approach
+     */        
+    if(map->legend.label.type==MS_TRUETYPE && (number_of_newlines=msCountChars(cur->transformedText,'\n')) > 0) {
+      offset=cur->height/(number_of_newlines+1);
+      pnt.y += offset;
+    } else
+      pnt.y += cur->height;
+ 
+    /* TODO: note tbonfort: if this todo concerned treating the individual heights of the legend labels, then this is now done */
+
+    msDrawLabel(image, pnt, cur->transformedText, &(map->legend.label), &map->fontset, 1.0);
+    if(offset) {
+      /* if we had multiple lines, adjust the current position so it points to the bottom of the current label */
+      pnt.y += cur->height-offset;
+    }
+    pnt.y += map->legend.keyspacingy; /* bump y for next label */
+        
+    /* free the transformed text if needed */
+    if(cur->transformedText!=cur->theclass->name)
+      free(cur->transformedText);
+    head = cur;
+    cur = cur->pred;
+    free(head);
+  } /* next legend */
 
 #ifdef USE_AGG
-    if(MS_RENDERER_AGG(map->outputformat))
-        msAlphaAGG2GD(image);
+  if(MS_RENDERER_AGG(map->outputformat))
+    msAlphaAGG2GD(image);
 #endif
-    return(image);
+    
+  return(image);
 }
 
 /* TODO */
@@ -422,7 +398,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   s = msGetSymbolIndex(&(map->symbolset), "legend", MS_FALSE);
   if(s == -1) {
-    if (msGrowSymbolSet(&map->symbolset) == NULL)
+    if(msGrowSymbolSet(&map->symbolset) == NULL)
         return -1;
     s = map->symbolset.numsymbols;
     map->symbolset.numsymbols++;
@@ -431,9 +407,10 @@ int msEmbedLegend(mapObj *map, imageObj *img)
     if(map->symbolset.symbol[s]->img) 
       gdImageDestroy(map->symbolset.symbol[s]->img);
   }
+
 #ifdef USE_AGG
   if(MS_RENDERER_AGG(map->outputformat))
-      msAlphaGD2AGG(img);
+    msAlphaGD2AGG(img);
 #endif
   
   /* render the legend. */
@@ -443,7 +420,6 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   map->symbolset.symbol[s]->img = image->img.gd; 
   image->img.gd = NULL;
   msFreeImage( image );
-
 
   if(!map->symbolset.symbol[s]->img) return(-1); /* something went wrong creating scalebar */
 
@@ -485,7 +461,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   l = msGetLayerIndex(map, "__embed__legend");
   if(l == -1) {
-    if (msGrowMapLayers(map) == NULL)
+    if(msGrowMapLayers(map) == NULL)
         return(-1);
     l = map->numlayers;
     map->numlayers++;
@@ -493,7 +469,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
     GET_LAYER(map, l)->name = strdup("__embed__legend");
     GET_LAYER(map, l)->type = MS_LAYER_ANNOTATION;
 
-    if (msGrowLayerClasses( GET_LAYER(map, l) ) == NULL)
+    if(msGrowLayerClasses( GET_LAYER(map, l) ) == NULL)
         return(-1);
     if(initClass(GET_LAYER(map, l)->class[0]) == -1) return(-1);
     GET_LAYER(map, l)->numclasses = 1; /* so we make sure to free it */
@@ -504,7 +480,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   GET_LAYER(map, l)->status = MS_ON;
 
-  if (msMaybeAllocateStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
+  if(msMaybeAllocateStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
   GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
   GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
   GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;
@@ -522,6 +498,3 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   return(0);
 }
-
-
-
