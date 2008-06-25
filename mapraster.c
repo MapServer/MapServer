@@ -1411,13 +1411,17 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 #endif 
 */
 
-    msBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
-
-    tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
-
-    msBuildPath3(szPath, tiAbsDirPath, map->shapepath, filename);
-
-    free(tiAbsDirPath);
+    /*
+    ** If using a tileindex then build the path relative to that file if SHAPEPATH is not set.
+    */
+    if(layer->tileindex) {
+      msBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
+      tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
+      msBuildPath3(szPath, tiAbsDirPath, map->shapepath, filename);
+      free(tiAbsDirPath);
+    } else {
+      msBuildPath3(szPath, map->mappath, map->shapepath, filename);
+    }
 
     /*
     ** Try to open the file, and read the first 8 bytes as a signature. 
