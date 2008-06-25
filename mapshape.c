@@ -1799,9 +1799,10 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
 void msTileIndexAbsoluteDir(char *tiFileAbsDir, layerObj *layer)
 {
   char tiFileAbsPath[MS_MAXPATHLEN];
-
+  char *tiFileAbsDirTmp=NULL;
+ 
   msBuildPath(tiFileAbsPath, layer->map->mappath, layer->tileindex); /* absolute path to tileindex file */
-  char *tiFileAbsDirTmp = msGetPath(tiFileAbsPath); /* tileindex file's directory */
+  tiFileAbsDirTmp = msGetPath(tiFileAbsPath); /* tileindex file's directory */
   strncpy(tiFileAbsDir, tiFileAbsDirTmp, MS_MAXPATHLEN);
   free(tiFileAbsDirTmp);
 }
@@ -1810,6 +1811,7 @@ int msTiledSHPOpenFile(layerObj *layer)
 {
   int i;
   char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
+  char tiFileAbsDir[MS_MAXPATHLEN];
 
   msTiledSHPLayerInfo *tSHP=NULL;
   
@@ -1859,7 +1861,6 @@ int msTiledSHPOpenFile(layerObj *layer)
 
   if((layer->tileitemindex = msDBFGetItemIndex(tSHP->tileshpfile->hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
  
-  char tiFileAbsDir[MS_MAXPATHLEN];
   msTileIndexAbsoluteDir(tiFileAbsDir, layer);
 
   /* position the source at the FIRST tile to use as a template, this is so the functions that fill the iteminfo array have something to work from */
@@ -1898,6 +1899,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 {
   int i, status;
   char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
+  char tiFileAbsDir[MS_MAXPATHLEN];
 
   msTiledSHPLayerInfo *tSHP=NULL;
   
@@ -1920,7 +1922,6 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
     status= msLayerWhichShapes(tlp, rect);
     if(status != MS_SUCCESS) return(status); /* could be MS_DONE or MS_FAILURE */
 
-    char tiFileAbsDir[MS_MAXPATHLEN];
     msTileIndexAbsoluteDir(tiFileAbsDir, layer);
 
     msInitShape(&tshape);
@@ -1971,7 +1972,6 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
     status = msShapefileWhichShapes(tSHP->tileshpfile, rect, layer->debug);
     if(status != MS_SUCCESS) return(status); /* could be MS_DONE or MS_FAILURE */
 
-    char tiFileAbsDir[MS_MAXPATHLEN];
     msTileIndexAbsoluteDir(tiFileAbsDir, layer);
 
     /* position the source at the FIRST shapefile */
@@ -2029,6 +2029,7 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
   int i, status, filter_passed = MS_FALSE;
   char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
   char **values=NULL;
+  char tiFileAbsDir[MS_MAXPATHLEN];
 
   msTiledSHPLayerInfo *tSHP=NULL;
   
@@ -2042,7 +2043,6 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
     return(MS_FAILURE);
   }
 
-  char tiFileAbsDir[MS_MAXPATHLEN];
   msTileIndexAbsoluteDir(tiFileAbsDir, layer);
 
   do {
@@ -2188,6 +2188,7 @@ int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
   char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
 
   msTiledSHPLayerInfo *tSHP=NULL;
+  char tiFileAbsDir[MS_MAXPATHLEN];
   
   if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
 	return MS_FAILURE;
@@ -2214,7 +2215,6 @@ int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     /* open the shapefile, since a specific tile was request an error should be generated if that tile does not exist */
     if(strlen(filename) == 0) return(MS_FAILURE);
 
-    char tiFileAbsDir[MS_MAXPATHLEN];
     msTileIndexAbsoluteDir(tiFileAbsDir, layer);
 
     msBuildPath3(szPath, tiFileAbsDir, layer->map->shapepath, filename);

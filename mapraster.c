@@ -1211,6 +1211,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
   rectObj searchrect;
   gdImagePtr img;
   char *pszTmp = NULL;
+  char tiAbsFilePath[MS_MAXPATHLEN];
+  char *tiAbsDirPath = NULL;
 
   if(layer->debug > 0 || map->debug > 1)
     msDebug( "msDrawRasterLayerLow(%s): entering.\n", layer->name );
@@ -1409,10 +1411,9 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 #endif 
 */
 
-    char tiAbsFilePath[MS_MAXPATHLEN];
     msBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
 
-    char *tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
+    tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
 
     msBuildPath3(szPath, tiAbsDirPath, map->shapepath, filename);
 
