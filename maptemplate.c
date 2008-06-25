@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $id: maptemplate.c 7725 2008-06-21 15:56:58Z sdlime $
  *
  * Project:  MapServer
  * Purpose:  Various template processing functions.
@@ -228,8 +228,6 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
     msGenerateImages(mapserv, MS_TRUE, MS_TRUE);
   }
 
-  /* initialize the buffer if necessary */
-   
   if(outputFormat) {
     const char *file = msGetOutputFormatOption( outputFormat, "FILE", NULL );
     if(!file) {
@@ -3254,8 +3252,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     /* if(resultlayer->description) outstr = msReplaceSubstring(outstr, "[cd]", resultlayer->description); // current layer description     */
   }
 
-  if(processResultSetTag(mapserv, &outstr, stream) != MS_SUCCESS)
-    return(NULL);
+  if(mode != QUERY) {
+    if(processResultSetTag(mapserv, &outstr, stream) != MS_SUCCESS) return(NULL);
+  }
 
   if(mode == QUERY) { /* return shape and/or values  */
 
@@ -3502,13 +3501,13 @@ int msReturnURL(mapservObj* ms, char* url, int mode)
   }
 
   tmpurl = processLine(ms, url, NULL, mode); /* URL templates can't handle multi-line tags, hence the NULL file pointer */
- 
+
   if(!tmpurl)
-   return MS_FAILURE;
-   
+    return MS_FAILURE;
+
   msRedirect(tmpurl);
   free(tmpurl);
-   
+
   return MS_SUCCESS;
 }
 
@@ -3528,16 +3527,6 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
 
   layerObj *lp=NULL;
 
-  /* -------------------------------------------------------------------- */
-  /*      mime type could be null when the function is called from        */
-  /*      mapscript (function msProcessQueryTemplate)                     */
-  /* -------------------------------------------------------------------- */
-
-  /* if(!pszMimeType) {
-    msSetError(MS_WEBERR, "Mime type not specified.", "msReturnNestedTemplateQuery()");
-    return MS_FAILURE;
-  } */
-
   if(papszBuffer) {
     (*papszBuffer) = (char *)malloc(MS_TEMPLATE_BUFFER);
     (*papszBuffer)[0] = '\0';
@@ -3548,7 +3537,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
   
   msInitShape(&(mapserv->resultshape));
 
-  if((mapserv->Mode == ITEMQUERY) || (mapserv->Mode == QUERY)) { /* may need to handle a URL result set */
+  if((mapserv->Mode == ITEMQUERY) || (mapserv->Mode == QUERY)) { /* may need to handle a URL result set since these modes return exactly 1 result */
 
     for(i=(mapserv->map->numlayers-1); i>=0; i--) {
       lp = (GET_LAYER(mapserv->map, i));
@@ -3574,9 +3563,8 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
 
         status = msLayerOpen(lp);
         if(status != MS_SUCCESS) return status;
-
-        /* retrieve all the item names */
-        status = msLayerGetItems(lp);
+        
+        status = msLayerGetItems(lp); /* retrieve all the item names */
         if(status != MS_SUCCESS) return status;
 
         status = msLayerGetShape(lp, &(mapserv->resultshape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
@@ -3605,6 +3593,9 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
     }
   }
 
+  /*
+  ** Now we know we're making a template sandwich
+  */
   mapserv->NR = mapserv->NL = 0;
   for(i=0; i<mapserv->map->numlayers; i++) { /* compute some totals */
     lp = (GET_LAYER(mapserv->map, i));
@@ -3617,10 +3608,12 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
     }
   }
 
-  if(papszBuffer && pszMimeType) {
+  /*
+  ** Is this step really necessary for buffered output? Legend and browse templates don't deal with mime-types
+  ** so why should this. Note that new-style templates don't buffer the mime-type either.
+  */
+  if(papszBuffer && mapserv->sendheaders) {
     sprintf(buffer, "Content-type: %s%c%c\n", pszMimeType, 10, 10);
-    /* sprintf(buffer, "<!-- %s -->\n",  msGetVersion()); */
-
     if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
       nExpandBuffer++;
       (*papszBuffer) = (char *)realloc((*papszBuffer), MS_TEMPLATE_BUFFER*nExpandBuffer);
@@ -3628,9 +3621,8 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
     }
     strcat((*papszBuffer), buffer);
     nCurrentSize += strlen(buffer);
-  } else if(pszMimeType) {
-      msIO_printf("Content-type: %s%c%c", pszMimeType, 10, 10); /* write MIME header */
-    /* printf("<!-- %s -->\n", msGetVersion()); */
+  } else if(mapserv->sendheaders) {
+    msIO_printf("Content-type: %s%c%c\n", pszMimeType, 10, 10);
     fflush(stdout);
   }
 
@@ -3647,16 +3639,13 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
 
     mapserv->NLR = lp->resultcache->numresults; 
 
-    /* open this layer */
-    status = msLayerOpen(lp);
+    status = msLayerOpen(lp); /* open this layer */
     if(status != MS_SUCCESS) return status;
 
-    /* retrieve all the item names */
-    status = msLayerGetItems(lp);
+    status = msLayerGetItems(lp); /* retrieve all the item names */
     if(status != MS_SUCCESS) return status;
-
-    /* open any necessary JOINs here */
-    if(lp->numjoins > 0) {
+    
+    if(lp->numjoins > 0) { /* open any necessary JOINs here */
       for(k=0; k<lp->numjoins; k++) {
         status = msJoinConnect(lp, &(lp->joins[k]));
         if(status != MS_SUCCESS) return status;        
@@ -4039,7 +4028,8 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, char **names, cha
     if(bGenerateImages)
       msGenerateImages(mapserv, MS_TRUE, MS_FALSE);
 
-    msReturnTemplateQuery(mapserv, NULL, &pszBuffer );
+    mapserv->sendheaders = MS_FALSE;
+    msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, &pszBuffer);
 
     mapserv->map = NULL;
     mapserv->request->ParamNames = mapserv->request->ParamValues = NULL;

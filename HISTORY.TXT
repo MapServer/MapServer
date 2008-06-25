@@ -12,8 +12,11 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- maptemplate.c: Fixed issues in RFC 36 implementation that prevented mapscript 
+  mapObj->processQueryTemplate() method from working.
+
 - WMS/WFS: extend warning message (#1396)
-)
+
 - WFS: Respect units for the DWhitin parameter (#2297)
 
 - WFS: correct OGC Contains filter  (#2306)
