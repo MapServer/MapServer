@@ -6494,6 +6494,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_long(return_value,   "status",     player->status);
     add_property_long(return_value,   "debug",      player->debug);
     PHPMS_ADD_PROP_STR(return_value,  "classitem",  player->classitem);
+    PHPMS_ADD_PROP_STR(return_value,  "classgroup",  player->classgroup);
     PHPMS_ADD_PROP_STR(return_value,  "name",       player->name);
     PHPMS_ADD_PROP_STR(return_value,  "group",      player->group);
     PHPMS_ADD_PROP_STR(return_value,  "data",       player->data);
@@ -8838,6 +8839,8 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
     add_property_double(return_value,  "maxscale", pclass->maxscaledenom);
 
     PHPMS_ADD_PROP_STR(return_value,   "keyimage",  pclass->keyimage);
+
+    PHPMS_ADD_PROP_STR(return_value,   "group",  pclass->group);
     
     return class_id;
 }

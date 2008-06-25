@@ -604,6 +604,7 @@ Currently supported classes, properties and methods:
    int    status      (MS_ON, MS_OFF, MS_DEFAULT or MS_DELETE)
    int    debug
    string classitem
+   string classgroup
    string name
    string group
    string data
@@ -920,7 +921,8 @@ Currently supported classes, properties and methods:
    labelObj label
    int    numstyles
    string keyimage   
-      
+   string group
+   
  Methods:
 
    int set(string property_name, new_value)
