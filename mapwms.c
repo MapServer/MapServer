@@ -1226,7 +1226,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    }
    else
    {
-       msIO_printf("        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wms_extent metadata. -->\n");
+       msIO_printf("        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wms_extent metadata. Also check that your data exists in the DATA statement -->\n");
    }
 
    /* time support */

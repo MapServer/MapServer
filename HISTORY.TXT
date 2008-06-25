@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- WMS/WFS: extend warning message (#1396)
+)
 - WFS: Respect units for the DWhitin parameter (#2297)
 
 - WFS: correct OGC Contains filter  (#2306)
