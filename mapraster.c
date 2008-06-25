@@ -1205,14 +1205,12 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
   shapeObj tshp;
 
   int force_gdal;
-  char szPath[MS_MAXPATHLEN], cwd[MS_MAXPATHLEN];
+  char szPath[MS_MAXPATHLEN];
   int final_status = MS_SUCCESS;
 
   rectObj searchrect;
   gdImagePtr img;
   char *pszTmp = NULL;
-
-  cwd[0] = '\0';
 
   if(layer->debug > 0 || map->debug > 1)
     msDebug( "msDrawRasterLayerLow(%s): entering.\n", layer->name );
@@ -1411,7 +1409,14 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 #endif 
 */
 
-    msBuildPath3(szPath, map->mappath, map->shapepath, filename);
+    char tiAbsFilePath[MS_MAXPATHLEN];
+    msBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
+
+    char *tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
+
+    msBuildPath3(szPath, tiAbsDirPath, map->shapepath, filename);
+
+    free(tiAbsDirPath);
 
     /*
     ** Try to open the file, and read the first 8 bytes as a signature. 
@@ -1565,7 +1570,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     ** Generate an error.
     */
     if( !f ) {
-      msSetError(MS_IOERR, "(%s)", "msDrawRaster()", filename);
+      msSetError(MS_IOERR, "%s using full path %s", "msDrawRaster()", filename, szPath);
 
 #ifndef IGNORE_MISSING_DATA
       if( layer->debug || map->debug )
