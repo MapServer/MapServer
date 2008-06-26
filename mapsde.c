@@ -1051,6 +1051,10 @@ int msSDELayerOpen(layerObj *layer) {
   
     /* request a connection and stream from the pool */
     poolinfo = (msSDEConnPoolInfo *)msConnPoolRequest( layer ); 
+    /* check the connection */
+    if (poolinfo && (SE_connection_test_server(poolinfo->connection, 30) != SE_SUCCESS)) {
+        msSDECloseConnection(poolinfo->connection);
+    }
   
     /* If we weren't returned a connection and stream, initialize new ones */
     if (!poolinfo) {
