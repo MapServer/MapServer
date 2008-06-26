@@ -1665,8 +1665,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                           strdup(psDistance->psChild->psNext->pszValue);
                         if (pszUnits)
                         {
-                            strcat(psFilterNode->psRightNode->pszValue, ";");
-                            strcat(psFilterNode->psRightNode->pszValue, pszUnits);
+                            psFilterNode->psRightNode->pszValue= msStringConcatenate(psFilterNode->psRightNode->pszValue, ";");
+                            psFilterNode->psRightNode->pszValue= msStringConcatenate(psFilterNode->psRightNode->pszValue, pszUnits);
                         }
                     }
                 }
