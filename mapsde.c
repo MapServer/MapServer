@@ -272,7 +272,9 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
     }
 
 
-    if (sde->join_table) {
+    proc_key = msLayerGetProcessingKey(layer,"ATTRIBUTE_QUALIFIED");
+    if (sde->join_table ||
+        (proc_key && strcasecmp( proc_key, "TRUE") == 0)) {
         strcat(full_column_name, sde->table);
         strcat(full_column_name, ".");
         strcat(full_column_name, column_name);
@@ -1832,6 +1834,8 @@ short nbasecol, njoincol;
 /*    nBaseColumns = 0; */
 /*    nJoinColumns = 0; */
  
+    char *proc_key = NULL;
+
     if (!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR,
                     "SDE layer has not been opened.",
@@ -1947,7 +1951,10 @@ short nbasecol, njoincol;
     } else {
        msDebug("layer->items has already been initialized!!!");
     }
-    if (!sde->join_table) {
+
+    proc_key = msLayerGetProcessingKey(layer,"ATTRIBUTE_QUALIFIED");
+    if (!sde->join_table && 
+        (proc_key == NULL ||  strcasecmp( proc_key, "TRUE") != 0)) {
         for(i=0; i<layer->numitems; i++) layer->items[i] = strdup(all_itemdefs[i].column_name);
         for(i=0; i<layer->numitems; i++) { /* requested columns */
             for(j=0; j<layer->numitems; j++) { /* all columns */

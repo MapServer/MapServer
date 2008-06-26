@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapsde.c: processing option added to allow using fully qualified names
+  for attributes (#2423).           
+
 - mapsde.c: Test that for an active connection before closing it #2498
 
 - mapdraw.c: Fixed issue where path following lines were not being drawn if FORCEd. (#2600)
