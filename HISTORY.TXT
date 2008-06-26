@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapdraw.c: Fixed issue where path following lines were not being drawn if FORCEd. (#2600)
+
 - mapshape.c: Applied patch to make the location of tiled data relative to the
   tileindex directory if SHAPEPATH is not set. (#2369)
 
