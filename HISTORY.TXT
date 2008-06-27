@@ -9,6 +9,9 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Current Version (SVN trunk):
+----------------------------
+
 Version 5.2.0-beta3 (2008-06-26):
 ---------------------------------
 
@@ -17,7 +20,7 @@ Version 5.2.0-beta3 (2008-06-26):
 
 - mapsde.c: Test that for an active connection before closing it #2498
 
-- mapdraw.c: Fixed issue where path following lines were not being drawn if FORCEd. (#2600)
+- mapdraw.c: Fixed issue where path following labels were not being drawn if FORCEd. (#2600)
 
 - mapshape.c: Applied patch to make the location of tiled data relative to the
   tileindex directory if SHAPEPATH is not set. (#2369)
