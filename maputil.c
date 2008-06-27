@@ -1495,8 +1495,8 @@ shapeObj* msOffsetPolyline(shapeObj *p, int offsetx, int offsety) {
                 /* offset line points computation */
                 if(first==1) { /* first point */
                     first = 0;
-                    ret->line[i].point[idx].x = p->line[i].point[j-1].x+ox;
-                    ret->line[i].point[idx].y = p->line[i].point[j-1].y+oy;
+                    x = ret->line[i].point[idx].x = p->line[i].point[j-1].x+ox;
+                    y = ret->line[i].point[idx].y = p->line[i].point[j-1].y+oy;
                     idx++;
                 } else { /* middle points */
                     if((dx*dx+dy*dy)>limit){ /* if the points are too close */

@@ -11,6 +11,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- maputil.c: fix a bug for offset lines with agg, when the first segment 
+  was horizontal (#2659)
 
 Version 5.2.0-beta3 (2008-06-26):
 ---------------------------------
