@@ -9,8 +9,8 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
+Version 5.2.0-beta3 (2008-06-26):
+---------------------------------
 
 - mapsde.c: processing option added to allow using fully qualified names
   for attributes (#2423).           
