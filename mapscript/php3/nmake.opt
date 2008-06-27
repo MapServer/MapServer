@@ -16,20 +16,20 @@
 ########################################################################
 #Use PHP4 flag when building with PHP4. Default is assumed to be PHP5
 
-PHP4=1
+#PHP4=1
 
 #name of the file that will be used when doing make install
-#it will be copied in the directory specified by the 
+#it will be copied in the directory specified by the
 PHP_INSTALL_DLL_NAME = php_mapscript_48.dll
 
 !IFDEF PHP4
 # Install directory for PHP4
-PHP_INSTALL_DIR=c:\php\php4\extensions 
+PHP_INSTALL_DIR=c:\php\php4\extensions
 # PHP TS library for PHP4
 PHP_TS_LIB_NAME=php4ts.lib
 !ELSE
 # Install directory for PHP5
-#PHP_INSTALL_DIR=c:\php\php5\ext 
+#PHP_INSTALL_DIR=c:\php\php5\ext
 # PHP TS library for PHP5
-#PHP_TS_LIB_NAME=php5ts.lib
+PHP_TS_LIB_NAME=php5ts.lib
 !ENDIF
