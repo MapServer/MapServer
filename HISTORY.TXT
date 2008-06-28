@@ -11,11 +11,15 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
 - maputil.c: fix a bug for offset lines with agg, when the first segment 
   was horizontal (#2659)
+
 - mapraster.c: fix for tiled rasters with relative shape paths defined, 
   from dfurhy (#2369)
 
+- maptemplate.c: fixed a problem with extent tags with _esc extension not 
+  working (#2666)
 
 Version 5.2.0-beta3 (2008-06-26):
 ---------------------------------
