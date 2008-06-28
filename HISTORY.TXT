@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapshape.c: restore old behavior of tiled shapes relative to shapepath
+  with new behavior for when shapepath is undefined (#2369)
+
 - maputil.c: fix a bug for offset lines with agg, when the first segment 
   was horizontal (#2659)
 
