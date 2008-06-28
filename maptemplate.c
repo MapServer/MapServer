@@ -1297,6 +1297,9 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   /* It is OK to have no include tags, just return. */
   if(!tagStart) return MS_SUCCESS;
 
+  /* hack to handle tags like 'mapext_esc' easily */
+  if(strstr(name, "_esc")) escape = ESCAPE_URL;
+
   while(tagStart) {
     tagOffset = tagStart - *line;
 
@@ -3125,11 +3128,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   if(processExtentTag(mapserv, &outstr, "mapext", &(mapserv->map->extent)) != MS_SUCCESS)
     return(NULL);
+  if(processExtentTag(mapserv, &outstr, "mapext_esc", &(mapserv->map->extent)) != MS_SUCCESS) /* depricated */
+    return(NULL);
    
-  encodedstr =  msEncodeUrl(repstr);
-  outstr = msReplaceSubstring(outstr, "[mapext_esc]", encodedstr); /* deprecated */
-  free(encodedstr);
-  
   sprintf(repstr, "%f", (mapserv->map->extent.maxx-mapserv->map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
   outstr = msReplaceSubstring(outstr, "[dx]", repstr);
   sprintf(repstr, "%f", (mapserv->map->extent.maxy-mapserv->map->extent.miny));
@@ -3146,11 +3147,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   if(processExtentTag(mapserv, &outstr, "rawext", &(mapserv->RawExt)) != MS_SUCCESS)
     return(NULL);
+  if(processExtentTag(mapserv, &outstr, "rawext_esc", &(mapserv->RawExt)) != MS_SUCCESS) /* depricated */
+    return(NULL);
   
-  encodedstr = msEncodeUrl(repstr);
-  outstr = msReplaceSubstring(outstr, "[rawext_esc]", encodedstr); /* deprecated */
-  free(encodedstr);
-    
 #ifdef USE_PROJ
   if((strstr(outstr, "lat]") || strstr(outstr, "lon]") || strstr(outstr, "lon_esc]"))
      && mapserv->map->projection.proj != NULL
@@ -3174,18 +3173,16 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     sprintf(repstr, "%f", llextent.maxy);
     outstr = msReplaceSubstring(outstr, "[maxlat]", repstr);    
 
-    if(processExtentTag(mapserv, &outstr, "mapext_latlon", &(llextent)) != MS_SUCCESS)
+    if(processExtentTag(mapserv, &outstr, "mapext_latlon", &(llextent)) != MS_SUCCESS) 
       return(NULL);
-     
-    encodedstr = msEncodeUrl(repstr);
-    outstr = msReplaceSubstring(outstr, "[mapext_latlon_esc]", encodedstr); /* deprecated */
-    free(encodedstr);
+    if(processExtentTag(mapserv, &outstr, "mapext_latlon_esc", &(llextent)) != MS_SUCCESS) /* depricated */
+      return(NULL);
   }
 #endif
 
   /* submitted by J.F (bug 1102) */
   if(mapserv->map->reference.status == MS_ON) {
-    sprintf(repstr, "%f", mapserv->map->reference.extent.minx); /* Individual reference map extent elements for spatial query building */
+    sprintf(repstr, "%f", mapserv->map->reference.extent.minx); /* Individual reference map extent elements for spatial query building, depricated. */
     outstr = msReplaceSubstring(outstr, "[refminx]", repstr);
     sprintf(repstr, "%f", mapserv->map->reference.extent.maxx);
     outstr = msReplaceSubstring(outstr, "[refmaxx]", repstr);
@@ -3196,10 +3193,8 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
     if(processExtentTag(mapserv, &outstr, "refext", &(mapserv->map->reference.extent)) != MS_SUCCESS)
       return(NULL);
-
-    encodedstr =  msEncodeUrl(repstr);
-    outstr = msReplaceSubstring(outstr, "[refext_esc]", encodedstr); /* deprecated */
-    free(encodedstr); 
+    if(processExtentTag(mapserv, &outstr, "refext_esc", &(mapserv->map->reference.extent)) != MS_SUCCESS) /* depricated */
+      return(NULL);
   }
 
   sprintf(repstr, "%d %d", mapserv->map->width, mapserv->map->height);
@@ -3284,11 +3279,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     
     if(processExtentTag(mapserv, &outstr, "shpext", &(mapserv->resultshape.bounds)) != MS_SUCCESS)
       return(NULL);
+    if(processExtentTag(mapserv, &outstr, "shpext_esc", &(mapserv->resultshape.bounds)) != MS_SUCCESS) /* depricated */
+      return(NULL);
 
-    encodedstr = msEncodeUrl(repstr);
-    outstr = msReplaceSubstring(outstr, "[shpext_esc]", encodedstr);
-    free(encodedstr);
-     
     sprintf(repstr, "%d", mapserv->resultshape.classindex);
     outstr = msReplaceSubstring(outstr, "[shpclass]", repstr);
 
