@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapsde.c: Check at compile time that we have SE_connection_test_server, 
+  which appears to only be available for ArcSDE 9+ (#2665).
+  
 - mapshape.c: restore old behavior of tiled shapes relative to shapepath
   with new behavior for when shapepath is undefined (#2369)
 
@@ -30,7 +33,7 @@ Version 5.2.0-beta3 (2008-06-26):
 - mapsde.c: processing option added to allow using fully qualified names
   for attributes (#2423).           
 
-- mapsde.c: Test that for an active connection before closing it #2498
+- mapsde.c: Test for an active connection before closing it (#2498).
 
 - mapdraw.c: Fixed issue where path following labels were not being drawn if FORCEd. (#2600)
 
