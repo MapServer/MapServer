@@ -974,10 +974,13 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 
   if(strstr(*line, "[/resultset]") == NULL) { /* read ahead */
     foundTagEnd = MS_FALSE;
-    while((fgets(lineBuffer, MS_BUFFER_LENGTH, stream) != NULL) && !foundTagEnd) {
-      *line = msStringConcatenate(*line, lineBuffer);
-      if(strstr(*line, "[/resultset]") != NULL)
-        foundTagEnd = MS_TRUE;
+    while(!foundTagEnd) {
+      if(fgets(lineBuffer, MS_BUFFER_LENGTH, stream) != NULL) {
+        *line = msStringConcatenate(*line, lineBuffer);
+        if(strstr(*line, "[/resultset]") != NULL)
+          foundTagEnd = MS_TRUE;
+      } else 
+        break; /* ran out of file */
     }
     if(foundTagEnd == MS_FALSE) {
       msSetError(MS_WEBERR, "[resultset] tag found without closing [/resultset].", "processResultSetTag()");
