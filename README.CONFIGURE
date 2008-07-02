@@ -69,6 +69,7 @@ Optional Packages:
 
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-pkg-config[=PATH] Include pkg-config support (PATH is path to pkg-config)
   --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is
                               path to freetype-config program or install dir).
   --with-zlib=DIR         GD,SVG: Specify where zlib is installed (DIR is path
@@ -115,7 +116,7 @@ Optional Packages:
   --with-curl-config=PATH Specify path to curl-config.
   --with-xml2-config=PATH Specify path to xml2-config.
   --with-fribidi-config[=ARG] Include FriBidi Support (ARG=yes/path to
-                          fribidi-config)
+                          fribidi-config or fribidi.pc)
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
   --with-httpd            Specify path to 'httpd' executable.
   --with-warnings[=flags] Enable strict warnings (or user defined warnings)
@@ -610,7 +611,7 @@ FriBidi Support:
 ::
 
   --with-fribidi-config[=ARG] Include FriBidi Support (ARG=yes/path to
-                          fribidi-config)
+                          fribidi-config or fribidi.pc)
 
 - The FriBidi library (http://fribidi.freedesktop.org/wiki/) is used
   by MapServer to support labels flowing from right to left, such as
@@ -619,6 +620,14 @@ FriBidi Support:
 - Support for the FriBidi library is optional and is not included by 
   default.
 
+- The arg to --with-fribidi-config can be one of:
+  - yes: Autoconf will check if the system has fribidi-config. If not,
+    it will check if the pkg-config has fribidi in it's packages list.
+  - path to fribidi-config for fribidi (v0.10.9 and older)
+  - path to fribidi.pc for fribidi2 (v0.19.1 and more recent)
+
+- This option may be used in combination with the --with-pkg-config[=PATH]
+  option to specify the path to the pkg-config script
 
 
 Miscellaneous flags:
