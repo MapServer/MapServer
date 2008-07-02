@@ -31,6 +31,7 @@
 #include <time.h>
 
 #include "mapserver.h"
+#include "maptime.h"
 #include "mapparser.h"
 #include "mapthread.h"
 #include "mapfile.h"
@@ -637,6 +638,9 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 {
     int nReturnVal = -1;
     char szPath[MS_MAXPATHLEN];
+    struct mstimeval starttime, endtime;
+
+    if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 
     if (img)
     {
@@ -711,6 +715,13 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         else
             msSetError(MS_MISCERR, "Unknown image type", 
                        "msSaveImage()"); 
+    }
+
+    if(map->debug >= MS_DEBUGLEVEL_TUNING) {
+      msGettimeofday(&endtime, NULL);
+      msDebug("msSaveImage() total time: %.3fs\n", 
+              (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+              (starttime.tv_sec+starttime.tv_usec/1.0e6) );
     }
 
     return nReturnVal;

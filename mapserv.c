@@ -33,6 +33,7 @@
 #endif
 
 #include "mapserv.h"
+#include "maptime.h"
 
 #ifndef WIN32
 #include <signal.h>
@@ -184,7 +185,7 @@ mapObj *loadMap(void)
   int i,j,k;
   mapObj *map = NULL;
   char *tmpstr, *key, *value=NULL;
-  
+
   for(i=0;i<mapserv->request->NumParams;i++) /* find the mapfile parameter first */
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
   
@@ -269,7 +270,7 @@ mapObj *loadMap(void)
       }
     }
   } 
-        
+
   return map;
 }
 
@@ -1113,8 +1114,9 @@ int main(int argc, char *argv[]) {
   char buffer[1024], *value=NULL;
   imageObj *img=NULL;
   int status;
-
   int sendheaders = MS_TRUE;
+  struct mstimeval execstarttime, execendtime;
+  struct mstimeval requeststarttime, requestendtime;
 
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if( msDebugInitFromEnv() != MS_SUCCESS ) {
@@ -1122,6 +1124,9 @@ int main(int argc, char *argv[]) {
     msCleanup();
     exit(0);
   }
+
+  if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING) 
+      msGettimeofday(&execstarttime, NULL);
 
   /* -------------------------------------------------------------------- */
   /*      Process arguments.  In normal use as a cgi-bin there are no     */
@@ -1208,6 +1213,9 @@ int main(int argc, char *argv[]) {
 
     mapserv->map = loadMap();
 
+    if( mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) 
+      msGettimeofday(&requeststarttime, NULL);
+
 #ifdef USE_FASTCGI
     if( mapserv->map->debug ) {
       static int nRequestCounter = 1;
@@ -1265,6 +1273,12 @@ int main(int argc, char *argv[]) {
       ** At this point any error has already been handled
       ** as an XML exception by the OGC service.
       */
+      if(mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {
+        msGettimeofday(&requestendtime, NULL);
+        msDebug("mapserv request processing time (msLoadMap not incl.): %.3fs\n", 
+                (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
+                (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
+      }
       msFreeMapServObj(mapserv);
       
 #ifdef USE_FASTCGI
@@ -1272,6 +1286,12 @@ int main(int argc, char *argv[]) {
       continue;
 #else
       /* normal case, processing is complete */
+      if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING) {
+        msGettimeofday(&execendtime, NULL);
+        msDebug("mapserv total execution time: %.3fs\n", 
+                (execendtime.tv_sec+execendtime.tv_usec/1.0e6)-
+                (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
+      }
       msCleanup();
       exit( 0 );
 #endif
@@ -1804,12 +1824,26 @@ int main(int argc, char *argv[]) {
     if(SelectLayer) free(SelectLayer);
     if(QueryFile) free(QueryFile);
 
+    if(mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {
+      msGettimeofday(&requestendtime, NULL);
+      msDebug("mapserv request processing time (loadmap not incl.): %.3fs\n", 
+              (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
+              (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
+    }
+
     msFreeMapServObj(mapserv);
 
 #ifdef USE_FASTCGI
     msResetErrorList();
   }
 #endif
+
+  if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING) {
+    msGettimeofday(&execendtime, NULL);
+    msDebug("mapserv total execution time: %.3fs\n", 
+            (execendtime.tv_sec+execendtime.tv_usec/1.0e6)-
+            (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
+  }
 
   msCleanup();
 
