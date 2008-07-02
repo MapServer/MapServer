@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Commandline .map rendering utility, mostly for testing.
@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
+#include "maptime.h"
 
 MS_CVSID("$Id$")
 
@@ -53,11 +54,30 @@ int main(int argc, char *argv[])
     if (strcmp(argv[i],"-c") == 0) { /* user specified number of draws */
       iterations = atoi(argv[i+1]);
       printf("We will draw %d times...\n", iterations);
-      break;
+      continue;
     }
+
+    if(strcmp(argv[i], "-all_debug") == 0) /* global debug */
+    {
+        int debug_level = atoi(argv[++i]);
+
+        msSetGlobalDebugLevel(debug_level);
+
+        /* Send output to stderr by default */ 
+        if (msGetErrorFile() == NULL)
+            msSetErrorFile("stderr");
+
+        continue;
+    }
+    
   }
   
   for(draws=0; draws<iterations; draws++) {
+
+  struct mstimeval requeststarttime, requestendtime;
+
+  if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING) 
+      msGettimeofday(&requeststarttime, NULL);
       
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
@@ -173,20 +193,18 @@ int main(int argc, char *argv[])
       i+=2;
     }
 
-    if(strcmp(argv[i], "-all_debug") == 0) /* debug */
+    if(strcmp(argv[i], "-all_debug") == 0) /* global debug */
     {
         int debug_level = atoi(argv[++i]);
 
+        /* msSetGlobalDebugLevel() already called. Just need to force debug
+         * level in map and all layers
+         */
         map->debug = debug_level;
         for(j=0; j<map->numlayers; j++) {
             GET_LAYER(map, j)->debug = debug_level;
         }
 
-        msSetGlobalDebugLevel(debug_level);
-
-        /* Send output to stderr by default */ 
-        if (msGetErrorFile() == NULL)
-            msSetErrorFile("stderr");
     }
     
     if(strcmp(argv[i], "-map_debug") == 0) /* debug */
@@ -282,6 +300,14 @@ int main(int argc, char *argv[])
 
   msFreeImage(image);
   msFreeMap(map);
+
+  if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING) {
+    msGettimeofday(&requestendtime, NULL);
+    msDebug("shp2img total time: %.3fs\n", 
+            (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
+            (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
+  }
+
   msCleanup();
 
 } /*   for(draws=0; draws<iterations; draws++) { */
