@@ -621,6 +621,7 @@ FriBidi Support:
   default.
 
 - The arg to --with-fribidi-config can be one of:
+
   - yes: Autoconf will check if the system has fribidi-config. If not,
     it will check if the pkg-config has fribidi in it's packages list.
   - path to fribidi-config for fribidi (v0.10.9 and older)
