@@ -80,6 +80,38 @@ AC_MSG_RESULT([MapServer Version from mapserver.h: '$MS_VERSION'])
 AC_SUBST(MS_VERSION,    "$MS_VERSION")
 
 dnl ---------------------------------------------------------------------
+dnl Several libraries may use pkg-config.
+dnl ---------------------------------------------------------------------
+
+AC_MSG_CHECKING(if pkg-config path is provided)
+
+AC_ARG_WITH(pkg-config,
+[  --with-pkg-config[[=PATH]]      Include pkg-config support (PATH is path to pkg-config)],,)
+
+if test -n "$with_pkg_config" -a "$with_pkg_config" != "no" ; then
+
+  AC_MSG_RESULT([yes])
+
+  PKG_CONFIG=$with_pkg_config
+else
+  PKG_CONFIG="yes"
+fi
+
+if test "$PKG_CONFIG" = "yes" ; then
+
+   AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
+   if test "$PKG_CONFIG" = "no" ; then
+      AC_MSG_RESULT([couldn't find pkg-config in default path. Please specify full path to pkg-config if needed])
+   fi
+
+elif test -f "$PKG_CONFIG" -a -x "$PKG_CONFIG" ; then
+     AC_MSG_RESULT([user supplied pkg-config ($PKG_CONFIG)])
+else
+     AC_MSG_ERROR(['$PKG_CONFIG' is not an executable.  Make sure you use --with-pkg-config=/path/to/pkg-config])
+fi
+
+dnl ---------------------------------------------------------------------
 dnl Several libraries might be needed for GD: png, zlib, freetype,
 dnl and jpeg (processed above).  Use where GD was found as default.
 dnl ---------------------------------------------------------------------
@@ -1873,27 +1905,47 @@ AC_MSG_CHECKING(if FriBidi support requested)
 
 AC_ARG_WITH(fribidi-config,
 [  --with-fribidi-config[[=ARG]] Include FriBidi Support (ARG=yes/path to 
-                          fribidi-config)],,)
+                          fribidi-config or fribidi.pc)],,)
 
 if test "$with_fribidi_config" = "no" -o "$with_fribidi_config" = "" ; then
   AC_MSG_RESULT(no)
   FRIBIDI_CONFIG="no"
+
 elif test "$with_fribidi_config" = "yes" ; then
   AC_MSG_RESULT(yes)
   AC_PATH_PROG(FRIBIDI_CONFIG, fribidi-config, no)
+  $FRIBIDI_PKG_CONFIG = "no"
+  if test "$FRIBIDI_CONFIG" = "no" -a "$PKG_CONFIG" != "no" ; then 
+     AC_MSG_CHECKING(for fribidi pkg-config path)
+     `$PKG_CONFIG --silence-errors --libs fribidi >> /dev/null`
+     if test $? -eq 0 ; then
+        AC_MSG_RESULT(yes)
+        FRIBIDI_PKG_CONFIG="yes"
+        FRIBIDI_CONFIG="fribidi"
+     else
+       AC_MSG_RESULT(no)
+     fi
+  fi 
 else
   FRIBIDI_CONFIG=$with_fribidi_config
 fi
 
-if test "$FRIBIDI_CONFIG" = "no" ; then
+if test "$FRIBIDI_CONFIG" = "no" ; then 
   FRIBIDI_ENABLED=
   FRIBIDI_INC=
   FRIBIDI_LIB=
 else
-  AC_MSG_RESULT([yes, user supplied fribidi-config])
-  FRIBIDI_ENABLED=-DUSE_FRIBIDI
-  FRIBIDI_LIB=`$FRIBIDI_CONFIG --libs`
-  FRIBIDI_INC=`$FRIBIDI_CONFIG --cflags`
+  if test "$FRIBIDI_PKG_CONFIG" = "yes" -o ${FRIBIDI_CONFIG: -3} = ".pc" ; then
+     AC_MSG_RESULT([yes, user supplied path to fribidi.pc])
+     FRIBIDI_ENABLED="-DUSE_FRIBIDI -DUSE_FRIBIDI2"
+     FRIBIDI_LIB=`$PKG_CONFIG --libs $FRIBIDI_CONFIG`
+     FRIBIDI_INC=`$PKG_CONFIG --cflags $FRIBIDI_CONFIG`
+  else
+     AC_MSG_RESULT([yes, user supplied fribidi-config])
+     FRIBIDI_ENABLED=-DUSE_FRIBIDI
+     FRIBIDI_LIB=`$FRIBIDI_CONFIG --libs`
+     FRIBIDI_INC=`$FRIBIDI_CONFIG --cflags`
+  fi
 fi
 
 AC_SUBST(FRIBIDI_ENABLED,$FRIBIDI_ENABLED)

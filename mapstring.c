@@ -35,7 +35,7 @@ MS_CVSID("$Id$")
 #include <ctype.h>
 
 #ifdef USE_FRIBIDI
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#if (defined(_WIN32) && !defined(__CYGWIN__)) || defined(USE_FRIBIDI2)
 #include "fribidi.h"
 #else
 #include <fribidi/fribidi.h>

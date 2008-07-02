@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Added support in configure script for pkg-config for fribidi2 (#2664)
+
 - Added more debug/tuning output to mapserv and shp2img at debug level 2 (#2673)
 
 - maptemplate.c: removed extra line feeds from mime header output. (#2672)
