@@ -11,6 +11,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- maptemplate.c: removed extra line feeds from mime header output. (#2672)
+
 - mapresample.c: fix for bug 2540 when using raster resampling and AGG.
 
 - mapsde.c: Check at compile time that we have SE_connection_test_server, 

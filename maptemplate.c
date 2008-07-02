@@ -235,7 +235,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       return MS_FAILURE;
     }
 
-    if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c\n", outputFormat->mimetype, 10, 10);
+    if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", outputFormat->mimetype, 10, 10);
     if((status = msReturnPage(mapserv, (char *) file, BROWSE, papszBuffer)) != MS_SUCCESS)
       return status;
   } else {
@@ -3609,7 +3609,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
   ** so why should this. Note that new-style templates don't buffer the mime-type either.
   */
   if(papszBuffer && mapserv->sendheaders) {
-    sprintf(buffer, "Content-type: %s%c%c\n", pszMimeType, 10, 10);
+    sprintf(buffer, "Content-type: %s%c%c", pszMimeType, 10, 10);
     if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
       nExpandBuffer++;
       (*papszBuffer) = (char *)realloc((*papszBuffer), MS_TEMPLATE_BUFFER*nExpandBuffer);
@@ -3618,7 +3618,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
     strcat((*papszBuffer), buffer);
     nCurrentSize += strlen(buffer);
   } else if(mapserv->sendheaders) {
-    msIO_printf("Content-type: %s%c%c\n", pszMimeType, 10, 10);
+    msIO_printf("Content-type: %s%c%c", pszMimeType, 10, 10);
     fflush(stdout);
   }
 
