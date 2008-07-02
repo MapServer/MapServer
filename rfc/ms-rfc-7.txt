@@ -8,6 +8,7 @@ MS RFC 7: MapServer CVS Commit Management
 :Last Edited: $Date$
 :Status: Adopted
 
+(Note: this RFC is superseded by RFC 7.1)
 
 Purpose
 -------
