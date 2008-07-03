@@ -39,7 +39,7 @@ struct mstimeval {
     long    tv_sec;         /* seconds */
     long    tv_usec;        /* and microseconds */
 };
-void msGettimeofday(struct mstimeval *t, void *__not_used_here__);
+MS_DLL_EXPORT void msGettimeofday(struct mstimeval *t, void *__not_used_here__);
 #else
 #  include <sys/time.h>     /* for gettimeofday() */
 #  define  mstimeval timeval

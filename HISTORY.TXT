@@ -9,7 +9,12 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Version 5.2.0-beta3 (2008-07-02):
+Version 5.2.0-rc1 (2008-07-02):
+---------------------------------
+
+- fix windows build problem (#2676) 
+
+Version 5.2.0-beta4 (2008-07-02):
 ---------------------------------
 
 - Added support in configure script for pkg-config for fribidi2 (#2664)
