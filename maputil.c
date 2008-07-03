@@ -640,7 +640,8 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
     char szPath[MS_MAXPATHLEN];
     struct mstimeval starttime, endtime;
 
-    if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
+    if(map && map->debug >= MS_DEBUGLEVEL_TUNING) 
+        msGettimeofday(&starttime, NULL);
 
     if (img)
     {
@@ -717,7 +718,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
                        "msSaveImage()"); 
     }
 
-    if(map->debug >= MS_DEBUGLEVEL_TUNING) {
+    if(map && map->debug >= MS_DEBUGLEVEL_TUNING) {
       msGettimeofday(&endtime, NULL);
       msDebug("msSaveImage() total time: %.3fs\n", 
               (endtime.tv_sec+endtime.tv_usec/1.0e6)-
