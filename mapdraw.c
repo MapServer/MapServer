@@ -1332,8 +1332,6 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;
   cliprect.maxy = map->extent.maxy + csz*map->cellsize;
 
-  printf("%f %f %f %f\n", cliprect.minx, cliprect.miny, cliprect.maxx, cliprect.maxy);
-
   if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
     return MS_FAILURE; /* error message is set in msBindLayerToShape() */
   
@@ -1586,8 +1584,6 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       return(MS_FAILURE);
     }
 
-    printf("Here!\n");
-
 #ifdef USE_PROJ
     if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
       msProjectShape(&layer->projection, &map->projection, shape);
@@ -1617,11 +1613,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 
     if(layer->transform == MS_TRUE) {
-      printf("Transform!\n");
       msClipPolylineRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
       msTransformShape(shape, map->extent, map->cellsize, image);
-      printf("%g,%g %g,%g\n", shape->line[0].point[0].x, shape->line[0].point[0].y, shape->line[0].point[1].x, shape->line[0].point[1].y);
     } else
       msOffsetShapeRelativeTo(shape, layer);
  
