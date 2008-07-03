@@ -860,8 +860,10 @@ static void imagePolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, i
     imageOffsetPolyline(img, p, color, offsetx, offsety);
   else {
     for (i = 0; i < p->numlines; i++)
-      for(j=1; j<p->line[i].numpoints; j++)
+      for(j=1; j<p->line[i].numpoints; j++) {
+        printf("IP: %d,%d %d,%d\n", (int)p->line[i].point[j-1].x, (int)p->line[i].point[j-1].y, (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
         gdImageLine(img, (int)p->line[i].point[j-1].x, (int)p->line[i].point[j-1].y, (int)p->line[i].point[j].x, (int)p->line[i].point[j].y, color);
+      }
   }
 }
 

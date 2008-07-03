@@ -9,8 +9,8 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
+Version 5.2.0-beta3 (2008-07-02):
+---------------------------------
 
 - Added support in configure script for pkg-config for fribidi2 (#2664)
 
