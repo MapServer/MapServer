@@ -95,9 +95,10 @@ int     tilesProcessed = 0;
   /* create new tileindex shapefiles and create a header */
   /* -------------------------------------------------- */
   sprintf(tileshapeName, "%s.shp", tileFileNameP);
+
   if(NULL==(tileSHP=msSHPCreate(tileFileNameP, SHP_POLYGON))) {
     fclose(metaFP);
-    printf("Unable to create %s.shp (.shx)\n", tileshapeName);
+    printf("Unable to create %s.shp (.shx)\n", tileFileNameP);
     return(1);
     }
 

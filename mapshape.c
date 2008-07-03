@@ -105,15 +105,15 @@ static void writeHeader( SHPHandle psSHP )
   
   i32 = psSHP->nFileSize/2;				/* file size */
   ByteCopy( &i32, abyHeader+24, 4 );
-  if( !bBigEndian ) *(abyHeader+24) = SWAP_FOUR_BYTES(*(abyHeader+24));
+  if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
     
   i32 = 1000;						/* version */
   ByteCopy( &i32, abyHeader+28, 4 );
-  if( bBigEndian ) *(abyHeader+28) = SWAP_FOUR_BYTES(*(abyHeader+28));
+  if( bBigEndian ) SwapWord( 4, abyHeader+28 );
     
   i32 = psSHP->nShapeType;				/* shape type */
   ByteCopy( &i32, abyHeader+32, 4 );
-  if( bBigEndian ) *(abyHeader+32) = SWAP_FOUR_BYTES(*(abyHeader+32));
+  if( bBigEndian ) SwapWord( 4, abyHeader+32 );
     
   dValue = psSHP->adBoundsMin[0];			/* set bounds */
   ByteCopy( &dValue, abyHeader+36, 8 );
@@ -159,8 +159,8 @@ static void writeHeader( SHPHandle psSHP )
   /* -------------------------------------------------------------------- */
   i32 = (psSHP->nRecords * 2 * sizeof(ms_int32) + 100)/2;   /* file size */
   ByteCopy( &i32, abyHeader+24, 4 );
-  if( !bBigEndian ) *(abyHeader+24) = SWAP_FOUR_BYTES(*(abyHeader+24));
-    
+  if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
+  
   fseek( psSHP->fpSHX, 0, 0 );
   fwrite( abyHeader, 100, 1, psSHP->fpSHX );
   
@@ -197,7 +197,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   uchar	*pabyBuf;
   int	i;
   double dValue;
-  
+
   /* -------------------------------------------------------------------- */
   /*      Ensure the access string is one of the legal ones.  We          */
   /*      ensure the result string indicates binary to avoid common       */
@@ -254,7 +254,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     msFree(psSHP);
     return( NULL );
   }
-  
+
   sprintf( pszFullname, "%s.shx", pszBasename );
   psSHP->fpSHX = fopen(pszFullname, pszAccess );
   if( psSHP->fpSHX == NULL ) {
@@ -290,10 +290,10 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
       
     return( NULL );
   }
-  
+
   psSHP->nRecords = pabyBuf[27] + pabyBuf[26] * 256 + pabyBuf[25] * 256 * 256 + pabyBuf[24] * 256 * 256 * 256;
   psSHP->nRecords = (psSHP->nRecords*2 - 100) / 8;
-  
+
   if( psSHP->nRecords < 0 || psSHP->nRecords > 256000000 )
   {
     msSetError(MS_SHPERR, "Corrupted .shp file : nRecords = %d.", "msSHPOpen()",
@@ -303,7 +303,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     free( psSHP );
     return( NULL );
   }
-  
+
   psSHP->nShapeType = pabyBuf[32];
   
   if( bBigEndian ) SwapWord( 8, pabyBuf+36 );
@@ -431,7 +431,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   uchar abyHeader[100];
   ms_int32 i32;
   double dValue;
-  
+
   /* -------------------------------------------------------------------- */
   /*      Establish the byte order on this system.                        */
   /* -------------------------------------------------------------------- */
@@ -467,7 +467,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   fpSHX = fopen(pszFullname, "wb" );
   if( fpSHX == NULL )
     return( NULL );
-  
+
   free( pszFullname );
   
   /* -------------------------------------------------------------------- */
@@ -481,16 +481,16 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   
   i32 = 50;						/* file size */
   ByteCopy( &i32, abyHeader+24, 4 );
-  if( !bBigEndian ) *(abyHeader+24) = SWAP_FOUR_BYTES(*(abyHeader+24));
-  
+  if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
+
   i32 = 1000;						/* version */
   ByteCopy( &i32, abyHeader+28, 4 );
-  if( bBigEndian ) *(abyHeader+28) = SWAP_FOUR_BYTES(*(abyHeader+28));
-    
+  if( bBigEndian ) SwapWord( 4, abyHeader+28 );
+  
   i32 = nShapeType;					/* shape type */
   ByteCopy( &i32, abyHeader+32, 4 );
-  if( bBigEndian ) *(abyHeader+32) = SWAP_FOUR_BYTES(*(abyHeader+32));
-    
+  if( bBigEndian ) SwapWord( 4, abyHeader+32 );
+
   dValue = 0.0;					/* set bounds */
   ByteCopy( &dValue, abyHeader+36, 8 );
   ByteCopy( &dValue, abyHeader+44, 8 );
@@ -507,8 +507,8 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   /* -------------------------------------------------------------------- */
   i32 = 50;						/* file size */
   ByteCopy( &i32, abyHeader+24, 4 );
-  if( !bBigEndian ) *(abyHeader+24) = SWAP_FOUR_BYTES(*(abyHeader+24));
-    
+  if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
+  
   fwrite( abyHeader, 100, 1, fpSHX );
   
   /* -------------------------------------------------------------------- */
@@ -516,7 +516,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   /* -------------------------------------------------------------------- */
   fclose( fpSHP );
   fclose( fpSHX );
-  
+
   return( msSHPOpen( pszLayer, "rb+" ) );
 }
 
@@ -716,12 +716,13 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 
     partSize = 0; /* first part always starts at 0 */
     ByteCopy( &partSize, pabyRec + 44 + 8 + 4*0, 4 );
-    if( bBigEndian ) *(pabyRec + 44 + 8 + 4*0) = SWAP_FOUR_BYTES(*(pabyRec + 44 + 8 + 4*0));
-    
+    if( bBigEndian ) SwapWord( 4, pabyRec + 44 + 8 + 4*0);
+
     for( i = 1; i < t_nParts; i++ ) {
       partSize += shape->line[i-1].numpoints;
       ByteCopy( &partSize, pabyRec + 44 + 8 + 4*i, 4 );
-      if( bBigEndian ) *(pabyRec + 44 + 8 + 4*i) = SWAP_FOUR_BYTES(*(pabyRec + 44 + 8 + 4*i));
+      if( bBigEndian ) SwapWord( 4, pabyRec + 44 + 8 + 4*i);
+
     }
     
     k = 0; /* overall point counter */

@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+- mapshape.c: Fixed integer pointer math being applied to uchars (#2667)
+
 - Fixed seg fault with saveImage() in PHP MapScript due to #2673 (#2677)
 
 - Fixed configure error related to new fribidi2 pkg-config support (#2664)
