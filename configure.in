@@ -1914,7 +1914,7 @@ if test "$with_fribidi_config" = "no" -o "$with_fribidi_config" = "" ; then
 elif test "$with_fribidi_config" = "yes" ; then
   AC_MSG_RESULT(yes)
   AC_PATH_PROG(FRIBIDI_CONFIG, fribidi-config, no)
-  $FRIBIDI_PKG_CONFIG = "no"
+  FRIBIDI_PKG_CONFIG="no"
   if test "$FRIBIDI_CONFIG" = "no" -a "$PKG_CONFIG" != "no" ; then 
      AC_MSG_CHECKING(for fribidi pkg-config path)
      `$PKG_CONFIG --silence-errors --libs fribidi >> /dev/null`

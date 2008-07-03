@@ -11962,7 +11962,7 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-  $FRIBIDI_PKG_CONFIG = "no"
+  FRIBIDI_PKG_CONFIG="no"
   if test "$FRIBIDI_CONFIG" = "no" -a "$PKG_CONFIG" != "no" ; then
      { echo "$as_me:$LINENO: checking for fribidi pkg-config path" >&5
 echo $ECHO_N "checking for fribidi pkg-config path... $ECHO_C" >&6; }
