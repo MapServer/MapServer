@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementation of query operations on rasters. 
@@ -1168,6 +1168,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
 #endif
 
         msAddLine( shape, &line );
+        msComputeBounds( shape );
     }
 
 /* -------------------------------------------------------------------- */

@@ -21,6 +21,8 @@ Current Version (SVN Trunk):
 
 - Fixed windows build problem (#2676)
 
+- Fix raster query bounds problem (#2679)
+
 
 Version 5.2.0-beta4 (2008-07-02):
 ---------------------------------
