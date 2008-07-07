@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+- Fixed problem with WMS INIMAGE exceptions vs AGG output formats (#2438)
+
 - mapshape.c: Fixed integer pointer math being applied to uchars (#2667)
 
 - Fixed seg fault with saveImage() in PHP MapScript due to #2673 (#2677)

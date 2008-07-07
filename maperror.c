@@ -402,7 +402,9 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
       format = map->outputformat;
   }
 
-  if (format == NULL) format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
+  /* Default to GIF if no suitable GD output format set */
+  if (format == NULL || !MS_DRIVER_GD(format)) 
+    format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
 
   img = gdImageCreate(width, height);
   color = gdImageColorAllocate(img, map->imagecolor.red, 
