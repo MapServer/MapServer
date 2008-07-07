@@ -292,7 +292,8 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   }
 
   psSHP->nRecords = pabyBuf[27] + pabyBuf[26] * 256 + pabyBuf[25] * 256 * 256 + pabyBuf[24] * 256 * 256 * 256;
-  psSHP->nRecords = (psSHP->nRecords*2 - 100) / 8;
+  if (psSHP->nRecords != 0)
+      psSHP->nRecords = (psSHP->nRecords*2 - 100) / 8;
 
   if( psSHP->nRecords < 0 || psSHP->nRecords > 256000000 )
   {
