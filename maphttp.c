@@ -400,8 +400,6 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             && strlen(pasReqInfo[i].pszProxyAddress) > 0)
         {
             long    nProxyType     = CURLPROXY_HTTP;
-            long    nProxyAuthType = CURLAUTH_BASIC;
-            char    szUsernamePasswd[128];    
             
             curl_easy_setopt(http_handle, CURLOPT_PROXY,
                              pasReqInfo[i].pszProxyAddress);
@@ -430,8 +428,17 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                 && strlen(pasReqInfo[i].pszProxyUsername) > 0
                 && strlen(pasReqInfo[i].pszProxyPassword) > 0)
             {
+                char    szUsernamePasswd[128];    
+#ifdef CURLOPT_PROXYAUTH
+                long    nProxyAuthType = CURLAUTH_BASIC;
+                /* CURLOPT_PROXYAUTH available only in Curl 7.10.7 and up */
                 nProxyAuthType = msGetCURLAuthType(pasReqInfo[i].eProxyAuthType);
                 curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, nProxyAuthType);
+#else
+                /* We log an error but don't abort processing */
+                msSetError(MS_HTTPERR, "CURLOPT_PROXYAUTH not supported. Requires Curl 7.10.7 and up. *_proxy_auth_type setting ignored.", 
+                           "msHTTPExecuteRequests()");
+#endif /* CURLOPT_PROXYAUTH */ 
                 
                 snprintf(szUsernamePasswd, 127, "%s:%s",
                          pasReqInfo[i].pszProxyUsername,

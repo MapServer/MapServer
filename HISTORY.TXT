@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+- Allow building against Curl 7.10.6 and older which lack CURLOPT_PROXYAUTH
+  option required for *_proxy_auth_type metadata (#571)
+
 - Avoid fatal error when creating new ShapeFileObj with MapScript (#2674)
 
 - Fixed problem with WMS INIMAGE exceptions vs AGG output formats (#2438)
