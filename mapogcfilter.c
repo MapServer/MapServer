@@ -943,7 +943,8 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
     bConcatWhere = 0;
     bHasAWhere = 0;
-    if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL)
+    if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
+        lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN)
       szExpression = FLTGetSQLExpression(psNode, lp);
     /* concatenates the WHERE clause for OGR layers. This only applies if
        the expression was empty or not of an expression string. If there

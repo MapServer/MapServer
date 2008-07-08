@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN Trunk):
 ----------------------------
 
+- Fix OGC simple filters on SDE layers (#2685)
+
 - wfs11 getcapabilities: correct memory corruption (#2686)
 
 - Allow building against Curl 7.10.6 and older which lack CURLOPT_PROXYAUTH
