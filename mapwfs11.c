@@ -293,7 +293,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
         msSetError(MS_WFSERR, "Server URL not found", "msWFSGetCapabilities11()");
         return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
     }
-    free( script_url );
 
 /* -------------------------------------------------------------------- */
 /*      Operations metadata.                                            */
@@ -402,16 +401,16 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     /*xmlFree(buffer);*/
     xmlFreeDoc(psDoc);
 
-    free(script_url);
+    free(script_url);	
      free(script_url_encoded);
     free(xsi_schemaLocation);
     free(schemalocation);
 
     xmlCleanupParser();
 
-    /* clean up */
-    msWFSFreeParamsObj(params);
-    free(params);
+    /* clean up : this is done in the dispatch*/
+    /*msWFSFreeParamsObj(params);
+    free(params);*/
 
     return(MS_SUCCESS);
 }
