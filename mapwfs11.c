@@ -398,6 +398,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     /*free buffer and the document */
     /*xmlFree(buffer);*/
     xmlFreeDoc(psDoc);
+    xmlFreeNs(psNsOgc);
 
     free(script_url);	
      free(script_url_encoded);
