@@ -204,7 +204,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     xmlNodePtr psRootNode, psMainNode, psNode, psFtNode;
     xmlNodePtr psTmpNode;
     const char *updatesequence=NULL;
-    xmlNsPtr psNsOws, psNsXLink, psNsOgc, psNsWfs;
+    xmlNsPtr psNsOws, psNsXLink, psNsOgc;
     char *schemalocation = NULL;
     char *xsi_schemaLocation = NULL;
 
@@ -247,8 +247,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      Name spaces                                                     */
 /* -------------------------------------------------------------------- */
-    psNsWfs = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/wfs", BAD_CAST "wfs");
-
     /*default name space*/      
     xmlNewProp(psRootNode, BAD_CAST "xmlns", BAD_CAST "http://www.opengis.net/wfs");
     
@@ -407,10 +405,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     free(schemalocation);
 
     xmlCleanupParser();
-
-    /* clean up : this is done in the dispatch*/
-    /*msWFSFreeParamsObj(params);
-    free(params);*/
 
     return(MS_SUCCESS);
 }
