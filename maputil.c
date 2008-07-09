@@ -5,6 +5,10 @@
  * Purpose:  Various utility functions ... a real hodgepodge.
  * Author:   Steve Lime and the MapServer team.
  *
+ * Notes: Some code (notably msAlphaBlend()) are directly derived from GD. See
+ * the mapserver/GD-COPYING file for the GD license.  Use of this code in this
+ * manner is compatible with the MapServer license.
+ *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
