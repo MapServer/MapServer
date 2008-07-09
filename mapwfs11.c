@@ -278,11 +278,11 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 /* -------------------------------------------------------------------- */
 
     psTmpNode = xmlAddChild(psRootNode, 
-                            msOWSCommonServiceIdentification(psNsOws, map, "OGC WFS", params->pszVersion));
+                            msOWSCommonServiceIdentification(psNsOws, map, "OGC WFS", params->pszVersion, "FO"));
 
     /*service provider*/
     psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(
-                                psNsOws, psNsXLink, map));
+                                psNsOws, psNsXLink, map, "FO"));
 
     /*operation metadata */
     if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL 

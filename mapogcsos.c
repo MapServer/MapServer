@@ -1287,10 +1287,10 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
     psTmpNode = xmlAddChild(psRootNode, xmlNewComment(BAD_CAST msGetVersion()));
 
     /*service identification*/
-    psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(psNsOws, map, "SOS", pszSOSVersion));
+    psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(psNsOws, map, "SOS", pszSOSVersion, "SO"));
 
     /*service provider*/
-    psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(psNsOws, psNsXLink, map));
+    psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(psNsOws, psNsXLink, map, "SO"));
 
     /*operation metadata */
 

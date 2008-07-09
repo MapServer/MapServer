@@ -72,9 +72,9 @@
 
 int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
 
-xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version);
+xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version, const char *namespaces);
 
-xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, mapObj *map);
+xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, mapObj *map, const char *namespaces);
 
 xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws);
 

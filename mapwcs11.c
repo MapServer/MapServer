@@ -439,11 +439,11 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
 
     psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
-                                psOwsNs, map, "OGC WCS", params->version));
+                                psOwsNs, map, "OGC WCS", params->version, "CO"));
 
     /*service provider*/
     psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(
-                                psOwsNs, psXLinkNs, map));
+                                psOwsNs, psXLinkNs, map, "CO"));
 
     /*operation metadata */
     if ((script_url=msOWSGetOnlineResource(map, "COM", "onlineresource", req)) == NULL 
