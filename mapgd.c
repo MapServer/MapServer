@@ -5,6 +5,10 @@
  * Purpose:  GD rendering and other GD related functions.
  * Author:   Steve Lime and the MapServer team.
  *
+ * Notes: Some code (notably msImageCopyMerge()) are directly derived from GD. 
+ * See the mapserver/GD-COPYING file for the GD license.  Use of this code in 
+ * this manner is compatible with the MapServer license.
+ *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
@@ -25,15 +29,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * Derivation From GD
- * ------------------
- * Some code (notably msImageCopyMerge()) are directly derived from GD.  See
- * The mapserver/GD-COPYING file for the GD license.  Use of this code in this
- * manner is compatible with the MapServer license.
- *
- */
+ ******************************************************************************/
 
 #include "mapserver.h"
 #include "mapthread.h"
