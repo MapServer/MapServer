@@ -106,7 +106,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
 
   /* add child elements */
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "title");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "title");
 
   psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Title", BAD_CAST value);
 
@@ -114,7 +114,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_title\" missing for ows:Title"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "abstract");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "abstract");
 
   psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Abstract", BAD_CAST value);
 
@@ -122,7 +122,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_abstract\" was missing for ows:Abstract"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "keywordlist");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "keywordlist");
 
   if (value) {
     char **tokens = NULL;
@@ -151,7 +151,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
 
   psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ServiceTypeVersion", BAD_CAST version);
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "fees");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "fees");
 
   psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Fees", BAD_CAST value);
 
@@ -159,7 +159,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_fees\" was missing for ows:Fees"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "accessconstraints");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "accessconstraints");
 
   psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "AccessConstraints", BAD_CAST value);
 
@@ -202,7 +202,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   /* add child elements */
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "contactorganization");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "contactorganization");
 
   psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ProviderName", BAD_CAST value);
 
@@ -214,7 +214,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   xmlNewNsProp(psNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "service_onlineresource");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFSCO", "service_onlineresource");
 
   xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST value);
 
@@ -224,7 +224,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ServiceContact", NULL);
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "contactperson");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "contactperson");
 
   psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "IndividualName", BAD_CAST  value);
 
@@ -232,7 +232,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactperson\" was missing for ows:IndividualName"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "contactposition");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "contactposition");
 
   psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "PositionName", BAD_CAST value); 
 
@@ -244,7 +244,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Phone", NULL);
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "contactvoicetelephone");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "contactvoicetelephone");
 
   psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "Voice", BAD_CAST value);
 
@@ -252,7 +252,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactvoicetelephone\" was missing for ows:Voice"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "contactfacsimiletelephone");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "contactfacsimiletelephone");
 
   psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "Facsimile", BAD_CAST value);
 
@@ -262,7 +262,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Address", NULL);
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "address");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "address");
 
   psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "DeliveryPoint", BAD_CAST value);
 
@@ -270,7 +270,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_address\" was missing for ows:DeliveryPoint"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "city");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "city");
 
   psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "City", BAD_CAST value);
 
@@ -278,7 +278,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_city\" was missing for ows:City"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "stateorprovince");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "stateorprovince");
 
   psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "AdministrativeArea", BAD_CAST value);
 
@@ -286,7 +286,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_stateorprovince\" was missing for ows:AdministrativeArea"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "postcode");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "postcode");
 
   psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "PostalCode", BAD_CAST value);
 
@@ -294,7 +294,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_postcode\" was missing for ows:PostalCode"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "country");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "country");
 
   psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "Country", BAD_CAST value);
 
@@ -302,7 +302,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_country\" was missing for ows:Country"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "contactelectronicmailaddress");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFSCO", "contactelectronicmailaddress");
 
   psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "ElectronicMailAddress", BAD_CAST value);
 
@@ -314,7 +314,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "service_onlineresource");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "service_onlineresource");
 
   xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "href", BAD_CAST value);
 
@@ -322,7 +322,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_service_onlineresource\" was missing for ows:OnlineResource/@xlink:href"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "hoursofservice");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "hoursofservice");
 
   psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "HoursOfService", BAD_CAST value);
 
@@ -330,7 +330,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_hoursofservice\" was missing for ows:HoursOfService"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "contactinstructions");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "contactinstructions");
 
   psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "ContactInstructions", BAD_CAST value);
 
@@ -338,7 +338,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactinstructions\" was missing for ows:ContactInstructions"));
   }
 
-  value = msOWSLookupMetadata(&(map->web.metadata), "O", "role");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MFCSO", "role");
 
   psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "Role", BAD_CAST value);
 
