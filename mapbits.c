@@ -5,6 +5,9 @@
  * Purpose:  Implementation of bit array functions.
  * Author:   Steve Lime and the MapServer team.
  *
+ * Notes: Derived from code placed in the public domain by Bob Stout, for more 
+ * information see http://c.snippets.org/snip_lister.php?fname=bitarray.c.
+ *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
@@ -33,11 +36,7 @@ MS_CVSID("$Id$")
 
 #include <limits.h>
 
-/* originally found at http://www.snippets.org/ */
-
-
 /* #define msGetBit(array, index) (*((array) + (index)/CHAR_BIT) & ( 1 << ((index) % CHAR_BIT))) */
-
 
 size_t msGetBitArraySize(int numbits)
 {
@@ -56,7 +55,6 @@ int msGetBit(char *array, int index)
   array += index / CHAR_BIT;
   return (*array & (1 << (index % CHAR_BIT))) != 0;    /* 0 or 1 */
 }
-
 
 /*
 ** msGetNextBit( status, start, size)
