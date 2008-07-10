@@ -10,8 +10,8 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (SVN Trunk):
-----------------------------
+Version 5.2.0-rc1 (2008-07-09):
+---------------------------------
 
 - mapowscommon.c: fix support multiple namespaces (#2690)
 
