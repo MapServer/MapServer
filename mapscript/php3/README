@@ -1698,6 +1698,7 @@ Constructor:
 
    int setBinding(const stylebinding, string value)
        Set the attribute binding for a specfiled style property. Returns true on success.
+       Added in MapServer 5.0.
 
         Example:
            $oStyle->setbinding(MS_STYLE_BINDING_COLOR, "FIELD_NAME_COLOR");
@@ -1705,7 +1706,9 @@ Constructor:
            the value of the color from the field called "FIELD_NAME_COLOR"
    
    int removeBinding(const stylebinding)
-        Remove the attribute binding for a specfiled style property. Returns true on success.  
+        Remove the attribute binding for a specfiled style property. Returns true on success.
+        Added in MapServer 5.0.
+        
         Example:
            $oStyle->removebinding(MS_STYLE_BINDING_COLOR);
 
