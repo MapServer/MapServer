@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk)
 ---------------------------
 
+- mapfile.c: Fixed a bug that prevented using named symbols via URL configuration. (#2700)
+
 Version 5.2.0-rc1 (2008-07-09):
 ---------------------------------
 

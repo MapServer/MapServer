@@ -4374,11 +4374,11 @@ static int loadMapInternal(mapObj *map)
 	  for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
             if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
               if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
-                msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
+                msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
                 return MS_FAILURE;
               }
             }
-          }              
+          }
         }
       }
 
@@ -4766,10 +4766,10 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 
       if(msyylex() == CLASS) {
         if((s = getSymbol(2, MS_NUMBER, MS_STRING)) == -1) return MS_FAILURE;
-	      if(s == MS_STRING)
+        if(s == MS_STRING)
           j = msGetClassIndex(GET_LAYER(map, i), msyytext);
         else
-	        j = (int) msyynumber;
+          j = (int) msyynumber;
 
         if(j>=GET_LAYER(map, i)->numclasses || j<0) {
           msSetError(MS_MISCERR, "Class to be modified not valid.", "msUpdateMapFromURL()");
@@ -4784,13 +4784,26 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
             return MS_FAILURE;
           }
 
-          return msUpdateStyleFromString((GET_LAYER(map, i))->class[j]->styles[k], string, MS_TRUE);
+          if(msUpdateStyleFromString((GET_LAYER(map, i))->class[j]->styles[k], string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
         } else {
-          return msUpdateClassFromString((GET_LAYER(map, i))->class[j], string, MS_TRUE);
-        }
+          if(msUpdateClassFromString((GET_LAYER(map, i))->class[j], string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
+	}
       } else {
-        return msUpdateLayerFromString((GET_LAYER(map, i)), string, MS_TRUE);
+        if(msUpdateLayerFromString((GET_LAYER(map, i)), string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
       }
+
+      /* make sure any symbol names for this layer have been resolved (bug #2700) */
+      for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
+	for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
+          if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname && GET_LAYER(map, i)->class[j]->styles[k]->symbol == 0) {
+            if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
+              msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msUpdateMapFromURL()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
+              return MS_FAILURE;
+            }
+          }
+        }
+      }
+
       break;
     case(LEGEND):
       return msUpdateLegendFromString(&(map->legend), string, MS_TRUE);
