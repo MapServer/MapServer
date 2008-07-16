@@ -352,7 +352,7 @@ Currently supported classes, properties and methods:
         layer that contains a LAYER TEMPLATE value.
         Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
-        Passing buffer <=0 defaults to tolerances set in the map file 
+        Passing buffer -1 defaults to tolerances set in the map file 
         (in pixels) but you can use a constant buffer (specified in 
         ground units) instead.
         Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
@@ -671,7 +671,7 @@ Currently supported classes, properties and methods:
         layer that contains a LAYER TEMPLATE value.
         Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
-        Passing buffer <=0 defaults to tolerances set in the map file 
+        Passing buffer -1 defaults to tolerances set in the map file 
         (in pixels) but you can use a constant buffer (specified in 
         ground units) instead.
         Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
