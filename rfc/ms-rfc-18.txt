@@ -1,0 +1,153 @@
+==============================================
+MS RFC 18: Encryption of passwords in mapfiles
+==============================================
+
+:Date:  2006/05/26
+:Author: Daniel Morissette
+:Contact: dmorissette@mapgears.com
+:Last Edited: 2006/06/01
+:Status: Adopted (2006/06/01)
+:Version: MapServer 4.9
+
+Overview
+--------
+
+This proposal provides a mechanism to protect database connection passwords used inside mapfiles by encrypting them instead of including them in plain text.
+
+Technical Solution
+------------------
+
+MapServer will be extended to allow the use of encrypted passwords as part of the CONNECTION string for the following layer types:
+
+* Oracle Spatial
+* PostGIS
+* ESRI SDE
+* OGR
+
+The Tiny Encryption Algorithm (TEA) at  http://www.simonshepherd.supanet.com/tea.htm will be used for the encryption/decryption functions.
+
+The implementation details follow...
+
+
+Encryption key
+--------------
+
+In order to safely protect the encrypted information, an encryption key will be required by this mechanism. The key will NOT be stored in the mapfile: it will be stored in a separate file on the server and should be kept in a safe area by the server administrator (especially outside of the web server's document directories). 
+
+The location of the encryption key can be specified by two mechanisms, either by setting the environment variable MS_ENCRYPTION_KEY or using a CONFIG directive:
+
+::
+
+ CONFIG MS_ENCRYPTION_KEY "/path/to/mykey.txt"
+
+New "msencrypt" command-line utility
+------------------------------------
+
+A "msencrypt" command-line utility will be provided to create an encryption key and to encrypt passwords (or any string) for use in a mapfile. 
+
+To create an encryption key:
+
+::
+
+  msencrypt -keygen /path/to/mykey.txt
+
+To encrypt a password or any string:
+
+::
+
+  msencrypt -key /path/to/mykey.txt <string_to_encrypt>
+
+If the MS_ENCRYPTION_KEY environment variable is set then the -key argument does not need to be specified.
+
+
+Encoding of encrypted strings
+-----------------------------
+
+Since the result of encryption is binary data that is not suitable for inclusion directly in a MapServer mapfile, hex encoding will be used for the encrypted strings in the mapfile as well as for storing the encryption key to disk.
+
+The { and } characters will be used as delimiters for encrypted strings inside database CONNECTIONs. This will allow the use of either plain text or encrypted passwords in mapfiles without any backwards compatibility issues.
+
+e.g. 
+
+::
+
+   CONNECTIONTYPE ORACLESPATIAL
+   CONNECTION "user/{MIIBugIBAAKBgQCP0Yj+Seh8==}@service"
+
+Any part of a CONNECTION string can be encrypted and not just the password. This will allow protecting other information such as login name, hostname or port numbers if necessary. 
+
+For reference, here are examples of typical connection strings for the layer types that will be affected:
+
+::
+
+   CONNECTIONTYPE POSTGIS
+   CONNECTION "host=yourhostname dbname=yourdatabasename user=yourdbusername password=yourdbpassword port=yourpgport"
+
+   CONNECTIONTYPE SDE
+   CONNECTION "sdemachine.iastate.edu,port:5151,sde,username,password"
+
+   CONNECTIONTYPE ORACLESPATIAL
+   CONNECTION "user/pwd@service"
+
+   CONNECTIONTYPE OGR
+   CONNECTION "OCI:user/pwd@service"
+
+
+Modifications to the source code
+--------------------------------
+
+A msDecryptString() function will be created, it will take a CONNECTION string as input and decrypt any encrypted component that it may find in it. This function will be called by the various msXXXLayerOpen() methods before opening the connection to the database. 
+
+::
+
+ char *msDecryptString(mapObj *map, const char *string)
+
+The first time that msDecryptString() is called for a given mapfile, it will load the encryption key from the file and store the key in a new private member of the mapObj (char * encryption_key).
+
+To reduce the chances of false matches in long CONNECTION strings such as OGR VRT data sources, msDecryptString() function will look for a pair of { + }, and then verify that all chars in the block are valid hex encoding chars (0-9,A-F) before proceeding with decryption.
+
+Note that the decrypted string will never be stored in the layerObj, it will be kept local to the function that opens the connection and destroyed as soon as the function is done with it. This is to prevent exposing the decrypted information in error messages or in calls to msSaveMap().
+
+Files affected
+--------------
+
+::
+
+ map.h
+ mapfile.c
+ maporaclespatial.c
+ mappostgis.c
+ mappostgresql.c
+ mapsde.c
+ mapogr.cpp
+
+
+Backwards compatibility issues
+------------------------------
+
+None.
+
+
+Bug ID
+------
+
+1792: http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1792
+
+Voting history
+--------------
+
++1: FrankW, DanielM, HowardB, YewondwossenA, SteveW
+
+
+Comments from the review period
+-------------------------------
+
+* There were concerns about the use of the {...} delimiter to indicate encrypted strings inside CONNECTIONs. Since there was not a better alternative we will stick to that.
+
+* There was a suggestion to use an ENCRYPTION_KEY mapfile keyword instead of CONFIG MS_ENCRYPTION_KEY. Since there was no strong argument either way we decided to stick to CONFIG MS_ENCRYPTION_KEY.
+
+* There was a suggestion to consider the Blowfish algorithm (http://www.schneier.com/blowfish.html) instead of TEA. The sample implementations of Blowfish would require much more work to integrate than TEA, and since TEA is public domain and so much simpler (simpler is better!), we'll stick to TEA for now and can always change the underlying algorithm at a later time if we find that TEA is too weak (which doesn't appear to be an issue).
+
+* Will the encryption methods be made available to MapScript? No plan to do so at this time, but this could easily be added later on.
+
+* Since the user running the web server (and MapServer) needs to have permissions to read the key, any web server process or user with permissions to read the key can decrypt the passwords using a trivial program. It should be made very clear in the documentation that this is just simple obfuscation and is by no means secure and that users should not place valuable passwords in mapfiles encrypted or not. 
