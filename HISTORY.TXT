@@ -9,9 +9,6 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
-
 Version 5.2.0 (2008-07-16):
 ---------------------------
 
