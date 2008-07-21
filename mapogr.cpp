@@ -2212,29 +2212,70 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
                                                       &r, &g, &b, &t))
               {
-                  MS_INIT_COLOR(c->label.color, r, g, b);
+                  MS_INIT_COLOR(c->label.backgroundcolor, r, g, b);
               }
+
+              pszColor = OGR_ST_GetParamStr(hLabelStyle, 
+                                            OGRSTLabelHColor,
+                                            &bIsNull);
+              if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
+                                                      &r, &g, &b, &t))
+              {
+                  MS_INIT_COLOR(c->label.shadowcolor, r, g, b);
+              }
+
+#if GDAL_VERSION_NUM >= 1600
+              pszColor = OGR_ST_GetParamStr(hLabelStyle, 
+                                            OGRSTLabelOColor,
+                                            &bIsNull);
+              if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
+                                                      &r, &g, &b, &t))
+              {
+                  MS_INIT_COLOR(c->label.outlinecolor, r, g, b);
+              }
+#endif /* GDAL_VERSION_NUM >= 1600 */
 
               // Label font... do our best to use TrueType fonts, otherwise
               // fallback on bitmap fonts.
 #if defined(USE_GD_TTF) || defined (USE_GD_FT)
-              const char *pszName = OGR_ST_GetParamStr(hLabelStyle, 
-                                                       OGRSTLabelFontName,
-                                                       &bIsNull);
-              if (pszName != NULL && !bIsNull && pszName[0] != '\0' &&
-                  msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
+              const char *pszBold = OGR_ST_GetParamNum(hLabelStyle, 
+                                                           OGRSTLabelBold, 
+                                                           &bIsNull) ? "-bold" : "";
+              const char *pszItalic = OGR_ST_GetParamNum(hLabelStyle, 
+                                                           OGRSTLabelItalic, 
+                                                           &bIsNull) ? "-italic" : "";
+              const char *pszFontName = OGR_ST_GetParamStr(hLabelStyle, 
+                                                           OGRSTLabelFontName,
+                                                           &bIsNull);
+              const char *pszName = CPLSPrintf("%s%s%s", pszFontName, pszBold, pszItalic);
+              bool bFont = true;
+
+              if (pszFontName != NULL && !bIsNull && pszFontName[0] != '\0')
               {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup(pszName);
-                  // msDebug("** Using '%s' TTF font **\n", pszName);
+                  if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
+                  {
+                      c->label.type = MS_TRUETYPE;
+                      c->label.font = strdup(pszName);
+                      // msDebug("** Using '%s' TTF font **\n", pszName);
+                  }
+                  else if ( (strcmp(pszFontName,pszName) != 0) &&
+                            msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
+                  {
+                      c->label.type = MS_TRUETYPE;
+                      c->label.font = strdup(pszFontName);
+                      // msDebug("** Using '%s' TTF font **\n", pszFontName);
+                  }
+                  else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
+                  {
+                      c->label.type = MS_TRUETYPE;
+                      c->label.font = strdup("default");
+                      // msDebug("** Using 'default' TTF font **\n");
+                  }
+                  else
+                      bFont = false;
               }
-              else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
-              {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup("default");
-                  // msDebug("** Using 'default' TTF font **\n");
-              }
-              else
+
+              if (!bFont)
 #endif /* USE_GD_FT || USE_GD_FT */
               {
                   c->label.type = MS_BITMAP;
@@ -2270,27 +2311,50 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               pszColor = poLabelStyle->BackColor(bIsNull);
               if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
-                  MS_INIT_COLOR(c->label.color, r, g, b);
+                  MS_INIT_COLOR(c->label.backgroundcolor, r, g, b);
               }
 
+              pszColor = poLabelStyle->ShadowColor(bIsNull);
+              if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
+              {
+                  MS_INIT_COLOR(c->label.shadowcolor, r, g, b);
+              }
+              
               // Label font... do our best to use TrueType fonts, otherwise
               // fallback on bitmap fonts.
 #if defined(USE_GD_TTF) || defined (USE_GD_FT)
-              const char *pszName = poLabelStyle->FontName(bIsNull);
-              if (pszName != NULL && !bIsNull && pszName[0] != '\0' &&
-                  msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
+              const char *pszBold = poLabelStyle->Bold(bIsNull)  ? "-bold" : "";
+              const char *pszItalic = poLabelStyle->Italic(bIsNull) ? "-italic" : "";
+              const char *pszFontName = poLabelStyle->FontName(bIsNull);
+              const char *pszName = CPLSPrintf("%s%s%s", pszFontName, pszBold, pszItalic);
+              bool bFont = true;
+
+              if (pszFontName != NULL && !bIsNull && pszFontName[0] != '\0')
               {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup(pszName);
-                  // msDebug("** Using '%s' TTF font **\n", pszName);
+                  if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
+                  {
+                      c->label.type = MS_TRUETYPE;
+                      c->label.font = strdup(pszName);
+                      // msDebug("** Using '%s' TTF font **\n", pszName);
+                  }
+                  else if ( (strcmp(pszFontName,pszName) != 0) &&
+                            msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
+                  {
+                      c->label.type = MS_TRUETYPE;
+                      c->label.font = strdup(pszFontName);
+                      // msDebug("** Using '%s' TTF font **\n", pszFontName);
+                  }
+                  else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
+                  {
+                      c->label.type = MS_TRUETYPE;
+                      c->label.font = strdup("default");
+                      // msDebug("** Using 'default' TTF font **\n");
+                  }
+                  else
+                      bFont = false;
               }
-              else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
-              {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup("default");
-                  // msDebug("** Using 'default' TTF font **\n");
-              }
-              else
+
+              if (!bFont)
 #endif /* USE_GD_FT || USE_GD_FT */
               {
                   c->label.type = MS_BITMAP;

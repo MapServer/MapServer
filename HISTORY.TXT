@@ -10,15 +10,20 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
-----------------------------
+------------------------------------
+
+- Several enhancements to STYLEITEM AUTO support for labels in OGR
+  layers (#2708)
+
 
 Version 5.2.0 (2008-07-16):
 ---------------------------
 
-- mapfile.c: Fixed a bug that prevented using named symbols via URL configuration. (#2700)
+- mapfile.c: Fixed a bug that prevented using named symbols via URL 
+  configuration. (#2700)
 
 Version 5.2.0-rc1 (2008-07-09):
----------------------------------
+-------------------------------
 
 - mapowscommon.c: fix support multiple namespaces (#2690)
 
@@ -78,7 +83,8 @@ Version 5.2.0-beta3 (2008-06-26):
 
 - mapsde.c: Test for an active connection before closing it (#2498).
 
-- mapdraw.c: Fixed issue where path following labels were not being drawn if FORCEd. (#2600)
+- mapdraw.c: Fixed issue where path following labels were not being drawn 
+  if FORCEd. (#2600)
 
 - mapshape.c: Applied patch to make the location of tiled data relative to the
   tileindex directory if SHAPEPATH is not set. (#2369)
