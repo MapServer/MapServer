@@ -1455,7 +1455,12 @@ if test "$PG_CONFIG" = "no" ; then
   POSTGIS_INC=
   POSTGIS_LIB=
 else
-  AC_MSG_RESULT([yes, user supplied pg_config])
+  if test -f "$PG_CONFIG" -a -x "$PG_CONFIG" ; then
+    AC_MSG_RESULT([yes, user supplied pg_config ($PG_CONFIG)])
+  else
+    AC_MSG_ERROR(['$PG_CONFIG' is not an executable.  Make sure you use --with-postgis=/path/to/pg_config])
+  fi
+
   POSTGIS_ENABLED=-DUSE_POSTGIS
   POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
@@ -1475,7 +1480,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if MyGIS support requested)
 
-AC_ARG_WITH(mygis,[  --with-mygis[[=ARG]]      Include MyGIS Support (ARG=yes/path to my_config)],,)
+AC_ARG_WITH(mygis,[  --with-mygis[[=ARG]]      Include MyGIS Support (ARG=yes/path to mysql_config)],,)
 
 if test "$with_mygis" = "no" -o "$with_mygis" = "" ; then
   AC_MSG_RESULT(no)
@@ -1492,7 +1497,12 @@ if test "$MY_CONFIG" = "no" ; then
   MYGIS_INC=
   MYGIS_LIB=
 else
-  AC_MSG_RESULT([yes, user supplied my_config])
+  if test -f "$MY_CONFIG" -a -x "$MY_CONFIG" ; then
+    AC_MSG_RESULT([yes, user supplied mysql_config ($MY_CONFIG)])
+  else
+    AC_MSG_ERROR(['$MY_CONFIG' is not an executable.  Make sure you use --with-mygis=/path/to/mysql_config])
+  fi
+
   MYGIS_ENABLED=-DUSE_MYGIS
   MYGIS_LIB="`$MY_CONFIG --libs` -lmysqlclient"
 #  MYGIS_LIB="-L/usr/lib/mysql -lmysqlclient"
@@ -1769,7 +1779,7 @@ dnl ---------------------------------------------------------------------
 dnl Look for libcurl if WMS and WFS Client requested
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(for curl-config)
+AC_MSG_CHECKING(for curl-config)
 AC_ARG_WITH(curl-config,
 [  --with-curl-config=PATH Specify path to curl-config.],,)
 
@@ -1780,6 +1790,11 @@ if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
 
   if test "`basename xx/$with_curl_config`" = "curl-config" ; then
     LIBCURL_CONFIG="$with_curl_config"
+    if test -f "$LIBCURL_CONFIG" -a -x "$LIBCURL_CONFIG" ; then
+      AC_MSG_RESULT([yes, user supplied curl-config ($LIBCURL_CONFIG)])
+    else
+      AC_MSG_ERROR(['$LIBCURL_CONFIG' is not an executable.  Make sure you use --with-curl-config=/path/to/curl-config])
+    fi
   else
     AC_PATH_PROG(LIBCURL_CONFIG, curl-config, no)
   fi
@@ -1851,14 +1866,17 @@ if test -z "$with_xml2_config" ; then
     with_xml2_config=no
     AC_MSG_RESULT([libxml2 not required.])
   fi
-else
-  AC_MSG_RESULT([--with-xml2-config=$with_xml2_config specified.])
 fi
 
 if test "$with_xml2_config" != "no" ; then
 
   if test "`basename xx/$with_xml2_config`" = "xml2-config" ; then
     LIBXML2_CONFIG="$with_xml2_config"
+    if test -f "$LIBXML2_CONFIG" -a -x "$LIBXML2_CONFIG" ; then
+      AC_MSG_RESULT([yes, user supplied xml2-config ($LIBXML2_CONFIG)])
+    else
+      AC_MSG_ERROR(['$LIBXML2_CONFIG' is not an executable.  Make sure you use --with-xml2-config=/path/to/xml2-config])
+    fi
   else
     AC_PATH_PROG(LIBXML2_CONFIG, xml2-config, no)
   fi
@@ -1941,7 +1959,11 @@ else
      FRIBIDI_LIB=`$PKG_CONFIG --libs $FRIBIDI_CONFIG`
      FRIBIDI_INC=`$PKG_CONFIG --cflags $FRIBIDI_CONFIG`
   else
-     AC_MSG_RESULT([yes, user supplied fribidi-config])
+     if test -f "$FRIBIDI_CONFIG" -a -x "$FRIBIDI_CONFIG" ; then
+       AC_MSG_RESULT([yes, user supplied fribidi-config ($FRIBIDI_CONFIG)])
+     else
+       AC_MSG_ERROR(['$FRIBIDI_CONFIG' is not an executable.  Make sure you use --with-fribidi-config=/path/to/fribidi-config or fribidi.pc])
+     fi
      FRIBIDI_ENABLED=-DUSE_FRIBIDI
      FRIBIDI_LIB=`$FRIBIDI_CONFIG --libs`
      FRIBIDI_INC=`$FRIBIDI_CONFIG --cflags`

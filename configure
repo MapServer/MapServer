@@ -1419,7 +1419,7 @@ Optional Packages:
   --without-tiff          Disable TIFF support.
   --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
-  --with-mygis[=ARG]      Include MyGIS Support (ARG=yes/path to my_config)
+  --with-mygis[=ARG]      Include MyGIS Support (ARG=yes/path to mysql_config)
   --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to
                           Oracle home)
   --with-ming[=DIR]       Include MING/Flash Support (DIR=path to Ming
@@ -11255,8 +11255,15 @@ if test "$PG_CONFIG" = "no" ; then
   POSTGIS_INC=
   POSTGIS_LIB=
 else
-  { echo "$as_me:$LINENO: result: yes, user supplied pg_config" >&5
-echo "${ECHO_T}yes, user supplied pg_config" >&6; }
+  if test -f "$PG_CONFIG" -a -x "$PG_CONFIG" ; then
+    { echo "$as_me:$LINENO: result: yes, user supplied pg_config ($PG_CONFIG)" >&5
+echo "${ECHO_T}yes, user supplied pg_config ($PG_CONFIG)" >&6; }
+  else
+    { { echo "$as_me:$LINENO: error: '$PG_CONFIG' is not an executable.  Make sure you use --with-postgis=/path/to/pg_config" >&5
+echo "$as_me: error: '$PG_CONFIG' is not an executable.  Make sure you use --with-postgis=/path/to/pg_config" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
   POSTGIS_ENABLED=-DUSE_POSTGIS
   POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
@@ -11341,8 +11348,15 @@ if test "$MY_CONFIG" = "no" ; then
   MYGIS_INC=
   MYGIS_LIB=
 else
-  { echo "$as_me:$LINENO: result: yes, user supplied my_config" >&5
-echo "${ECHO_T}yes, user supplied my_config" >&6; }
+  if test -f "$MY_CONFIG" -a -x "$MY_CONFIG" ; then
+    { echo "$as_me:$LINENO: result: yes, user supplied mysql_config ($MY_CONFIG)" >&5
+echo "${ECHO_T}yes, user supplied mysql_config ($MY_CONFIG)" >&6; }
+  else
+    { { echo "$as_me:$LINENO: error: '$MY_CONFIG' is not an executable.  Make sure you use --with-mygis=/path/to/mysql_config" >&5
+echo "$as_me: error: '$MY_CONFIG' is not an executable.  Make sure you use --with-mygis=/path/to/mysql_config" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
   MYGIS_ENABLED=-DUSE_MYGIS
   MYGIS_LIB="`$MY_CONFIG --libs` -lmysqlclient"
 #  MYGIS_LIB="-L/usr/lib/mysql -lmysqlclient"
@@ -11674,8 +11688,8 @@ echo "${ECHO_T}        OGC SOS Server support requested." >&6; }
 fi
 
 
-{ echo "$as_me:$LINENO: checking for curl-config..." >&5
-echo "$as_me: checking for curl-config..." >&6;}
+{ echo "$as_me:$LINENO: checking for curl-config" >&5
+echo $ECHO_N "checking for curl-config... $ECHO_C" >&6; }
 
 # Check whether --with-curl-config was given.
 if test "${with_curl_config+set}" = set; then
@@ -11689,6 +11703,14 @@ if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
 
   if test "`basename xx/$with_curl_config`" = "curl-config" ; then
     LIBCURL_CONFIG="$with_curl_config"
+    if test -f "$LIBCURL_CONFIG" -a -x "$LIBCURL_CONFIG" ; then
+      { echo "$as_me:$LINENO: result: yes, user supplied curl-config ($LIBCURL_CONFIG)" >&5
+echo "${ECHO_T}yes, user supplied curl-config ($LIBCURL_CONFIG)" >&6; }
+    else
+      { { echo "$as_me:$LINENO: error: '$LIBCURL_CONFIG' is not an executable.  Make sure you use --with-curl-config=/path/to/curl-config" >&5
+echo "$as_me: error: '$LIBCURL_CONFIG' is not an executable.  Make sure you use --with-curl-config=/path/to/curl-config" >&2;}
+   { (exit 1); exit 1; }; }
+    fi
   else
     # Extract the first word of "curl-config", so it can be a program name with args.
 set dummy curl-config; ac_word=$2
@@ -11810,15 +11832,20 @@ echo "${ECHO_T}      but WCS 1.1 support will be disabled." >&6; }
     { echo "$as_me:$LINENO: result: libxml2 not required." >&5
 echo "${ECHO_T}libxml2 not required." >&6; }
   fi
-else
-  { echo "$as_me:$LINENO: result: --with-xml2-config=$with_xml2_config specified." >&5
-echo "${ECHO_T}--with-xml2-config=$with_xml2_config specified." >&6; }
 fi
 
 if test "$with_xml2_config" != "no" ; then
 
   if test "`basename xx/$with_xml2_config`" = "xml2-config" ; then
     LIBXML2_CONFIG="$with_xml2_config"
+    if test -f "$LIBXML2_CONFIG" -a -x "$LIBXML2_CONFIG" ; then
+      { echo "$as_me:$LINENO: result: yes, user supplied xml2-config ($LIBXML2_CONFIG)" >&5
+echo "${ECHO_T}yes, user supplied xml2-config ($LIBXML2_CONFIG)" >&6; }
+    else
+      { { echo "$as_me:$LINENO: error: '$LIBXML2_CONFIG' is not an executable.  Make sure you use --with-xml2-config=/path/to/xml2-config" >&5
+echo "$as_me: error: '$LIBXML2_CONFIG' is not an executable.  Make sure you use --with-xml2-config=/path/to/xml2-config" >&2;}
+   { (exit 1); exit 1; }; }
+    fi
   else
     # Extract the first word of "xml2-config", so it can be a program name with args.
 set dummy xml2-config; ac_word=$2
@@ -11993,8 +12020,14 @@ echo "${ECHO_T}yes, user supplied path to fribidi.pc" >&6; }
      FRIBIDI_LIB=`$PKG_CONFIG --libs $FRIBIDI_CONFIG`
      FRIBIDI_INC=`$PKG_CONFIG --cflags $FRIBIDI_CONFIG`
   else
-     { echo "$as_me:$LINENO: result: yes, user supplied fribidi-config" >&5
-echo "${ECHO_T}yes, user supplied fribidi-config" >&6; }
+     if test -f "$FRIBIDI_CONFIG" -a -x "$FRIBIDI_CONFIG" ; then
+       { echo "$as_me:$LINENO: result: yes, user supplied fribidi-config ($FRIBIDI_CONFIG)" >&5
+echo "${ECHO_T}yes, user supplied fribidi-config ($FRIBIDI_CONFIG)" >&6; }
+     else
+       { { echo "$as_me:$LINENO: error: '$FRIBIDI_CONFIG' is not an executable.  Make sure you use --with-fribidi-config=/path/to/fribidi-config or fribidi.pc" >&5
+echo "$as_me: error: '$FRIBIDI_CONFIG' is not an executable.  Make sure you use --with-fribidi-config=/path/to/fribidi-config or fribidi.pc" >&2;}
+   { (exit 1); exit 1; }; }
+     fi
      FRIBIDI_ENABLED=-DUSE_FRIBIDI
      FRIBIDI_LIB=`$FRIBIDI_CONFIG --libs`
      FRIBIDI_INC=`$FRIBIDI_CONFIG --cflags`
