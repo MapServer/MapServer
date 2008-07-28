@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-2)
 --------------------------------
 
+- Support reading projection parameter for OFC filters (#2712)
+
 - Stop configure execution with an error if path to one of the -config 
   scripts is invalid (#2710)
 
