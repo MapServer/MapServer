@@ -50,8 +50,9 @@ int FLTogrConvertGeometry(OGRGeometryH hGeometry, shapeObj *psShape,
     return msOGRGeometryToShape(hGeometry, psShape, nType);
 }
 
-int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape)
+int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape , char **ppszSRS)
 {
+    char *pszSRS = NULL;
     if (psTree && psShape)
     {
         CPLXMLNode *psNext = psTree->psNext;
@@ -66,6 +67,11 @@ int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape)
             FLTogrConvertGeometry(hGeometry, psShape, 
                                   OGR_G_GetGeometryType(hGeometry));
         }
+
+        pszSRS = (char *)CPLGetXMLValue(psTree, "srsName", NULL);
+        if (ppszSRS && pszSRS)
+          *ppszSRS = strdup(pszSRS);
+
         return MS_TRUE;
     }
 
@@ -109,6 +115,59 @@ int FLTIsGeosNode(char *pszValue)
 
     return MS_TRUE;
 }
+
+int FTLParseEpsgString(char *pszEpsg, projectionObj *psProj)
+{
+    int nStatus = MS_FALSE;
+    int nTokens = 0;
+    char **tokens = NULL;
+    int nEpsgTmp=0;
+
+#ifdef USE_PROJ
+    if (pszEpsg && psProj)
+    {
+        nTokens = 0;
+        tokens = msStringSplit(pszEpsg,'#', &nTokens);
+        if (tokens && nTokens == 2)
+        {
+            char szTmp[32];
+            sprintf(szTmp, "init=epsg:%s",tokens[1]);
+            msInitProjection(psProj);
+            if (msLoadProjectionString(psProj, szTmp) == 0)
+              nStatus = MS_TRUE;
+        }
+        else if (tokens &&  nTokens == 1)
+        {
+            if (tokens)
+              msFreeCharArray(tokens, nTokens);
+            nTokens = 0;
+
+            tokens = msStringSplit(pszEpsg,':', &nTokens);
+            nEpsgTmp = -1;
+            if (tokens &&  nTokens == 1)
+            {
+                nEpsgTmp = atoi(tokens[0]);
+                
+            }
+            else if (tokens &&  nTokens == 2)
+            {
+                nEpsgTmp = atoi(tokens[1]);
+            }
+            if (nEpsgTmp > 0)
+            {
+                char szTmp[32];
+                sprintf(szTmp, "init=epsg:%d",nEpsgTmp);
+                msInitProjection(psProj);
+                if (msLoadProjectionString(psProj, szTmp) == 0)
+                  nStatus = MS_TRUE;
+            }
+        }
+        if (tokens)
+          msFreeCharArray(tokens, nTokens);
+#endif
+    }
+    return nStatus;
+}
     
 /************************************************************************/
 /*                        FLTGetQueryResultsForNode                     */
@@ -123,13 +182,11 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                               int bOnlySpatialFilter)
 {
     char *szExpression = NULL;
-    int bIsBBoxFilter =0, nEpsgTmp = 0, i=0;
+    int bIsBBoxFilter =0,  i=0;
     char *szEPSG = NULL;
     rectObj sQueryRect = map->extent;
     layerObj *lp = NULL;
     char *szClassItem = NULL;
-    char **tokens = NULL;
-    int nTokens = 0;
     projectionObj sProjTmp;
     int bPointQuery = 0, bShapeQuery=0;
     shapeObj *psQueryShape = NULL;
@@ -270,46 +327,8 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 /* -------------------------------------------------------------------- */
     if(szEPSG && map->projection.numargs > 0)
     {
-#ifdef USE_PROJ
-        nTokens = 0;
-        tokens = msStringSplit(szEPSG,'#', &nTokens);
-        if (tokens && nTokens == 2)
-        {
-            char szTmp[32];
-            sprintf(szTmp, "init=epsg:%s",tokens[1]);
-            msInitProjection(&sProjTmp);
-            if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
-              msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
-        }
-        else if (tokens &&  nTokens == 1)
-        {
-            if (tokens)
-              msFreeCharArray(tokens, nTokens);
-            nTokens = 0;
-
-            tokens = msStringSplit(szEPSG,':', &nTokens);
-            nEpsgTmp = -1;
-            if (tokens &&  nTokens == 1)
-            {
-                nEpsgTmp = atoi(tokens[0]);
-                
-            }
-            else if (tokens &&  nTokens == 2)
-            {
-                nEpsgTmp = atoi(tokens[1]);
-            }
-            if (nEpsgTmp > 0)
-            {
-                char szTmp[32];
-                sprintf(szTmp, "init=epsg:%d",nEpsgTmp);
-                msInitProjection(&sProjTmp);
-                if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
-                  msProjectRect(&sProjTmp, &map->projection,  &sQueryRect);
-            }
-        }
-        if (tokens)
-          msFreeCharArray(tokens, nTokens);
-#endif
+        if (FTLParseEpsgString(szEPSG, &sProjTmp))
+          msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
     }
 
 
@@ -319,6 +338,9 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0) /* && dfDistance >=0) */
     {
+        if (psNode->pszSRS &&  map->projection.numargs > 0 &&
+            FTLParseEpsgString(psNode->pszSRS, &sProjTmp))
+           msProjectShape(&sProjTmp, &map->projection, psQueryShape);
 
       if (bUseGeos)
         {
@@ -365,6 +387,12 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0)
     {
+        /*reproject shape if epsg was set*/
+        if (psNode->pszSRS &&  map->projection.numargs > 0 &&
+            FTLParseEpsgString(psNode->pszSRS, &sProjTmp))
+           msProjectShape(&sProjTmp, &map->projection, psQueryShape);
+
+
         if (bUseGeos)
         {
             if ((strcasecmp(psNode->pszValue, "DWithin") == 0 ||
@@ -1327,6 +1355,9 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode)
         if( psFilterNode->pszValue )
             free( psFilterNode->pszValue );
 
+        if (psFilterNode->pszSRS)
+          free( psFilterNode->pszSRS);
+
         if( psFilterNode->pOther )
         {
 #ifdef notdef
@@ -1359,6 +1390,7 @@ FilterEncodingNode *FLTCreateFilterEncodingNode(void)
     psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
     psFilterNode->pszValue = NULL;
     psFilterNode->pOther = NULL;
+    psFilterNode->pszSRS = NULL;
     psFilterNode->psLeftNode = NULL;
     psFilterNode->psRightNode = NULL;
 
@@ -1613,6 +1645,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 shapeObj *psShape = NULL;
                 int bPoint = 0, bLine = 0, bPolygon = 0;
                 char *pszUnits = NULL;
+                char *pszSRS = NULL;
                 
                 
                 CPLXMLNode *psGMLElement = NULL, *psDistance=NULL;
@@ -1643,9 +1676,13 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     pszUnits = (char *)CPLGetXMLValue(psDistance, "units", NULL);
                     psShape = (shapeObj *)malloc(sizeof(shapeObj));
                     msInitShape(psShape);
-                    if (FLTShapeFromGMLTree(psGMLElement, psShape))
+                    if (FLTShapeFromGMLTree(psGMLElement, psShape, &pszSRS))
                       /* if (FLTGML2Shape_XMLNode(psPoint, psShape)) */
                     {
+                        /*set the srs if available*/
+                        if (pszSRS)
+                          psFilterNode->pszSRS = pszSRS;
+
                         psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
                         /* not really using the property name anywhere ?? Is is always */
                         /* Geometry ?  */
@@ -1686,6 +1723,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
             {
                 shapeObj *psShape = NULL;
                 int  bLine = 0, bPolygon = 0, bPoint=0;
+                char *pszSRS = NULL;
 
                 
                 CPLXMLNode *psGMLElement = NULL;
@@ -1712,9 +1750,13 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 {
                     psShape = (shapeObj *)malloc(sizeof(shapeObj));
                     msInitShape(psShape);
-                    if (FLTShapeFromGMLTree(psGMLElement, psShape))
+                    if (FLTShapeFromGMLTree(psGMLElement, psShape, &pszSRS))
                       /* if (FLTGML2Shape_XMLNode(psPoint, psShape)) */
                     {
+                        /*set the srs if available*/
+                        if (pszSRS)
+                          psFilterNode->pszSRS = pszSRS;
+
                         psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
                         /* not really using the property name anywhere ?? Is is always */
                         /* Geometry ?  */
@@ -2457,6 +2499,7 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
                         msFreeCharArray(tokens, nTokens);
                         nTokens = 0;
                         tokens = msStringSplit(szUnitStr,'#', &nTokens);
+                        msFree(szUnitStr);
                         if (tokens && nTokens >= 1)
                         {
                             if (nTokens ==1)
@@ -3759,7 +3802,7 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
     if (psBox)
     {
         pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
-        if (*ppszSRS)
+        if (ppszSRS && pszSRS)
           *ppszSRS = strdup(pszSRS);
 
         psCoordinates = CPLGetXMLNode(psBox, "coordinates");

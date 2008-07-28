@@ -381,7 +381,7 @@ typedef struct _FilterNode
     FilterNodeType      eType;
     char                *pszValue;
     void                *pOther;
-
+    char                *pszSRS;
     struct _FilterNode  *psLeftNode;
     struct _FilterNode  *psRightNode;
 } FilterEncodingNode;
