@@ -12,8 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
-- Several enhancements to STYLEITEM AUTO support for labels in OGR
-  layers (#2708)
+- Several enhancements to STYLEITEM AUTO support for labels (#2708) and
+  TTF symbols (#2721) in OGR layers 
 
 
 Version 5.2.0 (2008-07-16):

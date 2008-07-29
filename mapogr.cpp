@@ -2660,6 +2660,21 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   MS_INIT_COLOR(c->styles[0]->color, r, g, b);
               }
 
+#if GDAL_VERSION_NUM >= 1600              
+              pszColor = OGR_ST_GetParamStr(hSymbolStyle,
+                                            OGRSTSymbolOColor,
+                                            &bIsNull);
+              if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle,
+                                                      pszColor,
+                                                      &r, &g, &b, &t))
+              {
+                  MS_INIT_COLOR(c->styles[0]->outlinecolor, r, g, b);
+              }
+#endif /* GDAL_VERSION_NUM >= 1600 */
+              c->styles[0]->angle = OGR_ST_GetParamNum(hSymbolStyle,
+                                                       OGRSTSymbolAngle,
+                                                       &bIsNull);
+              
               c->styles[0]->size = OGR_ST_GetParamNum(hSymbolStyle, 
                                                       OGRSTSymbolSize, 
                                                       &bIsNull);
@@ -2695,6 +2710,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   MS_INIT_COLOR(c->styles[0]->color, r, g, b);
               }
 
+              c->styles[0]->angle = poSymbolStyle->Angle(bIsNull);
+                  
               c->styles[0]->size = (int)poSymbolStyle->Size(bIsNull);
 
               // Symbol name mapping:
