@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementation of most layerObj functions.
@@ -171,12 +171,23 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 */
 void msLayerClose(layerObj *layer) 
 {
+  int i;
+
   /* no need for items once the layer is closed */
   msLayerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
     layer->items = NULL;
     layer->numitems = 0;
+  }
+
+  /* clear out items used as part of expressions (bug #2702) */
+  for(i=0; i<layer->numclasses; i++) {    
+    msFreeCharArray(layer->class[i]->expression.items, layer->class[i]->expression.numitems);
+    msFree(layer->class[i]->expression.indexes);
+    layer->class[i]->expression.items = NULL;
+    layer->class[i]->expression.indexes = NULL;
+    layer->class[i]->expression.numitems = 0;        
   }
 
   if (layer->vtable) {
