@@ -1590,7 +1590,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             }
             if (oDisplay)
             {
-                sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+              sprintf(gszTmp, "button_%d_%d",nLayerIndex, nShapeIndex);
                 ((SWFObj *)image->img.swf)->nTmpCount++;
                 SWFDisplayItem_setName(oDisplay, gszTmp);
             }
@@ -1650,7 +1650,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             }
             if (oDisplay)
             {
-                sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+               sprintf(gszTmp, "button_%d_%d",nLayerIndex, nShapeIndex);
                 ((SWFObj *)image->img.swf)->nTmpCount++;
                 SWFDisplayItem_setName(oDisplay, gszTmp);
             }
@@ -1722,7 +1722,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
             if (oDisplay)
             {
-                sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+                sprintf(gszTmp, "button_%d_%d",nLayerIndex, nShapeIndex);
                 ((SWFObj *)image->img.swf)->nTmpCount++;
                 SWFDisplayItem_setName(oDisplay, gszTmp);
             }
@@ -2016,7 +2016,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                                          nShapeIndex, width);
 	    StoreButton(oButton, image);
 	    oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
-            sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+             sprintf(gszTmp, "button_%d_%d",nLayerIndex, nShapeIndex);
             ((SWFObj *)image->img.swf)->nTmpCount++;
             SWFDisplayItem_setName(oDisplay, gszTmp);
             
@@ -2158,7 +2158,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                               nShapeIndex, width);
             StoreButton(oButton, image);
             oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
-            sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+            sprintf(gszTmp, "button_%d_%d",nLayerIndex, nShapeIndex);
             ((SWFObj *)image->img.swf)->nTmpCount++;
             SWFDisplayItem_setName(oDisplay, gszTmp);
         }
@@ -2209,7 +2209,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                                   nShapeIndex, width);
                 StoreButton(oButton, image);
 		oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oButton);
-                sprintf(gszTmp, "button%d",((SWFObj *)image->img.swf)->nTmpCount);
+                 sprintf(gszTmp, "button_%d_%d",nLayerIndex, nShapeIndex);
                 ((SWFObj *)image->img.swf)->nTmpCount++;
                 SWFDisplayItem_setName(oDisplay, gszTmp);
             }

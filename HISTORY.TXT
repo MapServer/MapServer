@@ -12,6 +12,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- SWF: Button names reflects the layer id and shape id (#2691)
+
+- Support reading projection parameter for OGC filters (#2712)
+
 - Several enhancements to STYLEITEM AUTO support for labels (#2708) and
   TTF symbols (#2721) in OGR layers 
 
