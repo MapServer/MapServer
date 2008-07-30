@@ -570,28 +570,32 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
             values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
                                                   OGRSTLabelTextString, 
                                                   &bDefault));
-            //msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
         }
         else if (hLabelStyle && itemindexes[i] == MSOGR_LABELANGLEINDEX)
         {
             values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
                                                   OGRSTLabelAngle, 
                                                   &bDefault));
-            //msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
         }
         else if (hLabelStyle && itemindexes[i] == MSOGR_LABELSIZEINDEX)
         {
             values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
                                                   OGRSTLabelSize, 
                                                   &bDefault));
-            //msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
         }
         else if (hLabelStyle && itemindexes[i] == MSOGR_LABELCOLORINDEX)
         {
             values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
                                                   OGRSTLabelFColor, 
                                                   &bDefault));
-            //msDebug(MSOGR_LABELCOLORNAME " = \"%s\"\n", values[i]);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug(MSOGR_LABELCOLORNAME " = \"%s\"\n", values[i]);
         }
         else
         {
@@ -615,25 +619,29 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
         if (poLabelStyle && itemindexes[i] == MSOGR_LABELTEXTINDEX)
         {
             values[i] = strdup(poLabelStyle->TextString(bDefault));
-            //msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
         }
         else if (poLabelStyle && itemindexes[i] == MSOGR_LABELANGLEINDEX)
         {
             values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelAngle,
                                                          bDefault));
-            //msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
         }
         else if (poLabelStyle && itemindexes[i] == MSOGR_LABELSIZEINDEX)
         {
             values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelSize,
                                                          bDefault));
-            //msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
         }
         else if (poLabelStyle && itemindexes[i] == MSOGR_LABELCOLORINDEX)
         {
             values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelFColor,
                                                          bDefault));
-            //msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
         }
         else
         {
@@ -2289,20 +2297,23 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   {
                       c->label.type = MS_TRUETYPE;
                       c->label.font = strdup(pszName);
-                      // msDebug("** Using '%s' TTF font **\n", pszName);
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** Using '%s' TTF font **\n", pszName);
                   }
                   else if ( (strcmp(pszFontName,pszName) != 0) &&
                             msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
                   {
                       c->label.type = MS_TRUETYPE;
                       c->label.font = strdup(pszFontName);
-                      // msDebug("** Using '%s' TTF font **\n", pszFontName);
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** Using '%s' TTF font **\n", pszFontName);
                   }
                   else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
                   {
                       c->label.type = MS_TRUETYPE;
                       c->label.font = strdup("default");
-                      // msDebug("** Using 'default' TTF font **\n");
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** Using 'default' TTF font **\n");
                   }
                   else
                       bFont = false;
@@ -2313,7 +2324,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               {
                   c->label.type = MS_BITMAP;
                   c->label.size = MS_MEDIUM;
-                  // msDebug("** Using 'medium' BITMAP font **\n");
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** Using 'medium' BITMAP font **\n");
               }
           }
 #else /* OGR Style C++ */
@@ -2368,20 +2380,23 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   {
                       c->label.type = MS_TRUETYPE;
                       c->label.font = strdup(pszName);
-                      // msDebug("** Using '%s' TTF font **\n", pszName);
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** Using '%s' TTF font **\n", pszName);
                   }
                   else if ( (strcmp(pszFontName,pszName) != 0) &&
                             msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
                   {
                       c->label.type = MS_TRUETYPE;
                       c->label.font = strdup(pszFontName);
-                      // msDebug("** Using '%s' TTF font **\n", pszFontName);
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** Using '%s' TTF font **\n", pszFontName);
                   }
                   else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
                   {
                       c->label.type = MS_TRUETYPE;
                       c->label.font = strdup("default");
-                      // msDebug("** Using 'default' TTF font **\n");
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** Using 'default' TTF font **\n");
                   }
                   else
                       bFont = false;
@@ -2392,7 +2407,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               {
                   c->label.type = MS_BITMAP;
                   c->label.size = MS_MEDIUM;
-                  // msDebug("** Using 'medium' BITMAP font **\n");
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** Using 'medium' BITMAP font **\n");
               }
           }
 #endif /* OGRStyle C API */
@@ -2428,7 +2444,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                                           &r, &g, &b, &t))
                   {
                       MS_INIT_COLOR(oPenColor, r, g, b);
-                      // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, nPenColor);
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** PEN COLOR = %d %d %d **\n", r,g,b);
                   }
 
                   nPenSize = OGR_ST_GetParamNum(hPenStyle, 
@@ -2449,7 +2466,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                            (nPenSize>1)?"default-circle":NULL);
                   }
               }
-              //msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
+              if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                  msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
               if (bIsBrush || layer->type == MS_LAYER_POLYGON)
               {
                   // This is a multipart symbology, so pen defn goes in the
@@ -2509,7 +2527,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   if (!bIsNull && poPenStyle->GetRGBFromString(pszColor,r,g,b,t))
                   {
                       MS_INIT_COLOR(oPenColor, r, g, b);
-                      // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, nPenColor);
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** PEN COLOR = %d %d %d **\n", r,g,b);
                   }
 
                   nPenSize = (int)poPenStyle->Width(bIsNull);
@@ -2529,7 +2548,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                            (nPenSize>1)?"default-circle":NULL);
                   }
               }
-              //msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
+              if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                  msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
               if (bIsBrush || layer->type == MS_LAYER_POLYGON)
               {
                   // This is a multipart symbology, so pen defn goes in the
@@ -2598,7 +2618,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                                           &r, &g, &b, &t))
                   {
                       MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-                      // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
                   }
 
                   pszColor = OGR_ST_GetParamStr(hBrushStyle, 
@@ -2649,7 +2670,8 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
                   {
                       MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-                      // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
+                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                          msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
                   }
 
                   pszColor = poBrushStyle->BackColor(bIsNull);
