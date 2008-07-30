@@ -2346,13 +2346,13 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               {
                   MS_INIT_COLOR(c->label.backgroundcolor, r, g, b);
               }
-
+#if GDAL_VERSION_NUM >= 1400
               pszColor = poLabelStyle->ShadowColor(bIsNull);
               if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
                   MS_INIT_COLOR(c->label.shadowcolor, r, g, b);
               }
-              
+#endif
               // Label font... do our best to use TrueType fonts, otherwise
               // fallback on bitmap fonts.
 #if defined(USE_GD_TTF) || defined (USE_GD_FT)
