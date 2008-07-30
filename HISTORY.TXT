@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-2)
 --------------------------------
 
+- SLD: when creating well known symbols on the fly the pen-up value
+  used should be -99.
+     
 - Support reading projection parameter for OFC filters (#2712)
 
 - Stop configure execution with an error if path to one of the -config 
