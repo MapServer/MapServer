@@ -494,12 +494,15 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
 
 // Special field index codes for handling text string and angle coming from
 // OGR style strings.
+#define MSOGR_LABELNUMITEMS     4
 #define MSOGR_LABELTEXTNAME     "OGR:LabelText"
 #define MSOGR_LABELTEXTINDEX    -100
 #define MSOGR_LABELANGLENAME    "OGR:LabelAngle"
 #define MSOGR_LABELANGLEINDEX   -101
 #define MSOGR_LABELSIZENAME     "OGR:LabelSize"
 #define MSOGR_LABELSIZEINDEX    -102
+#define MSOGR_LABELCOLORNAME    "OGR:LabelColor"
+#define MSOGR_LABELCOLORINDEX   -103
 
 
 /**********************************************************************
@@ -583,6 +586,13 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                                                   &bDefault));
             //msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
         }
+        else if (hLabelStyle && itemindexes[i] == MSOGR_LABELCOLORINDEX)
+        {
+            values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
+                                                  OGRSTLabelFColor, 
+                                                  &bDefault));
+            //msDebug(MSOGR_LABELCOLORNAME " = \"%s\"\n", values[i]);
+        }
         else
         {
           msSetError(MS_OGRERR,"Invalid field index!?!","msOGRGetValues()");
@@ -616,6 +626,12 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
         else if (poLabelStyle && itemindexes[i] == MSOGR_LABELSIZEINDEX)
         {
             values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelSize,
+                                                         bDefault));
+            //msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
+        }
+        else if (poLabelStyle && itemindexes[i] == MSOGR_LABELCOLORINDEX)
+        {
+            values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelFColor,
                                                          bDefault));
             //msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
         }
@@ -1143,11 +1159,13 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
 static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
 {
   OGRFeatureDefnH hDefn;
-  int i, numitems;
+  int i, numitems,totalnumitems;
+  int numStyleItems = MSOGR_LABELNUMITEMS;
   char **items;
+  const char *getShapeStyleItems;
 
   if((hDefn = OGR_L_GetLayerDefn( psInfo->hLayer )) == NULL ||
-     (numitems = OGR_FD_GetFieldCount( hDefn )) == 0) 
+     (totalnumitems = numitems = OGR_FD_GetFieldCount( hDefn )) == 0) 
   {
     msSetError(MS_OGRERR, 
                "OGR Connection for layer `%s' contains no fields.", 
@@ -1156,7 +1174,11 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
     return NULL;
   }
 
-  if((items = (char**)malloc(sizeof(char *)*(numitems+1))) == NULL) 
+  getShapeStyleItems = msLayerGetProcessingKey( layer, "GETSHAPE_STYLE_ITEMS" );
+  if (getShapeStyleItems && EQUAL(getShapeStyleItems, "all"))
+      totalnumitems += numStyleItems;
+
+  if((items = (char**)malloc(sizeof(char *)*(totalnumitems+1))) == NULL) 
   {
     msSetError(MS_MEMERR, NULL, "msOGRFileGetItems()");
     return NULL;
@@ -1166,8 +1188,17 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
   {
       OGRFieldDefnH hField = OGR_FD_GetFieldDefn( hDefn, i );
       items[i] = strdup( OGR_Fld_GetNameRef( hField ));
-  }                                  
-  items[numitems] = NULL;
+  }
+
+  if (getShapeStyleItems && EQUAL(getShapeStyleItems, "all"))
+  {
+      assert(numStyleItems == 4);
+      items[i++] = strdup( MSOGR_LABELTEXTNAME );
+      items[i++] = strdup( MSOGR_LABELANGLENAME );
+      items[i++] = strdup( MSOGR_LABELSIZENAME );
+      items[i++] = strdup( MSOGR_LABELCOLORNAME );
+  }
+  items[i++] = NULL;
 
   return items;
 }
@@ -1816,6 +1847,8 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
           itemindexes[i] = MSOGR_LABELANGLEINDEX;
       else if (EQUAL(layer->items[i], MSOGR_LABELSIZENAME))
           itemindexes[i] = MSOGR_LABELSIZEINDEX;
+      else if (EQUAL(layer->items[i], MSOGR_LABELCOLORNAME))
+          itemindexes[i] = MSOGR_LABELCOLORINDEX;
       else
           itemindexes[i] = OGR_FD_GetFieldIndex( hDefn, layer->items[i] );
       if(itemindexes[i] == -1)
