@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- SLD: when creating well known symbols on the fly the pen-up value
+  used should be -99.
+
 - SWF: Button names reflects the layer id and shape id (#2691)
 
 - Support reading projection parameter for OGC filters (#2712)

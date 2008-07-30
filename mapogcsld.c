@@ -1869,8 +1869,8 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
             psSymbol->points[psSymbol->numpoints].x = 0.5;
             psSymbol->points[psSymbol->numpoints].y = 1;
             psSymbol->numpoints++;
-            psSymbol->points[psSymbol->numpoints].x = -1;
-            psSymbol->points[psSymbol->numpoints].y = -1;
+            psSymbol->points[psSymbol->numpoints].x = -99;
+            psSymbol->points[psSymbol->numpoints].y = -99;
             psSymbol->numpoints++;
             psSymbol->points[psSymbol->numpoints].x = 0;
             psSymbol->points[psSymbol->numpoints].y = 0.5;
@@ -1896,8 +1896,8 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
             psSymbol->points[psSymbol->numpoints].x = 1;
             psSymbol->points[psSymbol->numpoints].y = 1;
             psSymbol->numpoints++;
-            psSymbol->points[psSymbol->numpoints].x = -1;
-            psSymbol->points[psSymbol->numpoints].y = -1;
+            psSymbol->points[psSymbol->numpoints].x = -99;
+            psSymbol->points[psSymbol->numpoints].y = -99;
             psSymbol->numpoints++;
             psSymbol->points[psSymbol->numpoints].x = 0;
             psSymbol->points[psSymbol->numpoints].y = 1;
