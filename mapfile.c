@@ -2530,9 +2530,12 @@ int freeLayer(layerObj *layer) {
   int i;
   if (!layer) return MS_FAILURE;
   if( MS_REFCNT_DECR_IS_NOT_ZERO(layer) ) { return MS_FAILURE; }
-/*  if (layer->debug)
-     msDebug("freeLayer(): freeing layer at %p.\n",layer); 
-*/
+
+  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+     msDebug("freeLayer(): freeing layer at %p.\n",layer);
+
+  if(msLayerIsOpen(layer))
+     msLayerClose(layer);
 
   msFree(layer->name);
   msFree(layer->group);
