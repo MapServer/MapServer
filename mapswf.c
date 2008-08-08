@@ -1391,9 +1391,10 @@ void AddMouseActions(SWFButton oButton, int nLayerIndex, int nShapeIndex)
  *
  * Returns a handle on the clip's SWFDisplayItem.
  */
-SWFDisplayItem _msSWFAddButtonWithId(imageObj *image, SWFMovie oMainMovie, 
-                                     SWFButton oButton, 
-                                     int nLayerIndex, int nShapeIndex)
+static SWFDisplayItem _msSWFAddButtonWithId(imageObj *image, 
+                                            SWFMovie oMainMovie, 
+                                            SWFButton oButton, 
+                                            int nLayerIndex, int nShapeIndex)
 {
     SWFMovieClip myButtonMovieClip;
     SWFDisplayItem oDisplay;
