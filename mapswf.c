@@ -1406,17 +1406,6 @@ SWFDisplayItem _msSWFAddButtonWithId(imageObj *image, SWFMovie oMainMovie,
 
     if (oDisplay)
     {
-#ifdef MS_TICKET_2336
-        // Force name to button214 to test with loader attached to ticket 2336
-        // (even if the loader says "button212", it really works on button214!)
-        static int test=0;
-        if (test==0)
-        {
-            sprintf(gszTmp, "button214");
-            test=1;
-        }
-        else
-#endif
         sprintf(gszTmp, "button_%d_%d",nLayerIndex, nShapeIndex);
         ((SWFObj *)image->img.swf)->nTmpCount++;
         SWFDisplayItem_setName(oDisplay, gszTmp);
