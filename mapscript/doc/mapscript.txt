@@ -1391,6 +1391,11 @@ close() : void
 
 .. note:: demote() is removed in MapServer 4.4
 
+connectLayer(int connectiontype, string library_str) : int
+    Changes the connectiontype of the layer and recreates the vtable
+    according to the new connection type. This method should be used
+    instead of setting the connectiontype parameter directly.    
+
 draw( mapObj_ map, imageObj_ image ) : int
     Renders this layer into the target image, adding labels to the cache if
     required.  Returns MS_SUCCESS or MS_FAILURE. 

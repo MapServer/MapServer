@@ -544,5 +544,10 @@
     {
         return msLayerClearProcessing(self);
     }
-
+    
+    int connectLayer(int connectiontype,
+                            char *library_str) 
+    {    
+        return msConnectLayer(self, connectiontype, library_str);
+    }
 }
