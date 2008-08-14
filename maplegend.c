@@ -366,7 +366,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
  
     /* TODO: note tbonfort: if this todo concerned treating the individual heights of the legend labels, then this is now done */
 
-    msDrawLabel(image, pnt, cur->transformedText, &(map->legend.label), &map->fontset, 1.0);
+    msDrawLabel(map, image, pnt, cur->transformedText, &(map->legend.label), 1.0);
     if(offset) {
       /* if we had multiple lines, adjust the current position so it points to the bottom of the current label */
       pnt.y += cur->height-offset;

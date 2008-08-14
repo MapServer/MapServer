@@ -1466,8 +1466,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
               for(s=0; s<layer->class[c]->numstyles; s++)
                 msDrawMarkerSymbol(&map->symbolset, image, &annopnt, (layer->class[c]->styles[s]), layer->scalefactor);
 	    }
-	    msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
-
+	    msDrawLabel(map, image, annopnt, shape->text, &label, layer->scalefactor);
           }
 	}
       }
@@ -1503,7 +1502,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             for(s=0; s<layer->class[c]->numstyles; s++)
 	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, (layer->class[c]->styles[s]), layer->scalefactor);
 	  }
-	  msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
+	  msDrawLabel(map, image, annopnt, shape->text, &label, layer->scalefactor);
         }
       }
       break;
@@ -1532,7 +1531,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
                 for(s=0; s<layer->class[c]->numstyles; s++)
 	          msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
 	      }
-	      msDrawLabel(image, *point, shape->text, &label, &map->fontset, layer->scalefactor);
+	      msDrawLabel(map, image, *point, shape->text, &label, layer->scalefactor);
 	    }
 	  }
 	}
@@ -1572,7 +1571,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	  if(layer->labelcache) {
 	    if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
 	  } else
-	    msDrawLabel(image, *point, shape->text, &label, &map->fontset, layer->scalefactor);
+	    msDrawLabel(map, image, *point, shape->text, &label, layer->scalefactor);
 	}
       }
     }
@@ -1664,7 +1663,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(layer->labelcache) {
             if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else
-          msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
+          msDrawLabel(map, image, annopnt, shape->text, &label, layer->scalefactor);
       }
     }
     }
@@ -1730,7 +1729,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(layer->labelcache) {
 	  if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else
-	  msDrawLabel(image, annopnt, shape->text, &label, &map->fontset, layer->scalefactor);
+	  msDrawLabel(map, image, annopnt, shape->text, &label, layer->scalefactor);
       }
     }
     break;
@@ -1784,7 +1783,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
           for(s=0; s<theclass->numstyles; s++)
   	    msDrawMarkerSymbol(&map->symbolset, image, point, (theclass->styles[s]), layer->scalefactor);
 	}
-	msDrawLabel(image, *point, newtext, label, &map->fontset, layer->scalefactor);
+	msDrawLabel(map, image, *point, newtext, label, layer->scalefactor);
       }
     }
     break;
@@ -1804,7 +1803,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
       if(layer->labelcache) {
         if(msAddLabel(map, layer->index, classindex, -1, -1, point, NULL, newtext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else
-	msDrawLabel(image, *point, newtext, label, &map->fontset, layer->scalefactor);
+	msDrawLabel(map, image, *point, newtext, label, layer->scalefactor);
     }
     break;
   default:
@@ -1942,98 +1941,141 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
     }
 }
 
-int msDrawLabel(imageObj *image, pointObj labelPnt, char *string, 
-                labelObj *label, fontSetObj *fontset, double scalefactor)
+/*
+** Draws a single label independently of the label cache. No collision avoidance is performed.
+*/
+int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, labelObj *label, double scalefactor)
 {
+  shapeObj billboard;
+  lineObj billboard_line;
+  pointObj billboard_points[5];
+
+  rectObj r;
+
+  styleObj style;
+
   if(!string)
     return(0); /* not an error, just don't want to do anything */
 
   if(strlen(string) == 0)
     return(0); /* not an error, just don't want to do anything */
 
-
-/* ======================================================================= */
-/*      TODO : This is a temporary hack to call the drawlableswf directly. */
-/*      Normally the only functions that should be wrapped here is         */
-/*      draw_text. We did this since msGetLabelSize has not yet been       */
-/*      implemented for MING FDB fonts.                                    */
-/* ======================================================================= */
-
+  /* ======================================================================= */
+  /*      TODO : This is a temporary hack to call the drawlableswf directly. */
+  /*      Normally the only functions that should be wrapped here is         */
+  /*      draw_text. We did this since msGetLabelSize has not yet been       */
+  /*      implemented for MING FDB fonts.                                    */
+  /* ======================================================================= */
 #ifdef USE_MING_FLASH
   if ( MS_RENDERER_SWF(image->format) )
-      return msDrawLabelSWF(image, labelPnt, string, label, fontset, scalefactor);
+    return msDrawLabelSWF(image, labelPnt, string, label, &(map->fontset), scalefactor);
 #endif
-  
-  
- if(label->position != MS_XY) {
-    pointObj p;
-    rectObj r;
 
-    if(msGetLabelSize(image,string, label, &r, fontset, scalefactor, MS_FALSE) == -1) return(-1);
-    p = get_metrics(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 0, NULL);
-    msDrawText(image, p, string, label, fontset, scalefactor); /* actually draw the label */
+  /* initialize a few things for handling a background */
+  if(MS_VALID_COLOR(label->backgroundcolor)) {
+    billboard.numlines = 1;
+    billboard.line = &billboard_line;
+    billboard.line->numpoints = 5;
+    billboard.line->point = billboard_points;
+    initStyle(&style);
+  }
+
+  if(msGetLabelSize(image, string, label, &r, &(map->fontset), scalefactor, MS_FALSE) == -1) return(-1);
+
+  if(label->position != MS_XY) {
+    pointObj p;
+
+    if(MS_VALID_COLOR(label->backgroundcolor)) {
+      p = get_metrics_line(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 1, billboard.line);
+
+      /* draw the background and background shadow (if necessary) */
+      if(MS_VALID_COLOR(label->backgroundshadowcolor)) {
+	MS_COPYCOLOR(&(style.color), &(label->backgroundshadowcolor));
+	style.offsetx = label->backgroundshadowsizex;
+	style.offsety = label->backgroundshadowsizey;
+	msDrawShadeSymbol(&(map->symbolset), image, &billboard, &style, 1);
+	style.offsetx = 0;
+	style.offsety = 0;
+      }
+      MS_COPYCOLOR(&(style.color), &(label->backgroundcolor));
+      msDrawShadeSymbol(&(map->symbolset), image, &billboard, &style, 1);
+    } else
+      p = get_metrics_line(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 0, NULL);
+
+    /* draw the label text */
+    msDrawText(image, p, string, label, &(map->fontset), scalefactor); /* actually draw the label */
   } else {
     labelPnt.x += label->offsetx;
     labelPnt.y += label->offsety;
-    msDrawText(image, labelPnt, string, label, fontset, scalefactor); /* actually draw the label */
+
+    if(MS_VALID_COLOR(label->backgroundcolor)) {
+      get_metrics_line(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 1, billboard.line);
+
+      /* draw the background and background shadow (if necessary) */
+      if(MS_VALID_COLOR(label->backgroundshadowcolor)) {
+        MS_COPYCOLOR(&(style.color), &(label->backgroundshadowcolor));
+        style.offsetx = label->backgroundshadowsizex;
+        style.offsety = label->backgroundshadowsizey;
+        msDrawShadeSymbol(&(map->symbolset), image, &billboard, &style, 1);
+        style.offsetx = 0;
+        style.offsety = 0;
+      }
+      MS_COPYCOLOR(&(style.color), &(label->backgroundcolor));
+      msDrawShadeSymbol(&(map->symbolset), image, &billboard, &style, 1);
+    }
+
+    /* draw the label text */
+    msDrawText(image, labelPnt, string, label, &(map->fontset), scalefactor); /* actually draw the label */
   }
 
   return(0);
 }
 
-
+/*
+** Render the text (no background effects) for a label.
+*/ 
 int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
 {
-    int nReturnVal = -1;
+  int nReturnVal = -1;
 
-    if (image)
-    {
-        if( MS_RENDERER_GD(image->format) )
-            nReturnVal = msDrawTextGD(image->img.gd, labelPnt, string, 
-                                     label, fontset, scalefactor);
+  if (image) {
+    if( MS_RENDERER_GD(image->format) )
+      nReturnVal = msDrawTextGD(image->img.gd, labelPnt, string, label, fontset, scalefactor);
 #ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            nReturnVal = msDrawTextAGG(image, labelPnt, string, 
-                                     label, fontset, scalefactor);
+    else if( MS_RENDERER_AGG(image->format) )
+      nReturnVal = msDrawTextAGG(image, labelPnt, string, label, fontset, scalefactor);
 #endif
-	else if( MS_RENDERER_IMAGEMAP(image->format) )
-            nReturnVal = msDrawTextIM(image, labelPnt, string, 
-                                     label, fontset, scalefactor);
+    else if( MS_RENDERER_IMAGEMAP(image->format) )
+      nReturnVal = msDrawTextIM(image, labelPnt, string, label, fontset, scalefactor);
 #ifdef USE_MING_FLASH
-        else if( MS_RENDERER_SWF(image->format) )
-            nReturnVal = draw_textSWF(image, labelPnt, string, label, 
-                                      fontset, scalefactor); 
+    else if( MS_RENDERER_SWF(image->format) )
+      nReturnVal = draw_textSWF(image, labelPnt, string, label, fontset, scalefactor); 
 #endif
 #ifdef USE_PDF
-        else if( MS_RENDERER_PDF(image->format) )
-            nReturnVal = msDrawTextPDF(image, labelPnt, string, label, 
-                                      fontset, scalefactor); 
+    else if( MS_RENDERER_PDF(image->format) )
+      nReturnVal = msDrawTextPDF(image, labelPnt, string, label, fontset, scalefactor); 
 #endif
-        else if( MS_RENDERER_SVG(image->format) )
-            nReturnVal = msDrawTextSVG(image, labelPnt, string, label, 
-                                      fontset, scalefactor); 
-    }
+    else if( MS_RENDERER_SVG(image->format) )
+      nReturnVal = msDrawTextSVG(image, labelPnt, string, label, fontset, scalefactor); 
+  }
 
-    return nReturnVal;
+  return nReturnVal;
 }
 
 int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor) 
 {
-    int nReturnVal = -1;
+  int nReturnVal = -1;
 
-    if (image)
-    {
-        if( MS_RENDERER_GD(image->format) )
-            nReturnVal = msDrawTextLineGD(image->img.gd, string, 
-                    label, labelpath, fontset, scalefactor);
+  if(image) {
+    if( MS_RENDERER_GD(image->format) )
+      nReturnVal = msDrawTextLineGD(image->img.gd, string, label, labelpath, fontset, scalefactor);
 #ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            nReturnVal = msDrawTextLineAGG(image, string, 
-                    label, labelpath, fontset, scalefactor);
+    else if( MS_RENDERER_AGG(image->format) )
+      nReturnVal = msDrawTextLineAGG(image, string, label, labelpath, fontset, scalefactor);
 #endif
-    }
+  }
 
-    return nReturnVal;
+  return nReturnVal;
 }
 
 int msDrawLabelCache(imageObj *image, mapObj *map)
@@ -2045,9 +2087,11 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
       int i, l, priority;
       int oldAlphaBlending=0;
       rectObj r;
+
       shapeObj billboard;
       lineObj billboard_line;
       pointObj billboard_points[5];
+
       labelCacheMemberObj *cachePtr=NULL;
       layerObj *layerPtr=NULL;
       labelObj *labelPtr=NULL;
@@ -2067,7 +2111,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
         oldAlphaBlending = image->img.gd->alphaBlendingFlag;
         gdImageAlphaBlending( image->img.gd, 1);
       }
-            
+
       billboard.numlines = 1;
       billboard.line = &billboard_line;
       billboard.line->numpoints = 5;
