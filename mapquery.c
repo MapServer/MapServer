@@ -458,7 +458,12 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     if(map->scaledenom > 0) {
       if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
       if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
-    }    
+    }
+
+    if (lp->maxscaledenom <= 0 && lp->minscaledenom <= 0) {
+      if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
+      if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
+    }
 
     /* Raster layers are handled specially. */
     if( lp->type == MS_LAYER_RASTER ) {
@@ -647,6 +652,11 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     if(map->scaledenom > 0) {
       if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
       if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
+    }
+
+    if (lp->maxscaledenom <= 0 && lp->minscaledenom <= 0) {
+      if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
+      if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
     }
 
     /* Get the layer tolerance
@@ -890,6 +900,11 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
       if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
     }
 
+    if (lp->maxscaledenom <= 0 && lp->minscaledenom <= 0) {
+      if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
+      if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
+    }
+
     /* Raster layers are handled specially.  */
     if( lp->type == MS_LAYER_RASTER ) {
         if( msRasterQueryByPoint( map, lp, mode, p, buffer )
@@ -1069,6 +1084,11 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     if(map->scaledenom > 0) {
       if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
       if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
+    }
+
+    if (lp->maxscaledenom <= 0 && lp->minscaledenom <= 0) {
+      if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
+      if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
     }
 
     /* Raster layers are handled specially. */
@@ -1274,6 +1294,11 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
       if(map->scaledenom > 0) {
         if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
         if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
+      }
+
+      if (lp->maxscaledenom <= 0 && lp->minscaledenom <= 0) {
+        if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
+        if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
       }
 
       /* Raster layers are handled specially. */

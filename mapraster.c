@@ -1238,6 +1238,19 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     }
   }
 
+  if(layer->maxscaledenom <= 0 && layer->minscaledenom <= 0) {
+    if((layer->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > layer->maxgeowidth)) {
+      if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): skipping, map width %.2g > MAXSCALEDENOM=%g\n", layer->name, 
+          (map->extent.maxx - map->extent.minx), layer->maxgeowidth );
+      return(0);
+    }
+    if((layer->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < layer->mingeowidth)) {
+      if(layer->debug == MS_TRUE) msDebug( "msDrawRasterLayerLow(%s): skipping, map width %.2g < MINSCALEDENOM=%g\n", layer->name, 
+          (map->extent.maxx - map->extent.minx), layer->mingeowidth );
+      return(0);
+    }
+  }
+
   force_gdal = MS_FALSE;
   if(MS_RENDERER_GD(image->format))
     img = image->img.gd;
