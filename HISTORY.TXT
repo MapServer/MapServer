@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Implement Equals and GetHashCode properly for the mapscript C# classes
+
 - Expose msConnectLayer to the SWIG mapscript interface (#2735)
 
 - SLD: when creating well known symbols on the fly the pen-up value

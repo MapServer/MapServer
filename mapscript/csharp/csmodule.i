@@ -36,6 +36,24 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 %ignore fp;
 
 /******************************************************************************
+ * Implement Equals and GetHashCode properly
+ *****************************************************************************/
+
+%typemap(cscode) SWIGTYPE %{
+  public override bool Equals(object obj) {
+    if (obj == null)
+        return false;
+    if (this.GetType() != obj.GetType())
+        return false;
+    return swigCPtr.Handle.Equals($csclassname.getCPtr(($csclassname)obj).Handle);
+  }
+
+  public override int GetHashCode() {
+    return swigCPtr.Handle.GetHashCode();
+  }
+%}
+
+/******************************************************************************
  * Module initialization helper (bug 1665)
  *****************************************************************************/
 
