@@ -637,6 +637,11 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 
   }
 
+  if (layer->maxscaledenom <= 0 && layer->minscaledenom <= 0) {
+      if((layer->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > layer->maxgeowidth)) return(MS_FALSE);
+      if((layer->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < layer->mingeowidth)) return(MS_FALSE);
+  }
+
   return MS_TRUE;  /* All tests passed.  Layer is visible. */
 }
 /*
@@ -1001,6 +1006,11 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     if((layer->labelmaxscaledenom != -1) && (map->scaledenom >= layer->labelmaxscaledenom)) annotate = MS_FALSE;
     if((layer->labelminscaledenom != -1) && (map->scaledenom < layer->labelminscaledenom)) annotate = MS_FALSE;
+  }
+
+  if (layer->maxscaledenom <= 0 && layer->minscaledenom <= 0) {
+      if((layer->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > layer->maxgeowidth)) return(MS_SUCCESS);
+      if((layer->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < layer->mingeowidth)) return(MS_SUCCESS);
   }
 
   /* reset layer pen values just in case the map has been previously processed */

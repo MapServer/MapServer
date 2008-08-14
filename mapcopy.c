@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project: MapServer
  * Purpose: Functions to allow copying/cloning of maps
@@ -768,6 +768,8 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 
     MS_COPYSTELEM(labelminscaledenom);
     MS_COPYSTELEM(labelmaxscaledenom);
+    MS_COPYSTELEM(mingeowidth);
+    MS_COPYSTELEM(maxgeowidth);
 
     MS_COPYSTELEM(sizeunits);
     MS_COPYSTELEM(maxfeatures);

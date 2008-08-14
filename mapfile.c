@@ -2442,6 +2442,8 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->scalefactor = 1.0;
   layer->maxscaledenom = -1.0;
   layer->minscaledenom = -1.0;
+  layer->maxgeowidth = -1.0;
+  layer->mingeowidth = -1.0;
 
   layer->sizeunits = MS_PIXELS;
 
@@ -2807,12 +2809,18 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(MAXSCALEDENOM):
       if(getDouble(&(layer->maxscaledenom)) == -1) return(-1);
       break;
+    case(MAXGEOWIDTH):
+      if(getDouble(&(layer->maxgeowidth)) == -1) return(-1);
+      break;
     case(METADATA):
       if(loadHashTable(&(layer->metadata)) != MS_SUCCESS) return(-1);
       break;
     case(MINSCALE):
     case(MINSCALEDENOM):
       if(getDouble(&(layer->minscaledenom)) == -1) return(-1);
+      break;
+    case(MINGEOWIDTH):
+      if(getDouble(&(layer->mingeowidth)) == -1) return(-1);
       break;
     case(NAME):
       if(getString(&layer->name) == MS_FAILURE) return(-1);
@@ -3001,8 +3009,10 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if(layer->labelrequires) fprintf(stream, "    LABELREQUIRES \"%s\"\n", layer->labelrequires);
   if(layer->maxfeatures > 0) fprintf(stream, "    MAXFEATURES %d\n", layer->maxfeatures);
   if(layer->maxscaledenom > -1) fprintf(stream, "    MAXSCALEDENOM %g\n", layer->maxscaledenom); 
+  if(layer->maxgeowidth > -1) fprintf(stream, "    MAXGEOWIDTH %g\n", layer->maxgeowidth);
   if(&(layer->metadata)) writeHashTable(&(layer->metadata), stream, "    ", "METADATA");
   if(layer->minscaledenom > -1) fprintf(stream, "    MINSCALEDENOM %g\n", layer->minscaledenom);
+  if(layer->mingeowidth > -1) fprintf(stream, "    MINGEOWIDTH %g\n", layer->mingeowidth);
   fprintf(stream, "    NAME \"%s\"\n", layer->name);
   writeColor(&(layer->offsite), stream, "OFFSITE", "    ");
   if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");

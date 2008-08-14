@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Support for the MapInfo style zoom layering option (#2738)
+
 - Implement Equals and GetHashCode properly for the mapscript C# classes
 
 - Expose msConnectLayer to the SWIG mapscript interface (#2735)

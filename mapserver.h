@@ -1081,6 +1081,8 @@ typedef struct layer_obj {
   double symbolscaledenom; /* scale at which symbols are default size */
   double minscaledenom, maxscaledenom;
   double labelminscaledenom, labelmaxscaledenom;
+  double mingeowidth, maxgeowidth; /* map width (in map units) at which the layer should be drawn */
+
   int sizeunits; /* applies to all classes */
 
   int maxfeatures;

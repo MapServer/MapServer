@@ -262,6 +262,11 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
     }
 
+    if (!scale_independent && lp->maxscaledenom <=0 && lp->minscaledenom <=0) {
+      if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
+      if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
+    }
+
     for(j=lp->numclasses-1;j>=0;j--) {
 
       /* skip the class if the classgroup is defined */
