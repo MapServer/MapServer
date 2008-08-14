@@ -217,6 +217,7 @@ DLEXPORT void php3_ms_lyr_moveClassUp(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_moveClassDown(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_removeClass(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_isVisible(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_setConnectionType(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -760,6 +761,7 @@ function_entry php_layer_class_functions[] = {
     {"setprojection",   php3_ms_lyr_setProjection,      NULL},
     {"getprojection",   php3_ms_lyr_getProjection,      NULL},
     {"setwktprojection",php3_ms_lyr_setWKTProjection,   NULL},
+    {"setconnectiontype",php3_ms_lyr_setConnectionType, NULL},
     {"addfeature",      php3_ms_lyr_addFeature,         NULL},
     {"getnumresults",   php3_ms_lyr_getNumResults,      NULL},
     {"getresult",       php3_ms_lyr_getResult,          NULL},
@@ -6693,7 +6695,6 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("header",     self->header)
     else IF_SET_STRING("footer",     self->footer)
     else IF_SET_STRING("connection", self->connection)
-    else IF_SET_LONG(  "connectiontype", self->connectiontype)
     else IF_SET_STRING("filteritem", self->filteritem)
     else IF_SET_STRING("template",   self->template)
     else IF_SET_LONG(  "opacity", self->opacity)
@@ -6702,6 +6703,12 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("styleitem",  self->styleitem)
     else IF_SET_STRING("requires",   self->requires)
     else IF_SET_STRING("labelrequires",   self->labelrequires)
+    else if (strcmp( "connectiontype", pPropertyName->value.str.val) == 0)
+    {
+        php3_error(E_ERROR, "Property 'connectiontype' must be set "
+                            "using setConnectionType().");
+        RETURN_LONG(-1);
+    }
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
              strcmp( "index",      pPropertyName->value.str.val) == 0 )
     {
@@ -7371,6 +7378,59 @@ DLEXPORT void php3_ms_lyr_getProjection(INTERNAL_FUNCTION_PARAMETERS)
         free(pszPojString);
     }
 }
+
+
+/**********************************************************************
+ *                        layer->setConnectionType()
+ **********************************************************************/
+
+/* {{{ proto int layer.setConnectionType(int connectiontype, string library_str)
+   Set layer connectiontype.  Returns 0 on success, -1 in error. */
+
+DLEXPORT void php3_ms_lyr_setConnectionType(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj *self;
+    pval   *pConnectionType, *pLibrary;
+    pval   *pThis;
+    int     numArgs, nStatus = -1;
+    const char *pszLibrary = "";
+
+    HashTable   *list=NULL;
+    pThis = getThis();
+    numArgs = ARG_COUNT(ht);
+
+    if (pThis == NULL || (numArgs != 1 && numArgs != 2) ||
+        getParameters(ht, numArgs, &pConnectionType, &pLibrary) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+    convert_to_long(pConnectionType);
+
+    if (numArgs >= 2)
+    {
+        convert_to_string(pLibrary);
+        pszLibrary = pLibrary->value.str.val;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = layerObj_setConnectionType(self, 
+                                              pConnectionType->value.lval,
+                                              pszLibrary)) != 0)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+    else
+    {
+        _phpms_set_property_long(pThis, "connectiontype", 
+                                 self->connectiontype, E_ERROR TSRMLS_CC);
+    }
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
 
 /************************************************************************/
 /*                        layer->addFeature                             */

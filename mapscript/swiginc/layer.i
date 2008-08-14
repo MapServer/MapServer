@@ -545,9 +545,13 @@
         return msLayerClearProcessing(self);
     }
     
-    int setConnectionType(int connectiontype,
-                            char *library_str) 
+    int setConnectionType(int connectiontype, const char *library_str) 
     {    
+        /* Caller is responsible to close previous layer correctly before
+         * calling msConnectLayer() 
+         */
+        if (msLayerIsOpen(self))
+          msLayerClose(self);
         return msConnectLayer(self, connectiontype, library_str);
     }
 }

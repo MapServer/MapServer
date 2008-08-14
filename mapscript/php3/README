@@ -637,7 +637,7 @@ Currently supported classes, properties and methods:
    string header
    string footer
    string connection
-   int    connectiontype
+   int    connectiontype  (read-only, use setConnectionType() to set it)
    string filteritem
    string template
    int    opacity
@@ -893,7 +893,14 @@ Currently supported classes, properties and methods:
        Returns MS_TRUE/MS_FALSE depending on whether the layer is 
        currently visible in the map (i.e. turned on, in scale, etc.). 
 
- 
+  int setConenctionType(int connectiontype [,string plugin_library])
+       Changes the connectiontype of the layer and recreates the vtable 
+       according to the new connection type. This method should be used 
+       instead of setting the connectiontype parameter directly. 
+       In case when the layer.connectiontype = MS_PLUGIN the plugin_library
+       parameter should also be specified so as to select the library to 
+       load by mapserver. For the other connection types this parameter 
+       is not used. 
 
  ClassObj Class:
  ---------------

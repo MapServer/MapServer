@@ -170,6 +170,8 @@ char            *layerObj_generateSLD(layerObj *self);
 int             layerObj_moveClassUp(layerObj *self, int index);
 int             layerObj_moveClassDown(layerObj *self, int index);
 classObj        *layerObj_removeClass(layerObj *self, int index);
+int             layerObj_setConnectionType(layerObj *self, int connectiontype, 
+                                           const char *library_str) ;
 
 
 classObj       *classObj_new(layerObj *layer, classObj *class);
