@@ -2953,10 +2953,6 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
         format = req->ParamValues[i];
   }
 
-  /* if SERVICE is not specified, this is not a WMS request */
-  if (service == NULL)
-    return MS_DONE;
-
   /* If SERVICE is specified then it MUST be "WMS" */
   if (service != NULL && strcasecmp(service, "WMS") != 0)
       return MS_DONE;  /* Not a WMS request */

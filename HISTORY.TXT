@@ -13,6 +13,12 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-2)
 --------------------------------
 
+- Accept WMS requests in which the optional SERVICE param is missing. 
+  A new test was incorrectly added in 5.2.0 that resulted in the error 
+  "Incomplete WFS request: SERVICE parameter missing" when the SERVICE 
+  parameter was missing in WMS requests in which the SERVICE param is 
+  optional (#2737)
+
 - SLD: when creating well known symbols on the fly the pen-up value
   used should be -99.
      
