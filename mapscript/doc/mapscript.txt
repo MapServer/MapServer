@@ -1208,6 +1208,8 @@ connection : string
 
 connectiontype : int
     See MS_CONNECTION_TYPE in mapserver.h for possible values.
+    When setting the connection type setConnectionType() should be
+    used in order to initialize the layer vtable properly.
 
 data : string
     Layer data definition, values depend upon connectiontype.
@@ -1389,12 +1391,7 @@ clone() : layerObj
 close() : void
     Close the underlying layer.
 
-.. note:: demote() is removed in MapServer 4.4
-
-connectLayer(int connectiontype, string library_str) : int
-    Changes the connectiontype of the layer and recreates the vtable
-    according to the new connection type. This method should be used
-    instead of setting the connectiontype parameter directly.    
+.. note:: demote() is removed in MapServer 4.4  
 
 draw( mapObj_ map, imageObj_ image ) : int
     Renders this layer into the target image, adding labels to the cache if
@@ -1607,6 +1604,14 @@ removeMetaData( string key ) : int
 
 .. note:: removeMetaData() is deprecated and will be removed in a future
           version.  Replaced by direct metadata access, see hashTableObj_.
+          
+setConnectionType(int connectiontype, string library_str) : int
+    Changes the connectiontype of the layer and recreates the vtable
+    according to the new connection type. This method should be used
+    instead of setting the connectiontype parameter directly.
+    In case when the layer.connectiontype = MS_PLUGIN the library_str 
+    parameter should also be specified so as to select the library to load by
+    mapserver. For the other connection types this parameter is not used.
 
 setExtent( float minx, float miny, float maxx, float maxy ) : int
     Sets the extent of a layer.  Returns MS_SUCCESS or MS_FAILURE.
