@@ -1615,7 +1615,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   /* return(-1); */
   /* } */
   /* } */
-
+  
   return(0); 
 }
 
@@ -2154,7 +2154,9 @@ void resetClassStyle(classObj *class)
   /* reset styles */
   for(i=0; i<class->numstyles; i++) {
     if(class->styles[i] != NULL) {
-      freeStyle(class->styles[i]);
+      if( freeStyle(class->styles[i]) == MS_SUCCESS ) {
+        msFree(class->styles[i]);
+      }
       class->styles[i] = NULL;
     }
   }
