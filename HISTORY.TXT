@@ -12,6 +12,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-2)
 --------------------------------
+
+- Masking the out-of-range characters to avoid the crash
+  in the AGG renderer (#2739)
+
 - AGG: fix pixmap symbols not drawing if no color was specified (#2736)
 
 - Accept WMS requests in which the optional SERVICE param is missing. 
