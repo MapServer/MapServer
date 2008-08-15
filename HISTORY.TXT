@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-2)
 --------------------------------
+- AGG: fix pixmap symbols not drawing if no color was specified (#2736)
 
 - Accept WMS requests in which the optional SERVICE param is missing. 
   A new test was incorrectly added in 5.2.0 that resulted in the error 

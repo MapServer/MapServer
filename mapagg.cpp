@@ -1579,7 +1579,9 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     } else if(agg_ocolor.a) {
         color = &(agg_ocolor);// try the outline color, polygons drawing thick outlines often do this
     } else {
-            return; // no color, bail out... 
+        if(symbol->type != MS_SYMBOL_PIXMAP)
+            //all symbols except pixmap symbols must specify a color
+            return;
     }
     
     //transform the shapeobj to something AGG understands
