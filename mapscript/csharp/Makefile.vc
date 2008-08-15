@@ -27,17 +27,23 @@ CFLAGS = 	$(BASE_CFLAGS) $(MS_CFLAGS) -I../..
 CC=     cl
 LINK=   link
 
+!IFDEF MS_DEBUG
+CSDEBUG = /debug:full
+!ELSE
+CSDEBUG =
+!ENDIF
+
 !IFDEF MONO
 CSC = mcs
 !ELSE
 !IF $(MSVC_VER) == 1400
 !IFDEF WIN64
-CSC = csc /platform:anycpu
+CSC = csc /platform:anycpu $(CSDEBUG)
 !ELSE
-CSC = csc /platform:x86
+CSC = csc /platform:x86 $(CSDEBUG)
 !ENDIF
 !ELSE
-CSC = csc
+CSC = csc $(CSDEBUG)
 !ENDIF
 !ENDIF
 
