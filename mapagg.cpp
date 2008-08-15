@@ -645,9 +645,18 @@ public:
         glyph.font(rasterfonts[size]);
         int numlines=0;
         char **lines;
+        /*masking out the out-of-range character codes*/
+        int len;
+        int cc_start = rasterfonts[size][2];
+        int cc_end = cc_start + rasterfonts[size][3];
         if((lines = msStringSplit((const char*)thechars, '\n', &(numlines))) == NULL)
             return(-1);
         for(int n=0;n<numlines;n++) {
+            len = strlen(lines[n]);
+            for (int i = 0; i < len; i++)
+            if (lines[n][i] < cc_start || lines[n][i] > cc_end)
+                lines[n][i] = '.';
+            
             if(outlinecolor.a) {
                 rt.color(outlinecolor);
                 for(int i=-1;i<=1;i++) {
