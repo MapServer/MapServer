@@ -88,17 +88,23 @@ BINDIR = $(MS_BASE)\..\bin
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 !IF $(MSVC_VER) == 1400
+!IFNDEF MS_DEBUG
 # Optimized, with using MSVCRT. 
 OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
-# Debug with MSVCRT
-#OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
-#LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
 !ELSE
+# Debug with MSVCRT
+OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+#LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+!ENDIF
+!ELSE
+!IFNDEF MS_DEBUG
 # Optimized, with using MSVCRT. 
 OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc
+!ELSE
 # Debug with MSVCRT
-#OPTFLAGS = /nologo /Zi /MDd $(WARNING_LEVEL) $(DEBUG) /EHsc
+OPTFLAGS = /nologo /Zi /MDd $(WARNING_LEVEL) $(DEBUG) /EHsc
 #LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+!ENDIF
 !ENDIF
 
 # Uncomment the following to link mapserv.exe with a dll.  In almost 
@@ -111,6 +117,7 @@ WARNING_LEVEL=/W3
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Debugging Options
 # ----------------------------------------------------------------------
+!IFDEF MS_DEBUG
 #NEED_NONBLOCKING_STDERR=-DNEED_NONBLOCKING_STDERR
 ENABLE_STDERR_DEBUG=-DENABLE_STDERR_DEBUG
 
@@ -120,6 +127,7 @@ LDEBUG=/debug
 # DEBUG Build flags
 # Set the DEBUG flag if you wish to make a debug build
 DEBUG=/DDEBUG
+!ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # String methods
@@ -794,22 +802,26 @@ IMGGEN_LIB=-L$(IMGGEN_DIR) -limgGEN
 ########################################################################
 # Should not need to be updated.
 ########################################################################
+!IFNDEF EXTERNAL_LIBS
 EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
      $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
      $(LIBXML_LIB) $(AGG_LIB) $(FRIBIDI_LIB)
+!ENDIF
         
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
 
+!IFNDEF INCLUDES
 INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
          $(AGG_INC) $(PNG_INC) $(FRIBIDI_INC)
+!ENDIF
         
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
@@ -822,9 +834,9 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) $(RGBA_PNG_ENABLED) $(FRIBIDI)
 
 !IFDEF WIN64
-MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
+MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT -DBGDWIN32
 !ELSE
-MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32
+MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DBGDWIN32
 !ENDIF
 
 
