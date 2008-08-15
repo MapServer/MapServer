@@ -12,6 +12,12 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Added legend graphics for layer of type annotation 
+  for the AGG and GD renderer (#1523)
+
+- Masking the out-of-range characters to avoid the crash 
+  in the AGG renderer (#2739)
+
 - Accept WMS requests in which the optional SERVICE parameter is missing. 
   A new test was incorrectly added in 5.2.0 that resulted in the error 
   "Incomplete WFS request: SERVICE parameter missing" when the SERVICE 

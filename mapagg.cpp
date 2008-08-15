@@ -2345,6 +2345,21 @@ int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass,
     */     
     switch(type) {
     case MS_LAYER_ANNOTATION:
+      if (theclass->label.size != -1)
+      {
+        rectObj label_rect;
+        labelObj label = theclass->label;
+        label.angle = 0;
+        if (label.type == MS_TRUETYPE) label.size = height;
+        marker.x = dstX + MS_NINT(width / 2.0);
+        marker.y = dstY + MS_NINT(height / 2.0);
+        if(msGetLabelSizeAGG(image, "Aa", &label, &label_rect, &map->fontset, 1.0, MS_FALSE) != -1)
+        {
+          pointObj label_point = get_metrics(&marker, MS_CC, label_rect, 0, 0, label.angle, 0, NULL);
+          msDrawTextAGG(image, label_point, "Aa", &label, &map->fontset, 1.0);
+        }
+      }
+      break;
     case MS_LAYER_POINT:
       marker.x = dstX + MS_NINT(width / 2.0);
       marker.y = dstY + MS_NINT(height / 2.0);
