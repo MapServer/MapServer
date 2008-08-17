@@ -794,22 +794,26 @@ IMGGEN_LIB=-L$(IMGGEN_DIR) -limgGEN
 ########################################################################
 # Should not need to be updated.
 ########################################################################
+!IFNDEF EXTERNAL_LIBS
 EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
      $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
      $(LIBXML_LIB) $(AGG_LIB) $(FRIBIDI_LIB)
+!ENDIF
         
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
 
+!IFNDEF INCLUDES
 INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
          $(AGG_INC) $(PNG_INC) $(FRIBIDI_INC)
+!ENDIF
         
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
@@ -822,9 +826,9 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) $(RGBA_PNG_ENABLED) $(FRIBIDI)
 
 !IFDEF WIN64
-MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
+MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT -DBGDWIN32
 !ELSE
-MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32
+MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DBGDWIN32
 !ENDIF
 
 
