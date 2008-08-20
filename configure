@@ -12721,6 +12721,8 @@ echo $ECHO_N "checking for location of config.h or php_config.h... $ECHO_C" >&6;
 
     test -f "$PHP_SRC_DIR/include/php/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
 
+    test -f "$PHP_SRC_DIR/include/php5/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php5/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
+
   if test -n "$PHP_CONFIG_H" ; then
     { echo "$as_me:$LINENO: result: $PHP_CONFIG_H" >&5
 echo "${ECHO_T}$PHP_CONFIG_H" >&6; }

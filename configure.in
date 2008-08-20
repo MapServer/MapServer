@@ -2290,6 +2290,9 @@ if test -n "$with_php" -a -d "$with_php" ; then
   dnl If php was installed, then the headers are under $prefix/include/php/*
   test -f "$PHP_SRC_DIR/include/php/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
 
+  dnl In PHP 5, few distributions use "/usr/include/php5" directory
+  test -f "$PHP_SRC_DIR/include/php5/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php5/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
+
   if test -n "$PHP_CONFIG_H" ; then
     AC_MSG_RESULT([$PHP_CONFIG_H])
   else
