@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fixed a memory leak associated with not deleting the lexer buffer
+  before parsing certain types of strings. (#2729)
+
 - Added legend graphics for layer of type annotation 
   for the AGG and GD renderer (#1523)
 
