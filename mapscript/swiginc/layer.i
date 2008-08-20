@@ -159,7 +159,7 @@
         /* 
         ** We assume folks use this like a simple query so retrieve all items with each shape.
         */
-        msLayerGetItems(self);
+        if(msLayerWhichItems(self, MS_TRUE, MS_FALSE, NULL) != MS_SUCCESS) return MS_FAILURE;
         return msLayerWhichShapes(self, rect);
     }	
 
