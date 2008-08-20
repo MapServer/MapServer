@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-2)
 --------------------------------
 
+- Fixed a memory leak associated with not deleting the lexer buffer 
+  before parsing certain types of strings. (#2729)
+
 - Masking the out-of-range characters to avoid the crash
   in the AGG renderer (#2739)
 
