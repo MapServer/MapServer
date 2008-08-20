@@ -75,7 +75,7 @@ AC_SUBST(STRINGS, $STRINGS)
 dnl ---------------------------------------------------------------------
 dnl Look for MapServer version in mapserver.h
 dnl ---------------------------------------------------------------------
-MS_VERSION=`grep MS_VERSION mapserver.h | grep '#define' | cut -d\" -f2`
+MS_VERSION=`grep 'MS_VERSION ' mapserver.h | grep '#define' | cut -d\" -f2`
 AC_MSG_RESULT([MapServer Version from mapserver.h: '$MS_VERSION'])
 AC_SUBST(MS_VERSION,    "$MS_VERSION")
 

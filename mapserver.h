@@ -30,8 +30,20 @@
 #ifndef MAP_H
 #define MAP_H
 
-/* $Id$
-**
+/*
+** MapServer version - to be updated for every release 
+*/
+
+#define MS_VERSION "5.3-dev"
+
+#define MS_VERSION_MAJOR    5
+#define MS_VERSION_MINOR    3
+#define MS_VERSION_REV      0
+
+#define MS_VERSION_NUM (MS_VERSION_MAJOR*10000+MS_VERSION_MINOR*100+MS_VERSION_REV)
+
+
+/* 
 ** Main includes. If a particular header was needed by several .c files then
 ** I just put it here. What the hell, it works and it's all right here. -SDL-
 */
@@ -118,8 +130,6 @@ extern "C" {
 #endif
 
 /* General defines, wrapable */
-
-#define MS_VERSION "5.3-dev"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

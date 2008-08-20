@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Added MS_VERSION_NUM for use with #if statements in code based on 
+  libmapserver (#2750)
+
 - Fixed the configure script: failed to detect php5 on ubuntu. (#2365)
 
 - Fixed a memory leak associated with not deleting the lexer buffer

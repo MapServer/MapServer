@@ -4967,7 +4967,7 @@ fi
 STRINGS=$STRINGS
 
 
-MS_VERSION=`grep MS_VERSION mapserver.h | grep '#define' | cut -d\" -f2`
+MS_VERSION=`grep 'MS_VERSION ' mapserver.h | grep '#define' | cut -d\" -f2`
 { echo "$as_me:$LINENO: result: MapServer Version from mapserver.h: '$MS_VERSION'" >&5
 echo "${ECHO_T}MapServer Version from mapserver.h: '$MS_VERSION'" >&6; }
 MS_VERSION="$MS_VERSION"
