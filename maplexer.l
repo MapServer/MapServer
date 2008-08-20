@@ -65,6 +65,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_STRING):
          BEGIN(INITIAL);
+         msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyysource=MS_STRING_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
          msyy_scan_string(msyystring);
@@ -75,6 +76,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_URL_VARIABLE):
          BEGIN(URL_VARIABLE);
+         msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyy_scan_string(msyystring);
          msyysource=MS_URL_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
@@ -83,6 +85,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_URL_STRING):
          BEGIN(URL_STRING);
+         msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyysource=MS_URL_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
          msyy_scan_string(msyystring);
