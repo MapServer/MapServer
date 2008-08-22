@@ -372,7 +372,10 @@ int layerObj_open(layerObj *self) {
 
 
 int layerObj_whichShapes(layerObj *self, rectObj *poRect) {
-  msLayerGetItems(self);
+  /* 
+  ** We assume folks use this like a simple query so retrieve all items with each shape.
+  */
+  if(msLayerWhichItems(self, MS_TRUE, MS_FALSE, NULL) != MS_SUCCESS) return MS_FAILURE;
   return msLayerWhichShapes(self, *poRect);
 }
 
