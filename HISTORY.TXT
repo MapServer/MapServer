@@ -13,6 +13,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-2)
 --------------------------------
 
+- Got rid of misleading errors about OWS SERVICE not being compiled in
+  when a OWS is sent that includes mode=map (or other mode value 
+  different from ows)(#2747)
+
 - Fixed a memory leak associated with not deleting the lexer buffer 
   before parsing certain types of strings. (#2729)
 

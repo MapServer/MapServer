@@ -1298,31 +1298,6 @@ int main(int argc, char *argv[]) {
     } /* done OGC/OWS case */
 
     /*
-    ** Try to report a meaningful message if we had an OGC request but
-    ** we couldn't handle it because we don't have support compiled in.
-    */
-    {
-      const char *service = NULL;
-
-      for(i=0; i<mapserv->request->NumParams; i++) {
-        if(strcasecmp(mapserv->request->ParamNames[i], "SERVICE") == 0)
-          service = mapserv->request->ParamValues[i];
-      }
-
-      if( service != NULL 
-          && (strcasecmp(service,"WMS") == 0 
-          || strcasecmp(service,"WCS") == 0 
-          || strcasecmp(service,"WFS") == 0 
-          || strcasecmp(service,"SOS") == 0) ) {
-        msSetError(MS_WEBERR, 
-                   "SERVICE=%s requested, but that OGC web service is not enabled in this build.  Please rebuild MapServer with appropriate options.", 
-                   "mapserv() ",
-                   service );
-        writeError();
-      }
-    }
-
-    /*
     ** Do "traditional" mode processing.
     */
     if (mapserv->Mode == -1)
