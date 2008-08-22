@@ -883,7 +883,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   char *pszProj=NULL;
   char *pszValue;
   char *pszHash, *pszName=NULL;
-  CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle;
+  CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psExtension;
   CPLXMLNode *psDimensionList, *psDimension;
   int nStyle;
   layerObj *layer;
@@ -1151,7 +1151,16 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
           }
       }
   }
-  
+ 
+  /* Extension */
+  psExtension = CPLGetXMLNode(psLayer, "Extension");
+  if (psExtension != NULL) {
+      pszValue = (char*)CPLGetXMLValue(psExtension, "ol:opacity", NULL);
+      if(pszValue != NULL)
+      {
+          layer->opacity = atof(pszValue)*100;
+      } 
+  }
 
   return MS_SUCCESS;
 }

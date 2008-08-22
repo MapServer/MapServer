@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Support OpenLayer's ol:opacity extension to OGC Web Map Context docs (#2746)
+
 - Added MS_VERSION_NUM for use with #if statements in code based on 
   libmapserver (#2750)
 
