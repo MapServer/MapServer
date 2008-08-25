@@ -619,7 +619,7 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
     dnl To test against static GD, do AC_CHECK_LIB calls against -lc and
     dnl include libgd.a in GD_LIB param
     GD_CHECKLIB=c
-    GD_LIB=""
+    GD_LIB=$GD_LIBDIR/libgd.a
     GD_STATIC=$GD_LIBDIR/libgd.a
     AC_MSG_RESULT([static linkage of $GD_STATIC requested... testing supported formats...])
   else

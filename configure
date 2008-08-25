@@ -6891,7 +6891,7 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
 
   if test "$GD_STATIC" = "yes" ; then
             GD_CHECKLIB=c
-    GD_LIB=""
+    GD_LIB=$GD_LIBDIR/libgd.a
     GD_STATIC=$GD_LIBDIR/libgd.a
     { echo "$as_me:$LINENO: result: static linkage of $GD_STATIC requested... testing supported formats..." >&5
 echo "${ECHO_T}static linkage of $GD_STATIC requested... testing supported formats..." >&6; }

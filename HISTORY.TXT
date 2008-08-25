@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Added support for static linking with the lib gd in configure 
+  script (#2696)
+
 - Support OpenLayer's ol:opacity extension to OGC Web Map Context docs (#2746)
 
 - Added MS_VERSION_NUM for use with #if statements in code based on 
