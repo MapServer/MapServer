@@ -861,135 +861,167 @@ static void imagePolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, i
   }
 }
 
+
+/*
+ * Polygon fill. Based on "Concave Polygon Scan Conversion" by Paul
+ * Heckbert from "Graphics Gems", Academic Press, 1990 
+ */
+
 static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, int offsety)
 {
-  float *slope;
-  pointObj *point1, *point2, *testpoint1, *testpoint2;
-  int i, j, k, l, m, nfound, *xintersect, temp, sign;
-  int x, y, ymin, ymax, *horiz, wrong_order;
-  int n;
+     
+     typedef struct {		 /* a polygon edge */
+          double x;          /* x coordinate of edge's intersection with current scanline */
+          double dx;         /* change in x with respect to y */
+          int i;             /* point index  */
+          int l;             /* line number */
+          int s;             /* scanline */
+     } pEdge;
+     
+     pointObj *point1, *point2;
+     
+     int k, l, i, j, xl, xr, ymin, ymax, y, n,nvert, nact, m;
+     int wrong_order;
+     
+     pEdge *edge, *temp;
+     pEdge  **active;
+     int *yhist, *edgeindex;
+     
+     if(p->numlines == 0) return;
+     n=0;
+     
+     for(i=0; i<p->numlines; i++) {
+          n += p->line[i].numpoints;
+     }
+     
+     if(n == 0)   return;
 
-  if(p->numlines == 0) return;
- 
-#if 0
-  if( c & 0xFF000000 )
-	gdImageAlphaBlending( im, 1 );
-#endif
-  
-  /* calculate the total number of vertices */
-  n=0;
-  for(i=0; i<p->numlines; i++)
-    n += p->line[i].numpoints;
-
-  /* Allocate slope and horizontal detection arrays */
-  slope = (float *)calloc(n, sizeof(float));
-  horiz = (int *)calloc(n, sizeof(int));
-  
-  /* Since at most only one intersection is added per edge, there can only be at most n intersections per scanline */
-  xintersect = (int *)calloc(n, sizeof(int));
-  
-  /* Find the min and max Y */
-  ymin = (int)(p->line[0].point[0].y);
-  ymax = ymin;
-  
-  for(l=0,j=0; j<p->numlines; j++) {
-    point1 = &( p->line[j].point[p->line[j].numpoints-1] );
-    for(i=0; i < p->line[j].numpoints; i++,l++) {
-      point2 = &( p->line[j].point[i] );
-      if(point1->y == point2->y) {
-	horiz[l] = 1;
-	slope[l] = 0.0;
-      } else {
-	horiz[l] = 0;
-	slope[l] = (float)((point2->x - point1->x) / (point2->y - point1->y));
-      }
-      ymin = (int) (MS_MIN(ymin, point1->y));
-      ymax = (int) (MS_MAX(ymax, point2->y));
-      point1 = point2;
-    }
-  }  
-
-  for(y = ymin; y <= ymax; y++) { /* for each scanline */
-
-    nfound = 0;
-    for(j=0, l=0; j<p->numlines; j++) { /* for each line, l is overall point counter */
-
-      m = l; /* m is offset from begining of all vertices */
-      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
-      for(i=0; i < p->line[j].numpoints; i++, l++) {
-	point2 = &( p->line[j].point[i] );
-	if(EDGE_CHECK(point1->y, y, point2->y) == CLIP_MIDDLE) {
-	  
-	  if(horiz[l]) /* First, is this edge horizontal ? */
-	    continue;
-
-	  /* Did we intersect the first point point ? */
-	  if(y == point1->y) {
-	    /* Yes, must find first non-horizontal edge */
-	    k = i-1;
-	    if(k < 0) k = p->line[j].numpoints-1;
-	    while(horiz[m+k]) {
-	      k--;
-	      if(k < 0) k = p->line[j].numpoints-1;
-	    }
-	    /* Now perform sign test */
-	    if(k > 0)
-	      testpoint1 = &( p->line[j].point[k-1] );
-	    else
-	      testpoint1 = &( p->line[j].point[p->line[j].numpoints-1] );
-	    testpoint2 = &( p->line[j].point[k] );
-	    sign = (int) ((testpoint2->y - testpoint1->y) *
-                          (point2->y - point1->y));
-	    if(sign < 0)
-                xintersect[nfound++] = (int) point1->x;
-	    /* All done for point matching case */
-	  } else {  
-	    /* Not at the first point,
-	       find the intersection*/
-	    x = (int)(ROUND(point1->x + (y - point1->y)*slope[l]));
-	    xintersect[nfound++] = x;
-	  }
-	}                 /* End of checking this edge */
-	
-	point1 = point2;  /* Go on to next edge */
-      }
-    } /* Finished this scanline, draw all of the spans */
+     edge = (pEdge *) calloc(n,sizeof(pEdge));           /* All edges in the polygon */
+     edgeindex =  (int *) calloc(n,sizeof(int));         /* Index to edges sorted by scanline */
+     active = (pEdge **) calloc(n,sizeof(pEdge*));       /* Pointers to active edges for current scanline */
     
-    /* First, sort the intersections */
-    do {
-      wrong_order = 0;
-      for(i=0; i < nfound-1; i++) {
-	if(xintersect[i] > xintersect[i+1]) {
-	  wrong_order = 1;
-	  SWAP(xintersect[i], xintersect[i+1], temp);
-	}
-      }
-    } while(wrong_order);
-    
-    /* Great, now we can draw the spans */
-    for(i=0; i < nfound; i += 2)
-      imageScanline(im, xintersect[i]+offsetx, xintersect[i+1]+offsetx, y+offsety, c);
-  } /* End of scanline loop */
-  
-  /* Finally, draw all of the horizontal edges */
-  for(j=0, l=0; j<p->numlines; j++) {
-    point1 = &( p->line[j].point[p->line[j].numpoints - 1] );
-    for(i=0; i<p->line[j].numpoints; i++, l++) {
-      point2 = &( p->line[j].point[i] );
-      if(horiz[l])
-	imageScanline(im, (int)(point1->x+offsetx), (int)(point2->x+offsetx), (int)(point2->y+offsety), c);
-      point1 = point2;
-    }
-  }
-  
-#if 0
-   gdImageAlphaBlending( im, 0 );
-#endif
+     nvert=0;
+     
+     ymin= (int) ceil(p->line[0].point[0].y-0.5);
+     ymax= (int) floor(p->line[0].point[0].y-0.5);
+     
+     /* populate the edge table */
+     for(l=0; l<p->numlines; l++) {
+          for(i=0; i < p->line[l].numpoints; i++) {
+               j = i < p->line[l].numpoints -1 ? i+1 : 0;
+               if (p->line[l].point[i].y  < p->line[l].point[j].y ) {
+                    point1 = &(p->line[l].point[i]);
+                    point2 = &(p->line[l].point[j]);
+               }  else {
+                    point2 = &(p->line[l].point[i]);
+                    point1 = &(p->line[l].point[j]);
+               }
+               
+               edge[nvert].dx  = point2->y == point1->y ? 0 :  (point2->x - point1->x) / (point2->y - point1->y);
+               edge[nvert].s = MS_NINT( p->line[l].point[i].y );  //ceil( p->line[l].point[i].y  - 0.5 );
+               edge[nvert].x = point1->x ;
+               edge[nvert].i = nvert;
+               edge[nvert].l = l;
+               
+               ymin = MS_MIN(ymin,edge[nvert].s);
+               ymax = MS_MAX(ymax,edge[nvert].s);
 
-  free(slope);
-  free(horiz);
-  free(xintersect);
+               nvert++;
+          }
+     }
+          
+     
+     /* Use histogram sort to create a bucket-sorted edgeindex by scanline */
+     yhist = (int*) calloc(ymax - ymin + 2,sizeof(int));
+     for(i=0;i<nvert;i++) {
+          yhist[ edge[i].s - ymin + 1 ]++;
+     }
+     for(i=0; i<=(ymax - ymin); i++)  {/* Calculate starting point in edgeindex for each scanline */
+          yhist[i+1] += yhist[i]; 
+     }
+     for(i=0;i<nvert;i++){ /* Bucket sort edges into edgeindex */
+          y = edge[i].s;
+          edgeindex[yhist[y-ymin]] = i;
+          yhist[y-ymin]++;
+     }
+     free(yhist);
+
+     
+     k=0;
+     nact=0;
+
+     for (y=ymin; y<=ymax; y++) {		/* step through scanlines */
+          /* scanline y is at y+.5 in continuous coordinates */
+          
+          /* check vertices between previous scanline and current one, if any */
+          for (; k<nvert && edge[edgeindex[k]].s <= y; k++) {
+               i = edge[edgeindex[k]].i;
+               
+               /* vertex previous to i */
+               if(i==0 || edge[i].l != edge[i-1].l)
+                    j = i +  p->line[edge[i].l].numpoints - 1;
+               else
+                    j = i - 1;
+               
+               if (edge[j].s  <=  y  ) { /* old edge, remove from active list */
+                    for (m=0; m<nact && active[m]->i!=j; m++);
+                    if (m<nact) {
+                         nact--;
+                         active[m]=active[nact];
+                    }
+               } else if (edge[j].s > y) { /* new edge,  insert into active list */
+                    active[nact]= & edge[j];
+                    nact++;
+               }
+               
+               /* vertex next  after i */
+               if(i==nvert-1 || edge[i].l != edge[i+1].l)
+                    j = i - p->line[edge[i].l].numpoints  + 1;
+               else
+                    j = i + 1;
+
+               if (edge[j].s  <=  y - 1 ) {     /* old edge, remove from active list */
+                    for (m=0; m<nact && active[m]->i!=i; m++);
+                    if (m<nact) {
+                         nact--;
+                         active[m]=active[nact];
+                    }
+               } else if (edge[j].s > y ) { /* new edge, insert into active list */
+                    active[nact]= & edge[i];
+                    nact++;
+               }
+          }
+          
+          /* Sort active edges by x */
+          do {
+               wrong_order = 0;
+               for(i=0; i < nact-1; i++) {
+                    if(active[i]->x > active[i+1]->x) {
+                         wrong_order = 1;
+                         SWAP(active[i], active[i+1], temp);
+                    }
+               }
+          } while(wrong_order);
+
+          /* draw horizontal spans for scanline y */
+          for (j=0; j<nact; j+=2) {	
+               /*  j -> j+1 is inside,  j+1 -> j+2 is outside */
+               xl = (int) MS_NINT(active[j]->x );  
+               xr = (int) (active[j+1]->x - 0.5) ;
+               
+               if(active[j]->x != active[j+1]->x) 
+                    imageScanline(im, xl+offsetx, xr+offsetx, y+offsety, c);
+               
+               active[j]->x += active[j]->dx;	/* increment edge coords */
+               active[j+1]->x += active[j+1]->dx;
+          }
+     }
+     
+     free(active);
+     free(edgeindex);
+     free(edge);
 }
+
 
 /*
 ** Function to draw a vector symbol, using a given style in an image. Image could be a map
