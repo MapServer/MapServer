@@ -1692,6 +1692,7 @@ Constructor:
   double        minvalue
   double        maxvalue
   string        rangeitem
+  int           opacity (this parameter is only supported for the AGG driver)
       
         
         

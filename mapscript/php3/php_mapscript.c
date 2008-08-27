@@ -13751,6 +13751,7 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
     add_property_double(return_value,   "minvalue", pstyle->minvalue);
     add_property_double(return_value,   "maxvalue", pstyle->maxvalue);
     PHPMS_ADD_PROP_STR(return_value,  "rangeitem", pstyle->rangeitem);
+    add_property_long(return_value,   "opacity",       pstyle->opacity);
     
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
     _phpms_build_color_object(&(pstyle->color),list, new_obj_ptr TSRMLS_CC);
@@ -13894,6 +13895,7 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_DOUBLE("minvalue",      self->minvalue)
     else IF_SET_DOUBLE("maxvalue",      self->maxvalue)
     else IF_SET_STRING( "rangeitem",    self->rangeitem)
+    else IF_SET_LONG( "opacity",        self->opacity)
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.",
