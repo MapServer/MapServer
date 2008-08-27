@@ -756,11 +756,15 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                                        "observedProperty_id");
         if (pszValue)
         {
-            psNode= xmlNewChild(psObsNode, NULL, BAD_CAST "observedProperty", BAD_CAST pszValue);
-             xmlSetNs(psNode,xmlNewNs(psNode, NULL,  NULL));
+            //psNode= xmlNewChild(psObsNode, psNsOm, BAD_CAST "observedProperty", BAD_CAST pszValue);
+            msSOSAddPropertyNode(psNsSwe, psNsXLink, psObsNode, lp, psNsGml);
+
         }
 
         /*TODO add featureofinterest*/
+
+        psNode =  xmlNewChild(psObsNode, psNsOm, BAD_CAST "featureOfInterest", NULL);
+        xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST "urn:ogc:foo");
 
         /* add result : gml:featureMember of all selected elements */
         psNode = xmlNewChild(psObsNode, NULL, BAD_CAST "result", NULL);
@@ -2665,6 +2669,21 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
   return msSOSException(map, "procedure", "InvalidParameterValue");
 }
 
+/************************************************************************/
+/*                           msSOSDescribeObsrvationType                */
+/*                                                                      */
+/*      DescribeObservationType request handler                         */
+/************************************************************************/
+int msSOSDescribeObservationType(mapObj *map, sosParamsObj *sosparams) {
+  if (!sosparams->pszObservedProperty) {
+    msSetError(MS_SOSERR, "Missing mandatory parameter observedProperty", "msSOSDescribeObservationType()");
+    return msSOSException(map, "observedproperty", "MissingParameterValue");
+  }
+  msSetError(MS_SOSERR, "Not yet implemented", "msSOSDescribeObservationType()");
+  return msSOSException(map, "mapserv", "NoApplicableCode");
+}
+
+
 #endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
 
 /*
@@ -2698,7 +2717,10 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
       return returnvalue;
     }
 
-    else if (strcasecmp(paramsObj->pszRequest, "DescribeSensor") == 0 || strcasecmp(paramsObj->pszRequest, "GetObservation") == 0) { 
+    else if (strcasecmp(paramsObj->pszRequest, "DescribeSensor") == 0 ||
+             strcasecmp(paramsObj->pszRequest, "GetObservation") == 0 ||
+             strcasecmp(paramsObj->pszRequest, "DescribeObservationType") == 0
+    ) { 
       /* check version */
       if (!paramsObj->pszVersion) {
         msSetError(MS_SOSERR, "Missing VERSION parameter", "msSOSDispatch()");
@@ -2721,6 +2743,9 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
 
       else if (strcasecmp(paramsObj->pszRequest, "GetObservation") == 0)
         returnvalue = msSOSGetObservation(map, paramsObj);
+
+      else if (strcasecmp(paramsObj->pszRequest, "DescribeObservationType") == 0)
+        returnvalue = msSOSDescribeObservationType(map, paramsObj);
 
       msSOSFreeParamsObj(paramsObj);
       free(paramsObj);
@@ -2864,6 +2889,11 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
 
     if (psXPathTmp)
       sosparams->pszRequest = strdup("GetObservation");
+
+    psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeObservationType");
+
+    if (psXPathTmp)
+      sosparams->pszRequest = strdup("DescribeObservationType");
 
     xmlXPathFreeObject(psXPathTmp);
 

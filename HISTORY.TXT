@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- various SOS updates for CITE compliance (#2646)
+
 - Added support for static linking with the lib gd in configure 
   script (#2696)
 
