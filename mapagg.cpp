@@ -2044,7 +2044,7 @@ int msGetLabelSizeAGG(imageObj *img, char *string, labelObj *label,
             msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSizeAGG()", label->font);
             return MS_FAILURE;
         }
-        if (ren->getLabelSize(string, font, label->size, rect) != MS_SUCCESS)
+        if (ren->getLabelSize(string, font, size, rect) != MS_SUCCESS)
             return MS_FAILURE;
         if (adjustBaseline) {
             label->offsety += MS_NINT(((rect->miny+rect->maxy) + size) / 2);
