@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-2)
 --------------------------------
+- Fix a label size computation for AGG bug when scalefactor is used (#2756) 
 
 - Got rid of misleading errors about OWS SERVICE not being compiled in
   when a OWS request is sent that includes mode=map (or other mode value 
