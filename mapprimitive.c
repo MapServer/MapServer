@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementations for rectObj, pointObj, lineObj, shapeObj, etc.
@@ -322,7 +322,12 @@ int msAddLineDirectly(shapeObj *p, lineObj *new_line)
     p->line = (lineObj *) malloc(sizeof(lineObj));
   else
     p->line = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
-  
+
+  if(!p->line) {
+    msSetError(MS_MEMERR, NULL, "msAddLineDirectly()");
+    return(MS_FAILURE);
+  }
+
   /* Copy the new line onto the end of the extended line array */
   c= p->numlines;
   p->line[c].numpoints = new_line->numpoints;  
@@ -1247,7 +1252,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
   segment_index = line_index = 0;
   total_length = max_line_length = 0.0;
   
-  /* determine longest line */
+  /* determine longest line segment */
   segment_lengths = (double **) malloc(sizeof(double *) * p->numlines);
   for(i=0; i<p->numlines; i++) {
     
