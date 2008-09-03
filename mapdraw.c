@@ -1486,7 +1486,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       /* No-clip labeling support */
       if(shape->text && msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
         bLabelNoClip = MS_TRUE;
-        annocallret = msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize);
+        annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*layer->class[c]->label.minfeaturesize);
         annopnt.x = MS_MAP2IMAGE_X(annopnt.x, map->extent.minx, map->cellsize);
         annopnt.y = MS_MAP2IMAGE_Y(annopnt.y, map->extent.maxy, map->cellsize);
       }
@@ -1702,7 +1702,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     /* No-clip labeling support */
     if(shape->text && msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
       bLabelNoClip = MS_TRUE;
-      annocallret = msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize);
+      annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*layer->class[c]->label.minfeaturesize);
       annopnt.x = MS_MAP2IMAGE_X(annopnt.x, map->extent.minx, map->cellsize);
       annopnt.y = MS_MAP2IMAGE_Y(annopnt.y, map->extent.maxy, map->cellsize);
     }
