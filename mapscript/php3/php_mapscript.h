@@ -200,6 +200,9 @@ classObj        *classObj_clone(classObj *class, layerObj *layer);
 int             classObj_moveStyleUp(classObj *self, int index);
 int             classObj_moveStyleDown(classObj *self, int index);
 int             classObj_deleteStyle(classObj *self, int index);
+char            *classObj_getMetaData(classObj *self, char *name);
+int             classObj_setMetaData(classObj *self, char *name, char *value);
+int             classObj_removeMetaData(classObj *self, char *name);
 
 pointObj       *pointObj_new();
 void            pointObj_destroy(pointObj *self);

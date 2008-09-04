@@ -233,6 +233,10 @@ DLEXPORT void php3_ms_class_moveStyleUp(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_moveStyleDown(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_deleteStyle(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_class_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_removeMetaData(INTERNAL_FUNCTION_PARAMETERS);
+
 DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_label_setBinding(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_label_removeBinding(INTERNAL_FUNCTION_PARAMETERS);
@@ -815,6 +819,9 @@ function_entry php_class_class_functions[] = {
     {"movestyleup",     php3_ms_class_moveStyleUp,      NULL},   
     {"movestyledown",   php3_ms_class_moveStyleDown,    NULL},   
     {"deletestyle",     php3_ms_class_deleteStyle,      NULL},   
+    {"getmetadata",     php3_ms_class_getMetaData,        NULL},
+    {"setmetadata",     php3_ms_class_setMetaData,        NULL},
+    {"removemetadata",  php3_ms_class_removeMetaData,     NULL},
     {NULL, NULL, NULL}
 };
 
@@ -9561,6 +9568,133 @@ DLEXPORT void  php3_ms_class_deleteStyle(INTERNAL_FUNCTION_PARAMETERS)
      }
 
      RETURN_LONG(nStatus);
+}
+
+
+
+/**********************************************************************
+ *                        class->getMetaData()
+ **********************************************************************/
+
+/* {{{ proto string class.getMetaData(string name)
+   Return MetaData entry by name, or empty string if not found. */
+
+DLEXPORT void php3_ms_class_getMetaData(INTERNAL_FUNCTION_PARAMETERS)
+{
+    classObj *self;
+    pval   *pThis, *pName;
+    char   *pszValue = NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pName) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pName);
+
+    self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (pszValue = classObj_getMetaData(self, pName->value.str.val)) == NULL)
+    {
+        pszValue = "";
+    }
+
+    RETURN_STRING(pszValue, 1);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        class->setMetaData()
+ **********************************************************************/
+
+/* {{{ proto int class.setMetaData(string name, string value)
+   Set MetaData entry by name.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_class_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
+{
+    classObj *self;
+    pval   *pThis, *pName, *pValue;
+    int    nStatus = MS_FAILURE;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pName, &pValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pName);
+    convert_to_string(pValue);
+
+    self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = classObj_setMetaData(self, 
+                                        pName->value.str.val,  
+                                        pValue->value.str.val)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        class->removeMetaData()
+ **********************************************************************/
+
+/* {{{ proto int class.removeMetaData(string name)
+   Remove MetaData entry by name.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_class_removeMetaData(INTERNAL_FUNCTION_PARAMETERS)
+{
+    classObj *self;
+    pval   *pThis, *pName;
+    int    nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    pThis = getThis();
+
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pName) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pName);
+
+    self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = classObj_removeMetaData(self, 
+                                        pName->value.str.val)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
 }
 
 

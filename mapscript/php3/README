@@ -995,6 +995,16 @@ Currently supported classes, properties and methods:
                 echo $class->numstyles; : will echo 1 
 
 
+   int getMetaData(string name)
+        Fetch class metadata entry by name.  Returns "" if no entry 
+        matches the name.  Note that the search is case sensitive.
+
+   int setMetaData(string name, string value)
+        Set a metadata entry for the class.  Returns MS_SUCCESS/MS_FAILURE.
+
+   int removeMetaData(string name)
+        Remove a metadata entry for the class.  Returns MS_SUCCESS/MS_FAILURE.
+
  ImageObj Class:
  ---------------
 

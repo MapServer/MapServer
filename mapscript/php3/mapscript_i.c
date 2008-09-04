@@ -697,6 +697,21 @@ int classObj_deleteStyle(classObj *self, int index)
     return msDeleteStyle(self, index);
 }
 
+char *classObj_getMetaData(classObj *self, char *name) {
+    return(msLookupHashTable(&(self->metadata), name));
+  }
+
+
+int classObj_setMetaData(classObj *self, char *name, char *value) {
+    if (msInsertHashTable(&(self->metadata), name, value) == NULL)
+	return MS_FAILURE;
+    return MS_SUCCESS;
+  }
+
+int classObj_removeMetaData(classObj *self, char *name) {
+    return(msRemoveHashTable(&(self->metadata), name));
+  }
+
 /**********************************************************************
  * class extensions for pointObj, useful many places
  **********************************************************************/
