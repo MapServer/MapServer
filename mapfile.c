@@ -4169,7 +4169,8 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot) {
   int i, j;
 
   /* free the labels */
-  for(i=0; i<cacheslot->numlabels; i++) {
+  if (cacheslot->labels)
+    for(i=0; i<cacheslot->numlabels; i++) {
       msFree(cacheslot->labels[i].text);
       if (cacheslot->labels[i].labelpath)
         msFreeLabelPathObj(cacheslot->labels[i].labelpath);
@@ -4179,17 +4180,18 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot) {
       msFree(cacheslot->labels[i].poly); /* free's the pointer */
       for(j=0;j<cacheslot->labels[i].numstyles; j++) freeStyle(&(cacheslot->labels[i].styles[j]));
       msFree(cacheslot->labels[i].styles);
-  }
+    }
   msFree(cacheslot->labels);
   cacheslot->labels = NULL;
   cacheslot->cachesize = 0;
   cacheslot->numlabels = 0;
   
   /* free the markers */
-  for(i=0; i<cacheslot->nummarkers; i++) {
+  if (cacheslot->markers)
+    for(i=0; i<cacheslot->nummarkers; i++) {
       msFreeShape(cacheslot->markers[i].poly);
       msFree(cacheslot->markers[i].poly);
-  }
+    }
   msFree(cacheslot->markers);
   cacheslot->markers = NULL;
   cacheslot->markercachesize = 0;
