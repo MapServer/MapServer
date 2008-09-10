@@ -6,7 +6,7 @@ dan          Daniel Morissette      dmorissette at mapgears.com          OGC Web
 sean         Sean Gillies           sgillies at frii.com                 SWIG MapScript
 assefa       Assefa Yewondwossen    assefa at dmsolutions.ca             OGC Web Services, Flash, SVG, 
 julien       Julien-Samuel Lacroix  jlacroix at dmsolutions.ca           OGC Web Services
-frank        Frank Warmerdam        warmerdam at pobox.com               Raster, outputFormatObj, 
+warmerdam    Frank Warmerdam        warmerdam at pobox.com               Raster, outputFormatObj, 
 hobu         Howard Butler          hobu.inc at gmail.com                mapsde.c
 pramsey      Paul Ramsey            pramsey at cleverelephant.ca         mappostgis.c, maptile.c
 jerryp       Jerry Pisk             jerry.pisk at gmail.com             
