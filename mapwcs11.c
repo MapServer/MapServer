@@ -1146,7 +1146,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     {
         msIO_fprintf( 
             stdout,
-            "    <Reference xlink:href=\"cid:coverage/wcs.%s\"/>\n",
+            "    <Reference xlink:href=\"cid:coverage/wcs.%s\"/>\n"
             "  </Coverage>\n"
             "</Coverages>\n"
             "--wcs\n"
