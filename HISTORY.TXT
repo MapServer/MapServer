@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-2)
 --------------------------------
+- Removed comma to correct WCS 1.1 Coverages formatting in payload directory. 
+  (no ticket filed)
+
 - Correct bug when LABEL_NO_CLIP in combination with minfeaturesize (#2758) 
 
 - Fix a label size computation for AGG bug when scalefactor is used (#2756) 
