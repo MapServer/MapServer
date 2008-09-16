@@ -66,8 +66,8 @@ $(MS_DLL) $(MS_LIB_DLL):	$(MS_LIB)
 	link /dll $(LDEBUG) \
 	   $(MS_OBJS) $(EXTERNAL_LIBS) \
 	   /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
-	if exist $(MS_DLL).manifest mt -manifest $(MS_DLL).manifest -outputresource:$(MS_DLL);2   
-	
+	if exist $(MS_DLL).manifest mt -manifest $(MS_DLL).manifest -outputresource:$(MS_DLL);2
+
 $(MS_LIB):	$(MS_OBJS)
 	if exist $(GDAL_DIR)\gdal.pdb copy $(GDAL_DIR)\gdal.pdb .
 	lib /out:$(MS_LIB) $(MS_OBJS)
@@ -83,10 +83,10 @@ gd::
 	nmake /f makefile.nt OPTFLAGS="$(OPTFLAGS)"
 	cd ..
 
-.c.obj:	
+.c.obj:
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
 
-.cpp.obj:	
+.cpp.obj:
 	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
 
 .c.exe:
@@ -163,9 +163,9 @@ install: $(MS_DLL) $(MS_EXE) python csharp java php
 !IFDEF PHP_HOME
     -mkdir $(BINDIR)\mapscript\php
 	xcopy /y /r /d /f .\mapscript\php3\*.dll $(BINDIR)\mapscript\php
-!ENDIF	
+!ENDIF
 
-!IFDEF PYTHON_HOME	
+!IFDEF PYTHON_HOME
 python: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
     cd mapscript\python
     $(SWIG) -python -shadow -o mapscript_wrap.c ../mapscript.i
@@ -212,15 +212,16 @@ ORACLE_LIB=$(ORACLE_DIR)/lib/msvc/oci.lib
 !IF $(SDE_VERSION) >= 92
 SDE_LIB = $(SDE_DIR)\lib\pe.lib \
           $(SDE_DIR)\lib\sde.lib \
-          $(SDE_DIR)\lib\sg.lib    
+          $(SDE_DIR)\lib\sg.lib
 !ELSE
 SDE_LIB = $(SDE_DIR)\lib\pe$(SDE_VERSION).lib \
           $(SDE_DIR)\lib\sde$(SDE_VERSION).lib \
-          $(SDE_DIR)\lib\sg$(SDE_VERSION).lib    
+          $(SDE_DIR)\lib\sg$(SDE_VERSION).lib
+!ENDIF
 !ENDIF
 !ENDIF
 
-plugins:  
+plugins:
 		-del mapsde.obj
 		-del maporaclespatial.obj
 		-del mapmssql2008.obj
@@ -242,9 +243,4 @@ plugins:
     link /dll /out:msplugin_mssql2008.dll mapmssql2008.obj $(ODBC_LIBS) mapserver_i.lib
     if exist msplugin_mssql2008.dll.manifest mt -manifest msplugin_mssql2008.dll.manifest -outputresource:msplugin_mssql2008.dll;2
     -del mapmssql2008.obj
-!ENDIF
-
-
-!ELSE
-plugins:
 !ENDIF
