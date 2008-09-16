@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fixed GetFeature through tileindex bug: the tileindex of the shape found 
+  wasn't set properly in the resultcache object. (#2359)
+
 - Removed comma to correct WCS 1.1 Coverages formatting in payload directory. 
   (#2764)
 

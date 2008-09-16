@@ -1393,6 +1393,7 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
   }   
 
   shape->index = OGR_F_GetFID( hFeature );
+  shape->tileindex = psInfo->nTileId;
 
   // Keep ref. to last feature read in case we need style info.
   if (psInfo->hLastFeature)

@@ -603,7 +603,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
         else
           nClassIndex = msShapeGetClass(psLayer, &shape, map->scaledenom, NULL, 0);
         
-        addResult(psLayer->resultcache, nClassIndex, anValues[i], -1);
+        addResult(psLayer->resultcache, nClassIndex, anValues[i], shape.tileindex);
 
 #ifdef USE_PROJ
       if(psLayer->project && msProjectionsDiffer(&(psLayer->projection), 
