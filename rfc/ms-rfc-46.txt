@@ -1,0 +1,166 @@
+******************************************************************************
+	Operation Ditch Plone
+******************************************************************************
+
+:Date:  2008/09/16
+:Author: Howard Butler
+:Contact: hobu.inc@gmail.com
+:Last Edited: $Date$
+:Status: Proposed
+
+
+.. sectnum::
+
+.. contents::
+    :depth: 3
+    :backlinks: top
+
+
+==============================================================================
+Purpose
+==============================================================================
+
+Developers have expressed dissatisfaction with the current MapServer Plone 
+site, the Plone site rather poorly serves the needs of the project, and its 
+maintenance and upkeep is limited to a single system administrator (Howard 
+Butler).  Operation Ditch Plone (ODP) will aspire to replace Plone's usage 
+in the MapServer website with a hybrid setup that is similar to the 
+infrastructure that the OpenLayers_ currently maintains.
+
+==============================================================================
+Failures of the Current Website
+==============================================================================
+
+The MapServer Plone website could be considered the 2.0 version of the 
+MapServer project's web presence.  The 1.0 version of the website was a 
+completely static.  The Plone version of the website looked to allow through-the-web 
+editing to lessen the burden for documenters.  Over three years into the effort, 
+it is pretty clear that the website has not had the desired effect with respect 
+to documentation, and it is getting in the way of the project doing other business.  
+
+Other failures, in no particular order:
+
+* Plone is a bitch to maintain
+* Plone is a bitch to configure to run speedily
+* Plone is a bitch to upgrade
+* Plone is a bitch
+
+Administrative Failures
+-----------------------
+
+Our uptime has been ok, but one effect of the current setup is that no one 
+except Howard Butler takes responsibility for our web infrastructure.  Part of 
+the reason for this is there are very few Plone admins available (they must be 
+getting paid well to put up with it somewhere else) and part of the reason is 
+that Howard bootstrapped the 2.0 version of the site and it was easy to leave 
+it in his hands.  Howard doesn't have the time to be able to keep things up at 
+anything over a subsistence level, and administration of MapServer's web 
+presence must be distributed if we are to achieve any progress.
+
+==============================================================================
+Goals
+==============================================================================
+
+Here are some goals that the 3.0 version of the MapServer website should achieve:
+
+* Make it easy for folks to find the docs
+* Stay the hell out of developers' way
+* Allow documenters to get their job done 
+* Allow limited user-contributed information in the form of wiki pages
+* Have a gallery that doesn't suck
+* Move off of UMN computing and integrate within OSGeo's infrastructure
+
+Make it easy for folks to find the docs
+---------------------------------------
+
+Some people have complained that it is difficult to find documents on the Plone 
+website unless you know the exact place in the hierarchy.   Because our mind-reading 
+webpage finding software isn't quite up to snuff, the new website should make it easy enough 
+for documenters to organize and reorganize information in logical and interlinked 
+ways.  It seems the strictly-enforced Plone hierarchy causes more problems than 
+it solves in this regard.
+
+Stay the hell out of developers' way
+------------------------------------
+
+The current website is quite slow.  Slow to edit, slow to view, and slow to 
+change.  There's lots of pointing and clicking involved to do the simplest 
+tasks.  So much so, that folks will only update the website when they 
+absolutely have to.  Developers have subversion access by definition of 
+being developers.  They should be able to edit the website through text files 
+in subversion and have the website be updated automatically.
+
+Allow documenters to get their job done
+---------------------------------------
+
+The Plone website fails documenters in a number of ways, but the most important 
+failure is the inability to tie documents to specific MapServer versions.  A 
+new iteration of the MapServer website must allow this to happen.  Luckily, 
+we already have tools to version documents (our source code repository), so 
+we should just leverage that to accomplish this goal.
+
+Allow limited user-contributed information in the form of wiki pages
+--------------------------------------------------------------------
+
+From time to time, users do contribute significant documentation describing 
+how to accomplish a particular task with MapServer.  Our new infrastructure 
+must still allow this to happen without too much friction.  MapServer's Trac 
+instance already provides this capability (along with single-signon), and we 
+can take advantage of it to accomplish this goal.
+
+Have a gallery that doesn't suck
+--------------------------------
+
+The `OpenLayers Gallery`_ doesn't suck, and it does an excellent job of highlighting 
+how people are using OpenLayers_.  Our gallery does suck, it is hard to add 
+new entries, and doesn't really highlight anything.  
+
+Move off of UMN computing and integrate within OSGeo's infrastructure
+---------------------------------------------------------------------
+
+Just recently (Sept 15th -- Sept 16th, 2008), the server that houses the Plone 
+site was having power supply unit issues (they have been resolved), but it is a 
+fact that the Plone site is running on a very old Solaris machine that could be 
+decommissioned at any point without much of a head's up.  MapServer no longer 
+brings grant monies to the UMN, and while they have been gracious to continue 
+hosting us, we need to move somewhere where we have more control over our 
+destiny.  Reasons like this are exactly why OSGeo exists, there are 
+resources there for us to use, and we should move the website there at the 
+same time as we dump Plone.
+
+==============================================================================
+Implementation
+==============================================================================
+
+We are going to unabashedly rip off OpenLayers' web infrastructure.  This includes 
+the gallery, static website, and Trac integration.  OpenLayers' web infrastructure 
+meets a lot of the goals above, it stays the hell out of the way of the developers 
+and does a good job of serving the users' documentation needs.  The mechanics of 
+how this transition will take place are described below:
+
+1) Migrate everything in http://mapserver.gis.umn.edu/development to Trac 
+   and add redirects of /development to a landing page on the Trac wiki.
+2) Migrate everything in http://mapserver.gis.umn.edu/community to Trac
+   and add redirects of /community to a landing page on the Trac wiki.
+3) Migrate everything in http://mapserver.gis.umn.edu/download to Trac
+   and add redirects of /download to a landing page on the Trac wiki.
+4) Stand up an Apache instance for MapServer on OSGeo infrastructure.  Howard 
+   will coordinate with OSGeo's System Administration Committee to get this 
+   done.  Our new URL will be http://mapserver.osgeo.org
+5) Stand up an instance of the `OpenLayers Gallery`_ at http://mapserver.osgeo.org/gallery 
+   and port over our existing gallery entries.  Any culling of these entries 
+   must be done by some volunteer effort.
+6) Migrate existing documents (notice of when to be given) in /docs to 
+   Subversion http://svn.osgeo.org/mapserver/trunk/docs/  All subsequent editing 
+   on major MapServer documents from that point forward should happen in svn, and 
+   the documents on the Plone website will be considered frozen.
+7) Stand up a cron process that takes the docs in Subversion and generates a 
+   static HTML website from them.  This website will be what exists at 
+   http://mapserver.osgeo.org
+
+
+
+
+
+.. _OpenLayers: http://openlayers.org
+.. _OpenLayers Gallery: http://gallery.openlayers.org
