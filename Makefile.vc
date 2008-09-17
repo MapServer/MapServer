@@ -239,7 +239,7 @@ plugins:
     -del maporaclespatial.obj
 !ENDIF
 !IFDEF MSSQL2008
-	$(CC) $(CFLAGS) $(ODBC_INC) -DUSE_MSSQL2008 /c mapmssql2008.c /Fomapmssql2008.obj
+	$(CC) $(CFLAGS) $(ODBC_INC) -DUSE_MSSQL2008 -DUSE_MSSQL2008_PLUGIN /c mapmssql2008.c /Fomapmssql2008.obj
     link /dll /out:msplugin_mssql2008.dll mapmssql2008.obj $(ODBC_LIBS) mapserver_i.lib
     if exist msplugin_mssql2008.dll.manifest mt -manifest msplugin_mssql2008.dll.manifest -outputresource:msplugin_mssql2008.dll;2
     -del mapmssql2008.obj
