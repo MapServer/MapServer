@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Add possibility  to use a full resolution setting for svg output (#1706)
+
 - Fixed GetFeature through tileindex bug: the tileindex of the shape found 
   wasn't set properly in the resultcache object. (#2359)
 

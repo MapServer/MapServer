@@ -315,7 +315,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
 /************************************************************************/
 static void imagePolyline(FILE *fp, int bCompressed, shapeObj *p, 
                           colorObj *color, int size,
-                          int symbolstylelength, int *symbolstyle)
+                          int symbolstylelength, int *symbolstyle, int bFullRes)
 {
     int i, j, k;
     char *pszDashArray = NULL;
@@ -350,11 +350,18 @@ static void imagePolyline(FILE *fp, int bCompressed, shapeObj *p,
         else
           msIO_fprintfgz(fp, bCompressed,"<polyline fill=\"none\" stroke=\"#%02x%02x%02x\" stroke-width=\"%d\" points=\"",color->red, color->green, color->blue,size);
         
-            
-        msIO_fprintfgz(fp, bCompressed, "%d,%d", (int)p->line[i].point[0].x, (int)p->line[i].point[0].y);
+        if (bFullRes) 
+          msIO_fprintfgz(fp, bCompressed, "%.2f,%.2f", p->line[i].point[0].x, p->line[i].point[0].y); 
+        else
+          msIO_fprintfgz(fp, bCompressed, "%d,%d", (int)p->line[i].point[0].x, (int)p->line[i].point[0].y);
+        
         for(j=1; j<p->line[i].numpoints; j++)
         {
-            msIO_fprintfgz(fp, bCompressed, " %d,%d", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
+            if (bFullRes)
+              msIO_fprintfgz(fp, bCompressed, " %.2f,%.2f", p->line[i].point[j].x, p->line[i].point[j].y); 
+            else
+              msIO_fprintfgz(fp, bCompressed, " %d,%d", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
+            
         }
         
         
@@ -427,19 +434,19 @@ void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
             {
                 for(j=0; j < shape->line[i].numpoints; j++ ) 
                 {
-                    /*
+                  
                     shape->line[i].point[j].x = 
                       (shape->line[i].point[j].x - extent.minx)/cellsize;
                     shape->line[i].point[j].y = 
                       (extent.maxy - shape->line[i].point[j].y)/cellsize;
                     
-                    */
+                    /*
                     shape->line[i].point[j].x = MS_MAP2IMAGE_X(shape->line[i].point[j].x,
                                                                extent.minx, cellsize);
                     shape->line[i].point[j].y = MS_MAP2IMAGE_Y( shape->line[i].point[j].y,
                                                                 extent.maxy,
                                                                 cellsize);
-                                                                
+                    */                                          
                     
                 }
             }      
@@ -511,7 +518,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     int width;
     /* gdPoint points[MS_MAXVECTORPOINTS]; */
     symbolObj *symbol;
-
+    int bFullRes;
 
 /* -------------------------------------------------------------------- */
 /*      if not SVG, return.                                             */
@@ -519,9 +526,14 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     if (!image || !MS_DRIVER_SVG(image->format) )
         return;
 
+    
     if(!p) return;
     if(p->numlines <= 0) return;
 
+    bFullRes = 0;
+    if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
+                   "TRUE") == 0)
+      bFullRes = 1;
     if(style->size == -1) {
       size = (int)msSymbolGetDefaultSize( symbolset->symbol[style->symbol] );
     }
@@ -561,11 +573,11 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     if(style->symbol == 0) 
       imagePolyline(image->img.svg->stream, image->img.svg->compressed, 
                     p, &style->color, width,
-                    symbol->patternlength,  symbol->pattern);
+                    symbol->patternlength,  symbol->pattern, bFullRes);
     else
       imagePolyline(image->img.svg->stream, image->img.svg->compressed, 
                     p, &style->color, (int)size,
-                    symbol->patternlength,  symbol->pattern);
+                    symbol->patternlength,  symbol->pattern, bFullRes);
         return;
     
 
@@ -589,7 +601,7 @@ void msImageStartLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
 static void imageFillPolygon(FILE *fp, int bCompressed, 
                              shapeObj *p, colorObj *psFillColor, 
                              colorObj *psOutlineColor, int size,
-                             int symbolstylelength, int *symbolstyle)
+                             int symbolstylelength, int *symbolstyle, int bFullRes)
 {
     int i, j, k,max;
     char *pszDashArray = NULL;
@@ -671,9 +683,18 @@ static void imageFillPolygon(FILE *fp, int bCompressed,
 
         if(p->line[i].numpoints > 2)
         {
-          msIO_fprintfgz(fp,  bCompressed, "M %d %d ", (int)p->line[i].point[0].x, (int)p->line[i].point[0].y);
-        for(j=1; j<p->line[i].numpoints; j++)
-          msIO_fprintfgz(fp,  bCompressed, "L %d %d ", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
+            if (bFullRes)
+              msIO_fprintfgz(fp,  bCompressed, "M %.2f %.2f ", p->line[i].point[0].x, p->line[i].point[0].y);
+            else
+              msIO_fprintfgz(fp,  bCompressed, "M %d %d ", (int)p->line[i].point[0].x, (int)p->line[i].point[0].y);
+        
+            for(j=1; j<p->line[i].numpoints; j++)
+            {
+                if (bFullRes)
+                  msIO_fprintfgz(fp,  bCompressed, "L %.2f %.2f ", p->line[i].point[j].x, p->line[i].point[j].y);
+                else
+                  msIO_fprintfgz(fp,  bCompressed, "L %d %d ", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
+            }
 
             /*msIO_fprintfgz(fp,  bCompressed, " %d,%d", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);*/
         
@@ -699,6 +720,8 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     colorObj    sOc;
     symbolObj   *symbol;
     int         size;
+    int bFullRes = 0;
+
 /* -------------------------------------------------------------------- */
 /*      if not svg, return.                                             */
 /* -------------------------------------------------------------------- */
@@ -708,6 +731,10 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     if(p == NULL || p->numlines <= 0)
       return;
 
+     bFullRes = 0;
+    if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
+                   "TRUE") == 0)
+      bFullRes = 1;
 
     symbol = symbolset->symbol[style->symbol];
 
@@ -742,7 +769,7 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
       psOutlineColor = &sOc;
 
     imageFillPolygon(image->img.svg->stream, image->img.svg->compressed ,p, psFillColor, psOutlineColor, size,
-                     symbol->patternlength,  symbol->pattern);
+                     symbol->patternlength,  symbol->pattern, bFullRes);
 
 }
 
