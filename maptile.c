@@ -167,7 +167,7 @@ int msTileSetExtent(mapservObj* msObj) {
     xmax = ((x + 1) * tilesize) - (SPHEREMERC_GROUND_SIZE / 2.0);
     ymin = (SPHEREMERC_GROUND_SIZE / 2.0) - ((y + 1) * tilesize);
     ymax = (SPHEREMERC_GROUND_SIZE / 2.0) - (y * tilesize);
-    
+
     map->extent.minx = xmin;
     map->extent.maxx = xmax;
     map->extent.miny = ymin;
@@ -224,7 +224,11 @@ int msTileSetExtent(mapservObj* msObj) {
   msObj->ImgRows = SPHEREMERC_IMAGE_SIZE;
   map->width = SPHEREMERC_IMAGE_SIZE;
   map->height = SPHEREMERC_IMAGE_SIZE;
-  
+
+  if(map->debug) {
+    msDebug( "msTileSetExtent (%f, %f) (%f, %f)\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
+  }
+
   return MS_SUCCESS;
 #else
   msSetError(MS_CGIERR, "Tile API is not available.", "msTileSetExtent()");
