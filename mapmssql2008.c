@@ -1285,7 +1285,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 				/* Set up to request the size of the buffer needed */
                 rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 1, SQL_C_BINARY, dummyBuffer, 0, &needLen);
 
-                /* allow space for coercion to geometry collection if needed
+                /* allow space for coercion to geometry collection if needed*/
                 wkbTemp = (char*)malloc(needLen+9);  
 
                 /* write data above space allocated for geometry collection coercion */

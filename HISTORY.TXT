@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-2)
 --------------------------------
+
+- Correct allocation error in mapmssql2008.c (#2768)
+
 - Removed comma to correct WCS 1.1 Coverages formatting in payload directory. 
   (#2764)
 
