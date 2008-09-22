@@ -147,7 +147,7 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
 
         if(style->bindings[MS_STYLE_BINDING_SIZE].index != -1) {
           style->size = 1;
-          bindIntegerAttribute(&style->size, shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index]);
+          bindDoubleAttribute(&style->size, shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index]);
         }
 
         if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1) {

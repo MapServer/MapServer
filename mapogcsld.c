@@ -3108,7 +3108,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                     
                         if (psStyle->size > 0)
                         {
-                            sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
+                            sprintf(szTmp, "<Size>%g</Size>\n", psStyle->size);
                             pszSLD = msStringConcatenate(pszSLD, szTmp);
                         }
 
@@ -3171,7 +3171,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         if (psStyle->size > 0)
-                          sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
+                          sprintf(szTmp, "<Size>%g</Size>\n", psStyle->size);
                         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
                         sprintf(szTmp, "%s\n", "</Graphic>");
@@ -3242,7 +3242,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
             pszSLD = msStringConcatenate(pszSLD, szTmp);
 
             if (psStyle->size > 0)
-              sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
+              sprintf(szTmp, "<Size>%g</Size>\n", psStyle->size);
             else
               sprintf(szTmp, "<Size>%d</Size>\n", 1);
             pszSLD = msStringConcatenate(pszSLD, szTmp);

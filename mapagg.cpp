@@ -1240,7 +1240,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
         x = p->x + ox - bounds.minx - (bounds.maxx-bounds.minx)/2.;
         y = p->y + oy - bounds.maxy + (bounds.maxy-bounds.miny)/2.;
         ren->renderGlyphs(x,y,agg_color,agg_ocolor,
-                size,font,symbol->character,angle_radians,AGG_NO_COLOR,0,0,style->width);
+                size,font,symbol->character,angle_radians,AGG_NO_COLOR,0,0,MS_NINT(style->width));
     }
     break;    
     case(MS_SYMBOL_PIXMAP): {
@@ -1538,7 +1538,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
         label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, NULL);
         ren->renderGlyphs(label_point.x,label_point.y,agg_color,agg_ocolor,label.size,
                           font,symbol->character,label.angle*MS_DEG_TO_RAD,
-                          AGG_NO_COLOR,0,0,style->width);
+                          AGG_NO_COLOR,0,0,MS_NINT(style->width));
         current_length += label_width + gap;
         in = 1;
       }
@@ -1566,10 +1566,12 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
 
     if(p->numlines==0)
         return;
+
     if(style->size == -1)
         size = msSymbolGetDefaultSize(symbolset->symbol[style->symbol]);
     else
         size = style->size;
+
     size = (size*scalefactor);
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
@@ -1688,7 +1690,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
             //with a thick line. as we're stroking a line with the vector
             //brush, we don't want to add a white space horizontally to avoid gaps, but we
             //do add some space vertically so the thick lines of the vector symbol appear.
-            ph+=style->width;
+            ph+=MS_NINT(style->width);
             path.transform(agg::trans_affine_translation(0,((double)style->width)/2.0));
             
             if(symbol->filled) {

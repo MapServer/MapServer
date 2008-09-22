@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Changed base type of styleObj size and width from int to double (#2766)
+
 - Correct allocation error in mapmssql2008.c
 
 - Add possibility  to use a full resolution setting for svg output (#1706)

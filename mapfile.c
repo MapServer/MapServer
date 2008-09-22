@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $id: mapfile.c 7854 2008-08-14 19:22:48Z dmorissette $
  *
  * Project:  MapServer
  * Purpose:  High level Map file parsing code.
@@ -1828,16 +1828,16 @@ int loadStyle(styleObj *style) {
       return(MS_SUCCESS); /* done */
       break;
     case(MAXSIZE):
-      if(getInteger(&(style->maxsize)) == -1) return(MS_FAILURE);      
+      if(getDouble(&(style->maxsize)) == -1) return(MS_FAILURE);      
       break;
     case(MINSIZE):
-      if(getInteger(&(style->minsize)) == -1) return(MS_FAILURE);
+      if(getDouble(&(style->minsize)) == -1) return(MS_FAILURE);
       break;
     case(MAXWIDTH):
-      if(getInteger(&(style->maxwidth)) == -1) return(MS_FAILURE);
+      if(getDouble(&(style->maxwidth)) == -1) return(MS_FAILURE);
       break;
     case(MINWIDTH):
-      if(getInteger(&(style->minwidth)) == -1) return(MS_FAILURE);
+      if(getDouble(&(style->minwidth)) == -1) return(MS_FAILURE);
       break;
     case(OFFSET):
       if(getInteger(&(style->offsetx)) == -1) return(MS_FAILURE);
@@ -1854,9 +1854,9 @@ int loadStyle(styleObj *style) {
       if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
 
       if(symbol == MS_NUMBER)
-        style->size = (int) msyynumber;
+        style->size = (double) msyynumber;
       else {
-	style->bindings[MS_STYLE_BINDING_SIZE].item = strdup(msyytext);
+ 	      style->bindings[MS_STYLE_BINDING_SIZE].item = strdup(msyytext);
         style->numbindings++;
       }
       break;
@@ -1874,9 +1874,9 @@ int loadStyle(styleObj *style) {
       }
       break;
     case(WIDTH):
-      if(getInteger(&(style->width)) == -1) return(MS_FAILURE);
-      if(style->width < 1) {
-        msSetError(MS_MISCERR, "Invalid WIDTH, must an integer greater or equal to 1." , "loadStyle()");
+      if(getDouble(&(style->width)) == -1) return(MS_FAILURE);
+      if(!(style->width > 0)) {
+        msSetError(MS_MISCERR, "Invalid WIDTH, must be greater than 0." , "loadStyle()");
         return(MS_FAILURE);
       }
       break;
@@ -1948,10 +1948,10 @@ void writeStyle(styleObj *style, FILE *stream) {
       fprintf(stream, "        COLOR [%s]\n", style->bindings[MS_STYLE_BINDING_COLOR].item);
   else writeColor(&(style->color), stream, "COLOR", "        ");
     
-  if(style->maxsize != MS_MAXSYMBOLSIZE) fprintf(stream, "        MAXSIZE %d\n", style->maxsize);
-  if(style->minsize != MS_MINSYMBOLSIZE) fprintf(stream, "        MINSIZE %d\n", style->minsize);
-  if(style->maxwidth != MS_MAXSYMBOLWIDTH) fprintf(stream, "        MAXWIDTH %d\n", style->maxwidth);
-  if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %d\n", style->minwidth);  
+  if(style->maxsize != MS_MAXSYMBOLSIZE) fprintf(stream, "        MAXSIZE %g\n", style->maxsize);
+  if(style->minsize != MS_MINSYMBOLSIZE) fprintf(stream, "        MINSIZE %g\n", style->minsize);
+  if(style->maxwidth != MS_MAXSYMBOLWIDTH) fprintf(stream, "        MAXWIDTH %g\n", style->maxwidth);
+  if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %g\n", style->minwidth);  
   if(style->opacity > 0) fprintf(stream, "        OPACITY %d\n", style->opacity);
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item)
@@ -1960,7 +1960,7 @@ void writeStyle(styleObj *style, FILE *stream) {
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SIZE].item)
       fprintf(stream, "        SIZE [%s]\n", style->bindings[MS_STYLE_BINDING_SIZE].item);
-  else if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
+  else if(style->size > 0) fprintf(stream, "        SIZE %g\n", style->size);
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SYMBOL].item)
      fprintf(stream, "        SYMBOL [%s]\n", style->bindings[MS_STYLE_BINDING_SYMBOL].item);
@@ -1971,7 +1971,7 @@ void writeStyle(styleObj *style, FILE *stream) {
     else
       fprintf(stream, "        SYMBOL %d\n", style->symbol);
   }
-  if(style->width > 1) fprintf(stream, "        WIDTH %d\n", style->width);
+  if(style->width > 1) fprintf(stream, "        WIDTH %g\n", style->width);
   if (style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
 
   if(style->rangeitem) {
@@ -2268,11 +2268,11 @@ int loadClass(classObj *class, char *templatepattern, layerObj *layer)
 #endif
     case(MAXSIZE):
       if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
-      if(getInteger(&(class->styles[0]->maxsize)) == -1) return(-1);
+      if(getDouble(&(class->styles[0]->maxsize)) == -1) return(-1);
       break;
     case(MINSIZE):      
       if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
-      if(getInteger(&(class->styles[0]->minsize)) == -1) return(-1);
+      if(getDouble(&(class->styles[0]->minsize)) == -1) return(-1);
       break;
     case(OUTLINECOLOR):            
       if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
@@ -2281,7 +2281,7 @@ int loadClass(classObj *class, char *templatepattern, layerObj *layer)
       break;
     case(SIZE):
       if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
-      if(getInteger(&(class->styles[0]->size)) == -1) return(-1);
+      if(getDouble(&(class->styles[0]->size)) == -1) return(-1);
       break;
     case(SYMBOL):
       if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
@@ -2307,11 +2307,11 @@ int loadClass(classObj *class, char *templatepattern, layerObj *layer)
       break;
     case(OVERLAYMAXSIZE):
       if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
-      if(getInteger(&(class->styles[1]->maxsize)) == -1) return(-1);
+      if(getDouble(&(class->styles[1]->maxsize)) == -1) return(-1);
       break;
     case(OVERLAYMINSIZE):      
       if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
-      if(getInteger(&(class->styles[1]->minsize)) == -1) return(-1);
+      if(getDouble(&(class->styles[1]->minsize)) == -1) return(-1);
       break;
     case(OVERLAYOUTLINECOLOR):      
       if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
@@ -2320,7 +2320,7 @@ int loadClass(classObj *class, char *templatepattern, layerObj *layer)
       break;
     case(OVERLAYSIZE):
       if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
-      if(getInteger(&(class->styles[1]->size)) == -1) return(-1);
+      if(getDouble(&(class->styles[1]->size)) == -1) return(-1);
       break;
     case(OVERLAYSYMBOL):
       if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;

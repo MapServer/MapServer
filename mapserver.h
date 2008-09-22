@@ -186,10 +186,10 @@ extern "C" {
 #define MS_ITEMNAMELEN 32
 #define MS_NAMELEN 20
 
-#define MS_MINSYMBOLSIZE 1   /* in pixels */
+#define MS_MINSYMBOLSIZE 0   /* in pixels */
 #define MS_MAXSYMBOLSIZE 500
 
-#define MS_MINSYMBOLWIDTH 1   /* in pixels */
+#define MS_MINSYMBOLWIDTH 0   /* in pixels */
 #define MS_MAXSYMBOLWIDTH 32
 
 #define MS_URL 0 /* template types */
@@ -700,11 +700,11 @@ typedef struct {
   int symbol;
   char *symbolname;
 
-  int size;
-  int minsize, maxsize;
+  double size;
+  double minsize, maxsize;
 
-  int width;
-  int minwidth, maxwidth;
+  double width;
+  double minwidth, maxwidth;
 
   int offsetx, offsety; /* for shadows, hollow symbols, etc... */
 
