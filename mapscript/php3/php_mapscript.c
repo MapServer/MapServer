@@ -6359,12 +6359,20 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
     imgSrc = (imageObj *)_phpms_fetch_handle(pSrcImg, PHPMS_GLOBAL(le_msimg), 
                                              list TSRMLS_CC);
     
-    if( !MS_DRIVER_GD(imgSrc->format) || !MS_DRIVER_GD(imgDst->format))
-    {
-        php3_error(E_ERROR, "PasteImage function should only be used with GD images.");
+    if( (!MS_DRIVER_GD(imgSrc->format) && !MS_DRIVER_AGG(imgSrc->format)) ||  
+ 	(!MS_DRIVER_GD(imgDst->format) && !MS_DRIVER_AGG(imgDst->format))) 
+      {
+        php3_error(E_ERROR, "PasteImage function should only be used with GD or AGG images.");
         RETURN_LONG(-1);
     }
       
+#ifdef USE_AGG
+    if( MS_RENDERER_AGG(imgSrc->format)) 
+      msAlphaAGG2GD(imgSrc); 
+    if( MS_RENDERER_AGG(imgDst->format)) 
+      msAlphaAGG2GD(imgDst); 
+#endif
+
     convert_to_long(pTransparent);
 
     if (nArgs >= 4)
