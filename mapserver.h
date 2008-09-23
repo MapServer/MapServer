@@ -346,7 +346,7 @@ enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RA
 enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 
 #define MS_POSITIONS_LENGTH 12
-enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY, MS_FOLLOW}; /* arrangement matters for auto placement, don't change it.  Added MS_FOLLOW for bug #1620 implementation */
+enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY, MS_FOLLOW}; /* Added MS_FOLLOW for bug #1620 implementation. */
 
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
@@ -1732,6 +1732,7 @@ MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimensi
 MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddPointToLine(lineObj *line, pointObj *point );
+MS_DLL_EXPORT double msGetPolygonArea(shapeObj *p);
 
 MS_DLL_EXPORT int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image); /* in mapraster.c */
 MS_DLL_EXPORT imageObj *msDrawReferenceMap(mapObj *map);

@@ -2186,21 +2186,24 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 	  } else {
 
             if(labelPtr->position == MS_AUTO) {
-              int first_pos, pos, last_pos;
+              int positions[MS_POSITIONS_LENGTH], npositions=0;
 
-              if(labelPtr->type == MS_LAYER_LINE) {                        
-                first_pos = MS_UC; /* There are three possible positions: UC, CC, LC */
-                last_pos = MS_CC;
+              if(layerPtr->type == MS_LAYER_POLYGON) {
+		positions[0]=MS_CC; positions[1]=MS_UC; positions[2]=MS_LC; positions[3]=MS_CL; positions[4]=MS_CR;
+                npositions = 5;
+              } else if(layerPtr->type == MS_LAYER_LINE) {
+                positions[0]=MS_UC; positions[1]=MS_LC; positions[2]=MS_CC;
+                npositions = 3;
               } else {
-                first_pos = MS_UL; /* There are 8 possible outer positions: UL, LR, UR, LL, CR, CL, UC, LC */
-                last_pos = MS_LC;
+                positions[0]=MS_UL; positions[1]=MS_LR; positions[2]=MS_UR; positions[3]=MS_LL; positions[4]=MS_CR; positions[5]=MS_CL; positions[6]=MS_UC; positions[7]=MS_LC;
+                npositions = 8;
               }
 
-              for(pos = first_pos; pos <= last_pos; pos++) {
+              for(i=0; i<npositions; i++) {
                 msFreeShape(cachePtr->poly);
                 cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-                p = get_metrics(&(cachePtr->point), pos, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                p = get_metrics(&(cachePtr->point), positions[i], r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
                 if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
                   msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
@@ -2209,7 +2212,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
                 if(cachePtr->status) /* found a suitable place for this label */ {
                   if(MS_VALID_COLOR(labelPtr->backgroundcolor))
-                    get_metrics_line(&(cachePtr->point), pos, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, 1, billboard.line);
+                    get_metrics_line(&(cachePtr->point), positions[i], r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, 1, billboard.line);
                   break; /* ...out of position loop */
                 }
 

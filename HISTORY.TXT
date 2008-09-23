@@ -12,6 +12,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Decoupled AUTO label placement from the positions enum in mapserver.h. Added 
+  explicit case for POLYGON layers where CC is the default and then we try UC, 
+  LC, CL and CR. (#2770)
+
 - Changed base type of styleObj size and width from int to double (#2766)
 
 - Correct allocation error in mapmssql2008.c
