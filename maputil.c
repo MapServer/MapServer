@@ -119,7 +119,7 @@ static int bindColorAttribute(colorObj *attribute, char *value)
 /*
 ** Function to bind various layer properties to shape attributes.
 */
-int msBindLayerToShape(layerObj *layer, shapeObj *shape)
+int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
 {
   int i, j;
   labelObj *label; /* for brevity */
@@ -150,12 +150,12 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape)
           bindDoubleAttribute(&style->size, shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index]);
         }
 
-        if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1) {
+        if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1 && (querymapMode != MS_TRUE)) {
           MS_INIT_COLOR(style->color, -1,-1,-1);
           bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);
         }
 
-        if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1) {
+        if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1 && (querymapMode != MS_TRUE)) {
           MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
           bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
         }

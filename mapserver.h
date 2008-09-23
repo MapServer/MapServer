@@ -1838,7 +1838,7 @@ MS_DLL_EXPORT int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image
 MS_DLL_EXPORT int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image);
 
-MS_DLL_EXPORT int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style);
+MS_DLL_EXPORT int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style, int querymapMode);
 MS_DLL_EXPORT int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);
 
   /*Range Support*/
@@ -1991,7 +1991,7 @@ MS_DLL_EXPORT int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image
 /* ==================================================================== */
 /* For mappdf */
 MS_DLL_EXPORT int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); /* maputil.c */
-MS_DLL_EXPORT int msBindLayerToShape(layerObj *layer, shapeObj *shape);
+MS_DLL_EXPORT int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode);
 MS_DLL_EXPORT int msValidateContexts(mapObj *map);
 MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
 MS_DLL_EXPORT int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems);

@@ -909,9 +909,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
     if(cache)
-      status = msDrawShape(map, layer, &shape, image, 0); /* draw only the first style */
+      status = msDrawShape(map, layer, &shape, image, 0, MS_FALSE); /* draw only the first style */
     else
-      status = msDrawShape(map, layer, &shape, image, -1); /* all styles  */
+      status = msDrawShape(map, layer, &shape, image, -1, MS_FALSE); /* all styles  */
     if(status != MS_SUCCESS) {
       msFreeShape(&shape);
       retcode = MS_FAILURE;
@@ -1105,9 +1105,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
     if(cache)
-      status = msDrawShape(map, layer, &shape, image, 0); /* draw only the first style */
+      status = msDrawShape(map, layer, &shape, image, 0, MS_TRUE); /* draw only the first style */
     else
-      status = msDrawShape(map, layer, &shape, image, -1); /* all styles  */
+      status = msDrawShape(map, layer, &shape, image, -1, MS_TRUE); /* all styles  */
     if(status != MS_SUCCESS) {
       msLayerClose(layer);
       msFree(colorbuffer);
@@ -1280,9 +1280,10 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 /*
 ** Function to render an individual shape, the style variable enables/disables the drawing of a single style
 ** versus a single style. This is necessary when drawing entire layers as proper overlay can only be achived
-** through caching. 
+** through caching. "querymapMode" parameter is used to tell msBindLayerToShape to not override the 
+** QUERYMAP HILITE color.
 */
-int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style)
+int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style, int querymapMode)
 {
   int i,j,c,s;
   rectObj cliprect;
@@ -1342,7 +1343,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;
   cliprect.maxy = map->extent.maxy + csz*map->cellsize;
 
-  if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
+  if(msBindLayerToShape(layer, shape, querymapMode) != MS_SUCCESS)
     return MS_FAILURE; /* error message is set in msBindLayerToShape() */
   
   if(shape->text && (layer->class[c]->label.encoding || layer->class[c]->label.wrap)) {
