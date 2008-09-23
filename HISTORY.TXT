@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-2)
 --------------------------------
 
+- PHP paste image should also work with AGG (#2682)
+
 - Correct allocation error in mapmssql2008.c (#2768)
 
 - Removed comma to correct WCS 1.1 Coverages formatting in payload directory. 
