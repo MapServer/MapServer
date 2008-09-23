@@ -1684,18 +1684,18 @@ Constructor:
 
   int           symbol
   string        symbolname
-  int           size
-  int           minsize 
-  int           maxsize 
+  double        size
+  double        minsize 
+  double        maxsize 
   int           offsetx
   int           offsety
   int           antialias
   colorObj      color
   colorObj      backgroundcolor
   colorObj      outlinecolor
-  int           width
-  int           minwidth
-  int           maxwidth
+  double        width
+  double        minwidth
+  double        maxwidth
   double        angle
   string        angleitem  
   string        sizeitem

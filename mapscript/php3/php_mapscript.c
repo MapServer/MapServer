@@ -13870,22 +13870,22 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
 
 
     /* editable properties */
-    add_property_long(return_value,   "symbol",     pstyle->symbol);
-    PHPMS_ADD_PROP_STR(return_value,  "symbolname", pstyle->symbolname);
-    add_property_long(return_value,   "size",       pstyle->size);
-    add_property_long(return_value,   "minsize",       pstyle->minsize);
-    add_property_long(return_value,   "maxsize",       pstyle->maxsize);
-    add_property_long(return_value,   "width",       pstyle->width);
-    add_property_long(return_value,   "minwidth",       pstyle->minwidth);
-    add_property_long(return_value,   "maxwidth",       pstyle->maxwidth);
-    add_property_long(return_value,   "offsetx",       pstyle->offsetx);
-    add_property_long(return_value,   "offsety",       pstyle->offsety);
-    add_property_double(return_value,   "angle",       pstyle->angle);
-    add_property_long(return_value,   "antialias",  pstyle->antialias);
-    add_property_double(return_value,   "minvalue", pstyle->minvalue);
-    add_property_double(return_value,   "maxvalue", pstyle->maxvalue);
-    PHPMS_ADD_PROP_STR(return_value,  "rangeitem", pstyle->rangeitem);
-    add_property_long(return_value,   "opacity",       pstyle->opacity);
+    add_property_long(return_value,   "symbol",         pstyle->symbol);
+    PHPMS_ADD_PROP_STR(return_value,  "symbolname",     pstyle->symbolname);
+    add_property_double(return_value, "size",           pstyle->size);
+    add_property_double(return_value, "minsize",        pstyle->minsize);
+    add_property_double(return_value, "maxsize",        pstyle->maxsize);
+    add_property_double(return_value, "width",          pstyle->width);
+    add_property_double(return_value, "minwidth",       pstyle->minwidth);
+    add_property_double(return_value, "maxwidth",       pstyle->maxwidth);
+    add_property_long(return_value,   "offsetx",        pstyle->offsetx);
+    add_property_long(return_value,   "offsety",        pstyle->offsety);
+    add_property_double(return_value, "angle",          pstyle->angle);
+    add_property_long(return_value,   "antialias",      pstyle->antialias);
+    add_property_double(return_value, "minvalue",       pstyle->minvalue);
+    add_property_double(return_value, "maxvalue",       pstyle->maxvalue);
+    PHPMS_ADD_PROP_STR(return_value,  "rangeitem",      pstyle->rangeitem);
+    add_property_long(return_value,   "opacity",        pstyle->opacity);
     
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
     _phpms_build_color_object(&(pstyle->color),list, new_obj_ptr TSRMLS_CC);
@@ -14016,12 +14016,12 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     IF_SET_LONG(  "symbol",             self->symbol)
     else IF_SET_STRING( "symbolname",   self->symbolname)
-    else IF_SET_LONG( "size",           self->size)
-    else IF_SET_LONG( "minsize",        self->minsize)
-    else IF_SET_LONG( "maxsize",        self->maxsize)
-    else IF_SET_LONG( "width",          self->width)
-    else IF_SET_LONG( "minwidth",       self->minwidth)
-    else IF_SET_LONG( "maxwidth",       self->maxwidth)
+    else IF_SET_DOUBLE( "size",         self->size)
+    else IF_SET_DOUBLE( "minsize",      self->minsize)
+    else IF_SET_DOUBLE( "maxsize",      self->maxsize)
+    else IF_SET_DOUBLE( "width",        self->width)
+    else IF_SET_DOUBLE( "minwidth",     self->minwidth)
+    else IF_SET_DOUBLE( "maxwidth",     self->maxwidth)
     else IF_SET_LONG( "offsetx",        self->offsetx)
     else IF_SET_LONG( "offsety",        self->offsety)
     else IF_SET_DOUBLE("angle",         self->angle)
