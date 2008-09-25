@@ -165,7 +165,7 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
     bottom=center.y+height/2.;
     left=center.x-width/2.;
 
-    if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
+    if(msBindLayerToShape(layer, shape, MS_FALSE) != MS_SUCCESS)
         return MS_FAILURE; /* error message is set in msBindLayerToShape() */
 
     values=(float*)calloc(layer->numclasses,sizeof(float));
@@ -273,7 +273,7 @@ int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape,
         layer->project = MS_FALSE;
 #endif
 
-    if(msBindLayerToShape(layer, shape) != MS_SUCCESS)
+    if(msBindLayerToShape(layer, shape, MS_FALSE) != MS_SUCCESS)
         return MS_FAILURE; /* error message is set in msBindLayerToShape() */
     
     /*check if dynamic diameter was wanted*/
