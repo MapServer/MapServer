@@ -1183,7 +1183,7 @@ void initLabel(labelObj *label)
   int i;
 
   label->antialias = -1; /* off  */
-
+  label->align = MS_ALIGN_LEFT;
   MS_INIT_COLOR(label->color, 0,0,0);  
   MS_INIT_COLOR(label->outlinecolor, -1,-1,-1); /* don't use it */
   label->outlinewidth=1;
@@ -1212,6 +1212,9 @@ void initLabel(labelObj *label)
   label->mindistance = -1; /* no limit */
   label->partials = MS_TRUE;
   label->wrap = '\0';
+  label->maxlength = 0;
+  label->minlength = 0;
+  label->space_size_10=0.0;
 
   label->encoding = NULL;
 
@@ -1263,6 +1266,9 @@ static int loadLabel(labelObj *label)
 #endif
       } else
 	label->autoangle = MS_TRUE;
+      break;
+    case(ALIGN):
+      if((label->align = getSymbol(3, MS_ALIGN_LEFT,MS_ALIGN_CENTER,MS_ALIGN_RIGHT)) == -1) return(-1);
       break;
     case(ANTIALIAS):
       if((label->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) 
@@ -1323,6 +1329,12 @@ static int loadLabel(labelObj *label)
     case(MAXSIZE):      
       if(getInteger(&(label->maxsize)) == -1) return(-1);
       break;
+    case(MAXLENGTH):
+      if(getInteger(&(label->maxlength)) == -1) return(-1);
+      break;
+    case(MINLENGTH):
+      if(getInteger(&(label->minlength)) == -1) return(-1);
+      break; 
     case(MINDISTANCE):      
       if(getInteger(&(label->mindistance)) == -1) return(-1);
       break;
@@ -1504,7 +1516,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   writeColor(&(label->shadowcolor), stream, "  SHADOWCOLOR", tab);
   if(label->shadowsizex != 1 && label->shadowsizey != 1) fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
   if(label->wrap) fprintf(stream, "  %sWRAP '%c'\n", tab, label->wrap);
-
+  if(label->maxlength>0) fprintf(stream, "  %sMAXLENGTH '%c'\n", tab, label->maxlength);
   fprintf(stream, "%sEND\n", tab);  
 }
 

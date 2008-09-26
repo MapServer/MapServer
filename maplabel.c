@@ -40,23 +40,205 @@
 
 MS_CVSID("$Id$")
 
+
+/**
+ * replace wrap characters with \n , respecting maximal line length.
+ *
+ * returns a pointer to the newly allocated text. memory is controlled
+ * inside this function, so the caller MUST use the pointer returned by
+ * the function:
+ * text = msWrapText(label,text);
+ *
+ * see http://mapserver.gis.umn.edu/development/rfc/ms-rfc-40/
+ * for a summary of how wrap/maxlength interact on the result
+ * of the text transformation
+ */
+char *msWrapText(labelObj *label, char *text) {
+    if(!text)
+        return text;
+    char wrap = label->wrap;
+    int maxlength = label->maxlength;
+    if(maxlength == 0) {
+        if(wrap!='\0') {
+            /* if maxlength = 0 and a wrap character was specified, replace
+             * all wrap characters by \n
+             */
+            msReplaceChar(text, wrap, '\n');
+        }
+        /* if neither maxlength, nor wrap were specified,
+         * don't transform this text
+         */
+        return text;
+    } else if(maxlength>0) {
+        if(wrap!='\0') {
+            int numwrapchars = msCountChars(text,wrap);
+            if(numwrapchars > 0) {
+                if(label->encoding) {
+/*
+                     * we have to use utf decoding functions here, so as not to
+                     * split a text line on a multibyte character
+                     */
+                    int num_cur_glyph_on_line = 0;
+                    char *textptr = text;
+                    char glyph[11];
+                    int glyphlen = 0;
+                    while((glyphlen = msGetNextGlyph((const char**)&textptr,glyph))>0) {
+                        num_cur_glyph_on_line++;
+                        if(*glyph == wrap && num_cur_glyph_on_line>=(maxlength)) {
+                            /*FIXME (if wrap becomes something other than char):*/
+                            *(textptr-1)='\n';
+                            num_cur_glyph_on_line=0;
+                        }
+                    }
+                } else {
+                    int cur_char_on_line = 0;
+                    char *textptr = text;
+                    while(*textptr != 0) {
+                        cur_char_on_line++;
+                        if(*textptr == wrap && cur_char_on_line>=maxlength) {
+                            *textptr='\n';
+                            cur_char_on_line=0;
+                        }
+                        textptr++;
+                    }
+                }
+                return text;
+            } else {
+                /*text is shorter than fixed limit*/
+                return text;
+            }
+        } else {
+            /*don't draw this label if it is longer thant the specified length
+             * and no wrap character was specified
+             */
+            if(msGetNumGlyphs(text)>maxlength) {
+                free(text);
+                return NULL;
+            } else {
+                return text;
+            }
+        }
+    } else { /*maxlength<0*/
+        maxlength = -maxlength;
+        int numglyphs = msGetNumGlyphs(text);
+        int numlines = numglyphs / maxlength;
+        if(numlines>1) {
+            char *newtext = malloc(strlen(text)+numlines+1);
+            char *newtextptr = newtext;
+            char *textptr = text;
+            int glyphlen = 0, num_cur_glyph = 0;
+            while((glyphlen = msGetNextGlyph((const char**)&textptr,newtextptr))>0) {
+                num_cur_glyph++;
+                newtextptr += glyphlen;
+                if(num_cur_glyph%maxlength == 0 && num_cur_glyph != numglyphs) {
+                    *newtextptr = '\n';
+                    newtextptr++;
+                }
+            }
+            free(text);
+            return newtext;
+        } else {
+            return text;
+        }
+    }
+}
+
+char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
+    double spacewidth=0.0;
+    int numlines;
+    rectObj label_rect;
+    if(label->space_size_10 == 0.0) {
+        int size;
+        if(label->type == MS_TRUETYPE) {
+            size = label->size;
+            label->size=10;
+        }
+        if(msGetLabelSize(image, "                ", label, &label_rect, &map->fontset, 1.0, MS_FALSE)==-1)
+            return text; /*error*/
+        spacewidth = (label_rect.maxx-label_rect.minx)/16.0;
+        if(label->type == MS_TRUETYPE) {
+            label->size = size;
+            label->space_size_10=spacewidth;
+            spacewidth = spacewidth * (double)label->size/10.0;
+        }
+    } else {
+        spacewidth = label->space_size_10 * (double)label->size/10.0;
+    }
+    char **textlines = msStringSplit(text,'\n',&numlines);
+    if(numlines==1) {
+        /*nothing to do*/
+        free(textlines[0]);
+        free(textlines);
+        return text;
+    }
+
+    int *textlinelengths = (int*)malloc(numlines*sizeof(int));
+    int *numspacesforpadding = (int*)malloc(numlines*sizeof(int));
+    int numspacestoadd=0;
+    int maxlinelength=0;
+    int i;
+    for(i=0;i<numlines;i++) {
+        msGetLabelSize(image, textlines[i], label, &label_rect, &map->fontset, 1.0, MS_FALSE);
+        textlinelengths[i] = label_rect.maxx-label_rect.minx;
+        if(maxlinelength<textlinelengths[i])
+            maxlinelength=textlinelengths[i];
+    }
+    for(i=0;i<numlines;i++) {
+        double nfracspaces = (maxlinelength - textlinelengths[i])/spacewidth;
+        numspacesforpadding[i]=MS_NINT(((maxlinelength - textlinelengths[i])/2.0)/(spacewidth));
+        if(label->align == MS_ALIGN_CENTER) {
+            numspacesforpadding[i]=MS_NINT(nfracspaces/2.0);
+        } else {
+           if(label->align == MS_ALIGN_RIGHT) {
+               numspacesforpadding[i]=MS_NINT(nfracspaces);
+           }
+        }
+        numspacestoadd+=numspacesforpadding[i];
+    }
+    char *newtext = (char*)malloc(strlen(text)+1+numspacestoadd);
+    char *newtextptr=newtext;
+    for(i=0;i<numlines;i++) {
+        int j;
+        for(j=0;j<numspacesforpadding[i];j++) {
+            *(newtextptr++)=' ';
+        }
+        strcpy(newtextptr,textlines[i]);
+        newtextptr+=strlen(textlines[i])+1;
+        if(i!=numlines-1) {
+           *(newtextptr-1)='\n';
+        }
+    }
+    free(text);
+    for(i=0;i<numlines;i++) {
+        free(textlines[i]);
+    }
+    free(textlines);
+    free(textlinelengths);
+    free(numspacesforpadding);
+    return newtext;
+}
 /*
  * this function applies the label encoding and wrap parameters
  * to the supplied text
  * Note: it is the caller's responsibility to free the returned 
  * char array
  */
-char *msTransformLabelText(labelObj *label, char *text)
+char *msTransformLabelText(mapObj *map, imageObj* image,labelObj *label, char *text)
 {
-    char *newtext;
+    char *newtext = text;
     if(label->encoding)
         newtext = msGetEncodedString(text, label->encoding);
     else
         newtext=strdup(text);
     
-    if(newtext && label->wrap!='\0') {
-        msReplaceChar(newtext, label->wrap, '\n');
+    if(newtext && (label->wrap!='\0' || label->maxlength!=0)) {
+        newtext = msWrapText(label, newtext);
     }
+
+    if(newtext && label->align!=MS_ALIGN_LEFT ) {
+        newtext = msAlignText(map, image,label, newtext);
+    }
+
     return newtext;
 }
 
@@ -396,17 +578,6 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 #endif
 }
 
-
-int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
-{
-#ifdef USE_AGG
-    if(MS_RENDERER_AGG(img->format))
-        return msGetLabelSizeAGG(img,string,label,rect,fontset,scalefactor,adjustBaseline);
-    else
-#endif
-        return msGetLabelSizeGD(string,label,rect,fontset,scalefactor,adjustBaseline);
-}
-
 /*
 ** Note: All these routines assume a reference point at the LL corner of the text. GD's
 ** bitmapped fonts use UL and this is compensated for. Note the rect is relative to the
@@ -449,8 +620,18 @@ int msGetLabelSizeGD(char *string, labelObj *label, rectObj *rect, fontSetObj *f
 
     /* bug 1449 fix (adjust baseline) */
     if(adjustBaseline) {
-      label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
-      label->offsetx += MS_NINT(bbox[0] / 2);
+      int nNewlines = msCountChars(string,'\n');
+      if(!nNewlines) {
+        label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
+        label->offsetx += MS_NINT(bbox[0] / 2);
+      }
+      else {
+        char* firstLine = msGetFirstLine(string);
+        gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, firstLine);
+        label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
+        label->offsetx += MS_NINT(bbox[0] / 2);
+        free(firstLine);
+      }
     }
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msGetLabelSize()");
@@ -478,6 +659,16 @@ int msGetLabelSizeGD(char *string, labelObj *label, rectObj *rect, fontSetObj *f
     
   }
   return(0);
+}
+
+int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
+{
+#ifdef USE_AGG
+    if(img!= NULL && MS_RENDERER_AGG(img->format))
+        return msGetLabelSizeAGG(img,string,label,rect,fontset,scalefactor,adjustBaseline);
+    else
+#endif
+        return msGetLabelSizeGD(string,label,rect,fontset,scalefactor,adjustBaseline);
 }
 
 /*

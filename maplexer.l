@@ -228,6 +228,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>maxscale                   { return(MAXSCALE); }
 <INITIAL,URL_STRING>maxscaledenom              { return(MAXSCALEDENOM); }
 <INITIAL>maxgeowidth                           { return(MAXGEOWIDTH); }
+<INITIAL>maxlength                             { return(MAXLENGTH); }
 <INITIAL>maxsize                               { return(MAXSIZE); }
 <INITIAL>maxsubdivide                          { return(MAXSUBDIVIDE); }
 <INITIAL>maxtemplate                           { return(MAXTEMPLATE); }
@@ -242,6 +243,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>minscale                   { return(MINSCALE); }
 <INITIAL,URL_STRING>minscaledenom              { return(MINSCALEDENOM); }
 <INITIAL>mingeowidth                           { return(MINGEOWIDTH); }
+<INITIAL>minsize                               { return(MINLENGTH); }
 <INITIAL>minsize                               { return(MINSIZE); }
 <INITIAL>minsubdivide                          { return(MINSUBDIVIDE); }
 <INITIAL>mintemplate                           { return(MINTEMPLATE); }

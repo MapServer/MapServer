@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $id: mapagg.cpp 7919 2008-09-22 21:24:18z sdlime $
  *
  * Project:  MapServer
  * Purpose:  AGG rendering and other AGG related functions.
@@ -2048,9 +2048,20 @@ int msGetLabelSizeAGG(imageObj *img, char *string, labelObj *label,
         }
         if (ren->getLabelSize(string, font, size, rect) != MS_SUCCESS)
             return MS_FAILURE;
-        if (adjustBaseline) {
-            label->offsety += MS_NINT(((rect->miny+rect->maxy) + size) / 2);
-            label->offsetx += MS_NINT(rect->minx / 2);
+        if(adjustBaseline) {
+            int nNewlines = msCountChars(string,'\n');
+            if(!nNewlines) {
+                label->offsety += MS_NINT(((rect->miny+rect->maxy) + size) / 2);
+                label->offsetx += MS_NINT(rect->minx / 2);
+            }
+            else {
+                rectObj r;
+                char* firstLine = msGetFirstLine(string);
+                ren->getLabelSize(firstLine, font, size, &r);
+                label->offsety += MS_NINT(((r.miny+r.maxy) + size) / 2);
+                label->offsetx += MS_NINT(r.minx / 2);
+                free(firstLine);
+            }
         }
     } else {
         char **token=NULL;
@@ -2275,7 +2286,7 @@ unsigned char *msSaveImageBufferAGG(imageObj* image, int *size_ptr, outputFormat
     msAlphaAGG2GD(image);
     pFormatBuffer = format->driver;
 
-    pszGDFormat = msStringConcatenate(pszGDFormat, "gd/");
+    pszGDFormat = msStringConcatenate(pszGDFormat,(char*)"gd/");
     pszGDFormat = msStringConcatenate(pszGDFormat, &(format->driver[4]));
 
     format->driver = pszGDFormat;
@@ -2355,10 +2366,10 @@ int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass,
         if (label.type == MS_TRUETYPE) label.size = height;
         marker.x = dstX + MS_NINT(width / 2.0);
         marker.y = dstY + MS_NINT(height / 2.0);
-        if(msGetLabelSizeAGG(image, "Aa", &label, &label_rect, &map->fontset, 1.0, MS_FALSE) != -1)
+        if(msGetLabelSizeAGG(image, (char*)"Aa", &label, &label_rect, &map->fontset, 1.0, MS_FALSE) != -1)
         {
           pointObj label_point = get_metrics(&marker, MS_CC, label_rect, 0, 0, label.angle, 0, NULL);
-          msDrawTextAGG(image, label_point, "Aa", &label, &map->fontset, 1.0);
+          msDrawTextAGG(image, label_point, (char*)"Aa", &label, &map->fontset, 1.0);
         }
       }
       break;

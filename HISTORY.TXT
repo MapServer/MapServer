@@ -12,6 +12,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- RFC40 implementation: label text wrapping and alignment (#2383)
+
+- baseline adjustment for multiline labels (#1449)
+
 - Added support to access to the labelObj OUTLINEWIDTH property in 
   PHP/MapScript 
 

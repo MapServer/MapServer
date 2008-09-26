@@ -1346,8 +1346,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   if(msBindLayerToShape(layer, shape, querymapMode) != MS_SUCCESS)
     return MS_FAILURE; /* error message is set in msBindLayerToShape() */
   
-  if(shape->text && (layer->class[c]->label.encoding || layer->class[c]->label.wrap)) {
-      char *newtext=msTransformLabelText(&(layer->class[c]->label),shape->text);
+  if(shape->text && (layer->class[c]->label.encoding || layer->class[c]->label.wrap
+          ||layer->class[c]->label.maxlength)) {
+      char *newtext=msTransformLabelText(map,image,&(layer->class[c]->label),shape->text);
       if(!newtext) return MS_FAILURE;
       free(shape->text);
       shape->text = newtext;
@@ -1773,8 +1774,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
 #endif
   
   /*apply wrap character and encoding to the label text*/
-  if(labeltext &&(label->encoding || label->wrap))
-      newtext = msTransformLabelText(label,labeltext);
+  if(labeltext &&(label->encoding || label->wrap || label->maxlength))
+      newtext = msTransformLabelText(map,image,label,labeltext);
   else
       newtext=labeltext;
   switch(layer->type) {
@@ -2048,7 +2049,6 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
 int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
 {
   int nReturnVal = -1;
-
   if (image) {
     if( MS_RENDERER_GD(image->format) )
       nReturnVal = msDrawTextGD(image->img.gd, labelPnt, string, label, fontset, scalefactor);
@@ -2153,7 +2153,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
           if(msGetLabelSize(image,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
             return(-1);
-
           if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
             continue; /* label too large relative to the feature */
 

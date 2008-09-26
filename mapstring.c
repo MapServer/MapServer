@@ -1682,3 +1682,29 @@ int msStringIsInteger(const char *string) {
   return MS_SUCCESS;
 }
 
+/**
+ * msGetFirstLine()
+ *
+ * returns the first line of a given string.
+ * used for calculating the baseline of labels
+ */
+char* msGetFirstLine(char* text) {
+    int firstLineLength=0;
+    int glyphLength;
+    char glyph[11];
+    const char *textptr=text;
+    char *firstLine,*firstLineCur;
+    while((glyphLength=msGetNextGlyph(&textptr,glyph))) {
+        if(glyphLength==1 && *glyph=='\n') {
+            firstLineCur = firstLine = malloc(firstLineLength+1);
+            while(firstLineLength--) {
+                *firstLineCur++ = *text++;
+            }
+            *firstLineCur='\0';
+            return firstLine;
+        }
+        firstLineLength+=glyphLength;
+    }
+    /*no newline found in text*/
+    return strdup(text);
+}

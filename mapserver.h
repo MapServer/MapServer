@@ -601,8 +601,13 @@ typedef struct {
   int buffer; /* space to reserve around a label */
 
   int antialias;
+  int align;
 
   char wrap;
+  int maxlength;
+  int minlength;
+  double space_size_10; /*cached size of a single space character -
+                       used for label text alignment of rfc40 */
 
   int minfeaturesize; /* minimum feature size (in pixels) to label */
   int autominfeaturesize; /* true or false */
@@ -1637,6 +1642,7 @@ MS_DLL_EXPORT int msGetNumGlyphs(const char *in_ptr);
 MS_DLL_EXPORT int msGetUnicodeEntity(const char *inptr, int *unicode);
 MS_DLL_EXPORT int msStringIsInteger(const char *string);
 MS_DLL_EXPORT int msUTF8ToUniChar(const char *str, int *chPtr); /* maptclutf.c */
+MS_DLL_EXPORT char* msGetFirstLine(char* text);
 
 #ifdef NEED_STRDUP
 MS_DLL_EXPORT char *strdup(char *s);
@@ -1694,7 +1700,7 @@ MS_DLL_EXPORT imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* 
 MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabel.c */
 MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
-MS_DLL_EXPORT char *msTransformLabelText(labelObj *label, char *text);
+MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, imageObj* image, labelObj *label, char *text);
 MS_DLL_EXPORT int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
 MS_DLL_EXPORT int msGetLabelSizeGD(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
 

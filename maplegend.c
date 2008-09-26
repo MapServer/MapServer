@@ -186,11 +186,11 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
         * same as the class name pointer
         */
        if(map->legend.label.encoding || map->legend.label.wrap)
-         transformedText = msTransformLabelText(&map->legend.label, lp->class[j]->name);
+         transformedText = msTransformLabelText(map,NULL,&map->legend.label, lp->class[j]->name);
        else
          transformedText = strdup(lp->class[j]->name);
 
-       if(transformedText == NULL || msGetLabelSizeGD(transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0) { /* something bad happened */
+       if(transformedText == NULL || msGetLabelSize(NULL,transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0) { /* something bad happened */
          if(transformedText) msFree(transformedText);
          return MS_FAILURE;
        }
@@ -288,7 +288,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
        * same as the class name pointer
        */
       if(map->legend.label.encoding || map->legend.label.wrap)
-        cur->transformedText = msTransformLabelText(&map->legend.label,lp->class[j]->name);
+        cur->transformedText = msTransformLabelText(map,NULL,&map->legend.label,lp->class[j]->name);
       else
         cur->transformedText = lp->class[j]->name;
 
@@ -297,7 +297,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       cur->pred = head;
       head = cur;
 
-      if(cur->transformedText==NULL || msGetLabelSizeGD(cur->transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0) { /* something bad happened, free allocated mem */
+      if(cur->transformedText==NULL || msGetLabelSize(NULL,cur->transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0) { /* something bad happened, free allocated mem */
         while(cur) {
           if(cur->transformedText!=cur->theclass->name)
             free(cur->transformedText);

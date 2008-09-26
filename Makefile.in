@@ -278,8 +278,9 @@ all: $(MAKE_GD) libmapserver.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@
 mapogr.o:	mapogr.cpp
 	$(CXX) -c $(CXXFLAGS) mapogr.cpp -o mapogr.o
 
+# use -Wno-uninitialized as the compiler produces incorrect warning messages
 mapagg.o: mapagg.cpp mapagg.h
-	$(CXX) -c $(CXXFLAGS) -O3 -Wno-uninitialized mapagg.cpp -o mapagg.o
+	$(CXX) -c $(CXXFLAGS) -Wno-uninitialized mapagg.cpp -o mapagg.o
 
 agg_font_freetype.o: $(AGG_FT_DIR)/agg_font_freetype.cpp
 	$(CXX) -c $(CXXFLAGS) $(AGG_FT_DIR)/agg_font_freetype.cpp -o agg_font_freetype.o
