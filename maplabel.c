@@ -54,10 +54,12 @@ MS_CVSID("$Id$")
  * of the text transformation
  */
 char *msWrapText(labelObj *label, char *text) {
+    char wrap;
+    int maxlength;
     if(!text)
         return text;
-    char wrap = label->wrap;
-    int maxlength = label->maxlength;
+    wrap = label->wrap;
+    maxlength = label->maxlength;
     if(maxlength == 0) {
         if(wrap!='\0') {
             /* if maxlength = 0 and a wrap character was specified, replace
@@ -119,9 +121,10 @@ char *msWrapText(labelObj *label, char *text) {
             }
         }
     } else { /*maxlength<0*/
+        int numglyphs,numlines;
         maxlength = -maxlength;
-        int numglyphs = msGetNumGlyphs(text);
-        int numlines = numglyphs / maxlength;
+        numglyphs = msGetNumGlyphs(text);
+        numlines = numglyphs / maxlength;
         if(numlines>1) {
             char *newtext = malloc(strlen(text)+numlines+1);
             char *newtextptr = newtext;
@@ -146,6 +149,9 @@ char *msWrapText(labelObj *label, char *text) {
 char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
     double spacewidth=0.0;
     int numlines;
+    char **textlines,*newtext,*newtextptr;
+    int *textlinelengths,*numspacesforpadding;
+    int numspacestoadd,maxlinelength,i;
     rectObj label_rect;
     if(label->space_size_10 == 0.0) {
         int size;
@@ -164,7 +170,7 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
     } else {
         spacewidth = label->space_size_10 * (double)label->size/10.0;
     }
-    char **textlines = msStringSplit(text,'\n',&numlines);
+    textlines = msStringSplit(text,'\n',&numlines);
     if(numlines==1) {
         /*nothing to do*/
         free(textlines[0]);
@@ -172,11 +178,10 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
         return text;
     }
 
-    int *textlinelengths = (int*)malloc(numlines*sizeof(int));
-    int *numspacesforpadding = (int*)malloc(numlines*sizeof(int));
-    int numspacestoadd=0;
-    int maxlinelength=0;
-    int i;
+    textlinelengths = (int*)malloc(numlines*sizeof(int));
+    numspacesforpadding = (int*)malloc(numlines*sizeof(int));
+    numspacestoadd=0;
+    maxlinelength=0;
     for(i=0;i<numlines;i++) {
         msGetLabelSize(image, textlines[i], label, &label_rect, &map->fontset, 1.0, MS_FALSE);
         textlinelengths[i] = label_rect.maxx-label_rect.minx;
@@ -195,8 +200,8 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
         }
         numspacestoadd+=numspacesforpadding[i];
     }
-    char *newtext = (char*)malloc(strlen(text)+1+numspacestoadd);
-    char *newtextptr=newtext;
+    newtext = (char*)malloc(strlen(text)+1+numspacestoadd);
+    newtextptr=newtext;
     for(i=0;i<numlines;i++) {
         int j;
         for(j=0;j<numspacesforpadding[i];j++) {
