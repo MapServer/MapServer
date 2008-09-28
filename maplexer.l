@@ -243,7 +243,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>minscale                   { return(MINSCALE); }
 <INITIAL,URL_STRING>minscaledenom              { return(MINSCALEDENOM); }
 <INITIAL>mingeowidth                           { return(MINGEOWIDTH); }
-<INITIAL>minsize                               { return(MINLENGTH); }
+<INITIAL>minlength                             { return(MINLENGTH); }
 <INITIAL>minsize                               { return(MINSIZE); }
 <INITIAL>minsubdivide                          { return(MINSUBDIVIDE); }
 <INITIAL>mintemplate                           { return(MINTEMPLATE); }
