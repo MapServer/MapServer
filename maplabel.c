@@ -49,6 +49,9 @@ MS_CVSID("$Id$")
  * the function:
  * text = msWrapText(label,text);
  *
+ * TODO/FIXME: function will produce erroneous/crashing? results
+ * if the wrap character is encoded with multiple bytes
+ *
  * see http://mapserver.gis.umn.edu/development/rfc/ms-rfc-40/
  * for a summary of how wrap/maxlength interact on the result
  * of the text transformation
@@ -56,40 +59,47 @@ MS_CVSID("$Id$")
 char *msWrapText(labelObj *label, char *text) {
     char wrap;
     int maxlength;
-    if(!text)
+    if(!text) /*not an error if no text*/
         return text;
     wrap = label->wrap;
     maxlength = label->maxlength;
     if(maxlength == 0) {
         if(wrap!='\0') {
-            /* if maxlength = 0 and a wrap character was specified, replace
-             * all wrap characters by \n
+            /* if maxlength = 0 *and* a wrap character was specified,
+             * replace all wrap characters by \n
+             * this is the traditional meaning of the wrap character
              */
             msReplaceChar(text, wrap, '\n');
         }
         /* if neither maxlength, nor wrap were specified,
-         * don't transform this text
-         */
+         * don't transform this text */
         return text;
     } else if(maxlength>0) {
         if(wrap!='\0') {
+            /* split input text at the wrap character, only if
+             * the current line length is over maxlength */
+
+            /* TODO: check if the wrap character is a valid byte
+             * inside a multibyte utf8 glyph. if so, the msCountChars
+             * will return an erroneous value */
             int numwrapchars = msCountChars(text,wrap);
+
             if(numwrapchars > 0) {
                 if(label->encoding) {
-/*
-                     * we have to use utf decoding functions here, so as not to
-                     * split a text line on a multibyte character
-                     */
-                    int num_cur_glyph_on_line = 0;
+                    /* we have to use utf decoding functions here, so as not to
+                     * split a text line on a multibyte character */
+                    
+                    int num_cur_glyph_on_line = 0; /*count for the number of glyphs
+                                                     on the current line*/
                     char *textptr = text;
-                    char glyph[11];
-                    int glyphlen = 0;
+                    char glyph[11]; /*storage for unicode fetching function*/
+                    int glyphlen = 0; /*size of current glyph in bytes*/
                     while((glyphlen = msGetNextGlyph((const char**)&textptr,glyph))>0) {
                         num_cur_glyph_on_line++;
                         if(*glyph == wrap && num_cur_glyph_on_line>=(maxlength)) {
                             /*FIXME (if wrap becomes something other than char):*/
-                            *(textptr-1)='\n';
-                            num_cur_glyph_on_line=0;
+                            *(textptr-1)='\n'; /*replace wrap char with a \n*/
+                            num_cur_glyph_on_line=0; /*reset count*/
                         }
                     }
                 } else {
@@ -98,21 +108,20 @@ char *msWrapText(labelObj *label, char *text) {
                     while(*textptr != 0) {
                         cur_char_on_line++;
                         if(*textptr == wrap && cur_char_on_line>=maxlength) {
-                            *textptr='\n';
-                            cur_char_on_line=0;
+                            *textptr='\n'; /*replace wrap char with a \n*/
+                            cur_char_on_line=0; /*reset count*/
                         }
                         textptr++;
                     }
                 }
                 return text;
             } else {
-                /*text is shorter than fixed limit*/
+                /*there are no characters available for wrapping*/
                 return text;
             }
         } else {
-            /*don't draw this label if it is longer thant the specified length
-             * and no wrap character was specified
-             */
+            /* if no wrap character was specified, but a maxlength was,
+             * don't draw this label if it is longer than the specified maxlength*/
             if(msGetNumGlyphs(text)>maxlength) {
                 free(text);
                 return NULL;
@@ -120,11 +129,13 @@ char *msWrapText(labelObj *label, char *text) {
                 return text;
             }
         }
-    } else { /*maxlength<0*/
+    } else { /* negative maxlength: we split lines unconditionally, i.e. without
+    loooking for a wrap character*/
         int numglyphs,numlines;
-        maxlength = -maxlength;
+        maxlength = -maxlength; /* use a positive value*/
         numglyphs = msGetNumGlyphs(text);
-        numlines = numglyphs / maxlength;
+        numlines = numglyphs / maxlength; /*count total number of lines needed
+                                            after splitting*/
         if(numlines>1) {
             char *newtext = malloc(strlen(text)+numlines+1);
             char *newtextptr = newtext;
@@ -134,6 +145,7 @@ char *msWrapText(labelObj *label, char *text) {
                 num_cur_glyph++;
                 newtextptr += glyphlen;
                 if(num_cur_glyph%maxlength == 0 && num_cur_glyph != numglyphs) {
+                    /*we're at a split location, insert a newline*/
                     *newtextptr = '\n';
                     newtextptr++;
                 }
@@ -141,46 +153,81 @@ char *msWrapText(labelObj *label, char *text) {
             free(text);
             return newtext;
         } else {
+            /*no splitting needed, return the original*/
             return text;
         }
     }
 }
 
 char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
-    double spacewidth=0.0;
+    double spacewidth=0.0; /*size of a single space, in fractional pixels*/
     int numlines;
     char **textlines,*newtext,*newtextptr;
     int *textlinelengths,*numspacesforpadding;
     int numspacestoadd,maxlinelength,i;
     rectObj label_rect;
+    if(!msCountChars(text,'\n'))
+        return text; /*only one line*/
+    
+    /*split text into individual lines
+     * TODO: check if splitting on \n is utf8 safe*/
+    textlines = msStringSplit(text,'\n',&numlines);
+    
+    /*
+     * label->space_size_10 contains a cache for the horizontal size of a single
+     * 'space' character, at size 10 for the current label
+     * FIXME: in case of attribute binding for the FONT of the label, this cache will
+     * be wrong for labels where the attributed font is different than the first
+     * computed font. This shouldn't happen too often, and hopefully the size of a 
+     * space character shouldn't vary too much between different fonts*/
     if(label->space_size_10 == 0.0) {
+        /*if the cache hasn't been initialized yet, or with pixmap fonts*/
         int size;
         if(label->type == MS_TRUETYPE) {
-            size = label->size;
+            size = label->size; /*keep a copy of the original size*/
             label->size=10;
         }
-        if(msGetLabelSize(image, "                ", label, &label_rect, &map->fontset, 1.0, MS_FALSE)==-1)
-            return text; /*error*/
+        /* compute the size of 16 adjacent spaces. we can't do this for just one space,
+         * as the labelSize computing functions return integer bounding boxes. we assume
+         * that the integer rounding for such a number of spaces will be negligeable
+         * compared to the actual size of thoses spaces */ 
+        if(msGetLabelSize(image, "                ", label,&label_rect, 
+                    &map->fontset, 1.0, MS_FALSE)==-1) { 
+            /*error computing label size, we can't continue*/
+
+            /*free the previously allocated split text*/
+            while(numlines--)
+                free(textlines[numlines]);
+            free(textlines);
+            return text;
+        }
+
+        /* this is the size of a single space character. for truetype fonts,
+         * it's the size of a 10pt space. For pixmap fonts, it's the size
+         * for the current label */
         spacewidth = (label_rect.maxx-label_rect.minx)/16.0;
         if(label->type == MS_TRUETYPE) {
-            label->size = size;
-            label->space_size_10=spacewidth;
+            label->size = size; /*restore original label size*/
+            label->space_size_10=spacewidth; /*cache the computed size*/
+
+            /*size of a space for current label size*/
             spacewidth = spacewidth * (double)label->size/10.0;
         }
     } else {
         spacewidth = label->space_size_10 * (double)label->size/10.0;
     }
-    textlines = msStringSplit(text,'\n',&numlines);
-    if(numlines==1) {
-        /*nothing to do*/
-        free(textlines[0]);
-        free(textlines);
-        return text;
-    }
-
+   
+    
+    /*length in pixels of each line*/
     textlinelengths = (int*)malloc(numlines*sizeof(int));
+    
+    /*number of spaces that need to be added to each line*/
     numspacesforpadding = (int*)malloc(numlines*sizeof(int));
+    
+    /*total number of spaces that need to be added*/
     numspacestoadd=0;
+
+    /*length in pixels of the longest line*/
     maxlinelength=0;
     for(i=0;i<numlines;i++) {
         msGetLabelSize(image, textlines[i], label, &label_rect, &map->fontset, 1.0, MS_FALSE);
@@ -189,8 +236,10 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
             maxlinelength=textlinelengths[i];
     }
     for(i=0;i<numlines;i++) {
+        /* number of spaces to add so the current line is
+         * as long as the longest line */
         double nfracspaces = (maxlinelength - textlinelengths[i])/spacewidth;
-        numspacesforpadding[i]=MS_NINT(((maxlinelength - textlinelengths[i])/2.0)/(spacewidth));
+
         if(label->align == MS_ALIGN_CENTER) {
             numspacesforpadding[i]=MS_NINT(nfracspaces/2.0);
         } else {
@@ -200,19 +249,26 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
         }
         numspacestoadd+=numspacesforpadding[i];
     }
+
+    /*allocate new text with room for the additional spaces needed*/
     newtext = (char*)malloc(strlen(text)+1+numspacestoadd);
     newtextptr=newtext;
     for(i=0;i<numlines;i++) {
         int j;
+        /*padd beginning of line with needed spaces*/
         for(j=0;j<numspacesforpadding[i];j++) {
             *(newtextptr++)=' ';
         }
+        /*copy original line*/
         strcpy(newtextptr,textlines[i]);
+        /*place pointer at the char right after the current line*/
         newtextptr+=strlen(textlines[i])+1;
         if(i!=numlines-1) {
-           *(newtextptr-1)='\n';
+            /*put the \n back in (was taken away by msStringSplit)*/
+            *(newtextptr-1)='\n';
         }
     }
+    /*free the original text*/
     free(text);
     for(i=0;i<numlines;i++) {
         free(textlines[i]);
@@ -220,8 +276,13 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
     free(textlines);
     free(textlinelengths);
     free(numspacesforpadding);
+
+    /*return the aligned text. note that the terminating \0 was added by the last
+     * call to strcpy */
     return newtext;
 }
+
+
 /*
  * this function applies the label encoding and wrap parameters
  * to the supplied text
