@@ -182,7 +182,7 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
      * space character shouldn't vary too much between different fonts*/
     if(label->space_size_10 == 0.0) {
         /*if the cache hasn't been initialized yet, or with pixmap fonts*/
-        int size;
+        int size=0; /*initialize this here to avoid compiler warning*/
         if(label->type == MS_TRUETYPE) {
             size = label->size; /*keep a copy of the original size*/
             label->size=10;
