@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-2)
 --------------------------------
+- PHP: add priority attribute to the label object (#2782)
 
 - Fixed bug when QUERYMAP hilite color is set and the shape's color in a 
   layer is from a data source (#2769)
