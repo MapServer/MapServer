@@ -150,6 +150,11 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
           bindDoubleAttribute(&style->size, shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index]);
         }
 
+        if(style->bindings[MS_STYLE_BINDING_WIDTH].index != -1) {
+          style->width = 1;
+          bindDoubleAttribute(&style->width, shape->values[style->bindings[MS_STYLE_BINDING_WIDTH].index]);
+        }
+
         if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1 && (querymapMode != MS_TRUE)) {
           MS_INIT_COLOR(style->color, -1,-1,-1);
           bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);

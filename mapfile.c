@@ -1864,11 +1864,10 @@ int loadStyle(styleObj *style) {
       break;
     case(SIZE):
       if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
-
       if(symbol == MS_NUMBER)
         style->size = (double) msyynumber;
       else {
- 	      style->bindings[MS_STYLE_BINDING_SIZE].item = strdup(msyytext);
+ 	style->bindings[MS_STYLE_BINDING_SIZE].item = strdup(msyytext);
         style->numbindings++;
       }
       break;
@@ -1886,10 +1885,12 @@ int loadStyle(styleObj *style) {
       }
       break;
     case(WIDTH):
-      if(getDouble(&(style->width)) == -1) return(MS_FAILURE);
-      if(!(style->width > 0)) {
-        msSetError(MS_MISCERR, "Invalid WIDTH, must be greater than 0." , "loadStyle()");
-        return(MS_FAILURE);
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+      if(symbol == MS_NUMBER)
+        style->width = (double) msyynumber;
+      else {
+        style->bindings[MS_STYLE_BINDING_WIDTH].item = strdup(msyytext);
+        style->numbindings++;
       }
       break;
     default:
@@ -1976,15 +1977,18 @@ void writeStyle(styleObj *style, FILE *stream) {
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SYMBOL].item)
      fprintf(stream, "        SYMBOL [%s]\n", style->bindings[MS_STYLE_BINDING_SYMBOL].item);
-  else
-  {
+  else {
     if(style->symbolname)
       fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
     else
       fprintf(stream, "        SYMBOL %d\n", style->symbol);
   }
-  if(style->width > 1) fprintf(stream, "        WIDTH %g\n", style->width);
-  if (style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
+
+  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_WIDTH].item)
+    fprintf(stream, "        WIDTH [%s]\n", style->bindings[MS_STYLE_BINDING_WIDTH].item);
+  else if(style->width > 0) fprintf(stream, "        WIDTH %g\n", style->width);
+
+  if(style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
 
   if(style->rangeitem) {
     fprintf(stream, "        RANGEITEM \"%s\"\n", style->rangeitem);
