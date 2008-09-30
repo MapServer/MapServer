@@ -351,12 +351,10 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 
   /* Store the label point or the label path (Bug #1620) */
   if ( point ) {
-
-  cachePtr->point = *point; /* the actual label point */
-  cachePtr->point.x = MS_NINT(cachePtr->point.x);
-  cachePtr->point.y = MS_NINT(cachePtr->point.y);
+    cachePtr->point = *point; /* the actual label point */
+    cachePtr->point.x = MS_NINT(cachePtr->point.x);
+    cachePtr->point.y = MS_NINT(cachePtr->point.y);
     cachePtr->labelpath = NULL;
-    
   } else if ( labelpath ) {
     int i;
     cachePtr->labelpath = labelpath;
