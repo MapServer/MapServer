@@ -1080,6 +1080,7 @@ Currently supported classes, properties and methods:
    int    partials
    int    force
    string encoding
+   int    priority
 
  Methods:
 
