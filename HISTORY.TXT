@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- styleObj width now supports attribute binding
+
 - RFC40 implementation: label text wrapping and alignment (#2383)
 
 - baseline adjustment for multiline labels (#1449)
