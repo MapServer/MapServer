@@ -1385,7 +1385,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 
       if(status == MS_DONE) break; /* no more tiles/images */
        
-      if(layer->data == NULL) /* assume whole filename is in attribute field */
+      if(layer->data == NULL || strlen(layer->data) == 0 ) /* assume whole filename is in attribute field */
           strcpy( tilename, tshp.values[tileitemindex] );
       else
           sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
