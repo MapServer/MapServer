@@ -1073,6 +1073,7 @@ Currently supported classes, properties and methods:
    int    type
    colorObj    color
    colorObj    outlinecolor
+   int         outlinewidth
    colorObj    shadowcolor
    int    shadowsizex
    int    shadowsizey
@@ -1097,6 +1098,10 @@ Currently supported classes, properties and methods:
    int    partials
    int    force
    string encoding
+   int    align
+   int    maxlength
+   int    minlength
+   int    priority
 
  Methods:
 

@@ -8663,6 +8663,7 @@ static long _phpms_build_label_object(labelObj *plabel,
     add_property_long(return_value,   "align", plabel->align);
     add_property_long(return_value,   "maxlength", plabel->maxlength);
     add_property_long(return_value,   "minlength", plabel->minlength);
+    add_property_long(return_value ,  "priority",   plabel->priority);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
     _phpms_build_color_object(&(plabel->color),list, new_obj_ptr TSRMLS_CC);
@@ -8753,6 +8754,7 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "align", self->align)
     else IF_SET_LONG(  "maxlength", self->maxlength)
     else IF_SET_LONG(  "minlength", self->minlength)
+    else IF_SET_LONG(  "priority",     self->priority)       
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
