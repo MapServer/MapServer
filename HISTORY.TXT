@@ -11,6 +11,11 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+- label size computation refactoring (#2390)
+
+- don't draw label background if we're using angle follow. (#2726)
+
+- legend keyimage resampling with agg (#2715)
 
 - tileindexed rasters when DATA is manipulated via mapscript work (#2783)
 
