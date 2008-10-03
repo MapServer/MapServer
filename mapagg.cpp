@@ -2311,7 +2311,8 @@ int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass,
     agg::rendering_buffer thepixmap = gdImg2AGGRB_BGRA(keyimage->img.gd);
     GDpixfmt img_pixf(thepixmap);
     img_pixf.premultiply();
-    ren->renderPixmapBGRA(img_pixf,dstX,dstY,0,1);
+    double scalefactor = (double)width / (double)keyimage->width;
+    ren->renderPixmapBGRA(img_pixf,dstX+width/2,dstY+height/2,0,scalefactor);
     delete[](thepixmap.buf());
     /* TO DO: we may want to handle this differently depending on the relative size of the keyimage */
   } else {        
