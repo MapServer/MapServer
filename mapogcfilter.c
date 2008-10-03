@@ -1050,7 +1050,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
     return msQueryByRect(map, lp->index, sQueryRect);
 
-    //return MS_SUCCESS;
+    /* return MS_SUCCESS; */
 }
 
 int FLTIsSimpleFilter(FilterEncodingNode *psNode)
@@ -1527,7 +1527,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /*      <Filter>                                                        */
 /*       <BBOX>                                                         */
 /*        <PropertyName>Geometry</PropertyName>                         */
-/*        <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326”>*/
+/*        <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326">*/
 /*          <gml:coordinates>13.0983,31.5899 35.5472,42.8143</gml:coordinates>*/
 /*        </gml:Box>                                                    */
 /*       </BBOX>                                                        */
@@ -2355,7 +2355,7 @@ char *FLTGetMapserverIsPropertyExpression(FilterEncodingNode *psFilterNode, laye
 /*      eg 1: <Filter>                                                  */
 /*            <BBOX>                                                    */
 /*              <PropertyName>Geometry</PropertyName>                   */
-/*              <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326”>*/
+/*              <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326">*/
 /*                <gml:coordinates>13.0983,31.5899 35.5472,42.8143</gml:coordinates>*/
 /*              </gml:Box>                                              */
 /*            </BBOX>                                                   */
@@ -2365,7 +2365,7 @@ char *FLTGetMapserverIsPropertyExpression(FilterEncodingNode *psFilterNode, laye
 /*              <AND>                                                   */
 /*               <BBOX>                                                 */
 /*                <PropertyName>Geometry</PropertyName>                  */
-/*                <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326”>*/
+/*                <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326">*/
 /*                  <gml:coordinates>13.0983,31.5899 35.5472,42.8143</gml:coordinates>*/
 /*                </gml:Box>                                            */
 /*               </BBOX>                                                */

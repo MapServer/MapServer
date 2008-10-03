@@ -756,7 +756,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                                        "observedProperty_id");
         if (pszValue)
         {
-            //psNode= xmlNewChild(psObsNode, psNsOm, BAD_CAST "observedProperty", BAD_CAST pszValue);
+            /* psNode= xmlNewChild(psObsNode, psNsOm, BAD_CAST "observedProperty", BAD_CAST pszValue); */
             msSOSAddPropertyNode(psNsSwe, psNsXLink, psObsNode, lp, psNsGml);
 
         }
@@ -2363,7 +2363,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
             return msSOSException(map, "offering_timeextent", "InvalidParameterValue");
         }
     
-        if (n == 2) // end time is empty. It is going to be set as "now
+        if (n == 2) /* end time is empty. It is going to be set as "now" */
           pszEndTime = tokens[1];
     
           psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix), tokens[0], pszEndTime));

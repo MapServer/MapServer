@@ -918,7 +918,7 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
                }
                
                edge[nvert].dx  = point2->y == point1->y ? 0 :  (point2->x - point1->x) / (point2->y - point1->y);
-               edge[nvert].s = MS_NINT( p->line[l].point[i].y );  //ceil( p->line[l].point[i].y  - 0.5 );
+               edge[nvert].s = MS_NINT( p->line[l].point[i].y );  /* ceil( p->line[l].point[i].y  - 0.5 ); */
                edge[nvert].x = point1->x ;
                edge[nvert].i = nvert;
                edge[nvert].l = l;
