@@ -2218,7 +2218,17 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
               } /* next position */
 
-              if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
+              if(labelPtr->force) {
+
+                  /*billboard wasn't initialized if no non-coliding position was found*/
+                  if(!cachePtr->status && MS_VALID_COLOR(labelPtr->backgroundcolor))
+                      get_metrics_line(&(cachePtr->point), positions[npositions-1], r,
+                              (marker_offset_x + labelPtr->offsetx),
+                              (marker_offset_y + labelPtr->offsety),
+                              labelPtr->angle, 1, billboard.line);
+
+                  cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
+              }
 
             } else { /* explicit position */
 
@@ -2254,7 +2264,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
           }
 
-          if(MS_VALID_COLOR(labelPtr->backgroundcolor)) {
+          /*draw the background, only if we're not using FOLLOW labels*/
+          if(!cachePtr->labelpath && MS_VALID_COLOR(labelPtr->backgroundcolor)) {
             styleObj style;
 
             initStyle(&style);                    
