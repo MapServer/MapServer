@@ -11,6 +11,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+
+- memory leak in msInsertLayer, from Ned Horning (#2784)
+
 - label size computation refactoring (#2390)
 
 - don't draw label background if we're using angle follow. (#2726)

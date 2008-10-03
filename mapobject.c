@@ -498,10 +498,20 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     }
 
     /* Ensure there is room for a new layer */
-    if (msGrowMapLayers(map) == NULL)
-        return -1;
-    /* Catch attempt to insert past end of layers array */
-    else if (nIndex >= map->numlayers) {
+    if (map->numlayers == map->maxlayers)
+              {
+                              if (msGrowMapLayers(map) == NULL)
+                                              return -1;
+              }
+
+              /* msGrowMapLayers allocates the new layer which we don't need to do since we have 1 that we are inserting 
+                              not sure if it is possible for this to be non null otherwise, but better to check since this function
+                              replaces the value */
+              if (map->layers[map->numlayers]!=NULL)
+                              free(map->layers[map->numlayers]);
+
+              /* Catch attempt to insert past end of layers array */
+              if (nIndex >= map->numlayers) {
         msSetError(MS_CHILDERR, "Cannot insert layer beyond index %d",
                    "msInsertLayer()", map->numlayers-1);
         return -1;
