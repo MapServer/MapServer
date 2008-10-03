@@ -3230,7 +3230,7 @@ int msDrawLegendIconGD(mapObj *map, layerObj *lp, classObj *class, int width, in
         if (label.type == MS_TRUETYPE) label.size = height;
         marker.x = dstX + MS_NINT(width / 2.0);
         marker.y = dstY + MS_NINT(height / 2.0);
-        if(msGetLabelSizeGD("Aa", &label, &label_rect, &map->fontset, 1.0, MS_FALSE) != -1)
+        if(msGetLabelSize(NULL,"Aa", &label, &label_rect, &map->fontset, 1.0, MS_FALSE) != -1)
         {
           pointObj label_point = get_metrics(&marker, MS_CC, label_rect, 0, 0, label.angle, 0, NULL);
           msDrawTextGD(img, label_point, "Aa", &label, &map->fontset, 1.0);

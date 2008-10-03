@@ -716,10 +716,10 @@ public:
                 fy += glyph->advance_y;
             }
         }
-        rect->minx--;
+        /*rect->minx--;
         rect->miny--;
         rect->maxx++;
-        rect->maxy++;
+        rect->maxy++;*/
         return MS_SUCCESS;
     }
     
@@ -2032,56 +2032,30 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
 
 }
 
-int msGetLabelSizeAGG(imageObj *img, char *string, labelObj *label,
-        rectObj *rect, fontSetObj *fontset, double scalefactor,
-        int adjustBaseline) {
-    if (label->type==MS_TRUETYPE) {
+int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, int size, char *string, rectObj *rect) {
         AGGMapserverRenderer* ren = getAGGRenderer(img);
-        int size;
-        size = MS_NINT(label->size*scalefactor);
-        size = MS_MAX(size, label->minsize);
-        size = MS_MIN(size, label->maxsize);
-        char * font = msLookupHashTable(&(fontset->fonts), label->font);
-        if (!font) {
-            msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSizeAGG()", label->font);
-            return MS_FAILURE;
-        }
-        if (ren->getLabelSize(string, font, size, rect) != MS_SUCCESS)
-            return MS_FAILURE;
-        if(adjustBaseline) {
-            int nNewlines = msCountChars(string,'\n');
-            if(!nNewlines) {
-                label->offsety += MS_NINT(((rect->miny+rect->maxy) + size) / 2);
-                label->offsetx += MS_NINT(rect->minx / 2);
-            }
-            else {
-                rectObj r;
-                char* firstLine = msGetFirstLine(string);
-                ren->getLabelSize(firstLine, font, size, &r);
-                label->offsety += MS_NINT(((r.miny+r.maxy) + size) / 2);
-                label->offsetx += MS_NINT(r.minx / 2);
-                free(firstLine);
-            }
-        }
-    } else {
-        char **token=NULL;
-        int t, num_tokens, max_token_length=0;
-        if ((token = msStringSplit(string, '\n', &(num_tokens))) == NULL)
-            return (0);
+        return ren->getLabelSize(string, font, size, rect);
+}
 
-        for (t=0; t<num_tokens; t++)
-            /* what's the longest token */
-            max_token_length = MS_MAX(max_token_length, (int) strlen(token[t]));
+int msGetRasterTextBBoxAGG(imageObj *img, int size, char *string, rectObj *rect) {
+    char **token=NULL;
+    int t, num_tokens, max_token_length=0;
+    if ((token = msStringSplit(string, '\n', &(num_tokens))) == NULL)
+        return (0);
 
-        rect->minx = 0;
-        rect->miny = -(rasterfont_sizes[label->size].height * num_tokens);
-        rect->maxx = rasterfont_sizes[label->size].width * max_token_length;
-        rect->maxy = 0;
+    for (t=0; t<num_tokens; t++)
+        //what's the longest token
+        max_token_length = MS_MAX(max_token_length, (int) strlen(token[t]));
 
-        msFreeCharArray(token, num_tokens);
-    }
+    rect->minx = 0;
+    rect->miny = -(rasterfont_sizes[size].height * num_tokens);
+    rect->maxx = rasterfont_sizes[size].width * max_token_length;
+    rect->maxy = 0;
+
+    msFreeCharArray(token, num_tokens);
     return MS_SUCCESS;
 }
+
 // ---------------------------------------------------------------------------
 // Draw a label curved along a line
 // ---------------------------------------------------------------------------
@@ -2366,7 +2340,7 @@ int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass,
         if (label.type == MS_TRUETYPE) label.size = height;
         marker.x = dstX + MS_NINT(width / 2.0);
         marker.y = dstY + MS_NINT(height / 2.0);
-        if(msGetLabelSizeAGG(image, (char*)"Aa", &label, &label_rect, &map->fontset, 1.0, MS_FALSE) != -1)
+        if(msGetLabelSize(image, (char*)"Aa", &label, &label_rect, &map->fontset, 1.0, MS_FALSE) != -1)
         {
           pointObj label_point = get_metrics(&marker, MS_CC, label_rect, 0, 0, label.angle, 0, NULL);
           msDrawTextAGG(image, label_point, (char*)"Aa", &label, &map->fontset, 1.0);

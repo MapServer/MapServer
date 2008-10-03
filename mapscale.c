@@ -310,7 +310,7 @@ imageObj *msDrawScalebar(mapObj *map)
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      if(msGetLabelSizeGD(label,&(map->scalebar.label), &r, 
+      if(msGetLabelSize(NULL,label,&(map->scalebar.label), &r, 
               &(map->fontset), 1, MS_FALSE) == -1) return(NULL);
       p2 = get_metrics(&p, MS_CC, r, 0,0, 0, 0, NULL);
       msDrawTextGD(image->img.gd, p2, label, &(map->scalebar.label), &(map->fontset), 1.0);
@@ -323,7 +323,7 @@ imageObj *msDrawScalebar(mapObj *map)
     map->scalebar.label.position = MS_CR;
     p.x = ox; /* + MS_NINT(fontPtr->w/2); */
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    if(msGetLabelSizeGD(label,&(map->scalebar.label), &r, 
+    if(msGetLabelSize(NULL,label,&(map->scalebar.label), &r, 
             &(map->fontset), 1, MS_FALSE) == -1) return(NULL);
     p2 = get_metrics(&p, MS_CR, r, 0,0, 0, 0, NULL);
     msDrawTextGD(image->img.gd, p2, label, &(map->scalebar.label), &(map->fontset), 1.0);
@@ -343,7 +343,7 @@ imageObj *msDrawScalebar(mapObj *map)
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      if(msGetLabelSizeGD(label,&(map->scalebar.label), &r, 
+      if(msGetLabelSize(NULL,label,&(map->scalebar.label), &r, 
               &(map->fontset), 1, MS_FALSE) == -1) return(NULL);
       p2 = get_metrics(&p, MS_CC, r, 0,0, 0, 0, NULL);
       msDrawTextGD(image->img.gd, p2, label, &(map->scalebar.label), &(map->fontset), 1.0);
@@ -359,7 +359,7 @@ imageObj *msDrawScalebar(mapObj *map)
     map->scalebar.label.position = MS_CR;
     p.x = ox; /* + MS_NINT(fontPtr->w/2); */
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    if(msGetLabelSizeGD(label,&(map->scalebar.label), &r, 
+    if(msGetLabelSize(NULL,label,&(map->scalebar.label), &r, 
             &(map->fontset), 1, MS_FALSE) == -1) return(NULL);
     p2 = get_metrics(&p, MS_CR, r, 0,0, 0, 0, NULL);
     msDrawTextGD(image->img.gd, p2, label, &(map->scalebar.label), &(map->fontset), 1.0);

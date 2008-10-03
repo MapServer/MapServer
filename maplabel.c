@@ -642,6 +642,62 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 #endif
 }
 
+int msGetTruetypeTextBBox(imageObj *img, char *font, int size, char *string, rectObj *rect) {
+#ifdef USE_GD_FT
+#ifdef USE_AGG
+    if(img!=NULL && MS_RENDERER_AGG(img->format)) {
+        return msGetTruetypeTextBBoxAGG(img,font,size,string,rect); 
+    } else
+#endif
+    {
+        int bbox[8];
+        char *error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
+        if(error) {
+            msSetError(MS_TTFERR, error, "msGetTruetypeTextBBox()");
+            return(MS_FAILURE);
+        }
+
+        rect->minx = bbox[0];
+        rect->miny = bbox[5];
+        rect->maxx = bbox[2];
+        rect->maxy = bbox[1];
+        return MS_SUCCESS;
+    }
+#else
+    /*shouldn't happen*/
+    return(MS_FAILURE);
+#endif
+}
+
+int msGetRasterTextBBox(imageObj *img, int size, char *string, rectObj *rect) {
+#ifdef USE_AGG
+    if(img!=NULL && MS_RENDERER_AGG(img->format)) {
+        return msGetRasterTextBBoxAGG(img,size,string,rect); 
+    } else
+#endif
+    {
+        gdFontPtr fontPtr;
+        char **token=NULL;
+        int t, num_tokens, max_token_length=0;
+        if((fontPtr = msGetBitmapFont(size)) == NULL)
+            return(-1);
+
+        if((token = msStringSplit(string, '\n', &(num_tokens))) == NULL)
+            return(0);
+
+        for(t=0; t<num_tokens; t++) /* what's the longest token */
+            max_token_length = MS_MAX(max_token_length, (int) strlen(token[t]));
+
+        rect->minx = 0;
+        rect->miny = -(fontPtr->h * num_tokens);
+        rect->maxx = fontPtr->w * max_token_length;
+        rect->maxy = 0;
+
+        msFreeCharArray(token, num_tokens);
+        return MS_SUCCESS;
+    }
+}
+
 /*
 ** Note: All these routines assume a reference point at the LL corner of the text. GD's
 ** bitmapped fonts use UL and this is compensated for. Note the rect is relative to the
@@ -649,13 +705,12 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 */
 
 /* assumes an angle of 0 regardless of what's in the label object */
-int msGetLabelSizeGD(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
+int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
 {
   int size;
   if(label->type == MS_TRUETYPE) {
 #ifdef USE_GD_FT
-    int bbox[8];
-    char *error=NULL, *font=NULL;
+    char *font=NULL;
 
     size = MS_NINT(label->size*scalefactor);
     size = MS_MAX(size, label->minsize);
@@ -670,69 +725,34 @@ int msGetLabelSizeGD(char *string, labelObj *label, rectObj *rect, fontSetObj *f
       return(-1);
     }
 
-
-    error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
-    if(error) {
-      msSetError(MS_TTFERR, error, "msGetLabelSize()");
-      return(-1);
-    }
-
-    rect->minx = bbox[0];
-    rect->miny = bbox[5];
-    rect->maxx = bbox[2];
-    rect->maxy = bbox[1];
+    if(msGetTruetypeTextBBox(img,font,size,string,rect)!=MS_SUCCESS)
+        return MS_FAILURE;
 
     /* bug 1449 fix (adjust baseline) */
     if(adjustBaseline) {
       int nNewlines = msCountChars(string,'\n');
       if(!nNewlines) {
-        label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
-        label->offsetx += MS_NINT(bbox[0] / 2);
+        label->offsety += MS_NINT(((rect->miny + rect->maxy) + size) / 2);
+        label->offsetx += MS_NINT(rect->minx / 2);
       }
       else {
+        rectObj rect2; /*bbox of first line only*/
         char* firstLine = msGetFirstLine(string);
-        gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, firstLine);
-        label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
-        label->offsetx += MS_NINT(bbox[0] / 2);
+        msGetTruetypeTextBBox(img,font,size,firstLine,&rect2);
+        label->offsety += MS_NINT(((rect2.miny+rect2.maxy) + size) / 2);
+        label->offsetx += MS_NINT(rect2.minx / 2);
         free(firstLine);
       }
     }
+    return MS_SUCCESS;
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msGetLabelSize()");
     return(-1);
 #endif
   } else { /* MS_BITMAP font */
-    gdFontPtr fontPtr;
-    char **token=NULL;
-    int t, num_tokens, max_token_length=0;
-    if((fontPtr = msGetBitmapFont(label->size)) == NULL)
-      return(-1);
-    
-      if((token = msStringSplit(string, '\n', &(num_tokens))) == NULL)
-	return(0);
-
-      for(t=0; t<num_tokens; t++) /* what's the longest token */
-	max_token_length = MS_MAX(max_token_length, (int) strlen(token[t]));
-
-      rect->minx = 0;
-      rect->miny = -(fontPtr->h * num_tokens);
-      rect->maxx = fontPtr->w * max_token_length;
-      rect->maxy = 0;
-
-      msFreeCharArray(token, num_tokens);
-    
-  }
+    msGetRasterTextBBox(img,label->size,string,rect);
+ }
   return(0);
-}
-
-int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
-{
-#ifdef USE_AGG
-    if(img!= NULL && MS_RENDERER_AGG(img->format))
-        return msGetLabelSizeAGG(img,string,label,rect,fontset,scalefactor,adjustBaseline);
-    else
-#endif
-        return msGetLabelSizeGD(string,label,rect,fontset,scalefactor,adjustBaseline);
 }
 
 /*
@@ -1068,7 +1088,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   label.outlinecolor = style->outlinecolor;
   label.antialias = symbol->antialias;
   
-  if(msGetLabelSizeGD(symbol->character, &label, &label_rect, symbolset->fontset, scalefactor, MS_FALSE) == -1)
+  if(msGetLabelSize(NULL,symbol->character, &label, &label_rect, symbolset->fontset, scalefactor, MS_FALSE) == -1)
     return(-1);
 
   label_width = (int) label_rect.maxx - (int) label_rect.minx;

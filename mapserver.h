@@ -1702,8 +1702,6 @@ MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, imageObj* image, labelObj *label, char *text);
 MS_DLL_EXPORT int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
-MS_DLL_EXPORT int msGetLabelSizeGD(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
-
 MS_DLL_EXPORT int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline, double **offsets);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
 MS_DLL_EXPORT void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr, int mapwidth, int mapheight, int buffer, labelCacheMemberObj *cachePtr, int current_priority, int current_label);
@@ -1949,8 +1947,8 @@ MS_DLL_EXPORT void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj 
 MS_DLL_EXPORT void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image,shapeObj *p, styleObj *style, double scalefactor);
-
-MS_DLL_EXPORT int msGetLabelSizeAGG(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
+int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, int size, char *string, rectObj *rect);
+int msGetRasterTextBBoxAGG(imageObj *img, int size, char *string, rectObj *rect);
 MS_DLL_EXPORT int msDrawTextAGG(imageObj *imgage, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
 
