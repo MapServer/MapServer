@@ -192,7 +192,7 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
          * that the integer rounding for such a number of spaces will be negligeable
          * compared to the actual size of thoses spaces */ 
         if(msGetLabelSize(image, "                ", label,&label_rect, 
-                    &map->fontset, 1.0, MS_FALSE)==-1) { 
+                    &map->fontset, 1.0, MS_FALSE,NULL)==-1) { 
             /*error computing label size, we can't continue*/
 
             /*free the previously allocated split text*/
@@ -230,7 +230,7 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
     /*length in pixels of the longest line*/
     maxlinelength=0;
     for(i=0;i<numlines;i++) {
-        msGetLabelSize(image, textlines[i], label, &label_rect, &map->fontset, 1.0, MS_FALSE);
+        msGetLabelSize(image, textlines[i], label, &label_rect, &map->fontset, 1.0, MS_FALSE, NULL);
         textlinelengths[i] = label_rect.maxx-label_rect.minx;
         if(maxlinelength<textlinelengths[i])
             maxlinelength=textlinelengths[i];
@@ -642,26 +642,63 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 #endif
 }
 
-int msGetTruetypeTextBBox(imageObj *img, char *font, int size, char *string, rectObj *rect) {
+int msGetTruetypeTextBBox(imageObj *img, char *font, int size, char *string, rectObj *rect, double **advances) {
 #ifdef USE_GD_FT
 #ifdef USE_AGG
     if(img!=NULL && MS_RENDERER_AGG(img->format)) {
-        return msGetTruetypeTextBBoxAGG(img,font,size,string,rect); 
+        return msGetTruetypeTextBBoxAGG(img,font,size,string,rect,advances); 
     } else
 #endif
     {
         int bbox[8];
-        char *error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
-        if(error) {
-            msSetError(MS_TTFERR, error, "msGetTruetypeTextBBox()");
-            return(MS_FAILURE);
-        }
+        char *error;
+        if(advances) {
+#if defined (GD_HAS_FTEX_XSHOW)
+            char *s;
+            int k;
+            gdFTStringExtra strex;
+            strex.flags = gdFTEX_XSHOW;
+            error = gdImageStringFTEx(NULL, bbox, 0, font, size, 0, 0, 0, string, &strex);
+            if(error) {
+                msSetError(MS_TTFERR, error, "gdImageStringFTEx()");
+                return(MS_FAILURE);
+            }
 
-        rect->minx = bbox[0];
-        rect->miny = bbox[5];
-        rect->maxx = bbox[2];
-        rect->maxy = bbox[1];
-        return MS_SUCCESS;
+            *advances = (double*)malloc( strlen(string) * sizeof(double) );
+            s = strex.xshow;
+            k = 0;
+            while ( *s && k < strlen(string) ) {
+                (*advances)[k++] = atof(s);      
+                while ( *s && *s != ' ')
+                    s++;
+                if ( *s == ' ' )
+                    s++;
+            }
+
+            gdFree(strex.xshow); /* done with character advances */
+
+            rect->minx = bbox[0];
+            rect->miny = bbox[5];
+            rect->maxx = bbox[2];
+            rect->maxy = bbox[1];
+            return MS_SUCCESS;
+#else
+            msSetError(MS_TTFERR, "gdImageStringFTEx support is not available or is not current enough (requires 2.0.29 or higher).", "msGetTruetypeTextBBox()");
+            return(-1);
+#endif
+        } else {
+            error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
+            if(error) {
+                msSetError(MS_TTFERR, error, "msGetTruetypeTextBBox()");
+                return(MS_FAILURE);
+            }
+
+            rect->minx = bbox[0];
+            rect->miny = bbox[5];
+            rect->maxx = bbox[2];
+            rect->maxy = bbox[1];
+            return MS_SUCCESS;
+        }
     }
 #else
     /*shouldn't happen*/
@@ -705,7 +742,7 @@ int msGetRasterTextBBox(imageObj *img, int size, char *string, rectObj *rect) {
 */
 
 /* assumes an angle of 0 regardless of what's in the label object */
-int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline)
+int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline, double **advances)
 {
   int size;
   if(label->type == MS_TRUETYPE) {
@@ -725,7 +762,7 @@ int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, 
       return(-1);
     }
 
-    if(msGetTruetypeTextBBox(img,font,size,string,rect)!=MS_SUCCESS)
+    if(msGetTruetypeTextBBox(img,font,size,string,rect,advances)!=MS_SUCCESS)
         return MS_FAILURE;
 
     /* bug 1449 fix (adjust baseline) */
@@ -738,7 +775,7 @@ int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, 
       else {
         rectObj rect2; /*bbox of first line only*/
         char* firstLine = msGetFirstLine(string);
-        msGetTruetypeTextBBox(img,font,size,firstLine,&rect2);
+        msGetTruetypeTextBBox(img,font,size,firstLine,&rect2,NULL);
         label->offsety += MS_NINT(((rect2.miny+rect2.maxy) + size) / 2);
         label->offsetx += MS_NINT(rect2.minx / 2);
         free(firstLine);
@@ -753,73 +790,6 @@ int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, 
     msGetRasterTextBBox(img,label->size,string,rect);
  }
   return(0);
-}
-
-/*
- * Return the size of the label, plus an array of individual character
- * offsets, as calculated by gdImageStringFTEx().  The callee is
- * responsible for freeing *offsets.
- */
-int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline, double **offsets) 
-{
-#if defined (USE_GD_FT) && defined (GD_HAS_FTEX_XSHOW)
-    int size;
-    char *s;
-    int k;
-    int bbox[8];
-    char *error=NULL, *font=NULL;
-    gdFTStringExtra strex;
-    
-    size = MS_NINT(label->size*scalefactor);
-    size = MS_MAX(size, label->minsize);
-    size = MS_MIN(size, label->maxsize);
-
-    font = msLookupHashTable(&(fontset->fonts), label->font);
-    if(!font) {
-      if(label->font) 
-        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSizeEx()", label->font);
-      else
-        msSetError(MS_TTFERR, "Requested font (NULL) not found.", "msGetLabelSizeEx()");
-      return(-1);
-    }
-
-    strex.flags = gdFTEX_XSHOW;
-    error = gdImageStringFTEx(NULL, bbox, 0, font, size, 0, 0, 0, string, &strex);
-    if(error) {
-      msSetError(MS_TTFERR, error, "msGetLabelSizeEx()");
-      return(-1);
-    }
-
-    *offsets = (double*)malloc( strlen(string) * sizeof(double) );
-    
-    s = strex.xshow;
-    k = 0;
-    while ( *s && k < strlen(string) ) {
-      (*offsets)[k++] = atof(s);      
-      while ( *s && *s != ' ')
-        s++;
-      if ( *s == ' ' )
-        s++;
-    }
-
-    gdFree(strex.xshow); /* done with character advances */
-
-    rect->minx = bbox[0];
-    rect->miny = bbox[5];
-    rect->maxx = bbox[2];
-    rect->maxy = bbox[1];
-
-    /* bug 1449 fix (adjust baseline) */
-    if(adjustBaseline) {
-      label->offsety += MS_NINT(((bbox[5] + bbox[1]) + size) / 2);
-      label->offsetx += MS_NINT(bbox[0] / 2);
-    }
-
-    return MS_SUCCESS;
-#else
-    msSetError(MS_TTFERR, "TrueType font support is not available or is not current enough (requires 2.0.29 or higher).", "msGetLabelSizeEx()");
-    return(-1);
-#endif
 }
 
 gdFontPtr msGetBitmapFont(int size)
@@ -1088,7 +1058,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   label.outlinecolor = style->outlinecolor;
   label.antialias = symbol->antialias;
   
-  if(msGetLabelSize(NULL,symbol->character, &label, &label_rect, symbolset->fontset, scalefactor, MS_FALSE) == -1)
+  if(msGetLabelSize(NULL,symbol->character, &label, &label_rect, symbolset->fontset, scalefactor, MS_FALSE,NULL) == -1)
     return(-1);
 
   label_width = (int) label_rect.maxx - (int) label_rect.minx;

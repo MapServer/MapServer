@@ -675,8 +675,7 @@ public:
         return MS_SUCCESS;
     }
     
-    int getLabelSize(char *string, char *font, double size, rectObj *rect) {
-
+    int getLabelSize(char *string, char *font, double size, rectObj *rect, double **advances) {
 
         if(!m_feng.load_font(font, 0, agg::glyph_ren_outline)) {
             msSetError(MS_TTFERR, "AGG error loading font (%s)", "getLabelSize()", font);
@@ -686,7 +685,10 @@ public:
         m_feng.height(size);
         m_feng.resolution(96);
         m_feng.flip_y(true);
-        int unicode;
+        int unicode,curGlyph=1,numglyphs;
+        if(advances) {
+            numglyphs=msGetNumGlyphs(string);
+        }
         const agg::glyph_cache* glyph;
         string+=msUTF8ToUniChar(string, &unicode);
         glyph=m_fman.glyph(unicode);
@@ -698,8 +700,16 @@ public:
         }
         else
             return MS_FAILURE;
+        if(advances) {
+            *advances = (double*)malloc(numglyphs*sizeof(double));
+            (*advances)[0]=glyph->advance_x;
+        }
         double fx=glyph->advance_x,fy=glyph->advance_y;
         while(*string) {
+            if(advances) {
+                if(*string=='\r' || *string=='\n')
+                    (*advances)[curGlyph++]=-fx;
+            }
             if(*string=='\r') {fx=0;string++;continue;}
             if(*string=='\n') {fx=0;fy+=ceil(size*LINESPACE);string++;continue;}
             string+=msUTF8ToUniChar(string, &unicode);
@@ -714,15 +724,18 @@ public:
 
                 fx += glyph->advance_x;
                 fy += glyph->advance_y;
+                if(advances) {
+                    double x,y;
+                    x=glyph->advance_x;
+                    m_fman.add_kerning(&x,&y);
+                    (*advances)[curGlyph++]=x;
+                }
             }
         }
-        /*rect->minx--;
-        rect->miny--;
-        rect->maxx++;
-        rect->maxy++;*/
         return MS_SUCCESS;
     }
     
+      
     ///render a freetype string
     ///@param x,y the lower left corner where to start the string, or the center of
     ///     the character if isMarker is true
@@ -1235,7 +1248,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
         if(!font) return;
         double x,y;
         rectObj bounds;
-        if(ren->getLabelSize(symbol->character,font,size,&bounds)!=MS_SUCCESS)
+        if(ren->getLabelSize(symbol->character,font,size,&bounds,NULL)!=MS_SUCCESS)
             return;
         x = p->x + ox - bounds.minx - (bounds.maxx-bounds.minx)/2.;
         y = p->y + oy - bounds.maxy + (bounds.maxy-bounds.miny)/2.;
@@ -1496,7 +1509,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
         msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextAGG()", label.font);
         return;
     }
-  if(ren->getLabelSize(symbol->character, font, label.size, &label_rect) != MS_SUCCESS)
+  if(ren->getLabelSize(symbol->character, font, label.size, &label_rect,NULL) != MS_SUCCESS)
     return;
 
   label_width = (int) label_rect.maxx - (int) label_rect.minx;
@@ -2032,9 +2045,9 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
 
 }
 
-int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, int size, char *string, rectObj *rect) {
+int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, int size, char *string, rectObj *rect, double **advances) {
         AGGMapserverRenderer* ren = getAGGRenderer(img);
-        return ren->getLabelSize(string, font, size, rect);
+        return ren->getLabelSize(string, font, size, rect,advances);
 }
 
 int msGetRasterTextBBoxAGG(imageObj *img, int size, char *string, rectObj *rect) {
@@ -2341,7 +2354,7 @@ int msDrawLegendIconAGG(mapObj *map, layerObj *lp, classObj *theclass,
         if (label.type == MS_TRUETYPE) label.size = height;
         marker.x = dstX + MS_NINT(width / 2.0);
         marker.y = dstY + MS_NINT(height / 2.0);
-        if(msGetLabelSize(image, (char*)"Aa", &label, &label_rect, &map->fontset, 1.0, MS_FALSE) != -1)
+        if(msGetLabelSize(image, (char*)"Aa", &label, &label_rect, &map->fontset, 1.0, MS_FALSE,NULL) != -1)
         {
           pointObj label_point = get_metrics(&marker, MS_CC, label_rect, 0, 0, label.angle, 0, NULL);
           msDrawTextAGG(image, label_point, (char*)"Aa", &label, &map->fontset, 1.0);

@@ -190,7 +190,7 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
        else
          transformedText = strdup(lp->class[j]->name);
 
-       if(transformedText == NULL || msGetLabelSize(NULL,transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0) { /* something bad happened */
+       if(transformedText == NULL || msGetLabelSize(NULL,transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE,NULL) != 0) { /* something bad happened */
          if(transformedText) msFree(transformedText);
          return MS_FAILURE;
        }
@@ -297,7 +297,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       cur->pred = head;
       head = cur;
 
-      if(cur->transformedText==NULL || msGetLabelSize(NULL,cur->transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE) != 0) { /* something bad happened, free allocated mem */
+      if(cur->transformedText==NULL || msGetLabelSize(NULL,cur->transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE,NULL) != 0) { /* something bad happened, free allocated mem */
         while(cur) {
           if(cur->transformedText!=cur->theclass->name)
             free(cur->transformedText);

@@ -1413,7 +1413,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
         if(layer->class[c]->label.autofollow == MS_TRUE ) {
-          annopath = msPolylineLabelPath(&annoshape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+          annopath = msPolylineLabelPath(image,&annoshape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
         } else {
           annocallret = msPolylineLabelPoint(&annoshape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length);
         }
@@ -1434,7 +1434,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
         /* Determine the label path if it has not been computed above */
         if(bLabelNoClip == MS_FALSE)
-          annopath = msPolylineLabelPath(shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+          annopath = msPolylineLabelPath(image,shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
 
         if( annopath ) {
           labelObj label = layer->class[c]->label;
@@ -1614,7 +1614,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
       if(layer->class[c]->label.autofollow == MS_TRUE) {
-        annopath = msPolylineLabelPath(&annoshape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+        annopath = msPolylineLabelPath(image,&annoshape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
       } else {
         annocallret = msPolylineLabelPoint(&annoshape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length);
       }
@@ -1644,7 +1644,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         layer->class[c]->label.position = MS_CC; /* Force all label positions to MS_CC regardless if a path is computed */
 
         if (bLabelNoClip == MS_FALSE)
-          annopath = msPolylineLabelPath(shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+          annopath = msPolylineLabelPath(image,shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
 
         if(annopath) {
           labelObj label = layer->class[c]->label;
@@ -1992,7 +1992,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
     initStyle(&style);
   }
 
-  if(msGetLabelSize(image, string, label, &r, &(map->fontset), scalefactor, MS_FALSE) == -1) return(-1);
+  if(msGetLabelSize(image, string, label, &r, &(map->fontset), scalefactor, MS_FALSE,NULL) == -1) return(-1);
 
   if(label->position != MS_XY) {
     pointObj p;
@@ -2151,7 +2151,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
           if(!cachePtr->text || strlen(cachePtr->text) == 0)
             continue; /* not an error, just don't want to do anything */
 
-          if(msGetLabelSize(image,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE) == -1)
+          if(msGetLabelSize(image,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
             return(-1);
           if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
             continue; /* label too large relative to the feature */

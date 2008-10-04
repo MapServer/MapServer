@@ -1701,8 +1701,7 @@ MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabe
 MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, imageObj* image, labelObj *label, char *text);
-MS_DLL_EXPORT int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline);
-MS_DLL_EXPORT int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline, double **offsets);
+MS_DLL_EXPORT int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline,double **advances);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
 MS_DLL_EXPORT void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr, int mapwidth, int mapheight, int buffer, labelCacheMemberObj *cachePtr, int current_priority, int current_label);
 MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
@@ -1731,7 +1730,7 @@ MS_DLL_EXPORT void msTransformShapeToPixel(shapeObj *shape, rectObj extent, doub
 MS_DLL_EXPORT void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize);
 MS_DLL_EXPORT void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, styleObj *style, symbolObj *symbol, int c, double size, double scalefactor);
 MS_DLL_EXPORT int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angle, double *length);
-MS_DLL_EXPORT labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *status);
+MS_DLL_EXPORT labelPathObj* msPolylineLabelPath(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *status);
 MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);
@@ -1947,7 +1946,7 @@ MS_DLL_EXPORT void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj 
 MS_DLL_EXPORT void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image,shapeObj *p, styleObj *style, double scalefactor);
-int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, int size, char *string, rectObj *rect);
+int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, int size, char *string, rectObj *rect, double **advances);
 int msGetRasterTextBBoxAGG(imageObj *img, int size, char *string, rectObj *rect);
 MS_DLL_EXPORT int msDrawTextAGG(imageObj *imgage, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);

@@ -1204,7 +1204,7 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
  * polyline must be converted to image coordinates before calling this
  * function.
  */
-labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *status)
+labelPathObj* msPolylineLabelPath(imageObj *img,shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *status)
 {
   double line_length, max_line_length, segment_length, total_length, distance_along_segment;
   double fwd_line_length, rev_line_length, text_length, text_start_length;
@@ -1290,7 +1290,7 @@ labelPathObj* msPolylineLabelPath(shapeObj *p, int min_length, fontSetObj *fonts
     goto FAILURE;
   
   /* determine the total length of the text */
-  if (msGetLabelSizeEx(string, label, &bbox, fontset, scalefactor, MS_FALSE, &offsets) == MS_FAILURE) {
+  if (msGetLabelSize(img,string, label, &bbox, fontset, scalefactor, MS_FALSE, &offsets) == MS_FAILURE) {
     *status = MS_FAILURE;
     goto FAILURE;
   }

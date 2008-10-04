@@ -11,8 +11,11 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+- refactor msGetLabelSizeEx (now merged with msGetLabelSize) (#2390)
 
-- memory leak in msInsertLayer, from Ned Horning (#2784)
+- native label size computation for AGG when using angle follow (#2357)
+
+- memory leak in msInsertLayer, from Ned Harding (#2784)
 
 - label size computation refactoring (#2390)
 
