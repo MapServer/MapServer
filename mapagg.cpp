@@ -725,10 +725,7 @@ public:
                 fx += glyph->advance_x;
                 fy += glyph->advance_y;
                 if(advances) {
-                    double x,y;
-                    x=glyph->advance_x;
-                    m_fman.add_kerning(&x,&y);
-                    (*advances)[curGlyph++]=x;
+                    (*advances)[curGlyph++]=glyph->advance_x;
                 }
             }
         }
