@@ -2451,10 +2451,13 @@ void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
                 if(dx*dx+dy*dy>1)
                     k++;
             }
-            /*always keep last point*/
             point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
             point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
-            shape->line[i].numpoints=k+1;
+            if(point[k].x!=point[k-1].x || point[k].y!=point[k-1].y) { 
+                shape->line[i].numpoints=k+1; 
+            } else { 
+                shape->line[i].numpoints=k; 
+            }
         }
     }
     else if(shape->type == MS_SHAPE_POLYGON) {

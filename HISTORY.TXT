@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-2)
 --------------------------------
+- fix a bug with shapes with duplicate end points. was causing NaNs 
+  in the angle follow placement code (#2695)
 
 - memory leak in msInsertLayer, from Ned Horning (#2784)
 
