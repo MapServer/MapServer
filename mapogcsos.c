@@ -2362,9 +2362,9 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
                        "msSOSGetCapabilities()");
             return msSOSException(map, "offering_timeextent", "InvalidParameterValue");
         }
-    
-        if (n == 2) /* end time is empty. It is going to be set as "now" */
-          pszEndTime = tokens[1];
+    */ 
+    /*    if (n == 2) */ /* end time is empty. It is going to be set as "now" */
+    /*      pszEndTime = tokens[1];
     
           psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix), tokens[0], pszEndTime));
         psNode = xmlAddChild(psRootNode, msSOSAddTimeNode(psNsOm, psNsGml, tokens[0], pszEndTime));
