@@ -11,6 +11,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+- fix a bug with shapes with duplicate end points. was causing nans
+  in the angle follow placement code (#2695)
+
 - refactor msGetLabelSizeEx (now merged with msGetLabelSize) (#2390)
 
 - native label size computation for AGG when using angle follow (#2357)
