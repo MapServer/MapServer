@@ -11,6 +11,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+- fix some integer rounding errors in the agg line offseter (#2659)
+
 - fix a bug with shapes with duplicate end points. was causing nans
   in the angle follow placement code (#2695)
 

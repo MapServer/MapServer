@@ -1472,7 +1472,7 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
 
 shapeObj* msOffsetPolyline(shapeObj *p, int offsetx, int offsety) {
     int i, j, first,idx;
-    int ox=0, oy=0, limit;
+    double ox=0, oy=0, limit;
     double dx,dy,dx0=0, dy0=0,x, y, x0=0.0, y0=0.0, k=0.0, k0=0.0, q=0.0, q0=0.0;
     float par=(float)0.71;
     shapeObj *ret = (shapeObj*)malloc(sizeof(shapeObj));
@@ -1500,15 +1500,15 @@ shapeObj* msOffsetPolyline(shapeObj *p, int offsetx, int offsety) {
                     }
                     ox=(dy>0) ? -offsetx : offsetx;
                 } else {
-                    k = (double)dy/(double)dx;
+                    k = dy/dx;
                     if(MS_ABS(k)<0.5) {
                         oy = (dx>0) ? offsetx : -offsetx;
                     } else {
                         if (MS_ABS(k)<2.1) {
-                            oy = (int) ((dx>0) ? offsetx*par : -offsetx*par);
-                            ox = (int) ((dy>0) ? -offsetx*par : offsetx*par);
+                            oy = (dx>0) ? offsetx*par : -offsetx*par;
+                            ox = (dy>0) ? -offsetx*par : offsetx*par;
                         } else
-                            ox = (int)((dy>0) ? -offsetx : offsetx);
+                            ox = (dy>0) ? -offsetx : offsetx;
                     }
                     q = p->line[i].point[j-1].y+oy - k*(p->line[i].point[j-1].x+ox);
                 }
