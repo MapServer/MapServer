@@ -357,10 +357,13 @@ int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *form
     int bot_idx, top_idx;
     int remap[256];
     int reqcolors = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
+    const char *interlace;
     ms_png_info info;
     info.width = gdImageSX(img);
     info.height = gdImageSY(img);
-    if( strcasecmp("ON", msGetOutputFormatOption( format, "INTERLACE", "ON" )) == 0 )
+    interlace = msGetOutputFormatOption( format, "INTERLACE", "OFF" );
+    if( strcasecmp("ON", interlace) == 0 || strcasecmp("YES", interlace) == 0
+            || strcasecmp("1", interlace) == 0)
         info.interlaced=1;
     else
         info.interlaced=0;
