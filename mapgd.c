@@ -3592,7 +3592,7 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 #ifdef USE_GD_PNG
     int force_pc256 = MS_FALSE;
     int force_palette = MS_FALSE;
-
+    int force_new_quantize = MS_FALSE;
     if( format->imagemode == MS_IMAGEMODE_RGB  || format->imagemode == MS_IMAGEMODE_RGBA ) {
       const char *force_string = msGetOutputFormatOption( format, "QUANTIZE_FORCE", "OFF" );
       if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
@@ -3601,10 +3601,15 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
       force_string = msGetOutputFormatOption( format, "PALETTE_FORCE", "OFF" );
       if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
         force_palette = MS_TRUE;
+    
+     force_string = msGetOutputFormatOption( format, "QUANTIZE_NEW", "OFF" );
+      if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
+        force_new_quantize = MS_TRUE;
     }
+
 #ifdef USE_RGBA_PNG
-    if( format->imagemode == MS_IMAGEMODE_RGBA ) {
-      if( force_palette )
+    if( format->imagemode == MS_IMAGEMODE_RGBA || (force_pc256 && force_new_quantize)) {
+      if( force_palette)
         return msSaveImageRGBAPalette(img, ctx ,format);
       else if( force_pc256 )
         return msSaveImageRGBAQuantized(img, ctx ,format);

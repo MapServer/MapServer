@@ -11,6 +11,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+- added formatoption QUANTIZE_NEW to force going through the pngquant 
+  quantization algorithm instead of the GD one for imagemode RGB (the 
+  GD one can be kind of buggy)
+
 - fix some integer rounding errors in the agg line offseter (#2659)
 
 - fix a bug with shapes with duplicate end points. was causing nans
