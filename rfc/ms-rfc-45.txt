@@ -1,0 +1,209 @@
+:Date: 2008/08/26
+:Authors: Stephen Lime, Håvard Tveite, Thomas Bonfort
+:Contact: Steve.Lime@DNR.State.MN.US
+:Status: Draft
+:Version: MapServer 5.4
+
+
+(*partiallly derived in part from a document prepared by Håvard and discussions with other developers working on cartographic output*)
+
+Proposed Changes
+################
+
+Scale Dependant Rendering
+*************************
+
+- All symbols can be scaled. When SYMBOLSCALEDENOM is given for a layer, the
+  layer and all of its symbols (height, width, line widths, line patterns, line
+  dashes, ...) are scaled. 
+
+- CLASS->STYLE->SIZE gives the vertical dimension of the symbol's bounding box
+  at the symbol scale (given by SYMBOLSCALEDENOM). For all other scales, the
+  symbol is scaled proportionally to the mapscale.
+
+- Symbol scaling can be limited by using CLASS->STYLE->MINSIZE and
+  CLASS->STYLE->MAXSIZE. By using these MINSIZE/MAXSIZE, one can ensure that a
+  symbol will never be rendered smaller/larger than the given sizes.
+
+Precise Symbol Placement
+************************
+
+Harmonize the placement of symbols relative to the feature (point or line)
+being drawn.
+
+Fractional values for sizes
+===========================
+All symbols sizes and symbol geometries should be specified and
+represented as double - AGG supports fractional line widths so users
+should be able to set them explicitly. GD could either round or
+truncate/cast the double to an int.
+
+- STYLE->SIZE/MINSIZE/MAXSIZE - styleObj.size/minsize/maxsize
+- STYLE->WIDTH/MINWIDTH/MAXWITH - styleObj.width/minwidth/maxwidth
+- STYLE->GAP - style.gap (replaces symbol->gap)
+- STYLE->PATTERN (new feature) - styleObj.pattern
+- STYLE-> CENTER/ORIGIN (new feature) - styleObj.centerx/centery and originx/originy
+- STYLE->OFFSET - styleObj.offsetx and styleObj.offsety
+- LABEL->SIZE/MINSIZE/MAXSIZE - labelObj.size/minsize/maxsize
+- LABEL->OFFSET - labelObj.offsetx and labelObj.offsety
+
+CENTER/ORIGIN [x y]
+===================
+Defines the centre of the symbol using decimal pixels (x axis increasing to
+the right, y axis increasing downwards).
+
+- Is used for placing a point symbol on the map or on a "decorated" line
+- Defines the center of rotation if an ANGLE is specified for point symbols.
+- Default value is the centre of the symbol's bounding box.
+- Applies to TYPE ellipse, vector, pixmap, truetype.
+
+ANGLE [double|attribute] [DEFAULT|CLOCKWISE|COMPASS]
+====================================================
+
+- STYLE-> ANGLE [double|attribute] [DEFAULT|CLOCKWISE|COMPASS]
+- LABEL-> ANGLE [double|auto|follow|attribute] [DEFAULT|CLOCKWISE|COMPASS]
+
+To specify rotation, you need a point of rotation, a reference direction, a
+direction of rotation and a unit of rotation.
+
+Currently, angles for labels have a reference direction to the right (west),
+and a counter-clockwise direction of rotation specified in degrees (0..360).
+
+When specifying direction/rotation for symbols, compass direction is often used
+(reference direction north and clockwise rotation). A mechanism to specify mode
+of rotation/direction is needed.
+
+The default would be reference direction east and counter-clockwise rotation.
+If possible, something like:
+
+Modes of operation
+------------------
+- DEFAULT reference direction to the right (east), counter-clockwise direction
+  of rotation.
+- CLOCKWISE reference direction to the right (east), clockwise direction of
+  rotation.
+- COMPASS reference direction to the north, clockwise direction of rotation
+  (compass directions). 
+
+Behavior
+--------
+- For symbols of Type HATCH, this is the angle of the hatched lines.
+- For points, this specifies the rotation of a symbol around its defined
+  CENTER.
+- For point symbols on lines, this specifies the rotation of the symbol
+  relative to the direction of the line (0 - the symbol's x-axis is oriented
+  along the line), or a fixed compass direction for the symbols orientation
+  (COMPASS).
+- For polygon fills this specifies the rotation of the pattern given by its
+  defining symbol. For its use with hatched lines, see Example#8 in the SYMBOL
+  examples.
+
+Keywords moved from SYMBOL to STYLE
+***********************************
+
+FIXME GAP [double]+ END
+=======================
+Gap between point symbols when rendered on a linear geometry (used eg. for
+shields)
+ 
+- Given in decimal pixels (at the symbol scale). Defines distances (centre to
+  centre) between point symbols for line decoration at the layers symbol scale
+
+- Default is 0.0. The first double gives the distance from the start of the
+  line to the first point symbol, the rest of the doubles constitute a pattern
+  of distances between the point symbols for the rest of the line.
+
+- GAP distances are scaled. Applies to TYPEs vector, ellipse, pixmap, truetype
+
+- FIXME : When drawing the symbol along a line segment, a negative GAP will add
+  180 degrees to the angle.
+
+- A GAP of 0 (the default value) will cause MapServer to use the symbol as a
+  brush to draw the line. (AGG only)
+
+- The defined centre (CENTER) of the symbol is used when placing the symbol on
+  the line. When placing the symbol on the line, the symbol is oriented in such
+  a way that the symbol's x-axis is directed along the line.
+
+
+DASHPATTERN ([double on] [double off])+ END
+===========================================
+- renamed from STYLE
+- the distances are scaled
+
+
+more to come?
+=============
+
+New Functionnality
+##################
+
+add MINSCALEDENOM/MAXSCALEDENOM parameters to styleObj
+******************************************************
+this would allow doing things like removing outlines or the hollow portions of
+"tube" line work based on scale.
+
+add LABELMETHOD to layerObj
+***************************
+(or perhaps just method to labelObj?)
+ 
+- this would allow users to choose label placement algorithms that meet their
+  needs. For example, in D2 below improving label placement will come with a
+  reduction in performance. In some situations simply using a shapes bounding
+  box center is perfectly adequate.
+
+- The default would be the improved placement in D2.
+
+add LABEL to layersObj
+*************************
+so that a default can be defined for all classes (sort of like templates). A
+class label would take precedent.
+
+add OUTLINEWIDTH to styleObj
+****************************
+eg for drawing road lines with a cached outline
+ 
+- It is currently impossible to have scale dependant road networks with a fixed
+  width outline, this addition will remedy this.
+ 
+- This would also be a shorthand to be able to specify an outline for linear
+  networks, without having to specify two style blocks.
+
+
+add TYPE to styleObj for line and polygon types 
+***********************************************
+
+modifies how the current shape is interpreted. Applies to line and polygon
+layers (for now: any ideas for applying this to point layers?)
+ 
+- TYPE BBOX : use the style to render the bounding box of the current shape
+
+- TYPE CENTROID : render a single pointObj at the centroid of the feature
+
+- TYPE VERTEXES : render a pointObj at each vertex of the shape.
+  - how to specify angle (follows line direction, fixed, ....)
+  - need to specify a way to ignore the start and/or end points of the feature
+
+- TYPE START/END : render a pointObj at the start/end of the feature. would be
+  used for example to add arrowheads to lines
+  - default angle is direction of first/last segment
+
+
+Files Affected
+##############
+
+* maplexer.l: C4, C5
+* mapgd.c: B1, C2, C3, C4
+* mapagg.cpp: B1, C2, C3, C4
+* mapfile.c: B1, C1, C2, C3, C4, C5, C6, D1
+* mapdraw.c: C1, C5, C6, D1
+* mapprimitive.c: C5, D2
+
+Bug IDs
+#######
+
+Individual modifications will be tracked with their own tickets which will
+be listed here.
+
+ - B1: http://trac.osgeo.org/mapserver/ticket/2766
+
