@@ -101,6 +101,19 @@ Behavior
   defining symbol. For its use with hatched lines, see Example#8 in the SYMBOL
   examples.
 
+Stable rendering for tile generation
+====================================
+*how and with what keywords?*
+
+polygon fill symbols
+--------------------
+give hatches and vector fills a stable geographical coordinate origin (0,0) to
+better support tiling and continuous rendering of neighbouring polygons
+
+labelling
+---------
+TODO
+
 Keywords moved from SYMBOL to STYLE
 ***********************************
 
