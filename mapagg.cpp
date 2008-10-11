@@ -1567,6 +1567,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
 {
     double width;
     double nwidth, size;
+    double ox,oy;
     symbolObj *symbol;
     AGGMapserverRenderer* ren = getAGGRenderer(image);
     shapeObj *offsetLine = NULL;
@@ -1590,6 +1591,9 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     width = MS_MAX(width, style->minwidth);
     width = MS_MIN(width, style->maxwidth);
     
+    ox = style->offsetx * scalefactor;
+    oy = style->offsety * scalefactor;
+
     agg::rgba8 agg_color,agg_ocolor,agg_bcolor;
     agg_color=getAGGColor(&style->color,style->opacity);
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
@@ -1609,13 +1613,13 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     
     line_adaptor *lines;
     if(style->offsety==-99) {
-        offsetLine = msOffsetPolyline(p,style->offsetx,style->offsety);
+        offsetLine = msOffsetPolyline(p,ox,-99);
     }
     if(offsetLine!=NULL) {
         lines=new line_adaptor(offsetLine);
     } else {
         if(style->offsetx!=0 || style->offsety!=0) {
-            lines=new offset_line_adaptor(p,style->offsetx,style->offsety);
+            lines=new offset_line_adaptor(p,ox,oy);
         } else {
             lines=new line_adaptor(p);
         }
@@ -1782,7 +1786,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     AGGMapserverRenderer* ren = getAGGRenderer(image);
     polygon_adaptor *polygons;
     if(style->offsety==-99) {
-        offsetPolygon = msOffsetPolyline(p,ox,style->offsety);
+        offsetPolygon = msOffsetPolyline(p,ox,-99);
     }
     if(offsetPolygon!=NULL) {
         polygons=new polygon_adaptor(offsetPolygon);

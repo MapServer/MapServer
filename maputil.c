@@ -1470,7 +1470,7 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
     msTransformShapeToPixel(shape, extent, cellsize);
 }
 
-shapeObj* msOffsetPolyline(shapeObj *p, int offsetx, int offsety) {
+shapeObj* msOffsetPolyline(shapeObj *p, double offsetx, double offsety) {
     int i, j, first,idx;
     double ox=0, oy=0, limit;
     double dx,dy,dx0=0, dy0=0,x, y, x0=0.0, y0=0.0, k=0.0, k0=0.0, q=0.0, q0=0.0;
