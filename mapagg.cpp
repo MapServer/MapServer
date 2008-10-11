@@ -1804,12 +1804,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     
     if(style->symbol == 0 || symbol->type==MS_SYMBOL_SIMPLE) {
         // simply draw a solid fill and outline of the specified colors
-        if(MS_VALID_COLOR(style->outlinecolor))
-            ren->renderPathSolid(*polygons,agg_color,agg_ocolor,style->width);
-            //use outline width without scalefactor applied
-        else
-            //draw a one pixel outline of the same color as the fill to avoid a faint outline
-            ren->renderPathSolid(*polygons,agg_color,agg_color,1); 
+        ren->renderPathSolid(*polygons,agg_color,agg_ocolor,style->width);
     }
     else {
         switch(symbol->type) {
@@ -1865,12 +1860,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             int ph = MS_NINT(symbol->sizey*d);
             if((pw <= 1) && (ph <= 1)) {
                 //use a solid fill if the symbol is too small
-                if(MS_VALID_COLOR(style->outlinecolor))
-                    ren->renderPathSolid(*polygons,agg_color,agg_ocolor,width);
-                else
-                    //render a one pixel outline of the same color as the fill to prevent a
-                    //faint due to antialiasing with contiguous polygons
-                    ren->renderPathSolid(*polygons,agg_color,agg_color,1);
+                ren->renderPathSolid(*polygons,agg_color,agg_ocolor,width);
                 break;
             }
             agg::path_storage path = imageVectorSymbolAGG(symbol,d);
@@ -1894,13 +1884,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             
             //draw an outline on the shape
             //TODO: change this as outlinecolor should be used for the symbol, not the shape
-            agg::rgba8 *oc=NULL;
-            if(agg_ocolor.a)
-                oc=&agg_ocolor;
-            else if(agg_bcolor.a)
-                oc=&agg_bcolor; /*avoid faint outline*/
-            if(oc!=NULL)
-                ren->renderPathSolid(*polygons,AGG_NO_COLOR,*oc,1);
+            ren->renderPathSolid(*polygons,AGG_NO_COLOR,agg_ocolor,1);
             
             if(bRotated) { // free the rotated symbol
                 msFreeSymbol(symbol);
@@ -1921,10 +1905,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             int pw = MS_NINT(symbol->sizex*d);
             int ph = MS_NINT(symbol->sizey*d);
             if((ph <= 1) && (pw <= 1)) { /* No sense using a tile, just fill solid */
-                if(MS_VALID_COLOR(style->outlinecolor))
-                    ren->renderPathSolid(*polygons,agg_color,agg_ocolor,style->width);
-                else
-                    ren->renderPathSolid(*polygons,agg_color,agg_color,1);
+                ren->renderPathSolid(*polygons,agg_color,agg_ocolor,style->width);
             }
             else {
                 agg::path_storage path;
@@ -1944,13 +1925,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 
                 //draw an outline on the shape
                 //TODO: change this as outlinecolor should be used for the symbol, not the shape
-                agg::rgba8 *oc=NULL;
-                if(agg_ocolor.a)
-                    oc=&agg_ocolor;
-                else if(agg_bcolor.a)
-                    oc=&agg_bcolor;
-                if(oc!=NULL)
-                    ren->renderPathSolid(*polygons,AGG_NO_COLOR,*oc,1);
+                ren->renderPathSolid(*polygons,AGG_NO_COLOR,agg_ocolor,1);
             }
         }
         break;
@@ -1961,9 +1936,9 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             double gap=(symbol->gap>0)?symbol->gap*size:0;
             ren->renderPathTruetypeTiled(*polygons,font,(unsigned int)((unsigned char)symbol->character[0]),size,
                     gap,agg_color,agg_bcolor,agg_ocolor);
-            //if a background was specified, draw an outline of the color
-            //to avoid faint outlines in contiguous polygons
-            ren->renderPathSolid(*polygons,AGG_NO_COLOR,agg_bcolor,1);
+            //FIXME: allow drawing an outline on the polygon to avoid
+            //faint outlines
+            //ren->renderPathSolid(*polygons,AGG_NO_COLOR,agg_bcolor,1);
         }
         break;
         case MS_SYMBOL_CARTOLINE:

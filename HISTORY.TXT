@@ -11,6 +11,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+- stop drawing an artificial outline around polygons to ensure
+  continuity - users needing this feature will have to explicitely
+  add an outlinecolor of the same color as the fill color
+
 - added formatoption QUANTIZE_NEW to force going through the pngquant 
   quantization algorithm instead of the GD one for imagemode RGB (the 
   GD one can be kind of buggy)
