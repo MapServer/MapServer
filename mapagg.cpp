@@ -1782,13 +1782,13 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     AGGMapserverRenderer* ren = getAGGRenderer(image);
     polygon_adaptor *polygons;
     if(style->offsety==-99) {
-        offsetPolygon = msOffsetPolyline(p,style->offsetx,style->offsety);
+        offsetPolygon = msOffsetPolyline(p,ox,style->offsety);
     }
     if(offsetPolygon!=NULL) {
         polygons=new polygon_adaptor(offsetPolygon);
     } else {
         if(style->offsetx!=0 || style->offsety!=0) {
-            polygons = new offset_polygon_adaptor(p,style->offsetx,style->offsety);
+            polygons = new offset_polygon_adaptor(p,ox,oy);
         } else {
             polygons = new polygon_adaptor(p);
         }
