@@ -297,6 +297,10 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
 
     if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
     {
+        if (bufferLength < SQL_COLUMN_NAME_MAX_LENGTH + 1)
+            strncpy(buffer, columnName, bufferLength);
+        else
+            strncpy(buffer, columnName, SQL_COLUMN_NAME_MAX_LENGTH + 1);
         return 1;
     }
     else
