@@ -724,8 +724,6 @@ int msMSSQL2008LayerClose(layerObj *layer)
     if(layerinfo) {
         msConnPoolRelease(layer, layerinfo->conn);
 
-        msMSSQL2008CloseConnection(layerinfo->conn);
-
         layerinfo->conn = NULL;
 
 		if(layerinfo->user_srid) {
