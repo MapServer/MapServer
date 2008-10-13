@@ -11,6 +11,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+
+- new polygon label placement algorithm (#2793)
+
 - stop drawing an artificial outline around polygons to ensure
   continuity - users needing this feature will have to explicitely
   add an outlinecolor of the same color as the fill color
