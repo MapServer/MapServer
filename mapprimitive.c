@@ -971,9 +971,70 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
   return;
 }
 
-/* Currently unused. */
-#ifdef notdef
-static int get_centroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
+static double getRingArea(lineObj *ring)
+{
+  int i;
+  double s=0;
+
+  for(i=0; i<ring->numpoints-1; i++)
+    s += (ring->point[i].x*ring->point[i+1].y - ring->point[i+1].x*ring->point[i].y);
+
+  return (MS_ABS(s/2));
+}
+
+double msGetPolygonArea(shapeObj *p) 
+{
+  int i;
+  double area=0;
+
+  for(i=0; i<p->numlines; i++) {
+    if(isOuterRing(p, i))
+      area += getRingArea(&(p->line[i]));
+    else
+      area -= getRingArea(&(p->line[i])); /* hole */
+  }
+
+  return area;
+}
+
+/*
+** Computes the center of gravity for a polygon based on it's largest outer ring only.
+*/
+static int getPolygonCenterOfGravity(shapeObj *p, pointObj *lp) 
+{
+  int i, j;
+  double area=0;
+  double sx=0, sy=0, tsx, tsy, s; /* sums */
+  double a;
+
+  double largestArea=0;
+
+  for(i=0; i<p->numlines; i++) {
+    if(isOuterRing(p, i)) {
+      tsx = tsy = s = 0; /* reset the ring sums */
+      for(j=0; j<p->line[i].numpoints-1; j++) {
+        a = p->line[i].point[j].x*p->line[i].point[j+1].y - p->line[i].point[j+1].x*p->line[i].point[j].y;
+        s += a;
+        tsx += (p->line[i].point[j].x + p->line[i].point[j+1].x)*a;
+        tsy += (p->line[i].point[j].y + p->line[i].point[j+1].y)*a;
+      }
+      area = MS_ABS(s/2);
+
+      if(area > largestArea) {
+        largestArea = area;
+        sx = tsx;
+        sy = tsy;
+      }
+    }
+  }
+
+  lp->x = sx/(6*largestArea);
+  lp->y = sy/(6*largestArea);
+
+  return MS_SUCCESS;
+}
+
+static int getPolygonCentroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
 {
   int i,j;
   double cent_weight_x=0.0, cent_weight_y=0.0;
@@ -984,7 +1045,7 @@ static int get_centroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
     for(j=1; j<p->line[i].numpoints; j++) {
       *miny = MS_MIN(*miny, p->line[i].point[j].y);
       *maxy = MS_MAX(*maxy, p->line[i].point[j].y);
-      len = length(p->line[i].point[j-1], p->line[i].point[j]);
+      len = msDistancePointToPoint(&(p->line[i].point[j-1]), &(p->line[i].point[j]));
       cent_weight_x += len * ((p->line[i].point[j-1].x + p->line[i].point[j].x)/2);
       cent_weight_y += len * ((p->line[i].point[j-1].y + p->line[i].point[j].y)/2);
       total_len += len;
@@ -992,14 +1053,13 @@ static int get_centroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
   }
 
   if(total_len == 0)
-    return(-1);
+    return(MS_FAILURE);
 
   lp->x = cent_weight_x / total_len;
   lp->y = cent_weight_y / total_len;
   
-  return(0);
+  return(MS_SUCCESS);
 }
-#endif
 
 #define NUM_SCANLINES 5
 
@@ -1009,13 +1069,15 @@ static int get_centroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
 int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
 {
   double slope;
-  pointObj *point1=NULL, *point2=NULL;
-  int i, j, k, nfound;
-  double x, y, *xintersect, temp;
-  double hi_y, lo_y;
+  pointObj *point1=NULL, *point2=NULL, cp;
+  int i, j, nfound;
+  double x, y, *intersect, temp;
+  double min, max;
   int wrong_order, n;
   double len, max_len=0;
-  double skip, minx, maxx, maxy, miny;
+  double minx, maxx, maxy, miny;
+
+  int method = 2;
 
   msComputeBounds(p);
   minx = p->bounds.minx;
@@ -1023,58 +1085,85 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
   maxx = p->bounds.maxx;
   maxy = p->bounds.maxy;
 
-  if(min_dimension != -1)
-    if(MS_MIN(maxx-minx,maxy-miny) < min_dimension) return(MS_FAILURE);
+  cp.x = (maxx+minx)/2.0;
+  cp.y = (maxy+miny)/2.0;
 
-  /* if(get_centroid(p, lp, &miny, &maxy) == -1) return(MS_FAILURE); */
-  lp->x = (maxx+minx)/2.0;
-  lp->y = (maxy+miny)/2.0;
+  switch (method) {
+  case 0: /* MBR */
+    lp->x = cp.x;
+    lp->y = cp.y;
+    break;
+  case 1: /* centroid */
+    if(getPolygonCentroid(p, lp, &miny, &maxy) != MS_SUCCESS) return(MS_FAILURE);  
+    break;
+  case 2: /* center of gravity */
+    if(getPolygonCenterOfGravity(p, lp) != MS_SUCCESS) return(MS_FAILURE);
+    break;
+  }
 
-  if(msIntersectPointPolygon(lp, p) == MS_TRUE) return(MS_SUCCESS);
+  if(msIntersectPointPolygon(lp, p) == MS_TRUE) {
+    double dist, min_dist=-1;
 
-  /* do it the hard way - scanline */
+    /* compute a distance to the polygon */
+    for(j=0;j<p->numlines;j++) {
+      for(i=1; i<p->line[j].numpoints; i++) {
+        dist = msDistancePointToSegment(lp, &(p->line[j].point[i-1]), &(p->line[j].point[i]));
+        if((dist < min_dist) || (min_dist < 0)) min_dist = dist;
+      }
+    }
 
-  skip = (maxy - miny)/NUM_SCANLINES;
+    if(min_dist > .1*MS_MAX(maxx-minx, maxy-miny))
+      return(MS_SUCCESS); /* point is not too close to the edge */
+  }
+
+  // printf("label: %s\n", p->text);
+  // printf("    bbox: %g %g %g %g\n",minx, miny, maxx, maxy);
+  // printf("    center: %g %g\n", cp.x, cp.y);
+  // printf("    center of gravity: %g %g\n", lp->x, lp->y);
+  // printf("    dx: %g, dy: %g\n", lp->x-cp.x, lp->y-cp.y);
+  // printf("    distance to parent shape: %g\n", min_dist);
+  // return MS_SUCCESS;
 
   n=0;
   for(j=0; j<p->numlines; j++) /* count total number of points */
     n += p->line[j].numpoints;
-  xintersect = (double *)calloc(n, sizeof(double));
+  if(!(intersect = (double *) calloc(n, sizeof(double)))) {
+    msSetError(MS_MEMERR, "Allocation of intersection array failed.", "msPolygonLabelPoint()");
+    return MS_FAILURE;
+  }
 
-  for(k=1; k<=NUM_SCANLINES; k++) { /* sample the shape in the y direction */
-    
-    y = maxy - k*skip; 
+  if(MS_ABS((int)lp->x - (int)cp.x) > MS_ABS((int)lp->y - (int)cp.y)) { /* center horizontally, fix y */
+
+    y = lp->y;
 
     /* need to find a y that won't intersect any vertices exactly */  
-    hi_y = y - 1; /* first initializing lo_y, hi_y to be any 2 pnts on either side of lp->y */
-    lo_y = y + 1;
+    max = y - 1; /* first initializing min, max to be any 2 pnts on either side of y */
+    min = y + 1;
     for(j=0; j<p->numlines; j++) {
-      if((lo_y < y) && (hi_y >= y)) 
-    break; /* already initialized */
+      if((min < y) && (max >= y))  break;
       for(i=0; i < p->line[j].numpoints; i++) {
-    if((lo_y < y) && (hi_y >= y)) 
-      break; /* already initialized */
-    if(p->line[j].point[i].y < y)
-      lo_y = p->line[j].point[i].y;
-    if(p->line[j].point[i].y >= y)
-      hi_y = p->line[j].point[i].y;
+        if((min < y) && (max >= y))  break;
+        if(p->line[j].point[i].y < y) 
+          min = p->line[j].point[i].y;
+        if(p->line[j].point[i].y >= y) 
+          max = p->line[j].point[i].y;
       }
     }
 
     n=0;
     for(j=0; j<p->numlines; j++) {
       for(i=0; i < p->line[j].numpoints; i++) {
-        if((p->line[j].point[i].y < y) && ((y - p->line[j].point[i].y) < (y - lo_y)))
-          lo_y = p->line[j].point[i].y;
-        if((p->line[j].point[i].y >= y) && ((p->line[j].point[i].y - y) < (hi_y - y)))
-          hi_y = p->line[j].point[i].y;
+        if((p->line[j].point[i].y < y) && ((y - p->line[j].point[i].y) < (y - min)))
+          min = p->line[j].point[i].y;
+        if((p->line[j].point[i].y >= y) && ((p->line[j].point[i].y - y) < (max - y)))
+          max = p->line[j].point[i].y;
       }
     }
 
-    if(lo_y == hi_y) 
+    if(min == max) 
       return (MS_FAILURE);
     else  
-      y = (hi_y + lo_y)/2.0;    
+      y = (max + min)/2.0;    
     
     nfound = 0;
     for(j=0; j<p->numlines; j++) { /* for each line */
@@ -1091,42 +1180,120 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
             slope = (point2->x - point1->x) / (point2->y - point1->y);
       
           x = point1->x + (y - point1->y)*slope;
-          xintersect[nfound++] = x;
-        } /* End of checking this edge */
+          intersect[nfound++] = x;
+        } /* end checking this edge */
     
-        point1 = point2;  /* Go on to next edge */
+        point1 = point2; /* next edge */
       }
-    } /* Finished the scanline */
+    } /* finished line */
     
-    /* First, sort the intersections */
+    /* sort the intersections */
     do {
       wrong_order = 0;
       for(i=0; i < nfound-1; i++) {
-        if(xintersect[i] > xintersect[i+1]) {
+        if(intersect[i] > intersect[i+1]) {
           wrong_order = 1;
-          SWAP(xintersect[i], xintersect[i+1], temp);
+          SWAP(intersect[i], intersect[i+1], temp);
         }
       }
     } while(wrong_order);
     
-    /* Great, now find longest span */
+    /* find longest span */
     for(i=0; i < nfound; i += 2) {
-      len = fabs(xintersect[i] - xintersect[i+1]);
+      len = fabs(intersect[i] - intersect[i+1]);
       if(len > max_len) {
         max_len = len;
-        lp->x = (xintersect[i] + xintersect[i+1])/2;
-        lp->y = y;
+        lp->x = (intersect[i] + intersect[i+1])/2;
+        // lp->y = y;
+      }
+    }
+  } else { /* center vertically, fix x */
+    x = lp->x;
+
+    /* need to find a x that won't intersect any vertices exactly */  
+    max = x - 1; /* first initializing min, max to be any 2 pnts on either side of x */
+    min = x + 1;
+    for(j=0; j<p->numlines; j++) {
+      if((min < x) && (max >= x))  break;
+      for(i=0; i < p->line[j].numpoints; i++) {
+        if((min < x) && (max >= x))  break;
+        if(p->line[j].point[i].x < x) 
+          min = p->line[j].point[i].x;
+        if(p->line[j].point[i].x >= x) 
+          max = p->line[j].point[i].x;
+      }
+    }
+
+    n=0;
+    for(j=0; j<p->numlines; j++) {
+      for(i=0; i < p->line[j].numpoints; i++) {
+        if((p->line[j].point[i].x < x) && ((x - p->line[j].point[i].x) < (x - min)))
+          min = p->line[j].point[i].x;
+        if((p->line[j].point[i].x >= x) && ((p->line[j].point[i].x - x) < (max - x)))
+          max = p->line[j].point[i].x;
+      }
+    }
+
+    if(min == max) 
+      return (MS_FAILURE);
+    else  
+      x = (max + min)/2.0;
+    
+    nfound = 0;
+    for(j=0; j<p->numlines; j++) { /* for each line */
+      
+      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
+      for(i=0; i < p->line[j].numpoints; i++) {
+        point2 = &( p->line[j].point[i] );
+    
+        if(EDGE_CHECK(point1->x, x, point2->x) == CLIP_MIDDLE) {
+      
+          if(point1->x == point2->x)
+            continue; /* ignore vertical edges */
+          else if(point1->y == point2->y)
+            y = point1->y; /* for a horizontal edge we know y */
+          else {
+            slope = (point2->x - point1->x) / (point2->y - point1->y);
+            y = (x - point1->x)/slope + point1->y;
+          }
+
+          intersect[nfound++] = y;
+        } /* end checking this edge */
+    
+        point1 = point2; /* next edge */
+      }
+    } /* finished line */
+    
+    /* sort the intersections */
+    do {
+      wrong_order = 0;
+      for(i=0; i < nfound-1; i++) {
+        if(intersect[i] > intersect[i+1]) {
+          wrong_order = 1;
+          SWAP(intersect[i], intersect[i+1], temp);
+        }
+      }
+    } while(wrong_order);
+    
+    /* find longest span */
+    for(i=0; i < nfound; i += 2) {
+      len = fabs(intersect[i] - intersect[i+1]);
+      if(len > max_len) {        
+        max_len = len;
+        lp->y = (intersect[i] + intersect[i+1])/2;
+        // lp->x = x;
       }
     }
   }
 
-  free(xintersect);
+  free(intersect);
 
   if(max_len > 0)
     return(MS_SUCCESS);
   else
     return(MS_FAILURE);
 }
+
 
 /*
 ** Find center of longest segment in polyline p. The polyline must have been converted
