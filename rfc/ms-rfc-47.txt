@@ -5,7 +5,7 @@ MS RFC 47: Move IGNORE_MISSING_DATA to run-time configuration
 :Date: 2008/10/09
 :Author: Paul Ramsey
 :Contact: pramsey@cleverelephant.ca
-:Last Edited: 2008/10/00
+:Last Edited: 2008/10/15
 :Status: Proposed
 :Version: MapServer 5.4
 
@@ -17,25 +17,25 @@ Making the options for ignoring missing data in tile-indexed layers and WMS clie
 Technical Solution
 ------------------
 
-Currently Mapserver has only compile-time control of behavior when files referenced in tile indexes are missing, via the IGNORE_MISSING_DATA define, and that behavior is applied globally.
+Currently Mapserver has only compile-time (./configure --ignore-missing-data) control of behavior when files referenced in tile indexes are missing, via the IGNORE_MISSING_DATA define, and that behavior is applied globally.
 
 Under this RFC, the missing data behavior will be defined:
 
  * at run time
- * on a per-layer basis
+ * globally for a map file
 
 As well, the option to "fail on a missing layer" will be added to the WMS client code, which currently defaults to "ignore on a missing layer".
 
-All changes will preserve the current default behavior in cases where new behavior is not requested by the user: missing data in tileindexes will continue to cause failure and missing WMS layers will continue to be ignored.
+All changes will preserve the current default behavior in cases where new behavior is not requested by the user: missing data in tileindexes will continue to cause failure and missing WMS layers will continue to be ignored, unless Mapserver is compiled with --ignore-missing-data.
 
-A map-level and layer-level configuration option will be added, "ON_MISSING_DATA", with the following valid values: "IGNORE", "LOG", "FAIL".  The default map-level behavior will be "FAIL", unless Mapserver is compiled with --ignore-missing-data, in which case it will be "LOG".  Thus will preserve the current behavior for all legacy mapfiles and compile set-ups.
+A map-level configuration option will be added, CONFIG "ON_MISSING_DATA" "[ACTION]", with the following valid actions: "IGNORE", "LOG", "FAIL".  The default map-level behavior will be "FAIL", unless Mapserver is compiled with --ignore-missing-data, in which case it will be "LOG".  This will preserve the current behavior for all legacy mapfiles and compile set-ups.
 
 At the same time, this ticket (#2722) can probably be tracked down and resolved.
 
 Mapscript Implications
 ----------------------
 
-This option may be altered via Mapscript, presumably.
+None.
 
 Files Affected
 --------------
@@ -46,8 +46,6 @@ Files Affected
  mapogr.c
  mapraster.c
  maprasterquery.c
- mapfile.c
- maplexer.l
 
 * Documentation will be updated to reflect the new feature
 
