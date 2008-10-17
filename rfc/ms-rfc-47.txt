@@ -30,6 +30,8 @@ All changes will preserve the current default behavior in cases where new behavi
 
 A map-level configuration option will be added, CONFIG "ON_MISSING_DATA" "[ACTION]", with the following valid actions: "IGNORE", "LOG", "FAIL".  The default map-level behavior will be "FAIL", unless Mapserver is compiled with --ignore-missing-data, in which case it will be "LOG".  This will preserve the current behavior for all legacy mapfiles and compile set-ups.
 
+In the case of "LOG" behavior, the logging will only occur if the mapfile is set up for logging: DEBUG is set and MS_ERRORFILE is set.  Documentation must note that DEBUG and MS_ERRORFILE need to be set.
+
 At the same time, this ticket (#2722) can probably be tracked down and resolved.
 
 Mapscript Implications
