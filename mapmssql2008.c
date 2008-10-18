@@ -1471,7 +1471,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
         return MS_FAILURE;
     }
 
-	return msMSSQL2008LayerGetShapeRandom(layer, shape, 0);
+	return msMSSQL2008LayerGetShapeRandom(layer, shape, &(layerinfo->row_num));
 }
 
 /* Query the DB for info about the requested table */
