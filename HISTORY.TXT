@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fixed msOGRGetValues function to return default values if the object 
+  type is not TEXT. (#2311)
+
 - Fix for the access violation caused by msMSSQL2008LayerGetShape (#2795)
 
 - Fixed msMSSQL2008LayerGetItems to retrieve the column names properly (#2791)

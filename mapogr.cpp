@@ -565,33 +565,45 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 OGR_ST_Destroy(hStylePart);
         }
         int bDefault;
-        if (hLabelStyle && itemindexes[i] == MSOGR_LABELTEXTINDEX)
+        if (itemindexes[i] == MSOGR_LABELTEXTINDEX)
         {
-            values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
+            if (hLabelStyle == NULL)
+                values[i] = strdup("");
+            else
+                values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
                                                   OGRSTLabelTextString, 
                                                   &bDefault));
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
         }
-        else if (hLabelStyle && itemindexes[i] == MSOGR_LABELANGLEINDEX)
+        else if (itemindexes[i] == MSOGR_LABELANGLEINDEX)
         {
-            values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
+            if (hLabelStyle == NULL)
+                values[i] = strdup("0");
+            else
+                values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
                                                   OGRSTLabelAngle, 
                                                   &bDefault));
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
         }
-        else if (hLabelStyle && itemindexes[i] == MSOGR_LABELSIZEINDEX)
+        else if (itemindexes[i] == MSOGR_LABELSIZEINDEX)
         {
-            values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
+            if (hLabelStyle == NULL)
+                values[i] = strdup("0");
+            else
+                values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
                                                   OGRSTLabelSize, 
                                                   &bDefault));
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
         }
-        else if (hLabelStyle && itemindexes[i] == MSOGR_LABELCOLORINDEX)
+        else if (itemindexes[i] == MSOGR_LABELCOLORINDEX)
         {
-            values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
+            if (hLabelStyle == NULL)
+                values[i] = strdup("#000000");
+            else
+                values[i] = strdup(OGR_ST_GetParamStr(hLabelStyle, 
                                                   OGRSTLabelFColor, 
                                                   &bDefault));
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
@@ -616,29 +628,41 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 delete poStylePart;
         }
         GBool bDefault;
-        if (poLabelStyle && itemindexes[i] == MSOGR_LABELTEXTINDEX)
+        if (itemindexes[i] == MSOGR_LABELTEXTINDEX)
         {
-            values[i] = strdup(poLabelStyle->TextString(bDefault));
+            if (poLabelStyle == NULL)
+                values[i] = strdup("");
+            else
+                values[i] = strdup(poLabelStyle->TextString(bDefault));
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
         }
-        else if (poLabelStyle && itemindexes[i] == MSOGR_LABELANGLEINDEX)
+        else if (itemindexes[i] == MSOGR_LABELANGLEINDEX)
         {
-            values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelAngle,
+            if (poLabelStyle == NULL)
+                values[i] = strdup("0");
+            else
+                values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelAngle,
                                                          bDefault));
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
         }
-        else if (poLabelStyle && itemindexes[i] == MSOGR_LABELSIZEINDEX)
+        else if (itemindexes[i] == MSOGR_LABELSIZEINDEX)
         {
-            values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelSize,
+            if (poLabelStyle == NULL)
+                values[i] = strdup("0");
+            else
+                values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelSize,
                                                          bDefault));
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
         }
-        else if (poLabelStyle && itemindexes[i] == MSOGR_LABELCOLORINDEX)
+        else if (itemindexes[i] == MSOGR_LABELCOLORINDEX)
         {
-            values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelFColor,
+            if (poLabelStyle == NULL)
+                values[i] = strdup("#000000");
+            else
+                values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelFColor,
                                                          bDefault));
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
