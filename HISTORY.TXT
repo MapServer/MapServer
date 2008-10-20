@@ -12,6 +12,13 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fix for the access violation caused by msMSSQL2008LayerGetShape (#2795)
+
+- Fixed msMSSQL2008LayerGetItems to retrieve the column names properly (#2791)
+
+- Prevent from calling msMSSQL2008CloseConnection from msMSSQL2008LayerClose
+  causing memory corruption issues (#2790) 
+
 - new polygon label placement algorithm (#2793)
 
 - stop drawing an artificial outline around polygons to ensure
