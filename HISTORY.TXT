@@ -12,6 +12,14 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-2)
 --------------------------------
+
+- Fix for the access violation caused by msMSSQL2008LayerGetShape (#2795)
+
+- Fixed msMSSQL2008LayerGetItems to retrieve the column names properly (#2791)
+
+- Prevent from calling msMSSQL2008CloseConnection from msMSSQL2008LayerClose
+  causing memory corruption issues (#2790) 
+
 - fix some integer rounding errors in the agg line offseter (#2659)
 
 - fix a bug with shapes with duplicate end points. was causing NaNs 
