@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- raster query fix for tileindex with relative paths (#2722)
+
 - Fixed msOGRGetValues function to return default values if the object 
   type is not TEXT. (#2311)
 

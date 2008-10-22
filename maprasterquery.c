@@ -667,6 +667,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     char szPath[MS_MAXPATHLEN];
     rectObj searchrect;
     rasterLayerInfo *rlinfo = NULL;
+    char tiAbsFilePath[MS_MAXPATHLEN];
+    char *tiAbsDirPath = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Get the layer info.                                             */
@@ -771,10 +773,20 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 /* -------------------------------------------------------------------- */
         msGDALInitialize();
 
+        /*
+        ** If using a tileindex then build the path relative to that file if SHAPEPATH is not set.
+        */
+        if(layer->tileindex && !map->shapepath) { 
+            msBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
+            tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
+            msBuildPath(szPath, tiAbsDirPath, filename); 
+            free(tiAbsDirPath);
+        } else {
+            msBuildPath3(szPath, map->mappath, map->shapepath, filename);
+        }
+
         msAcquireLock( TLOCK_GDAL );
-        hDS = GDALOpen(
-            msBuildPath3( szPath, map->mappath, map->shapepath, filename ), 
-            GA_ReadOnly );
+        hDS = GDALOpen(szPath, GA_ReadOnly );
         
         if( hDS == NULL )
         {
