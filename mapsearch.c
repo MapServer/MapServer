@@ -9,7 +9,7 @@
  *  
  *   http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
  *
- * The appropriate copyright notice accompanys the funtion definition.
+ * The appropriate copyright notice accompanies the funtion definition.
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
