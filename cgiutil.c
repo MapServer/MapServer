@@ -5,6 +5,8 @@
  * Purpose:  cgiRequestObj and CGI parameter parsing. 
  * Author:   Steve Lime and the MapServer team.
  *
+ * Notes: Portions derived from NCSA HTTPd Server's example CGI programs (util.c). 
+ *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
