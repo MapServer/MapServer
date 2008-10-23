@@ -5,6 +5,9 @@
  * Purpose:  Various string handling functions.
  * Author:   Steve Lime and the MapServer team.
  *
+ * Notes: A couple of string handling functions (strrstr, strlcat) were taken from
+ * other sources. Copyright notices accompany those functions below. 
+ *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
