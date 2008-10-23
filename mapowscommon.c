@@ -493,7 +493,7 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
   /* add attributes to root element */
   xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST version);
 
-  if (language !=  "undefined") {
+  if (strcasecmp(language, "undefined") == 0) {
     if (ows_version == OWS_1_0_0) {
       ows_version_string = strdup("1.0.0");
       xmlNewProp(psRootNode, BAD_CAST "language", BAD_CAST language);
