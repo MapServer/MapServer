@@ -41,6 +41,15 @@ from testing import mapscript, MapTestCase
 # ===========================================================================
 # Test begins now
 
+class NewLabelsTestCase(MapTestCase):
+
+    def testLabelBinding(self):
+        """attribute binding can be set and get"""
+        new_label = mapscript.labelObj()
+        assert (not new_label.getBinding(mapscript.MS_LABEL_BINDING_COLOR))
+        new_label.setBinding(mapscript.MS_LABEL_BINDING_COLOR,"NEW_BINDING")
+        assert (new_label.getBinding(mapscript.MS_LABEL_BINDING_COLOR) == "NEW_BINDING")
+
 class LabelCacheMemberTestCase(MapTestCase):
 
     def testCacheMemberText(self):

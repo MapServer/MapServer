@@ -1116,6 +1116,14 @@ Currently supported classes, properties and methods:
            This would bind the color parameter with the data (ie will extract
            the value of the color from the field called "FIELD_NAME_COLOR"
    
+   string getBinding(const labelbinding)
+       Get the attribute binding for a specfiled label property. Returns null if there
+       is no binding for this property.
+
+        Example:
+           $oLabel->setbinding(MS_LABEL_BINDING_COLOR, "FIELD_NAME_COLOR");
+           echo $oLabel->getbinding(MS_LABEL_BINDING_COLOR); // FIELD_NAME_COLOR
+
    int removeBinding(const labelbinding)
         Remove the attribute binding for a specfiled style property. Returns true on success.  
         Example:
@@ -1727,7 +1735,15 @@ Constructor:
            $oStyle->setbinding(MS_STYLE_BINDING_COLOR, "FIELD_NAME_COLOR");
            This would bind the color parameter with the data (ie will extract
            the value of the color from the field called "FIELD_NAME_COLOR"
-   
+
+   string getBinding(const stylebinding)
+       Get the attribute binding for a specfiled style property. Returns null if there
+       is no binding for this property.
+
+        Example:
+           $oStyle->setbinding(MS_STYLE_BINDING_COLOR, "FIELD_NAME_COLOR");
+           echo $oStyle->getbinding(MS_STYLE_BINDING_COLOR); // FIELD_NAME_COLOR
+
    int removeBinding(const stylebinding)
         Remove the attribute binding for a specfiled style property. Returns true on success.
         Added in MapServer 5.0.

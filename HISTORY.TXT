@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- MapScript: Added getBinding method to label and style object (#2670)
+
 - mapowscommon.c: use strcasecmp to check for language value
 
 - raster query fix for tileindex with relative paths (#2722)

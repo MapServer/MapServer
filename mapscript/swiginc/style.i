@@ -153,4 +153,11 @@
 
     return MS_SUCCESS;
   }
+
+  char *getBinding(int binding) 
+  {
+    if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return NULL;
+
+    return self->bindings[binding].item;
+  }
 }

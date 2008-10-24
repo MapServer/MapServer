@@ -48,6 +48,13 @@
     return MS_SUCCESS;
   }
 
+  char *getBinding(int binding) 
+  {
+    if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return NULL;
+
+    return self->bindings[binding].item;
+  }
+
   int setBinding(int binding, char *item) 
   {
     if(!item) return MS_FAILURE;
