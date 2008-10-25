@@ -1022,8 +1022,8 @@ static int getPolygonCenterOfGravity(shapeObj *p, pointObj *lp)
 
       if(area > largestArea) {
         largestArea = area;
-        sx = tsx;
-        sy = tsy;
+        sx = s>0?tsx:-tsx;
+        sy = s>0?tsy:-tsy;
       }
     }
   }
