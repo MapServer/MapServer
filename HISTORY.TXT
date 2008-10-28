@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- mapogcfilter.c: increase array size (code was assigning to out
+  of bounds subscript)
+
 - MapScript: Added getBinding method to label and style object (#2670)
 
 - mapowscommon.c: use strcasecmp to check for language value

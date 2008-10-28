@@ -3617,7 +3617,7 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
     char *pszWild = NULL;
     char *pszSingle = NULL;
     char *pszEscape = NULL;
-    char szTmp[3];
+    char szTmp[4];
 
     int nLength=0, i=0, iBuffer = 0;
     int  bCaseInsensitive = 0;
