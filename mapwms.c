@@ -735,7 +735,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       if ( MS_ABS((reqy - (double)map->height)) > 1.0 )
       {
           if (map->debug)
-              msDebug("msWMSLoadGetMapParams(): enabling non-square pixels.");
+              msDebug("msWMSLoadGetMapParams(): enabling non-square pixels.\n");
           msSetConfigOption(map, "MS_NONSQUARE", "YES");
           nonsquare_enabled = MS_TRUE;
       }

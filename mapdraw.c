@@ -224,7 +224,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         {
             map->gt.need_geotransform = MS_TRUE;
             if (map->debug)
-                msDebug( "msDrawMap(): kicking into non-square pixel preserving mode." );
+                msDebug( "msDrawMap(): kicking into non-square pixel preserving mode.\n" );
         }
         map->cellsize = (cellsize_x*0.5 + cellsize_y*0.5);
     }

@@ -44,6 +44,13 @@
 ** Geometry is requested as Base64 encoded WKB. The endian is always requested
 ** as the client endianness.
 **
+** msPostGISLayerWhichShapes creates SQL based on DATA and LAYER state, 
+** executes it, and places the un-read PGresult handle in the layerinfo->pgresult,
+** setting the layerinfo->rownum to 0.
+**
+** msPostGISNextShape reads a row, increments layerinfo->rownum, and returns 
+** MS_SUCCESS, until rownum reaches ntuples, and it returns MS_DONE instead.
+**
 */
 
 #include <assert.h>
@@ -680,20 +687,35 @@ int msPostGISParseData(layerObj *layer) {
     return MS_SUCCESS;
 }
 
-
 /*
-** Decode a base64 character
+** Decode a base64 character.
 */
-unsigned char msPostGISBase64DecodeChar(char c) {
-    if (c >= 'A' && c <= 'Z') return(c - 'A');
-    if (c >= 'a' && c <= 'z') return(c - 'a' + 26);
-    if (c >= '0' && c <= '9') return(c - '0' + 52);
-    if (c == '+')             return 62;
-    return 63;
-}
+unsigned char msPostGISBase64DecodeChar[128] = {
+    /* not Base64 characters */
+    63,63,63,63,63,63,63,63,63,63,63,63,63,63,63,
+    63,63,63,63,63,63,63,63,63,63,63,63,63,63,63,
+    63,63,63,63,63,63,63,63,63,63,63,63,63,
+    /* + */
+    62,
+    /* not Base64 characters */
+    63,63,63,63,
+    /* 0-9 */
+    52,53,54,55,56,57,58,59,60,61,
+    /* not Base64 characters */
+    63,63,63,63,63,63,63,
+    /* A-Z */
+    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,
+    /* not Base64 characters */
+    63,63,63,63,63,63,
+    /* a-z */
+    26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,
+    /* not Base64 characters */
+    63,63,63,63,63 };
+
 
 /*
-** Decode base64 string "src" (null terminated) into "dest" (not null terminated).
+** Decode base64 string "src" (null terminated) 
+** into "dest" (not null terminated).
 ** Returns length of decoded array or 0 on failure.
 */
 int msPostGISBase64Decode(unsigned char *dest, const char *src) {
@@ -715,8 +737,8 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src) {
         }
 
         for (k=0; k<j; k+=4) {
-            char c1='A', c2='A', c3='A', c4='A';
-            unsigned char b1=0, b2=0, b3=0, b4=0;
+            register unsigned char c1='A', c2='A', c3='A', c4='A';
+            register unsigned char b1=0, b2=0, b3=0, b4=0;
 
             c1 = buf[k];
 
@@ -730,10 +752,10 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src) {
                 c4 = buf[k+3];
             }
 
-            b1 = msPostGISBase64DecodeChar(c1);
-            b2 = msPostGISBase64DecodeChar(c2);
-            b3 = msPostGISBase64DecodeChar(c3);
-            b4 = msPostGISBase64DecodeChar(c4);
+            b1 = msPostGISBase64DecodeChar[c1];
+            b2 = msPostGISBase64DecodeChar[c2];
+            b3 = msPostGISBase64DecodeChar[c3];
+            b4 = msPostGISBase64DecodeChar[c4];
 
             *p++=((b1<<2)|(b2>>4) );
             if (c3 != '=') {
