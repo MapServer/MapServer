@@ -594,6 +594,7 @@ int msPostGISParseData(layerObj *layer) {
         layerinfo->uid = (char*) malloc((tmp - (pos_uid + 14)) + 1);
         strncpy(layerinfo->uid, pos_uid + 14, tmp - (pos_uid + 14));
         (layerinfo->uid)[tmp - (pos_uid + 14)] = '\0'; /* null terminate it */
+        msStringTrim(layerinfo->uid);
     }
 
     /*
@@ -612,6 +613,7 @@ int msPostGISParseData(layerObj *layer) {
             layerinfo->srid = (char*) malloc(slength + 1);
             strncpy(layerinfo->srid, pos_srid + 12, slength);
             (layerinfo->srid)[slength] = '\0'; /* null terminate it */
+            msStringTrim(layerinfo->srid);
         }
     }
 
@@ -646,11 +648,13 @@ int msPostGISParseData(layerObj *layer) {
     layerinfo->geomcolumn = (char*) malloc((pos_scn - data) + 1);
     strncpy(layerinfo->geomcolumn, data, pos_scn - data);
     (layerinfo->geomcolumn)[pos_scn - data] = '\0';
+    msStringTrim(layerinfo->geomcolumn);
 
     /* Copy the table name or sub-select clause */
     layerinfo->fromsource = (char*) malloc((pos_opt - (pos_scn + 6)) + 1);
     strncpy(layerinfo->fromsource, pos_scn + 6, pos_opt - (pos_scn + 6));
     (layerinfo->fromsource)[pos_opt - (pos_scn + 6)] = '\0';
+    msStringTrim(layerinfo->fromsource);
 
     /* Something is wrong, our goemetry column and table references are not there. */
     if (strlen(layerinfo->fromsource) < 1 || strlen(layerinfo->geomcolumn) < 1) {

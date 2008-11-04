@@ -352,10 +352,38 @@ char *msStringChop(char *string) {
   return(string);
 }
 
-/**
- * remove leading white spaces and shif evey thing to the left
- */
+/*
+** Trim leading and trailing white space.
+*/
+void msStringTrim(char *str)
+{
+    int i;
 
+    /* Send nulls home without supper. */
+    if( ! str ) return;
+
+    /* Move non-white string to the front. */
+    i = strspn(str, " ");
+    if(i) {
+        memmove(str, str + i, strlen(str) - i + 1);
+    }
+    /* Nothing left? Exit. */
+    if(strlen(str) == 0) {
+        return;
+    }
+    /* Null-terminate end of non-white string. */
+    for(i=strlen(str)-1; i>=0; i--) { /* step backwards from end */
+        if(str[i] != ' ') { 
+	        str[i+1] = '\0'; 
+	        return; 
+        }
+    }
+    return;
+}
+
+/*
+** Remove leading white spaces and shift everything to the left.
+*/
 char *msStringTrimLeft(char *string)
 {
     char *read, *write;
@@ -390,7 +418,7 @@ char *msStringTrimLeft(char *string)
 }
     
 /* ------------------------------------------------------------------------------- */
-/*       Trims leading blanks from a string                                        */
+/*       Trims trailing blanks from a string                                        */
 /* ------------------------------------------------------------------------------- */
 void msStringTrimBlanks(char *string)
 {

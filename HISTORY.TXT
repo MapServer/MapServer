@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- mapstring.c: msStringTrim(*char str), front-and-back whitespace trimmer
+
 - mappostgis.c: re-write to remove binary cursors and break up 
   logic into smaller parts, add support for maxfeatures
 

@@ -1602,8 +1602,9 @@ MS_DLL_EXPORT int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj quer
 MS_DLL_EXPORT int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, 
                          pointObj p, double buffer );
 
-
-MS_DLL_EXPORT void msStringTrimBlanks(char *string); /* in mapstring.c */
+/* in mapstring.c */
+MS_DLL_EXPORT void msStringTrim(char *str); 
+MS_DLL_EXPORT void msStringTrimBlanks(char *string); 
 MS_DLL_EXPORT char *msStringTrimLeft(char *string);
 MS_DLL_EXPORT char *msStringChop(char *string);
 MS_DLL_EXPORT void msStringTrimEOL(char *string);
