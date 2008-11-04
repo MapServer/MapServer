@@ -1801,8 +1801,6 @@ MS_DLL_EXPORT int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *shape,
                          OGRwkbGeometryType type);
 #endif /* USE_OGR */
 
-MS_DLL_EXPORT int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record);
-MS_DLL_EXPORT int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record);
 MS_DLL_EXPORT int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img);
 
 MS_DLL_EXPORT int msInitializeVirtualTable(layerObj *layer);
@@ -1814,7 +1812,7 @@ MS_DLL_EXPORT int msShapeFileLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msTiledSHPLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msSDELayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msOGRLayerInitializeVirtualTable(layerObj *layer);
-MS_DLL_EXPORT int msPOSTGISLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msPostGISLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msWFSLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msGraticuleLayerInitializeVirtualTable(layerObj *layer);

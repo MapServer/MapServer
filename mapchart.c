@@ -48,7 +48,9 @@ MS_CVSID("$Id$")
 */
 int findChartPoint(mapObj *map, shapeObj *shape, int width, int height, pointObj *center) {
     int middle,numpoints,idx,offset;
+    #ifdef USE_AGG
     double invcellsize = 1.0/map->cellsize; /*speed up MAP2IMAGE_X/Y_IC_DBL*/
+    #endif
     switch(shape->type) {
         case MS_SHAPE_POINT:
             if( MS_RENDERER_GD(map->outputformat) ) {

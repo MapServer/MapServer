@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- mappostgis.c: re-write to remove binary cursors and break up 
+  logic into smaller parts, add support for maxfeatures
+
 - mapogcfilter.c: increase array size (code was assigning to out
   of bounds subscript)
 

@@ -3,10 +3,12 @@
  *
  * Project:  MapServer
  * Purpose:  PostGIS CONNECTIONTYPE support.
- * Author:   Dave Blaseby / Paul Ramsey, Refractions Research
+ * Author:   Paul Ramsey <pramsey@cleverelephant.ca>
+ *           Dave Blasby <dblasby@gmail.com>
  *
  ******************************************************************************
- * Copyright (c) 1996-2005 Regents of the University of Minnesota.
+ * Copyright (c) 2008 Paul Ramsey
+ * Copyright (c) 2002 Refractions Research
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -15,7 +17,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -27,10 +29,28 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* $Id$ */
+/*
+** Some theory of operation:
+**
+** Build SQL from DATA statement and LAYER state. SQL is always of the form:
+**
+**    SELECT [this, that, other], geometry, uid 
+**      FROM [table|(subquery) as sub] 
+**      WHERE [box] AND [filter]
+** 
+** So the geometry always resides at layer->numitems and the uid always 
+** resides at layer->numitems + 1
+**
+** Geometry is requested as Base64 encoded WKB. The endian is always requested
+** as the client endianness.
+**
+*/
+
 #include <assert.h>
+#include <string.h>
 #include "mapserver.h"
 #include "maptime.h"
+#include "mappostgis.h"
 
 #ifndef FLT_MAX
 #define FLT_MAX 25000000.0
@@ -38,746 +58,72 @@
 
 #ifdef USE_POSTGIS
 
-#ifndef LITTLE_ENDIAN
-#define LITTLE_ENDIAN 1
-#endif
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN 2
-#endif
-
-#include "libpq-fe.h"
-#include <string.h>
-#include <ctype.h> /* tolower() */
-
 MS_CVSID("$Id$")
 
-typedef struct ms_POSTGIS_layer_info_t
-{
-    char        *sql;           /* sql query to send to DB */
-    PGconn      *conn;          /* connection to db */
-    long        row_num;        /* what row is the NEXT to be read (for random access) */
-    PGresult    *query_result;  /* for fetching rows from the db */
-    char        *urid_name;     /* name of user-specified unique identifier or OID */
-    char        *user_srid;     /* zero length = calculate, non-zero means using this value! */
-    int gBYTE_ORDER;            /* no longer a global variable */
+/*
+** msPostGISCloseConnection()
+**
+** Handler registered witih msConnPoolRegister so that Mapserver
+** can clean up open connections during a shutdown.
+*/
+void msPostGISCloseConnection(void *pgconn) {
+    PQfinish((PGconn*)pgconn);
+}
 
-    char        cursor_name[128]; /* active cursor (empty string if none) */
+/*
+** msPostGISCreateLayerInfo()
+*/
+msPostGISLayerInfo *msPostGISCreateLayerInfo(void) {
+    msPostGISLayerInfo *layerinfo = malloc(sizeof(msPostGISLayerInfo));
+    layerinfo->sql = NULL;
+    layerinfo->srid = NULL;
+    layerinfo->uid = NULL;
+    layerinfo->pgconn = NULL;
+    layerinfo->pgresult = NULL;
+    layerinfo->geomcolumn = NULL;
+    layerinfo->fromsource = NULL;
+    layerinfo->endian = 0;
+    layerinfo->rownum = 0;
+    return layerinfo;
+}
 
-} msPOSTGISLayerInfo;
+/*
+** msPostGISFreeLayerInfo()
+*/
+void msPostGISFreeLayerInfo(layerObj *layer) {
+    msPostGISLayerInfo *layerinfo = NULL;
+    layerinfo = (msPostGISLayerInfo*)layer->layerinfo;
+    if ( layerinfo->sql ) free(layerinfo->sql);
+    if ( layerinfo->uid ) free(layerinfo->uid);
+    if ( layerinfo->srid ) free(layerinfo->srid);
+    if ( layerinfo->geomcolumn ) free(layerinfo->geomcolumn);
+    if ( layerinfo->fromsource ) free(layerinfo->fromsource);
+    if ( layerinfo->pgresult ) PQclear(layerinfo->pgresult);
+    if ( layerinfo->pgconn ) msConnPoolRelease(layer, layerinfo->pgconn);
+    free(layerinfo);
+    layer->layerinfo = NULL;
+}
 
-#define DATA_ERROR_MESSAGE \
-    "%s" \
-    "Error with POSTGIS data variable. You specified '%s'.\n" \
-    "Standard ways of specifiying are : \n(1) 'geometry_column from geometry_table' \n(2) 'geometry_column from (sub query) as foo using unique column name using SRID=srid#' \n\n" \
-    "Make sure you put in the 'using unique  column name' and 'using SRID=#' clauses in.\n\n" \
-    "For more help, please see http://postgis.refractions.net/documentation/ \n\n" \
-    "Mappostgis.c - version of Jan 23/2004.\n"
 
-
-void postresql_NOTICE_HANDLER(void *arg, const char *message)
-{
+/*
+** postgresqlNoticeHandler()
+**
+** Propagate messages from the database to the Mapserver log,
+** set in PQsetNoticeProcessor during layer open.
+*/
+void postresqlNoticeHandler(void *arg, const char *message) {
     layerObj *lp;
-    lp = (layerObj*) arg;
+    lp = (layerObj*)arg;
 
     if (lp->debug) {
-        msDebug("%s", message);
+        msDebug("%s\n", message);
     }
 }
 
-msPOSTGISLayerInfo *getPostGISLayerInfo(const layerObj *layer)
-{
-    return layer->layerinfo;
-}
-
-void setPostGISLayerInfo(layerObj *layer, msPOSTGISLayerInfo *postgislayerinfo)
-{
-     layer->layerinfo = (void*) postgislayerinfo;
-}
-
-/* remove white space */
-/* dont send in empty strings or strings with just " " in them! */
-char* removeWhite(char *str)
-{
-    int     initial;
-    char    *orig, *loc;
-
-    initial = strspn(str, " ");
-    if(initial) {
-        memmove(str, str + initial, strlen(str) - initial + 1);
-    }
-    /* now final */
-    if(strlen(str) == 0) {
-        return str;
-    }
-    if(str[strlen(str) - 1] == ' ') {
-        /* have to remove from end */
-        orig = str;
-        loc = &str[strlen(str) - 1];
-        while((*loc = ' ') && (loc >orig)) {
-            *loc = 0;
-            loc--;
-        }
-    }
-    return str;
-}
-
-/* TODO Take a look at glibc's strcasestr */
-char *strstrIgnoreCase(const char *haystack, const char *needle)
-{
-    char    *hay_lower;
-    char    *needle_lower;
-    int     len_hay,len_need;
-    int     t;
-    char    *loc;
-    int     match = -1;
-
-    len_hay = strlen(haystack);
-    len_need = strlen(needle);
-
-    hay_lower = (char*) malloc(len_hay + 1);
-    needle_lower =(char*) malloc(len_need + 1);
-
-
-    for(t = 0; t < len_hay; t++) {
-        hay_lower[t] = tolower(haystack[t]);
-    }
-    hay_lower[t] = 0;
-
-    for(t = 0; t < len_need; t++) {
-        needle_lower[t] = tolower(needle[t]);
-    }
-    needle_lower[t] = 0;
-
-    loc = strstr(hay_lower, needle_lower);
-    if(loc) {
-        match = loc - hay_lower;
-    }
-
-    free(hay_lower);
-    free(needle_lower);
-
-    return (char *) (match < 0 ? NULL : haystack + match);
-}
-
-static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, int debug);
-
-static void msPOSTGISCloseConnection(void *conn_handle)
-{
-    PQfinish((PGconn*) conn_handle);
-}
-
-/* takes a connection and ensures that it is in a valid transactional state */
-/* performing PQreset() and/or ROLLBACK on it as necessary */
-int msPOSTGISSanitizeConnection(PGconn *conn)
-{
-    int conn_bad = 0;
-    PGTransactionStatusType trans_status;
-
-    if (PQstatus(conn) == CONNECTION_BAD)
-    {
-        msDebug("Warning: resetting bad database connection due to PQstatus(conn) == CONNECTION_BAD in msPOSTGISSanitizeConnection()\n");
-        conn_bad = 1;
-    }
-    else if (PQtransactionStatus(conn) == PQTRANS_UNKNOWN)
-    {
-	msDebug("Warning: resetting bad database connection due to PQtransactionStatus(conn) == PQTRANS_UNKNOWN in msPOSTGISSanitizeConnection()\n");
-        conn_bad = 1;
-    }
-
-    /* if connection is in bad, PQreset() it */
-    if (conn_bad)
-    {
-        PQreset(conn);
-        if (PQstatus(conn) == CONNECTION_BAD)
-        {
-            msSetError(MS_QUERYERR, "Database connection status is CONNECTION_BAD even after attempt to PQreset() it: %s", "msPOSTGISSanitizeConnection()", PQerrorMessage(conn));
-            return MS_FAILURE;
-        }
-        else if (PQtransactionStatus(conn) == PQTRANS_UNKNOWN) 
-        {
-            msSetError(MS_QUERYERR, "Database connection transaction status is PQTRANS_UNKNOWN even after attempt to PQreset() it: %s", "msPOSTGISSanitizeConnection()", PQerrorMessage(conn)); 
-            return MS_FAILURE;
-        }
-    }
-
-    if (PQtransactionStatus(conn) == PQTRANS_ACTIVE) /* no connection should have an active async call */
-    {
-        msSetError(MS_QUERYERR, "Refusing to sanitize a database connection with a pending asynchronous query (transaction status of PQTRANS_ACTIVE).", "msPOSTGISSanitizeConnection()");
-	return MS_FAILURE;
-    }
-
-    trans_status = PQtransactionStatus(conn);
-    if (trans_status == PQTRANS_INTRANS || trans_status == PQTRANS_INERROR) /* idle, in a transaction block or a failed transaction block */
-    {
-        PGresult *rb_res = PQexec(conn, "ROLLBACK");
-        if (!rb_res || PQresultStatus(rb_res) != PGRES_COMMAND_OK) {
-            msSetError(MS_QUERYERR, "Error executing POSTGIS ROLLBACK statement: %s", "msPOSTGISSanitizeConnection()", PQerrorMessage(conn));
-
-            if(rb_res) {
-                PQclear(rb_res);
-            }
-
-            return MS_FAILURE;
-        }
-        PQclear(rb_res);
-    }
- 
-    return MS_SUCCESS;
-}
-
-/*static int gBYTE_ORDER = 0;*/
-
-/* open up a connection to the postgresql database using the connection string in layer->connection */
-/* ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv" */
-int msPOSTGISLayerOpen(layerObj *layer)
-{
-    msPOSTGISLayerInfo  *layerinfo;
-    int                 order_test = 1;
-
-    if(layer->debug) {
-        msDebug("msPOSTGISLayerOpen called datastatement: %s\n", layer->data);
-    }
-
-    if(getPostGISLayerInfo(layer)) {
-        if(layer->debug) {
-            msDebug("msPOSTGISLayerOpen :: layer is already open!!\n");
-        }
-        return MS_SUCCESS;  /* already open */
-    }
-
-    if(!layer->data) {
-        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerOpen()", "", "Error parsing POSTGIS data variable: nothing specified in DATA statement.\n\nMore Help:\n\n");
-
-        return MS_FAILURE;
-    }
-
-    /* have to setup a connection to the database */
-
-    layerinfo = (msPOSTGISLayerInfo*) malloc(sizeof(msPOSTGISLayerInfo));
-    layerinfo->sql = NULL; /* calc later */
-    layerinfo->row_num = 0;
-    layerinfo->query_result = NULL;
-    layerinfo->urid_name = NULL;
-    layerinfo->user_srid = NULL;
-    layerinfo->conn = NULL;
-    layerinfo->gBYTE_ORDER = 0;
-    layerinfo->cursor_name[0] = '\0';
-
-    layerinfo->conn = (PGconn *) msConnPoolRequest(layer);
-    if(!layerinfo->conn) {
-        char *conn_decrypted;
-        if(layer->debug) {
-            msDebug("MSPOSTGISLayerOpen -- shared connection not available.\n");
-        }
-
-        if(!layer->connection) {
-          msSetError(MS_MISCERR, "Missing CONNECTION keyword.", "msPOSTGISLayerOpen()");
-          return MS_FAILURE;
-        }
-
-        /* Decrypt any encrypted token in connection and attempt to connect */
-        conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
-        if (conn_decrypted == NULL) {
-          return(MS_FAILURE);  /* An error should already have been produced */
-        }
-   
-        layerinfo->conn = PQconnectdb(conn_decrypted);
-
-        msFree(conn_decrypted);
-        conn_decrypted = NULL;
-
-        if(!layerinfo->conn || PQstatus(layerinfo->conn) == CONNECTION_BAD) {
-            char *index, *maskeddata;
-            if (layer->debug)
-                msDebug("msPOSTGISLayerOpen() FAILURE!!!\n");
-
-            maskeddata = strdup(layer->connection);
-            index = strstr(maskeddata, "password=");
-            if(index != NULL) {
-              index = (char *)(index + 9);
-              while(*index != '\0' && *index != ' ') {
-                  *index = '*';
-                  index++;
-              }
-            }
-            
-            msSetError(MS_QUERYERR, "Couldn't make connection to DB with connect string '%s'.\n\nError reported was '%s'.\n\n\nThis error occured when trying to make a connection to the specified postgresql server.  \n\nMost commonly this is caused by \n(1) incorrect connection string \n(2) you didnt specify a 'user=...' in your connection string \n(3) the postmaster (postgresql server) isnt running \n(4) you are not allowing TCP/IP connection to the postmaster \n(5) your postmaster is not running on the correct port - if its not on 5432 you must specify a 'port=...' \n (6) the security on your system does not allow the webserver (usually user 'nobody') to make socket connections to the postmaster \n(7) you forgot to specify a 'host=...' if the postmaster is on a different machine\n(8) you made a typo \n  ", "msPOSTGISLayerOpen()", maskeddata, PQerrorMessage(layerinfo->conn));
-
-            free(maskeddata);
-            free(layerinfo);
-            return MS_FAILURE;
-        }
-
-        msConnPoolRegister(layer, layerinfo->conn, msPOSTGISCloseConnection);
-
-        PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER, (void *) layer);
-    }
-
-
-    if(((char *) &order_test)[0] == 1) {
-        layerinfo->gBYTE_ORDER = LITTLE_ENDIAN;
-    } else {
-        layerinfo->gBYTE_ORDER = BIG_ENDIAN;
-    }
-
-    setPostGISLayerInfo(layer, layerinfo);
-    return MS_SUCCESS;
-}
-
-/* Return MS_TRUE if layer is open, MS_FALSE otherwise. */
-int msPOSTGISLayerIsOpen(layerObj *layer)
-{
-    return getPostGISLayerInfo(layer) ? MS_TRUE : MS_FALSE;
-}
-
-
-/* Free the itemindexes array in a layer. */
-void msPOSTGISLayerFreeItemInfo(layerObj *layer)
-{
-    if(layer->debug) {
-        msDebug("msPOSTGISLayerFreeItemInfo called\n");
-    }
-
-    if(layer->iteminfo) {
-        free(layer->iteminfo);
-    }
-    layer->iteminfo = NULL;
-}
-
-
-/* allocate the iteminfo index array - same order as the item list */
-int msPOSTGISLayerInitItemInfo(layerObj *layer)
-{
-    int     i;
-    int     *itemindexes ;
-
-    if (layer->debug) {
-        msDebug("msPOSTGISLayerInitItemInfo called\n");
-    }
-
-    if(layer->numitems == 0) {
-        return MS_SUCCESS;
-    }
-
-    if(layer->iteminfo) {
-        free(layer->iteminfo);
-    }
-
-    layer->iteminfo = (int *) malloc(sizeof(int) * layer->numitems);
-    if(!layer->iteminfo) {
-        msSetError(MS_MEMERR, NULL, "msPOSTGISLayerInitItemInfo()");
-
-        return MS_FAILURE;
-    }
-
-    itemindexes = (int*)layer->iteminfo;
-    for(i = 0; i < layer->numitems; i++) {
-        itemindexes[i] = i; /* last one is always the geometry one - the rest are non-geom */
-    }
-
-    return MS_SUCCESS;
-}
-
-
-/* Since we now have PostGIST 0.5, and 0.6  calling conventions, */
-/* we have to attempt to handle the database in several ways.  If we do the wrong */
-/* thing, then it'll throw an error and we can rollback and try again. */
-/*  */
-/* 2. attempt to do 0.6 calling convention (spatial ref system needed) */
-/* 3. attempt to do 0.5 calling convention (no spatial ref system) */
-
-/* The difference between 0.5 and 0.6 is that the bounding box must be */
-/* declared to be in the same the same spatial reference system as the */
-/* geometry column.  For 0.6, we determine the SRID of the column and then */
-/* tag the bounding box as the same SRID. */
-
-static int prepare_database(const char *geom_table, const char *geom_column, layerObj *layer, PGresult **sql_results, rectObj rect, char **query_string, const char *urid_name, const char *user_srid)
-{
-    msPOSTGISLayerInfo *layerinfo;
-    PGresult    *result = 0, *beg_res = 0;
-    char        *temp = 0;
-    char        *columns_wanted = 0;
-    char        *data_source = 0;
-    char        *f_table_name = 0;
-    char        box3d[200];         /* 19 characters + 4 doubles at 15 decimal places */
-    char        *query_string_0_6 = 0;
-    int         t;
-    size_t      length;
-    char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
-
-    layerinfo =  getPostGISLayerInfo(layer);
-    
-    beg_res = PQexec(layerinfo->conn, "BEGIN");
-    if (!beg_res || PQresultStatus(beg_res) != PGRES_COMMAND_OK)
-    {
-        msSetError(MS_QUERYERR, "Error executing PostgreSQL BEGIN statement: %s", "prepare_database()", PQerrorMessage(layerinfo->conn));
-        if(beg_res) {
-            PQclear(beg_res);
-        }
-        msPOSTGISSanitizeConnection(layerinfo->conn);
-        return MS_FAILURE;
-    }
-    PQclear(beg_res);
-
-    /* Set the urid name */
-    layerinfo->urid_name = (char *) malloc(strlen(urid_name) + 1);
-    strcpy(layerinfo->urid_name, urid_name);
-
-    /* Extract the proper f_table_name from the geom_table string.
-     * We are expecting the geom_table to be either a single word
-     * or a sub-select clause that possibly includes a join --
-     *
-     * (select column[,column[,...]] from ftab[ natural join table2]) as foo
-     *
-     * We are expecting whitespace or a ')' after the ftab name.
-     *
-     */
-
-    pos_from = strstrIgnoreCase(geom_table, " from ");
-
-    if(!pos_from) {
-        f_table_name = (char *) malloc(strlen(geom_table) + 1);
-        strcpy(f_table_name, geom_table);
-    } else { /* geom_table is a sub-select clause */
-        pos_ftab = pos_from + 6; /* This should be the start of the ftab name */
-        pos_space = strstr(pos_ftab, " "); /* First space */
-
-        /* TODO strrchr is POSIX and C99, rindex is neither */
-#if defined(_WIN32) && !defined(__CYGWIN__)
-        pos_paren = strrchr(pos_ftab, ')');
-#else
-        pos_paren = rindex(pos_ftab, ')');
-#endif
-
-        if(!pos_space || !pos_paren) {
-            msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "prepare_database()", geom_table, "Error parsing POSTGIS data variable: Something is wrong with your subselect statement.\n\nMore Help:\n\n");
-
-            return MS_FAILURE;
-        }
-
-        if (pos_paren < pos_space) { /* closing parenthesis preceeds any space */
-            f_table_name = (char *) malloc(pos_paren - pos_ftab + 1);
-            strncpy(f_table_name, pos_ftab, pos_paren - pos_ftab);
-            f_table_name[pos_paren - pos_ftab] = '\0';
-        } else {
-            f_table_name = (char *) malloc(pos_space - pos_ftab + 1);
-            strncpy(f_table_name, pos_ftab, pos_space - pos_ftab);
-            f_table_name[pos_space - pos_ftab] = '\0';
-        }
-    }
-
-    if(layer->numitems == 0) {
-        columns_wanted = (char *) malloc(55 + strlen(geom_column) + strlen(urid_name) + 1);
-        if (layerinfo->gBYTE_ORDER == LITTLE_ENDIAN) {
-            sprintf(columns_wanted, "asbinary(force_collection(force_2d(%s)),'NDR'),%s::text", geom_column, urid_name);
-        } else {
-            sprintf(columns_wanted, "asbinary(force_collection(force_2d(%s)),'XDR'),%s::text", geom_column, urid_name);
-        }
-    } else {
-        length = 55 + strlen(geom_column) + strlen(urid_name);
-        for(t = 0; t < layer->numitems; t++) {
-            length += strlen(layer->items[t]) + 9;
-        }
-        columns_wanted = (char *) malloc(length + 1);
-        *columns_wanted = 0;
-        for(t = 0; t < layer->numitems; t++) {
-            strcat(columns_wanted, "\"");
-            strcat(columns_wanted, layer->items[t]);
-            strcat(columns_wanted, "\"");
-            strcat(columns_wanted, "::text,");
-        }
-        temp = columns_wanted + strlen(columns_wanted);
-        if(layerinfo->gBYTE_ORDER == LITTLE_ENDIAN) {
-            sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR'),%s::text", geom_column, urid_name);
-        } else {
-            sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR'),%s::text", geom_column, urid_name);
-        }
-    }
-
-    /* UGLY HACK (for issue #2420) turn zeroed bounding box into very large bounding box */
-    if( rect.minx == -1 && rect.miny == -1 && rect.minx == rect.maxx && rect.miny == rect.maxy) {
-      rect.minx = rect.miny = -1 * FLT_MAX;
-      rect.maxx = rect.maxy = FLT_MAX;
-    }
-
-    sprintf(box3d, "'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D", rect.minx, rect.miny, rect.maxx, rect.maxy);
-
-    /* substitute token '!BOX!' in geom_table with the box3d - do an unlimited # of subs */
-    /* to not undo the work here, we need to make sure that data_source is malloc'd here */
-
-     if(!strstr(geom_table, "!BOX!")) {
-         data_source = (char *) malloc(strlen(geom_table) + 1);
-         strcpy(data_source, geom_table);
-     } else {
-       char* result = NULL;
-       while (strstr(geom_table,"!BOX!"))
-	 {
-	   /* need to do a substition */
-	   char    *start, *end;
-	   char    *oldresult = result;
-	   start = strstr(geom_table,"!BOX!");
-	   end = start+5;
-	   
-	   result = (char *)malloc((start - geom_table) + strlen(box3d) + strlen(end) +1);
-	   
-	   strncpy(result, geom_table, start - geom_table);
-	   strcpy(result + (start - geom_table), box3d);
-	   strcat(result, end);
-	   
-	   geom_table= result;
-	   if (oldresult != NULL)
-	     free(oldresult);
-	 }
-       /* if we're here, this will be a malloc'd string, so no need to 
-	  copy it */
-       data_source = (char *)geom_table;
-     }
-
-    /* Allocate buffer to fit the largest query string */
-    query_string_0_6 = (char *) malloc(113 + 42 + 7 + 12 + strlen(columns_wanted) + strlen(data_source) + (layer->filter.string ? strlen(layer->filter.string) : 0) + 2 * strlen(geom_column) + strlen(box3d) + strlen(f_table_name) + strlen(user_srid) + 1);
-    
-    assert( layerinfo->cursor_name[0] == '\0' );
-    strcpy( layerinfo->cursor_name, "mycursor" );
-
-    if( layer->maxfeatures > 0 ) {
-      if(!layer->filter.string) {
-        if(!strlen(user_srid)) {
-          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') ) limit %d", columns_wanted, data_source, geom_column, box3d, f_table_name, geom_column, layer->maxfeatures);
-        } else {
-          /* use the user specified version */
-          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s ) limit %d", columns_wanted, data_source, geom_column, box3d, user_srid, layer->maxfeatures);
-        }
-      } else {
-        if(!strlen(user_srid)) {
-          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') )) limit %d", columns_wanted, data_source, layer->filter.string, geom_column, box3d, f_table_name, geom_column, layer->maxfeatures);
-        } else {
-          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) ) limit %d", columns_wanted, data_source, layer->filter.string, geom_column, box3d, user_srid, layer->maxfeatures);
-        }
-      }
-    } else {
-      if(!layer->filter.string) {
-        if(!strlen(user_srid)) {
-          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )", columns_wanted, data_source, geom_column, box3d, f_table_name, geom_column);
-        } else {
-          /* use the user specified version */
-          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )", columns_wanted, data_source, geom_column, box3d, user_srid);
-        }
-      } else {
-        if(!strlen(user_srid)) {
-          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))", columns_wanted, data_source, layer->filter.string, geom_column, box3d, f_table_name, geom_column);
-        } else {
-          sprintf(query_string_0_6, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )", columns_wanted, data_source, layer->filter.string, geom_column, box3d, user_srid);
-        }
-      }
-    }
-
-    free(data_source);
-    free(f_table_name);
-    free(columns_wanted);
-
-    /* set enable_seqscan=off not required (already done) */
-
-    if(layer->debug) {
-        msDebug("query_string_0_6:%s\n", query_string_0_6);
-    }
-    result = PQexec(layerinfo->conn, query_string_0_6);
-
-    if(!result || PQresultStatus(result) != PGRES_COMMAND_OK)
-    {
-        msSetError(MS_QUERYERR, "Error declaring cursor: %s\nWith query string: %s\n", "prepare_database()", PQerrorMessage(layerinfo->conn), query_string_0_6);
-        free(query_string_0_6);
-        if (result)
-        {
-	    PQclear(result);
-        }
-        return MS_FAILURE;
-    }
-        
-    *sql_results = result;
-
-    *query_string = (char *) malloc(strlen(query_string_0_6) + 1);
-    strcpy(*query_string, query_string_0_6);
-
-    free(query_string_0_6);
-
-    return MS_SUCCESS;
-}
-
-
-/* build the neccessary SQL */
-/* allocate a cursor for the SQL query */
-/* get ready to read from the cursor */
-/*  */
-/* For queries, we need to also retreive the OID for each of the rows */
-/* So GetShape() can randomly access a row. */
-
-int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
-{
-    msPOSTGISLayerInfo  *layerinfo = 0;
-    char    *query_str = 0;
-    char    *table_name = 0;
-    char    *geom_column_name = 0;
-    char    *urid_name = 0;
-    char    *user_srid = 0;
-    int     set_up_result;
-
-    if(layer->debug) {
-        msDebug("msPOSTGISLayerWhichShapes called\n");
-    }
-
-    layerinfo = getPostGISLayerInfo(layer);
-
-    if(!layerinfo) {
-        /* layer not opened yet */
-        msSetError(MS_QUERYERR, "msPOSTGISLayerWhichShapes called on unopened layer (layerinfo = NULL)", "msPOSTGISLayerWhichShapes()");
-
-        return MS_FAILURE;
-    }
-
-    if(!layer->data) {
-        msSetError(MS_QUERYERR, "Missing DATA clause in PostGIS Layer definition.  DATA statement must contain 'geometry_column from table_name' or 'geometry_column from (sub-query) as foo'.", "msPOSTGISLayerWhichShapes()");
-
-        return MS_FAILURE;
-    }
-
-	if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
-		return MS_FAILURE;
-	}
-
-    set_up_result = prepare_database(table_name, geom_column_name, layer, &(layerinfo->query_result), rect, &query_str, urid_name, user_srid);
-
-
-    free(user_srid);
-    free(urid_name);
-    free(geom_column_name);
-    free(table_name);
-
-    if(set_up_result != MS_SUCCESS) {
-        free(query_str);
-
-        return set_up_result; /* relay error */
-    }
-
-    PQclear(layerinfo->query_result);
-
-    layerinfo->sql = query_str;
-    layerinfo->query_result = PQexec(layerinfo->conn, "FETCH ALL in mycursor");
-
-    if(!layerinfo->query_result || PQresultStatus(layerinfo->query_result) != PGRES_TUPLES_OK) {
-        msSetError(MS_QUERYERR, "Error executing POSTGIS SQL statement (in FETCH ALL): %s\n-%s\n", "msPOSTGISLayerWhichShapes()", query_str, PQerrorMessage(layerinfo->conn));
-
-        if(layerinfo->query_result) {
-          PQclear(layerinfo->query_result);
-        }
-        layerinfo->query_result = NULL;
-        msPOSTGISSanitizeConnection(layerinfo->conn);
-
-        return MS_FAILURE;
-    }
-
-    layerinfo->row_num = 0;
-
-    return MS_SUCCESS;
-}
-
-/* Close the postgis record set and connection */
-int msPOSTGISLayerClose(layerObj *layer)
-{
-    msPOSTGISLayerInfo  *layerinfo;
-    PGresult *rollb_res;
-    
-    layerinfo = getPostGISLayerInfo(layer);
-
-    if(layer->debug) {
-        /* TODO Can layer->data be NULL? */
-        msDebug("msPOSTGISLayerClose datastatement: %s\n", layer->data);
-    }
-    if(layer->debug && !layerinfo) {
-        msDebug("msPOSTGISLayerClose -- layerinfo is  NULL\n");
-    }
-
-    if(layerinfo) {
-        if(layerinfo->query_result) {
-            if(layer->debug) {
-                msDebug("msPOSTGISLayerClose -- closing query_result\n");
-            }
-            PQclear(layerinfo->query_result);
-            layerinfo->query_result = NULL;
-        } else if(layer->debug) {
-            msDebug("msPOSTGISLayerClose -- query_result is NULL\n");
-        }
-
-        if( strlen(layerinfo->cursor_name) > 0 )
-        {
-            PGresult            *query_result;
-            char                cmd_buffer[500];
-
-            sprintf( cmd_buffer, "CLOSE %s", layerinfo->cursor_name );
-
-            query_result = PQexec(layerinfo->conn, cmd_buffer );
-            if(query_result) {
-                PQclear(query_result);
-            } else {
-              if (msPOSTGISSanitizeConnection(layerinfo->conn) != MS_SUCCESS)
-	      {
-                return MS_FAILURE;
-	      }
-	    }
-
-            layerinfo->cursor_name[0] = '\0';
-
-            rollb_res = PQexec(layerinfo->conn, "ROLLBACK");
-            if (!rollb_res || PQresultStatus(rollb_res) != PGRES_COMMAND_OK) {
-                msSetError(MS_QUERYERR, "Error executing PostgreSQL ROLLBACK statement: %s", "msPOSTGISLayerClose()", PQerrorMessage(layerinfo->conn));
-        
-                if(rollb_res) {
-                    PQclear(rollb_res);
-                }
-                msPOSTGISSanitizeConnection(layerinfo->conn);
-        
-                return MS_FAILURE;
-            }
-            PQclear(rollb_res);
-
-        }
-
-        msConnPoolRelease(layer, layerinfo->conn);
-        layerinfo->conn = NULL;
-
-        if(layerinfo->urid_name) {
-            free(layerinfo->urid_name);
-            layerinfo->urid_name = NULL;
-        }
-
-        if(layerinfo->sql) {
-            free(layerinfo->sql);
-            layerinfo->sql = NULL;
-        }
-
-        setPostGISLayerInfo(layer, NULL);
-        free(layerinfo);
-    }
-
-    return MS_SUCCESS;
-}
-
-/* ******************************************************* */
-/* wkb is assumed to be 2d (force_2d) */
-/* and wkb is a GEOMETRYCOLLECTION (force_collection) */
-/* and wkb is in the endian of this computer (asbinary(...,'[XN]DR')) */
-/* each of the sub-geom inside the collection are point,linestring, or polygon */
-/*  */
-/* also, int is 32bits long */
-/* double is 64bits long */
-/* ******************************************************* */
-
-
-/* convert the wkb into points */
-/* points -> pass through */
-/* lines->   constituent points */
-/* polys->   treat ring like line and pull out the consituent points */
-
-static int  force_to_points(char *wkb, shapeObj *shape)
+/*
+** TODO, review and clean
+*/
+static int force_to_points(unsigned char *wkb, shapeObj *shape)
 {
     /* we're going to make a 'line' for each entity (point, line or ring) in the geom collection */
 
@@ -855,7 +201,7 @@ static int  force_to_points(char *wkb, shapeObj *shape)
 /* lines -> pass through */
 /* polys -> treat rings as lines */
 
-static int  force_to_lines(char *wkb, shapeObj *shape)
+static int force_to_lines(unsigned char *wkb, shapeObj *shape)
 {
     int     offset = 0;
     int     pt_offset;
@@ -918,7 +264,7 @@ static int  force_to_lines(char *wkb, shapeObj *shape)
 /* point   -> reject */
 /* line    -> reject */
 /* polygon -> lines of linear rings */
-static int  force_to_polygons(char  *wkb, shapeObj *shape)
+static int force_to_polygons(unsigned char *wkb, shapeObj *shape)
 {
     int     offset = 0;
     int     pt_offset;
@@ -966,7 +312,7 @@ static int  force_to_polygons(char  *wkb, shapeObj *shape)
 /* if there is any line in wkb, return force_line */
 /* otherwise return force_point */
 
-static int  dont_force(char *wkb, shapeObj *shape)
+static int dont_force(unsigned char *wkb, shapeObj *shape)
 {
     int     offset =0;
     int     ngeoms;
@@ -1035,491 +381,1463 @@ static void find_bounds(shapeObj *shape)
         }
     }
 }
+/* TODO Review and clean above! */
 
 
-/* find the next shape with the appropriate shape type (convert it if necessary) */
-/* also, load in the attribute data */
-/* MS_DONE => no more data */
+/*
+** msPostGISRetrievePK()
+**
+** Find out that the primary key is for this layer.
+** The layerinfo->fromsource must already be populated and
+** must not be a subquery.
+*/
+int msPostGISRetrievePK(layerObj *layer) {
+    PGresult *pgresult = NULL;
+    char *sql = 0;
+    msPostGISLayerInfo *layerinfo = 0;
+    int length;
+    int pgVersion;
+    char *pos_sep;
+    char *schema = NULL;
+    char *table = NULL;
 
-int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
-{
-    int     result;
+    if (layer->debug) {
+        msDebug("msPostGISRetrievePK called.\n");
+    }
 
-    msPOSTGISLayerInfo  *layerinfo;
+    layerinfo = (msPostGISLayerInfo *) layer->layerinfo;
 
-    layerinfo = getPostGISLayerInfo(layer);
+    /* Attempt to separate fromsource into schema.table */
+    pos_sep = strstr(layerinfo->fromsource, ".");
+    if (pos_sep) {
+        length = strlen(layerinfo->fromsource) - strlen(pos_sep);
+        schema = (char*)malloc(length + 1);
+        strncpy(schema, layerinfo->fromsource, length);
+        schema[length] = '\0';
 
-    if(!layerinfo) {
-        msSetError(MS_QUERYERR, "NextShape called with layerinfo = NULL", "msPOSTGISLayerNextShape()");
+        length = strlen(pos_sep);
+        table = (char*)malloc(length);
+        strncpy(table, pos_sep + 1, length - 1);
+        table[length - 1] = '\0';
 
+        if (layer->debug) {
+            msDebug("msPostGISRetrievePK(): Found schema %s, table %s.\n", schema, table);
+        }
+    }
+
+    if (layerinfo->pgconn == NULL) {
+        msSetError(MS_QUERYERR, "Layer does not have a postgis connection.", "msPostGISRetrievePK()");
+        return(MS_FAILURE);
+    }
+    pgVersion = PQserverVersion(layerinfo->pgconn);
+
+    if (pgVersion < 70000) {
+        if (layer->debug) {
+            msDebug("msPostGISRetrievePK(): Major version below 7.\n");
+        }
+        return MS_FAILURE;
+    }
+    if (pgVersion < 70200) {
+        if (layer->debug) {
+            msDebug("msPostGISRetrievePK(): Version below 7.2.\n");
+        }
+        return MS_FAILURE;
+    }
+    if (pgVersion < 70300) {
+        /*
+        ** PostgreSQL v7.2 has a different representation of primary keys that
+        ** later versions.  This currently does not explicitly exclude
+        ** multicolumn primary keys.
+        */
+        static char *v72sql = "select b.attname from pg_class as a, pg_attribute as b, (select oid from pg_class where relname = '%s') as c, pg_index as d where d.indexrelid = a.oid and d.indrelid = c.oid and d.indisprimary and b.attrelid = a.oid and a.relnatts = 1";
+        sql = malloc(strlen(layerinfo->fromsource) + strlen(v72sql));
+        sprintf(sql, v72sql, layerinfo->fromsource);
+    } else {
+        /*
+        ** PostgreSQL v7.3 and later treat primary keys as constraints.
+        ** We only support single column primary keys, so multicolumn
+        ** pks are explicitly excluded from the query.
+        */
+        if (schema && table) {
+            static char *v73sql = "select attname from pg_attribute, pg_constraint, pg_class, pg_namespace where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_class.relnamespace = pg_namespace.oid and pg_namespace.nspname = '%s' and pg_constraint.conkey[2] is null";
+            sql = malloc(strlen(schema) + strlen(table) + strlen(v73sql));
+            sprintf(sql, v73sql, table, schema);
+            free(table);
+            free(schema);
+        } else {
+            static char *v73sql = "select attname from pg_attribute, pg_constraint, pg_class where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_table_is_visible(pg_class.oid) and pg_constraint.conkey[2] is null";
+            sql = malloc(strlen(layerinfo->fromsource) + strlen(v73sql));
+            sprintf(sql, v73sql, layerinfo->fromsource);
+        }
+    }
+
+    if (layer->debug > 1) {
+        msDebug("msPostGISRetrievePK: %s\n", sql);
+    }
+
+    layerinfo = (msPostGISLayerInfo *) layer->layerinfo;
+
+    if (layerinfo->pgconn == NULL) {
+        msSetError(MS_QUERYERR, "Layer does not have a postgis connection.", "msPostGISRetrievePK()");
+        free(sql);
+        return(MS_FAILURE);
+    }
+
+    pgresult = PQexec(layerinfo->pgconn, sql);
+    if ( !pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
+        char *tmp1;
+        char *tmp2 = NULL;
+
+        tmp1 = "Error executing POSTGIS statement (msPostGISRetrievePK():";
+        tmp2 = (char*)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql) + 1));
+        strcpy(tmp2, tmp1);
+        strcat(tmp2, sql);
+        msSetError(MS_QUERYERR, tmp2, "msPostGISRetrievePK()");
+        free(tmp2);
+        free(sql);
+        return(MS_FAILURE);
+
+    }
+
+    if (PQntuples(pgresult) < 1) {
+        if (layer->debug) {
+            msDebug("msPostGISRetrievePK: No results found.\n");
+        }
+        PQclear(pgresult);
+        free(sql);
+        return MS_FAILURE;
+    }
+    if (PQntuples(pgresult) > 1) {
+        if (layer->debug) {
+            msDebug("msPostGISRetrievePK: Multiple results found.\n");
+        }
+        PQclear(pgresult);
+        free(sql);
         return MS_FAILURE;
     }
 
-    result = msPOSTGISLayerGetShapeRandom(layer, shape, &(layerinfo->row_num));
-    /* getshaperandom will increment the row_num */
-    /* layerinfo->row_num   ++; */
+    if (PQgetisnull(pgresult, 0, 0)) {
+        if (layer->debug) {
+            msDebug("msPostGISRetrievePK: Null result returned.\n");
+        }
+        PQclear(pgresult);
+        free(sql);
+        return MS_FAILURE;
+    }
 
-    return result;
+    layerinfo->uid = (char*)malloc(PQgetlength(pgresult, 0, 0) + 1);
+    strcpy(layerinfo->uid, PQgetvalue(pgresult, 0, 0));
+
+    PQclear(pgresult);
+    free(sql);
+    return MS_SUCCESS;
 }
 
 
+/*
+** msPostGISParseData()
+**
+** Parse the DATA string for geometry column name, table name,
+** unique id column, srid, and SQL string.
+*/
+int msPostGISParseData(layerObj *layer) {
+    char *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_uid, *data;
+    int slength;
+    msPostGISLayerInfo *layerinfo;
 
-/* Used by NextShape() to access a shape in the query set */
-/* TODO: only fetch 1000 rows at a time.  This should check to see if the */
-/* requested feature is in the set.  If it is, return it, otherwise */
-/* grab the next 1000 rows. */
-int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
-{
-    msPOSTGISLayerInfo  *layerinfo;
-    char                *wkb;
-    int                 result, t, size;
-    char                *temp, *temp2;
-    long                record_oid;
+    assert(layer != NULL);
+    assert(layer->layerinfo != NULL);
 
+    layerinfo = (msPostGISLayerInfo*)(layer->layerinfo);
 
-    layerinfo = getPostGISLayerInfo(layer);
+    if (layer->debug) {
+        msDebug("msPostGISParseData called.\n");
+    }
 
-    if(!layerinfo) {
-        msSetError(MS_QUERYERR, "GetShape called with layerinfo = NULL", "msPOSTGISLayerGetShape()");
+    if (!layer->data) {
+        msSetError(MS_QUERYERR, "Missing DATA clause. DATA statement must contain 'geometry_column from table_name' or 'geometry_column from (sub-query) as sub'.", "msPostGISParseData()");
+        return MS_FAILURE;
+    }
+    data = layer->data;
 
+    /*
+    ** Clean up any existing strings first, as we will be populating these fields.
+    */
+    if( layerinfo->srid ) {
+        free(layerinfo->srid);
+        layerinfo->srid = NULL;
+    }
+    if( layerinfo->uid ) {
+        free(layerinfo->uid);
+        layerinfo->uid = NULL;
+    }
+    if( layerinfo->geomcolumn ) {
+        free(layerinfo->geomcolumn);
+        layerinfo->geomcolumn = NULL;
+    }
+    if( layerinfo->fromsource ) {
+        free(layerinfo->fromsource);
+        layerinfo->fromsource = NULL;
+    }
+    
+    /*
+    ** Look for the optional ' using unique ID' string first.
+    */
+    pos_uid = strcasestr(data, " using unique ");
+    if (pos_uid) {
+        /* Find the end of this case 'using unique ftab_id using srid=33' */
+        tmp = strstr(pos_uid + 14, " ");
+        /* Find the end of this case 'using srid=33 using unique ftab_id' */
+        if (!tmp) {
+            tmp = pos_uid + strlen(pos_uid);
+        }
+        layerinfo->uid = (char*) malloc((tmp - (pos_uid + 14)) + 1);
+        strncpy(layerinfo->uid, pos_uid + 14, tmp - (pos_uid + 14));
+        (layerinfo->uid)[tmp - (pos_uid + 14)] = '\0'; /* null terminate it */
+    }
+
+    /*
+    ** Look for the optional ' using srid=333 ' string next.
+    */
+    pos_srid = strcasestr(data, " using srid=");
+    if (!pos_srid) {
+        layerinfo->srid = (char*) malloc(1);
+        (layerinfo->srid)[0] = '\0'; /* no SRID, so return just null terminator*/
+    } else {
+        slength = strspn(pos_srid + 12, "-0123456789");
+        if (!slength) {
+            msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didnt have any numbers! %s", "msPostGISParseData()", data);
+            return MS_FAILURE;
+        } else {
+            layerinfo->srid = (char*) malloc(slength + 1);
+            strncpy(layerinfo->srid, pos_srid + 12, slength);
+            (layerinfo->srid)[slength] = '\0'; /* null terminate it */
+        }
+    }
+
+    /*
+    ** This is a little hack so the rest of the code works. 
+    ** pos_opt should point to the start of the optional blocks.
+    **
+    ** If they are both set, return the smaller one. 
+    */
+    if (pos_srid && pos_uid) {
+        pos_opt = (pos_srid > pos_uid) ? pos_uid : pos_srid;
+    }
+    /* If one or none is set, return the larger one. */
+    else {
+        pos_opt = (pos_srid > pos_uid) ? pos_srid : pos_uid;
+    }
+    /* No pos_opt? Move it to the end of the string. */
+    if (!pos_opt) {
+        pos_opt = data + strlen(data);
+    }
+
+    /*
+    ** Scan for the 'geometry from table' or 'geometry from () as foo' clause. 
+    */
+    pos_scn = strcasestr(data, " from ");
+    if (!pos_scn) {
+        msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", data);
         return MS_FAILURE;
     }
 
-    if(!layerinfo->conn) {
-        msSetError(MS_QUERYERR, "NextShape called on POSTGIS layer with no connection to DB.", "msPOSTGISLayerGetShape()");
+    /* Copy the geometry column name */
+    layerinfo->geomcolumn = (char*) malloc((pos_scn - data) + 1);
+    strncpy(layerinfo->geomcolumn, data, pos_scn - data);
+    (layerinfo->geomcolumn)[pos_scn - data] = '\0';
 
+    /* Copy the table name or sub-select clause */
+    layerinfo->fromsource = (char*) malloc((pos_opt - (pos_scn + 6)) + 1);
+    strncpy(layerinfo->fromsource, pos_scn + 6, pos_opt - (pos_scn + 6));
+    (layerinfo->fromsource)[pos_opt - (pos_scn + 6)] = '\0';
+
+    /* Something is wrong, our goemetry column and table references are not there. */
+    if (strlen(layerinfo->fromsource) < 1 || strlen(layerinfo->geomcolumn) < 1) {
+        msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", data);
         return MS_FAILURE;
     }
 
-    if(!layerinfo->query_result) {
-        msSetError(MS_QUERYERR, "GetShape called on POSTGIS layer with invalid DB query results.", "msPOSTGISLayerGetShapeRandom()");
+    /*
+    ** We didn't find a ' using unique ' in the DATA string so try and find a 
+    ** primary key on the table.
+    */
+    if ( ! (layerinfo->uid) ) {
+        if ( msPostGISRetrievePK(layer) != MS_SUCCESS ) {
+            /* No user specified unique id so we will use the PostgreSQL oid */
+            /* TODO: Deprecate this, oids are deprecated in PostgreSQL */
+            layerinfo->uid = strdup("oid");
+        }
+    }
 
+    if (layer->debug) {
+        msDebug("msPostGISParseData: unique_column=%s, srid=%s, geom_column_name=%s, table_name=%s\n", layerinfo->uid, layerinfo->srid, layerinfo->geomcolumn, layerinfo->fromsource);
+    }
+    return MS_SUCCESS;
+}
+
+
+/*
+** Decode a base64 character
+*/
+unsigned char msPostGISBase64DecodeChar(char c) {
+    if (c >= 'A' && c <= 'Z') return(c - 'A');
+    if (c >= 'a' && c <= 'z') return(c - 'a' + 26);
+    if (c >= '0' && c <= '9') return(c - '0' + 52);
+    if (c == '+')             return 62;
+    return 63;
+}
+
+/*
+** Decode base64 string "src" (null terminated) into "dest" (not null terminated).
+** Returns length of decoded array or 0 on failure.
+*/
+int msPostGISBase64Decode(unsigned char *dest, const char *src) {
+
+    if (src && *src) {
+
+        unsigned char *p = dest;
+        int i, j, k;
+        unsigned char *buf = calloc(strlen(src) + 1, sizeof(unsigned char));
+
+        /* Drop illegal chars first */
+        for (i=0, j=0; src[i]; i++) {
+            char c = src[i];
+            if ( (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+                    (c >= '0' && c <= '9') ||
+                    (c == '+') || (c == '/') || (c == '=')) {
+                buf[j++] = c;
+            }
+        }
+
+        for (k=0; k<j; k+=4) {
+            char c1='A', c2='A', c3='A', c4='A';
+            unsigned char b1=0, b2=0, b3=0, b4=0;
+
+            c1 = buf[k];
+
+            if (k+1<j) {
+                c2 = buf[k+1];
+            }
+            if (k+2<j) {
+                c3 = buf[k+2];
+            }
+            if (k+3<j) {
+                c4 = buf[k+3];
+            }
+
+            b1 = msPostGISBase64DecodeChar(c1);
+            b2 = msPostGISBase64DecodeChar(c2);
+            b3 = msPostGISBase64DecodeChar(c3);
+            b4 = msPostGISBase64DecodeChar(c4);
+
+            *p++=((b1<<2)|(b2>>4) );
+            if (c3 != '=') {
+                *p++=(((b2&0xf)<<4)|(b3>>2) );
+            }
+            if (c4 != '=') {
+                *p++=(((b3&0x3)<<6)|b4 );
+            }
+        }
+        free(buf);
+        return(p-dest);
+    }
+    return 0;
+}
+
+/*
+** msPostGISBuildSQLBox()
+**
+** Returns malloc'ed char* that must be freed by caller.
+*/
+char *msPostGISBuildSQLBox(layerObj *layer, rectObj *rect, char *strSRID) {
+
+    char *strBox = NULL;
+
+    if (layer->debug) {
+        msDebug("msPostGISBuildSQLBox called.\n");
+    }
+
+    if ( strSRID ) {
+        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)";
+        /* 10 doubles + 1 integer + template characters */
+        strBox = (char*)malloc(10 * 15 + strlen(strSRID) + strlen(strBoxTemplate));
+        sprintf(strBox, strBoxTemplate,
+                rect->minx, rect->miny,
+                rect->minx, rect->maxy,
+                rect->maxx, rect->maxy,
+                rect->maxx, rect->miny,
+                rect->minx, rect->miny,
+                strSRID);
+    } else {
+        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))')";
+        /* 10 doubles + template characters */
+        strBox = (char*)malloc(10 * 15 + strlen(strBoxTemplate));
+        sprintf(strBox, strBoxTemplate,
+                rect->minx, rect->miny,
+                rect->minx, rect->maxy,
+                rect->maxx, rect->maxy,
+                rect->maxx, rect->miny,
+                rect->minx, rect->miny);
+    }
+
+    return strBox;
+
+}
+
+/*
+** msPostGISBuildSQLItems()
+**
+** Returns malloc'ed char* that must be freed by caller.
+*/
+char *msPostGISBuildSQLItems(layerObj *layer) {
+
+    char *strEndian = NULL;
+    char *strGeom = NULL;
+    char *strItems = NULL;
+    msPostGISLayerInfo *layerinfo = NULL;
+
+    if (layer->debug) {
+        msDebug("msPostGISBuildSQLItems called.\n");
+    }
+
+    assert( layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+
+    if ( ! layerinfo->geomcolumn ) {
+        msSetError(MS_MISCERR, "layerinfo->geomcolumn is not initialized.", "msPostGISBuildSQLItems()");
+        return 0;
+    }
+
+    /*
+    ** Get the server to transform the geometry into our
+    ** native endian before transmitting it to us..
+    */
+    if (layerinfo->endian == LITTLE_ENDIAN) {
+        strEndian = "NDR";
+    } else {
+        strEndian = "XDR";
+    }
+
+    {
+        /*
+        ** We transfer the geometry from server to client as a
+        ** base64 encoded WKB byte-array. We will have to decode this
+        ** data once we get it. Forcing 2D removes ordinates we don't
+        ** need, saving time. Forcing collection reduces the number
+        ** of input types to handle.
+        */
+        static char *strGeomTemplate = "encode(AsBinary(force_collection(force_2d(\"%s\")),'%s'),'base64') as geom,\"%s\"";
+        strGeom = (char*)malloc(strlen(strGeomTemplate) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid));
+        sprintf(strGeom, strGeomTemplate, layerinfo->geomcolumn, strEndian, layerinfo->uid);
+    }
+
+    if( layer->debug > 1 ) {
+        msDebug("msPostGISBuildSQLItems: %d items requested.\n",layer->numitems);
+    }
+
+    /*
+    ** Not requesting items? We just need geometry and unique id.
+    */
+    if (layer->numitems == 0) {
+        strItems = strdup(strGeom);
+    } 
+    /*
+    ** Build SQL to pull all the items.
+    */
+    else {
+        int length = strlen(strGeom) + 2;
+        int t;
+        for ( t = 0; t < layer->numitems; t++ ) {
+            length += strlen(layer->items[t]) + 3; /* itemname + "", */
+        }
+        strItems = (char*)malloc(length);
+        strItems[0] = '\0';
+        for ( t = 0; t < layer->numitems; t++ ) {
+            strcat(strItems, "\"");
+            strcat(strItems, layer->items[t]);
+            strcat(strItems, "\",");
+        }
+        strcat(strItems, strGeom);
+    }
+
+    free(strGeom);
+    return strItems;
+}
+
+/*
+** msPostGISBuildSQLSRID()
+**
+** Returns malloc'ed char* that must be freed by caller.
+*/
+char *msPostGISBuildSQLSRID(layerObj *layer) {
+
+    char *strSRID = NULL;
+    msPostGISLayerInfo *layerinfo = NULL;
+
+    if (layer->debug) {
+        msDebug("msPostGISBuildSQLSRID called.\n");
+    }
+
+    assert( layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+
+    /* An SRID was already provided in the DATA line. */
+    if ( layerinfo->srid && (strlen(layerinfo->srid) > 0) ) {
+        strSRID = strdup(layerinfo->srid);
+        if( layer->debug > 1 ) {
+            msDebug("msPostGISBuildSQLSRID: SRID provided (%s)\n", strSRID);
+        }
+    }
+    /*
+    ** No SRID in data line, so extract target table from the 'fromsource'. 
+    ** Either of form "thetable" (one word) or "(select ... from thetable)"
+    ** or "(select ... from thetable where ...)".
+    */
+    else {
+        char *f_table_name;
+        char *strSRIDTemplate = "find_srid('','%s','%s')";
+        char *pos = strstr(layerinfo->fromsource, " ");
+        if( layer->debug > 1 ) {
+            msDebug("msPostGISBuildSQLSRID: Building find_srid line.\n", strSRID);
+        }
+
+        if ( ! pos ) {
+            /* target table is one word */
+            f_table_name = strdup(layerinfo->fromsource);
+            if( layer->debug > 1 ) {
+                msDebug("msPostGISBuildSQLSRID: Found table (%s)\n", f_table_name);
+            }
+        } else {
+            /* target table is hiding in sub-select clause */
+            pos = strcasestr(layerinfo->fromsource, " from ");
+            if ( pos ) {
+                char *pos_paren;
+                char *pos_space;
+                pos += 6; /* should be start of table name */
+                pos_paren = strstr(pos, ")"); /* first ) after table name */
+                pos_space = strstr(pos, " "); /* first space after table name */
+                if ( pos_space < pos_paren ) {
+                    /* found space first */
+                    f_table_name = (char*)malloc(pos_space - pos + 1);
+                    strncpy(f_table_name, pos, pos_space - pos);
+                    f_table_name[pos_space - pos] = '\0';
+                } else {
+                    /* found ) first */
+                    f_table_name = (char*)malloc(pos_paren - pos + 1);
+                    strncpy(f_table_name, pos, pos_paren - pos);
+                    f_table_name[pos_paren - pos] = '\0';
+                }
+            } else {
+                /* should not happen */
+                return 0;
+            }
+        }
+        strSRID = malloc(strlen(strSRIDTemplate) + strlen(f_table_name) + strlen(layerinfo->geomcolumn));
+        sprintf(strSRID, strSRIDTemplate, f_table_name, layerinfo->geomcolumn);
+    }
+    return strSRID;
+}
+
+/*
+** msPostGISBuildSQLFrom()
+**
+** Returns malloc'ed char* that must be freed by caller.
+*/
+char *msPostGISBuildSQLFrom(layerObj *layer, rectObj *rect) {
+    char *fromsource =0;
+    char *strFrom = 0;
+    static char *boxToken = "!BOX!";
+    static int boxTokenLength = 5;
+    msPostGISLayerInfo *layerinfo;
+
+    if (layer->debug) {
+        msDebug("msPostGISBuildSQLFrom called.\n");
+    }
+
+    assert( layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+
+    if ( ! layerinfo->fromsource ) {
+        msSetError(MS_MISCERR, "Layerinfo->fromsource is not initialized.", "msPostGISBuildSQLFrom()");
+        return 0;
+    }
+    
+    fromsource = layerinfo->fromsource;
+
+    /*
+    ** If there's a '!BOX!' in our source we need to substitute the
+    ** current rectangle for it...
+    */
+    if ( strstr(fromsource, boxToken) && rect ) {
+        char *result = NULL;
+        char *strBox;
+        char *strSRID;
+
+        /* We see to set the SRID on the box, but to what SRID? */
+        strSRID = msPostGISBuildSQLSRID(layer);
+        if ( ! strSRID ) {
+            return 0;
+        }
+
+        /* Create a suitable SQL string from the rectangle and SRID. */
+        strBox = msPostGISBuildSQLBox(layer, rect, strSRID);
+        if ( ! strBox ) {
+            msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISBuildSQLFrom()");
+            if (strSRID) free(strSRID);
+            return 0;
+        }
+
+        /* Do the substitution. */
+        while ( strstr(fromsource,boxToken) ) {
+            char    *start, *end;
+            char    *oldresult = result;
+            start = strstr(fromsource, boxToken);
+            end = start + boxTokenLength;
+
+            result = (char*)malloc((start - fromsource) + strlen(strBox) + strlen(end) +1);
+
+            strncpy(result, fromsource, start - fromsource);
+            strcpy(result + (start - fromsource), strBox);
+            strcat(result, end);
+
+            fromsource = result;
+            if (oldresult != NULL)
+                free(oldresult);
+        }
+
+        if (strSRID) free(strSRID);
+        if (strBox) free(strBox);
+
+    }
+    /*
+    ** Otherwise we can just take the fromsource "as is".
+    */
+    strFrom = strdup(fromsource);
+
+    return strFrom;
+}
+
+/*
+** msPostGISBuildSQLWhere()
+**
+** Returns malloc'ed char* that must be freed by caller.
+*/
+char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
+    char *strRect = 0;
+    char *strFilter = 0;
+    char *strUid = 0;
+    char *strWhere = 0;
+    char *strLimit = 0;
+    size_t strRectLength = 0;
+    size_t strFilterLength = 0;
+    size_t strUidLength = 0;
+    size_t strLimitLength = 0;
+    int insert_and = 0;
+    msPostGISLayerInfo *layerinfo;
+
+    if (layer->debug) {
+        msDebug("msPostGISBuildSQLWhere called.\n");
+    }
+
+    assert( layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+
+    if ( ! layerinfo->fromsource ) {
+        msSetError(MS_MISCERR, "Layerinfo->fromsource is not initialized.", "msPostGISBuildSQLFrom()");
+        return 0;
+    }
+
+    /* Populate strLimit, if necessary. */
+    if( layer->maxfeatures >= 0 ) {
+        static char *strLimitTemplate = " limit %d";
+        strLimit = malloc(strlen(strLimitTemplate) + 12);
+        sprintf(strLimit, strLimitTemplate, layer->maxfeatures);
+        strLimitLength = strlen(strLimit);
+    }
+    
+    /* Populate strRect, if necessary. */
+    if ( rect && layerinfo->geomcolumn ) {
+        char *strBox = 0;
+        char *strSRID = 0;
+        size_t strBoxLength = 0;
+        static char *strRectTemplate = "%s && %s";
+
+        /* We see to set the SRID on the box, but to what SRID? */
+        strSRID = msPostGISBuildSQLSRID(layer);
+        if ( ! strSRID ) {
+            return 0;
+        }
+
+        strBox = msPostGISBuildSQLBox(layer, rect, strSRID);
+        if ( strBox ) {
+            strBoxLength = strlen(strBox);
+        }
+        else {
+            msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISBuildSQLWhere()");
+            return 0;
+        }
+
+        strRect = (char*)malloc(strlen(strRectTemplate) + strBoxLength + strlen(layerinfo->geomcolumn));
+        sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox);
+        strRectLength = strlen(strRect);
+        if (strBox) free(strBox);
+        if (strSRID) free(strSRID);
+    }
+
+    /* Populate strFilter, if necessary. */
+    if ( layer->filter.string ) {
+        strFilter = strdup(layer->filter.string);
+        strFilterLength = strlen(strFilter);
+    }
+
+    /* Populate strUid, if necessary. */
+    if ( uid ) {
+        static char *strUidTemplate = "\"%s\" = %ld";
+        strUid = (char*)malloc(strlen(strUidTemplate) + strlen(layerinfo->uid) + 9);
+        sprintf(strUid, strUidTemplate, layerinfo->uid, *uid);
+        strUidLength = strlen(strUid);
+    }
+
+    strWhere = (char*)malloc(strRectLength + 5 + strFilterLength + 5 + strUidLength + strLimitLength);
+    *strWhere = '\0';
+    if ( strRect ) {
+        strcat(strWhere, strRect);
+        insert_and++;
+        free(strRect);
+    }
+    if ( strFilter ) {
+        if ( insert_and ) {
+            strcat(strWhere, " and ");
+        }
+        strcat(strWhere, strFilter);
+        free(strFilter);
+        insert_and++;
+    }
+    if ( strUid ) {
+        if ( insert_and ) {
+            strcat(strWhere, " and ");
+        }
+        strcat(strWhere, strUid);
+        free(strUid);
+        insert_and++;
+    }
+    if ( strLimit ) {
+        strcat(strWhere, strLimit);
+        free(strLimit);
+    }
+
+    return strWhere;
+}
+
+/*
+** msPostGISBuildSQL()
+**
+** Returns malloc'ed char* that must be freed by caller.
+*/
+char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid) {
+
+    msPostGISLayerInfo *layerinfo = 0;
+    char *strFrom = 0;
+    char *strItems = 0;
+    char *strWhere = 0;
+    char *strSQL = 0;
+    static char *strSQLTemplate = "select %s from %s where %s";
+
+    if (layer->debug) {
+        msDebug("msPostGISBuildSQL called.\n");
+    }
+
+    assert( layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+
+    strItems = msPostGISBuildSQLItems(layer);
+    if ( ! strItems ) {
+        msSetError(MS_MISCERR, "Failed to build SQL items.", "msPostGISBuildSQL()");
+        return 0;
+    }
+
+    strFrom = msPostGISBuildSQLFrom(layer, rect);
+    if ( ! strFrom ) {
+        msSetError(MS_MISCERR, "Failed to build SQL 'from'.", "msPostGISBuildSQL()");
+        return 0;
+    }
+
+    strWhere = msPostGISBuildSQLWhere(layer, rect, uid);
+    if ( ! strWhere ) {
+        msSetError(MS_MISCERR, "Failed to build SQL 'where'.", "msPostGISBuildSQL()");
+        return 0;
+    }
+
+    strSQL = malloc(strlen(strSQLTemplate) + strlen(strFrom) + strlen(strItems) + strlen(strWhere));
+    sprintf(strSQL, strSQLTemplate, strItems, strFrom, strWhere);
+    if (strItems) free(strItems);
+    if (strFrom) free(strFrom);
+    if (strWhere) free(strWhere);
+
+    return strSQL;
+
+}
+
+int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
+
+    char *wkb64 = NULL;
+    unsigned char *wkb = NULL;
+    msPostGISLayerInfo *layerinfo = NULL;
+    int result;
+
+    if (layer->debug) {
+        msDebug("msPostGISReadShape called.\n");
+    }
+
+    assert(layer->layerinfo != NULL);
+    layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+
+    /* Retrieve the geometry. */
+    wkb64 = (char*)PQgetvalue(layerinfo->pgresult, layerinfo->rownum, layer->numitems );
+
+    if ( ! wkb64 ) {
+        msSetError(MS_QUERYERR, "Base64 WKB returned is null!", "msPostGISReadShape()");
         return MS_FAILURE;
     }
+
+    wkb = calloc(PQgetlength(layerinfo->pgresult, layerinfo->rownum, layer->numitems), sizeof(char));
+    result = msPostGISBase64Decode(wkb, wkb64);
+
+    if( ! result ) {
+        free(wkb);
+        return MS_FAILURE;
+    }
+    
+    switch (layer->type) {
+        
+    case MS_LAYER_POINT:
+        result = force_to_points(wkb, shape);
+        break;
+        
+    case MS_LAYER_LINE:
+        result = force_to_lines(wkb, shape);
+        break;
+        
+    case MS_LAYER_POLYGON:
+        result = force_to_polygons(wkb, shape);
+        break;
+    
+    case MS_LAYER_ANNOTATION:
+    case MS_LAYER_QUERY:
+    case MS_LAYER_CHART:
+        result = dont_force(wkb, shape);
+        break;
+
+    case MS_LAYER_RASTER:
+        msDebug( "Ignoring MS_LAYER_RASTER in msPostGISReadShape.\n" );
+        break;
+
+    case MS_LAYER_CIRCLE:
+        msDebug( "Ignoring MS_LAYER_RASTER in msPostGISReadShape.\n" );
+        break;
+
+    default:
+        msDebug( "Unsupported layer type in msPostGISReadShape()!\n" );
+        break;
+    }
+
+    if (shape->type != MS_SHAPE_NULL) {
+        int t;
+        long uid;
+        char *tmp;
+        /* Found a drawable shape, so now retreive the attributes. */
+
+        shape->values = (char**) malloc(sizeof(char*) * layer->numitems);
+        for ( t = 0; t < layer->numitems; t++) {
+            int size = PQgetlength(layerinfo->pgresult, layerinfo->rownum, t);
+            char *val = (char*)PQgetvalue(layerinfo->pgresult, layerinfo->rownum, t);
+            shape->values[t] = (char*) malloc(size + 1);
+            memcpy(shape->values[t], val, size);
+            shape->values[t][size] = '\0'; /* null terminate it */
+            if( layer->debug > 1 ) {
+                msDebug("msPostGISReadShape: [%s] %s\n", layer->items[t], shape->values[t]);
+            }
+
+        }
+        /* t is the geometry, t+1 is the uid */
+        tmp = PQgetvalue(layerinfo->pgresult, layerinfo->rownum, t + 1);
+        if( tmp ) {
+            uid = strtol( tmp, NULL, 10 );
+        }
+        else {
+            uid = 0;
+        }
+
+        shape->index = uid;
+        shape->numvalues = layer->numitems;
+
+        find_bounds(shape);
+    }
+    
+    if( layer->debug > 1 ) {
+        char *tmp = msShapeToWKT(shape);
+        msDebug("msPostGISReadShape: [shape] %s\n", tmp);
+        free(tmp);
+    }
+    
+    free(wkb);
+    return MS_SUCCESS;
+}
+
+#endif /* USE_POSTGIS */
+
+
+/*
+** msPostGISLayerOpen()
+**
+** Registered vtable->LayerOpen function.
+*/
+int msPostGISLayerOpen(layerObj *layer) {
+#ifdef USE_POSTGIS
+    msPostGISLayerInfo  *layerinfo;
+    int order_test = 1;
+
+    assert(layer != NULL);
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerOpen called: %s\n", layer->data);
+    }
+
+    if (layer->layerinfo) {
+        if (layer->debug) {
+            msDebug("msPostGISLayerOpen: Layer is already open!\n");
+        }
+        return MS_SUCCESS;  /* already open */
+    }
+
+    if (!layer->data) {
+        msSetError(MS_QUERYERR, "Nothing specified in DATA statement.", "msPostGISLayerOpen()");
+        return MS_FAILURE;
+    }
+
+    /*
+    ** Initialize the layerinfo 
+    **/
+    layerinfo = msPostGISCreateLayerInfo();
+
+    if (((char*) &order_test)[0] == 1) {
+        layerinfo->endian = LITTLE_ENDIAN;
+    } else {
+        layerinfo->endian = BIG_ENDIAN;
+    }
+
+    /*
+    ** Get a database connection from the pool.
+    */
+    layerinfo->pgconn = (PGconn *) msConnPoolRequest(layer);
+
+    /* No connection in the pool, so set one up. */
+    if (!layerinfo->pgconn) {
+        char *conn_decrypted;
+        if (layer->debug) {
+            msDebug("msPostGISLayerOpen: No connection in pool, creating a fresh one.\n");
+        }
+
+        if (!layer->connection) {
+            msSetError(MS_MISCERR, "Missing CONNECTION keyword.", "msPostGISLayerOpen()");
+            return MS_FAILURE;
+        }
+
+        /*
+        ** Decrypt any encrypted token in connection string and attempt to connect.
+        */
+        conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
+        if (conn_decrypted == NULL) {
+            return MS_FAILURE;  /* An error should already have been produced */
+        }
+        layerinfo->pgconn = PQconnectdb(conn_decrypted);
+        msFree(conn_decrypted);
+        conn_decrypted = NULL;
+
+        /*
+        ** Connection failed, return error message with passwords ***ed out.
+        */
+        if (!layerinfo->pgconn || PQstatus(layerinfo->pgconn) == CONNECTION_BAD) {
+            char *index, *maskeddata;
+            if (layer->debug)
+                msDebug("msPostGISLayerOpen: Connection failure.\n");
+
+            maskeddata = strdup(layer->connection);
+            index = strstr(maskeddata, "password=");
+            if (index != NULL) {
+                index = (char*)(index + 9);
+                while (*index != '\0' && *index != ' ') {
+                    *index = '*';
+                    index++;
+                }
+            }
+
+            msSetError(MS_QUERYERR, "Database connection failed (%s) with connect string '%s'\nIs the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn), maskeddata);
+
+            free(maskeddata);
+            free(layerinfo);
+            return MS_FAILURE;
+        }
+
+        /* Register to receive notifications from the database. */
+        PQsetNoticeProcessor(layerinfo->pgconn, postresqlNoticeHandler, (void *) layer);
+
+        /* Save this connection in the pool for later. */
+        msConnPoolRegister(layer, layerinfo->pgconn, msPostGISCloseConnection);
+    }
+
+    /* Save the layerinfo in the layerObj. */
+    layer->layerinfo = (void*)layerinfo;
+
+    return MS_SUCCESS;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISLayerOpen()");
+    return MS_FAILURE;
+#endif
+}
+
+/*
+** msPostGISLayerClose()
+**
+** Registered vtable->LayerClose function.
+*/
+int msPostGISLayerClose(layerObj *layer) {
+#ifdef USE_POSTGIS
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerClose called: %s\n", layer->data);
+    }
+    
+    if( layer->layerinfo ) {
+        msPostGISFreeLayerInfo(layer); 
+    }
+
+    return MS_SUCCESS;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISLayerOpen()");
+    return MS_FAILURE;
+#endif
+}
+
+
+/*
+** msPostGISLayerIsOpen()
+**
+** Registered vtable->LayerIsOpen function.
+*/
+int msPostGISLayerIsOpen(layerObj *layer) {
+#ifdef USE_POSTGIS
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerIsOpen called.\n");
+    }
+
+    if (layer->layerinfo)
+        return MS_TRUE;
+    else
+        return MS_FALSE;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISLayerIsOpen()");
+    return MS_FAILURE;
+#endif
+}
+
+
+/*
+** msPostGISLayerFreeItemInfo()
+**
+** Registered vtable->LayerFreeItemInfo function.
+*/
+void msPostGISLayerFreeItemInfo(layerObj *layer) {
+#ifdef USE_POSTGIS
+    if (layer->debug) {
+        msDebug("msPostGISLayerFreeItemInfo called.\n");
+    }
+
+    if (layer->iteminfo) {
+        free(layer->iteminfo);
+    }
+    layer->iteminfo = NULL;
+#endif
+}
+
+/*
+** msPostGISLayerInitItemInfo()
+**
+** Registered vtable->LayerInitItemInfo function.
+** Our iteminfo is list of indexes from 1..numitems.
+*/
+int msPostGISLayerInitItemInfo(layerObj *layer) {
+#ifdef USE_POSTGIS
+    int i;
+    int *itemindexes ;
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerInitItemInfo called.\n");
+    }
+
+    if (layer->numitems == 0) {
+        return MS_SUCCESS;
+    }
+
+    if (layer->iteminfo) {
+        free(layer->iteminfo);
+    }
+
+    itemindexes = (int *) malloc(sizeof(int) * layer->numitems);
+    if (!itemindexes) {
+        msSetError(MS_MEMERR, "Out of memory.", "msPostGISLayerInitItemInfo()");
+        return MS_FAILURE;
+    }
+
+    for (i = 0; i < layer->numitems; i++) {
+        itemindexes[i] = i; /* Last item is always the geometry. The rest are non-geometry. */
+    }
+    layer->iteminfo = itemindexes;
+
+    return MS_SUCCESS;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISLayerInitItemInfo()");
+    return MS_FAILURE;
+#endif
+}
+
+/*
+** msPostGISLayerWhichShapes()
+**
+** Registered vtable->LayerWhichShapes function.
+*/
+int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect) {
+#ifdef USE_POSTGIS
+    msPostGISLayerInfo *layerinfo = NULL;
+    char *strSQL = NULL;
+    PGresult *pgresult = NULL;
+
+    assert(layer != NULL);
+    assert(layer->layerinfo != NULL);
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerWhichShapes called.\n");
+    }
+
+    /* Fill out layerinfo with our current DATA state. */
+    if ( msPostGISParseData(layer) != MS_SUCCESS) {
+        return MS_FAILURE;
+    }
+
+    /* 
+    ** This comes *after* parsedata, because parsedata fills in 
+    ** layer->layerinfo.
+    */
+    layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+
+    /* Build a SQL query based on our current state. */
+    strSQL = msPostGISBuildSQL(layer, &rect, NULL);
+    if ( ! strSQL ) {
+        msSetError(MS_QUERYERR, "Failed to build query SQL.", "msPostGISLayerWhichShapes()");
+        return MS_FAILURE;
+    }
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerWhichShapes query: %s\n", strSQL);
+    }
+
+    pgresult = PQexec(layerinfo->pgconn, strSQL);
+
+    if ( layer->debug > 1 ) {
+        msDebug("msPostGISLayerWhichShapes query status: %d\n", PQresultStatus(pgresult));
+    }
+
+    /* Something went wrong. */
+    if (!pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
+        msSetError(MS_QUERYERR, "Error (%s) executing query: %s", "msPostGISLayerWhichShapes()", PQerrorMessage(layerinfo->pgconn), strSQL);
+        free(strSQL);
+        if (pgresult) {
+            PQclear(pgresult);
+        }
+        return MS_FAILURE;
+    }
+
+    if ( layer->debug ) {
+        msDebug("msPostGISLayerWhichShapes got %d records in result.\n", PQntuples(pgresult));
+    }
+
+    /* Clean any existing pgresult before storing current one. */
+    if(layerinfo->pgresult) PQclear(layerinfo->pgresult);
+    layerinfo->pgresult = pgresult;
+    
+    /* Clean any existing SQL before storing current. */
+    if(layerinfo->sql) free(layerinfo->sql);
+    layerinfo->sql = strSQL;
+    
+    layerinfo->rownum = 0;
+
+    return MS_SUCCESS;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISLayerWhichShapes()");
+    return MS_FAILURE;
+#endif
+}
+
+/*
+** msPostGISLayerNextShape()
+**
+** Registered vtable->LayerNextShape function.
+*/
+int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape) {
+#ifdef USE_POSTGIS
+    msPostGISLayerInfo  *layerinfo;
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerNextShape called.\n");
+    }
+
+    assert(layer != NULL);
+    assert(layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
 
     shape->type = MS_SHAPE_NULL;
 
-    while(shape->type == MS_SHAPE_NULL) {
-        if(*record < PQntuples(layerinfo->query_result)) {
-            /* retreive an item */
-            wkb = (char *)PQgetvalue(layerinfo->query_result, (*record), layer->numitems);
-            switch(layer->type) {
-                case MS_LAYER_POINT:
-                    result = force_to_points(wkb, shape);
-                    break;
-
-                case MS_LAYER_LINE:
-                    result = force_to_lines(wkb, shape);
-                    break;
-
-                case MS_LAYER_POLYGON:
-                    result = force_to_polygons(wkb, shape);
-                    break;
-
-                case MS_LAYER_ANNOTATION:
-                case MS_LAYER_QUERY:
-                case MS_LAYER_CHART:
-                    result = dont_force(wkb, shape);
-                    break;
-
-                case MS_LAYER_RASTER:
-                    msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
-                    break;
-
-                case MS_LAYER_CIRCLE:
-                    msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
-                    break;
-
-                default:
-                   msDebug( "Unsupported layer type in msPOSTGISLayerNextShape()!" );
-                   break;
-            }
-
-            if(shape->type != MS_SHAPE_NULL) {
-                /* have to retreive the attributes */
-                shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
-                for(t=0; t < layer->numitems; t++) {
-                     temp = (char *) PQgetvalue(layerinfo->query_result, *record, t);
-                     size = PQgetlength(layerinfo->query_result, *record, t);
-                     temp2 = (char *) malloc(size + 1);
-                     memcpy(temp2, temp, size);
-                     temp2[size] = 0; /* null terminate it */
-
-                     shape->values[t] = temp2;
-                }
-                temp = (char *) PQgetvalue(layerinfo->query_result, *record, t + 1); /* t is WKB, t+1 is OID */
-                record_oid = strtol(temp, NULL, 10);
-
-                shape->index = record_oid;
-                shape->numvalues = layer->numitems;
-
-                find_bounds(shape);
-                (*record)++;        /* move to next shape */
+    /* 
+    ** Roll through pgresult until we hit non-null shape (usually right away).
+    */
+    while (shape->type == MS_SHAPE_NULL) {
+        if (layerinfo->rownum < PQntuples(layerinfo->pgresult)) {
+            int rv;
+            /* Retrieve this shape. */
+            rv = msPostGISReadShape(layer, shape);
+            if( shape->type != MS_SHAPE_NULL ) {
+                (layerinfo->rownum)++; /* move to next shape */
                 return MS_SUCCESS;
             } else {
-                (*record)++; /* move to next shape */
+                (layerinfo->rownum)++; /* move to next shape */
             }
         } else {
             return MS_DONE;
         }
     }
 
+    /* Found nothing, clean up and exit. */
     msFreeShape(shape);
 
     return MS_FAILURE;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISLayerNextShape()");
+    return MS_FAILURE;
+#endif
 }
 
+/*
+** msPostGISLayerGetShape()
+**
+** Registered vtable->LayerGetShape function. We ignore the 'tile' 
+** parameter, as it means nothing to us.
+*/
+int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record) {
+#ifdef USE_POSTGIS
+    PGresult *pgresult;
+    msPostGISLayerInfo *layerinfo;
+    int result, num_tuples;
+    char *strSQL = 0;
 
-/* Execute a query on the DB based on record being an OID. */
+    assert(layer != NULL);
+    assert(layer->layerinfo != NULL);
 
-int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
-{
-    char    *query_str;
-    char    *table_name = 0;
-    char    *geom_column_name = 0;
-    char    *urid_name = 0;
-    char    *user_srid = 0;
-    char    *columns_wanted = 0;
-    size_t  length;
-    char    *temp;
-
-    PGresult            *query_result, *beg_res, *rollb_res, *close_res;
-    msPOSTGISLayerInfo  *layerinfo;
-    char                *wkb;
-    int                 result, t, size, num_tuples;
-    char                *temp1, *temp2;
-
-    if(layer->debug) {
-        msDebug("msPOSTGISLayerGetShape called for record = %i\n", record);
+    if (layer->debug) {
+        msDebug("msPostGISLayerGetShape called for record = %i\n", record);
     }
 
-    layerinfo = getPostGISLayerInfo(layer);
-
-    if(!layerinfo) {
-        /* Layer not open */
-        msSetError(MS_QUERYERR, "msPOSTGISLayerGetShape called on unopened layer (layerinfo = NULL)", "msPOSTGISLayerGetShape()");
-
+    /* Fill out layerinfo with our current DATA state. */
+    if ( msPostGISParseData(layer) != MS_SUCCESS) {
         return MS_FAILURE;
     }
-    
-    beg_res = PQexec(layerinfo->conn, "BEGIN");
-    if (!beg_res || PQresultStatus(beg_res) != PGRES_COMMAND_OK)
-    {
-        msSetError(MS_QUERYERR, "Error executing PostgreSQL BEGIN statement: %s", "msPOSTGISLayerGetShape()", PQerrorMessage(layerinfo->conn));
-        if(beg_res)
-	{
-            PQclear(beg_res);
-        }
-        msPOSTGISSanitizeConnection(layerinfo->conn);
+
+    /* 
+    ** This comes *after* parsedata, because parsedata fills in 
+    ** layer->layerinfo.
+    */
+    layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+
+    /* Build a SQL query based on our current state. */
+    strSQL = msPostGISBuildSQL(layer, 0, &record);
+    if ( ! strSQL ) {
+        msSetError(MS_QUERYERR, "Failed to build query SQL.", "msPostGISLayerGetShape()");
         return MS_FAILURE;
     }
-    PQclear(beg_res);
 
-    if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
-		return MS_FAILURE;
-	}
-
-    if(layer->numitems == 0) {
-        /* Don't need the oid since its really record */
-        columns_wanted = (char *) malloc(46 + strlen(geom_column_name) + 1);
-        if(layerinfo->gBYTE_ORDER == LITTLE_ENDIAN) {
-            sprintf(columns_wanted, "asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
-        } else {
-            sprintf(columns_wanted, "asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
-        }
-    } else {
-        length = 46 + strlen(geom_column_name);
-        for(t = 0; t < layer->numitems; t++) {
-            length += strlen(layer->items[t]) + 9;
-        }
-        columns_wanted = (char *) malloc(length + 1);
-        *columns_wanted = 0;
-        for(t = 0; t < layer->numitems; t++) {
-            strcat(columns_wanted, "\"");
-            strcat(columns_wanted, layer->items[t]);
-            strcat(columns_wanted, "\"");
-            strcat(columns_wanted, "::text,");
-        }
-        temp = columns_wanted + strlen(columns_wanted);
-        if(layerinfo->gBYTE_ORDER == LITTLE_ENDIAN) {
-            sprintf(temp, "asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
-        } else {
-            sprintf(temp, "asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
-        }
+    if (layer->debug) {
+        msDebug("msPostGISLayerGetShape query: %s\n", strSQL);
     }
 
-    /* TODO Can a long always hold 3 * sizeof(long) decimal digits? */
-    query_str = (char *) malloc(68 + strlen(columns_wanted) + strlen(table_name) + strlen(urid_name) + 3 * sizeof(long) + 1);
-    sprintf(query_str, "DECLARE mycursor2 BINARY CURSOR FOR SELECT %s from %s WHERE %s = %li", columns_wanted, table_name, urid_name, record);
+    pgresult = PQexec(layerinfo->pgconn, strSQL);
 
-    if(layer->debug) {
-        msDebug("msPOSTGISLayerGetShape: %s \n", query_str);
-    }
+    /* Something went wrong. */
+    if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
+        msSetError(MS_QUERYERR, "Error (%s) executing SQL: %s", "msPostGISLayerGetShape()", PQerrorMessage(layerinfo->pgconn), strSQL );
 
-    /* Cleanup parsed query parts */
-    free(columns_wanted);
-    free(user_srid);
-    free(urid_name);
-    free(geom_column_name);
-    free(table_name);
-
-    query_result = PQexec(layerinfo->conn, query_str);
-
-    if(!query_result || PQresultStatus(query_result) != PGRES_COMMAND_OK) {
-        msSetError(MS_QUERYERR, "Error executing POSTGIS SQL statement (in FETCH ALL): %s\n-%s\nMore Help:", "msPOSTGISLayerGetShape()", query_str, PQerrorMessage(layerinfo->conn));
-
-        if(query_result) {
-          PQclear(query_result);
+        if (pgresult) {
+            PQclear(pgresult);
         }
-        msPOSTGISSanitizeConnection(layerinfo->conn);
-
-        free(query_str);
-
-        return MS_FAILURE;
-
-    }
-    PQclear(query_result);
-
-    query_result = PQexec(layerinfo->conn, "FETCH ALL in mycursor2");
-    if( !query_result || PQresultStatus(query_result) !=  PGRES_TUPLES_OK) {
-        msSetError(MS_QUERYERR, "Error executing POSTGIS SQL statement (in FETCH ALL): %s\n-%s\n", "msPOSTGISLayerGetShape()", query_str, PQerrorMessage(layerinfo->conn));
-
-        if(query_result) {
-          PQclear(query_result);
-        }
-        msPOSTGISSanitizeConnection(layerinfo->conn);
-
-        free(query_str);
+        free(strSQL);
 
         return MS_FAILURE;
     }
 
-    free(query_str);
+    /* Clean any existing pgresult before storing current one. */
+    if(layerinfo->pgresult) PQclear(layerinfo->pgresult);
+    layerinfo->pgresult = pgresult;
 
+    /* Clean any existing SQL before storing current. */
+    if(layerinfo->sql) free(layerinfo->sql);
+    layerinfo->sql = strSQL;
 
-    /* query has been done, so we can retreive the results */
+    layerinfo->rownum = 0; /* Only return one result. */
+
+    /* We don't know the shape type until we read the geometry. */
     shape->type = MS_SHAPE_NULL;
 
-    num_tuples = PQntuples(query_result);
-    if(0 < num_tuples) {
-        /* only need to get one shape */
-        /* retreive an item */
-        wkb = (char *) PQgetvalue(query_result, 0, layer->numitems);  
-        /* layer->numitems is the wkt column */
-        switch(layer->type) {
-            case MS_LAYER_POINT:
-                result = force_to_points(wkb, shape);
-                break;
-
-            case MS_LAYER_LINE:
-                result = force_to_lines(wkb, shape);
-                break;
-
-            case MS_LAYER_POLYGON:
-                result =    force_to_polygons(wkb, shape);
-                break;
-
-            case MS_LAYER_ANNOTATION:
-            case MS_LAYER_QUERY:
-            case MS_LAYER_CHART:
-                result = dont_force(wkb,shape);
-                break;
-
-            case MS_LAYER_RASTER:
-                msDebug("Ignoring MS_LAYER_RASTER in mappostgis.c\n");
-                break;
-
-            case MS_LAYER_CIRCLE:
-                msDebug("Ignoring MS_LAYER_RASTER in mappostgis.c\n");
-                break;
-
-            default:
-                msDebug("Ignoring unrecognised layer type.");
-                break;
-        }
-
-        if(shape->type != MS_SHAPE_NULL) {
-            /* have to retreive the attributes */
-            shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
-            for(t = 0; t < layer->numitems; t++) {
-                 temp1= (char *) PQgetvalue(query_result, 0, t);
-                 size = PQgetlength(query_result, 0, t);
-                 temp2 = (char *) malloc(size + 1);
-                 memcpy(temp2, temp1, size);
-                 temp2[size] = 0; /* null terminate it */
-
-                 shape->values[t] = temp2;
-
-            }
-            shape->index = record;
-            shape->numvalues = layer->numitems;
-
-            find_bounds(shape);
-        }
+    num_tuples = PQntuples(pgresult);
+    if (layer->debug) {
+        msDebug("msPostGISLayerGetShape number of records: %d\n", num_tuples);
     }
 
-    PQclear(query_result);
-
-    close_res = PQexec(layerinfo->conn, "CLOSE mycursor2");
-    if (!close_res || PQresultStatus(close_res) != PGRES_COMMAND_OK)
-    {
-        msSetError(MS_QUERYERR, "Error executing PostgreSQL CLOSE statement.", "msPOSTGISLayerGetShape()");
-        if (num_tuples > 0 && shape->type != MS_SHAPE_NULL)
-        {
-            msFreeShape(shape);
-        }
-        if (close_res)
-        {
-            PQclear(close_res);
-        }
-        msPOSTGISSanitizeConnection(layerinfo->conn);
-        return MS_FAILURE;
+    if (num_tuples > 0) {
+         result = msPostGISReadShape(layer, shape);
     }
-    PQclear(close_res);
-
-    rollb_res = PQexec(layerinfo->conn, "ROLLBACK");
-    if (!rollb_res || PQresultStatus(rollb_res) != PGRES_COMMAND_OK)
-    {
-        msSetError(MS_QUERYERR, "Error executing PostgreSQL ROLLBACK statement: %s", "msPOSTGISLayerClose()", PQerrorMessage(layerinfo->conn));
-        if(rollb_res)
-	{
-            PQclear(rollb_res);
-        }
-        msPOSTGISSanitizeConnection(layerinfo->conn);
-        return MS_FAILURE;
-    }
-    PQclear(rollb_res);
 
     return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : ( (num_tuples > 0) ? MS_SUCCESS : MS_DONE );
-
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISLayerGetShape()");
+    return MS_FAILURE;
+#endif
 }
 
+/*
+** msPostGISLayerGetItems()
+**
+** Registered vtable->LayerGetItems function. Query the database for
+** column information about the requested layer. Rather than look in
+** system tables, we just run a zero-cost query and read out of the
+** result header.
+*/
+int msPostGISLayerGetItems(layerObj *layer) {
+#ifdef USE_POSTGIS
+    msPostGISLayerInfo *layerinfo;
+    char *sql = 0;
+    static char *strSQLTemplate = "select * from %s where false limit 0";
+    PGresult *pgresult;
+    int t;
+    char *col;
+    char found_geom = 0;
+    int item_num;
 
+    assert(layer != NULL);
+    assert(layer->layerinfo != NULL);
+    
+    layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+    
+    assert(layerinfo->pgconn);
 
-
-/* query the DB for info about the requested table */
-/*  */
-/* CHEAT: dont look in the system tables, get query optimization infomation */
-/*  */
-/* get the table name, return a list of the possible columns (except GEOMETRY column) */
-/*  */
-/* found out this is called during a query */
-
-int msPOSTGISLayerGetItems(layerObj *layer)
-{
-    msPOSTGISLayerInfo  *layerinfo;
-    char                *table_name = 0;
-    char                *geom_column_name = 0;
-    char                *urid_name = 0;
-    char                *user_srid = 0;
-    char                *sql = 0;
-
-    PGresult            *query_result;
-    int                 t;
-    char                *col;
-    char                found_geom = 0;
-
-    int                 item_num;
-
-
-    if(layer->debug) {
-        msDebug("in msPOSTGISLayerGetItems  (find column names)\n");
+    if (layer->debug) {
+        msDebug("msPostGISLayerGetItems called.\n");
     }
 
-    layerinfo = getPostGISLayerInfo( layer);
-
-    if(!layerinfo) {
-        /* layer not opened yet */
-        msSetError(MS_QUERYERR, "msPOSTGISLayerGetItems called on unopened layer", "msPOSTGISLayerGetItems()");
-
+    /* Fill out layerinfo with our current DATA state. */
+    if ( msPostGISParseData(layer) != MS_SUCCESS) {
         return MS_FAILURE;
     }
 
-    if(!layerinfo->conn) {
-        msSetError(MS_QUERYERR, "msPOSTGISLayerGetItems called on POSTGIS layer with no connection to DB.", "msPOSTGISLayerGetItems()");
+    layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
 
-        return MS_FAILURE;
+    /*
+    ** Both the "table" and "(select ...) as sub" cases can be handled with the 
+    ** same SQL.
+    */
+    sql = (char*) malloc(strlen(strSQLTemplate) + strlen(layerinfo->fromsource));
+    sprintf(sql, strSQLTemplate, layerinfo->fromsource);
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerGetItems executing SQL: %s\n", sql);
     }
-    /* get the table name and geometry column name */
 
-    if (msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug) != MS_SUCCESS) {
-		return MS_FAILURE;
-	}
-
-    /* two cases here.  One, its a table (use select * from table) otherwise, just use the select clause */
-    sql = (char *) malloc(36 + strlen(table_name) + 1);
-    sprintf(sql, "SELECT * FROM %s WHERE false LIMIT 0", table_name); /* attempt the query, but dont actually do much (this might take some time if there is an order by!) */
-
-    free(user_srid);
-    free(urid_name);
-    /* geom_column_name is needed later */
-    free(table_name);
-
-    query_result = PQexec(layerinfo->conn, sql);
-
-    if(!query_result || PQresultStatus(query_result) != PGRES_TUPLES_OK) {
-        msSetError(MS_QUERYERR, "Error executing POSTGIS SQL statement (in msPOSTGISLayerGetItems): %s\n-%s\n", "msPOSTGISLayerGetItems()", sql, PQerrorMessage(layerinfo->conn));
-
-        if(query_result) {
-            PQclear(query_result);
-        } else {
-            msPOSTGISSanitizeConnection(layerinfo->conn);
-	}
-
+    pgresult = PQexec(layerinfo->pgconn, sql);
+    
+    if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
+        msSetError(MS_QUERYERR, "Error (%s) executing SQL: %s", "msPostGISLayerGetItems()", PQerrorMessage(layerinfo->pgconn), sql);
+        if (pgresult) {
+            PQclear(pgresult);
+        }
         free(sql);
-        free(geom_column_name);
-
         return MS_FAILURE;
     }
 
     free(sql);
 
-    layer->numitems = PQnfields(query_result) - 1; /* dont include the geometry column */
-    layer->items = malloc(sizeof(char *) * (layer->numitems + 1)); /* +1 in case there is a problem finding goeometry column */
-                                                                /* it will return an error if there is no geometry column found, */
-                                                                /* so this isnt a problem */
+    layer->numitems = PQnfields(pgresult) - 1; /* dont include the geometry column (last entry)*/
+    layer->items = malloc(sizeof(char*) * (layer->numitems + 1)); /* +1 in case there is a problem finding geometry column */
 
     found_geom = 0; /* havent found the geom field */
     item_num = 0;
 
-    for(t = 0; t < PQnfields(query_result); t++) {
-        col = PQfname(query_result, t);
-        if(strcmp(col, geom_column_name) != 0) {
+    for (t = 0; t < PQnfields(pgresult); t++) {
+        col = PQfname(pgresult, t);
+        if ( strcmp(col, layerinfo->geomcolumn) != 0 ) {
             /* this isnt the geometry column */
-            layer->items[item_num] = (char *) malloc(strlen(col) + 1);
-            strcpy(layer->items[item_num], col);
+            layer->items[item_num] = strdup(col);
             item_num++;
         } else {
             found_geom = 1;
         }
     }
 
-    PQclear(query_result);
+    PQclear(pgresult);
 
-    if(!found_geom) {
-        msSetError(MS_QUERYERR, "msPOSTGISLayerGetItems: tried to find the geometry column in the results from the database, but couldnt find it.  Is it miss-capitialized? '%s'", "msPOSTGISLayerGetItems()", geom_column_name);
-
-	    free(geom_column_name);
-
+    if (!found_geom) {
+        msSetError(MS_QUERYERR, "Tried to find the geometry column in the database, but couldn't find it.  Is it mis-capitalized? '%s'", "msPostGISLayerGetItems()", layerinfo->geomcolumn);
         return MS_FAILURE;
     }
 
-    free(geom_column_name);
-
-    return msPOSTGISLayerInitItemInfo(layer);
+    return msPostGISLayerInitItemInfo(layer);
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISLayerGetShape()");
+    return MS_FAILURE;
+#endif
 }
 
-
-/* we return an infinite extent */
-/* we could call the SQL AGGREGATE extent(GEOMETRY), but that would take FOREVER */
-/* to return (it has to read the entire table). */
-/* So, we just tell it that we're everywhere and lets the spatial indexing figure things out for us */
-/*  */
-/* Never seen this function actually called */
-int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
-{
-    if(layer->debug) {
-        msDebug("msPOSTGISLayerGetExtent called\n");
+/*
+** msPostGISLayerGetExtent()
+**
+** Registered vtable->LayerGetExtent function.
+**
+** TODO: Update to use proper PostGIS functions to pull
+** extent quickly and accurately when available.
+*/
+int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent) {
+    if (layer->debug) {
+        msDebug("msPOSTGISLayerGetExtent called.\n");
     }
 
     extent->minx = extent->miny = -1.0 * FLT_MAX ;
@@ -1527,495 +1845,9 @@ int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
 
     return MS_SUCCESS;
 
-
-        /* this should get the real extents,but it requires a table read */
-        /* unforunately, there is no way to call this function from mapscript, so its */
-        /* pretty useless.  Untested since you cannot actually call it. */
-
-/*
-
-PGresult   *query_result;
-    char        sql[5000];
-
-    msPOSTGISLayerInfo *layerinfo;
-
-   char    table_name[5000];
-      char    geom_column_name[5000];
-      char    urid_name[5000];
-    char    user_srid[5000];
-    if (layer == NULL)
-    {
-                char tmp[5000];
-
-                sprintf(tmp, "layer is null - have you opened the layer yet?");
-                    msSetError(MS_QUERYERR, tmp,
-                         "msPOSTGISLayerGetExtent()");
-
-        return(MS_FAILURE);
-    }
-
-
-
-  layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
-
-   msPOSTGISLayerParseData(layer->data, geom_column_name,table_name, urid_name,user_srid,layer->debug);
-
-   sprintf(sql,"select extent(%s) from %s", geom_column_name,table_name);
-
-
-    if (layerinfo->conn == NULL)
-    {
-                char tmp[5000];
-
-                sprintf(tmp, "layer doesnt have a postgis connection - have you opened the layer yet?");
-                    msSetError(MS_QUERYERR, tmp,
-                         "msPOSTGISLayerGetExtent()");
-
-        return(MS_FAILURE);
-    }
-
-
-
-    query_result = PQexec(layerinfo->conn, sql);
-    if (!(query_result) || PQresultStatus(query_result) !=  PGRES_TUPLES_OK)
-    {
-        char tmp[5000];
-
-        sprintf(tmp, "Error executing POSTGIS  SQL   statement (in msPOSTGISLayerGetExtent): %s", layerinfo->sql);
-            msSetError(MS_QUERYERR, tmp,
-                 "msPOSTGISLayerGetExtent()");
-
-            PQclear(query_result);
-        return(MS_FAILURE);
-    }
-
-    if (PQntuples(query_result) != 1)
-    {
-                char tmp[5000];
-
-                sprintf(tmp, "Error executing POSTGIS  SQL   statement (in msPOSTGISLayerGetExtent) [doesnt have exactly 1 result]: %s", layerinfo->sql);
-                    msSetError(MS_QUERYERR, tmp,
-                         "msPOSTGISLayerGetExtent()");
-
-                    PQclear(query_result);
-        return(MS_FAILURE);
-    }
-
-    sscanf(PQgetvalue(query_result,0,0),"%lf %lf %lf %lf", &extent->minx,&extent->miny,&extent->maxx,&extent->maxy );
-
-    PQclear(query_result);
-    */
-
 }
 
-int msPOSTGISLayerRetrievePGVersion(layerObj *layer, int debug, int *major, int *minor, int *point) {
-    PGresult *query_result;
-    char *sql;
-    msPOSTGISLayerInfo *layerinfo;
-    char *tmp;
-
-    sql = "select substring(version() from 12 for (position('on' in version()) - 13))";
-
-    if(debug) {
-        msDebug("msPOSTGISLayerRetrievePGVersion(): query = %s\n", sql);
-    }
-  
-    layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
-
-    if(layerinfo->conn == NULL) {
-        char *tmp1 = "Layer does not have a postgis connection.";
-        msSetError(MS_QUERYERR, tmp1, "msPOSTGISLayerRetrievePGVersion()\n");
-        return(MS_FAILURE);
-    }
-
-    query_result = PQexec(layerinfo->conn, sql);
-    if(!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK) {
-        char *tmp1;
-        char *tmp2 = NULL;
-
-        tmp1 = "Error executing POSTGIS statement (msPOSTGISLayerRetrievePGVersion():";
-        tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql) + 1));
-        strcpy(tmp2, tmp1);
-        strcat(tmp2, sql);
-        msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePGVersion()");
-        if(debug) {
-          msDebug("msPOSTGISLayerRetrievePGVersion: No results returned.\n");
-        }
-        free(tmp2);
-        msPOSTGISSanitizeConnection(layerinfo->conn);
-        return(MS_FAILURE);
-
-    }
-    if(PQntuples(query_result) < 1) {
-        if(debug) {
-            msDebug("msPOSTGISLayerRetrievePGVersion: No results found.\n");
-        }
-        PQclear(query_result);
-        return MS_FAILURE;
-    } 
-    if(PQgetisnull(query_result, 0, 0)) {
-        if(debug) {
-            msDebug("msPOSTGISLayerRetrievePGVersion: Null result returned.\n");
-        }
-        PQclear(query_result);
-        return MS_FAILURE;
-    }
-
-    tmp = PQgetvalue(query_result, 0, 0);
-
-    if(debug) {
-        msDebug("msPOSTGISLayerRetrievePGVersion: Version String: %s\n", tmp);
-    }
-
-    *major = atoi(tmp);
-    *minor = atoi(tmp + 2);
-    *point = atoi(tmp + 4);
-  
-    if(debug) {
-        msDebug("msPOSTGISLayerRetrievePGVersion(): Found version %i, %i, %i\n", *major, *minor, *point);
-    }
-
-    PQclear(query_result);
-    return MS_SUCCESS;
-}
-
-int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name, int debug) 
-{
-    PGresult   *query_result = 0;
-    char        *sql = 0;
-    msPOSTGISLayerInfo *layerinfo = 0;
-    int major, minor, point, tmpint;
-    int length;
-    char *pos_sep, *schema, *table;
-    schema = NULL;
-    table = NULL;
-
-     /* Attempt to separate table_name into schema.table */
-    pos_sep = strstr(table_name, ".");
-    if(pos_sep) 
-    {
-      length = strlen(table_name) - strlen(pos_sep);
-      schema = (char *)malloc(length + 1);
-      strncpy(schema, table_name, length);
-      schema[length] = 0;
-
-      length = strlen(pos_sep);
-      table = (char *)malloc(length);
-      strncpy(table, pos_sep + 1, length - 1);
-      table[length - 1] = 0;
-      
-      if(debug)
-      {
-        msDebug("msPOSTGISLayerRetrievePK(): Found schema %s, table %s.\n", schema, table);
-      }
-    }
-    
-    if(msPOSTGISLayerRetrievePGVersion(layer, debug, &major, &minor, &point) == MS_FAILURE) 
-    {
-        if(debug)
-        {
-            msDebug("msPOSTGISLayerRetrievePK(): Unabled to retrieve version.\n");
-        }
-        return MS_FAILURE;
-    }
-    if(major < 7) 
-    {
-        if(debug)
-        {
-            msDebug("msPOSTGISLayerRetrievePK(): Major version below 7.\n");
-        }
-        return MS_FAILURE;
-    }
-    else if(major == 7 && minor < 2) 
-    {
-        if(debug)
-        {
-            msDebug("msPOSTGISLayerRetrievePK(): Version below 7.2.\n");
-        }
-        return MS_FAILURE;
-    }
-    if(major == 7 && minor == 2) {
-        /*
-         * PostgreSQL v7.2 has a different representation of primary keys that
-         * later versions.  This currently does not explicitly exclude
-         * multicolumn primary keys.
-         */
-        sql = malloc(strlen(table_name) + 234);
-        sprintf(sql, "select b.attname from pg_class as a, pg_attribute as b, (select oid from pg_class where relname = '%s') as c, pg_index as d where d.indexrelid = a.oid and d.indrelid = c.oid and d.indisprimary and b.attrelid = a.oid and a.relnatts = 1", table_name);
-    } else {
-        /*
-         * PostgreSQL v7.3 and later treat primary keys as constraints.
-         * We only support single column primary keys, so multicolumn
-         * pks are explicitly excluded from the query.
-         */
-        if(schema && table)
-        {
-            sql = malloc(strlen(schema) + strlen(table) + 376); 
-            sprintf(sql, "select attname from pg_attribute, pg_constraint, pg_class, pg_namespace where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_class.relnamespace = pg_namespace.oid and pg_namespace.nspname = '%s' and pg_constraint.conkey[2] is null", table, schema);
-            free(table);
-            free(schema);
-        }
-        else
-        {
-            sql = malloc(strlen(table_name) + 325); 
-            sprintf(sql, "select attname from pg_attribute, pg_constraint, pg_class where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_table_is_visible(pg_class.oid) and pg_constraint.conkey[2] is null", table_name);
-      }
-    }
-
-    if (debug)
-    {
-       msDebug("msPOSTGISLayerRetrievePK: query = %s\n", sql);
-    }
-
-    layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
-
-    if(layerinfo->conn == NULL) 
-    {
-      char tmp1[42] = "Layer does not have a postgis connection.";
-      msSetError(MS_QUERYERR, tmp1, "msPOSTGISLayerRetrievePK()");
-      free(sql);
-      return(MS_FAILURE);
-    }
-
-    query_result = PQexec(layerinfo->conn, sql);
-    if(!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK) 
-    {
-      char *tmp1;
-      char *tmp2 = NULL;
-
-      tmp1 = "Error executing POSTGIS statement (msPOSTGISLayerRetrievePK():";
-      tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql) + 1));
-      strcpy(tmp2, tmp1);
-      strcat(tmp2, sql);
-      msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePK()");
-      free(tmp2);
-      free(sql);
-      msPOSTGISSanitizeConnection(layerinfo->conn);
-      return(MS_FAILURE);
-
-    }
-
-    if(PQntuples(query_result) < 1) 
-    {
-      if(debug) 
-      {
-        msDebug("msPOSTGISLayerRetrievePK: No results found.\n");
-      }
-      PQclear(query_result);
-      free(sql);
-      return MS_FAILURE;
-    }
-    if(PQntuples(query_result) > 1)
-    {
-      if(debug)
-      {
-        msDebug("msPOSTGISLayerRetrievePK: Multiple results found.\n");
-      }
-      PQclear(query_result);
-      free(sql);
-      return MS_FAILURE;
-    }
-
-    if(PQgetisnull(query_result, 0, 0)) 
-    {
-      if(debug) 
-      {
-        msDebug("msPOSTGISLayerRetrievePK: Null result returned.\n");
-      }
-      PQclear(query_result);
-      free(sql);
-      return MS_FAILURE;
-    }
-
-    tmpint = PQgetlength(query_result, 0, 0);
-    *urid_name = (char *)malloc(tmpint + 1);
-    strcpy(*urid_name, PQgetvalue(query_result, 0, 0));
-
-    PQclear(query_result);
-    free(sql);
-    return MS_SUCCESS;
-}
-
-/* Function to parse the Mapserver DATA parameter for geometry
- * column name, table name and name of a column to serve as a
- * unique record id
- */
-
-static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, int debug)
-{
-    char    *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_urid, *data;
-    int     slength;
-
-    data = layer->data;
-
-    /* given a string of the from 'geom from ctivalues' or 'geom from () as foo'
-     * return geom_column_name as 'geom'
-     * and table name as 'ctivalues' or 'geom from () as foo'
-     */
-
-    /* First look for the optional ' using unique ID' string */
-    pos_urid = strstrIgnoreCase(data, " using unique ");
-
-    if(pos_urid) {
-        /* CHANGE - protect the trailing edge for thing like 'using unique ftab_id using srid=33' */
-        tmp = strstr(pos_urid + 14, " ");
-        if(!tmp) {
-            tmp = pos_urid + strlen(pos_urid);
-        }
-        *urid_name = (char *) malloc((tmp - (pos_urid + 14)) + 1);
-        strncpy(*urid_name, pos_urid + 14, tmp - (pos_urid + 14));
-        (*urid_name)[tmp - (pos_urid + 14)] = 0;
-    }
-
-    /* Find the srid */
-    pos_srid = strstrIgnoreCase(data, " using SRID=");
-    if(!pos_srid) {
-        *user_srid = (char *) malloc(1);
-        (*user_srid)[0] = 0;
-    } else {
-        slength = strspn(pos_srid + 12, "-0123456789");
-        if(!slength) {
-            msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable: You specified 'using SRID=#' but didnt have any numbers!\n\nMore Help:\n\n", data);
-
-            return MS_FAILURE;
-        } else {
-            *user_srid = (char *) malloc(slength + 1);
-            strncpy(*user_srid, pos_srid + 12, slength);
-            (*user_srid)[slength] = 0; /* null terminate it */
-        }
-    }
-
-
-    /* this is a little hack so the rest of the code works.  If the ' using SRID=' comes before */
-    /* the ' using unique ', then make sure pos_opt points to where the ' using SRID' starts! */
-    
-    /*pos_opt = (pos_srid > pos_urid) ? pos_urid : pos_srid; */
-    if (!pos_srid && !pos_urid) { pos_opt = pos_urid; }
-    else if (pos_srid && pos_urid) 
-    { 
-        pos_opt = (pos_srid > pos_urid)? pos_urid : pos_srid;
-    }
-    else { pos_opt = (pos_srid > pos_urid) ? pos_srid : pos_urid; }
-
-    /* Scan for the table or sub-select clause */
-    pos_scn = strstrIgnoreCase(data, " from ");
-    if(!pos_scn) {
-        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').  More help: \n\n", data);
-
-        return MS_FAILURE;
-    }
-
-    /* Copy the geometry column name */
-    *geom_column_name = (char *) malloc((pos_scn - data) + 1);
-    strncpy(*geom_column_name, data, pos_scn - data);
-    (*geom_column_name)[pos_scn - data] = 0;
-
-    /* Copy out the table name or sub-select clause */
-    if(!pos_opt) {
-        pos_opt = pos_scn + strlen(pos_scn);
-    }
-    *table_name = (char *) malloc((pos_opt - (pos_scn + 6)) + 1);
-    strncpy(*table_name, pos_scn + 6, pos_opt - (pos_scn + 6));
-    (*table_name)[pos_opt - (pos_scn + 6)] = 0;
-
-    if(strlen(*table_name) < 1 || strlen(*geom_column_name) < 1) {
-        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find a geometry_column or table/subselect).  More help: \n\n", data);
-
-        return MS_FAILURE;
-    }
-
-    if( !pos_urid ) {
-        if( msPOSTGISLayerRetrievePK(layer, urid_name, *table_name, debug) != MS_SUCCESS ) {
-            /* No user specified unique id so we will use the Postgesql OID */
-            *urid_name = (char *) malloc(4);
-            strcpy(*urid_name, "OID");
-        }
-    }
-
-
-    if(debug) {
-        msDebug("msPOSTGISLayerParseData: unique column = %s, srid='%s', geom_column_name = %s, table_name=%s\n", *urid_name, *user_srid, *geom_column_name, *table_name);
-    }
-
-    return MS_SUCCESS;
-}
-
-#else
-
-/* prototypes if postgis isnt supposed to be compiled */
-
-int msPOSTGISLayerOpen(layerObj *layer)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerOpen called but unimplemented!  (mapserver not compiled with postgis support)", "msPOSTGISLayerOpen()");
-    return MS_FAILURE;
-}
-
-int msPOSTGISLayerIsOpen(layerObj *layer)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISIsLayerOpen called but unimplemented!  (mapserver not compiled with postgis support)", "msPOSTGISLayerIsOpen()");
-    return MS_FALSE;
-}
-
-void msPOSTGISLayerFreeItemInfo(layerObj *layer)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerFreeItemInfo called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerFreeItemInfo()");
-}
-
-int msPOSTGISLayerInitItemInfo(layerObj *layer)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerInitItemInfo called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerInitItemInfo()");
-    return MS_FAILURE;
-}
-
-int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerWhichShapes called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerWhichShapes()");
-    return MS_FAILURE;
-}
-
-int msPOSTGISLayerClose(layerObj *layer)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerClose called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerClose()");
-    return MS_FAILURE;
-}
-
-int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerNextShape called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerNextShape()");
-    return MS_FAILURE;
-}
-
-int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerGetShape called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerGetShape()");
-    return MS_FAILURE;
-}
-
-int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerGetExtent called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerGetExtent()");
-    return MS_FAILURE;
-}
-
-int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerGetShapeRandom called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerGetShapeRandom()");
-    return MS_FAILURE;
-}
-
-int msPOSTGISLayerGetItems(layerObj *layer)
-{
-    msSetError(MS_QUERYERR, "msPOSTGISLayerGetItems called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerGetItems()");
-    return MS_FAILURE;
-}
-
-
-/* end above's #ifdef USE_POSTGIS */
-#endif
-
-int msPOSTGISLayerSetTimeFilter(layerObj *lp, 
-                                const char *timestring, 
-                                const char *timefield)
+int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char *timefield)
 {
     char *tmpstimestring = NULL;
     char *timeresolution = NULL;
@@ -2414,42 +2246,35 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
     return MS_FALSE;
 }
 
-int 
-msPOSTGISLayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record)
-{
-    return msPOSTGISLayerGetShape(layer, shape, record);
-}
-
-
-int
-msPOSTGISLayerInitializeVirtualTable(layerObj *layer)
-{
+int msPostGISLayerInitializeVirtualTable(layerObj *layer) {
     assert(layer != NULL);
     assert(layer->vtable != NULL);
 
-    layer->vtable->LayerInitItemInfo = msPOSTGISLayerInitItemInfo;
-    layer->vtable->LayerFreeItemInfo = msPOSTGISLayerFreeItemInfo;
-    layer->vtable->LayerOpen = msPOSTGISLayerOpen;
-    layer->vtable->LayerIsOpen = msPOSTGISLayerIsOpen;
-    layer->vtable->LayerWhichShapes = msPOSTGISLayerWhichShapes;
-    layer->vtable->LayerNextShape = msPOSTGISLayerNextShape;
-    layer->vtable->LayerGetShape = msPOSTGISLayerGetShapeVT;
+    layer->vtable->LayerInitItemInfo = msPostGISLayerInitItemInfo;
+    layer->vtable->LayerFreeItemInfo = msPostGISLayerFreeItemInfo;
+    layer->vtable->LayerOpen = msPostGISLayerOpen;
+    layer->vtable->LayerIsOpen = msPostGISLayerIsOpen;
+    layer->vtable->LayerWhichShapes = msPostGISLayerWhichShapes;
+    layer->vtable->LayerNextShape = msPostGISLayerNextShape;
+    layer->vtable->LayerGetShape = msPostGISLayerGetShape;
 
-    layer->vtable->LayerClose = msPOSTGISLayerClose;
+    layer->vtable->LayerClose = msPostGISLayerClose;
 
-    layer->vtable->LayerGetItems = msPOSTGISLayerGetItems;
-    layer->vtable->LayerGetExtent = msPOSTGISLayerGetExtent;
+    layer->vtable->LayerGetItems = msPostGISLayerGetItems;
+    layer->vtable->LayerGetExtent = msPostGISLayerGetExtent;
 
     layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
 
     /* layer->vtable->LayerGetAutoStyle, not supported for this layer */
-    layer->vtable->LayerCloseConnection = msPOSTGISLayerClose;
-    
-    layer->vtable->LayerSetTimeFilter = msPOSTGISLayerSetTimeFilter;
+    layer->vtable->LayerCloseConnection = msPostGISLayerClose;
+
+    layer->vtable->LayerSetTimeFilter = msPostGISLayerSetTimeFilter; 
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
 
 
     return MS_SUCCESS;
 }
+
+
 

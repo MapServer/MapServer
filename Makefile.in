@@ -143,7 +143,7 @@ POSTGIS=      @POSTGIS_ENABLED@
 POSTGIS_LIB=  @POSTGIS_LIB@
 POSTGIS_INC=  @POSTGIS_INC@
 
-# Optional MyGIS Support.  See http://postgis.refractions.net/
+# Optional MyGIS Support. 
 MYGIS=      @MYGIS_ENABLED@
 MYGIS_LIB=  @MYGIS_LIB@
 MYGIS_INC=  @MYGIS_INC@

@@ -1206,7 +1206,7 @@ msInitializeVirtualTable(layerObj *layer)
             return(msOGRLayerInitializeVirtualTable(layer));
             break;
         case(MS_POSTGIS):
-            return(msPOSTGISLayerInitializeVirtualTable(layer));
+            return(msPostGISLayerInitializeVirtualTable(layer));
             break;
         case(MS_WMS):
               /* WMS isn't a public layer type, it isn't used anywhere */
