@@ -1652,6 +1652,10 @@ MS_DLL_EXPORT char *strdup(char *s);
 MS_DLL_EXPORT char *strrstr(char *string, char *find);
 #endif /* NEED_STRRSTR */
 
+#ifdef NEED_STRCASESTR
+MS_DLL_EXPORT char *strcasestr(const char *s, const char *find)
+#endif /* NEED_STRCASESTR */
+
 #ifdef NEED_STRNCASECMP
 MS_DLL_EXPORT int strncasecmp(const char *s1, const char *s2, int len);
 #endif /* NEED_STRNCASECMP */
