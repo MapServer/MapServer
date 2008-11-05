@@ -1,0 +1,81 @@
+:Date: 2008/11/01
+:Authors: Stephen Lime, Thomas Bonfort
+:Contact: Steve.Lime@DNR.State.MN.US, thomas.bonfort@camptocamp.com
+:Status: Draft
+:Version: MapServer 5.4
+:Funding: Camptocamp
+
+
+1. Summary
+###################
+
+The purpose of this RFC is to add the ability to Mapserver to interpret the 
+geometries based on a user-defined TYPE keyword, and to render the interpreted
+geometry with the selected styling
+
+The directive to activate this behavior is the TYPE keyword, that belongs to
+the STYLE object.
+
+Usages of this parameter include drawing bounding boxes of underlying 
+geometries, or adding arrowheads/tails to lines.
+
+
+2. Detailed functionality
+#########################
+
+The TYPE keyword initially accepts these parameters :
+
+- *BBOX* : render a shapeObj representing the bounding box of the 
+  underlying geometry
+- *BUFFER* : render a shapeObj representing the buffered geometry.
+  TODO: specify buffer distance. Not initially implemented.
+- *CENTROID* : render a pointObj at the location of the centroid of the
+  geometry
+- *CONVEXHULL* : not initially implemented
+- *START / END* : render a point symbol at the first/last vertex of the
+  underlying geometry. By default, the symbol is oriented to match the 
+  orientation of the corresponding geometry segment. This would be used
+  to add arrowheads/tails to linestrings.
+- *VERTICES* : render a point symbol at each vertex of the geometry. The
+  default orientation matches the half angle of the corresponding segments. 
+  TODO: specify if the start and end points are included or not.
+
+3. Implementation Details
+#########################
+
+Apart from the parsing and internal storage of which type should be used,
+the modifications of this RFC only affect the high-level rendering functions
+in mapdraw.c .
+
+There are two main modifications:
+
+- inside msDrawVectorLayer, a copy of the shape before being clipped by the
+  current extent must be kept, as the whole shape must be used for all but
+  the VERTICES type. Then, when looping through the different styles that 
+  can be applied, we switch off to the type-specific function if a TYPE 
+  keyword is set.
+- inside mapdraw.c, the type-specific drawing function is added. Depending
+  on the current style type, it either computes a new shape from the
+  original shape (types bbox, convexhull or buffer) and passes it to the
+  msDrawShadeSymbol, or calls msDrawMarkerSymbol for points of the original
+  shape (types start, end, vertices, centroid) after having adjusted the
+  orientation accordingly.
+
+4. Affected Files
+#################
+
+- mapdraw.c
+- maplexer.c/.l
+- mapfile.c
+- mapserver.h
+
+5. Backwards Incompatibility Issues
+###################################
+
+none expected.
+
+6. Bug ID
+##########
+
+http://trac.osgeo.org/mapserver/ticket/xxxx
+
