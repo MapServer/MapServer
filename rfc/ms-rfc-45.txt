@@ -7,6 +7,8 @@
 
 (*partiallly derived in part from a document prepared by Håvard and discussions with other developers working on cartographic output*)
 
+*TODO*: incorporate ideas of http://trac.osgeo.org/mapserver/ticket/1592
+
 1. Proposed Changes
 ###################
 
