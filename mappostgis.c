@@ -53,6 +53,9 @@
 **
 */
 
+/* GNU needs this for strcasestr */
+#define _GNU_SOURCE
+
 #include <assert.h>
 #include <string.h>
 #include "mapserver.h"

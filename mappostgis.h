@@ -36,3 +36,4 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid);
 int msPostGISParseData(layerObj *layer);
 
 #endif /* USE_POSTGIS */
+
