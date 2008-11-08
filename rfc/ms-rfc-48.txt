@@ -10,35 +10,51 @@
 ###################
 
 The purpose of this RFC is to add the ability to Mapserver to interpret the 
-geometries based on a user-defined TYPE keyword, and to render the interpreted
+geometries based on a user-defined GEOMETRYTRANSFORM keyword, and to render the interpreted
 geometry with the selected styling
 
-The directive to activate this behavior is the TYPE keyword, that belongs to
-the STYLE object.
+An example usage would be:
+
+GEOMETRYTRANSFORM "centroid(geom)"
+
+to treat the underlying geometry as a point rendered at the centroid of current feature.
+
+The directive to activate this behavior is the GEOMETRYTRANSFORM keyword, that 
+intially belongs to the STYLE object. Further developments could be to enable the 
+keyword at the LAYER level.
 
 Usages of this parameter include drawing bounding boxes of underlying 
 geometries, or adding arrowheads/tails to lines.
 
+Further developments would allow complex expressions to be passed to the keyword,
+allowing nested transformations to the underlying geometry, eg:
+
+GEOMETRYTRANSFORM "difference(geom,buffer(geom,10))"
+
+and binding to attributes, eg:
+
+GEOMETRYTRANSFORM "buffer(geom,[distance])"
 
 2. Detailed functionality
 #########################
 
-The TYPE keyword initially accepts these parameters :
+The GEOMETRYTRANSFORM keyword initially accepts these parameters :
 
-- *BBOX* : render a shapeObj representing the bounding box of the 
+- *bbox(geom)* : render a shapeObj representing the bounding box of the 
   underlying geometry
-- *BUFFER* : render a shapeObj representing the buffered geometry.
-  TODO: specify buffer distance. Not initially implemented.
-- *CENTROID* : render a pointObj at the location of the centroid of the
+- *buffer(geom,distance)* : render a shapeObj representing the buffered geometry.
+  "distance" specifies the buffer distance, in layer units. Not initially implemented.
+- *centroid(geom)* : render a pointObj at the location of the centroid of the
   geometry
-- *CONVEXHULL* : not initially implemented
-- *START / END* : render a point symbol at the first/last vertex of the
+- *convexhull(geom)* : not initially implemented
+- *start/end(the_geom)* : render a point symbol at the first/last vertex of the
   underlying geometry. By default, the symbol is oriented to match the 
   orientation of the corresponding geometry segment. This would be used
   to add arrowheads/tails to linestrings.
-- *VERTICES* : render a point symbol at each vertex of the geometry. The
-  default orientation matches the half angle of the corresponding segments. 
-  TODO: specify if the start and end points are included or not.
+- *vertices(geom[,option]* : render a point symbol at each vertex of the geometry.
+  The default orientation matches the half angle of the corresponding segments. 
+  The option keyword, specifies if the start and or end vertices should also be 
+  included in the transformation.
 
 3. Implementation Details
 #########################
@@ -52,7 +68,7 @@ There are two main modifications:
 - inside msDrawVectorLayer, a copy of the shape before being clipped by the
   current extent must be kept, as the whole shape must be used for all but
   the VERTICES type. Then, when looping through the different styles that 
-  can be applied, we switch off to the type-specific function if a TYPE 
+  can be applied, we switch off to the type-specific function if a GEOMETRYTRANSFORM 
   keyword is set.
 - inside mapdraw.c, the type-specific drawing function is added. Depending
   on the current style type, it either computes a new shape from the
@@ -68,13 +84,28 @@ There are two main modifications:
 - maplexer.c/.l
 - mapfile.c
 - mapserver.h
+- one or more files may be added for the parsing of the transform expression, and
+  the transformation itself.
 
-5. Backwards Incompatibility Issues
+5. Mapscript implications
+#########################
+
+Getters and setters will have to be added to the different mapscripts.
+
+A possible enhancement could also be to expose the transformation function to
+mapscript.
+
+6. Documentation
+################
+
+TBD post implementation
+
+7. Backwards Incompatibility Issues
 ###################################
 
 none expected.
 
-6. Bug ID
+8. Bug ID
 ##########
 
 http://trac.osgeo.org/mapserver/ticket/xxxx
