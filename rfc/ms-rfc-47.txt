@@ -6,7 +6,7 @@ MS RFC 47: Move IGNORE_MISSING_DATA to run-time configuration
 :Author: Paul Ramsey
 :Contact: pramsey@cleverelephant.ca
 :Last Edited: 2008/10/15
-:Status: Proposed
+:Status: Adopted on 2008-10-15 - Completed
 :Version: MapServer 5.4
 
 Overview 
