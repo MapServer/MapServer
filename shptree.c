@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Commandline utility to generate .qix shapefile spatial indexes.
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
       byte_order = MS_NEW_MSB_ORDER; 
   }
     
-  if(msShapefileOpen(&shapefile, "rb", argv[1]) == -1) {
+  if(msShapefileOpen(&shapefile, "rb", argv[1], MS_TRUE) == -1) {
     fprintf(stdout, "Error opening shapefile %s.\n", argv[1]);
     exit(0);
   }

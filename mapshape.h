@@ -183,7 +183,7 @@ typedef struct {
 } msTiledSHPLayerInfo;
 
 /* shapefileObj function prototypes  */
-MS_DLL_EXPORT int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename);
+MS_DLL_EXPORT int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename, int log_failures);
 MS_DLL_EXPORT int msShapefileCreate(shapefileObj *shpfile, char *filename, int type);
 MS_DLL_EXPORT void msShapefileClose(shapefileObj *shpfile);
 MS_DLL_EXPORT int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug);

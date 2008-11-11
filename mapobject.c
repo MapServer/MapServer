@@ -227,6 +227,33 @@ void msApplyMapConfigOptions( mapObj *map )
 }
 
 /************************************************************************/
+/*                         msMapIgnoreMissingData()                               */
+/************************************************************************/
+
+int msMapIgnoreMissingData( mapObj *map )
+{
+    const char *result = msGetConfigOption( map, "ON_MISSING_DATA" );
+    const int default_result = 
+#ifndef IGNORE_MISSING_DATA
+        MS_MISSING_DATA_FAIL;
+#else
+        MS_MISSING_DATA_LOG;
+#endif
+        
+    if( result == NULL )
+        return default_result;
+        
+    if( strcasecmp(result,"FAIL") == 0 ) 
+        return MS_MISSING_DATA_FAIL;
+    else if( strcasecmp(result,"LOG") == 0 )
+        return MS_MISSING_DATA_LOG;
+    else if( strcasecmp(result,"IGNORE") == 0 )
+        return MS_MISSING_DATA_IGNORE;
+
+    return default_result;    
+}
+
+/************************************************************************/
 /*                           msMapSetExtent()                           */
 /************************************************************************/
 

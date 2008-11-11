@@ -175,6 +175,10 @@ extern "C" {
 
 #define MS_MAXCOLORS 256
 
+#define MS_MISSING_DATA_IGNORE 0
+#define MS_MISSING_DATA_FAIL 1
+#define MS_MISSING_DATA_LOG 2
+
 #define MS_BUFFER_LENGTH 2048 /* maximum input line length */
 #define MS_URL_LENGTH 1024
 #define MS_MAXPATHLEN 1024
@@ -1520,6 +1524,7 @@ MS_DLL_EXPORT int msMapSetFakedExtent( mapObj *map );
 MS_DLL_EXPORT int msMapRestoreRealExtent( mapObj *map );
 MS_DLL_EXPORT int msMapLoadOWSParameters( mapObj *map, cgiRequestObj *request,
                                           const char *wmtver_string );
+MS_DLL_EXPORT int msMapIgnoreMissingData( mapObj *map );
 
 /* mapfile.c */
    

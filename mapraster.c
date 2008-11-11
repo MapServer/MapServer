@@ -1588,20 +1588,27 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     ** Generate an error.
     */
     if( !f ) {
-      msSetError(MS_IOERR, "%s using full path %s", "msDrawRaster()", filename, szPath);
+      int ignore_missing = msMapIgnoreMissingData( map );
+      if( ignore_missing != MS_MISSING_DATA_IGNORE ) {
+        msSetError(MS_IOERR, "%s using full path %s", "msDrawRaster()", filename, szPath);
+      }
 
-#ifndef IGNORE_MISSING_DATA
-      if( layer->debug || map->debug )
+      if( ignore_missing == MS_MISSING_DATA_FAIL ) {
+        if( layer->debug || map->debug )  
           msDebug( "Unable to open file %s for layer %s ... fatal error.\n", filename, layer->name );
+        final_status = MS_FAILURE;
+        break;
+      }
 
-      final_status = MS_FAILURE;
-      break;
-#else
-      if( layer->debug || map->debug )
+      if( ignore_missing == MS_MISSING_DATA_LOG ) {
+        if( layer->debug || map->debug )
           msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", filename, layer->name );
+        continue;
+      }
 
-      continue; /* skip it, next tile */
-#endif
+      if( ignore_missing == MS_MISSING_DATA_IGNORE ) {
+        continue; /* skip it, next tile */
+      }
     }
 
     /* put others which may require checks here */  

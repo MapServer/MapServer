@@ -1069,9 +1069,9 @@ shapefileObj *shapefileObj_new(char *filename, int type) {
       return NULL;
 
     if(type == -1)
-      status = msShapefileOpen(shapefile, "rb", filename);
+      status = msShapefileOpen(shapefile, "rb", filename, MS_TRUE);
     else if (type == -2)
-      status = msShapefileOpen(shapefile, "rb+", filename);
+      status = msShapefileOpen(shapefile, "rb+", filename, MS_TRUE);
     else
       status = msShapefileCreate(shapefile, filename, type);
 

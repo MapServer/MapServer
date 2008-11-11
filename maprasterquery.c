@@ -721,8 +721,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     if(layer->tileindex) { /* we have in index file */
         if(msShapefileOpen(&tilefile, "rb", 
                          msBuildPath3(szPath, map->mappath, map->shapepath, 
-                                      layer->tileindex)) == -1) 
-            if(msShapefileOpen(&tilefile, "rb", msBuildPath(szPath, map->mappath, layer->tileindex)) == -1) 
+                                      layer->tileindex), MS_TRUE) == -1) 
+            if(msShapefileOpen(&tilefile, "rb", msBuildPath(szPath, map->mappath, layer->tileindex), MS_TRUE) == -1) 
                 return(MS_FAILURE);    
 
         tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem);
@@ -790,22 +790,22 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
         
         if( hDS == NULL )
         {
+            int ignore_missing = msMapIgnoreMissingData( map );
             msReleaseLock( TLOCK_GDAL );
 
-#ifndef IGNORE_MISSING_DATA
-            if( layer->debug || map->debug )
+            if ( ignore_missing == MS_MISSING_DATA_FAIL ) {
+              if( layer->debug || map->debug )
                 msSetError( MS_IMGERR, 
                             "Unable to open file %s for layer %s ... fatal error.\n%s", 
                             szPath, layer->name, CPLGetLastErrorMsg(),
                             "msRasterQueryByRect()" );
-            
-            return(MS_FAILURE);
-#else
-            if( layer->debug || map->debug )
+              return(MS_FAILURE);
+            }
+            if( ignore_missing == MS_MISSING_DATA_LOG ) {
+              if( layer->debug || map->debug )
                 msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n%s", 
                          filename, layer->name, CPLGetLastErrorMsg() );
-            
-#endif
+            }
             continue;
         }
 
