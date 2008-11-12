@@ -1338,7 +1338,7 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
 /*                      msSLDParseGraphicFillOrStroke                   */
 /*                                                                      */
 /*      Parse the GraphicFill Or GraphicStroke node : look for a        */
-/*      Merker symbol and set the style for that symbol.                */
+/*      Marker symbol and set the style for that symbol.                */
 /************************************************************************/
 void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot, 
                                    char *pszDashValue,
@@ -2018,11 +2018,6 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         iStyle = psLayer->class[nClassId]->numstyles;
 	msMaybeAllocateStyle(psLayer->class[nClassId], iStyle);
         
-
-        /* set the default color */
-        psLayer->class[nClassId]->styles[iStyle]->color.red = 128;
-        psLayer->class[nClassId]->styles[iStyle]->color.green = 128;
-        psLayer->class[nClassId]->styles[iStyle]->color.blue = 128;
 
         msSLDParseGraphicFillOrStroke(psRoot, NULL,
                                       psLayer->class[nClassId]->styles[iStyle],
