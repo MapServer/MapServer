@@ -298,6 +298,8 @@ int msCopyLabel(labelObj *dst, labelObj *src)
 
     MS_COPYSTRING(dst->encoding, src->encoding);
 
+    MS_COPYSTELEM(outlinewidth);
+
     return MS_SUCCESS;
 }
 
@@ -446,7 +448,8 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     MS_COPYSTRING(dst->keyimage, src->keyimage);
     MS_COPYSTRING(dst->name, src->name);
     MS_COPYSTRING(dst->title, src->title);
-
+    MS_COPYSTRING(dst->group, src->group);
+    
     if (msCopyExpression(&(dst->text), &(src->text)) != MS_SUCCESS) {
         msSetError(MS_MEMERR, "Failed to copy text.", "msCopyClass()");
         return MS_FAILURE;
@@ -853,6 +856,8 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 
     MS_COPYRECT(&(dst->extent), &(src->extent));
     
+    MS_COPYSTRING(dst->classgroup, src->classgroup); 
+
     return MS_SUCCESS;
 }
 

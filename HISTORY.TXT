@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Add Support for SLD TextSymbolizer HALO and ANGLE (#2806)
+
 - IGNORE_MISSING_DATA: largely replaced by run-time CONFIG property,
   ON_MISSING_DATA, which supports three modes: FAIL, LOG, and IGNORE.
   (#2785) ms-rfc-47.txt

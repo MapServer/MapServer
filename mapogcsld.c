@@ -2497,7 +2497,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
     char *pszName=NULL, *pszFontFamily=NULL, *pszFontStyle=NULL;
     char *pszFontWeight=NULL; 
     CPLXMLNode *psLabelPlacement=NULL, *psPointPlacement=NULL, *psLinePlacement=NULL;
-    CPLXMLNode *psFill = NULL, *psPropertyName=NULL;
+    CPLXMLNode *psFill = NULL, *psPropertyName=NULL, *psHalo=NULL, *psHaloRadius=NULL, *psHaloFill=NULL;
     int nLength = 0;
     char *pszColor = NULL;
     /* char *pszItem = NULL; */
@@ -2666,10 +2666,54 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                     if (psPointPlacement)
                       ParseTextPointPlacement(psPointPlacement, psClass);
                     if (psLinePlacement)
-                      ParseTextLinePlacement(psPointPlacement, psClass);
+                      ParseTextLinePlacement(psLinePlacement, psClass);
                 }
 
-                
+/* -------------------------------------------------------------------- */
+/*      parse the halo parameter.                                       */
+/* -------------------------------------------------------------------- */
+                psHalo = CPLGetXMLNode(psRoot, "Halo");
+                if (psHalo)
+                {
+                    psHaloRadius =  CPLGetXMLNode(psHalo, "Radius");
+                    if (psHaloRadius && psHaloRadius->psChild && psHaloRadius->psChild->pszValue)
+                      psClass->label.outlinewidth = atoi(psHaloRadius->psChild->pszValue);
+
+                    psHaloFill =  CPLGetXMLNode(psHalo, "Fill");
+                    if (psHaloFill)
+                    {
+                        psCssParam =  CPLGetXMLNode(psHaloFill, "CssParameter");
+                        while (psCssParam && psCssParam->pszValue && 
+                           strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+                        {
+                            pszName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
+                            if (pszName)
+                            {
+                                if (strcasecmp(pszName, "fill") == 0)
+                                {
+                                    if(psCssParam->psChild && psCssParam->psChild->psNext && 
+                                       psCssParam->psChild->psNext->pszValue)
+                                      pszColor = psCssParam->psChild->psNext->pszValue;
+
+                                    if (pszColor)
+                                    {
+                                        nLength = strlen(pszColor);
+                                        /* expecting hexadecimal ex : #aaaaff */
+                                        if (nLength == 7 && pszColor[0] == '#')
+                                        {
+                                            psClass->label.outlinecolor.red = msHexToInt(pszColor+1);
+                                            psClass->label.outlinecolor.green = msHexToInt(pszColor+3);
+                                            psClass->label.outlinecolor.blue = msHexToInt(pszColor+5);
+                                        }
+                                    }
+                                }
+                            }
+                            psCssParam = psCssParam->psNext;
+                        }
+
+                    }
+                    
+                }
 /* -------------------------------------------------------------------- */
 /*      Parse the color                                                 */
 /* -------------------------------------------------------------------- */
@@ -2708,7 +2752,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
             
             }/* labelitem */
         }
-        /* TODO : support Halo parameter => shadow */
+
     }
 }
 
@@ -2822,6 +2866,12 @@ void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
         {
             psClass->label.offsetx = atoi(psOffset->psChild->pszValue);
             psClass->label.offsety = atoi(psOffset->psChild->pszValue);
+
+            /*if there is a line placement, we will assume that the 
+              best setting for mapserver would be for the text to follow
+              the line #2806*/
+            psClass->label.autofollow = MS_TRUE;         
+            psClass->label.autoangle = MS_TRUE; 
         }
     }
             
