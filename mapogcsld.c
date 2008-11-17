@@ -2509,6 +2509,11 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 
     if (psRoot && psClass && psLayer)
     {
+        /*set the angle by defulat to auto. the angle can be
+          modified Label Placement #2806*/
+        psClass->label.autoangle = MS_TRUE;
+
+
         /* label  */
         /* support literal expression  and  propertyname 
          - <TextSymbolizer><Label>MY_COLUMN</Label>
@@ -2861,17 +2866,23 @@ void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
     CPLXMLNode *psOffset = NULL;
     if (psRoot && psClass)
     {
+        /*if there is a line placement, we will assume that the 
+              best setting for mapserver would be for the text to follow
+              the line #2806*/
+        psClass->label.autofollow = MS_TRUE;         
+        psClass->label.autoangle = MS_TRUE; 
+
         psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
         if (psOffset && psOffset->psChild && psOffset->psChild->pszValue)
         {
             psClass->label.offsetx = atoi(psOffset->psChild->pszValue);
             psClass->label.offsety = atoi(psOffset->psChild->pszValue);
 
-            /*if there is a line placement, we will assume that the 
-              best setting for mapserver would be for the text to follow
-              the line #2806*/
-            psClass->label.autofollow = MS_TRUE;         
-            psClass->label.autoangle = MS_TRUE; 
+            /*if there is a PerpendicularOffset, we will assume that the 
+              best setting for mapserver would be for use angle 0 and the
+              the offset #2806*/
+            psClass->label.autoangle = MS_FALSE;
+            psClass->label.autofollow = MS_FALSE; 
         }
     }
             
