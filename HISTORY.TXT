@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-2)
 --------------------------------
 
+- Add Support for SLD TextSymbolizer HALO and ANGLE (#2806)
+
 - Fix crash when an invalid bbox filter is used (#2805)
 
 - raster query fix for tileindex with relative paths (#2722)

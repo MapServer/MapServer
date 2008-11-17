@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project: MapServer
  * Purpose: Functions to allow copying/cloning of maps
@@ -297,6 +297,8 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     MS_COPYSTELEM(priority);
 
     MS_COPYSTRING(dst->encoding, src->encoding);
+
+    MS_COPYSTELEM(outlinewidth);
 
     return MS_SUCCESS;
 }
