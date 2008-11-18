@@ -157,13 +157,16 @@ AC_DEFUN(AC_LD_SHARED,
     IRIX_ALL=
   fi
 
-  AC_ARG_WITH(ld-shared,[  --without-ld-shared     Disable shared library support],,)
+  AC_ARG_WITH(ld-shared,[  --with-ld-shared=CMD    Specify link command to use to build shared libs
+  --without-ld-shared     Disable shared library support],,)
 
-  if test "$with_ld_shared" != "" ; then
+  dnl using --with-ld-shared with no CMD arg has no effect (but some people
+  dnl still try it!)
+  if test "$with_ld_shared" != "" -a "$with_ld_shared" != "yes"; then
     if test "$with_ld_shared" = "no" ; then
-      echo "user disabled shared library support."	
+      AC_MSG_RESULT([user disabled shared library support.])
     else
-      echo "using user supplied .so link command ... $with_ld_shared"	
+      AC_MSG_RESULT([using user supplied .so link command ... $with_ld_shared])	
     fi
     LD_SHARED="$with_ld_shared"
   fi
