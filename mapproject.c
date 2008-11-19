@@ -877,6 +877,8 @@ void msSetPROJ_LIB( const char *proj_lib )
 #ifdef USE_PROJ
     static int finder_installed = 0;
 
+    msAcquireLock( TLOCK_PROJ );
+
     if( finder_installed == 0 && proj_lib != NULL)
     {
         finder_installed = 1;
@@ -899,6 +901,8 @@ void msSetPROJ_LIB( const char *proj_lib )
 
     if( proj_lib != NULL )
         ms_proj_lib = strdup( proj_lib );
+    
+    msReleaseLock( TLOCK_PROJ );
 #endif
 }
 
