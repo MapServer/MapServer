@@ -71,7 +71,8 @@ MSVC_VER=1310
 
 # Set the following to point to the directory adjacent to the dependent libs.
 !IFNDEF MS_BASE 
-MS_BASE =   c:\projects\mapserver
+#MS_BASE =   c:\projects\mapserver
+MS_BASE =  f:\projects\mapserver-buildkit-ms520\mapserver-5.2.x
 !ENDIF
 
 # Set the following to point to the current (mapserver) directory.
@@ -166,8 +167,9 @@ USE_POINT_Z_M=
 # GD is a required support library for MapServer 4.x.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !IFNDEF GD_DIR
-GD_DIR=$(MS_BASE)\..\gd-2.0.33
-GD_LIB=$(GD_DIR)/bgd_i.lib
+GD_DIR=$(MS_BASE)\..\gd-2.0.35
+GD_LIB=$(GD_DIR)/gd.lib
+#GD_LIB=$(GD_DIR)/bgd_i.lib
 !ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -280,8 +282,8 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 # The AGG (Ant-Grain Geometry) libraray http://www.antigrain.com/
 #is used in Mapserver to putput high class rendering
 #
-#AGG=-DUSE_AGG
-#AGG_DIR=$(MS_BASE)\..\agg-2.4
+AGG=-DUSE_AGG
+AGG_DIR=$(MS_BASE)\..\agg-2.4
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PDF (Acrobat PDF support) 
@@ -341,7 +343,7 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # GDAL_DIR to the directory where GDAL was built. 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #GDAL=-DUSE_GDAL
-#GDAL_DIR=$(MS_BASE)\..\gdal
+#GDAL_DIR=$(MS_BASE)\..\gdal_1_5_2
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -359,7 +361,7 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # needs only be defined once.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #OGR=-DUSE_OGR
-#GDAL_DIR=$(MS_BASE)\..\gdal
+#GDAL_DIR=$(MS_BASE)\..\gdal_1_5_2
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -384,16 +386,17 @@ JPEG_INC = -I$(JPEG_DIR)
 # See http://www.postgresql.org for support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #POSTGIS =-DUSE_POSTGIS
-#POSTGIS_DIR =$(MS_BASE)\..\postgresql-8.1.2
+#POSTGIS_DIR =$(MS_BASE)\..\postgresql-8.3.3
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Direct connectivity to Oracle Spatial.
 # ----------------------------------------------------------------------
 # Point this to where your ORACLE_HOME directory lives.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ORACLE_DIR = c:\Oracle\Ora81
+#ORACLE_DIR = $(MS_BASE)\..\oracle-10.2.0.1.0
 #ORACLE=-DUSE_ORACLESPATIAL
 #ORACLE=-DUSE_ORACLE_PLUGIN
+
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -457,6 +460,14 @@ JPEG_INC = -I$(JPEG_DIR)
 # Section IV: Mapserver OGC Configuration
 ########################################################################
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# LIBXML: utility library to write xml.
+# http://xmlsoft.org/index.html
+# WFS, WCS and SOS all need this flag to be activated
+# NOTE: ICONV is required when libxml2 is activated
+# ----------------------------------------------------------------------
+#XML2_ENABLED=-DUSE_LIBXML2
+#LIBXML_DIR=$(MS_BASE)\..\libxml2-2.6.23.win32
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WMS Server
@@ -481,6 +492,8 @@ JPEG_INC = -I$(JPEG_DIR)
 #WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
 #WINSOCK_LIB ="C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib\WS2_32.Lib"
 
+
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Client
 # ----------------------------------------------------------------------
@@ -491,13 +504,14 @@ JPEG_INC = -I$(JPEG_DIR)
 # WFS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WFS_SVR to compile with WFS server 
-# support, requires OGR and PROJ4
+# support, requires OGR and PROJ4, and libxml2
 #WFS=-DUSE_WFS_SVR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WCS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WCS_SVR to compile with WCS server support, requires GDAL.
+# It Also requires libxml2
 #WCS=-DUSE_WCS_SVR
 
 
@@ -506,12 +520,8 @@ JPEG_INC = -I$(JPEG_DIR)
 # ----------------------------------------------------------------------
 # Use -DUSE_OGC_SOS to compile with SOS, needs USE_WMS_SVR or 
 #USE_WFS_SVR enabled so the the gml functions to be enabled
-#It also needs ICONV support since the libxml windows binaries 
-#are built with it 
-#http://xmlsoft.org/index.html
+#It also needs ICONV support and libxml2 support 
 #SOS=-DUSE_SOS_SVR
-#XML2_ENABLED=-DUSE_LIBXML2
-#LIBXML_DIR=$(MS_BASE)\..\libxml2-2.6.13.win32
 
 
 ########################################################################
@@ -578,7 +588,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # also required for all OGC services (WMS, WFS, and WCS). 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
-#PROJ_DIR=$(MS_BASE)\..\proj-4.4.9
+#PROJ_DIR=$(MS_BASE)\..\proj
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -627,7 +637,7 @@ CURL_LIB = $(CURL_DIR)/libcurl.lib
 !ENDIF
 
 # LIBXML include and library
-!IFDEF SOS
+!IFDEF XML2_ENABLED
 LIBXML_INC = -I$(LIBXML_DIR)/include
 LIBXML_LIB = $(LIBXML_DIR)/lib/libxml2.lib
 !ENDIF
@@ -681,7 +691,7 @@ GDAL_LIB = $(GDAL_DIR)/gdal_i.lib
 
 # Setup OGR includes and libraries
 !IFDEF OGR
-OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/port
+OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/port -I$(GDAL_DIR)/gcore
 OGR_LIB = $(GDAL_DIR)/gdal_i.lib
 !ENDIF
 
