@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Exposed PIXELS value via URL configuration
+
 - Add Support for SLD TextSymbolizer HALO and ANGLE (#2806)
 
 - IGNORE_MISSING_DATA: largely replaced by run-time CONFIG property,
