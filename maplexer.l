@@ -359,7 +359,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>oraclespatial                         { return(MS_ORACLESPATIAL); }
 <INITIAL>percentages                           { return(MS_PERCENTAGES); }
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
-<INITIAL>pixels                                { return(MS_PIXELS); }
+<INITIAL,URL_STRING>pixels                     { return(MS_PIXELS); }
 <INITIAL>point                                 { return(MS_LAYER_POINT); }
 <INITIAL>polygon                               { return(MS_LAYER_POLYGON); }
 <INITIAL>postgis                               { return(MS_POSTGIS); }
