@@ -1419,7 +1419,11 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   char *xh="", *xf=",";
   char *yh="", *yf="";
   char *cs=" "; /* coordinate */
-  char *ph="", *pf="", *ps=" "; /* part */
+
+  char *ph="", *pf="", *ps=" "; /* part: works for multi-point/multi-linestring and simple polygons */
+  char *irh="", *irf="", *irs=""; /* inner ring: necessary for complex polygons */
+  char *orh="", *orf="", *ors=""; /* outer ring */
+
   char *sh="", *sf=""; /* shape */
 
   int centroid=MS_FALSE; /* output just the centroid */
