@@ -343,6 +343,11 @@ int mapObj_insertLayer(mapObj *self, layerObj *layer, int index)
     return -1;
 }
 
+layerObj *mapObj_removeLayer(mapObj *self, int layerindex)
+{
+    return msRemoveLayer(self, layerindex);
+}
+
 /**********************************************************************
  * class extensions for layerObj, always within the context of a map
  **********************************************************************/
@@ -363,8 +368,18 @@ layerObj *layerObj_new(mapObj *map) {
   }
 
 void layerObj_destroy(layerObj *self) {
-    return; // map deconstructor takes care of it
-  }
+   /* if the layer has a parent_map, let's the map object destroy it */
+   if ((self->map == NULL) && (self->refcount == 1)) {
+      /* if there is no other PHP Object that use this C layer object, delete it */
+         freeLayer(self);
+         free(self);
+         self = NULL;
+   } else 
+   {
+      MS_REFCNT_DECR(self);  
+   }
+   return;
+}
 
 int layerObj_open(layerObj *self) {
     return msLayerOpen(self);

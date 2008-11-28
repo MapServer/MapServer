@@ -75,6 +75,7 @@ PHP_RSHUTDOWN_FUNCTION(phpms);
 static void php_ms_free_map(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
 static void php_ms_free_image(zend_rsrc_list_entry *rsrc TSRMLS_DC);
+DLEXPORT void php3_ms_free_layer(layerObj *pLayer);
 DLEXPORT void php3_ms_free_point(pointObj *pPoint);
 DLEXPORT void php3_ms_free_line(lineObj *pLine);
 DLEXPORT void php3_ms_free_shape(shapeObj *pShape);
@@ -169,6 +170,7 @@ DLEXPORT void php3_ms_map_loadOWSParameters(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_OWSDispatch(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_insertLayer(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_removeLayer(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -707,6 +709,7 @@ function_entry php_map_class_functions[] = {
     {"loadowsparameters",  php3_ms_map_loadOWSParameters,       NULL},
     {"owsdispatch",     php3_ms_map_OWSDispatch,        NULL},
     {"insertlayer",     php3_ms_map_insertLayer,        NULL},
+    {"removelayer",     php3_ms_map_removeLayer,        NULL},
     {NULL, NULL, NULL}
 };
 
@@ -1010,10 +1013,9 @@ PHP_MINIT_FUNCTION(phpms)
     PHPMS_GLOBAL(le_msimg)  = 
         zend_register_list_destructors_ex(php_ms_free_image, NULL,
                                           "imageObj", module_number);
-    PHPMS_GLOBAL(le_mslayer)= 
-        zend_register_list_destructors_ex(NULL, NULL,
-                                          "layerObj", module_number);
 
+    PHPMS_GLOBAL(le_mslayer)= register_list_destructors(php3_ms_free_layer,
+                                                            NULL);
     PHPMS_GLOBAL(le_msclass)= register_list_destructors(php3_ms_free_stub,
                                                         NULL);
     PHPMS_GLOBAL(le_mslabel)= register_list_destructors(php3_ms_free_stub,
@@ -1408,6 +1410,11 @@ static void php_ms_free_image(zend_rsrc_list_entry *rsrc TSRMLS_DC)
     imageObj *image = (imageObj *)rsrc->ptr;
     
     msFreeImage(image);
+}
+
+DLEXPORT void php3_ms_free_layer(layerObj *pLayer) 
+{
+    layerObj_destroy(pLayer);
 }
 
 DLEXPORT void php3_ms_free_rect(rectObj *pRect) 
@@ -6043,8 +6050,7 @@ DLEXPORT void php3_ms_map_insertLayer(INTERNAL_FUNCTION_PARAMETERS)
                                          list TSRMLS_CC);
     poLayer = (layerObj *)_phpms_fetch_handle(pLyr, 
                                               PHPMS_GLOBAL(le_mslayer),
-                                              list TSRMLS_CC);
-
+                                              list TSRMLS_CC); 
     if (self == NULL || poLayer == NULL ||
         (iReturn =  mapObj_insertLayer(self, poLayer, nLyrIndex) ) < 0)
     {
@@ -6058,6 +6064,51 @@ DLEXPORT void php3_ms_map_insertLayer(INTERNAL_FUNCTION_PARAMETERS)
     
     /* Return layer object */
     RETURN_LONG(iReturn);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        map->removelayer()
+ *
+ * Remove layer from map object
+ **********************************************************************/
+
+/* {{{ proto int map.removeLayer(int layer_index)
+   Returns layerObj removed on sucess, else null. */
+ 
+DLEXPORT void php3_ms_map_removeLayer(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis;
+    long  layerIndex = 0;
+    mapObj *self=NULL;
+    layerObj *poLayer=NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &layerIndex) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    
+    if (self == NULL ||
+        (poLayer = mapObj_removeLayer(self, layerIndex)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+     /* Update mapObj members */
+    _phpms_set_property_long(pThis, "numlayers",
+                             self->numlayers, E_ERROR TSRMLS_CC); 
+
+     /* Return layer object */
+    _phpms_build_layer_object(poLayer, (int)NULL, list, return_value TSRMLS_CC);
+    
 }
 /* }}} */
 
@@ -6500,12 +6551,10 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     _phpms_object_init(return_value, layer_id, php_layer_class_functions,
                        PHP4_CLASS_ENTRY(layer_class_entry_ptr) TSRMLS_CC);
 
-#ifdef PHP4
-    zend_list_addref(parent_map_id);
+    if (parent_map_id != (int)NULL)
+       zend_list_addref(parent_map_id);
     add_property_resource(return_value, "_map_handle_", parent_map_id);
-#else
-    add_property_long(return_value, "_map_handle_", parent_map_id);
-#endif
+    MS_REFCNT_INCR(player);
 
     /* read-only properties */
     add_property_long(return_value,   "numclasses", player->numclasses);

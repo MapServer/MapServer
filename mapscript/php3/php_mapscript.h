@@ -127,6 +127,7 @@ int             mapObj_loadOWSParameters(mapObj *self, cgiRequestObj *request,
                                           char *wmtver_string);
 int             mapObj_OWSDispatch(mapObj *self, cgiRequestObj *req );
 int             mapObj_insertLayer(mapObj *self, layerObj *layer, int index);
+layerObj        *mapObj_removeLayer(mapObj *self, int layerindex);
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
