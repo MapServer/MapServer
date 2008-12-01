@@ -10,8 +10,11 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Version 5.2.1 (2008-12-01)
---------------------------
+Current Version (SVN branch-5-2)
+--------------------------------
+
+Version 5.2.1 (2008-12-01):
+---------------------------
 
 - Exposed PIXELS value via URL configuration
 
