@@ -96,7 +96,6 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
 
   xmlNodePtr   psRootNode = NULL;
   xmlNodePtr   psNode     = NULL;
-  xmlNodePtr   psSubNode  = NULL;
 
   if (_validateNamespace(psNsOws) == MS_FAILURE)
     psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
@@ -125,20 +124,8 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
   value = msOWSLookupMetadata(&(map->web.metadata), namespaces, "keywordlist");
 
   if (value) {
-    char **tokens = NULL;
-    int n = 0;
-    int i = 0;
-
     psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL);
-
-    tokens = msStringSplit(value, ',', &n);
-    if (tokens && n > 0) {
-      for (i=0; i<n; i++) {
-        psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "Keyword", BAD_CAST tokens[i]);
-        xmlSetNs(psSubNode, psNsOws);
-      }
-      msFreeCharArray(tokens, n);
-    }
+    msLibXml2GenerateList(psNode, psNsOws, "Keyword", value, ',');
   }
 
   else {
