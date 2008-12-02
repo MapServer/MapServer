@@ -479,7 +479,7 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws
 
 xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText) {
   char *xsi_schemaLocation = NULL;
-  char *ows_version_string = NULL;
+  char szVersionBuf[OWS_VERSION_MAXLEN];
 
   xmlNsPtr     psNsXsi     = NULL;
   xmlNodePtr   psRootNode  = NULL;
@@ -493,22 +493,18 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
   /* add attributes to root element */
   xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST version);
 
-  if (strcasecmp(language, "undefined") == 0) {
-    if (ows_version == OWS_1_0_0) {
-      ows_version_string = strdup("1.0.0");
-      xmlNewProp(psRootNode, BAD_CAST "language", BAD_CAST language);
-    }
-    if (ows_version == OWS_1_1_0) {
-      ows_version_string = strdup("1.1.0");
-      xmlNewProp(psRootNode, BAD_CAST "xml:lang", BAD_CAST language);
-    }
+  if (ows_version == OWS_1_0_0) {
+    xmlNewProp(psRootNode, BAD_CAST "language", BAD_CAST language);
+  }
+  if (ows_version == OWS_1_1_0) {
+    xmlNewProp(psRootNode, BAD_CAST "xml:lang", BAD_CAST language);
   }
 
   xsi_schemaLocation = strdup((char *)psNsOws->href);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *)schemas_location);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/ows/");
-  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *)ows_version_string);
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *)msOWSGetVersionString(ows_version, szVersionBuf));
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/owsExceptionReport.xsd");
 
   /* add namespace'd attributes to root element */
@@ -528,7 +524,6 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
     psNode = xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST ExceptionText);
   }
 
-  free(ows_version_string);
   free(xsi_schemaLocation);
   return psRootNode;
 }
