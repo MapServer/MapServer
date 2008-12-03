@@ -750,29 +750,40 @@ public:
     int renderGlyphs(double x, double y, agg::rgba8 &color, agg::rgba8 &outlinecolor,
             double size, char *font, char *thechars, double angle,
             agg::rgba8 &shadowcolor, double shdx, double shdy,
-            int outlinewidth) {
+            int outlinewidth, bool isMarker=false) {
         if(!m_feng.load_font(font, 0, agg::glyph_ren_outline)) {
             msSetError(MS_TTFERR, "AGG error loading font (%s)", "renderGlyphs()", font);
             return MS_FAILURE;
         }
         ras_aa.filling_rule(agg::fill_non_zero);
-        agg::trans_affine mtx;
-        mtx *= agg::trans_affine_translation(-x,-y);
-        /*agg angles are antitrigonometric*/
-        mtx *= agg::trans_affine_rotation(-angle);
-        mtx *= agg::trans_affine_translation(x,y);
         
-        
-        
+        const agg::glyph_cache* glyph;
+        int unicode;
         m_feng.hinting(true);
         m_feng.height(size);
         m_feng.resolution(96);
         m_feng.flip_y(true);
         font_curve_type m_curves(m_fman.path_adaptor());
-        const agg::glyph_cache* glyph;
-        int unicode;
-        
-        
+        double ox=0,oy=0; 
+        if(isMarker) {
+          //is we're rendering a marker symbol, it has to be centered
+          //on the label point (the default is the lower left of the 
+          //text)
+          //this block computes the offset between the lower left corner
+          //of the character and it's center for the given rotaion. this
+          //offset will then be used in the following agg::trans_affine_translation
+          msUTF8ToUniChar(thechars, &unicode);
+          glyph=m_fman.glyph(unicode);
+          ox=glyph->bounds.x1+(glyph->bounds.x2-glyph->bounds.x1)/2.;
+          oy=glyph->bounds.y1+(glyph->bounds.y2-glyph->bounds.y1)/2.;
+          agg::trans_affine_rotation(-angle).transform(&ox,&oy);
+        }
+        agg::trans_affine mtx;
+        mtx *= agg::trans_affine_translation(-x,-y);
+        /*agg angles are antitrigonometric*/
+        mtx *= agg::trans_affine_rotation(-angle);
+        mtx *= agg::trans_affine_translation(x-ox,y-oy);
+               
         double fx=x,fy=y;
         const char *utfptr=thechars;
         agg::path_storage glyphs;
@@ -1243,14 +1254,8 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     case(MS_SYMBOL_TRUETYPE): {
         char* font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
         if(!font) return;
-        double x,y;
-        rectObj bounds;
-        if(ren->getLabelSize(symbol->character,font,size,&bounds,NULL)!=MS_SUCCESS)
-            return;
-        x = p->x + ox - bounds.minx - (bounds.maxx-bounds.minx)/2.;
-        y = p->y + oy - bounds.maxy + (bounds.maxy-bounds.miny)/2.;
-        ren->renderGlyphs(x,y,agg_color,agg_ocolor,
-                size,font,symbol->character,angle_radians,AGG_NO_COLOR,0,0,MS_NINT(style->width));
+        ren->renderGlyphs(p->x+ox,p->y+oy,agg_color,agg_ocolor,
+                size,font,symbol->character,angle_radians,AGG_NO_COLOR,0,0,MS_NINT(style->width),true);
     }
     break;    
     case(MS_SYMBOL_PIXMAP): {

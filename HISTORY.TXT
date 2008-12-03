@@ -11,6 +11,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+- mapagg.cpp: Fix center of rotation for truetype marker symbols 
 
 - mapowscommon.c: use msLibXml2GenerateList to generate listed XML elements
 
