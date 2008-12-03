@@ -997,7 +997,7 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xml
          psObsNode = xmlNewChild(psMemberNode, NULL, BAD_CAST "Observation", NULL);
 
         /*time*/
-         /* ??TODO : sampling time is a manadatory element but uses a non manadtor metada offering_timeextent */
+         /* ??TODO : sampling time is a manadatory element but uses a non mandatory metadata sos_offering_timeextent */
          value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_timeextent");
          if (value)
          {
@@ -1006,9 +1006,9 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xml
              char *pszEndTime = NULL;
              tokens = msStringSplit(value, '/', &n);
              if (tokens==NULL || (n != 1 && n!=2)) {
-                 msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
+                 msSetError(MS_SOSERR, "Wrong number of arguments for sos_offering_timeextent.",
                             "msSOSGetObservation()");
-                 msSOSException(map, "offering_timeextent", "InvalidParameterValue");
+                 msSOSException(map, "sos_offering_timeextent", "InvalidParameterValue");
                  return NULL;
              }
 
@@ -1407,7 +1407,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                  if (value)
                      psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "name", BAD_CAST value);
                  else
-                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_name\" missing for gml:name"));
+                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_offering_name\" missing for gml:name"));
 
                  /* srsName */                 
                  value = msOWSLookupMetadata(&(map->web.metadata), "SO", "srs");
@@ -1427,9 +1427,9 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                      int n;
                      tokens = msStringSplit(value, ',', &n);
                      if (tokens==NULL || n != 4) {
-                         msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
+                         msSetError(MS_SOSERR, "Wrong number of arguments for sos_offering_extent.",
                                     "msSOSGetCapabilities()");
-                         return msSOSException(map, "offering_extent", "InvalidParameterValue");
+                         return msSOSException(map, "sos_offering_extent", "InvalidParameterValue");
                      }
                      value = msOWSGetEPSGProj(&(lp->projection),
                                               &(lp->metadata), "SO", MS_TRUE);
@@ -1446,7 +1446,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                  if (value)
                      psNode = xmlNewChild(psOfferingNode, psNsSos, BAD_CAST "intendedApplication", BAD_CAST value);
                  else
-                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_intendedapplication\" missing for sos:intendedApplication"));
+                     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_offering_intendedapplication\" missing for sos:intendedApplication"));
 
                  /*time*/
                  value = msOWSLookupMetadata(&(lp->metadata), "S", 
@@ -1458,9 +1458,9 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                      char *pszEndTime = NULL;
                      tokens = msStringSplit(value, '/', &n);
                      if (tokens==NULL || (n != 1 && n!=2)) {
-                         msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
+                         msSetError(MS_SOSERR, "Wrong number of arguments for sos_offering_timeextent.",
                                     "msSOSGetCapabilities()");
-                         return msSOSException(map, "offering_timeextent", "InvalidParameterValue");
+                         return msSOSException(map, "sos_offering_timeextent", "InvalidParameterValue");
                      }
 
                      if (n == 2) /* end time is empty. It is going to be set as "now*/
@@ -2328,9 +2328,9 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
 
        tokens = msStringSplit(pszTmp, ',', &n);
        if (tokens==NULL || n != 4) {
-          msSetError(MS_SOSERR, "Wrong number of arguments for offering_extent.",
+          msSetError(MS_SOSERR, "Wrong number of arguments for sos_offering_extent.",
           "msSOSGetCapabilities()");
-          return msSOSException(map, "offering_extent", "InvalidParameterValue");
+          return msSOSException(map, "sos_offering_extent", "InvalidParameterValue");
        }
 
        envelope.minx = atof(tokens[0]);
@@ -2341,7 +2341,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
        if (map && msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
          if (msProjectRect(&lp->projection, &map->projection, &envelope) == MS_FAILURE){ 
            msSetError(MS_SOSERR, "Coordinates transformation failed.  Raised in msProjectRect() of file %s line %d", "msSOSGetCapabilities()", __FILE__, __LINE__);
-           return msSOSException(map, "offering_extent", "InvalidParameterValue");
+           return msSOSException(map, "sos_offering_extent", "InvalidParameterValue");
          }
        }
 
@@ -2358,9 +2358,9 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
         char *pszEndTime = NULL;
         tokens = msStringSplit(pszTmp, '/', &n);
         if (tokens==NULL || (n != 1 && n!=2)) {
-            msSetError(MS_SOSERR, "Wrong number of arguments for offering_timeextent.",
+            msSetError(MS_SOSERR, "Wrong number of arguments for sos_offering_timeextent.",
                        "msSOSGetCapabilities()");
-            return msSOSException(map, "offering_timeextent", "InvalidParameterValue");
+            return msSOSException(map, "sos_offering_timeextent", "InvalidParameterValue");
         }
     */ 
     /*    if (n == 2) */ /* end time is empty. It is going to be set as "now" */
