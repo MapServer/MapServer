@@ -648,7 +648,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   ** Validate first against epsg in the map and if no matching srs is found
   ** validate all layers requested.
   */
-  if (epsgbuf && strlen(epsgbuf) > 1)
+  if (epsgbuf != NULL && strlen(epsgbuf) > 1)
   {
       epsgvalid = MS_FALSE;
       projstring = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata),
@@ -747,7 +747,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   ** have a projection. This will prevent problems when users forget to 
   ** explicitly set a projection on all layers in a WMS mapfile.
   */
-  if ((srsbuffer && strlen(srsbuffer) > 1) || nonsquare_enabled)
+  if ((srsbuffer != NULL && strlen(srsbuffer) > 1) || nonsquare_enabled)
   {
       projectionObj newProj;
 
@@ -761,7 +761,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       }
       
       msInitProjection(&newProj);
-      if (srsbuffer && strlen(srsbuffer) > 1 && 
+      if (srsbuffer != NULL && strlen(srsbuffer) > 1 && 
           msLoadProjectionString(&newProj, srsbuffer) != 0)
       {
           msFreeProjection(&newProj);
@@ -803,7 +803,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
   /* apply the srs to the map file. This is only done after validating */
   /* that the srs given as parameter is valid for all layers */
-  if (srsbuffer && strlen(srsbuffer) > 1)
+  if (srsbuffer != NULL && strlen(srsbuffer) > 1)
   {
       if (msLoadProjectionString(&(map->projection), srsbuffer) != 0)
           return msWMSException(map, nVersion, NULL);

@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- mapwms.c: cleanup warnings with recent gcc versions (#2822)
+
 - mapogcsos.c: Cleanup warning and error messages
 
 - mapagg.cpp: Fix center of rotation for truetype marker symbols 
