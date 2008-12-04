@@ -600,7 +600,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 
     sscanf(buffer,"%s %s", alias,  file1);
 
-    if (!file1 || !alias || (strlen(file1) <= 0))
+    if (!(*file1) || !(*alias) || (strlen(file1) <= 0))
       continue;
     
     bFullPath = 0;
