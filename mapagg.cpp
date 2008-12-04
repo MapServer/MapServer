@@ -2456,6 +2456,9 @@ void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize)
             } else {
                 shape->line[i].numpoints=k;
             }
+            //skip degenerate line once more
+            if(shape->line[i].numpoints<2)
+            	shape->line[i].numpoints=0;
         }
     }
     else if(shape->type == MS_SHAPE_POLYGON) {
