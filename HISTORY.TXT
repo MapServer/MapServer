@@ -1,6 +1,6 @@
 MapServer Revision History
 ==========================
-
+ 
 This is a human-readable revision history which will attempt to document
 required changes for users to migrate from one version of MapServer to the
 next.  Developers are strongly encouraged to document their changes and
