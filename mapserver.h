@@ -691,6 +691,14 @@ typedef struct {
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
+  
+  /*private vars for rfc48*/
+  /*TODO: how/if to expose these two to swig*/
+  char *_geomtransformexpression;
+  int _geomtransform;
+  
+  /*should an angle be automatically computed*/
+  int autoangle;
 
   colorObj color;
   colorObj backgroundcolor;
@@ -1848,7 +1856,6 @@ MS_DLL_EXPORT int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *imag
 MS_DLL_EXPORT int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image);
-
 MS_DLL_EXPORT int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style, int querymapMode);
 MS_DLL_EXPORT int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);
 
@@ -2294,6 +2301,28 @@ int msSaveImageRGBAPalette(gdImagePtr img, gdIOCtx *ctx ,outputFormatObj *format
 /* ==================================================================== */
 /*      end of prototypes for functions in maprgbapng.c                 */
 /* ==================================================================== */
+
+/* ==================================================================== */
+/*      prototypes for functions in mapgeomtransform.c                        */
+/* ==================================================================== */
+#define MS_GEOMTRANSFORM_NONE 0
+#define MS_GEOMTRANSFORM_START 1
+#define MS_GEOMTRANSFORM_END 2
+#define MS_GEOMTRANSFORM_VERTICES 3
+#define MS_GEOMTRANSFORM_BBOX 4
+#define MS_GEOMTRANSFORM_CENTROID 5
+#define MS_GEOMTRANSFORM_BUFFER 6
+#define MS_GEOMTRANSFORM_CONVEXHULL 7
+
+MS_DLL_EXPORT int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *style, char *transform);
+MS_DLL_EXPORT char *msStyleGetGeomTransform(styleObj *style);
+/* ==================================================================== */
+/*      end of prototypes for functions in mapgeomtransform.c                 */
+/* ==================================================================== */
+
+
+
 
 #endif
 

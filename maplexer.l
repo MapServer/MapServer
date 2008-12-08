@@ -182,6 +182,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>formatoption                          { return(FORMATOPTION); }
 <INITIAL>from                                  { return(FROM); }
 <INITIAL>gap                                   { return(GAP); }
+<INITIAL>geomtransform                         { return(GEOMTRANSFORM); }
 <INITIAL>grid                                  { return(GRID); }
 <INITIAL>graticule                             { return(GRATICULE); }
 <INITIAL>group                                 { return(GROUP); }

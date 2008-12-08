@@ -944,11 +944,12 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   
   if(shpcache) {
     int s;
-      
     for(s=1; s<maxnumstyles; s++) {
       for(current=shpcache; current; current=current->next) {        
-        if(layer->class[current->shape.classindex]->numstyles > s)
-	  msDrawLineSymbol(&map->symbolset, image, &current->shape, layer->class[current->shape.classindex]->styles[s], layer->scalefactor);
+        if(layer->class[current->shape.classindex]->numstyles > s &&
+            layer->class[current->shape.classindex]->styles[s]->_geomtransform==MS_GEOMTRANSFORM_NONE) {
+          msDrawLineSymbol(&map->symbolset, image, &current->shape, layer->class[current->shape.classindex]->styles[s], layer->scalefactor);
+       }
       }
     }
     
@@ -1291,7 +1292,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   double angle, length = 0.0;
   int bLabelNoClip = MS_FALSE;
   int annocallret = MS_FAILURE; /* Retvals for find-label-pnt calls */
- 
+  
+  int hasGeomTransform = MS_FALSE;
+  shapeObj nonClippedShape;
+  
   pointObj center; /* circle origin */
   double r; /* circle radius */
   int csz; /* clip over size */
@@ -1622,21 +1626,47 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msFreeShape(&annoshape);
     }
 
+    for(s=0;s<layer->class[c]->numstyles;s++){
+      if(layer->class[c]->styles[s]->_geomtransform != MS_GEOMTRANSFORM_NONE) {
+        hasGeomTransform = MS_TRUE;
+        break;
+      }
+    }
+
+    if(hasGeomTransform) {
+      msInitShape(&nonClippedShape);
+      msCopyShape(shape,&nonClippedShape);
+    }
 
     if(layer->transform == MS_TRUE) {
       msClipPolylineRect(shape, cliprect);
-      if(shape->numlines == 0) return(MS_SUCCESS);
+      if(shape->numlines == 0) {
+        if(hasGeomTransform)
+          msFreeShape(&nonClippedShape);   
+        return(MS_SUCCESS);
+      }
       msTransformShape(shape, map->extent, map->cellsize, image);
-    } else
+      if(hasGeomTransform)
+        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
+    } else {
       msOffsetShapeRelativeTo(shape, layer);
- 
-    if(style != -1)
-      msDrawLineSymbol(&map->symbolset, image, shape, (layer->class[c]->styles[style]), layer->scalefactor);
-    else {
-      for(s=0; s<layer->class[c]->numstyles; s++)
-        msDrawLineSymbol(&map->symbolset, image, shape, (layer->class[c]->styles[s]), layer->scalefactor);
+      if(hasGeomTransform)
+        msOffsetShapeRelativeTo(&nonClippedShape, layer);
     }
-
+    
+    /*RFC48: loop through the styles, and pass off to the type-specific
+    function if the style has an appropriate type*/
+    for(s=0; s<layer->class[c]->numstyles; s++) {
+        if(layer->class[c]->styles[s]->_geomtransform != MS_GEOMTRANSFORM_NONE)
+          msDrawTransformedShape(map, &map->symbolset, image, &nonClippedShape, (layer->class[c]->styles[s]), layer->scalefactor);
+        else if(style==-1 || s==style)
+          msDrawLineSymbol(&map->symbolset, image, shape, (layer->class[c]->styles[s]), layer->scalefactor);
+    }
+    
+    /*RFC48: free non clipped shape if it was previously alloced/used*/
+    if(hasGeomTransform)
+      msFreeShape(&nonClippedShape);
+    
     if(shape->text) {
 
       /* Bug #1620 implementation */
@@ -1709,6 +1739,18 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       annopnt.y = MS_MAP2IMAGE_Y(annopnt.y, map->extent.maxy, map->cellsize);
     }
 
+    for(s=0;s<layer->class[c]->numstyles;s++){
+      if(layer->class[c]->styles[s]->_geomtransform != MS_GEOMTRANSFORM_NONE) {
+        hasGeomTransform = MS_TRUE;
+        break;
+      }
+    }
+
+    if(hasGeomTransform) {
+      msInitShape(&nonClippedShape);
+      msCopyShape(shape,&nonClippedShape);
+    }
+
     if(layer->transform == MS_TRUE) {
       /*
        * add a small buffer around the cliping rectangle to
@@ -1722,14 +1764,27 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       cliprect.maxy += buffer;
 
       msClipPolygonRect(shape, cliprect);
-      if(shape->numlines == 0) return(MS_SUCCESS);
+      if(shape->numlines == 0) {
+        if(hasGeomTransform)
+          msFreeShape(&nonClippedShape);   
+        return(MS_SUCCESS);
+      }
       msTransformShape(shape, map->extent, map->cellsize, image);
-    } else
+      if(hasGeomTransform)
+        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
+    } else {
       msOffsetShapeRelativeTo(shape, layer);
+      if(hasGeomTransform)
+        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
+    }
  
     for(s=0; s<layer->class[c]->numstyles; s++)
-      msDrawShadeSymbol(&map->symbolset, image, shape, (layer->class[c]->styles[s]), layer->scalefactor);
-
+      if(layer->class[c]->styles[s]->_geomtransform != MS_GEOMTRANSFORM_NONE)
+        msDrawTransformedShape(map, &map->symbolset, image, &nonClippedShape, (layer->class[c]->styles[s]), layer->scalefactor);
+      else
+        msDrawShadeSymbol(&map->symbolset, image, shape, (layer->class[c]->styles[s]), layer->scalefactor);
+    if(hasGeomTransform)
+      msFreeShape(&nonClippedShape);
     if(shape->text) {
       if((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) ||
          (msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS)) {

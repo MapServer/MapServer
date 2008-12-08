@@ -11,6 +11,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+- RFC48 implementation: GEOMTRANSFORM on styleObj (#2825)
 
 - mapwms.c: cleanup warnings with recent gcc versions (#2822)
 

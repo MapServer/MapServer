@@ -1748,7 +1748,6 @@ static void writeHashTable(hashTableObj *table, FILE *stream, char *tab, char *t
 */
 int initStyle(styleObj *style) {
   int i;
-
   MS_REFCNT_INIT(style);
   MS_INIT_COLOR(style->color, -1,-1,-1); /* must explictly set colors */
   MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1);
@@ -1771,7 +1770,10 @@ int initStyle(styleObj *style) {
   style->offsetx = style->offsety = 0; /* no offset */
   style->antialias = MS_FALSE;
   style->angle = 360;
+  style->autoangle= MS_FALSE;
   style->opacity = 100; /* fully opaque */
+  style->_geomtransformexpression = NULL;
+  style->_geomtransform = MS_GEOMTRANSFORM_NONE;
 
   style->numbindings = 0;
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
@@ -1803,13 +1805,15 @@ int loadStyle(styleObj *style) {
       break;
   /* End Range fields*/
     case(ANGLE):
-      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+      if((symbol = getSymbol(3, MS_NUMBER,MS_BINDING,MS_AUTO)) == -1) return(MS_FAILURE);
 
       if(symbol == MS_NUMBER)
         style->angle = (double) msyynumber;
-      else {
+      else if(symbol==MS_BINDING){
         style->bindings[MS_STYLE_BINDING_ANGLE].item = strdup(msyytext);
         style->numbindings++;
+      } else {
+        style->autoangle=MS_TRUE;
       }
       break;
     case(ANTIALIAS):
@@ -1838,6 +1842,14 @@ int loadStyle(styleObj *style) {
       return(MS_FAILURE); /* missing END (probably) */
     case(END):     
       return(MS_SUCCESS); /* done */
+      break;
+    case(GEOMTRANSFORM):
+      {
+        char *expr=NULL;
+        if(getString(&expr) == -1) return(MS_FAILURE);
+        msStyleSetGeomTransform(style,expr);
+        msFree(expr);expr=NULL;
+      }
       break;
     case(MAXSIZE):
       if(getDouble(&(style->maxsize)) == -1) return(MS_FAILURE);      
@@ -1935,6 +1947,7 @@ int freeStyle(styleObj *style) {
   if( MS_REFCNT_DECR_IS_NOT_ZERO(style) ) { return MS_FAILURE; }
 
   msFree(style->symbolname);
+  msFree(style->_geomtransformexpression);
   msFree(style->rangeitem);
 
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++)
@@ -1996,6 +2009,9 @@ void writeStyle(styleObj *style, FILE *stream) {
     fprintf(stream, "        DATARANGE %g %g\n", style->minvalue, style->maxvalue);
   }
 
+  if(style->_geomtransformexpression) {
+    fprintf(stream, "        GEOMTRANSFORM \"%s\"\n",style->_geomtransformexpression);
+  }
   fprintf(stream, "      END\n");
 }
 

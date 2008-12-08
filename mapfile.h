@@ -274,4 +274,8 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define MAXLENGTH 1210
 #define MINLENGTH 1211
 
+
+/*rfc48 geometry transforms*/
+#define GEOMTRANSFORM 1220
+
 #endif /* MAPFILE_H */

@@ -386,7 +386,8 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(minvalue);
     MS_COPYSTELEM(maxvalue);
     MS_COPYSTELEM(opacity);
-
+    MS_COPYSTRING(dst->_geomtransformexpression,src->_geomtransformexpression);
+    MS_COPYSTELEM(_geomtransform);
     MS_COPYSTRING(dst->rangeitem, src->rangeitem);
     MS_COPYSTELEM(rangeitemindex);
 
