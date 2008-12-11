@@ -307,6 +307,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>transform                             { return(TRANSFORM); }
 <INITIAL>type                                  { return(TYPE); }
 <INITIAL,URL_VARIABLE,URL_STRING>units         { return(UNITS); }
+<INITIAL>                                      { return(VALIDATION); }
 <INITIAL,URL_VARIABLE>web                      { return(WEB); }
 <INITIAL,URL_STRING>width                      { return(WIDTH); }
 <INITIAL,URL_STRING>wkt                        { return(WKT); }
