@@ -1286,13 +1286,22 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
         for ( t = 0; t < layer->numitems; t++) {
             int size = PQgetlength(layerinfo->pgresult, layerinfo->rownum, t);
             char *val = (char*)PQgetvalue(layerinfo->pgresult, layerinfo->rownum, t);
-            shape->values[t] = (char*) malloc(size + 1);
-            memcpy(shape->values[t], val, size);
-            shape->values[t][size] = '\0'; /* null terminate it */
-            if( layer->debug > 1 ) {
-                msDebug("msPostGISReadShape: [%s] %s\n", layer->items[t], shape->values[t]);
+            int isnull = PQgetisnull(layerinfo->pgresult, layerinfo->rownum, t);
+            if ( isnull ) {
+                shape->values[t] = strdup("");
             }
-
+            else {
+                shape->values[t] = (char*) malloc(size + 1);
+                memcpy(shape->values[t], val, size);
+                shape->values[t][size] = '\0'; /* null terminate it */
+                msStringTrimBlanks(shape->values[t]);
+            }
+            if( layer->debug > 4 ) {
+                msDebug("msPostGISReadShape: PQgetlength = %d\n", size);
+            }
+            if( layer->debug > 1 ) {
+                msDebug("msPostGISReadShape: [%s] \"%s\"\n", layer->items[t], shape->values[t]);
+            }
         }
         /* t is the geometry, t+1 is the uid */
         tmp = PQgetvalue(layerinfo->pgresult, layerinfo->rownum, t + 1);
@@ -1304,12 +1313,17 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
         }
 
         shape->index = uid;
+
+        if( layer->debug > 2 ) {
+            msDebug("msPostGISReadShape: [index] %d\n",  shape->index);
+        }
+
         shape->numvalues = layer->numitems;
 
         find_bounds(shape);
     }
     
-    if( layer->debug > 1 ) {
+    if( layer->debug > 2 ) {
         char *tmp = msShapeToWKT(shape);
         msDebug("msPostGISReadShape: [shape] %s\n", tmp);
         free(tmp);
@@ -1525,16 +1539,16 @@ int msPostGISLayerInitItemInfo(layerObj *layer) {
         free(layer->iteminfo);
     }
 
-    itemindexes = (int *) malloc(sizeof(int) * layer->numitems);
-    if (!itemindexes) {
+    layer->iteminfo = malloc(sizeof(int) * layer->numitems);
+    if (!layer->iteminfo) {
         msSetError(MS_MEMERR, "Out of memory.", "msPostGISLayerInitItemInfo()");
         return MS_FAILURE;
     }
-
+	
+    itemindexes = (int*)layer->iteminfo;
     for (i = 0; i < layer->numitems; i++) {
         itemindexes[i] = i; /* Last item is always the geometry. The rest are non-geometry. */
     }
-    layer->iteminfo = itemindexes;
 
     return MS_SUCCESS;
 #else
