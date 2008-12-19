@@ -370,6 +370,12 @@ DLEXPORT void php_ms_cgirequest_getName(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_ms_cgirequest_getValue(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_ms_cgirequest_getValueByName(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_hashtable_get(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_hashtable_set(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_hashtable_remove(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_hashtable_clear(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_hashtable_nextkey(INTERNAL_FUNCTION_PARAMETERS);
+
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value  TSRMLS_DC);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
@@ -434,6 +440,9 @@ DLEXPORT void php_ms_labelcache_free(INTERNAL_FUNCTION_PARAMETERS);
 static long _phpms_build_querymap_object(queryMapObj *pquerymap,
                                       HashTable *list, pval *return_value TSRMLS_DC);
 
+static long _phpms_build_hashtable_object(hashTableObj *hashtable,
+                                          HashTable *list, pval *return_value TSRMLS_DC);
+
 
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
@@ -493,6 +502,7 @@ static int le_mslabelcache;
 static int le_mssymbol;
 static int le_msquerymap;
 static int le_mscgirequest;
+static int le_mshashtable;
 
 /* 
  * Declare any global variables you may need between the BEGIN
@@ -560,6 +570,7 @@ static zend_class_entry *labelcache_class_entry_ptr;
 static zend_class_entry *symbol_class_entry_ptr;
 static zend_class_entry *querymap_class_entry_ptr;
 static zend_class_entry *cgirequest_class_entry_ptr;
+static zend_class_entry *hashtable_class_entry_ptr;
 
 #ifdef ZEND_ENGINE_2  // PHP5
 ZEND_BEGIN_ARG_INFO(one_arg_force_ref, 0)
@@ -960,7 +971,14 @@ function_entry php_querymap_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
-
+function_entry php_hashtable_class_functions[] = {
+    {"get",             php3_ms_hashtable_get,        NULL},    
+    {"set",             php3_ms_hashtable_set,        NULL},    
+    {"remove",          php3_ms_hashtable_remove,     NULL},    
+    {"clear",           php3_ms_hashtable_clear,      NULL},
+    {"nextkey",         php3_ms_hashtable_nextkey,    NULL},  
+    {NULL, NULL, NULL}
+};
 
 function_entry php_cgirequest_class_functions[] = {
     {"loadparams",             php_ms_cgirequest_loadParams,   NULL},
@@ -1084,7 +1102,8 @@ PHP_MINIT_FUNCTION(phpms)
     PHPMS_GLOBAL(le_mscgirequest)= 
         register_list_destructors(php_ms_free_cgirequest, NULL);
     
-
+    PHPMS_GLOBAL(le_mshashtable)= register_list_destructors(php3_ms_free_stub, 
+                                                            NULL);
 
     /* boolean constants*/
     REGISTER_LONG_CONSTANT("MS_TRUE",       MS_TRUE,        const_flag);
@@ -1373,6 +1392,9 @@ PHP_MINIT_FUNCTION(phpms)
 
      INIT_CLASS_ENTRY(tmp_class_entry, "ms_cgirequest_obj", php_cgirequest_class_functions);
      cgirequest_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_hashtable_obj", php_hashtable_class_functions);
+     hashtable_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     return SUCCESS;
 }
@@ -6612,6 +6634,10 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     _phpms_build_color_object(&(player->offsite),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "offsite", new_obj_ptr, E_ERROR TSRMLS_CC);
 
+    MAKE_STD_ZVAL(new_obj_ptr);
+    _phpms_build_hashtable_object(&(player->metadata),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "metadata",new_obj_ptr,E_ERROR TSRMLS_CC);
+
     if (player->connectiontype == MS_GRATICULE && 
         player->layerinfo != NULL)
     {
@@ -9019,6 +9045,10 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,   "keyimage",  pclass->keyimage);
 
     PHPMS_ADD_PROP_STR(return_value,   "group",  pclass->group);
+
+    MAKE_STD_ZVAL(new_obj_ptr);
+    _phpms_build_hashtable_object(&(pclass->metadata),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "metadata",new_obj_ptr,E_ERROR TSRMLS_CC);
     
     return class_id;
 }
@@ -12416,13 +12446,7 @@ static long _phpms_build_web_object(webObj *pweb,
                                     HashTable *list, pval *return_value TSRMLS_DC)
 {
     int         web_id;
-#ifdef PHP4
     pval        *new_obj_ptr;
-#else
-    pval        new_obj_param;  /* No, it's not a pval * !!! */
-    pval        *new_obj_ptr;
-    new_obj_ptr = &new_obj_param;
-#endif
 
     if (pweb == NULL)
         return 0;
@@ -12454,12 +12478,14 @@ static long _phpms_build_web_object(webObj *pweb,
     PHPMS_ADD_PROP_STR(return_value,  "browseformat",   pweb->browseformat);
     
     
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
-#endif
     _phpms_build_rect_object(&(pweb->extent), PHPMS_GLOBAL(le_msrect_ref), 
                              list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "extent", new_obj_ptr,E_ERROR TSRMLS_CC);
+
+    MAKE_STD_ZVAL(new_obj_ptr);
+    _phpms_build_hashtable_object(&(pweb->metadata),list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "metadata",new_obj_ptr,E_ERROR TSRMLS_CC);
 
     return web_id;
 }
@@ -15550,6 +15576,214 @@ DLEXPORT void php_ms_cgirequest_getValueByName(INTERNAL_FUNCTION_PARAMETERS)
     {
       RETURN_STRING("", 1);
     }
+}
+/* }}} */
+
+/*=====================================================================
+ *         PHP function wrappers - hashtable object
+ *====================================================================*/
+
+static long _phpms_build_hashtable_object(hashTableObj *hashtable,
+                                          HashTable *list, pval *return_value TSRMLS_DC)
+{
+    int hashtable_id;
+
+    if (hashtable == NULL)
+      return 0;
+
+    hashtable_id = php3_list_insert(hashtable, PHPMS_GLOBAL(le_mshashtable));
+
+    _phpms_object_init(return_value, hashtable_id, php_hashtable_class_functions,
+                       PHP4_CLASS_ENTRY(hashtable_class_entry_ptr) TSRMLS_CC);
+
+    return hashtable_id;
+}
+
+
+/**********************************************************************
+ *                        hashtable->get()
+ **********************************************************************/
+
+/* {{{ proto int hashtable.get(string key)
+   Get a value from item by its key. Returns empty string if not found. */
+
+DLEXPORT void php3_ms_hashtable_get(INTERNAL_FUNCTION_PARAMETERS)
+{
+    hashTableObj *self;
+    pval         *pKey, *pThis;  
+    const char   *pszValue=NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pKey) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (hashTableObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mshashtable),
+                                               list TSRMLS_CC);
+
+    convert_to_string(pKey);
+
+    if ((self == NULL) ||
+        ((pszValue = hashTableObj_get(self, pKey->value.str.val)) == NULL))
+    {
+       pszValue = "";
+    }
+
+    RETURN_STRING((char *)pszValue, 1);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        hashtable->set()
+ **********************************************************************/
+
+/* {{{ proto int hashtable.set(string key, string value)
+   Set a hash item given key and value. Returns MS_FAILURE on error. */
+
+DLEXPORT void php3_ms_hashtable_set(INTERNAL_FUNCTION_PARAMETERS)
+{
+    hashTableObj *self;
+    pval         *pKey, *pValue, *pThis;
+    int          nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pKey, &pValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (hashTableObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mshashtable),
+                                               list TSRMLS_CC);
+
+    if (self == NULL)
+       RETURN_LONG(nStatus);
+          
+    convert_to_string(pKey);
+    convert_to_string(pValue);      
+    
+    if ((nStatus = hashTableObj_set(self, pKey->value.str.val, 
+                                    pValue->value.str.val)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        hashtable->remove()
+ **********************************************************************/
+
+/* {{{ proto int hashtable.remove(string key)
+   Remove one item from hash table. Returns MS_FAILURE on error. */
+
+DLEXPORT void php3_ms_hashtable_remove(INTERNAL_FUNCTION_PARAMETERS)
+{
+    hashTableObj *self;
+    pval         *pKey, *pThis;  
+    int           nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pKey) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (hashTableObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mshashtable),
+                                               list TSRMLS_CC);
+    if (self == NULL)
+       RETURN_LONG(nStatus);
+
+    convert_to_string(pKey);
+
+    if ((nStatus = hashTableObj_remove(self, pKey->value.str.val)) != MS_SUCCESS)
+    {
+       _phpms_report_mapserver_error(E_ERROR);
+    }
+    
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        hashtable->clear()
+ **********************************************************************/
+
+/* {{{ proto int hashtable.clear()
+   Clear all items in hash table (to NULL). */
+
+DLEXPORT void php3_ms_hashtable_clear(INTERNAL_FUNCTION_PARAMETERS)
+{
+    hashTableObj *self;
+    pval         *pThis;  
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (hashTableObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mshashtable),
+                                               list TSRMLS_CC);
+
+    if (self == NULL)
+       return;
+    
+    hashTableObj_clear(self);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        hashtable->nextkey()
+ **********************************************************************/
+
+/* {{{ proto int hashtable.nextkey(string previousKey)
+   Return the next key or first key if previousKey == NULL. 
+   Returns NULL if no item is in the hashTable or end of hashTable reached */
+
+DLEXPORT void php3_ms_hashtable_nextkey(INTERNAL_FUNCTION_PARAMETERS)
+{
+    hashTableObj *self;
+    pval         *pPreviousKey, *pThis;
+    char         *pszKey = "", *pszValue = NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pPreviousKey) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (hashTableObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mshashtable),
+                                               list TSRMLS_CC);
+
+    convert_to_string(pPreviousKey);
+
+    if (strcmp(pPreviousKey->value.str.val,"") != 0)
+    {
+       pszKey = pPreviousKey->value.str.val;
+    }
+
+    if ((self == NULL) || 
+        (pszValue = hashTableObj_nextKey(self, pszKey)) == NULL)
+       return;
+
+    RETURN_STRING(pszValue, 1);
 }
 /* }}} */
 

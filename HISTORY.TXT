@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Added hashtable object and metadata methods for php-mapscript (#2773)
+
 - mappostgis.c: Fix trailing spaces in fixed varchar fields (#2817)
 
 - RFC48 implementation: GEOMTRANSFORM on styleObj (#2825)

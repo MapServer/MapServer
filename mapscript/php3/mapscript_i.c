@@ -39,6 +39,7 @@
 #include "../../mapsymbol.h"
 #include "../../mapshape.h"
 #include "../../mapproject.h"
+#include "../../maphash.h"
 
 /**********************************************************************
  * class extensions for mapObj
@@ -1328,4 +1329,48 @@ void cgirequestObj_destroy(cgiRequestObj *self)
     msFreeCharArray(self->ParamNames, self->NumParams);
     msFreeCharArray(self->ParamValues, self->NumParams);
     free(self);
+}
+
+
+/**********************************************************************
+ * class extensions hashTableObj
+ **********************************************************************/
+
+// New instance
+hashTableObj *hashTableObj_new() {
+   return msCreateHashTable();
+}
+
+// Destroy instance
+void hashTableObj_destroy(hashTableObj *self) {
+   msFreeHashTable(self);
+}
+
+// set a hash item given key and value
+int hashTableObj_set(hashTableObj *self, const char *key, const char *value) {
+   if (msInsertHashTable(self, key, value) == NULL) {
+      return MS_FAILURE;
+   }
+   return MS_SUCCESS;
+}
+
+// get value from item by its key
+const char *hashTableObj_get(hashTableObj *self, const char *key) {
+   return (msLookupHashTable(self, key));
+}
+
+// Remove one item from hash table
+int hashTableObj_remove(hashTableObj *self, const char *key) {
+   return (msRemoveHashTable(self, key));
+}
+
+// Clear all items in hash table (to NULL)
+void hashTableObj_clear(hashTableObj *self) {
+   msFreeHashItems(self);
+   initHashTable(self);
+}
+
+// Return the next key or first key if previousKey == NULL
+char *hashTableObj_nextKey(hashTableObj *self, const char *previousKey) {
+   return ((char *)msNextKeyFromHashTable(self, previousKey));
 }

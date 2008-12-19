@@ -296,15 +296,12 @@ int             styleObj_setSymbolByName(styleObj *self, mapObj *map,
                                          char* pszSymbolName);
 styleObj       *styleObj_clone(styleObj *style);
 
-/*=====================================================================
- *                   Internal functions from hashtable_i.c
- *====================================================================*/
 hashTableObj   *hashTableObj_new();
 int             hashTableObj_set(hashTableObj *self, const char *key, 
                                  const char *value);
 const char     *hashTableObj_get(hashTableObj *self, const char *key);
-int            *hashTableObj_remove(hashTableObj *self, const char *key);
-void           *hashTableObj_clear(hashTableObj *self);
+int            hashTableObj_remove(hashTableObj *self, const char *key);
+void           hashTableObj_clear(hashTableObj *self);
 char           *hashTableObj_nextKey(hashTableObj *self, const char *prevkey);
 
 
