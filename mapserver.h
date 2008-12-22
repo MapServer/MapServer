@@ -1631,6 +1631,7 @@ MS_DLL_EXPORT char *msBuildPath3(char *pszReturnPath, const char *abs_path, cons
 MS_DLL_EXPORT char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path);
 MS_DLL_EXPORT char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path1, const char *path2);
 MS_DLL_EXPORT char **msStringSplit(const char *string, char cd, int *num_tokens);
+MS_DLL_EXPORT char **msStringTokenize( const char *pszLine, const char *pszDelim, int *num_tokens, int preserve_quote);
 MS_DLL_EXPORT int msCountChars(char *str, char ch);
 MS_DLL_EXPORT char *msLongToString(long value);
 MS_DLL_EXPORT char *msDoubleToString(double value, int force_f);

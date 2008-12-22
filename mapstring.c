@@ -755,6 +755,74 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
   return(token);
 }
 
+/* This method is similar to msStringSplit but support quoted strings. 
+   It also support multi-characters delimiter and allows to preserve quotes */
+char **msStringTokenize( const char *pszLine, const char *pszDelim, 
+                         int *num_tokens, int preserve_quote )
+{
+    char **papszResult = NULL;
+    int n = 1, iChar, nLength = strlen(pszLine), iTokenChar = 0, bInQuotes = MS_FALSE;
+    char *pszToken = (char *) malloc(sizeof(char*)*(nLength+1));
+    int nDelimLen = strlen(pszDelim);
+
+    /* Compute the number of tokens */
+    for( iChar = 0; pszLine[iChar] != '\0'; iChar++ )
+    {
+        if( bInQuotes && pszLine[iChar] == '"' && pszLine[iChar+1] == '"' )
+        {
+            iChar++;
+        }
+        else if( pszLine[iChar] == '"' )
+        {
+            bInQuotes = !bInQuotes;
+        }
+        else if ( !bInQuotes && strncmp(pszLine+iChar,pszDelim,nDelimLen) == 0 )
+        {
+            iChar += nDelimLen - 1;
+            n++;
+        }
+    }
+
+    papszResult = (char **) malloc(sizeof(char *)*n);
+    n = iTokenChar = bInQuotes = 0;
+    for( iChar = 0; pszLine[iChar] != '\0'; iChar++ )
+    {
+        if( bInQuotes && pszLine[iChar] == '"' && pszLine[iChar+1] == '"' )
+        {
+           if (preserve_quote == MS_TRUE)
+              pszToken[iTokenChar++] = '"';
+           pszToken[iTokenChar++] = '"';
+           iChar++;
+        }
+        else if( pszLine[iChar] == '"' )
+        {
+           if (preserve_quote == MS_TRUE)
+              pszToken[iTokenChar++] = '"';
+            bInQuotes = !bInQuotes;
+        }
+        else if( !bInQuotes && strncmp(pszLine+iChar,pszDelim,nDelimLen) == 0 )
+        {
+            pszToken[iTokenChar++] = '\0';
+            papszResult[n] = pszToken;
+            pszToken = (char *) malloc(sizeof(char*)*(nLength+1));
+            iChar += nDelimLen - 1;
+            iTokenChar = 0;
+            n++;
+        }
+        else
+        {
+            pszToken[iTokenChar++] = pszLine[iChar];
+        }
+    }
+
+    pszToken[iTokenChar++] = '\0';
+    papszResult[n] = pszToken;
+    
+    *num_tokens = n+1;
+
+    return papszResult;
+}
+
 /**********************************************************************
  *                       msEncodeChar()
  *

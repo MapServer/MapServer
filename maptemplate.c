@@ -424,6 +424,33 @@ char *findTag(char *pszInstr, char *pszTag)
    return pszStart;
 }
 
+/* 
+** This function return a pointer 
+** to the end of the tag in pszTag
+** 
+** The end of a tag is the next
+** non-quoted ']' character. 
+** Return NULL if not found.
+*/ 
+
+char *findTagEnd(const char *pszTag)
+{
+   char *pszEnd = NULL, 
+        *pszTmp = (char*)pszTag;
+
+   while (pszTmp != NULL) {
+      if (*pszTmp == '"')
+         pszTmp = strchr(pszTmp+1,'"');
+      if ((pszTmp == NULL) || (*pszTmp == ']')) { 
+         pszEnd = pszTmp;
+         pszTmp = NULL;
+      } else
+         pszTmp++;
+   }
+   
+   return pszEnd;
+}
+
 /*
 ** Return a hashtableobj from instr of all
 ** arguments. hashtable must be freed by caller.
@@ -435,7 +462,6 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
    char **papszArgs, **papszVarVal;
    int nArgs, nDummy;
    int i;
-   char *pszQuoteStr, *pszQuoteStart, *pszQuoteEnd;
    
    if(!pszTag || !pszInstr) {
      msSetError(MS_WEBERR, "Invalid pointer.", "getTagArgs()");
@@ -446,8 +472,8 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
    pszStart = findTag(pszInstr, pszTag);
 
    if(pszStart) {
-      /* find ending position */
-      pszEnd = strchr(pszStart, ']');
+       /* find ending position */
+       pszEnd = findTagEnd(pszStart);
    
       if(pszEnd) {
          /* skip the tag name */
@@ -464,63 +490,14 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
             if(!(*ppoHashTable))
               *ppoHashTable = msCreateHashTable();
             
-            /* Enable the use of "" in args */
-            /* To do so, extract all "" values */
-            /* and replace the " in it by spaces */
-            if(strchr(pszArgs, '"'))
-            {
-                pszQuoteEnd = pszArgs;
-                while((pszQuoteStart = strchr(pszQuoteEnd, '"')))
-                {
-                    pszQuoteEnd = strchr(pszQuoteStart+1, '"');
-                    if(pszQuoteEnd)
-                    {
-                        pszQuoteEnd[0] = '\0';
-                        while((pszQuoteStr = strchr(pszQuoteStart, ' ')))
-                            pszQuoteStr[0] = '"';
-
-                        /* Replace also the '=' to be able to use it in the */
-                        /* quoted argument. The '=' is replaced by ']' which */
-                        /* is illegal before here since this is the closing */
-                        /* character of the whole tag. */
-                        while((pszQuoteStr = strchr(pszQuoteStart, '=')))
-                            pszQuoteStr[0] = ']';
-
-                        /* Then remove the starting and ending quote */
-                        pszQuoteEnd[0] = '"';
-                        for(i=(pszQuoteStart-pszArgs); i<nLength; i++)
-                        {
-                            if(i+1 >= pszQuoteEnd-pszArgs)
-                                if(i+2 >= nLength)
-                                    pszArgs[i] = '\0';
-                                else
-                                    pszArgs[i] = pszArgs[i+2];
-                            else
-                                pszArgs[i] = pszArgs[i+1];
-                        }
-                    }
-                }
-            }
-
             /* put all arguments seperate by space in a hash table */
-            papszArgs = msStringSplit(pszArgs, ' ', &nArgs);
+            papszArgs = msStringTokenize(pszArgs, " ", &nArgs, MS_TRUE);
 
             /* msReturnTemplateQuerycheck all argument if they have values */
             for (i=0; i<nArgs; i++) {
-               /* Quotes are in fact spaces */
-               if(strchr(papszArgs[i],'"'))
-                   while((pszQuoteStr = strchr(papszArgs[i],'"')))
-                       pszQuoteStr[0] = ' ';
-
                if(strchr(papszArgs[i], '='))
                {
-                  papszVarVal = msStringSplit(papszArgs[i], '=', &nDummy);
-               
-                  /* ']' are in fact '=' (See above). */
-                  if(strchr(papszVarVal[1],']'))
-                      while((pszQuoteStr = strchr(papszVarVal[1],']')))
-                          pszQuoteStr[0] = '=';
-
+                  papszVarVal = msStringTokenize(papszArgs[i], "=", &nDummy, MS_FALSE);               
                   msInsertHashTable(*ppoHashTable, papszVarVal[0], 
                                     papszVarVal[1]);
                   free(papszVarVal[0]);
@@ -1618,7 +1595,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     msFreeShape(&tShape);
     
     /* find the end of the tag */
-    tagEnd = strchr(tagStart, ']');
+    tagEnd = findTagEnd(tagStart);
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
