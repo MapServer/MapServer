@@ -61,6 +61,10 @@
         /* no debug output here */
         return msOGCWKT2ProjectionObj(wkt, self, MS_FALSE);
     }
+
+    int getUnits() {
+      return GetMapserverUnitUsingProj(self);
+    }
 }
 
 

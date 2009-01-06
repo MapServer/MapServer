@@ -324,6 +324,7 @@ DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_projection_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_projection_getunits(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -912,6 +913,7 @@ function_entry php_shapefile_class_functions[] = {
 };
 
 function_entry php_projection_class_functions[] = {
+    {"getunits",        php3_ms_projection_getunits,    NULL},
     {"free",            php3_ms_projection_free,        NULL},    
     {NULL, NULL, NULL}
 };
@@ -13620,6 +13622,45 @@ DLEXPORT void php3_ms_projection_new(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_build_projection_object(pNewProj, 
                                    PHPMS_GLOBAL(le_msprojection_new), 
                                    list, return_value TSRMLS_CC);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        projection->getunits()
+ **********************************************************************/
+
+/* {{{ proto int projection.getunits()
+   Returns the units of a projection object */
+DLEXPORT void php3_ms_projection_getunits(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval *pThis;
+    projectionObj *self;
+    long lValue = -1;
+
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+
+    if (pThis == NULL ||
+        ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (projectionObj *)_phpms_fetch_handle2(pThis, 
+                                                 PHPMS_GLOBAL(le_msprojection_new), 
+                                                 PHPMS_GLOBAL(le_msprojection_ref),
+                                                 list TSRMLS_CC);
+
+    if (self)
+    {
+       lValue = projectionObj_getUnits(self);
+    } else {
+       php3_error(E_ERROR, "Invalid projection object.");
+    }
+
+    RETURN_LONG(lValue);
 }
 /* }}} */
 

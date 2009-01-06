@@ -287,6 +287,7 @@ class MapSetWKTTestCase(MapTestCase):
 
         assert proj4.find( '+proj=aea' ) != -1
         assert proj4.find( '+ellps=WGS84' ) != -1
+        assert (mapscript.projectionObj(proj4)).getUnits() != mapscript.MS_DD
 
     def testESRIWKT(self):
         self.map.setWKTProjection('ESRI::PROJCS["Pulkovo_1995_GK_Zone_2",GEOGCS["GCS_Pulkovo_1995",DATUM["D_Pulkovo_1995",SPHEROID["Krasovsky_1940",6378245,298.3]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Gauss_Kruger"],PARAMETER["False_Easting",2500000],PARAMETER["False_Northing",0],PARAMETER["Central_Meridian",9],PARAMETER["Scale_Factor",1],PARAMETER["Latitude_Of_Origin",0],UNIT["Meter",1]]')
@@ -294,13 +295,14 @@ class MapSetWKTTestCase(MapTestCase):
 
         assert proj4.find( '+proj=tmerc' ) != -1
         assert proj4.find( '+ellps=krass' ) != -1
+        assert (mapscript.projectionObj(proj4)).getUnits() != mapscript.MS_DD
 
     def testWellKnownGEOGCS(self):
         self.map.setWKTProjection('WGS84')
         proj4 = self.map.getProjection()
         assert proj4.find( '+proj=longlat' ) != -1, proj4
         assert proj4.find( '+ellps=WGS84' ) != -1, proj4
-
+        assert (mapscript.projectionObj(proj4)).getUnits() != mapscript.MS_METERS
 
 # ===========================================================================
 # Run the tests outside of the main suite

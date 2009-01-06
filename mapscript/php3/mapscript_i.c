@@ -1169,6 +1169,10 @@ projectionObj *projectionObj_new(char *string) {
     return proj;
   }
 
+int projectionObj_getUnits(projectionObj *self)
+{
+   return GetMapserverUnitUsingProj(self);
+}
 
 void projectionObj_destroy(projectionObj *self) {
     msFreeProjection(self);

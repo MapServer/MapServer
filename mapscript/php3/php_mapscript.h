@@ -281,6 +281,7 @@ int             shapefileObj_add(shapefileObj *self, shapeObj *shape);
 int             shapefileObj_addPoint(shapefileObj *self, pointObj *point);
 
 projectionObj   *projectionObj_new(char *string);
+int             projectionObj_getUnits(projectionObj *self);
 void            projectionObj_destroy(projectionObj *self);
 
 void            labelCacheObj_freeCache(labelCacheObj *self);
