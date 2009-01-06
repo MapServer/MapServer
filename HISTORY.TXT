@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Correct half pixel error in WMS layer's BBOX request to remote WMS (#2843)
+
 - Expose Map/Layer's Projection objects in PHP/MapScript (#2845)
 
 - Added getUnits() methods to projectionObj in Mapscript (#2798)

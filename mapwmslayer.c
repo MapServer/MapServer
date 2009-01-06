@@ -635,7 +635,17 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         }
     }
 
+/* ------------------------------------------------------------------
+ * Adjust for MapServer EXTENT being center of pixel and WMS BBOX being 
+ * edge of pixel (#2843), and then reproject if needed.
+ * ------------------------------------------------------------------ */
     bbox = map->extent;
+
+    bbox.minx -= map->cellsize * 0.5;
+    bbox.maxx += map->cellsize * 0.5;
+    bbox.miny -= map->cellsize * 0.5;
+    bbox.maxy += map->cellsize * 0.5;
+
     if (msProjectionsDiffer(&(map->projection), &(lp->projection)))
     {
         msProjectRect(&(map->projection), &(lp->projection), &bbox);
