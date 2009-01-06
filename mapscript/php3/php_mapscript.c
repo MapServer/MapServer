@@ -1603,6 +1603,11 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     _phpms_add_property_object(return_value, "latlon", new_obj_ptr, E_ERROR TSRMLS_CC);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_projection_object(&(pMap->projection), PHPMS_GLOBAL(le_msprojection_ref),
+                                   list,  new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "projection", new_obj_ptr, E_ERROR TSRMLS_CC);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
     _phpms_build_outputformat_object(pMap->outputformat, list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "outputformat", new_obj_ptr, E_ERROR TSRMLS_CC);
 
@@ -1993,7 +1998,8 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
     rectObj             sRect;
     int                 bSetNewExtents = 0; 
     int                 bSetUnitsAndExtents = 0;
-    pval                **pExtent;
+    pval                **pExtent, *new_obj_ptr;
+    HashTable           *list=NULL;
     
 
     convert_to_string(pProjString);
@@ -2029,7 +2035,16 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
 
     if (nStatus == -1)
         _phpms_report_mapserver_error(E_ERROR);
-
+    else
+    { /* update the php projection object */
+       zend_hash_del(Z_OBJPROP_P(pThis), "projection", 
+                      sizeof("projection"));
+      
+       MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+       _phpms_build_projection_object(&(self->projection), PHPMS_GLOBAL(le_msprojection_ref),
+                                      list,  new_obj_ptr TSRMLS_CC);
+                                      _phpms_add_property_object(pThis, "projection", new_obj_ptr, E_ERROR TSRMLS_CC);
+    }
     
     nUnits = GetMapserverUnitUsingProj(&(self->projection));
     if (nUnits != -1 && bSetUnitsAndExtents)
@@ -6632,6 +6647,11 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "requires",   player->requires);
     PHPMS_ADD_PROP_STR(return_value,  "labelrequires", player->labelrequires);
 
+    MAKE_STD_ZVAL(new_obj_ptr); 
+    _phpms_build_projection_object(&(player->projection), PHPMS_GLOBAL(le_msprojection_ref),
+                                   list,  new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "projection", new_obj_ptr, E_ERROR TSRMLS_CC);
+
     MAKE_STD_ZVAL(new_obj_ptr);
     _phpms_build_color_object(&(player->offsite),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "offsite", new_obj_ptr, E_ERROR TSRMLS_CC);
@@ -7342,19 +7362,11 @@ DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS)
 {
     layerObj *self;
     pval   *pProjString;
-    pval   *pThis;
+    pval   *pThis, *new_obj_ptr;
     int     nStatus = 0;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pProjString) != SUCCESS)
@@ -7376,6 +7388,16 @@ DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS)
                                           pProjString->value.str.val)) == -1)
         _phpms_report_mapserver_error(E_ERROR);
 
+    /* update the php projection object */
+    zend_hash_del(Z_OBJPROP_P(pThis), "projection", 
+                  sizeof("projection"));
+    
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_projection_object(&(self->projection), PHPMS_GLOBAL(le_msprojection_ref),
+                                   list,  new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(pThis, "projection", new_obj_ptr, E_ERROR TSRMLS_CC);
+    
+
     RETURN_LONG(nStatus);
 }
 /* }}} */
@@ -7392,18 +7414,11 @@ DLEXPORT void php3_ms_lyr_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS)
 {
     layerObj *self;
     pval   *pProjString;
-    pval   *pThis;
+    pval   *pThis, *new_obj_ptr;
     int     nStatus = 0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pProjString) != SUCCESS)
@@ -7424,6 +7439,15 @@ DLEXPORT void php3_ms_lyr_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS)
         (nStatus = layerObj_setWKTProjection(self, 
                                           pProjString->value.str.val)) == -1)
         _phpms_report_mapserver_error(E_ERROR);
+
+    /* update the php projection object */
+    zend_hash_del(Z_OBJPROP_P(pThis), "projection", 
+                  sizeof("projection"));
+    
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_projection_object(&(self->projection), PHPMS_GLOBAL(le_msprojection_ref),
+                                   list,  new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(pThis, "projection", new_obj_ptr, E_ERROR TSRMLS_CC);
 
     RETURN_LONG(nStatus);
 }
