@@ -15,6 +15,10 @@ Current Version (SVN branch-5-2)
 
 - mapowscommon.c: output version string correctly (#2821)
 
+- mapwmslayer.c: Correct half pixel error in WMS layer's BBOX request to 
+  remote WMS (#2843)
+
+
 Version 5.2.1 (2008-12-01):
 ---------------------------
 
