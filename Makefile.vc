@@ -228,19 +228,19 @@ plugins:
 
 !IFDEF SDE_OPT
 	$(CC) $(CFLAGS) -DUSE_SDE /c mapsde.c /Fomapsde.obj
-    link /dll /out:msplugin_sde_$(SDE_VERSION).dll mapsde.obj mapthread.obj mapserver_i.lib $(SDE_LIB)
+    link /dll $(LDEBUG) /out:msplugin_sde_$(SDE_VERSION).dll mapsde.obj mapthread.obj mapserver_i.lib $(SDE_LIB)
     if exist msplugin_sde_$(SDE_VERSION).dll.manifest mt -manifest msplugin_sde_$(SDE_VERSION).dll.manifest -outputresource:msplugin_sde_$(SDE_VERSION).dll;2
 	-del mapsde.obj
 !ENDIF
 !IFDEF ORACLE
 	$(CC) $(CFLAGS) -DUSE_ORACLESPATIAL /c maporaclespatial.c /Fomaporaclespatial.obj
-    link /dll /out:msplugin_oracle.dll maporaclespatial.obj $(ORACLE_LIB) mapserver_i.lib
+    link /dll $(LDEBUG) /out:msplugin_oracle.dll maporaclespatial.obj $(ORACLE_LIB) mapserver_i.lib
     if exist msplugin_oracle.dll.manifest mt -manifest msplugin_oracle.dll.manifest -outputresource:msplugin_oracle.dll;2
     -del maporaclespatial.obj
 !ENDIF
 !IFDEF MSSQL2008
 	$(CC) $(CFLAGS) $(ODBC_INC) -DUSE_MSSQL2008 -DUSE_MSSQL2008_PLUGIN /c mapmssql2008.c /Fomapmssql2008.obj
-    link /dll /out:msplugin_mssql2008.dll mapmssql2008.obj $(ODBC_LIBS) mapserver_i.lib
+    link /dll $(LDEBUG) /out:msplugin_mssql2008.dll mapmssql2008.obj $(ODBC_LIBS) mapserver_i.lib
     if exist msplugin_mssql2008.dll.manifest mt -manifest msplugin_mssql2008.dll.manifest -outputresource:msplugin_mssql2008.dll;2
     -del mapmssql2008.obj
 !ENDIF
