@@ -288,7 +288,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
 
    if (msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid") == NULL)
    {
-       msIO_fprintf(stdout, "<!-- WARNING: Required Feature Id attribute (fid) not specified for this feature type. Make sure you set one of wfs_featureid, ows_feature_id or gml_featureid metadata. -->\n");
+       msIO_fprintf(stdout, "<!-- WARNING: Required Feature Id attribute (fid) not specified for this feature type. Make sure you set one of wfs_featureid, ows_featureid or gml_featureid metadata. -->\n");
    }
 
    msIO_printf("    </FeatureType>\n");
