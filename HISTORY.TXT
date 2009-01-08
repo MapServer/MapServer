@@ -12,6 +12,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN branch-5-2)
 --------------------------------
+- mapagg.cpp: fix center of rotation for truetype marker symbols (#2848)
 
 - mapowscommon.c: output version string correctly (#2821)
 
