@@ -59,6 +59,7 @@
  *====================================================================*/
 
 mapObj         *mapObj_new(char *filename, char *new_path);
+mapObj         *mapObj_newFromString(char *map_text, char *new_path);
 void            mapObj_destroy(mapObj* self);
 mapObj         *mapObj_clone(mapObj* self);
 int             mapObj_setRotation(mapObj* self, double rotation_angle );

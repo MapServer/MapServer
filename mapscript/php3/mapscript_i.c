@@ -52,6 +52,15 @@ mapObj *mapObj_new(char *filename, char *new_path) {
     } 
 }
 
+mapObj *mapObj_newFromString(char *map_text, char *new_path) {
+
+      if(map_text && strlen(map_text))
+        return msLoadMapFromString(map_text, new_path);
+      else { /* create an empty map, no layers etc... */
+        return msNewMapObj();
+      }
+}
+
 void  mapObj_destroy(mapObj* self) {
     msFreeMap(self);
   }

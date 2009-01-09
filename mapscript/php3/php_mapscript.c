@@ -92,6 +92,7 @@ DLEXPORT void php3_ms_getversionint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_new_from_string(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_clone(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
@@ -593,6 +594,7 @@ function_entry phpms_functions[] = {
     {"ms_getversion",   php3_ms_getversion,     NULL},
     {"ms_getversionint",php3_ms_getversionint,  NULL},
     {"ms_newmapobj",    php3_ms_map_new,        NULL},
+    {"ms_newmapobjfromstring",    php3_ms_map_new_from_string,        NULL},
     {"ms_newlayerobj",  php3_ms_lyr_new,        two_args_first_arg_force_ref},
     {"ms_newclassobj",  php3_ms_class_new,      one_arg_force_ref},
     {"ms_newpointobj",  php3_ms_point_new,      NULL},
@@ -1690,6 +1692,72 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_WARNING, "Failed to open map file %s", 
                             pFname->value.str.val);
+        RETURN_FALSE;
+    }
+
+    /* Return map object */
+    _phpms_build_map_object(pNewMap, list, return_value TSRMLS_CC);
+
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        ms_newMapObjFromString()
+ **********************************************************************/
+
+/* {{{ proto mapObj ms_newMapObjFromString(string mapfileString)
+   Returns a new object to deal with a MapServer map file. */
+
+DLEXPORT void php3_ms_map_new_from_string(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pMapText, *pNewPath;
+    mapObj      *pNewMap = NULL;
+    int         nArgs;
+    char        *pszNewPath = NULL;
+    HashTable   *list=NULL;
+
+#if defined(WIN32)
+    char        szPath[MS_MAXPATHLEN], szMapText[MS_MAXPATHLEN];
+    char        szNewPath[MS_MAXPATHLEN];
+#endif
+
+    nArgs = ARG_COUNT(ht);
+    if ((nArgs != 1 && nArgs != 2) ||
+        getParameters(ht, nArgs, &pMapText, &pNewPath) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pMapText);
+
+    if (nArgs >= 2)
+    {
+        convert_to_string(pNewPath);
+        pszNewPath = pNewPath->value.str.val;
+    }
+
+    /* Attempt to open the MAP file 
+     */
+
+#if defined(WIN32)
+
+    if (pszNewPath)
+    {
+        msBuildPath(szNewPath, NULL, pszNewPath);
+        pNewMap = mapObj_newFromString(szMapText, szNewPath);
+    }
+    else
+       pNewMap = mapObj_newFromString(szMapText, pszNewPath);
+   
+#else
+    pNewMap = mapObj_newFromString(pMapText->value.str.val, pszNewPath);
+#endif
+    if (pNewMap == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_WARNING, "Failed to open map file %s", 
+                            pMapText->value.str.val);
         RETURN_FALSE;
     }
 

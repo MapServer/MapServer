@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Added ms_newMapObjFromString mapObj constructor in PHP/Mapscript (#2399)
+
 - Add support to compile mssql2008 when SDE or ORACLE is not compiled (#2851)
 
 - Add support for creating debug builds for the plugins on Windows
