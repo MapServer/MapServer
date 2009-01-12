@@ -391,6 +391,10 @@ void layerObj_destroy(layerObj *self) {
    return;
 }
 
+int layerObj_updateFromString(layerObj *self, char *snippet) {
+   return msUpdateLayerFromString(self, snippet, MS_FALSE);
+}
+
 int layerObj_open(layerObj *self) {
     return msLayerOpen(self);
   }
@@ -622,6 +626,51 @@ int layerObj_setConnectionType(layerObj *self, int connectiontype,
 }
 
 /**********************************************************************
+ * class extensions for labelObj
+ **********************************************************************/
+int labelObj_updateFromString(labelObj *self, char *snippet) {
+   return msUpdateLabelFromString(self, snippet);
+}
+
+/**********************************************************************
+ * class extensions for legendObj
+ **********************************************************************/
+int legendObj_updateFromString(legendObj *self, char *snippet) {
+   return msUpdateLegendFromString(self, snippet, MS_FALSE);
+}
+
+/**********************************************************************
+ * class extensions for queryMapObj
+ **********************************************************************/
+int queryMapObj_updateFromString(queryMapObj *self, char *snippet) {
+   return msUpdateQueryMapFromString(self, snippet, MS_FALSE);
+}
+
+/**********************************************************************
+ * class extensions for referenceMapObj
+ **********************************************************************/
+
+int referenceMapObj_updateFromString(referenceMapObj *self, char *snippet) {
+   return msUpdateReferenceMapFromString(self, snippet, MS_FALSE);
+}
+
+/**********************************************************************
+ * class extensions for scaleBarObj
+ **********************************************************************/
+
+int scalebarObj_updateFromString(scalebarObj *self, char *snippet) {
+   return msUpdateScalebarFromString(self, snippet, MS_FALSE);
+}
+
+/**********************************************************************
+ * class extensions for webObj
+ **********************************************************************/
+
+int webObj_updateFromString(webObj *self, char *snippet) {
+   return msUpdateWebFromString(self, snippet, MS_FALSE);
+}
+
+/**********************************************************************
  * class extensions for classObj, always within the context of a layer
  **********************************************************************/
 classObj *classObj_new(layerObj *layer, classObj *class) {
@@ -642,6 +691,10 @@ classObj *classObj_new(layerObj *layer, classObj *class) {
 
     return (layer->class[layer->numclasses-1]);
   }
+
+int classObj_updateFromString(classObj *self, char *snippet) {
+   return msUpdateClassFromString(self, snippet, MS_FALSE);
+}
 
 void  classObj_destroy(classObj *self) {
     return; /* do nothing, map deconstrutor takes care of it all */
@@ -1249,6 +1302,9 @@ void  styleObj_destroy(styleObj *self) {
     return; /* do nothing, map deconstrutor takes care of it all */
   }
 
+int styleObj_updateFromString(styleObj *self, char *snippet) {
+   return msUpdateStyleFromString(self, snippet, MS_FALSE);
+}
 
 int styleObj_setSymbolByName(styleObj *self, mapObj *map, char* pszSymbolName) {
     self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName, MS_TRUE);

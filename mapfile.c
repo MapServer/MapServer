@@ -3764,6 +3764,8 @@ int loadQueryMap(queryMapObj *querymap)
 {
   for(;;) {
     switch(msyylex()) {
+    case(QUERYMAP):
+      break; /* for string loads */
     case(COLOR):      
       loadColor(&(querymap->color), NULL);
       break;
@@ -3921,6 +3923,8 @@ int loadWeb(webObj *web, mapObj *map)
     case(EMPTY):
       if(getString(&web->empty) == MS_FAILURE) return(-1);
       break;
+    case(WEB):
+      break; /* for string loads */
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadWeb()");
       return(-1);

@@ -180,6 +180,7 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS);
 
 
 DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_drawQuery(INTERNAL_FUNCTION_PARAMETERS);
@@ -223,6 +224,7 @@ DLEXPORT void php3_ms_lyr_isVisible(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setConnectionType(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_getExpressionString(INTERNAL_FUNCTION_PARAMETERS);
@@ -240,6 +242,7 @@ DLEXPORT void php3_ms_class_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_removeMetaData(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_label_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_label_setBinding(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_label_getBinding(INTERNAL_FUNCTION_PARAMETERS);
@@ -320,20 +323,25 @@ DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_getextent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_web_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_referenceMap_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_projection_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_projection_getunits(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_scalebar_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_scalebar_setImageColor(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_legend_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_style_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_clone(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_setBinding(INTERNAL_FUNCTION_PARAMETERS);
@@ -362,6 +370,7 @@ DLEXPORT void php3_ms_symbol_setPattern(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_getPattern(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_symbol_setImagepath(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_querymap_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_querymap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 
@@ -751,27 +760,32 @@ function_entry php_color_class_functions[] = {
 };
 
 function_entry php_web_class_functions[] = {
+    {"updatefromstring", php3_ms_web_updateFromString,NULL },
     {"set",             php3_ms_web_setProperty,        NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_reference_class_functions[] = {
+    {"updatefromstring", php3_ms_referenceMap_updateFromString,NULL },
     {"set",             php3_ms_referenceMap_setProperty,NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_scalebar_class_functions[] = {
+    {"updatefromstring", php3_ms_scalebar_updateFromString,NULL },
     {"set",             php3_ms_scalebar_setProperty,   NULL},
     {"setimagecolor",   php3_ms_scalebar_setImageColor, NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_legend_class_functions[] = {
+    {"updatefromstring",  php3_ms_legend_updateFromString,     NULL},
     {"set",             php3_ms_legend_setProperty,     NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_layer_class_functions[] = {
+    {"updatefromstring",  php3_ms_lyr_updateFromString,     NULL},
     {"set",             php3_ms_lyr_setProperty,        NULL},    
     {"draw",            php3_ms_lyr_draw,               NULL},    
     {"drawquery",       php3_ms_lyr_drawQuery,          NULL},    
@@ -818,6 +832,7 @@ function_entry php_layer_class_functions[] = {
 };
 
 function_entry php_label_class_functions[] = {
+    {"updatefromstring",  php3_ms_label_updateFromString,     NULL},
     {"set",             php3_ms_label_setProperty,      NULL},    
     {"setbinding",      php3_ms_label_setBinding,      NULL},    
     {"getbinding",      php3_ms_label_getBinding,      NULL},    
@@ -826,6 +841,7 @@ function_entry php_label_class_functions[] = {
 };
 
 function_entry php_class_class_functions[] = {
+    {"updatefromstring",  php3_ms_class_updateFromString,     NULL},
     {"set",             php3_ms_class_setProperty,      NULL},    
     {"setexpression",   php3_ms_class_setExpression,    NULL},    
     {"getexpressionstring", php3_ms_class_getExpressionString, NULL},    
@@ -921,6 +937,7 @@ function_entry php_projection_class_functions[] = {
 };
 
 function_entry php_style_class_functions[] = {
+    {"updatefromstring",  php3_ms_style_updateFromString,     NULL},
     {"set",             php3_ms_style_setProperty,      NULL},    
     {"clone",           php3_ms_style_clone,            NULL},    
     {"setbinding",      php3_ms_style_setBinding,       NULL},    
@@ -971,6 +988,7 @@ function_entry php_symbol_class_functions[] = {
 
 
 function_entry php_querymap_class_functions[] = {
+    {"updatefromstring",  php3_ms_querymap_updateFromString,     NULL},
     {"set",             php3_ms_querymap_setProperty,   NULL},
     {NULL, NULL, NULL}
 };
@@ -6810,6 +6828,45 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        layer->updateFromString()
+ **********************************************************************/
+
+/* {{{ proto int layer.updateFromString(string snippet)
+   Update a layer from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_lyr_updateFromString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj *self;
+    pval   *pThis;
+    char   *pSnippet;
+    int    s_len, nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pSnippet, &s_len) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = layerObj_updateFromString(self, 
+                                        pSnippet)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+
+
+/* }}} */
+
 
 /**********************************************************************
  *                        layer->set()
@@ -8863,6 +8920,45 @@ static long _phpms_build_label_object(labelObj *plabel,
     return label_id;
 }
 
+/**********************************************************************
+ *                        label->updateFromString()
+ **********************************************************************/
+
+/* {{{ proto int label.updateFromString(string snippet)
+   Update a label from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_label_updateFromString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    labelObj *self;
+    pval   *pThis;
+    char   *pSnippet;
+    int    s_len, nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pSnippet, &s_len) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (labelObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslabel),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = labelObj_updateFromString(self, 
+                                        pSnippet)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+
+
+/* }}} */
+
 
 /**********************************************************************
  *                        label->set()
@@ -9215,6 +9311,46 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_build_class_object(pNewClass, map_id, layer_id, list, 
                               return_value TSRMLS_CC);
 }
+/* }}} */
+
+
+/**********************************************************************
+ *                        class->updateFromString()
+ **********************************************************************/
+
+/* {{{ proto int class.updateFromString(string snippet)
+   Update a class from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_class_updateFromString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    classObj *self;
+    pval   *pThis;
+    char   *pSnippet;
+    int    s_len, nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pSnippet, &s_len) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = classObj_updateFromString(self, 
+                                        pSnippet)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+
+
 /* }}} */
 
 
@@ -9934,7 +10070,6 @@ DLEXPORT void php3_ms_class_removeMetaData(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /* }}} */
-
 
 /*=====================================================================
  *                 PHP function wrappers - colorObj class
@@ -12585,6 +12720,42 @@ static long _phpms_build_web_object(webObj *pweb,
 }
 
 /**********************************************************************
+ *                        web->updateFromString()
+ **********************************************************************/
+
+/* {{{ proto int web.updateFromString(string snippet)
+   Update a web from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_web_updateFromString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    webObj *self;
+    pval   *pThis;
+    char   *pSnippet;
+    int    s_len, nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pSnippet, &s_len) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (webObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msweb),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = webObj_updateFromString(self, 
+                                        pSnippet)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+
+/**********************************************************************
  *                        web->set()
  **********************************************************************/
 
@@ -13098,6 +13269,42 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
                                new_obj_ptr, E_ERROR TSRMLS_CC);
 
     return reference_id;
+}
+
+/**********************************************************************
+ *                        referenceMap->updateFromString()
+ **********************************************************************/
+
+/* {{{ proto int referenceMap.updateFromString(string snippet)
+   Update a referenceMap from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_referenceMap_updateFromString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    referenceMapObj *self;
+    pval   *pThis;
+    char   *pSnippet;
+    int    s_len, nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pSnippet, &s_len) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (referenceMapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msrefmap),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = referenceMapObj_updateFromString(self, 
+                                        pSnippet)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
 }
 
 
@@ -13862,6 +14069,42 @@ static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
 }
 
 /**********************************************************************
+ *                        scalebar->updateFromString()
+ **********************************************************************/
+
+/* {{{ proto int scalebar.updateFromString(string snippet)
+   Update a scalebar from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_scalebar_updateFromString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    scalebarObj *self;
+    pval   *pThis;
+    char   *pSnippet;
+    int    s_len, nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pSnippet, &s_len) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (scalebarObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msscalebar),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = scalebarObj_updateFromString(self, 
+                                        pSnippet)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+
+/**********************************************************************
  *                        scalebar->set()
  **********************************************************************/
 
@@ -14034,6 +14277,46 @@ static long _phpms_build_legend_object(legendObj *plegend,
 
     return legend_id;
 }
+
+/**********************************************************************
+ *                        legend->updateFromString()
+ **********************************************************************/
+
+/* {{{ proto int legend.updateFromString(string snippet)
+   Update a legend from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_legend_updateFromString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    legendObj *self;
+    pval   *pThis;
+    char   *pSnippet;
+    int    s_len, nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pSnippet, &s_len) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (legendObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslegend),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = legendObj_updateFromString(self, 
+                                        pSnippet)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+
+
+/* }}} */
+
 
 /**********************************************************************
  *                        legend->set()
@@ -14240,6 +14523,42 @@ DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS)
                               return_value TSRMLS_CC);
 }
 /* }}} */
+
+/**********************************************************************
+ *                        style->updateFromString()
+ **********************************************************************/
+
+/* {{{ proto int style.updateFromString(string snippet)
+   Update a style from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_style_updateFromString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    styleObj *self;
+    pval   *pThis;
+    char   *pSnippet;
+    int    s_len, nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pSnippet, &s_len) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (styleObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msstyle),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = styleObj_updateFromString(self, 
+                                        pSnippet)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
 
 
 /**********************************************************************
@@ -15436,6 +15755,44 @@ static long _phpms_build_querymap_object(queryMapObj *pquerymap,
     return querymap_id;
 }
 
+/**********************************************************************
+ *                        querymap->updateFromString()
+ **********************************************************************/
+
+/* {{{ proto int querymap.updateFromString(string snippet)
+   Update a querymap from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_querymap_updateFromString(INTERNAL_FUNCTION_PARAMETERS)
+{
+    queryMapObj *self;
+    pval   *pThis;
+    char   *pSnippet;
+    int    s_len, nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pSnippet, &s_len) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (queryMapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msquerymap),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = queryMapObj_updateFromString(self, 
+                                        pSnippet)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+
+
+/* }}} */
 
 /**********************************************************************
  *                        querymap->set()

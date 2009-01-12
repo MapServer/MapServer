@@ -132,6 +132,7 @@ layerObj        *mapObj_removeLayer(mapObj *self, int layerindex);
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
+int             layerObj_updateFromString(layerObj *self, char *snippet);
 int             layerObj_open(layerObj *self);
 int             layerObj_whichShapes(layerObj *self, rectObj *poRect);
 shapeObj        *layerObj_nextShape(layerObj *self);
@@ -175,8 +176,20 @@ classObj        *layerObj_removeClass(layerObj *self, int index);
 int             layerObj_setConnectionType(layerObj *self, int connectiontype, 
                                            const char *library_str) ;
 
+int             labelObj_updateFromString(labelObj *self, char *snippet);
+
+int             legendObj_updateFromString(legendObj *self, char *snippet);
+
+int             queryMapObj_updateFromString(queryMapObj *self, char *snippet);
+
+int             referenceMapObj_updateFromString(referenceMapObj *self, char *snippet);
+
+int             scalebarObj_updateFromString(scalebarObj *self, char *snippet);
+
+int             webObj_updateFromString(webObj *self, char *snippet);
 
 classObj       *classObj_new(layerObj *layer, classObj *class);
+int             classObj_updateFromString(classObj *self, char *snippet);
 void            classObj_destroy(classObj* self);
 int             classObj_setExpression(classObj *self, char *string);
 char            *classObj_getExpressionString(classObj *self);
@@ -294,6 +307,7 @@ DBFFieldType    DBFInfo_getFieldType(DBFInfo *self, int iField);
 
 styleObj       *styleObj_new(classObj *class, styleObj *style);
 void            styleObj_destroy(styleObj* self);
+int             styleObj_updateFromString(styleObj *self, char *snippet);
 int             styleObj_setSymbolByName(styleObj *self, mapObj *map, 
                                          char* pszSymbolName);
 styleObj       *styleObj_clone(styleObj *style);
