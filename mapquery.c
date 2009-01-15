@@ -661,13 +661,13 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 
     /* Get the layer tolerance
        default is 3 for point and line layers, 0 for others */
-    if(lp->tolerance == -1)
-        if(lp->status == MS_LAYER_POINT || lp->status == MS_LAYER_LINE)
-            layer_tolerance = 3;
-        else
-            layer_tolerance = 0;
-    else
-        layer_tolerance = lp->tolerance;
+    if(lp->tolerance == -1) {
+      if(lp->status == MS_LAYER_POINT || lp->status == MS_LAYER_LINE)
+        layer_tolerance = 3;
+       else
+        layer_tolerance = 0;
+    } else
+      layer_tolerance = lp->tolerance;
   
     if(lp->toleranceunits == MS_PIXELS)
       tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
@@ -692,10 +692,10 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	return(MS_FAILURE);
       }
 
-      if(selectshape.type != MS_SHAPE_POLYGON) {
+      if(selectshape.type != MS_SHAPE_POLYGON && selectshape.type != MS_SHAPE_LINE) {
 	msLayerClose(lp);
 	msLayerClose(slp);
-	msSetError(MS_QUERYERR, "Selection features MUST be polygons.", "msQueryByFeatures()");
+	msSetError(MS_QUERYERR, "Selection features MUST be polygons or lines.", "msQueryByFeatures()");
 	return(MS_FAILURE);
       }
       
@@ -767,9 +767,8 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	  lp->project = MS_FALSE;
 #endif
  
-	switch(selectshape.type) { /* may eventually support types other than polygon */
-	case MS_SHAPE_POLYGON:
-	  
+	switch(selectshape.type) { /* may eventually support types other than polygon on line */
+	case MS_SHAPE_POLYGON:	  
 	  switch(shape.type) { /* make sure shape actually intersects the selectshape */
 	  case MS_SHAPE_POINT:
 	    if(tolerance == 0) /* just test for intersection */
@@ -796,21 +795,53 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
             }
 	    break;
 	  default:
+            status = MS_FALSE;
 	    break;
 	  }
-	  
-	  if(status == MS_TRUE) {
-	    addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	    
-	    if(lp->resultcache->numresults == 1)
-	      lp->resultcache->bounds = shape.bounds;
-	    else
-	      msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
-	  }
-
 	  break;
+	case MS_SHAPE_LINE:
+          switch(shape.type) { /* make sure shape actually intersects the selectshape */
+          case MS_SHAPE_POINT:
+            if(tolerance == 0) { /* just test for intersection */
+              distance = msDistanceShapeToShape(&selectshape, &shape);
+              if(distance == 0) status = MS_TRUE;
+            } else {
+	      distance = msDistanceShapeToShape(&selectshape, &shape);
+              if(distance < tolerance) status = MS_TRUE;
+            }
+            break;
+          case MS_SHAPE_LINE:
+            if(tolerance == 0) { /* just test for intersection */
+              status = msIntersectPolylines(&shape, &selectshape);
+            } else { /* check distance, distance=0 means they intersect */
+              distance = msDistanceShapeToShape(&selectshape, &shape);
+              if(distance < tolerance) status = MS_TRUE;
+            }
+            break;
+          case MS_SHAPE_POLYGON:
+            if(tolerance == 0) /* just test for intersection */
+              status = msIntersectPolylinePolygon(&selectshape, &shape);
+            else { /* check distance, distance=0 means they intersect */
+              distance = msDistanceShapeToShape(&selectshape, &shape);
+              if(distance < tolerance) status = MS_TRUE;
+            }
+            break;
+          default:
+            status = MS_FALSE;
+            break;
+          }
+          break;
 	default:
-	  break;
+	  break; /* should never get here as we test for selection shape type explicitly earlier */
+	}
+
+	if(status == MS_TRUE) {
+	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
+
+	  if(lp->resultcache->numresults == 1)
+	    lp->resultcache->bounds = shape.bounds;
+	  else
+	    msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
 	}
 
 	msFreeShape(&shape);
