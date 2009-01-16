@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-2)
 --------------------------------
 
+- Add USE_MSSQL2008_PLUGIN to the MSSQL 2008 compile options (#2823)
+
 - Add support to compile mssql2008 when SDE or ORACLE is not compiled (#2851)
 
 - mapagg.cpp: fix center of rotation for truetype marker symbols (#2848)
