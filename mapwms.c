@@ -1527,7 +1527,7 @@ int msWMSIsSubGroup(char** currentGroups, int currentLevel, char** otherGroups, 
    /* compare all groups below the current level */
    for (i = 0; i <= currentLevel; i++)
    {
-      if (strncmp(currentGroups[i], otherGroups[i], strlen(currentGroups[i])) != 0)
+      if (strcmp(currentGroups[i], otherGroups[i]) != 0)
       {
          return MS_FALSE; /* if one of these is not equal it is not a sub group */
       }

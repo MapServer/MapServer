@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fixed bug with wms layer group hierarchy (#2810)
+
 - Added updateFromString() methods for several objects in PHP/Mapscript (#2298)
 
 - Added ms_newMapObjFromString mapObj constructor in PHP/Mapscript (#2399)
