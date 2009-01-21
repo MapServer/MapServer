@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fixed memory leak of map::setProjection in PHP/MapScript (#2861)
+
 - Fixed "internal PHP GC memory leaks" in PHP/MapScript (#2767)
 
 - Fixed bug with wms layer group hierarchy (#2810)

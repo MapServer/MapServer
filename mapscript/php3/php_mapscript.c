@@ -2095,8 +2095,6 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
         bSetUnitsAndExtents = pSetUnitsAndExtents->value.lval;
     }
 
-    
-    msInitProjection(&in);
     in = self->projection;
     msInitProjection(&out);
     if (bWKTProj)
@@ -2104,7 +2102,7 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
     else
         msLoadProjectionString(&(out),  pProjString->value.str.val);
     sRect = self->extent;
-    
+ 
     if (in.proj!= NULL && out.proj!=NULL)
     {
         if (msProjectionsDiffer(&in, &out))
@@ -2113,6 +2111,8 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
               bSetNewExtents =1;
         }
     }
+    // Free the temporary projection object   
+    msFreeProjection(&out);
 
     if (bWKTProj) 
         nStatus = mapObj_setWKTProjection(self, pProjString->value.str.val);
