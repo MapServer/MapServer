@@ -409,7 +409,10 @@ int _phpms_add_property_object(pval *pObj,
           php3_error(err_type, "Unable to add %s property", property_name);
         return -1;
     }
-
+#if PHP_MAJOR_VERSION >= 5
+    else
+        ZVAL_DELREF(pObjToAdd);
+#endif
     return 0;
 }
 

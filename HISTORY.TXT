@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fixed "internal PHP GC memory leaks" in PHP/MapScript (#2767)
+
 - Fixed bug with wms layer group hierarchy (#2810)
 
 - Added updateFromString() methods for several objects in PHP/Mapscript (#2298)
