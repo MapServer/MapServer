@@ -2111,7 +2111,7 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
               bSetNewExtents =1;
         }
     }
-    // Free the temporary projection object   
+    /* Free the temporary projection object */
     msFreeProjection(&out);
 
     if (bWKTProj) 
