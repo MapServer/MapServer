@@ -1918,6 +1918,7 @@ int msOracleSpatialLayerInitItemInfo( layerObj *layer )
 int msOracleSpatialLayerGetItems( layerObj *layer )
 {
     char *rzt = "";
+    ub2 rzttype = 0;
     char *flk = "";
     int function = 0;
     int version = 0;
@@ -2000,6 +2001,8 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
     for (i = 0; i <= layer->numitems; i++)
     {
         success = TRY( hand, OCIParamGet ((dvoid*) dthand->stmthp, (ub4)OCI_HTYPE_STMT,hand->errhp,(dvoid*)&pard, (ub4)i+1))
+               && TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,(dvoid*)&rzttype,(ub4 *)0, (ub4) OCI_ATTR_DATA_TYPE, hand->errhp ))
+               && TRY( hand, OCIParamGet ((dvoid*) dthand->stmthp, (ub4)OCI_HTYPE_STMT,hand->errhp,(dvoid*)&pard, (ub4)i+1))
                && TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,(dvoid*)&rzt,(ub4 *)&flk_len, (ub4) OCI_ATTR_NAME, hand->errhp ));
 
         flk = (char *)malloc(sizeof(char*) * flk_len+1);
@@ -2025,7 +2028,14 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
             }
             else
             {
+              if (rzttype!=OCI_TYPECODE_BLOB) 
+              {
                 strcpy(layer->items[count_item], flk);
+              }
+              else
+              {
+                strcpy(layer->items[count_item], "null");
+              }
             }
             count_item++;
         }
