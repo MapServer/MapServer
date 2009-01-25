@@ -1506,6 +1506,12 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sMINFEATURESIZE AUTO\n", tab);
   else
     fprintf(stream, "  %sMINFEATURESIZE %d\n", tab, label->minfeaturesize);
+  
+  if(label->minscaledenom != -1.0)
+    fprintf(stream, "  %sMINSCALEDENOM %g\n", tab, label->minscaledenom);
+  if(label->maxscaledenom != -1.0)
+      fprintf(stream, "  %sMAXSCALEDENOM %g\n", tab, label->maxscaledenom);
+    
   fprintf(stream, "  %sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
 
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item)
@@ -1995,13 +2001,19 @@ void writeStyle(styleObj *style, FILE *stream) {
     if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_COLOR].item)
       fprintf(stream, "        COLOR [%s]\n", style->bindings[MS_STYLE_BINDING_COLOR].item);
   else writeColor(&(style->color), stream, "COLOR", "        ");
+  
+  if(style->minscaledenom != -1.0)
+      fprintf(stream, "        MINSCALEDENOM %g\n", style->minscaledenom);
+  if(style->maxscaledenom != -1.0)
+        fprintf(stream, "        MAXSCALEDENOM %g\n", style->maxscaledenom);
     
   if(style->maxsize != MS_MAXSYMBOLSIZE) fprintf(stream, "        MAXSIZE %g\n", style->maxsize);
   if(style->minsize != MS_MINSYMBOLSIZE) fprintf(stream, "        MINSIZE %g\n", style->minsize);
   if(style->maxwidth != MS_MAXSYMBOLWIDTH) fprintf(stream, "        MAXWIDTH %g\n", style->maxwidth);
   if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %g\n", style->minwidth);  
-  if(style->opacity > 0) fprintf(stream, "        OPACITY %d\n", style->opacity);
-
+  if(style->opacity != 100) fprintf(stream, "        OPACITY %d\n", style->opacity);
+  if(style->outlinewidth > 0) fprintf(stream, "        OUTLINEWIDTH %g\n", style->outlinewidth);
+  
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item)
       fprintf(stream, "        OUTLINECOLOR [%s]\n", style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item);
   else writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
