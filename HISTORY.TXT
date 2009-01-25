@@ -11,6 +11,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
+- RFC49 implementation (#2865)
 
 - Fixed Blobs not filtered in OracleSpatial Attribute/WFS queries (#2829)
 

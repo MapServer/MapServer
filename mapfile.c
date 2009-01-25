@@ -1206,7 +1206,8 @@ void initLabel(labelObj *label)
   label->maxsize = MS_MAXFONTSIZE;
   label->buffer = 0;
   label->offsetx = label->offsety = 0;
-
+  label->minscaledenom=-1;
+  label->maxscaledenom=-1;
   label->minfeaturesize = -1; /* no limit */
   label->autominfeaturesize = MS_FALSE;
   label->mindistance = -1; /* no limit */
@@ -1329,6 +1330,9 @@ static int loadLabel(labelObj *label)
     case(MAXSIZE):      
       if(getInteger(&(label->maxsize)) == -1) return(-1);
       break;
+    case(MAXSCALEDENOM):
+      if(getDouble(&(label->maxscaledenom)) == -1) return(-1);
+      break;
     case(MAXLENGTH):
       if(getInteger(&(label->maxlength)) == -1) return(-1);
       break;
@@ -1346,6 +1350,9 @@ static int loadLabel(labelObj *label)
 	label->minfeaturesize = (int)msyynumber;
       else
 	label->autominfeaturesize = MS_TRUE;
+      break;
+    case(MINSCALEDENOM):
+      if(getDouble(&(label->minscaledenom)) == -1) return(-1);
       break;
     case(MINSIZE):
       if(getInteger(&(label->minsize)) == -1) return(-1);
@@ -1375,7 +1382,7 @@ static int loadLabel(labelObj *label)
         label->priority = (int) msyynumber;
         if(label->priority < 1 || label->priority > MS_MAX_LABEL_PRIORITY) {
             msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d." , 
-                       "loadStyle()", MS_MAX_LABEL_PRIORITY);
+                       "loadLabel()", MS_MAX_LABEL_PRIORITY);
             return(-1);
         }
       } else {
@@ -1765,8 +1772,10 @@ int initStyle(styleObj *style) {
   style->minsize = MS_MINSYMBOLSIZE;
   style->maxsize = MS_MAXSYMBOLSIZE;
   style->width = 1; /* in pixels */
+  style->outlinewidth = 0; /* in pixels */
   style->minwidth = MS_MINSYMBOLWIDTH;
   style->maxwidth = MS_MAXSYMBOLWIDTH;
+  style->minscaledenom=style->maxscaledenom = -1.0;
   style->offsetx = style->offsety = 0; /* no offset */
   style->antialias = MS_FALSE;
   style->angle = 360;
@@ -1843,6 +1852,12 @@ int loadStyle(styleObj *style) {
     case(END):     
       return(MS_SUCCESS); /* done */
       break;
+    case(MAXSCALEDENOM):
+      if(getDouble(&(style->maxscaledenom)) == -1) return(MS_FAILURE);
+      break;
+    case(MINSCALEDENOM):
+      if(getDouble(&(style->minscaledenom)) == -1) return(MS_FAILURE);
+      break;
     case(GEOMTRANSFORM):
       {
         char *expr=NULL;
@@ -1873,6 +1888,13 @@ int loadStyle(styleObj *style) {
     case(OUTLINECOLOR):
       if(loadColor(&(style->outlinecolor), &(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR])) != MS_SUCCESS) return(MS_FAILURE);
       if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item) style->numbindings++;
+      break;
+    case(OUTLINEWIDTH):
+      if(getDouble(&(style->outlinewidth)) == -1) return(MS_FAILURE);
+      if(style->outlinewidth < 0) {
+          msSetError(MS_MISCERR, "Invalid WIDTH, must be greater than 0" , "loadStyle()");
+          return(MS_FAILURE);
+      }
       break;
     case(SIZE):
       if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);

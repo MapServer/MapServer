@@ -616,6 +616,8 @@ typedef struct {
   int minfeaturesize; /* minimum feature size (in pixels) to label */
   int autominfeaturesize; /* true or false */
 
+  double minscaledenom,maxscaledenom;
+  
   int mindistance;
   int partials; /* can labels run of an image */
 
@@ -721,6 +723,7 @@ typedef struct {
   double minsize, maxsize;
 
   double width;
+  double outlinewidth;
   double minwidth, maxwidth;
 
   int offsetx, offsety; /* for shadows, hollow symbols, etc... */
@@ -728,6 +731,8 @@ typedef struct {
   double angle;
 
   int antialias;
+
+  double minscaledenom, maxscaledenom;
 
 #ifndef SWIG
   attributeBindingObj bindings[MS_STYLE_BINDING_LENGTH];

@@ -890,7 +890,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
   
     cache = MS_FALSE;
-    if(layer->type == MS_LAYER_LINE && layer->class[shape.classindex]->numstyles > 1) 
+    if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1||layer->class[shape.classindex]->styles[0]->outlinewidth>0))
       cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
          
     /* With 'STYLEITEM AUTO', we will have the datasource fill the class' */
@@ -908,8 +908,54 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(annotate && (layer->class[shape.classindex]->text.string || layer->labelitem) && layer->class[shape.classindex]->label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
-    if(cache)
-      status = msDrawShape(map, layer, &shape, image, 0, MS_FALSE); /* draw only the first style */
+    if (cache) {
+        int i;
+        for (i = 0; i < layer->class[shape.classindex]->numstyles; i++) {
+            styleObj *pStyle = layer->class[shape.classindex]->styles[i];
+            colorObj tmp;
+            if (pStyle->outlinewidth > 0) {
+                /* 
+                 * RFC 49 implementation
+                 * if an outlinewidth is used:
+                 *  - augment the style's width to account for the outline width
+                 *  - swap the style color and outlinecolor
+                 *  - draw the shape (the outline) in the first pass of the
+                 *    caching mechanism
+                 */
+                
+                /* adapt width (must take scalefactor into account) */
+                pStyle->width += (pStyle->outlinewidth / layer->scalefactor) * 2;
+                pStyle->minwidth += pStyle->outlinewidth * 2;
+                pStyle->maxwidth += pStyle->outlinewidth * 2;
+                
+                /*swap color and outlinecolor*/
+                tmp = pStyle->color;
+                pStyle->color = pStyle->outlinecolor;
+                pStyle->outlinecolor = tmp;
+            }
+            if (i == 0 || pStyle->outlinewidth > 0) {
+                status = msDrawShape(map, layer, &shape, image, i, MS_TRUE); /* draw a single style */
+            }
+            if (pStyle->outlinewidth > 0) {
+                /*
+                 * RFC 49 implementation: switch back the styleobj to its
+                 * original state, so the line fill will be drawn in the
+                 * second pass of the caching mechanism
+                 */
+                
+                /* reset widths to original state */
+                pStyle->width -= (pStyle->outlinewidth / layer->scalefactor) * 2;
+                pStyle->minwidth -= pStyle->outlinewidth * 2;
+                pStyle->maxwidth -= pStyle->outlinewidth * 2;
+                
+                /*reswap colors to original state*/
+                tmp = pStyle->color;
+                pStyle->color = pStyle->outlinecolor;
+                pStyle->outlinecolor = tmp;
+            }
+        }
+    }
+
     else
       status = msDrawShape(map, layer, &shape, image, -1, MS_FALSE); /* all styles  */
     if(status != MS_SUCCESS) {
@@ -944,12 +990,23 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   
   if(shpcache) {
     int s;
-    for(s=1; s<maxnumstyles; s++) {
-      for(current=shpcache; current; current=current->next) {        
-        if(layer->class[current->shape.classindex]->numstyles > s &&
-            layer->class[current->shape.classindex]->styles[s]->_geomtransform==MS_GEOMTRANSFORM_NONE) {
-          msDrawLineSymbol(&map->symbolset, image, &current->shape, layer->class[current->shape.classindex]->styles[s], layer->scalefactor);
-       }
+    for(s=0; s<maxnumstyles; s++) {
+      for(current=shpcache; current; current=current->next) {
+        if(layer->class[current->shape.classindex]->numstyles > s) {
+          styleObj *pStyle = layer->class[current->shape.classindex]->styles[s];
+          if(pStyle->_geomtransform!=MS_GEOMTRANSFORM_NONE)
+        	continue; /*skip this as it has already been rendered*/
+          if(map->scaledenom > 0) {
+            if((pStyle->maxscaledenom != -1) && (map->scaledenom >= pStyle->maxscaledenom))
+              continue;
+            if((pStyle->minscaledenom != -1) && (map->scaledenom < pStyle->minscaledenom))
+              continue;
+          }
+          if(s==0 && pStyle->outlinewidth>0) {
+            msDrawLineSymbol(&map->symbolset, image, &current->shape, pStyle, layer->scalefactor);  
+          } else if(s>0)
+            msDrawLineSymbol(&map->symbolset, image, &current->shape, pStyle, layer->scalefactor);
+        }
       }
     }
     
@@ -1134,8 +1191,16 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   
     for(s=1; s<maxnumstyles; s++) {
       for(current=shpcache; current; current=current->next) {        
-        if(layer->class[current->shape.classindex]->numstyles > s)
-	  msDrawLineSymbol(&map->symbolset, image, &current->shape, (layer->class[current->shape.classindex]->styles[s]), layer->scalefactor);
+        if(layer->class[current->shape.classindex]->numstyles > s) {
+          styleObj *curStyle = layer->class[current->shape.classindex]->styles[s];
+          if(map->scaledenom > 0) {
+            if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+              continue;
+            if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+              continue;
+          }
+	      msDrawLineSymbol(&map->symbolset, image, &current->shape, (layer->class[current->shape.classindex]->styles[s]), layer->scalefactor);
+        }
       }
     }
     
@@ -1353,7 +1418,6 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   if(shape->text && (layer->class[c]->label.encoding || layer->class[c]->label.wrap
           ||layer->class[c]->label.maxlength)) {
       char *newtext=msTransformLabelText(map,image,&(layer->class[c]->label),shape->text);
-      if(!newtext) return MS_FAILURE;
       free(shape->text);
       shape->text = newtext;
   }
@@ -1382,11 +1446,15 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msOffsetPointRelativeTo(&center, layer);
 
     /* shade symbol drawing will call outline function if color not set */
-    if(style != -1)
-      msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, (layer->class[c]->styles[style]), layer->scalefactor);
-    else {
-      for(s=0; s<layer->class[c]->numstyles; s++)
-        msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, (layer->class[c]->styles[s]), layer->scalefactor);
+    for(s=0; s<layer->class[c]->numstyles; s++) {
+      styleObj *curStyle = layer->class[c]->styles[s];
+      if(map->scaledenom > 0) {
+        if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+          continue;
+        if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+          continue;
+      }
+      msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, curStyle, layer->scalefactor);
     }
 
     /* TO DO: need to handle circle annotation */
@@ -1479,8 +1547,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
 	  } else {
             if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
-              for(s=0; s<layer->class[c]->numstyles; s++)
-                msDrawMarkerSymbol(&map->symbolset, image, &annopnt, (layer->class[c]->styles[s]), layer->scalefactor);
+              for(s=0; s<layer->class[c]->numstyles; s++) {
+                styleObj *curStyle = layer->class[c]->styles[s];
+                if(map->scaledenom > 0) {
+                  if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+                    continue;
+                  if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+                    continue;
+                }
+                msDrawMarkerSymbol(&map->symbolset, image, &annopnt, curStyle, layer->scalefactor);
+              }
 	    }
 	    msDrawLabel(map, image, annopnt, shape->text, &label, layer->scalefactor);
           }
@@ -1515,8 +1591,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
         } else {
 	  if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
-            for(s=0; s<layer->class[c]->numstyles; s++)
-	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, (layer->class[c]->styles[s]), layer->scalefactor);
+        for(s=0; s<layer->class[c]->numstyles; s++) {
+          styleObj *curStyle = layer->class[c]->styles[s];
+          if(map->scaledenom > 0) {
+            if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+              continue;
+            if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+              continue;
+          }
+	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, curStyle, layer->scalefactor);
+        }
 	  }
 	  msDrawLabel(map, image, annopnt, shape->text, &label, layer->scalefactor);
         }
@@ -1544,8 +1628,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	      if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
 	    } else {
 	      if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
-                for(s=0; s<layer->class[c]->numstyles; s++)
-	          msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
+            for(s=0; s<layer->class[c]->numstyles; s++) {
+              styleObj *curStyle = layer->class[c]->styles[s];
+              if(map->scaledenom > 0) {
+                if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+                  continue;
+                if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+                  continue;
+              }
+	          msDrawMarkerSymbol(&map->symbolset, image, point, curStyle, layer->scalefactor);
+            }
 	      }
 	      msDrawLabel(map, image, *point, shape->text, &label, layer->scalefactor);
 	    }
@@ -1575,8 +1667,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	} else
           msOffsetPointRelativeTo(point, layer);
 
-	for(s=0; s<layer->class[c]->numstyles; s++)
-  	  msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
+  for(s=0; s<layer->class[c]->numstyles; s++) {
+    styleObj *curStyle = layer->class[c]->styles[s];
+    if(map->scaledenom > 0) {
+      if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+        continue;
+      if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+        continue;
+    }
+    msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
+  }
 
 	if(shape->text) {
           labelObj label = layer->class[c]->label;
@@ -1650,17 +1750,25 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
     } else {
       msOffsetShapeRelativeTo(shape, layer);
-      if(hasGeomTransform)
-        msOffsetShapeRelativeTo(&nonClippedShape, layer);
     }
     
+	if(hasGeomTransform)
+      msOffsetShapeRelativeTo(&nonClippedShape, layer);
+	
     /*RFC48: loop through the styles, and pass off to the type-specific
     function if the style has an appropriate type*/
     for(s=0; s<layer->class[c]->numstyles; s++) {
-        if(layer->class[c]->styles[s]->_geomtransform != MS_GEOMTRANSFORM_NONE)
-          msDrawTransformedShape(map, &map->symbolset, image, &nonClippedShape, (layer->class[c]->styles[s]), layer->scalefactor);
-        else if(style==-1 || s==style)
-          msDrawLineSymbol(&map->symbolset, image, shape, (layer->class[c]->styles[s]), layer->scalefactor);
+      styleObj *curStyle = layer->class[c]->styles[s];
+      if(map->scaledenom > 0) {
+        if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+          continue;
+        if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+          continue;
+      }
+      if(curStyle->_geomtransform != MS_GEOMTRANSFORM_NONE)
+        msDrawTransformedShape(map, &map->symbolset, image, &nonClippedShape, curStyle, layer->scalefactor);
+      else if(style==-1 || s==style)
+        msDrawLineSymbol(&map->symbolset, image, shape, curStyle, layer->scalefactor);
     }
     
     /*RFC48: free non clipped shape if it was previously alloced/used*/
@@ -1778,13 +1886,22 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
     }
  
-    for(s=0; s<layer->class[c]->numstyles; s++)
-      if(layer->class[c]->styles[s]->_geomtransform != MS_GEOMTRANSFORM_NONE)
-        msDrawTransformedShape(map, &map->symbolset, image, &nonClippedShape, (layer->class[c]->styles[s]), layer->scalefactor);
+    for(s=0; s<layer->class[c]->numstyles; s++) {
+      styleObj *curStyle = layer->class[c]->styles[s];
+      if(map->scaledenom > 0) {
+        if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+          continue;
+        if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+          continue;
+      }
+      if(curStyle->_geomtransform==MS_GEOMTRANSFORM_NONE)
+    	msDrawShadeSymbol(&map->symbolset, image, shape, curStyle, layer->scalefactor);
       else
-        msDrawShadeSymbol(&map->symbolset, image, shape, (layer->class[c]->styles[s]), layer->scalefactor);
-    if(hasGeomTransform)
+    	msDrawTransformedShape(map, &map->symbolset, image, &nonClippedShape, curStyle, layer->scalefactor);
+    }
+	if(hasGeomTransform)
       msFreeShape(&nonClippedShape);
+
     if(shape->text) {
       if((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) ||
          (msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS)) {
@@ -1847,8 +1964,16 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
         if(msAddLabel(map, layer->index, classindex, -1, -1, point, NULL, newtext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else {
 	if(theclass->numstyles > 0 && MS_VALID_COLOR(theclass->styles[0]->color)) {
-          for(s=0; s<theclass->numstyles; s++)
-  	    msDrawMarkerSymbol(&map->symbolset, image, point, (theclass->styles[s]), layer->scalefactor);
+      for(s=0; s<theclass->numstyles; s++) {
+        styleObj *curStyle = theclass->styles[s];
+        if(map->scaledenom > 0) {
+        if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+          continue;
+        if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+          continue;
+        }
+  	    msDrawMarkerSymbol(&map->symbolset, image, point, (curStyle), layer->scalefactor);
+      }
 	}
 	msDrawLabel(map, image, *point, newtext, label, layer->scalefactor);
       }
@@ -1863,9 +1988,16 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
     } else
       msOffsetPointRelativeTo(point, layer);
 
-    for(s=0; s<theclass->numstyles; s++)
-      msDrawMarkerSymbol(&map->symbolset, image, point, (theclass->styles[s]), layer->scalefactor);
-
+    for(s=0; s<theclass->numstyles; s++) {
+      styleObj *curStyle = theclass->styles[s];
+      if(map->scaledenom > 0) {
+        if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+          continue;
+        if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+          continue;
+      }
+      msDrawMarkerSymbol(&map->symbolset, image, point, (curStyle), layer->scalefactor);
+    }
     if(labeltext) {
       if(layer->labelcache) {
         if(msAddLabel(map, layer->index, classindex, -1, -1, point, NULL, newtext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);

@@ -318,6 +318,12 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   classObj *classPtr=NULL;
 
   if(!string) return(MS_SUCCESS); /* not an error */ 
+  if(map->scaledenom > 0) {
+    if((label->maxscaledenom != -1) && (map->scaledenom >= label->maxscaledenom))
+        return(MS_SUCCESS);
+    if((label->minscaledenom != -1) && (map->scaledenom < label->minscaledenom))
+        return(MS_SUCCESS);
+  }
 
   layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
   classPtr = GET_LAYER(map, layerindex)->class[classindex];
