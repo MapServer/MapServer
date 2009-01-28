@@ -950,6 +950,9 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
       }
   }
 
+  /* Server Title */
+  msGetMapContextXMLHashValue(psLayer, "Server.title", &(layer->metadata),  "wms_server_title");
+
   /* Abstract */
   msGetMapContextXMLHashValue(psLayer, "Abstract", &(layer->metadata), 
                               "wms_abstract");
@@ -1698,7 +1701,13 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                        NULL, "wms_server_version", OWS_WARN,
                           "      <Server service=\"OGC:WMS\" version=\"%s\" ",
                                        "1.0.0");
-          if(GET_LAYER(map, i)->name)
+
+          if(msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "MO", "server_title"))
+              msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata),
+                                       NULL, "wms_server_title", OWS_NOERR,
+                                       "title=\"%s\">\n", "");
+
+          else if(GET_LAYER(map, i)->name)
               msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata), 
                                        NULL, "wms_title", OWS_NOERR, 
                                        "title=\"%s\">\n", GET_LAYER(map, i)->name);
