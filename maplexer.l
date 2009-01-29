@@ -307,7 +307,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>transform                             { return(TRANSFORM); }
 <INITIAL>type                                  { return(TYPE); }
 <INITIAL,URL_VARIABLE,URL_STRING>units         { return(UNITS); }
-<INITIAL>                                      { return(VALIDATION); }
+<INITIAL>validation                            { return(VALIDATION); }
 <INITIAL,URL_VARIABLE>web                      { return(WEB); }
 <INITIAL,URL_STRING>width                      { return(WIDTH); }
 <INITIAL,URL_STRING>wkt                        { return(WKT); }
@@ -389,7 +389,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>wms                                   { return(MS_WMS); }
 <INITIAL>alpha                                 { return(MS_GD_ALPHA); }
 
-<URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=_ ]*\]     {
+<URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=_ ]*\]   {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_STRING);
