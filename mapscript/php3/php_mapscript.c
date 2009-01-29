@@ -8873,9 +8873,9 @@ static long _phpms_build_label_object(labelObj *plabel,
                                                 plabel->backgroundshadowsizex);
     add_property_long(return_value,   "backgroundshadowsizey",
                                                 plabel->backgroundshadowsizey);
-    add_property_long(return_value,   "size",       plabel->size);
-    add_property_long(return_value,   "minsize",    plabel->minsize);
-    add_property_long(return_value,   "maxsize",    plabel->maxsize);
+    add_property_double(return_value,   "size",       plabel->size);
+    add_property_double(return_value,   "minsize",    plabel->minsize);
+    add_property_double(return_value,   "maxsize",    plabel->maxsize);
     add_property_long(return_value,   "position",   plabel->position);
     add_property_long(return_value,   "offsetx",    plabel->offsetx);
     add_property_long(return_value,   "offsety",    plabel->offsety);
@@ -9003,9 +9003,9 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "shadowsizey",  self->shadowsizey)
     else IF_SET_LONG(  "backgroundshadowsizex", self->backgroundshadowsizex)
     else IF_SET_LONG(  "backgroundshadowsizey", self->backgroundshadowsizey)
-    else IF_SET_LONG(  "size",         self->size)
-    else IF_SET_LONG(  "minsize",      self->minsize)
-    else IF_SET_LONG(  "maxsize",      self->maxsize)
+    else IF_SET_DOUBLE(  "size",         self->size)
+    else IF_SET_DOUBLE(  "minsize",      self->minsize)
+    else IF_SET_DOUBLE(  "maxsize",      self->maxsize)
     else IF_SET_LONG(  "position",     self->position)
     else IF_SET_LONG(  "offsetx",      self->offsetx)
     else IF_SET_LONG(  "offsety",      self->offsety)

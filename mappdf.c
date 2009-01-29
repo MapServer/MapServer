@@ -1206,7 +1206,7 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
 {
     int x, y, x1, y1;
     int font = 0;
-    int size;
+    double size;
     float phi = label->angle;
     colorObj  sColor;
     char *wrappedString;

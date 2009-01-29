@@ -1499,7 +1499,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
   if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
   if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
   gap = MS_ABS(symbol->gap)* (int) scalefactor;
-  label.size = (int) (size * scalefactor);
+  label.size = (size * scalefactor);
   // label.minsize = style->minsize; 
   // label.maxsize = style->maxsize; 
 
@@ -2014,19 +2014,19 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
         /*adjust top line*/
         int n=msCountChars(string,'\n');
         glyph_gen glyph(0);
-        glyph.font(rasterfonts[label->size]);
+        glyph.font(rasterfonts[MS_NINT(label->size)]);
         y -= glyph.height()*(n);
         ren->renderRasterGlyphs(x,y,
                 agg_color,
                 agg_ocolor,
-                label->size,
+                MS_NINT(label->size),
                 string);
         return 0;
     }
 
 }
 
-int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, int size, char *string, rectObj *rect, double **advances) {
+int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, double size, char *string, rectObj *rect, double **advances) {
         AGGMapserverRenderer* ren = getAGGRenderer(img);
         return ren->getLabelSize(string, font, size, rect,advances);
 }

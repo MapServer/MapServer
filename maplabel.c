@@ -182,7 +182,7 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
      * space character shouldn't vary too much between different fonts*/
     if(label->space_size_10 == 0.0) {
         /*if the cache hasn't been initialized yet, or with pixmap fonts*/
-        int size=0; /*initialize this here to avoid compiler warning*/
+        double size=0; /*initialize this here to avoid compiler warning*/
         if(label->type == MS_TRUETYPE) {
             size = label->size; /*keep a copy of the original size*/
             label->size=10;
@@ -648,7 +648,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 #endif
 }
 
-int msGetTruetypeTextBBox(imageObj *img, char *font, int size, char *string, rectObj *rect, double **advances) {
+int msGetTruetypeTextBBox(imageObj *img, char *font, double size, char *string, rectObj *rect, double **advances) {
 #ifdef USE_GD_FT
 #ifdef USE_AGG
     if(img!=NULL && MS_RENDERER_AGG(img->format)) {
@@ -750,12 +750,12 @@ int msGetRasterTextBBox(imageObj *img, int size, char *string, rectObj *rect) {
 /* assumes an angle of 0 regardless of what's in the label object */
 int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline, double **advances)
 {
-  int size;
+  double size;
   if(label->type == MS_TRUETYPE) {
 #ifdef USE_GD_FT
     char *font=NULL;
 
-    size = MS_NINT(label->size*scalefactor);
+    size = label->size*scalefactor;
     size = MS_MAX(size, label->minsize);
     size = MS_MIN(size, label->maxsize);
 
@@ -793,7 +793,7 @@ int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, 
     return(-1);
 #endif
   } else { /* MS_BITMAP font */
-    msGetRasterTextBBox(img,label->size,string,rect);
+    msGetRasterTextBBox(img,MS_NINT(label->size),string,rect);
  }
   return(0);
 }
@@ -1056,7 +1056,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
   if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
   gap = MS_ABS(symbol->gap)* (int) scalefactor;
-  label.size = (int) (size * scalefactor);
+  label.size = (size * scalefactor);
   /* label.minsize = style->minsize; */
   /* label.maxsize = style->maxsize; */
 

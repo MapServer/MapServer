@@ -220,7 +220,7 @@ imageObj *msDrawScalebar(mapObj *map)
 #endif
   }
   else
-    fontPtr = msGetBitmapFont(map->scalebar.label.size);
+    fontPtr = msGetBitmapFont(MS_NINT(map->scalebar.label.size));
 
   if(!fontPtr) return(NULL);
 

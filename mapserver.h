@@ -592,8 +592,8 @@ typedef struct {
   colorObj backgroundshadowcolor;
   int backgroundshadowsizex, backgroundshadowsizey;
 
-  int size;
-  int minsize, maxsize;
+  double size;
+  double minsize, maxsize;
 
   int position;
   int offsetx, offsety;
@@ -1967,7 +1967,7 @@ MS_DLL_EXPORT void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj 
 MS_DLL_EXPORT void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image,shapeObj *p, styleObj *style, double scalefactor);
-int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, int size, char *string, rectObj *rect, double **advances);
+int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, double size, char *string, rectObj *rect, double **advances);
 int msGetRasterTextBBoxAGG(imageObj *img, int size, char *string, rectObj *rect);
 MS_DLL_EXPORT int msDrawTextAGG(imageObj *imgage, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);

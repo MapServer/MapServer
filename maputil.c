@@ -178,7 +178,7 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
 
       if(label->bindings[MS_LABEL_BINDING_SIZE].index != -1) {
         label->size = 1;
-        bindIntegerAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
+        bindDoubleAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
       }
 
       if(label->bindings[MS_LABEL_BINDING_COLOR].index != -1) {

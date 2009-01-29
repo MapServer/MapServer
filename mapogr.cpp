@@ -2255,7 +2255,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               c->label.angle = OGR_ST_GetParamDbl(hLabelStyle, 
                                                   OGRSTLabelAngle, &bIsNull);
 
-              c->label.size = OGR_ST_GetParamNum(hLabelStyle, 
+              c->label.size = OGR_ST_GetParamDbl(hLabelStyle, 
                                                  OGRSTLabelSize, &bIsNull);
               if( c->label.size < 1 ) /* no point dropping to zero size */
                   c->label.size = 1;

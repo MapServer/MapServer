@@ -1848,7 +1848,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
       continue; /* not an error, just don't want to do anything */
 
     if(cachePtr->label.type == MS_TRUETYPE)
-      cachePtr->label.size = (int)(cachePtr->label.size*layerPtr->scalefactor);
+      cachePtr->label.size = (cachePtr->label.size*layerPtr->scalefactor);
 
     if(msGetLabelSize(img,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
       return(-1);

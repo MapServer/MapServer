@@ -3007,7 +3007,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     int t, num_tokens;
     gdFontPtr fontPtr;
 
-    if((fontPtr = msGetBitmapFont(label->size)) == NULL)
+    if((fontPtr = msGetBitmapFont(MS_NINT(label->size))) == NULL)
       return(-1);
 
     if((token = msStringSplit(string, '\n', &(num_tokens))) == NULL)

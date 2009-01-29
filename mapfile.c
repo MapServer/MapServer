@@ -1328,7 +1328,7 @@ static int loadLabel(labelObj *label)
     case(LABEL):
       break; /* for string loads */
     case(MAXSIZE):      
-      if(getInteger(&(label->maxsize)) == -1) return(-1);
+      if(getDouble(&(label->maxsize)) == -1) return(-1);
       break;
     case(MAXSCALEDENOM):
       if(getDouble(&(label->maxscaledenom)) == -1) return(-1);
@@ -1355,7 +1355,7 @@ static int loadLabel(labelObj *label)
       if(getDouble(&(label->minscaledenom)) == -1) return(-1);
       break;
     case(MINSIZE):
-      if(getInteger(&(label->minsize)) == -1) return(-1);
+      if(getDouble(&(label->minsize)) == -1) return(-1);
       break;
     case(OFFSET):
       if(getInteger(&(label->offsetx)) == -1) return(-1);
@@ -1403,7 +1403,7 @@ static int loadLabel(labelObj *label)
 	return(-1);
 
       if(symbol == MS_NUMBER) {
-        label->size = (int) msyynumber;
+        label->size = (double) msyynumber;
       } else if(symbol == MS_BINDING) {
         label->bindings[MS_LABEL_BINDING_SIZE].item = strdup(msyytext);
         label->numbindings++;
@@ -1460,7 +1460,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   fprintf(stream, "%sLABEL\n", tab);
 
   if(label->type == MS_BITMAP) {
-    fprintf(stream, "  %sSIZE %s\n", tab, msBitmapFontSizes[label->size]);
+    fprintf(stream, "  %sSIZE %s\n", tab, msBitmapFontSizes[MS_NINT(label->size)]);
     fprintf(stream, "  %sTYPE BITMAP\n", tab);
   } else {
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
@@ -1477,12 +1477,12 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_FONT].item)
       fprintf(stream, "  %sFONT [%s]\n", tab, label->bindings[MS_LABEL_BINDING_FONT].item);
     else fprintf(stream, "  %sFONT \"%s\"\n", tab, label->font);
-    fprintf(stream, "  %sMAXSIZE %d\n", tab, label->maxsize);
-    fprintf(stream, "  %sMINSIZE %d\n", tab, label->minsize);
+    fprintf(stream, "  %sMAXSIZE %g\n", tab, label->maxsize);
+    fprintf(stream, "  %sMINSIZE %g\n", tab, label->minsize);
 
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_SIZE].item)
       fprintf(stream, "  %sSIZE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_SIZE].item);
-    else fprintf(stream, "  %sSIZE %d\n", tab, label->size);
+    else fprintf(stream, "  %sSIZE %g\n", tab, label->size);
     fprintf(stream, "  %sTYPE TRUETYPE\n", tab);
   }  
 
