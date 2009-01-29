@@ -235,7 +235,11 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       return MS_FAILURE;
     }
 
-    if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", outputFormat->mimetype, 10, 10);
+    if(mapserv->sendheaders) { 
+      const char *attachment = msGetOutputFormatOption( outputFormat, "ATTACHMENT", NULL ); 
+      if(attachment) msIO_printf("Content-disposition: attachment; filename=%s\n", attachment);
+      msIO_printf("Content-type: %s%c%c", outputFormat->mimetype, 10, 10);
+    }
     if((status = msReturnPage(mapserv, (char *) file, BROWSE, papszBuffer)) != MS_SUCCESS)
       return status;
   } else {
