@@ -672,6 +672,7 @@ typedef struct {
 %immutable;
 #endif /* SWIG */
   hashTableObj metadata;
+  hashTableObj validation;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
@@ -787,6 +788,7 @@ typedef struct class_obj{
 %immutable;
 #endif /* SWIG */
   hashTableObj metadata;
+  hashTableObj validation;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
@@ -1188,6 +1190,7 @@ typedef struct layer_obj {
 %immutable;
 #endif /* SWIG */
   hashTableObj metadata;
+  hashTableObj validation;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
