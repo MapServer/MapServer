@@ -393,6 +393,8 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   int nBlack = 0;   
   outputFormatObj *format = NULL;
   char *errormsg = msGetErrorString("; ");
+  char *pFormatBuffer;
+  char cGDFormat[128];
   if (map) {
       if( map->width != -1 && map->height != -1 )
       {
@@ -403,7 +405,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   }
 
   /* Default to GIF if no suitable GD output format set */
-  if (format == NULL || !MS_DRIVER_GD(format)) 
+  if (format == NULL || (!MS_DRIVER_GD(format) && !MS_DRIVER_AGG(format))) 
     format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
 
   img = gdImageCreate(width, height);
@@ -466,7 +468,17 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   /* actually write the image */
   if(!filename) 
       msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(format), 10,10);
-  msSaveImageGD(img, filename, format);
+  if (MS_DRIVER_GD(format))
+    msSaveImageGD(img, filename, format);
+  else
+  {
+      strcpy(cGDFormat, "gd/");
+      strcat(cGDFormat, &(format->driver[4]));
+      format->driver = &cGDFormat[0];
+      msSaveImageGD(img, filename, format);
+      format->driver = pFormatBuffer;
+  }
+
   gdImageDestroy(img);
 
   if (format->refcount == 0)

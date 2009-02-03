@@ -417,7 +417,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       int  j, k, iLayer;
 
       layers = msStringSplit(values[i], ',', &numlayers);
-      if (layers==NULL || numlayers < 1) {
+      if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) {
         msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
                    "msWMSLoadGetMapParams()");
         return msWMSException(map, nVersion, NULL);
@@ -2217,6 +2217,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
               MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
   if (msSaveImage(map, img, NULL) != MS_SUCCESS)
       return msWMSException(map, nVersion, NULL);
+
 
   msFreeImage(img);
 
