@@ -890,7 +890,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
   
     cache = MS_FALSE;
-    if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1||layer->class[shape.classindex]->styles[0]->outlinewidth>0))
+    if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1 || 
+        (layer->class[shape.classindex]->numstyles == 1 && layer->class[shape.classindex]->styles[0]->outlinewidth>0)))
       cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
          
     /* With 'STYLEITEM AUTO', we will have the datasource fill the class' */
