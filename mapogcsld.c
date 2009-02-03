@@ -1054,7 +1054,7 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                        psCssParam->psChild->psNext->pszValue)
                     {
                         psStyle->size = 
-                          atoi(psCssParam->psChild->psNext->pszValue);
+                          atof(psCssParam->psChild->psNext->pszValue);
                                 
                         /* use an ellipse symbol for the width */
                         if (psStyle->symbol <=0)
@@ -1370,7 +1370,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
             /* extract symbol size */
             psSize = CPLGetXMLNode(psGraphic, "Size");
             if (psSize && psSize->psChild && psSize->psChild->pszValue)
-              psStyle->size = atoi(psSize->psChild->pszValue);
+              psStyle->size = atof(psSize->psChild->pszValue);
             else
               psStyle->size = 6; /* defualt value */
 
@@ -2097,7 +2097,7 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                                along the line). Set to be negative for ration purpose. */
                                
                             psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName, pszURL,
-                                                                    -(2 * psStyle->size));
+                                                                    (int)(-(2 * psStyle->size)));
                             if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
                               psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol]->name);
 
@@ -2489,7 +2489,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                           classObj *psClass)
 {
     char szFontName[100];
-    int  nFontSize = 10;
+    double  dfFontSize = 10;
     int bFontSet = 0;
 
     CPLXMLNode *psLabel=NULL, *psFont=NULL;
@@ -2616,9 +2616,9 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 
                                  if(psCssParam->psChild && psCssParam->psChild->psNext && 
                                     psCssParam->psChild->psNext->pszValue)
-                                   nFontSize = atoi(psCssParam->psChild->psNext->pszValue); 
-                                 if (nFontSize <=0)
-                                   nFontSize = 10;
+                                   dfFontSize = atof(psCssParam->psChild->psNext->pszValue); 
+                                 if (dfFontSize <=0.0)
+                                   dfFontSize = 10.0;
                             }
                         }
                         psCssParam = psCssParam->psNext;
@@ -2650,7 +2650,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                         bFontSet = 1;
                         psClass->label.font = strdup(szFontName);
                         psClass->label.type = MS_TRUETYPE;
-                        psClass->label.size = nFontSize;
+                        psClass->label.size = dfFontSize;
                     }
                 }       
                 if (!bFontSet)
@@ -3329,7 +3329,7 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
     int nSymbol = -1;
     symbolObj *psSymbol = NULL;
     int i = 0;
-    int nSize = 1;
+    double dfSize = 1.0;
     char *pszDashArray = NULL;
     char *pszGraphicSLD = NULL;
     
@@ -3378,20 +3378,20 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
                                  psStyle->symbolname, MS_FALSE);
                             
     if (nSymbol <0)
-      nSize = 1;
+      dfSize = 1.0;
     else
     {
         if (psStyle->size > 0)
-          nSize = psStyle->size;
+          dfSize = psStyle->size;
         else if (psStyle->width > 0)
-          nSize = psStyle->width;
+          dfSize = psStyle->width;
         else
-          nSize = 1;
+          dfSize = 1;
     }
 
     sprintf(szTmp, 
-            "<CssParameter name=\"stroke-width\">%d</CssParameter>\n",
-            nSize);
+            "<CssParameter name=\"stroke-width\">%.2f</CssParameter>\n",
+            dfSize);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
                             
 /* -------------------------------------------------------------------- */
@@ -3440,7 +3440,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
     char *pszSLD = NULL;
     char szHexColor[7];
     char *pszGraphicSLD = NULL;
-    int nSize;
+    double dfSize;
 
     sprintf(szTmp, "%s\n",  "<PolygonSymbolizer>");
     pszSLD = msStringConcatenate(pszSLD, szTmp);
@@ -3524,15 +3524,15 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
                 szHexColor);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-        nSize = 1;
+        dfSize = 1.0;
         if (psStyle->size > 0)
-          nSize = psStyle->size;
+          dfSize = psStyle->size;
         else if (psStyle->width > 0)
-          nSize = psStyle->width;
+          dfSize = psStyle->width;
             
         sprintf(szTmp, 
-            "<CssParameter name=\"stroke-width\">%d</CssParameter>\n",
-            nSize);
+            "<CssParameter name=\"stroke-width\">%.2f</CssParameter>\n",
+            dfSize);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "</Stroke>");
@@ -3643,7 +3643,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
                 if (psClass->label.size > 0)
                 {
                     sprintf(szTmp, 
-                            "<CssParameter name=\"font-size\">%d</CssParameter>\n",
+                            "<CssParameter name=\"font-size\">%.2f</CssParameter>\n",
                             psClass->label.size);
                     pszSLD = msStringConcatenate(pszSLD, szTmp);
                 }
