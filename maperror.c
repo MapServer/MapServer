@@ -472,6 +472,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
     msSaveImageGD(img, filename, format);
   else
   {
+      pFormatBuffer = format->driver;
       strcpy(cGDFormat, "gd/");
       strcat(cGDFormat, &(format->driver[4]));
       format->driver = &cGDFormat[0];
