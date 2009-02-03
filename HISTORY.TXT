@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- fix when layer status = DEFAULT and passing list of layers (#2066)
+
 - Fixed msAddLabel may cause access violation in certain conditions
 
 - Changed base type of labelObj size, minsize and maxsize from int to double (#2766)
