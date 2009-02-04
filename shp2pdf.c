@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Commandline shape to pdf converter.
@@ -154,7 +154,24 @@ int main(int argc, char *argv[])
 
     if(strncmp(argv[i],"-l",2) == 0) { /* load layer list */
       layers = msStringSplit(argv[i+1], ' ', &(num_layers));
-      layer_found=0;
+
+      for(j=0; j<num_layers; j++) { /* loop over -l */
+        layer_found=0;
+        for(k=0; k<map->numlayers; k++) {
+          if(GET_LAYER(map, k)->name && strcmp(GET_LAYER(map, k)->name, layers[j]) == 0) {
+            layer_found=1;
+            break;
+          }
+          else {
+            invalid_layer = strdup(layers[j]);
+          }
+        }
+        if (layer_found==0) {
+          fprintf(stderr, "Layer (-l) %s not found\n", invalid_layer);
+          msCleanup();
+          exit(0);
+        }
+      }
 
       for(j=0; j<map->numlayers; j++) {
         if(GET_LAYER(map, j)->status == MS_DEFAULT)
@@ -164,21 +181,11 @@ int main(int argc, char *argv[])
           for(k=0; k<num_layers; k++) {
             if(strcmp(GET_LAYER(map, j)->name, layers[k]) == 0) {
               GET_LAYER(map, j)->status = MS_ON;
-              layer_found=1;
               break;
-            }
-            else {
-              invalid_layer = strdup(layers[k]);
             }
           }
         }
       }
-      if (layer_found == 0) {
-        fprintf(stderr, "Layer (-l) %s not found\n", invalid_layer);
-        msCleanup();
-        exit(0);
-      }
-
       msFreeCharArray(layers, num_layers);
 
       i+=1;
