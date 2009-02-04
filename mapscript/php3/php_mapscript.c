@@ -1736,7 +1736,7 @@ DLEXPORT void php3_ms_map_new_from_string(INTERNAL_FUNCTION_PARAMETERS)
     HashTable   *list=NULL;
 
 #if defined(WIN32)
-    char        szPath[MS_MAXPATHLEN], szMapText[MS_MAXPATHLEN];
+    char        szMapText[MS_MAXPATHLEN];
     char        szNewPath[MS_MAXPATHLEN];
 #endif
 
@@ -1762,11 +1762,12 @@ DLEXPORT void php3_ms_map_new_from_string(INTERNAL_FUNCTION_PARAMETERS)
 
     if (pszNewPath)
     {
-        msBuildPath(szNewPath, NULL, pszNewPath);
-        pNewMap = mapObj_newFromString(szMapText, szNewPath);
+        virtual_getcwd(szMapText, MS_MAXPATHLEN TSRMLS_CC);
+        msBuildPath(szNewPath, szMapText, pszNewPath);
+        pNewMap = mapObj_newFromString(pMapText->value.str.val, szNewPath);
     }
     else
-       pNewMap = mapObj_newFromString(szMapText, pszNewPath);
+       pNewMap = mapObj_newFromString(pMapText->value.str.val, pszNewPath);
    
 #else
     pNewMap = mapObj_newFromString(pMapText->value.str.val, pszNewPath);
