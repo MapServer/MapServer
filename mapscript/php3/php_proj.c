@@ -14,16 +14,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- * 
+ *
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies of this Software or works derived from this Software.
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -64,15 +64,15 @@
 /*
  *         PHP PROJ4 Module
  *
- *  This is a PHP module that gives acces to basic PROJ4 projection 
+ *  This is a PHP module that gives acces to basic PROJ4 projection
  *  functionalities.
  *
  * There following functions available in this module :
  *
  * 1) pj_init : create and initializes a projection structures
- * 
+ *
  *    PJ pj_init(array_of_parameters)
- * 
+ *
  *    Example : $projarray[0] = "proj=lcc";
  *              $projarray[1] = "ellps=GRS80";
  *              $projarray[2] = "lat_0=49";
@@ -84,7 +84,7 @@
  *
  * 2) pj_fwd : Performs a projection from lat/long coordinates to
  *             cartesian coordinates.
- * 
+ *
  * retrun_array pj_fwd(double lat, double long, PJ pj)
  *
  *   Example :  $lat = 45.25;
@@ -96,7 +96,7 @@
  *
  * 3) pj_inv : Performs a projection from cartesian coordinates to
  *             lat/long  coordinates .
- * 
+ *
  * retrun_array pj_fwd(double geox, double geoy, PJ pj)
  *
  *   Example :  $ingeox = 1537490.335842;
@@ -108,7 +108,7 @@
  *
  *
  * 4) pj_transform : pj_transform(PJ pjsrc, PJ pjdst, double x, double y)
- *      transforms coordinates from source projection to 
+ *      transforms coordinates from source projection to
  *                   destination projection.
  *
  *   Example :  $projarray[0] = "proj=lcc";
@@ -129,8 +129,8 @@
  *              $ret = pj_transform($pjlcc, $pjlat, $ingeox, $ingeoy);
  *
  * 5) pj_free : frees PJ structure
- *     
- *  void pj_free(PJ pj); 
+ *
+ *  void pj_free(PJ pj);
  *
  **********************************************************************/
 
@@ -161,7 +161,7 @@
 #define ZEND_DEBUG 0
 #endif
 
-#ifndef DLEXPORT 
+#ifndef DLEXPORT
 #define DLEXPORT ZEND_DLEXPORT
 #endif
 
@@ -192,14 +192,14 @@ DLEXPORT void php_info_proj(void);
 
 #if defined (PHP4) || defined (PHP5)
 static zend_class_entry *proj_class_entry_ptr;
-#endif 
+#endif
 
 #define PHPMS_GLOBAL(a) a
 static int le_projobj;
 
 function_entry php_proj_functions[] = {
     {"pj_fwd",  php_proj_pj_fwd,   NULL},
-    {"pj_inv",  php_proj_pj_inv,   NULL}, 
+    {"pj_inv",  php_proj_pj_inv,   NULL},
     {"pj_init",  php_proj_pj_init,   NULL},
     {"pj_transform",  php_proj_pj_transform,   NULL},
     {"pj_datum_transform",  php_proj_pj_datum_transform,   NULL},
@@ -213,23 +213,23 @@ php3_module_entry php_proj_module_entry = {
     STANDARD_MODULE_HEADER,
 #endif
     "PHPPROJ", php_proj_functions, php_init_proj, php_end_proj,
-    NULL, NULL, 
+    NULL, NULL,
 #ifdef ZEND_VERSION
     PHP_MINFO(phpproj),
 #else
-    php_info_proj, 
+    php_info_proj,
 #endif
 #if ZEND_MODULE_API_NO >= 20010901
     "phpproj, php4.1version",          /* extension version number (string) */
 #endif
-    STANDARD_MODULE_PROPERTIES 
+    STANDARD_MODULE_PROPERTIES
 };
 
 
 #if COMPILE_DL
-DLEXPORT php3_module_entry *get_module(void) 
-{ 
-    return &php_proj_module_entry; 
+DLEXPORT php3_module_entry *get_module(void)
+{
+    return &php_proj_module_entry;
 }
 #endif
 
@@ -243,10 +243,10 @@ DLEXPORT void ttt(INTERNAL_FUNCTION_PARAMETERS)
 {
 }
 
-#ifdef ZEND_VERSION 
+#ifdef ZEND_VERSION
 PHP_MINFO_FUNCTION(phpproj)
 #else
-DLEXPORT void php_info_proj(void) 
+DLEXPORT void php_info_proj(void)
 #endif
 {
     php3_printf(" Version %s<br>\n", PHP_PROJ_VERSION);
@@ -260,7 +260,7 @@ DLEXPORT int php_init_proj(INIT_FUNC_ARGS)
     zend_class_entry tmp_class_entry;
 #endif
 
-    PHPMS_GLOBAL(le_projobj)  = 
+    PHPMS_GLOBAL(le_projobj)  =
         register_list_destructors(php_proj_pj_free,
                                   NULL);
 
@@ -342,7 +342,7 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
     int         nParamCount = 0;
     int         i = 0;
     PJ          *pj = NULL;
-    
+
     char        **papszBuf = NULL;
 
 //    char        *strttt = NULL;
@@ -353,7 +353,7 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 /*      extract parameters.                                             */
 /* -------------------------------------------------------------------- */
     if (getParameters(ht, 1, &pArrayOfParams) != SUCCESS)
-    {           
+    {
         WRONG_PARAM_COUNT;
     }
 
@@ -366,10 +366,10 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
       RETURN_LONG(-1);
 
     papszBuf = (char **) malloc((nParamCount+2)*sizeof(char *));
-	
-    for (i = 0; i < nParamCount; i++) 
+
+    for (i = 0; i < nParamCount; i++)
     {
-        if (_php3_hash_index_find(pArrayOfParams->value.ht, i, 
+        if (_php3_hash_index_find(pArrayOfParams->value.ht, i,
                                   (void **)&pParam) != FAILURE)
         {
 #if defined (PHP4) || defined (PHP5)
@@ -386,8 +386,8 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
      papszBuf[i] = NULL;
 
     pj = pj_init(nParamCount, papszBuf);
-           
-    _php_proj_build_proj_object(pj, list, return_value TSRMLS_CC);  
+
+    _php_proj_build_proj_object(pj, list, return_value TSRMLS_CC);
 }
 
 
@@ -426,22 +426,22 @@ DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
 /*      extract parameters.                                             */
 /* -------------------------------------------------------------------- */
     if (getParameters(ht, 3, &p1, &p2, &pj) != SUCCESS)
-    {           
+    {
         WRONG_PARAM_COUNT;
     }
 
 /* -------------------------------------------------------------------- */
 /*      initilize return array.                                         */
 /* -------------------------------------------------------------------- */
-    if (array_init(return_value) == FAILURE) 
+    if (array_init(return_value) == FAILURE)
     {
         RETURN_FALSE;
     }
-    
+
     convert_to_double(p1);
     convert_to_double(p2);
 
-    popj = (PJ *)_phpms_fetch_handle(pj, 
+    popj = (PJ *)_phpms_fetch_handle(pj,
                                      PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (popj)
@@ -495,14 +495,14 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 /*      extract parameters.                                             */
 /* -------------------------------------------------------------------- */
     if (getParameters(ht, 3, &p1, &p2, &pj) != SUCCESS)
-    {           
+    {
         WRONG_PARAM_COUNT;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      initilize return array.                                         */
 /* -------------------------------------------------------------------- */
-    if (array_init(return_value) == FAILURE) 
+    if (array_init(return_value) == FAILURE)
     {
         RETURN_FALSE;
     }
@@ -510,7 +510,7 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_double(p1);
     convert_to_double(p2);
 
-    popj = (PJ *)_phpms_fetch_handle(pj, 
+    popj = (PJ *)_phpms_fetch_handle(pj,
                                      PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (popj)
@@ -557,39 +557,39 @@ DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
 /*      extract parameters.                                             */
 /* -------------------------------------------------------------------- */
     if (getParameters(ht, 4, &pjin , &pjout, &p1, &p2) != SUCCESS)
-    {           
+    {
         WRONG_PARAM_COUNT;
     }
 
 /* -------------------------------------------------------------------- */
 /*      initilize return array.                                         */
 /* -------------------------------------------------------------------- */
-    if (array_init(return_value) == FAILURE) 
+    if (array_init(return_value) == FAILURE)
     {
         RETURN_FALSE;
     }
-    
+
     convert_to_double(p1);
     convert_to_double(p2);
 
-    in = (PJ *)_phpms_fetch_handle(pjin, 
+    in = (PJ *)_phpms_fetch_handle(pjin,
                                    PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
-    out = (PJ *)_phpms_fetch_handle(pjout, 
+    out = (PJ *)_phpms_fetch_handle(pjout,
                                     PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (in && out)
     {
         pnt.u = p1->value.dval;
         pnt.v = p2->value.dval;
-        
+
         if( pj_is_latlong(in) )
         {
             pnt.u *= DEG_TO_RAD;
             pnt.v *= DEG_TO_RAD;
         }
 
-        error = pj_transform(in, out, 1, 0, 
+        error = pj_transform(in, out, 1, 0,
                              &(pnt.u), &(pnt.v), &z );
 
         if( pj_is_latlong(out) )
@@ -601,8 +601,8 @@ DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
 
     if (error)
     {
-        php_error(E_ERROR,"Error in pj_transform"); 
-                  
+        php_error(E_ERROR,"Error in pj_transform");
+
         RETURN_LONG(-1);
     }
     else
@@ -645,39 +645,39 @@ DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)
 /*      extract parameters.                                             */
 /* -------------------------------------------------------------------- */
     if (getParameters(ht, 4, &pjin , &pjout, &p1, &p2) != SUCCESS)
-    {           
+    {
         WRONG_PARAM_COUNT;
     }
 
 /* -------------------------------------------------------------------- */
 /*      initilize return array.                                         */
 /* -------------------------------------------------------------------- */
-    if (array_init(return_value) == FAILURE) 
+    if (array_init(return_value) == FAILURE)
     {
         RETURN_FALSE;
     }
-    
+
     convert_to_double(p1);
     convert_to_double(p2);
 
-    in = (PJ *)_phpms_fetch_handle(pjin, 
+    in = (PJ *)_phpms_fetch_handle(pjin,
                                    PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
-    out = (PJ *)_phpms_fetch_handle(pjout, 
+    out = (PJ *)_phpms_fetch_handle(pjout,
                                     PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (in && out)
     {
         pnt.u = p1->value.dval;
         pnt.v = p2->value.dval;
-        
+
         if( pj_is_latlong(in) )
         {
             pnt.u *= DEG_TO_RAD;
             pnt.v *= DEG_TO_RAD;
         }
 
-        error = pj_transform(in, out, 1, 0, 
+        error = pj_transform(in, out, 1, 0,
                              &(pnt.u), &(pnt.v), &z );
 
         if (!error)
@@ -693,7 +693,7 @@ DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)
     if (error)
     {
         php_error(E_ERROR,"Error in pj_datum_transform");
-                  
+
         RETURN_LONG(-1);
     }
     else
@@ -724,11 +724,11 @@ DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS)
 /*      extract parameters.                                             */
 /* -------------------------------------------------------------------- */
     if (getParameters(ht, 1, &pj) != SUCCESS)
-    {           
+    {
         WRONG_PARAM_COUNT;
     }
-    
-    popj = (PJ *)_phpms_fetch_handle(pj, 
+
+    popj = (PJ *)_phpms_fetch_handle(pj,
                                      PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (popj)

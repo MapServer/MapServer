@@ -1323,6 +1323,9 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_LABEL_BINDING_FONT",  MS_LABEL_BINDING_FONT, const_flag);
     REGISTER_LONG_CONSTANT("MS_LABEL_BINDING_PRIORITY", MS_LABEL_BINDING_PRIORITY, const_flag);
     
+    /*cgi request types*/
+    REGISTER_LONG_CONSTANT("MS_GET_REQUEST", MS_GET_REQUEST, const_flag);
+    REGISTER_LONG_CONSTANT("MS_POST_REQUEST", MS_POST_REQUEST, const_flag);
        
     INIT_CLASS_ENTRY(tmp_class_entry, "ms_map_obj", php_map_class_functions);
     map_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
@@ -15863,6 +15866,7 @@ static long _phpms_build_cgirequest_object(cgiRequestObj *prequest, int handle_t
                        PHP4_CLASS_ENTRY(cgirequest_class_entry_ptr) TSRMLS_CC);
 
     add_property_long(return_value,   "numparams",     prequest->NumParams);
+    add_property_long(return_value,   "type",     prequest->type);
 
     return id;
 }
@@ -15911,6 +15915,7 @@ DLEXPORT void php_ms_cgirequest_loadParams(INTERNAL_FUNCTION_PARAMETERS)
       cgirequestObj_loadParams(self);
      /* sync the class member*/ 
      _phpms_set_property_long(pThis,"numparams", self->NumParams, E_ERROR TSRMLS_CC); 
+     _phpms_set_property_long(pThis,"type", self->type, E_ERROR TSRMLS_CC); 
 
      RETURN_LONG(self->NumParams);
 }
