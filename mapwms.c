@@ -415,6 +415,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     if (strcasecmp(names[i], "LAYERS") == 0)
     {
       int  j, k, iLayer;
+      int *layerOrder = (int*)malloc(map->numlayers * sizeof(int));
 
       layers = msStringSplit(values[i], ',', &numlayers);
       if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) {
@@ -425,7 +426,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
 
       for (iLayer=0; iLayer < map->numlayers; iLayer++)
+      {
           map->layerorder[iLayer] = iLayer;
+          layerOrder[iLayer] = 0;
+      }
 
       for(j=0; j<map->numlayers; j++)
       {
@@ -434,7 +438,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         if (GET_LAYER(map, j)->status != MS_DEFAULT)
            GET_LAYER(map, j)->status = MS_OFF;
         else
+        {
            map->layerorder[nLayerOrder++] = j;
+           layerOrder[j] = 1;
+        }
       }
 
       for (k=0; k<numlayers; k++)
@@ -450,8 +457,12 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
               {
                   if (GET_LAYER(map, j)->status != MS_DEFAULT)
                   {
-                      map->layerorder[nLayerOrder++] = j;
-                      GET_LAYER(map, j)->status = MS_ON;
+                     if (layerOrder[j] == 0)
+                     {
+                        map->layerorder[nLayerOrder++] = j;
+                        layerOrder[j] = 1;
+                        GET_LAYER(map, j)->status = MS_ON;
+                     }
                   }
                   validlayers++;
                   layerfound = 1;
@@ -466,9 +477,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       for (j=0; j<map->numlayers; j++)
       {
          if (GET_LAYER(map, j)->status == MS_OFF)
-           map->layerorder[nLayerOrder++] = j;
+            if (layerOrder[j] == 0)
+               map->layerorder[nLayerOrder++] = j;
       }
-
+      
+      free(layerOrder);
       msFreeCharArray(layers, numlayers);
     }
     else if (strcasecmp(names[i], "STYLES") == 0) {
