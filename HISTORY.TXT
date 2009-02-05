@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fixed endianness issues with wide character strings for ArcSDE (#2878).  
+  Thanks Russell McOrmond
+
 - Fixed WMS request with LAYERS parameter: may cause segmentation fault (#2871)
 
 - fix when layer status = DEFAULT and passing list of layers (#2066)
