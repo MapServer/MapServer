@@ -79,6 +79,20 @@ static char *msTrueFalse[2]={"FALSE", "TRUE"};
 static char *msJoinType[2]={"ONE-TO-ONE", "ONE-TO-MANY"};
 static char *msAlignValue[3]={"LEFT","CENTER","RIGHT"};
 
+/*
+** Validates a string (value) against a series of patterns. We support up to four to allow cascading from classObj to
+** layerObj to webObj plus a legacy pattern like TEMPLATEPATTERN or qstring_validation_pattern.
+*/
+int msValidateParameter(char *value, char *pattern1, char *pattern2, char *pattern3, char *pattern4) {
+  if(msEvalRegex(pattern1, value) == MS_TRUE) return MS_SUCCESS;
+  if(msEvalRegex(pattern2, value) == MS_TRUE) return MS_SUCCESS;
+  if(msEvalRegex(pattern3, value) == MS_TRUE) return MS_SUCCESS;
+  if(msEvalRegex(pattern4, value) == MS_TRUE) return MS_SUCCESS;
+
+  msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msValidateParameter()");
+  return(MS_FAILURE);
+}
+
 int msEvalRegex(char *e, char *s) {
   ms_regex_t re;
 
@@ -1399,6 +1413,11 @@ static int loadLabel(labelObj *label)
       break;
     case(SIZE):
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
+      if(label->bindings[MS_LABEL_BINDING_SIZE].item) {
+        msFree(label->bindings[MS_LABEL_BINDING_SIZE].item);
+	label->numbindings--;
+      }
+
       if((symbol = getSymbol(7, MS_NUMBER,MS_BINDING,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
 	return(-1);
 
@@ -1720,16 +1739,15 @@ int loadHashTable(hashTableObj *ptable)
     case(END):
       return(MS_SUCCESS);
     case(MS_STRING):
-      key = strdup(msyytext);
+      key = strdup(msyytext); /* the key is *always* a string */
       if(getString(&data) == MS_FAILURE) return(MS_FAILURE);      
-      msInsertHashTable(ptable, key, data);
-      
+      msInsertHashTable(ptable, key, data);      
+
       free(key);
       free(data); data=NULL;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadHashTable()",
-                 msyytext, msyylineno );
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadHashTable()", msyytext, msyylineno );
       return(MS_FAILURE);
     }
   }
@@ -1748,8 +1766,9 @@ static void writeHashTable(hashTableObj *table, FILE *stream, char *tab, char *t
 
   for (i=0;i<MS_HASHSIZE; i++) {
     if (table->items[i] != NULL) {
-      for (tp=table->items[i]; tp!=NULL; tp=tp->next)
-	fprintf(stream, "%s  \"%s\"\t\"%s\"\n", tab, tp->key, tp->data);
+      for (tp=table->items[i]; tp!=NULL; tp=tp->next) {
+  	fprintf(stream, "%s  \"%s\"\t\"%s\"\n", tab, tp->key, tp->data);
+      }
     }
   }
 
@@ -2072,8 +2091,8 @@ int initClass(classObj *class)
 
   class->type = -1;
   
-  /* class->metadata = NULL; */
   initHashTable(&(class->metadata));
+  initHashTable(&(class->validation));
   
   class->maxscaledenom = class->minscaledenom = -1.0;
 
@@ -2104,20 +2123,21 @@ int freeClass(classObj *class)
   msFree(class->name);
   msFree(class->title);
   msFree(class->template);
-    msFree(class->group);
+  msFree(class->group);
   
   if (&(class->metadata)) msFreeHashItems(&(class->metadata));
+  if (&(class->validation)) msFreeHashItems(&(class->validation));
   
-  
-  for(i=0;i<class->numstyles;i++) { /* each style     */
-    if (class->styles[i]!=NULL) {
-    	if( freeStyle(class->styles[i]) == MS_SUCCESS ) {
-		msFree(class->styles[i]);
-	}
+  for(i=0;i<class->numstyles;i++) { /* each style */
+    if(class->styles[i]!=NULL) {
+      if(freeStyle(class->styles[i]) == MS_SUCCESS) {
+        msFree(class->styles[i]);
+      }
     }
   }
   msFree(class->styles);
   msFree(class->keyimage);
+
   return MS_SUCCESS;
 }
 
@@ -2271,7 +2291,7 @@ int loadClass(classObj *class, char *templatepattern, layerObj *layer)
     case(MAXSCALE):
     case(MAXSCALEDENOM):
       if(getDouble(&(class->maxscaledenom)) == -1) return(-1);
-      break;    
+      break;
     case(METADATA):
       if(loadHashTable(&(class->metadata)) != MS_SUCCESS) return(-1);
       break;
@@ -2396,6 +2416,10 @@ int loadClass(classObj *class, char *templatepattern, layerObj *layer)
       else
 	class->styles[1]->symbolname = strdup(msyytext);
       class->numstyles = 2;
+      break;
+
+    case(VALIDATION):
+      if(loadHashTable(&(class->validation)) != MS_SUCCESS) return(-1);
       break;
     default:
       if(strlen(msyytext) > 0) {
@@ -2570,8 +2594,8 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->requires = layer->labelrequires = NULL;
 
-  /* layer->metadata = NULL; */
   initHashTable(&(layer->metadata));
+  initHashTable(&(layer->validation));
   
   layer->dump = MS_FALSE;
 
@@ -2583,7 +2607,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->numprocessing = 0;
   layer->processing = NULL;
   layer->numjoins = 0;
-  if((layer->joins = (joinObj *)malloc(MS_MAXJOINS*sizeof(joinObj))) == NULL) {
+  if((layer->joins = (joinObj *) malloc(MS_MAXJOINS*sizeof(joinObj))) == NULL) {
     msSetError(MS_MEMERR, NULL, "initLayer()");
     return(-1);
   }
@@ -2644,6 +2668,8 @@ int freeLayer(layerObj *layer) {
     msFree(layer->resultcache);
   }
 
+  msFree(layer->styleitem);
+
   msFree(layer->filteritem);
   freeExpression(&(layer->filter));
 
@@ -2651,10 +2677,11 @@ int freeLayer(layerObj *layer) {
   msFree(layer->labelrequires);
 
   if(&(layer->metadata)) msFreeHashItems(&(layer->metadata));
+  if(&(layer->validation)) msFreeHashItems(&(layer->validation));
 
-  if( layer->numprocessing > 0 )
-      msFreeCharArray( layer->processing, layer->numprocessing );
-  msFree(layer->styleitem);
+  if(layer->numprocessing > 0)
+      msFreeCharArray(layer->processing, layer->numprocessing);
+
   for(i=0;i<layer->numjoins;i++) /* each join */
     freeJoin(&(layer->joins[i]));
   msFree(layer->joins);
@@ -2713,11 +2740,10 @@ classObj *msGrowLayerClasses( layerObj *layer )
     return layer->class[layer->numclasses];
 }
 
-
-
 int loadLayer(layerObj *layer, mapObj *map)
 {
   int type;
+  char *string;
   char *templatepattern = NULL;
 
   layer->map = (mapObj *)map;
@@ -2747,11 +2773,12 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->connectiontype = getSymbol(9, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_PLUGIN)) == -1) return(-1);
       break;
     case(DATA):
-      if(getString(&layer->data) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->datapattern, layer->data) != MS_TRUE) {
+      if(getString(&string) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS && msValidateParameter(string, msLookupHashTable(&(layer->validation), "data"), msLookupHashTable(&(map->web.validation), "data"), map->datapattern, NULL) != MS_SUCCESS) {
 	msSetError(MS_MISCERR, "URL-based DATA configuration failed pattern validation." , "loadLayer()");
         return(-1);
       }
+      layer->data = string;
       break;
     case(DEBUG):
       if((layer->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return(-1);
@@ -2785,10 +2812,8 @@ int loadLayer(layerObj *layer, mapObj *map)
         if(getDouble(&(layer->extent.maxx)) == -1) return(-1);
         if(getDouble(&(layer->extent.maxy)) == -1) return(-1);
         if (!MS_VALID_EXTENT(layer->extent)) {
-            msSetError(MS_MISCERR, "Given layer extent is invalid. Check that it " \
-        "is in the form: minx, miny, maxx, maxy", 
-                       "loadLayer()"); 
-            return(-1);
+          msSetError(MS_MISCERR, "Given layer extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "loadLayer()"); 
+          return(-1);
         }
         break;
     }
@@ -2977,6 +3002,9 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(UNITS):
       if((layer->units = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return(-1);
       break;
+    case(VALIDATION):
+      if(loadHashTable(&(layer->validation)) != MS_SUCCESS) return(-1);
+      break;
     default:
       if(strlen(msyytext) > 0) {
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLayer()", msyytext, msyylineno);      
@@ -3112,6 +3140,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if (layer->type != -1)
     fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);
   fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);
+  if(&(layer->validation)) writeHashTable(&(layer->metadata), stream, "    ", "VALIDATION");
 
   if(layer->classgroup) fprintf(stream, "    CLASSGROUP \"%s\"\n", layer->classgroup);
 
@@ -3891,9 +3920,9 @@ void initWeb(webObj *web)
   web->imagepath = strdup("");
   web->imageurl = strdup("");
   
-  /* web->metadata = NULL; */
   initHashTable(&(web->metadata));
-  
+  initHashTable(&(web->validation));  
+
   web->map = NULL;
   web->queryformat = strdup("text/html");
   web->legendformat = strdup("text/html");
@@ -3916,6 +3945,7 @@ void freeWeb(webObj *web)
   msFree(web->legendformat);
   msFree(web->browseformat);
   if(&(web->metadata)) msFreeHashItems(&(web->metadata));
+  if(&(web->validation)) msFreeHashItems(&(web->validation));
 }
 
 static void writeWeb(webObj *web, FILE *stream)
@@ -3941,6 +3971,7 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->legendformat != NULL) fprintf(stream, "    LEGENDFORMAT %s\n", web->legendformat);
   if(web->browseformat != NULL) fprintf(stream, "    BROWSEFORMAT %s\n", web->browseformat);
   if(web->template) fprintf(stream, "    TEMPLATE \"%s\"\n", web->template);
+  if(&(web->validation)) writeHashTable(&(web->metadata), stream, "    ", "VALIDATION");
   fprintf(stream, "  END\n\n");
 }
 
@@ -4035,6 +4066,9 @@ int loadWeb(webObj *web, mapObj *map)
         msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadWeb()");
         return(-1);
       }
+      break;
+    case(VALIDATION):
+      if(loadHashTable(&(web->validation)) != MS_SUCCESS) return(-1);
       break;
     default:
       if(strlen(msyytext) > 0) {
