@@ -1322,9 +1322,9 @@ int msSDELayerOpen(layerObj *layer) {
     /* Determine if we are big or little- endian for */
     /* working with the encoding */
     if( *((unsigned char *) &endian_test) == 1 )
-        sde->bBigEndian = MS_TRUE;
-    else
         sde->bBigEndian = MS_FALSE;
+    else
+        sde->bBigEndian = MS_TRUE;
 
     /* point to the SDE layer information  */
     /* (note this might actually be in another layer) */
