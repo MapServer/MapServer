@@ -414,7 +414,14 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
     if (strcasecmp(names[i], "LAYERS") == 0)
     {
-      int  j, k, iLayer;
+      int  j, k, iLayer, *layerOrder;
+      
+      layerOrder = (int*)malloc(map->numlayers * sizeof(int));
+      if (layerOrder == NULL)
+      {
+        msSetError(MS_MEMERR, NULL, "msWMSLoadGetMapParams()");
+        return MS_FAILURE;
+      }
 
       layers = msStringSplit(values[i], ',', &numlayers);
       if (layers==NULL || numlayers < 1) {
@@ -425,7 +432,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
 
       for (iLayer=0; iLayer < map->numlayers; iLayer++)
+      {
           map->layerorder[iLayer] = iLayer;
+          layerOrder[iLayer] = 0;
+      }
 
       for(j=0; j<map->numlayers; j++)
       {
@@ -434,7 +444,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         if (GET_LAYER(map, j)->status != MS_DEFAULT)
            GET_LAYER(map, j)->status = MS_OFF;
         else
+        {
            map->layerorder[nLayerOrder++] = j;
+           layerOrder[j] = 1;
+        }
       }
 
       for (k=0; k<numlayers; k++)
@@ -450,8 +463,12 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
               {
                   if (GET_LAYER(map, j)->status != MS_DEFAULT)
                   {
-                      map->layerorder[nLayerOrder++] = j;
-                      GET_LAYER(map, j)->status = MS_ON;
+                     if (layerOrder[j] == 0)
+                     {
+                        map->layerorder[nLayerOrder++] = j;
+                        layerOrder[j] = 1;
+                        GET_LAYER(map, j)->status = MS_ON;
+                     }
                   }
                   validlayers++;
                   layerfound = 1;
@@ -466,9 +483,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       for (j=0; j<map->numlayers; j++)
       {
          if (GET_LAYER(map, j)->status == MS_OFF)
-           map->layerorder[nLayerOrder++] = j;
+            if (layerOrder[j] == 0)
+               map->layerorder[nLayerOrder++] = j;
       }
-
+      
+      free(layerOrder);
       msFreeCharArray(layers, numlayers);
     }
     else if (strcasecmp(names[i], "STYLES") == 0) {

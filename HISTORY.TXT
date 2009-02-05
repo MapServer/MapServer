@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-2)
 --------------------------------
 
+- Fixed WMS request with LAYERS parameter: may cause segmentation fault (#2871)
+
 - fix when layer status = DEFAULT and passing list of layers (#2066)
 
 - Fixed Blobs not filtered in OracleSpatial Attribute/WFS queries (#2829)
