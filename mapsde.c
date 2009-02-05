@@ -69,6 +69,7 @@ typedef struct {
   SE_COLUMN_DEF *joindefs;
   short *nBaseColumns;
   short *nJoinColumns;
+  int bBigEndian;
 } msSDELayerInfo;
 
 typedef struct {
@@ -747,7 +748,10 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                                 "SE_stream_get_string()");
                     return(MS_FAILURE);
                 } else {
-                    shape->values[i] = msConvertWideStringToUTF8((const wchar_t*) wide, "UTF-16");
+                    if (sde->bBigEndian)
+                        shape->values[i] = msConvertWideStringToUTF8((const wchar_t*) wide, "UTF-16BE");
+                    else
+                        shape->values[i] = msConvertWideStringToUTF8((const wchar_t*) wide, "UTF-16LE");
                     msFree(wide);
                 }
                 break;
@@ -1005,6 +1009,7 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer, long* id)
 int msSDELayerOpen(layerObj *layer) {
 #ifdef USE_SDE
     long status=-1;
+    int endian_test=1;
     char **params=NULL;
     char **data_params=NULL;
     char *join_table=NULL;
@@ -1314,6 +1319,12 @@ int msSDELayerOpen(layerObj *layer) {
         return(MS_FAILURE);
     }  
 
+    /* Determine if we are big or little- endian for */
+    /* working with the encoding */
+    if( *((unsigned char *) &endian_test) == 1 )
+        sde->bBigEndian = MS_TRUE;
+    else
+        sde->bBigEndian = MS_FALSE;
 
     /* point to the SDE layer information  */
     /* (note this might actually be in another layer) */
