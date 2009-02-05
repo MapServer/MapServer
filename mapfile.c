@@ -2743,7 +2743,7 @@ classObj *msGrowLayerClasses( layerObj *layer )
 int loadLayer(layerObj *layer, mapObj *map)
 {
   int type;
-  char *string;
+  char *string = NULL;
   char *templatepattern = NULL;
 
   layer->map = (mapObj *)map;
