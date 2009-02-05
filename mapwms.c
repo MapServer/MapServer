@@ -414,8 +414,14 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
     if (strcasecmp(names[i], "LAYERS") == 0)
     {
-      int  j, k, iLayer;
-      int *layerOrder = (int*)malloc(map->numlayers * sizeof(int));
+      int  j, k, iLayer, *layerOrder;
+      
+      layerOrder = (int*)malloc(map->numlayers * sizeof(int));
+      if (layerOrder == NULL)
+      {
+        msSetError(MS_MEMERR, NULL, "msWMSLoadGetMapParams()");
+        return MS_FAILURE;
+      }
 
       layers = msStringSplit(values[i], ',', &numlayers);
       if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) {
