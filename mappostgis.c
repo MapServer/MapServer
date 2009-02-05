@@ -731,10 +731,8 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src) {
 
         /* Drop illegal chars first */
         for (i=0, j=0; src[i]; i++) {
-            char c = src[i];
-            if ( (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-                    (c >= '0' && c <= '9') ||
-                    (c == '+') || (c == '/') || (c == '=')) {
+            unsigned char c = src[i];
+            if ( (msPostGISBase64DecodeChar[c] != 63) || (c == '/') || (c == '=')) {
                 buf[j++] = c;
             }
         }
