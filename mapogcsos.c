@@ -224,7 +224,7 @@ layerObj *msSOSGetFirstLayerForOffering(mapObj *map, const char *pszOffering,
                 {
                     pszTmp = 
                       msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", 
-                                          "observedProperty_id");
+                                          "observedproperty_id");
                     if (pszTmp && (strcasecmp(pszTmp, pszProperty) == 0))
                     {
                         lp = (GET_LAYER(map, i));
@@ -273,13 +273,13 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,xmlNodePtr psPare
         psNode = xmlNewChild(psParent, NULL, BAD_CAST "observedProperty", NULL);
         psCompNode = xmlNewChild(psNode, psNsSwe, BAD_CAST "CompositePhenomenon", NULL);
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
-                                       "observedProperty_id");
+                                       "observedproperty_id");
         if (pszValue)/*should always be true */
           xmlNewNsProp(psCompNode, psNsGml,
                        BAD_CAST "id", BAD_CAST pszValue);
 
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
-                                         "observedProperty_name");
+                                         "observedproperty_name");
         if (pszValue)
           psNode = xmlNewChild(psCompNode, psNsGml, 
                                  BAD_CAST "name", BAD_CAST pszValue);
@@ -670,7 +670,6 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         psNode = xmlNewChild(psParent, NULL, BAD_CAST "member", NULL);
         
         psObsNode = xmlNewChild(psNode, NULL, BAD_CAST "Observation", BAD_CAST pszValue);
-        
 
         /* order of elements is time, location, procedure, observedproperty
          featureofinterest, result */
@@ -706,7 +705,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                                                     msOWSLookupMetadata(&(lp->metadata), "S", 
                                                                         "offering_id"), 
                                                     msOWSLookupMetadata(&(lp->metadata), "S", 
-                                                                        "observedProperty_id"));
+                                                                        "observedproperty_id"));
 
             if (lp != lpfirst)
               status = msLayerOpen(lpfirst);
@@ -755,13 +754,9 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
 
         /*observed property*/
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
-                                       "observedProperty_id");
+                                       "observedproperty_id");
         if (pszValue)
-        {
-            /* psNode= xmlNewChild(psObsNode, psNsOm, BAD_CAST "observedProperty", BAD_CAST pszValue); */
             msSOSAddPropertyNode(psNsSwe, psNsXLink, psObsNode, lp, psNsGml);
-
-        }
 
         /*TODO add featureofinterest*/
 
@@ -791,18 +786,6 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         pszFeatureId = msOWSLookupMetadata(&(lp->metadata), "OSG", "featureid");
 
         if(pszFeatureId && msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
-        { /* find the featureid amongst the items for this layer */
-          for(j=0; j<lp->numitems; j++) {
-            if(strcasecmp(lp->items[j], pszFeatureId) == 0) { /* found it  */
-              break;
-            }
-          }
-          if (j<lp->numitems)
-            xmlNewNsProp(psNode, psNsGml, BAD_CAST "id", BAD_CAST  sShape.values[j]);
-          msLayerClose(lp);
-        }
-
-        if(pszFeatureId && msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
 
         xmlSetNs(psLayerNode,xmlNewNs(psLayerNode, NULL,  NULL));
         
@@ -827,7 +810,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                                                 msOWSLookupMetadata(&(lp->metadata), "S", 
                                                                     "offering_id"), 
                                                 msOWSLookupMetadata(&(lp->metadata), "S", 
-                                                                    "observedProperty_id"));
+                                                                    "observedproperty_id"));
 
         if (lpfirst && msLayerOpen(lpfirst) == MS_SUCCESS && 
             msLayerGetItems(lpfirst) == MS_SUCCESS)
@@ -932,7 +915,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
                                             msOWSLookupMetadata(&(lp->metadata), "S", 
                                                                 "offering_id"), 
                                             msOWSLookupMetadata(&(lp->metadata), "S", 
-                                                                "observedProperty_id"));
+                                                                "observedproperty_id"));
 
 
     if (lp == lpfirst || (lpfirst && msLayerOpen(lpfirst) == MS_SUCCESS && 
@@ -977,7 +960,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
 /*      Add a member node used for getObservation request using         */
 /*      Observation as the result format.                               */
 /************************************************************************/
-xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParent, mapObj *map, 
+xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParent, mapObj *map, 
                                          layerObj *lp, const char *pszProcedure) 
 {
     char *pszTmp = NULL;
@@ -992,7 +975,7 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xml
                                             msOWSLookupMetadata(&(lp->metadata), "S", 
                                                                 "offering_id"), 
                                             msOWSLookupMetadata(&(lp->metadata), "S", 
-                                                                "observedProperty_id"));
+                                                                "observedproperty_id"));
     if (psParent)
     {
          psMemberNode = xmlNewChild(psParent, NULL, BAD_CAST "member", NULL);
@@ -1017,7 +1000,7 @@ xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xml
              if (n == 2) /* end time is empty. It is going to be set as "now*/
                pszEndTime = tokens[1];
 
-             psNode = xmlAddChild(psObsNode, msSOSAddTimeNode(psNsSos, psNsGml, tokens[0], pszEndTime));
+             psNode = xmlAddChild(psObsNode, msSOSAddTimeNode(psNsOm, psNsGml, tokens[0], pszEndTime));
              msFreeCharArray(tokens, n);
              
          }
@@ -1619,7 +1602,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                      {
                          if ((value = 
                              msOWSLookupMetadata(&(GET_LAYER(map, j)->metadata), "S", 
-                                                 "observedProperty_id")))
+                                                 "observedproperty_id")))
                          {
                              for (k=0; k<nProperties; k++)
                              {
@@ -2415,7 +2398,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
                     if (msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "procedure_item") == NULL)
                     {
                         pszProcedure = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
-                        psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsSwe, psNsXLink, psRootNode, map, (GET_LAYER(map, i)),
+                        psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map, (GET_LAYER(map, i)),
                                                                       pszProcedure);
                         /*add a result node*/
                         psResultNode = xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
@@ -2475,7 +2458,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams) {
                                                                                *nDiffrentProc);
 
                                 paDiffrentProc[nDiffrentProc-1].pszProcedure = strdup(pszProcedureValue);
-                                psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsSwe, psNsXLink, psRootNode, map, 
+                                psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map, 
                                                                                   (GET_LAYER(map, i)),
                                                                                   pszProcedureValue);
                                 msFree(pszProcedureValue);
@@ -2678,7 +2661,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
 /************************************************************************/
 int msSOSDescribeObservationType(mapObj *map, sosParamsObj *sosparams) {
   if (!sosparams->pszObservedProperty) {
-    msSetError(MS_SOSERR, "Missing mandatory parameter observedProperty", "msSOSDescribeObservationType()");
+    msSetError(MS_SOSERR, "Missing mandatory parameter observedproperty", "msSOSDescribeObservationType()");
     return msSOSException(map, "observedproperty", "MissingParameterValue");
   }
   msSetError(MS_SOSERR, "Not yet implemented", "msSOSDescribeObservationType()");
