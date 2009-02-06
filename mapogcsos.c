@@ -708,9 +708,10 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                                                     msOWSLookupMetadata(&(lp->metadata), "S", 
                                                                         "observedProperty_id"));
 
-            if (lpfirst && msLayerOpen(lpfirst) == MS_SUCCESS && 
-                msLayerGetItems(lpfirst) == MS_SUCCESS)
-            {   
+            if (lp != lpfirst)
+              status = msLayerOpen(lpfirst);
+            if (status == MS_SUCCESS && msLayerGetItems(lpfirst) == MS_SUCCESS)
+            {           
                 for(i=0; i<lpfirst->numitems; i++) 
                 {
                     if (strcasecmp(lpfirst->items[i], pszValue) == 0)
@@ -732,7 +733,8 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                         msFree(pszValueShape);
                 }
                 /*else should we generate a warning !*/
-                msLayerClose(lpfirst);
+                if (lp != lpfirst)
+                  msLayerClose(lpfirst);
             }
                 
         }
