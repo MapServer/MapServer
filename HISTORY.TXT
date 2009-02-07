@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- add WFS calls for schema resolution (#2646)
+
 - add gml:id to om:Observation (#2646)
 
 - fix some XML validity issues (#2646)
