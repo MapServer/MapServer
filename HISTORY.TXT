@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- add gml:id to om:Observation (#2646)
+
 - fix some XML validity issues (#2646)
 
 - Fixed endianness issues with wide character strings for ArcSDE (#2878).  

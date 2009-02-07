@@ -651,6 +651,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
     layerObj *lpfirst = NULL;
     const char *pszTimeField = NULL;
     char *pszTmp = NULL;
+    char *pszOid = NULL;
     char *pszTime = NULL;
     char *pszValueShape = NULL;
     const char *pszFeatureId  = NULL;
@@ -670,6 +671,23 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         psNode = xmlNewChild(psParent, NULL, BAD_CAST "member", NULL);
         
         psObsNode = xmlNewChild(psNode, NULL, BAD_CAST "Observation", BAD_CAST pszValue);
+
+        pszFeatureId = msOWSLookupMetadata(&(lp->metadata), "OSG", "featureid");
+
+        if(pszFeatureId && msLayerGetItems(lp) == MS_SUCCESS)
+        { /* find the featureid amongst the items for this layer */
+            for(j=0; j<lp->numitems; j++) {
+                if(strcasecmp(lp->items[j], pszFeatureId) == 0) { /* found it  */
+                    break;
+                }
+            }
+            if (j<lp->numitems) {
+                pszOid = msStringConcatenate(pszOid, "o_");
+                pszOid = msStringConcatenate(pszOid, sShape.values[j]);
+                xmlNewNsProp(psObsNode, psNsGml, BAD_CAST "id", BAD_CAST pszOid);
+                msFree(pszOid);
+            }
+        }
 
         /* order of elements is time, location, procedure, observedproperty
          featureofinterest, result */
@@ -1683,7 +1701,6 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
      xmlFreeNs(psNsSos);
      xmlFreeNs(psNsOgc);
      xmlFreeNs(psNsSwe);
-
 
      free(script_url);
      free(script_url_encoded);
