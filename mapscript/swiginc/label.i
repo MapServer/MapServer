@@ -41,6 +41,7 @@
 
     if(self->bindings[binding].item) {
       free(self->bindings[binding].item);
+      self->bindings[binding].item = NULL;
       self->bindings[binding].index = -1; 
       self->numbindings--;
     }
@@ -61,7 +62,8 @@
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return MS_FAILURE;
 
     if(self->bindings[binding].item) {
-      free(self->bindings[binding].item); 
+      free(self->bindings[binding].item);
+      self->bindings[binding].item = NULL; 
       self->bindings[binding].index = -1;
       self->numbindings--;
     }
