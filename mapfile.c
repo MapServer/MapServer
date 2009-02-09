@@ -1269,6 +1269,8 @@ static int loadLabel(labelObj *label)
       if(symbol == MS_NUMBER)
 	label->angle = msyynumber;
       else if(symbol == MS_BINDING) {
+        if (label->bindings[MS_LABEL_BINDING_ANGLE].item != NULL)
+          msFree(label->bindings[MS_LABEL_BINDING_ANGLE].item);
         label->bindings[MS_LABEL_BINDING_ANGLE].item = strdup(msyytext);
         label->numbindings++;
       } else if ( symbol == MS_FOLLOW ) {
@@ -1326,8 +1328,12 @@ static int loadLabel(labelObj *label)
         return(-1);
 
       if(symbol == MS_STRING) {
+        if (label->font != NULL)
+          msFree(label->font);
         label->font = strdup(msyytext);
       } else {
+        if (label->bindings[MS_LABEL_BINDING_FONT].item != NULL)
+          msFree(label->bindings[MS_LABEL_BINDING_FONT].item);
         label->bindings[MS_LABEL_BINDING_FONT].item = strdup(msyytext);
         label->numbindings++;
       }
@@ -1400,7 +1406,9 @@ static int loadLabel(labelObj *label)
             return(-1);
         }
       } else {
-	label->bindings[MS_LABEL_BINDING_PRIORITY].item = strdup(msyytext);
+        if (label->bindings[MS_LABEL_BINDING_PRIORITY].item != NULL)
+          msFree(label->bindings[MS_LABEL_BINDING_PRIORITY].item);
+        label->bindings[MS_LABEL_BINDING_PRIORITY].item = strdup(msyytext);
         label->numbindings++;
       }
       break;
@@ -1424,6 +1432,8 @@ static int loadLabel(labelObj *label)
       if(symbol == MS_NUMBER) {
         label->size = (double) msyynumber;
       } else if(symbol == MS_BINDING) {
+        if (label->bindings[MS_LABEL_BINDING_SIZE].item != NULL)
+          msFree(label->bindings[MS_LABEL_BINDING_SIZE].item);
         label->bindings[MS_LABEL_BINDING_SIZE].item = strdup(msyytext);
         label->numbindings++;
       } else
@@ -1578,6 +1588,8 @@ void freeExpression(expressionObj *exp)
 int loadExpression(expressionObj *exp)
 {
   if((exp->type = getSymbol(5, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX)) == -1) return(-1);
+  if (exp->string != NULL)
+    msFree(exp->string);
   exp->string = strdup(msyytext);
 
   if(exp->type == MS_ISTRING)
@@ -1844,6 +1856,8 @@ int loadStyle(styleObj *style) {
       if(symbol == MS_NUMBER)
         style->angle = (double) msyynumber;
       else if(symbol==MS_BINDING){
+        if (style->bindings[MS_STYLE_BINDING_ANGLE].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_ANGLE].item);
         style->bindings[MS_STYLE_BINDING_ANGLE].item = strdup(msyytext);
         style->numbindings++;
       } else {
@@ -1926,6 +1940,8 @@ int loadStyle(styleObj *style) {
       if(symbol == MS_NUMBER)
         style->size = (double) msyynumber;
       else {
+        if (style->bindings[MS_STYLE_BINDING_SIZE].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_SIZE].item);
  	style->bindings[MS_STYLE_BINDING_SIZE].item = strdup(msyytext);
         style->numbindings++;
       }
@@ -1937,8 +1953,14 @@ int loadStyle(styleObj *style) {
       if(symbol == MS_NUMBER)
 	style->symbol = (int) msyynumber;
       else if(symbol == MS_STRING)
-	style->symbolname = strdup(msyytext);
+      {
+        if (style->symbolname != NULL)
+          msFree(style->symbolname);
+        style->symbolname = strdup(msyytext);
+      }
       else {
+        if (style->bindings[MS_STYLE_BINDING_SYMBOL].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_SYMBOL].item);
         style->bindings[MS_STYLE_BINDING_SYMBOL].item = strdup(msyytext);
         style->numbindings++;
       }
@@ -1948,6 +1970,8 @@ int loadStyle(styleObj *style) {
       if(symbol == MS_NUMBER)
         style->width = (double) msyynumber;
       else {
+        if (style->bindings[MS_STYLE_BINDING_WIDTH].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_WIDTH].item);
         style->bindings[MS_STYLE_BINDING_WIDTH].item = strdup(msyytext);
         style->numbindings++;
       }
@@ -2100,7 +2124,8 @@ int initClass(classObj *class)
    * to msGrowClassStyles()
    */
   class->numstyles = 0;  
-  class->maxstyles = 0;  
+  class->maxstyles = 0;
+   
   class->styles = NULL;  
 
   class->keyimage = NULL;
@@ -2375,8 +2400,12 @@ int loadClass(classObj *class, char *templatepattern, layerObj *layer)
       if(state == MS_NUMBER)
 	class->styles[0]->symbol = (int) msyynumber;
       else
+      {
+        if (class->styles[0]->symbolname != NULL)
+          msFree(class->styles[0]->symbolname);
 	class->styles[0]->symbolname = strdup(msyytext);
-      class->numstyles = 1;
+        class->numstyles = 1;
+      }
       break;
 
     /*
@@ -2413,8 +2442,12 @@ int loadClass(classObj *class, char *templatepattern, layerObj *layer)
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
       if(state == MS_NUMBER)
 	class->styles[1]->symbol = (int) msyynumber;
-      else
+      else 
+      {
+        if (class->styles[1]->symbolname != NULL)
+          msFree(class->styles[1]->symbolname);
 	class->styles[1]->symbolname = strdup(msyytext);
+      }
       class->numstyles = 2;
       break;
 
@@ -3245,7 +3278,11 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       if(state == MS_NUMBER)
 	ref->marker = (int) msyynumber;
       else
+      {
+        if (ref->markername != NULL)
+          msFree(ref->markername);
 	ref->markername = strdup(msyytext);
+      }
       break;
     case(MARKERSIZE):
       if(getInteger(&(ref->markersize)) == -1) return(-1);
