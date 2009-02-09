@@ -690,32 +690,103 @@ int msPostGISParseData(layerObj *layer) {
     return MS_SUCCESS;
 }
 
+
+
+/*
+** Decode a hex character.
+*/
+static unsigned char msPostGISHexDecodeChar[256] = {
+    /* not Base64 characters */
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    /* 0-9 */
+    0,1,2,3,4,5,6,7,8,9,
+    /* not Hex characters */
+    64,64,64,64,64,64,64,
+    /* A-F */
+    10,11,12,13,14,15,
+    /* not Hex characters */
+    64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,10,11,12,13,14,15,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    /* not Hex characters (upper 128 characters) */
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64
+    };
+
+/*
+** Decode hex string "src" (null terminated) 
+** into "dest" (not null terminated).
+** Returns length of decoded array or 0 on failure.
+*/
+int msPostGISHexDecode(unsigned char *dest, const char *src, int srclen) {
+
+    if (src && *src && (srclen % 2 == 0) ) {
+
+        unsigned char *p = dest;
+        int i;
+
+        for ( i=0; i<srclen; i+=2 ) {
+            register unsigned char b1=0, b2=0;
+            register unsigned char c1 = src[i];
+            register unsigned char c2 = src[i + 1];
+
+            b1 = msPostGISHexDecodeChar[c1];
+            b2 = msPostGISHexDecodeChar[c2];
+
+            *p++ = (b1 << 4) | b2;
+
+        }
+        return(p-dest);
+    }
+    return 0;
+}
+
 /*
 ** Decode a base64 character.
 */
-unsigned char msPostGISBase64DecodeChar[128] = {
+static unsigned char msPostGISBase64DecodeChar[256] = {
     /* not Base64 characters */
-    63,63,63,63,63,63,63,63,63,63,63,63,63,63,63,
-    63,63,63,63,63,63,63,63,63,63,63,63,63,63,63,
-    63,63,63,63,63,63,63,63,63,63,63,63,63,
-    /* + */
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,
+    /*  +  */
     62,
     /* not Base64 characters */
-    63,63,63,63,
+    64,64,64,
+    /*  /  */
+    63,
     /* 0-9 */
     52,53,54,55,56,57,58,59,60,61,
     /* not Base64 characters */
-    63,63,63,63,63,63,63,
+    64,64,64,64,64,64,64,
     /* A-Z */
     0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,
     /* not Base64 characters */
-    63,63,63,63,63,63,
+    64,64,64,64,64,64,
     /* a-z */
     26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,
     /* not Base64 characters */
-    63,63,63,63,63 };
-
-
+    64,64,64,64,64,
+    /* not Base64 characters (upper 128 characters) */
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+    64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64
+    };    
+    
 /*
 ** Decode base64 string "src" (null terminated) 
 ** into "dest" (not null terminated).
@@ -726,24 +797,16 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src, int srclen) {
     if (src && *src) {
 
         unsigned char *p = dest;
-
-#ifdef BASE64_VALIDATE
-        int i = 0, j = 0, k = 0;
+        int i, j, k;
         unsigned char *buf = calloc(srclen + 1, sizeof(unsigned char));
-#else
-        int j = srclen, k = 0;
-        const char *buf = src;
-#endif
 
-#ifdef BASE64_VALIDATE
         /* Drop illegal chars first */
         for (i=0, j=0; src[i]; i++) {
             unsigned char c = src[i];
-            if ( (msPostGISBase64DecodeChar[c] != 63) || (c == '/') || (c == '=')) {
+            if ( (msPostGISBase64DecodeChar[c] != 64) || (c == '=') ) {
                 buf[j++] = c;
             }
         }
-#endif
 
         for (k=0; k<j; k+=4) {
             register unsigned char c1='A', c2='A', c3='A', c4='A';
@@ -774,13 +837,12 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src, int srclen) {
                 *p++=(((b3&0x3)<<6)|b4 );
             }
         }
-#ifdef BASE64_VALIDATE
         free(buf);
-#endif
         return(p-dest);
     }
     return 0;
 }
+
 
 /*
 ** msPostGISBuildSQLBox()
@@ -865,7 +927,12 @@ char *msPostGISBuildSQLItems(layerObj *layer) {
         ** need, saving time. Forcing collection reduces the number
         ** of input types to handle.
         */
+
+#if TRANSFER_ENCODING == 64
         static char *strGeomTemplate = "encode(AsBinary(force_collection(force_2d(\"%s\")),'%s'),'base64') as geom,\"%s\"";
+#else
+        static char *strGeomTemplate = "encode(AsBinary(force_collection(force_2d(\"%s\")),'%s'),'hex') as geom,\"%s\"";
+#endif
         strGeom = (char*)malloc(strlen(strGeomTemplate) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid));
         sprintf(strGeom, strGeomTemplate, layerinfo->geomcolumn, strEndian, layerinfo->uid);
     }
@@ -1223,11 +1290,11 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid) {
 
 int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
 
-    char *wkb64 = NULL;
+    char *wkbstr = NULL;
     unsigned char *wkb = NULL;
     msPostGISLayerInfo *layerinfo = NULL;
     int result = 0;
-    int wkb64len = 0;
+    int wkbstrlen = 0;
 
     if (layer->debug) {
         msDebug("msPostGISReadShape called.\n");
@@ -1237,17 +1304,21 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
     layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
 
     /* Retrieve the geometry. */
-    wkb64 = (char*)PQgetvalue(layerinfo->pgresult, layerinfo->rownum, layer->numitems );
-    wkb64len = PQgetlength(layerinfo->pgresult, layerinfo->rownum, layer->numitems);
+    wkbstr = (char*)PQgetvalue(layerinfo->pgresult, layerinfo->rownum, layer->numitems );
+    wkbstrlen = PQgetlength(layerinfo->pgresult, layerinfo->rownum, layer->numitems);
     
-    if ( ! wkb64 ) {
+    if ( ! wkbstr ) {
         msSetError(MS_QUERYERR, "Base64 WKB returned is null!", "msPostGISReadShape()");
         return MS_FAILURE;
     }
 
 
-    wkb = calloc(wkb64len, sizeof(char));
-    result = msPostGISBase64Decode(wkb, wkb64, wkb64len);
+    wkb = calloc(wkbstrlen, sizeof(char));
+#if TRANSFER_ENCODING == 64
+    result = msPostGISBase64Decode(wkb, wkbstr, wkbstrlen - 1);
+#else
+    result = msPostGISHexDecode(wkb, wkbstr, wkbstrlen);
+#endif
 
     if( ! result ) {
         free(wkb);

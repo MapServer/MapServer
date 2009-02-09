@@ -9,7 +9,8 @@
 #define BIG_ENDIAN 2
 #endif
 
-#define BASE64_VALIDATE
+/* HEX = 16 or BASE64 = 64*/
+#define TRANSFER_ENCODING 64
 
 /*
 ** msPostGISLayerInfo
