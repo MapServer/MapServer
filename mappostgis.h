@@ -9,6 +9,8 @@
 #define BIG_ENDIAN 2
 #endif
 
+#define BASE64_VALIDATE
+
 /*
 ** msPostGISLayerInfo
 **
