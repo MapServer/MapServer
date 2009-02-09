@@ -721,14 +721,21 @@ unsigned char msPostGISBase64DecodeChar[128] = {
 ** into "dest" (not null terminated).
 ** Returns length of decoded array or 0 on failure.
 */
-int msPostGISBase64Decode(unsigned char *dest, const char *src) {
+int msPostGISBase64Decode(unsigned char *dest, const char *src, int srclen) {
 
     if (src && *src) {
 
         unsigned char *p = dest;
-        int i, j, k;
-        unsigned char *buf = calloc(strlen(src) + 1, sizeof(unsigned char));
 
+#ifdef BASE64_VALIDATE
+        int i = 0, j = 0, k = 0;
+        unsigned char *buf = calloc(srclen + 1, sizeof(unsigned char));
+#else
+        int j = srclen, k = 0;
+        const char *buf = src;
+#endif
+
+#ifdef BASE64_VALIDATE
         /* Drop illegal chars first */
         for (i=0, j=0; src[i]; i++) {
             unsigned char c = src[i];
@@ -736,6 +743,7 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src) {
                 buf[j++] = c;
             }
         }
+#endif
 
         for (k=0; k<j; k+=4) {
             register unsigned char c1='A', c2='A', c3='A', c4='A';
@@ -766,7 +774,9 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src) {
                 *p++=(((b3&0x3)<<6)|b4 );
             }
         }
+#ifdef BASE64_VALIDATE
         free(buf);
+#endif
         return(p-dest);
     }
     return 0;
@@ -1216,7 +1226,8 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
     char *wkb64 = NULL;
     unsigned char *wkb = NULL;
     msPostGISLayerInfo *layerinfo = NULL;
-    int result;
+    int result = 0;
+    int wkb64len = 0;
 
     if (layer->debug) {
         msDebug("msPostGISReadShape called.\n");
@@ -1227,14 +1238,16 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
 
     /* Retrieve the geometry. */
     wkb64 = (char*)PQgetvalue(layerinfo->pgresult, layerinfo->rownum, layer->numitems );
-
+    wkb64len = PQgetlength(layerinfo->pgresult, layerinfo->rownum, layer->numitems);
+    
     if ( ! wkb64 ) {
         msSetError(MS_QUERYERR, "Base64 WKB returned is null!", "msPostGISReadShape()");
         return MS_FAILURE;
     }
 
-    wkb = calloc(PQgetlength(layerinfo->pgresult, layerinfo->rownum, layer->numitems), sizeof(char));
-    result = msPostGISBase64Decode(wkb, wkb64);
+
+    wkb = calloc(wkb64len, sizeof(char));
+    result = msPostGISBase64Decode(wkb, wkb64, wkb64len);
 
     if( ! result ) {
         free(wkb);
