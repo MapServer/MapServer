@@ -1423,6 +1423,7 @@ static int loadLabel(labelObj *label)
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if(label->bindings[MS_LABEL_BINDING_SIZE].item) {
         msFree(label->bindings[MS_LABEL_BINDING_SIZE].item);
+        label->bindings[MS_LABEL_BINDING_SIZE].item = NULL;
 	label->numbindings--;
       }
 
@@ -1432,8 +1433,6 @@ static int loadLabel(labelObj *label)
       if(symbol == MS_NUMBER) {
         label->size = (double) msyynumber;
       } else if(symbol == MS_BINDING) {
-        if (label->bindings[MS_LABEL_BINDING_SIZE].item != NULL)
-          msFree(label->bindings[MS_LABEL_BINDING_SIZE].item);
         label->bindings[MS_LABEL_BINDING_SIZE].item = strdup(msyytext);
         label->numbindings++;
       } else
