@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Removed the error generation when the OGR layer contains no fields (#2883)
+
 - Added enhancements to mapogr.cpp for style annotations (#2879)
 
 - Fixed memory leaks when using msUpdate*FromString methods. (#2857)

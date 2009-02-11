@@ -1641,15 +1641,16 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
   char **items;
   const char *getShapeStyleItems;
 
-  if((hDefn = OGR_L_GetLayerDefn( psInfo->hLayer )) == NULL ||
-     (totalnumitems = numitems = OGR_FD_GetFieldCount( hDefn )) == 0) 
+  if((hDefn = OGR_L_GetLayerDefn( psInfo->hLayer )) == NULL) 
   {
     msSetError(MS_OGRERR, 
-               "OGR Connection for layer `%s' contains no fields.", 
+               "OGR Connection for layer `%s' contains no field definition.", 
                "msOGRFileGetItems()",
                layer->name?layer->name:"(null)" );
     return NULL;
   }
+
+  totalnumitems = numitems = OGR_FD_GetFieldCount( hDefn );
 
   getShapeStyleItems = msLayerGetProcessingKey( layer, "GETSHAPE_STYLE_ITEMS" );
   if (getShapeStyleItems && EQUAL(getShapeStyleItems, "all"))
