@@ -1247,11 +1247,8 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
 /*
 ** Function process any number of MapServer extent tags (e.g. shpext, mapext, etc...).
-**
-** TODO: Add projection support (see shpxy tag).
-**       Allow percentage expansion (e.g. 10%).
 */
-static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectObj *extent)
+static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectObj *extent, projectionObj *rectProj)
 {
   char *argValue;
 
@@ -1270,6 +1267,8 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 
   int precision=-1;
   int escape=ESCAPE_HTML;
+
+  char *projectionString=NULL;
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processExtentTag()");
@@ -1312,12 +1311,38 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 
       argValue = msLookupHashTable(tagArgs, "precision");
       if(argValue) precision = atoi(argValue);
+
+      argValue = msLookupHashTable(tagArgs, "proj");
+      if(argValue) projectionString = argValue;
     }
 
     tempExtent.minx = extent->minx - xExpand;
     tempExtent.miny = extent->miny - yExpand;
     tempExtent.maxx = extent->maxx + xExpand;
     tempExtent.maxy = extent->maxy + yExpand;
+
+    /* no big deal to convert from file to image coordinates, but what are the image parameters */
+    if(rectProj && projectionString && strcasecmp(projectionString,"image") == 0) {
+      precision = 0;
+
+      /* if necessary, project the shape to match the map */
+      if(msProjectionsDiffer(rectProj, &(mapserv->map->projection)))
+        msProjectRect(rectProj, &mapserv->map->projection, &tempExtent);
+
+      /* convert tempExtent to image coordinates based on the map extent and cellsize */
+      tempExtent.minx = MS_MAP2IMAGE_X(tempExtent.minx, mapserv->map->extent.minx, mapserv->map->cellsize);
+      tempExtent.miny = MS_MAP2IMAGE_Y(tempExtent.miny, mapserv->map->extent.maxy, mapserv->map->cellsize);
+      tempExtent.maxx = MS_MAP2IMAGE_X(tempExtent.minx, mapserv->map->extent.minx, mapserv->map->cellsize);
+      tempExtent.maxy = MS_MAP2IMAGE_Y(tempExtent.miny, mapserv->map->extent.maxy, mapserv->map->cellsize);
+    } else if(rectProj && projectionString) {
+       projectionObj projection;
+       msInitProjection(&projection);
+
+       if(MS_SUCCESS != msLoadProjectionString(&projection, projectionString)) return MS_FAILURE;
+
+       if(msProjectionsDiffer(rectProj, &projection))
+         msProjectRect(rectProj, &projection, &tempExtent);
+    }
 
     tagValue = strdup(format);
 
@@ -3114,9 +3139,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   sprintf(repstr, "%f", mapserv->map->extent.maxy);
   outstr = msReplaceSubstring(outstr, "[maxy]", repstr);
 
-  if(processExtentTag(mapserv, &outstr, "mapext", &(mapserv->map->extent)) != MS_SUCCESS)
+  if(processExtentTag(mapserv, &outstr, "mapext", &(mapserv->map->extent), &(mapserv->map->projection)) != MS_SUCCESS)
     return(NULL);
-  if(processExtentTag(mapserv, &outstr, "mapext_esc", &(mapserv->map->extent)) != MS_SUCCESS) /* depricated */
+  if(processExtentTag(mapserv, &outstr, "mapext_esc", &(mapserv->map->extent), &(mapserv->map->projection)) != MS_SUCCESS) /* depricated */
     return(NULL);
    
   sprintf(repstr, "%f", (mapserv->map->extent.maxx-mapserv->map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
@@ -3133,9 +3158,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   sprintf(repstr, "%f", mapserv->RawExt.maxy);
   outstr = msReplaceSubstring(outstr, "[rawmaxy]", repstr);
 
-  if(processExtentTag(mapserv, &outstr, "rawext", &(mapserv->RawExt)) != MS_SUCCESS)
+  if(processExtentTag(mapserv, &outstr, "rawext", &(mapserv->RawExt), &(mapserv->map->projection)) != MS_SUCCESS)
     return(NULL);
-  if(processExtentTag(mapserv, &outstr, "rawext_esc", &(mapserv->RawExt)) != MS_SUCCESS) /* depricated */
+  if(processExtentTag(mapserv, &outstr, "rawext_esc", &(mapserv->RawExt), &(mapserv->map->projection)) != MS_SUCCESS) /* depricated */
     return(NULL);
   
 #ifdef USE_PROJ
@@ -3161,9 +3186,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     sprintf(repstr, "%f", llextent.maxy);
     outstr = msReplaceSubstring(outstr, "[maxlat]", repstr);    
 
-    if(processExtentTag(mapserv, &outstr, "mapext_latlon", &(llextent)) != MS_SUCCESS) 
+    if(processExtentTag(mapserv, &outstr, "mapext_latlon", &(llextent), NULL) != MS_SUCCESS) 
       return(NULL);
-    if(processExtentTag(mapserv, &outstr, "mapext_latlon_esc", &(llextent)) != MS_SUCCESS) /* depricated */
+    if(processExtentTag(mapserv, &outstr, "mapext_latlon_esc", &(llextent), NULL) != MS_SUCCESS) /* depricated */
       return(NULL);
   }
 #endif
@@ -3179,9 +3204,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     sprintf(repstr, "%f", mapserv->map->reference.extent.maxy);
     outstr = msReplaceSubstring(outstr, "[refmaxy]", repstr);
 
-    if(processExtentTag(mapserv, &outstr, "refext", &(mapserv->map->reference.extent)) != MS_SUCCESS)
+    if(processExtentTag(mapserv, &outstr, "refext", &(mapserv->map->reference.extent), &(mapserv->map->projection)) != MS_SUCCESS)
       return(NULL);
-    if(processExtentTag(mapserv, &outstr, "refext_esc", &(mapserv->map->reference.extent)) != MS_SUCCESS) /* depricated */
+    if(processExtentTag(mapserv, &outstr, "refext_esc", &(mapserv->map->reference.extent), &(mapserv->map->projection)) != MS_SUCCESS) /* depricated */
       return(NULL);
   }
 
@@ -3265,9 +3290,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     sprintf(repstr, "%f", (mapserv->resultshape.bounds.maxy + mapserv->resultshape.bounds.miny)/2);
     outstr = msReplaceSubstring(outstr, "[shpmidy]", repstr);
     
-    if(processExtentTag(mapserv, &outstr, "shpext", &(mapserv->resultshape.bounds)) != MS_SUCCESS)
+    if(processExtentTag(mapserv, &outstr, "shpext", &(mapserv->resultshape.bounds), &(mapserv->resultlayer->projection)) != MS_SUCCESS)
       return(NULL);
-    if(processExtentTag(mapserv, &outstr, "shpext_esc", &(mapserv->resultshape.bounds)) != MS_SUCCESS) /* depricated */
+    if(processExtentTag(mapserv, &outstr, "shpext_esc", &(mapserv->resultshape.bounds), &(mapserv->resultlayer->projection)) != MS_SUCCESS) /* depricated */
       return(NULL);
 
     sprintf(repstr, "%d", mapserv->resultshape.classindex);
