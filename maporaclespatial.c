@@ -48,7 +48,7 @@ MS_CVSID("$Id$")
 
 #define ARRAY_SIZE                 1024
 #define QUERY_SIZE                 1
-#define TEXT_SIZE                  256
+#define TEXT_SIZE                  4000 /* ticket #2260 */
 #define TYPE_OWNER                 "MDSYS"
 #define SDO_GEOMETRY               TYPE_OWNER".SDO_GEOMETRY"
 #define SDO_GEOMETRY_LEN           strlen( SDO_GEOMETRY )
