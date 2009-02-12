@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fix mapserver crash when rendering a query map in HILITE mode
+  and there are is no STYLE defined (#2803)
+
 - Added projection support to [...ext] tags for template output.
 
 - Removed the error generation when the OGR layer contains no fields (#2883)
