@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Added projection support to [...ext] tags for template output.
+
 - Removed the error generation when the OGR layer contains no fields (#2883)
 
 - Added enhancements to mapogr.cpp for style annotations (#2879)
