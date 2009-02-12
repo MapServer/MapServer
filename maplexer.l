@@ -266,6 +266,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>partials                              { return(PARTIALS); }
 <INITIAL>pattern                               { return(PATTERN); }
 <INITIAL,URL_STRING>points                     { return(POINTS); }
+<INITIAL>items                                 { return(ITEMS); }
 <INITIAL,URL_STRING>position                   { return(POSITION); }
 <INITIAL>postlabelcache                        { return(POSTLABELCACHE); }
 <INITIAL>priority                              { return(PRIORITY); }

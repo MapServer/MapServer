@@ -551,6 +551,8 @@ int layerObj_setProjection(layerObj *self, char *string) {
   }
 
 int layerObj_addFeature(layerObj *self, shapeObj *shape) {
+    if (self->features == NULL) shape->index = 0;
+    else shape->index = self->features->shape.index + 1;
     if(insertFeatureList(&(self->features), shape) == NULL) 
       return -1;
     else

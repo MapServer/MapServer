@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Add support for rendering INLINE layers with layer attributes (items) (#2870)
+
 - Fix mapserver crash when rendering a query map in HILITE mode
   and there are is no STYLE defined (#2803)
 

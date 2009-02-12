@@ -202,6 +202,7 @@ void msLayerClose(layerObj *layer)
 */
 int msLayerGetItems(layerObj *layer) 
 {
+  const char *itemNames;
   /* clean up any previously allocated instances */
   msLayerFreeItemInfo(layer);
   if(layer->items) {
@@ -220,7 +221,14 @@ int msLayerGetItems(layerObj *layer)
    * was following TODO ITEM:
    */
   /* TO DO! Need to add any joined itemd on to the core layer items, one long list!  */
-  return layer->vtable->LayerGetItems(layer);
+  itemNames = msLayerGetProcessingKey( layer, "ITEMS" );
+  if (itemNames)
+  {
+    layer->items = msStringSplit(itemNames, ',', &layer->numitems);
+    return MS_SUCCESS;
+  }
+  else
+    return layer->vtable->LayerGetItems(layer);
 }
 
 /*
@@ -397,6 +405,14 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     layer->numitems = 0;
   }
 
+  /* Always retrieve all items in some cases */
+  if (layer->connectiontype == MS_INLINE)
+  {
+     msLayerGetItems(layer);
+     nt = layer->numitems;
+  }
+  else
+  {
   /*
   ** layer level counts
   */
@@ -486,6 +502,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   rv = layer->vtable->LayerCreateItems(layer, nt);
   if (rv != MS_SUCCESS) {
     return rv;
+  }
   }
 
   if(nt > 0) {

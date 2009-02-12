@@ -675,6 +675,8 @@ static int loadFeature(layerObj	*player, int type)
       msSetError(MS_EOFERR, NULL, "loadFeature()");      
       return(MS_FAILURE);
     case(END):
+      if (player->features == NULL) shape->index = 0;
+      else shape->index = player->features->shape.index + 1;
       if((node = insertFeatureList(list, shape)) == NULL) 
 	status = MS_FAILURE;
 
@@ -692,7 +694,19 @@ static int loadFeature(layerObj	*player, int type)
       points.numpoints = 0;
 
       if(status == MS_FAILURE) return(MS_FAILURE);
-      break;    
+      break;
+    case(ITEMS):
+    {
+      char *string=NULL;
+      if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
+      if (string)
+      {
+        if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
+        shape->values = msStringSplit(string, ';', &shape->numvalues);
+        msFree(string); /* clean up */
+      }
+      break;
+    }
     case(TEXT):
       if(getString(&shape->text) == MS_FAILURE) return(MS_FAILURE);
       break;
@@ -729,6 +743,17 @@ static void writeFeature(shapeObj *shape, FILE *stream)
     for(j=0; j<shape->line[i].numpoints; j++)
       fprintf(stream, "        %g %g\n", shape->line[i].point[j].x, shape->line[i].point[j].y);
     fprintf(stream, "      END\n");
+  }
+
+  if (shape->numvalues) {
+    fprintf(stream, "      ITEMS \"");
+    for (i=0; i<shape->numvalues; i++) {
+      if (i == 0)
+        fprintf(stream, "%s", shape->values[i]);
+      else
+        fprintf(stream, ";%s", shape->values[i]);
+    }
+    fprintf(stream, "\"\n");
   }
 
   if(shape->text) fprintf(stream, "      TEXT \"%s\"\n", shape->text);
