@@ -1427,8 +1427,8 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   char *cs=" "; /* coordinate */
 
   char *ph="", *pf="", *ps=" "; /* part: works for multi-point/multi-linestring and simple polygons */
-  char *irh="", *irf="", *irs=""; /* inner ring: necessary for complex polygons */
-  char *orh="", *orf="", *ors=""; /* outer ring */
+  /* char *irh="", *irf="", *irs=""; // inner ring: necessary for complex polygons */
+  /* char *orh="", *orf="", *ors=""; // outer ring */
 
   char *sh="", *sf=""; /* shape */
 
