@@ -130,7 +130,7 @@
 
     if(self->bindings[binding].item) {
       free(self->bindings[binding].item);
-      self->bindings[binding].index = NULL;
+      self->bindings[binding].item = NULL;
       self->bindings[binding].index = -1;
       self->numbindings--;
     }
@@ -145,7 +145,7 @@
 
     if(self->bindings[binding].item) {
       free(self->bindings[binding].item);
-      self->bindings[binding].index = NULL;
+      self->bindings[binding].item = NULL;
       self->bindings[binding].index = -1;
       self->numbindings--;
     }
