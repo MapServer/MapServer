@@ -1089,6 +1089,10 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     for(i=0; i<layer->numclasses; i++) {
       if(layer->type == MS_LAYER_POLYGON) { /* alter BOTTOM style since that's almost always the fill */
+	if (layer->class[i]->styles == NULL) {
+           msSetError(MS_MISCERR, "Don't know how to draw class %s of layer %s without a style definition.", "msDrawQueryLayer()", layer->class[i]->name, layer->name);
+           return(MS_FAILURE);
+	}
         if(MS_VALID_COLOR(layer->class[i]->styles[0]->color)) {
           colorbuffer[i] = layer->class[i]->styles[0]->color; /* save the color from the BOTTOM style */
           layer->class[i]->styles[0]->color = map->querymap.color;
