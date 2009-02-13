@@ -1207,6 +1207,10 @@ int msLoadProjectionString(projectionObj *p, char *value)
 
       if( strcasecmp(id,"CRS84") == 0 )
           strcpy( init_string, "init=epsg:4326" );
+      if( strcasecmp(id,"CRS83") == 0 )
+          strcpy( init_string, "init=epsg:4269" );
+      if( strcasecmp(id,"CRS27") == 0 )
+          strcpy( init_string, "init=epsg:4267" );
       else
       {
           msSetError( MS_PROJERR, 
@@ -1216,6 +1220,28 @@ int msLoadProjectionString(projectionObj *p, char *value)
           return -1;
       }
 
+      p->args = (char**)malloc(sizeof(char*) * 2);
+      p->args[0] = strdup(init_string);
+      p->numargs = 1;
+  }
+  else if (strncasecmp(value, "CRS:",4) == 0 )
+  {
+      char init_string[100];
+      init_string[0] = '\0';
+      if (atoi(value+4) == 84)
+        strcpy( init_string, "init=epsg:4326");
+      else if (atoi(value+4) == 83)
+        strcpy( init_string, "init=epsg:4269");
+      else if (atoi(value+4) == 27)
+        strcpy( init_string, "init=epsg:4267");
+      else
+      {
+          msSetError( MS_PROJERR, 
+                      "Unrecognised OGC CRS def '%s'.",
+                      "msLoadProjectionString()", 
+                      value );
+          return -1;
+      }
       p->args = (char**)malloc(sizeof(char*) * 2);
       p->args[0] = strdup(init_string);
       p->numargs = 1;

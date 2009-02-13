@@ -387,6 +387,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   char *request = NULL;
   int status = 0;
 
+  char *bboxrequest=NULL;
+
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
 
@@ -510,14 +512,17 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         styles = values[i];
 
     }
-    else if (strcasecmp(names[i], "SRS") == 0) {
+    else if (strcasecmp(names[i], "SRS") == 0 || strcasecmp(names[i], "CRS") == 0) {
       srsfound = 1;
       /* SRS is in format "EPSG:epsg_id" or "AUTO:proj_id,unit_id,lon0,lat0" */
       if (strncasecmp(values[i], "EPSG:", 5) == 0)
       {
         /* SRS=EPSG:xxxx */
-
-          snprintf(srsbuffer, 100, "init=epsg:%.20s", values[i]+5);
+        
+        /*don't need to copy init=xxx since the srsbudder is only
+          used with msLoadProjection and that does alreay the job*/
+        //snprintf(srsbuffer, 100, "init=epsg:%.20s", values[i]+5);
+          snprintf(srsbuffer, 100, "EPSG:%.20s",values[i]+5);
           snprintf(epsgbuf, 100, "EPSG:%.20s",values[i]+5);
 
         /* we need to wait until all params are read before */
@@ -532,7 +537,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           map->units = iUnits;
         */
       }
-      else if (strncasecmp(values[i], "AUTO:", 5) == 0)
+      else if (strncasecmp(values[i], "AUTO:", 5) == 0 && nVersion < OWS_1_3_0)
       {
         snprintf(srsbuffer, 100, "%s",  values[i]);
         /* SRS=AUTO:proj_id,unit_id,lon0,lat0 */
@@ -545,12 +550,27 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           map->units = iUnits;
         */
       }
+      else if (nVersion >= OWS_1_3_0 && (strncasecmp(values[i], "AUTO2:", 6) == 0 ||
+                                         strncasecmp(values[i], "CRS:", 4) == 0))
+      {
+          snprintf(srsbuffer, 100, "%s",  values[i]);
+      }
       else
       {
-        msSetError(MS_WMSERR,
-                   "Unsupported SRS namespace (only EPSG and AUTO currently supported).",
-                   "msWMSLoadGetMapParams()");
-        return msWMSException(map, nVersion, "InvalidSRS");
+          if (nVersion >= OWS_1_3_0)
+          {
+              msSetError(MS_WMSERR,
+                         "Unsupported CRS namespace (only EPSG, AUTO2, CRS currently supported).",
+                         "msWMSLoadGetMapParams()");
+              return msWMSException(map, nVersion, "InvalidCRS");
+          }
+          else
+          {
+              msSetError(MS_WMSERR,
+                         "Unsupported SRS namespace (only EPSG and AUTO currently supported).",
+                         "msWMSLoadGetMapParams()");
+              return msWMSException(map, nVersion, "InvalidSRS");
+          }
       }
     }
     else if (strcasecmp(names[i], "BBOX") == 0) {
@@ -563,23 +583,30 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                    "msWMSLoadGetMapParams()");
         return msWMSException(map, nVersion, NULL);
       }
-      map->extent.minx = atof(tokens[0]);
-      map->extent.miny = atof(tokens[1]);
-      map->extent.maxx = atof(tokens[2]);
-      map->extent.maxy = atof(tokens[3]);
+      bboxrequest = values[i];
 
-      msFreeCharArray(tokens, n);
-
-      /* validate bbox values */
-      if ( map->extent.minx >= map->extent.maxx ||
-           map->extent.miny >=  map->extent.maxy)
+      /*for wms 1.3.0 we will do the validation of the bbox after all parameters
+       are read to account for the axes order*/
+      if (nVersion < OWS_1_3_0)
       {
-          msSetError(MS_WMSERR,
-                   "Invalid values for BBOX.",
-                   "msWMSLoadGetMapParams()");
-          return msWMSException(map, nVersion, NULL);
+          map->extent.minx = atof(tokens[0]);
+          map->extent.miny = atof(tokens[1]);
+          map->extent.maxx = atof(tokens[2]);
+          map->extent.maxy = atof(tokens[3]);
+
+          msFreeCharArray(tokens, n);
+
+          /* validate bbox values */
+          if ( map->extent.minx >= map->extent.maxx ||
+               map->extent.miny >=  map->extent.maxy)
+          {
+              msSetError(MS_WMSERR,
+                         "Invalid values for BBOX.",
+                         "msWMSLoadGetMapParams()");
+              return msWMSException(map, nVersion, NULL);
+          }
+          adjust_extent = MS_TRUE;
       }
-      adjust_extent = MS_TRUE;
     }
     else if (strcasecmp(names[i], "WIDTH") == 0) {
       widthfound = 1;
@@ -629,6 +656,51 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
   }
 
+   if (bboxfound && bboxrequest && nVersion >= OWS_1_3_0)
+   {
+       char **tokens;
+       int n;
+       rectObj rect;
+       projectionObj proj;
+       tokens = msStringSplit(bboxrequest, ',', &n);
+       
+       /*we have already validated that the request format when reding
+        the request parameters*/
+       rect.minx = atof(tokens[0]);
+       rect.miny = atof(tokens[1]);
+       rect.maxx = atof(tokens[2]);
+       rect.maxy = atof(tokens[3]);
+   
+       msFreeCharArray(tokens, n);
+
+       /*try to adjust the axes if necessary*/
+       if (srsbuffer && strlen(srsbuffer) > 1)
+       {
+            msInitProjection(&proj);
+            if (msLoadProjectionStringEPSG(&proj, (char *)srsbuffer) == 0)
+            {
+                msAxisNormalizePoints( &proj, 1, &rect.minx, &rect.miny );
+                msAxisNormalizePoints( &proj, 1, &rect.maxx, &rect.maxy );
+            }
+            msFreeProjection( &proj );
+       }
+       map->extent.minx = rect.minx;
+       map->extent.miny = rect.miny;
+       map->extent.maxx = rect.maxx;
+       map->extent.maxy = rect.maxy;
+
+       /* validate bbox values */
+       if ( map->extent.minx >= map->extent.maxx ||
+            map->extent.miny >=  map->extent.maxy)
+       {
+           msSetError(MS_WMSERR,
+                      "Invalid values for BBOX.",
+                      "msWMSLoadGetMapParams()");
+           return msWMSException(map, nVersion, NULL);
+       }
+       adjust_extent = MS_TRUE;
+   }
+   
   /*
   ** If any select layers have a default time, we will apply the default
   ** time value even if no TIME request was in the url.
@@ -732,9 +804,18 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                   }
                   if (epsgvalid == MS_FALSE)
                   {
-                      msSetError(MS_WMSERR, "Invalid SRS given : SRS must be valid for all requested layers.",
-                                         "msWMSLoadGetMapParams()");
-                      return msWMSException(map, nVersion, "InvalidSRS");
+                      if (nVersion >= OWS_1_3_0)
+                      {
+                          msSetError(MS_WMSERR, "Invalid CRS given : CRS must be valid for all requested layers.",
+                                     "msWMSLoadGetMapParams()");
+                          return msWMSException(map, nVersion, "InvalidSRS");
+                      }
+                      else
+                      {
+                          msSetError(MS_WMSERR, "Invalid SRS given : SRS must be valid for all requested layers.",
+                                     "msWMSLoadGetMapParams()");
+                          return msWMSException(map, nVersion, "InvalidSRS");
+                      }
                   }
               }
           }
@@ -788,19 +869,38 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       if (map->projection.numargs <= 0)
       {
-          msSetError(MS_WMSERR, "Cannot set new SRS on a map that doesn't "
-                     "have any projection set. Please make sure your mapfile "
-                     "has a projection defined at the top level.", 
-                     "msWMSLoadGetMapParams()");
-          return msWMSException(map, nVersion, "InvalidSRS");
+          if (nVersion >= OWS_1_3_0)
+          {
+              msSetError(MS_WMSERR, "Cannot set new CRS on a map that doesn't "
+                         "have any projection set. Please make sure your mapfile "
+                         "has a projection defined at the top level.", 
+                         "msWMSLoadGetMapParams()");
+              return msWMSException(map, nVersion, "InvalidCRS");
+          }
+          else
+          {
+               msSetError(MS_WMSERR, "Cannot set new SRS on a map that doesn't "
+                         "have any projection set. Please make sure your mapfile "
+                         "has a projection defined at the top level.", 
+                         "msWMSLoadGetMapParams()");
+              return msWMSException(map, nVersion, "InvalidSRS");
+          }
       }
       
       msInitProjection(&newProj);
-      if (srsbuffer != NULL && strlen(srsbuffer) > 1 && 
-          msLoadProjectionString(&newProj, srsbuffer) != 0)
+      if (srsbuffer != NULL && strlen(srsbuffer) > 1)
       {
-          msFreeProjection(&newProj);
-          return msWMSException(map, nVersion, NULL);
+          int nTmp;
+          
+          if (nVersion >= OWS_1_3_0)   
+            nTmp = msLoadProjectionStringEPSG(&newProj, srsbuffer);
+          else 
+            nTmp = msLoadProjectionString(&newProj, srsbuffer);
+          if (nTmp != 0)
+          { 
+              msFreeProjection(&newProj);
+              return msWMSException(map, nVersion, NULL);
+          }
       }
 
       if (nonsquare_enabled || 
@@ -840,12 +940,18 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   /* that the srs given as parameter is valid for all layers */
   if (srsbuffer != NULL && strlen(srsbuffer) > 1)
   {
-      if (msLoadProjectionString(&(map->projection), srsbuffer) != 0)
-          return msWMSException(map, nVersion, NULL);
+      int nTmp;
+      if (nVersion >= OWS_1_3_0)
+        nTmp = msLoadProjectionStringEPSG(&(map->projection), srsbuffer);
+      else
+        nTmp = msLoadProjectionString(&(map->projection), srsbuffer);
 
-        iUnits = GetMapserverUnitUsingProj(&(map->projection));
-        if (iUnits != -1)
-          map->units = iUnits;
+      if (nTmp != 0)
+        return msWMSException(map, nVersion, NULL);
+
+      iUnits = GetMapserverUnitUsingProj(&(map->projection));
+      if (iUnits != -1)
+        map->units = iUnits;
   }
 
   /* Validate Styles :
@@ -2547,9 +2653,9 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       info_format = values[i];
     else if (strcasecmp(names[i], "FEATURE_COUNT") == 0)
       feature_count = atoi(values[i]);
-    else if(strcasecmp(names[i], "X") == 0)
+    else if(strcasecmp(names[i], "X") == 0 || strcasecmp(names[i], "I") == 0)
       point.x = atof(values[i]);
-    else if (strcasecmp(names[i], "Y") == 0)
+    else if (strcasecmp(names[i], "Y") == 0 || strcasecmp(names[i], "J") == 0)
       point.y = atof(values[i]);
     else if (strcasecmp(names[i], "RADIUS") == 0)
     {
@@ -2594,7 +2700,10 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       }
   }
   if(point.x == -1.0 || point.y == -1.0) {
-    msSetError(MS_WMSERR, "Required X/Y parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
+    if (nVersion >= OWS_1_3_0)
+      msSetError(MS_WMSERR, "Required I/J parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
+    else
+      msSetError(MS_WMSERR, "Required X/Y parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
     return msWMSException(map, nVersion, NULL);
   }
 
