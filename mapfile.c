@@ -1647,6 +1647,8 @@ void freeExpression(expressionObj *exp)
 
 int loadExpression(expressionObj *exp)
 {
+  /* TODO: should we fall freeExpression if exp->string != NULL? We do some checking to avoid a leak but is it enough... */
+
   if((exp->type = getSymbol(5, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX)) == -1) return(-1);
   if (exp->string != NULL)
     msFree(exp->string);
@@ -1663,14 +1665,6 @@ int loadExpression(expressionObj *exp)
       exp->type = MS_REGEX;
   }
   
-  /* if(exp->type == MS_REGEX) { */
-  /* if(ms_regcomp(&(exp->regex), exp->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { // compile the expression  */
-  /* sprintf(ms_error.message, "Parsing error near (%s):(line %d)", exp->string, msyylineno); */
-  /* msSetError(MS_REGEXERR, ms_error.message, "loadExpression()"); */
-  /* return(-1); */
-  /* } */
-  /* } */
-
   return(0);
 }
 
@@ -2836,7 +2830,6 @@ classObj *msGrowLayerClasses( layerObj *layer )
 int loadLayer(layerObj *layer, mapObj *map)
 {
   int type;
-  char *string = NULL;
   char *templatepattern = NULL;
 
   layer->map = (mapObj *)map;
@@ -2854,24 +2847,47 @@ int loadLayer(layerObj *layer, mapObj *map)
       layer->numclasses++;
       break;
     case(CLASSGROUP):
-      if(getString(&layer->classgroup) == MS_FAILURE) return(-1);
-      break;   
+      if(getString(&layer->classgroup) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->classgroup, msLookupHashTable(&(layer->validation), "classgroup"), msLookupHashTable(&(map->web.validation), "classgroup"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based CLASSGROUP configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->classgroup); layer->classgroup=NULL;
+          return(-1);
+        }
+      }
+      break;
     case(CLASSITEM):
-      if(getString(&layer->classitem) == MS_FAILURE) return(-1);
+      if(getString(&layer->classitem) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->classitem, msLookupHashTable(&(layer->validation), "classitem"), msLookupHashTable(&(map->web.validation), "classitem"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based CLASSITEM configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->classitem); layer->classitem=NULL;
+          return(-1);
+        }
+      }
       break;
     case(CONNECTION):
-      if(getString(&layer->connection) == MS_FAILURE) return(-1);
+      if(getString(&layer->connection) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->connection, msLookupHashTable(&(layer->validation), "connection"), msLookupHashTable(&(map->web.validation), "connection"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based CONNECTION configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->connection); layer->connection=NULL;
+          return(-1);
+        }
+      }
       break;
     case(CONNECTIONTYPE):
       if((layer->connectiontype = getSymbol(9, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_PLUGIN)) == -1) return(-1);
       break;
     case(DATA):
-      if(getString(&string) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msValidateParameter(string, msLookupHashTable(&(layer->validation), "data"), msLookupHashTable(&(map->web.validation), "data"), map->datapattern, NULL) != MS_SUCCESS) {
-	msSetError(MS_MISCERR, "URL-based DATA configuration failed pattern validation." , "loadLayer()");
-        return(-1);
+      if(getString(&layer->data) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->data, msLookupHashTable(&(layer->validation), "data"), msLookupHashTable(&(map->web.validation), "data"), map->datapattern, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based DATA configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->data); layer->data=NULL;
+          return(-1);
+        }
       }
-      layer->data = string;
       break;
     case(DEBUG):
       if((layer->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return(-1);
@@ -2885,12 +2901,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       return(-1);
       break;
     case(END):
-      /* May want to re-write this test to be more specific. */
-      /* if(!layer->connection && layer->data && layer->numclasses > 1 && !layer->classitem) { */
-      /* msSetError(MS_MISCERR, "Multiple classes defined but no classitem?", "loadLayer()");       */
-      /* return(-1); */
-      /* } */
-
       if(layer->type == -1) {
 	msSetError(MS_MISCERR, "Layer type not set.", "loadLayer()");      
 	return(-1);
@@ -2928,16 +2938,33 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(loadFeature(layer, type) == MS_FAILURE) return(-1);      
       break;
     case(FILTER):
-      if(loadExpression(&(layer->filter)) == -1) return(-1);
+      if(loadExpression(&(layer->filter)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->filter.string, msLookupHashTable(&(layer->validation), "filter"), msLookupHashTable(&(map->web.validation), "filter"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based FILTER configuration failed pattern validation." , "loadLayer()");
+          freeExpression(&(layer->filter));
+          return(-1);
+	}
+      }
       break;
     case(FILTERITEM):
-      if(getString(&layer->filteritem) == MS_FAILURE) return(-1);
+      if(getString(&layer->filteritem) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->filteritem, msLookupHashTable(&(layer->validation), "filteritem"), msLookupHashTable(&(map->web.validation), "filteritem"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based FILTERITEM configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->filteritem); layer->filteritem=NULL;
+          return(-1);
+        }
+      }
       break;
     case(FOOTER):
-      if(getString(&layer->footer) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, layer->footer) != MS_TRUE) {
-        msSetError(MS_MISCERR, "URL-based FOOTER configuration failed pattern validation." , "loadLayer()");
-        return(-1);
+      if(getString(&layer->footer) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->footer, msLookupHashTable(&(layer->validation), "footer"), msLookupHashTable(&(map->web.validation), "footer"), map->templatepattern, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based FOOTER configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->footer); layer->footer=NULL;
+          return(-1);
+        }
       }
       break;
     case(GRID):
@@ -2951,13 +2978,23 @@ int loadLayer(layerObj *layer, mapObj *map)
       loadGrid(layer);
       break;
     case(GROUP):
-      if(getString(&layer->group) == MS_FAILURE) return(-1);
+      if(getString(&layer->group) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->group, msLookupHashTable(&(layer->validation), "group"), msLookupHashTable(&(map->web.validation), "group"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based GROUP configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->group); layer->group=NULL;
+          return(-1);
+        }
+      }
       break;
-    case(HEADER):      
-      if(getString(&layer->header) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, layer->header) != MS_TRUE) {
-        msSetError(MS_MISCERR, "URL-based HEADER configuration failed pattern validation." , "loadLayer()");
-        return(-1);
+    case(HEADER):
+      if(getString(&layer->header) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->header, msLookupHashTable(&(layer->validation), "header"), msLookupHashTable(&(map->web.validation), "header"), map->templatepattern, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based HEADER configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->header); layer->header=NULL;
+          return(-1);
+        }
       }
       break;
     case(JOIN):
@@ -2973,7 +3010,14 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->labelcache = getSymbol(2, MS_ON, MS_OFF)) == -1) return(-1);
       break;
     case(LABELITEM):
-      if(getString(&layer->labelitem) == MS_FAILURE) return(-1);
+      if(getString(&layer->labelitem) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->labelitem, msLookupHashTable(&(layer->validation), "labelitem"), msLookupHashTable(&(map->web.validation), "labelitem"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based LABELITEM configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->labelitem); layer->labelitem=NULL;
+          return(-1);
+        }
+      }
       break;
     case(LABELMAXSCALE):
     case(LABELMAXSCALEDENOM):
@@ -2984,7 +3028,14 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getDouble(&(layer->labelminscaledenom)) == -1) return(-1);
       break;    
     case(LABELREQUIRES):
-      if(getString(&layer->labelrequires) == MS_FAILURE) return(-1);
+      if(getString(&layer->labelrequires) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->labelrequires, msLookupHashTable(&(layer->validation), "labelrequires"), msLookupHashTable(&(map->web.validation), "labelrequires"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based LABELREQUIRES configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->labelrequires); layer->labelrequires=NULL;
+          return(-1);
+        }
+      }
       break;
     case(LAYER):
       break; /* for string loads */
@@ -3031,11 +3082,18 @@ int loadLayer(layerObj *layer, mapObj *map)
     break;
     case(PROCESSING):
     {
-        /* NOTE: processing array maintained as size+1 with NULL terminator.
-                 This ensure that CSL (GDAL string list) functions can be
-                 used on the list for easy processing. */
+      /* NOTE: processing array maintained as size+1 with NULL terminator.
+               This ensure that CSL (GDAL string list) functions can be
+               used on the list for easy processing. */
       char *value=NULL;
       if(getString(&value) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(value, msLookupHashTable(&(layer->validation), "processing"), msLookupHashTable(&(map->web.validation), "processing"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based PROCESSING configuration failed pattern validation." , "loadLayer()");
+          free(value); value=NULL;
+          return(-1);
+        }
+      }
       msLayerAddProcessing( layer, value );
       free(value); value=NULL;
     }
@@ -3050,7 +3108,14 @@ int loadLayer(layerObj *layer, mapObj *map)
       layer->project = MS_TRUE;
       break;
     case(REQUIRES):
-      if(getString(&layer->requires) == MS_FAILURE) return(-1);
+      if(getString(&layer->requires) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->requires, msLookupHashTable(&(layer->validation), "requires"), msLookupHashTable(&(map->web.validation), "requires"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based REQUIRES configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->requires); layer->requires=NULL;
+          return(-1);
+        }
+      }
       break;
     case(SIZEUNITS):
       if((layer->sizeunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
@@ -3059,25 +3124,48 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->status = getSymbol(3, MS_ON,MS_OFF,MS_DEFAULT)) == -1) return(-1);
       break;
     case(STYLEITEM):
-      if(getString(&layer->styleitem) == MS_FAILURE) return(-1);
+      if(getString(&layer->styleitem) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->styleitem, msLookupHashTable(&(layer->validation), "styleitem"), msLookupHashTable(&(map->web.validation), "styleitem"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based STYLEITEM configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->styleitem); layer->styleitem=NULL;
+          return(-1);
+        }
+      }
       break;
     case(SYMBOLSCALE):
     case(SYMBOLSCALEDENOM):
       if(getDouble(&(layer->symbolscaledenom)) == -1) return(-1);
       break;
     case(TEMPLATE):
-      if(getString(&layer->template) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, layer->template) != MS_TRUE) { 
-        msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadLayer()");
-        return(-1);
+      if(getString(&layer->template) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->template, msLookupHashTable(&(layer->validation), "template"), msLookupHashTable(&(map->web.validation), "template"), map->templatepattern, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->template); layer->template=NULL;
+          return(-1);
+        }
       }
       break;
     case(TILEINDEX):
-      if(getString(&layer->tileindex) == MS_FAILURE) return(-1);
+      if(getString(&layer->tileindex) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->tileindex, msLookupHashTable(&(layer->validation), "tileindex"), msLookupHashTable(&(map->web.validation), "tileindex"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based TILEINDEX configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->tileindex); layer->tileindex=NULL;
+          return(-1);
+        }
+      }
       break;
     case(TILEITEM):
-      free(layer->tileitem); layer->tileitem = NULL; /* erase default */
-      if(getString(&layer->tileitem) == MS_FAILURE) return(-1);
+      if(getString(&layer->tileitem) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->tileitem, msLookupHashTable(&(layer->validation), "tileitem"), msLookupHashTable(&(map->web.validation), "tileitem"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based TILEITEM configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->tileitem); layer->tileitem=NULL;
+          return(-1);
+        }
+      }
       break;
     case(TOLERANCE):
       if(getDouble(&(layer->tolerance)) == -1) return(-1);
@@ -4911,9 +4999,9 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
   int i, j, k, s;
   errorObj *ms_error;
 
-  /*
-  ** TODO: need to make sure this feature is enabled
-  */
+  /* make sure this configuration can be modified */
+  if(msLookupHashTable(&(map->web.validation), "immutable"))
+    return(MS_SUCCESS); /* fail silently */
 
   msyystate = MS_TOKENIZE_URL_VARIABLE; /* set lexer state and input to tokenize */
   msyystring = variable;
@@ -4981,6 +5069,10 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
         msSetError(MS_MISCERR, "Layer to be modified not valid.", "msUpdateMapFromURL()");
         return MS_FAILURE;
       }
+
+      /* make sure this layer can be modified */
+      if(msLookupHashTable(&(GET_LAYER(map, i)->validation), "immutable"))
+        return(MS_SUCCESS); /* fail silently */
 
       if(msyylex() == CLASS) {
         if((s = getSymbol(2, MS_NUMBER, MS_STRING)) == -1) return MS_FAILURE;

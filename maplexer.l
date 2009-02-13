@@ -153,12 +153,12 @@ char path[MS_MAXPATHLEN];
 <INITIAL>buffer                                { return(BUFFER); }
 <INITIAL>character                             { return(CHARACTER); }
 <INITIAL,URL_VARIABLE>class                    { return(CLASS); }
-<INITIAL>classitem                             { return(CLASSITEM); }
+<INITIAL,URL_STRING>classitem                  { return(CLASSITEM); }
 <INITIAL,URL_STRING>classgroup                 { return(CLASSGROUP); }
 <INITIAL,URL_STRING>color                      { return(COLOR); }
 <INITIAL>config                                { return(CONFIG); }
-<INITIAL>connection                            { return(CONNECTION); }
-<INITIAL>connectiontype                        { return(CONNECTIONTYPE); }
+<INITIAL,URL_STRING>connection                 { return(CONNECTION); }
+<INITIAL,URL_STRING>connectiontype             { return(CONNECTIONTYPE); }
 <INITIAL,URL_STRING>data                       { return(DATA); }
 <INITIAL>datapattern                           { return(DATAPATTERN); }
 <INITIAL>debug                                 { return(DEBUG); }
@@ -173,8 +173,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>extension                             { return(EXTENSION); }
 <INITIAL,URL_STRING>feature                    { return(FEATURE); }
 <INITIAL>filled                                { return(FILLED); }
-<INITIAL>filter                                { return(FILTER); }
-<INITIAL>filteritem                            { return(FILTERITEM); }
+<INITIAL,URL_STRING>filter                     { return(FILTER); }
+<INITIAL,URL_STRING>filteritem                 { return(FILTERITEM); }
 <INITIAL,URL_STRING>footer                     { return(FOOTER); }
 <INITIAL,URL_STRING>font                       { return(FONT); }
 <INITIAL>fontset                               { return(FONTSET); }
@@ -185,10 +185,10 @@ char path[MS_MAXPATHLEN];
 <INITIAL>geomtransform                         { return(GEOMTRANSFORM); }
 <INITIAL>grid                                  { return(GRID); }
 <INITIAL>graticule                             { return(GRATICULE); }
-<INITIAL>group                                 { return(GROUP); }
+<INITIAL,URL_STRING>group                      { return(GROUP); }
 <INITIAL,URL_STRING>header                     { return(HEADER); }
 <INITIAL>image                                 { return(IMAGE); }
-<INITIAL,URL_STRING,URL_VARIABLE>imagecolor    { return(IMAGECOLOR); }
+<INITIAL,URL_VARIABLE,URL_STRING>imagecolor    { return(IMAGECOLOR); }
 <INITIAL,URL_VARIABLE>imagetype                { return(IMAGETYPE); }
 <INITIAL>imagequality                          { return(IMAGEQUALITY); }
 <INITIAL>imagemode                             { return(IMAGEMODE); }
@@ -210,7 +210,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>labelmaxscaledenom                    { return(LABELMAXSCALEDENOM); }
 <INITIAL>labelminscale                         { return(LABELMINSCALE); }
 <INITIAL>labelminscaledenom                    { return(LABELMINSCALEDENOM); }
-<INITIAL>labelrequires                         { return(LABELREQUIRES); }
+<INITIAL,URL_STRING>labelrequires              { return(LABELREQUIRES); }
 <INITIAL>latlon                                { return(LATLON); }
 <INITIAL,URL_VARIABLE>layer                    { return(LAYER); }
 <INITIAL,URL_VARIABLE>legend                   { return(LEGEND); }
@@ -270,13 +270,13 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>position                   { return(POSITION); }
 <INITIAL>postlabelcache                        { return(POSTLABELCACHE); }
 <INITIAL>priority                              { return(PRIORITY); }
-<INITIAL>processing                            { return(PROCESSING); }
+<INITIAL,URL_STRING>processing                 { return(PROCESSING); }
 <INITIAL,URL_VARIABLE,URL_STRING>projection    { return(PROJECTION); }
 <INITIAL>queryformat                           { return(QUERYFORMAT); }
 <INITIAL,URL_VARIABLE>querymap                 { return(QUERYMAP); }
 <INITIAL,URL_VARIABLE>reference                { return(REFERENCE); }
 <INITIAL>relativeto                            { return(RELATIVETO); }
-<INITIAL>requires                              { return(REQUIRES); }
+<INITIAL,URL_STRING>requires                   { return(REQUIRES); }
 <INITIAL,URL_VARIABLE>resolution               { return(RESOLUTION); }
 <INITIAL>scale                                 { return(SCALE); }
 <INITIAL>scaledenom                            { return(SCALEDENOM); }
@@ -427,7 +427,7 @@ char path[MS_MAXPATHLEN];
                                                  return(TIME);
                                                }
 
-<INITIAL>\/[^\/]*\/i                           {
+<INITIAL,URL_STRING>\/[^\/]*\/i                {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
                                                  return(MS_IREGEX);
@@ -441,7 +441,7 @@ char path[MS_MAXPATHLEN];
                                                  return(IREGEX);
                                                }
 
-<INITIAL>\/[^\/]*\/                            {
+<INITIAL,URL_STRING>\/[^\/]*\/                 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_REGEX);
@@ -455,7 +455,7 @@ char path[MS_MAXPATHLEN];
                                                  return(REGEX);
                                                }
 
-<INITIAL>\(.*\)                                {
+<INITIAL,URL_STRING>\(.*\)                     {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_EXPRESSION);
