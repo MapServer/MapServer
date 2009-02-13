@@ -1251,7 +1251,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
     if (wms_version >= OWS_1_3_0 && value && strncasecmp(value, "EPSG:", 5) == 0)
     {
         msInitProjection(&proj);
-        if (msLoadProjectionStringESPG(&proj, (char *)value) == 0)
+        if (msLoadProjectionStringEPSG(&proj, (char *)value) == 0)
         {
             msAxisNormalizePoints( &proj, 1, &extent->minx, &extent->miny );
             msAxisNormalizePoints( &proj, 1, &extent->maxx, &extent->maxy );

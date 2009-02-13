@@ -1083,13 +1083,13 @@ static int loadProjection(projectionObj *p)
 
 
 /************************************************************************/
-/*                         msLoadProjectionStringESPG                   */
+/*                         msLoadProjectionStringEPSG                   */
 /*                                                                      */
 /*      Checks fro EPSG type projection and set the axes for a          */
 /*      certain code ranges.                                            */
 /*      Use for now in WMS 1.3.0                                        */
 /************************************************************************/
-int msLoadProjectionStringESPG(projectionObj *p, char *value)
+int msLoadProjectionStringEPSG(projectionObj *p, char *value)
 {
     p->gt.need_geotransform = MS_FALSE;
     
