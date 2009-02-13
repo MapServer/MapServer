@@ -107,6 +107,7 @@ typedef uint32_t        ms_uint32;
 #include <pdflib.h>
 #endif
 
+
 #include <sys/types.h> /* regular expression support */
 
 /* The regex lib from the system and the regex lib from PHP needs to
@@ -1491,6 +1492,7 @@ MS_DLL_EXPORT featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *lis
 MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
 
 MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, char *value);
+MS_DLL_EXPORT int msLoadProjectionStringEPSG(projectionObj *p, char *value);
 
 /* To be used *only* within the mapfile loading phase */
 MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, char *value);
@@ -1973,6 +1975,7 @@ MS_DLL_EXPORT void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image
 int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, double size, char *string, rectObj *rect, double **advances);
 int msGetRasterTextBBoxAGG(imageObj *img, int size, char *string, rectObj *rect);
 MS_DLL_EXPORT int msDrawTextAGG(imageObj *imgage, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+
 MS_DLL_EXPORT int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
 
 MS_DLL_EXPORT void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize);

@@ -84,8 +84,10 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
         wms_exception_format = "INIMAGE";  /* WMS 1.0.0 */
       else if (nVersion <= OWS_1_0_7)
         wms_exception_format = "SE_XML";   /* WMS 1.0.1 to 1.0.7 */
-      else
+      else if (nVersion <= OWS_1_1_1)
         wms_exception_format = "application/vnd.ogc.se_xml"; /* WMS 1.1.0 and later */
+      else
+        wms_exception_format = "text/xml";
   }
 
   if (strcasecmp(wms_exception_format, "INIMAGE") == 0 ||
@@ -143,7 +145,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 
       msIO_printf("<ServiceExceptionReport version=\"1.1.0\">\n");
     }
-    else /* 1.1.1 */
+    else if (nVersion <= OWS_1_1_1)/* 1.1.1 */
     {
         msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
@@ -153,6 +155,20 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
                            "ISO-8859-1");
         msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"%s/wms/1.1.1/exception_1_1_1.dtd\">\n", schemalocation);
         msIO_printf("<ServiceExceptionReport version=\"1.1.1\">\n");
+    }
+    else /*1.3.0*/
+    {
+        if (strcasecmp(wms_exception_format, "application/vnd.ogc.se_xml") == 0)
+          msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+        else
+          msIO_printf("Content-type: text/xml%c%c",10,10);
+
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
+                                 "MO", "encoding", OWS_NOERR,
+                  "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
+                           "ISO-8859-1");
+        msIO_printf("<ServiceExceptionReport version=\"1.3.0\" xmlns=\"http://www.opengis.net/ogc\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/ogc %s/wms/1.3.0/exceptions_1_3_0.xsd\">\n",
+                    schemalocation);
     }
 
 
@@ -1081,6 +1097,26 @@ void msWMSPrintAttribution(FILE *stream, const char *tabspace,
 /*
 ** msWMSPrintScaleHint()
 **
+** Print a Min/MaxScaleDenominator tag for the layer if applicable.
+** used for WMS >=1.3.0 
+*/
+void msWMSPrintScaleDenominator(const char *tabspace, double minscaledenom,
+                                double maxscaledenom)
+{
+    if (minscaledenom > 0)
+      msIO_printf("%s<MinScaleDenominator>%g</MinScaleDenominator>\n",
+                  tabspace, minscaledenom);
+    
+    if (maxscaledenom > 0)
+      msIO_printf("%s<MaxScaleDenominator>%g</MaxScaleDenominator>\n",
+                  tabspace, maxscaledenom);
+}
+
+
+
+/*
+** msWMSPrintScaleHint()
+**
 ** Print a ScaleHint tag for this layer if applicable.
 **
 ** (see WMS 1.1.0 sect. 7.1.5.4) The WMS defines the scalehint values as
@@ -1125,7 +1161,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    char *pszMetadataName=NULL, *mimetype=NULL;
    char **classgroups = NULL;
    int iclassgroups=0 ,j=0;
-  
+   char szVersionBuf[OWS_VERSION_MAXLEN];
+
    /* if the layer status is set to MS_DEFAULT, output a warning */
    if (lp->status == MS_DEFAULT)
      msIO_fprintf(stdout, "<!-- WARNING: This layer has its status set to DEFAULT and will always be displayed when doing a GetMap request even if it is not requested by the client. This is not in line with the expected behavior of a WMS server. Using status ON or OFF is recommended. -->\n");
@@ -1188,14 +1225,26 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    {
        /* starting 1.1.1 SRS are given in individual tags */
        if (nVersion > OWS_1_1_0)
-           msOWSPrintEncodeParamList(stdout, "(at least one of) "
-                                     "MAP.PROJECTION, LAYER.PROJECTION "
-                                     "or wms_srs metadata", 
-                                     msOWSGetEPSGProj(&(lp->projection), 
+       {
+           if (nVersion >= OWS_1_3_0)
+             msOWSPrintEncodeParamList(stdout, "(at least one of) "
+                                       "MAP.PROJECTION, LAYER.PROJECTION "
+                                       "or wms_srs metadata", 
+                                       msOWSGetEPSGProj(&(lp->projection), 
+                                                      &(lp->metadata),
+                                                      "MO", MS_FALSE),
+                                     OWS_WARN, ' ', NULL, NULL, 
+                                     "        <CRS>%s</CRS>\n", NULL);
+           else
+             msOWSPrintEncodeParamList(stdout, "(at least one of) "
+                                       "MAP.PROJECTION, LAYER.PROJECTION "
+                                       "or wms_srs metadata", 
+                                       msOWSGetEPSGProj(&(lp->projection), 
                                                       &(lp->metadata),
                                                       "MO", MS_FALSE),
                                      OWS_WARN, ' ', NULL, NULL, 
                                      "        <SRS>%s</SRS>\n", NULL);
+       }
        else
          /* If map has no proj then every layer MUST have one or produce a warning */
          msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, "
@@ -1208,7 +1257,18 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    {
        /* starting 1.1.1 SRS are given in individual tags */
        if (nVersion > OWS_1_1_0)
-           msOWSPrintEncodeParamList(stdout, "(at least one of) "
+       {
+           if (nVersion >=  OWS_1_3_0)
+             msOWSPrintEncodeParamList(stdout, "(at least one of) "
+                                     "MAP.PROJECTION, LAYER.PROJECTION "
+                                     "or wms_srs metadata", 
+                                     msOWSGetEPSGProj(&(lp->projection), 
+                                                      &(lp->metadata),
+                                                      "MO", MS_FALSE),
+                                     OWS_WARN, ' ', NULL, NULL, 
+                                     "        <CRS>%s</CRS>\n", NULL);
+           else
+             msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                      "MAP.PROJECTION, LAYER.PROJECTION "
                                      "or wms_srs metadata", 
                                      msOWSGetEPSGProj(&(lp->projection), 
@@ -1216,6 +1276,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                                       "MO", MS_FALSE),
                                      OWS_WARN, ' ', NULL, NULL, 
                                      "        <SRS>%s</SRS>\n", NULL);
+       }
        else
        /* No warning required in this case since there's at least a map proj. */
          msOWSPrintEncodeParam(stdout,
@@ -1230,22 +1291,34 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    {
        if(lp->projection.numargs > 0)
        {
-           msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
-                                       &(lp->projection), NULL, OWS_WMS);
+           if (nVersion >= OWS_1_3_0)
+             msOWSPrintEX_GeographicBoundingBox(stdout, "    ", &(ext),
+                                                &(lp->projection));
+           else
+             msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
+                                         &(lp->projection), NULL, OWS_WMS);
+
            msOWSPrintBoundingBox( stdout,"        ", &(ext), &(lp->projection),
-                                  &(lp->metadata), "MO" );
+                                  &(lp->metadata), "MO", nVersion );
        }
        else
        {
-           msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
-                                       &(map->projection), NULL, OWS_WMS);
+           if (nVersion >= OWS_1_3_0)
+             msOWSPrintEX_GeographicBoundingBox(stdout, "    ", &(ext),
+                                                &(map->projection));
+           else
+              msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
+                                         &(map->projection), NULL, OWS_WMS);
            msOWSPrintBoundingBox(stdout,"        ", &(ext), &(map->projection),
-                                  &(map->web.metadata), "MO" );
+                                 &(map->web.metadata), "MO", nVersion );
        }
    }
    else
    {
-       msIO_printf("        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wms_extent metadata. Also check that your data exists in the DATA statement -->\n");
+       if (nVersion >= OWS_1_3_0)
+         msIO_printf("        <!-- WARNING: Optional Ex_GeographicBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wms_extent metadata. Also check that your data exists in the DATA statement -->\n");
+       else
+         msIO_printf("        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wms_extent metadata. Also check that your data exists in the DATA statement -->\n");
    }
 
    /* time support */
@@ -1443,7 +1516,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                            {
                                char *name_encoded = msEncodeHTMLEntities(lp->name);
                                sprintf(legendurl, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=%s",  
-                                       script_url_encoded,"1.1.1",name_encoded,
+                                       script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
                                        mimetype,  classgroups[i]);
                                msFree(name_encoded);
 
@@ -1482,8 +1555,10 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    
    msFree(pszMetadataName);
 
-   msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
-
+   if (nVersion <  OWS_1_3_0)
+     msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
+   else
+     msWMSPrintScaleDenominator("        ", lp->minscaledenom, lp->maxscaledenom);
    msIO_printf("%s    </Layer>\n", indent);
 
    return MS_SUCCESS;
@@ -1669,7 +1744,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
     dtd_url = strdup(schemalocation);
     dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.0/capabilities_1_1_0.dtd");
   }
-  else {
+  /*TODO review wms1.3.0*/
+  else if (nVersion != OWS_1_3_0) {
     nVersion = OWS_1_1_1;
     dtd_url = strdup(schemalocation);
     /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
@@ -1689,8 +1765,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
       return msWMSException(map, nVersion, NULL);
   }
 
-  if (nVersion <= OWS_1_0_7)
-      msIO_printf("Content-type: text/xml%c%c",10,10);  /* 1.0.0 to 1.0.7 */
+  if (nVersion <= OWS_1_0_7 || nVersion >= OWS_1_3_0)
+      msIO_printf("Content-type: text/xml%c%c",10,10);  /* 1.0.0 to 1.0.7 and >=1.3.0*/
   else
       msIO_printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  /* 1.1.0 and later */
 
@@ -1698,23 +1774,43 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                            "MO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                 "ISO-8859-1");
-  msIO_printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
-  msIO_printf(" [\n");
 
-  /* some mapserver specific declarations will go here */
-  msIO_printf(" <!ELEMENT VendorSpecificCapabilities EMPTY>\n");
+  /*TODO review wms1.3.0*/
+  if ( nVersion < OWS_1_3_0)
+  {
+      msIO_printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
+      msIO_printf(" [\n");
 
-  msIO_printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
+      /* some mapserver specific declarations will go here */
+      msIO_printf(" <!ELEMENT VendorSpecificCapabilities EMPTY>\n");
 
-  msIO_printf("<WMT_MS_Capabilities version=\"%s\"",
-         msOWSGetVersionString(nVersion, szVersionBuf));
+      msIO_printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
+  }
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
-
+  if ( nVersion >= OWS_1_3_0)
+    msIO_printf("<WMS_Capabilities version=\"%s\"",
+                msOWSGetVersionString(nVersion, szVersionBuf));
+  else
+    msIO_printf("<WMT_MS_Capabilities version=\"%s\"",
+                  msOWSGetVersionString(nVersion, szVersionBuf));
   if (updatesequence)
     msIO_printf(" updateSequence=\"%s\"",updatesequence);
 
-  msIO_printf(">\n",updatesequence);
+  
+  if ( nVersion == OWS_1_3_0)
+  {
+      msIO_printf("  xmlns=\"http://www.opengis.net/wms\""
+                  "   xmlns:sld=\"http://www.opengis.net/sld\""
+                  "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+                  "   xsi:schemaLocation=\"http://www.opengis.net/wms %s/wms/%s/capabilities_1_3_0.xsd "
+                  " http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/sld_capabilities.xsd\"",
+         msOWSGetSchemasLocation(map), msOWSGetVersionString(nVersion, szVersionBuf));
+  }
+
+  msIO_printf(">\n");
+
+
 
   /* Report MapServer Version Information */
   msIO_printf("\n<!-- %s -->\n\n", msGetVersion());
@@ -1725,8 +1821,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   /* Service name is defined by the spec and changed at v1.0.0 */
   if (nVersion <= OWS_1_0_7)
       msIO_printf("  <Name>GetMap</Name>\n");  /* v 1.0.0 to 1.0.7 */
+  else if (nVersion > OWS_1_0_7 && nVersion < OWS_1_3_0)
+      msIO_printf("  <Name>OGC:WMS</Name>\n"); /* v 1.1.0 to 1.1.1*/
   else
-      msIO_printf("  <Name>OGC:WMS</Name>\n"); /* v 1.1.0+ */
+      msIO_printf("  <Name>WMS</Name>\n"); /* v 1.3.0+ */
+  
 
   /* the majority of this section is dependent on appropriately named metadata in the WEB object */
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "title",
@@ -1780,6 +1879,13 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                            "accessconstraints", OWS_NOERR,
                         "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
 
+  if (nVersion >= OWS_1_3_0)
+  {
+      /* LayerLimit not supported. No restriction in MapServer at this point*/
+      msIO_printf("  <MaxWidth>%d</MaxWidth>\n", map->maxsize);
+      msIO_printf("  <MaxHeight>%d</MaxHeight>\n", map->maxsize);
+  }
+
   msIO_printf("</Service>\n\n");
 
   /* WMS capabilities definitions */
@@ -1814,9 +1920,14 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
     /* WMS 1.1.0 and later */
     /* Note changes to the request names, their ordering, and to the formats */
 
-    msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
-                    "application/vnd.ogc.wms_xml",
-                    NULL);
+    if (nVersion >= OWS_1_3_0)
+      msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
+                           "text/xml",
+                           NULL);
+    else
+      msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
+                           "application/vnd.ogc.wms_xml",
+                           NULL);
 
     msGetOutputFormatMimeListWMS(map,mime_list,sizeof(mime_list)/sizeof(char*));
     msWMSPrintRequestCap(nVersion, "GetMap", script_url_encoded,
@@ -1852,22 +1963,38 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                        NULL);
     }
 
-    msWMSPrintRequestCap(nVersion, "DescribeLayer", script_url_encoded,
-                         "text/xml",
-                         NULL);
+    if (nVersion == OWS_1_3_0)
+      msWMSPrintRequestCap(nVersion, "sld:DescribeLayer", script_url_encoded,
+                           "text/xml",
+                           NULL);
+    else
+      msWMSPrintRequestCap(nVersion, "DescribeLayer", script_url_encoded,
+                           "text/xml",
+                           NULL);
 
     msGetOutputFormatMimeListGD(map,mime_list,sizeof(mime_list)/sizeof(char*));
 
     if (nVersion >= OWS_1_1_1) {
-      msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
+        
+        if (nVersion == OWS_1_3_0)
+          msWMSPrintRequestCap(nVersion, "sld:GetLegendGraphic", script_url_encoded,
                     mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                     mime_list[4], mime_list[5], mime_list[6], mime_list[7],
                     mime_list[8], mime_list[9], mime_list[10], mime_list[11],
                     mime_list[12], mime_list[13], mime_list[14], mime_list[15],
                     mime_list[16], mime_list[17], mime_list[18], mime_list[19],
                     NULL );
-
-      msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded, "text/xml", NULL);
+        else 
+        {
+            msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
+                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                    NULL );
+            msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded, "text/xml", NULL);
+        }
     }
 
   }
@@ -1879,6 +2006,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
       msIO_printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
   else
   {
+      /*allow text/xml for >=1.3.0*/
+      if (nVersion >= OWS_1_3_0)
+        msIO_printf("    <Format>text/xml</Format>\n");
       /* 1.1.0 and later */
       msIO_printf("    <Format>application/vnd.ogc.se_xml</Format>\n");
       msIO_printf("    <Format>application/vnd.ogc.se_inimage</Format>\n");
@@ -1887,11 +2017,15 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   msIO_printf("  </Exception>\n");
 
 
-  msIO_printf("  <VendorSpecificCapabilities />\n"); /* nothing yet */
+  if (nVersion != OWS_1_3_0) 
+    msIO_printf("  <VendorSpecificCapabilities />\n"); /* nothing yet */
 
   /* SLD support */
   if (nVersion >= OWS_1_0_7) {
-    msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
+      if (nVersion >= OWS_1_3_0)
+        msIO_printf("  <sld:UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\" InlineFeature=\"0\" RemoteWCS=\"0\"/>\n");
+      else
+        msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
   }
 
   /* Top-level layer with map extents and SRS, encloses all map layers */
@@ -1912,8 +2046,19 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   /* is REQUIRED.  It also suggests that we use an empty SRS element if there */
   /* is no common SRS. */
   if (nVersion > OWS_1_1_0)
+  {
       /* starting 1.1.1 SRS are given in individual tags */
-      msOWSPrintEncodeParamList(stdout, "(at least one of) "
+      if (nVersion >= OWS_1_3_0)
+          msOWSPrintEncodeParamList(stdout, "(at least one of) "
+                                "MAP.PROJECTION, LAYER.PROJECTION "
+                                "or wms_srs metadata", 
+                                msOWSGetEPSGProj(&(map->projection), 
+                                                 &(map->web.metadata),
+                                                 "MO", MS_FALSE),
+                                OWS_WARN, ' ', NULL, NULL, 
+                                "    <CRS>%s</CRS>\n", "");
+      else
+        msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                 "MAP.PROJECTION, LAYER.PROJECTION "
                                 "or wms_srs metadata", 
                                 msOWSGetEPSGProj(&(map->projection), 
@@ -1921,6 +2066,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                                                  "MO", MS_FALSE),
                                 OWS_WARN, ' ', NULL, NULL, 
                                 "    <SRS>%s</SRS>\n", "");
+  }
   else
       /* If map has no proj then every layer MUST have one or produce a warning */
     msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
@@ -1929,17 +2075,25 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                                              "MO", MS_FALSE),
                             OWS_WARN, "    <SRS>%s</SRS>\n", "");
 
-  msOWSPrintLatLonBoundingBox(stdout, "    ", &(map->extent),
-                              &(map->projection), NULL, OWS_WMS);
+  if (nVersion >= OWS_1_3_0)
+    msOWSPrintEX_GeographicBoundingBox(stdout, "    ", &(map->extent),
+                                       &(map->projection));
+  else
+    msOWSPrintLatLonBoundingBox(stdout, "    ", &(map->extent),
+                                &(map->projection), NULL, OWS_WMS);
+
   msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
-                         &(map->web.metadata), "MO" );
+                         &(map->web.metadata), "MO", nVersion);
 
   if (nVersion >= OWS_1_0_7) {
     msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
   }
 
-  msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
-                      map->resolution);
+  if (nVersion <  OWS_1_3_0)
+    msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
+                        map->resolution);
+  else
+    msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
 
 
   /*  */
@@ -2041,7 +2195,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   msIO_printf("  </Layer>\n");
 
   msIO_printf("</Capability>\n");
-  msIO_printf("</WMT_MS_Capabilities>\n");
+  if ( nVersion >= OWS_1_3_0)
+    msIO_printf("</WMS_Capabilities>\n");
+  else
+    msIO_printf("</WMT_MS_Capabilities>\n");
 
   free(script_url);
   free(script_url_encoded);

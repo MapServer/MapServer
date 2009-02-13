@@ -1160,6 +1160,39 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
     return status;
 }
 
+
+/*
+** msOWSPrintEX_GeographicBoundingBox()
+**
+** Print a EX_GeographicBoundingBox tag for WMS1.3.0
+**
+*/
+void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace, 
+                                        rectObj *extent, projectionObj *srcproj)
+
+{
+  const char *pszTag = "EX_GeographicBoundingBox";  /* The default for WMS */
+  rectObj ext;
+
+  ext = *extent;
+
+  /* always project to lat long */
+  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
+      msProjectRect(srcproj, NULL, &ext);
+  }
+  
+
+  msIO_fprintf(stream, "%s<%s>\n", tabspace, pszTag);
+  msIO_fprintf(stream, "%s    <westBoundLongitude>%g</westBoundLongitude>\n", tabspace, ext.minx);
+  msIO_fprintf(stream, "%s    <eastBoundLongitude>%g</eastBoundLongitude>\n", tabspace, ext.maxx);
+  msIO_fprintf(stream, "%s    <southBoundLatitude>%g</southBoundLatitude>\n", tabspace, ext.miny);
+  msIO_fprintf(stream, "%s    <northBoundLatitude>%g</northBoundLatitude>\n", tabspace, ext.maxy);
+  msIO_fprintf(stream, "%s</%s>\n", tabspace, pszTag);
+
+  //msIO_fprintf(stream, "%s<%s minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 
+  //      tabspace, pszTag, ext.minx, ext.miny, ext.maxx, ext.maxy);
+}
+
 /*
 ** msOWSPrintLatLonBoundingBox()
 **
@@ -1201,24 +1234,48 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
                            rectObj *extent, 
                            projectionObj *srcproj,
                            hashTableObj *metadata,
-                           const char *namespaces) 
+                           const char *namespaces,
+                           int wms_version) 
 {
     const char	*value, *resx, *resy;
     char *encoded, *encoded_resx, *encoded_resy;
+    projectionObj proj;
 
     /* Look for EPSG code in PROJECTION block only.  "wms_srs" metadata cannot be
      * used to establish the native projection of a layer for BoundingBox purposes.
      */
     value = msOWSGetEPSGProj(srcproj, NULL, namespaces, MS_TRUE);
     
+    /*for wms 1.3.0 we need to make sure that we present the BBOX with  
+      a revered axes for some espg codes*/
+    if (wms_version >= OWS_1_3_0 && value && strncasecmp(value, "EPSG:", 5) == 0)
+    {
+        msInitProjection(&proj);
+        if (msLoadProjectionStringESPG(&proj, (char *)value) == 0)
+        {
+            msAxisNormalizePoints( &proj, 1, &extent->minx, &extent->miny );
+            msAxisNormalizePoints( &proj, 1, &extent->maxx, &extent->maxy );
+        }
+        msFreeProjection( &proj );
+    }
+    
+
     if( value != NULL )
     {
         encoded = msEncodeHTMLEntities(value);
-        msIO_fprintf(stream, "%s<BoundingBox SRS=\"%s\"\n"
+        if (wms_version >= OWS_1_3_0)
+          msIO_fprintf(stream, "%s<BoundingBox CRS=\"%s\"\n"
                "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
                tabspace, encoded, 
                tabspace, extent->minx, extent->miny, 
                extent->maxx, extent->maxy);
+        else
+          msIO_fprintf(stream, "%s<BoundingBox SRS=\"%s\"\n"
+               "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
+               tabspace, encoded, 
+               tabspace, extent->minx, extent->miny, 
+               extent->maxx, extent->maxy);
+
         msFree(encoded);
 
         if( (resx = msOWSLookupMetadata( metadata, "MFO", "resx" )) != NULL &&
@@ -1559,7 +1616,8 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
   } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=epsg:")) != NULL && strlen(value) < 20) {
     sprintf(epsgCode, "EPSG:%s", value+10);
     return epsgCode;
-  } else if (proj && proj->numargs > 0 && strncasecmp(proj->args[0], "AUTO:", 5) == 0 ) {
+  } else if (proj && proj->numargs > 0 && (strncasecmp(proj->args[0], "AUTO:", 5) == 0 ||
+                                           strncasecmp(proj->args[0], "AUTO2:", 6) == 0)) {
     return proj->args[0];
   }
 

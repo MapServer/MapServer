@@ -187,6 +187,7 @@ MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 #define OWS_1_0_8   0x010008
 #define OWS_1_1_0   0x010100
 #define OWS_1_1_1   0x010101
+#define OWS_1_3_0   0x010300
 #define OWS_VERSION_MAXLEN   20  /* Buffer size for msOWSGetVersionString() */
 #define OWS_VERSION_NOTSET    -1
 #define OWS_VERSION_BADFORMAT -2
@@ -266,11 +267,15 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
                                  rectObj *extent, projectionObj *srcproj,
                                  projectionObj *wfsproj, int nService);
+void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace, 
+                                        rectObj *extent, projectionObj *srcproj);
+
 void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
                            rectObj *extent, 
                            projectionObj *srcproj,
                            hashTableObj *metadata,
-                           const char *namespaces);
+                           const char *namespaces,
+                           int wms_version);
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
                             int nVersion, hashTableObj *metadata,
                             const char *namespaces  );

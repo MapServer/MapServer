@@ -1081,6 +1081,42 @@ static int loadProjection(projectionObj *p)
 #endif
 }
 
+
+/************************************************************************/
+/*                         msLoadProjectionStringESPG                   */
+/*                                                                      */
+/*      Checks fro EPSG type projection and set the axes for a          */
+/*      certain code ranges.                                            */
+/*      Use for now in WMS 1.3.0                                        */
+/************************************************************************/
+int msLoadProjectionStringESPG(projectionObj *p, char *value)
+{
+    p->gt.need_geotransform = MS_FALSE;
+    
+    if (strncasecmp(value, "EPSG:", 5) == 0)
+    {
+        char init_string[100];
+
+        /* translate into PROJ.4 format. */
+        sprintf( init_string, "init=epsg:%s", value+5 );
+
+        p->args = (char**)malloc(sizeof(char*) * 2);
+        p->args[0] = strdup(init_string);
+        p->numargs = 1;
+
+        if( atoi(value+5) >= 4000 && atoi(value+5) < 5000 )
+        {
+            p->args[1] = strdup("+epsgaxis=ne");
+            p->numargs = 2;
+        }
+
+        return msProcessProjection( p );
+    }
+
+    return msLoadProjectionString(p, value);
+}
+
+
 int msLoadProjectionString(projectionObj *p, char *value)
 {
   p->gt.need_geotransform = MS_FALSE;
