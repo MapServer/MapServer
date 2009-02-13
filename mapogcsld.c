@@ -676,14 +676,18 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                             if (psNode)
                             {
 /* ==================================================================== */
-/*      If the filter has a spatial filter, we keep the node. This      */
-/*      node will be parsed when applying the SLD and be used to do     */
-/*      queries on the layer.                                           */
+/*      If the filter has a spatial filter or is a simple, we keep      */
+/*      the node. This node will be parsed when applying the SLD and    */
+/*      be used to do queries on the layer.  Simple filers              */
+/*      (Comparision operators (PropertyIsEqualTo,                      */
+/*      PropertyNotEqualTo, ... combined or not with logical            */
+/*      operators such as AND/OR/NOT) will be used to set the FILTER    */
+/*      element of the layer.                                           */
 /* ==================================================================== */
-                                if (FLTHasSpatialFilter(psNode))
-                                  psLayer->layerinfo = (void *)psNode;
 
-                                szExpression = FLTGetMapserverExpression(psNode, psLayer);
+                              psLayer->layerinfo = (void *)psNode;
+
+                              szExpression = FLTGetMapserverExpression(psNode, psLayer);
 
                                 if (szExpression)
                                 {

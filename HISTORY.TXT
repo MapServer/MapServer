@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- SLD: if it conatins a Filer Encoding tag, try to always set the
+  layer's FILTER element (#2889)
+
 - Add support for rendering INLINE layers with layer attributes (items) (#2870)
 
 - Fix mapserver crash when rendering a query map in HILITE mode
