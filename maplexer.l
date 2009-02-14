@@ -168,7 +168,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>encoding                              { return(ENCODING); }
 <INITIAL,URL_STRING>end                        { return(END); }
 <INITIAL,URL_STRING>error                      { return(ERROR); }
-<INITIAL>expression                            { return(EXPRESSION); }
+<INITIAL,URL_STRING>expression                 { return(EXPRESSION); }
 <INITIAL,URL_VARIABLE,URL_STRING>extent        { return(EXTENT); }
 <INITIAL>extension                             { return(EXTENSION); }
 <INITIAL,URL_STRING>feature                    { return(FEATURE); }
