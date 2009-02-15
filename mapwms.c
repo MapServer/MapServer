@@ -522,8 +522,21 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         /*don't need to copy init=xxx since the srsbudder is only
           used with msLoadProjection and that does alreay the job*/
         //snprintf(srsbuffer, 100, "init=epsg:%.20s", values[i]+5);
-          snprintf(srsbuffer, 100, "EPSG:%.20s",values[i]+5);
-          snprintf(epsgbuf, 100, "EPSG:%.20s",values[i]+5);
+
+        
+        snprintf(srsbuffer, 100, "EPSG:%.20s",values[i]+5);
+        snprintf(epsgbuf, 100, "EPSG:%.20s",values[i]+5);
+       
+        /* This test was to correct a request by the OCG cite 1.3.0 test
+         sending CRS=ESPG:4326,  Bug:*/
+        if (nVersion >= OWS_1_3_0)
+        {
+            if (srsbuffer[strlen(srsbuffer)-1] == ',')
+              srsbuffer[strlen(srsbuffer)-1] = '\0';
+            if (epsgbuf[strlen(epsgbuf)-1] == ',')
+              epsgbuf[strlen(epsgbuf)-1] = '\0';
+            
+        }
 
         /* we need to wait until all params are read before */
         /* loding the projection into the map. This will help */
@@ -656,6 +669,20 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
   }
 
+   /*validate the exception format WMS 1.3.0 section 7.4.3.5*/
+
+   if (nVersion >= OWS_1_3_0 && wms_exception_format != NULL)
+   {    
+       if (strcasecmp(wms_exception_format, "INIMAGE") != 0 &&
+           strcasecmp(wms_exception_format, "BLANK") != 0 &&
+           strcasecmp(wms_exception_format, "XML") != 0)
+       {
+           msSetError(MS_WMSERR,
+                      "Invalid format for the EXCEPTION parameter.",
+                      "msWMSLoadGetMapParams()");
+           return msWMSException(map, nVersion, "InvalidFormat");
+       }
+   }
    if (bboxfound && bboxrequest && nVersion >= OWS_1_3_0)
    {
        char **tokens;
@@ -941,6 +968,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   if (srsbuffer != NULL && strlen(srsbuffer) > 1)
   {
       int nTmp;
+      msFreeProjection(&map->projection);
+      msInitProjection(&map->projection);
       if (nVersion >= OWS_1_3_0)
         nTmp = msLoadProjectionStringEPSG(&(map->projection), srsbuffer);
       else
@@ -2110,15 +2139,18 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   msIO_printf("  <Exception>\n");
   if (nVersion <= OWS_1_0_7)
       msIO_printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
-  else
+  else if (nVersion <= OWS_1_1_1)
   {
-      /*allow text/xml for >=1.3.0*/
-      if (nVersion >= OWS_1_3_0)
-        msIO_printf("    <Format>text/xml</Format>\n");
-      /* 1.1.0 and later */
       msIO_printf("    <Format>application/vnd.ogc.se_xml</Format>\n");
       msIO_printf("    <Format>application/vnd.ogc.se_inimage</Format>\n");
       msIO_printf("    <Format>application/vnd.ogc.se_blank</Format>\n");
+  }
+  else /*>=1.3.0*/
+  {
+       msIO_printf("    <Format>XML</Format>\n");
+       msIO_printf("    <Format>INIMAGE</Format>\n");
+       msIO_printf("    <Format>BLANK</Format>\n");
+       
   }
   msIO_printf("  </Exception>\n");
 
@@ -2707,6 +2739,15 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     return msWMSException(map, nVersion, NULL);
   }
 
+  /*wms1.3.0: check if the points are valid*/
+  if (nVersion >= OWS_1_3_0)
+  {
+      if (point.x > map->width || point.y > map->height)
+      {
+          msSetError(MS_WMSERR, "Invalid I/J values", "msWMSFeatureInfo()");
+          return msWMSException(map, nVersion, "InvalidPoint");
+      }
+  }
   /* Perform the actual query */
   cellx = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width); /* note: don't adjust extent, WMS assumes incoming extent is correct */
   celly = MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
@@ -2784,7 +2825,10 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   else
   {
      msSetError(MS_WMSERR, "Unsupported INFO_FORMAT value (%s).", "msWMSFeatureInfo()", info_format);
-     return msWMSException(map, nVersion, NULL);
+     if (nVersion >= OWS_1_3_0)
+       return msWMSException(map, nVersion, "InvalidFormat");
+     else
+       return msWMSException(map, nVersion, NULL); 
   }
 
   return(MS_SUCCESS);
