@@ -63,6 +63,10 @@ static double roundInterval(double d)
     return(MS_NINT(d/1000) * 1000);
   if(d<1000000)
     return(MS_NINT(d/10000) * 10000);
+  if(d<10000000)
+    return(MS_NINT(d/100000) * 100000);
+  if(d<100000000)
+    return(MS_NINT(d/1000000) * 1000000);
 
   return(-1);
 }

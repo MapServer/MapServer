@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- Fixed a scalebar rounding problem causing to draw zero scalebar width (#2890)
+
 - SLD: if it conatins a Filer Encoding tag, try to always set the
   layer's FILTER element (#2889)
 
