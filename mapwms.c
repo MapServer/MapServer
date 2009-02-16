@@ -711,6 +711,28 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
             }
             msFreeProjection( &proj );
        }
+       /*if the CRS is AUTO2:auto_crs_id,factor,lon0,lat0,
+        we need to grab the factor patameter and use it with the bbox*/
+       if (strlen(srsbuffer) > 1 && strncasecmp(srsbuffer, "AUTO2:", 6) == 0)
+       {
+           char **args;
+           int numargs;
+           double factor;
+           args = msStringSplit(srsbuffer, ',', &numargs);
+           if (numargs == 4)
+           {
+               factor = atof(args[1]);
+               if (factor > 0 && factor != 1.0)
+               {
+                   rect.minx = rect.minx*factor;
+                   rect.miny = rect.miny*factor;
+                   rect.maxx = rect.maxx*factor;
+                   rect.maxx = rect.maxy*factor;
+               }
+           }
+           msFreeCharArray(args, numargs);
+       }
+
        map->extent.minx = rect.minx;
        map->extent.miny = rect.miny;
        map->extent.maxx = rect.maxx;

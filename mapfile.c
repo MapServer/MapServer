@@ -875,19 +875,31 @@ static int _msProcessAutoProjection(projectionObj *p)
 
     /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
     args = msStringSplit(p->args[0], ',', &numargs);
-    if (numargs != 4 || strncasecmp(args[0], "AUTO:", 5) != 0)
+    if (numargs != 4 || 
+        (strncasecmp(args[0], "AUTO:", 5) != 0 &&
+         strncasecmp(args[0], "AUTO2:", 6) != 0))
     {
         msSetError(MS_PROJERR, 
-                   "WMS/WFS AUTO PROJECTION must be in the format "
-                   "'AUTO:proj_id,units_id,lon0,lat0' (got '%s').\n",
+                   "WMS/WFS AUTO/AUTO2 PROJECTION must be in the format "
+                   "'AUTO:proj_id,units_id,lon0,lat0' or 'AUTO2:crs_id,factor,lon0,lat0'(got '%s').\n",
                    "_msProcessAutoProjection()", p->args[0]);
         return -1;
     }
 
-    nProjId = atoi(args[0]+5);
+    if (strncasecmp(args[0], "AUTO:", 5)==0)
+      nProjId = atoi(args[0]+5);
+    else
+      nProjId = atoi(args[0]+6);
+
     nUnitsId = atoi(args[1]);
     dLon0 = atof(args[2]);
     dLat0 = atof(args[3]);
+
+
+    /*There is no unit parameter for AUTO2. The 2nd parameter is
+     factor. Set the units to always be meter*/
+    if (strncasecmp(args[0], "AUTO2:", 6) == 0)
+      nUnitsId = 9001;
 
     msFreeCharArray(args, numargs);
 
@@ -998,9 +1010,11 @@ int msProcessProjection(projectionObj *p)
         return 0;
     }
 
-    if (strncasecmp(p->args[0], "AUTO:", 5) == 0)
+    if (strncasecmp(p->args[0], "AUTO:", 5) == 0 ||
+        strncasecmp(p->args[0], "AUTO2:", 6) == 0)
     {
         /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
+        /*WMS 1.3.0: AUTO2:auto_crs_id,factor,lon0,lat0*/
         return _msProcessAutoProjection(p);
     }
     msAcquireLock( TLOCK_PROJ );
@@ -1147,11 +1161,13 @@ int msLoadProjectionString(projectionObj *p, char *value)
       p->args = msStringSplit(trimmed,'+', &p->numargs);
       free( trimmed );
   }
-  else if (strncasecmp(value, "AUTO:", 5) == 0)
+  else if (strncasecmp(value, "AUTO:", 5) == 0 ||
+           strncasecmp(value, "AUTO2:", 6) == 0)
   {
-      /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
-      /* Keep the projection defn into a single token for writeProjection() */
-      /* to work fine. */
+     /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
+     /* WMS 1.3.0 projection: "AUTO2:auto_crs_id,factor,lon0,lat0"*/
+     /* Keep the projection defn into a single token for writeProjection() */
+     /* to work fine. */
       p->args = (char**)malloc(sizeof(char*));
       p->args[0] = strdup(value);
       p->numargs = 1;
