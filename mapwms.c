@@ -2850,25 +2850,53 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
   char *pszOnlineResEncoded=NULL, *pszLayerName=NULL;
   char *schemalocation = NULL;
   char *version = NULL;
+  char *sld_version = NULL;
 
-   for(i=0; map && i<numentries; i++) {
-     if(strcasecmp(names[i], "LAYERS") == 0) {
-      layers = msStringSplit(values[i], ',', &numlayers);
-     }
-     if(strcasecmp(names[i], "VERSION") == 0) {
-      version = values[i];
-     }
-   }
+  for(i=0; map && i<numentries; i++) {
+      if(strcasecmp(names[i], "LAYERS") == 0) {
+          layers = msStringSplit(values[i], ',', &numlayers);
+      }
+      if(strcasecmp(names[i], "VERSION") == 0) {
+          version = values[i];
+      }
+      if(strcasecmp(names[i], "SLD_VERSION") == 0) {
+          sld_version = values[i];
+      }
+  }
 
-   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
+  if (nVersion >= OWS_1_3_0 && sld_version == NULL)
+  {
+      msSetError(MS_WMSERR, "Missing required parameter SLD_VERSION", "DescribeLayer()");
+      return msWMSException(map, nVersion, "MissingParameterValue");
+  }
+  if (nVersion >= OWS_1_3_0 && strcasecmp(sld_version, "1.1.0") != 0)
+  {
+      msSetError(MS_WMSERR, "SLD_VERSION must be 1.1.0", "DescribeLayer()");
+      return msWMSException(map, nVersion, "InvalidParameterValue");
+  }
+  msIO_printf("Content-type: text/xml\n\n");
+  
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                             "MO", "encoding", OWS_NOERR,
                             "<?xml version='1.0' encoding=\"%s\"?>\n",
                             "ISO-8859-1");
-   schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
-   msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"%s/wms/1.1.1/WMS_DescribeLayerResponse.dtd\">\n", schemalocation);
-   free(schemalocation);
 
-   msIO_printf("<WMS_DescribeLayerResponse version=\"%s\" >\n", version);
+   schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
+   if (nVersion < OWS_1_3_0)
+   {
+      
+       msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"%s/wms/1.1.1/WMS_DescribeLayerResponse.dtd\">\n", schemalocation);
+      
+
+       msIO_printf("<WMS_DescribeLayerResponse version=\"%s\" >\n", version);
+   }
+   else
+   {
+       msIO_printf("<DescribeLayerResponse xmlns=\"http://www.opengis.net/sld\" xmlns:ows=\"http://www.opengis.net/ows\" xmlns:se=\"http://www.opengis.net/se\" xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"  xsi:schemaLocation=\"http://www.opengis.net/sld %s/sld/1.1.0/DescribeLayer.xsd\">\n", schemalocation);
+       msIO_printf("<Version>%s</Version>\n",sld_version);
+       
+   }
+    free(schemalocation);
 
    /* check if map-level metadata wfs(wcs)_onlineresource is available */
    pszOnlineResMapWFS = msOWSLookupMetadata(&(map->web.metadata), "FO", "onlineresource");
@@ -2906,11 +2934,25 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
              pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWFS);
              pszLayerName = msEncodeHTMLEntities(lp->name);
 
-             msIO_printf("<LayerDescription name=\"%s\" wfs=\"%s\" owsType=\"WFS\" owsURL=\"%s\">\n",
-                    pszLayerName, pszOnlineResEncoded, pszOnlineResEncoded);
-             msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
-             msIO_printf("</LayerDescription>\n");
-
+             if (nVersion < OWS_1_3_0)
+             {
+                 msIO_printf("<LayerDescription name=\"%s\" wfs=\"%s\" owsType=\"WFS\" owsURL=\"%s\">\n",
+                             pszLayerName, pszOnlineResEncoded, pszOnlineResEncoded);
+                 msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
+                 msIO_printf("</LayerDescription>\n");
+             }
+             else /*wms 1.3.0*/
+             {
+                 msIO_printf("  <LayerDescription>\n");
+                 msIO_printf("    <owsType>wfs</owsType>\n");
+                 msIO_printf("    <se:OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", 
+                             pszOnlineResEncoded);
+                 msIO_printf("    <TypeName>\n");
+                 msIO_printf("      <se:FeatureTypeName>%s</se:FeatureTypeName>\n",pszLayerName);
+                 msIO_printf("    </TypeName>\n");
+                 msIO_printf("  </LayerDescription>\n");
+             }
+           
              msFree(pszOnlineResEncoded);
              msFree(pszLayerName);
            }
@@ -2920,21 +2962,54 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
                pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWCS);
                pszLayerName = msEncodeHTMLEntities(lp->name);
 
-               msIO_printf("<LayerDescription name=\"%s\"  owsType=\"WCS\" owsURL=\"%s\">\n",
-                    pszLayerName, pszOnlineResEncoded);
-             msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
-             msIO_printf("</LayerDescription>\n");
+               if (nVersion < OWS_1_3_0)
+               {
+                   msIO_printf("<LayerDescription name=\"%s\"  owsType=\"WCS\" owsURL=\"%s\">\n",
+                               pszLayerName, pszOnlineResEncoded);
+                   msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
+                   msIO_printf("</LayerDescription>\n");
 
-             msFree(pszOnlineResEncoded);
-             msFree(pszLayerName);
+                   msFree(pszOnlineResEncoded);
+                   msFree(pszLayerName);
+               }        
+               else
+               {
+                   msIO_printf("  <LayerDescription>\n");
+                   msIO_printf("    <owsType>wcs</owsType>\n");
+                   msIO_printf("    <se:OnlineResource  xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", 
+                               pszOnlineResEncoded);
+                   msIO_printf("    <TypeName>\n");
+                   msIO_printf("      <se:CoverageTypeName>%s</se:CoverageTypeName>\n",pszLayerName);
+                   msIO_printf("    </TypeName>\n");
+                   msIO_printf("  </LayerDescription>\n");
+               }
            }
            else
            {
              char *pszLayerName;
              pszLayerName = msEncodeHTMLEntities(lp->name);
 
-             msIO_printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
-                    pszLayerName);
+             if (nVersion < OWS_1_3_0)
+               msIO_printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
+                           pszLayerName);
+             else /*wms 1.3.0*/
+             {
+                 msIO_printf("  <LayerDescription>\n");
+                 /*need to have a owstype for the DescribeLayer to be valid*/
+                 if (lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS)
+                   msIO_printf("    <owsType>wcs</owsType>\n");
+                 else
+                    msIO_printf("    <owsType>wfs</owsType>\n");
+
+                 msIO_printf("    <se:OnlineResource  xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\"/>\n"); 
+                 msIO_printf("    <TypeName>\n");
+                 if (lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS)
+                   msIO_printf("      <se:CoverageTypeName>%s</se:CoverageTypeName>\n",pszLayerName);
+                 else
+                   msIO_printf("      <se:FeatureTypeName>%s</se:FeatureTypeName>\n",pszLayerName);
+                 msIO_printf("    </TypeName>\n");
+                 msIO_printf("  </LayerDescription>\n");
+             }
 
              msFree(pszLayerName);
            }
@@ -2943,7 +3018,10 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
        }
    }
 
-   msIO_printf("</WMS_DescribeLayerResponse>\n");
+   if (nVersion < OWS_1_3_0)
+     msIO_printf("</WMS_DescribeLayerResponse>\n");
+   else
+      msIO_printf("</DescribeLayerResponse>\n");
 
    if (layers)
      msFreeCharArray(layers, numlayers);
@@ -3431,7 +3509,6 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
     return msWMSFeatureInfo(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams);
   else if (strcasecmp(request, "DescribeLayer") == 0)
   {
-      msIO_printf("Content-type: text/xml\n\n");
       return msWMSDescribeLayer(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams);
   }
 
