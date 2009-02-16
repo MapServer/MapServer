@@ -2892,7 +2892,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
    }
    else
    {
-       msIO_printf("<DescribeLayerResponse xmlns=\"http://www.opengis.net/sld\" xmlns:ows=\"http://www.opengis.net/ows\" xmlns:se=\"http://www.opengis.net/se\" xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"  xsi:schemaLocation=\"http://www.opengis.net/sld %s/sld/1.1.0/DescribeLayer.xsd\">\n", schemalocation);
+       msIO_printf("<DescribeLayerResponse xmlns=\"http://www.opengis.net/sld\" xmlns:ows=\"http://www.opengis.net/ows\" xmlns:se=\"http://www.opengis.net/se\" xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xsi:schemaLocation=\"http://www.opengis.net/sld %s/sld/1.1.0/DescribeLayer.xsd\">\n", schemalocation);
        msIO_printf("<Version>%s</Version>\n",sld_version);
        
    }
@@ -2945,7 +2945,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
              {
                  msIO_printf("  <LayerDescription>\n");
                  msIO_printf("    <owsType>wfs</owsType>\n");
-                 msIO_printf("    <se:OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", 
+                 msIO_printf("    <se:OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n", 
                              pszOnlineResEncoded);
                  msIO_printf("    <TypeName>\n");
                  msIO_printf("      <se:FeatureTypeName>%s</se:FeatureTypeName>\n",pszLayerName);
@@ -2976,7 +2976,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
                {
                    msIO_printf("  <LayerDescription>\n");
                    msIO_printf("    <owsType>wcs</owsType>\n");
-                   msIO_printf("    <se:OnlineResource  xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", 
+                   msIO_printf("    <se:OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n", 
                                pszOnlineResEncoded);
                    msIO_printf("    <TypeName>\n");
                    msIO_printf("      <se:CoverageTypeName>%s</se:CoverageTypeName>\n",pszLayerName);
@@ -3001,7 +3001,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
                  else
                     msIO_printf("    <owsType>wfs</owsType>\n");
 
-                 msIO_printf("    <se:OnlineResource  xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\"/>\n"); 
+                 msIO_printf("    <se:OnlineResource xlink:type=\"simple\"/>\n"); 
                  msIO_printf("    <TypeName>\n");
                  if (lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS)
                    msIO_printf("      <se:CoverageTypeName>%s</se:CoverageTypeName>\n",pszLayerName);
