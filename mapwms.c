@@ -701,7 +701,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
        msFreeCharArray(tokens, n);
 
        /*try to adjust the axes if necessary*/
-       if (srsbuffer && strlen(srsbuffer) > 1)
+       if (strlen(srsbuffer) > 1)
        {
             msInitProjection(&proj);
             if (msLoadProjectionStringEPSG(&proj, (char *)srsbuffer) == 0)
