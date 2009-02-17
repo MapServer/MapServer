@@ -199,7 +199,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>interlace                             { return(INTERLACE); }
 <INITIAL,URL_STRING>intervals                  { return(INTERVALS); } 
 <INITIAL>join                                  { return(JOIN); }
-<INITIAL>keyimage                              { return(KEYIMAGE); }
+<INITIAL,URL_STRING>keyimage                   { return(KEYIMAGE); }
 <INITIAL,URL_STRING>keysize                    { return(KEYSIZE); }
 <INITIAL>keyspacing                            { return(KEYSPACING); }
 <INITIAL,URL_STRING>label                      { return(LABEL); }
@@ -297,9 +297,9 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>template                   { return(TEMPLATE); }
 <INITIAL>templatepattern                       { return(TEMPLATEPATTERN); }
 <INITIAL,URL_STRING>text                       { return(TEXT); }
-<INITIAL>tileindex                             { return(TILEINDEX); }
-<INITIAL>tileitem                              { return(TILEITEM); }
-<INITIAL>title                                 { return(TITLE); }
+<INITIAL,URL_STRING>tileindex                  { return(TILEINDEX); }
+<INITIAL,URL_STRING>tileitem                   { return(TILEITEM); }
+<INITIAL,URL_STRING>title                      { return(TITLE); }
 <INITIAL>to                                    { return(TO); }
 <INITIAL,URL_STRING>tolerance                  { return(TOLERANCE); }
 <INITIAL,URL_STRING>toleranceunits             { return(TOLERANCEUNITS); }

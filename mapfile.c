@@ -2409,10 +2409,26 @@ int loadClass(classObj *class, layerObj *layer)
       }
       break;
     case(GROUP):
+      if(getString(&class->group) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(class->group, msLookupHashTable(&(class->validation), "group"), msLookupHashTable(&(layer->validation), "group"), msLookupHashTable(&(map->web.validation), "group"), NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based GROUP configuration failed pattern validation." , "loadClass()");
+          msFree(class->group); class->group=NULL;
+          return(-1);
+        }
+      }
+
       if(getString(&class->group) == MS_FAILURE) return(-1);
       break;      
     case(KEYIMAGE):
-      if(getString(&class->keyimage) == MS_FAILURE) return(-1);
+      if(getString(&class->keyimage) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(class->keyimage, msLookupHashTable(&(class->validation), "keyimage"), msLookupHashTable(&(layer->validation), "keyimage"), msLookupHashTable(&(map->web.validation), "keyimage"), NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based KEYIMAGE configuration failed pattern validation." , "loadClass()");
+          msFree(class->keyimage); class->keyimage=NULL;
+          return(-1);
+        }
+      }
       break;
     case(LABEL):
       class->label.size = MS_MEDIUM; /* only set a default if the LABEL section is present */
@@ -2443,21 +2459,38 @@ int loadClass(classObj *class, layerObj *layer)
       class->numstyles++;
       break;
     case(TEMPLATE):
-      if(getString(&class->template) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, class->template) != MS_TRUE) {
-        msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadClass()");
-        return(-1);
+      if(getString(&class->template) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(class->template, msLookupHashTable(&(class->validation), "template"), msLookupHashTable(&(layer->validation), "template"), msLookupHashTable(&(map->web.validation), "template"), map->templatepattern) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadClass()");
+          msFree(class->template); class->template=NULL;
+          return(-1);
+	}
       }
       break;
     case(TEXT):
-      if(loadExpression(&(class->text)) == -1) return(-1);
+      if(loadExpression(&(class->text)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(class->text.string, msLookupHashTable(&(class->validation), "text"), msLookupHashTable(&(layer->validation), "text"), msLookupHashTable(&(map->web.validation), "text"), NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based TEXT configuration failed pattern validation." , "loadClass()");
+          freeExpression(&(class->text));
+          return(-1);
+        }
+      }
       if((class->text.type != MS_STRING) && (class->text.type != MS_EXPRESSION)) {
-	msSetError(MS_MISCERR, "Text expressions support constant or replacement strings." , "loadClass()");
+	msSetError(MS_MISCERR, "Text expressions support constant or tagged replacement strings." , "loadClass()");
 	return(-1);
       }
       break;
     case(TITLE):
-      if(getString(&class->title) == MS_FAILURE) return(-1);
+      if(getString(&class->title) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(class->title, msLookupHashTable(&(class->validation), "title"), msLookupHashTable(&(layer->validation), "title"), msLookupHashTable(&(map->web.validation), "title"), NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based TITLE configuration failed pattern validation." , "loadClass()");
+          msFree(class->title); class->title=NULL;
+          return(-1);
+        }
+      }
       break;
     case(TYPE):
       if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return(-1);
@@ -2547,8 +2580,7 @@ int loadClass(classObj *class, layerObj *layer)
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
       if(state == MS_NUMBER)
 	class->styles[1]->symbol = (int) msyynumber;
-      else 
-      {
+      else  {
         if (class->styles[1]->symbolname != NULL)
           msFree(class->styles[1]->symbolname);
 	class->styles[1]->symbolname = strdup(msyytext);
@@ -4209,7 +4241,7 @@ int loadWeb(webObj *web, mapObj *map)
 
   for(;;) {
     switch(msyylex()) {
-    case(BROWSEFORMAT):
+    case(BROWSEFORMAT): /* change to use validation in 6.0 */
       free(web->browseformat); web->browseformat = NULL; /* there is a default */
       if(getString(&web->browseformat) == MS_FAILURE) return(-1);
       break;
@@ -4239,28 +4271,34 @@ int loadWeb(webObj *web, mapObj *map)
       }
       break;
     case(FOOTER):
-      if(getString(&web->footer) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, web->footer) != MS_TRUE) { 
-        msSetError(MS_MISCERR, "URL-based FOOTER configuration failed pattern validation." , "loadWeb()");
-        return(-1);
+      if(getString(&web->footer) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(web->footer, msLookupHashTable(&(web->validation), "footer"), map->templatepattern, NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based FOOTER configuration failed pattern validation." , "loadWeb()");
+          msFree(web->footer); web->footer=NULL;
+          return(-1);
+        }
       }
       break;
     case(HEADER):
-      if(getString(&web->header) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, web->header) != MS_TRUE) {
-        msSetError(MS_MISCERR, "URL-based HEADER configuration failed pattern validation." , "loadWeb()");
-        return(-1);
+      if(getString(&web->header) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(web->header, msLookupHashTable(&(web->validation), "header"), map->templatepattern, NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based HEADER configuration failed pattern validation." , "loadWeb()");
+          msFree(web->header); web->header=NULL;
+          return(-1);
+        }
       }
       break;
-    case(IMAGEPATH):
+    case(IMAGEPATH): /* change to use validation in 6.0 */
       free(web->imagepath); web->imagepath = NULL; /* there is a default */
       if(getString(&web->imagepath) == MS_FAILURE) return(-1);
       break;
-    case(IMAGEURL):
+    case(IMAGEURL): /* change to use validation in 6.0 */
       free(web->imageurl); web->imageurl = NULL; /* there is a default */
       if(getString(&web->imageurl) == MS_FAILURE) return(-1);
       break;
-    case(LEGENDFORMAT):
+    case(LEGENDFORMAT): /* change to use validation in 6.0 */
       free(web->legendformat); web->legendformat = NULL; /* there is a default */
       if(getString(&web->legendformat) == MS_FAILURE) return(-1);
       break;
@@ -4284,15 +4322,18 @@ int loadWeb(webObj *web, mapObj *map)
     case(MINTEMPLATE):
       if(getString(&web->mintemplate) == MS_FAILURE) return(-1);
       break; 
-    case(QUERYFORMAT):
+    case(QUERYFORMAT): /* change to use validation in 6.0 */
       free(web->queryformat); web->queryformat = NULL; /* there is a default */
       if(getString(&web->queryformat) == MS_FAILURE) return(-1);
       break;   
     case(TEMPLATE):
-      if(getString(&web->template) == MS_FAILURE) return(-1);
-      if(msyysource == MS_URL_TOKENS && msEvalRegex(map->templatepattern, web->template) != MS_TRUE) {
-        msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadWeb()");
-        return(-1);
+      if(getString(&web->template) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(web->template, msLookupHashTable(&(web->validation), "template"), map->templatepattern, NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based TEMPLATE configuration failed pattern validation." , "loadWeb()");
+          msFree(web->template); web->template=NULL;
+          return(-1);
+        }
       }
       break;
     case(VALIDATION):
@@ -5128,6 +5169,10 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msSetError(MS_MISCERR, "Class to be modified not valid.", "msUpdateMapFromURL()");
           return MS_FAILURE;
         }
+
+	/* make sure this class can be modified */
+	if(msLookupHashTable(&(GET_LAYER(map, i)->class[j]->validation), "immutable"))
+	  return(MS_SUCCESS); /* fail silently */
 
         if(msyylex() == STYLE) {
           if(getInteger(&k) == -1) return MS_FAILURE;
