@@ -1960,9 +1960,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
       msIO_printf("  xmlns=\"http://www.opengis.net/wms\""
                   "   xmlns:sld=\"http://www.opengis.net/sld\""
                   "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+                  "   xmlns:ms=\"http://mapserver.gis.umn.edu/mapserver\""
                   "   xsi:schemaLocation=\"http://www.opengis.net/wms %s/wms/%s/capabilities_1_3_0.xsd "
-                  " http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/sld_capabilities.xsd\"",
-         msOWSGetSchemasLocation(map), msOWSGetVersionString(nVersion, szVersionBuf));
+                  " http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/sld_capabilities.xsd "
+                  " http://mapserver.gis.umn.edu/mapserver %sservice=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension\"",
+         msOWSGetSchemasLocation(map), msOWSGetVersionString(nVersion, szVersionBuf), script_url_encoded);
   }
 
   msIO_printf(">\n");
@@ -2134,6 +2136,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
     if (nVersion >= OWS_1_1_1) {
         
         if (nVersion == OWS_1_3_0)
+        {
           msWMSPrintRequestCap(nVersion, "sld:GetLegendGraphic", script_url_encoded,
                     mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                     mime_list[4], mime_list[5], mime_list[6], mime_list[7],
@@ -2141,6 +2144,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                     mime_list[12], mime_list[13], mime_list[14], mime_list[15],
                     mime_list[16], mime_list[17], mime_list[18], mime_list[19],
                     NULL );
+          msWMSPrintRequestCap(nVersion, "ms:GetStyles", script_url_encoded, "text/xml", NULL);
+        }
         else 
         {
             msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
@@ -3357,6 +3362,27 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
     return(MS_SUCCESS);
 }
 
+int msWMSGetSchemaExtension(mapObj *map) 
+{
+    char *schemalocation = NULL;
+
+    schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
+
+    msIO_printf("Content-type: text/xml\n\n");
+
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
+                            "MO", "encoding", OWS_NOERR,
+                            "<?xml version='1.0' encoding=\"%s\"?>\n",
+                            "ISO-8859-1");
+    msIO_printf("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" xmlns:wms=\"http://www.opengis.net/wms\" xmlns:ms=\"http://mapserver.gis.umn.edu/mapserver\" targetNamespace=\"http://mapserver.gis.umn.edu/mapserver\" elementFormDefault=\"qualified\" version=\"1.0.0\">\n");
+    msIO_printf("  <import namespace=\"http://www.opengis.net/wms\" schemaLocation=\"%s/wms/1.3.0/capabilities_1_3_0.xsd\"/>\n", schemalocation);
+    msIO_printf("  <element name=\"GetStyles\" type=\"wms:OperationType\" substitutionGroup=\"wms:_ExtendedOperation\"/>\n");
+    msIO_printf("</schema>");
+
+    free(schemalocation);
+
+    return(MS_SUCCESS);
+}
 
 #endif /* USE_WMS_SVR */
 
@@ -3528,6 +3554,9 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
 
   if (strcasecmp(request, "GetStyles") == 0)
     return msWMSGetStyles(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams);
+
+  else if (request && strcasecmp(request, "GetSchemaExtension") == 0)
+    return msWMSGetSchemaExtension(map);
 
   /* getMap parameters are used by both getMap and getFeatureInfo */
   if (strcasecmp(request, "map") == 0 || strcasecmp(request, "GetMap") == 0 ||
