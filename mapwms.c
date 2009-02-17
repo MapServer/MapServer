@@ -3068,6 +3068,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
     int i = 0;
     int nWidth = -1, nHeight =-1;
     char *pszStyle = NULL;
+    char *sld_version = NULL;
 
      for(i=0; map && i<numentries; i++)
      {
@@ -3101,6 +3102,8 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
            psScale = values[i];
          else if (strcasecmp(names[i], "STYLE") == 0)
            pszStyle = values[i];
+         else if(strcasecmp(names[i], "SLD_VERSION") == 0) 
+           sld_version = values[i];
 #endif
      }
 
@@ -3115,6 +3118,16 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          return msWMSException(map, nVersion, "InvalidFormat");
      }
 
+     if (nVersion >= OWS_1_3_0 && sld_version == NULL)
+  {
+      msSetError(MS_WMSERR, "Missing required parameter SLD_VERSION", "GetLegendGraphic()");
+      return msWMSException(map, nVersion, "MissingParameterValue");
+  }
+  if (nVersion >= OWS_1_3_0 && strcasecmp(sld_version, "1.1.0") != 0)
+  {
+      msSetError(MS_WMSERR, "SLD_VERSION must be 1.1.0", "GetLegendGraphic()");
+      return msWMSException(map, nVersion, "InvalidParameterValue");
+  }
      /* check if layer name is valid. We only test the layer name and not */
      /* the group name. */
      for (i=0; i<map->numlayers; i++)
