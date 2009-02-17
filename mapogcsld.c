@@ -411,6 +411,7 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
     CPLStripXMLNamespace(psRoot, "ogc", 1); 
     CPLStripXMLNamespace(psRoot, "sld", 1); 
     CPLStripXMLNamespace(psRoot, "gml", 1); 
+    CPLStripXMLNamespace(psRoot, "se", 1); 
     
 
 /* -------------------------------------------------------------------- */
@@ -957,7 +958,7 @@ void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                               int bNewClass)
 {
     int nClassId = 0;
-    CPLXMLNode *psStroke;
+    CPLXMLNode *psStroke=NULL, *psOffset=NULL;
     int iStyle = 0;
 
     if (psRoot && psLayer)
@@ -981,6 +982,14 @@ void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             
             msSLDParseStroke(psStroke, psLayer->class[nClassId]->styles[iStyle],
                              psLayer->map, 0); 
+
+            /*parse PerpendicularOffset SLD 1.1.10*/
+            psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
+            if (psOffset && psOffset->psChild && psOffset->psChild->pszValue)
+            {
+              psLayer->class[nClassId]->styles[iStyle]->offsetx = atoi(psOffset->psChild->pszValue);
+              psLayer->class[nClassId]->styles[iStyle]->offsety = psLayer->class[nClassId]->styles[iStyle]->offsetx;
+            }
         }
     }
 }
@@ -1011,9 +1020,13 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
     {
         /* parse css parameters */
         psCssParam =  CPLGetXMLNode(psStroke, "CssParameter");
-            
+        /*sld 1.1 used SvgParameter*/ 
+        if (psCssParam == NULL)
+          psCssParam =  CPLGetXMLNode(psStroke, "SvgParameter");
+
         while (psCssParam && psCssParam->pszValue && 
-               strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+               (strcasecmp(psCssParam->pszValue, "CssParameter") == 0 ||
+                strcasecmp(psCssParam->pszValue, "SvgParameter") == 0))
         {
             psStrkName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
 
@@ -1202,9 +1215,30 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 {
     CPLXMLNode *psFill, *psStroke;
     int nClassId=0, iStyle=0;
+    CPLXMLNode *psDisplacement=NULL, *psDisplacementX=NULL, *psDisplacementY=NULL;
+    int nOffsetX=-1, nOffsetY=-1;
 
     if (psRoot && psLayer)
     {
+        /*parse displacement for SLD 1.1.0*/
+        psDisplacement = CPLGetXMLNode(psRoot, "Displacement");
+        if (psDisplacement)
+        {
+            psDisplacementX = CPLGetXMLNode(psDisplacement, "DisplacementX");
+            psDisplacementY = CPLGetXMLNode(psDisplacement, "DisplacementY");
+            /* psCssParam->psChild->psNext->pszValue) */
+            if (psDisplacementX &&
+                psDisplacementX->psChild && 
+                psDisplacementX->psChild->pszValue &&
+                psDisplacementY && 
+                psDisplacementY->psChild && 
+                psDisplacementY->psChild->pszValue)
+            {
+                nOffsetX = atoi(psDisplacementX->psChild->pszValue);
+                nOffsetY = atoi(psDisplacementY->psChild->pszValue);
+            }
+        }
+            
         psFill =  CPLGetXMLNode(psRoot, "Fill");
         if (psFill)
         {
@@ -1224,6 +1258,12 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             
             msSLDParsePolygonFill(psFill, psLayer->class[nClassId]->styles[iStyle],
                                   psLayer->map);
+            
+            if (nOffsetX > 0 && nOffsetY > 0)
+            {
+                psLayer->class[nClassId]->styles[iStyle]->offsetx = nOffsetX;   
+                psLayer->class[nClassId]->styles[iStyle]->offsety = nOffsetY;  
+            }
         }
         /* stroke wich corresponds to the outilne in mapserver */
         /* is drawn after the fill */
@@ -1259,6 +1299,12 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             }
             msSLDParseStroke(psStroke, psLayer->class[nClassId]->styles[iStyle],
                              psLayer->map, 1);
+
+            if (nOffsetX > 0 && nOffsetY > 0)
+            {
+                psLayer->class[nClassId]->styles[iStyle]->offsetx = nOffsetX;   
+                psLayer->class[nClassId]->styles[iStyle]->offsety = nOffsetY;  
+            }
         }
     }
 }
@@ -1285,8 +1331,13 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
         psStyle->color.blue = 128;
 
         psCssParam =  CPLGetXMLNode(psFill, "CssParameter");
+        /*sld 1.1 used SvgParameter*/ 
+        if (psCssParam == NULL)
+          psCssParam =  CPLGetXMLNode(psFill, "SvgParameter");
+
         while (psCssParam && psCssParam->pszValue && 
-               strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+               (strcasecmp(psCssParam->pszValue, "CssParameter") == 0 ||
+                strcasecmp(psCssParam->pszValue, "SvgParameter") == 0))
         {
             psFillName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
             if (psFillName)
@@ -1351,6 +1402,8 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 {
     CPLXMLNode  *psCssParam, *psGraphic, *psExternalGraphic, *psMark, *psSize;
     CPLXMLNode *psWellKnownName, *psStroke, *psFill;
+    CPLXMLNode *psDisplacement=NULL, *psDisplacementX=NULL, *psDisplacementY=NULL;
+    CPLXMLNode *psOpacity=NULL, *psRotation=NULL;
     char *psColor=NULL, *psColorName = NULL;
     int nLength = 0;
     char *pszSymbolName = NULL;
@@ -1376,8 +1429,34 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
             if (psSize && psSize->psChild && psSize->psChild->pszValue)
               psStyle->size = atof(psSize->psChild->pszValue);
             else
-              psStyle->size = 6; /* defualt value */
+              psStyle->size = 6; /* default value */
 
+            /*SLD 1.1.0 extract opacity, rotation, displacement*/
+            psOpacity = CPLGetXMLNode(psGraphic, "Opacity");
+            if (psOpacity && psOpacity->psChild && psOpacity->psChild->pszValue)
+              psStyle->opacity = (int)(atof(psOpacity->psChild->pszValue) * 100);
+
+            psRotation = CPLGetXMLNode(psGraphic, "Rotation");
+            if (psRotation && psRotation->psChild && psRotation->psChild->pszValue)
+              psStyle->angle = atof(psRotation->psChild->pszValue);
+
+            psDisplacement = CPLGetXMLNode(psGraphic, "Displacement");
+            if (psDisplacement)
+            {
+                psDisplacementX = CPLGetXMLNode(psDisplacement, "DisplacementX");
+                psDisplacementY = CPLGetXMLNode(psDisplacement, "DisplacementY");
+                /* psCssParam->psChild->psNext->pszValue) */
+                if (psDisplacementX &&
+                    psDisplacementX->psChild && 
+                    psDisplacementX->psChild->pszValue &&
+                    psDisplacementY && 
+                    psDisplacementY->psChild && 
+                    psDisplacementY->psChild->pszValue)
+                {
+                    psStyle->offsetx = atoi(psDisplacementX->psChild->pszValue);
+                    psStyle->offsety = atoi(psDisplacementY->psChild->pszValue);
+                }
+            }
             /* extract symbol */
             psMark =  CPLGetXMLNode(psGraphic, "Mark");
             if (psMark)
@@ -1423,8 +1502,13 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                     if (psFill)
                     {
                         psCssParam =  CPLGetXMLNode(psFill, "CssParameter");
+                        /*sld 1.1 used SvgParameter*/ 
+                         if (psCssParam == NULL)
+                           psCssParam =  CPLGetXMLNode(psFill, "SvgParameter");
+
                         while (psCssParam && psCssParam->pszValue && 
-                               strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+                               (strcasecmp(psCssParam->pszValue, "CssParameter") == 0 ||
+                                strcasecmp(psCssParam->pszValue, "SvgParameter") == 0))
                         {
                             psColorName = 
                               (char*)CPLGetXMLValue(psCssParam, "name", NULL);
@@ -1454,8 +1538,13 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                     if (psStroke)
                     {
                         psCssParam =  CPLGetXMLNode(psStroke, "CssParameter");
+                        /*sld 1.1 used SvgParameter*/ 
+                        if (psCssParam == NULL)
+                          psCssParam =  CPLGetXMLNode(psStroke, "SvgParameter");
+
                         while (psCssParam && psCssParam->pszValue && 
-                               strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+                               (strcasecmp(psCssParam->pszValue, "CssParameter") == 0 ||
+                                strcasecmp(psCssParam->pszValue, "SvgParameter") == 0))
                         {
                             psColorName = 
                               (char*)CPLGetXMLValue(psCssParam, "name", NULL);
@@ -2098,7 +2187,7 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                             /* the last parameter is used to set the GAP size in the symbol. 
                                It is harcoded to be 2 * the size set for the symbol. This is
                                used when using graphic strokes with line symblizers (symbols
-                               along the line). Set to be negative for ration purpose. */
+                               along the line). Set to be negative for rotation purpose. */
                                
                             psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName, pszURL,
                                                                     (int)(-(2 * psStyle->size)));
@@ -2513,7 +2602,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 
     if (psRoot && psClass && psLayer)
     {
-        /*set the angle by defulat to auto. the angle can be
+        /*set the angle by default to auto. the angle can be
           modified Label Placement #2806*/
         psClass->label.autoangle = MS_TRUE;
 
@@ -2588,8 +2677,13 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                 if (psFont)
                 {
                     psCssParam =  CPLGetXMLNode(psFont, "CssParameter");
+                    /*sld 1.1 used SvgParameter*/ 
+                    if (psCssParam == NULL)
+                      psCssParam =  CPLGetXMLNode(psFont, "SvgParameter");
+
                     while (psCssParam && psCssParam->pszValue && 
-                           strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+                           (strcasecmp(psCssParam->pszValue, "CssParameter") == 0 ||
+                            strcasecmp(psCssParam->pszValue, "SvgParameter") == 0))
                     {
                         pszName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
                         if (pszName)
@@ -2692,8 +2786,13 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                     if (psHaloFill)
                     {
                         psCssParam =  CPLGetXMLNode(psHaloFill, "CssParameter");
+                        /*sld 1.1 used SvgParameter*/ 
+                        if (psCssParam == NULL)
+                          psCssParam =  CPLGetXMLNode(psHaloFill, "SvgParameter");
+
                         while (psCssParam && psCssParam->pszValue && 
-                           strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+                               (strcasecmp(psCssParam->pszValue, "CssParameter") == 0 ||
+                                strcasecmp(psCssParam->pszValue, "SvgParameter") == 0))
                         {
                             pszName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
                             if (pszName)
@@ -2730,9 +2829,14 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                 if (psFill)
                 {
                     psCssParam =  CPLGetXMLNode(psFill, "CssParameter");
+                     /*sld 1.1 used SvgParameter*/ 
+                    if (psCssParam == NULL)
+                      psCssParam =  CPLGetXMLNode(psFill, "SvgParameter");
+
                     while (psCssParam && psCssParam->pszValue && 
-                           strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
-                    {
+                           (strcasecmp(psCssParam->pszValue, "CssParameter") == 0 ||
+                            strcasecmp(psCssParam->pszValue, "SvgParameter") == 0))
+                    {   
                         pszName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
                         if (pszName)
                         {
@@ -2768,7 +2872,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 /************************************************************************/
 /*                         ParseTextPointPlacement                      */
 /*                                                                      */
-/*      point plavament node ifor the text symbolizer.                  */
+/*      point placement node for the text symbolizer.                  */
 /************************************************************************/
 void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
 {
@@ -2867,15 +2971,23 @@ void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
 /************************************************************************/
 void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
 {
-    CPLXMLNode *psOffset = NULL;
+  CPLXMLNode *psOffset = NULL, *psAligned=NULL;
     if (psRoot && psClass)
     {
         /*if there is a line placement, we will assume that the 
-              best setting for mapserver would be for the text to follow
-              the line #2806*/
+          best setting for mapserver would be for the text to follow
+          the line #2806*/
         psClass->label.autofollow = MS_TRUE;         
         psClass->label.autoangle = MS_TRUE; 
 
+        /*sld 1.1.0 has a parameter IsAligned. default value is true*/
+        psAligned = CPLGetXMLNode(psRoot, "IsAligned");
+        if (psAligned && psAligned->psChild && psAligned->psChild->pszValue && 
+            strcasecmp(psAligned->psChild->pszValue, "false") == 0)
+        {
+            psClass->label.autoangle = MS_FALSE;
+            psClass->label.autofollow = MS_FALSE;
+        }
         psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
         if (psOffset && psOffset->psChild && psOffset->psChild->pszValue)
         {
@@ -2883,10 +2995,15 @@ void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
             psClass->label.offsety = atoi(psOffset->psChild->pszValue);
 
             /*if there is a PerpendicularOffset, we will assume that the 
-              best setting for mapserver would be for use angle 0 and the
+              best setting for mapserver would be to use angle=0 and the
               the offset #2806*/
-            psClass->label.autoangle = MS_FALSE;
-            psClass->label.autofollow = MS_FALSE; 
+            /* since sld 1.1.0 introduces the IsAligned parameter, only
+               set the angles if the parameter is not set*/
+            if (!psAligned)
+            {
+                psClass->label.autoangle = MS_FALSE;
+                psClass->label.autofollow = MS_FALSE; 
+            }
         }
     }
             
