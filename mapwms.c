@@ -2293,7 +2293,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
          layerObj *lp;
          lp = (GET_LAYER(map, i));
 
-         if (pabLayerProcessed[i])
+         if (pabLayerProcessed[i] || (lp->status == MS_DELETE))
              continue;  /* Layer has already been handled */
 
 

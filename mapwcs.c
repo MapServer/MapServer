@@ -670,7 +670,7 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
   coverageMetadataObj cm;
   int status;
 
-  if(!msWCSIsLayerSupported(layer)) return MS_SUCCESS; /* not an error, this layer cannot be served via WCS */
+  if((layer->status == MS_DELETE) || !msWCSIsLayerSupported(layer)) return MS_SUCCESS; /* not an error, this layer cannot be served via WCS */
 
   status = msWCSGetCoverageMetadata(layer, &cm);
   if(status != MS_SUCCESS) return MS_FAILURE;

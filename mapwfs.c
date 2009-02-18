@@ -441,6 +441,9 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       layerObj *lp;
       lp = GET_LAYER(map, i);
 
+      if (lp->status == MS_DELETE)
+         continue;
+
       /* List only vector layers in which DUMP=TRUE */
       if (msWFSIsLayerSupported(lp))
       {

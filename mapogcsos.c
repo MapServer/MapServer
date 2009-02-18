@@ -1368,6 +1368,10 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
          for (i=0; i<map->numlayers; i++)
          {
              lp = (GET_LAYER(map, i));
+
+             if (lp->status == MS_DELETE)
+                continue;
+
              value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_id");
              if (value)
              {

@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- OWS GetCapabilities should skip layers with status == MS_DELETE (#2582)
+
 - Set the default symbol size to 1 instead of 0 (#2896)
 
 - fix WMS LegendURL to print sld_version for 1.3.0 Capabilities (#473)
