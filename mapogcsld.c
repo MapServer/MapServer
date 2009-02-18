@@ -685,8 +685,8 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      operators such as AND/OR/NOT) will be used to set the FILTER    */
 /*      element of the layer.                                           */
 /* ==================================================================== */
-
-                              psLayer->layerinfo = (void *)psNode;
+                                if (FLTHasSpatialFilter(psNode)) 
+                                  psLayer->layerinfo = (void *)psNode;
 
                               szExpression = FLTGetMapserverExpression(psNode, psLayer);
 
@@ -2386,6 +2386,61 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /*      <xs:attribute name="label" type="xs:string"/>                   */
 /*      </xs:complexType>                                               */
 /*      </xs:element>                                                   */
+/*                                                                      */
+/*      SLD 1.1                                                         */
+/*                                                                      */
+/*      <xsd:element name="RasterSymbolizer" type="se:RasterSymbolizerType" substitutionGroup="se:Symbolizer"/>*/
+/*      <xsd:complexType name="RasterSymbolizerType">                   */
+/*      <xsd:complexContent>                                            */
+/*      <xsd:extension base="se:SymbolizerType">                        */
+/*      <xsd:sequence>                                                  */
+/*      <xsd:element ref="se:Geometry" minOccurs="0"/>                  */
+/*      <xsd:element ref="se:Opacity" minOccurs="0"/>                   */
+/*      <xsd:element ref="se:ChannelSelection" minOccurs="0"/>          */
+/*      <xsd:element ref="se:OverlapBehavior" minOccurs="0"/>           */
+/*      <xsd:element ref="se:ColorMap" minOccurs="0"/>                  */
+/*      <xsd:element ref="se:ContrastEnhancement" minOccurs="0"/>       */
+/*      <xsd:element ref="se:ShadedRelief" minOccurs="0"/>              */
+/*      <xsd:element ref="se:ImageOutline" minOccurs="0"/>              */
+/*      </xsd:sequence>                                                 */
+/*      </xsd:extension>                                                */
+/*      </xsd:complexContent>                                           */
+/*      </xsd:complexType>                                              */
+/*                                                                      */
+/*      <xsd:element name="ColorMap" type="se:ColorMapType"/>           */
+/*      <xsd:complexType name="ColorMapType">                           */
+/*      <xsd:choice>                                                    */
+/*      <xsd:element ref="se:Categorize"/>                              */
+/*      <xsd:element ref="se:Interpolate"/>                             */
+/*      </xsd:choice>                                                   */
+/*      </xsd:complexType>                                              */
+/*                                                                      */
+/*      <xsd:element name="Categorize" type="se:CategorizeType" substitutionGroup="se:Function"/>*/
+/*      <xsd:complexType name="CategorizeType">                         */
+/*      <xsd:complexContent>                                            */
+/*      <xsd:extension base="se:FunctionType">                          */
+/*      <xsd:sequence>                                                  */
+/*      <xsd:element ref="se:LookupValue"/>                             */
+/*      <xsd:element ref="se:Value"/>                                   */
+/*      <xsd:sequence minOccurs="0" maxOccurs="unbounded">              */
+/*      <xsd:element ref="se:Threshold"/>                               */
+/*      <xsd:element ref="se:Value"/>                                   */
+/*      </xsd:sequence>                                                 */
+/*      </xsd:sequence>                                                 */
+/*      <xsd:attribute name="threshholdsBelongTo" type="se:ThreshholdsBelongToType" use="optional"/>*/
+/*      </xsd:extension>                                                */
+/*      </xsd:complexContent>                                           */
+/*      </xsd:complexType>                                              */
+/*      <xsd:element name="LookupValue" type="se:ParameterValueType"/>  */
+/*      <xsd:element name="Value" type=" se:ParameterValueType"/>       */
+/*      <xsd:element name="Threshold" type=" se:ParameterValueType"/>   */
+/*      <xsd:simpleType name="ThreshholdsBelongToType">                 */
+/*      <xsd:restriction base="xsd:token">                              */
+/*      <xsd:enumeration value="succeeding"/>                           */
+/*      <xsd:enumeration value="preceding"/>                            */
+/*      </xsd:restriction>                                              */
+/*      </xsd:simpleType>                                               */
+/*                                                                      */
 /************************************************************************/
 void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
@@ -2398,6 +2453,13 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
     double dfOpacity = 1.0;
     char *pszLabel = NULL,  *pszPreviousLabel = NULL;
     char *pch = NULL, *pchPrevious=NULL;
+    
+    CPLXMLNode  *psNode=NULL, *psCategorize=NULL;
+    char **papszValues = (char **)malloc(sizeof(char*)*100);
+    char **papszThresholds = (char **)malloc(sizeof(char*)*100);
+    char *pszTmp = NULL;
+    int nValues=0, nThresholds=0;
+    int i,nMaxValues= 100, nMaxThreshold=100;
 
     if (!psRoot || !psLayer)
       return;
@@ -2428,148 +2490,265 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
     if (psColorMap)
     {
         psColorEntry = CPLGetXMLNode(psColorMap, "ColorMapEntry");
-        while (psColorEntry && psColorEntry->pszValue &&
-               strcasecmp(psColorEntry->pszValue, "ColorMapEntry") == 0)
+        
+        if (psColorEntry) /*SLD 1.0*/
         {
-            pszColor = (char *)CPLGetXMLValue(psColorEntry, "color", NULL);
-            pszQuantity = (char *)CPLGetXMLValue(psColorEntry, "quantity", NULL);
-            pszLabel = (char *)CPLGetXMLValue(psColorEntry, "label", NULL);
+            while (psColorEntry && psColorEntry->pszValue &&
+                   strcasecmp(psColorEntry->pszValue, "ColorMapEntry") == 0)
+            {
+                pszColor = (char *)CPLGetXMLValue(psColorEntry, "color", NULL);
+                pszQuantity = (char *)CPLGetXMLValue(psColorEntry, "quantity", NULL);
+                pszLabel = (char *)CPLGetXMLValue(psColorEntry, "label", NULL);
 
+                if (pszColor && pszQuantity)
+                {
+                    if (pszPreviousColor && pszPreviousQuality)
+                    {
+                        if (strlen(pszPreviousColor) == 7 && 
+                            pszPreviousColor[0] == '#' &&
+                            strlen(pszColor) == 7 && pszColor[0] == '#')
+                        {
+                            sColor.red = msHexToInt(pszPreviousColor+1);
+                            sColor.green= msHexToInt(pszPreviousColor+3);
+                            sColor.blue = msHexToInt(pszPreviousColor+5);
+
+                            /* pszQuantity and pszPreviousQuality may be integer or float */
+                            pchPrevious=strchr(pszPreviousQuality,'.');
+                            pch=strchr(pszQuantity,'.');
+                            if (pchPrevious==NULL && pch==NULL) {
+                                sprintf(szExpression,
+                                        "([pixel] >= %d AND [pixel] < %d)",
+                                        atoi(pszPreviousQuality),
+                                        atoi(pszQuantity));
+                            } else if (pchPrevious != NULL && pch==NULL) {
+                                sprintf(szExpression,
+                                        "([pixel] >= %f AND [pixel] < %d)",
+                                        atof(pszPreviousQuality),
+                                        atoi(pszQuantity));
+                            } else if (pchPrevious == NULL && pch != NULL) {
+                                sprintf(szExpression,
+                                        "([pixel] >= %d AND [pixel] < %f)",
+                                        atoi(pszPreviousQuality),
+                                        atof(pszQuantity));
+                            } else {
+                                sprintf(szExpression,
+                                        "([pixel] >= %f AND [pixel] < %f)",
+                                        atof(pszPreviousQuality),
+                                        atof(pszQuantity));
+                            }
+
+
+                            if (msGrowLayerClasses(psLayer) == NULL)
+                              return/* MS_FAILURE */;
+                            else
+                            {
+                                initClass(psLayer->class[psLayer->numclasses]);
+                                psLayer->numclasses++;
+                                nClassId = psLayer->numclasses-1;
+
+                                /*set the class name using the label. If label not defined
+                                  set it with the quantity*/
+                                if (pszPreviousLabel)
+                                  psLayer->class[nClassId]->name = strdup(pszPreviousLabel);
+                                else
+                                  psLayer->class[nClassId]->name = strdup(pszPreviousQuality);
+
+                                msMaybeAllocateStyle(psLayer->class[nClassId], 0);
+
+                                psLayer->class[nClassId]->styles[0]->color.red = 
+                                  sColor.red;
+                                psLayer->class[nClassId]->styles[0]->color.green = 
+                                  sColor.green;
+                                psLayer->class[nClassId]->styles[0]->color.blue = 
+                                  sColor.blue;
+
+                                if (psLayer->classitem && 
+                                    strcasecmp(psLayer->classitem, "[pixel]") != 0)
+                                  free(psLayer->classitem);
+                                psLayer->classitem = strdup("[pixel]");
+
+                                msLoadExpressionString(&psLayer->class[nClassId]->expression,
+                                                       szExpression);
+                            
+                            
+                            }
+                        }
+                        else
+                        {
+                            msSetError(MS_WMSERR, 
+                                       "Invalid ColorMap Entry.", 
+                                       "msSLDParseRasterSymbolizer()");
+                        }
+
+                    }
+               
+                    pszPreviousColor = pszColor;
+                    pszPreviousQuality = pszQuantity;
+                    pszPreviousLabel = pszLabel;
+
+                }
+                psColorEntry = psColorEntry->psNext;
+            }
+            /* do the last Color Map Entry */
             if (pszColor && pszQuantity)
             {
-                if (pszPreviousColor && pszPreviousQuality)
+                if (strlen(pszColor) == 7 && pszColor[0] == '#')
                 {
-                    if (strlen(pszPreviousColor) == 7 && 
-                        pszPreviousColor[0] == '#' &&
-                        strlen(pszColor) == 7 && pszColor[0] == '#')
+                    sColor.red = msHexToInt(pszColor+1);
+                    sColor.green= msHexToInt(pszColor+3);
+                    sColor.blue = msHexToInt(pszColor+5);
+
+                    /* pszQuantity may be integer or float */
+                    pch=strchr(pszQuantity,'.');
+                    if (pch==NULL) {
+                        sprintf(szExpression, "([pixel] = %d)", atoi(pszQuantity));
+                    } else {
+                        sprintf(szExpression, "([pixel] = %f)", atof(pszQuantity));
+                    }
+
+                    if (msGrowLayerClasses(psLayer) == NULL)
+                      return/* MS_FAILURE */;
+                    else
                     {
-                        sColor.red = msHexToInt(pszPreviousColor+1);
-                        sColor.green= msHexToInt(pszPreviousColor+3);
-                        sColor.blue = msHexToInt(pszPreviousColor+5);
-
-                        /* pszQuantity and pszPreviousQuality may be integer or float */
-			pchPrevious=strchr(pszPreviousQuality,'.');
-			pch=strchr(pszQuantity,'.');
-			if (pchPrevious==NULL && pch==NULL) {
-			  sprintf(szExpression,
-				  "([pixel] >= %d AND [pixel] < %d)",
-				  atoi(pszPreviousQuality),
-				  atoi(pszQuantity));
-			} else if (pchPrevious != NULL && pch==NULL) {
-			  sprintf(szExpression,
-				  "([pixel] >= %f AND [pixel] < %d)",
-				  atof(pszPreviousQuality),
-				  atoi(pszQuantity));
-			} else if (pchPrevious == NULL && pch != NULL) {
-			  sprintf(szExpression,
-				  "([pixel] >= %d AND [pixel] < %f)",
-				  atoi(pszPreviousQuality),
-				  atof(pszQuantity));
-			} else {
-			  sprintf(szExpression,
-				  "([pixel] >= %f AND [pixel] < %f)",
-				  atof(pszPreviousQuality),
-				  atof(pszQuantity));
-			}
-
-
-                        if (msGrowLayerClasses(psLayer) == NULL)
-                            return/* MS_FAILURE */;
+                        initClass(psLayer->class[psLayer->numclasses]);
+                        psLayer->numclasses++;
+                        nClassId = psLayer->numclasses-1;
+                        msMaybeAllocateStyle(psLayer->class[nClassId], 0);
+                        if (pszLabel)
+                          psLayer->class[nClassId]->name = strdup(pszLabel);
                         else
+                          psLayer->class[nClassId]->name = strdup(pszQuantity);
+                        psLayer->class[nClassId]->numstyles = 1;
+                        psLayer->class[nClassId]->styles[0]->color.red = 
+                          sColor.red;
+                        psLayer->class[nClassId]->styles[0]->color.green = 
+                          sColor.green;
+                        psLayer->class[nClassId]->styles[0]->color.blue = 
+                          sColor.blue;
+
+                        if (psLayer->classitem && 
+                            strcasecmp(psLayer->classitem, "[pixel]") != 0)
+                          free(psLayer->classitem);
+                        psLayer->classitem = strdup("[pixel]");
+
+                        msLoadExpressionString(&psLayer->class[nClassId]->expression,
+                                               szExpression);
+                    }
+                }
+            }
+        }
+        else if ((psCategorize = CPLGetXMLNode(psColorMap, "Categorize")))
+        {
+            papszValues = (char **)malloc(sizeof(char*)*nMaxValues);
+            papszThresholds = (char **)malloc(sizeof(char*)*nMaxThreshold);
+            psNode =  CPLGetXMLNode(psCategorize, "Value");
+            while (psNode && psNode->pszValue &&
+                   psNode->psChild && psNode->psChild->pszValue)
+                   
+            {
+                if (strcasecmp(psNode->pszValue, "Value") == 0)
+                {
+                    papszValues[nValues] =  psNode->psChild->pszValue;  
+                    nValues++;
+                    if (nValues == nMaxValues)
+                    {
+                        nMaxValues +=100;
+                        papszValues = (char **)realloc(papszValues, sizeof(char*)*nMaxValues);
+                    }
+                }
+                else if (strcasecmp(psNode->pszValue, "Threshold") == 0)
+                {
+                    papszThresholds[nThresholds] =  psNode->psChild->pszValue;
+                    nThresholds++;
+                    if (nValues == nMaxThreshold)
+                    {
+                        nMaxThreshold += 100;
+                        papszThresholds = (char **)realloc(papszThresholds, sizeof(char*)*nMaxThreshold);
+                    }
+                }
+                psNode = psNode->psNext;
+            }
+
+            if (nValues == nThresholds+1)
+            {
+                /*free existing classes*/
+                for(i=0;i<psLayer->maxclasses;i++) {
+                    if (psLayer->class[i] != NULL) 
+                    {
+                        psLayer->class[i]->layer=NULL;
+                        if ( freeClass(psLayer->class[i]) == MS_SUCCESS ) {
+                            msFree(psLayer->class[i]);
+                        }
+                    }
+                }
+                for (i=0; i<nValues; i++)
+                {
+                    pszTmp = (papszValues[i]);
+                    if (pszTmp && strlen(pszTmp) == 7 && pszTmp[0] == '#')
+                    {
+                        sColor.red = msHexToInt(pszTmp+1);
+                        sColor.green= msHexToInt(pszTmp+3);
+                        sColor.blue = msHexToInt(pszTmp+5);
+                        if (i == 0)
+                        {
+                            if (strchr(papszThresholds[i],'.'))
+                              sprintf(szExpression, "([pixel] < %f)", atof(papszThresholds[i]));
+                            else
+                              sprintf(szExpression, "([pixel] < %d)", atoi(papszThresholds[i]));
+                        
+                        }
+                        else if (i < nValues-1)
+                        {
+                            if (strchr(papszThresholds[i],'.'))
+                              sprintf(szExpression,
+                                      "([pixel] >= %f AND [pixel] < %f)",
+                                      atof(papszThresholds[i-1]), 
+                                      atof(papszThresholds[i]));
+                            else
+                              sprintf(szExpression,
+                                      "([pixel] >= %d AND [pixel] < %d)",
+                                      atoi(papszThresholds[i-1]), 
+                                      atoi(papszThresholds[i]));
+                        }
+                        else
+                        {
+                            if (strchr(papszThresholds[i-1],'.'))
+                              sprintf(szExpression, "([pixel] >= %f)", atof(papszThresholds[i-1]));
+                            else
+                              sprintf(szExpression, "([pixel] >= %d)", atoi(papszThresholds[i-1]));
+                        }
+                        if (msGrowLayerClasses(psLayer))
                         {
                             initClass(psLayer->class[psLayer->numclasses]);
                             psLayer->numclasses++;
                             nClassId = psLayer->numclasses-1;
-
-                            /*set the class name using the label. If label not defined
-                              set it with the quantity*/
-                            if (pszPreviousLabel)
-                              psLayer->class[nClassId]->name = strdup(pszPreviousLabel);
-                            else
-                              psLayer->class[nClassId]->name = strdup(pszPreviousQuality);
-
-			    msMaybeAllocateStyle(psLayer->class[nClassId], 0);
-
+                            msMaybeAllocateStyle(psLayer->class[nClassId], 0);
+                            psLayer->class[nClassId]->numstyles = 1;
                             psLayer->class[nClassId]->styles[0]->color.red = 
                               sColor.red;
                             psLayer->class[nClassId]->styles[0]->color.green = 
                               sColor.green;
                             psLayer->class[nClassId]->styles[0]->color.blue = 
                               sColor.blue;
-
                             if (psLayer->classitem && 
                                 strcasecmp(psLayer->classitem, "[pixel]") != 0)
                               free(psLayer->classitem);
                             psLayer->classitem = strdup("[pixel]");
-
                             msLoadExpressionString(&psLayer->class[nClassId]->expression,
-                                                 szExpression);
-                            
-                            
+                                                   szExpression);
                         }
+                        
                     }
-                    else
-                    {
-                        msSetError(MS_WMSERR, 
-                                   "Invalid ColorMap Entry.", 
-                                   "msSLDParseRasterSymbolizer()");
-                    }
-
                 }
-               
-                pszPreviousColor = pszColor;
-                pszPreviousQuality = pszQuantity;
-                pszPreviousLabel = pszLabel;
-
             }
-            psColorEntry = psColorEntry->psNext;
+            free(papszValues);
+            free(papszThresholds);
+
+            
         }
-        /* do the last Color Map Entry */
-        if (pszColor && pszQuantity)
+        else
         {
-            if (strlen(pszColor) == 7 && pszColor[0] == '#')
-            {
-                sColor.red = msHexToInt(pszColor+1);
-                sColor.green= msHexToInt(pszColor+3);
-                sColor.blue = msHexToInt(pszColor+5);
-
-		/* pszQuantity may be integer or float */
-		pch=strchr(pszQuantity,'.');
-		if (pch==NULL) {
-		  sprintf(szExpression, "([pixel] = %d)", atoi(pszQuantity));
-		} else {
-		  sprintf(szExpression, "([pixel] = %f)", atof(pszQuantity));
-		}
-
-                if (msGrowLayerClasses(psLayer) == NULL)
-                    return/* MS_FAILURE */;
-                else
-                {
-                    initClass(psLayer->class[psLayer->numclasses]);
-                    psLayer->numclasses++;
-                    nClassId = psLayer->numclasses-1;
-		    msMaybeAllocateStyle(psLayer->class[nClassId], 0);
-                    if (pszLabel)
-                      psLayer->class[nClassId]->name = strdup(pszLabel);
-                    else
-                      psLayer->class[nClassId]->name = strdup(pszQuantity);
-                    psLayer->class[nClassId]->numstyles = 1;
-                    psLayer->class[nClassId]->styles[0]->color.red = 
-                      sColor.red;
-                    psLayer->class[nClassId]->styles[0]->color.green = 
-                              sColor.green;
-                    psLayer->class[nClassId]->styles[0]->color.blue = 
-                      sColor.blue;
-
-                    if (psLayer->classitem && 
-                        strcasecmp(psLayer->classitem, "[pixel]") != 0)
-                      free(psLayer->classitem);
-                    psLayer->classitem = strdup("[pixel]");
-
-                    msLoadExpressionString(&psLayer->class[nClassId]->expression,
-                                         szExpression);
-                }
-            }
+            msSetError(MS_WMSERR, "Invalid SLD document. msSLDParseRaster", "");
         }
     }
 }
