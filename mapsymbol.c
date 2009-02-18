@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  symbolObj related functions.
@@ -128,8 +128,8 @@ void initSymbol(symbolObj *s)
   s->transparent = MS_FALSE;
   s->transparentcolor = 0;
   s->patternlength = 0; /* solid line */
-  s->sizex = 0;
-  s->sizey = 0;
+  s->sizex = 1;
+  s->sizey = 1;
   s->filled = MS_FALSE;
   s->numpoints=0;
   s->img = NULL;
