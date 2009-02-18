@@ -209,7 +209,7 @@ mapObj *loadMap(void)
   /* services can take advantage of these "vendor specific" extensions */
   for(i=0;i<mapserv->request->NumParams;i++) {
     /*
-		** a few CGI variables should be skipped altogether
+    ** a few CGI variables should be skipped altogether
     **
     ** qstring: there is separate per layer validation for attribute queries and the substitution checks
     **          below conflict with that so we avoid it here
@@ -1111,7 +1111,7 @@ void msCleanupOnExit( void )
 /************************************************************************/
 int main(int argc, char *argv[]) {
   int i,j, iArg;
-  char buffer[1024], *value=NULL;
+  char buffer[1024];
   imageObj *img=NULL;
   int status;
   int sendheaders = MS_TRUE;
@@ -1539,15 +1539,12 @@ int main(int argc, char *argv[]) {
           }
           GET_LAYER(mapserv->map, SelectLayerIndex)->status = MS_ON;
 
-          value = msLookupHashTable(&(GET_LAYER(mapserv->map, SelectLayerIndex)->metadata), "qstring_validation_pattern");
-          if(value) { /* validate qstring value */
-            if(msEvalRegex(value, QueryString) == MS_FALSE) {
-              msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
-              writeError();
-            }
-          } else { /* throw an error since a validation pattern is required */
-            msSetError(MS_WEBERR, "Metadata qstring_validation_pattern is not set.", "mapserv()"); 
-            writeError();
+          /* validate the qstring parameter */
+          if(msValidateParameter(QueryString, msLookupHashTable(&(GET_LAYER(mapserv->map, SelectLayerIndex)->validation), "qstring"), 
+                                              msLookupHashTable(&(mapserv->map->web.validation), "qstring"), 
+                                              msLookupHashTable(&(GET_LAYER(mapserv->map, SelectLayerIndex)->metadata), "qstring_validation_pattern"), NULL) != MS_SUCCESS) {
+	    msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
+	    writeError();
           }
 
           if(QueryCoordSource != NONE && !mapserv->UseShapes)
@@ -1621,14 +1618,11 @@ int main(int argc, char *argv[]) {
             writeError();
           }
 
-          value = msLookupHashTable(&(GET_LAYER(mapserv->map, QueryLayerIndex)->metadata), "qstring_validation_pattern");
-          if(value) { /* validate qstring value */
-            if(msEvalRegex(value, QueryString) == MS_FALSE) {
-              msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
-              writeError();
-            }
-          } else { /* throw an error since a validation pattern is required */
-            msSetError(MS_WEBERR, "Metadata qstring_validation_pattern is not set.", "mapserv()"); 
+	  /* validate the qstring parameter */
+          if(msValidateParameter(QueryString, msLookupHashTable(&(GET_LAYER(mapserv->map, QueryLayerIndex)->validation), "qstring"),
+				 msLookupHashTable(&(mapserv->map->web.validation), "qstring"),
+				 msLookupHashTable(&(GET_LAYER(mapserv->map, QueryLayerIndex)->metadata), "qstring_validation_pattern"), NULL) != MS_SUCCESS) {
+            msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
             writeError();
           }
 
