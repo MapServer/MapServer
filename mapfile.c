@@ -2417,8 +2417,6 @@ int loadClass(classObj *class, layerObj *layer)
           return(-1);
         }
       }
-
-      if(getString(&class->group) == MS_FAILURE) return(-1);
       break;      
     case(KEYIMAGE):
       if(getString(&class->keyimage) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
