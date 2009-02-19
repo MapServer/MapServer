@@ -1085,6 +1085,9 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
   maxx = p->bounds.maxx;
   maxy = p->bounds.maxy;
 
+  if(min_dimension != -1)
+    if(MS_MIN(maxx-minx,maxy-miny) < min_dimension) return(MS_FAILURE);
+
   cp.x = (maxx+minx)/2.0;
   cp.y = (maxy+miny)/2.0;
 
