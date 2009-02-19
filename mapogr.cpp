@@ -2367,6 +2367,7 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
           itemindexes[i] = MSOGR_LABELUNDERLINEINDEX;
       else if (EQUAL(layer->items[i], MSOGR_LABELPRIORITYNAME))
           itemindexes[i] = MSOGR_LABELPRIORITYINDEX;
+#if GDAL_VERSION_NUM >= 1400
       else if (EQUAL(layer->items[i], MSOGR_LABELSTRIKEOUTNAME))
           itemindexes[i] = MSOGR_LABELSTRIKEOUTINDEX;
       else if (EQUAL(layer->items[i], MSOGR_LABELSTRETCHNAME))
@@ -2375,7 +2376,6 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
           itemindexes[i] = MSOGR_LABELADJHORINDEX;
       else if (EQUAL(layer->items[i], MSOGR_LABELADJVERTNAME))
           itemindexes[i] = MSOGR_LABELADJVERTINDEX;
-#if GDAL_VERSION_NUM >= 1400
       else if (EQUAL(layer->items[i], MSOGR_LABELHCOLORNAME))
           itemindexes[i] = MSOGR_LABELHCOLORINDEX;
 #endif /* GDAL_VERSION_NUM >= 1400 */
