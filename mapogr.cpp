@@ -1055,6 +1055,7 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELPRIORITYNAME " = \"%s\"\n", values[i]);
     }
+#if GDAL_VERSION_NUM >= 1400
     else if (itemindexes[i] == MSOGR_LABELSTRIKEOUTINDEX)
     {
         if (poLabelStyle == NULL
@@ -1099,7 +1100,6 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELADJVERTNAME " = \"%s\"\n", values[i]);
     }
-#if GDAL_VERSION_NUM >= 1400
     else if (itemindexes[i] == MSOGR_LABELHCOLORINDEX)
     {
         if (poLabelStyle == NULL
