@@ -9,8 +9,8 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (5.3-dev, SVN trunk):
-------------------------------------
+Version 5.4.0-beta1 (2009-2-18):
+--------------------------------
 
 - restored much of the pre-5.0 capabilities to update a mapfile via URL but in
   a more secure manner (RFC44)
