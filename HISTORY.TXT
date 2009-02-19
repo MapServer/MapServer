@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (5.3-dev, SVN trunk):
 ------------------------------------
 
+- restored much of the pre-5.0 capabilities to update a mapfile via URL but in
+  a more secure manner (RFC44)
+
 - WMS 1.3.0 support added (#473)
 
 - OWS GetCapabilities should skip layers with status == MS_DELETE (#2582)
