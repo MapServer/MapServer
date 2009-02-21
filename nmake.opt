@@ -55,7 +55,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Check compiler version given in command line
 # nmake -f makefile.vc MSVC_VER=xxxx
-# 1310 = 7.1 (2003)   1400 = 8.0 (2005)
+# 1310 = 7.1 (2003)   1400 = 8.0 (2005) 1500 = 9.0 (2006)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !IFNDEF MSVC_VER
 #assume msvc 7.1
@@ -87,7 +87,7 @@ BINDIR = $(MS_BASE)\..\bin
 # Optmization, debug, and related compile flags.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-!IF $(MSVC_VER) == 1400
+!IF $(MSVC_VER) >= 1400
 !IFNDEF MS_DEBUG
 # Optimized, with using MSVCRT. 
 OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
