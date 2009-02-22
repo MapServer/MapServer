@@ -405,14 +405,6 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     layer->numitems = 0;
   }
 
-  /* Always retrieve all items in some cases */
-  if (layer->connectiontype == MS_INLINE)
-  {
-     msLayerGetItems(layer);
-     nt = layer->numitems;
-  }
-  else
-  {
   /*
   ** layer level counts
   */
@@ -499,10 +491,20 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     }
   }
 
-  rv = layer->vtable->LayerCreateItems(layer, nt);
-  if (rv != MS_SUCCESS) {
-    return rv;
+  /* Always retrieve all items in some cases */
+  if (layer->connectiontype == MS_INLINE)
+  {
+     msLayerGetItems(layer);
+     /* need to realloc the array to accept the possible new items*/
+     if (nt > 0)
+        layer->items = (char **)realloc(layer->items, sizeof(char *)*(layer->numitems + nt));
   }
+  else
+  {
+    rv = layer->vtable->LayerCreateItems(layer, nt);
+    if (rv != MS_SUCCESS) {
+      return rv;
+    }
   }
 
   if(nt > 0) {
@@ -1299,6 +1301,12 @@ int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int tile, long shape
         msSetError(MS_SHPERR, "Cannot retrieve inline shape. There some problem with the shape", "msLayerGetShape()");
         return MS_FAILURE;
     }
+    /* check for the expected size of the values array */
+    if (layer->numitems > shape->numvalues) {
+        shape->values = (char **)realloc(shape->values, sizeof(char *)*(layer->numitems));
+        for (i = shape->numvalues; i < layer->numitems; i++)
+            shape->values[i] = strdup("");
+    }
     return MS_SUCCESS;
 }
 
@@ -1312,6 +1320,14 @@ int msINLINELayerNextShape(layerObj *layer, shapeObj *shape)
     msCopyShape(&(layer->currentfeature->shape), shape);
 
     layer->currentfeature = layer->currentfeature->next;
+
+    /* check for the expected size of the values array */
+    if (layer->numitems > shape->numvalues) {
+        int i;
+        shape->values = (char **)realloc(shape->values, sizeof(char *)*(layer->numitems));
+        for (i = shape->numvalues; i < layer->numitems; i++)
+            shape->values[i] = strdup("");
+    }
 
     return(MS_SUCCESS);
 }
