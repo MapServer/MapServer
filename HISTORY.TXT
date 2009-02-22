@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Setting up the same size units between the OGR auto-style and the 
+  OGR label attribute binding option (#2900)
+
 - Take better care of the extra items with the inline layers to 
   prevent from memory corruption (#2870)
 

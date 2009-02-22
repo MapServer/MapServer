@@ -598,6 +598,10 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 hLabelStyle = hStylePart;
             else if (hStylePart)
                 OGR_ST_Destroy(hStylePart);
+
+          /* Setting up the size units according to msOGRLayerGetAutoStyle*/
+          if (hStylePart && layer->map)
+            OGR_ST_SetUnit(hStylePart, OGRSTUPixel, layer->map->cellsize*72.0*39.37);
         }
         int bDefault;
         if (itemindexes[i] == MSOGR_LABELTEXTINDEX)
@@ -892,6 +896,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
             poLabelStyle = (OGRStyleLabel*)poStylePart;
         else if (poStylePart)
             delete poStylePart;
+        /* Setting up the size units according to msOGRLayerGetAutoStyle*/
+        if (poStylePart && layer->map)
+            poStylePart->SetUnit(OGRSTUPixel, layer->map->cellsize*72.0*39.37);
     }
     GBool bDefault;
     if (itemindexes[i] == MSOGR_LABELTEXTINDEX)
