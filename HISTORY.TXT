@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Take better care of the extra items with the inline layers to 
+  prevent from memory corruption (#2870)
+
 - Fixed the compiler options for MSVC 2008 (#2898)
 
 Version 5.4.0-beta1 (2009-2-18):
