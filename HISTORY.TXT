@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Tracking original geometry type so we can make better decisions on what
+  positions to use with POSITION AUTO and annotation layers. (#2770)
+
 - Setting up the same size units between the OGR auto-style and the 
   OGR label attribute binding option (#2900)
 

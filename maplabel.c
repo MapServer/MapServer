@@ -308,7 +308,7 @@ char *msTransformLabelText(mapObj *map, imageObj* image,labelObj *label, char *t
     return newtext;
 }
 
-int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label )
+int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label )
 {
   int i;
   labelCacheSlotObj *cacheslot;
@@ -323,20 +323,20 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   classPtr = GET_LAYER(map, layerindex)->class[classindex];
 
   if( label == NULL )
-      label = &(classPtr->label);
+    label = &(classPtr->label);
 
   if(map->scaledenom > 0) {
     if((label->maxscaledenom != -1) && (map->scaledenom >= label->maxscaledenom))
-        return(MS_SUCCESS);
+      return(MS_SUCCESS);
     if((label->minscaledenom != -1) && (map->scaledenom < label->minscaledenom))
-        return(MS_SUCCESS);
+      return(MS_SUCCESS);
   }
 
   /* Validate label priority value and get ref on label cache for it */
   if (label->priority < 1)
-      label->priority = 1;
+    label->priority = 1;
   else if (label->priority > MS_MAX_LABEL_PRIORITY)
-      label->priority = MS_MAX_LABEL_PRIORITY;
+    label->priority = MS_MAX_LABEL_PRIORITY;
 
   cacheslot = &(map->labelcache.slots[label->priority-1]);
 
@@ -353,8 +353,15 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 
   cachePtr->layerindex = layerindex; /* so we can get back to this *raw* data if necessary */
   cachePtr->classindex = classindex;
-  cachePtr->tileindex = tileindex;
-  cachePtr->shapeindex = shapeindex;
+
+  if(shape) {
+    cachePtr->tileindex = shape->tileindex;
+    cachePtr->shapeindex = shape->index;
+    cachePtr->shapetype = shape->type;
+  } else {
+    cachePtr->tileindex = cachePtr->shapeindex = -1;    
+    cachePtr->shapetype = MS_SHAPE_POINT;
+  }
 
   /* Store the label point or the label path (Bug #1620) */
   if ( point ) {
@@ -420,13 +427,13 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 
     /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
     /* #2347: after RFC-24 classPtr->styles could be NULL so we check it */
-    if (classPtr->styles != NULL) {
-	    if(msGetMarkerSize(&map->symbolset, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
-    	  return(MS_FAILURE);
+    if(classPtr->styles != NULL) {
+      if(msGetMarkerSize(&map->symbolset, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS) 
+        return(MS_FAILURE);
     } else {
-    	msSetError(MS_MISCERR, "msAddLabel error: missing style definition for layer '%s'", "msAddLabel()", layerPtr->name);
-		return(MS_FAILURE);
-	}
+      msSetError(MS_MISCERR, "msAddLabel error: missing style definition for layer '%s'", "msAddLabel()", layerPtr->name);
+      return(MS_FAILURE);
+    }
     rect.minx = MS_NINT(point->x - .5 * w);
     rect.miny = MS_NINT(point->y - .5 * h);
     rect.maxx = rect.minx + (w-1);
@@ -444,7 +451,6 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 
   return(MS_SUCCESS);
 }
-
 
 /* msTestLabelCacheCollisions()
 **

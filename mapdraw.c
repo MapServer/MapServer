@@ -1517,7 +1517,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           labelObj label = layer->class[c]->label;
           
           if(layer->labelcache) {
-            if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, NULL, annopath, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+            if(msAddLabel(map, layer->index, c, shape, NULL, annopath, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
           } else {
             /* FIXME: Not sure how this should work with the label path yet */
             /*
@@ -1549,7 +1549,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	  if(label.autoangle) label.angle = angle;
 
           if(layer->labelcache) {
-            if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+            if(msAddLabel(map, layer->index, c, shape, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
 	  } else {
             if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
               for(s=0; s<layer->class[c]->numstyles; s++) {
@@ -1593,7 +1593,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           label.angle -= map->gt.rotation_angle;
 
         if(layer->labelcache) {
-          if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
+          if(msAddLabel(map, layer->index, c, shape, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
         } else {
 	  if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
         for(s=0; s<layer->class[c]->numstyles; s++) {
@@ -1630,7 +1630,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 	  if(shape->text) {
 	    if(layer->labelcache) {
-	      if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
+	      if(msAddLabel(map, layer->index, c, shape, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
 	    } else {
 	      if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
             for(s=0; s<layer->class[c]->numstyles; s++) {
@@ -1690,7 +1690,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             label.angle -= map->gt.rotation_angle;
 
 	  if(layer->labelcache) {
-	    if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
+	    if(msAddLabel(map, layer->index, c, shape, point, NULL, shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
 	  } else
 	    msDrawLabel(map, image, *point, shape->text, &label, layer->scalefactor);
 	}
@@ -1793,7 +1793,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           labelObj label = layer->class[c]->label;
 
           if(layer->labelcache) {
-            if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, NULL, annopath, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+            if(msAddLabel(map, layer->index, c, shape, NULL, annopath, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
           } else {
             /* FIXME: need to call msDrawTextLineGD() from here eventually */
             /* msDrawLabel(image, label_line->point[0], shape->text, &label, &map->fontset, layer->scalefactor); */
@@ -1816,7 +1816,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(label.autoangle) label.angle = angle;
 
 	if(layer->labelcache) {
-            if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
+          if(msAddLabel(map, layer->index, c, shape, &annopnt, NULL, shape->text, length, &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else
           msDrawLabel(map, image, annopnt, shape->text, &label, layer->scalefactor);
       }
@@ -1916,7 +1916,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           label.angle -= map->gt.rotation_angle;
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->index, shape->tileindex, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else
 	  msDrawLabel(map, image, annopnt, shape->text, &label, layer->scalefactor);
       }
@@ -1950,7 +1950,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
     layer->project = MS_FALSE;
 #endif
   
-  /*apply wrap character and encoding to the label text*/
+  /* apply wrap character and encoding to the label text */
   if(labeltext &&(label->encoding || label->wrap || label->maxlength))
       newtext = msTransformLabelText(map,image,label,labeltext);
   else
@@ -1966,7 +1966,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
 
     if(labeltext) {
       if(layer->labelcache) {
-        if(msAddLabel(map, layer->index, classindex, -1, -1, point, NULL, newtext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
+        if(msAddLabel(map, layer->index, classindex, NULL, point, NULL, newtext, -1, NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else {
 	if(theclass->numstyles > 0 && MS_VALID_COLOR(theclass->styles[0]->color)) {
       for(s=0; s<theclass->numstyles; s++) {
@@ -2005,7 +2005,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
     }
     if(labeltext) {
       if(layer->labelcache) {
-        if(msAddLabel(map, layer->index, classindex, -1, -1, point, NULL, newtext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
+        if(msAddLabel(map, layer->index, classindex, NULL, point, NULL, newtext, -1,NULL) != MS_SUCCESS) return(MS_FAILURE);
       } else
 	msDrawLabel(map, image, *point, newtext, label, layer->scalefactor);
     }
@@ -2380,10 +2380,10 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             if(labelPtr->position == MS_AUTO) {
               int positions[MS_POSITIONS_LENGTH], npositions=0;
 
-              if(layerPtr->type == MS_LAYER_POLYGON) {
+              if(layerPtr->type == MS_LAYER_POLYGON || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_POLYGON)) {
 		positions[0]=MS_CC; positions[1]=MS_UC; positions[2]=MS_LC; positions[3]=MS_CL; positions[4]=MS_CR;
                 npositions = 5;
-              } else if(layerPtr->type == MS_LAYER_LINE) {
+              } else if(layerPtr->type == MS_LAYER_LINE || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_LINE)) {
                 positions[0]=MS_UC; positions[1]=MS_LC; positions[2]=MS_CC;
                 npositions = 3;
               } else {

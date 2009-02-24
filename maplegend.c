@@ -495,10 +495,9 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   if(map->legend.postlabelcache) /* add it directly to the image */
     msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
   else
-    msAddLabel(map, l, 0, -1, -1, &point, NULL, " ", 1.0, NULL);
+    msAddLabel(map, l, 0, NULL, &point, NULL, " ", 1.0, NULL);
 
-  /* Mark layer as deleted so that it doesn't interfere with html legends or */
-  /* with saving maps */
+  /* Mark layer as deleted so that it doesn't interfere with html legends or with saving maps */
   GET_LAYER(map, l)->status = MS_DELETE;
 
   return(0);
