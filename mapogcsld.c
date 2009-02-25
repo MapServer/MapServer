@@ -3813,8 +3813,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
     if (nVersion > OWS_1_0_0)
       strcpy(sNameSpace, "se:");
 
-    sprintf(szTmp, "<%sPolygonSymbolizer>%s\n",  sNameSpace);
-
+    sprintf(szTmp, "<%sPolygonSymbolizer>\n",  sNameSpace);
 
     pszSLD = msStringConcatenate(pszSLD, szTmp);
     /* fill */
