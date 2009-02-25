@@ -3357,8 +3357,17 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
         return msWMSException(map, nVersion, "LayerNotDefined");
     }
 
-    msIO_printf("Content-type: application/vnd.ogc.sld+xml%c%c",10,10);
-    sld = msSLDGenerateSLD(map, -1);
+    if (nVersion <= OWS_1_1_1)
+    {
+      msIO_printf("Content-type: application/vnd.ogc.sld+xml%c%c",10,10);
+      sld = msSLDGenerateSLD(map, -1, "1.0.0");
+    }
+    else
+    {   
+      /*for wms 1.3.0 generate a 1.1 sld*/
+       msIO_printf("Content-type: text/xml%c%c",10,10);
+       sld = msSLDGenerateSLD(map, -1, "1.1.0");
+    }
     if (sld)
     {
         msIO_printf("%s\n", sld);

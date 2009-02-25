@@ -28,7 +28,7 @@
 
 #include "mapserver.h"
 
-MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer);
+MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion);
 MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
                                    char *pszStyleLayerName);
 MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, 
@@ -79,13 +79,13 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psCla
 void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass);
 void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass);
 
-char *msSLDGenerateSLDLayer(layerObj *psLayer);
+char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion);
 
 char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter);
-char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer);
-char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer);
-char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer);
-char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer);
+char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
+char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
+char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
+char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion);
 
 
 #endif

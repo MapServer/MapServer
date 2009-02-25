@@ -330,7 +330,7 @@ int mapObj_applySLDURL(mapObj *self, char *sld)
 
 char *mapObj_generateSLD(mapObj *self)
 {
-    return msSLDGenerateSLD(self, -1);
+  return msSLDGenerateSLD(self, -1, NULL);
 }
 
 
@@ -597,7 +597,7 @@ int layerObj_applySLDURL(layerObj *self, char *sld, char *stylelayer)
 
 char *layerObj_generateSLD(layerObj *self)
 {
-    return msSLDGenerateSLD(self->map, self->index);
+  return msSLDGenerateSLD(self->map, self->index, NULL);
 }
 
 int layerObj_moveClassUp(layerObj *self, int index)

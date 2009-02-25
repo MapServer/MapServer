@@ -411,7 +411,7 @@
     
     %newobject generateSLD;
     char *generateSLD() {
-        return (char *) msSLDGenerateSLD(self, -1);
+        return (char *) msSLDGenerateSLD(self, -1, NULL);
     }
 
 

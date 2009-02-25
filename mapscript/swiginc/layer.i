@@ -491,7 +491,7 @@
     %newobject generateSLD; 
     char *generateSLD() 
     {
-        return (char *) msSLDGenerateSLD(self->map, self->index);
+        return (char *) msSLDGenerateSLD(self->map, self->index, NULL);
     }
 
     int isVisible()

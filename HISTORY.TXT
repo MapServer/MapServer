@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Generate SLD version 1.1.0 (#473) 
+
 - Tracking original geometry type so we can make better decisions on what
   positions to use with POSITION AUTO and annotation layers. (#2770)
 
