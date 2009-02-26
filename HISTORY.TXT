@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fix build problem with mapogcsld.c when OWS services are not available (#473)
+
 - Fix build on windows (maputil.c)
 
 Version 5.4.0-beta2 (2009-2-25):

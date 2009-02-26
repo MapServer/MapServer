@@ -3311,6 +3311,8 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion)
 char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                          int bNeedMarkSybol, int nVersion)
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+
     char *pszSLD = NULL;
     int nSymbol = -1;
     symbolObj *psSymbol = NULL;
@@ -3651,6 +3653,12 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
     }
 
     return pszSLD;
+
+#else
+    return NULL;
+
+#endif
+
 }
 
 
@@ -3663,6 +3671,8 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 /************************************************************************/
 char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+
     char *pszSLD = NULL;
     char szTmp[100];
     char szHexColor[7];
@@ -3785,6 +3795,9 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
 
     return pszSLD;
 
+#else
+    return NULL;
+#endif
 }
 
 
@@ -3795,6 +3808,8 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
 /************************************************************************/
 char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+
     char szTmp[100];
     char *pszSLD = NULL;
     char szHexColor[7];
@@ -3918,6 +3933,10 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     return pszSLD;
+
+#else
+    return NULL;
+#endif
 }
 
 /************************************************************************/
@@ -3927,6 +3946,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
 /************************************************************************/
 char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
     char *pszSLD = NULL;
     char *pszGraphicSLD = NULL;
     char szTmp[100];
@@ -3950,6 +3970,11 @@ char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     return pszSLD;
+
+#else
+    return NULL;
+
+#endif
 }
 
 
@@ -3962,6 +3987,7 @@ char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
 /************************************************************************/
 char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
     char *pszSLD = NULL;
 
     char szTmp[100];
@@ -4190,6 +4216,9 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
     }
     return pszSLD;
 
+#else
+    return NULL;
+#endif
 }
 
 
