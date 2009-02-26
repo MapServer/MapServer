@@ -1572,11 +1572,11 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety) {
 
   if(offsety == -99) { /* complex calculations */
     for (i = 0; i < p->numlines; i++) {
+      pointObj old_pt, old_diffdir, old_offdir;
       idx=0;
       first = 1;
 
       /* saved metrics of the last processed point */
-      pointObj old_pt, old_diffdir, old_offdir;
       if (p->line[i].numpoints>0)
         old_pt=p->line[i].point[0];
       for(j=1; j<p->line[i].numpoints; j++) {
