@@ -1,0 +1,39 @@
+#
+# See http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1753
+#
+# Donated by: Nicol Hermann <nicol@nicol.info>
+# Modified by Umberto Nicoletti
+#
+MAP
+  NAME test 
+  EXTENT 3404414.882766 5429530.647216  3456884.187265 5550332.450907 
+  SIZE 600 600
+  UNITS METERS 
+  
+  LAYER
+    NAME test-iso 
+    STATUS DEFAULT
+    TYPE polygon
+    DATA "iso-subset"
+    TEMPLATE "dummy.html"
+    CLASS
+      NAME test
+      COLOR 128 128 0
+      OUTLINECOLOR 0 0 0
+    END
+  END
+  
+  LAYER
+    NAME test-utf 
+    STATUS DEFAULT
+    TYPE polygon
+    DATA "utf-subset"
+    TEMPLATE "dummy.html"
+    CLASS
+      NAME test
+      COLOR 128 128 0
+      OUTLINECOLOR 0 0 0
+    END
+  END
+END
+
