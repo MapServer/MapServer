@@ -2110,7 +2110,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
   if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
   if(fc < 0 && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
-  if(size < 1) return; /* size too small */
+  if(size < 1 && style->symbol != 0) return; /* size too small AND we're not doing a basic solid fill (which can't be scaled so size doesn't matter) */
       
   if(style->symbol == 0) { /* simply draw a single pixel of the specified color */    
     if(style->antialias==MS_TRUE) {      

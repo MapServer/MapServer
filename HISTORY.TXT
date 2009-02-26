@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed a problem where default shade symbols (solid fill, no size) were being
+  scaled and not rendered as expected (related to #2896 I believe)
+
 - Fixed a problem with offset polylines (AGG only) (#2868)
 
 - Generate SLD version 1.1.0 (#473) 

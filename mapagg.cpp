@@ -3,7 +3,7 @@
  *
  * Project:  MapServer
  * Purpose:  AGG rendering and other AGG related functions.
- * Author:   Steve Lime and the MapServer team.
+ * Author:   Thomas Bonfort and the MapServer team.
  *
  ******************************************************************************
  * Copyright (c) 1996-2007 Regents of the University of Minnesota.
@@ -1786,7 +1786,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
     if(!MS_VALID_COLOR(style->color) && symbol->type!=MS_SYMBOL_PIXMAP)
         return; // nothing to do (colors are not required with PIXMAP symbols)
-    if(size < 1) return; // size too small 
+    if(size < 1 && style->symbol != 0) return; // size too small AND we're not doing a basic solid fill (which can't be scaled so size doesn't matter)
 
     AGGMapserverRenderer* ren = getAGGRenderer(image);
     polygon_adaptor *polygons;
