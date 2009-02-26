@@ -1470,103 +1470,171 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
     msTransformShapeToPixel(shape, extent, cellsize);
 }
 
-shapeObj* msOffsetPolyline(shapeObj *p, double offsetx, double offsety) {
-    int i, j, first,idx;
-    double ox=0, oy=0, limit;
-    double dx,dy,dx0=0, dy0=0,x, y, x0=0.0, y0=0.0, k=0.0, k0=0.0, q=0.0, q0=0.0;
-    float par=(float)0.71;
-    shapeObj *ret = (shapeObj*)malloc(sizeof(shapeObj));
-    msInitShape(ret);
-    ret->numlines = p->numlines;
-    ret->line=(lineObj*)malloc(sizeof(lineObj)*ret->numlines);
-    for(i=0;i<ret->numlines;i++) {
-        ret->line[i].numpoints=p->line[i].numpoints;
-        ret->line[i].point=(pointObj*)malloc(sizeof(pointObj)*ret->line[i].numpoints);
-    }
-    if(offsety == -99) {
-        limit = offsetx*offsetx/4;
-        for (i = 0; i < p->numlines; i++) {
-            idx=0;
-            first = 1;
-            for(j=1; j<p->line[i].numpoints; j++) {        
-                ox=0; oy=0;
-                x = dx = (p->line[i].point[j].x - p->line[i].point[j-1].x);
-                y = dy = (p->line[i].point[j].y - p->line[i].point[j-1].y);
+/*
+** Helper functions supplied as part of bug #2868 solution. Consider moving these to
+** mapprimitive.c for more general use.
+*/
 
-                /* offset setting - quick approximation, may be changed with goniometric functions */
-                if(dx==0) { /* vertical line */
-                    if(dy==0) {
-                        continue; /* checking unique points */
-                    }
-                    ox=(dy>0) ? -offsetx : offsetx;
-                } else {
-                    k = dy/dx;
-                    if(MS_ABS(k)<0.5) {
-                        oy = (dx>0) ? offsetx : -offsetx;
-                    } else {
-                        if (MS_ABS(k)<2.1) {
-                            oy = (dx>0) ? offsetx*par : -offsetx*par;
-                            ox = (dy>0) ? -offsetx*par : offsetx*par;
-                        } else
-                            ox = (dy>0) ? -offsetx : offsetx;
-                    }
-                    q = p->line[i].point[j-1].y+oy - k*(p->line[i].point[j-1].x+ox);
-                }
+/* vector difference */
+static pointObj point_diff(const pointObj a, const pointObj b) {
+  pointObj retv = {a.x-b.x,a.y-b.y
+#ifdef USE_POINT_Z_M
+    ,a.z-b.z,a.m-b.m
+#endif
+  };
+  return retv;
+}
 
-                /* offset line points computation */
-                if(first==1) { /* first point */
-                    first = 0;
-                    x = ret->line[i].point[idx].x = p->line[i].point[j-1].x+ox;
-                    y = ret->line[i].point[idx].y = p->line[i].point[j-1].y+oy;
-                    idx++;
-                } else { /* middle points */
-                    if((dx*dx+dy*dy)>limit){ /* if the points are too close */
-                        if(dx0==0) { /* checking verticals */
-                            if(dx==0) {
-                                continue;
-                            }
-                            x = x0;
-                            y = k*x + q;
-                        } else {
-                            if(dx==0) {
-                                x = p->line[i].point[j-1].x+ox;
-                                y = k0*x + q0;
-                            } else {
-                                if(k==k0) continue; /* checking equal direction */
-                                x = (q-q0)/(k0-k);
-                                y = k*x+q;
-                            }
-                        }
-                    }else{/* need to be refined */
-                        x = p->line[i].point[j-1].x+ox;
-                        y = p->line[i].point[j-1].y+oy;
-                    }
-                    ret->line[i].point[idx].x=x;
-                    ret->line[i].point[idx].y=y;
-                    idx++;
-                }
-                dx0 = dx; dy0 = dy; x0 = x, y0 = y; k0 = k; q0=q;
-            }
-            /* last point */
-            if(first==0) {
-                ret->line[i].point[idx].x=p->line[i].point[p->line[i].numpoints-1].x+ox;
-                ret->line[i].point[idx].y=p->line[i].point[p->line[i].numpoints-1].y+oy;
-                idx++;
-            }
-            if(idx!=p->line[i].numpoints) {
-                /*printf("shouldn't happen :(\n");*/
-                ret->line[i].numpoints=idx;
-                ret->line=realloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
-            }
+/* vector sum */
+static pointObj point_sum(const pointObj a, const pointObj b) {
+  pointObj retv = {a.x+b.x,a.y+b.y
+#ifdef USE_POINT_Z_M
+    ,a.z+b.z,a.m+b.m
+#endif
+  };
+  return retv;
+}
+
+/* vector multiply */
+static pointObj point_mul(const pointObj a, double b) {
+  pointObj retv= {a.x*b,a.y*b
+#ifdef USE_POINT_Z_M
+    ,a.z*b,a.m*b
+#endif
+  };
+  return retv;
+}
+
+/* vector ??? */
+static double point_abs2(const pointObj a) {
+#ifdef USE_POINT_Z_M
+  return a.x*a.x+a.y*a.y+a.z*a.z+a.m*a.m;
+#else
+  return a.x*a.x+a.y*a.y;
+#endif
+}
+
+/* vector normal */
+static pointObj point_norm(const pointObj a) {
+  double lenmul;
+  pointObj retv;
+
+#ifdef USE_POINT_Z_M
+  if (a.x==0 && a.y==0 && a.z==0 && a.m==0) 
+#else
+  if (a.x==0 && a.y==0) 
+#endif
+    return a;
+
+  lenmul=1.0/sqrt(point_abs2(a));  /* this seems to be the costly operation */
+
+  retv.x = a.x*lenmul;
+  retv.y = a.y*lenmul;
+#ifdef USE_POINT_Z_M
+  retv.z = a.z*lenmul;
+  retv.m = a.m*lenmul;
+#endif
+
+  return retv;
+}
+
+/* rotate a vector 90 degrees */
+static pointObj point_rotz90(const pointObj a) {
+  double nx=-1.0*a.y, ny=a.x;
+  pointObj retv=a;
+  retv.x=nx; retv.y=ny;
+  return retv;
+}
+
+/* vector cross product (warning: z and m dimensions are ignored!) */
+static double point_cross(const pointObj a, const pointObj b) {
+  return a.x*b.y-a.y*b.x;
+}
+
+/* 
+** For offset corner point calculation 1/sin() is used
+** to avoid 1/0 division (and long spikes) we define a 
+** limit for sin().
+*/
+#define CURVE_SIN_LIMIT 0.3
+
+shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety) {
+  int i, j, first,idx;
+
+  shapeObj *ret = (shapeObj*)malloc(sizeof(shapeObj));
+  msInitShape(ret);
+  ret->numlines = p->numlines;
+  ret->line=(lineObj*)malloc(sizeof(lineObj)*ret->numlines);
+  for(i=0;i<ret->numlines;i++) {
+    ret->line[i].numpoints=p->line[i].numpoints;
+    ret->line[i].point=(pointObj*)malloc(sizeof(pointObj)*ret->line[i].numpoints);
+  }
+
+  if(offsety == -99) { /* complex calculations */
+    for (i = 0; i < p->numlines; i++) {
+      idx=0;
+      first = 1;
+
+      /* saved metrics of the last processed point */
+      pointObj old_pt, old_diffdir, old_offdir;
+      if (p->line[i].numpoints>0)
+        old_pt=p->line[i].point[0];
+      for(j=1; j<p->line[i].numpoints; j++) {
+        const pointObj pt = p->line[i].point[j]; /* place of the point */
+        const pointObj diffdir = point_norm(point_diff(pt,old_pt)); /* direction of the line */
+        const pointObj offdir = point_rotz90(diffdir); /* direction where the distance between the line and the offset is measured */
+        pointObj offpt; /* this will be the corner point of the offset line */
+
+        /* offset line points computation */
+        if(first == 1) { /* first point */
+          first = 0;
+          offpt = point_sum(old_pt,point_mul(offdir,offsetx));
+        } else { /* middle points */
+          /* curve is the angle of the last and the current line's direction (supplementary angle of the shape's inner angle) */
+          double sin_curve = point_cross(diffdir,old_diffdir);
+          double cos_curve = point_cross(old_offdir,diffdir);
+          if ((-1.0)*CURVE_SIN_LIMIT < sin_curve && sin_curve < CURVE_SIN_LIMIT) {
+            /* do not calculate 1/sin, instead use a corner point approximation: average of the last and current offset direction and length */
+
+            /* 
+	    ** TODO: fair for obtuse inner angles, however, positive and negative
+            ** acute inner angles would need special handling - similar to LINECAP
+            ** to avoid drawing of long spikes
+            */
+            offpt = point_sum(old_pt, point_mul(point_sum(offdir, old_offdir),0.5*offsetx));
+          } else {
+            double base_shift = -1.0*(1.0+cos_curve)/sin_curve;
+            offpt = point_sum(old_pt, point_mul(point_sum(point_mul(diffdir,base_shift),offdir), offsetx));
+	  }
         }
-    } else { /* normal offset (eg. drop shadow) */
-        for (i = 0; i < p->numlines; i++)
-            for(j=1; j<p->line[i].numpoints; j++) {
-                ret->line[i].point[j-1].x=p->line[i].point[j-1].x+offsetx;
-                ret->line[i].point[j-1].y=p->line[i].point[j-1].y+offsety;
-            }
+        ret->line[i].point[idx]=offpt;
+        idx++;
+        old_pt=pt; old_diffdir=diffdir; old_offdir=offdir;
+      }
+	            
+      /* last point */
+      if(first == 0) {
+        pointObj offpt=point_sum(old_pt,point_mul(old_offdir,offsetx));
+        ret->line[i].point[idx]=offpt;
+        idx++;
+      }
+            
+      if(idx != p->line[i].numpoints) {
+        /* printf("shouldn't happen :(\n"); */
+        ret->line[i].numpoints=idx;
+        ret->line=realloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
+      }
     }
-    return ret;
+  } else { /* normal offset (eg. drop shadow) */
+    for (i = 0; i < p->numlines; i++) {
+      for(j=1; j<p->line[i].numpoints; j++) {
+        ret->line[i].point[j-1].x=p->line[i].point[j-1].x+offsetx;
+        ret->line[i].point[j-1].y=p->line[i].point[j-1].y+offsety;
+      }
+    }
+  }
+
+  return ret;
 }
 
 /*
