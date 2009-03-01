@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed C# the compiler options for MSVC 2008 (#2910)
+
 - Fix build problem with mapogcsld.c when OWS services are not available (#473)
 
 - Fix build on windows (maputil.c)
