@@ -2,9 +2,9 @@
 # nmake.opt - MapServer 4.x configuration for MSVC++
 ########################################################################
 
-# This VC++ configuration is used in building MAPSERVER.LIB, 
-# MAPSERVER_I.LIB MAPSERV.EXE, and the other 
-# MapServer command-line programs.  
+# This VC++ configuration is used in building MAPSERVER.LIB,
+# MAPSERVER_I.LIB MAPSERV.EXE, and the other
+# MapServer command-line programs.
 #
 # To use the makefile:
 #  - Open a DOS prompt window
@@ -24,12 +24,12 @@
 #   Section VIII: UMN GIS System Support
 #   Section IX:  Collect compiler flags
 #
-# The easiest way to get going is to use MSVC 2003 and the MapServer 
-# buildkit that is available at 
+# The easiest way to get going is to use MSVC 2003 and the MapServer
+# buildkit that is available at
 # http://mapserver.gis.umn.edu/docs/howto/buildkit
-# This will provide a full set of libraries to build MapServer will almost 
-# all of its options enabled.  If you are building everything from 
-# scratch, start by commenting out most of the options and adding them 
+# This will provide a full set of libraries to build MapServer will almost
+# all of its options enabled.  If you are building everything from
+# scratch, start by commenting out most of the options and adding them
 # in incrementally.
 
 
@@ -55,7 +55,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Check compiler version given in command line
 # nmake -f makefile.vc MSVC_VER=xxxx
-# 1310 = 7.1 (2003)   1400 = 8.0 (2005) 1500 = 9.0 (2006)
+# 1310 = 7.1 (2003)   1400 = 8.0 (2005) 1500 = 9.0 (2008)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !IFNDEF MSVC_VER
 #assume msvc 7.1
@@ -65,12 +65,12 @@ MSVC_VER=1310
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # File locations and where to install things
 # ----------------------------------------------------------------------
-# If you are using the MapServer Build Kit, almost everything should be 
+# If you are using the MapServer Build Kit, almost everything should be
 # relative to this directory throughout this option file.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Set the following to point to the directory adjacent to the dependent libs.
-!IFNDEF MS_BASE 
+!IFNDEF MS_BASE
 MS_BASE =   c:\projects\mapserver
 !ENDIF
 
@@ -89,7 +89,7 @@ BINDIR = $(MS_BASE)\..\bin
 
 !IF $(MSVC_VER) >= 1400
 !IFNDEF MS_DEBUG
-# Optimized, with using MSVCRT. 
+# Optimized, with using MSVCRT.
 OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
 !ELSE
 # Debug with MSVCRT
@@ -98,7 +98,7 @@ OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPR
 !ENDIF
 !ELSE
 !IFNDEF MS_DEBUG
-# Optimized, with using MSVCRT. 
+# Optimized, with using MSVCRT.
 OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc
 !ELSE
 # Debug with MSVCRT
@@ -107,7 +107,7 @@ OPTFLAGS = /nologo /Zi /MDd $(WARNING_LEVEL) $(DEBUG) /EHsc
 !ENDIF
 !ENDIF
 
-# Uncomment the following to link mapserv.exe with a dll.  In almost 
+# Uncomment the following to link mapserv.exe with a dll.  In almost
 # all cases you will want to do this.
 DLLBUILD = 1
 
@@ -195,7 +195,7 @@ OUTPUT_JPEG=-DUSE_GD_JPEG
 # ----------------------------------------------------------------------
 # If you wish to allow PNG output maps, uncomment the following flag.
 # If not using a GD build with an internal copy of libpng, you will
-# also need to uncomment PNG_DIR and ZLIB_DIR and point to it; 
+# also need to uncomment PNG_DIR and ZLIB_DIR and point to it;
 # however, with BGD.DLL this is normally not necessary.
 # See http://www.libpng.org/pub/png/libpng.html for support library.
 # See http://www.gzip.org/zlib/ for support library.
@@ -219,7 +219,7 @@ OUTPUT_GIF=-DUSE_GD_GIF -DGD_HAS_GDIMAGEGIFPTR
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # GD BMP support
 # ----------------------------------------------------------------------
-# If you wish to allow Windows BMP output maps, 
+# If you wish to allow Windows BMP output maps,
 # uncomment the following flag.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OUTPUT_WBMP=-DUSE_GD_WBMP
@@ -228,7 +228,7 @@ OUTPUT_WBMP=-DUSE_GD_WBMP
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # GD Bitmap Font support
 # ----------------------------------------------------------------------
-# Bitmap font support (GD 2.0.22 and greater, 
+# Bitmap font support (GD 2.0.22 and greater,
 # see Bug 969 for more details)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 GD_HAS_GETBITMAPFONT=-DGD_HAS_GETBITMAPFONT
@@ -254,7 +254,7 @@ USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
 # If you wish to annotate your maps with true type fonts unccomment the
 # following flag. Provide the full path to the FreeType 2.x external
 # support library, unless it is provided within your GD build as is the
-# case with BGD.DLL.  
+# case with BGD.DLL.
 # See http://www.freetype.org for support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ANNOTATION_FT=-DUSE_GD_FT
@@ -272,19 +272,19 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 !ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# MING (Macromedia Flash SWF output support) 
+# MING (Macromedia Flash SWF output support)
 # ----------------------------------------------------------------------
-# The MING library can be used to allow MapServer to output maps in 
+# The MING library can be used to allow MapServer to output maps in
 # flash format.  Ming 0.2a is the only version known to compile and work
 # on Win32.  The 0.3 version does not work at this time.  See
-# http://ming.sourceforge.net for the support library and more 
+# http://ming.sourceforge.net for the support library and more
 # information
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #MING=-DUSE_MING_FLASH
 #MING_DIR=$(MS_BASE)\..\ming-0.2a
 
 
-# If you wish to use AGG 
+# If you wish to use AGG
 # The AGG (Ant-Grain Geometry) libraray http://www.antigrain.com/
 #is used in Mapserver to putput high class rendering
 #
@@ -292,11 +292,11 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 #AGG_DIR=$(MS_BASE)\..\agg-2.4
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# PDF (Acrobat PDF support) 
+# PDF (Acrobat PDF support)
 # ----------------------------------------------------------------------
-# If you wish to have PDF output, uncomment the following flag and 
+# If you wish to have PDF output, uncomment the following flag and
 # provide the full path to the PDF support library project directory.
-# See http://www.pdflib.com/products/pdflib/download-source.html to 
+# See http://www.pdflib.com/products/pdflib/download-source.html to
 # download the support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #PDF=-DUSE_PDF
@@ -304,10 +304,10 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# GEOS 
+# GEOS
 # ----------------------------------------------------------------------
-# GEOS provides support for spatial predicates and overlay/buffer 
-# operations.  It can only be compiled on Windows with MSVC 7.0 or 
+# GEOS provides support for spatial predicates and overlay/buffer
+# operations.  It can only be compiled on Windows with MSVC 7.0 or
 # greater (or the cygwin/mingw stack).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #GEOS=-DUSE_GEOS
@@ -315,10 +315,10 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ZLIB 
+# ZLIB
 # ----------------------------------------------------------------------
-# ZLIB is required for PNG and for SVG support to allow the output of 
-# compressed files.  If -DUSE_ZLIB is defined, you essentially have all 
+# ZLIB is required for PNG and for SVG support to allow the output of
+# compressed files.  If -DUSE_ZLIB is defined, you essentially have all
 # you need for SVG output support
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ZLIB=-DUSE_ZLIB
@@ -342,11 +342,11 @@ ZLIB_INC=-I$(ZLIB_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # GDAL
 # ----------------------------------------------------------------------
-# The lite version of mapserver 4.x supports only GIF, PNG and JPEG data 
-# for input. If you wish to support many geospatial raster formats 
-# for input you will need the GDAL support library from 
-# http://www.gdal.org/.  Once built, enable the GDAL flag, and point 
-# GDAL_DIR to the directory where GDAL was built. 
+# The lite version of mapserver 4.x supports only GIF, PNG and JPEG data
+# for input. If you wish to support many geospatial raster formats
+# for input you will need the GDAL support library from
+# http://www.gdal.org/.  Once built, enable the GDAL flag, and point
+# GDAL_DIR to the directory where GDAL was built.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #GDAL=-DUSE_GDAL
 #GDAL_DIR=$(MS_BASE)\..\gdal
@@ -356,14 +356,14 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # OGR
 # ----------------------------------------------------------------------
 # The OGR library (part of GDAL) supports a variety of geospatial vector
-# formats including mapinfo, Arc/Info binary coverages, S-57, SDTS, 
-# Microstation DGN (pre-v7), TIGER, UK .NTF.  It also include support 
-# for treating non-spatial tablular data from ODBC, CSV, MySQL, 
-# Oracle Spatial, and PostgreSQL as spatial table with use of the 
-# VRT (virtual) driver. 
+# formats including mapinfo, Arc/Info binary coverages, S-57, SDTS,
+# Microstation DGN (pre-v7), TIGER, UK .NTF.  It also include support
+# for treating non-spatial tablular data from ODBC, CSV, MySQL,
+# Oracle Spatial, and PostgreSQL as spatial table with use of the
+# VRT (virtual) driver.
 #
-# NOTE: Both -DUSE_OGR and -DUSE_GDAL need to be defined if you 
-# want to use GDAL/OGR for both raster and vector support, but GDAL_DIR 
+# NOTE: Both -DUSE_OGR and -DUSE_GDAL need to be defined if you
+# want to use GDAL/OGR for both raster and vector support, but GDAL_DIR
 # needs only be defined once.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #OGR=-DUSE_OGR
@@ -373,7 +373,7 @@ ZLIB_INC=-I$(ZLIB_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # JPEG Input
 # ----------------------------------------------------------------------
-# JPEG input for raster layers is also available through GDAL, If you wish 
+# JPEG input for raster layers is also available through GDAL, If you wish
 # to build support for JPEG without GDAL, uncomment the following flag
 # and provide the full path to the jpeg support library project directory.
 # See http://www.ijg.org/ for support library.
@@ -387,7 +387,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # Direct connectivity to Postgresql PostGIS.
 # ----------------------------------------------------------------------
 # To turn on direct connectivity to Postgresql PostGIS uncomment the following
-# flag and set the full path name to the project directory for the 
+# flag and set the full path name to the project directory for the
 # Postgresql native Win32 client library.
 # See http://www.postgresql.org for support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -409,8 +409,8 @@ JPEG_INC = -I$(JPEG_DIR)
 # ----------------------------------------------------------------------
 # To turn on direct connectivity to ArcSDE uncomment the following
 # flags and set the full path name to the project directory for ArcSDE.
-# The support library for ArcSDE (the ArcSDE C API/SDK) is typically 
-# only available for those with a full license of ArcSDE.  It is not 
+# The support library for ArcSDE (the ArcSDE C API/SDK) is typically
+# only available for those with a full license of ArcSDE.  It is not
 # available for download.
 # Either set USE_SDE or USE_SDE_PLUGIN, not both.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -419,15 +419,15 @@ JPEG_INC = -I$(JPEG_DIR)
 
 #SDE_VERSION = 91
 #SDE_DIR = C:\arcgis\arcsde
-#SDE_INC = -I$(SDE_SDK)\include 
+#SDE_INC = -I$(SDE_SDK)\include
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Direct connectivity to SQL Server 
+# Direct connectivity to SQL Server
 # ----------------------------------------------------------------------
 # To turn on direct connectivity to SQL Server uncomment the following
-# flag. You then need to set the ODBC_INC path later as well to the 
-# Windows SDK include path.  The SQL Server 2008 driver can only be 
+# flag. You then need to set the ODBC_INC path later as well to the
+# Windows SDK include path.  The SQL Server 2008 driver can only be
 # built and used as a plugin.  See RFC 38 for more details.  The ODBC
 # libs and includes must be set to be able to build the plugin.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -440,8 +440,8 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # EPPL7 Support
 # ----------------------------------------------------------------------
-# This activates ERDAS as well. It is included in the distribution. 
-# Probably the best raster alternative if you've got EPPL7 laying 
+# This activates ERDAS as well. It is included in the distribution.
+# Probably the best raster alternative if you've got EPPL7 laying
 # around. See http://www.lmic.state.mn.us/ for more information.
 # Uncomment out the following flag and set the full path name to the
 # epplib.obj file.
@@ -498,7 +498,7 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Server
 # ----------------------------------------------------------------------
-# Use -DUSE_WFS_SVR to compile with WFS server 
+# Use -DUSE_WFS_SVR to compile with WFS server
 # support, requires OGR and PROJ4
 #WFS=-DUSE_WFS_SVR
 
@@ -512,10 +512,10 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # OGC SOS
 # ----------------------------------------------------------------------
-# Use -DUSE_OGC_SOS to compile with SOS, needs USE_WMS_SVR or 
+# Use -DUSE_OGC_SOS to compile with SOS, needs USE_WMS_SVR or
 #USE_WFS_SVR enabled so the the gml functions to be enabled
-#It also needs ICONV support since the libxml windows binaries 
-#are built with it 
+#It also needs ICONV support since the libxml windows binaries
+#are built with it
 #http://xmlsoft.org/index.html
 #SOS=-DUSE_SOS_SVR
 #XML2_ENABLED=-DUSE_LIBXML2
@@ -529,19 +529,19 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # SWIG location
 # ----------------------------------------------------------------------
-# SWIG is required to *generate* the C/C++ code that creates the 
+# SWIG is required to *generate* the C/C++ code that creates the
 # bindings to various languages.  You can download a pre-built binary
-# for SWIG at http://www.swig.org.  NOTE: The PHP bindings are *not* 
-# generated with SWIG at this time.  If you use this makefile to 
-# make any MapScript bindings, eg. "nmake /f makefile.vc python", you 
-# will need to have SWIG installed.  
+# for SWIG at http://www.swig.org.  NOTE: The PHP bindings are *not*
+# generated with SWIG at this time.  If you use this makefile to
+# make any MapScript bindings, eg. "nmake /f makefile.vc python", you
+# will need to have SWIG installed.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #SWIG = $(MS_BASE)\..\SWIG-1.3.27\swig
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Java MapScript
 # ----------------------------------------------------------------------
-# Java MapScript very likely requires USE_THREAD to be defined.  It is 
+# Java MapScript very likely requires USE_THREAD to be defined.  It is
 # known to work with both JDK 1.5 and JDK 1.4
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #JAVA_HOME = "C:\Progra~1\Java\jdk1.5.0"
@@ -549,7 +549,7 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Python MapScript
 # ----------------------------------------------------------------------
-# Python MapScript very likely requires USE_THREAD to be defined.  
+# Python MapScript very likely requires USE_THREAD to be defined.
 # Python 2.2 and above are supported.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #PYTHON_HOME = "$(MS_BASE)\..\Python-2.4.2"
@@ -557,7 +557,7 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PHP MapScript
 # ----------------------------------------------------------------------
-# The PHP_REGEX hack allows you to use PHP's regex system rather than 
+# The PHP_REGEX hack allows you to use PHP's regex system rather than
 # the normal GNU regex library.  This should normally not be needed.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #PHP_HOME = $(MS_BASE)\..\php-4.4.2
@@ -583,7 +583,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # If you would like mapserver to be able to reproject data from one
 # geographic projection to another, uncomment the following flag
 # Proj.4 distribution (cartographic projection routines).  PROJ.4 is
-# also required for all OGC services (WMS, WFS, and WCS). 
+# also required for all OGC services (WMS, WFS, and WCS).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
 #PROJ_DIR=$(MS_BASE)\..\proj-4.4.9
@@ -608,7 +608,7 @@ REGEX_DIR=$(MS_BASE)\..\regex-0.12
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # FastCGI Support
 # ----------------------------------------------------------------------
-# Uncomment, and update accordingly. 
+# Uncomment, and update accordingly.
 #FCGIDEF=-DUSE_FASTCGI
 #FCGIDIR=$(MS_BASE)\..\fcgi-2.4.0
 
@@ -699,15 +699,15 @@ SDE_INC=-I$(SDE_DIR)/include
 !IF "$(SDE_OPT)" != "-DUSE_SDE_PLUGIN"
 SDE_LIB = $(SDE_DIR)\lib\pe$(SDE_VERSION).lib \
           $(SDE_DIR)\lib\sde$(SDE_VERSION).lib \
-          $(SDE_DIR)\lib\sg$(SDE_VERSION).lib    
+          $(SDE_DIR)\lib\sg$(SDE_VERSION).lib
 !ELSE
-SDE_LIB = 
+SDE_LIB =
 !ENDIF
 !ENDIF
 
 # Setup REGEX object and includes
 !IFNDEF PHP_REGEX
-REGEX_OBJ=$(REGEX_DIR)\regex.obj 
+REGEX_OBJ=$(REGEX_DIR)\regex.obj
 REGEX_INC=-I$(REGEX_DIR)
 !ELSE
 REGEX_OBJ=$(PHP_HOME)\regex\regcomp.obj $(PHP_HOME)\regex\regerror.obj \
@@ -752,7 +752,7 @@ ORACLE_INC=-I$(ORACLE_DIR)/include
 !IF "$(ORACLE)" != "-DUSE_ORACLE_PLUGIN"
 ORACLE_LIB=$(ORACLE_DIR)/lib/msvc/oci.lib
 !ELSE
-ORACLE_LIB = 
+ORACLE_LIB =
 !ENDIF
 !ENDIF
 
@@ -810,7 +810,7 @@ EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
      $(LIBXML_LIB) $(AGG_LIB) $(FRIBIDI_LIB)
 !ENDIF
-        
+
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
 
@@ -822,7 +822,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
          $(AGG_INC) $(PNG_INC) $(FRIBIDI_INC)
 !ENDIF
-        
+
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(THREADS) \
