@@ -38,6 +38,9 @@ MS_CVSID("$Id$")
 
 #include "mapwcs.h"
 
+#include "maptime.h"
+#include <time.h>
+
 #include "gdal.h"
 #include "cpl_string.h" /* GDAL string handling */
 
@@ -1484,7 +1487,9 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       return msWCSException(map, "InvalidParameterValue", "time", 
                             params->version );
     }
-    if(!strstr(value, params->time)) { /* this is likely too simple a test */
+    
+    /* check if timestamp is covered by the wcs_timeposition definition */
+    if (msValidateTimeValue(params->time, value) == MS_FALSE) {
       msSetError( MS_WCSERR, "The coverage does not have a time position of %s.", "msWCSGetCoverage()", params->time );
       return msWCSException(map, "InvalidParameterValue", "time",
                             params->version);
@@ -1518,7 +1523,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       
     /* finally set the filter */
     freeExpression(&tlp->filter);
-    msLoadExpressionString(&tlp->filter, params->time);
+    msLayerSetTimeFilter(tlp, params->time, value);
   }
            
   if( strncasecmp(params->version,"1.0",3) == 0 )
