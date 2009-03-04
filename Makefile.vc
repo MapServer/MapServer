@@ -134,7 +134,11 @@ clean:
 mapscriptvars: makefile.vc nmake.opt
 	-del mapscriptvars
 	echo $(MS_CURRENT) > mapscriptvars
+!IFDEF WIN64
+	echo $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT >> mapscriptvars
+!ELSE
 	echo $(MS_DEFS) -DWIN32 -D_WIN32 >> mapscriptvars
+!ENDIF
 	echo $(INCLUDES) >> mapscriptvars
 	echo $(LIBS_DLL) >> mapscriptvars
 	echo $(LIBS) >> mapscriptvars

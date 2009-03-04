@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Adding -DUSE_GENERIC_MS_NINT to the WIN64 MapScript builds (#2250)
+
 - Fixed C# the compiler options for MSVC 2008 (#2910)
 
 - Fix build problem with mapogcsld.c when OWS services are not available (#473)
