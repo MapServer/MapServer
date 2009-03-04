@@ -25,7 +25,13 @@ PHP4_FLAGS=/DZEND_WIN32 /DPHP_WIN32 /DPHP4 /DZTS
 #LDFLAGS =	/NODEFAULTLIB:msvcrt /dll $(LDEBUG)
 #LDFLAGS =	/NODEFAULTLIB:libcd /dll $(LDEBUG)
 
-BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32 $(PHP4_FLAGS)
+# Set flag for Visual Studio > 2003 & PHP < 5.3
+# see http://bugs.php.net/bug.php?id=39130
+!IF $(MSVC_VER) >= 1400
+VCFLAGS = -D_USE_32BIT_TIME_T
+!ENDIF
+
+BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32 $(PHP4_FLAGS) $(VCFLAGS)
 OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc
 LDFLAGS =       /NODEFAULTLIB:libc /dll /FORCE:MULTIPLE $(LDEBUG)
 
@@ -44,7 +50,7 @@ MS_LIBS = $(EXTERNAL_LIBS) ../../mapserver.lib
 # The rest of the file should not have to be edited...
 #
 
-PHPMS_OBJS =  php_mapscript_util.obj php_mapscript.obj mapscript_i.obj 
+PHPMS_OBJS =  php_mapscript_util.obj php_mapscript.obj mapscript_i.obj
 
 PHPPROJ_OBJS = php_mapscript_util.obj php_proj.obj
 
