@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- SLD: Correct crash with large class names (#2915)
+
 - Added Java MapScript WIN64 support (#2250)
 
 - Fixed a problem with long running processes, embedded scalebars/legends and AGG. (#2887)

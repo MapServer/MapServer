@@ -4233,6 +4233,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
 
 #ifdef USE_OGR
     char szTmp[100];
+    char *pszTmpName = NULL;
     int i, j;
     styleObj *psStyle = NULL;
     char *pszFilter = NULL;
@@ -4267,12 +4268,18 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
         else if (psLayer->name)
         {
             pszEncoded = msEncodeHTMLEntities(psLayer->name);
+            pszTmpName = (char *)malloc(sizeof(char)*(strlen(pszEncoded)+100));
             if (nVersion > OWS_1_0_0)
-              sprintf(szTmp, "<se:Name>%s</se:Name>\n", pszEncoded);
+              sprintf(pszTmpName, "<se:Name>%s</se:Name>\n", pszEncoded);
             else
-              sprintf(szTmp, "<Name>%s</Name>\n", pszEncoded);
-
+              sprintf(pszTmpName, "<Name>%s</Name>\n", pszEncoded);
+            
+            
             msFree(pszEncoded);
+            pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+            msFree(pszTmpName);
+            pszTmpName=NULL;
+
         }
         else
         {
@@ -4280,8 +4287,9 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
               sprintf(szTmp, "<se:Name>%s</se:Name>\n", "NamedLayer");
             else
               sprintf(szTmp, "<Name>%s</Name>\n", "NamedLayer"); 
+            pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
         }
-        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+        
 
         sprintf(szTmp, "%s\n",  "<UserStyle>");
         pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
@@ -4311,16 +4319,19 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
                 if (psLayer->class[i]->name)
                 {
                     pszEncoded = msEncodeHTMLEntities(psLayer->class[i]->name);
-                    
+                    pszTmpName = (char *)malloc(sizeof(char)*(strlen(pszEncoded)+100));
+
                     if (nVersion > OWS_1_0_0)
-                      sprintf(szTmp, "<se:Name>%s</se:Name>\n",  pszEncoded);
+                      sprintf(pszTmpName, "<se:Name>%s</se:Name>\n",  pszEncoded);
                     else
-                      sprintf(szTmp, "<Name>%s</Name>\n",  pszEncoded);
+                      sprintf(pszTmpName, "<Name>%s</Name>\n",  pszEncoded);
 
                     msFree(pszEncoded);
 
-                    pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
-                }
+                    pszFinalSLD = msStringConcatenate(pszFinalSLD, pszTmpName);
+                    msFree(pszTmpName);
+                    pszTmpName=NULL;
+               }
 /* -------------------------------------------------------------------- */
 /*      get the Filter if there is a class expression.                  */
 /* -------------------------------------------------------------------- */
