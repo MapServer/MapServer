@@ -402,16 +402,14 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   imageObj *image = NULL;
 
   s = msGetSymbolIndex(&(map->symbolset), "legend", MS_FALSE);
-  if(s == -1) {
-    if(msGrowSymbolSet(&map->symbolset) == NULL)
-        return -1;
-    s = map->symbolset.numsymbols;
-    map->symbolset.numsymbols++;
-    initSymbol(map->symbolset.symbol[s]);
-  } else {
-    if(map->symbolset.symbol[s]->img) 
-      gdImageDestroy(map->symbolset.symbol[s]->img);
-  }
+  if(s != -1) 
+    msRemoveSymbol(&(map->symbolset), s); /* solves some caching issues in AGG with long-running processes */
+
+  if(msGrowSymbolSet(&map->symbolset) == NULL)
+    return -1;
+  s = map->symbolset.numsymbols;
+  map->symbolset.numsymbols++;
+  initSymbol(map->symbolset.symbol[s]);
 
 #ifdef USE_AGG
   if(MS_RENDERER_AGG(map->outputformat))

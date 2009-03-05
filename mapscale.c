@@ -391,16 +391,14 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
   imageObj *image = NULL;
 
   s = msGetSymbolIndex(&(map->symbolset), "scalebar", MS_FALSE);
-  if(s == -1) {
-    if (msGrowSymbolSet(&map->symbolset) == NULL)
-        return -1;
-    s = map->symbolset.numsymbols;
-    map->symbolset.numsymbols++;
-    initSymbol(map->symbolset.symbol[s]);
-  } else {
-    if(map->symbolset.symbol[s]->img) 
-      gdImageDestroy(map->symbolset.symbol[s]->img);
-  }
+  if(s != -1) 
+    msRemoveSymbol(&(map->symbolset), s); /* solves some caching issues in AGG with long-running processes */
+
+  if(msGrowSymbolSet(&map->symbolset) == NULL)
+    return -1;
+  s = map->symbolset.numsymbols;
+  map->symbolset.numsymbols++;
+  initSymbol(map->symbolset.symbol[s]);
   
   image = msDrawScalebar(map);
   map->symbolset.symbol[s]->img =  image->img.gd; /* TODO  */
@@ -413,8 +411,7 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
 
   /* in 8 bit, mark 0 as being transparent.  In 24bit hopefully already
      have transparency enabled ... */
-  if(map->scalebar.transparent == MS_ON 
-     && !gdImageTrueColor(image->img.gd ) )
+  if(map->scalebar.transparent == MS_ON && !gdImageTrueColor(image->img.gd ) )
     gdImageColorTransparent(map->symbolset.symbol[s]->img, 0);
 
   switch(map->scalebar.position) {
@@ -464,12 +461,10 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
     map->layerorder[l] = l;
   }
 
-  /* to resolve bug 490 */
-  GET_LAYER(map, l)->opacity = MS_GD_ALPHA;
-  
+  GET_LAYER(map, l)->opacity = MS_GD_ALPHA; /* to resolve bug 490 */
   GET_LAYER(map, l)->status = MS_ON;
 
-/* TODO: Change this when we get rid of MS_MAXSTYLES */
+  /* TODO: Change this when we get rid of MS_MAXSTYLES */
   if (msMaybeAllocateStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
   GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
   GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
@@ -486,12 +481,12 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
        * layer of the map was a raster layer
        */
       if(MS_RENDERER_AGG(map->outputformat))
-          msAlphaGD2AGG(img);
+        msAlphaGD2AGG(img);
 #endif
       msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
-  }
-  else
+  } else {
     msAddLabel(map, l, 0, NULL, &point, NULL, " ", 1.0, NULL);
+  }
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or with saving maps */
   GET_LAYER(map, l)->status = MS_DELETE;

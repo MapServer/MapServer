@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed a problem with long running processes, embedded scalebars/legends and AGG. (#2887)
+
 - Applied patch to deal with a couple of WCS issues (time ranges, #2487) and PostGIS tileindex-based time filters (#1856)
 
 - Adding -DUSE_GENERIC_MS_NINT to the WIN64 MapScript builds (#2250)
