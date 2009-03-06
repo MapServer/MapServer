@@ -1825,7 +1825,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 
   if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0 && symbol->type != MS_SYMBOL_PIXMAP) return; /* nothing to do (color not required for a pixmap symbol) */
-  if(size < 1) return; /* size too small */
+  if(style->symbol!=0 && size < 1) return; /* size too small */
 
   ox = MS_NINT(style->offsetx*scalefactor);
   oy = (style->offsety < -90) ? style->offsety : (int)(style->offsety*scalefactor);
