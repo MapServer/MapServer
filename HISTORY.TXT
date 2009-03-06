@@ -9,6 +9,11 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Current Version:
+----------------
+
+- SLD: Correct non validating SLD (#2915)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 
