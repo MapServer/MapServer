@@ -3435,7 +3435,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         
                         if (psLayer->type == MS_LAYER_POINT)
                         {
-                            if (psSymbol->filled)
+                            if (psSymbol->filled || bFillColor)
                             {
                                 sprintf(szTmp, "<%sFill>\n", sNameSpace);
                                 pszSLD = msStringConcatenate(pszSLD, szTmp);
@@ -3620,18 +3620,20 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         psStyle->outlinecolor.blue,
                         sCssParam);
                 pszSLD = msStringConcatenate(pszSLD, szTmp);
-                sprintf(szTmp, "</%sStroke>\n", sCssParam);
+                sprintf(szTmp, "</%sStroke>\n", sNameSpace);
                 pszSLD = msStringConcatenate(pszSLD, szTmp);
                 bColorAvailable = 1;
             }
             if (!bColorAvailable)
             {       
                 /* default color */
+                sprintf(szTmp, "<%sFill>\n", sNameSpace);
+                pszSLD = msStringConcatenate(pszSLD, szTmp);
                 sprintf(szTmp, 
                         "<%s name=\"fill\">%s</%s>\n",
                         sCssParam, "#808080", sCssParam);
                 pszSLD = msStringConcatenate(pszSLD, szTmp);
-                sprintf(szTmp, "</%sFill>\n", sCssParam);
+                sprintf(szTmp, "</%sFill>\n", sNameSpace);
                 pszSLD = msStringConcatenate(pszSLD, szTmp);
             }
 
@@ -3723,8 +3725,14 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
         pszGraphicSLD = NULL;
     }
 
-    sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
-            psStyle->color.green,psStyle->color.blue);
+    if (psStyle->color.red != -1 && 
+        psStyle->color.green != -1 &&
+        psStyle->color.blue != -1)
+      sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
+              psStyle->color.green,psStyle->color.blue);
+    else
+      sprintf(szHexColor,"%02x%02x%02x",psStyle->outlinecolor.red,
+              psStyle->outlinecolor.green,psStyle->outlinecolor.blue);
                             
     sprintf(szTmp, 
             "<%s name=\"stroke\">#%s</%s>\n", 
