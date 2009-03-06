@@ -40,16 +40,151 @@ MS_CVSID("$Id$")
  * renderer specific drawing functions shouldn't be called directly, but through
  * this function
  */
-int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int height, imageObj *img, int dstX, int dstY)
+int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass, 
+        int width, int height, imageObj *image, int dstX, int dstY)
 {
-#ifdef USE_AGG
-  if(MS_RENDERER_AGG(map->outputformat))
-    return msDrawLegendIconAGG(map,lp,class,width,height,img,dstX,dstY);
-  else
-#endif
-    /*default is to draw with GD*/
-    return msDrawLegendIconGD(map,lp,class,width,height,img->img.gd,dstX,dstY);
+  int i, type;
+  shapeObj box, zigzag;
+  pointObj marker;
+  char szPath[MS_MAXPATHLEN];
+  styleObj outline_style;
+  
+  if(MS_RENDERER_GD(map->outputformat))
+    /* keep GD specific code here for now as it supports clipping */
+	if(MS_VALID_COLOR(map->legend.outlinecolor))
+	  gdImageSetClip(image->img.gd, dstX, dstY, dstX + width - 1, dstY + height - 1);
+  
+
+  /* initialize the box used for polygons and for outlines */
+  box.line = (lineObj *)malloc(sizeof(lineObj));
+  box.numlines = 1;
+  box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
+  box.line[0].numpoints = 5;
+
+  box.line[0].point[0].x = dstX;
+  box.line[0].point[0].y = dstY;
+  box.line[0].point[1].x = dstX + width - 1;
+  box.line[0].point[1].y = dstY;
+  box.line[0].point[2].x = dstX + width - 1;
+  box.line[0].point[2].y = dstY + height - 1;
+  box.line[0].point[3].x = dstX;
+  box.line[0].point[3].y = dstY + height - 1;
+  box.line[0].point[4].x = box.line[0].point[0].x;
+  box.line[0].point[4].y = box.line[0].point[0].y;
+  box.line[0].numpoints = 5;
+    
+  /* if the class has a keyimage, treat it as a point layer
+   * (the keyimage will be treated there) */
+  if(theclass->keyimage != NULL) {
+    type = MS_LAYER_POINT;
+  } else {        
+    /* some polygon layers may be better drawn using zigzag if there is no fill */
+    type = lp->type;
+    if(type == MS_LAYER_POLYGON) {
+      type = MS_LAYER_LINE;
+      for(i=0; i<theclass->numstyles; i++) {
+       if(MS_VALID_COLOR(theclass->styles[i]->color)) { /* there is a fill */
+      type = MS_LAYER_POLYGON;
+      break;
+        }
+      }
+    }
+  }
+
+  /* 
+  ** now draw the appropriate color/symbol/size combination 
+  */     
+  switch(type) {
+  case MS_LAYER_ANNOTATION:
+    marker.x = dstX + MS_NINT(width / 2.0);
+    marker.y = dstY + MS_NINT(height / 2.0);
+    if (theclass->numstyles > 0) {
+      for(i=0; i<theclass->numstyles; i++)
+        msDrawMarkerSymbol(&map->symbolset, image, &marker, theclass->styles[i], lp->scalefactor);          
+    } else if (theclass->label.size!=-1) {
+      labelObj label = theclass->label;
+      double lsize = label.size;
+      double langle = label.angle;
+      int lpos = label.position;
+      label.angle = 0;
+      label.position = MS_CC;
+      if (label.type == MS_TRUETYPE) label.size = height;
+      msDrawLabel(map, image, marker, (char*)"Az", &label,1.0);
+      label.size = lsize;
+      label.position = lpos;
+      label.angle = langle;
+    }
+    break;
+  case MS_LAYER_POINT:
+    marker.x = dstX + MS_NINT(width / 2.0);
+    marker.y = dstY + MS_NINT(height / 2.0);
+    if(theclass->keyimage != NULL) {
+      int symbolNum;
+      styleObj imgStyle;
+      symbolNum = msAddImageSymbol(&(map->symbolset), msBuildPath(szPath, map->mappath, theclass->keyimage));
+      if(symbolNum == -1) { 
+          msSetError(MS_GDERR, "Failed to open legend key image", "msCreateLegendIcon()");
+          return(MS_FAILURE);
+      }
+      initStyle(&imgStyle);
+      imgStyle.size = width;
+      imgStyle.symbol = symbolNum;
+      msDrawMarkerSymbol(&map->symbolset,image,&marker,&imgStyle,lp->scalefactor);
+      /* TO DO: we may want to handle this differently depending on the relative size of the keyimage */
+    } else {
+      for(i=0; i<theclass->numstyles; i++)
+        msDrawMarkerSymbol(&map->symbolset, image, &marker, theclass->styles[i], lp->scalefactor);
+    }
+    break;
+  case MS_LAYER_LINE:
+    zigzag.line = (lineObj *)malloc(sizeof(lineObj));
+    zigzag.numlines = 1;
+    zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
+    zigzag.line[0].numpoints = 4;
+
+    zigzag.line[0].point[0].x = dstX;
+    zigzag.line[0].point[0].y = dstY + height - 1;
+    zigzag.line[0].point[1].x = dstX + MS_NINT(width / 3.0) - 1; 
+    zigzag.line[0].point[1].y = dstY;
+    zigzag.line[0].point[2].x = dstX + MS_NINT(2.0 * width / 3.0) - 1; 
+    zigzag.line[0].point[2].y = dstY + height - 1; 
+    zigzag.line[0].point[3].x = dstX + width - 1; 
+    zigzag.line[0].point[3].y = dstY; 
+
+    for(i=0; i<theclass->numstyles; i++)
+      msDrawLineSymbol(&map->symbolset, image, &zigzag, theclass->styles[i], lp->scalefactor); 
+
+    free(zigzag.line[0].point);
+    free(zigzag.line);    
+    break;
+  case MS_LAYER_CIRCLE:
+  case MS_LAYER_RASTER:
+  case MS_LAYER_CHART:
+  case MS_LAYER_POLYGON:
+    for(i=0; i<theclass->numstyles; i++)     
+      msDrawShadeSymbol(&map->symbolset, image, &box, theclass->styles[i], lp->scalefactor);
+    break;
+  default:
+    return MS_FAILURE;
+    break;
+  } /* end symbol drawing */
+
+  /* handle an outline if necessary */
+  if(MS_VALID_COLOR(map->legend.outlinecolor)) {
+    initStyle(&outline_style);
+    outline_style.color = map->legend.outlinecolor;
+    msDrawLineSymbol(&map->symbolset, image, &box, &outline_style, 1.0);
+    /* reset clipping rectangle */
+    if(MS_RENDERER_GD(map->outputformat))
+    	gdImageSetClip(image->img.gd, 0, 0, image->width - 1, image->height - 1);
+  }
+
+  free(box.line[0].point);
+  free(box.line);
+  
+  return MS_SUCCESS;
 }
+
 
 imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height)
 {
