@@ -4276,7 +4276,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
             
             
             msFree(pszEncoded);
-            pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+            pszFinalSLD = msStringConcatenate(pszFinalSLD, pszTmpName);
             msFree(pszTmpName);
             pszTmpName=NULL;
 
