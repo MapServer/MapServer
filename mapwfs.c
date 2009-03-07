@@ -2018,11 +2018,6 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 if (pszValue)
                   wfsparams->nMaxFeatures = atoi(pszValue);
 
-                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "srsName",
-                                                 NULL);
-                if (pszValue)
-                  wfsparams->pszSrs = strdup(pszValue);
-
                 psQuery = CPLGetXMLNode(psGetFeature, "Query");
                 if (psQuery)
                 {
@@ -2050,6 +2045,12 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                     while (psQuery &&  psQuery->pszValue && 
                            strcasecmp(psQuery->pszValue, "Query") == 0)
                     {
+                        /* get SRS */
+                        pszValue = (char*)CPLGetXMLValue(psGetFeature,  "srsName",
+                                                 NULL);
+                        if (pszValue)
+                          wfsparams->pszSrs = strdup(pszValue);
+
                         /* parse typenames */
                         pszValue = (char*)CPLGetXMLValue(psQuery,  
                                                          "typename", NULL);
