@@ -17,6 +17,8 @@ Current Version (SVN trunk):
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 
+- Update EXTENT warning message (#2914)
+
 - SLD: Correct crash with large class names (#2915)
 
 - Added Java MapScript WIN64 support (#2250)

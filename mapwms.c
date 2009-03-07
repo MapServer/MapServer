@@ -1473,9 +1473,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    else
    {
        if (nVersion >= OWS_1_3_0)
-         msIO_printf("        <!-- WARNING: Optional Ex_GeographicBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wms_extent metadata. Also check that your data exists in the DATA statement -->\n");
+         msIO_printf("        <!-- WARNING: Optional Ex_GeographicBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->\n");
        else
-         msIO_printf("        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wms_extent metadata. Also check that your data exists in the DATA statement -->\n");
+         msIO_printf("        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->\n");
    }
 
    /* time support */
