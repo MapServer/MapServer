@@ -106,7 +106,7 @@ typedef struct
   char *pszBbox; /* only used with a Get Request */
   char *pszOutputFormat; /* only used with DescibeFeatureType */
   char *pszFeatureId;
-
+  char *pszSrs;
 } wfsParamsObj;
 
 /*

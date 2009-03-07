@@ -1860,6 +1860,8 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
           free(wfsparams->pszFeatureId);
         if (wfsparams->pszOutputFormat)
           free(wfsparams->pszOutputFormat);
+        if (wfsparams->pszSrs)
+          free(wfsparams->pszSrs);
     }
 }
 
@@ -1900,6 +1902,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 else if (strcasecmp(request->ParamNames[i], "BBOX") == 0)
                   wfsparams->pszBbox = strdup(request->ParamValues[i]);
                 
+                else if (strcasecmp(request->ParamNames[i], "SRSNAME") == 0)
+                  wfsparams->pszSrs = strdup(request->ParamValues[i]);
+
                 else if (strcasecmp(request->ParamNames[i], "TYPENAME") == 0)
                   wfsparams->pszTypeName = strdup(request->ParamValues[i]);
                 
@@ -2012,6 +2017,11 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                                                  NULL);
                 if (pszValue)
                   wfsparams->nMaxFeatures = atoi(pszValue);
+
+                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "srsName",
+                                                 NULL);
+                if (pszValue)
+                  wfsparams->pszSrs = strdup(pszValue);
 
                 psQuery = CPLGetXMLNode(psGetFeature, "Query");
                 if (psQuery)

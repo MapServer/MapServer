@@ -14,10 +14,12 @@ Current Version (SVN trunk):
 - Refactor legend icon drawing (remove renderer specific versions)
   Add label styling or markers for annotation layer legend icons (#2917)
 
+- Update EXTENT warning message (#2914)
+
+- add support for SRSNAME parameter (#2899)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
-
-- Update EXTENT warning message (#2914)
 
 - SLD: Correct crash with large class names (#2915)
 
