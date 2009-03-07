@@ -1563,9 +1563,10 @@ if test "$ORA_HOME" = "no" ; then
 else
 
   dnl Try to locate lib directory
-  test -f $ORA_HOME/lib/libclntsh.so && ORA_LIBDIR="$ORA_HOME/lib"
-  test -f $ORA_HOME/libclntsh.so &&     ORA_LIBDIR="$ORA_HOME"
+  test -f $ORA_HOME/lib/libclntsh.so -o -f $ORA_HOME/lib/libclntsh.dylib && ORA_LIBDIR="$ORA_HOME/lib"
+  test -f $ORA_HOME/libclntsh.so -o -f $ORA_HOME/libclntsh.dylib && ORA_LIBDIR="$ORA_HOME"
   test -f $ORA_HOME/lib/oracle/10*/client/lib/libclntsh.so && ORA_LIBDIR=`dirname $ORA_HOME/lib/oracle/10*/client/lib/libclntsh.so`
+  test -f $ORA_HOME/lib/oracle/10*/client/lib/libclntsh.dylib && ORA_LIBDIR=`dirname $ORA_HOME/lib/oracle/10*/client/lib/libclntsh.dylib`
 
   if test -z "$ORA_LIBDIR" ; then
     AC_MSG_ERROR([Oracle Spatial: libclntsh.so not found.])
