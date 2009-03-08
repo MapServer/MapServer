@@ -1189,6 +1189,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
           }
           /*we load the projection sting in the map and possibly 
             set the axis order*/
+          msFreeProjection(&map->projection);
           msLoadProjectionStringEPSG(&(map->projection), paramsObj->pszSrs);
       }
   }
