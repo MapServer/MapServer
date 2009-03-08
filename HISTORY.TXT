@@ -18,6 +18,8 @@ Current Version (SVN trunk):
 
 - add support for SRSNAME parameter (#2899)
 
+- add support for resultType (#2907)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 

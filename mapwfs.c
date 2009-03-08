@@ -1003,6 +1003,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   char **aFIDLayers = NULL;
   char **aFIDValues = NULL;
   int iFIDLayers = 0;
+  int iNumberOfFeatures = 0;
+  int iResultTypeHits = 0;
 
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
 
@@ -1013,7 +1015,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   /*  */
   /* __TODO__ Need to support XML encoded requests */
   /*  */
-  
+
+  if (paramsObj->pszResultType != NULL)
+  {
+    if (strcasecmp(paramsObj->pszResultType, "hits") == 0)
+      iResultTypeHits = 1;
+  }  
 
   /* typename is mandatory unlsess featureid is specfied. We do not
      support featureid */
@@ -1024,7 +1031,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                  "msWFSGetFeature()");
       return msWFSException(map, "typename", "MissingParameterValue", paramsObj->pszVersion);
   }
-
 
   if(paramsObj->pszTypeName) {
     int j, k;
@@ -1497,6 +1503,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       }
     }
 
+    /* if no results where written (TODO: this needs to be GML2/3 specific I imagine */
+    for(i=0; i<map->numlayers; i++) {
+      if (GET_LAYER(map, i)->resultcache && GET_LAYER(map, i)->resultcache->numresults > 0)
+        iNumberOfFeatures += GET_LAYER(map, i)->resultcache->numresults;
+        break;
+    }
+
     /*
     ** GetFeature response
     */
@@ -1597,8 +1610,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       }
 
       if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
-        msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\">\n",
-		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format);
+        msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\" numberOfFeatures=\"%d\">\n",
+		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format, iNumberOfFeatures);
       else
         msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
 		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format);
@@ -1609,15 +1622,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     msFree(encoded_typename);
 
     /* handle case of maxfeatures = 0 */
-    if(maxfeatures != 0)
+    if(maxfeatures != 0 && iResultTypeHits == 0)
       msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
-    
-    /* if no results where written (TODO: this needs to be GML2/3 specific I imagine */
-    for(i=0; i<map->numlayers; i++) {
-      if (GET_LAYER(map, i)->resultcache && GET_LAYER(map, i)->resultcache->numresults > 0)
-        break;
-    }
-    if ((i==map->numlayers) || (maxfeatures == 0)) {
+
+    if (((i==map->numlayers) || (maxfeatures == 0)) && iResultTypeHits == 0) {
       msIO_printf("   <gml:boundedBy>\n"); 
       msIO_printf("      <gml:null>missing</gml:null>\n");
       msIO_printf("   </gml:boundedBy>\n"); 
@@ -1862,6 +1870,8 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
           free(wfsparams->pszOutputFormat);
         if (wfsparams->pszSrs)
           free(wfsparams->pszSrs);
+        if (wfsparams->pszResultType)
+          free(wfsparams->pszResultType);
     }
 }
 
@@ -1904,6 +1914,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 
                 else if (strcasecmp(request->ParamNames[i], "SRSNAME") == 0)
                   wfsparams->pszSrs = strdup(request->ParamValues[i]);
+
+                else if (strcasecmp(request->ParamNames[i], "RESULTTYPE") == 0)
+                  wfsparams->pszResultType = strdup(request->ParamValues[i]);
 
                 else if (strcasecmp(request->ParamNames[i], "TYPENAME") == 0)
                   wfsparams->pszTypeName = strdup(request->ParamValues[i]);
@@ -2012,6 +2025,10 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 if (pszValue)
                   wfsparams->pszService = strdup(pszValue);
 
+                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "resultType",
+                                                 NULL);
+                if (pszValue)
+                  wfsparams->pszResultType = strdup(pszValue);
 
                 pszValue = (char*)CPLGetXMLValue(psGetFeature,  "maxFeatures", 
                                                  NULL);
