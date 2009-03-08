@@ -1534,8 +1534,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     /* if no results where written (TODO: this needs to be GML2/3 specific I imagine */
     for(i=0; i<map->numlayers; i++) {
       if (GET_LAYER(map, i)->resultcache && GET_LAYER(map, i)->resultcache->numresults > 0)
+      {
         iNumberOfFeatures += GET_LAYER(map, i)->resultcache->numresults;
         break;
+      }
     }
 
     /*
