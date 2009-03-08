@@ -1416,7 +1416,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectO
     msFreeCharArray(tokens, n);
     return MS_SUCCESS;
   }
-  else if( lp->type != MS_LAYER_RASTER )
+  else
   {
       return msLayerGetExtent(lp, ext);
   }

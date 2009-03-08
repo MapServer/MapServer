@@ -1252,13 +1252,6 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
 }
 
 /************************************************************************/
-/*                       msRASTERLayerGetExtent()                       */
-/************************************************************************/
-
-int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
-	{ return MS_FAILURE; }
-
-/************************************************************************/
 /*                       msRASTERLayerGetItems()                        */
 /************************************************************************/
 
@@ -1301,6 +1294,70 @@ int msRASTERLayerGetItems(layerObj *layer)
     return msRASTERLayerInitItemInfo(layer);
 #endif /* def USE_GDAL */
 }
+
+/************************************************************************/
+/*                       msRASTERLayerGetExtent()                       */
+/************************************************************************/
+
+int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
+
+{ 
+  char szPath[MS_MAXPATHLEN];
+  mapObj *map = layer->map;
+  double adfGeoTransform[6];
+  int nXSize, nYSize;
+  GDALDatasetH hDS;
+
+  /*
+  ** For the time being we only automatically derive extents from
+  ** single raster files.  Opening many raster files from a tile index
+  ** in order to get the extent would be potentially very expensive.  We
+  ** could - in theory - scan the tile index and build up an extent from
+  ** the polygons but that is quite complicated code wise, so I am leaving
+  ** that till someone cares more about the issue.  (#79)
+  */
+  if( !layer->data 
+      || strlen(layer->data) == 0 
+      || layer->tileindex != NULL )
+  {
+    /* should we be issuing a specific error about not supporting 
+       extents for tileindexed raster layers? */
+    return MS_FAILURE;
+  }
+
+  if( map == NULL )
+    return MS_FAILURE;
+
+  msBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
+
+  msAcquireLock( TLOCK_GDAL );
+  hDS = GDALOpen(szPath, GA_ReadOnly );
+  
+  if( hDS != NULL )
+  {
+    nXSize = GDALGetRasterXSize( hDS );
+    nYSize = GDALGetRasterYSize( hDS );
+    GDALGetGeoTransform( hDS, adfGeoTransform );
+    
+    GDALClose( hDS );
+  }
+  
+  msReleaseLock( TLOCK_GDAL );
+
+  if( hDS == NULL )
+  {
+      return MS_FAILURE;
+  }
+  
+  extent->minx = adfGeoTransform[0];
+  extent->maxy = adfGeoTransform[3];
+  
+  extent->maxx = adfGeoTransform[0] + nXSize * adfGeoTransform[1];
+  extent->miny = adfGeoTransform[3] + nYSize * adfGeoTransform[5];
+  
+  return MS_SUCCESS;
+}
+
 
 /************************************************************************/
 /*                     msRASTERLayerSetTimeFilter()                     */
