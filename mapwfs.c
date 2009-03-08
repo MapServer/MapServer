@@ -277,7 +277,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    }
    else
    {
-       msIO_printf("<!-- WARNING: Optional LatLongBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wfs_extent metadata. Also check that your data exists in the DATA statement -->\n");
+       msIO_printf("<!-- WARNING: Optional LatLongBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wfs_extent metadata. Also check that your data exists in the DATA statement -->\n");
    }
 
    msOWSPrintURLType(stdout, &(lp->metadata), "FO", "metadataurl", 
@@ -1074,6 +1074,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     else
       msFreeCharArray(tokens, n);
 
+   
     pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
 
     /* Keep only selected layers, set to OFF by default. */
@@ -1166,6 +1167,32 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       }
     }
   }
+
+  /*
+      srs is defined for wfs 1.1. If it is available. If it used to set 
+      the map projection. For EPSG codes between 4000 and 5000 
+      that coordinates order follow what is defined  in the ESPG database
+      see #2899
+  */
+  if (strncmp(paramsObj->pszVersion,"1.1",3) == 0 && paramsObj->pszSrs && pszOutputSRS)
+  {     
+      /*check if the srs passed is valid. Assuming that it is an EPSG:xxx format.
+       TODO: do we accept urn type projection strings*/
+      if (strncasecmp(paramsObj->pszSrs, "EPSG:", 5) == 0)
+      {
+          if (strcasecmp(paramsObj->pszSrs, pszOutputSRS) != 0)
+          {
+              msSetError(MS_WFSERR, 
+		       "Invalid GetFeature Request: SRSNAME value should be valid for all the TYPENAMES. Please check the capabilities and reformulate your request.",
+                         "msWFSGetFeature()");
+              return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
+          }
+          /*we load the projection sting in the map and possibly 
+            set the axis order*/
+          msLoadProjectionStringEPSG(&(map->projection), paramsObj->pszSrs);
+      }
+  }
+ 
 
   /* Validate outputformat */
   if (paramsObj->pszOutputFormat) {
