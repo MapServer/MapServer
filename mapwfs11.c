@@ -51,12 +51,10 @@ int msWFSException11(mapObj *map, const char *locator,
     xmlNsPtr   psNsOws    = NULL;
     xmlChar *buffer       = NULL;
     
-
     if (version == NULL)
        version = "1.1.0";
 
-
-    psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
+    psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
     errorString = msGetErrorString("\n");
     errorMessage = msEncodeHTMLEntities(errorString);
@@ -64,11 +62,11 @@ int msWFSException11(mapObj *map, const char *locator,
 
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-    psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_1_0, schemasLocation, version, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
+    psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_0_0, schemasLocation, version, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
 
     xmlDocSetRootElement(psDoc, psRootNode);
 
-    psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
+    psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
     msIO_printf("Content-type: text/xml%c%c",10,10);
     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);

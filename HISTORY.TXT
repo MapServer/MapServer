@@ -20,6 +20,8 @@ Current Version (SVN trunk):
 
 - add support for resultType (#2907)
 
+- WFS 1.1.0 should use OWS Common 1.0.0 (#2925)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 
