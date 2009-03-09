@@ -10,7 +10,7 @@
 #endif
 
 /* HEX = 16 or BASE64 = 64*/
-#define TRANSFER_ENCODING 64
+#define TRANSFER_ENCODING 16
 
 /*
 ** msPostGISLayerInfo
