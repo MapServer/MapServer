@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Change mapbit.c bitmask type from char to new 32bit ms_bitarray (#2930)
+
 - Added resolution writing in image files (#2891)
 
 - Try to save resolution values to GeoTIFF via GDAL (#2891)
