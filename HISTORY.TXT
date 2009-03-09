@@ -22,6 +22,8 @@ Current Version (SVN trunk):
 
 - WFS 1.1.0 should use OWS Common 1.0.0 (#2925)
 
+- clean up GEOS init and cleanup functions (#2299)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 

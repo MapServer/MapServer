@@ -1287,9 +1287,6 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
 
     msInitShape(&shape);
 
-    /*todo call should be moved somewhere else*/
-    msGEOSSetup();
-
     /* this should not be a necessary test for uries using geos*/
     /*
       if(selectshape->type != MS_SHAPE_POLYGON) {
@@ -1490,9 +1487,6 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
 
       msLayerClose(lp);
     } /* next layer */
-
-    /*todo call should be moved somewhere else*/
-    msGEOSCleanup();
 
     /* was anything found? */
     for(l=start; l>=stop; l--) {    
