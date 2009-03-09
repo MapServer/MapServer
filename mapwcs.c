@@ -1723,11 +1723,11 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
     return msWCSException(map, NULL, NULL, params->version );
   } else if( MS_RENDERER_GD(map->outputformat) ) {
-    image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
+    image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution);        
     if( image != NULL ) msImageInitGD( image, &map->imagecolor );
 #ifdef USE_AGG
   } else if( MS_RENDERER_AGG(map->outputformat) ) {
-    image = msImageCreateAGG(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
+     image = msImageCreateAGG(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution);        
     if( image != NULL ) msImageInitAGG( image, &map->imagecolor );
 #endif
   } else if( MS_RENDERER_RAWDATA(map->outputformat) ) {

@@ -11,6 +11,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- Added resolution writing in image files (#2891)
+
 - Refactor legend icon drawing (remove renderer specific versions)
   Add label styling or markers for annotation layer legend icons (#2917)
 

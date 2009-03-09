@@ -258,7 +258,7 @@ imageObj *msDrawScalebar(mapObj *map)
 
    /* create image */
   image = msImageCreateGD(map->scalebar.width, sy, format,
-                          map->web.imagepath, map->web.imageurl);
+                          map->web.imagepath, map->web.imageurl, map->resolution);
 
   /* drop this reference to output format */
   msApplyOutputFormat( &format, NULL, 

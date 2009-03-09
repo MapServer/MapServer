@@ -1563,7 +1563,7 @@ about AGG here, and create a GD imageObj
 /* -------------------------------------------------------------------- */
     srcImage = msImageCreate( nLoadImgXSize, nLoadImgYSize,
                               sDummyMap.outputformat, NULL, NULL, 
-                              &sDummyMap );
+                              &sDummyMap);
 
     if (srcImage == NULL)
         return -1; /* msSetError() should have been called already */

@@ -269,7 +269,7 @@ void msPreAllocateColorsGD(imageObj *image, mapObj *map) {
  * Utility function to create a GD image. Returns
  * a pointer to an imageObj structure.
  */  
-imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl) 
+imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, unsigned int resolution) 
 {
   imageObj  *image;
 
@@ -297,7 +297,8 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *
     image->height = height;
     image->imagepath = NULL;
     image->imageurl = NULL;
-    
+    image->resolution = resolution;
+
     if(imagepath) image->imagepath = strdup(imagepath);
     if(imageurl) image->imageurl = strdup(imageurl);
        
@@ -318,6 +319,11 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *
 
 void msImageInitGD( imageObj *image, colorObj *background )
 {
+#ifdef USE_GD_RESOLUTION
+   /* Set the resolution */
+    gdImageSetResolution(image->img.gd, image->resolution, image->resolution);
+#endif
+
   if(image->format->imagemode == MS_IMAGEMODE_PC256) {
     gdImageColorAllocate(image->img.gd, background->red, background->green, background->blue);
     return;
@@ -379,6 +385,11 @@ imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver)
   image->imageurl = NULL;
   image->width = gdImageSX(img);
   image->height = gdImageSY(img);
+#ifdef USE_GD_RESOLUTION
+  image->resolution = gdImageResolutionX(img);
+#else
+  image->resolution = 72;
+#endif
 
   /* Create an outputFormatObj for the format. */
   image->format = msCreateDefaultOutputFormat( NULL, driver );

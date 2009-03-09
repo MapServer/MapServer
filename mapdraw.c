@@ -150,7 +150,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     else if( MS_RENDERER_GD(map->outputformat) )
     {
         image = msImageCreateGD(map->width, map->height, map->outputformat, 
-				map->web.imagepath, map->web.imageurl);        
+				map->web.imagepath, map->web.imageurl, map->resolution);        
         if( image != NULL ) msImageInitGD( image, &map->imagecolor );
         msPreAllocateColorsGD(image, map);
     }
@@ -158,14 +158,14 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     else if( MS_RENDERER_AGG(map->outputformat) )
     {
         image = msImageCreateAGG(map->width, map->height, map->outputformat, 
-				map->web.imagepath, map->web.imageurl);        
+                                 map->web.imagepath, map->web.imageurl, map->resolution);        
         if( image != NULL ) msImageInitAGG( image, &map->imagecolor );
     }
 #endif
     else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
     {
         image = msImageCreateIM(map->width, map->height, map->outputformat, 
-				map->web.imagepath, map->web.imageurl);        
+				map->web.imagepath, map->web.imageurl, map->resolution);        
         if( image != NULL ) msImageInitIM( image );
     }
     else if( MS_RENDERER_RAWDATA(map->outputformat) )
@@ -674,7 +674,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(layer->opacity > 0 && layer->opacity < 100) {
       msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
       
-      image_draw = msImageCreateGD( image->width, image->height, transFormat, image->imagepath, image->imageurl );
+      image_draw = msImageCreateGD( image->width, image->height, transFormat, image->imagepath, image->imageurl, map->resolution );
       if(!image_draw) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
         return(MS_FAILURE);
@@ -700,7 +700,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(layer->opacity > 0 && layer->opacity < 100) {
       msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
-      image_draw = msImageCreateAGG(image->width, image->height, transFormat, image->imagepath, image->imageurl);
+      image_draw = msImageCreateAGG(image->width, image->height, transFormat, image->imagepath, image->imageurl, map->resolution);
       if(!image_draw) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
         return(MS_FAILURE);

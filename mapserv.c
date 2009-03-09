@@ -1494,10 +1494,10 @@ int main(int argc, char *argv[]) {
       /* initialize the legend image */
 #ifdef USE_AGG
       if(MS_RENDERER_AGG(mapserv->map->outputformat))
-        img = msImageCreateAGG(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format, mapserv->map->web.imagepath, mapserv->map->web.imageurl);        
+         img = msImageCreateAGG(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format, mapserv->map->web.imagepath, mapserv->map->web.imageurl, mapserv->map->resolution);        
       else
 #endif
-        img = msImageCreateGD(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format, mapserv->map->web.imagepath, mapserv->map->web.imageurl);
+        img = msImageCreateGD(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format, mapserv->map->web.imagepath, mapserv->map->web.imageurl, mapserv->map->resolution);
 
   /* allocate the background color */
 #ifdef USE_AGG

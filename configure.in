@@ -649,6 +649,14 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
      GD_DEF="$GD_DEF -DUSE_GD_FT"
   fi
 
+  dnl check for Resolution support
+  GD_RESOLUTION_SUPPORT=no  
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageSetResolution, GD_RESOLUTION_SUPPORT=yes,, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+
+  if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
+     GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
+  fi
+
   dnl check for gdImageOpenPolygon (means GD version 2.0.29 or higher)
   AC_CHECK_LIB($GD_CHECKLIB, gdImageOpenPolygon, GD_DEF="$GD_DEF -DGD_HAS_FTEX_XSHOW",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
@@ -691,6 +699,14 @@ else
   dnl GD 2.0.22 and more recent replaced the static font pointers with 
   dnl getter functions.
   AC_CHECK_LIB(gd, gdFontGetTiny, GD_DEF="$GD_DEF -DGD_HAS_GETBITMAPFONTS",, $GD_LIB $GD_XTRA_LIBS)
+
+  dnl check for Resolution support
+  GD_RESOLUTION_SUPPORT=no  
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageSetResolution, GD_RESOLUTION_SUPPORT=yes,, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+
+  if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
+     GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
+  fi
 
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd $GD_LIB"
