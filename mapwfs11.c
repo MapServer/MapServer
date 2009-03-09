@@ -163,7 +163,7 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
     {
         xmlNewChild(psRootNode, psNsOws, BAD_CAST "WGS84BoundingBox", NULL);
         xmlAddSibling(psNode,
-                      xmlNewComment(BAD_CAST "WARNING: Mandatory WGS84BoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wfs_extent metadata."));
+                      xmlNewComment(BAD_CAST "WARNING: Optional WGS84BoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wfs_extent metadata. Also check that your data exists in the DATA statement"));
     }
 
     value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href");
