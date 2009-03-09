@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementation of support for output using GDAL.
@@ -401,6 +401,19 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*  Try to save resolution in the output file.                          */
+/* -------------------------------------------------------------------- */
+    if( image->resolution <= 0 )
+    {
+      char res[30];
+
+      sprintf( res, "%d", image->resolution );
+      GDALSetMetadataItem( hMemDS, "TIFFTAG_XRESOLUTION", res, NULL );
+      GDALSetMetadataItem( hMemDS, "TIFFTAG_YRESOLUTION", res, NULL );
+      GDALSetMetadataItem( hMemDS, "TIFFTAG_RESOLUTIONUNIT", "2", NULL );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Create a disk image in the selected output format from the      */
 /*      memory image.                                                   */
