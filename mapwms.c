@@ -2203,11 +2203,14 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
     msIO_printf("  <VendorSpecificCapabilities />\n"); /* nothing yet */
 
   /* SLD support */
-  if (nVersion >= OWS_1_0_7) {
+  if (strcasecmp(sldenabled, "true") == 0)
+  {
+    if (nVersion >= OWS_1_0_7) {
       if (nVersion >= OWS_1_3_0)
         msIO_printf("  <sld:UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\" InlineFeature=\"0\" RemoteWCS=\"0\"/>\n");
       else
         msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
+    }
   }
 
   /* Top-level layer with map extents and SRS, encloses all map layers */
