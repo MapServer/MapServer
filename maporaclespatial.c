@@ -2089,7 +2089,8 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     /* allocate enough space for items */
     if (layer->numitems > 0)
     {
-        layerinfo->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
+        if (layerinfo->items_query == NULL)
+            layerinfo->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
 
         if (layerinfo->items_query == NULL)
         {
