@@ -88,7 +88,7 @@ BINDIR = $(MS_BASE)\..\bin
 # Optmization, debug, and related compile flags.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-!IF $(MSVC_VER) == 1400
+!IF $(MSVC_VER) >= 1400
 # Optimized, with using MSVCRT. 
 OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
 # Debug with MSVCRT
