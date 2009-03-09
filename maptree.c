@@ -378,7 +378,7 @@ static int treeAddShapeId(treeObj *tree, int id, rectObj rect)
   return(treeNodeAddShapeId(tree->root, id, rect, tree->maxdepth));
 }
 
-static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi, char *status)
+static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi, ms_bitarray status)
 {
   int i;
     
@@ -404,9 +404,9 @@ static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi, char *status)
   }
 }
 
-char *msSearchTree(treeObj *tree, rectObj aoi)
+ms_bitarray msSearchTree(treeObj *tree, rectObj aoi)
 {
-  char *status=NULL;
+  ms_bitarray status=NULL;
 
   status = msAllocBitArray(tree->numshapes);
   if(!status) {
@@ -452,7 +452,7 @@ void msTreeTrim(treeObj *tree)
   treeNodeTrim(tree->root);
 }
 
-static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, char *status) 
+static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray status) 
 {
   int i;
   ms_int32 offset;
@@ -507,10 +507,10 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, char *status
   return;
 }
 
-char *msSearchDiskTree(char *filename, rectObj aoi, int debug)
+ms_bitarray msSearchDiskTree(char *filename, rectObj aoi, int debug)
 {
   SHPTreeHandle	disktree;
-  char *status=NULL;
+  ms_bitarray status=NULL;
 
   disktree = msSHPDiskTreeOpen (filename, debug);
   if(!disktree) {
@@ -763,7 +763,7 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
 }
 
 /* Function to filter search results further against feature bboxes */
-void msFilterTreeSearch(shapefileObj *shp, char *status, rectObj search_rect)
+void msFilterTreeSearch(shapefileObj *shp, ms_bitarray status, rectObj search_rect)
 {
   int i;
   rectObj shape_rect;

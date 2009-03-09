@@ -89,7 +89,7 @@ typedef	struct {
 
     int		*panRecOffset;
     int		*panRecSize;
-    char  *panRecLoaded;
+    ms_bitarray panRecLoaded;
     int   panRecAllLoaded;
 
     double	adBoundsMin[4];
@@ -165,7 +165,7 @@ typedef struct {
 
   int lastshape;
 
-  char *status;
+  ms_bitarray status;
   rectObj statusbounds; /* holds extent associated with the status vector */
 
   int isopen;

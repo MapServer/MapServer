@@ -88,6 +88,9 @@ typedef int32_t         ms_int32;
 typedef uint32_t        ms_uint32;
 #endif
 
+/* ms_bitarray is used by the bit mask in mapbit.c */
+typedef ms_uint32 *     ms_bitarray;
+
 #include "maperror.h"
 #include "mapprimitive.h"
 #include "mapshape.h"
@@ -1773,11 +1776,11 @@ MS_DLL_EXPORT int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *imag
 MS_DLL_EXPORT imageObj *msDrawReferenceMap(mapObj *map);
 
 MS_DLL_EXPORT size_t msGetBitArraySize(int numbits); /* in mapbits.c */
-MS_DLL_EXPORT char *msAllocBitArray(int numbits);
-MS_DLL_EXPORT int msGetBit(char *array, int index);
-MS_DLL_EXPORT void msSetBit(char *array, int index, int value);
-MS_DLL_EXPORT void msFlipBit(char *array, int index);
-MS_DLL_EXPORT int msGetNextBit(char *array, int index, int size);
+MS_DLL_EXPORT ms_bitarray msAllocBitArray(int numbits);
+MS_DLL_EXPORT int msGetBit(ms_bitarray array, int index);
+MS_DLL_EXPORT void msSetBit(ms_bitarray array, int index, int value);
+MS_DLL_EXPORT void msFlipBit(ms_bitarray array, int index);
+MS_DLL_EXPORT int msGetNextBit(ms_bitarray array, int index, int size);
 
 MS_DLL_EXPORT int msLayerInitItemInfo(layerObj *layer);
 MS_DLL_EXPORT void msLayerFreeItemInfo(layerObj *layer); 

@@ -10,7 +10,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
- *
+ 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -36,24 +36,30 @@ MS_CVSID("$Id$")
 
 #include <limits.h>
 
-/* #define msGetBit(array, index) (*((array) + (index)/CHAR_BIT) & ( 1 << ((index) % CHAR_BIT))) */
+/* 
+ * Hardcoded size of our bit array. 
+ * See function msGetNextBit for another hardcoded value.
+ */
+#define MS_ARRAY_BIT 32
+
+/* #define msGetBit(array, index) (*((array) + (index)/MS_ARRAY_BIT) & ( 1 << ((index) % MS_ARRAY_BIT))) */
 
 size_t msGetBitArraySize(int numbits)
 {
-  return((numbits + CHAR_BIT - 1) / CHAR_BIT);
+  return((numbits + MS_ARRAY_BIT - 1) / MS_ARRAY_BIT);
 }
 
-char *msAllocBitArray(int numbits)
+ms_bitarray msAllocBitArray(int numbits)
 {
-  char *array = calloc((numbits + CHAR_BIT - 1) / CHAR_BIT, sizeof(char));
+  ms_bitarray array = calloc((numbits + MS_ARRAY_BIT - 1) / MS_ARRAY_BIT, MS_ARRAY_BIT);
   
   return(array);
 }
 
-int msGetBit(char *array, int index)
+int msGetBit(ms_bitarray array, int index)
 {
-  array += index / CHAR_BIT;
-  return (*array & (1 << (index % CHAR_BIT))) != 0;    /* 0 or 1 */
+  array += index / MS_ARRAY_BIT;
+  return (*array & (1 << (index % MS_ARRAY_BIT))) != 0;    /* 0 or 1 */
 }
 
 /*
@@ -63,16 +69,16 @@ int msGetBit(char *array, int index)
 ** If hits end of bitmap without finding set bit, will return -1.
 **
 */
-int msGetNextBit(char *array, int i, int size) { 
+int msGetNextBit(ms_bitarray array, int i, int size) { 
 
-  register char b;
+  register ms_uint32 b;
 
   while(i < size) {
-    b = *(array + (i/CHAR_BIT));
-    if( b && (b >> (i % CHAR_BIT)) ) {
+    b = *(array + (i/MS_ARRAY_BIT));
+    if( b && (b >> (i % MS_ARRAY_BIT)) ) {
       /* There is something in this byte */
       /* And it is not to the right of us */
-      if( b & ( 1 << (i % CHAR_BIT)) ) {
+      if( b & ( 1 << (i % MS_ARRAY_BIT)) ) {
         /* There is something at this bit! */
         return i;
       }
@@ -82,7 +88,7 @@ int msGetNextBit(char *array, int i, int size) {
     }
     else {
       /* Nothing in this byte, move to start of next byte */
-      i += CHAR_BIT - (i % CHAR_BIT);
+      i += MS_ARRAY_BIT - (i % MS_ARRAY_BIT);
     }
   }
   
@@ -90,17 +96,17 @@ int msGetNextBit(char *array, int i, int size) {
   return -1;
 }
   
-void msSetBit(char *array, int index, int value)
+void msSetBit(ms_bitarray array, int index, int value)
 {
-  array += index / CHAR_BIT;
+  array += index / MS_ARRAY_BIT;
   if (value)
-    *array |= 1 << (index % CHAR_BIT);           /* set bit */
+    *array |= 1 << (index % MS_ARRAY_BIT);           /* set bit */
   else    
-    *array &= ~(1 << (index % CHAR_BIT));        /* clear bit */
+    *array &= ~(1 << (index % MS_ARRAY_BIT));        /* clear bit */
 }
 
-void msFlipBit(char *array, int index)
+void msFlipBit(ms_bitarray array, int index)
 {
-  array += index / CHAR_BIT;
-  *array ^= 1 << (index % CHAR_BIT);                   /* flip bit */
+  array += index / MS_ARRAY_BIT;
+  *array ^= 1 << (index % MS_ARRAY_BIT);                   /* flip bit */
 }

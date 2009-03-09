@@ -85,13 +85,13 @@ MS_DLL_EXPORT treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth);
 MS_DLL_EXPORT void msTreeTrim(treeObj *tree);
 MS_DLL_EXPORT void msDestroyTree(treeObj *tree);
 
-MS_DLL_EXPORT char *msSearchTree(treeObj *tree, rectObj aoi);
-MS_DLL_EXPORT char *msSearchDiskTree(char *filename, rectObj aoi, int debug);
+MS_DLL_EXPORT ms_bitarray msSearchTree(treeObj *tree, rectObj aoi);
+MS_DLL_EXPORT ms_bitarray msSearchDiskTree(char *filename, rectObj aoi, int debug);
 
 MS_DLL_EXPORT treeObj *msReadTree(char *filename, int debug);
 MS_DLL_EXPORT int msWriteTree(treeObj *tree, char *filename, int LSB_order);
 
-MS_DLL_EXPORT void msFilterTreeSearch(shapefileObj *shp, char *status, rectObj search_rect);
+MS_DLL_EXPORT void msFilterTreeSearch(shapefileObj *shp, ms_bitarray status, rectObj search_rect);
 
 #ifdef __cplusplus
 }
