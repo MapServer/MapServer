@@ -388,6 +388,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int status = 0;
 
   char *bboxrequest=NULL;
+  const char *sldenabled=NULL;
 
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
@@ -410,24 +411,32 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     /* check if SLD is passed.  If yes, check for OGR support */
     if (strcasecmp(names[i], "SLD") == 0 || strcasecmp(names[i], "SLD_BODY") == 0)
     {
-      if (ogrEnabled == 0)
-      {
-        msSetError(MS_WMSERR, "OGR support is not available.", "msWMSLoadGetMapParams()");
-        return msWMSException(map, nVersion, NULL);
-      }
-      else
-      {
-        if (strcasecmp(names[i], "SLD") == 0)
-        {
-            if ((status = msSLDApplySLDURL(map, values[i], -1, NULL)) != MS_SUCCESS)
-              return msWMSException(map, nVersion, NULL);
-        }
-        if (strcasecmp(names[i], "SLD_BODY") == 0)
-        {
-            if ((status =msSLDApplySLD(map, values[i], -1, NULL)) != MS_SUCCESS)
-              return msWMSException(map, nVersion, NULL);
-        }
-      }
+       sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
+
+       if (sldenabled == NULL)
+         sldenabled = strdup("true");
+
+       if (ogrEnabled == 0)
+       {
+          msSetError(MS_WMSERR, "OGR support is not available.", "msWMSLoadGetMapParams()");
+          return msWMSException(map, nVersion, NULL);
+       }
+       else
+       {
+          if (strcasecmp(sldenabled, "true") == 0)
+          {
+            if (strcasecmp(names[i], "SLD") == 0)
+            {
+              if ((status = msSLDApplySLDURL(map, values[i], -1, NULL)) != MS_SUCCESS)
+                return msWMSException(map, nVersion, NULL);
+            }
+            if (strcasecmp(names[i], "SLD_BODY") == 0)
+            {
+              if ((status =msSLDApplySLD(map, values[i], -1, NULL)) != MS_SUCCESS)
+                return msWMSException(map, nVersion, NULL);
+            }
+          }
+       }
     }
 
     if (strcasecmp(names[i], "LAYERS") == 0)
@@ -1869,9 +1878,15 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   char szVersionBuf[OWS_VERSION_MAXLEN];
   char *schemalocation = NULL;
   const char *updatesequence=NULL;
+  const char *sldenabled=NULL;
   int i;
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
+
+  sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
+
+  if (sldenabled == NULL)
+      sldenabled = strdup("true");
 
   if (requested_updatesequence != NULL) {
       i = msOWSNegotiateUpdateSequence(requested_updatesequence, updatesequence);
@@ -2128,43 +2143,39 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                        NULL);
     }
 
-    if (nVersion == OWS_1_3_0)
-      msWMSPrintRequestCap(nVersion, "sld:DescribeLayer", script_url_encoded,
-                           "text/xml",
-                           NULL);
-    else
-      msWMSPrintRequestCap(nVersion, "DescribeLayer", script_url_encoded,
-                           "text/xml",
-                           NULL);
-
-    msGetOutputFormatMimeListGD(map,mime_list,sizeof(mime_list)/sizeof(char*));
-
-    if (nVersion >= OWS_1_1_1) {
-        
+    if (strcasecmp(sldenabled, "true") == 0) {
         if (nVersion == OWS_1_3_0)
-        {
-          msWMSPrintRequestCap(nVersion, "sld:GetLegendGraphic", script_url_encoded,
-                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
-                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
-                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
-                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
-                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
-                    NULL );
-          msWMSPrintRequestCap(nVersion, "ms:GetStyles", script_url_encoded, "text/xml", NULL);
-        }
-        else 
-        {
-            msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
-                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
-                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
-                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
-                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
-                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
-                    NULL );
-            msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded, "text/xml", NULL);
-        }
-    }
+           msWMSPrintRequestCap(nVersion, "sld:DescribeLayer", script_url_encoded, "text/xml", NULL);
+        else
+           msWMSPrintRequestCap(nVersion, "DescribeLayer", script_url_encoded, "text/xml", NULL);
 
+        msGetOutputFormatMimeListGD(map,mime_list,sizeof(mime_list)/sizeof(char*));
+
+        if (nVersion >= OWS_1_1_1) {
+           if (nVersion == OWS_1_3_0)
+           {
+              msWMSPrintRequestCap(nVersion, "sld:GetLegendGraphic", script_url_encoded,
+                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                    NULL );
+              msWMSPrintRequestCap(nVersion, "ms:GetStyles", script_url_encoded, "text/xml", NULL);
+           }
+           else 
+           {
+              msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
+                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                    NULL );
+              msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded, "text/xml", NULL);
+           }
+       }
+    }
   }
 
   msIO_printf("  </Request>\n");
@@ -3080,6 +3091,12 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
     int nWidth = -1, nHeight =-1;
     char *pszStyle = NULL;
     char *sld_version = NULL;
+    const char *sldenabled = NULL;
+
+    sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
+
+    if (sldenabled == NULL)
+       sldenabled = strdup("true");
 
      for(i=0; map && i<numentries; i++)
      {
@@ -3102,10 +3119,10 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
 /*      xml string.                                                     */
 /* -------------------------------------------------------------------- */
          else if (strcasecmp(names[i], "SLD") == 0 &&
-                  values[i] && strlen(values[i]) > 0)
+                  values[i] && strlen(values[i]) > 0 && strcasecmp(sldenabled, "true") == 0)
              msSLDApplySLDURL(map, values[i], -1, NULL);
          else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
-                  values[i] && strlen(values[i]) > 0)
+                  values[i] && strlen(values[i]) > 0 && strcasecmp(sldenabled, "true") == 0)
              msSLDApplySLD(map, values[i], -1, NULL);
          else if (strcasecmp(names[i], "RULE") == 0)
            psRule = values[i];

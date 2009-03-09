@@ -29,6 +29,8 @@ Current Version (SVN trunk):
 
 - clean up GEOS init and cleanup functions (#2929)
 
+- add support for disabling SLD (#1395)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 
