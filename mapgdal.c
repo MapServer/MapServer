@@ -404,7 +404,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 /* -------------------------------------------------------------------- */
 /*  Try to save resolution in the output file.                          */
 /* -------------------------------------------------------------------- */
-    if( image->resolution <= 0 )
+    if( image->resolution > 0 )
     {
       char res[30];
 
