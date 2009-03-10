@@ -974,7 +974,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   /* const char *wmtver, char **names, char **values, int numentries) */
 {
-  int         i, maxfeatures=-1;
+  int         i, j, maxfeatures=-1;
   const char *typename="";
   char       *script_url=NULL, *script_url_encoded;
   rectObj     bbox;
@@ -1532,10 +1532,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     }
 
     /* if no results where written (TODO: this needs to be GML2/3 specific I imagine */
-    for(i=0; i<map->numlayers; i++) {
-      if (GET_LAYER(map, i)->resultcache && GET_LAYER(map, i)->resultcache->numresults > 0)
+    for(j=0; j<map->numlayers; j++) {
+      if (GET_LAYER(map, j)->resultcache && GET_LAYER(map, j)->resultcache->numresults > 0)
       {
-        iNumberOfFeatures += GET_LAYER(map, i)->resultcache->numresults;
+        iNumberOfFeatures += GET_LAYER(map, j)->resultcache->numresults;
         break;
       }
     }
@@ -1655,7 +1655,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     if(maxfeatures != 0 && iResultTypeHits == 0)
       msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
 
-    if (((i==map->numlayers) || (maxfeatures == 0)) && iResultTypeHits == 0) {
+    if (((j==map->numlayers) || (maxfeatures == 0)) && iResultTypeHits == 0) {
       msIO_printf("   <gml:boundedBy>\n"); 
       msIO_printf("      <gml:null>missing</gml:null>\n");
       msIO_printf("   </gml:boundedBy>\n"); 

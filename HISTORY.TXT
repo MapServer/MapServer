@@ -33,6 +33,8 @@ Current Version (SVN trunk):
 
 - add support for disabling SLD (#1395)
 
+- fix to output gml:boundedBy again (#2907)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 
