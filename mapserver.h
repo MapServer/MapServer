@@ -1779,6 +1779,7 @@ MS_DLL_EXPORT size_t msGetBitArraySize(int numbits); /* in mapbits.c */
 MS_DLL_EXPORT ms_bitarray msAllocBitArray(int numbits);
 MS_DLL_EXPORT int msGetBit(ms_bitarray array, int index);
 MS_DLL_EXPORT void msSetBit(ms_bitarray array, int index, int value);
+MS_DLL_EXPORT void msSetAllBits(ms_bitarray array, int index, int value);
 MS_DLL_EXPORT void msFlipBit(ms_bitarray array, int index);
 MS_DLL_EXPORT int msGetNextBit(ms_bitarray array, int index, int size);
 

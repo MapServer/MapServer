@@ -1756,9 +1756,7 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
       msSetError(MS_MEMERR, NULL, "msShapefileWhichShapes()");
       return(MS_FAILURE);
     }
-    for(i=0;i<shpfile->numshapes;i++) {
-      msSetBit(shpfile->status, i, 1);
-    }
+    msSetAllBits(shpfile->status, shpfile->numshapes, 1);
   } 
   else {
 

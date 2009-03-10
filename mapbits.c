@@ -104,6 +104,14 @@ void msSetBit(ms_bitarray array, int index, int value)
   else    
     *array &= ~(1 << (index % MS_ARRAY_BIT));        /* clear bit */
 }
+  
+void msSetAllBits(ms_bitarray array, int numbits, int value)
+{
+  if (value)
+      memset(array, 0xff, ((numbits + 7) / 8) ); /* set bit */
+  else    
+      memset(array, 0x0,  ((numbits + 7) / 8) ); /* clear bit */
+}
 
 void msFlipBit(ms_bitarray array, int index)
 {
