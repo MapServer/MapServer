@@ -818,23 +818,9 @@ public:
         if(outlinecolor.a) {
             ras_aa.reset();
             ras_aa.filling_rule(agg::fill_non_zero);
-            if(outlinewidth==1) {
-            //draw the text offset by one pixel in each direction (NW,W,SW,N,S,NE,E,SE)
-                for(int i=-1;i<=1;i++) {
-                    for(int j=-1;j<=1;j++) {
-                        if(i||j) {
-                            agg::trans_affine_translation tr(i,j);
-                            agg::conv_transform<agg::path_storage, agg::trans_affine> tglyphs(glyphs,tr);
-                            ras_aa.add_path(tglyphs);
-                        }
-                    }
-                }
-            }
-            else {
-                agg::conv_contour<agg::path_storage> cc(glyphs);
-                cc.width(outlinewidth);
-                ras_aa.add_path(cc);
-            }
+            agg::conv_contour<agg::path_storage> cc(glyphs);
+            cc.width(outlinewidth);
+            ras_aa.add_path(cc);
             ren_aa.color(outlinecolor);
             agg::render_scanlines(ras_aa, sl_line, ren_aa);
         }
