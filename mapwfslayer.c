@@ -832,6 +832,11 @@ int msWFSLayerOpen(layerObj *lp,
     /* way we work with layers right now the bbox is unlikely to change */
     /* between now and the time whichshapes() would have been called by */
     /* the MapServer core. */
+#ifdef USE_PROJ
+    if((lp->map->projection.numargs > 0) && (lp->projection.numargs > 0))
+        msProjectRect(&lp->map->projection, &lp->projection, &psInfo->rect); /* project the searchrect to source coords */
+#endif
+
     if (msWFSLayerWhichShapes(lp, psInfo->rect) == MS_FAILURE)
         status = MS_FAILURE;
     
