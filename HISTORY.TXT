@@ -39,6 +39,8 @@ Current Version (SVN trunk):
 
 - fix to output gml:boundedBy again (#2907)
 
+- fix warning for change in bitmask type (#2930)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 

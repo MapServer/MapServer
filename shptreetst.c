@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Utility program to visualize a quadtree search
@@ -80,7 +80,7 @@ int main( int argc, char ** argv )
     rectObj	rect;
  
     int		pos;
-    char	*bitmap = NULL;
+    ms_bitarray bitmap = NULL;
      
     char	mBigEndian;
     treeNodeObj *node = NULL;
