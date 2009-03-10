@@ -11,6 +11,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- mapraster.c: use GDALOpenShared(), and CLOSE_CONNECTION=DEFERRED (#2815)
+
 - AGG font outline method change (#1243)
 
 - Change mapbit.c bitmask type from char to new 32bit ms_bitarray (#2930)

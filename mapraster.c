@@ -1495,10 +1495,11 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       msGDALInitialize();
 
       msAcquireLock( TLOCK_GDAL );
-      hDS = GDALOpen(szPath, GA_ReadOnly );
+      hDS = GDALOpenShared(szPath, GA_ReadOnly );
 
       if(hDS != NULL) {
-        double	adfGeoTransform[6];
+          double	adfGeoTransform[6];
+          const char *close_connection;
 
             if (layer->projection.numargs > 0 && 
                 EQUAL(layer->projection.args[0], "auto"))
@@ -1573,7 +1574,23 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
                 break;
             }
 
-            GDALClose( hDS );
+            close_connection = msLayerGetProcessingKey( layer, 
+                                                        "CLOSE_CONNECTION" );
+            
+            /* default to keeping open for single data files, and 
+               to closing for tile indexes */
+            if( close_connection == NULL && layer->tileindex == NULL )
+                close_connection = "DEFER";
+
+            if( close_connection != NULL
+                && strcasecmp(close_connection,"DEFER") == 0 )
+            {
+                GDALDereferenceDataset( hDS );
+            }
+            else
+            {
+                GDALClose( hDS );
+            }
             msReleaseLock( TLOCK_GDAL );
             continue;
         }
