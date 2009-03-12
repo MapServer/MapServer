@@ -41,6 +41,8 @@ Current Version (SVN trunk):
 
 - fix warning for change in bitmask type (#2930)
 
+- fix time advertising in WMS 1.3.0 (#2935)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 

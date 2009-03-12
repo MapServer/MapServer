@@ -1494,11 +1494,20 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
        pszWmsTimeDefault = msOWSLookupMetadata(&(lp->metadata),  "MO",
                                                "timedefault");
 
+       if (nVersion >= OWS_1_3_0) {
+         if (pszWmsTimeDefault)
+           msIO_fprintf(stdout, "        <Dimension name=\"time\" units=\"ISO8601\" default=\"%s\" nearestValue=\"0\">%s</Dimension>\n",pszWmsTimeDefault, pszWmsTimeExtent);
+         else
+           msIO_fprintf(stdout, "        <Dimension name=\"time\" units=\"ISO8601\" nearestValue=\"0\">%s</Dimension>\n",pszWmsTimeExtent);
+       }
+
+       else {
        msIO_fprintf(stdout, "        <Dimension name=\"time\" units=\"ISO8601\"/>\n");
        if (pszWmsTimeDefault)
          msIO_fprintf(stdout, "        <Extent name=\"time\" default=\"%s\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeDefault, pszWmsTimeExtent);
        else
            msIO_fprintf(stdout, "        <Extent name=\"time\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeExtent);
+       }
 
    }
 
