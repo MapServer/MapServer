@@ -36,6 +36,8 @@ Version 5.4.0-beta3 (2009-03-05):
 
 - Fix build on windows (maputil.c)
 
+- fix time advertising in WMS 1.3.0 (#2935)
+
 Version 5.4.0-beta2 (2009-02-25):
 ---------------------------------
 
