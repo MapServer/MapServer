@@ -33,7 +33,8 @@
 #include "mapserver.h"
 #include "maphash.h"
 
-#define IDSIZE 128
+#define IDPATTERN "^[0-9A-Za-z]{1,63}$"
+#define IDSIZE 64
 #define TEMPLATE_TYPE(s)  (((strncmp("http://", s, 7) == 0) || (strncmp("https://", s, 8) == 0) || (strncmp("ftp://", s, 6)) == 0)  ? MS_URL : MS_FILE)
 #define MAXZOOM 25
 #define MINZOOM -25

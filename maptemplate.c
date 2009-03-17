@@ -3848,7 +3848,7 @@ int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
       image = msDrawMap(mapserv->map, bQueryMap);
 
       if(image) { 
-        sprintf(buffer, "%s%s%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+        snprintf(buffer, 1024, "%s%s%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
 
         if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
@@ -3864,7 +3864,7 @@ int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
       imageObj *image = NULL;
       image = msDrawLegend(mapserv->map, MS_FALSE);
       if(image) { 
-        sprintf(buffer, "%s%sleg%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+        snprintf(buffer, 1024, "%s%sleg%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
                 
         if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
@@ -3880,7 +3880,7 @@ int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
       imageObj *image = NULL;
       image = msDrawScalebar(mapserv->map);
       if(image) {
-        sprintf(buffer, "%s%ssb%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+        snprintf(buffer, 1024, "%s%ssb%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
         if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
           return MS_FALSE;
@@ -3895,7 +3895,7 @@ int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
       imageObj *image;
       image = msDrawReferenceMap(mapserv->map);
       if(image) { 
-        sprintf(buffer, "%s%sref%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
+        snprintf(buffer, 1024, "%s%sref%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
         if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
           return MS_FALSE;
