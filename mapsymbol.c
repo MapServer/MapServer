@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  symbolObj related functions.
@@ -621,7 +621,7 @@ symbolObj *msGrowSymbolSet( symbolSetObj *symbolset )
 int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 {
     int retval = MS_FAILURE;
-    
+
     msAcquireLock( TLOCK_PARSER );
     retval = loadSymbolSet( symbolset, map );
     msReleaseLock( TLOCK_PARSER );
@@ -635,6 +635,9 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 /* char *symbol_path; */
   int status=1;
   char szPath[MS_MAXPATHLEN], *pszSymbolPath=NULL;
+
+  int foundSymbolSetToken=MS_FALSE;
+  int token;
 
   if(!symbolset) {
     msSetError(MS_SYMERR, "Symbol structure unallocated.", "loadSymbolSet()");
@@ -662,7 +665,15 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
   ** Read the symbol file
   */
   for(;;) {
-    switch(msyylex()) {
+
+    token = msyylex();
+
+    if(!foundSymbolSetToken && token != SYMBOLSET) {
+      msSetError(MS_IDENTERR, "First token must be SYMBOLSET, this doesn't look like a symbol file.", "msLoadSymbolSet()");
+      return(-1);
+    }
+
+    switch(token) {
     case(END):
     case(EOF):      
       status = 0;
@@ -678,6 +689,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
           symbolset->numsymbols++;
       break;
     case(SYMBOLSET):
+      foundSymbolSetToken = MS_TRUE;
       break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbolSet()", msyytext, msyylineno);
