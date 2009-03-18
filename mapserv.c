@@ -1310,7 +1310,7 @@ int main(int argc, char *argv[]) {
     loadForm();
  
     if(mapserv->savemap) {
-      snprintf(buffer, 1024, "%s%s%s.map", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id);
+      snprintf(buffer, sizeof(buffer), "%s%s%s.map", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id);
       if(msSaveMap(mapserv->map, buffer) == -1) writeError();
     }
 
@@ -1784,7 +1784,7 @@ int main(int argc, char *argv[]) {
         if(msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, NULL) != MS_SUCCESS) writeError();
           
         if(mapserv->savequery) {
-          snprintf(buffer, 1024, "%s%s%s%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_QUERY_EXTENSION);
+          snprintf(buffer, sizeof(buffer), "%s%s%s%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_QUERY_EXTENSION);
           if((status = msSaveQuery(mapserv->map, buffer)) != MS_SUCCESS) return status;
         }
       }
