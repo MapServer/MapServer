@@ -823,7 +823,8 @@ void msGetOutputFormatMimeListGD( mapObj *map, char **mime_list, int max_mime )
         }
 
         if( j == mime_count && map->outputformatlist[i]->driver &&
-            strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0)
+            (strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
+             strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0))
             mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
     }
 
@@ -857,6 +858,7 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
 
         if( j == mime_count && map->outputformatlist[i]->driver &&
             (strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
+             strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0 ||
              strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0 ||
              strcasecmp(map->outputformatlist[i]->driver, "svg")==0)) 
             mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
