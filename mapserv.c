@@ -41,8 +41,7 @@
 
 MS_CVSID("$Id$")
 
-
-mapservObj* mapserv;
+mapservObj *mapserv;
 
 int writeLog(int show_error)
 {
@@ -199,8 +198,21 @@ mapObj *loadMap(void)
   } else {
     if(getenv(mapserv->request->ParamValues[i])) /* an environment references the actual file to use */
       map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
-    else
-      map = msLoadMap(mapserv->request->ParamValues[i], NULL);
+    else {
+      /* by here we know the request isn't for something in an environment variable */
+      if(getenv("MS_MAP_NO_PATH")) {
+        msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "loadMap()");
+	writeError();
+      }
+
+      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
+        msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "loadMap()");
+        writeError();
+      }
+
+      /* ok to try to load now */
+      map = msLoadMap(mapserv->request->ParamValues[i], NULL);      
+    }
   }
 
   if(!map) writeError();
@@ -1194,7 +1206,7 @@ int main(int argc, char *argv[]) {
     /* -------------------------------------------------------------------- */
     mapserv = msAllocMapServObj();
     mapserv->sendheaders = sendheaders; /* override the default if necessary (via command line -nh switch) */
-
+    
     mapserv->request->ParamNames = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
     mapserv->request->ParamValues = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
     if(mapserv->request->ParamNames==NULL || mapserv->request->ParamValues==NULL) {

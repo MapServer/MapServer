@@ -1054,11 +1054,28 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
 
     if(!src) return(MS_SUCCESS); /* don't process the tag, could be something else so return MS_SUCCESS */
 
+    if(msEvalRegex(MS_TEMPLATE_EXPR, src) != MS_TRUE) {
+      msSetError(MS_WEBERR, "Malformed template name (%s).", "processIncludeTag()", src);
+      return MS_FAILURE;
+    }
+
     if((includeStream = fopen(msBuildPath(path, mapserv->map->mappath, src), "r")) == NULL) {
       msSetError(MS_IOERR, src, "processIncludeTag()");
       return MS_FAILURE;
     } 
-    
+
+    /* examine 1st line, must contain a magic string to continue */
+    if(fgets(buffer, MS_BUFFER_LENGTH, includeStream) != NULL) {
+      if(!msCaseFindSubstring(buffer, MS_TEMPLATE_MAGIC_STRING)) {
+	fclose(includeStream);
+	msSetError(MS_WEBERR, "Missing magic string, this doesn't look like a MapServer template.", "processIncludeTag()");
+	return MS_FAILURE;
+      }
+    } else { /* empty template, just return */
+      fclose(includeStream);
+      return MS_SUCCESS;
+    }
+
     while(fgets(buffer, MS_BUFFER_LENGTH, includeStream) != NULL)
       content = msStringConcatenate(content, buffer);
 
@@ -3413,25 +3430,29 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
   int   nCurrentSize = 0;
   int   nExpandBuffer = 0;
 
-  ms_regex_t re; /* compiled regular expression to be matched */ 
   char szPath[MS_MAXPATHLEN];
 
-  if(ms_regcomp(&re, MS_TEMPLATE_EXPR, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
-    msSetError(MS_REGEXERR, NULL, "msReturnPage()");
-    return MS_FAILURE;
-  }
-
-  if(ms_regexec(&re, html, 0, NULL, 0) != 0) { /* no match */
-    ms_regfree(&re);
+  if(msEvalRegex(MS_TEMPLATE_EXPR, html) != MS_TRUE) {
     msSetError(MS_WEBERR, "Malformed template name (%s).", "msReturnPage()", html);
     return MS_FAILURE;
   }
-  ms_regfree(&re);
 
   if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, html), "r")) == NULL) {
     msSetError(MS_IOERR, html, "msReturnPage()");
     return MS_FAILURE;
   } 
+
+  /* examine 1st line, must contain a magic string to continue */
+  if(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) {
+    if(!msCaseFindSubstring(line, MS_TEMPLATE_MAGIC_STRING)) {
+      fclose(stream);
+      msSetError(MS_WEBERR, "Missing magic string, this doesn't look like a MapServer template.", "msReturnPage()");
+      return MS_FAILURE; 
+    }
+  } else { /* file is empty, technically not a error */
+    fclose(stream);
+    return MS_SUCCESS;
+  }
 
   if(papszBuffer) {
     if((*papszBuffer) == NULL) {
