@@ -748,7 +748,13 @@ public:
         ras_aa.filling_rule(agg::fill_non_zero);
         const agg::glyph_cache* glyph;
         int unicode;
-        
+
+        m_feng.hinting(true);
+        m_feng.height(size);
+        m_feng.resolution(96);
+        m_feng.flip_y(true);
+        font_curve_type m_curves(m_fman.path_adaptor());
+                
         double ox = 0, oy = 0;
 		if (isMarker) {
 			//is we're rendering a marker symbol, it has to be centered
@@ -768,15 +774,6 @@ public:
 		/*agg angles are antitrigonometric*/
 		mtx *= agg::trans_affine_rotation(-angle);
 		mtx *= agg::trans_affine_translation(x - ox, y - oy);
-
-
-
-        m_feng.hinting(true);
-        m_feng.height(size);
-        m_feng.resolution(96);
-        m_feng.flip_y(true);
-        font_curve_type m_curves(m_fman.path_adaptor());
-        
 
 
         double fx=x,fy=y;
