@@ -933,3 +933,34 @@ char *msCommifyString(char *str)
 
   return str;
 }
+
+/************************************************************************/
+/*                  case incensitive equivalent of strstr               */
+/************************************************************************/
+const char *msCaseFindSubstring(const char *haystack, const char *needle)
+{
+  if ( !*needle )
+    {
+      return haystack;
+    }
+  for ( ; *haystack; ++haystack )
+    {
+      if ( toupper(*haystack) == toupper(*needle) )
+        {
+	  /*          * Matched starting char -- loop through remaining chars.          */
+	  const char *h, *n;
+	  for ( h = haystack, n = needle; *h && *n; ++h, ++n )
+            {
+	      if ( toupper(*h) != toupper(*n) )
+		{
+		  break;
+                }
+            }
+	  if ( !*n ) /* matched all of 'needle' to null termination */
+            {
+	      return haystack; /* return the start of the match */
+            }
+        }
+    }
+  return 0;
+}

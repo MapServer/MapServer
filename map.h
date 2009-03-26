@@ -137,7 +137,9 @@ extern "C" {
 /* General defines, not wrapable */
 #ifndef SWIG
 #define MS_DEFAULT_MAPFILE_PATTERN "\\.map$"
-#define MS_TEMPLATE_EXPR "\\.(jsp|asp|cfm|xml|wml|html|htm|shtml|phtml|php|svg)$"
+
+#define MS_TEMPLATE_MAGIC_STRING "MapServer Template"
+#define MS_TEMPLATE_EXPR "\\.(xml|wml|html|htm|svg|kml|gml|js|tmpl)$"
 
 #define MS_INDEX_EXTENSION ".qix"
 #define MS_QUERY_EXTENSION ".qy"
@@ -1377,6 +1379,7 @@ MS_DLL_EXPORT char *strcatalloc(char *pszDest, char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 MS_DLL_EXPORT char *msCommifyString(char *str);
+MS_DLL_EXPORT const char *msCaseFindSubstring(const char *haystack, const char *needle);
 
 #ifdef NEED_STRDUP
 MS_DLL_EXPORT char *strdup(char *s);

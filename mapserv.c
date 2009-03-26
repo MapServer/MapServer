@@ -280,8 +280,21 @@ mapObj *loadMap(void)
   } else {
     if(getenv(msObj->request->ParamValues[i])) /* an environment references the actual file to use */
       map = msLoadMap(getenv(msObj->request->ParamValues[i]), NULL);
-    else
+    else {
+      /* by here we know the request isn't for something in an environment variable */
+      if(getenv("MS_MAP_NO_PATH")) {
+        msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "loadMap()");
+	writeError();
+      }
+
+      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), msObj->request->ParamValues[i]) != MS_TRUE) {
+        msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "loadMap()");
+        writeError();
+      }
+
+      /* ok to try to load now */
       map = msLoadMap(msObj->request->ParamValues[i], NULL);
+    }
   }
 
   if(!map) writeError();
