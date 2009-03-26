@@ -41,6 +41,20 @@ MS_CVSID("$Id$")
 
 static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mode);
 
+static int isValidTemplate(FILE *stream, const char *filename)
+{
+  char buffer[MS_BUFFER_LENGTH];
+
+  if(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {
+    if(!msCaseFindSubstring(buffer, MS_TEMPLATE_MAGIC_STRING)) {
+      msSetError(MS_WEBERR, "Missing magic string, %s doesn't look like a MapServer template.", "isValidTemplate()", filename);
+      return MS_FALSE;
+    }
+  }
+
+  return MS_TRUE;
+}
+
 /*
  * Redirect to (only use in CGI)
  * 
@@ -1064,16 +1078,9 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
       return MS_FAILURE;
     } 
 
-    /* examine 1st line, must contain a magic string to continue */
-    if(fgets(buffer, MS_BUFFER_LENGTH, includeStream) != NULL) {
-      if(!msCaseFindSubstring(buffer, MS_TEMPLATE_MAGIC_STRING)) {
-	fclose(includeStream);
-	msSetError(MS_WEBERR, "Missing magic string, this doesn't look like a MapServer template.", "processIncludeTag()");
-	return MS_FAILURE;
-      }
-    } else { /* empty template, just return */
+    if(isValidTemplate(includeStream, src) != MS_TRUE) {
       fclose(includeStream);
-      return MS_SUCCESS;
+      return MS_FAILURE;
     }
 
     while(fgets(buffer, MS_BUFFER_LENGTH, includeStream) != NULL)
@@ -2874,6 +2881,11 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
           return(NULL);
         }
 
+	if(isValidTemplate(stream, join->header) != MS_TRUE) {
+	  fclose(stream);
+	  return NULL;
+	}
+
         /* echo file to the output buffer, no substitutions */
         while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = msStringConcatenate(outbuf, line);
 
@@ -2884,7 +2896,12 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
         msSetError(MS_IOERR, "Error while opening join template file %s.", "processOneToManyJoin()", join->template);
         return(NULL);
       }      
-      
+     
+      if(isValidTemplate(stream, join->template) != MS_TRUE) {
+	fclose(stream);
+	return NULL;
+      }
+ 
       records = MS_TRUE;
     }
     
@@ -2899,12 +2916,18 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
     }
       
     rewind(stream);
+    fgets(line, MS_BUFFER_LENGTH, stream); /* skip the first line since it's the magic string */
   } /* next record */
 
   if(records==MS_TRUE && join->footer) {    
     if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, join->footer), "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening join footer file %s.", "processOneToManyJoin()", join->footer);
       return(NULL);
+    }
+
+    if(isValidTemplate(stream, join->footer) != MS_TRUE) {
+      fclose(stream);
+      return NULL;
     }
 
     /* echo file to the output buffer, no substitutions */
@@ -3442,16 +3465,9 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
     return MS_FAILURE;
   } 
 
-  /* examine 1st line, must contain a magic string to continue */
-  if(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) {
-    if(!msCaseFindSubstring(line, MS_TEMPLATE_MAGIC_STRING)) {
-      fclose(stream);
-      msSetError(MS_WEBERR, "Missing magic string, this doesn't look like a MapServer template.", "msReturnPage()");
-      return MS_FAILURE; 
-    }
-  } else { /* file is empty, technically not a error */
+  if(isValidTemplate(stream, html) != MS_TRUE) {
     fclose(stream);
-    return MS_SUCCESS;
+    return MS_FAILURE;
   }
 
   if(papszBuffer) {
