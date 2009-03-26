@@ -4563,6 +4563,9 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
   int i,j,k;
   char szPath[MS_MAXPATHLEN], szCWDPath[MS_MAXPATHLEN];
 
+  int foundMapToken=MS_FALSE;
+  int token;
+
   if(!filename) {
     msSetError(MS_MISCERR, "Filename is undefined.", "msLoadMap()");
     return(NULL);
@@ -4614,7 +4617,14 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 
   for(;;) {
 
-    switch(msyylex()) {   
+    token = msyylex();
+  
+    if(!foundMapToken && token != MAP) {
+      msSetError(MS_IDENTERR, "First token must be MAP, this doesn't look like a mapfile.", "msLoadMap()");
+      return(NULL);
+    }
+
+    switch(token) {
 
     case(CONFIG):
     {
@@ -4739,7 +4749,8 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if(loadLegend(&(map->legend), map) == -1) return(NULL);
       break;
     case(MAP):
-      break;   
+      foundMapToken = MS_TRUE;
+      break;
     case(MAXSIZE):
       if(getInteger(&(map->maxsize)) == -1) return(NULL);
       break;

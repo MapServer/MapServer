@@ -438,6 +438,10 @@ void loadForm(void)
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"id") == 0) {
+      if(msEvalRegex(IDPATTERN, msObj->request->ParamValues[i]) == MS_FALSE) {
+        msSetError(MS_WEBERR, "Parameter 'id' value fails to validate.", "loadMap()");
+	writeError();
+      }
       strncpy(msObj->Id, msObj->request->ParamValues[i], IDSIZE);
       continue;
     }
@@ -1261,7 +1265,7 @@ int main(int argc, char *argv[]) {
     loadForm();
  
     if(msObj->SaveMap) {
-      sprintf(buffer, "%s%s%s.map", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id);
+      snprintf(buffer, sizeof(buffer), "%s%s%s.map", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id);
       if(msSaveMap(msObj->Map, buffer) == -1) writeError();
     }
 
@@ -1618,7 +1622,7 @@ int main(int argc, char *argv[]) {
           if (msReturnTemplateQuery(msObj, msObj->Map->web.queryformat, NULL) != MS_SUCCESS) writeError();
           
           if(msObj->SaveQuery) {
-             sprintf(buffer, "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);
+	    snprintf(buffer, sizeof(buffer), "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);
              if((status = msSaveQuery(msObj->Map, buffer)) != MS_SUCCESS) return status;
           }
        }

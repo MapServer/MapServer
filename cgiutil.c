@@ -69,7 +69,8 @@ MS_CVSID("$Id$")
 static char *readPostBody( cgiRequestObj *request ) 
 {
     char *data; 
-    int data_max, data_len, chunk_size;
+    unsigned int data_max, data_len;
+    int chunk_size;
 
     msIO_needBinaryStdin();
     
@@ -84,7 +85,7 @@ static char *readPostBody( cgiRequestObj *request )
         if( data == NULL )
         {
             msIO_printf("Content-type: text/html%c%c",10,10);
-            msIO_printf("malloc() failed, Content-Length: %d unreasonably large?\n",
+            msIO_printf("malloc() failed, Content-Length: %u unreasonably large?\n",
                    data_max );
             exit( 1 );
         }
@@ -118,7 +119,7 @@ static char *readPostBody( cgiRequestObj *request )
             if( data == NULL )
             {
                 msIO_printf("Content-type: text/html%c%c",10,10);
-                msIO_printf("out of memory trying to allocate %d input buffer, POST body too large?\n", data_max+1 );
+                msIO_printf("out of memory trying to allocate %u input buffer, POST body too large?\n", data_max+1 );
                 exit(1);
             }
         }

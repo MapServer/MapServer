@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-4-10):
 ---------------------------------
 
+- Fixed several security issues found in an audit of the CGI application (#2939, #2941, #2942, #2943, #2944)
+
 - Fixed java and csharp Makefile.in to use -lmapserver instead of -lmap
   (side-effect of #2150)
 
