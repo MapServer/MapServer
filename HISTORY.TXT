@@ -10,8 +10,10 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (SVN branch-4-10):
----------------------------------
+Version 4.10.4 (2009-03-26)
+---------------------------
+
+- Improved security relative to untrusted directories and mapfiles (RFC 56)
 
 - Fixed several security issues found in an audit of the CGI application (#2939, #2941, #2942, #2943, #2944)
 
