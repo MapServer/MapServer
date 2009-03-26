@@ -248,6 +248,25 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
     return _msQueryByIndex(map, qlayer, tileindex, shapeindex, 0);
 }
 
+void msRestoreOldFilter(layerObj *lp, int old_filtertype, char *old_filteritem, char *old_filterstring)
+{
+  freeExpression(&(lp->filter));
+  if(lp->filteritem) {
+    free(lp->filteritem);
+    lp->filteritem = NULL;
+    lp->filteritemindex = -1;
+  }
+  
+  /* restore any previously defined filter */
+  if(old_filterstring) {
+    lp->filter.type = old_filtertype;
+    lp->filter.string = old_filterstring;
+    if(old_filteritem) { 
+      lp->filteritem = old_filteritem;
+    }
+  }
+}
+
 int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int mode)
 {
   layerObj *lp;
@@ -310,11 +329,19 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
 
   /* open this layer */
   status = msLayerOpen(lp);
-  if(status != MS_SUCCESS) return(MS_FAILURE);
+  if(status != MS_SUCCESS) {
+      /* Manually reset the filter */
+      msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
+      return(MS_FAILURE);
+  }
   
   /* build item list (no annotation) */
   status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
-  if(status != MS_SUCCESS) return(MS_FAILURE);
+  if(status != MS_SUCCESS) {
+      /* Manually reset the filter */
+      msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
+      return(MS_FAILURE);
+  }
 
   /* identify target shapes */
   searchrect = map->extent;
@@ -327,10 +354,14 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
 
   status = msLayerWhichShapes(lp, searchrect);
   if(status == MS_DONE) { /* no overlap */
+    /* Manually reset the filter */
+    msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
     msLayerClose(lp);
     msSetError(MS_NOTFOUND, "No matching record(s) found, layer and area of interest do not overlap.", "msQueryByAttributes()");
     return(MS_FAILURE);
   } else if(status != MS_SUCCESS) {
+    /* Manually reset the filter */
+    msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
     msLayerClose(lp);
     return(MS_FAILURE);
   }
@@ -383,26 +414,14 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   if (classgroup)
     msFree(classgroup);
 
-  if(status != MS_DONE) return(MS_FAILURE);
+  if(status != MS_DONE){
+     /* Manually reset the filter */
+     msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
+     return(MS_FAILURE);
+  }
 
-  /* the FILTER set was just temporary, clean up here */
-  freeExpression(&(lp->filter));
-  if(lp->filteritem) {
-    free(lp->filteritem);
-    lp->filteritem = NULL;
-    lp->filteritemindex = -1;
-  }
-  
-  /* restore any previously defined filter */
-  if(old_filterstring) {
-    lp->filter.type = old_filtertype;
-    lp->filter.string = strdup(old_filterstring);
-    free(old_filterstring);
-    if(old_filteritem) { 
-      lp->filteritem = strdup(old_filteritem);
-      free(old_filteritem);
-    }
-  }
+  /* Manually reset the filter */
+  msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
 
   msLayerClose(lp);
 
