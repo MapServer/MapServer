@@ -1588,6 +1588,7 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     add_property_double(return_value,"scale",     pMap->scaledenom);
 
     add_property_double(return_value,"resolution",pMap->resolution);
+    add_property_double(return_value,"defresolution",pMap->defresolution);
     PHPMS_ADD_PROP_STR(return_value, "shapepath", pMap->shapepath);
     add_property_long(return_value,  "keysizex",  pMap->legend.keysizex);
     add_property_long(return_value,  "keysizey",  pMap->legend.keysizey);
@@ -1884,6 +1885,7 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     /* TODO: scale deprecated in v5.0 remove in future release */
     else IF_SET_DOUBLE("scale",       self->scaledenom)
     else IF_SET_DOUBLE("resolution",  self->resolution)
+    else IF_SET_DOUBLE("defresolution",  self->defresolution)
     else IF_SET_STRING("shapepath",   self->shapepath)
     else IF_SET_LONG(  "keysizex",    self->legend.keysizex)
     else IF_SET_LONG(  "keysizey",    self->legend.keysizey)
@@ -5725,6 +5727,7 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     /* TODO: scale deprecated in v5.0 remove in future release */
     _phpms_set_property_double(pThis,"scale",     self->scaledenom, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis,  "resolution",self->resolution, E_ERROR TSRMLS_CC);
+    _phpms_set_property_double(pThis,  "defresolution",self->defresolution, E_ERROR TSRMLS_CC);
     if(self->shapepath)
         _phpms_set_property_string(pThis, "shapepath",self->shapepath,E_ERROR TSRMLS_CC);
 

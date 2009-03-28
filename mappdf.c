@@ -278,17 +278,25 @@ void drawPolylinePDF(PDF *pdf, shapeObj *p, colorObj  *c, double width)
  /* internal function to do line drawing in the pdf, using dashed patterns*/
  /************************************************************************/
  void drawDashedPolylinePDF(PDF *pdf, shapeObj *p, symbolObj  *s, colorObj *c, 
-                            double width)
+                            double width, double scalefactor)
  {
-     int i, j;
+    int i, j;
     int optlistlength=14;
     char *optlist=NULL;
+    int symbol_pattern[MS_MAXPATTERNLENGTH];
+
+    /* scale the pattern */
+    for (i=0; i<s->patternlength; i++)
+    {
+        symbol_pattern[i] = s->pattern[i]*scalefactor;
+    }
+
      for(i=0;i<s->patternlength;i++) {
-       if(!s->pattern[i]) /*in case length is zero*/ 
+       if(!symbol_pattern[i]) /*in case length is zero*/ 
          optlistlength+=2;
        else
-        if(s->pattern[i]>0)
-         optlistlength+=(int)(log10(s->pattern[i]))+2;
+        if(symbol_pattern[i]>0)
+         optlistlength+=(int)(log10(symbol_pattern[i]))+2;
         else{
           msSetError(MS_SYMERR, "Symbol patterns must be positive", "drawDashedPolylinePDF()");
           return;
@@ -297,7 +305,7 @@ void drawPolylinePDF(PDF *pdf, shapeObj *p, colorObj  *c, double width)
      optlist = (char*)malloc(optlistlength*sizeof(char));
      sprintf(optlist,"dasharray={");
      for(i=0;i<s->patternlength;i++)
-       sprintf(optlist,"%s %d",optlist,s->pattern[i]);
+         sprintf(optlist,"%s %d",optlist,symbol_pattern[i]);
      sprintf(optlist,"%s }",optlist);
      PDF_setdashpattern(pdf,optlist);
      
@@ -370,7 +378,7 @@ void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 #if PDFLIB_MAJORVERSION >= 6
      if(symbolset && symbolset->symbol[style->symbol]->patternlength)
        drawDashedPolylinePDF(pdf, p, symbolset->symbol[style->symbol], 
-                             &(style->color),size);
+                             &(style->color),size, scalefactor);
      else
 #endif
        drawPolylinePDF(pdf, p, &(style->color),  size);
@@ -441,6 +449,9 @@ void billboardPDF(PDF *pdf, shapeObj *shape, labelObj *label)
 int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string,
                    labelObj *label, fontSetObj *fontset, double scalefactor)
 {
+    int label_offset_x, label_offset_y;
+    label_offset_x = label_offset_y = 0;
+
     if(!string)
         return(0); /* not an error, just don't want to do anything */
 
@@ -452,16 +463,21 @@ int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string,
         rectObj r;
 
         if(msGetLabelSize(image,string, label, &r, fontset, scalefactor, MS_FALSE,NULL) == -1) return(-1);
+        label_offset_x = label->offsetx*scalefactor;
+        label_offset_y = label->offsety*scalefactor;
+
         p = get_metrics(&labelPnt, label->position, r,
-                                   label->offsetx,
-                                   label->offsety,
+                                   label_offset_x,
+                                   label_offset_y,
                                    label->angle,
                                    0, NULL);
         msDrawTextPDF(image, p, string,
                  label, fontset, scalefactor);
     } else {
-        labelPnt.x += label->offsetx;
-        labelPnt.y += label->offsety;
+        label_offset_x = label->offsetx*scalefactor;
+        label_offset_y = label->offsety*scalefactor;
+        labelPnt.x += label_offset_x;
+        labelPnt.y += label_offset_y;
         msDrawTextPDF(image,labelPnt, string,
                  label, fontset, scalefactor);
     }
@@ -486,11 +502,13 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
 
     int draw_marker;
     int marker_width, marker_height;
-    int marker_offset_x, marker_offset_y;
+    int marker_offset_x, marker_offset_y, label_offset_x, label_offset_y;
     rectObj marker_rect;
+    int label_mindistance=-1, label_buffer=0;
     
     imageObj    *imagetmp = NULL;
 
+    
 /* -------------------------------------------------------------------- */
 /*      if not PDF, return.                                             */
 /* -------------------------------------------------------------------- */
@@ -537,6 +555,11 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         if(msGetLabelSize(image,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
             return(-1);
 
+        label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
+        label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
+        label_buffer = labelPtr->buffer*layerPtr->scalefactor;
+        label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
+        
         if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
             continue; /* label too large relative to the feature */
 
@@ -579,10 +602,10 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     p = get_metrics(&(cachePtr->point),
                                      position,
                                      r,
-                                     (marker_offset_x + labelPtr->offsetx),
-                                     (marker_offset_y + labelPtr->offsety),
+                                     (marker_offset_x + label_offset_x),
+                                     (marker_offset_y + label_offset_y),
                                      labelPtr->angle,
-                                     labelPtr->buffer,
+                                     label_buffer,
                                      cachePtr->poly);
 
                     /*save marker bounding polygon*/
@@ -592,7 +615,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
                     msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                                map->width, map->height, 
-                                               labelPtr->buffer, cachePtr, priority, l);
+                                               label_buffer, cachePtr, priority, l, label_mindistance);
 
                     /*found a suitable place for this label*/
                     if(cachePtr->status)
@@ -613,10 +636,10 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     p = get_metrics(&(cachePtr->point),
                                     j,
                                     r,
-                                    (marker_offset_x + labelPtr->offsetx),
-                                    (marker_offset_y + labelPtr->offsety),
+                                    (marker_offset_x + label_offset_x),
+                                    (marker_offset_y + label_offset_y),
                                     labelPtr->angle,
-                                    labelPtr->buffer,
+                                    label_buffer,
                                     cachePtr->poly);
 
                     /* save marker bounding polygon*/
@@ -626,7 +649,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
                     msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                                map->width, map->height, 
-                                               labelPtr->buffer, cachePtr, priority, l);
+                                               label_buffer, cachePtr, priority, l, label_mindistance);
 
                     /* found a suitable place for this label*/
                     if(cachePtr->status)
@@ -648,10 +671,10 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                 p = get_metrics(&(cachePtr->point),
                                 labelPtr->position,
                                 r,
-                                labelPtr->offsetx,
-                                labelPtr->offsety,
+                                label_offset_x,
+                                label_offset_y,
                                 labelPtr->angle,
-                                labelPtr->buffer,
+                                label_buffer,
                                 cachePtr->poly);
             }
             else
@@ -659,10 +682,10 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                 p = get_metrics(&(cachePtr->point),
                                 labelPtr->position,
                                 r,
-                                (marker_offset_x + labelPtr->offsetx),
-                                (marker_offset_y + labelPtr->offsety),
+                                (marker_offset_x + label_offset_x),
+                                (marker_offset_y + label_offset_y),
                                 labelPtr->angle,
-                                labelPtr->buffer,
+                                label_buffer,
                                 cachePtr->poly);
              }
 
@@ -676,7 +699,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                 /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
                 msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                            map->width, map->height, 
-                                           labelPtr->buffer, cachePtr, priority, l);
+                                           label_buffer, cachePtr, priority, l, label_mindistance);
             }
         } /* end position if-then-else */
 
@@ -696,6 +719,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         }
 
         /*handle a filled label background*/
+        /* backgroundshadowsize(x/y) have to be modified with the scalefactor */
         /* TODO */
         /* if(labelPtr->backgroundcolor >= 0) */
         /* billboardPDF(img, cachePtr->poly, labelPtr); */

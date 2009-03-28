@@ -4400,7 +4400,8 @@ int initMap(mapObj *map)
 
   map->scaledenom = -1.0;
   map->resolution = 72.0; /* pixels per inch */
- 
+  map->defresolution = 72.0; /* pixels per inch */
+
   map->height = map->width = -1;
   map->maxsize = MS_MAXIMAGESIZE_DEFAULT;
 
@@ -4654,6 +4655,7 @@ int msSaveMap(mapObj *map, char *filename)
   if(map->imagetype != NULL) fprintf(stream, "  IMAGETYPE %s\n", map->imagetype);
 
   if(map->resolution != 72.0) fprintf(stream, "  RESOLUTION %f\n", map->resolution);
+  if(map->defresolution != 72.0) fprintf(stream, "  DEFRESOLUTION %f\n", map->defresolution);
 
   if(map->interlace != MS_NOOVERRIDE)
       fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
@@ -4857,6 +4859,9 @@ static int loadMapInternal(mapObj *map)
       break;
     case(RESOLUTION):
       if(getDouble(&(map->resolution)) == -1) return MS_FAILURE;
+      break;
+    case(DEFRESOLUTION):
+      if(getDouble(&(map->defresolution)) == -1) return MS_FAILURE;
       break;
     case(SCALE):
     case(SCALEDENOM):
@@ -5216,7 +5221,12 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 
       if(getDouble(&(map->resolution)) == -1) break;      
       break;
-    case(SCALEBAR):
+    case(DEFRESOLUTION):
+      msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
+      msyylex();
+
+      if(getDouble(&(map->defresolution)) == -1) break;      
+      break;    case(SCALEBAR):
       return msUpdateScalebarFromString(&(map->scalebar), string, MS_TRUE);      
     case(SIZE):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;

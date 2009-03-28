@@ -278,6 +278,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>relativeto                            { return(RELATIVETO); }
 <INITIAL,URL_STRING>requires                   { return(REQUIRES); }
 <INITIAL,URL_VARIABLE>resolution               { return(RESOLUTION); }
+<INITIAL,URL_VARIABLE>defresolution            { return(DEFRESOLUTION); }
 <INITIAL>scale                                 { return(SCALE); }
 <INITIAL>scaledenom                            { return(SCALEDENOM); }
 <INITIAL,URL_VARIABLE>scalebar                 { return(SCALEBAR); }

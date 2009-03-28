@@ -266,6 +266,8 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscaledenom/map->scaledenom;
       else
         GET_LAYER(map, i)->scalefactor = 1;
+
+      GET_LAYER(map, i)->scalefactor *= map->resolution/map->defresolution;
     }
 
     return image;
@@ -914,7 +916,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
         for (i = 0; i < layer->class[shape.classindex]->numstyles; i++) {
             styleObj *pStyle = layer->class[shape.classindex]->styles[i];
             colorObj tmp;
-            if (pStyle->outlinewidth > 0) {
+           if (pStyle->outlinewidth > 0) {
                 /* 
                  * RFC 49 implementation
                  * if an outlinewidth is used:
@@ -928,7 +930,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
                 pStyle->width += (pStyle->outlinewidth / layer->scalefactor) * 2;
                 pStyle->minwidth += pStyle->outlinewidth * 2;
                 pStyle->maxwidth += pStyle->outlinewidth * 2;
-                
+                pStyle->size += (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
+
                 /*swap color and outlinecolor*/
                 tmp = pStyle->color;
                 pStyle->color = pStyle->outlinecolor;
@@ -948,7 +951,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
                 pStyle->width -= (pStyle->outlinewidth / layer->scalefactor) * 2;
                 pStyle->minwidth -= pStyle->outlinewidth * 2;
                 pStyle->maxwidth -= pStyle->outlinewidth * 2;
-                
+                pStyle->size -= (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
+
                 /*reswap colors to original state*/
                 tmp = pStyle->color;
                 pStyle->color = pStyle->outlinecolor;
@@ -1371,7 +1375,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   int csz; /* clip over size */
   double buffer;
   int status = MS_FAILURE;
-  
+  int minfeaturesize;
+
   labelPathObj *annopath = NULL; /* Curved label path. Bug #1620 implementation */
 
 
@@ -1416,6 +1421,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   cliprect.miny = map->extent.miny - csz*map->cellsize;
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;
   cliprect.maxy = map->extent.maxy + csz*map->cellsize;
+  minfeaturesize = layer->class[c]->label.minfeaturesize*layer->scalefactor;
 
   if(msBindLayerToShape(layer, shape, querymapMode) != MS_SUCCESS)
     return MS_FAILURE; /* error message is set in msBindLayerToShape() */
@@ -1490,9 +1496,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
         if(layer->class[c]->label.autofollow == MS_TRUE ) {
-          annopath = msPolylineLabelPath(image,&annoshape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+          annopath = msPolylineLabelPath(image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
         } else {
-          annocallret = msPolylineLabelPoint(&annoshape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length);
+          annocallret = msPolylineLabelPoint(&annoshape, &annopnt, minfeaturesize, &angle, &length);
         }
 
         msFreeShape(&annoshape);
@@ -1511,7 +1517,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
         /* Determine the label path if it has not been computed above */
         if(bLabelNoClip == MS_FALSE)
-          annopath = msPolylineLabelPath(image,shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+          annopath = msPolylineLabelPath(image,shape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
 
         if( annopath ) {
           labelObj label = layer->class[c]->label;
@@ -1539,7 +1545,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
         /* Regular labels: Only attempt to find the label point if we have not */
         /* succesfully calculated it previously                                */
-        if ((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) || (msPolylineLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length) == MS_SUCCESS)) {
+        if ((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) || (msPolylineLabelPoint(shape, &annopnt, minfeaturesize, &angle, &length) == MS_SUCCESS)) {
           labelObj label = layer->class[c]->label;
           
           if(label.angle != 0)
@@ -1573,7 +1579,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       /* No-clip labeling support */
       if(shape->text && msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
         bLabelNoClip = MS_TRUE;
-        annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*layer->class[c]->label.minfeaturesize);
+        annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*minfeaturesize);
         annopnt.x = MS_MAP2IMAGE_X(annopnt.x, map->extent.minx, map->cellsize);
         annopnt.y = MS_MAP2IMAGE_Y(annopnt.y, map->extent.maxy, map->cellsize);
       }
@@ -1586,7 +1592,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	msOffsetShapeRelativeTo(shape, layer);
 
       if ((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) ||
-          (msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS)) {
+          (msPolygonLabelPoint(shape, &annopnt, minfeaturesize) == MS_SUCCESS)) {
         labelObj label = layer->class[c]->label;
 
         if(label.angle != 0)
@@ -1723,9 +1729,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
       if(layer->class[c]->label.autofollow == MS_TRUE) {
-        annopath = msPolylineLabelPath(image,&annoshape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+        annopath = msPolylineLabelPath(image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
       } else {
-        annocallret = msPolylineLabelPoint(&annoshape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length);
+        annocallret = msPolylineLabelPoint(&annoshape, &annopnt, minfeaturesize, &angle, &length);
       }
 
       msFreeShape(&annoshape);
@@ -1787,7 +1793,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         layer->class[c]->label.position = MS_CC; /* Force all label positions to MS_CC regardless if a path is computed */
 
         if (bLabelNoClip == MS_FALSE)
-          annopath = msPolylineLabelPath(image,shape, layer->class[c]->label.minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
+          annopath = msPolylineLabelPath(image,shape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &status);
 
         if(annopath) {
           labelObj label = layer->class[c]->label;
@@ -1807,7 +1813,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       if ( layer->class[c]->label.autofollow == MS_FALSE || (!annopath && status != MS_FAILURE) ) {
 
       if((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) || 
-         (msPolylineLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize, &angle, &length) == MS_SUCCESS)) {
+         (msPolylineLabelPoint(shape, &annopnt, minfeaturesize, &angle, &length) == MS_SUCCESS)) {
         labelObj label = layer->class[c]->label;
 
         if(label.angle != 0)
@@ -1847,7 +1853,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     /* No-clip labeling support */
     if(shape->text && msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
       bLabelNoClip = MS_TRUE;
-      annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*layer->class[c]->label.minfeaturesize);
+      annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*minfeaturesize);
       annopnt.x = MS_MAP2IMAGE_X(annopnt.x, map->extent.minx, map->cellsize);
       annopnt.y = MS_MAP2IMAGE_Y(annopnt.y, map->extent.maxy, map->cellsize);
     }
@@ -1909,7 +1915,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
     if(shape->text) {
       if((bLabelNoClip == MS_TRUE && annocallret == MS_SUCCESS) ||
-         (msPolygonLabelPoint(shape, &annopnt, layer->class[c]->label.minfeaturesize) == MS_SUCCESS)) {
+         (msPolygonLabelPoint(shape, &annopnt, minfeaturesize) == MS_SUCCESS)) {
         labelObj label = layer->class[c]->label;
 
         if(label.angle != 0)
@@ -2066,7 +2072,7 @@ void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj 
 
 
 void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, styleObj *style, double scalefactor)
-{    
+{
    if (image)
    {
        if( MS_RENDERER_GD(image->format) )
@@ -2153,6 +2159,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   shapeObj billboard;
   lineObj billboard_line;
   pointObj billboard_points[5];
+  int label_offset_x, label_offset_y;
 
   rectObj r;
 
@@ -2186,17 +2193,20 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
 
   if(msGetLabelSize(image, string, label, &r, &(map->fontset), scalefactor, MS_FALSE,NULL) == -1) return(-1);
 
+  label_offset_x = label->offsetx*scalefactor;
+  label_offset_y = label->offsety*scalefactor;
+
   if(label->position != MS_XY) {
     pointObj p;
 
     if(MS_VALID_COLOR(label->backgroundcolor)) {
-      p = get_metrics_line(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 1, billboard.line);
+      p = get_metrics_line(&labelPnt, label->position, r, label_offset_x, label_offset_y, label->angle, 1, billboard.line);
 
       /* draw the background and background shadow (if necessary) */
       if(MS_VALID_COLOR(label->backgroundshadowcolor)) {
 	MS_COPYCOLOR(&(style.color), &(label->backgroundshadowcolor));
-	style.offsetx = label->backgroundshadowsizex;
-	style.offsety = label->backgroundshadowsizey;
+	style.offsetx = label->backgroundshadowsizex*scalefactor;
+	style.offsety = label->backgroundshadowsizey*scalefactor;
 	msDrawShadeSymbol(&(map->symbolset), image, &billboard, &style, 1);
 	style.offsetx = 0;
 	style.offsety = 0;
@@ -2204,22 +2214,22 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
       MS_COPYCOLOR(&(style.color), &(label->backgroundcolor));
       msDrawShadeSymbol(&(map->symbolset), image, &billboard, &style, 1);
     } else
-      p = get_metrics_line(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 0, NULL);
+      p = get_metrics_line(&labelPnt, label->position, r, label_offset_x, label_offset_y, label->angle, 0, NULL);
 
     /* draw the label text */
     msDrawText(image, p, string, label, &(map->fontset), scalefactor); /* actually draw the label */
   } else {
-    labelPnt.x += label->offsetx;
-    labelPnt.y += label->offsety;
+    labelPnt.x += label_offset_x;
+    labelPnt.y += label_offset_y;
 
     if(MS_VALID_COLOR(label->backgroundcolor)) {
-      get_metrics_line(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 1, billboard.line);
+      get_metrics_line(&labelPnt, label->position, r, label_offset_x, label_offset_y, label->angle, 1, billboard.line);
 
       /* draw the background and background shadow (if necessary) */
       if(MS_VALID_COLOR(label->backgroundshadowcolor)) {
         MS_COPYCOLOR(&(style.color), &(label->backgroundshadowcolor));
-        style.offsetx = label->backgroundshadowsizex;
-        style.offsety = label->backgroundshadowsizey;
+        style.offsetx = label->backgroundshadowsizex*scalefactor;
+        style.offsety = label->backgroundshadowsizey*scalefactor;
         msDrawShadeSymbol(&(map->symbolset), image, &billboard, &style, 1);
         style.offsetx = 0;
         style.offsety = 0;
@@ -2300,9 +2310,11 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
       labelObj *labelPtr=NULL;
 
       int marker_width, marker_height;
-      int marker_offset_x, marker_offset_y;
+      int marker_offset_x, marker_offset_y, label_offset_x, label_offset_y;
       rectObj marker_rect;
-      int map_edge_buffer=0;
+      int label_mindistance=-1,
+          label_buffer=0, map_edge_buffer=0;
+
       const char *value;
 
 #ifdef USE_AGG
@@ -2345,6 +2357,12 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
           if(msGetLabelSize(image,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
             return(-1);
+
+          label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
+          label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
+          label_buffer = labelPtr->buffer*layerPtr->scalefactor;
+          label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
+
           if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
             continue; /* label too large relative to the feature */
 
@@ -2356,7 +2374,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               return(-1);
 
             marker_offset_x = MS_NINT(marker_width/2.0);
-            marker_offset_y = MS_NINT(marker_height/2.0);      
+            marker_offset_y = MS_NINT(marker_height/2.0);
 
             marker_rect.minx = MS_NINT(cachePtr->point.x - .5 * marker_width);
             marker_rect.miny = MS_NINT(cachePtr->point.y - .5 * marker_height);
@@ -2374,7 +2392,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
 	    /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip it */
             if(!labelPtr->force)
-  	      msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, labelPtr->buffer + map_edge_buffer, cachePtr, priority, l);
+              msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance);
 	  } else {
 
             if(labelPtr->position == MS_AUTO) {
@@ -2395,16 +2413,16 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                 msFreeShape(cachePtr->poly);
                 cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-                p = get_metrics(&(cachePtr->point), positions[i], r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                p = get_metrics(&(cachePtr->point), positions[i], r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
                 if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
                   msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
                 /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
-                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, labelPtr->buffer + map_edge_buffer, cachePtr, priority, l);
+                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance);
 
                 if(cachePtr->status) /* found a suitable place for this label */ {
                   if(MS_VALID_COLOR(labelPtr->backgroundcolor))
-                    get_metrics_line(&(cachePtr->point), positions[i], r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, 1, billboard.line);
+                    get_metrics_line(&(cachePtr->point), positions[i], r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, 1, billboard.line);
                   break; /* ...out of position loop */
                 }
 
@@ -2415,8 +2433,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   /*billboard wasn't initialized if no non-coliding position was found*/
                   if(!cachePtr->status && MS_VALID_COLOR(labelPtr->backgroundcolor))
                       get_metrics_line(&(cachePtr->point), positions[npositions-1], r,
-                              (marker_offset_x + labelPtr->offsetx),
-                              (marker_offset_y + labelPtr->offsety),
+                              (marker_offset_x + label_offset_x),
+                              (marker_offset_y + label_offset_y),
                               labelPtr->angle, 1, billboard.line);
 
                   cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
@@ -2427,13 +2445,13 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
               if(labelPtr->position == MS_CC) { /* don't need the marker_offset */
-                p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                p = get_metrics(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, label_buffer, cachePtr->poly);
                 if(MS_VALID_COLOR(labelPtr->backgroundcolor))
-                  get_metrics_line(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, 1, billboard.line);
+                  get_metrics_line(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, 1, billboard.line);
               } else {
-                p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
                 if(MS_VALID_COLOR(labelPtr->backgroundcolor))
-                  get_metrics_line(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, 1, billboard.line);
+                  get_metrics_line(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, 1, billboard.line);
               }
   
               if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
@@ -2441,7 +2459,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
               /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip the test */
               if(!labelPtr->force)
-                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, labelPtr->buffer + map_edge_buffer, cachePtr, priority, l);
+                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance);
 
             }
           }
@@ -2463,8 +2481,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             initStyle(&style);                    
             if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
               MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundshadowcolor));
-              style.offsetx = labelPtr->backgroundshadowsizex;
-              style.offsety = labelPtr->backgroundshadowsizey;
+              style.offsetx = labelPtr->backgroundshadowsizex*layerPtr->scalefactor;
+              style.offsety = labelPtr->backgroundshadowsizey*layerPtr->scalefactor;
               msDrawShadeSymbol(&map->symbolset,image,&billboard,&style,1);
               style.offsetx = 0;
               style.offsety = 0;

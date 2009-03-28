@@ -2271,7 +2271,8 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     char szPath[MS_MAXPATHLEN];
     SWFDisplayItem oShadowDisplay;
     SWFDisplayItem oDisplay; 
-
+    int shadowsizex, shadowsizey;
+  
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
@@ -2297,6 +2298,8 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 /* double angle_radians = MS_DEG_TO_RAD*label->angle; */
 
     size = label->size*scalefactor;
+    shadowsizex = label->shadowsizex*scalefactor;
+    shadowsizey = label->shadowsizey*scalefactor;
 
     if(!fontset) 
     {
@@ -2367,9 +2370,9 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
         	StoreText(oShadowText, image);
             /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
             oShadowDisplay = SWFMovie_add(GetCurrentMovie(map, image), oShadowText);
-            if (label->shadowsizex > 0 && label->shadowsizey > 0)
-            	SWFDisplayItem_moveTo(oShadowDisplay, (float)x + label->shadowsizex, 
-                                    (float)y + label->shadowsizey);
+            if (shadowsizex > 0 && shadowsizey > 0)
+            	SWFDisplayItem_moveTo(oShadowDisplay, (float)x + shadowsizex, 
+                                    (float)y + shadowsizey);
             else
             	SWFDisplayItem_moveTo(oShadowDisplay, (float)x + 1, (float)y + 1);
 
@@ -2509,9 +2512,11 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
     int draw_marker;
     int marker_width, marker_height;
-    int marker_offset_x, marker_offset_y;
+    int marker_offset_x, marker_offset_y, label_offset_x, label_offset_y;
     rectObj marker_rect;
-    
+    int label_mindistance=-1,
+        label_buffer=0, map_edge_buffer=0;    
+
     int         nCurrentMovie = 0;
     int         bLayerOpen = 0;
     imageObj    *imagetmp = NULL;
@@ -2616,6 +2621,11 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                              &(map->fontset), layerPtr->scalefactor) == -1)
             return(-1);
 
+        label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
+        label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
+        label_buffer = labelPtr->buffer*layerPtr->scalefactor;
+        label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
+
         if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
             continue; /* label too large relative to the feature */
 
@@ -2653,7 +2663,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     msFreeShape(cachePtr->poly);
                     cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-                    p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                    p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
 
                     if(draw_marker)
                         msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
@@ -2661,7 +2671,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
                     msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                                map->width, map->height, 
-                                               labelPtr->buffer, cachePtr, priority, l);
+                                               label_buffer, cachePtr, priority, l, label_mindistance);
 
                     if(cachePtr->status) /* found a suitable place for this label */
                         break;
@@ -2674,7 +2684,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     msFreeShape(cachePtr->poly);
                     cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-                    p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                    p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
 
                     if(draw_marker)
                         msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
@@ -2682,7 +2692,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
                     msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                                map->width, map->height, 
-                                               labelPtr->buffer, cachePtr, priority, l);
+                                               label_buffer, cachePtr, priority, l, label_mindistance);
 
                     if(cachePtr->status) /* found a suitable place for this label */
                         break;
@@ -2696,9 +2706,9 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
             cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
             if(labelPtr->position == MS_CC) /* don't need the marker_offset */
-                p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                p = get_metrics(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, label_buffer, cachePtr->poly);
             else
-                p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
 
             if(draw_marker)
                 msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
@@ -2708,7 +2718,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
               /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
                 msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                            map->width, map->height, 
-                                           labelPtr->buffer, cachePtr, priority, l);
+                                           label_buffer, cachePtr, priority, l, label_mindistance);
             }
         } /* end position if-then-else */
 
@@ -2753,6 +2763,7 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
 {
     pointObj p;
     rectObj r;
+    int label_offset_x, label_offset_y;
 
     if (!image || !MS_DRIVER_SWF(image->format))
         return 0;
@@ -2764,8 +2775,11 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
         return(0); /* not an error, just don't want to do anything */
     
     msGetLabelSizeSWF(string, label, &r, fontset, scalefactor);
-    p = get_metrics(&labelPnt, label->position, r, label->offsetx, 
-                    label->offsety, label->angle, 0, NULL);
+    label_offset_x = label->offsetx*scalefactor;
+    label_offset_y = label->offsety*scalefactor;
+
+    p = get_metrics(&labelPnt, label->position, r, label_offset_x, 
+                    label_offset_y, label->angle, 0, NULL);
     /* labelPnt.x += label->offsetx; */
     /* labelPnt.y += label->offsety; */
     return draw_textSWF(image, p, string, label, fontset, scalefactor);

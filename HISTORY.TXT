@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Improve control of output resolution (RFC 55, #2948)
+
 - mapraster.c: use GDALOpenShared(), and CLOSE_CONNECTION=DEFERRED (#2815)
 
 - AGG font outline method change (#1243)

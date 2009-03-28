@@ -462,7 +462,8 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
 */
 void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr, 
                                 int mapwidth, int mapheight, int buffer,
-                                labelCacheMemberObj *cachePtr, int current_priority, int current_label)
+                                labelCacheMemberObj *cachePtr, int current_priority, 
+                                int current_label, int mindistance)
 {
     int i, p;
 
@@ -503,7 +504,7 @@ void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr,
         for(  ; i < cacheslot->numlabels; i++) { 
             if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-                if((labelPtr->mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+                if((mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= mindistance)) { /* label is a duplicate */
                     cachePtr->status = MS_FALSE;
                     return;
                 }
@@ -782,15 +783,15 @@ int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, 
     if(adjustBaseline) {
       int nNewlines = msCountChars(string,'\n');
       if(!nNewlines) {
-        label->offsety += MS_NINT(((rect->miny + rect->maxy) + size) / 2);
-        label->offsetx += MS_NINT(rect->minx / 2);
+        label->offsety += (MS_NINT(((rect->miny + rect->maxy) + size) / 2))/scalefactor;
+        label->offsetx += (MS_NINT(rect->minx / 2))/scalefactor;
       }
       else {
         rectObj rect2; /*bbox of first line only*/
         char* firstLine = msGetFirstLine(string);
         msGetTruetypeTextBBox(img,font,size,firstLine,&rect2,NULL);
-        label->offsety += MS_NINT(((rect2.miny+rect2.maxy) + size) / 2);
-        label->offsetx += MS_NINT(rect2.minx / 2);
+        label->offsety += (MS_NINT(((rect2.miny+rect2.maxy) + size) / 2))/scalefactor;
+        label->offsetx += (MS_NINT(rect2.minx / 2))/scalefactor;
         free(firstLine);
       }
     }
@@ -1063,7 +1064,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
   if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
   gap = MS_ABS(symbol->gap)* (int) scalefactor;
-  label.size = (size * scalefactor);
+  label.size = size ;/* "* scalefactor" removed: this is already scaled in msDrawTextGD()*/
   /* label.minsize = style->minsize; */
   /* label.maxsize = style->maxsize; */
 

@@ -981,8 +981,8 @@ DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
-  ox = style->offsetx; /* TODO: add scaling? */
-  oy = style->offsety;
+  ox = style->offsetx*scalefactor;
+  oy = style->offsety*scalefactor;
   if(style->size == -1) {
       size = msSymbolGetDefaultSize( symbol );
       size = MS_NINT(size*scalefactor);
@@ -1831,8 +1831,12 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
   labelObj *labelPtr=NULL;
 
   int marker_width, marker_height;
-  int marker_offset_x, marker_offset_y;
+  int marker_offset_x, marker_offset_y, label_offset_x, label_offset_y;
   rectObj marker_rect;
+  int label_mindistance, label_buffer;
+
+  label_mindistance=-1;
+  label_buffer=0;
 
   DEBUG_IF printf("msDrawLabelCacheIM\n<BR>");
   for(priority=MS_MAX_LABEL_PRIORITY-1; priority>=0; priority--) {
@@ -1854,6 +1858,11 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 
     if(msGetLabelSize(img,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
       return(-1);
+
+    label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
+    label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
+    label_buffer = labelPtr->buffer*layerPtr->scalefactor;
+    label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
 
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
       continue; /* label too large relative to the feature */
@@ -1895,14 +1904,14 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
 
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
           /* Compare against rendered labels and markers (sets cachePtr->status) */
           msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
-                                     -1, -1, labelPtr->buffer, cachePtr, priority, l);
+                                     -1, -1, label_buffer, cachePtr, priority, l, label_mindistance);
 
 	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
@@ -1915,14 +1924,14 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
 
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
           /* Compare against rendered labels and markers (sets cachePtr->status) */
           msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
-                                     -1, -1, labelPtr->buffer, cachePtr, priority, l);
+                                     -1, -1, label_buffer, cachePtr, priority, l,label_mindistance);
 
 	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
@@ -1936,9 +1945,9 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
       if(labelPtr->position == MS_CC) /* don't need the marker_offset */
-        p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+        p = get_metrics(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, label_buffer, cachePtr->poly);
       else
-        p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+        p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
 
       if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
@@ -1947,7 +1956,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 
         /* Compare against rendered labels and markers (sets cachePtr->status) */
         msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
-                                   -1, -1, labelPtr->buffer, cachePtr, priority, l);
+                                   -1, -1, label_buffer, cachePtr, priority, l,label_mindistance);
       }
     } /* end position if-then-else */
 

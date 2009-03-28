@@ -519,6 +519,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     /* gdPoint points[MS_MAXVECTORPOINTS]; */
     symbolObj *symbol;
     int bFullRes;
+    int symbol_pattern[MS_MAXPATTERNLENGTH], i;
 
 /* -------------------------------------------------------------------- */
 /*      if not SVG, return.                                             */
@@ -564,6 +565,14 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
 
     symbol = symbolset->symbol[style->symbol];
 
+    /* scale the symbol pattern */
+    if (symbol->patternlength > 0)
+    {
+        for (i=0; i<symbol->patternlength; i++)
+        {
+            symbol_pattern[i] = symbol->pattern[i]*scalefactor;
+        }
+    }
 
     /* TODO : all lines are draw as filled lines.  */
     
@@ -573,11 +582,11 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     if(style->symbol == 0) 
       imagePolyline(image->img.svg->stream, image->img.svg->compressed, 
                     p, &style->color, width,
-                    symbol->patternlength,  symbol->pattern, bFullRes);
+                    symbol->patternlength,  symbol_pattern, bFullRes);
     else
       imagePolyline(image->img.svg->stream, image->img.svg->compressed, 
                     p, &style->color, (int)size,
-                    symbol->patternlength,  symbol->pattern, bFullRes);
+                    symbol->patternlength,  symbol_pattern, bFullRes);
         return;
     
 
@@ -721,6 +730,7 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     symbolObj   *symbol;
     int         size;
     int bFullRes = 0;
+    int symbol_pattern[MS_MAXPATTERNLENGTH], i;
 
 /* -------------------------------------------------------------------- */
 /*      if not svg, return.                                             */
@@ -749,6 +759,15 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
 
+    /* scale the symbol pattern */
+    if (symbol->patternlength > 0)
+    {
+        for (i=0; i<symbol->patternlength; i++)
+        {
+            symbol_pattern[i] = symbol->pattern[i]*scalefactor;
+        }
+    }
+
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
         return;
 
@@ -769,7 +788,7 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
       psOutlineColor = &sOc;
 
     imageFillPolygon(image->img.svg->stream, image->img.svg->compressed ,p, psFillColor, psOutlineColor, size,
-                     symbol->patternlength,  symbol->pattern, bFullRes);
+                     symbol->patternlength,  symbol_pattern, bFullRes);
 
 }
 
@@ -1154,9 +1173,13 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
   layerObj *layerPtr=NULL;
   labelObj *labelPtr=NULL;
 
-  int marker_width, marker_height;
+  int marker_width, marker_height, label_offset_x, label_offset_y;
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
+  int label_mindistance, label_buffer;
+
+  label_mindistance=-1;
+  label_buffer=0;
 
 /* -------------------------------------------------------------------- */
 /*      if not svg or invaid inputs, return.                            */
@@ -1182,6 +1205,11 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
     if(msGetLabelSize(image, cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
       return(-1);
 
+    label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
+    label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
+    label_buffer = labelPtr->buffer*layerPtr->scalefactor;
+    label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
+    
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
       continue; /* label too large relative to the feature */
 
@@ -1211,7 +1239,7 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
 
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
@@ -1219,7 +1247,7 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
           /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
           msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                      map->width, map->height, 
-                                     labelPtr->buffer, cachePtr, priority, l);
+                                     label_buffer, cachePtr, priority, l, label_mindistance);
 
 
 	  if(cachePtr->status) /* found a suitable place for this label */
@@ -1233,7 +1261,7 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
 
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
@@ -1241,7 +1269,7 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
           /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
           msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                      map->width, map->height, 
-                                     labelPtr->buffer, cachePtr, priority, l);
+                                     label_buffer, cachePtr, priority, l, label_mindistance);
 
 	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
@@ -1254,9 +1282,9 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
       if(labelPtr->position == MS_CC) /* don't need the marker_offset */
-        p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+        p = get_metrics(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, label_buffer, cachePtr->poly);
       else
-        p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+        p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
 
       if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
@@ -1266,7 +1294,7 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
         /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
         msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                    map->width, map->height, 
-                                   labelPtr->buffer, cachePtr, priority, l);
+                                   label_buffer, cachePtr, priority, l, label_mindistance);
       }
     } /* end position if-then-else */
 

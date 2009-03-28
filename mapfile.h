@@ -282,4 +282,7 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 /* rfc48 geometry transforms */
 #define GEOMTRANSFORM 1220
 
+/* rfc55 output resolution */
+#define DEFRESOLUTION 1221
+
 #endif /* MAPFILE_H */

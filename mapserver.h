@@ -1275,6 +1275,7 @@ typedef struct map_obj{ /* structure for a map */
   enum MS_UNITS units; /* units of the projection */
   double scaledenom; /* scale of the output image */
   double resolution;
+  double defresolution; /* default resolution: used for calculate the scalefactor */
 
   char *shapepath; /* where are the shape files located */
   char *mappath; /* path of the mapfile, all path are relative to this path */
@@ -1738,7 +1739,7 @@ MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, imageObj* image, labelObj *label, char *text);
 MS_DLL_EXPORT int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline,double **advances);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
-MS_DLL_EXPORT void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr, int mapwidth, int mapheight, int buffer, labelCacheMemberObj *cachePtr, int current_priority, int current_label);
+MS_DLL_EXPORT void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr, int mapwidth, int mapheight, int buffer, labelCacheMemberObj *cachePtr, int current_priority, int current_label, int mindistance);
 MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);

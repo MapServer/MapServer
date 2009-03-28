@@ -1161,7 +1161,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   if(size < 1) return; /* size too small */
 
   ox = MS_NINT(style->offsetx*scalefactor);
-  oy = (style->offsety < -90) ? style->offsety : (int)(style->offsety*scalefactor);
+  oy = (style->offsety < -90) ? (style->offsety*scalefactor) : (int)(style->offsety*scalefactor);
 
   /*
   ** handle the most simple case
@@ -1353,8 +1353,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
-  ox = style->offsetx; /* TODO: add scaling? */
-  oy = style->offsety;
+  ox = style->offsetx*scalefactor;
+  oy = style->offsety*scalefactor;
 
   if(style->size == -1) {
     size = msSymbolGetDefaultSize( ( symbolset->symbol[style->symbol] ) );
@@ -1573,8 +1573,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
-  ox = style->offsetx; /* TODO: add scaling? */
-  oy = style->offsety;
+  ox = style->offsetx*scalefactor;
+  oy = style->offsety*scalefactor;
 
   if(style->size == -1) {
     size = msSymbolGetDefaultSize( ( symbolset->symbol[style->symbol] ) );
@@ -1801,7 +1801,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   gdPoint oldpnt, newpnt;
 
   int oldAlphaBlending = img->alphaBlendingFlag;
-
+  
   if(!p) return;
   if(p->numlines <= 0) return;
 
@@ -2012,19 +2012,21 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   if(symbol->patternlength > 0) {
     int *style;
     int k=0, sc;
-   
+    int symbol_pattern[MS_MAXPATTERNLENGTH];
+    
     /* malloc style array large enough for this pattern */
+    /* and scale the pattern */
     int n=0;
     for(i=0; i<symbol->patternlength; i++) {
-      n += symbol->pattern[i];
+      symbol_pattern[i] = symbol->pattern[i]*scalefactor;
+      n += symbol_pattern[i];
     }
     style = (int *) malloc (n * sizeof(int));
 
     sc = fc; /* start with foreground color */
 
-    /* todo: scale the style/pattern */
     for(i=0; i<symbol->patternlength; i++) {      
-      for(j=0; j<symbol->pattern[i]; j++) {
+      for(j=0; j<symbol_pattern[i]; j++) {
         style[k] = sc;
         k++;
       } 
@@ -2078,7 +2080,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
   int fc, bc, oc;
   double size, d, angle, angle_radians;
-  int width;
+  int width, gap;
   
   int bbox[8];
   rectObj rect;
@@ -2111,8 +2113,10 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;
 
-  ox = MS_NINT(style->offsetx*scalefactor); /* should we scale the offsets? */
+  ox = MS_NINT(style->offsetx*scalefactor);
   oy = MS_NINT(style->offsety*scalefactor);
+
+  gap = MS_NINT(symbol->gap*scalefactor);
 
   if(fc==-1 && oc!=-1 && symbol->type!=MS_SYMBOL_PIXMAP) { /* use msDrawLineSymbolGD() instead (POLYLINE) */
     msDrawLineSymbolGD(symbolset, img, p, style, scalefactor);
@@ -2168,11 +2172,11 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     y = (int)(rect.maxy - rect.miny);
     
     /* create tile image */
-    tile = createBrush(img, x+2*symbol->gap, y+2*symbol->gap, style, &tile_fc, &tile_bc);
+    tile = createBrush(img, x+2*gap, y+2*gap, style, &tile_fc, &tile_bc);
 
     /* center the glyph */
-    x = (int)-rect.minx + symbol->gap;
-    y = (int)-rect.miny + symbol->gap;
+    x = (int)-rect.minx + gap;
+    y = (int)-rect.miny + gap;
 
     gdImageStringFT(tile, bbox, ((symbol->antialias || style->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
 
@@ -2934,6 +2938,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 {
   int x, y;
   int oldAlphaBlending=0;
+  int shadowsizex, shadowsizey;
 
   if(!string) return(0); /* not errors, just don't want to do anything */
   if(strlen(string) == 0) return(0);
@@ -2944,6 +2949,9 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
   if(label->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->color));
   if(label->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->outlinecolor));
   if(label->shadowcolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->shadowcolor));
+
+  shadowsizex = label->shadowsizex*scalefactor;
+  shadowsizey = label->shadowsizey*scalefactor;
 
   if(label->type == MS_TRUETYPE) {
     char *error=NULL, *font=NULL;
@@ -2996,7 +3004,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     }
 
     if(label->shadowcolor.pen >= 0) { /* handle the shadow color */
-      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
+      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+shadowsizex, y+shadowsizey, string);
       if(error) {
 	msSetError(MS_TTFERR, error, "msDrawTextGD()");
 	return(-1);
@@ -3038,7 +3046,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 	}
 
 	if(label->shadowcolor.pen >= 0)
-	  gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, (unsigned char *) token[t], label->shadowcolor.pen);
+	  gdImageString(img, fontPtr, x+shadowsizex, y+shadowsizey, (unsigned char *) token[t], label->shadowcolor.pen);
 
 	gdImageString(img, fontPtr, x, y, (unsigned char *) token[t], label->color.pen);
 
@@ -3059,7 +3067,7 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
   int oldAlphaBlending = 0;
   double size;
   int bbox[8];
-  int i;
+  int i, shadowsizex=0, shadowsizey=0;
 
   if (!string) return(0); /* do nothing */
   if (strlen(string) == 0) return(0); /* do nothing */
@@ -3076,6 +3084,8 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
     size = label->size*scalefactor;
     size = MS_MAX(size, label->minsize);
     size = MS_MIN(size, label->maxsize);
+    shadowsizex = label->shadowsizex*scalefactor;
+    shadowsizey = label->shadowsizey*scalefactor;
 
 #ifdef USE_GD_FT
     if(!fontset) {
@@ -3120,7 +3130,7 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
       y = MS_NINT(labelpath->path.point[i].y);
 
       if(label->shadowcolor.pen >= 0) { /* handle the shadow color */
-        error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, theta, x+label->shadowsizex, y+label->shadowsizey, s);
+        error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, theta, x+shadowsizex, y+shadowsizey, s);
         if(error) {
           msSetError(MS_TTFERR, error, "msDrawTextLineGD()");
           return(-1);
