@@ -857,7 +857,7 @@ private:
 // Returns a pointer to a newly created imageObj structure.
 // a pointer to the AGG renderer is stored in the imageObj, used for caching
 // ----------------------------------------------------------------------
-imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, unsigned int resolution) 
+imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution) 
 {
     imageObj *pNewImage = NULL;
 
@@ -904,7 +904,7 @@ void msImageInitAGG(imageObj *image, colorObj *background)
     }
 #ifdef USE_GD_RESOLUTION
    /* Set the resolution */
-    gdImageSetResolution(image->img.gd, image->resolution, image->resolution);
+    gdImageSetResolution(image->img.gd, (unsigned int)image->resolution, (unsigned int)image->resolution);
 #endif
     image->buffer_format=MS_RENDER_WITH_AGG;
     /*

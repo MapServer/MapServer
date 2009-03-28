@@ -293,7 +293,7 @@ DEBUG_IF printf("addImageCache\n<BR>");
  * a pointer to an imageObj structure.
  */
 imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
-                          char *imagepath, char *imageurl, unsigned int resolution)
+                          char *imagepath, char *imageurl, double resolution)
 {
     imageObj  *image=NULL;
     if (setvbuf(stdout, NULL, _IONBF , 0)){
