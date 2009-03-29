@@ -408,7 +408,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     {
       char res[30];
 
-      sprintf( res, "%d", image->resolution );
+      sprintf( res, "%lf", image->resolution );
       GDALSetMetadataItem( hMemDS, "TIFFTAG_XRESOLUTION", res, NULL );
       GDALSetMetadataItem( hMemDS, "TIFFTAG_YRESOLUTION", res, NULL );
       GDALSetMetadataItem( hMemDS, "TIFFTAG_RESOLUTIONUNIT", "2", NULL );
