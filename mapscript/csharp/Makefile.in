@@ -218,7 +218,7 @@ CC= @CC@
 #
 # --- You shouldn't have to edit anything else. ---
 #
-all: interface mapscript_so mapscript_csharp dll_config
+all: interface mapscript_so mapscript_csharp
 
 sign:
 	sn -k mapscript.snk
@@ -243,11 +243,11 @@ mapscript_csharp::
 dll_config: Makefile
 	rm -rf mapscript_csharp.dll.config
 	echo "<configuration>" >> mapscript_csharp.dll.config
-	echo "<dllmap dll=\"mapscript\" target=\""$(LIBMAPSCRIPT_SHARED)"\">" >> mapscript_csharp.dll.config
+	echo "<dllmap dll=\"mapscript\" target=\""mapscript"\">" >> mapscript_csharp.dll.config
 	echo "</configuration>" >> mapscript_csharp.dll.config
 
 clean:
-	rm -rf edu *.o *.c *.cs *.@SO_EXT@ *.dll
+	rm -rf edu *.o *.c *.cs *.@SO_EXT@ *.dll *.dll.config
 
 test:
 	LC_ALL=C mono ./shpdump.exe ../../tests/point.shp
