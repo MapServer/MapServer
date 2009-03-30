@@ -24,6 +24,26 @@
   }
 %}
 
+/* Translate Perl's built-in file object to FILE * */
+%typemap(in) FILE * {
+  $1 = PerlIO_exportFILE (IoIFP (sv_2io ($input)), NULL);
+}
+
+/* To support imageObj::getBytes */
+%typemap(out) gdBuffer {
+        SV *mysv;
+        mysv = sv_newmortal();
+        if ($1.data == NULL)
+            sv_setpv(mysv,"");
+        else
+            sv_setpvn(mysv,(const char*)$1.data,$1.size);
+        $result = newRV(mysv);
+        sv_2mortal($result);
+        argvi++;
+        if( $1.owns_data )
+            gdFree($1.data);
+}
+
 /*
 ===============================================================================
 RFC-24 implementation follows
