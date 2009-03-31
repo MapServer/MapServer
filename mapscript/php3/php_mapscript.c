@@ -6340,22 +6340,15 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         int   b;
         FILE *tmp = NULL;
         char  buf[4096];
-#if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
         void *iptr=NULL;
-#endif
 
         retVal = 0;
 
 
         php_header(TSRMLS_C);
 
-#if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
-        if( MS_DRIVER_GD(im->format) )
-          iptr = (void *)msSaveImageBufferGD(im->img.gd, &size, im->format);
-#ifdef USE_AGG
-        else if( MS_DRIVER_AGG(im->format) )
+        if( MS_DRIVER_GD(im->format) || MS_DRIVER_AGG(im->format))
           iptr = (void *)msSaveImageBuffer(im, &size, im->format);
-#endif
         else if (im->format->name && strcasecmp(im->format->name, "imagemap")==0)
         {
             iptr = im->img.imagemap;
@@ -6411,36 +6404,6 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             gdFree(iptr);
         }
 
-#else  /* No gdImageGifPtr(): GD 1.2/1.3 */
-
-        /* there is no gdImageGifPtr function */
-
-        tmp = tmpfile(); /* temporary file */
-        if (tmp == NULL) 
-        {
-            php3_error(E_WARNING, "Unable to open temporary file");
-            retVal = -1;
-        } 
-        else
-        {
-            gdImageGif (im->img.gd, tmp); //TODO
-            size = ftell(tmp);
-            fseek(tmp, 0, SEEK_SET);
-
-#if APACHE && defined(CHARSET_EBCDIC)
-            /* This is a binary file already: avoid EBCDIC->ASCII conversion */
-            ap_bsetflag(php3_rqst->connection->client, B_EBCDIC2ASCII, 0);
-#endif
-
-            while ((b = fread(buf, 1, sizeof(buf), tmp)) > 0) 
-            {
-                php_write(buf, b TSRMLS_CC);
-            }
-
-            fclose(tmp); /* the temporary file is automatically deleted */
-            retVal = size;
-        }
-#endif
 
     }
 
