@@ -1204,9 +1204,9 @@ msInitializeVirtualTable(layerObj *layer)
     if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
       layer->connectiontype = MS_TILED_SHAPEFILE;
 
-    if(layer->type == MS_LAYER_RASTER )
+    if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS)
       layer->connectiontype = MS_RASTER;
-    
+
 
     switch(layer->connectiontype) {
         case(MS_INLINE):
@@ -1228,8 +1228,8 @@ msInitializeVirtualTable(layerObj *layer)
             return(msPostGISLayerInitializeVirtualTable(layer));
             break;
         case(MS_WMS):
-              /* WMS isn't a public layer type, it isn't used anywhere */
-              return MS_FAILURE;
+              /* WMS should be treated as a raster layer */
+              return(msRASTERLayerInitializeVirtualTable(layer));
               break;
         case(MS_ORACLESPATIAL):
             return(msOracleSpatialLayerInitializeVirtualTable(layer));

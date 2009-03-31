@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- setConnectionType(MS_WMS) doesn't work with mapscript (#2908)
+
 - Perl Mapscript: improvement of imageObj wrapper (#2962)
 
 - Improve control of output resolution (RFC 55, #2948)
