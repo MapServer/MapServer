@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- setConnectionType(MS_WMS) doesn't work with mapscript (#2908)
+
 - Properly reset filter/filteritem when queryByAttribute() fails (#2808)
 
 - WMS GetImage and GetLegendGraphic formats should advertise AGG driver (#2957)
