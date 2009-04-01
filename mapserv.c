@@ -403,6 +403,10 @@ void loadForm(void)
     }
 
     if(strcasecmp(mapserv->request->ParamNames[i],"id") == 0) {
+      if(msEvalRegex(IDPATTERN, mapserv->request->ParamValues[i]) == MS_FALSE) { 
+	msSetError(MS_WEBERR, "Parameter 'id' value fails to validate.", "loadForm()"); 
+	writeError(); 
+      }
       strncpy(mapserv->Id, mapserv->request->ParamValues[i], IDSIZE);
       continue;
     }
