@@ -4708,10 +4708,19 @@ int msSaveMap(mapObj *map, char *filename)
 static int loadMapInternal(mapObj *map)
 {
   int i,j,k;
+  int foundMapToken=MS_FALSE; 
+  int token; 
 
   for(;;) {
 
-    switch(msyylex()) {   
+    token = msyylex(); 
+
+    if(!foundMapToken && token != MAP) { 
+      msSetError(MS_IDENTERR, "First token must be MAP, this doesn't look like a mapfile.", "msLoadMap()"); 
+      return(MS_FAILURE); 
+    }
+
+    switch(token) {
 
     case(CONFIG):
     {
@@ -4838,6 +4847,7 @@ static int loadMapInternal(mapObj *map)
       if(loadLegend(&(map->legend), map) == -1) return MS_FAILURE;
       break;
     case(MAP):
+      foundMapToken = MS_TRUE;
       break;   
     case(MAXSIZE):
       if(getInteger(&(map->maxsize)) == -1) return MS_FAILURE;
@@ -4895,8 +4905,7 @@ static int loadMapInternal(mapObj *map)
       if(loadWeb(&(map->web), map) == -1) return MS_FAILURE;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadMap()", 
-                 msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadMap()", msyytext, msyylineno);
       return MS_FAILURE;
     }
   } /* next token */
