@@ -293,7 +293,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	switch(msyylex()) {  
 	case(END):
 	  if(s->patternlength < 2) {
-	    msSetError(MS_SYMERR, "Not enough pattern elements. A minimum of 2 are required", "loadSymbol()");
+	    msSetError(MS_SYMERR, "Not enough pattern elements. A minimum of 2 are required.", "loadSymbol()");
 	    return(-1);
 	  }	  
 	  done = MS_TRUE;
@@ -316,9 +316,14 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       break;
     case(POINTS):
       done = MS_FALSE;
+      s->sizex = s->sizey = 0;
       for(;;) {
 	switch(msyylex()) { 
 	case(END):
+          if(s->numpoints < 1) {
+            msSetError(MS_SYMERR, "Not enough points are defined", "loadSymbol()");
+            return(-1);
+          }
 	  done = MS_TRUE;
 	  break;
 	case(MS_NUMBER):
