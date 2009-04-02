@@ -1,0 +1,97 @@
+MAP
+  NAME "Testing"
+  EXTENT -0.5 50.977222 0.5 51.977222
+  IMAGETYPE PNG
+  IMAGECOLOR 255 255 255
+  STATUS ON
+  SIZE 200 200
+  SYMBOLSET "symbols.txt"
+
+  LAYER
+    NAME "POLYGON"
+    TYPE POLYGON
+    STATUS DEFAULT
+    DATA "polygon"
+    CLASSITEM "FNAME"
+    CLASS
+      NAME "0"
+      STYLE
+        COLOR 255 153 102
+        OUTLINECOLOR 0 0 204
+        SYMBOL 1
+        SIZE 2
+      END
+    END
+    CLASS
+      NAME "1"
+      EXPRESSION "foo"
+      STYLE
+        COLOR 255 153 102
+        OUTLINECOLOR 0 0 204
+        SYMBOL 1
+        SIZE 2
+      END
+    END
+  END
+
+  LAYER
+    NAME "LINE"
+    TYPE LINE
+    STATUS DEFAULT
+    DATA "line"
+    CLASSITEM "FNAME"
+    CLASS
+      NAME "0"
+      STYLE
+        COLOR 0 153 0
+        SYMBOL 1
+        SIZE 3
+      END
+    END
+    CLASS
+      NAME "1"
+      EXPRESSION "foo"
+      STYLE
+        COLOR 0 153 0
+        SYMBOL 1
+        SIZE 3
+      END
+    END
+  END
+
+  LAYER
+    NAME "POINT"
+    TYPE POINT
+    STATUS DEFAULT
+    DATA "point"
+    CLASSITEM "FNAME"
+    CLASS
+      NAME "0"
+      STYLE
+        COLOR 0 0 0
+        SYMBOL 1
+        SIZE 13
+      END
+      STYLE
+        COLOR 204 204 204
+        SYMBOL 1
+        SIZE 7
+      END
+      STYLE
+        COLOR 0 0 0
+        SYMBOL 1
+        SIZE 3
+      END
+    END
+    CLASS
+      NAME "1"
+      EXPRESSION "foo"
+      STYLE
+        COLOR 0 0 0
+        SYMBOL 1
+        SIZE 13
+      END
+    END
+  END
+  
+END
