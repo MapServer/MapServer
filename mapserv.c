@@ -1135,6 +1135,8 @@ int main(int argc, char *argv[]) {
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
 
+  msSetup();
+
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if( msDebugInitFromEnv() != MS_SUCCESS ) {
     writeError();

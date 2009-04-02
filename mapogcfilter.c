@@ -348,9 +348,6 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                  strcasecmp(psNode->pszValue, "Beyond") == 0 ) &&
                 dfDistance > 0)
             {
-#ifdef USE_GEOS
-                msGEOSSetup();
-#endif
                 if (nUnit >=0 && nUnit != map->units)
                   dfDistance *= msInchesPerUnit(nUnit,0)/msInchesPerUnit(map->units,0);
 
@@ -360,9 +357,6 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                     status = msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
                     msFreeShape(psTmpShape);
                 }
-#ifdef USE_GEOS
-                msGEOSCleanup();
-#endif
             }
             else
               status = msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
@@ -399,9 +393,6 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                  strcasecmp(psNode->pszValue, "Beyond") == 0 ) &&
                 dfDistance > 0)
             {
-#ifdef USE_GEOS
-                msGEOSSetup();   
-#endif         
 /* -------------------------------------------------------------------- */
 /*      if units is set, covert value from unit to map unit.            */
 /* -------------------------------------------------------------------- */
@@ -414,9 +405,6 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                     status = msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
                     msFreeShape(psTmpShape);
                 }
-#ifdef USE_GEOS
-                msGEOSCleanup();
-#endif
             } 
             else
               status = msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
