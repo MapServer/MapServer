@@ -4263,9 +4263,8 @@ int loadWeb(webObj *web, mapObj *map)
       if(getDouble(&(web->extent.maxx)) == -1) return(-1);
       if(getDouble(&(web->extent.maxy)) == -1) return(-1);
       if (!MS_VALID_EXTENT(web->extent)) {
-          msSetError(MS_MISCERR, "Given web extent is invalid. Check that it " \
-        "is in the form: minx, miny, maxx, maxy", "loadWeb()"); 
-          return(-1);
+        msSetError(MS_MISCERR, "Given web extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "loadWeb()"); 
+        return(-1);
       }
       break;
     case(FOOTER):
@@ -4288,12 +4287,10 @@ int loadWeb(webObj *web, mapObj *map)
         }
       }
       break;
-    case(IMAGEPATH): /* change to use validation in 6.0 */
-      free(web->imagepath); web->imagepath = NULL; /* there is a default */
+    case(IMAGEPATH):      
       if(getString(&web->imagepath) == MS_FAILURE) return(-1);
       break;
-    case(IMAGEURL): /* change to use validation in 6.0 */
-      free(web->imageurl); web->imageurl = NULL; /* there is a default */
+    case(IMAGEURL):
       if(getString(&web->imageurl) == MS_FAILURE) return(-1);
       break;
     case(LEGENDFORMAT): /* change to use validation in 6.0 */
@@ -5149,6 +5146,8 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
       msyylex();
 
+      /* TODO: should validate or does msPostMapParseOutputFormatSetup() do enough? */
+
       map->imagetype = getToken();
       msPostMapParseOutputFormatSetup( map );
       break;
@@ -5249,10 +5248,6 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
         break;
       }
       msMapComputeGeotransform( map );
-      break;
-    case(SHAPEPATH):
-      msFree(map->shapepath);
-      map->shapepath = strdup(string);
       break;
     case(TRANSPARENT):
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
