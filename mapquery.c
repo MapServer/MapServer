@@ -121,6 +121,11 @@ int msLoadQuery(mapObj *map, char *filename) {
     return(MS_FAILURE);
   }
 
+  /* 
+  ** Make sure the file at least has the right extension. 
+  */ 
+  if(msEvalRegex("\\.qy$", filename) != MS_TRUE) return MS_FAILURE; 
+
   stream = fopen(filename, "rb");
   if(!stream) {
     msSetError(MS_IOERR, "(%s)", "msLoadQuery()", filename);
