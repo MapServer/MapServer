@@ -9,8 +9,14 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version:
-----------------
+Version 5.4.0-beta4 (2009-04-01):
+---------------------------------
+
+- Made sure computation of default symbol size is consistent will older versions (#2963)
+
+- Improved security relative to untrusted directories and mapfiles (RFC 56)
+
+- Fixed several security issues found in an audit of the CGI application (#2939, #2941, #2942, #2943, #2944)
 
 - setConnectionType(MS_WMS) doesn't work with mapscript (#2908)
 
@@ -23,7 +29,6 @@ Current Version:
 - SLD: Correct non validating SLD (#2915)
 
 - Fixed problem with mode=nquery on connectiontype WFS layers (#2885)
-
 
 Version 5.4.0-beta3 (2009-03-05):
 ---------------------------------
