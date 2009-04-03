@@ -15,6 +15,8 @@ Current Version
 Version 5.4.0-beta4 (2009-04-01):
 ---------------------------------
 
+- SWF: test missing when creating EllipseButtons (#2966)
+
 - clean up GEOS init and cleanup functions (#2929) 
 
 - Made sure computation of default symbol size is consistent will older versions (#2963)
