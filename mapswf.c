@@ -1660,12 +1660,15 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                      psFillColor, psOutlineColor,
                                      &sColorHighlightObj,
                                      nLayerIndex, nShapeIndex, image);
-		/* Ticket #2555 memory leak : need to store buttons to properly destroy them */
-                StoreButton(oButton, image);
-                oDisplay = _msSWFAddButtonWithId(image,
-                                                 GetCurrentMovie(map, image),
-                                                 oButton, 
-                                                 nLayerIndex, nShapeIndex);
+                if (oButton)
+                {
+                    /* Ticket #2555 memory leak : need to store buttons to properly destroy them */
+                    StoreButton(oButton, image);
+                    oDisplay = _msSWFAddButtonWithId(image,
+                                                     GetCurrentMovie(map, image),
+                                                     oButton, 
+                                                     nLayerIndex, nShapeIndex);
+                }
             
             } 
             else 
@@ -1679,11 +1682,14 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                            psFillColor, NULL, 
                                            &sColorHighlightObj,
                                            nLayerIndex, nShapeIndex, image);
-		    StoreButton(oButton, image);
-                    oDisplay = _msSWFAddButtonWithId(image,
-                                                     GetCurrentMovie(map, image),
-                                                     oButton, 
-                                                     nLayerIndex, nShapeIndex);
+                    if (oButton)
+                    {
+                        StoreButton(oButton, image);
+                        oDisplay = _msSWFAddButtonWithId(image,
+                                                         GetCurrentMovie(map, image),
+                                                         oButton, 
+                                                         nLayerIndex, nShapeIndex);
+                    }
                 }
             }
             break;
