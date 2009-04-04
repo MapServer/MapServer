@@ -2042,7 +2042,7 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     msGDALInitialize();
 
     msAcquireLock( TLOCK_GDAL );
-    hDS = GDALOpen(msBuildPath3(szPath,  layer->map->mappath, layer->map->shapepath, layer->data) , GA_ReadOnly );
+    hDS = GDALOpen(msTryBuildPath3(szPath,  layer->map->mappath, layer->map->shapepath, layer->data) , GA_ReadOnly );
     if( hDS == NULL ) {
       msReleaseLock( TLOCK_GDAL );
       msSetError( MS_IOERR, "%s", "msWCSGetCoverageMetadata()", CPLGetLastErrorMsg() );

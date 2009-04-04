@@ -782,7 +782,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
             msBuildPath(szPath, tiAbsDirPath, filename); 
             free(tiAbsDirPath);
         } else {
-            msBuildPath3(szPath, map->mappath, map->shapepath, filename);
+            msTryBuildPath3(szPath, map->mappath, map->shapepath, filename);
         }
 
         msAcquireLock( TLOCK_GDAL );
@@ -1328,7 +1328,7 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   if( map == NULL )
     return MS_FAILURE;
 
-  msBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
+  msTryBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
 
   msAcquireLock( TLOCK_GDAL );
   hDS = GDALOpen(szPath, GA_ReadOnly );

@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fix filename path processing for raster queries and WCS get coverage so 
+  that non-filesystem filenames are not altered (#2901) 
+
 - Improved security relative to untrusted directories and mapfiles (RFC 56)
 
 - Fixed several security issues found in an audit of the CGI application (#2939, #2941, #2942, #2943, #2944)
