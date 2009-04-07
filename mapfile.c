@@ -3394,7 +3394,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if (layer->type != -1)
     fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);
   fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);
-  if(&(layer->validation)) writeHashTable(&(layer->metadata), stream, "    ", "VALIDATION");
+  if(&(layer->validation)) writeHashTable(&(layer->validation), stream, "    ", "VALIDATION");
 
   if(layer->classgroup) fprintf(stream, "    CLASSGROUP \"%s\"\n", layer->classgroup);
 
@@ -4229,7 +4229,7 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->legendformat != NULL) fprintf(stream, "    LEGENDFORMAT %s\n", web->legendformat);
   if(web->browseformat != NULL) fprintf(stream, "    BROWSEFORMAT %s\n", web->browseformat);
   if(web->template) fprintf(stream, "    TEMPLATE \"%s\"\n", web->template);
-  if(&(web->validation)) writeHashTable(&(web->metadata), stream, "    ", "VALIDATION");
+  if(&(web->validation)) writeHashTable(&(web->validation), stream, "    ", "VALIDATION");
   fprintf(stream, "  END\n\n");
 }
 

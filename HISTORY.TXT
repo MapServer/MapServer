@@ -16,6 +16,8 @@ Current Version
 
 - clean up GEOS init and cleanup functions (#2929) 
 
+- Fixed writing of VALIDATION block in msSaveMap() (#2970)
+
 
 Version 5.4.0-beta4 (2009-04-01):
 ---------------------------------
