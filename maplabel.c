@@ -540,7 +540,7 @@ int msGetLabelSizeEx(char *string, labelObj *label, rectObj *rect, fontSetObj *f
       label->offsetx += MS_NINT(bbox[0] / 2);
     }
 
-    return MS_SUCCESS;
+    return 0;
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available or is not current enough (requires 2.0.29 or higher).", "msGetLabelSizeEx()");
     return(-1);
