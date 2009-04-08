@@ -1460,7 +1460,7 @@ labelPathObj* msPolylineLabelPath(imageObj *img,shapeObj *p, int min_length, fon
     goto FAILURE;
   
   /* determine the total length of the text */
-  if (msGetLabelSize(img,string, label, &bbox, fontset, scalefactor, MS_FALSE, &offsets) == MS_FAILURE) {
+  if (msGetLabelSize(img,string, label, &bbox, fontset, scalefactor, MS_FALSE, &offsets) == -1) {
     *status = MS_FAILURE;
     goto FAILURE;
   }

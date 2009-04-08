@@ -777,7 +777,7 @@ int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, 
     }
 
     if(msGetTruetypeTextBBox(img,font,size,string,rect,advances)!=MS_SUCCESS)
-        return MS_FAILURE;
+        return -1;
 
     /* bug 1449 fix (adjust baseline) */
     if(adjustBaseline) {
@@ -795,7 +795,7 @@ int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, 
         free(firstLine);
       }
     }
-    return MS_SUCCESS;
+    return 0;
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msGetLabelSize()");
     return(-1);
