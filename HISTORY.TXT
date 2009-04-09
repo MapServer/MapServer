@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Improve rounding logic for computing the src_xoff/yoff (#2976)
+
 - Fix filename path processing for raster queries and WCS get coverage so 
   that non-filesystem filenames are not altered (#2901) 
 

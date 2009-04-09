@@ -242,8 +242,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       urx = GEO_TRANS(adfInvGeoTransform+0,copyRect.maxx,copyRect.maxy);
       ury = GEO_TRANS(adfInvGeoTransform+3,copyRect.maxx,copyRect.maxy);
       
-      src_xoff = MAX(0,(int) llx);
-      src_yoff = MAX(0,(int) ury);
+      src_xoff = MAX(0,(int) floor(llx+0.5));
+      src_yoff = MAX(0,(int) floor(ury+0.5));
       src_xsize = MIN(MAX(0,(int) (urx - llx + 0.5)),
                       GDALGetRasterXSize(hDS) - src_xoff);
       src_ysize = MIN(MAX(0,(int) (lly - ury + 0.5)),
@@ -274,11 +274,25 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           return 0;
       }
 
-#ifndef notdef
       if( layer->debug )
           msDebug( "msDrawGDAL(): src=%d,%d,%d,%d, dst=%d,%d,%d,%d\n", 
                    src_xoff, src_yoff, src_xsize, src_ysize, 
                    dst_xoff, dst_yoff, dst_xsize, dst_ysize );
+#ifndef notdef
+      if( layer->debug )
+      {
+          double d_src_xoff, d_src_yoff, geo_x, geo_y;
+
+          geo_x = mapRect.minx + dst_xoff * map->cellsize;
+          geo_y = mapRect.maxy - dst_yoff * map->cellsize;
+
+          d_src_xoff = (geo_x - adfGeoTransform[0]) / adfGeoTransform[1];
+          d_src_yoff = (geo_y - adfGeoTransform[3]) / adfGeoTransform[5];
+          
+          msDebug( "source raster PL (%.3f,%.3f) for dst PL (%d,%d).\n",
+                   d_src_xoff, d_src_yoff,
+                   dst_xoff, dst_yoff );
+      }
 #endif
   }
 
