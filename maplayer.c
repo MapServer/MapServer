@@ -77,7 +77,7 @@ int msLayerOpen(layerObj *layer)
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
     layer->connectiontype = MS_TILED_SHAPEFILE;
 
-  if(layer->type == MS_LAYER_RASTER )
+  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS)
     layer->connectiontype = MS_RASTER;
 
   if ( ! layer->vtable) {

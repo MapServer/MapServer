@@ -12,6 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version
 ---------------
 
+- Prevent from changing the connection type to MS_RASTER when setConnectionType(MS_WMS) is used (#2908)
+
+
 Version 5.4.0-rc1 (2009-04-08):
 -------------------------------
 

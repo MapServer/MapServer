@@ -190,7 +190,8 @@ static void msRasterLayerInfoInitialize( layerObj *layer )
     /* We need to do this or the layer->layerinfo will be interpreted */
     /* as shapefile access info because the default connectiontype is */
     /* MS_SHAPEFILE. */
-    layer->connectiontype = MS_RASTER;
+    if (layer->connectiontype != MS_WMS)
+        layer->connectiontype = MS_RASTER;
 
     rlinfo->query_result_hard_max = 1000000;
 
