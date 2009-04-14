@@ -12,8 +12,11 @@ For a complete change history, please see the Subversion log comments.
 Current Version
 ---------------
 
-- Prevent from changing the connection type to MS_RASTER when setConnectionType(MS_WMS) is used (#2908)
+- Prevent from changing the connection type to MS_RASTER when
+  setConnectionType(MS_WMS) is used (#2908)
 
+- Fixed ANGLE FOLLOW code to return a "font not found" error when a TTF file
+  is not found instead of silently producing a map with no label (#2974)
 
 Version 5.4.0-rc1 (2009-04-08):
 -------------------------------
