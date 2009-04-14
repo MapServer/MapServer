@@ -13,7 +13,7 @@ applications can be enhanced using Java, JavaScript or many other web
 technologies. For more  information and complete documentation please 
 visit:
 
-  http://mapserver.gis.umn.edu/
+  http://www.mapserver.org/
 
 Bug reports and enhancment submissions can be reported in the MapServer 
 Bugzilla at the following url.   If you do make changes and/or enhancements, 
@@ -24,12 +24,9 @@ please let us know so that they might be incorporated into future releases.
 
 Join the MapServer user mailing list online at:
 
-  http://lists.umn.edu/cgi-bin/wa?SUBED1=mapserver-users&A=1
+  http://www.mapserver.org/community/lists.html
 
  
-Please let us know how you are using the MapServer. Drop us a note at: 
-
-  mapserver-info@mapserver.gis.umn.edu.
 
 -----------
 Credits
