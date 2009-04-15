@@ -9,6 +9,9 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Current Version
+---------------
+
 Version 5.4.0-rc2 (2009-04-15):
 -------------------------------
 
