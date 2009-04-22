@@ -12,6 +12,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Rework Python MapScript's setup.py to be more like Python's to fix
+  a number of issues including (#2637) and to use mapserver-config 
+  and ditch the old mapscriptvars approach
+
 - Prevent from changing the connection type to MS_RASTER when setConnectionType(MS_WMS) is used (#2908)
 
 - Improve rounding logic for computing the src_xoff/yoff (#2976)
