@@ -486,8 +486,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
     /* set the scale factor so that scale dependant symbols are drawn in the legend with their default size */
     if(cur->layer->sizeunits != MS_PIXELS)
+    {
+       map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
       cur->layer->scalefactor = (msInchesPerUnit(cur->layer->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
-
+    }
     if(msDrawLegendIcon(map, cur->layer, cur->theclass,  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y) != MS_SUCCESS)
       return NULL;
         
