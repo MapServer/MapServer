@@ -169,7 +169,6 @@ class ms_ext(build_ext):
         if self.get_compiler() == 'msvc':
             for lib in self.libraries:
                 if lib == 'mapserver':
-                    print lib
                     self.libraries.remove(lib)
             self.libraries.append('mapserver_i')
             self.libraries.append('gd')
