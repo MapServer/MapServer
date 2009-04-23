@@ -1,0 +1,6 @@
+EXPORTS gdFree
+	gdImagePngPtr
+	gdImageColorTransparent
+	gdImageInterlace
+	gdImageSaveAlpha
+	gdImageDestroy
