@@ -13,7 +13,14 @@
 
 import sys, os
 
-from setuptools import setup, Extension
+try:
+    from setuptools import setup
+    from setuptools import Extension
+    HAVE_SETUPTOOLS = True
+except ImportError:
+    from distutils.core import setup, Extension
+
+
 from distutils import sysconfig
 from distutils.command.build_ext import build_ext
 from distutils.ccompiler import get_default_compiler
@@ -171,19 +178,34 @@ classifiers = [
         
 ]
 
-
-setup( name = name,
-       version = mapserver_version,
-       author = author,
-       author_email = author_email,
-       maintainer = maintainer,
-       maintainer_email = maintainer_email,
-       long_description = readme,
-       description = description,
-       license = license,
-       classifiers = classifiers,
-       py_modules = py_modules,
-       url=url,
-       zip_safe = False,
-       cmdclass={'build_ext':ms_ext},
-       ext_modules = ext_modules )
+if HAVE_SETUPTOOLS:
+    setup( name = name,
+           version = mapserver_version,
+           author = author,
+           author_email = author_email,
+           maintainer = maintainer,
+           maintainer_email = maintainer_email,
+           long_description = readme,
+           description = description,
+           license = license,
+           classifiers = classifiers,
+           py_modules = py_modules,
+           url=url,
+           zip_safe = False,
+           cmdclass={'build_ext':ms_ext},
+           ext_modules = ext_modules )
+else:
+    setup( name = name,
+           version = mapserver_version,
+           author = author,
+           author_email = author_email,
+           maintainer = maintainer,
+           maintainer_email = maintainer_email,
+           long_description = readme,
+           description = description,
+           license = license,
+           classifiers = classifiers,
+           py_modules = py_modules,
+           url=url,
+           cmdclass={'build_ext':ms_ext},
+           ext_modules = ext_modules )    
