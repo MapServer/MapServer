@@ -50,7 +50,44 @@ extra_compile_args = []
 #extra_compile_args = ['-g', '-arch', 'i386', '-isysroot','/']
 
 
-def get_config(option, config='../../mapserver-config'):
+
+
+def read_mapscriptvars():
+
+    # Should be created by the mapserver build process.
+    mapscriptvars = "../../mapscriptvars"
+
+    try:
+        fp = open(mapscriptvars, "r")
+    except IOError, e:
+        raise IOError, '%s. %s' % (e, "Has MapServer been made?")
+    
+    output = {}
+    install_dir = fp.readline().strip()
+    defines = fp.readline().strip()
+    includes = fp.readline().strip()
+    libraries = fp.readline().strip()
+    extra_libs = fp.readline().strip()
+    version = fp.readline().strip()
+    if version:
+        version = version.split()[2]
+        version = version.replace('#','')
+    
+    output['version'] = version
+    output['libs'] = libraries
+    output['extra_libs'] = extra_libs
+    output['defines'] = defines
+    output['includes'] = includes
+    fp.close()
+    return output
+
+def get_config(option, config='mapserver-config'):
+    
+    v = read_mapscriptvars()
+    if sys.platform == 'win32':
+        v = read_mapscriptvars()
+        return v[option]
+    
     command = config + " --%s" % option
     p = popen2.popen3(command)
     r = p[0].readline().strip()
@@ -61,7 +98,7 @@ def get_config(option, config='../../mapserver-config'):
 
 class ms_ext(build_ext):
 
-    MAPSERVER_CONFIG = '../../mapserver-config'
+    MAPSERVER_CONFIG = 'mapserver-config'
     user_options = build_ext.user_options[:]
     user_options.extend([
         ('mapserver-config=', None,
@@ -147,7 +184,8 @@ mapserver_module = Extension('_mapscript',
                         extra_link_args = extra_link_args)
 
 
-mapserver_version = get_config('version')
+mapserver_version = get_config('version', config='../../mapserver-config')
+
 author = "Steve Lime"
 author_email = "steve.lime@dnr.state.mn.us"
 maintainer = "Howard Butler"
