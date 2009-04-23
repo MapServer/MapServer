@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- - Fix mapogcfilter.c not to cause syntax error if PROJ.4 is not compiled in (#2987)
+
 - Rework Python MapScript's setup.py to be more like Python's to fix
   a number of issues including (#2637) and to use mapserver-config 
   and ditch the old mapscriptvars approach
