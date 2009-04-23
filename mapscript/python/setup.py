@@ -13,6 +13,7 @@
 
 import sys, os
 
+HAVE_SETUPTOOLS = False
 try:
     from setuptools import setup
     from setuptools import Extension
