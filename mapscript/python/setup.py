@@ -136,6 +136,12 @@ class ms_ext(build_ext):
         libs =  self.get_mapserver_config('libs')
         self.library_dirs = self.library_dirs + [x[2:] for x in libs.split() if x[:2] == "-L"]
 
+        # silly stuff to deal with setuptools doing things 
+        # like -D-DMYDEFINE
+        defs = self.get_mapserver_config('defines')
+        self.define = [x[2:] for x in defs.split() if x[:2] == "-D"]
+        self.define = ' -D'.join(self.define)
+
         ex_next = False
         libs = libs.split()
         for x in libs:
