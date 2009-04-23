@@ -79,6 +79,8 @@ def read_mapscriptvars():
     output['defines'] = defines
     output['includes'] = includes
     fp.close()
+   # print output['libs']
+   # sys.exit(1)
     return output
 
 def get_config(option, config='mapserver-config'):
@@ -145,7 +147,7 @@ class ms_ext(build_ext):
                 dir, lib = os.path.split(x)
                 libraries.append( lib[:-4] )
                 if len(dir) > 0:
-                    lib_dirs.append( dir )
+                    self.library_dirs.append( dir )
             elif x[-2:] == '.a':
                 extra_link_args.append(x)
             elif x[:10] == '-framework':
@@ -157,23 +159,19 @@ class ms_ext(build_ext):
         # don't forget to add mapserver lib
         self.libraries = unique(libraries) + ['mapserver',]
 
-        if self.libraries is None:
-            if self.get_compiler() == 'msvc':
-                libraries.remove('mapserver')
-                libraries.append('mapserver_i')
-                libraries.append('gd')
-            self.libraries = libraries
-
+        if self.get_compiler() == 'msvc':
+            for lib in self.libraries:
+                if lib == 'mapserver':
+                    print lib
+                    self.libraries.remove(lib)
+            self.libraries.append('mapserver_i')
+            self.libraries.append('gd')
+            self.libraries = unique(self.libraries)
         build_ext.finalize_options(self)
         
-        if self.get_compiler() == 'msvc':
-            return True
-        try:
-            self.dir = os.path.abspath('..')
-            self.library_dirs.append(self.dir)
-            self.include_dirs.append(self.dir)
-        except:
-            print 'Could not run mapserver-config!!!!'
+        self.dir = os.path.abspath('../..')
+        self.library_dirs.append(self.dir)
+        self.include_dirs.append(self.dir)
 
 
     
@@ -200,7 +198,7 @@ py_modules = ['mapscript',]
 readme = file('README','rb').read()
 
 if not os.path.exists('mapscript_wrap.c') :
-	os.system('swig -python -shadow -modern %s -o mapscript_wrap.c ../mapscript.i' % " ".get_config('defines'))
+	os.system('swig -python -shadow -modern %s -o mapscript_wrap.c ../mapscript.i' % get_config('defines'))
 
 classifiers = [
         'Development Status :: 4 - Beta',
