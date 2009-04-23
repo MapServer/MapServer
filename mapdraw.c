@@ -1579,7 +1579,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       /* No-clip labeling support */
       if(shape->text && msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
         bLabelNoClip = MS_TRUE;
-        annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*minfeaturesize);
+        if (minfeaturesize > 0)
+          annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*minfeaturesize);
+        else
+          annocallret = msPolygonLabelPoint(shape, &annopnt, -1);
+
         annopnt.x = MS_MAP2IMAGE_X(annopnt.x, map->extent.minx, map->cellsize);
         annopnt.y = MS_MAP2IMAGE_Y(annopnt.y, map->extent.maxy, map->cellsize);
       }
@@ -1599,6 +1603,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           label.angle -= map->gt.rotation_angle;
 
         if(layer->labelcache) {
+          /*compute the bounds. Previous bounds were calculated on a non transformed shape*/
+          if (bLabelNoClip == MS_TRUE)
+            msComputeBounds(shape);
           if(msAddLabel(map, layer->index, c, shape, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
         } else {
 	  if(layer->class[c]->numstyles > 0 && MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
@@ -1853,7 +1860,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     /* No-clip labeling support */
     if(shape->text && msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") != NULL) {
       bLabelNoClip = MS_TRUE;
-      annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*minfeaturesize);
+      if (layer->class[c]->label.minfeaturesize > 0)
+        annocallret = msPolygonLabelPoint(shape, &annopnt, map->cellsize*minfeaturesize);
+      else
+        annocallret = msPolygonLabelPoint(shape, &annopnt, -1);
+
       annopnt.x = MS_MAP2IMAGE_X(annopnt.x, map->extent.minx, map->cellsize);
       annopnt.y = MS_MAP2IMAGE_Y(annopnt.y, map->extent.maxy, map->cellsize);
     }
@@ -1922,6 +1933,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           label.angle -= map->gt.rotation_angle;
 
 	if(layer->labelcache) {
+          /*compute the bounds. Previous bounds were calculated on a non transformed shape*/
+        if (bLabelNoClip == MS_TRUE)
+          msComputeBounds(shape);
 	  if(msAddLabel(map, layer->index, c, shape, &annopnt, NULL, shape->text, MS_MIN(shape->bounds.maxx-shape->bounds.minx,shape->bounds.maxy-shape->bounds.miny), &label) != MS_SUCCESS) return(MS_FAILURE);
 	} else
 	  msDrawLabel(map, image, annopnt, shape->text, &label, layer->scalefactor);

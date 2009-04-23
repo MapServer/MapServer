@@ -1769,7 +1769,7 @@ MS_DLL_EXPORT void msTransformPixelToShape(shapeObj *shape, rectObj extent, doub
 MS_DLL_EXPORT void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, styleObj *style, symbolObj *symbol, int c, double size, double scalefactor);
 MS_DLL_EXPORT int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angle, double *length);
 MS_DLL_EXPORT labelPathObj* msPolylineLabelPath(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *status);
-MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
+MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension);
 MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddPointToLine(lineObj *line, pointObj *point );
