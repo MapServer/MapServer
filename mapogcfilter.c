@@ -164,8 +164,8 @@ int FTLParseEpsgString(char *pszEpsg, projectionObj *psProj)
         }
         if (tokens)
           msFreeCharArray(tokens, nTokens);
-#endif
     }
+#endif
     return nStatus;
 }
     
