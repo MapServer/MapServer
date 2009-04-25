@@ -1594,7 +1594,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     {
         for (i=0; i<symbol->patternlength; i++)
         {
-            symbol_pattern[i] = symbol->pattern[i]*scalefactor;
+            symbol_pattern[i] = MS_MAX(symbol->pattern[i]*scalefactor,1);
         }
     }
 
