@@ -1066,7 +1066,7 @@ static int getPolygonCentroid(shapeObj *p, pointObj *lp, double *miny, double *m
 /*
 ** Find a label point in a polygon.
 */
-int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
+int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
 {
   double slope;
   pointObj *point1=NULL, *point2=NULL, cp;

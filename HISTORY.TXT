@@ -12,7 +12,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
-- Fix Getlegendgraphic when sizeunit is set
+- Fix problem when using minfeaturesize with a LABEL_NO_CLIP (#2758)
+
+- Fix Getlegendgraphic when sizeunit is set (#2983)
 
 - Fix mapogcfilter.c not to cause syntax error if PROJ.4 is not compiled in (#2987)
 
