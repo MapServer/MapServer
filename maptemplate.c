@@ -512,18 +512,18 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
             papszArgs = msStringTokenize(pszArgs, " ", &nArgs, MS_TRUE);
 
             /* msReturnTemplateQuerycheck all argument if they have values */
-            for (i=0; i<nArgs; i++) {
-               if(strchr(papszArgs[i], '='))
-               {
-                  papszVarVal = msStringTokenize(papszArgs[i], "=", &nDummy, MS_FALSE);               
-                  msInsertHashTable(*ppoHashTable, papszVarVal[0], 
-                                    papszVarVal[1]);
+            for (i=0; i<nArgs; i++) {                
+                if(strlen(papszArgs[i]) == 0) continue;
+
+               if(strchr(papszArgs[i], '=')) {
+                  papszVarVal = msStringTokenize(papszArgs[i], "=", &nDummy, MS_FALSE);
+                  msInsertHashTable(*ppoHashTable, papszVarVal[0], papszVarVal[1]);
                   free(papszVarVal[0]);
                   free(papszVarVal[1]);
                   free(papszVarVal);                  
-               }
-               else /* no value specified. set it to 1 */
+               } else { /* no value specified. set it to 1 */
                   msInsertHashTable(*ppoHashTable, papszArgs[i], "1");
+               }
                
                free(papszArgs[i]);
             }
@@ -1110,17 +1110,14 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
   int tagOffset, tagLength;
   char *encodedTagValue=NULL, *tagValue=NULL;
 
-  char *argValue;
+  char *argValue=NULL;
 
-  char *name=NULL;
-  char *pattern=NULL;
-  int precision=-1; /* don't change */
-  char *format="$value";
-  char *nullFormat="";
-  int uc=MS_FALSE, lc=MS_FALSE, commify=MS_FALSE;
-
-  /* int substr=MS_FALSE, substrStart, substrLength; */
-  int escape=ESCAPE_HTML;
+  /* tag arguments, initialized below since we may be processing a number of tags in this function call */
+  char *name=NULL, *pattern=NULL;
+  char *format=NULL, *nullFormat=NULL;
+  int precision;
+  int uc, lc, commify;
+  int escape;
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processItemTag()");
@@ -1132,6 +1129,14 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
   while (tagStart) {  
+    /* initialize the tag arguments */
+    format = "$value";
+    nullFormat = "";
+    precision=-1;
+    name = pattern = NULL;
+    uc = lc = commify = MS_FALSE;
+    escape=ESCAPE_HTML;
+
     tagOffset = tagStart - *line;
 
     /* check for any tag arguments */
