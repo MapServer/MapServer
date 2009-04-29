@@ -1286,7 +1286,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   double xExpand, yExpand;
 
   char number[64]; /* holds a single number in the extent */
-  char numberFormat[16]="%f";
+  char numberFormat[16];
   char *format;
 
   int precision;
@@ -1306,14 +1306,14 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 
   while(tagStart) {
     /* set tag argument defaults */
-    xExpand = yExpand=0;
-    precision=-1;
-    format="$minx $miny $maxx $maxy";
+    xExpand = yExpand = 0;
+    precision = -1;
+    format = "$minx $miny $maxx $maxy";
     if(strstr(name, "_esc")) 
       escape = ESCAPE_URL;
     else
-      escape=ESCAPE_HTML;
-    projectionString=NULL;
+      escape = ESCAPE_HTML;
+    projectionString = NULL;
 
     tagOffset = tagStart - *line;
 
@@ -1379,6 +1379,8 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 
     if(precision != -1)
       snprintf(numberFormat, 16, "%%.%dlf", precision);
+    else
+      snprintf(numberFormat, 16, "%%f");
 
     snprintf(number, 64, numberFormat, tempExtent.minx);
     tagValue = msReplaceSubstring(tagValue, "$minx", number);
