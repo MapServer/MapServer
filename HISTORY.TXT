@@ -12,6 +12,11 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Fixed a problem with the iniitialization of tag arguments when multiple item, shpxy or exent
+  tags were in the same block of template text being processed (#2990)
+
+- Fixed a double free problem in shpxy tag processing
+
 - Fix problem when using minfeaturesize with a LABEL_NO_CLIP (#2758)
 
 - Fix Getlegendgraphic when sizeunit is set (#2983)
