@@ -505,15 +505,15 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
             strncpy(pszArgs, pszStart, nLength);
             pszArgs[nLength] = '\0';
             
-            if(!(*ppoHashTable))
+            if(!(*ppoHashTable))	      
               *ppoHashTable = msCreateHashTable();
-            
+
             /* put all arguments seperate by space in a hash table */
             papszArgs = msStringTokenize(pszArgs, " ", &nArgs, MS_TRUE);
 
             /* msReturnTemplateQuerycheck all argument if they have values */
             for (i=0; i<nArgs; i++) {                
-                if(strlen(papszArgs[i]) == 0) continue;
+               if(strlen(papszArgs[i]) == 0) continue;
 
                if(strchr(papszArgs[i], '=')) {
                   papszVarVal = msStringTokenize(papszArgs[i], "=", &nDummy, MS_FALSE);
@@ -1283,14 +1283,14 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   char *encodedTagValue=NULL, *tagValue=NULL;
 
   rectObj tempExtent;
-  double xExpand=0, yExpand=0;
+  double xExpand, yExpand;
 
   char number[64]; /* holds a single number in the extent */
   char numberFormat[16]="%f";
-  char *format="$minx $miny $maxx $maxy";
+  char *format;
 
-  int precision=-1;
-  int escape=ESCAPE_HTML;
+  int precision;
+  int escape;
 
   char *projectionString=NULL;
 
@@ -1302,12 +1302,19 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   tagStart = findTag(*line, name); /* this supports any extent */
 
   /* It is OK to have no include tags, just return. */
-  if(!tagStart) return MS_SUCCESS;
-
-  /* hack to handle tags like 'mapext_esc' easily */
-  if(strstr(name, "_esc")) escape = ESCAPE_URL;
+  if(!tagStart) return  MS_SUCCESS;
 
   while(tagStart) {
+    /* set tag argument defaults */
+    xExpand = yExpand=0;
+    precision=-1;
+    format="$minx $miny $maxx $maxy";
+    if(strstr(name, "_esc")) 
+      escape = ESCAPE_URL;
+    else
+      escape=ESCAPE_HTML;
+    projectionString=NULL;
+
     tagOffset = tagStart - *line;
 
      /* check for any tag arguments */
@@ -1441,31 +1448,32 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 
-  char *argValue;
-  char *pointFormat1, *pointFormat2;
+  char *argValue=NULL;
+  char *pointFormat1=NULL, *pointFormat2=NULL;
   int pointFormatLength;
 
-  /* h = header, f=footer, s=seperator */
-  char *xh="", *xf=",";
-  char *yh="", *yf="";
-  char *cs=" "; /* coordinate */
-
-  char *ph="", *pf="", *ps=" "; /* part: works for multi-point/multi-linestring and simple polygons */
+  /*
+  ** Pointers to static strings, naming convention is:
+  **   char 1 - x=x, y=y, c=coordinate, p=part, s=shape 
+  **   char 2 - h=header, f=footer, s=seperator
+  */
+  char *xh, *xf, *yh, *yf;
+  char *cs;
+  char *ph, *pf, *ps;
+  char *sh, *sf;
   /* char *irh="", *irf="", *irs=""; // inner ring: necessary for complex polygons */
   /* char *orh="", *orf="", *ors=""; // outer ring */
 
-  char *sh="", *sf=""; /* shape */
+  int centroid;
+  int precision;
 
-  int centroid=MS_FALSE; /* output just the centroid */
-  int precision=0;
-
-  double buffer=0; /* no buffer */
-  int bufferUnits=-1;
-
-  shapeObj tShape;
+  double buffer;
+  int bufferUnits;
 
   char *projectionString=NULL;
  
+  shapeObj tShape;
+
   char *coords=NULL, point[128];  
   
   if(!*line) {
@@ -1478,15 +1486,28 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   tagStart = findTag(*line, "shpxy");
 
   /* It is OK to have no shpxy tags, just return. */
-  if( !tagStart )
-      return MS_SUCCESS;
+  if(!tagStart)
+    return MS_SUCCESS;
 
   if(!shape || shape->numlines <= 0) { /* I suppose we need to make sure the part has vertices (need shape checker?) */
     msSetError(MS_WEBERR, "Null or empty shape.", "processShpxyTag()");
     return(MS_FAILURE);
   }
 
-  while (tagStart) {  
+  while (tagStart) {
+    /* initialize the tag arguments */
+    xh = yh = yf = ph = pf = sh = sf = "";
+    xf= ",";
+    ps = cs = " ";
+
+    centroid = MS_FALSE;
+    precision = 0;
+
+    buffer = 0;
+    bufferUnits = -1;
+ 
+    projectionString = NULL;
+
     tagOffset = tagStart - *line;
     
     /* check for any tag arguments */
@@ -1527,8 +1548,9 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       if(argValue) precision = atoi(argValue);
 
       argValue = msLookupHashTable(tagArgs, "centroid");
-      if(argValue) 
+      if(argValue) {
         if(strcasecmp(argValue,"true") == 0) centroid = MS_TRUE;
+      }
 
       argValue = msLookupHashTable(tagArgs, "proj");
       if(argValue) projectionString = argValue;
@@ -1661,11 +1683,11 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     *line = msReplaceSubstring(*line, tag, coords);
 
     /* clean up */
-    free(tag); tag = NULL;
+    free(tag); tag = NULL;    
     msFreeHashTable(tagArgs); tagArgs=NULL;
-    free(pointFormat1);
-    free(pointFormat2);
-    free(coords);
+    free(pointFormat1); pointFormat1 = NULL;
+    free(pointFormat2); pointFormat2 = NULL;
+    free(coords); coords = NULL;
 
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, "shpxy");
