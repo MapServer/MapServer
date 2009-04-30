@@ -1380,17 +1380,17 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     tagValue = strdup(format);
 
     if(precision != -1)
-      snprintf(numberFormat, 16, "%%.%dlf", precision);
+      snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
     else
-      snprintf(numberFormat, 16, "%%f");
+      snprintf(numberFormat, sizeof(numberFormat), "%%f");
 
-    snprintf(number, 64, numberFormat, tempExtent.minx);
+    snprintf(number, sizeof(number), numberFormat, tempExtent.minx);
     tagValue = msReplaceSubstring(tagValue, "$minx", number);
-    snprintf(number, 64, numberFormat, tempExtent.miny);
+    snprintf(number, sizeof(number), numberFormat, tempExtent.miny);
     tagValue = msReplaceSubstring(tagValue, "$miny", number);
-    snprintf(number, 64, numberFormat, tempExtent.maxx);
+    snprintf(number, sizeof(number), numberFormat, tempExtent.maxx);
     tagValue = msReplaceSubstring(tagValue, "$maxx", number);
-    snprintf(number, 64, numberFormat, tempExtent.maxy);
+    snprintf(number, sizeof(number), numberFormat, tempExtent.maxy);
     tagValue = msReplaceSubstring(tagValue, "$maxy", number);
 
      /* find the end of the tag */
