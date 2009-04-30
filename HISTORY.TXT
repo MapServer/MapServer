@@ -12,7 +12,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
-- - Fix mapogcfilter.c not to cause syntax error if PROJ.4 is not compiled in (#2987)
+- Fixed template code for item, shpxy and extent tags to properly initialize tag arguments in cases
+  where there are mutiple tags in one chunk of template (#2990)
+
+- Fix mapogcfilter.c not to cause syntax error if PROJ.4 is not compiled in (#2987)
 
 - Rework Python MapScript's setup.py to be more like Python's to fix
   a number of issues including (#2637) and to use mapserver-config 
