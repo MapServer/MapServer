@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Fixed a memory leak when unescaping quotes in logical expressions (#2938)
+
 - Fixed a problem with the iniitialization of tag arguments when multiple item, shpxy or exent
   tags were in the same block of template text being processed (#2990)
 
