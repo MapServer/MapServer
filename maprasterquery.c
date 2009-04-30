@@ -1303,6 +1303,9 @@ int msRASTERLayerGetItems(layerObj *layer)
 int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
 { 
+#ifndef USE_GDAL
+    return MS_FAILURE;
+#else
   char szPath[MS_MAXPATHLEN];
   mapObj *map = layer->map;
   double adfGeoTransform[6];
@@ -1357,6 +1360,7 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   extent->miny = adfGeoTransform[3] + nYSize * adfGeoTransform[5];
   
   return MS_SUCCESS;
+#endif /* def USE_GDAL */
 }
 
 
