@@ -373,7 +373,9 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
       tmpstr2 = msReplaceSubstring(tmpstr2, "\'", "\\\'");
       tmpstr2 = msReplaceSubstring(tmpstr2, "\"", "\\\"");
       tmpstr = msReplaceSubstring(tmpstr, expression->items[i], tmpstr2);
+      free(tmpstr2);
     }
+
     msAcquireLock( TLOCK_PARSER );
     msyystate = MS_TOKENIZE_EXPRESSION;
     msyystring = tmpstr; /* set lexer state to EXPRESSION_STRING */
@@ -381,18 +383,13 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     expresult = msyyresult;
     msReleaseLock( TLOCK_PARSER );
 
-    if (status != 0)
-    {
-        msSetError(MS_PARSEERR, "Failed to parse expression: %s", "msEvalExpression", tmpstr);
-        free(tmpstr);
-        if(tmpstr2)
-          free(tmpstr2);
-            
-        return MS_FALSE;
+    if (status != 0) {
+      msSetError(MS_PARSEERR, "Failed to parse expression: %s", "msEvalExpression", tmpstr);
+      free(tmpstr);
+      return MS_FALSE;
     }
+
     free(tmpstr);
-    if(tmpstr2)
-      free(tmpstr2);
     return expresult;
     
     break;
