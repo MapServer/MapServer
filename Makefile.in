@@ -70,17 +70,9 @@ GD_STATIC = @GD_STATIC@
 # Optional Anti-Grain Geometry Support.
 #
 AGG=     @AGG_ENABLED@
-AGG_LIB=  @AGG_LIB@
 AGG_INC=  @AGG_INC@
+AGG_OBJ=  @AGG_OBJ@
 
-#
-# agg_font_freetype stuff.
-#
-# If libaggfreetype.so is not available on this system then set the following
-# to enable building agg_font_freetype.o from source and linking it in directly
-#
-AGG_FT_DIR=@AGG_FT_DIR@
-AGG_FT_OBJ=@AGG_FT_OBJ@
 
 PNG_INC= @PNG_INC@
 PNG_LIB= @PNG_LIB@
@@ -256,7 +248,7 @@ EXE_LDFLAGS =	$(RUNPATHS) -L. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
-OBJS= mapgeomtransform.o maprgbapng.o maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapagg.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o  mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o maplibxml2.o mapdebug.o mapchart.o maptclutf.o $(EPPL_OBJ) $(AGG_FT_OBJ)
+OBJS= $(AGG_OBJ) mapgeomtransform.o maprgbapng.o maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapagg.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o  mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o maplibxml2.o mapdebug.o mapchart.o maptclutf.o $(EPPL_OBJ) 
 
 EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms \
@@ -281,9 +273,6 @@ mapogr.o:	mapogr.cpp
 # use -Wno-uninitialized as the compiler produces incorrect warning messages
 mapagg.o: mapagg.cpp mapagg.h
 	$(CXX) -c $(CXXFLAGS) -Wno-uninitialized mapagg.cpp -o mapagg.o
-
-agg_font_freetype.o: $(AGG_FT_DIR)/agg_font_freetype.cpp
-	$(CXX) -c $(CXXFLAGS) $(AGG_FT_DIR)/agg_font_freetype.cpp -o agg_font_freetype.o
 
 php3_mapscript:: $(LIBMAP_STATIC)
 	cd mapscript/php3; $(MAKE); cd ../..
@@ -408,7 +397,7 @@ uninstall:
 	(cd $(INST_LIB) && rm $(LIBMAP_SH_VER) $(LIBMAP_SHARED) )
 
 clean: @MAKE_PHPMS_CLEAN@
-	rm -f $(LIBMAP_STATIC) $(LIBMAP_SHARED) $(LIBMAP_SH_VER) *.o $(EXE_LIST)
+	rm -f $(LIBMAP_STATIC) $(LIBMAP_SHARED) $(LIBMAP_SH_VER) *.o $(EXE_LIST) renderers/agg/src/*.o
 
 exe-clean:
 	rm -f $(EXE_LIST)

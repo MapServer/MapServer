@@ -27,14 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-#include "agg_array.h"
-#include "agg_rendering_buffer.h"
+#include "renderers/agg/include/agg_array.h"
+#include "renderers/agg/include/agg_rendering_buffer.h"
 
 
 template<class T> class mapserv_row_ptr_cache
 {
 public:
-	typedef agg::const_row_info<T> row_data;
+	typedef mapserver::const_row_info<T> row_data;
 
 	mapserv_row_ptr_cache() :
             m_buf(0),
@@ -141,7 +141,7 @@ public:
     private:
         /*-------------------------------------------------------------------*/
         T*            m_buf;        /* Pointer to rendering buffer */
-        agg::pod_array<T*> m_rows;  /* Pointers to each row of the buffer */
+        mapserver::pod_array<T*> m_rows;  /* Pointers to each row of the buffer */
         unsigned      m_width;      /* Width in pixels */
         unsigned      m_height;     /* Height in pixels */
         int           m_stride;     /* Number of bytes per row. Can be < 0 */
@@ -179,7 +179,7 @@ public:
             *x = m_point->x;
             *y = m_point->y;
             m_point++;
-            return first ? agg::path_cmd_move_to : agg::path_cmd_line_to;
+            return first ? mapserver::path_cmd_move_to : mapserver::path_cmd_line_to;
         }
         /*if here, we're at the end of a line*/
         m_line++;
@@ -187,7 +187,7 @@ public:
         if(m_line>=m_lend) /*is this the last line of the shapObj. normally, 
         (m_line==m_lend) should be a sufficient test, as the caller should not call
         this function if a previous call returned path_cmd_stop.*/
-            return agg::path_cmd_stop; /*no more points to process*/
+            return mapserver::path_cmd_stop; /*no more points to process*/
         
         /*if here, there are more lines in the shapeObj, continue with next one*/
         m_point=m_line->point; /*pointer to first point of next line*/
@@ -252,7 +252,7 @@ public:
             *x = m_point->x;
             *y = m_point->y;
             m_point++;
-            return first ? agg::path_cmd_move_to : agg::path_cmd_line_to;
+            return first ? mapserver::path_cmd_move_to : mapserver::path_cmd_line_to;
         }
         *x = *y = 0.0;
         if(!m_stop) {
@@ -265,17 +265,17 @@ public:
                  * but set m_stop so the subsequent call to vertex() will return
                  * the stop command*/
                 m_stop=true;
-                return agg::path_cmd_end_poly;
+                return mapserver::path_cmd_end_poly;
             }
             /*if here, there's another line in the shape, so we set the pointers accordingly
              * and return the command to close the current polygon*/
             m_point=m_line->point; /*first vertex of next line*/
             m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of next line*/
-            return agg::path_cmd_end_poly;
+            return mapserver::path_cmd_end_poly;
         }
         /*if here, a previous call to vertex informed us that we'd consumed all the vertexes
          * of the shape. return the command to stop processing this shape*/
-        return agg::path_cmd_stop;
+        return mapserver::path_cmd_stop;
     }
 private:
     shapeObj *s;

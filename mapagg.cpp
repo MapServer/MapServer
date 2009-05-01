@@ -38,90 +38,81 @@
 #include <io.h>
 #endif
 
-#include "agg_basics.h"
-#include "agg_rendering_buffer.h"
-#include "agg_rasterizer_scanline_aa.h"
-#include "agg_rasterizer_outline_aa.h"
-#include "agg_rasterizer_outline.h"
-
-#include "agg_conv_stroke.h"
-#include "agg_conv_dash.h"
-#include "agg_conv_curve.h"
-#include "agg_conv_contour.h"
-
-#include "agg_scanline_p.h"
-#include "agg_path_storage.h"
-
-#include "agg_renderer_base.h"
-#include "agg_renderer_scanline.h"
-#include "agg_renderer_primitives.h"
-#include "agg_renderer_outline_aa.h"
-#include "agg_renderer_outline_image.h"
-
-#include "agg_pixfmt_rgb.h"
-#include "agg_pixfmt_rgba.h"
-
-#include "agg_arc.h"
-#include "agg_ellipse.h"
-
-#include "agg_pattern_filters_rgba.h"
-
-#include "agg_bounding_rect.h"
-#include "agg_span_allocator.h"
-#include "agg_image_accessors.h"
-#include "agg_span_pattern_rgba.h"
-#include "agg_span_interpolator_linear.h"
-#include "agg_span_image_filter_rgba.h"
-#include "agg_span_image_filter_rgb.h"
-
-#include "agg_trans_affine.h"
-#include "agg_scanline_boolean_algebra.h"
-#include "agg_scanline_storage_aa.h"
 #include "math.h"
 #include "mapagg.h"
-
 #include <ft2build.h>
-#include "agg_font_freetype.h"
-#include "agg_font_cache_manager.h"
 
-#include "agg_glyph_raster_bin.h"
-#include "agg_renderer_raster_text.h"
-#include "agg_embedded_raster_fonts.h"
+#include "renderers/agg/include/agg_basics.h"
+#include "renderers/agg/include/agg_rendering_buffer.h"
+#include "renderers/agg/include/agg_rasterizer_scanline_aa.h"
+#include "renderers/agg/include/agg_rasterizer_outline_aa.h"
+#include "renderers/agg/include/agg_rasterizer_outline.h"
+#include "renderers/agg/include/agg_conv_stroke.h"
+#include "renderers/agg/include/agg_conv_dash.h"
+#include "renderers/agg/include/agg_conv_curve.h"
+#include "renderers/agg/include/agg_conv_contour.h"
+#include "renderers/agg/include/agg_scanline_p.h"
+#include "renderers/agg/include/agg_path_storage.h"
+#include "renderers/agg/include/agg_renderer_base.h"
+#include "renderers/agg/include/agg_renderer_scanline.h"
+#include "renderers/agg/include/agg_renderer_primitives.h"
+#include "renderers/agg/include/agg_renderer_outline_aa.h"
+#include "renderers/agg/include/agg_renderer_outline_image.h"
+#include "renderers/agg/include/agg_pixfmt_rgb.h"
+#include "renderers/agg/include/agg_pixfmt_rgba.h"
+#include "renderers/agg/include/agg_arc.h"
+#include "renderers/agg/include/agg_ellipse.h"
+#include "renderers/agg/include/agg_pattern_filters_rgba.h"
+#include "renderers/agg/include/agg_bounding_rect.h"
+#include "renderers/agg/include/agg_span_allocator.h"
+#include "renderers/agg/include/agg_image_accessors.h"
+#include "renderers/agg/include/agg_span_pattern_rgba.h"
+#include "renderers/agg/include/agg_span_interpolator_linear.h"
+#include "renderers/agg/include/agg_span_image_filter_rgba.h"
+#include "renderers/agg/include/agg_span_image_filter_rgb.h"
+#include "renderers/agg/include/agg_trans_affine.h"
+#include "renderers/agg/include/agg_scanline_boolean_algebra.h"
+#include "renderers/agg/include/agg_scanline_storage_aa.h"
+#include "renderers/agg/include/agg_font_freetype.h"
+#include "renderers/agg/include/agg_font_cache_manager.h"
+#include "renderers/agg/include/agg_glyph_raster_bin.h"
+#include "renderers/agg/include/agg_renderer_raster_text.h"
+#include "renderers/agg/include/agg_embedded_raster_fonts.h"
 
 #define LINESPACE 1.33 //space beween text lines... from GD
 #define _EPSILON 0.00001 //used for double equality testing
 
 
 #ifdef CPL_MSB
-typedef agg::order_argb gd_color_order;
+typedef mapserver::order_argb gd_color_order;
 #else
-typedef agg::order_bgra gd_color_order;
+typedef mapserver::order_bgra gd_color_order;
 #endif
 
-typedef agg::blender_rgba_pre<agg::rgba8, gd_color_order> blender_pre; 
-typedef agg::pixfmt_alpha_blend_rgba<blender_pre, agg::rendering_buffer, agg::pixel32_type> GDpixfmt;
-typedef agg::pixfmt_alpha_blend_rgba<blender_pre,mapserv_row_ptr_cache<int>,int> pixelFormat;
+typedef mapserver::blender_rgba_pre<mapserver::rgba8, gd_color_order> blender_pre; 
+typedef mapserver::pixfmt_alpha_blend_rgba<blender_pre, mapserver::rendering_buffer, mapserver::pixel32_type> GDpixfmt;
+typedef mapserver::pixfmt_alpha_blend_rgba<blender_pre,mapserv_row_ptr_cache<int>,int> pixelFormat;
 
-static agg::rgba8 AGG_NO_COLOR = agg::rgba8(0,0,0,0);
+static mapserver::rgba8 AGG_NO_COLOR = mapserver::rgba8(0,0,0,0);
 
 
 
-typedef agg::rgba8 color_type;
-typedef agg::font_engine_freetype_int16 font_engine_type;
-typedef agg::font_cache_manager<font_engine_type> font_manager_type;
-typedef agg::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
+typedef mapserver::rgba8 color_type;
+typedef mapserver::font_engine_freetype_int16 font_engine_type;
+typedef mapserver::font_cache_manager<font_engine_type> font_manager_type;
+typedef mapserver::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
 
-typedef agg::glyph_raster_bin<color_type> glyph_gen;
+typedef mapserver::glyph_raster_bin<color_type> glyph_gen;
 
-typedef agg::renderer_base<pixelFormat> renderer_base;
+typedef mapserver::renderer_base<pixelFormat> renderer_base;
 
-typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_aa;
-typedef agg::renderer_outline_aa<renderer_base> renderer_oaa;
-typedef agg::renderer_primitives<renderer_base> renderer_prim;
-typedef agg::renderer_scanline_bin_solid<renderer_base> renderer_bin;
-typedef agg::rasterizer_outline_aa<renderer_oaa> rasterizer_outline_aa;
-typedef agg::rasterizer_outline <renderer_prim> rasterizer_outline;
-typedef agg::rasterizer_scanline_aa<> rasterizer_scanline;
+typedef mapserver::renderer_scanline_aa_solid<renderer_base> renderer_aa;
+typedef mapserver::renderer_outline_aa<renderer_base> renderer_oaa;
+typedef mapserver::renderer_primitives<renderer_base> renderer_prim;
+typedef mapserver::renderer_scanline_bin_solid<renderer_base> renderer_bin;
+typedef mapserver::rasterizer_outline_aa<renderer_oaa> rasterizer_outline_aa;
+typedef mapserver::rasterizer_outline <renderer_prim> rasterizer_outline;
+typedef mapserver::rasterizer_scanline_aa<> rasterizer_scanline;
 
 ///apply line styling functions. applies the line joining and capping
 ///parameters from the symbolobj to the given stroke
@@ -131,24 +122,24 @@ template<class VertexSource>
 static void strokeFromSymbol(VertexSource &stroke, symbolObj *symbol) {
     switch(symbol->linejoin) {
     case MS_CJC_ROUND:
-        stroke.line_join(agg::round_join);
+        stroke.line_join(mapserver::round_join);
         break;
     case MS_CJC_MITER:
-        stroke.line_join(agg::miter_join);
+        stroke.line_join(mapserver::miter_join);
         break;
     case MS_CJC_BEVEL:
-        stroke.line_join(agg::bevel_join);
+        stroke.line_join(mapserver::bevel_join);
         break;
     }
     switch(symbol->linecap) {
     case MS_CJC_BUTT:
-        stroke.line_cap(agg::butt_cap);
+        stroke.line_cap(mapserver::butt_cap);
         break;
     case MS_CJC_ROUND:
-        stroke.line_cap(agg::round_cap);
+        stroke.line_cap(mapserver::round_cap);
         break;
     case MS_CJC_SQUARE:
-        stroke.line_cap(agg::square_cap);
+        stroke.line_cap(mapserver::square_cap);
         break;
     }
 }
@@ -160,12 +151,12 @@ static void strokeFromSymbol(VertexSource &stroke, symbolObj *symbol) {
 ///with a call to delete[](rendering_buffer.buf())
 ///
 
-static agg::rendering_buffer gdImg2AGGRB_BGRA(gdImagePtr img) {
+static mapserver::rendering_buffer gdImg2AGGRB_BGRA(gdImagePtr img) {
     int width=img->sx;
     int height=img->sy;
-    agg::int8u*           im_data;
-    agg::rendering_buffer im_data_rbuf;
-    im_data = new agg::int8u[width * height * 4];
+    mapserver::int8u*           im_data;
+    mapserver::rendering_buffer im_data_rbuf;
+    im_data = new mapserver::int8u[width * height * 4];
     im_data_rbuf.attach(im_data, width,height, width*4);
     for(int row=0;row<height;row++) {
         unsigned int* rowptr=(unsigned int*)im_data_rbuf.row_ptr(row);
@@ -189,11 +180,11 @@ static agg::rendering_buffer gdImg2AGGRB_BGRA(gdImagePtr img) {
     return im_data_rbuf;
 }
 
-inline agg::rgba8 getAGGColor(colorObj* c, int opacity) {
+inline mapserver::rgba8 getAGGColor(colorObj* c, int opacity) {
     if(c && MS_VALID_COLOR(*c)) {
-        return agg::rgba8_pre(c->red,c->green,c->blue,MS_NINT(opacity*2.55));
+        return mapserver::rgba8_pre(c->red,c->green,c->blue,MS_NINT(opacity*2.55));
     } else {
-        return agg::rgba8(0,0,0,0);
+        return mapserver::rgba8(0,0,0,0);
     }
 }
 
@@ -210,10 +201,10 @@ inline agg::rgba8 getAGGColor(colorObj* c, int opacity) {
 static GDpixfmt loadSymbolPixmap(symbolObj *sym) {
     GDpixfmt pixf;
     if(sym->renderer_cache) {
-        pixf.attach(*((agg::rendering_buffer*)sym->renderer_cache));
+        pixf.attach(*((mapserver::rendering_buffer*)sym->renderer_cache));
     }
     else {
-        agg::rendering_buffer *im_data_rbuf = new agg::rendering_buffer;
+        mapserver::rendering_buffer *im_data_rbuf = new mapserver::rendering_buffer;
         *im_data_rbuf = gdImg2AGGRB_BGRA(sym->img);
         sym->renderer_cache=(void*)(im_data_rbuf);
         pixf.attach(*im_data_rbuf);
@@ -230,12 +221,12 @@ static GDpixfmt loadSymbolPixmap(symbolObj *sym) {
  * monospaced as this is what is assumed when calculating label 
  * sizes
  */
-const agg::int8u* rasterfonts[]= { 
-        agg::gse5x7, /*gd tiny. gse5x7 is a bit less high than gd tiny*/
-        agg::gse7x11, /*gd small*/
-        agg::gse7x11_bold, /*gd medium*/
-        agg::gse7x15, /*gd large*/
-        agg::gse8x16_bold /*gd huge*/
+const mapserver::int8u* rasterfonts[]= { 
+        mapserver::gse5x7, /*gd tiny. gse5x7 is a bit less high than gd tiny*/
+        mapserver::gse7x11, /*gd small*/
+        mapserver::gse7x11_bold, /*gd medium*/
+        mapserver::gse7x15, /*gd large*/
+        mapserver::gse8x16_bold /*gd huge*/
 };
 
 typedef struct {
@@ -275,7 +266,7 @@ public:
     }
     ///clear the whole image.
     ///@param color the fully opaque background color to use  
-    void clear(agg::rgba8 &color) {
+    void clear(mapserver::rgba8 &color) {
         ren_base.clear(color);
     }
     
@@ -285,17 +276,17 @@ public:
     ///@param color the fill color of the ellipse, or NULL for no fill
     ///@param outlinecolor the color of the outline, or NULL for no outline
     ///@param outlinewidth the width of the optional outline
-    void renderEllipse(double x, double y, double w, double h, double angle, agg::rgba8 &color,
-            agg::rgba8 &outlinecolor, double outlinewidth=1) {
-        agg::path_storage path;
-        agg::ellipse ellipse(x,y,w/2.,h/2.0);
+    void renderEllipse(double x, double y, double w, double h, double angle, mapserver::rgba8 &color,
+            mapserver::rgba8 &outlinecolor, double outlinewidth=1) {
+        mapserver::path_storage path;
+        mapserver::ellipse ellipse(x,y,w/2.,h/2.0);
         path.concat_path(ellipse);
         if( (fabs(angle)>_EPSILON) || (fabs(MS_2PI-angle)>_EPSILON)) {
-            agg::trans_affine mtx;
-            mtx *= agg::trans_affine_translation(-x,-y);
+            mapserver::trans_affine mtx;
+            mtx *= mapserver::trans_affine_translation(-x,-y);
             /*agg angles are antitrigonometric*/
-            mtx *= agg::trans_affine_rotation(-angle);
-            mtx *= agg::trans_affine_translation(x,y);
+            mtx *= mapserver::trans_affine_rotation(-angle);
+            mtx *= mapserver::trans_affine_translation(x,y);
             path.transform(mtx);
         }
         renderPathSolid(path,color,outlinecolor,outlinewidth);      
@@ -312,23 +303,23 @@ public:
     ///@param lc the style of the line caps, defaults to round caps
     ///@param lj the style of the line joins, defaults to round joins
     template<class VertexSource>
-    void renderPolyline(VertexSource &p,agg::rgba8 &color, 
+    void renderPolyline(VertexSource &p,mapserver::rgba8 &color, 
             double width,int dashstylelength, int *dashstyle,
-            enum agg::line_cap_e lc=agg::round_cap,
-            enum agg::line_join_e lj=agg::round_join) {
+            enum mapserver::line_cap_e lc=mapserver::round_cap,
+            enum mapserver::line_join_e lj=mapserver::round_join) {
         ras_aa.reset();
-        ras_aa.filling_rule(agg::fill_non_zero);
+        ras_aa.filling_rule(mapserver::fill_non_zero);
         ren_aa.color(color);
 
         if (dashstylelength <= 0) {
-            agg::conv_stroke<VertexSource> stroke(p);  
+            mapserver::conv_stroke<VertexSource> stroke(p);  
             stroke.width(width);
             stroke.line_cap(lc);
             stroke.line_join(lj);
             ras_aa.add_path(stroke);
         } else {
-            agg::conv_dash<VertexSource> dash(p);
-            agg::conv_stroke<agg::conv_dash<VertexSource> > stroke_dash(dash);  
+            mapserver::conv_dash<VertexSource> dash(p);
+            mapserver::conv_stroke<mapserver::conv_dash<VertexSource> > stroke_dash(dash);  
             for (int i=0; i<dashstylelength; i+=2) {
                 if (i < dashstylelength-1)
                     dash.add_dash(dashstyle[i], dashstyle[i+1]);
@@ -338,7 +329,7 @@ public:
             stroke_dash.line_join(lj);                        
             ras_aa.add_path(stroke_dash);
         }
-        agg::render_scanlines(ras_aa, sl_line, ren_aa);
+        mapserver::render_scanlines(ras_aa, sl_line, ren_aa);
     }
     
     ///brush a polyline with a vector symbol. draws the vector symbol in a temporary
@@ -355,25 +346,25 @@ public:
     template<class VertexSource1, class VertexSource2>
     void renderPolylineVectorSymbol(VertexSource1 &shape, VertexSource2 &symbol,
             int tilewidth, int tileheight, 
-            agg::rgba8 &color, agg::rgba8 &backgroundcolor) {
+            mapserver::rgba8 &color, mapserver::rgba8 &backgroundcolor) {
         ras_aa.reset();
-        ras_aa.filling_rule(agg::fill_non_zero);
-        typedef agg::wrap_mode_repeat wrap_type;
-        typedef agg::image_accessor_wrap<GDpixfmt,wrap_type,wrap_type> img_source_type;
-        typedef agg::span_pattern_rgba<img_source_type> span_gen_type;
-        agg::int8u*           m_pattern;
-        agg::rendering_buffer m_pattern_rbuf;
-        m_pattern = new agg::int8u[tilewidth * tileheight * 4];
+        ras_aa.filling_rule(mapserver::fill_non_zero);
+        typedef mapserver::wrap_mode_repeat wrap_type;
+        typedef mapserver::image_accessor_wrap<GDpixfmt,wrap_type,wrap_type> img_source_type;
+        typedef mapserver::span_pattern_rgba<img_source_type> span_gen_type;
+        mapserver::int8u*           m_pattern;
+        mapserver::rendering_buffer m_pattern_rbuf;
+        m_pattern = new mapserver::int8u[tilewidth * tileheight * 4];
         m_pattern_rbuf.attach(m_pattern, tilewidth,tileheight, tilewidth*4);
 
         GDpixfmt pixf(m_pattern_rbuf);
-        agg::renderer_base<GDpixfmt> rb(pixf);
-        agg::renderer_scanline_aa_solid<agg::renderer_base<GDpixfmt> > rs(rb);
+        mapserver::renderer_base<GDpixfmt> rb(pixf);
+        mapserver::renderer_scanline_aa_solid<mapserver::renderer_base<GDpixfmt> > rs(rb);
 
         rb.clear(backgroundcolor);
         rs.color(color);
         ras_aa.add_path(symbol);
-        agg::render_scanlines(ras_aa, sl_line, rs);
+        mapserver::render_scanlines(ras_aa, sl_line, rs);
         renderPathPixmapBGRA(shape,pixf);
         delete[](m_pattern);
     }
@@ -387,10 +378,10 @@ public:
     ///     premultiplied before calling
     template<class VertexSource>
     void renderPathPixmapBGRA(VertexSource &line, GDpixfmt &pattern) {
-        agg::pattern_filter_bilinear_rgba8 fltr;
-        typedef agg::line_image_pattern<agg::pattern_filter_bilinear_rgba8> pattern_type;
-        typedef agg::renderer_outline_image<renderer_base, pattern_type> renderer_img_type;
-        typedef agg::rasterizer_outline_aa<renderer_img_type, agg::line_coord_sat> rasterizer_img_type;
+        mapserver::pattern_filter_bilinear_rgba8 fltr;
+        typedef mapserver::line_image_pattern<mapserver::pattern_filter_bilinear_rgba8> pattern_type;
+        typedef mapserver::renderer_outline_image<renderer_base, pattern_type> renderer_img_type;
+        typedef mapserver::rasterizer_outline_aa<renderer_img_type, mapserver::line_coord_sat> rasterizer_img_type;
         pattern_type patt(fltr);  
         
         patt.create(pattern);
@@ -399,7 +390,7 @@ public:
         ras_img.add_path(line);
     }
 
-    ///render a shape represented by an agg::path_storage
+    ///render a shape represented by an mapserver::path_storage
     ///@param path the path containing the geometry to render
     ///@param color fill color or null for no fill
     ///@param outlinecolor outline color or null for no outline
@@ -407,29 +398,29 @@ public:
     ///@param lc capping used for the optional outline, defaults to round caps
     ///@param lj joins used for the optional outline, defaults to round joins
     template<class VertexSource>
-    void renderPathSolid(VertexSource &path, agg::rgba8 &color,
-            agg::rgba8 &outlinecolor, double outlinewidth,
-            enum agg::line_cap_e lc=agg::round_cap,
-            enum agg::line_join_e lj=agg::round_join) {
+    void renderPathSolid(VertexSource &path, mapserver::rgba8 &color,
+            mapserver::rgba8 &outlinecolor, double outlinewidth,
+            enum mapserver::line_cap_e lc=mapserver::round_cap,
+            enum mapserver::line_join_e lj=mapserver::round_join) {
         ras_aa.reset();
         if(color.a) {
             //use this to preserve holes in the geometry
             //this is needed when drawing fills
-            ras_aa.filling_rule(agg::fill_even_odd);
+            ras_aa.filling_rule(mapserver::fill_even_odd);
             ras_aa.add_path ( path );
             ren_aa.color(color);
-            agg::render_scanlines ( ras_aa, sl_poly, ren_aa );
+            mapserver::render_scanlines ( ras_aa, sl_poly, ren_aa );
         }
         if(outlinecolor.a && outlinewidth > 0) {
             ras_aa.reset();
-            ras_aa.filling_rule(agg::fill_non_zero); 
+            ras_aa.filling_rule(mapserver::fill_non_zero); 
             ren_aa.color(outlinecolor);
-            agg::conv_stroke<VertexSource> stroke(path);
+            mapserver::conv_stroke<VertexSource> stroke(path);
             stroke.width(outlinewidth);
             stroke.line_cap(lc);
             stroke.line_join(lj);
             ras_aa.add_path(stroke);
-            agg::render_scanlines ( ras_aa, sl_line, ren_aa );
+            mapserver::render_scanlines ( ras_aa, sl_line, ren_aa );
         }
     }
 
@@ -442,22 +433,22 @@ public:
     ///@param color the color used to render the pattern
     template<class VertexSource1, class VertexSource2>
     void renderPathSolidClipped(VertexSource1 &pattern, VertexSource2 &clipper,
-            agg::rgba8 &color)
+            mapserver::rgba8 &color)
     {
-        agg::rasterizer_scanline_aa<> ras1,ras2;
-        agg::scanline_storage_aa8 storage;
-        agg::scanline_storage_aa8 storage1;
-        agg::scanline_storage_aa8 storage2;
-        agg::scanline_p8 sl1,sl2;
-        ras1.filling_rule(agg::fill_non_zero);
+        mapserver::rasterizer_scanline_aa<> ras1,ras2;
+        mapserver::scanline_storage_aa8 storage;
+        mapserver::scanline_storage_aa8 storage1;
+        mapserver::scanline_storage_aa8 storage2;
+        mapserver::scanline_p8 sl1,sl2;
+        ras1.filling_rule(mapserver::fill_non_zero);
         ras1.add_path(pattern);                    
-        agg::render_scanlines(ras1, sl_line, storage1);
-        ras2.filling_rule(agg::fill_even_odd);
+        mapserver::render_scanlines(ras1, sl_line, storage1);
+        ras2.filling_rule(mapserver::fill_even_odd);
         ras2.add_path(clipper);
-        agg::render_scanlines(ras2,sl_poly,storage2);
-        agg::sbool_combine_shapes_aa(agg::sbool_and, storage1, storage2, sl1, sl2, sl_line, storage);
+        mapserver::render_scanlines(ras2,sl_poly,storage2);
+        mapserver::sbool_combine_shapes_aa(mapserver::sbool_and, storage1, storage2, sl1, sl2, sl_line, storage);
         ren_aa.color(color);
-        agg::render_scanlines ( storage, sl_line, ren_aa );
+        mapserver::render_scanlines ( storage, sl_line, ren_aa );
     }
     
     ///tile a shape with a vector symbol. this function
@@ -473,22 +464,22 @@ public:
     ///TODO: add the outlinecolor
     template<class VertexSource1, class VertexSource2>
     void renderPathTiled(VertexSource1 &shape, VertexSource2 &tile,
-            int tilewidth, int tileheight, agg::rgba8 &color, agg::rgba8 &backgroundcolor) 
+            int tilewidth, int tileheight, mapserver::rgba8 &color, mapserver::rgba8 &backgroundcolor) 
     {
         ras_aa.reset();
-        ras_aa.filling_rule(agg::fill_non_zero);
-        agg::int8u*           m_pattern;
-        agg::rendering_buffer m_pattern_rbuf;
-        m_pattern = new agg::int8u[tilewidth * tileheight * 4];
+        ras_aa.filling_rule(mapserver::fill_non_zero);
+        mapserver::int8u*           m_pattern;
+        mapserver::rendering_buffer m_pattern_rbuf;
+        m_pattern = new mapserver::int8u[tilewidth * tileheight * 4];
         m_pattern_rbuf.attach(m_pattern, tilewidth,tileheight, tilewidth*4);
 
         GDpixfmt pixf(m_pattern_rbuf);
-        agg::renderer_base<GDpixfmt> rb(pixf);
-        agg::renderer_scanline_aa_solid<agg::renderer_base<GDpixfmt> > rs(rb);
+        mapserver::renderer_base<GDpixfmt> rb(pixf);
+        mapserver::renderer_scanline_aa_solid<mapserver::renderer_base<GDpixfmt> > rs(rb);
         rb.clear(backgroundcolor);
         rs.color(color);
         ras_aa.add_path(tile);
-        agg::render_scanlines(ras_aa, sl_poly, rs);
+        mapserver::render_scanlines(ras_aa, sl_poly, rs);
         renderPathTiledPixmapBGRA(shape,pixf);
         delete[](m_pattern);
     }
@@ -509,11 +500,11 @@ public:
     template<class VertexSource1>
             void renderPathTruetypeTiled(VertexSource1 &shape, char *font, int glyphUnicode,
                     double glyphheight, double gap,
-                    agg::rgba8 &color,
-                    agg::rgba8 &backgroundcolor,
-                    agg::rgba8 &outlinecolor) 
+                    mapserver::rgba8 &color,
+                    mapserver::rgba8 &backgroundcolor,
+                    mapserver::rgba8 &outlinecolor) 
         {
-        if(!m_feng.load_font(font, 0, agg::glyph_ren_outline)) {
+        if(!m_feng.load_font(font, 0, mapserver::glyph_ren_outline)) {
             msSetError(MS_TTFERR, "AGG error loading font (%s)", "renderPathTruetypeTiled()", font);
             return;
         }
@@ -522,22 +513,22 @@ public:
         m_feng.resolution(96);
         m_feng.flip_y(true);
         font_curve_type m_curves(m_fman.path_adaptor());
-        const agg::glyph_cache* glyph=m_fman.glyph(glyphUnicode);
+        const mapserver::glyph_cache* glyph=m_fman.glyph(glyphUnicode);
         if(!glyph) return;
         int gw=glyph->bounds.x2-glyph->bounds.x1+1,
             gh=glyph->bounds.y2-glyph->bounds.y1+1;
         int tilewidth=MS_NINT(gw+gap),
             tileheight=MS_NINT(gh+gap);
         
-            ras_aa.filling_rule(agg::fill_non_zero);
-            agg::int8u* m_pattern;
-            agg::rendering_buffer m_pattern_rbuf;
-            m_pattern = new agg::int8u[tilewidth * tileheight * 4];
+            ras_aa.filling_rule(mapserver::fill_non_zero);
+            mapserver::int8u* m_pattern;
+            mapserver::rendering_buffer m_pattern_rbuf;
+            m_pattern = new mapserver::int8u[tilewidth * tileheight * 4];
             m_pattern_rbuf.attach(m_pattern, tilewidth,tileheight, tilewidth*4);
 
             GDpixfmt pixf(m_pattern_rbuf);
-            agg::renderer_base<GDpixfmt> rb(pixf);
-            agg::renderer_scanline_aa_solid<agg::renderer_base<GDpixfmt> > rs(rb);
+            mapserver::renderer_base<GDpixfmt> rb(pixf);
+            mapserver::renderer_scanline_aa_solid<mapserver::renderer_base<GDpixfmt> > rs(rb);
             rb.clear(backgroundcolor);
             
             double fy=(tileheight+gh)/2.;
@@ -548,20 +539,20 @@ public:
                 for(int i=-1;i<=1;i++)
                     for(int j=-1;j<=1;j++) {
                         if(i||j) { 
-                            agg::trans_affine_translation tr(i,j);
-                            agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, tr);
+                            mapserver::trans_affine_translation tr(i,j);
+                            mapserver::conv_transform<font_curve_type, mapserver::trans_affine> trans_c(m_curves, tr);
                             ras_aa.add_path(trans_c);
                         }
                     }
                 rs.color(outlinecolor);
-                agg::render_scanlines(ras_aa, sl_line, rs);
+                mapserver::render_scanlines(ras_aa, sl_line, rs);
             }
             if(color.a) {
                 ras_aa.reset();
                 m_fman.init_embedded_adaptors(glyph,fx,fy);
                 ras_aa.add_path(m_curves);
                 rs.color(color);
-                agg::render_scanlines(ras_aa, sl_line, rs);
+                mapserver::render_scanlines(ras_aa, sl_line, rs);
             }
             renderPathTiledPixmapBGRA(shape,pixf);
             delete[](m_pattern);
@@ -577,16 +568,16 @@ public:
     ///     premultiplied before calling
     template<class VertexSource1>
     void renderPathTiledPixmapBGRA(VertexSource1 &path ,GDpixfmt &tile) {
-        typedef agg::wrap_mode_repeat wrap_type;
-        typedef agg::image_accessor_wrap<GDpixfmt,wrap_type,wrap_type> img_source_type;
-        typedef agg::span_pattern_rgba<img_source_type> span_gen_type;
-        agg::span_allocator<agg::rgba8> sa;
+        typedef mapserver::wrap_mode_repeat wrap_type;
+        typedef mapserver::image_accessor_wrap<GDpixfmt,wrap_type,wrap_type> img_source_type;
+        typedef mapserver::span_pattern_rgba<img_source_type> span_gen_type;
+        mapserver::span_allocator<mapserver::rgba8> sa;
         ras_aa.reset();
-        ras_aa.filling_rule(agg::fill_even_odd);
+        ras_aa.filling_rule(mapserver::fill_even_odd);
         img_source_type img_src(tile);
         span_gen_type sg(img_src, 0, 0);
         ras_aa.add_path(path);
-        agg::render_scanlines_aa(ras_aa, sl_poly, ren_base, sa, sg);
+        mapserver::render_scanlines_aa(ras_aa, sl_poly, ren_base, sa, sg);
     }
 
     ///render a single pixmap at a specified location
@@ -599,29 +590,29 @@ public:
     ///     (i.e. at the nearest integer position)to avoid the blur caused by the bilinear filtering
     void renderPixmapBGRA(GDpixfmt &img_pixf, double x, double y, double angle, double scale) {
         ras_aa.reset();
-        ras_aa.filling_rule(agg::fill_non_zero);
+        ras_aa.filling_rule(mapserver::fill_non_zero);
         
         if( (fabs(angle)>_EPSILON) || (fabs(MS_2PI-angle)>_EPSILON) || scale !=1) {
-            agg::trans_affine image_mtx;
-            image_mtx *= agg::trans_affine_translation(-(double)img_pixf.width()/2.,
+            mapserver::trans_affine image_mtx;
+            image_mtx *= mapserver::trans_affine_translation(-(double)img_pixf.width()/2.,
                     -(double)img_pixf.height()/2.);
             /*agg angles are antitrigonometric*/
-            image_mtx *= agg::trans_affine_rotation(-angle);
-            image_mtx *= agg::trans_affine_scaling(scale);
+            image_mtx *= mapserver::trans_affine_rotation(-angle);
+            image_mtx *= mapserver::trans_affine_scaling(scale);
 
 
 
-            image_mtx*= agg::trans_affine_translation(x,y);
+            image_mtx*= mapserver::trans_affine_translation(x,y);
             image_mtx.invert();
-            typedef agg::span_interpolator_linear<> interpolator_type;
+            typedef mapserver::span_interpolator_linear<> interpolator_type;
             interpolator_type interpolator(image_mtx);
-            agg::span_allocator<agg::rgba8> sa;
+            mapserver::span_allocator<mapserver::rgba8> sa;
 
             // "hardcoded" bilinear filter
             //------------------------------------------
-            typedef agg::span_image_filter_rgba_bilinear_clip<GDpixfmt, interpolator_type> span_gen_type;
-            span_gen_type sg(img_pixf, agg::rgba(0,0,0,0), interpolator);
-            agg::path_storage pixmap_bbox;
+            typedef mapserver::span_image_filter_rgba_bilinear_clip<GDpixfmt, interpolator_type> span_gen_type;
+            span_gen_type sg(img_pixf, mapserver::rgba(0,0,0,0), interpolator);
+            mapserver::path_storage pixmap_bbox;
             int ims_2 = MS_NINT(MS_MAX(img_pixf.height(),img_pixf.width())*scale*1.415)/2+1;
             pixmap_bbox.move_to(x-ims_2,y-ims_2);
             pixmap_bbox.line_to(x+ims_2,y-ims_2);
@@ -629,7 +620,7 @@ public:
             pixmap_bbox.line_to(x-ims_2,y+ims_2);
             pixmap_bbox.close_polygon();      
             ras_aa.add_path(pixmap_bbox);
-            agg::render_scanlines_aa(ras_aa, sl_line, ren_base, sa, sg);
+            mapserver::render_scanlines_aa(ras_aa, sl_line, ren_base, sa, sg);
         }
         else {
             //just copy the image at the correct location (we place the pixmap on 
@@ -638,10 +629,10 @@ public:
         }
     }
     
-    int renderRasterGlyphs(double x, double y, agg::rgba8 &color, agg::rgba8 &outlinecolor,
+    int renderRasterGlyphs(double x, double y, mapserver::rgba8 &color, mapserver::rgba8 &outlinecolor,
             int size, char *thechars) {
         glyph_gen glyph(0);
-        agg::renderer_raster_htext_solid<renderer_base, glyph_gen> rt(ren_base, glyph);
+        mapserver::renderer_raster_htext_solid<renderer_base, glyph_gen> rt(ren_base, glyph);
         glyph.font(rasterfonts[size]);
         int numlines=0;
         char **lines;
@@ -677,7 +668,7 @@ public:
     
     int getLabelSize(char *string, char *font, double size, rectObj *rect, double **advances) {
 
-        if(!m_feng.load_font(font, 0, agg::glyph_ren_outline)) {
+        if(!m_feng.load_font(font, 0, mapserver::glyph_ren_outline)) {
             msSetError(MS_TTFERR, "AGG error loading font (%s)", "getLabelSize()", font);
             return MS_FAILURE;
         }
@@ -689,7 +680,7 @@ public:
         if(advances) {
             numglyphs=msGetNumGlyphs(string);
         }
-        const agg::glyph_cache* glyph;
+        const mapserver::glyph_cache* glyph;
         string+=msUTF8ToUniChar(string, &unicode);
         glyph=m_fman.glyph(unicode);
         if(glyph){
@@ -747,17 +738,17 @@ public:
     ///@param isMarker defines if the text should have its lower left corner start at the
     ///     given x,y (false), or if the text should be centered on x,y (true).
     ///     when set to true, will only center the text if this one is a single character
-    int renderGlyphs(double x, double y, agg::rgba8 &color, agg::rgba8 &outlinecolor,
+    int renderGlyphs(double x, double y, mapserver::rgba8 &color, mapserver::rgba8 &outlinecolor,
             double size, char *font, char *thechars, double angle,
-            agg::rgba8 &shadowcolor, double shdx, double shdy,
+            mapserver::rgba8 &shadowcolor, double shdx, double shdy,
             int outlinewidth, bool isMarker=false) {
-        if(!m_feng.load_font(font, 0, agg::glyph_ren_outline)) {
+        if(!m_feng.load_font(font, 0, mapserver::glyph_ren_outline)) {
             msSetError(MS_TTFERR, "AGG error loading font (%s)", "renderGlyphs()", font);
             return MS_FAILURE;
         }
-        ras_aa.filling_rule(agg::fill_non_zero);
+        ras_aa.filling_rule(mapserver::fill_non_zero);
         
-        const agg::glyph_cache* glyph;
+        const mapserver::glyph_cache* glyph;
         int unicode;
         m_feng.hinting(true);
         m_feng.height(size);
@@ -771,22 +762,22 @@ public:
           //text)
           //this block computes the offset between the lower left corner
           //of the character and it's center for the given rotaion. this
-          //offset will then be used in the following agg::trans_affine_translation
+          //offset will then be used in the following mapserver::trans_affine_translation
           msUTF8ToUniChar(thechars, &unicode);
           glyph=m_fman.glyph(unicode);
           ox=glyph->bounds.x1+(glyph->bounds.x2-glyph->bounds.x1)/2.;
           oy=glyph->bounds.y1+(glyph->bounds.y2-glyph->bounds.y1)/2.;
-          agg::trans_affine_rotation(-angle).transform(&ox,&oy);
+          mapserver::trans_affine_rotation(-angle).transform(&ox,&oy);
         }
-        agg::trans_affine mtx;
-        mtx *= agg::trans_affine_translation(-x,-y);
+        mapserver::trans_affine mtx;
+        mtx *= mapserver::trans_affine_translation(-x,-y);
         /*agg angles are antitrigonometric*/
-        mtx *= agg::trans_affine_rotation(-angle);
-        mtx *= agg::trans_affine_translation(x-ox,y-oy);
+        mtx *= mapserver::trans_affine_rotation(-angle);
+        mtx *= mapserver::trans_affine_translation(x-ox,y-oy);
                
         double fx=x,fy=y;
         const char *utfptr=thechars;
-        agg::path_storage glyphs;
+        mapserver::path_storage glyphs;
         
         //first render all the glyphs to a path
         while(*utfptr) {
@@ -797,7 +788,7 @@ public:
             if(glyph)
             {
                 m_fman.init_embedded_adaptors(glyph,fx,fy);
-                agg::conv_transform<font_curve_type, agg::trans_affine> trans_c(m_curves, mtx);
+                mapserver::conv_transform<font_curve_type, mapserver::trans_affine> trans_c(m_curves, mtx);
                 glyphs.concat_path(trans_c);
                 fx += glyph->advance_x;
                 fy += glyph->advance_y;
@@ -806,9 +797,9 @@ public:
         
         //use a smoother renderer for the shadow
         if(shadowcolor.a) {
-            agg::trans_affine_translation tr(shdx,shdy);
-            agg::conv_transform<agg::path_storage, agg::trans_affine> tglyphs(glyphs,tr);
-            agg::line_profile_aa prof;
+            mapserver::trans_affine_translation tr(shdx,shdy);
+            mapserver::conv_transform<mapserver::path_storage, mapserver::trans_affine> tglyphs(glyphs,tr);
+            mapserver::line_profile_aa prof;
             prof.width(0.5);
             renderer_oaa ren_oaa(ren_base,prof);
             rasterizer_outline_aa rasterizer_smooth(ren_oaa);
@@ -817,20 +808,20 @@ public:
         }
         if(outlinecolor.a) {
             ras_aa.reset();
-            ras_aa.filling_rule(agg::fill_non_zero);
-            agg::conv_contour<agg::path_storage> cc(glyphs);
+            ras_aa.filling_rule(mapserver::fill_non_zero);
+            mapserver::conv_contour<mapserver::path_storage> cc(glyphs);
             cc.width(outlinewidth);
             ras_aa.add_path(cc);
             ren_aa.color(outlinecolor);
-            agg::render_scanlines(ras_aa, sl_line, ren_aa);
+            mapserver::render_scanlines(ras_aa, sl_line, ren_aa);
         }
     
         if(color.a) {
             ras_aa.reset();
-            ras_aa.filling_rule(agg::fill_non_zero);
+            ras_aa.filling_rule(mapserver::fill_non_zero);
             ras_aa.add_path(glyphs);
             ren_aa.color(color);
-            agg::render_scanlines(ras_aa, sl_line, ren_aa);
+            mapserver::render_scanlines(ras_aa, sl_line, ren_aa);
         }
         return MS_SUCCESS;
     }
@@ -841,11 +832,11 @@ private:
     renderer_aa ren_aa;
     renderer_prim ren_prim;
     renderer_bin ren_bin;
-    agg::scanline_p8 sl_poly; /*packed scanlines, works faster when the area is larger 
+    mapserver::scanline_p8 sl_poly; /*packed scanlines, works faster when the area is larger 
     than the perimeter, in number of pixels*/
-    agg::scanline_u8 sl_line; /*unpacked scanlines, works faster if the area is roughly
+    mapserver::scanline_u8 sl_line; /*unpacked scanlines, works faster if the area is roughly
     equal to the perimeter, in number of pixels*/
-    agg::scanline_bin m_sl_bin;
+    mapserver::scanline_bin m_sl_bin;
     rasterizer_scanline ras_aa;
     rasterizer_outline ras_oa;
     font_engine_type m_feng;
@@ -899,7 +890,7 @@ void msImageInitAGG(imageObj *image, colorObj *background)
     if(image->format->imagemode == MS_IMAGEMODE_RGBA) {
         ren->clear(AGG_NO_COLOR);
     } else {
-        agg::rgba8 bc = getAGGColor(background,100);
+        mapserver::rgba8 bc = getAGGColor(background,100);
         ren->clear(bc);
     }
 #ifdef USE_GD_RESOLUTION
@@ -915,9 +906,9 @@ void msImageInitAGG(imageObj *image, colorObj *background)
 // ------------------------------------------------------------------------ 
 // Function to create a custom hatch symbol based on an arbitrary angle. 
 // ------------------------------------------------------------------------
-static agg::path_storage createHatchAGG(int sx, int sy, double angle, double step)
+static mapserver::path_storage createHatchAGG(int sx, int sy, double angle, double step)
 {
-    agg::path_storage path;
+    mapserver::path_storage path;
     //restrict the angle to [0 180[
     angle = fmod(angle, 360.0);
     if(angle < 0) angle += 360;
@@ -990,8 +981,8 @@ static agg::path_storage createHatchAGG(int sx, int sy, double angle, double ste
 // ----------------------------------------------------------------
 // create a path from the list of points contained in the symbolObj
 // -----------------------------------------------------------------
-static agg::path_storage imageVectorSymbolAGG(symbolObj *symbol, double scale) {
-    agg::path_storage path;
+static mapserver::path_storage imageVectorSymbolAGG(symbolObj *symbol, double scale) {
+    mapserver::path_storage path;
     bool is_new=true;
     for(int i=0;i < symbol->numpoints;i++) {
         if((symbol->points[i].x == -99) && (symbol->points[i].y == -99)) { // (PENUP) 
@@ -1059,15 +1050,15 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
     angle = (style->angle) ? style->angle : 0.0;
     angle_radians = angle*MS_DEG_TO_RAD;
 
-    agg::path_storage circle;
-    agg::arc ellipse( p->x,p->y,r,r,0,MS_2PI,true );
-    //agg::ellipse ellipse(p->x,p->y,r,r);
+    mapserver::path_storage circle;
+    mapserver::arc ellipse( p->x,p->y,r,r,0,MS_2PI,true );
+    //mapserver::ellipse ellipse(p->x,p->y,r,r);
     ellipse.approximation_scale ( 1 );
     circle.concat_path(ellipse);
-    circle.transform(agg::trans_affine_translation(style->offsetx*scalefactor,style->offsety*scalefactor));
+    circle.transform(mapserver::trans_affine_translation(style->offsetx*scalefactor,style->offsety*scalefactor));
     if(size < 1) return; // size too small
     
-    agg::rgba8 agg_color,agg_ocolor,agg_bcolor;
+    mapserver::rgba8 agg_color,agg_ocolor,agg_bcolor;
     agg_color=getAGGColor(&style->color,style->opacity);
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
     agg_bcolor=getAGGColor(&style->backgroundcolor,style->opacity);
@@ -1083,13 +1074,13 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         //TODO
     break;
     case(MS_SYMBOL_HATCH): {
-        agg::path_storage hatch;
+        mapserver::path_storage hatch;
         //fill the circle
         ren->renderPathSolid(circle,agg_bcolor,AGG_NO_COLOR,1);
         int s = MS_NINT(2*r)+1;
         hatch = createHatchAGG(s,s,style->angle,size);
-        hatch.transform(agg::trans_affine_translation(p->x-r,p->y-r));
-        agg::conv_stroke <agg::path_storage > stroke(hatch);
+        hatch.transform(mapserver::trans_affine_translation(p->x-r,p->y-r));
+        mapserver::conv_stroke <mapserver::path_storage > stroke(hatch);
         stroke.width(width);
         //render the actual hatches
         ren->renderPathSolidClipped(stroke,circle,agg_color);
@@ -1119,8 +1110,8 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
             ren->renderPathSolid(circle,agg_color,agg_ocolor,style->width);
         }
         else {
-            agg::path_storage path;
-            agg::arc ellipse ( pw/2.,ph/2.,
+            mapserver::path_storage path;
+            mapserver::arc ellipse ( pw/2.,ph/2.,
                     d*symbol->points[0].x/2.,d*symbol->points[0].y/2.,
                     0,MS_2PI,true );
             ellipse.approximation_scale(1);
@@ -1131,7 +1122,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
                 pw+=MS_NINT(gap);
                 ph+=MS_NINT(gap);
                 //center the ellipse symbol on the tile
-                path.transform(agg::trans_affine_translation(gap/2.,gap/2.));
+                path.transform(mapserver::trans_affine_translation(gap/2.,gap/2.));
             }
             //render the actual tiled circle
             ren->renderPathTiled(circle,ellipse,pw,ph,
@@ -1156,7 +1147,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
             ren->renderPathSolid(circle,agg_color,agg_ocolor,width);
             return;
         }
-        agg::path_storage path = imageVectorSymbolAGG(symbol,d);
+        mapserver::path_storage path = imageVectorSymbolAGG(symbol,d);
 
         if(symbol->gap>0) {
             double gap = symbol->gap*d;
@@ -1164,13 +1155,13 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
             pw+=MS_NINT(gap);
             ph+=MS_NINT(gap);
             //center the vector symbol on the tile
-            path.transform(agg::trans_affine_translation(gap/2.,gap/2.));
+            path.transform(mapserver::trans_affine_translation(gap/2.,gap/2.));
         }
         if(symbol->filled) {
             ren->renderPathTiled(circle,path,pw,ph,agg_color,agg_bcolor);
             ren->renderPathSolid(circle,AGG_NO_COLOR,agg_ocolor,width);
         } else  { //symbol is a line, convert to a stroke to apply the width to the line
-            agg::conv_stroke <agg::path_storage > stroke(path);
+            mapserver::conv_stroke <mapserver::path_storage > stroke(path);
             stroke.width(width);
             strokeFromSymbol(stroke,symbol);
             ren->renderPathTiled(circle,stroke,pw,ph,agg_color,agg_bcolor);
@@ -1231,7 +1222,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
        return; // nothing to do if no color, except for pixmap symbols
    
     if(size < 1) return; // size too small 
-    agg::rgba8 agg_color,agg_ocolor,agg_bcolor;
+    mapserver::rgba8 agg_color,agg_ocolor,agg_bcolor;
     agg_color=getAGGColor(&style->color,style->opacity);
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
     agg_bcolor=getAGGColor(&style->backgroundcolor,style->opacity);
@@ -1265,7 +1256,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
             ren->renderEllipse(x,y,w,h,angle_radians,agg_color,agg_ocolor,width);
         }
         else {
-            agg::rgba8 *c;
+            mapserver::rgba8 *c;
             if(agg_color.a)
                 c=&agg_color;
             else if(agg_ocolor.a)
@@ -1282,9 +1273,9 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
             bRotated = true;
             symbol = msRotateSymbol(symbol, angle);
         }
-        agg::path_storage path = imageVectorSymbolAGG(symbol,d);
+        mapserver::path_storage path = imageVectorSymbolAGG(symbol,d);
         //center the symbol on the marker location
-        agg::trans_affine translation = agg::trans_affine_translation(
+        mapserver::trans_affine translation = mapserver::trans_affine_translation(
                 p->x - d*.5*symbol->sizex + ox,
                 p->y - d*.5*symbol->sizey + oy);
         path.transform(translation);
@@ -1293,7 +1284,7 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
             ren->renderPathSolid(path,agg_color,agg_ocolor,width);
         }
         else {
-            agg::rgba8 *c;
+            mapserver::rgba8 *c;
             if(agg_color.a)
                 c=&agg_color;
             else if(agg_ocolor.a)
@@ -1323,7 +1314,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
                          styleObj *style, double size, double scalefactor) {
     symbolObj *symbol=symbolset->symbol[style->symbol];
     GDpixfmt img_pixf;
-    agg::path_storage vector_symbol;
+    mapserver::path_storage vector_symbol;
     
     bool bRotated=false;
     AGGMapserverRenderer* ren = getAGGRenderer(image);
@@ -1361,7 +1352,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
         symbol_width=sw;
     double angle_radians = style->angle*MS_DEG_TO_RAD;
     
-    agg::rgba8 agg_color,agg_ocolor,agg_bcolor;
+    mapserver::rgba8 agg_color,agg_ocolor,agg_bcolor;
     agg_color=getAGGColor(&style->color,style->opacity);
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
     agg_bcolor=getAGGColor(&style->backgroundcolor,style->opacity);
@@ -1400,7 +1391,7 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
                         ren->renderEllipse(point.x,point.y,sw,sh,0,agg_color,agg_ocolor,outlinewidth);
                     }
                     else {
-                        agg::rgba8 *c;
+                        mapserver::rgba8 *c;
                         if(agg_color.a)
                             c=&agg_color;
                         else if(agg_ocolor.a)
@@ -1412,16 +1403,16 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
                     }
                     break;
                 case MS_SYMBOL_VECTOR: {
-                    agg::path_storage rotsym = vector_symbol;
-                    rotsym.transform(agg::trans_affine_translation(-sw/2,-sh/2));
-                    rotsym.transform(agg::trans_affine_rotation(-angle));
-                    rotsym.transform(agg::trans_affine_translation(point.x,point.y));
+                    mapserver::path_storage rotsym = vector_symbol;
+                    rotsym.transform(mapserver::trans_affine_translation(-sw/2,-sh/2));
+                    rotsym.transform(mapserver::trans_affine_rotation(-angle));
+                    rotsym.transform(mapserver::trans_affine_translation(point.x,point.y));
                     if(symbol->filled) {
                         //draw an optionnally filled and/or outlined vector symbol
                         ren->renderPathSolid(rotsym,agg_color,agg_ocolor,outlinewidth);
                     }
                     else {
-                        agg::rgba8 *c;
+                        mapserver::rgba8 *c;
                         if(agg_color.a)
                             c=&agg_color;
                         else if(agg_ocolor.a)
@@ -1505,7 +1496,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
     return;
 
   label_width = (int) label_rect.maxx - (int) label_rect.minx;
-  agg::rgba8 agg_color,agg_ocolor;
+  mapserver::rgba8 agg_color,agg_ocolor;
   agg_color=getAGGColor(&label.color,100);
   agg_ocolor=getAGGColor(&label.outlinecolor,100);
   for(i=0; i<p->numlines; i++) {
@@ -1598,11 +1589,11 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         }
     }
 
-    agg::rgba8 agg_color,agg_ocolor,agg_bcolor;
+    mapserver::rgba8 agg_color,agg_ocolor,agg_bcolor;
     agg_color=getAGGColor(&style->color,style->opacity);
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
     agg_bcolor=getAGGColor(&style->backgroundcolor,style->opacity);
-    agg::rgba8 *color;
+    mapserver::rgba8 *color;
     if(agg_color.a) {
         color = &(agg_color);
     } else if(agg_ocolor.a) {
@@ -1642,29 +1633,29 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         else
             nwidth=width;
         //read caps and joins from symbol
-        enum agg::line_cap_e lc=agg::round_cap;
-        enum agg::line_join_e lj=agg::round_join;
+        enum mapserver::line_cap_e lc=mapserver::round_cap;
+        enum mapserver::line_join_e lj=mapserver::round_join;
         if(symbol->type==MS_SYMBOL_SIMPLE) {
             switch(symbol->linejoin) {
             case MS_CJC_ROUND:
-                lj=agg::round_join;
+                lj=mapserver::round_join;
                 break;
             case MS_CJC_MITER:
-                lj=agg::miter_join;
+                lj=mapserver::miter_join;
                 break;
             case MS_CJC_BEVEL:
-                lj=agg::bevel_join;
+                lj=mapserver::bevel_join;
                 break;
             }
             switch(symbol->linecap) {
             case MS_CJC_BUTT:
-                lc=agg::butt_cap;
+                lc=mapserver::butt_cap;
                 break;
             case MS_CJC_ROUND:
-                lc=agg::round_cap;
+                lc=mapserver::round_cap;
                 break;
             case MS_CJC_SQUARE:
-                lc=agg::square_cap;
+                lc=mapserver::square_cap;
                 break;
             }
         }
@@ -1702,14 +1693,14 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
                 ren->renderPolyline(*lines,*color,size,0,NULL);
                 break;
             }
-            agg::path_storage path = imageVectorSymbolAGG(symbol,d);
+            mapserver::path_storage path = imageVectorSymbolAGG(symbol,d);
             
             //more or less ugly way of getting the symbol to draw entirely when stroked 
             //with a thick line. as we're stroking a line with the vector
             //brush, we don't want to add a white space horizontally to avoid gaps, but we
             //do add some space vertically so the thick lines of the vector symbol appear.
             ph+=MS_NINT(width);
-            path.transform(agg::trans_affine_translation(0,((double)width)/2.0));
+            path.transform(mapserver::trans_affine_translation(0,((double)width)/2.0));
             
             if(symbol->filled) {
                 //brush with a filled vector symbol, with an optional background
@@ -1717,7 +1708,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
             } else  {
                 //brush with a stroked vector symbol (to get width), 
                 //with an optional background
-                agg::conv_stroke <agg::path_storage > stroke(path);
+                mapserver::conv_stroke <mapserver::path_storage > stroke(path);
                 stroke.width(width);            
                 strokeFromSymbol(stroke,symbol);             
                 ren->renderPolylineVectorSymbol(*lines,stroke,pw,ph,*color,agg_bcolor);
@@ -1801,7 +1792,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             polygons = new polygon_adaptor(p);
         }
     }
-    agg::rgba8 agg_color,agg_ocolor,agg_bcolor;
+    mapserver::rgba8 agg_color,agg_ocolor,agg_bcolor;
     agg_color=getAGGColor(&style->color,style->opacity);
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
     agg_bcolor=getAGGColor(&style->backgroundcolor,style->opacity);
@@ -1817,7 +1808,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             msComputeBounds(p);
             int pw=MS_NINT(p->bounds.maxx-p->bounds.minx)+1;
             int ph=MS_NINT(p->bounds.maxy-p->bounds.miny)+1;
-            agg::path_storage hatch;
+            mapserver::path_storage hatch;
             
             //optional backgroundcolor before drawing the symbol
             ren->renderPathSolid(*polygons,agg_bcolor,AGG_NO_COLOR,1);
@@ -1827,14 +1818,14 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             hatch = createHatchAGG(pw,ph,style->angle,size);
             
             //translate the hatch so it overlaps the current shape
-            hatch.transform(agg::trans_affine_translation(p->bounds.minx, p->bounds.miny));
+            hatch.transform(mapserver::trans_affine_translation(p->bounds.minx, p->bounds.miny));
             
             
             
             if(symbol->patternlength>1) {
                 //dash the hatch and render it clipped by the shape
-                agg::conv_dash<agg::path_storage > dash(hatch);
-                agg::conv_stroke<agg::conv_dash<agg::path_storage> > stroke_dash(dash);
+                mapserver::conv_dash<mapserver::path_storage > dash(hatch);
+                mapserver::conv_stroke<mapserver::conv_dash<mapserver::path_storage> > stroke_dash(dash);
                 int symbol_pattern[MS_MAXPATTERNLENGTH];
                 for (int i=0; i<symbol->patternlength; i+=2) {
                     if (i < symbol->patternlength-1) {
@@ -1848,7 +1839,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 ren->renderPathSolidClipped(stroke_dash,*polygons,agg_color);
             } else {
                 //render the hatch clipped by the shape
-                agg::conv_stroke <agg::path_storage > stroke(hatch);
+                mapserver::conv_stroke <mapserver::path_storage > stroke(hatch);
                 stroke.width(width);
                 ren->renderPathSolidClipped(stroke,*polygons,agg_color);
             }
@@ -1872,19 +1863,19 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 ren->renderPathSolid(*polygons,agg_color,agg_ocolor,width);
                 break;
             }
-            agg::path_storage path = imageVectorSymbolAGG(symbol,d);
+            mapserver::path_storage path = imageVectorSymbolAGG(symbol,d);
             if(symbol->gap>0) {
                 //adjust the size of the tile if a gap is specified
                 double gap = symbol->gap*d;
                 pw+=MS_NINT(gap);
                 ph+=MS_NINT(gap);
                 //center the symbol on the adjusted tile
-                path.transform(agg::trans_affine_translation(gap/2.,gap/2.));
+                path.transform(mapserver::trans_affine_translation(gap/2.,gap/2.));
             }
             if(symbol->filled) {
                 ren->renderPathTiled(*polygons,path,pw,ph,agg_color,agg_bcolor);
             } else  {
-                agg::conv_stroke <agg::path_storage > stroke(path);
+                mapserver::conv_stroke <mapserver::path_storage > stroke(path);
                 stroke.width(width);
                 //apply symbol caps and joins
                 strokeFromSymbol(stroke,symbol);             
@@ -1917,8 +1908,8 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 ren->renderPathSolid(*polygons,agg_color,agg_ocolor,width);
             }
             else {
-                agg::path_storage path;
-                agg::arc ellipse ( pw/2.,ph/2.,
+                mapserver::path_storage path;
+                mapserver::arc ellipse ( pw/2.,ph/2.,
                         d*symbol->points[0].x/2.,d*symbol->points[0].y/2.,
                         0,MS_2PI,true );
                 ellipse.approximation_scale(1);
@@ -1927,7 +1918,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                     double gap = symbol->gap*d;
                     pw+=MS_NINT(gap);
                     ph+=MS_NINT(gap);
-                    path.transform(agg::trans_affine_translation(gap/2.,gap/2.));
+                    path.transform(mapserver::trans_affine_translation(gap/2.,gap/2.));
                 }
                 ren->renderPathTiled(*polygons,ellipse,pw,ph,
                         agg_color,agg_bcolor);
@@ -1980,7 +1971,7 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
 
     x = labelPnt.x;
     y = labelPnt.y;
-    agg::rgba8 agg_color,agg_ocolor,agg_scolor;
+    mapserver::rgba8 agg_color,agg_ocolor,agg_scolor;
     agg_color=getAGGColor(&label->color,100);
     agg_ocolor=getAGGColor(&label->outlinecolor,100);
     agg_scolor=getAGGColor(&label->shadowcolor,100);
@@ -2069,7 +2060,7 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
     AGGMapserverRenderer* ren = getAGGRenderer(image);
     if (!string) return(0); // do nothing 
     if (strlen(string) == 0) return(0); // do nothing
-    agg::rgba8 agg_color,agg_ocolor,agg_scolor;
+    mapserver::rgba8 agg_color,agg_ocolor,agg_scolor;
     agg_color=getAGGColor(&label->color,100);
     agg_ocolor=getAGGColor(&label->outlinecolor,100);
     agg_scolor=getAGGColor(&label->shadowcolor,100);
@@ -2152,16 +2143,16 @@ void msPieSliceAGG ( imageObj *image, styleObj *style, double center_x, double c
     }
 
     //create a path with pie slice
-    agg::path_storage path;
+    mapserver::path_storage path;
     path.remove_all();
     path.move_to ( center_x,center_y );
     //NOTE: agg angles are anti-trigonometric
-    agg::arc arc ( center_x,center_y,radius,radius,start*MS_DEG_TO_RAD,end*MS_DEG_TO_RAD,true );
+    mapserver::arc arc ( center_x,center_y,radius,radius,start*MS_DEG_TO_RAD,end*MS_DEG_TO_RAD,true );
     arc.approximation_scale ( 1 );
     path.concat_path(arc);
     path.line_to ( center_x,center_y );
     path.close_polygon();
-    agg::rgba8 agg_color,agg_ocolor;
+    mapserver::rgba8 agg_color,agg_ocolor;
     agg_color=getAGGColor(&style->color,style->opacity);
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
         
@@ -2180,7 +2171,7 @@ void msFilledRectangleAGG ( imageObj *image, styleObj *style, double c1_x, doubl
         double c2_x, double c2_y )
 {
     AGGMapserverRenderer* ren = getAGGRenderer(image);
-    agg::path_storage path;
+    mapserver::path_storage path;
     path.remove_all();
     path.move_to ( c1_x,c1_y );
     path.line_to ( c2_x,c1_y );
@@ -2190,7 +2181,7 @@ void msFilledRectangleAGG ( imageObj *image, styleObj *style, double c1_x, doubl
     double width=1;
     if(style->width!=-1)
         width=style->width;
-    agg::rgba8 agg_color,agg_ocolor;
+    mapserver::rgba8 agg_color,agg_ocolor;
     agg_color=getAGGColor(&style->color,style->opacity);
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
         
@@ -2291,7 +2282,7 @@ void msFreeImageAGG(imageObj *img)
 
 void msFreeSymbolCacheAGG(void *buffer) {
     if(buffer!=NULL) {
-        agg::rendering_buffer *rb = (agg::rendering_buffer*)buffer;
+        mapserver::rendering_buffer *rb = (mapserver::rendering_buffer*)buffer;
         delete[] rb->buf();
         delete rb;
     }
@@ -2475,15 +2466,15 @@ void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct)
     float factor =((float)pct)/100.;
     for (y = 0; (y < h); y++) {
         for (x = 0; (x < w); x++) {
-            agg::int8u *src_p = (agg::int8u*)&(gdImageTrueColorPixel(src->img.gd, x, y));
+            mapserver::int8u *src_p = (mapserver::int8u*)&(gdImageTrueColorPixel(src->img.gd, x, y));
             if(src_p[gd_color_order::A] == 0) continue;
             //get a pointer to the destination pixel
-            agg::int8u *p = (agg::int8u*)&(gdImageTrueColorPixel(dst->img.gd, x, y));
+            mapserver::int8u *p = (mapserver::int8u*)&(gdImageTrueColorPixel(dst->img.gd, x, y));
 
             //blend the src pixel over it.
             //the color channels must also be scaled by the opacity
             //as the blender expects premultiplied colors
-            agg::blender_bgra32_pre::blend_pix(p,
+            mapserver::blender_bgra32_pre::blend_pix(p,
                     MS_NINT(src_p[gd_color_order::R]*factor),
                     MS_NINT(src_p[gd_color_order::G]*factor),
                     MS_NINT(src_p[gd_color_order::B]*factor),
