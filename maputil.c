@@ -1625,9 +1625,9 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety) {
     }
   } else { /* normal offset (eg. drop shadow) */
     for (i = 0; i < p->numlines; i++) {
-      for(j=1; j<p->line[i].numpoints; j++) {
-        ret->line[i].point[j-1].x=p->line[i].point[j-1].x+offsetx;
-        ret->line[i].point[j-1].y=p->line[i].point[j-1].y+offsety;
+      for(j=0; j<p->line[i].numpoints; j++) {
+        ret->line[i].point[j].x=p->line[i].point[j].x+offsetx;
+        ret->line[i].point[j].y=p->line[i].point[j].y+offsety;
       }
     }
   }
