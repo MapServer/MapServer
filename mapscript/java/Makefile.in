@@ -51,7 +51,6 @@ GD_STATIC = @GD_STATIC@
 # Optional Anti-Grain Geometry Support.
 #
 AGG=     @AGG_ENABLED@
-AGG_LIB=  @AGG_LIB@
 AGG_INC=  @AGG_INC@
 
 
@@ -185,7 +184,7 @@ CCFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
 	$(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) $(XML2_INC)
 
 # Link flags and shared libs only
-SUP_LIBS =  $(GD_LIB) $(AGG_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
+SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
 	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
 	  $(THREAD_LIB) $(XTRALIBS) $(GEOS_LIB) $(ICONV_INC) $(XML2_LIB)
