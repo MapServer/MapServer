@@ -735,6 +735,7 @@ MING_LIB= $(MING_DIR)/src/libming.lib
 
 # Setup AGG
 !IFDEF AGG
+AGG_INC=-I$(FT_DIR)\include
 AGG_OBJ=renderers\agg\src\agg_arc.obj renderers\agg\src\agg_curves.obj renderers\agg\src\agg_vcgen_contour.obj \
 renderers\agg\src\agg_vcgen_dash.obj renderers\agg\src\agg_vcgen_stroke.obj renderers\agg\src\agg_image_filters.obj \
 renderers\agg\src\agg_line_aa_basics.obj renderers\agg\src\agg_line_profile_aa.obj renderers\agg\src\agg_sqrt_tables.obj \
@@ -822,7 +823,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
-         $(PNG_INC) $(FRIBIDI_INC)
+         $(PNG_INC) $(FRIBIDI_INC) $(AGG_INC)
 !ENDIF
 
 
