@@ -844,7 +844,11 @@ if test "$with_agg" != "no" ; then
   if test -z "$FT_BIN" ; then
     AC_PATH_PROG(FT_BIN, freetype-config, no)
     if test "$FT_BIN" == "no" ; then
-      AC_MSG_ERROR([freetype-config required for agg support - please configure --with-freetype.])
+      AC_MSG_ERROR([the freetype-config executable could not be found and is required for agg support
+        to fix this, you should either:
+        * install the freetype development headers
+        * rerun configure with --with-freetype=/path/to/freetype-config
+        * disable agg support with --with-agg=no ])
     fi
   fi
   

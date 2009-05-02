@@ -9534,8 +9534,16 @@ fi
 
 
     if test "$FT_BIN" == "no" ; then
-      { { $as_echo "$as_me:$LINENO: error: freetype-config required for agg support - please configure --with-freetype." >&5
-$as_echo "$as_me: error: freetype-config required for agg support - please configure --with-freetype." >&2;}
+      { { $as_echo "$as_me:$LINENO: error: the freetype-config executable could not be found and is required for agg support
+        to fix this, you should either:
+        * install the freetype development headers
+        * rerun configure with --with-freetype=/path/to/freetype-config
+        * disable agg support with --with-agg=no " >&5
+$as_echo "$as_me: error: the freetype-config executable could not be found and is required for agg support
+        to fix this, you should either:
+        * install the freetype development headers
+        * rerun configure with --with-freetype=/path/to/freetype-config
+        * disable agg support with --with-agg=no " >&2;}
    { (exit 1); exit 1; }; }
     fi
   fi
