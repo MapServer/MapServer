@@ -686,7 +686,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     /* Get the layer tolerance
        default is 3 for point and line layers, 0 for others */
     if(lp->tolerance == -1) {
-      if(lp->status == MS_LAYER_POINT || lp->status == MS_LAYER_LINE)
+      if(lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
         layer_tolerance = 3;
        else
         layer_tolerance = 0;
@@ -971,7 +971,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
     /* Get the layer tolerance
        default is 3 for point and line layers, 0 for others */
     if(lp->tolerance == -1)
-        if(lp->status == MS_LAYER_POINT || lp->status == MS_LAYER_LINE)
+        if(lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
             layer_tolerance = 3;
         else
             layer_tolerance = 0;
@@ -1159,7 +1159,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     /* Get the layer tolerance
        default is 3 for point and line layers, 0 for others */
     if(lp->tolerance == -1)
-        if(lp->status == MS_LAYER_POINT || lp->status == MS_LAYER_LINE)
+        if(lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
             layer_tolerance = 3;
         else
             layer_tolerance = 0;
