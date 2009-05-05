@@ -604,13 +604,17 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     
     SE_COLUMN_DEF *itemdefs;
     SE_SHAPE shapeval=0;
-    SE_BLOB_INFO blobval;
-    /* blobval = (SE_BLOB_INFO *) malloc(sizeof(SE_BLOB_INFO)); */
     msSDELayerInfo *sde;
+
+    SE_BLOB_INFO blobval;
+#ifdef SE_CLOB_TYPE
+    SE_CLOB_INFO clobval;
+#endif
 
 #ifdef SE_NSTRING_TYPE
     SE_WCHAR* wide=NULL;
 #endif
+
 
     if(!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR, 
@@ -775,6 +779,31 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             break;
             
 #endif
+
+#ifdef SE_CLOB_TYPE
+
+        case SE_CLOB_TYPE:
+            status = SE_stream_get_clob(sde->connPoolInfo->stream, (short) (i+1), &clobval);
+            if(status == SE_SUCCESS) {
+                shape->values[i] = (char *)malloc(sizeof(char)*clobval.clob_length);
+                shape->values[i] = memcpy(  shape->values[i],
+                                            clobval.clob_buffer, 
+                                            clobval.clob_length);
+                SE_clob_free(&clobval);
+            }
+            else if (status == SE_NULL_VALUE) {
+                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+            }
+            else {
+                sde_error(  status,  
+                            "sdeGetRecord()", 
+                            "SE_stream_get_clob()");
+                return(MS_FAILURE);
+            }
+            break;
+            
+#endif
+
         case SE_BLOB_TYPE:
             status = SE_stream_get_blob(sde->connPoolInfo->stream, (short) (i+1), &blobval);
             if(status == SE_SUCCESS) {
@@ -794,6 +823,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 return(MS_FAILURE);
             }
             break;
+            
         case SE_DATE_TYPE:
             status = SE_stream_get_date(sde->connPoolInfo->stream, (short)(i+1), &dateval);
             if(status == SE_SUCCESS) {
