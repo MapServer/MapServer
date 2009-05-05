@@ -607,8 +607,13 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     msSDELayerInfo *sde;
 
     SE_BLOB_INFO blobval;
+
 #ifdef SE_CLOB_TYPE
     SE_CLOB_INFO clobval;
+#endif
+
+#ifdef SE_NCLOB_TYPE
+    SE_NCLOB_INFO nclobval;
 #endif
 
 #ifdef SE_NSTRING_TYPE
@@ -800,8 +805,30 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                             "SE_stream_get_clob()");
                 return(MS_FAILURE);
             }
-            break;
-            
+            break;    
+#endif
+
+#ifdef SE_CLOB_TYPE
+
+        case SE_NCLOB_TYPE:
+            status = SE_stream_get_nclob(sde->connPoolInfo->stream, (short) (i+1), &nclobval);
+            if(status == SE_SUCCESS) {
+                shape->values[i] = (char *)malloc(sizeof(char)*nclobval.nclob_length);
+                shape->values[i] = memcpy(  shape->values[i],
+                                            nclobval.nclob_buffer, 
+                                            nclobval.nclob_length);
+                SE_nclob_free(&nclobval);
+            }
+            else if (status == SE_NULL_VALUE) {
+                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+            }
+            else {
+                sde_error(  status,  
+                            "sdeGetRecord()", 
+                            "SE_stream_get_nclob()");
+                return(MS_FAILURE);
+            }
+            break;    
 #endif
 
         case SE_BLOB_TYPE:
