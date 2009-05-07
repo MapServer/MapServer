@@ -1,5 +1,7 @@
 MapServer Revision History
 ==========================
+
+$Id$
  
 This is a human-readable revision history which will attempt to document
 required changes for users to migrate from one version of MapServer to the
