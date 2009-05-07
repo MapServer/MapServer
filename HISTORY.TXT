@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Fixed detection of freetype when installed in non-system directory (#3008)
+
 - Fixed detection of libpng + zlib headers with experimental-png enabled (#3010)
 
 - Fixed a memory leak when unescaping quotes in logical expressions (#2938)
