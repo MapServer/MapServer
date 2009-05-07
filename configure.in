@@ -164,8 +164,8 @@ fi
 if test -n "$FT_LIBDIR" -a -z "$FT_BIN" ; then
   FT_LIB="-L$FT_LIBDIR $FT_TYPE"
   AC_MSG_RESULT([        using libfreetype from $FT_LIB])
-  AC_ADD_RUNPATH("$FT_LIBDIR")
-else
+  AC_ADD_RUNPATH("$FT_LIB")
+elif test -z "$FT_LIBDIR" -a -z "$FT_BIN" ; then dnl replaced else by elif
   dnl check for lib in system libs  
   AC_CHECK_LIB(freetype, FT_Init_FreeType, FT_LIB="-lfreetype",,)
 

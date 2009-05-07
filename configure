@@ -5256,12 +5256,12 @@ if test -n "$FT_LIBDIR" -a -z "$FT_BIN" ; then
   { echo "$as_me:$LINENO: result:         using libfreetype from $FT_LIB" >&5
 echo "${ECHO_T}        using libfreetype from $FT_LIB" >&6; }
 
-  if test ""$FT_LIBDIR"" != "/usr/lib"; then
+  if test ""$FT_LIB"" != "/usr/lib"; then
 
-  if test -z ""$FT_LIBDIR"" || echo ""$FT_LIBDIR"" | grep '^/' >/dev/null ; then
-    ai_p=""$FT_LIBDIR""
+  if test -z ""$FT_LIB"" || echo ""$FT_LIB"" | grep '^/' >/dev/null ; then
+    ai_p=""$FT_LIB""
   else
-    ai_p="`pwd`/"$FT_LIBDIR""
+    ai_p="`pwd`/"$FT_LIB""
   fi
 
 
@@ -5277,8 +5277,7 @@ echo "${ECHO_T}        using libfreetype from $FT_LIB" >&6; }
 
   fi
 
-else
-    { echo "$as_me:$LINENO: checking for FT_Init_FreeType in -lfreetype" >&5
+elif test -z "$FT_LIBDIR" -a -z "$FT_BIN" ; then     { echo "$as_me:$LINENO: checking for FT_Init_FreeType in -lfreetype" >&5
 echo $ECHO_N "checking for FT_Init_FreeType in -lfreetype... $ECHO_C" >&6; }
 if test "${ac_cv_lib_freetype_FT_Init_FreeType+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
