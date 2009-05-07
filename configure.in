@@ -893,8 +893,11 @@ else
     test -f $PNG_DIR/lib/png.h && PNG_INCLUDE="$PNG_DIR/lib"
     test -f $PNG_DIR/png.h && PNG_INCLUDE="$PNG_DIR"
     if test -n "$PNG_INCLUDE" ; then
+      dnl make sure we'll be able to find zlib.h
+      old_cflags="$CFLAGS"
       AC_CHECK_HEADER([$PNG_INCLUDE/png.h],,
         [AC_MSG_ERROR([cannot find png headers])])
+      CFLAGS="$old_cflags"
     else
         AC_MSG_ERROR([cannot find png headers in $PNG_DIR])
     fi
