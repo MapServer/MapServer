@@ -9348,6 +9348,7 @@ echo "$as_me: error: libpng required - please reconfigure --with-png." >&2;}
     test -f $PNG_DIR/lib/png.h && PNG_INCLUDE="$PNG_DIR/lib"
     test -f $PNG_DIR/png.h && PNG_INCLUDE="$PNG_DIR"
     if test -n "$PNG_INCLUDE" ; then
+            old_cflags="$CFLAGS"
       # On IRIX 5.3, sys/types and inttypes.h are conflicting.
 
 
@@ -9554,6 +9555,7 @@ echo "$as_me: error: cannot find png headers" >&2;}
 fi
 
 
+      CFLAGS="$old_cflags"
     else
         { { echo "$as_me:$LINENO: error: cannot find png headers in $PNG_DIR" >&5
 echo "$as_me: error: cannot find png headers in $PNG_DIR" >&2;}
