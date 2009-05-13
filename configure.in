@@ -895,6 +895,7 @@ else
     if test -n "$PNG_INCLUDE" ; then
       dnl make sure we'll be able to find zlib.h
       old_cflags="$CFLAGS"
+      CFLAGS="$ZLIB_INC $CFLAGS"
       AC_CHECK_HEADER([$PNG_INCLUDE/png.h],,
         [AC_MSG_ERROR([cannot find png headers])])
       CFLAGS="$old_cflags"

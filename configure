@@ -9446,6 +9446,7 @@ echo "$as_me: error: libpng required - please reconfigure --with-png." >&2;}
     test -f $PNG_DIR/png.h && PNG_INCLUDE="$PNG_DIR"
     if test -n "$PNG_INCLUDE" ; then
             old_cflags="$CFLAGS"
+      CFLAGS="$ZLIB_INC $CFLAGS"
       # On IRIX 5.3, sys/types and inttypes.h are conflicting.
 
 
