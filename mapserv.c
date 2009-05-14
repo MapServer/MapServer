@@ -1493,7 +1493,7 @@ int main(int argc, char *argv[]) {
       }
 
       if((layerindex = msGetLayerIndex(mapserv->map, tokens[0])) == -1) {
-        msSetError(MS_WEBERR, "Icon layer=%s not found in mapfile.", "mapserv()", GET_LAYER(mapserv->map, layerindex)->name);
+        msSetError(MS_WEBERR, "Icon layer=%s not found in mapfile.", "mapserv()", tokens[0]);
         writeError();
       }
 
