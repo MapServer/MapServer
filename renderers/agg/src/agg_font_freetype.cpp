@@ -663,6 +663,15 @@ namespace mapserver
                     m_cur_face = 0;
                     m_name = 0;
                 }
+                if( FT_Select_Charmap(m_cur_face, FT_ENCODING_UNICODE) ) {
+                    if( FT_Select_Charmap(m_cur_face, FT_ENCODING_APPLE_ROMAN) ) {
+                        m_char_map = FT_ENCODING_NONE;
+                    } else {
+                        m_char_map = FT_ENCODING_APPLE_ROMAN;
+                    }
+                } else {
+                    m_char_map = FT_ENCODING_UNICODE;
+                }   
             }
 
 
@@ -903,7 +912,7 @@ namespace mapserver
         m_glyph_index = FT_Get_Char_Index(m_cur_face, glyph_code);
         m_last_error = FT_Load_Glyph(m_cur_face, 
                                      m_glyph_index, 
-                                     m_hinting ? FT_LOAD_DEFAULT : FT_LOAD_NO_HINTING);
+                                     m_hinting ? FT_LOAD_DEFAULT|FT_LOAD_NO_BITMAP : FT_LOAD_NO_HINTING|FT_LOAD_NO_BITMAP);
 //                                     m_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_NO_HINTING);
         if(m_last_error == 0)
         {

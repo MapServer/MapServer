@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- Fix agg freetype character lookup when no unicode charmap is present (#3018)
 
 - Fork AGG rendering library in our trunk
 
