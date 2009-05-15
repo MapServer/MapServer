@@ -548,6 +548,7 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
     char szTmp[100];
     int i=0;
     char *pszTokenValue = NULL;
+    char *pszBlockValue = NULL;
     const char *pszBlockSep=NULL, *pszTokenSep=NULL;
 
     if (psParent)
@@ -629,15 +630,16 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
         xmlNewNsProp(psSubNode, NULL, BAD_CAST "tokenSeparator", BAD_CAST pszTokenValue);
 
         if (pszBlockSep)
-          pszTokenValue = msStringConcatenate(pszTokenValue, (char *)pszBlockSep);
+          pszBlockValue = msStringConcatenate(pszBlockValue, (char *)pszBlockSep);
         else
-          pszTokenValue = msStringConcatenate(pszTokenValue, "\n");
+          pszBlockValue = msStringConcatenate(pszBlockValue, "\n");
 
-        xmlNewNsProp(psSubNode, NULL, BAD_CAST "blockSeparator", BAD_CAST pszTokenValue);
+        xmlNewNsProp(psSubNode, NULL, BAD_CAST "blockSeparator", BAD_CAST pszBlockValue);
 
         xmlNewNsProp(psSubNode, NULL, BAD_CAST "decimalSeparator", BAD_CAST ".");
 
         msFree(pszTokenValue);
+        msFree(pszBlockValue);
     }   
 }
 

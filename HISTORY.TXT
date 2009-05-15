@@ -75,6 +75,8 @@ Current Version (SVN trunk):
 
 - fix time advertising in WMS 1.3.0 (#2935)
 
+- fix SOS blockSeparator output (#3014)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 
