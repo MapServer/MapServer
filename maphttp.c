@@ -267,6 +267,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     CURLM   *multi_handle;
     CURLMsg *curl_msg;
     char     debug = MS_FALSE;
+    const char *pszCurlCABundle = NULL;
 
     if (numRequests == 0)
         return MS_SUCCESS;  /* Nothing to do */
@@ -291,9 +292,17 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     if (nTimeout <= 0)
         nTimeout = 30;
 
+    /* Check if we've got a CURL_CA_BUNDLE env. var.
+     * If set then the value is the full path to the ca-bundle.crt file
+     * e.g. CURL_CA_BUNDLE=/usr/local/share/curl/curl-ca-bundle.crt
+     */
+    pszCurlCABundle = getenv("CURL_CA_BUNDLE");
+
     if (debug)
     {
         msDebug("HTTP: Starting to prepare HTTP requests.\n");
+        if (pszCurlCABundle)
+            msDebug("Using CURL_CA_BUNDLE=%s\n", pszCurlCABundle);
     }
 
     /* Alloc a curl-multi handle, and add a curl-easy handle to it for each
@@ -394,7 +403,11 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
         /* Set timeout.*/
         curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, nTimeout );
-        
+
+        /* Pass CURL_CA_BUNDLE if set */
+        if (pszCurlCABundle)
+            curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCurlCABundle );
+
         /* Set proxying settings */
         if (pasReqInfo[i].pszProxyAddress != NULL
             && strlen(pasReqInfo[i].pszProxyAddress) > 0)
