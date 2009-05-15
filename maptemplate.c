@@ -1066,7 +1066,7 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
     fclose(includeStream);
 
      /* find the end of the tag */
-    tagEnd = strchr(tagStart, ']');
+    tagEnd = findTagEnd(tagStart);
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
@@ -1228,7 +1228,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     }
 
     /* find the end of the tag */
-    tagEnd = strchr(tagStart, ']');
+    tagEnd = findTagEnd(tagStart);
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
@@ -1392,7 +1392,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     tagValue = msReplaceSubstring(tagValue, "$maxy", number);
 
      /* find the end of the tag */
-    tagEnd = strchr(tagStart, ']');
+    tagEnd = findTagEnd(tagStart);
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
