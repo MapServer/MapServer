@@ -39,6 +39,8 @@ Current Version:
 - Fix mapogcfilter.c not to cause syntax error if PROJ.4 is not compiled
   in (#2987)
 
+- fix SOS blockSeparator output (#3014)
+
 Version 5.4.0 (2009-04-22):
 ---------------------------
 
