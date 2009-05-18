@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Change the dll mapping rules to support the recent MONO versions 
+(#3019)
+
 - Added CURL_CA_BUNDLE env. var. to enable using HTTPS services in WMS/WFS
   client connections (#3007)
 
