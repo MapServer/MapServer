@@ -78,6 +78,8 @@ Current Version (SVN trunk):
 
 - fix SOS blockSeparator output (#3014)
 
+- fix MIME type support (#3020)
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 
