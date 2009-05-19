@@ -54,8 +54,8 @@ const char *pszSOSNamespaceUri           = "http://www.opengis.net/sos/1.0";
 const char *pszSOSNamespacePrefix        = "sos";
 const char *pszOMNamespaceUri            = "http://www.opengis.net/om/1.0";
 const char *pszOMNamespacePrefix         = "om";
-const char *pszSOSDescribeSensorMimeType = "text/xml; subtype=sensorML/1.0.0";
-const char *pszSOSGetObservationMimeType = "text/xml; subtype=om/1.0.0";
+const char *pszSOSDescribeSensorMimeType = "text/xml; subtype=\"sensorML/1.0.0\"";
+const char *pszSOSGetObservationMimeType = "text/xml; subtype=\"om/1.0.0\"";
 
 typedef struct {
   char *pszProcedure;

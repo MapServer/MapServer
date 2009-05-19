@@ -44,6 +44,8 @@ Current Version:
 
 - fix SOS blockSeparator output (#3014)
 
+- fix MIME type support (#3020)
+
 Version 5.4.0 (2009-04-22):
 ---------------------------
 
