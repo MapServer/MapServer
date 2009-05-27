@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Fix memory leak in SQL building (#2997)
+
 - Change the dll mapping rules to support the recent MONO versions 
 (#3019)
 
