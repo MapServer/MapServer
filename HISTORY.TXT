@@ -15,6 +15,8 @@ Current Version (SVN trunk):
 ----------------------------
 - Fix agg freetype character lookup when no unicode charmap is present (#3018)
 
+- Fix memory leak in SQL building (#2997)
+
 - Fork AGG rendering library in our trunk
 
 - Fixed a memory leak when unescaping quotes in	logical	expressions (#2938)
