@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Fix error when saving the MAXLENGTH parameter (#3031)
+
 - Test database connections before using them (#2932)
 
 - Support non-numeric join criteria (#2006)
