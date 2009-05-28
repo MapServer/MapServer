@@ -1205,7 +1205,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
     /* Populate strUid, if necessary. */
     if ( uid ) {
         static char *strUidTemplate = "\"%s\" = %ld";
-        strUid = (char*)malloc(strlen(strUidTemplate) + strlen(layerinfo->uid) + 9);
+        strUid = (char*)malloc(strlen(strUidTemplate) + strlen(layerinfo->uid) + 64);
         sprintf(strUid, strUidTemplate, layerinfo->uid, *uid);
         strUidLength = strlen(strUid);
     }
