@@ -1519,6 +1519,19 @@ int msPostGISLayerOpen(layerObj *layer) {
         /* Save this connection in the pool for later. */
         msConnPoolRegister(layer, layerinfo->pgconn, msPostGISCloseConnection);
     }
+    else {
+        /* Connection in the pool should be tested to see if backend is alive. */
+        if( PQstatus(layerinfo->pgconn) != CONNECTION_OK ) {
+            /* Uh oh, bad connection. Can we reset it? */
+            PQreset(layerinfo->pgconn);
+            if( PQstatus(layerinfo->pgconn) != CONNECTION_OK ) {
+                /* Nope, time to bail out. */
+                msSetError(MS_QUERYERR, "PostgreSQL database connection gone bad (%s)", "msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn));
+                return MS_FAILURE;
+            }
+            
+        }
+    }
 
     /* Save the layerinfo in the layerObj. */
     layer->layerinfo = (void*)layerinfo;
