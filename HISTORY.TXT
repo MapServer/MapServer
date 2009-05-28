@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- Fix filter error in multi-clause filters (#2937)
+
 - Fix agg freetype character lookup when no unicode charmap is present (#3018)
 
 - Fix memory leak in SQL building (#2997)
