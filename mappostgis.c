@@ -1197,9 +1197,12 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
 
     /* Populate strFilter, if necessary. */
     if ( layer->filter.string ) {
-        strFilter = strdup(layer->filter.string);
+        static char *strFilterTemplate = "(%s)";
+        strFilter = (char*)malloc(strlen(strFilterTemplate) + strlen(layer->filter.string));
+        sprintf(strFilter, strFilterTemplate, layer->filter.string);
         strFilterLength = strlen(strFilter);
     }
+
 
     /* Populate strUid, if necessary. */
     if ( uid ) {
