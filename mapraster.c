@@ -1398,10 +1398,12 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 
       if(status == MS_DONE) break; /* no more tiles/images */
        
-      if(layer->data == NULL || strlen(layer->data) == 0 ) /* assume whole filename is in attribute field */
-          strcpy( tilename, tshp.values[tileitemindex] );
-      else
-          sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
+      if(layer->data == NULL || strlen(layer->data) == 0 ) { /* assume whole filename is in attribute field */
+	(void) strncpy(tilename, tshp.values[tileitemindex], sizeof(tilename)-1);
+	tilename[sizeof(tilename)-1] = '\0';
+      } else {
+	snprintf(tilename, sizeof(tilename), "%s/%s", tshp.values[tileitemindex], layer->data);
+      }
       filename = tilename;
       
       msFreeShape(&tshp); /* done with the shape */
