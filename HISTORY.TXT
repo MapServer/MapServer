@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Support non-numeric join criteria (#2006)
+
 - Ensure there's enough room in the SQL to hold a long (#1284)
 
 - Fix filter error in multi-clause filters (#2937)

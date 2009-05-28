@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Postgres CONNECTIONTYPE support.
@@ -328,7 +328,7 @@ int msPOSTGRESQLJoinNext(joinObj *join) {
                     "msPOSTGRESQLJoinNext()");
             return MS_FAILURE;
         }
-        sprintf(sql, "SELECT %s FROM %s WHERE %s = %s", columns, join->table, join->to, joininfo->from_value);
+        sprintf(sql, "SELECT %s FROM %s WHERE %s = '%s'", columns, join->table, join->to, joininfo->from_value);
         if(joininfo->layer_debug) {
             msDebug("msPOSTGRESQLJoinNext(): executing %s.\n", sql);
         }
