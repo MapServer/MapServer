@@ -333,34 +333,69 @@ int msAddColorAGG(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
 #endif
 
 /************************************************************************/
+/*                        resetExtension()                              */
+/*                                                                      */
+/*      Adapted from GDAL's CPLResetExtension().                        */
+/************************************************************************/
+static char *resetExtension( const char *pszFilename, const char *pszNewExt )
+{
+  char *pszResult = (char*) malloc(strlen(pszFilename) + 1 + strlen(pszNewExt) + 1);
+  size_t  i;
+
+  strcpy(pszResult, pszFilename);
+
+  /* -------------------------------------------------------------------- */
+  /*      First, try and strip off any existing extension.                */
+  /* -------------------------------------------------------------------- */
+  for( i = strlen(pszResult) - 1; i > 0; i-- ) {
+    if( pszResult[i] == '.' ) {
+      pszResult[i] = '\0';
+      break;
+    }
+
+    if( pszResult[i] == '/' || pszResult[i] == '\\' || pszResult[i] == ':' )
+      break;
+  }
+
+  /* -------------------------------------------------------------------- */
+  /*      Append the new extension.                                       */
+  /* -------------------------------------------------------------------- */
+  strcat(pszResult, ".");
+  strcat(pszResult, pszNewExt);
+
+  return pszResult;
+}
+
+/************************************************************************/
 /*                           readWorldFile()                            */
 /*                                                                      */
 /*      Function to read georeferencing information for an image        */
 /*      from an ESRI world file.                                        */
 /************************************************************************/
 
-static int readWorldFile(char *filename, double *ulx, double *uly, double *cx, double *cy) {
+static int readWorldFile(const char *filename, double *ulx, double *uly, double *cx, double *cy) {
   FILE *stream;
   char *wld_filename;
   int i=0;
   char buffer[BUFLEN];
 
-  wld_filename = strdup(filename);
-
-  strcpy(strrchr(wld_filename, '.'), ".wld");
+  wld_filename = resetExtension(filename, "wld");
   stream = fopen(wld_filename, "r");
+  free(wld_filename);
   if(!stream) {
-    strcpy(strrchr(wld_filename, '.'), ".tfw");
+    wld_filename = resetExtension(filename, "tfw");
     stream = fopen(wld_filename, "r");
+    free(wld_filename);
     if(!stream) {
-      strcpy(strrchr(wld_filename, '.'), ".jgw");
+      wld_filename = resetExtension(filename, "jgw");
       stream = fopen(wld_filename, "r");
+      free(wld_filename);
       if(!stream) {
-        strcpy(strrchr(wld_filename, '.'), ".gfw");
+        wld_filename = resetExtension(filename, "gfw");
         stream = fopen(wld_filename, "r");
+        free(wld_filename);
         if(!stream) {	
 	  msSetError(MS_IOERR, "Unable to open world file for reading.", "readWorldFile()");
-	  free(wld_filename);
 	  return(-1);
         }
       }
@@ -389,7 +424,6 @@ static int readWorldFile(char *filename, double *ulx, double *uly, double *cx, d
   }
     
   fclose(stream);
-  free(wld_filename);
 
   return(0);
 }
