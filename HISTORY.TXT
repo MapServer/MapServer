@@ -11,8 +11,8 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version:
-----------------
+Version 5.4.1 (2009-06-02):
+---------------------------
 
 - Fix MapScript whichShapes() to respect filters AND return all items (#2689)
 
