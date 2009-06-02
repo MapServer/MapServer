@@ -156,10 +156,15 @@
 
     int whichShapes(rectObj rect)
     {
-        /* 
-        ** We assume folks use this like a simple query so retrieve all items with each shape.
-        */
-        if(msLayerWhichItems(self, MS_TRUE, MS_FALSE, NULL) != MS_SUCCESS) return MS_FAILURE;
+        int oldconnectiontype = self->connectiontype;
+        self->connectiontype = MS_INLINE;
+
+        if(msLayerWhichItems(self, MS_TRUE, MS_FALSE, NULL) != MS_SUCCESS) {
+            self->connectiontype = oldconnectiontype;
+            return MS_FAILURE;
+        }
+        self->connectiontype = oldconnectiontype;
+
         return msLayerWhichShapes(self, rect);
     }	
 
