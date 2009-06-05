@@ -1748,7 +1748,7 @@ MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);
 MS_DLL_EXPORT int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 
-MS_DLL_EXPORT void msFreeShape(shapeObj *shape); /* in mapprimative.c */
+MS_DLL_EXPORT void msFreeShape(shapeObj *shape); /* in mapprimitive.c */
 MS_DLL_EXPORT void msFreeLabelPathObj(labelPathObj *path);
 MS_DLL_EXPORT shapeObj *msShapeFromWKT(const char *string);
 MS_DLL_EXPORT char *msShapeToWKT(shapeObj *shape);
@@ -1774,6 +1774,7 @@ MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddPointToLine(lineObj *line, pointObj *point );
 MS_DLL_EXPORT double msGetPolygonArea(shapeObj *p);
+MS_DLL_EXPORT int msGetPolygonCentroid(shapeObj *p, pointObj *lp, double *miny, double *maxy);
 
 MS_DLL_EXPORT int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image); /* in mapraster.c */
 MS_DLL_EXPORT imageObj *msDrawReferenceMap(mapObj *map);

@@ -1034,7 +1034,7 @@ static int getPolygonCenterOfGravity(shapeObj *p, pointObj *lp)
   return MS_SUCCESS;
 }
 
-static int getPolygonCentroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
+int msGetPolygonCentroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
 {
   int i,j;
   double cent_weight_x=0.0, cent_weight_y=0.0;
@@ -1097,7 +1097,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
     lp->y = cp.y;
     break;
   case 1: /* centroid */
-    if(getPolygonCentroid(p, lp, &miny, &maxy) != MS_SUCCESS) return(MS_FAILURE);  
+    if(msGetPolygonCentroid(p, lp, &miny, &maxy) != MS_SUCCESS) return(MS_FAILURE);  
     break;
   case 2: /* center of gravity */
     if(getPolygonCenterOfGravity(p, lp) != MS_SUCCESS) return(MS_FAILURE);
