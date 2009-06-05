@@ -39,6 +39,7 @@
 #include "mapparser.h"
 #include "mapthread.h"
 #include "mapfile.h"
+#include "mapcopy.h"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -1785,3 +1786,61 @@ int msCheckParentPointer(void* p, char *objname) {
     return MS_SUCCESS;
 }
 
+/*
+** Issue #3043: Layer extent comparison short circuit.
+**
+** msExtentsOverlap()
+**
+** Returns MS_TRUE if map extent and layer extent overlap, 
+** MS_FALSE if they are disjoint, and MS_UNKNOWN if there is 
+** not enough info to calculate a deterministic answer.
+**
+*/
+int msExtentsOverlap(mapObj *map, layerObj *layer)
+{
+    rectObj map_extent;
+    rectObj layer_extent;
+    
+    /* No extent info? Nothing we can do, return MS_UNKNOWN. */
+    if( (map->extent.minx == -1) && (map->extent.miny == -1) && (map->extent.maxx == -1 ) && (map->extent.maxy == -1) ) return MS_UNKNOWN;
+    if( (layer->extent.minx == -1) && (layer->extent.miny == -1) && (layer->extent.maxx == -1 ) && (layer->extent.maxy == -1) ) return MS_UNKNOWN;
+        
+#ifdef USE_PROJ
+
+    /* No map projection? Let someone else sort this out. */
+    if( ! (map->projection.numargs > 0) ) 
+        return MS_UNKNOWN;
+
+    /* No layer projection? Perform naive comparison, because they are 
+    ** in the same projection. */
+    if( ! (layer->projection.numargs > 0) ) 
+        return msRectOverlap( &(map->extent), &(layer->extent) );
+    
+    /* We need to transform our rectangles for comparison, 
+    ** so we will work with copies and leave the originals intact. */
+    MS_COPYRECT(&map_extent, &(map->extent) );
+    MS_COPYRECT(&layer_extent, &(layer->extent) );
+
+    /* Transform map extents into geographics for comparison. */
+    if( msProjectRect(&(map->projection), &(map->latlon), &map_extent) )
+        return MS_UNKNOWN;
+        
+    /* Transform layer extents into geographics for comparison. */
+    if( msProjectRect(&(layer->projection), &(map->latlon), &layer_extent) )
+        return MS_UNKNOWN;
+
+    /* Simple case? Return simple answer. */
+    if ( map_extent.minx < map_extent.maxx && layer_extent.minx < layer_extent.maxx )
+        return msRectOverlap( &(map_extent), &(layer_extent) );
+        
+    /* Uh oh, one of the rects crosses the dateline!
+    ** Let someone else handle it. */
+    return MS_UNKNOWN;
+   
+#else
+    /* No proj? Naive comparison. */
+    if( msRectOverlap( &(map->extent), &(layer->extent) ) return MS_TRUE;
+    return MS_FALSE;
+#endif
+
+}

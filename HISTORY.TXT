@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- Do pre-emptive test for map.extent/layer.extent interaction (#3043)
+
 - Add centroid geomtransform (#2825)
 
 - Test database connections before using them (#2932)

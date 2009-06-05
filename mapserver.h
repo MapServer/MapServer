@@ -136,6 +136,7 @@ extern "C" {
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
+#define MS_UNKNOWN -1
 #define MS_ON 1
 #define MS_OFF 0
 #define MS_DEFAULT 2
@@ -2028,6 +2029,9 @@ MS_DLL_EXPORT int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image
 /* ==================================================================== */
 /*      Prototypes for functions in maputil.c                           */
 /* ==================================================================== */
+
+MS_DLL_EXPORT int msExtentsOverlap(mapObj *map, layerObj *layer);
+
 /* For mappdf */
 MS_DLL_EXPORT int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); /* maputil.c */
 MS_DLL_EXPORT int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode);

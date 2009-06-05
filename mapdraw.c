@@ -616,6 +616,11 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 
   if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_FALSE);
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_FALSE);
+
+  /* Only return MS_FALSE if it is definitely false. Sometimes it will return MS_UNKNOWN, which we 
+  ** consider true, for this use case (it might be visible, try and draw it, see what happens). */
+  if ( msExtentsOverlap(map, layer) == MS_FALSE ) return(MS_FALSE);  
+  
   if(msEvalContext(map, layer, layer->requires) == MS_FALSE) return(MS_FALSE);
 
   if(map->scaledenom > 0) {
