@@ -219,6 +219,62 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->renderer = MS_RENDER_WITH_AGG;
     }
 #endif
+    
+#if defined(USE_CAIRO)
+    if( strcasecmp(driver,"CAIRO/PNG") == 0 )
+    {
+        format = msAllocOutputFormat( map, "cairopng", driver );
+        format->mimetype = strdup("image/png; mode=24bit");
+        format->imagemode = MS_IMAGEMODE_RGB;
+        format->extension = strdup("png");
+        format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
+        format->r = msCreateRenderer(MS_RENDER_WITH_CAIRO_RASTER);
+    }
+    if( strcasecmp(driver,"CAIRO/JPEG") == 0 )
+    {
+        format = msAllocOutputFormat( map, "cairojpeg", driver );
+        format->mimetype = strdup("image/jpeg");
+        format->imagemode = MS_IMAGEMODE_RGB;
+        format->extension = strdup("jpg");
+        format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
+        format->r = msCreateRenderer(MS_RENDER_WITH_CAIRO_RASTER);
+    }
+    if( strcasecmp(driver,"CAIRO/PDF") == 0 )
+	{
+		format = msAllocOutputFormat( map, "cairopdf", driver );
+		format->mimetype = strdup("application/x-pdf");
+		format->imagemode = MS_IMAGEMODE_RGB;
+		format->extension = strdup("pdf");
+		format->renderer = MS_RENDER_WITH_CAIRO_VECTOR;
+		format->r = msCreateRenderer(MS_RENDER_WITH_CAIRO_VECTOR);
+	}
+    if( strcasecmp(driver,"CAIRO/SVG") == 0 )
+	{
+		format = msAllocOutputFormat( map, "cairosvg", driver );
+		format->mimetype = strdup("image/svg+xml");
+		format->imagemode = MS_IMAGEMODE_RGB;
+		format->extension = strdup("svg");
+		format->renderer = MS_RENDER_WITH_CAIRO_VECTOR;
+		format->r = msCreateRenderer(MS_RENDER_WITH_CAIRO_VECTOR);
+	}
+    
+    
+#endif
+
+#if defined(USE_OGL) 
+    if( strcasecmp(driver,"OGL/PNG") == 0 ) 
+    { 
+        format = msAllocOutputFormat( map, "oglpng24", driver ); 
+        format->mimetype = strdup("image/png; mode=24bit"); 
+        format->imagemode = MS_IMAGEMODE_RGB; 
+        format->extension = strdup("png"); 
+        format->renderer = MS_RENDER_WITH_OGL; 
+        format->r = msCreateRenderer(MS_RENDER_WITH_OGL); 
+    } 
+#endif 
+ 
+    
+
 #ifdef USE_MING_FLASH
     if( strcasecmp(driver,"swf") == 0 )
     {
@@ -321,6 +377,19 @@ void msApplyDefaultOutputFormats( mapObj *map )
 
     if( msSelectOutputFormat( map, "aggjpeg" ) == NULL )
         msCreateDefaultOutputFormat( map, "AGG/JPEG" );
+    
+    if( msSelectOutputFormat( map, "cairopng" ) == NULL )
+        msCreateDefaultOutputFormat( map, "CAIRO/PNG" );
+
+    if( msSelectOutputFormat( map, "cairojpeg" ) == NULL )
+        msCreateDefaultOutputFormat( map, "CAIRO/JPEG" );
+    
+    if( msSelectOutputFormat( map, "cairopdf" ) == NULL )
+        msCreateDefaultOutputFormat( map, "CAIRO/PDF" );
+    
+    if( msSelectOutputFormat( map, "cairosvg" ) == NULL )
+        msCreateDefaultOutputFormat( map, "CAIRO/SVG" );
+
 
     if( msSelectOutputFormat( map, "swf" ) == NULL )
         msCreateDefaultOutputFormat( map, "swf" );
@@ -336,6 +405,17 @@ void msApplyDefaultOutputFormats( mapObj *map )
 
     if( msSelectOutputFormat( map, "svg" ) == NULL )
         msCreateDefaultOutputFormat( map, "svg" );
+
+#if defined(USE_CAIRO)
+    if( msSelectOutputFormat( map, "cairopng24" ) == NULL )
+        msCreateDefaultOutputFormat( map, "CAIRO/PNG" );
+    if( msSelectOutputFormat( map, "cairojpeg" ) == NULL )
+        msCreateDefaultOutputFormat( map, "CAIRO/JPEG" );
+    if( msSelectOutputFormat( map, "cairopdf" ) == NULL )
+        msCreateDefaultOutputFormat( map, "CAIRO/PDF" );
+    if( msSelectOutputFormat( map, "cairosvg" ) == NULL )
+        msCreateDefaultOutputFormat( map, "CAIRO/SVG" );
+#endif
 
     if( map->imagetype != NULL )
         free( map->imagetype );
@@ -357,7 +437,7 @@ void msFreeOutputFormat( outputFormatObj *format )
     msFree( format->driver );
     msFree( format->extension );
     msFreeCharArray( format->formatoptions, format->numformatoptions );
-
+    msFree( format->r);
     msFree( format );
 }
 
@@ -388,7 +468,7 @@ static outputFormatObj *msAllocOutputFormat( mapObj *map, const char *name,
     format->name = strdup(name);
     format->driver = strdup(driver);
     format->refcount = 0;
-
+    format->r = NULL;
     format->imagemode = MS_IMAGEMODE_PC256;
 
 /* -------------------------------------------------------------------- */
@@ -672,7 +752,8 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *src )
 
     dst->imagemode = src->imagemode;
     dst->renderer = src->renderer;
-
+    dst->r = src->r;
+    
     dst->transparent = src->transparent;
     dst->bands = src->bands;
 
@@ -919,4 +1000,95 @@ int msOutputFormatValidate( outputFormatObj *format )
         format->renderer = MS_RENDER_WITH_RAWDATA;
 
     return result;
+}
+
+renderObj* msCreateRenderer(int type) {
+    renderObj *r = malloc(sizeof(renderObj));
+    switch(type) {
+#ifdef USE_CAIRO
+    case MS_RENDER_WITH_CAIRO_RASTER:
+        r->supports_imagecache=0;
+        r->supports_pixel_buffer=1;
+        r->supports_transparent_layers = 1;
+        r->startNewLayer = startNewLayerCairo;
+        r->closeNewLayer = closeNewLayerCairo;
+        r->renderLine=&renderLineCairo;
+        r->createImage=&createImageCairo;
+        r->saveImage=&saveImageCairo;
+        r->getRasterBuffer=&getRasterBufferCairo;
+        r->transformShape=&msTransformShapeAGG;
+        r->renderPolygon=&renderPolygonCairo;
+        r->renderGlyphsLine=&renderGlyphsLineCairo;
+        r->renderGlyphs=&renderGlyphsCairo;
+        r->freeImage=&freeImageCairo;
+        r->renderEllipseSymbol = &renderEllipseSymbolCairo;
+        r->renderVectorSymbol = &renderVectorSymbolCairo;
+        r->renderTruetypeSymbol = &renderTruetypeSymbolCairo;
+        r->renderPixmapSymbol = &renderPixmapSymbolCairo;
+        r->mergeRasterBuffer = &mergeRasterBufferCairo;
+        r->getTruetypeTextBBox = &getTruetypeTextBBoxCairo;
+        r->renderTile = &renderTileCairo;
+        r->renderPolygonTiled = &renderPolygonTiledCairo;
+        r->freeTile = &freeTileCairo;
+        r->freeSymbol = &freeSymbolCairo;
+        return r;
+    case MS_RENDER_WITH_CAIRO_VECTOR:
+        r->supports_imagecache=0;
+        r->supports_pixel_buffer=0;
+        r->supports_transparent_layers = 1;
+    	r->startNewLayer = startNewLayerCairo;
+    	r->closeNewLayer = closeNewLayerCairo;
+        r->renderLine=&renderLineCairo;
+        r->createImage=&createImageCairo;
+        r->saveImage=&saveImageCairo;
+        r->getRasterBuffer=&getRasterBufferCairo;
+        r->transformShape=&msTransformShapeAGG;
+        r->renderPolygon=&renderPolygonCairo;
+        r->renderGlyphsLine=&renderGlyphsLineCairo;
+        r->renderGlyphs=&renderGlyphsCairo;
+        r->freeImage=&freeImageCairo;
+        r->renderEllipseSymbol = &renderEllipseSymbolCairo;
+        r->renderVectorSymbol = &renderVectorSymbolCairo;
+        r->renderTruetypeSymbol = &renderTruetypeSymbolCairo;
+        r->renderPixmapSymbol = &renderPixmapSymbolCairo;
+        r->mergeRasterBuffer = &mergeRasterBufferCairo;
+        r->getTruetypeTextBBox = &getTruetypeTextBBoxCairo;
+        r->renderTile = &renderTileCairo;
+        r->renderPolygonTiled = &renderPolygonTiledCairo;
+        r->freeTile = &freeTileCairo;
+        r->freeSymbol = &freeSymbolCairo;
+        return r;
+#endif
+#ifdef USE_OGL
+    case MS_RENDER_WITH_OGL:
+    	r->supports_transparent_layers = 1;
+    	r->startNewLayer = msStartNewLayerOgl;
+    	r->closeNewLayer = msCloseNewLayerOgl;
+        r->renderLine=&msDrawLineOgl;
+        r->createImage=&msImageCreateOgl;
+        r->saveImage=&msSaveImageOgl;
+        r->transformShape=&msTransformShapeAGG;
+        r->renderPolygon=&msDrawPolygonOgl;
+        r->renderGlyphs=&msRenderGlyphsOgl;
+        r->renderEllipseSymbol = &msRenderEllipseOgl;
+        r->renderVectorSymbol = &msRenderVectorSymbolOgl;
+        r->renderPixmapSymbol = &msRenderPixmapOgl;
+        r->mergeRasterBuffer = &msMergeImagesOgl;
+        r->getTruetypeTextBBox = &msGetTruetypeTextBBoxOgl;
+        r->createPixmapSymbolTile = &msCreateTilePixmapOgl;
+        r->createVectorSymbolTile = &msCreateTileVectorOgl;
+        r->createEllipseSymbolTile = &msCreateTileEllipseOgl;
+        r->createTruetypeSymbolTile = &msCreateTileTruetypeOgl;
+        r->renderTile = &msRenderTileOgl;
+        r->renderPolygonTiled = &msDrawPolygonTiledOgl;
+        r->renderLineTiled = &msDrawLineTiledOgl;
+        r->freeTile = &msFreeTileOgl;
+        r->freeSymbol = &msFreeSymbolOgl;
+        r->freeImage=&msFreeImageOgl;
+        return r;
+#endif
+
+    default:
+        return NULL;
+    }
 }

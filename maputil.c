@@ -652,7 +652,30 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 
     if (img)
     {
-        if( MS_DRIVER_GD(img->format) )
+        if (MS_RENDERER_PLUGIN(img->format)) {
+            renderObj *r = img->format->r;
+            FILE *stream;
+            if(filename) 
+                stream = fopen(msBuildPath(szPath, map->mappath, filename),"wb");
+            else {
+                if ( msIO_needBinaryStdout() == MS_FAILURE )
+                    return MS_FAILURE;
+                stream = stdout;
+            }
+            if(!stream)
+                return MS_FAILURE;
+            if(r->supports_pixel_buffer) {
+                rasterBufferObj data;
+                r->getRasterBuffer(img,&data);
+
+                msSaveRasterBuffer(&data,stream,img->format );
+            } else {
+                r->saveImage(img, stream, img->format);
+            }
+            fclose(stream);
+            return MS_SUCCESS;
+        }
+    	else if( MS_DRIVER_GD(img->format) )
         {
             if(map != NULL && filename != NULL )
                 nReturnVal = msSaveImageGD(img->img.gd, 
@@ -748,8 +771,22 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj *format)
 {
     *size_ptr = 0;
-	
-	if( MS_DRIVER_GD(image->format) )
+    if( MS_RENDERER_PLUGIN(image->format)){
+        rasterBufferObj data;
+        renderObj *r = image->format->r;
+        if(r->supports_pixel_buffer) {
+            bufferObj buffer;
+            msBufferInit(&buffer);
+            r->getRasterBuffer(image,&data);
+            msSaveRasterBufferToBuffer(&data,&buffer,format);
+            return buffer.data;
+            //don't free the bufferObj as we don't own the bytes anymore
+        } else {
+	        msSetError(MS_MISCERR, "Unsupported image type", "msSaveImageBuffer()");
+            return NULL;
+        }
+    }
+    else if( MS_DRIVER_GD(image->format) )
     {
         return msSaveImageBufferGD(image->img.gd, size_ptr, format);
     }
@@ -771,7 +808,21 @@ void msFreeImage(imageObj *image)
 {
     if (image)
     {
-        if( MS_RENDERER_GD(image->format) ) {
+        if(MS_RENDERER_PLUGIN(image->format)) {
+            renderObj *r = image->format->r;
+            if(r->supports_imagecache) {
+                tileCacheObj *next,*cur = image->tilecache;
+                while(cur) {
+                    r->freeTile(cur->data);
+                    next = cur->next;
+                    free(cur);
+                    cur = next;
+                }
+                image->ntiles = 0;
+            }
+        	image->format->r->freeImage(image);
+        }
+        else if( MS_RENDERER_GD(image->format) ) {
             if( image->img.gd != NULL )
                 msFreeImageGD(image->img.gd);
 #ifdef USE_AGG
@@ -1318,12 +1369,30 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
                         char *imagepath, char *imageurl, mapObj *map)
 {
     imageObj *image = NULL;
-
     if( MS_RENDERER_GD(format) )
     {
         image = msImageCreateGD(width, height, format,
                                 imagepath, imageurl, map->resolution);
         if( image != NULL && map) msImageInitGD( image, &map->imagecolor );
+    }
+    else if(MS_RENDERER_PLUGIN(format)) {
+    	image = format->r->createImage(width,height,format,&map->imagecolor);
+    	image->format = format;
+		format->refcount++;
+
+		image->width = width;
+		image->height = height;
+		image->imagepath = NULL;
+		image->imageurl = NULL;
+        image->tilecache = NULL;
+        image->ntiles = 0;
+
+		if (imagepath)
+			image->imagepath = strdup(imagepath);
+		if (imageurl)
+			image->imageurl = strdup(imageurl);
+
+		return image;
     }
 #ifdef USE_AGG
     else if( MS_RENDERER_AGG(format) )
@@ -1424,7 +1493,11 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize, 
                        imageObj *image)   
 {
+	if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
+		image->format->r->transformShape(shape, extent, cellsize);
 
+		return;
+	}
 #ifdef USE_MING_FLASH
     if (image != NULL && MS_RENDERER_SWF(image->format) )
     {
@@ -1784,6 +1857,39 @@ int msCheckParentPointer(void* p, char *objname) {
         return MS_FAILURE;
     }
     return MS_SUCCESS;
+}
+
+inline void msBufferInit(bufferObj *buffer) {
+    buffer->data=NULL;
+    buffer->size=0;
+    buffer->available=0;
+    buffer->_next_allocation_size = MS_DEFAULT_BUFFER_ALLOC;
+}
+
+inline void msBufferResize(bufferObj *buffer, size_t target_size){
+    while(buffer->available <= target_size) {
+        buffer->data = realloc(buffer->data,buffer->available+buffer->_next_allocation_size);
+        buffer->available += buffer->_next_allocation_size;
+        buffer->_next_allocation_size *= 2;
+    }
+}
+
+inline void msBufferAppend(bufferObj *buffer, void *data, size_t length) {
+    if(buffer->available < buffer->size+length) {
+        msBufferResize(buffer,buffer->size+length);
+    }
+    memcpy(&(buffer->data[buffer->size]),data,length);
+    buffer->size += length;
+}
+
+inline void msBufferFree(bufferObj *buffer) {
+    if(buffer->available>0)
+        free(buffer->data);
+}
+
+
+void msFreeRasterBuffer(rasterBufferObj *b) {
+    msFree(b->pixelbuffer);
 }
 
 /*

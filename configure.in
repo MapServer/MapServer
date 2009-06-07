@@ -87,7 +87,8 @@ dnl ---------------------------------------------------------------------
 AC_MSG_CHECKING(if pkg-config path is provided)
 
 AC_ARG_WITH(pkg-config,
-[  --with-pkg-config[[=PATH]]      Include pkg-config support (PATH is path to pkg-config)],,)
+[  --with-pkg-config[[=PATH]]
+                          Include pkg-config support (PATH is path to pkg-config)],,)
 
 if test -n "$with_pkg_config" -a "$with_pkg_config" != "no" ; then
 
@@ -523,7 +524,8 @@ unset ac_cv_lib_gd_gdFontCacheSetup
 
 AC_CHECKING(for GD 2.0.16 or higher)
 AC_ARG_WITH(gd,
-[  --with-gd[[=[static,]DIR]] Specify which version of GD to use (DIR is GD's
+[  --with-gd[[=[static,]DIR]]
+                          Specify which version of GD to use (DIR is GD's
                           install dir).],,)
 
 if test "$with_gd" = "no" ; then
@@ -832,6 +834,121 @@ dnl Restore LIBS environment to state at beginning of PDF tests.
 LIBS="$ms_saved_LIBS"
 
 dnl ---------------------------------------------------------------------
+dnl FTGL Support.
+dnl ---------------------------------------------------------------------
+
+AC_MSG_CHECKING(if FTGL support requested)
+AC_ARG_WITH(ftgl,
+[  --with-ftgl[[=DIR]]       Include OpenGl support (DIR is OpenGL's install dir).],,)
+
+if test "$with_ftgl" = "yes" ; then
+  with_ftgl="/usr"
+  AC_MSG_RESULT([looking for ftgl libs in /usr])
+fi
+if test -n "$with_ftgl" -a "$with_ftgl" != "no" ; then
+
+  AC_EXPAND_PATH($with_ftgl, FTGL_DIR)
+
+  test -f $FTGL_DIR/include/FTGL/ftgl.h -a -f $FTGL_DIR/include/FTGL/FTGLTextureFont.h && FTGL_INCLUDE="-I$FTGL_DIR/include/FTGL/"
+
+  if test -z "$FTGL_INCLUDE" ; then
+      AC_MSG_ERROR("could not find ftgl.h in $FTGL_DIR/include/FTGL.")
+  fi
+  
+  test -f $FTGL_DIR/lib/libftgl.so && FTGL_LIBDIR="$FTGL_DIR/lib"
+  test -f $FTGL_DIR/lib64/libftgl.so && FTGL_LIBDIR="$FTGL_DIR/lib64"
+   
+  if test -z "$FTGL_LIBDIR" ; then
+      AC_MSG_ERROR("could not find libftgl in $FTGL_DIR.")
+  fi
+
+  
+
+  dnl If we got this far all is well!
+  FTGL_ENABLED="-DUSE_FTGL"
+  FTGL_INC="$FTGL_INCLUDE"
+  FTGL_LIB="-L$FTGL_LIBDIR -lftgl"
+  AC_ADD_RUNPATH("$FTGL_LIBDIR")
+  
+  AC_MSG_RESULT([using ftgl from $FTGL_DIR])
+  
+else
+
+  AC_MSG_RESULT([no])
+
+fi
+
+AC_SUBST(FTGL_ENABLED,$FTGL_ENABLED)
+AC_SUBST(FTGL_INC,    $FTGL_INC)
+AC_SUBST(FTGL_LIB,    $FTGL_LIB)
+
+
+ALL_ENABLED="$FTGL_ENABLED $ALL_ENABLED"
+ALL_INC="$FTGL_INC $ALL_INC"
+ALL_LIB="$FTGL_LIB $ALL_LIB"
+
+
+dnl ---------------------------------------------------------------------
+dnl Optional OGL Support.
+dnl ---------------------------------------------------------------------
+
+AC_MSG_CHECKING(if OGL support requested)
+AC_ARG_WITH(ogl,
+[  --with-opengl[[=DIR]]     Include OpenGl support (DIR is OpenGL's install dir).],,)
+
+if test "$with_opengl" = "yes" ; then
+
+  with_opengl="/usr"
+  AC_MSG_RESULT([looking for opengl libs in /usr])
+fi
+if test -n "$with_opengl" -a "$with_opengl" != "no" ; then
+
+  if test -n "$FTGL_LIB" ; then
+     FT_INC=`$FTGL_LIB --cflags`
+  else
+     AC_MSG_ERROR([FTGL required for opengl support - please configure --with-ftgl.])
+  fi
+  
+  AC_EXPAND_PATH($with_opengl, OGL_DIR)
+
+  test -f $OGL_DIR/include/GL/gl.h -a -f $OGL_DIR/include/GL/glx.h -a -f $OGL_DIR/include/GL/glu.h && OGL_INCLUDE="-I$OGL_DIR/include"
+
+  if test -z "$OGL_INCLUDE" ; then
+      AC_MSG_ERROR("could not find gl.h in $OGL_DIR/include/.")
+  fi
+  
+  test -f $OGL_DIR/lib/libGL.so -a -f $OGL_DIR/lib/libGLU.so && OGL_LIBDIR="$OGL_DIR/lib"
+   
+  if test -z "$OGL_LIBDIR" ; then
+      AC_MSG_ERROR("could not find libGL or libGLU in $OGL_DIR/lib/.")
+  fi
+
+  
+
+  dnl If we got this far all is well!
+  OGL_ENABLED="-DUSE_OGL"
+  OGL_INC="$OGL_INCLUDE"
+  OGL_LIB="-L$OGL_LIBDIR -lGL -lGLU"
+  AC_ADD_RUNPATH("$OGL_LIBDIR")
+  
+  AC_MSG_RESULT([using opengl from $OGL_DIR])
+  
+else
+
+  AC_MSG_RESULT([no])
+
+fi
+
+AC_SUBST(OGL_ENABLED,$OGL_ENABLED)
+AC_SUBST(OGL_INC,    $OGL_INC)
+AC_SUBST(OGL_LIB,    $OGL_LIB)
+
+
+ALL_ENABLED="$OGL_ENABLED $ALL_ENABLED"
+ALL_INC="$OGL_INC $ALL_INC"
+ALL_LIB="$OGL_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
 dnl Optional AGG Support.
 dnl ---------------------------------------------------------------------
 
@@ -880,7 +997,7 @@ dnl ---------------------------------------------------------------------
 
 AC_MSG_CHECKING(if RGBA palette png support requested)
 AC_ARG_WITH(experimental-png,
-[  --with-experimental-png       Include experimental palette support for rgba png.],,)
+[  --with-experimental-png Include experimental palette support for rgba png.],,)
 
 if test -z "$with_experimental_png" -o "$with_experimental_png" = "no" ; then
   AC_MSG_RESULT([no])
@@ -1070,8 +1187,8 @@ AC_ARG_WITH(sde,
 [  --with-sde[[=DIR]]        Include ESRI SDE support (DIR is SDE's install dir).],,)
 
 AC_ARG_WITH(sde-version,
-[  --with-sde-version[[=VERSION NUMBER]]  Set ESRI SDE version number (Default
-                          is 91).],SDE_VERSION=$with_sde_version,SDE_VERSION=91)
+[  --with-sde-version[[=VERSION NUMBER]]
+                          Set ESRI SDE version number (Default is 91).],SDE_VERSION=$with_sde_version,SDE_VERSION=91)
 
 if test -z "$SDE_VERSION" -o `expr "$SDE_VERSION" \>\= 92` = 1; then
 SDE_VERSION=""
@@ -1505,7 +1622,8 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if OracleSpatial support requested)
 AC_ARG_WITH(oraclespatial,
-[  --with-oraclespatial[[=ARG]] Include OracleSpatial Support (ARG=yes/path to
+[  --with-oraclespatial[[=ARG]]
+                          Include OracleSpatial Support (ARG=yes/path to
                           Oracle home)],,)
 
 if test "$with_oraclespatial" = "no" -o "$with_oraclespatial" = ""; then
@@ -1904,7 +2022,8 @@ dnl ---------------------------------------------------------------------------
 AC_MSG_CHECKING(if FriBidi support requested)
 
 AC_ARG_WITH(fribidi-config,
-[  --with-fribidi-config[[=ARG]] Include FriBidi Support (ARG=yes/path to 
+[  --with-fribidi-config[[=ARG]]
+                          Include FriBidi Support (ARG=yes/path to 
                           fribidi-config or fribidi.pc)],,)
 
 if test "$with_fribidi_config" = "no" -o "$with_fribidi_config" = "" ; then
@@ -1959,6 +2078,57 @@ AC_SUBST(FRIBIDI_LIB,$FRIBIDI_LIB)
 ALL_ENABLED="$FRIBIDI_ENABLED $ALL_ENABLED"
 ALL_INC="$FRIBIDI_INC $ALL_INC"
 ALL_LIB="$FRIBIDI_LIB $ALL_LIB"
+
+
+dnl ---------------------------------------------------------------------------
+dnl Look for Cairo if requested.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(if Cairo support requested)
+
+AC_ARG_WITH(cairo,
+[  --with-cairo[[=ARG]]      Include Cairo Support (ARG=yes/path to cairo.pc)],,)
+
+if test "$with_cairo" = "no" -o "$with_cairo" = "" ; then
+  AC_MSG_RESULT(no)
+  CAIRO_CONFIG="no"
+
+elif test "$with_cairo" = "yes" ; then
+  AC_MSG_RESULT(yes)
+  if test "$PKG_CONFIG" != "no" ; then 
+     AC_MSG_CHECKING(for cairo pkg-config path)
+     `$PKG_CONFIG --silence-errors -- cairo cairo-ft cairo-svg cairo-pdf cairo-png >> /dev/null`
+     if test $? -eq 0 ; then
+        AC_MSG_RESULT(yes)
+        CAIRO_CONFIG="cairo cairo-ft cairo-svg cairo-pdf cairo-png"
+     else
+       AC_MSG_ERROR([cairo support requested, but not found.Try installing the cairo development headers])
+     fi
+  else
+    AC_MSG_ERROR([pkg-config required for cairo support, try using --with-pkg-config=PATH])
+  fi 
+else
+  CAIRO_CONFIG=$with_cairo_config
+fi
+
+if test "$CAIRO_CONFIG" = "no" ; then 
+  CAIRO_ENABLED=
+  CAIRO_INC=
+  CAIRO_LIB=
+else
+  AC_MSG_RESULT([yes, pkg-config defaults, or user supplied path to cairo.pc])
+  CAIRO_ENABLED="-DUSE_CAIRO"
+  CAIRO_LIB=`$PKG_CONFIG --libs $CAIRO_CONFIG`
+  CAIRO_INC=`$PKG_CONFIG --cflags $CAIRO_CONFIG`
+fi
+
+AC_SUBST(CAIRO_ENABLED,$CAIRO_ENABLED)
+AC_SUBST(CAIRO_INC,$CAIRO_INC)
+AC_SUBST(CAIRO_LIB,$CAIRO_LIB)
+
+ALL_ENABLED="$CAIRO_ENABLED $ALL_ENABLED"
+ALL_INC="$CAIRO_INC $ALL_INC"
+ALL_LIB="$CAIRO_LIB $ALL_LIB"
 
 
 dnl ---------------------------------------------------------------------
@@ -2074,9 +2244,10 @@ dnl Check IGNORE_MISSING_DATA option (OFF by default)
 dnl ---------------------------------------------------------------------
 
 AC_ARG_ENABLE(ignore-missing-data,
-[  --enable-ignore-missing-data   Ignore missing data file errors at runtime
-  --disable-ignore-missing-data  Report all missing data files (enabled by 
-                                 default).],,)
+[  --enable-ignore-missing-data
+                          Ignore missing data file errors at runtime
+  --disable-ignore-missing-data
+                          Report all missing data files (enabled by default).],,)
 if test "$enable_ignore_missing_data" = "yes" ; then
 
   IGNORE_MISSING_DATA="-DIGNORE_MISSING_DATA"
@@ -2216,7 +2387,8 @@ AC_ARG_WITH(php,
                           module.],,)
 
 AC_ARG_ENABLE(internal-ld-detect,
-[  --enable-perlv-ld-detect (applies to --with-php only) 
+[  --enable-perlv-ld-detect
+                          (applies to --with-php only) 
                           Use perl -V output to figure the command to use to 
                           link php_mapscript.so.  Try this only if the default
                           internal macro didn't work.],,)
@@ -2521,12 +2693,14 @@ AC_MSG_RESULT([  Debug:                     ${REPORT_ENABLE_DEBUG}${DEBUG_FLAGS}
 AC_MSG_RESULT([  Generic NINT:              ${USE_NINT}])
 AC_MSG_RESULT()
 AC_MSG_RESULT([ -------------- Renderer Settings --------- ])
+AC_MSG_RESULT([  OpenGL support:            ${OGL_ENABLED}])
 AC_MSG_RESULT([  zlib support:              ${ZLIB_ENABLED}])
 AC_MSG_RESULT([  png support:               ${PNG_SETTING}])
 AC_MSG_RESULT([  palette rgba png support:  ${RGBA_PNG_ENABLED}])
 AC_MSG_RESULT([  jpeg support:              ${JPEG_ENABLED}])
 AC_MSG_RESULT([  iconv support:             ${ICONV_ENABLED}])
 AC_MSG_RESULT([  AGG support:               ${AGG_ENABLED}])
+AC_MSG_RESULT([  Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}])
 AC_MSG_RESULT([  Ming(flash) support:       ${MING_ENABLED}])
 AC_MSG_RESULT([  PDFLib support:            ${PDF_ENABLED}])
 AC_MSG_RESULT()

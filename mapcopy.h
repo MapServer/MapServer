@@ -66,6 +66,7 @@
         (_dst)->red   = (_src)->red;  \
         (_dst)->green = (_src)->green;\
         (_dst)->blue  = (_src)->blue; \
+        (_dst)->alpha  = (_src)->alpha; \
     MS_MACROEND
 
 #define MS_COPYSTRING(_dst, _src)     \

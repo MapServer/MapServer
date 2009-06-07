@@ -86,6 +86,7 @@ Optional Packages:
   --without-pdf           Disable PDF support.
   --with-pdf[=DIR]        Include PDF support (DIR is PDFlib's install dir).
   --with-agg[=DIR]        Include AGG support (DIR is AGG's install dir).
+  --with-cairo            Include Cairo support (PDF and SVG support)
   --without-eppl          Disable EPPL7 support.
   --with-eppl             Include EPPL7 support.
   --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
@@ -478,6 +479,18 @@ For this reason you should make sure that your PDFLib is configured
 using '--with-pnglib --with-zlib' which will force PDFLib to use the 
 system verison of libpng and zlib.
 
+
+CAIRO Support:
+--------------
+
+::
+  --without-cairo         Disable Cairo support (default)
+  --with-cairo[=/path/to/cairo.pc] Enable Cairo Support
+
+- Cairo support is required for PDF or SVG output
+- pkg-config is used to obtain the compilation options for cairo. If your
+  libs and headers are installed in a non-standard location, you can pass
+  the full path to the cairo.pc configuration package
 
 OGC WMS Server Compatibility:
 -----------------------------

@@ -371,7 +371,13 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYCOLOR(&(dst->maxcolor), &(src->maxcolor));
 
     MS_COPYSTRING(dst->symbolname, src->symbolname);
-
+    MS_COPYSTELEM(patternlength);
+    for(i=0;i<src->patternlength;i++)
+        dst->pattern[i]=src->pattern[i];
+    MS_COPYSTELEM(gap);
+    MS_COPYSTELEM(linejoin);
+    MS_COPYSTELEM(linejoinmaxsize);
+    MS_COPYSTELEM(linecap);
     MS_COPYSTELEM(symbol);
     MS_COPYSTELEM(size);
     MS_COPYSTELEM(minsize);

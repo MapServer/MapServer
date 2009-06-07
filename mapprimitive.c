@@ -97,6 +97,7 @@ void msInitShape(shapeObj *shape)
   shape->numvalues = 0;
 
   shape->geometry = NULL;
+  shape->renderer_cache = NULL;
 
   /* annotation component */
   shape->text = NULL;

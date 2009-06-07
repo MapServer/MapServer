@@ -119,7 +119,7 @@ typedef mapserver::rasterizer_scanline_aa<> rasterizer_scanline;
 ///@param stroke the stroke to which we apply the styling
 ///@param symbol the symbolobj which may contain the styling info
 template<class VertexSource>
-static void strokeFromSymbol(VertexSource &stroke, symbolObj *symbol) {
+static void strokeFromSymbol(VertexSource &stroke, styleObj *symbol) {
     switch(symbol->linejoin) {
     case MS_CJC_ROUND:
         stroke.line_join(mapserver::round_join);
@@ -1163,7 +1163,7 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         } else  { //symbol is a line, convert to a stroke to apply the width to the line
             mapserver::conv_stroke <mapserver::path_storage > stroke(path);
             stroke.width(width);
-            strokeFromSymbol(stroke,symbol);
+            strokeFromSymbol(stroke,style);
             ren->renderPathTiled(circle,stroke,pw,ph,agg_color,agg_bcolor);
             ren->renderPathSolid(circle,AGG_NO_COLOR,agg_ocolor,width);
         }
@@ -1635,8 +1635,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         //read caps and joins from symbol
         enum mapserver::line_cap_e lc=mapserver::round_cap;
         enum mapserver::line_join_e lj=mapserver::round_join;
-        if(symbol->type==MS_SYMBOL_SIMPLE) {
-            switch(symbol->linejoin) {
+        switch(style->linejoin) {
             case MS_CJC_ROUND:
                 lj=mapserver::round_join;
                 break;
@@ -1646,8 +1645,8 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
             case MS_CJC_BEVEL:
                 lj=mapserver::bevel_join;
                 break;
-            }
-            switch(symbol->linecap) {
+        }
+        switch(style->linecap) {
             case MS_CJC_BUTT:
                 lc=mapserver::butt_cap;
                 break;
@@ -1657,7 +1656,6 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
             case MS_CJC_SQUARE:
                 lc=mapserver::square_cap;
                 break;
-            }
         }
         ren->renderPolyline(*lines,*color,nwidth,symbol->patternlength,symbol_pattern,lc,lj);
     }
@@ -1710,7 +1708,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
                 //with an optional background
                 mapserver::conv_stroke <mapserver::path_storage > stroke(path);
                 stroke.width(width);            
-                strokeFromSymbol(stroke,symbol);             
+                strokeFromSymbol(stroke,style);             
                 ren->renderPolylineVectorSymbol(*lines,stroke,pw,ph,*color,agg_bcolor);
             }
             if(bRotated) { /* free the rotated symbol */
@@ -1878,7 +1876,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 mapserver::conv_stroke <mapserver::path_storage > stroke(path);
                 stroke.width(width);
                 //apply symbol caps and joins
-                strokeFromSymbol(stroke,symbol);             
+                strokeFromSymbol(stroke,style);             
                 ren->renderPathTiled(*polygons,stroke,pw,ph,agg_color,agg_bcolor);
             }
             

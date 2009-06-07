@@ -191,7 +191,7 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
          * as the labelSize computing functions return integer bounding boxes. we assume
          * that the integer rounding for such a number of spaces will be negligeable
          * compared to the actual size of thoses spaces */ 
-        if(msGetLabelSize(image, "                ", label,&label_rect, 
+        if(msGetLabelSize(image, ".              .", label,&label_rect, 
                     &map->fontset, 1.0, MS_FALSE,NULL)==-1) { 
             /*error computing label size, we can't continue*/
 
@@ -330,6 +330,13 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
       return(MS_SUCCESS);
     if((label->minscaledenom != -1) && (map->scaledenom < label->minscaledenom))
       return(MS_SUCCESS);
+  }
+
+  if(map->scaledenom > 0) {
+    if((label->maxscaledenom != -1) && (map->scaledenom >= label->maxscaledenom))
+        return(MS_SUCCESS);
+    if((label->minscaledenom != -1) && (map->scaledenom < label->minscaledenom))
+        return(MS_SUCCESS);
   }
 
   /* Validate label priority value and get ref on label cache for it */
@@ -658,9 +665,16 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 
 int msGetTruetypeTextBBox(imageObj *img, char *font, double size, char *string, rectObj *rect, double **advances) {
 #ifdef USE_GD_FT
+	if(img!=NULL && MS_RENDERER_PLUGIN(img->format)) {
+		img->format->r->getTruetypeTextBBox(img,font,size,string,rect,advances);
+		//printf("%s: %f %f %f %f\n",string,rect->minx,rect->miny,rect->maxx,rect->maxy);
+		return MS_SUCCESS;
+	} else 
 #ifdef USE_AGG
-    if(img!=NULL && MS_RENDERER_AGG(img->format)) {
-        return msGetTruetypeTextBBoxAGG(img,font,size,string,rect,advances); 
+	if(img!=NULL && MS_RENDERER_AGG(img->format)) {
+        msGetTruetypeTextBBoxAGG(img,font,size,string,rect,advances);
+        //printf("%s: %f %f %f %f\n",string,rect->minx,rect->miny,rect->maxx,rect->maxy);
+        return MS_SUCCESS;
     } else
 #endif
     {

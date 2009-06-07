@@ -1840,7 +1840,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 
   ox = MS_NINT(style->offsetx*scalefactor);
   oy = (style->offsety < -90) ? style->offsety : (int)(style->offsety*scalefactor);
-
+  
   /*
   ** handle the most simple case
   */
@@ -1900,7 +1900,6 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     d = (size)/symbol->sizey;
     x = MS_NINT(symbol->sizex*d);    
     y = MS_NINT(symbol->sizey*d);
-
     if((x < 2) && (y < 2)) break; /* no need for a brush */
 
     if(gdImageTrueColor(img) && x > 1 && style->antialias == MS_TRUE && x == y) { /* use a fuzzy brush */
@@ -2126,7 +2125,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
   if(fc < 0 && symbol->type!=MS_SYMBOL_PIXMAP) return; /* nothing to do (colors are not required with PIXMAP symbols) */
   if(size < 1 && style->symbol != 0) return; /* size too small AND we're not doing a basic solid fill (which can't be scaled so size doesn't matter) */
-      
+  
   if(style->symbol == 0) { /* simply draw a single pixel of the specified color */    
     if(style->antialias==MS_TRUE) {      
       imageFilledPolygon(img, p, fc, ox, oy); /* fill is NOT anti-aliased, the outline IS */

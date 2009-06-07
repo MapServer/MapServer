@@ -147,6 +147,21 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         msSetError(MS_GDERR, "Map outputformat not set!", "msPrepareImage()");
         return(NULL);
     }
+    else if (MS_RENDERER_PLUGIN(map->outputformat)) {
+		renderObj *r = map->outputformat->r;
+		image = r->createImage(map->width, map->height, map->outputformat,&map->imagecolor);
+        if (image == NULL)
+            return(NULL);
+		image->format = map->outputformat;
+		image->format->refcount++;
+		image->width = map->width;
+		image->height = map->height;
+		if (map->web.imagepath)
+			image->imagepath = strdup(map->web.imagepath);
+		if (map->web.imageurl)
+			image->imageurl = strdup(map->web.imageurl);
+
+	}
     else if( MS_RENDERER_GD(map->outputformat) )
     {
         image = msImageCreateGD(map->width, map->height, map->outputformat, 
@@ -698,6 +713,23 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
         gdImageAlphaBlending(image->img.gd, 1);
     }
   }
+  else if (MS_RENDERER_PLUGIN(image_draw->format)) {
+		if (layer->opacity > 0 && layer->opacity < 100) {
+			if (!image_draw->format->r->supports_transparent_layers) {
+				msApplyOutputFormat(&transFormat, image->format, MS_TRUE,
+						MS_NOOVERRIDE,MS_NOOVERRIDE);
+				image_draw = msImageCreate(image->width, image->height,
+						transFormat, image->imagepath, image->imageurl, map);
+				if (!image_draw) {
+					msSetError(MS_GDERR, "Unable to initialize image.",
+							"msDrawLayer()");
+					return (MS_FAILURE);
+				}
+			} else {
+				image_draw->format->r->startNewLayer(image_draw,layer->opacity);
+			}
+		} 
+  }
 #ifdef USE_AGG
   else if(MS_RENDERER_AGG(image_draw->format)) {
     
@@ -762,6 +794,19 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     /* deref and possibly free temporary transparent output format.  */
     msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+  }
+  else if( MS_RENDERER_PLUGIN(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
+	  if (!image_draw->format->r->supports_transparent_layers) {
+          rasterBufferObj rb;
+          image_draw->format->r->getRasterBuffer(image_draw,&rb);
+		  image_draw->format->r->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0);  
+		  image_draw->format->r->freeImage( image_draw );
+	
+		  /* deref and possibly free temporary transparent output format.  */
+		  msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+	  } else {
+		  image_draw->format->r->closeNewLayer(image_draw,layer->opacity*0.01);
+	  }
   }
 #ifdef USE_AGG
   else if( MS_RENDERER_AGG(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
@@ -1012,7 +1057,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
             if((pStyle->minscaledenom != -1) && (map->scaledenom < pStyle->minscaledenom))
               continue;
           }
-          if(s==0 && pStyle->outlinewidth>0) {
+          if(s==0 && pStyle->outlinewidth>0 && MS_VALID_COLOR(pStyle->color)) {
             msDrawLineSymbol(&map->symbolset, image, &current->shape, pStyle, layer->scalefactor);  
           } else if(s>0)
             msDrawLineSymbol(&map->symbolset, image, &current->shape, pStyle, layer->scalefactor);
@@ -1409,16 +1454,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
    * adjust the clipping rectangle so that clipped polygon shapes with thick lines
    * do not enter the image */
   if(layer->class[c]->numstyles > 0 && layer->class[c]->styles[0] != NULL) {
-      double maxsize;
-      if(layer->class[c]->styles[0]->size == -1)
-          maxsize=MS_MAX(
-                  msSymbolGetDefaultSize(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]),
-                  layer->class[c]->styles[0]->width);
-      else
-          maxsize=MS_MAX(
-                  layer->class[c]->styles[0]->size,
-                  layer->class[c]->styles[0]->width);
-      csz = MS_NINT((maxsize*layer->scalefactor));
+      double maxsize,maxunscaledsize;
+      maxsize = MS_MAX(
+          msSymbolGetDefaultSize(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]),
+          MS_MAX(layer->class[c]->styles[0]->size,layer->class[c]->styles[0]->width)
+      );
+      maxunscaledsize = MS_MAX( layer->class[c]->styles[0]->minsize,
+                                layer->class[c]->styles[0]->minwidth);
+      csz = MS_NINT(MS_MAX(maxsize*layer->scalefactor,maxunscaledsize)+1);
   } else {
       csz = 0;
   }
@@ -2045,131 +2088,6 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
   return(MS_SUCCESS); /* all done, no cleanup */
 }
 
-
-/************************************************************************/
-/*                          msCircleDrawLineSymbol                      */
-/*                                                                      */
-/*      Note : the map parameter is only used to be able to converet    */
-/*      the color index to rgb values.                                  */
-/************************************************************************/
-void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)
-{
-    if (image)
-    {
-        if( MS_RENDERER_GD(image->format) )
-            msCircleDrawLineSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
-#ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            msCircleDrawLineSymbolAGG(symbolset, image, p, r, style, scalefactor);
-#endif
-	else if( MS_RENDERER_IMAGEMAP(image->format) )
-            msCircleDrawLineSymbolIM(symbolset, image, p, r, style, scalefactor);
-        else
-            msSetError(MS_MISCERR, "Unknown image type", 
-                       "msCircleDrawLineSymbol()");
-    }
-}
-
-void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)
-{
-    if (image)
-    {
-        if( MS_RENDERER_GD(image->format) )
-            msCircleDrawShadeSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
-#ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            msCircleDrawShadeSymbolAGG(symbolset, image, p, r, style, scalefactor);
-#endif
-	else if( MS_RENDERER_IMAGEMAP(image->format) )
-            msCircleDrawShadeSymbolIM(symbolset, image, p, r, style, scalefactor);
-              
-        else
-             msSetError(MS_MISCERR, "Unknown image type", 
-                        "msCircleDrawShadeSymbol()"); 
-    }
-}
-
-
-void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, styleObj *style, double scalefactor)
-{
-   if (image)
-   {
-       if( MS_RENDERER_GD(image->format) )
-           msDrawMarkerSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
-#ifdef USE_AGG
-       else if( MS_RENDERER_AGG(image->format) )
-           msDrawMarkerSymbolAGG(symbolset, image, p, style, scalefactor);
-#endif
-       else if( MS_RENDERER_IMAGEMAP(image->format) )
-           msDrawMarkerSymbolIM(symbolset, image, p, style, scalefactor);
-       
-#ifdef USE_MING_FLASH              
-       else if( MS_RENDERER_SWF(image->format) )
-           msDrawMarkerSymbolSWF(symbolset, image, p, style, scalefactor);
-#endif
-#ifdef USE_PDF
-       else if( MS_RENDERER_PDF(image->format) )
-           msDrawMarkerSymbolPDF(symbolset, image, p, style, scalefactor);
-#endif
-       else if( MS_RENDERER_SVG(image->format) )
-           msDrawMarkerSymbolSVG(symbolset, image, p, style, scalefactor);
-
-    }
-}
-
-void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor)
-{
-    if (image)
-    {
-        if( MS_RENDERER_GD(image->format) )
-            msDrawLineSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
-#ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            msDrawLineSymbolAGG(symbolset, image, p, style, scalefactor);
-#endif
-	else if( MS_RENDERER_IMAGEMAP(image->format) )
-            msDrawLineSymbolIM(symbolset, image, p, style, scalefactor);
-
-#ifdef USE_MING_FLASH
-        else if( MS_RENDERER_SWF(image->format) )
-            msDrawLineSymbolSWF(symbolset, image, p,  style, scalefactor);
-#endif
-#ifdef USE_PDF
-        else if( MS_RENDERER_PDF(image->format) )
-            msDrawLineSymbolPDF(symbolset, image, p,  style, scalefactor);
-#endif
-        else if( MS_RENDERER_SVG(image->format) )
-            msDrawLineSymbolSVG(symbolset, image, p,  style, scalefactor);
-
-    }
-}
-
-void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor)
-{
-    if (image)
-    {
-        if( MS_RENDERER_GD(image->format) )
-            msDrawShadeSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
-#ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            msDrawShadeSymbolAGG(symbolset, image, p, style, scalefactor);
-#endif
-	else if( MS_RENDERER_IMAGEMAP(image->format) )
-            msDrawShadeSymbolIM(symbolset, image, p, style, scalefactor);
-
-#ifdef USE_MING_FLASH
-        else if( MS_RENDERER_SWF(image->format) )
-            msDrawShadeSymbolSWF(symbolset, image, p, style, scalefactor);
-#endif
-#ifdef USE_PDF
-        else if( MS_RENDERER_PDF(image->format) )
-            msDrawShadeSymbolPDF(symbolset, image, p, style, scalefactor);
-#endif
-        else if( MS_RENDERER_SVG(image->format) )
-            msDrawShadeSymbolSVG(symbolset, image, p, style, scalefactor);
-    }
-}
-
 /*
 ** Draws a single label independently of the label cache. No collision avoidance is performed.
 */
@@ -2264,57 +2182,11 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   return(0);
 }
 
-/*
-** Render the text (no background effects) for a label.
-*/ 
-int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
-{
-  int nReturnVal = -1;
-  if (image) {
-    if( MS_RENDERER_GD(image->format) )
-      nReturnVal = msDrawTextGD(image->img.gd, labelPnt, string, label, fontset, scalefactor);
-#ifdef USE_AGG
-    else if( MS_RENDERER_AGG(image->format) )
-      nReturnVal = msDrawTextAGG(image, labelPnt, string, label, fontset, scalefactor);
-#endif
-    else if( MS_RENDERER_IMAGEMAP(image->format) )
-      nReturnVal = msDrawTextIM(image, labelPnt, string, label, fontset, scalefactor);
-#ifdef USE_MING_FLASH
-    else if( MS_RENDERER_SWF(image->format) )
-      nReturnVal = draw_textSWF(image, labelPnt, string, label, fontset, scalefactor); 
-#endif
-#ifdef USE_PDF
-    else if( MS_RENDERER_PDF(image->format) )
-      nReturnVal = msDrawTextPDF(image, labelPnt, string, label, fontset, scalefactor); 
-#endif
-    else if( MS_RENDERER_SVG(image->format) )
-      nReturnVal = msDrawTextSVG(image, labelPnt, string, label, fontset, scalefactor); 
-  }
-
-  return nReturnVal;
-}
-
-int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor) 
-{
-  int nReturnVal = -1;
-
-  if(image) {
-    if( MS_RENDERER_GD(image->format) )
-      nReturnVal = msDrawTextLineGD(image->img.gd, string, label, labelpath, fontset, scalefactor);
-#ifdef USE_AGG
-    else if( MS_RENDERER_AGG(image->format) )
-      nReturnVal = msDrawTextLineAGG(image, string, label, labelpath, fontset, scalefactor);
-#endif
-  }
-
-  return nReturnVal;
-}
-
 int msDrawLabelCache(imageObj *image, mapObj *map)
 {
   int nReturnVal = MS_SUCCESS;
   if(image) {
-    if(MS_RENDERER_GD(image->format) || MS_RENDERER_AGG(image->format)) {          
+    if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_GD(image->format) || MS_RENDERER_AGG(image->format)) {          
       pointObj p;
       int i, l, priority;
       int oldAlphaBlending=0;
@@ -2341,6 +2213,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
         msAlphaGD2AGG(image);
       else
 #endif
+      if(!MS_RENDERER_PLUGIN(image->format))
       { /* bug 490 - switch on alpha blending for label cache */
         oldAlphaBlending = image->img.gd->alphaBlendingFlag;
         gdImageAlphaBlending( image->img.gd, 1);

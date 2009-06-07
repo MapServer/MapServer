@@ -378,7 +378,12 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   };
   typedef struct legend_struct legendlabel;
   legendlabel *head=NULL,*cur=NULL;
-
+  
+  if(MS_RENDERER_PLUGIN(map->outputformat)) {
+    msSetError(MS_MISCERR, "Scalebar not supported yet", "msDrawScalebar()");
+    return(NULL);
+  }
+  
   if(msValidateContexts(map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
   if(msLegendCalcSize(map, scale_independent, &size_x, &size_y, NULL) != MS_SUCCESS) return NULL;
 
@@ -537,6 +542,11 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   int s,l;
   pointObj point;
   imageObj *image = NULL;
+
+  if(MS_RENDERER_PLUGIN(map->outputformat)) {
+    msSetError(MS_MISCERR, "Scalebar not supported yet", "msDrawScalebar()");
+    return MS_FAILURE;
+  }
 
   s = msGetSymbolIndex(&(map->symbolset), "legend", MS_FALSE);
   if(s != -1) 

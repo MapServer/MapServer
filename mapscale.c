@@ -167,6 +167,11 @@ imageObj *msDrawScalebar(mapObj *map)
     msSetError(MS_MISCERR, "Map units not set.", "msDrawScalebar()");
     return(NULL);
   }
+
+  if(MS_RENDERER_PLUGIN(map->outputformat)) {
+    msSetError(MS_MISCERR, "Scalebar not supported yet", "msDrawScalebar()");
+    return(NULL);
+  }
 /*
  *  Allow scalebars to use TrueType fonts for labels (jnovak@novacell.com)
  *

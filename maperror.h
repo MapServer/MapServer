@@ -80,6 +80,7 @@ extern "C" {
 #define MS_AGGERR 39
 #define MS_OWSERR 40
 #define MS_NUMERRORCODES 41
+#define MS_OGLERR 42
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64

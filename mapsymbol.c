@@ -58,7 +58,7 @@ void freeImageCache(struct imageCacheObj *ic)
 {
   if(ic) {
     freeImageCache(ic->next); /* free any children */
-    gdImageDestroy(ic->img);
+   	gdImageDestroy(ic->img);
     free(ic);  
   }
   return;
@@ -134,12 +134,15 @@ void initSymbol(symbolObj *s)
   s->numpoints=0;
   s->img = NULL;
   s->renderer_cache=NULL;
+  s->renderer=NULL;
+  s->pixmap_buffer=NULL;
   s->imagepath = NULL;
   s->name = NULL;
   s->gap = 0;
   s->inmapfile = MS_FALSE;
   s->antialias = MS_FALSE;
   s->font = NULL;
+  s->full_font_path = NULL;
   s->character = NULL;
   s->position = MS_CC;
 
@@ -156,10 +159,20 @@ int msFreeSymbol(symbolObj *s) {
   
   if(s->name) free(s->name);
   if(s->img) gdImageDestroy(s->img);
+  if(s->renderer!=NULL) {
+	  s->renderer->freeSymbol(s);
+  }
 #ifdef USE_AGG
-  if(s->renderer_cache) msFreeSymbolCacheAGG(s->renderer_cache);
+  else
+	  if(s->renderer_cache) msFreeSymbolCacheAGG(s->renderer_cache);
 #endif
+  if(s->pixmap_buffer) {
+      msFreeRasterBuffer(s->pixmap_buffer);
+      free(s->pixmap_buffer);
+  }
+
   if(s->font) free(s->font);
+  msFree(s->full_font_path);
   if(s->imagepath) free(s->imagepath);
   if(s->character) free(s->character);
   
@@ -324,8 +337,10 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	case(MS_NUMBER):
 	  s->points[s->numpoints].x = atof(msyytext); /* grab the x */
 	  if(getDouble(&(s->points[s->numpoints].y)) == -1) return(-1); /* grab the y */
+	  if(s->points[s->numpoints].x!=-99) {
 	  s->sizex = MS_MAX(s->sizex, s->points[s->numpoints].x);
-	  s->sizey = MS_MAX(s->sizey, s->points[s->numpoints].y);	
+	  s->sizey = MS_MAX(s->sizey, s->points[s->numpoints].y);
+	  }
 	  s->numpoints++;
 	  break;
 	default:

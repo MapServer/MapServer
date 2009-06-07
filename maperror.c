@@ -517,6 +517,12 @@ char *msGetVersion() {
 #ifdef USE_AGG
   strcat(version, " SUPPORTS=AGG");
 #endif
+#ifdef USE_CAIRO
+  strcat(version, " SUPPORTS=CAIRO");
+#endif
+#ifdef USE_OGL
+  strcat(version, " SUPPORTS=OPENGL");
+#endif
 #ifdef USE_GD_FT
   strcat(version, " SUPPORTS=FREETYPE");
 #endif

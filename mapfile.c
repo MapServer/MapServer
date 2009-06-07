@@ -1916,6 +1916,13 @@ int initStyle(styleObj *style) {
   style->opacity = 100; /* fully opaque */
   style->_geomtransformexpression = NULL;
   style->_geomtransform = MS_GEOMTRANSFORM_NONE;
+  
+  style->patternlength = 0; /* solid line */
+  style->gap = 0;
+  style->position = MS_CC;
+  style->linecap = MS_CJC_ROUND;
+  style->linejoin = MS_CJC_NONE;
+  style->linejoinmaxsize = 3;
 
   style->numbindings = 0;
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
@@ -1987,6 +1994,9 @@ int loadStyle(styleObj *style) {
     case(END):     
       return(MS_SUCCESS); /* done */
       break;
+    case(GAP):
+      if((getDouble(&style->gap)) == -1) return(-1);
+      break;
     case(MAXSCALEDENOM):
       if(getDouble(&(style->maxscaledenom)) == -1) return(MS_FAILURE);
       break;
@@ -2001,6 +2011,18 @@ int loadStyle(styleObj *style) {
         msFree(expr);expr=NULL;
       }
       break;
+      
+    case(LINECAP):
+      if((style->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1)
+        return(-1);
+      break;
+    case(LINEJOIN):
+      if((style->linejoin = getSymbol(4,MS_CJC_NONE, MS_CJC_ROUND, MS_CJC_MITER, MS_CJC_BEVEL)) == -1)
+        return(-1);
+      break;
+    case(LINEJOINMAXSIZE):
+      if((getDouble(&style->linejoinmaxsize)) == -1) return(-1);
+      break;
     case(MAXSIZE):
       if(getDouble(&(style->maxsize)) == -1) return(MS_FAILURE);      
       break;
@@ -2014,8 +2036,8 @@ int loadStyle(styleObj *style) {
       if(getDouble(&(style->minwidth)) == -1) return(MS_FAILURE);
       break;
     case(OFFSET):
-      if(getInteger(&(style->offsetx)) == -1) return(MS_FAILURE);
-      if(getInteger(&(style->offsety)) == -1) return(MS_FAILURE);
+      if(getDouble(&(style->offsetx)) == -1) return(MS_FAILURE);
+      if(getDouble(&(style->offsety)) == -1) return(MS_FAILURE);
       break;
     case(OPACITY):
       if(getInteger(&(style->opacity)) == -1) return(MS_FAILURE);
@@ -2023,6 +2045,41 @@ int loadStyle(styleObj *style) {
     case(OUTLINECOLOR):
       if(loadColor(&(style->outlinecolor), &(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR])) != MS_SUCCESS) return(MS_FAILURE);
       if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item) style->numbindings++;
+      break;
+      
+    case(PATTERN): {
+      int done = MS_FALSE;
+      for(;;) { /* read till the next END */
+        switch(msyylex()) {  
+        case(END):
+          if(style->patternlength < 2) {
+            msSetError(MS_SYMERR, "Not enough pattern elements. A minimum of 2 are required", "loadStyle()");
+            return(-1);
+          }   
+          done = MS_TRUE;
+          break;
+        case(MS_NUMBER): /* read the pattern values */
+          if(style->patternlength == MS_MAXPATTERNLENGTH) {
+            msSetError(MS_SYMERR, "Pattern too long.", "loadStyle()");
+            return(-1);
+          }
+          style->pattern[style->patternlength] = atof(msyytext);
+          style->patternlength++;
+          break;
+        default:
+          msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadStyle()", msyytext, msyylineno);
+          return(-1);
+        }
+        if(done == MS_TRUE)
+          break;
+      }      
+      break;
+    }
+    case(POSITION):
+      /* if((s->position = getSymbol(3, MS_UC,MS_CC,MS_LC)) == -1)  */
+      /* return(-1); */
+      if((style->position = getSymbol(9, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) 
+        return(-1);
       break;
     case(OUTLINEWIDTH):
       if(getDouble(&(style->outlinewidth)) == -1) return(MS_FAILURE);
@@ -2174,7 +2231,7 @@ void writeStyle(styleObj *style, FILE *stream) {
     fprintf(stream, "        WIDTH [%s]\n", style->bindings[MS_STYLE_BINDING_WIDTH].item);
   else if(style->width > 0) fprintf(stream, "        WIDTH %g\n", style->width);
 
-  if(style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %d %d\n", style->offsetx, style->offsety);
+  if(style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %g %g\n", style->offsetx, style->offsety);
 
   if(style->rangeitem) {
     fprintf(stream, "        RANGEITEM \"%s\"\n", style->rangeitem);
@@ -4777,6 +4834,38 @@ static int loadMapInternal(mapObj *map)
           }
         }
       }
+      
+      /*backwards compatibility symbol to style merging*/
+      for(i=0; i<map->numlayers; i++) {
+        layerObj *layer = GET_LAYER(map, i);
+        for(j=0; j<layer->numclasses; j++) {
+          classObj *class = layer->class[j];
+          for(k=0; k<class->numstyles; k++) {
+            styleObj *style = class->styles[k];
+            if(style->symbol != 0) {
+              symbolObj *symbol = map->symbolset.symbol[style->symbol];
+              if(style->gap == 0)
+                style->gap = symbol->gap;
+              if(style->patternlength == 0) {
+                int idx;
+                style->patternlength = symbol->patternlength;
+                for(idx=0;idx<style->patternlength;idx++)
+                  style->pattern[idx] = (double)(symbol->pattern[idx]);
+              }
+              if(style->position == MS_CC)
+                style->position = symbol->position;
+              if(style->linecap == MS_CJC_ROUND)
+                style->linecap = symbol->linecap;
+              if(style->linejoin == MS_CJC_NONE)
+                style->linejoin = symbol->linejoin;
+              if(style->linejoinmaxsize == 3)
+                style->linejoinmaxsize = symbol->linejoinmaxsize;
+            }
+          }
+        }
+      }
+      
+      
 
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if(msLoadFontSet(&(map->fontset), map) == -1) return MS_FAILURE;

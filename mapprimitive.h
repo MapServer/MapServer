@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Declarations for rectObj, pointObj, lineObj, shapeObj, etc.
@@ -73,6 +73,7 @@ typedef struct {
 
 #ifndef SWIG
   void *geometry;
+  void *renderer_cache;
 #endif
 
 #ifdef SWIG

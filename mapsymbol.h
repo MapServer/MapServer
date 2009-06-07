@@ -46,9 +46,7 @@ typedef struct {
   int red;
   int green;
   int blue;
-#if ALPHACOLOR_ENABLED
   int alpha;
-#endif
 } colorObj;
 
 #ifndef SWIG
@@ -61,6 +59,14 @@ struct imageCacheObj {
   gdImagePtr img;
   struct imageCacheObj *next;
 };
+
+typedef struct {
+    unsigned char *pixelbuffer;
+    unsigned int width,height;
+    unsigned int pixel_step, row_step;
+    unsigned char *a,*r,*g,*b;
+} rasterBufferObj;
+
 #endif /* SWIG */
 
 
@@ -79,6 +85,7 @@ typedef struct {
   ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options
   */
   double sizex, sizey;
+  double minx,miny,maxx,maxy;
 
 #ifndef SWIG
   pointObj points[MS_MAXVECTORPOINTS];
@@ -93,7 +100,9 @@ typedef struct {
   %mutable;
 #endif /* SWIG */
   int filled;
-
+  
+  
+  /*deprecated, moved to styleObj*/
   int patternlength;                      /* Number of intervals (eg. dashes) in the pattern (was style, see bug 2119) */
   int pattern[MS_MAXPATTERNLENGTH];
 
@@ -102,7 +111,10 @@ typedef struct {
   */
 #ifndef SWIG
   gdImagePtr img;
-  void *renderer_cache; /* AGG storage */
+  void *renderer_cache; /* Renderer storage */
+  renderObj *renderer;
+  rasterBufferObj *pixmap_buffer;
+  char *full_font_path;
 #endif /* SWIG */
 
 #ifdef SWIG
@@ -122,14 +134,14 @@ typedef struct {
   char *character;
   int antialias;
   char *font;
-  int gap;
-  int position;
+  int gap; /*deprecated, moved to styleObj*/
+  int position; /*deprecated, moved to styleObj*/
 
   /*
   ** MS_SYMBOL_CARTOLINE options
   */
-  int linecap, linejoin;
-  double linejoinmaxsize;
+  int linecap, linejoin; /*deprecated, moved to styleObj*/
+  double linejoinmaxsize;/*deprecated, moved to styleObj*/
 
 } symbolObj;
 

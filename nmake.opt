@@ -290,6 +290,17 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 #
 AGG=-DUSE_AGG
 
+# If you wish to use OpenGl
+#
+#OGL=-DUSE_OGL
+#FTGL_DIR=$(MS_BASE)\..\ftgl-2.1.3~rc5
+
+# Cairo renderer support 
+#
+#CAIRO=-DUSE_CAIRO
+#CAIRO_DIR=$(MS_BASE)\..\cairo-1.8.6
+
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PDF (Acrobat PDF support)
 # ----------------------------------------------------------------------
@@ -733,6 +744,18 @@ MING_LIB= $(MING_DIR)/src/libming.lib
 #MING_VERSION=-DMING_VERSION_03
 !ENDIF
 
+# Setup OGL
+!IFDEF OGL
+OGL_INC= -I$(FTGL_DIR)\src
+OGL_LIB= $(FTGL_DIR)\msvc\build\ftgl_static.lib opengl32.lib glu32.lib user32.lib gdi32.lib
+!ENDIF
+
+# Setup CAIRO
+!IFDEF CAIRO
+CAIRO_INC= -I$(CAIRO_DIR)\src
+CAIRO_LIB= $(CAIRO_DIR)\src\cairo.lib
+!ENDIF
+
 # Setup AGG
 !IFDEF AGG
 AGG_INC=-I$(FT_DIR)\include
@@ -811,7 +834,7 @@ EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
      $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
-     $(LIBXML_LIB) $(AGG_LIB) $(FRIBIDI_LIB)
+     $(LIBXML_LIB) $(AGG_LIB) $(OGL_LIB) $(CAIRO_LIB) $(FRIBIDI_LIB)
 !ENDIF
 
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
@@ -823,7 +846,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
-         $(PNG_INC) $(FRIBIDI_INC) $(AGG_INC)
+         $(AGG_INC) $(OGL_INC) $(CAIRO_INC) $(PNG_INC) $(FRIBIDI_INC)
 !ENDIF
 
 
@@ -834,7 +857,8 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(USE_POINT_Z_M) $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
-          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) $(RGBA_PNG_ENABLED) $(FRIBIDI)
+          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) \
+          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI)
 
 !IFDEF WIN64
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
