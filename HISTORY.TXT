@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- include PNG libs first (#3046)
+
 - merge graphics branch: RFC54 implementation, cairo rendering (png, svg, pdf),
   opengl rendering (non functionnal yet)
 
