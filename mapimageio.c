@@ -1,6 +1,6 @@
-#include "mapserver.h"
 #include "png.h"
 #include "setjmp.h"
+#include "mapserver.h"
 
 #include "jpeglib.h"
 
