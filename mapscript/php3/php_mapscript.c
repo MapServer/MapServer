@@ -196,6 +196,7 @@ DLEXPORT void php3_ms_lyr_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getNumResults(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getResults(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_whichShapes(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_nextShape(INTERNAL_FUNCTION_PARAMETERS);
@@ -413,6 +414,9 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preferenceMap,
 static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
                                                   HashTable *list TSRMLS_DC, 
                                                   pval *return_value);
+static long _phpms_build_resultcache_object(resultCacheObj *pRes,
+                                            HashTable *list TSRMLS_DC, 
+                                            pval *return_value);
 
 static long _phpms_build_projection_object(projectionObj *pproj, 
                                            int handle_type, HashTable *list, 
@@ -802,6 +806,7 @@ function_entry php_layer_class_functions[] = {
     {"addfeature",      php3_ms_lyr_addFeature,         NULL},
     {"getnumresults",   php3_ms_lyr_getNumResults,      NULL},
     {"getresult",       php3_ms_lyr_getResult,          NULL},
+    {"getresults",       php3_ms_lyr_getResults,          NULL},
     {"open",            php3_ms_lyr_open,               NULL},
     {"whichshapes",     php3_ms_lyr_whichShapes,        NULL},
     {"nextshape",       php3_ms_lyr_nextShape,          NULL},
@@ -7817,6 +7822,49 @@ DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 
+/**********************************************************************
+ *                        layer->getResults()
+ **********************************************************************/
+
+/* {{{ proto int layer.getResults()
+   Returns a resultCacheObj or NULL. */
+
+DLEXPORT void php3_ms_lyr_getResults(INTERNAL_FUNCTION_PARAMETERS)
+{
+  pval *pThis;
+    layerObj *self;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+
+    if (self== NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (self->resultcache == NULL)
+      RETURN_NULL();
+
+    /* Return a resultCacheMemberObj object */
+    _phpms_build_resultcache_object(self->resultcache,
+                                    list TSRMLS_CC, return_value);
+}
+/* }}} */
+
 
 /**********************************************************************
  *                        layer->open()
@@ -13869,6 +13917,41 @@ static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
     return 0;
 }
 
+/*=====================================================================
+ *                 PHP function wrappers - resultCacheObj class
+ *====================================================================*/
+
+/**********************************************************************
+ *                     _phpms_build_resultCache_object()
+ **********************************************************************/
+static long _phpms_build_resultcache_object(resultCacheObj *pRes,
+                                            HashTable *list TSRMLS_DC, 
+                                            pval *return_value)
+{
+    pval        *new_obj_ptr;
+
+    if (pRes == NULL)
+        return 0;
+
+    object_init(return_value);
+
+    /* Note: Contrary to most other object classes, this one does not
+     *       need to keep a handle on the internal structure since all
+     *       members are read-only and thus there is no set() method.
+     */
+
+    /* read-only properties */
+    add_property_long(return_value,   "numresults", pRes->numresults);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
+    _phpms_build_rect_object(&(pRes->bounds), PHPMS_GLOBAL(le_msrect_ref), 
+                             list, new_obj_ptr TSRMLS_CC);
+    _phpms_add_property_object(return_value, "bounds", new_obj_ptr,E_ERROR TSRMLS_CC);
+
+    return 0;
+}
 
 /*=====================================================================
  *                 PHP function wrappers - projection class
