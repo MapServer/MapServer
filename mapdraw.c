@@ -654,7 +654,7 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
     }
     if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom)) {
       if( layer->debug >= MS_DEBUGLEVEL_V ) {
-        msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER.MAXSCALE is too large for this MAP scale\n", layer->name);
+        msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER.MINSCALE is too large for this MAP scale\n", layer->name);
       }
       return(MS_FALSE);
     }
