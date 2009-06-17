@@ -634,15 +634,30 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 
   /* Only return MS_FALSE if it is definitely false. Sometimes it will return MS_UNKNOWN, which we 
   ** consider true, for this use case (it might be visible, try and draw it, see what happens). */
-  if ( msExtentsOverlap(map, layer) == MS_FALSE ) return(MS_FALSE);  
+  if ( msExtentsOverlap(map, layer) == MS_FALSE ) {
+    if( layer->debug >= MS_DEBUGLEVEL_V ) {
+      msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER.EXTENT does not intersect MAP.EXTENT\n", layer->name);
+    }
+    return(MS_FALSE);  
+  }
   
   if(msEvalContext(map, layer, layer->requires) == MS_FALSE) return(MS_FALSE);
 
   if(map->scaledenom > 0) {
     
     /* layer scale boundaries should be checked first */
-    if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom)) return(MS_FALSE);
-    if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom)) return(MS_FALSE);
+    if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom)) {
+      if( layer->debug >= MS_DEBUGLEVEL_V ) {
+        msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER.MAXSCALE is too small for this MAP scale\n", layer->name);
+      }
+      return(MS_FALSE);
+    }
+    if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom)) {
+      if( layer->debug >= MS_DEBUGLEVEL_V ) {
+        msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER.MAXSCALE is too large for this MAP scale\n", layer->name);
+      }
+      return(MS_FALSE);
+    }
 
     /* now check class scale boundaries (all layers *must* pass these tests) */
     if(layer->numclasses > 0) {
@@ -654,14 +669,29 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 
         break; /* can't skip this class (or layer for that matter) */
       } 
-      if(i == layer->numclasses) return(MS_FALSE);
+      if(i == layer->numclasses) {
+        if( layer->debug >= MS_DEBUGLEVEL_V ) {
+          msDebug("msLayerIsVisible(): Skipping layer (%s) because no CLASS in the layer is in-scale for this MAP scale\n", layer->name);
+        }
+        return(MS_FALSE);
+      }
     }
 
   }
 
   if (layer->maxscaledenom <= 0 && layer->minscaledenom <= 0) {
-      if((layer->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > layer->maxgeowidth)) return(MS_FALSE);
-      if((layer->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < layer->mingeowidth)) return(MS_FALSE);
+      if((layer->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > layer->maxgeowidth)) {
+        if( layer->debug >= MS_DEBUGLEVEL_V ) {
+          msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER width is much smaller than map width\n", layer->name);
+        }
+        return(MS_FALSE);
+      }
+      if((layer->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < layer->mingeowidth)) {
+        if( layer->debug >= MS_DEBUGLEVEL_V ) {
+          msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER width is much larger than map width\n", layer->name);
+        }
+        return(MS_FALSE);
+      }
   }
 
   return MS_TRUE;  /* All tests passed.  Layer is visible. */

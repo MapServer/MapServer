@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Add logging in layer visibility tests to help users find why layers don't draw (#3054)
+
 - include PNG libs first (#3046)
 
 - merge graphics branch: RFC54 implementation, cairo rendering (png, svg, pdf),
