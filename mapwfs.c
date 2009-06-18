@@ -1639,6 +1639,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
         }
       }
 
+     if(maxfeatures > 0) {
+         iNumberOfFeatures = maxfeatures;
+     }
+
       if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
         msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\" numberOfFeatures=\"%d\">\n",
 		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format, iNumberOfFeatures);

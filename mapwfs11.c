@@ -207,6 +207,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     char *xsi_schemaLocation = NULL;
 
     char *script_url=NULL, *script_url_encoded=NULL;
+    const char *value = NULL;
 
     xmlChar *buffer = NULL;
     int size = 0, i;
@@ -329,7 +330,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
                                                                   "XMLSCHEMA,text/xml; subtype=gml/2.1.2,text/xml; subtype=gml/3.1.1"));
 
 /* -------------------------------------------------------------------- */
-/*      GetFeatureType                                                  */
+/*      GetFeature                                                      */
 /* -------------------------------------------------------------------- */
       psNode = xmlAddChild(psMainNode, 
                           msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetFeature", 
@@ -348,6 +349,14 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
      xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                   "Parameter", "outputFormat", 
                                                                   "text/xml; subtype=gml/3.1.1"));
+
+     value = msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures");
+
+    if (value) {
+         xmlAddChild(psMainNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
+                                                                  "Constraint", "DefaultMaxFeatures",
+                                                                  (char *)value));
+    }
 
 /* -------------------------------------------------------------------- */
 /*      FeatureTypeList                                                 */
