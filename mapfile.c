@@ -1661,6 +1661,10 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   if(label->shadowsizex != 1 && label->shadowsizey != 1) fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
   if(label->wrap) fprintf(stream, "  %sWRAP '%c'\n", tab, label->wrap);
   if(label->maxlength>0) fprintf(stream, "  %sMAXLENGTH %d\n", tab, label->maxlength);
+  if (label->align == MS_ALIGN_CENTER)
+    fprintf(stream, "  %sALIGN CENTER\n", tab);
+  else if (label->align == MS_ALIGN_RIGHT)
+    fprintf(stream, "  %sALIGN RIGHT\n", tab);
   fprintf(stream, "%sEND\n", tab);  
 }
 

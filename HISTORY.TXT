@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Save ALIGN parameter if it is set to CENTER or RIGHT (#3057)
+
 - PHP: add a getResults method on the layer object (#2967)
 
 Version 5.4.1 (2009-06-02):
