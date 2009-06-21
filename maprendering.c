@@ -169,7 +169,7 @@ tileCacheObj *addTileCache(imageObj *img,
         while(cachep->next && cachep->next->next) cachep = cachep->next;
 
         /*free the last tile's data*/
-        img->format->r->freeTile(cachep->next->data);
+        img->format->vtable->freeTile(cachep->next->data);
 
         /*reuse the last tile object*/
             /* make the cache point to the start of the list*/
@@ -201,7 +201,7 @@ tileCacheObj *addTileCache(imageObj *img,
 
 tileCacheObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int width, int height) {
 	tileCacheObj *tile;
-	renderObj *r = img->format->r;
+	rendererVTableObj *renderer = img->format->vtable;
     if(width==-1 || height == -1) {
         width=height=MS_MAX(symbol->sizex,symbol->sizey);
     }
@@ -214,19 +214,19 @@ tileCacheObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int 
         p_y = height/2.0;
         format.driver = img->format->driver;
         format.imagemode = MS_IMAGEMODE_RGBA;
-        tileimg = r->createImage(width,height,&format,NULL);
+        tileimg = renderer->createImage(width,height,&format,NULL);
         switch(symbol->type) {
             case (MS_SYMBOL_TRUETYPE):
-                r->renderTruetypeSymbol(tileimg, p_x, p_y, symbol, s);
+                renderer->renderTruetypeSymbol(tileimg, p_x, p_y, symbol, s);
                 break;
             case (MS_SYMBOL_PIXMAP): 
-                r->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
+                renderer->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
                 break;
             case (MS_SYMBOL_ELLIPSE): 
-                r->renderEllipseSymbol(tileimg, p_x, p_y,symbol, s);
+                renderer->renderEllipseSymbol(tileimg, p_x, p_y,symbol, s);
                 break;
             case (MS_SYMBOL_VECTOR): 
-                r->renderVectorSymbol(tileimg, p_x, p_y, symbol, s);
+                renderer->renderVectorSymbol(tileimg, p_x, p_y, symbol, s);
                 break;
             default:
                 break;
@@ -238,7 +238,7 @@ tileCacheObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int 
 
 void msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol, 
         symbolStyleObj *style, double spacing, int auto_angle) {
-    renderObj *r = image->format->r;
+    rendererVTableObj *renderer = image->format->vtable;
     int i,j;
     pointObj point;
     double original_rotation = style->rotation;
@@ -247,7 +247,7 @@ void msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
         symbol_width = MS_MAX(1,symbol->sizex*style->scale);
     else {
         rectObj rect;
-        r->getTruetypeTextBBox(image,symbol->full_font_path,style->scale,
+        renderer->getTruetypeTextBBox(image,symbol->full_font_path,style->scale,
                 symbol->character,&rect,NULL);
         symbol_width=rect.maxx-rect.minx;
     }
@@ -280,16 +280,16 @@ void msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
                 point.y = p->line[i].point[j - 1].y + current_length * ry;
                 switch (symbol->type) {
                     case MS_SYMBOL_PIXMAP:
-                        r->renderPixmapSymbol(image, point.x, point.y, symbol, style);
+                        renderer->renderPixmapSymbol(image, point.x, point.y, symbol, style);
                         break;
                     case MS_SYMBOL_ELLIPSE:
-                        r->renderEllipseSymbol(image, point.x, point.y, symbol, style);
+                        renderer->renderEllipseSymbol(image, point.x, point.y, symbol, style);
                         break;
                     case MS_SYMBOL_VECTOR:
-                        r->renderVectorSymbol(image, point.x, point.y, symbol, style);
+                        renderer->renderVectorSymbol(image, point.x, point.y, symbol, style);
                         break;
                     case MS_SYMBOL_TRUETYPE:
-                        r->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
+                        renderer->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
                         break;
                 }
                 current_length += symbol_width + spacing;
@@ -341,16 +341,16 @@ void msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
                     point.y = p->line[i].point[j - 1].y + offset * ry;
                     switch (symbol->type) {
                         case MS_SYMBOL_PIXMAP:
-                            r->renderPixmapSymbol(image, point.x, point.y, symbol, style);
+                            renderer->renderPixmapSymbol(image, point.x, point.y, symbol, style);
                             break;
                         case MS_SYMBOL_ELLIPSE:
-                            r->renderEllipseSymbol(image, point.x, point.y, symbol, style);
+                            renderer->renderEllipseSymbol(image, point.x, point.y, symbol, style);
                             break;
                         case MS_SYMBOL_VECTOR:
-                            r->renderVectorSymbol(image, point.x, point.y, symbol, style);
+                            renderer->renderVectorSymbol(image, point.x, point.y, symbol, style);
                             break;
                         case MS_SYMBOL_TRUETYPE:
-                            r->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
+                            renderer->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
                             break;
                     }
                     break;
@@ -401,7 +401,7 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     if (image)
     {
 		if (MS_RENDERER_PLUGIN(image->format)) {
-			renderObj *r = image->format->r;
+			rendererVTableObj *renderer = image->format->vtable;
 			symbolObj *symbol;
 			shapeObj *offsetLine = p;
             int i;
@@ -415,7 +415,7 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
 			symbol = symbolset->symbol[style->symbol];
             /* store a reference to the renderer to be used for freeing */
-            symbol->renderer = r;
+            symbol->renderer = renderer;
 
 			width = style->width * scalefactor;
             width = MS_MIN(width,style->maxwidth);
@@ -447,7 +447,7 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 }
                 s.color.alpha = MS_NINT(style->opacity * 2.55);
 
-                r->renderLine(image,offsetLine,&s);
+                renderer->renderLine(image,offsetLine,&s);
             }
 			else {
                 symbolStyleObj s;
@@ -536,11 +536,11 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
     if (image)
     {
         if (MS_RENDERER_PLUGIN(image->format)) {
-        	renderObj *r = image->format->r;
+        	rendererVTableObj *renderer = image->format->vtable;
         	shapeObj *offsetPolygon = NULL;
         	symbolObj *symbol = symbolset->symbol[style->symbol];
             /* store a reference to the renderer to be used for freeing */
-            symbol->renderer = r;
+            symbol->renderer = renderer;
             
             if (style->offsetx != 0 || style->offsety != 0) {
 				if(style->offsety==-99)
@@ -554,7 +554,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
              * also draws an optional outline */
             if(style->symbol == 0 || symbol->type == MS_SYMBOL_SIMPLE) {
                 style->color.alpha = MS_NINT(style->opacity*2.55);
-                r->renderPolygon(image,offsetPolygon,&style->color);
+                renderer->renderPolygon(image,offsetPolygon,&style->color);
                 if(MS_VALID_COLOR(style->outlinecolor)) {
                     strokeStyleObj s;
                     MS_COPYCOLOR(&s.color,&style->outlinecolor);
@@ -562,7 +562,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
                     s.width = (style->width == 0)?scalefactor:style->width*scalefactor;
 
                     s.color.alpha = style->color.alpha;
-                    r->renderLine(image,offsetPolygon,&s);
+                    renderer->renderLine(image,offsetPolygon,&s);
                 }
                 goto cleanup; /*finished plain polygon*/
             }
@@ -571,7 +571,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
                 colorObj red;
                 MS_INIT_COLOR(red,255,0,0);
                 red.alpha=255;
-                r->renderPolygon(image,offsetPolygon,&red);
+                renderer->renderPolygon(image,offsetPolygon,&red);
                 goto cleanup; /*finished plain polygon*/
             }
 #if 0		
@@ -670,12 +670,12 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
    if (image)
    {
        if(MS_RENDERER_PLUGIN(image->format)) {
-    	    renderObj *r = image->format->r;
+    	    rendererVTableObj *renderer = image->format->vtable;
             symbolStyleObj s;
        	    double p_x,p_y;
             symbolObj *symbol = symbolset->symbol[style->symbol];
     	    /* store a reference to the renderer to be used for freeing */
-            symbol->renderer = r;
+            symbol->renderer = renderer;
             
             computeSymbolStyle(&s,style,symbol,scalefactor);
             if (!MS_VALID_COLOR(s.color) && !MS_VALID_COLOR(s.outlinecolor) && symbol->type != MS_SYMBOL_PIXMAP)
@@ -697,10 +697,10 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
             p_x = p->x + style->offsetx * scalefactor;
             p_y = p->y + style->offsety * scalefactor;
 
-			if(r->supports_imagecache) {
+			if(renderer->supports_imagecache) {
 				tileCacheObj *tile = getTile(image, symbol, &s, -1, -1);
 				if(tile!=NULL)
-				    r->renderTile(image, (imageObj*)tile->data, p_x, p_y);
+				    renderer->renderTile(image, (imageObj*)tile->data, p_x, p_y);
 				return;
 			}
 			switch (symbol->type) {
@@ -710,20 +710,20 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
 						symbol->font));
                 if(!symbol->full_font_path)
 					return;
-                r->renderTruetypeSymbol(image, p_x, p_y, symbol, &s);
+                renderer->renderTruetypeSymbol(image, p_x, p_y, symbol, &s);
 
 			}
 				break;
 			case (MS_SYMBOL_PIXMAP): {
-				r->renderPixmapSymbol(image,p_x,p_y,symbol,&s);
+				renderer->renderPixmapSymbol(image,p_x,p_y,symbol,&s);
 			}
 				break;
 			case (MS_SYMBOL_ELLIPSE): {
-				r->renderEllipseSymbol(image, p_x, p_y,symbol, &s);
+				renderer->renderEllipseSymbol(image, p_x, p_y,symbol, &s);
 			}
 				break;
 			case (MS_SYMBOL_VECTOR): {
-				r->renderVectorSymbol(image, p_x, p_y, symbol, &s);
+				renderer->renderVectorSymbol(image, p_x, p_y, symbol, &s);
 			}
 				break;
 			default:
@@ -806,7 +806,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
         labelStyleObj s;
  	if (image) {
 		if (MS_RENDERER_PLUGIN(image->format)) {
-			renderObj *r = image->format->r;
+			rendererVTableObj *renderer = image->format->vtable;
             double x, y;
 			if (!string || !strlen(string))
 				return (0); // not errors, just don't want to do anything
@@ -816,7 +816,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
 			x = labelPnt.x;
 			y = labelPnt.y;
 			if (label->type == MS_TRUETYPE) {
-				r->renderGlyphs(image,x,y,&s,string);			}
+				renderer->renderGlyphs(image,x,y,&s,string);			}
 		}
 	else if( MS_RENDERER_GD(image->format) )
       nReturnVal = msDrawTextGD(image->img.gd, labelPnt, string, label, fontset, scalefactor);
@@ -846,7 +846,7 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
     int nReturnVal = -1;
     if(image) {
         if (MS_RENDERER_PLUGIN(image->format)) {
-            renderObj *r = image->format->r;
+            rendererVTableObj *renderer = image->format->vtable;
             labelStyleObj s;
             if (!string || !strlen(string))
                 return (0); // not errors, just don't want to do anything
@@ -854,7 +854,7 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
 
             computeLabelStyle(&s,label,fontset,scalefactor);
             if (label->type == MS_TRUETYPE) {
-                r->renderGlyphsLine(image,labelpath,&s,string);			
+                renderer->renderGlyphsLine(image,labelpath,&s,string);			
             }
         }
     else if( MS_RENDERER_GD(image->format) )

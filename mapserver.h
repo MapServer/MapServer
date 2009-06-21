@@ -89,9 +89,9 @@ typedef uint32_t        ms_uint32;
 #endif
 
 /*forward declaration of rendering object*/
-struct renderer;
+struct rendererVTable;
 struct tilecache;
-typedef struct renderer renderObj;
+typedef struct rendererVTable rendererVTableObj;
 typedef struct tilecache tileCacheObj;
 
 
@@ -304,7 +304,7 @@ extern "C" {
 #define MS_DRIVER_PDF(format) (strncasecmp((format)->driver,"pdf",3)==0)
 #define MS_DRIVER_IMAGEMAP(format)  (strncasecmp((format)->driver,"imagemap",8)==0)
 #define MS_DRIVER_SVG(format) (strncasecmp((format)->driver,"svg",3)==0)
-#define MS_DRIVER_AGG(format) (strncasecmp((format)->driver,"agg/",3)==0)
+#define MS_DRIVER_AGG(format) (strncasecmp((format)->driver,"agg/",4)==0)
 #define MS_DRIVER_CAIRO(format) (strncasecmp((format)->driver,"cairo/",6)==0)
 #define MS_DRIVER_OGL(format) (strncasecmp((format)->driver,"ogl/",4)==0)
 #define MS_DRIVER_TEMPLATE(format) (strncasecmp((format)->driver,"template",8)==0)
@@ -318,8 +318,9 @@ extern "C" {
 #define MS_RENDER_WITH_AGG      7
 #define MS_RENDER_WITH_TEMPLATE 8 /* query results only */
 #define MS_RENDER_WITH_CAIRO_RASTER   9
-#define MS_RENDER_WITH_CAIRO_VECTOR 10
-#define MS_RENDER_WITH_OGL      11
+#define MS_RENDER_WITH_CAIRO_PDF 10
+#define MS_RENDER_WITH_CAIRO_SVG 11
+#define MS_RENDER_WITH_OGL      12
 
 #define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
@@ -557,7 +558,7 @@ typedef struct {
     char **formatoptions;
     int  refcount;
     int inmapfile; /* boolean value for writing */
-    renderObj *r;
+    rendererVTableObj *vtable;
 } outputFormatObj;
 
 /* The following is used for "don't care" values in transparent, interlace and
@@ -2471,100 +2472,12 @@ typedef struct {
 void msFreeRasterBuffer(rasterBufferObj *b);
 #endif /* SWIG */
 
-/* ==================================================================== */
-/*      Prototypes for functions in mapogl.cpp                          */
-/* ==================================================================== */
-
-#ifdef USE_OGL
 #ifndef SWIG
-void msDrawLineOgl(imageObj *img, shapeObj *p, colorObj *c, double width, int patternlength, double* pattern);
-imageObj* msImageCreateOgl(int width, int height, outputFormatObj *format, colorObj* bg);
-int msSaveImageOgl(imageObj *img, char *filename, outputFormatObj *format);
-void msDrawPolygonOgl(imageObj *img, shapeObj *p,colorObj *c, colorObj *oc, double outlineWidth);
-void msDrawPolygonTiledOgl(imageObj *img, shapeObj *p, colorObj *oc, double outlineWidth, void *tile);
-void msDrawLineTiledOgl(imageObj *img, shapeObj *p, void* tile);
-void msRenderGlyphsOgl(imageObj *img,double x, double y, colorObj *color, colorObj *outlinecolor,
-            double size, char *font, char *thechars, double angle,
-            colorObj *shadowcolor, double shdx, double shdy,
-            int outlinewidth);
-void msRenderEllipseOgl(imageObj *image, double x, double y,
-    		double width, double height, double angle,
-    		colorObj *color, colorObj *outlinecolor,
-    		double outlinewidth);
-void msRenderVectorSymbolOgl(imageObj *img, double x, double y, symbolObj *symbol,
-		double scale, double angle, colorObj *c, colorObj *oc, double ow);
-void msRenderPixmapOgl(imageObj *img, double x, double y,
-        		symbolObj *symbol,
-        		double scale, double angle);
-void msMergeImagesOgl(imageObj *dest, imageObj *overlay, int opacity,
-		int dstX, int dstY);
-void* msCreateTileVectorOgl(symbolObj *symbol, double scale, double angle,
-    		colorObj *color,
-    		colorObj *backgroundcolor,
-    		colorObj *outlinecolor, double outlinewidth);
-void* msCreateTileEllipseOgl(double width, double height, double angle,
-			colorObj *color,
-			colorObj *backgroundcolor,
-			colorObj *outlinecolor,
-	double outlinewidth);
-
-void* msCreateTilePixmapOgl(symbolObj *symbol, double scale, double angle, colorObj *bc);
-
-void* msCreateTileTruetypeOgl(imageObj *img, char *text, char *font,
-	double size, double angle, colorObj *c, colorObj *bc, colorObj *oc,
-	double ow);
-void msRenderTileOgl(imageObj *img, void *tile, double x, double y, double angle);
-int msGetTruetypeTextBBoxOgl(imageObj *img,char *font, double size, char *string,
-    		rectObj *rect, double **advances);
-void msFreeImageOgl(imageObj *image);
-void msFreeTileOgl(void *tile);
-void msStartNewLayerOgl(imageObj *img, double opacity);
-void msCloseNewLayerOgl(imageObj *img, double opacity);
-void msFreeSymbolOgl(symbolObj *s);
-
-#endif /* SWIG */
-#endif  /* USE_OGL  */
-
-
-/* ==================================================================== */
-/*      prototypes for functions in mapcairo.c                        */
-/* ==================================================================== */
-#ifdef USE_CAIRO
-#ifndef SWIG
-	void renderLineCairo(imageObj *img, shapeObj *p, strokeStyleObj *s);
-    imageObj* createImageCairo(int width, int height, outputFormatObj *format, colorObj* bg);
-    void getRasterBufferCairo(imageObj *img,rasterBufferObj *rb);
-    int saveImageCairo(imageObj *img, FILE *fp, outputFormatObj *format);
-    void renderPolygonCairo(imageObj *img, shapeObj *p,colorObj *c);
-    void renderPolygonTiledCairo(imageObj *img, shapeObj *p, imageObj *tile);
-    void renderGlyphsCairo(imageObj *img,double x, double y, labelStyleObj *s, char *text);
-    void renderGlyphsLineCairo(imageObj *img,labelPathObj *labelpath,labelStyleObj *style, char *text);
-
-
-    
-    void renderEllipseSymbolCairo(imageObj *image, double x, double y, symbolObj *symbol, symbolStyleObj *s); 
-    void renderVectorSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *s);
-    void renderPixmapSymbolCairo(imageObj *img, double x, double y,symbolObj *symbol, symbolStyleObj *s);
-    void renderTruetypeSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
-
-    void mergeRasterBufferCairo(imageObj *img, rasterBufferObj *rb, double opacity, int dstX, int dstY);
-    
-    void renderTileCairo(imageObj *img, imageObj *tile, double x, double y);
-    int getTruetypeTextBBoxCairo(imageObj *img,char *font, double size, char *string,
-        		rectObj *rect, double **advances);
-    void freeImageCairo(imageObj *image);
-    void freeTileCairo(imageObj *tile);
-    void startNewLayerCairo(imageObj *img, double opacity);
-    void closeNewLayerCairo(imageObj *img, double opacity);
-    void freeSymbolCairo(symbolObj *s);
-#endif /* SWIG */
-#endif
-/* ==================================================================== */
-/*      end of prototypes for functions in mapcairo.c                 */
-/* ==================================================================== */   
-
-#ifndef SWIG
-renderObj* msCreateRenderer(int type);
+MS_DLL_EXPORT int msInitializeRendererVTable(outputFormatObj *outputformat);
+MS_DLL_EXPORT int msPopulateRendererVTableCairoRaster( rendererVTableObj *renderer );
+MS_DLL_EXPORT int msPopulateRendererVTableCairoSVG( rendererVTableObj *renderer );
+MS_DLL_EXPORT int msPopulateRendererVTableCairoPDF( rendererVTableObj *renderer );
+MS_DLL_EXPORT int msPopulateRendererVTableOGL( rendererVTableObj *renderer );
 
 //allocate 50k for starters
 #define MS_DEFAULT_BUFFER_ALLOC 50000
@@ -2587,8 +2500,7 @@ inline void msBufferResize(bufferObj *buffer, size_t target_size);
 MS_DLL_EXPORT  inline void msBufferFree(bufferObj *buffer);
 MS_DLL_EXPORT  inline void msBufferAppend(bufferObj *buffer, void *data, size_t length);
 
-struct renderer{
-	//void *renderer_data;
+struct rendererVTable {
 	int supports_transparent_layers;
     int supports_pixel_buffer;
 	int supports_imagecache;

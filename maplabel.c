@@ -666,7 +666,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 int msGetTruetypeTextBBox(imageObj *img, char *font, double size, char *string, rectObj *rect, double **advances) {
 #ifdef USE_GD_FT
 	if(img!=NULL && MS_RENDERER_PLUGIN(img->format)) {
-		img->format->r->getTruetypeTextBBox(img,font,size,string,rect,advances);
+		img->format->vtable->getTruetypeTextBBox(img,font,size,string,rect,advances);
 		//printf("%s: %f %f %f %f\n",string,rect->minx,rect->miny,rect->maxx,rect->maxy);
 		return MS_SUCCESS;
 	} else 

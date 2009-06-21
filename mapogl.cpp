@@ -5,10 +5,10 @@
  *      Author: toby
  */
 
-#ifdef USE_OGL
-#include <assert.h>
 #include "mapserver.h"
 
+#ifdef USE_OGL
+#include <assert.h>
 #include "mapoglrenderer.h"
 #include "mapoglcontext.h"
 
@@ -215,5 +215,40 @@ void msFreeSymbolOgl(symbolObj *s)
 {
 	
 }
-
 #endif /* USE_OGL */
+
+int msPopulateRendererVTableOGL(rendererVTableObj *renderer) {
+#ifdef USE_OGL
+    	renderer->supports_transparent_layers = 1;
+    	renderer->startNewLayer = msStartNewLayerOgl;
+    	renderer->closeNewLayer = msCloseNewLayerOgl;
+        renderer->renderLine=&msDrawLineOgl;
+        renderer->createImage=&msImageCreateOgl;
+        renderer->saveImage=&msSaveImageOgl;
+        renderer->transformShape=&msTransformShapeAGG;
+        renderer->renderPolygon=&msDrawPolygonOgl;
+        renderer->renderGlyphs=&msRenderGlyphsOgl;
+        renderer->renderEllipseSymbol = &msRenderEllipseOgl;
+        renderer->renderVectorSymbol = &msRenderVectorSymbolOgl;
+        renderer->renderPixmapSymbol = &msRenderPixmapOgl;
+        renderer->mergeRasterBuffer = &msMergeImagesOgl;
+        renderer->getTruetypeTextBBox = &msGetTruetypeTextBBoxOgl;
+        renderer->createPixmapSymbolTile = &msCreateTilePixmapOgl;
+        renderer->createVectorSymbolTile = &msCreateTileVectorOgl;
+        renderer->createEllipseSymbolTile = &msCreateTileEllipseOgl;
+        renderer->createTruetypeSymbolTile = &msCreateTileTruetypeOgl;
+        renderer->renderTile = &msRenderTileOgl;
+        renderer->renderPolygonTiled = &msDrawPolygonTiledOgl;
+        renderer->renderLineTiled = &msDrawLineTiledOgl;
+        renderer->freeTile = &msFreeTileOgl;
+        renderer->freeSymbol = &msFreeSymbolOgl;
+        renderer->freeImage=&msFreeImageOgl;
+        return MS_SUCCESS;
+    #else
+        msSetError(MS_MISCERR,"OGL driver requested but it is not compiled in this release",
+                "msPopulateRendererVTableOGL()");
+        return MS_FAILURE;
+#endif
+
+}
+

@@ -26,10 +26,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
+#include "mapserver.h"
 
 #ifdef USE_CAIRO
 
-#include "mapserver.h"
 #include <cairo.h>
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <cairo-pdf.h>
@@ -49,6 +49,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 */
+
+
 
 
 /* trivial cache container */
@@ -749,4 +751,81 @@ void freeSymbolCairo(symbolObj *s) {
 	s->renderer_cache=NULL;
 }
 
+#endif /*USE_CAIRO*/
+
+
+int msPopulateRendererVTableCairoRaster( rendererVTableObj *renderer ) {
+#ifdef USE_CAIRO
+    renderer->supports_imagecache=0;
+    renderer->supports_pixel_buffer=1;
+    renderer->supports_transparent_layers = 1;
+    renderer->startNewLayer = startNewLayerCairo;
+    renderer->closeNewLayer = closeNewLayerCairo;
+    renderer->renderLine=&renderLineCairo;
+    renderer->createImage=&createImageCairo;
+    renderer->saveImage=&saveImageCairo;
+    renderer->getRasterBuffer=&getRasterBufferCairo;
+    renderer->transformShape=&msTransformShapeAGG;
+    renderer->renderPolygon=&renderPolygonCairo;
+    renderer->renderGlyphsLine=&renderGlyphsLineCairo;
+    renderer->renderGlyphs=&renderGlyphsCairo;
+    renderer->freeImage=&freeImageCairo;
+    renderer->renderEllipseSymbol = &renderEllipseSymbolCairo;
+    renderer->renderVectorSymbol = &renderVectorSymbolCairo;
+    renderer->renderTruetypeSymbol = &renderTruetypeSymbolCairo;
+    renderer->renderPixmapSymbol = &renderPixmapSymbolCairo;
+    renderer->mergeRasterBuffer = &mergeRasterBufferCairo;
+    renderer->getTruetypeTextBBox = &getTruetypeTextBBoxCairo;
+    renderer->renderTile = &renderTileCairo;
+    renderer->renderPolygonTiled = &renderPolygonTiledCairo;
+    renderer->freeTile = &freeTileCairo;
+    renderer->freeSymbol = &freeSymbolCairo;
+    return MS_SUCCESS;
+#else
+    msSetError(MS_MISCERR, "Cairo Driver requested but is not built in", 
+            "msPopulateRendererVTableCairoRaster()");
+    return MS_FAILURE;
 #endif
+}
+
+inline int populateRendererVTableCairoVector( rendererVTableObj *renderer ) {
+#ifdef USE_CAIRO
+    renderer->supports_imagecache=0;
+    renderer->supports_pixel_buffer=0;
+    renderer->supports_transparent_layers = 1;
+    renderer->startNewLayer = startNewLayerCairo;
+    renderer->closeNewLayer = closeNewLayerCairo;
+    renderer->renderLine=&renderLineCairo;
+    renderer->createImage=&createImageCairo;
+    renderer->saveImage=&saveImageCairo;
+    renderer->getRasterBuffer=&getRasterBufferCairo;
+    renderer->transformShape=&msTransformShapeAGG;
+    renderer->renderPolygon=&renderPolygonCairo;
+    renderer->renderGlyphsLine=&renderGlyphsLineCairo;
+    renderer->renderGlyphs=&renderGlyphsCairo;
+    renderer->freeImage=&freeImageCairo;
+    renderer->renderEllipseSymbol = &renderEllipseSymbolCairo;
+    renderer->renderVectorSymbol = &renderVectorSymbolCairo;
+    renderer->renderTruetypeSymbol = &renderTruetypeSymbolCairo;
+    renderer->renderPixmapSymbol = &renderPixmapSymbolCairo;
+    renderer->mergeRasterBuffer = &mergeRasterBufferCairo;
+    renderer->getTruetypeTextBBox = &getTruetypeTextBBoxCairo;
+    renderer->renderTile = &renderTileCairo;
+    renderer->renderPolygonTiled = &renderPolygonTiledCairo;
+    renderer->freeTile = &freeTileCairo;
+    renderer->freeSymbol = &freeSymbolCairo;
+    return MS_SUCCESS;
+#else
+    msSetError(MS_MISCERR, "Cairo Driver requested but is not built in", 
+            "msPopulateRendererVTableCairoRaster()");
+    return MS_FAILURE;
+#endif
+}
+
+int msPopulateRendererVTableCairoSVG( rendererVTableObj *renderer ) {
+    return populateRendererVTableCairoVector(renderer);
+}
+int msPopulateRendererVTableCairoPDF( rendererVTableObj *renderer ) {
+    return populateRendererVTableCairoVector(renderer);
+}
+

@@ -228,7 +228,6 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->imagemode = MS_IMAGEMODE_RGB;
         format->extension = strdup("png");
         format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
-        format->r = msCreateRenderer(MS_RENDER_WITH_CAIRO_RASTER);
     }
     if( strcasecmp(driver,"CAIRO/JPEG") == 0 )
     {
@@ -237,7 +236,6 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->imagemode = MS_IMAGEMODE_RGB;
         format->extension = strdup("jpg");
         format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
-        format->r = msCreateRenderer(MS_RENDER_WITH_CAIRO_RASTER);
     }
     if( strcasecmp(driver,"CAIRO/PDF") == 0 )
 	{
@@ -245,8 +243,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 		format->mimetype = strdup("application/x-pdf");
 		format->imagemode = MS_IMAGEMODE_RGB;
 		format->extension = strdup("pdf");
-		format->renderer = MS_RENDER_WITH_CAIRO_VECTOR;
-		format->r = msCreateRenderer(MS_RENDER_WITH_CAIRO_VECTOR);
+		format->renderer = MS_RENDER_WITH_CAIRO_PDF;
 	}
     if( strcasecmp(driver,"CAIRO/SVG") == 0 )
 	{
@@ -254,8 +251,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 		format->mimetype = strdup("image/svg+xml");
 		format->imagemode = MS_IMAGEMODE_RGB;
 		format->extension = strdup("svg");
-		format->renderer = MS_RENDER_WITH_CAIRO_VECTOR;
-		format->r = msCreateRenderer(MS_RENDER_WITH_CAIRO_VECTOR);
+		format->renderer = MS_RENDER_WITH_CAIRO_SVG;
 	}
     
     
@@ -269,7 +265,6 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->imagemode = MS_IMAGEMODE_RGB; 
         format->extension = strdup("png"); 
         format->renderer = MS_RENDER_WITH_OGL; 
-        format->r = msCreateRenderer(MS_RENDER_WITH_OGL); 
     } 
 #endif 
  
@@ -339,7 +334,10 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 
     if( format != NULL )
       format->inmapfile = MS_FALSE;
-
+    
+    if( format!= NULL && MS_RENDERER_PLUGIN(format) ) {
+        msInitializeRendererVTable(format);
+    }
     return format;
 }
 
@@ -437,7 +435,8 @@ void msFreeOutputFormat( outputFormatObj *format )
     msFree( format->driver );
     msFree( format->extension );
     msFreeCharArray( format->formatoptions, format->numformatoptions );
-    msFree( format->r);
+    /* msFreeRendererVTable( format->vtable ); */
+    msFree( format->vtable );
     msFree( format );
 }
 
@@ -468,7 +467,7 @@ static outputFormatObj *msAllocOutputFormat( mapObj *map, const char *name,
     format->name = strdup(name);
     format->driver = strdup(driver);
     format->refcount = 0;
-    format->r = NULL;
+    format->vtable = NULL;
     format->imagemode = MS_IMAGEMODE_PC256;
 
 /* -------------------------------------------------------------------- */
@@ -752,7 +751,6 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *src )
 
     dst->imagemode = src->imagemode;
     dst->renderer = src->renderer;
-    dst->r = src->r;
     
     dst->transparent = src->transparent;
     dst->bands = src->bands;
@@ -766,6 +764,8 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *src )
 
     dst->inmapfile = src->inmapfile;
 
+    msInitializeRendererVTable(dst);
+    
     return dst;
 }
 
@@ -1002,93 +1002,30 @@ int msOutputFormatValidate( outputFormatObj *format )
     return result;
 }
 
-renderObj* msCreateRenderer(int type) {
-    renderObj *r = malloc(sizeof(renderObj));
-    switch(type) {
-#ifdef USE_CAIRO
-    case MS_RENDER_WITH_CAIRO_RASTER:
-        r->supports_imagecache=0;
-        r->supports_pixel_buffer=1;
-        r->supports_transparent_layers = 1;
-        r->startNewLayer = startNewLayerCairo;
-        r->closeNewLayer = closeNewLayerCairo;
-        r->renderLine=&renderLineCairo;
-        r->createImage=&createImageCairo;
-        r->saveImage=&saveImageCairo;
-        r->getRasterBuffer=&getRasterBufferCairo;
-        r->transformShape=&msTransformShapeAGG;
-        r->renderPolygon=&renderPolygonCairo;
-        r->renderGlyphsLine=&renderGlyphsLineCairo;
-        r->renderGlyphs=&renderGlyphsCairo;
-        r->freeImage=&freeImageCairo;
-        r->renderEllipseSymbol = &renderEllipseSymbolCairo;
-        r->renderVectorSymbol = &renderVectorSymbolCairo;
-        r->renderTruetypeSymbol = &renderTruetypeSymbolCairo;
-        r->renderPixmapSymbol = &renderPixmapSymbolCairo;
-        r->mergeRasterBuffer = &mergeRasterBufferCairo;
-        r->getTruetypeTextBBox = &getTruetypeTextBBoxCairo;
-        r->renderTile = &renderTileCairo;
-        r->renderPolygonTiled = &renderPolygonTiledCairo;
-        r->freeTile = &freeTileCairo;
-        r->freeSymbol = &freeSymbolCairo;
-        return r;
-    case MS_RENDER_WITH_CAIRO_VECTOR:
-        r->supports_imagecache=0;
-        r->supports_pixel_buffer=0;
-        r->supports_transparent_layers = 1;
-    	r->startNewLayer = startNewLayerCairo;
-    	r->closeNewLayer = closeNewLayerCairo;
-        r->renderLine=&renderLineCairo;
-        r->createImage=&createImageCairo;
-        r->saveImage=&saveImageCairo;
-        r->getRasterBuffer=&getRasterBufferCairo;
-        r->transformShape=&msTransformShapeAGG;
-        r->renderPolygon=&renderPolygonCairo;
-        r->renderGlyphsLine=&renderGlyphsLineCairo;
-        r->renderGlyphs=&renderGlyphsCairo;
-        r->freeImage=&freeImageCairo;
-        r->renderEllipseSymbol = &renderEllipseSymbolCairo;
-        r->renderVectorSymbol = &renderVectorSymbolCairo;
-        r->renderTruetypeSymbol = &renderTruetypeSymbolCairo;
-        r->renderPixmapSymbol = &renderPixmapSymbolCairo;
-        r->mergeRasterBuffer = &mergeRasterBufferCairo;
-        r->getTruetypeTextBBox = &getTruetypeTextBBoxCairo;
-        r->renderTile = &renderTileCairo;
-        r->renderPolygonTiled = &renderPolygonTiledCairo;
-        r->freeTile = &freeTileCairo;
-        r->freeSymbol = &freeSymbolCairo;
-        return r;
-#endif
-#ifdef USE_OGL
-    case MS_RENDER_WITH_OGL:
-    	r->supports_transparent_layers = 1;
-    	r->startNewLayer = msStartNewLayerOgl;
-    	r->closeNewLayer = msCloseNewLayerOgl;
-        r->renderLine=&msDrawLineOgl;
-        r->createImage=&msImageCreateOgl;
-        r->saveImage=&msSaveImageOgl;
-        r->transformShape=&msTransformShapeAGG;
-        r->renderPolygon=&msDrawPolygonOgl;
-        r->renderGlyphs=&msRenderGlyphsOgl;
-        r->renderEllipseSymbol = &msRenderEllipseOgl;
-        r->renderVectorSymbol = &msRenderVectorSymbolOgl;
-        r->renderPixmapSymbol = &msRenderPixmapOgl;
-        r->mergeRasterBuffer = &msMergeImagesOgl;
-        r->getTruetypeTextBBox = &msGetTruetypeTextBBoxOgl;
-        r->createPixmapSymbolTile = &msCreateTilePixmapOgl;
-        r->createVectorSymbolTile = &msCreateTileVectorOgl;
-        r->createEllipseSymbolTile = &msCreateTileEllipseOgl;
-        r->createTruetypeSymbolTile = &msCreateTileTruetypeOgl;
-        r->renderTile = &msRenderTileOgl;
-        r->renderPolygonTiled = &msDrawPolygonTiledOgl;
-        r->renderLineTiled = &msDrawLineTiledOgl;
-        r->freeTile = &msFreeTileOgl;
-        r->freeSymbol = &msFreeSymbolOgl;
-        r->freeImage=&msFreeImageOgl;
-        return r;
-#endif
-
-    default:
-        return NULL;
+int msInitializeRendererVTable(outputFormatObj *format) {
+    assert(format);
+    if(format->vtable) {
+        /* TODO?: clean up caches before switch 
+        msFreeRendererVTable(format->vtable); */
+        msFree(format->vtable);
     }
+    format->vtable = (rendererVTableObj*)malloc(sizeof(rendererVTableObj));
+    
+    switch(format->renderer) {
+        case MS_RENDER_WITH_CAIRO_RASTER:
+            return msPopulateRendererVTableCairoRaster(format->vtable);
+        case MS_RENDER_WITH_CAIRO_PDF:
+            return msPopulateRendererVTableCairoPDF(format->vtable);
+        case MS_RENDER_WITH_CAIRO_SVG:
+            return msPopulateRendererVTableCairoSVG(format->vtable);
+        case MS_RENDER_WITH_OGL:
+            return msPopulateRendererVTableOGL(format->vtable);
+        default:
+            msSetError(MS_MISCERR, "unsupported RendererVtable renderer %d",
+                    "msInitializeRendererVTable()",format->renderer);
+            return MS_FAILURE;            
+    }
+    /* this code should never be executed */
+    return MS_FAILURE;
 }
+

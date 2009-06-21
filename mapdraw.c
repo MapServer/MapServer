@@ -148,8 +148,8 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         return(NULL);
     }
     else if (MS_RENDERER_PLUGIN(map->outputformat)) {
-		renderObj *r = map->outputformat->r;
-		image = r->createImage(map->width, map->height, map->outputformat,&map->imagecolor);
+		rendererVTableObj *renderer = map->outputformat->vtable;
+		image = renderer->createImage(map->width, map->height, map->outputformat,&map->imagecolor);
         if (image == NULL)
             return(NULL);
 		image->format = map->outputformat;
@@ -745,7 +745,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
   else if (MS_RENDERER_PLUGIN(image_draw->format)) {
 		if (layer->opacity > 0 && layer->opacity < 100) {
-			if (!image_draw->format->r->supports_transparent_layers) {
+			if (!image_draw->format->vtable->supports_transparent_layers) {
 				msApplyOutputFormat(&transFormat, image->format, MS_TRUE,
 						MS_NOOVERRIDE,MS_NOOVERRIDE);
 				image_draw = msImageCreate(image->width, image->height,
@@ -756,7 +756,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 					return (MS_FAILURE);
 				}
 			} else {
-				image_draw->format->r->startNewLayer(image_draw,layer->opacity);
+				image_draw->format->vtable->startNewLayer(image_draw,layer->opacity);
 			}
 		} 
   }
@@ -826,16 +826,17 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
   else if( MS_RENDERER_PLUGIN(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
-	  if (!image_draw->format->r->supports_transparent_layers) {
+	  rendererVTableObj *renderer = image_draw->format->vtable;
+      if (!renderer->supports_transparent_layers) {
           rasterBufferObj rb;
-          image_draw->format->r->getRasterBuffer(image_draw,&rb);
-		  image_draw->format->r->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0);  
-		  image_draw->format->r->freeImage( image_draw );
+          renderer->getRasterBuffer(image_draw,&rb);
+		  renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0);  
+		  renderer->freeImage( image_draw );
 	
 		  /* deref and possibly free temporary transparent output format.  */
 		  msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
 	  } else {
-		  image_draw->format->r->closeNewLayer(image_draw,layer->opacity*0.01);
+		  renderer->closeNewLayer(image_draw,layer->opacity*0.01);
 	  }
   }
 #ifdef USE_AGG

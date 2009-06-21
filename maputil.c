@@ -653,7 +653,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
     if (img)
     {
         if (MS_RENDERER_PLUGIN(img->format)) {
-            renderObj *r = img->format->r;
+            rendererVTableObj *renderer = img->format->vtable;
             FILE *stream;
             if(filename) 
                 stream = fopen(msBuildPath(szPath, map->mappath, filename),"wb");
@@ -664,13 +664,13 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
             }
             if(!stream)
                 return MS_FAILURE;
-            if(r->supports_pixel_buffer) {
+            if(renderer->supports_pixel_buffer) {
                 rasterBufferObj data;
-                r->getRasterBuffer(img,&data);
+                renderer->getRasterBuffer(img,&data);
 
                 msSaveRasterBuffer(&data,stream,img->format );
             } else {
-                r->saveImage(img, stream, img->format);
+                renderer->saveImage(img, stream, img->format);
             }
             fclose(stream);
             return MS_SUCCESS;
@@ -773,11 +773,11 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
     *size_ptr = 0;
     if( MS_RENDERER_PLUGIN(image->format)){
         rasterBufferObj data;
-        renderObj *r = image->format->r;
-        if(r->supports_pixel_buffer) {
+        rendererVTableObj *renderer = image->format->vtable;
+        if(renderer->supports_pixel_buffer) {
             bufferObj buffer;
             msBufferInit(&buffer);
-            r->getRasterBuffer(image,&data);
+            renderer->getRasterBuffer(image,&data);
             msSaveRasterBufferToBuffer(&data,&buffer,format);
             return buffer.data;
             //don't free the bufferObj as we don't own the bytes anymore
@@ -809,18 +809,18 @@ void msFreeImage(imageObj *image)
     if (image)
     {
         if(MS_RENDERER_PLUGIN(image->format)) {
-            renderObj *r = image->format->r;
-            if(r->supports_imagecache) {
+            rendererVTableObj *renderer = image->format->vtable;
+            if(renderer->supports_imagecache) {
                 tileCacheObj *next,*cur = image->tilecache;
                 while(cur) {
-                    r->freeTile(cur->data);
+                    renderer->freeTile(cur->data);
                     next = cur->next;
                     free(cur);
                     cur = next;
                 }
                 image->ntiles = 0;
             }
-        	image->format->r->freeImage(image);
+        	renderer->freeImage(image);
         }
         else if( MS_RENDERER_GD(image->format) ) {
             if( image->img.gd != NULL )
@@ -1376,7 +1376,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         if( image != NULL && map) msImageInitGD( image, &map->imagecolor );
     }
     else if(MS_RENDERER_PLUGIN(format)) {
-    	image = format->r->createImage(width,height,format,&map->imagecolor);
+    	image = format->vtable->createImage(width,height,format,&map->imagecolor);
     	image->format = format;
 		format->refcount++;
 
@@ -1494,7 +1494,7 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
                        imageObj *image)   
 {
 	if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
-		image->format->r->transformShape(shape, extent, cellsize);
+		image->format->vtable->transformShape(shape, extent, cellsize);
 
 		return;
 	}

@@ -112,7 +112,7 @@ typedef struct {
 #ifndef SWIG
   gdImagePtr img;
   void *renderer_cache; /* Renderer storage */
-  renderObj *renderer;
+  rendererVTableObj *renderer;
   rasterBufferObj *pixmap_buffer;
   char *full_font_path;
 #endif /* SWIG */
