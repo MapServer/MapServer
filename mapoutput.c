@@ -764,7 +764,8 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *src )
 
     dst->inmapfile = src->inmapfile;
 
-    msInitializeRendererVTable(dst);
+    if( MS_RENDERER_PLUGIN(dst) ) {
+        msInitializeRendererVTable(dst);
     
     return dst;
 }
