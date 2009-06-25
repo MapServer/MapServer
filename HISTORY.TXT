@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
+- Add centroid geomtransform (#2825)
 
 - Save ALIGN parameter if it is set to CENTER or RIGHT (#3057)
 

@@ -44,6 +44,9 @@ void msStyleSetGeomTransform(styleObj *s, char *transform) {
   else if(!strncasecmp("bbox",transform,4)) {
     s->_geomtransform = MS_GEOMTRANSFORM_BBOX;
   }
+  else if(!strncasecmp("centroid",transform,8)) {
+    s->_geomtransform = MS_GEOMTRANSFORM_CENTROID;
+  }
   else {
     s->_geomtransform = MS_GEOMTRANSFORM_NONE;
     msSetError(MS_MISCERR,"unknown transform expression","msStyleSetGeomTransform()");
@@ -159,6 +162,14 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
   	    msDrawShadeSymbol(symbolset, image, &bbox, style, scalefactor);
       }
       break;
+    case MS_GEOMTRANSFORM_CENTROID:
+      {
+        double unused; /*used by centroid function*/
+        pointObj centroid;
+        if(MS_SUCCESS == msGetPolygonCentroid(shape,&centroid,&unused,&unused)){
+          msDrawMarkerSymbol(symbolset,image,&centroid,style,scalefactor);
+        }
+      }
     default:
      msSetError(MS_MISCERR, "unknown geomtransform", "msDrawTransformedShape()");
      return MS_FAILURE;
