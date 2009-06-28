@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- remove -O optimization flags to configure script if configured
+  with --enable-debug
 
 - make WFS numberOfFeatures match maxFeatures if passed (#2907)
 
