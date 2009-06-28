@@ -13131,6 +13131,8 @@ fi
 
 
 if test "$enable_debug" = "yes" ; then
+    CXXFLAGS=`echo "$CXXFLAGS " | sed 's/-O[123] / /'`
+  CFLAGS=`echo "$CFLAGS " | sed 's/-O[123] / /'`
 
   REPORT_ENABLE_DEBUG="-g "
   { $as_echo "$as_me:$LINENO: result:         Enabling debug features: -g in CFLAGS." >&5

@@ -2352,6 +2352,9 @@ AC_ARG_ENABLE(debug,
   --disable-debug         Do not include "-g" in CFLAGS (the default).],,)
 
 if test "$enable_debug" = "yes" ; then
+  dnl remove optimization flags
+  CXXFLAGS=`echo "$CXXFLAGS " | sed 's/-O[[123]] / /'`
+  CFLAGS=`echo "$CFLAGS " | sed 's/-O[[123]] / /'`
 
   REPORT_ENABLE_DEBUG="-g "
   AC_MSG_RESULT([        Enabling debug features: -g in CFLAGS.])
