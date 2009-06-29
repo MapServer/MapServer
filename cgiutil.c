@@ -54,6 +54,11 @@ static char *readPostBody( cgiRequestObj *request )
   /* -------------------------------------------------------------------- */
   if( getenv("CONTENT_LENGTH") != NULL ) {
     data_max = (unsigned int) atoi(getenv("CONTENT_LENGTH"));
+    if(data_max <= 0) {
+      msIO_printf("Content-type: text/html%c%c",10,10);
+      msIO_printf("Content-Length too small.\n");
+      exit( 1 );
+    }
     data = (char *) malloc(data_max+1);
     if( data == NULL ) {
       msIO_printf("Content-type: text/html%c%c",10,10);
