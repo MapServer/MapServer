@@ -13,7 +13,11 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
+
 - Add centroid geomtransform (#2825)
+
+- Fixed performance bottleneck when computing a polygon center of gravity for
+  label point computation. (#3053)
 
 - Save ALIGN parameter if it is set to CENTER or RIGHT (#3057)
 
