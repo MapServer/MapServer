@@ -1011,21 +1011,19 @@ static int getPolygonCenterOfGravity(shapeObj *p, pointObj *lp)
   double largestArea=0;
 
   for(i=0; i<p->numlines; i++) {
-    if(isOuterRing(p, i)) {
-      tsx = tsy = s = 0; /* reset the ring sums */
-      for(j=0; j<p->line[i].numpoints-1; j++) {
-        a = p->line[i].point[j].x*p->line[i].point[j+1].y - p->line[i].point[j+1].x*p->line[i].point[j].y;
-        s += a;
-        tsx += (p->line[i].point[j].x + p->line[i].point[j+1].x)*a;
-        tsy += (p->line[i].point[j].y + p->line[i].point[j+1].y)*a;
-      }
-      area = MS_ABS(s/2);
+    tsx = tsy = s = 0; /* reset the ring sums */
+    for(j=0; j<p->line[i].numpoints-1; j++) {
+      a = p->line[i].point[j].x*p->line[i].point[j+1].y - p->line[i].point[j+1].x*p->line[i].point[j].y;
+      s += a;
+      tsx += (p->line[i].point[j].x + p->line[i].point[j+1].x)*a;
+      tsy += (p->line[i].point[j].y + p->line[i].point[j+1].y)*a;
+    }
+    area = MS_ABS(s/2);
 
-      if(area > largestArea) {
-        largestArea = area;
-        sx = s>0?tsx:-tsx;
-        sy = s>0?tsy:-tsy;
-      }
+    if(area > largestArea) {
+      largestArea = area;
+      sx = s>0?tsx:-tsx;
+      sy = s>0?tsy:-tsy;
     }
   }
 

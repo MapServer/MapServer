@@ -13,8 +13,12 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
 - remove -O optimization flags to configure script if configured
   with --enable-debug
+
+- Fixed performance bottleneck when computing a polygon center of gravity for
+  label point computation. (#3053)
 
 - make WFS numberOfFeatures match maxFeatures if passed (#2907)
 
