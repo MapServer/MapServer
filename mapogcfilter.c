@@ -44,6 +44,16 @@ static int compare_ints( const void * a, const void * b)
     return (*(int*)a) - (*(int*)b);
 }
 
+static FLTIsNumeric(char *pszValue)
+{
+    if (pszValue)
+    {
+        if (msEvalRegex("[-+]?\\b([0-9]*\\.[0-9]+|[0-9]+)\\b", pszValue) == MS_TRUE)
+          return MS_TRUE;
+    }
+
+    return MS_FALSE;
+}
 int FLTogrConvertGeometry(OGRGeometryH hGeometry, shapeObj *psShape,
                           OGRwkbGeometryType nType) 
 {
@@ -2610,7 +2620,7 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
     const char *pszAttribute = NULL;
     char szTmp[256];
     char **tokens = NULL;
-    int nTokens = 0, i=0,j=0, nLength=0, bString=0;
+    int nTokens = 0, i=0,bString=0;
     char *pszTmp;
     
     if (!psFilterNode)
@@ -2622,12 +2632,12 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
         {
             if (FLTIsBinaryComparisonFilterType(psFilterNode->pszValue))
             {
-                pszExpression = FLTGetBinaryComparisonExpresssion(psFilterNode);
+                pszExpression = FLTGetBinaryComparisonExpresssion(psFilterNode, lp);
             }
             else if (strcasecmp(psFilterNode->pszValue, 
                                 "PropertyIsBetween") == 0)
             {
-                 pszExpression = FLTGetIsBetweenComparisonExpresssion(psFilterNode);
+                pszExpression = FLTGetIsBetweenComparisonExpresssion(psFilterNode, lp);
             }
             else if (strcasecmp(psFilterNode->pszValue, 
                                 "PropertyIsLike") == 0)
@@ -2641,11 +2651,11 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
         if (strcasecmp(psFilterNode->pszValue, "AND") == 0 ||
             strcasecmp(psFilterNode->pszValue, "OR") == 0)
         {
-            pszExpression = FLTGetLogicalComparisonExpresssion(psFilterNode);
+            pszExpression = FLTGetLogicalComparisonExpresssion(psFilterNode, lp);
         }
         else if (strcasecmp(psFilterNode->pszValue, "NOT") == 0)
         {       
-            pszExpression = FLTGetLogicalComparisonExpresssion(psFilterNode);
+            pszExpression = FLTGetLogicalComparisonExpresssion(psFilterNode, lp);
         }
     }
     else if (psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL)
@@ -2668,17 +2678,10 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
                         if (i == 0)
                         {
                             pszTmp = tokens[0];
-                            nLength = strlen(pszTmp);
-                            for (j=0; j<nLength; j++)
-                            {
-                                if (!isdigit(pszTmp[j]) &&  pszTmp[j] != '.')
-                                {
-                                    bString = 1;
-                                    break;
-                                }
-                            }
+                            if(FLTIsNumeric(pszTmp) == MS_FALSE) 
+                              bString = 1;
                         }
-                         if (bString)
+                        if (bString)
                           sprintf(szTmp, "('[%s]' = '%s')" , pszAttribute, tokens[i]);
                         else
                            sprintf(szTmp, "([%s] = %s)" , pszAttribute, tokens[i]);
@@ -2720,7 +2723,7 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
     const char *pszAttribute = NULL;
     char szTmp[256];
     char **tokens = NULL;
-    int nTokens = 0, i=0,j=0, nLength=0,bString=0;
+    int nTokens = 0, i=0, bString=0;
     char *pszTmp;
 
     if (psFilterNode == NULL || lp == NULL)
@@ -2734,13 +2737,13 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
             if (FLTIsBinaryComparisonFilterType(psFilterNode->pszValue))
             {
                 pszExpression = 
-                  FLTGetBinaryComparisonSQLExpresssion(psFilterNode);
+                  FLTGetBinaryComparisonSQLExpresssion(psFilterNode, lp);
             }            
             else if (strcasecmp(psFilterNode->pszValue, 
                                 "PropertyIsBetween") == 0)
             {
                  pszExpression = 
-                   FLTGetIsBetweenComparisonSQLExpresssion(psFilterNode);
+                   FLTGetIsBetweenComparisonSQLExpresssion(psFilterNode, lp);
             }
             else if (strcasecmp(psFilterNode->pszValue, 
                                 "PropertyIsLike") == 0)
@@ -2789,16 +2792,9 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
                         if (i == 0)
                         {
                             pszTmp = tokens[0];
-                            nLength = strlen(pszTmp);
-                            for (j=0; i<nLength; j++)
-                            {
-                                if (!isdigit(pszTmp[j]) &&  pszTmp[j] != '.')
-                                {
-                                    bString = 1;
-                                    break;
-                                }
-                            }
-                        }
+                            if (FLTIsNumeric(pszTmp) == MS_FALSE)    
+                               bString = 1;
+                       }
                         if (bString)
                           sprintf(szTmp, "(%s = '%s')" , pszAttribute, tokens[i]);
                         else
@@ -2806,12 +2802,19 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 
                         if (pszExpression != NULL)
                           pszExpression = msStringConcatenate(pszExpression, " OR ");
+                        else
+                          /*opening and closing brackets*/
+                          pszExpression = msStringConcatenate(pszExpression, "(");
+
                         pszExpression = msStringConcatenate(pszExpression, szTmp);
                     }
 
                     msFreeCharArray(tokens, nTokens);
                 }
             }
+            /*opening and closing brackets*/
+            if (pszExpression)
+               pszExpression = msStringConcatenate(pszExpression, ")");
         }
 #else
         msSetError(MS_MISCERR, "OWS support is not available.", 
@@ -2828,20 +2831,20 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 /*                                                                      */
 /*      Return the expresion for a specific node.                       */
 /************************************************************************/
-char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode)
+char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
     char *pszExpression = NULL;
     if (!psFilterNode)
       return NULL;
 
     if (FLTIsLogicalFilterType(psFilterNode->pszValue))
-      pszExpression = FLTGetLogicalComparisonExpresssion(psFilterNode);
+      pszExpression = FLTGetLogicalComparisonExpresssion(psFilterNode, lp);
     else if (FLTIsComparisonFilterType(psFilterNode->pszValue))
     {
         if (FLTIsBinaryComparisonFilterType(psFilterNode->pszValue))
-          pszExpression = FLTGetBinaryComparisonExpresssion(psFilterNode);
+          pszExpression = FLTGetBinaryComparisonExpresssion(psFilterNode, lp);
         else if (strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0)
-          pszExpression = FLTGetIsBetweenComparisonExpresssion(psFilterNode);
+          pszExpression = FLTGetIsBetweenComparisonExpresssion(psFilterNode, lp);
         else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
           pszExpression = FLTGetIsLikeComparisonExpression(psFilterNode);
     }
@@ -2952,7 +2955,7 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 /*                                                                      */
 /*      Return the expression for logical comparison expression.        */
 /************************************************************************/
-char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
+char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
     char *pszTmp = NULL;
     char *pszBuffer = NULL;
@@ -2978,9 +2981,9 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") != 0 &&
             strcasecmp(psFilterNode->psLeftNode->pszValue, "DWithin") != 0 &&
             FLTIsGeosNode(psFilterNode->psLeftNode->pszValue) == MS_FALSE)
-          pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
+          pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode, lp);
         else
-          pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
+          pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode, lp);
 
         if (!pszTmp)
           return NULL;
@@ -3005,9 +3008,9 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
          (strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") == 0)))
     {
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") != 0)
-          pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
+          pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode, lp);
         else
-          pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
+          pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode, lp);
 
         if (!pszTmp)
           return NULL;
@@ -3023,7 +3026,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /* -------------------------------------------------------------------- */
     if (psFilterNode->psLeftNode && psFilterNode->psRightNode)
     {
-        pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
+        pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode, lp);
         if (!pszTmp)
           return NULL;
 
@@ -3036,7 +3039,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
         strcat(pszBuffer, " ");
         strcat(pszBuffer, psFilterNode->pszValue);
         strcat(pszBuffer, " ");
-        pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
+        pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode, lp);
         if (!pszTmp)
           return NULL;
 
@@ -3053,7 +3056,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
     else if (psFilterNode->psLeftNode && 
              strcasecmp(psFilterNode->pszValue, "NOT") == 0)
     {
-        pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
+        pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode, lp);
         if (!pszTmp)
           return NULL;
 
@@ -3078,10 +3081,11 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /*                                                                      */
 /*      Return the expression for a binary comparison filter node.      */
 /************************************************************************/
-char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
+char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
     char szBuffer[1024];
-    int i=0, bString=0, nLenght = 0;
+    int bString=0;
+    char szTmp[256];
 
     szBuffer[0] = '\0';
     if (!psFilterNode || !FLTIsBinaryComparisonFilterType(psFilterNode->pszValue))
@@ -3094,18 +3098,12 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
     bString = 0;
     if (psFilterNode->psRightNode->pszValue)
     {
-        nLenght = strlen(psFilterNode->psRightNode->pszValue);
-        for (i=0; i<nLenght; i++)
-        {
-            if (!isdigit(psFilterNode->psRightNode->pszValue[i]) &&
-                psFilterNode->psRightNode->pszValue[i] != '.')
-            {
-                /* if (psFilterNode->psRightNode->pszValue[i] < '0' || */
-                /* psFilterNode->psRightNode->pszValue[i] > '9') */
-                bString = 1;
-                break;
-            }
-        }
+        sprintf(szTmp, "%s_type",  psFilterNode->psLeftNode->pszValue);
+        if (msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp) != NULL &&
+            (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", szTmp), "Character") == 0))
+          bString = 1;
+        else if (FLTIsNumeric(psFilterNode->psRightNode->pszValue) == MS_FALSE)    
+          bString = 1;
     }
     
     /* specical case to be able to have empty strings in the expression. */
@@ -3179,11 +3177,12 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /*                                                                      */
 /*      Return the expression for a binary comparison filter node.      */
 /************************************************************************/
-char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
+char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode, 
+                                           layerObj *lp)
 {
     char szBuffer[1024];
-    int i=0, bString=0, nLenght = 0;
-    char szTmp[100];
+    int bString=0;
+    char szTmp[256];
 
     szBuffer[0] = '\0';
     if (!psFilterNode || !
@@ -3197,18 +3196,13 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
     bString = 0;
     if (psFilterNode->psRightNode->pszValue)
     {
-        nLenght = strlen(psFilterNode->psRightNode->pszValue);
-        for (i=0; i<nLenght; i++)
-        {
-            if (!isdigit(psFilterNode->psRightNode->pszValue[i]) &&
-                psFilterNode->psRightNode->pszValue[i] != '.')
-            {
-                /* if (psFilterNode->psRightNode->pszValue[i] < '0' || */
-                /* psFilterNode->psRightNode->pszValue[i] > '9') */
-                bString = 1;
-                break;
-            }
-        }
+        sprintf(szTmp, "%s_type",  psFilterNode->psLeftNode->pszValue);
+        if (msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp) != NULL &&
+            (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", szTmp), "Character") == 0))
+          bString = 1;
+
+        else if (FLTIsNumeric(psFilterNode->psRightNode->pszValue) == MS_FALSE)    
+          bString = 1;
     }
     
     /* specical case to be able to have empty strings in the expression. */
@@ -3293,12 +3287,14 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
 /*                                                                      */
 /*      Build an SQL expresssion for IsBteween Filter.                  */
 /************************************************************************/
-char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
+char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
+                                              layerObj *lp)
 {
     char szBuffer[1024];
     char **aszBounds = NULL;
     int nBounds = 0;
-    int i=0, bString=0, nLenght = 0;
+    int bString=0;
+    char szTmp[256];
 
 
     szBuffer[0] = '\0';
@@ -3322,29 +3318,19 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
     bString = 0;
     if (aszBounds[0])
     {
-        nLenght = strlen(aszBounds[0]);
-        for (i=0; i<nLenght; i++)
-        {
-            if (!isdigit(aszBounds[0][i]) && aszBounds[0][i] != '.')
-            {
-                bString = 1;
-                break;
-            }
-        }
+        sprintf(szTmp, "%s_type",  psFilterNode->psLeftNode->pszValue);
+        if (msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp) != NULL &&
+            (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", szTmp), "Character") == 0))
+          bString = 1;
+        else if (FLTIsNumeric(aszBounds[0]) == MS_FALSE)    
+          bString = 1;
     }
     if (!bString)
     {
         if (aszBounds[1])
         {
-            nLenght = strlen(aszBounds[1]);
-            for (i=0; i<nLenght; i++)
-            {
-                if (!isdigit(aszBounds[1][i]) && aszBounds[1][i] != '.')
-                {
-                    bString = 1;
-                    break;
-                }
-            }
+            if (FLTIsNumeric(aszBounds[1]) == MS_FALSE)    
+              bString = 1;
         }
     }
         
@@ -3389,12 +3375,14 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode)
 /*                                                                      */
 /*      Build expresssion for IsBteween Filter.                         */
 /************************************************************************/
-char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
+char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode, 
+                                           layerObj *lp)
 {
     char szBuffer[1024];
     char **aszBounds = NULL;
     int nBounds = 0;
-    int i=0, bString=0, nLenght = 0;
+    int bString=0;
+    char szTmp[256];
 
 
     szBuffer[0] = '\0';
@@ -3418,29 +3406,19 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
     bString = 0;
     if (aszBounds[0])
     {
-        nLenght = strlen(aszBounds[0]);
-        for (i=0; i<nLenght; i++)
-        {
-            if (!isdigit(aszBounds[0][i]) && aszBounds[0][i] != '.')
-            {
-                bString = 1;
-                break;
-            }
-        }
+        sprintf(szTmp, "%s_type",  psFilterNode->psLeftNode->pszValue);
+        if (msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp) != NULL &&
+            (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", szTmp), "Character") == 0))
+          bString = 1;
+        else if (FLTIsNumeric(aszBounds[0]) == MS_FALSE)    
+          bString = 1;
     }
     if (!bString)
     {
         if (aszBounds[1])
         {
-            nLenght = strlen(aszBounds[1]);
-            for (i=0; i<nLenght; i++)
-            {
-                if (!isdigit(aszBounds[1][i]) && aszBounds[1][i] != '.')
-                {
-                    bString = 1;
-                    break;
-                }
-            }
+            if (FLTIsNumeric(aszBounds[1]) == MS_FALSE)    
+              bString = 1;  
         }
     }
         
