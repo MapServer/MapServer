@@ -93,15 +93,15 @@ MS_DLL_EXPORT int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode);
 
 MS_DLL_EXPORT char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT char *FLTGetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode);
-MS_DLL_EXPORT char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
 
 MS_DLL_EXPORT shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
                       int *pnUnit);
 
-MS_DLL_EXPORT char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
-MS_DLL_EXPORT char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
-MS_DLL_EXPORT char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
+MS_DLL_EXPORT char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
+MS_DLL_EXPORT char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode);
 MS_DLL_EXPORT int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
 
@@ -111,8 +111,8 @@ MS_DLL_EXPORT int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *ma
                           int iLayerIndex);
 
 MS_DLL_EXPORT char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,layerObj *lp);
-MS_DLL_EXPORT char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
-MS_DLL_EXPORT char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
+MS_DLL_EXPORT char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
                                        int connectiontype);
 MS_DLL_EXPORT char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
