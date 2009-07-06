@@ -44,16 +44,45 @@ static int compare_ints( const void * a, const void * b)
     return (*(int*)a) - (*(int*)b);
 }
 
-static FLTIsNumeric(char *pszValue)
+static int FLTIsNumeric(char *pszValue)
 {
+
     if (pszValue)
     {
+        /*the regex seems to have a problem on windows when mapserver is built using
+          PHP regex. Use custom testing*/
+        int i = 0, nLength=0, bString=0;
+
+        /*
         if (msEvalRegex("[-+]?\\b([0-9]*\\.[0-9]+|[0-9]+)\\b", pszValue) == MS_TRUE)
           return MS_TRUE;
+        */
+        nLength = strlen(pszValue);
+        for (i=0; i<nLength; i++)
+        {
+            if (i == 0)
+            {
+                if (!isdigit(pszValue[i]) &&  pszValue[i] != '-')
+                {
+                     bString = 1;
+                     break;
+                }
+            }
+            else if (!isdigit(pszValue[i]) &&  pszValue[i] != '.')
+            {
+                bString = 1;
+                break;
+            }
+        }
+        if (!bString)
+          return MS_TRUE;
+
+        
     }
 
     return MS_FALSE;
 }
+
 int FLTogrConvertGeometry(OGRGeometryH hGeometry, shapeObj *psShape,
                           OGRwkbGeometryType nType) 
 {
