@@ -379,6 +379,8 @@ enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS
 enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
+enum MS_QUERY_TYPES {MS_QUERY_BY_POINT, MS_QUERY_BY_POINT_UNIQUE, MS_QUERY_BY_RECT, MS_QUERY_BY_SHAPE, MS_QUERY_BY_FEATURES, MS_QUERY_BY_OPERATOR};
+
 enum MS_ALIGN_VALUE {MS_ALIGN_LEFT, MS_ALIGN_CENTER, MS_ALIGN_RIGHT}; 
 
 enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
@@ -1824,7 +1826,7 @@ MS_DLL_EXPORT int msLayerOpen(layerObj *layer); /* in maplayer.c */
 MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msLayerClose(layerObj *layer);
 MS_DLL_EXPORT int msLayerWhichShapes(layerObj *layer, rectObj rect);
-MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadata);
+MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int get_all, char *metadata); 
 MS_DLL_EXPORT int msLayerNextShape(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msLayerGetItems(layerObj *layer);
 MS_DLL_EXPORT int msLayerSetItems(layerObj *layer, char **items, int numitems);

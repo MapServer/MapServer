@@ -924,9 +924,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 /*      flash movie for query purpose.                                  */
 /* ==================================================================== */
   if(image && MS_RENDERER_SWF(image->format))
-    status = msLayerWhichItems(layer, MS_TRUE, annotate, msLookupHashTable(&(layer->metadata), "SWFDUMPATTRIBUTES"));                                
+    status = msLayerWhichItems(layer, MS_FALSE, msLookupHashTable(&(layer->metadata), "SWFDUMPATTRIBUTES"));                                
   else        
-    status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL);
+    status = msLayerWhichItems(layer, MS_FALSE, NULL);
 
   if(status != MS_SUCCESS) {
     msLayerClose(layer);
@@ -1209,7 +1209,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   /* build item list */
-  status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL); /* FIX: results have already been classified (this may change) */
+  status = msLayerWhichItems(layer, MS_FALSE, NULL); /* FIX: results have already been classified (this may change) */
   if(status != MS_SUCCESS) {
       msFree(colorbuffer);
       msFree(mindistancebuffer);

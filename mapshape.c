@@ -1893,8 +1893,8 @@ int msTiledSHPOpenFile(layerObj *layer)
     status = msLayerOpen(tlp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-     /* build item list (no annotation) since we do have to classify the shape */
-     status = msLayerWhichItems(tlp, MS_TRUE, MS_FALSE, NULL);
+     /* build item list */
+     status = msLayerWhichItems(tlp, MS_FALSE, NULL);
      if(status != MS_SUCCESS) return(MS_FAILURE);
 
      tSHP->tileshpfile = (shapefileObj *) tlp->layerinfo; /* shapefiles use layerinfo to point to a shapefileObj */

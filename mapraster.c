@@ -1347,8 +1347,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
         goto cleanup;
     }
 
-    /* build item list (no annotation) since we may have to classify the shape, plus we want the tileitem */
-    status = msLayerWhichItems(tlp, MS_TRUE, MS_FALSE, layer->tileitem);
+    status = msLayerWhichItems(tlp, MS_FALSE, layer->tileitem);
     if(status != MS_SUCCESS)
     {
         final_status = status;

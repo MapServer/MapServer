@@ -550,7 +550,7 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         status = msLayerOpen(layer);
         if(status != MS_SUCCESS) return MS_FAILURE;
     
-        status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL);
+        status = msLayerWhichItems(layer, MS_FALSE, NULL);
         if(status != MS_SUCCESS) {
             msLayerClose(layer);
             return MS_FAILURE;

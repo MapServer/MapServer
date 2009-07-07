@@ -377,6 +377,8 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
       free(tmpstr2);
     }
 
+    // fprintf(stderr, "exp; %s\n", tmpstr);
+
     msAcquireLock( TLOCK_PARSER );
     msyystate = MS_TOKENIZE_EXPRESSION;
     msyystring = tmpstr; /* set lexer state to EXPRESSION_STRING */

@@ -279,267 +279,136 @@ static int string2list(char **list, int *listsize, char *string)
 {
   int i;
 
-  for(i=0; i<(*listsize); i++)
-    if(strcasecmp(list[i], string) == 0) { 
-        /* printf("string2list (duplicate): %s %d\n", string, i); */
-      return(i);
-    }
+  for(i=0; i<(*listsize); i++) {
+    if(strcasecmp(list[i], string) == 0) return(i);
+  }
 
   list[i] = strdup(string);
   (*listsize)++;
 
-  /* printf("string2list: %s %d\n", string, i); */
-
   return(i);
 }
 
-/* TO DO: this function really needs to use the lexer */
-static void expression2list(char **list, int *listsize, expressionObj *expression) 
+static void expression2list(char **items, int numitems, char **list, int *listsize, expressionObj *exp)
 {
-  int i, j, l;
-  char tmpstr1[1024], tmpstr2[1024];
-  short in=MS_FALSE;
-  int tmpint;
+  int i, t, index;
+  char *tag, *expptr;
+  int taglen;
 
-  j = 0;
-  l = strlen(expression->string);
-  for(i=0; i<l; i++) {
-    if(expression->string[i] == '[') {
-      in = MS_TRUE;
-      tmpstr2[j] = expression->string[i];
-      j++;
-      continue;
+  for(i=0; i<numitems; i++) {
+    tag = (char *) malloc(sizeof(char)*strlen(items[i])+3);
+    sprintf(tag, "[%s]", items[i]); /* there is enough room in tag */
+    if((expptr = (char *) msCaseFindSubstring(exp->string, tag)) != 0) {      
+      index = string2list(list, listsize, items[i]); /* add to overall list */
+
+      t = exp->numitems; /* we need to know if the tag list changes */
+      string2list(exp->items, &(exp->numitems), tag); /* add tag to expression list, use tag so we don't have to reconstruct it later */
+      if(t != exp->numitems) exp->indexes[exp->numitems-1] = index; /* index to overall list */
+
+      /* normalize expression */
+      taglen = strlen(tag);
+      do {
+	memcpy(expptr, tag, taglen);
+      } while((expptr = (char *) msCaseFindSubstring(expptr+taglen, tag)) != 0);
     }
-    if(expression->string[i] == ']') {
-      in = MS_FALSE;
-
-      tmpint = expression->numitems;
-
-      tmpstr2[j] = expression->string[i];
-      tmpstr2[j+1] = '\0';
-      string2list(expression->items, &(expression->numitems), tmpstr2);
-
-      if(tmpint != expression->numitems) { /* not a duplicate, so no need to calculate the index */
-        tmpstr1[j-1] = '\0';
-        expression->indexes[expression->numitems - 1] = string2list(list, listsize, tmpstr1);
-      }
-
-      j = 0; /* reset */
-
-      continue;
-    }
-
-    if(in) {
-      tmpstr2[j] = expression->string[i];
-      tmpstr1[j-1] = expression->string[i];
-      j++;
-    }
+    free(tag);
   }
 }
 
-int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *metadata) 
+static int allocateExpressionItems(expressionObj *exp, int numitems)
 {
-  int status;
-  int numchars;
-/* int i; */
-
-  status = msLayerGetItems(layer); /* get a list of all attributes available for this layer (including JOINs) */
-  if(status != MS_SUCCESS) return(status);
-
-  /* allocate space for the various item lists */
-  if(classify && layer->filter.type == MS_EXPRESSION) { 
-    numchars = msCountChars(layer->filter.string, '[');
-    if(numchars > 0) {
-      layer->filter.items = (char **)calloc(numchars, sizeof(char *)); /* should be more than enough space */
-      if(!(layer->filter.items)) {
-	msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	return(MS_FAILURE);
-      }
-      layer->filter.indexes = (int *)malloc(numchars*sizeof(int));
-      if(!(layer->filter.indexes)) {
-	msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	return(MS_FAILURE);
-      }
-      layer->filter.numitems = 0;     
-    }
+  exp->items = (char **) calloc(numitems, sizeof(char *));
+  if(!(exp->items)) {
+    msSetError(MS_MEMERR, NULL, "allocateExpressionItems()");
+    return MS_FAILURE;
   }
+  exp->indexes = (int *) malloc(numitems*sizeof(int));
+  if(!(exp->indexes)) {
+    msSetError(MS_MEMERR, NULL, "allocateExpressionItems()");
+    return MS_FAILURE;
+  }
+  exp->numitems = 0; /* initially empty */
 
-  /* for(i=0; i<layer->numitems; i++) { } */
-
-  return(MS_SUCCESS);
+  return MS_SUCCESS; 
 }
 
-/*
-** This function builds a list of items necessary to draw or query a particular layer by
-** examining the contents of the various xxxxitem parameters and expressions. That list is
-** then used to set the iteminfo variable. 
-*/
-int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadata) 
+int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 {
+  char **items;
+  int numitems;
   int i, j, k, rv;
-  int nt=0, ne=0;
+  int freeitems=MS_FALSE;
 
   if (!layer->vtable) {
     rv =  msInitializeVirtualTable(layer);
-    if (rv != MS_SUCCESS) {
-      return rv;
-    }
-  }
-
-  /*  */
-  /* TO DO! I have a better algorithm. */
-  /*  */
-  /* 1) call msLayerGetItems to get a complete list (including joins) */
-  /* 2) loop though item-based parameters and expressions to identify items to keep */
-  /* 3) based on 2) build a list of items */
-  /*  */
-  /* This is more straight forward and robust, fixes the problem of [...] regular expressions */
-  /* embeded in logical expressions. It also opens up to using dynamic joins anywhere... */
-  /*  */
-
-  /* Cleanup any previous item selection */
-  msLayerFreeItemInfo(layer);
-  if(layer->items) {
-    msFreeCharArray(layer->items, layer->numitems);
-    layer->items = NULL;
-    layer->numitems = 0;
+    if (rv != MS_SUCCESS) return rv;
   }
 
   /*
-  ** layer level counts
+  ** The algorithm:
+  **   1) call msLayerGetItems to get a complete list (including joins potentially)
+  **   2) loop though item-based parameters and expressions to identify items to keep 
+  **   3) based on 2) build a list of items 
   */
-  if(classify) {
-    if(layer->classitem) nt++;
-    if(layer->filteritem) nt++;
 
-    ne = 0;
-    if(layer->filter.type == MS_EXPRESSION) {
-      ne = msCountChars(layer->filter.string, '[');
-      if(ne > 0) {
-        layer->filter.items = (char **) calloc(ne, sizeof(char *)); /* should be more than enough space */
-        if(!(layer->filter.items)) {
-          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-          return(MS_FAILURE);
-        }
-        layer->filter.indexes = (int *) malloc(ne*sizeof(int));
-        if(!(layer->filter.indexes)) {
-          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-          return(MS_FAILURE);
-        }
-        layer->filter.numitems = 0;
-        nt += ne;
-      }
-    }
-  }
+  rv = msLayerGetItems(layer);
+  if(rv != MS_SUCCESS) return(rv);
 
-  if(annotate) {
-    if(layer->labelitem) nt++;
-  }
+  items = layer->items; /* save for later */
+  numitems = layer->numitems;
 
   /*
-  ** class level counts
+  ** reset things (if necessary)
+  **   note: if we don't reset then the items array is fully populated will ALL items
   */
+  if(!get_all || (layer->connectiontype == MS_INLINE)) {
+    rv = layer->vtable->LayerCreateItems(layer, numitems);
+    if (rv != MS_SUCCESS) return rv;
+    freeitems = MS_TRUE;
+  }
+
+  /* layer-level item use */
+  if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
+  if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
+  if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
+
+  if(layer->filter.type == MS_EXPRESSION) {
+    if(allocateExpressionItems(&layer->filter, numitems) != MS_SUCCESS) return MS_FAILURE;
+    expression2list(items, numitems, layer->items, &(layer->numitems), &(layer->filter));
+  }
+
+  /* class-level item use */
   for(i=0; i<layer->numclasses; i++) {
-    
-    if(classify) {
-      for(j=0; j<layer->class[i]->numstyles; j++) {
-        if(layer->class[i]->styles[j]->rangeitem) nt++;
-        nt += layer->class[i]->styles[j]->numbindings;
-      }
-
-      ne = 0;
-      if(layer->class[i]->expression.type == MS_EXPRESSION) { 
-        ne = msCountChars(layer->class[i]->expression.string, '[');
-        if(ne > 0) {
-          layer->class[i]->expression.items = (char **) calloc(ne, sizeof(char *)); /* should be more than enough space */
-          if(!(layer->class[i]->expression.items)) {
-            msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-            return(MS_FAILURE);
-          }
-          layer->class[i]->expression.indexes = (int *) malloc(ne*sizeof(int));
-          if(!(layer->class[i]->expression.indexes)) {
-            msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-            return(MS_FAILURE);
-          }
-          layer->class[i]->expression.numitems = 0;
-          nt += ne;
-        }
-      }
+    if(layer->class[i]->expression.type == MS_EXPRESSION) {
+      if(allocateExpressionItems(&layer->class[i]->expression, numitems) != MS_SUCCESS) return MS_FAILURE;
+      expression2list(items, numitems, layer->items, &(layer->numitems), &(layer->class[i]->expression));
     }
 
-    if(annotate) {
-      nt += layer->class[i]->label.numbindings;
+    if(layer->class[i]->text.type == MS_EXPRESSION) {
+      if(allocateExpressionItems(&layer->class[i]->text, numitems) != MS_SUCCESS) return MS_FAILURE;
+      expression2list(items, numitems, layer->items, &(layer->numitems), &(layer->class[i]->text));
+    }
 
-      ne = 0;
-      if(layer->class[i]->text.type == MS_EXPRESSION) { 
-        ne = msCountChars(layer->class[i]->text.string, '[');
-        if(ne > 0) {
-          layer->class[i]->text.items = (char **) calloc(ne, sizeof(char *)); /* should be more than enough space */
-          if(!(layer->class[i]->text.items)) {
-            msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-            return(MS_FAILURE);
-          }
-          layer->class[i]->text.indexes = (int *) malloc(ne*sizeof(int));
-          if(!(layer->class[i]->text.indexes)) {
-            msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-            return(MS_FAILURE);
-          }
-          layer->class[i]->text.numitems = 0;
-          nt += ne;
-        }
-      }
+    for(k=0; k<MS_LABEL_BINDING_LENGTH; k++)
+      if(layer->class[i]->label.bindings[k].item) layer->class[i]->label.bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->label.bindings[k].item);
+
+    /* style-level item use */
+    for(j=0; j<layer->class[i]->numstyles; j++) {
+      if(layer->class[i]->styles[j]->rangeitem) layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem);
+      for(k=0; k<MS_STYLE_BINDING_LENGTH; k++)
+	if(layer->class[i]->styles[j]->bindings[k].item) layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
     }
   }
 
-  /* Always retrieve all items in some cases */
-  if (layer->connectiontype == MS_INLINE)
-  {
-     msLayerGetItems(layer);
-     /* need to realloc the array to accept the possible new items*/
-     if (nt > 0)
-        layer->items = (char **)realloc(layer->items, sizeof(char *)*(layer->numitems + nt));
-  }
-  else
-  {
-    rv = layer->vtable->LayerCreateItems(layer, nt);
-    if (rv != MS_SUCCESS) {
-      return rv;
-    }
-  }
-
-  if(nt > 0) {
-    if(classify) {
-      if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
-      if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
-
-      for(i=0; i<layer->numclasses; i++) {
-        if(layer->class[i]->expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i]->expression));
-        for(j=0; j<layer->class[i]->numstyles; j++) {
-          if(layer->class[i]->styles[j]->rangeitem) layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem); 
-	  for(k=0; k<MS_STYLE_BINDING_LENGTH; k++)
-	    if(layer->class[i]->styles[j]->bindings[k].item) layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
-        }
-      }
-
-      if(layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));      
-    }
-
-    if(annotate) {
-      if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
-      for(i=0; i<layer->numclasses; i++) {
-        if(layer->class[i]->text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i]->text));
-        for(k=0; k<MS_LABEL_BINDING_LENGTH; k++)
-          if(layer->class[i]->label.bindings[k].item) layer->class[i]->label.bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->label.bindings[k].item);
-      }
-    }
-  }
-
+  /*
+  ** need a description here of what this code is doing...
+  */ 
   if(metadata) {
     char **tokens;
     int n = 0;
     int j;
     int bFound = 0;
-      
+
     tokens = msStringSplit(metadata, ',', &n);
     if(tokens) {
       for(i=0; i<n; i++) {
@@ -550,7 +419,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
             break;
           }
         }
-              
+
         if(!bFound) {
           layer->numitems++;
           layer->items =  (char **)realloc(layer->items, sizeof(char *)*(layer->numitems));
@@ -561,11 +430,16 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     }
   }
 
+  /*
+  ** Clean up (if necessary)
+  */
+  if(freeitems) msFreeCharArray(items, numitems);
+
   /* populate the iteminfo array */
   if(layer->numitems == 0)
-    return(MS_SUCCESS);
-
-  return(msLayerInitItemInfo(layer));
+    return MS_SUCCESS;
+  else
+    return msLayerInitItemInfo(layer);
 }
 
 /*

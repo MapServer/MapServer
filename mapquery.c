@@ -196,8 +196,8 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  /* build item list (no annotation) since we do have to classify the shape */
-  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
+  /* build item list */
+  status = msLayerWhichItems(lp, MS_TRUE, NULL);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   if (!addtoquery || lp->resultcache == NULL) {
@@ -340,8 +340,8 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
       return(MS_FAILURE);
   }
   
-  /* build item list (no annotation) */
-  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
+  /* build item list */
+  status = msLayerWhichItems(lp, MS_TRUE, NULL);
   if(status != MS_SUCCESS) {
       /* Manually reset the filter */
       msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
@@ -501,8 +501,8 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-    /* build item list (no annotation) */
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
+    /* build item list */
+    status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     /* identify target shapes */
@@ -702,8 +702,8 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     
-    /* build item list (no annotation) */
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
+    /* build item list */
+    status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     
     /* for each selection shape */
@@ -995,8 +995,8 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-    /* build item list (no annotation) */
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
+    /* build item list */
+    status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     /* identify target shapes */
@@ -1175,8 +1175,8 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-    /* build item list (no annotation) */
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
+    /* build item list */
+    status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     /* identify target shapes */
@@ -1368,8 +1368,8 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
       status = msLayerOpen(lp);
       if(status != MS_SUCCESS) return(MS_FAILURE);
 
-      /* build item list (no annotation) */
-      status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
+      /* build item list */
+      status = msLayerWhichItems(lp, MS_TRUE, NULL);
       if(status != MS_SUCCESS) return(MS_FAILURE);
 
 /* identify target shapes */
