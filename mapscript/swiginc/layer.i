@@ -159,7 +159,7 @@
         int oldconnectiontype = self->connectiontype;
         self->connectiontype = MS_INLINE;
 
-        if(msLayerWhichItems(self, MS_TRUE, MS_FALSE, NULL) != MS_SUCCESS) {
+        if(msLayerWhichItems(self, MS_TRUE, NULL) != MS_SUCCESS) {
             self->connectiontype = oldconnectiontype;
             return MS_FAILURE;
         }
