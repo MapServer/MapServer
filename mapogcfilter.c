@@ -615,7 +615,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
         if((psLayer->labelminscaledenom != -1) && (map->scaledenom < psLayer->labelminscaledenom)) 
           annotate = MS_FALSE;
     }
-    status = msLayerWhichItems(psLayer, MS_TRUE, annotate, NULL);
+    status = msLayerWhichItems(psLayer, MS_FALSE, NULL);
     if (status != MS_SUCCESS) 
       return;
 
