@@ -13308,17 +13308,27 @@ echo "${ECHO_T}yes" >&6; }
             test -f "$PHP_SRC_DIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
         if test -n "$PHP_NO_SOURCE" ; then
                     USE_PHP_REGEX="-DUSE_PHP_REGEX"
+          PHP_REGEX_INC="$PHP_SRC_DIR/"
           PHP_REGEX_OBJ=php_regex.o
           { echo "$as_me:$LINENO: result:         found regex_extra.h - building PHP MapScript with PHP's bundled regex " >&5
 echo "${ECHO_T}        found regex_extra.h - building PHP MapScript with PHP's bundled regex " >&6; }
         else
-          { { echo "$as_me:$LINENO: error:
-!!! PHP uses its bundled regex library but regex/regex_extra.h cannot be !!!
-!!! found.                                                               !!!" >&5
+                    test -f "$PHP_SRC_DIR/ext/ereg/regex/regex.h" && PHP_NO_SOURCE="1"
+          if test -n "$PHP_NO_SOURCE" ; then
+                    USE_PHP_REGEX="-DUSE_PHP_REGEX"
+          PHP_REGEX_INC="$PHP_SRC_DIR/ext/ereg/"
+          PHP_REGEX_OBJ=php_regex.o
+          { echo "$as_me:$LINENO: result:         found regex.h - building PHP MapScript with PHP's bundled regex " >&5
+echo "${ECHO_T}        found regex.h - building PHP MapScript with PHP's bundled regex " >&6; }
+          else
+            { { echo "$as_me:$LINENO: error:
+!!! PHP uses its bundled regex library but regex/regex_extra.h (PHP <=5.2) or !!!
+!!! ext/ereg/regex/regex.h (PHP >=5.3) cannot be found.                                  !!!" >&5
 echo "$as_me: error:
-!!! PHP uses its bundled regex library but regex/regex_extra.h cannot be !!!
-!!! found.                                                               !!!" >&2;}
+!!! PHP uses its bundled regex library but regex/regex_extra.h (PHP <=5.2) or !!!
+!!! ext/ereg/regex/regex.h (PHP >=5.3) cannot be found.                                  !!!" >&2;}
    { (exit 1); exit 1; }; }
+          fi
 	fi
 
   else

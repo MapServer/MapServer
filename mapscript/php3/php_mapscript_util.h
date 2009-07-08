@@ -44,6 +44,11 @@
 #define TSRMLS_CC
 #endif
 
+/* PHP >=5.3 replaced ZVAL_DELREF by Z_DELREF */
+#if ZEND_MODULE_API_NO >= 20090626
+#define ZVAL_DELREF Z_DELREF
+#define ZVAL_ADDREF Z_ADDREF
+#endif
 
 /**********************************************************************
  *                  macros for setting object properties

@@ -2487,12 +2487,23 @@ if test -n "$with_php" -a -d "$with_php" ; then
         if test -n "$PHP_NO_SOURCE" ; then
           dnl Found regex_extra.h
           USE_PHP_REGEX="-DUSE_PHP_REGEX"
+          PHP_REGEX_INC="$PHP_SRC_DIR/"
           PHP_REGEX_OBJ=php_regex.o
           AC_MSG_RESULT([        found regex_extra.h - building PHP MapScript with PHP's bundled regex ])
         else
-          AC_MSG_ERROR([
-!!! PHP uses its bundled regex library but regex/regex_extra.h cannot be !!!
-!!! found.                                                               !!!])
+          dnl PHP 5.3 changed the layout of regex-related files.
+          test -f "$PHP_SRC_DIR/ext/ereg/regex/regex.h" && PHP_NO_SOURCE="1"
+          if test -n "$PHP_NO_SOURCE" ; then
+          dnl Found regex.h
+          USE_PHP_REGEX="-DUSE_PHP_REGEX"
+          PHP_REGEX_INC="$PHP_SRC_DIR/ext/ereg/"
+          PHP_REGEX_OBJ=php_regex.o
+          AC_MSG_RESULT([        found regex.h - building PHP MapScript with PHP's bundled regex ])
+          else
+            AC_MSG_ERROR([
+!!! PHP uses its bundled regex library but regex/regex_extra.h (PHP <=5.2) or !!!
+!!! ext/ereg/regex/regex.h (PHP >=5.3) cannot be found.                                  !!!])
+          fi
 	fi
 
   else

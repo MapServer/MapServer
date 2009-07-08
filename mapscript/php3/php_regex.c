@@ -54,8 +54,15 @@
 
 #include "mapregex.h"
 
+/* regex_extra.h doesn't exist in PHP >=5.3 */
+#include "php.h"
+
+#if ZEND_MODULE_API_NO < 20090626
 #include "regex/regex_extra.h"
 #include "regex/regex.h"
+#else
+#include "php_regex.h"
+#endif
 
 
 
@@ -77,8 +84,8 @@ API_EXPORT(int) ms_regexec(const ms_regex_t *regex, const char *string, size_t n
   /*This next line only works because we know that regmatch_t
     and ms_regmatch_t are exactly alike (POSIX STANDARD)*/
   return regexec((const regex_t*)(regex->sys_regex), 
-	       string, nmatch, 
-	       (regmatch_t*) pmatch, eflags);
+                 string, nmatch, 
+                 (regmatch_t*) pmatch, eflags);
 }
 
 API_EXPORT(void) ms_regfree(ms_regex_t *regex)

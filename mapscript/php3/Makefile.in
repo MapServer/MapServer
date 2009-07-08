@@ -54,7 +54,7 @@ PHP_INC = -I$(PHP_SRC_DIR) -I$(PHP_SRC_DIR)/dl -I$(PHP_SRC_DIR)/main \
 # uses the same version of the REGEX library that PHP was compiled with:
 #
 PHP_REGEX_OBJ=@PHP_REGEX_OBJ@
-PHP_REGEX_INC=@PHP_REGEX_INC@
+PHP_REGEX_INC=-I@PHP_REGEX_INC@
 
 
 #
