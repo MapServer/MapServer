@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Removed ZEND_DEBUG define in PHP/Mapscript (#2717)
+
 - Fixed PHP/Mapscript to support PHP 5.3 (#3065, #3066)
 
 - remove -O optimization flags to configure script if configured
