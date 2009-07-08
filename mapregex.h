@@ -37,11 +37,11 @@ extern "C" {
   /* We want these to match the POSIX standard, so we need these*/
   /* === regex2.h === */
 #ifdef WIN32
-#define API_EXPORT(type)    __declspec(dllexport) type __stdcall
+#define MS_API_EXPORT(type)  __declspec(dllexport) type __stdcall
 #elif defined(__GNUC__) && __GNUC__ >= 4
-#define API_EXPORT(type)    __attribute__ ((visibility("default"))) type
+#define MS_API_EXPORT(type)  __attribute__ ((visibility("default"))) type
 #else
-#define API_EXPORT(type)    type
+#define MS_API_EXPORT(type)  type
 #endif
   
   typedef struct {
@@ -55,10 +55,10 @@ extern "C" {
     ms_regoff_t rm_eo;  /* Byte offset from string's start to substring's end.  */
   } ms_regmatch_t;
   
-  API_EXPORT(int) ms_regcomp(ms_regex_t *, const char *, int);
-  API_EXPORT(size_t) ms_regerror(int, const ms_regex_t *, char *, size_t);
-  API_EXPORT(int) ms_regexec(const ms_regex_t *, const char *, size_t, ms_regmatch_t [], int);
-  API_EXPORT(void) ms_regfree(ms_regex_t *);
+  MS_API_EXPORT(int) ms_regcomp(ms_regex_t *, const char *, int);
+  MS_API_EXPORT(size_t) ms_regerror(int, const ms_regex_t *, char *, size_t);
+  MS_API_EXPORT(int) ms_regexec(const ms_regex_t *, const char *, size_t, ms_regmatch_t [], int);
+  MS_API_EXPORT(void) ms_regfree(ms_regex_t *);
 
 #ifndef BUILDING_REGEX_PROXY
 

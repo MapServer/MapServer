@@ -44,10 +44,10 @@
 #define TSRMLS_CC
 #endif
 
-/* PHP >=5.3 replaced ZVAL_DELREF by Z_DELREF */
+/* PHP >=5.3 replaced ZVAL_DELREF by Z_DELREF_P */
 #if ZEND_MODULE_API_NO >= 20090626
-#define ZVAL_DELREF Z_DELREF
-#define ZVAL_ADDREF Z_ADDREF
+#define ZVAL_DELREF Z_DELREF_P
+#define ZVAL_ADDREF Z_ADDREF_P
 #endif
 
 /**********************************************************************
