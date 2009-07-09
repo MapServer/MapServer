@@ -11741,7 +11741,12 @@ echo "$as_me: error: '$PG_CONFIG' is not an executable.  Make sure you use --wit
   fi
 
   POSTGIS_ENABLED=-DUSE_POSTGIS
-  POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
+  POSTGIS_EXTRALIBS=`$PG_CONFIG --libs`
+    if test $? -eq 0 ; then
+      POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq $POSTGIS_EXTRALIBS"
+  else
+      POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
+  fi
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
 fi
 

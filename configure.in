@@ -1560,7 +1560,13 @@ else
   fi
 
   POSTGIS_ENABLED=-DUSE_POSTGIS
-  POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
+  POSTGIS_EXTRALIBS=`$PG_CONFIG --libs`
+  dnl Verify if pg_config has the "--libs" option..
+  if test $? -eq 0 ; then  
+      POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq $POSTGIS_EXTRALIBS"
+  else
+      POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
+  fi
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
 fi
 
