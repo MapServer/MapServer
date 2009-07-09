@@ -358,6 +358,22 @@ layerObj *mapObj_removeLayer(mapObj *self, int layerindex)
     return msRemoveLayer(self, layerindex);
 }
 
+int mapObj_setCenter(mapObj *self, pointObj *center)
+{
+    return msMapSetCenter(self, center);    
+}
+
+int mapObj_offsetExtent(mapObj *self, double x, double y)
+{
+    return msMapOffsetExtent(self, x, y);    
+}
+
+int mapObj_scaleExtent(mapObj *self, double zoomfactor, double minscaledenom, 
+                       double maxscaledenom)
+{
+    return msMapScaleExtent(self, zoomfactor, minscaledenom, maxscaledenom);    
+}
+
 /**********************************************************************
  * class extensions for layerObj, always within the context of a map
  **********************************************************************/
@@ -403,7 +419,7 @@ int layerObj_open(layerObj *self) {
 int layerObj_whichShapes(layerObj *self, rectObj *poRect) {
     int oldconnectiontype = self->connectiontype;
     self->connectiontype = MS_INLINE;
-
+    
     if(msLayerWhichItems(self, MS_FALSE, NULL) != MS_SUCCESS) {
         self->connectiontype = oldconnectiontype;
         return MS_FAILURE;

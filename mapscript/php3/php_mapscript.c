@@ -169,6 +169,10 @@ DLEXPORT void php3_ms_map_OWSDispatch(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_insertLayer(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_removeLayer(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_map_setcenter(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_offsetextent(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_scaleextent(INTERNAL_FUNCTION_PARAMETERS);
+
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -729,6 +733,9 @@ function_entry php_map_class_functions[] = {
     {"owsdispatch",     php3_ms_map_OWSDispatch,        NULL},
     {"insertlayer",     php3_ms_map_insertLayer,        NULL},
     {"removelayer",     php3_ms_map_removeLayer,        NULL},
+    {"setcenter",       php3_ms_map_setcenter,          NULL},
+    {"offsetextent",    php3_ms_map_offsetextent,       NULL},
+    {"scaleextent",     php3_ms_map_scaleextent,       NULL},
     {NULL, NULL, NULL}
 };
 
@@ -6241,8 +6248,133 @@ DLEXPORT void php3_ms_map_removeLayer(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        map->setCenter()
+ *
+ * Set the map center to the given map point. 
+ **********************************************************************/
+
+/* {{{ proto int map.setCenter(pointObj center)
+   Returns MS_SUCCESS or MS_FAILURE */
+ 
+DLEXPORT void php3_ms_map_setcenter(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis, *pPoint;
+    mapObj *self=NULL;
+    pointObj *poPoint;
+    HashTable   *list=NULL;
+    int nStatus = MS_FAILURE;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &pPoint) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+    poPoint = (pointObj *)_phpms_fetch_handle2(pPoint,
+                                               PHPMS_GLOBAL(le_mspoint_ref),
+                                               PHPMS_GLOBAL(le_mspoint_new),
+                                               list TSRMLS_CC);
+
+    if (self && poPoint &&
+        (nStatus=mapObj_setCenter(self, poPoint) != MS_SUCCESS))
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+
+    RETURN_LONG(nStatus);
+    
+}
 /* }}} */
 
+/**********************************************************************
+ *                        map->offsetExtent()
+ *
+ * Offset the map extent based on the given distances in map coordinates.
+ **********************************************************************/
+
+/* {{{ proto int map.offsetExtend(float x, float y)
+   Returns MS_SUCCESS or MS_FAILURE */
+ 
+DLEXPORT void php3_ms_map_offsetextent(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis;
+    mapObj *self=NULL;
+    HashTable   *list=NULL;
+    int nStatus = MS_FAILURE;
+    double x, y;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "dd", &x, &y) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+    if (self &&
+        (nStatus=mapObj_offsetExtent(self, x, y) != MS_SUCCESS))
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+
+    RETURN_LONG(nStatus);
+    
+}
+/* }}} */
+
+/**********************************************************************
+ *                        map->scaleExtent()
+ *
+ * Scale the map extent using the zoomfactor and ensure the extent within
+ * the minscaledenom and maxscaledenom domain. If minscaledenom and/or
+ * maxscaledenom is 0 then the parameter is not taken into account.
+ **********************************************************************/
+
+/* {{{ proto int map.scaleExtend(double zoomfactor, double minscaledenom,
+                                 double maxscaledenom) 
+   Returns MS_SUCCESS or MS_FAILURE */
+ 
+DLEXPORT void php3_ms_map_scaleextent(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis;
+    mapObj *self=NULL;
+    HashTable   *list=NULL;
+    int nStatus = MS_FAILURE;
+    double zoomfactor, minscaledenom, maxscaledenom;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ddd", &zoomfactor, &minscaledenom, &maxscaledenom) 
+         == FAILURE))
+    {
+       return;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+    if (self &&
+        (nStatus=mapObj_scaleExtent(self, zoomfactor, minscaledenom, maxscaledenom) != MS_SUCCESS))
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+
+    RETURN_LONG(nStatus);
+    
+}
+/* }}} */
 
 
 /*=====================================================================

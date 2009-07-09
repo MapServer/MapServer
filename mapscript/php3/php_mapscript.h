@@ -130,6 +130,11 @@ int             mapObj_OWSDispatch(mapObj *self, cgiRequestObj *req );
 int             mapObj_insertLayer(mapObj *self, layerObj *layer, int index);
 layerObj        *mapObj_removeLayer(mapObj *self, int layerindex);
 
+int             mapObj_setCenter(mapObj *self, pointObj *center);
+int             mapObj_offsetExtent(mapObj *self, double x, double y);
+int             mapObj_scaleExtent(mapObj *self, double zoomfactor, double minscaledenom, 
+                                   double maxscaledenom);
+
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
 int             layerObj_updateFromString(layerObj *self, char *snippet);
