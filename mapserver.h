@@ -379,7 +379,8 @@ enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS
 enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
-enum MS_QUERY_TYPES {MS_QUERY_BY_POINT, MS_QUERY_BY_POINT_UNIQUE, MS_QUERY_BY_RECT, MS_QUERY_BY_SHAPE, MS_QUERY_BY_FEATURES, MS_QUERY_BY_OPERATOR};
+enum MS_QUERY_MODE {MS_QUERY_SINGLE, MS_QUERY_MULTIPLE};
+enum MS_QUERY_TYPE {MS_QUERY_BY_POINT, MS_QUERY_BY_RECT, MS_QUERY_BY_SHAPE, MS_QUERY_BY_FEATURES, MS_QUERY_BY_OPERATOR};
 
 enum MS_ALIGN_VALUE {MS_ALIGN_LEFT, MS_ALIGN_CENTER, MS_ALIGN_RIGHT}; 
 
@@ -566,6 +567,23 @@ typedef struct {
 /* The following is used for "don't care" values in transparent, interlace and
    imagequality values. */
 #define MS_NOOVERRIDE  -1111 
+
+/************************************************************************/
+/*                             queryObj                                 */
+/*                                                                      */
+/*      encapsulates the information necessary to perform a query       */
+/************************************************************************/
+typedef struct {
+  int type; /* MS_QUERY_TYPE */
+  int mode; /* MS_QUERY_MODE */
+  int qlayer;
+
+  pointObj point; /* by point */
+  rectObj rect; /* by rect */
+  shapeObj *shape;
+
+  int slayer;
+} queryObj;
 
 /************************************************************************/
 /*                             queryMapObj                              */

@@ -352,12 +352,9 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   */
 
   rv = msLayerGetItems(layer);
-  if(rv != MS_SUCCESS) { 
-    if(layer->connectiontype == MS_INLINE) 
-      return MS_SUCCESS; /* no items fine for inline layers (TODO: re-examine this) */
-    else
-      return rv;
-  }
+  if(rv != MS_SUCCESS) return rv;
+
+  if(layer->numitems == 0) return MS_SUCCESS; /* nothing to do but not an error */
 
   items = layer->items; /* save for later */
   numitems = layer->numitems;
@@ -919,7 +916,7 @@ LayerDefaultClose(layerObj *layer)
 int 
 LayerDefaultGetItems(layerObj *layer)
 {
-    return MS_FAILURE;
+  return MS_SUCCESS; /* returning no items is legit */
 }
 
 int 
