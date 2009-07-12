@@ -344,6 +344,10 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     if (rv != MS_SUCCESS) return rv;
   }
 
+  /* force get_all=MS_TRUE in some cases */
+  if(layer->connectiontype == MS_INLINE)
+    get_all=MS_TRUE;
+
   /*
   ** The algorithm:
   **   1) call msLayerGetItems to get a complete list (including joins potentially)
@@ -363,7 +367,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   ** reset things (if necessary)
   **   note: if we don't reset then the items array is fully populated will ALL items
   */
-  if(!get_all || (layer->connectiontype == MS_INLINE)) {
+  if(!get_all) {
     rv = layer->vtable->LayerCreateItems(layer, numitems);
     if (rv != MS_SUCCESS) return rv;
     freeitems = MS_TRUE;

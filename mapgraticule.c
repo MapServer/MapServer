@@ -475,7 +475,14 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
  */
 int msGraticuleLayerGetItems(layerObj *layer)
 {
-  msGraticuleLayerInitItemInfo(layer);
+  char **ppItemName   = (char **) malloc( sizeof( char * ) );
+
+  *ppItemName = (char *) malloc( 64 ); /* why is this necessary? */
+  strcpy( *ppItemName, "Graticule" );
+
+  layer->numitems   = 1;
+  layer->items   = ppItemName;
+
   return MS_SUCCESS;
 }
 
@@ -484,14 +491,6 @@ int msGraticuleLayerGetItems(layerObj *layer)
  */
 int msGraticuleLayerInitItemInfo(layerObj *layer)
 {
-  char **ppItemName   = (char **) malloc( sizeof( char * ) );
-
-  *ppItemName = (char *) malloc( 64 );
-  strcpy( *ppItemName, "Graticule" );
-   
-  layer->numitems   = 1;
-  layer->items   = ppItemName;
-   
   return MS_SUCCESS;
 }
 
@@ -500,10 +499,6 @@ int msGraticuleLayerInitItemInfo(layerObj *layer)
  */
 void msGraticuleLayerFreeItemInfo(layerObj *layer)
 {
-  if(layer->items) {
-    free( *((char **) layer->items) );
-    free( ((char **) layer->items)  );
-  }
   return;
 }
 
@@ -546,7 +541,7 @@ int msGraticuleLayerInitializeVirtualTable(layerObj *layer)
   assert(layer != NULL);
   assert(layer->vtable != NULL);
 
-  layer->vtable->LayerInitItemInfo = msGraticuleLayerInitItemInfo;
+  layer->vtable->LayerInitItemInfo = msGraticuleLayerInitItemInfo; /* should use defaults for item info functions */
   layer->vtable->LayerFreeItemInfo = msGraticuleLayerFreeItemInfo;
   layer->vtable->LayerOpen = msGraticuleLayerOpen;
   layer->vtable->LayerIsOpen = msGraticuleLayerIsOpen;
