@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- New fix for incomplete CVE-2009-0840 security fix made in 5.4.0 (#2943)
+
 - Add centroid geomtransform (#2825)
 
 - Fixed performance bottleneck when computing a polygon center of gravity for

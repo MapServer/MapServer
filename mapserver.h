@@ -76,6 +76,10 @@ static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid );
 
 /* definition of  ms_int32/ms_uint32 */
 #include <limits.h>
+#ifndef _WIN32
+#include <stdint.h>
+#endif
+
 #if ULONG_MAX == 0xffffffff
 typedef long            ms_int32;
 typedef unsigned long   ms_uint32;
@@ -83,7 +87,6 @@ typedef unsigned long   ms_uint32;
 typedef int             ms_int32;
 typedef unsigned int    ms_uint32;
 #else
-#include <stdint.h>
 typedef int32_t         ms_int32;
 typedef uint32_t        ms_uint32;
 #endif
