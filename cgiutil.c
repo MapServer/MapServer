@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  cgiRequestObj and CGI parameter parsing. 
@@ -41,7 +42,8 @@ MS_CVSID("$Id$")
 static char *readPostBody( cgiRequestObj *request ) 
 {
   char *data; 
-  int data_max, data_len, chunk_size;
+  size_t data_max, data_len;
+  int chunk_size;
 
   msIO_needBinaryStdin();
 
@@ -49,11 +51,17 @@ static char *readPostBody( cgiRequestObj *request )
   /*      If the length is provided, read in one gulp.                    */
   /* -------------------------------------------------------------------- */
   if( getenv("CONTENT_LENGTH") != NULL ) {
-    data_max = atoi(getenv("CONTENT_LENGTH"));
+    data_max = (size_t) atoi(getenv("CONTENT_LENGTH"));
+    /* Test for suspicious CONTENT_LENGTH (negative value or SIZE_MAX) */
+    if( data_max >= SIZE_MAX ) {
+      msIO_printf("Content-type: text/html%c%c",10,10);
+      msIO_printf("Suspicious Content-Length.\n");
+      exit( 1 );
+    }
     data = (char *) malloc(data_max+1);
     if( data == NULL ) {
       msIO_printf("Content-type: text/html%c%c",10,10);
-      msIO_printf("malloc() failed, Content-Length: %d unreasonably large?\n", data_max );
+      msIO_printf("malloc() failed, Content-Length: %u unreasonably large?\n", data_max );
       exit( 1 );
     }
 
@@ -70,7 +78,9 @@ static char *readPostBody( cgiRequestObj *request )
   /* -------------------------------------------------------------------- */
   /*      Otherwise read in chunks to the end.                            */
   /* -------------------------------------------------------------------- */
-  data_max = 10000;
+#define DATA_ALLOC_SIZE 10000
+
+  data_max = DATA_ALLOC_SIZE;
   data_len = 0;
   data = (char *) malloc(data_max+1);
 
@@ -78,12 +88,19 @@ static char *readPostBody( cgiRequestObj *request )
     data_len += chunk_size;
 
     if( data_len == data_max ) {
-      data_max = data_max + 10000;
+      /* Realloc buffer, making sure we check for possible size_t overflow */
+        if ( data_max > SIZE_MAX - (DATA_ALLOC_SIZE+1) ) {
+        msIO_printf("Content-type: text/html%c%c",10,10);
+        msIO_printf("Possible size_t overflow, cannot reallocate input buffer, POST body too large?\n" );
+        exit(1);
+      }
+
+      data_max = data_max + DATA_ALLOC_SIZE;
       data = (char *) realloc(data, data_max+1);
 
       if( data == NULL ) {
         msIO_printf("Content-type: text/html%c%c",10,10);
-        msIO_printf("out of memory trying to allocate %d input buffer, POST body too large?\n", data_max+1 );
+        msIO_printf("out of memory trying to allocate %u input buffer, POST body too large?\n", data_max+1 );
         exit(1);
       }
     }
