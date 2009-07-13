@@ -1179,6 +1179,10 @@ int main(int argc, char *argv[]) {
       /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );
       putenv( argv[iArg] );
+    } else if( strncmp(argv[iArg], "MS_ERRORFILE=", 13) == 0 ) {
+      msSetErrorFile( argv[iArg] + 13 );
+    } else if( strncmp(argv[iArg], "MS_DEBUGLEVEL=", 14) == 0) {
+      msSetGlobalDebugLevel( atoi(argv[iArg] + 14) );
     } else {
       /* we don't produce a usage message as some web servers pass junk arguments */
     }
