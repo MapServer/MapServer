@@ -48,6 +48,7 @@
 #include <malloc.h>
 #else
 #include <unistd.h>
+#include <stdint.h>
 #endif
 
 #ifndef DISABLE_CVSID
