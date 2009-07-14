@@ -598,34 +598,20 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
                                        const char *imagetype )
 
 {
-    int i, index;
+    int index;
     outputFormatObj *format = NULL;
 
     if( map == NULL || imagetype == NULL || strlen(imagetype) == 0 )
         return NULL;
     
-    index = msGetOutputFormatIndex(map, imagetype);
-    if (index >= 0)
-        format = map->outputformatlist[index];
-
 /* -------------------------------------------------------------------- */
 /*      Try to find the format in the maps list of formats, first by    */
 /*      mime type, and then by output format name.                      */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < map->numoutputformats && format == NULL; i++ )
-    {
-        if( map->outputformatlist[i]->mimetype != NULL
-            && strcasecmp(imagetype,
-                          map->outputformatlist[i]->mimetype) == 0 )
-            format = map->outputformatlist[i];
-    }
-    
-    for( i = 0; i < map->numoutputformats && format == NULL; i++ )
-    {
-        if( strcasecmp(imagetype,map->outputformatlist[i]->name) == 0 )
-            format = map->outputformatlist[i];
-    }
-    
+    index = msGetOutputFormatIndex(map, imagetype);
+    if (index >= 0)
+        format = map->outputformatlist[index];
+
     if (format)
     {
         if (map->imagetype)
