@@ -196,7 +196,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
 {
   imageObj *img = NULL;
   int i, status;
-
+  
   outputFormatObj *outputFormat=NULL;
 
   if(!queryFormat) {
@@ -204,15 +204,9 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
     return MS_FAILURE;
   }
 
-  /*
-  ** The functions in mapoutput.c rely on mime-type too and we don't want that with queries. So
-  ** we do a name search only.
-  */
-  for( i = 0; i < mapserv->map->numoutputformats; i++ ) {
-    if( strcasecmp(queryFormat, mapserv->map->outputformatlist[i]->name) == 0 )
-      outputFormat = mapserv->map->outputformatlist[i];
-  }
-
+  i = msGetOutputFormatIndex(mapserv->map, queryFormat); /* queryFormat can be a mime-type or name */
+  if(i >= 0) outputFormat = mapserv->map->outputformatlist[i];
+  
   if(outputFormat) {
      if( !MS_RENDERER_TEMPLATE(outputFormat) ) { /* got an image format, return the query results that way */
        outputFormatObj *tempOutputFormat = mapserv->map->outputformat; /* save format */
