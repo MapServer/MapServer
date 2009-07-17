@@ -80,6 +80,16 @@ static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid );
 #include <stdint.h>
 #endif
 
+#ifdef _WIN32
+#ifndef SIZE_MAX
+#ifdef _WIN64 
+#define SIZE_MAX _UI64_MAX
+#else
+#define SIZE_MAX UINT_MAX
+#endif
+#endif
+#endif
+
 #if ULONG_MAX == 0xffffffff
 typedef long            ms_int32;
 typedef unsigned long   ms_uint32;
