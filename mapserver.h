@@ -594,8 +594,6 @@ typedef struct {
   pointObj point; /* by point */
   rectObj rect; /* by rect */
   shapeObj *shape;
-
-  int slayer;
 } queryObj;
 
 /************************************************************************/
