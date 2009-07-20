@@ -51,6 +51,16 @@
 #include <stdint.h>
 #endif
 
+#ifdef _WIN32
+#ifndef SIZE_MAX
+#ifdef _WIN64 
+#define SIZE_MAX _UI64_MAX
+#else
+#define SIZE_MAX UINT_MAX
+#endif
+#endif
+#endif
+
 #ifndef DISABLE_CVSID
 #  define MS_CVSID(string)     static char ms_cvsid[] = string; \
 static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid ); }
