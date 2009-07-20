@@ -3702,8 +3702,8 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
   }
 
   mapserv->RN = 1; /* overall result number */
-  for(i=(mapserv->map->numlayers-1); i>=0; i--) {
-    mapserv->resultlayer = lp = (GET_LAYER(mapserv->map, i));
+  for(i=0; i<mapserv->map->numlayers; i++) {
+    mapserv->resultlayer = lp = (GET_LAYER(mapserv->map, mapserv->map->layerorder[i]));
 
     if(!lp->resultcache) continue;
     if(lp->resultcache->numresults <= 0) continue;

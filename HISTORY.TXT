@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed template processor to respect layer order. (#2619)
+
 - Add MS_DEBUGLEVEL and MS_ERRORFILE commandline switches for mapserv.c. 
 
 - Exposed msMapOffsetExtent, msMapScaleExtent and msMapSetCenter methods in PHP/Mapscript (#2460)
