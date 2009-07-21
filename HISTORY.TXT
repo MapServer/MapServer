@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch, may never be released):
 ----------------------------------------------------
 
+- Fixed several security issues found in an audit of the CGI application (#2939, #2941, #2942, #2944)
+
 - Fix for CVE-2009-0840 security vulnerability (#2943)
 
 Version 5.0.3 (2008-06-04)

@@ -197,10 +197,23 @@ mapObj *loadMap(void)
   } else {
     if(getenv(msObj->request->ParamValues[i])) /* an environment references the actual file to use */
       map = msLoadMap(getenv(msObj->request->ParamValues[i]), NULL);
-    else
+    else {
+      /* by here we know the request isn't for something in an environment variable */
+      if(getenv("MS_MAP_NO_PATH")) {
+        msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "loadMap()");
+ 	writeError();
+      }
+ 
+      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), msObj->request->ParamValues[i]) != MS_TRUE) {
+        msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "loadMap()");
+       writeError();
+      }
+ 
+      /* ok to try to load now */
       map = msLoadMap(msObj->request->ParamValues[i], NULL);
+    }
   }
-
+  
   if(!map) writeError();
 
   /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
@@ -357,6 +370,10 @@ void loadForm(void)
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"id") == 0) {
+      if(msEvalRegex(IDPATTERN, msObj->request->ParamValues[i]) == MS_FALSE) { 
+        msSetError(MS_WEBERR, "Parameter 'id' value fails to validate.", "loadMap()"); 
+        writeError(); 
+      } 
       strncpy(msObj->Id, msObj->request->ParamValues[i], IDSIZE);
       continue;
     }
@@ -1207,7 +1224,7 @@ int main(int argc, char *argv[]) {
     loadForm();
  
     if(msObj->SaveMap) {
-      sprintf(buffer, "%s%s%s.map", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id);
+      snprintf(buffer, sizeof(buffer), "%s%s%s.map", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id);
       if(msSaveMap(msObj->Map, buffer) == -1) writeError();
     }
 
@@ -1585,7 +1602,7 @@ int main(int argc, char *argv[]) {
         if(msReturnTemplateQuery(msObj, msObj->Map->web.queryformat, NULL) != MS_SUCCESS) writeError();
           
         if(msObj->SaveQuery) {
-          sprintf(buffer, "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);
+          snprintf(buffer, sizeof(buffer), "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);
           if((status = msSaveQuery(msObj->Map, buffer)) != MS_SUCCESS) return status;
         }
       }

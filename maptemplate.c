@@ -40,6 +40,20 @@ MS_CVSID("$Id$")
 
 char *processLine(mapservObj* msObj, char* instr, int mode);
 
+static int isValidTemplate(FILE *stream, const char *filename)
+{
+  char buffer[MS_BUFFER_LENGTH];
+
+  if(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {
+    if(!msCaseFindSubstring(buffer, MS_TEMPLATE_MAGIC_STRING)) {
+      msSetError(MS_WEBERR, "Missing magic string, %s doesn't look like a MapServer template.", "isValidTemplate()", filename);
+      return MS_FALSE;
+    }
+  }
+
+  return MS_TRUE;
+}
+
 /*
  * Redirect to (only use in CGI)
  * 
@@ -200,7 +214,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType, char **papszBuff
       img = msDrawMap(msObj->Map, MS_TRUE);
       if(!img) return MS_FAILURE;
 
-      snprintf(buffer, 1024, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+      snprintf(buffer, sizeof(buffer), "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
 
       status = msSaveImage(msObj->Map, img, buffer);
       if(status != MS_SUCCESS) return status;
@@ -211,7 +225,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType, char **papszBuff
       {
          img = msDrawLegend(msObj->Map, MS_FALSE);
          if(!img) return MS_FAILURE;
-         snprintf(buffer, 1024, "%s%sleg%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+         snprintf(buffer, sizeof(buffer), "%s%sleg%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
          status = msSaveImage(msObj->Map, img, buffer);
          if(status != MS_SUCCESS) return status;
          msFreeImage(img);
@@ -221,7 +235,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType, char **papszBuff
       {
          img = msDrawScalebar(msObj->Map);
          if(!img) return MS_FAILURE;
-         snprintf(buffer, 1024, "%s%ssb%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+         snprintf(buffer, sizeof(buffer), "%s%ssb%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
          status = msSaveImage( msObj->Map, img, buffer);
          if(status != MS_SUCCESS) return status;
          msFreeImage(img);
@@ -231,7 +245,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType, char **papszBuff
       {
          img = msDrawReferenceMap(msObj->Map);
          if(!img) return MS_FAILURE;
-         snprintf(buffer, 1024, "%s%sref%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+         snprintf(buffer, sizeof(buffer), "%s%sref%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
          status = msSaveImage(msObj->Map, img, buffer);
          if(status != MS_SUCCESS) return status;
          msFreeImage(img);
@@ -2392,6 +2406,11 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
           return(NULL);
         }
 
+	if(isValidTemplate(stream, join->header) != MS_TRUE) {
+	  fclose(stream);
+	  return NULL;
+	}
+
         /* echo file to the output buffer, no substitutions */
         while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = msStringConcatenate(outbuf, line);
 
@@ -2402,7 +2421,12 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
         msSetError(MS_IOERR, "Error while opening join template file %s.", "processOneToManyJoin()", join->template);
         return(NULL);
       }      
-      
+     
+      if(isValidTemplate(stream, join->template) != MS_TRUE) {
+	fclose(stream);
+	return NULL;
+      }
+ 
       records = MS_TRUE;
     }
     
@@ -2417,12 +2441,18 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
     }
       
     rewind(stream);
+    fgets(line, MS_BUFFER_LENGTH, stream); /* skip the first line since it's the magic string */
   } /* next record */
 
   if(records==MS_TRUE && join->footer) {    
     if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, join->footer), "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening join footer file %s.", "processOneToManyJoin()", join->footer);
       return(NULL);
+    }
+
+    if(isValidTemplate(stream, join->footer) != MS_TRUE) {
+      fclose(stream);
+      return NULL;
     }
 
     /* echo file to the output buffer, no substitutions */
