@@ -673,6 +673,7 @@ typedef struct {
   double minscaledenom,maxscaledenom;
   
   int mindistance;
+  int repeatdistance;
   int partials; /* can labels run of an image */
 
   int force; /* labels *must* be drawn */
@@ -1828,8 +1829,16 @@ MS_DLL_EXPORT void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer);
 MS_DLL_EXPORT void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize);
 MS_DLL_EXPORT void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize);
 MS_DLL_EXPORT void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, styleObj *style, symbolObj *symbol, int c, double size, double scalefactor);
-MS_DLL_EXPORT int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angle, double *length);
-MS_DLL_EXPORT labelPathObj* msPolylineLabelPath(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *status);
+MS_DLL_EXPORT void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, double **line_lengths, int *max_line_index, double *max_line_length, double *total_length);
+MS_DLL_EXPORT pointObj** msPolylineLabelPoint(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints);
+MS_DLL_EXPORT pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints, int *regularLines, int numlines);
+MS_DLL_EXPORT void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, double** segment_lengths, 
+                                                  int line_index, double line_length, double total_length,
+                                                  int* labelpoints_index, int* labelpoints_size, pointObj ***labelpoints);
+MS_DLL_EXPORT labelPathObj** msPolylineLabelPath(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *numpaths, int** regular_lines, int* num_regular_Lines);
+MS_DLL_EXPORT void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor,
+                                                 int line_index, double** segment_lengths, double line_length, double total_length, 
+                                                 int* labelpaths_index, int* labelpaths_size, labelPathObj ***labelpaths, int** regular_lines, int *regular_lines_index, int* regular_lines_size);
 MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension);
 MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
 MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);

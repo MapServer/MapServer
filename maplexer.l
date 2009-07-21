@@ -239,6 +239,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>minarcs                               { return(MINARCS); }
 <INITIAL>minboxsize                            { return(MINBOXSIZE); }
 <INITIAL>mindistance                           { return(MINDISTANCE); }
+<INITIAL>repeatdistance                        { return(REPEATDISTANCE); }
 <INITIAL>minfeaturesize                        { return(MINFEATURESIZE); }
 <INITIAL>mininterval                           { return(MININTERVAL); }
 <INITIAL,URL_STRING>minscale                   { return(MINSCALE); }

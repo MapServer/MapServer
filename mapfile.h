@@ -285,4 +285,7 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 /* rfc55 output resolution */
 #define DEFRESOLUTION 1221
 
+/* label repeat enhancement */
+#define REPEATDISTANCE 1222
+
 #endif /* MAPFILE_H */

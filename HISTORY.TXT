@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Labeling enhancements: ability to repeat labels along a line/multiline (#3030)
+
 - Modified STYLEITEM code to use the new way of rendering thick lines (#3025)
 
 - Fixed template processor to respect layer order. (#2619)

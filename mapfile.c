@@ -1328,6 +1328,7 @@ void initLabel(labelObj *label)
   label->minfeaturesize = -1; /* no limit */
   label->autominfeaturesize = MS_FALSE;
   label->mindistance = -1; /* no limit */
+  label->repeatdistance = 0; /* no repeat */
   label->partials = MS_TRUE;
   label->wrap = '\0';
   label->maxlength = 0;
@@ -1464,6 +1465,9 @@ static int loadLabel(labelObj *label)
       break; 
     case(MINDISTANCE):      
       if(getInteger(&(label->mindistance)) == -1) return(-1);
+      break;
+    case(REPEATDISTANCE):      
+      if(getInteger(&(label->repeatdistance)) == -1) return(-1);
       break;
     case(MINFEATURESIZE):
       if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1) 
@@ -1638,6 +1642,9 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   else
     fprintf(stream, "  %sMINFEATURESIZE %d\n", tab, label->minfeaturesize);
   
+  if (label->repeatdistance > 0)
+      fprintf(stream, "  %sREPEATDISTANCE %d\n", tab, label->repeatdistance);
+
   if(label->minscaledenom != -1.0)
     fprintf(stream, "  %sMINSCALEDENOM %g\n", tab, label->minscaledenom);
   if(label->maxscaledenom != -1.0)
