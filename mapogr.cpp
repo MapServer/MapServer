@@ -2985,18 +2985,11 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                                 OGRSTPenWidth, &bIsNull);
                   if (bIsNull)
                       nPenSize = 1;
-                  if (pszPenName!=NULL || nPenSize > 1)
+                  if (pszPenName!=NULL)
                   {
-                      // Thick line or patterned line style
-                      //
-                      // First try to match pen name in symbol file
-                      // If not found then look for a "default-circle" symbol
-                      // that we'll use for producing thick lines.  
-                      // Otherwise symbol will be set to 0 and line will 
-                      // be 1 pixel wide.
+                      // Try to match pen name in symbol file
                       nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
-                                                    pszPenName, 
-                                           (nPenSize>1)?"default-circle":NULL);
+                                                    pszPenName, NULL);
                   }
               }
               if (layer->debug >= MS_DEBUGLEVEL_VVV)
@@ -3014,6 +3007,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   c->styles[1]->outlinecolor = oPenColor;
                   c->styles[1]->size = nPenSize;
                   c->styles[1]->symbol = nPenSymbol;
+                  c->styles[1]->width = nPenSize;
               }
               else
               {
@@ -3031,6 +3025,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                       c->styles[0]->color = oPenColor;
                   c->styles[0]->symbol = nPenSymbol;
                   c->styles[0]->size = nPenSize;
+                  c->styles[0]->width = nPenSize;
               }
 
           }
@@ -3067,18 +3062,11 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   nPenSize = (int)poPenStyle->Width(bIsNull);
                   if (bIsNull)
                       nPenSize = 1;
-                  if (pszPenName!=NULL || nPenSize > 1)
+                  if (pszPenName!=NULL)
                   {
-                      // Thick line or patterned line style
-                      //
-                      // First try to match pen name in symbol file
-                      // If not found then look for a "default-circle" symbol
-                      // that we'll use for producing thick lines.  
-                      // Otherwise symbol will be set to 0 and line will 
-                      // be 1 pixel wide.
+                      // Try to match pen name in symbol file
                       nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
-                                                    pszPenName, 
-                                           (nPenSize>1)?"default-circle":NULL);
+                                                    pszPenName, NULL);
                   }
               }
               if (layer->debug >= MS_DEBUGLEVEL_VVV)
@@ -3096,6 +3084,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   c->styles[1]->outlinecolor = oPenColor;
                   c->styles[1]->size = nPenSize;
                   c->styles[1]->symbol = nPenSymbol;
+                  c->styles[1]->width = nPenSize;
               }
               else
               {
@@ -3113,6 +3102,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                       c->styles[0]->color = oPenColor;
                   c->styles[0]->symbol = nPenSymbol;
                   c->styles[0]->size = nPenSize;
+                  c->styles[0]->width = nPenSize;
               }
 
           }
