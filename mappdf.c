@@ -615,7 +615,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
                     msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                                map->width, map->height, 
-                                               label_buffer, cachePtr, priority, l, label_mindistance);
+                                               label_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
 
                     /*found a suitable place for this label*/
                     if(cachePtr->status)
@@ -649,7 +649,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
                     msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                                map->width, map->height, 
-                                               label_buffer, cachePtr, priority, l, label_mindistance);
+                                               label_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
 
                     /* found a suitable place for this label*/
                     if(cachePtr->status)
@@ -699,7 +699,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                 /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
                 msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
                                            map->width, map->height, 
-                                           label_buffer, cachePtr, priority, l, label_mindistance);
+                                           label_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
             }
         } /* end position if-then-else */
 

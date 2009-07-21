@@ -2481,7 +2481,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
 	    /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip it */
             if(!labelPtr->force)
-              msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance);
+              msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
 	  } else {
 
             if(labelPtr->position == MS_AUTO) {
@@ -2511,7 +2511,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
                 /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
-                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance);
+                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
 
                 if(cachePtr->status) /* found a suitable place for this label */ {
                   if(MS_VALID_COLOR(labelPtr->backgroundcolor))
@@ -2552,7 +2552,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
               /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip the test */
               if(!labelPtr->force)
-                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance);
+                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
 
             }
           }

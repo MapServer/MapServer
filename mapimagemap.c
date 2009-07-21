@@ -1911,7 +1911,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 
           /* Compare against rendered labels and markers (sets cachePtr->status) */
           msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
-                                     -1, -1, label_buffer, cachePtr, priority, l, label_mindistance);
+                                     -1, -1, label_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
 
 	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
@@ -1931,7 +1931,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 
           /* Compare against rendered labels and markers (sets cachePtr->status) */
           msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
-                                     -1, -1, label_buffer, cachePtr, priority, l,label_mindistance);
+                                     -1, -1, label_buffer, cachePtr, priority, l,label_mindistance, (r.maxx-r.minx));
 
 	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
@@ -1956,7 +1956,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 
         /* Compare against rendered labels and markers (sets cachePtr->status) */
         msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
-                                   -1, -1, label_buffer, cachePtr, priority, l,label_mindistance);
+                                   -1, -1, label_buffer, cachePtr, priority, l,label_mindistance, (r.maxx-r.minx));
       }
     } /* end position if-then-else */
 
