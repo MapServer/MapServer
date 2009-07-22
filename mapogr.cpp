@@ -3371,21 +3371,17 @@ msOGRLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msOGRLayerIsOpen;
     layer->vtable->LayerWhichShapes = msOGRLayerWhichShapes;
     layer->vtable->LayerNextShape = msOGRLayerNextShape;
+    layer->vtable->LayerResultsGetShape = msOGRLayerGetShape; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msOGRLayerGetShape;
-
     layer->vtable->LayerClose = msOGRLayerClose;
     layer->vtable->LayerGetItems = msOGRLayerGetItems;
     layer->vtable->LayerGetExtent = msOGRLayerGetExtent;
     layer->vtable->LayerGetAutoStyle = msOGRLayerGetAutoStyle;
-
     /* layer->vtable->LayerCloseConnection, use default */
-
     layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
-    
     layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
-
 
     return MS_SUCCESS;
 }

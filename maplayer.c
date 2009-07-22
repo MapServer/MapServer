@@ -146,6 +146,21 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 }
 
 /*
+** Used to retrieve a shape from a result set by index. Result sets are created by the various
+** msQueryBy...() functions. The index is assigned by the data source.
+*/
+int msLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
+{
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
+  }
+
+  return layer->vtable->LayerResultsGetShape(layer, shape, tile, record);
+}
+
+/*
 ** Used to retrieve a shape by index. All data sources must be capable of random access using
 ** a record number of some sort.
 */
@@ -373,7 +388,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     freeitems = MS_TRUE;
   }
 
-  /* layer-level item use */
+  /* layer-level item use (TODO: consider making sure the item is valid before adding to the list some how) */
   if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
   if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
   if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
@@ -868,57 +883,52 @@ msLayerMakePlainTimeFilter(layerObj *lp, const char *timestring,
 /*
  * Dummies / default actions for layers
  */
-int 
-LayerDefaultInitItemInfo(layerObj *layer)
+int LayerDefaultInitItemInfo(layerObj *layer)
 {
-    return MS_SUCCESS;
+  return MS_SUCCESS;
 }
 
-void 
-LayerDefaultFreeItemInfo(layerObj *layer)
+void LayerDefaultFreeItemInfo(layerObj *layer)
 {
-    return;
+  return;
 }
 
 int LayerDefaultOpen(layerObj *layer)
 {
-    return MS_FAILURE;
+  return MS_FAILURE;
 }
 
-int 
-LayerDefaultIsOpen(layerObj *layer)
+int LayerDefaultIsOpen(layerObj *layer)
 {
-    return MS_FALSE;
+  return MS_FALSE;
 }
 
-int 
-LayerDefaultWhichShapes(layerObj *layer, rectObj rect)
+int LayerDefaultWhichShapes(layerObj *layer, rectObj rect)
 {
-    return MS_SUCCESS;
+  return MS_SUCCESS;
 }
 
-int 
-LayerDefaultNextShape(layerObj *layer, shapeObj *shape)
+int LayerDefaultNextShape(layerObj *layer, shapeObj *shape)
 {
-    return MS_FAILURE;
+  return MS_FAILURE;
 }
 
-
-int 
-LayerDefaultGetShape(layerObj *layer, shapeObj *shape, 
-                     int tile, long record)
+int LayerDefaultResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
-    return MS_FAILURE;
+  return MS_FAILURE;
 }
 
-int 
-LayerDefaultClose(layerObj *layer)
+int LayerDefaultGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
-    return MS_SUCCESS;
+  return MS_FAILURE;
 }
 
-int 
-LayerDefaultGetItems(layerObj *layer)
+int LayerDefaultClose(layerObj *layer)
+{
+  return MS_SUCCESS;
+}
+
+int LayerDefaultGetItems(layerObj *layer)
 {
   return MS_SUCCESS; /* returning no items is legit */
 }
@@ -947,47 +957,39 @@ msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 #endif
 }
 
-int 
-LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
+int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
 {
-    return MS_FAILURE;
+  return MS_FAILURE;
 }
 
-int 
-LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
-                         int tile, long record)
+int LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record)
 {
-    msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
-    return MS_FAILURE; 
+  msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
+  return MS_FAILURE; 
 }
 
-int 
-LayerDefaultCloseConnection(layerObj *layer)
+int LayerDefaultCloseConnection(layerObj *layer)
 {
-    return MS_SUCCESS;
+  return MS_SUCCESS;
 }
 
-
-int 
-LayerDefaultCreateItems(layerObj *layer,
-                      const int nt)
+int LayerDefaultCreateItems(layerObj *layer, const int nt)
 {
-    if (nt > 0) {
-        layer->items = (char **)calloc(nt, sizeof(char *)); /* should be more than enough space */
-        if(!layer->items) {
-            msSetError(MS_MEMERR, NULL, "LayerDefaultCreateItems()");
-            return(MS_FAILURE);
-        }
-        layer->numitems = 0;
+  if (nt > 0) {
+    layer->items = (char **)calloc(nt, sizeof(char *)); /* should be more than enough space */
+    if(!layer->items) {
+      msSetError(MS_MEMERR, NULL, "LayerDefaultCreateItems()");
+      return(MS_FAILURE);
     }
-    return MS_SUCCESS;
+    layer->numitems = 0;
+  }
+  return MS_SUCCESS;
 }
 
-int 
-LayerDefaultGetNumFeatures(layerObj *layer)
+int LayerDefaultGetNumFeatures(layerObj *layer)
 {
-    msSetError(MS_SHPERR, "Not an inline layer", "msLayerGetNumFeatures()");
-    return MS_FAILURE;
+  msSetError(MS_SHPERR, "Not an inline layer", "msLayerGetNumFeatures()");
+  return MS_FAILURE;
 }
 
 /*
@@ -1020,122 +1022,116 @@ int msConnectLayer(layerObj *layer,
     return msInitializeVirtualTable(layer) ;   
 }
 
-static int
-populateVirtualTable(layerVTableObj *vtable)
+static int populateVirtualTable(layerVTableObj *vtable)
 {
-    assert(vtable != NULL);
+  assert(vtable != NULL);
 
-    vtable->LayerInitItemInfo = LayerDefaultInitItemInfo;
-    vtable->LayerFreeItemInfo = LayerDefaultFreeItemInfo;
-    vtable->LayerOpen = LayerDefaultOpen;
-    vtable->LayerIsOpen = LayerDefaultIsOpen;
-    vtable->LayerWhichShapes = LayerDefaultWhichShapes;
+  vtable->LayerInitItemInfo = LayerDefaultInitItemInfo;
+  vtable->LayerFreeItemInfo = LayerDefaultFreeItemInfo;
+  vtable->LayerOpen = LayerDefaultOpen;
+  vtable->LayerIsOpen = LayerDefaultIsOpen;
+  vtable->LayerWhichShapes = LayerDefaultWhichShapes;
 
-    vtable->LayerNextShape = LayerDefaultNextShape;
-    vtable->LayerGetShape = LayerDefaultGetShape;
-    vtable->LayerClose = LayerDefaultClose;
-    vtable->LayerGetItems = LayerDefaultGetItems;
-    vtable->LayerGetExtent = LayerDefaultGetExtent;
+  vtable->LayerNextShape = LayerDefaultNextShape;
+  vtable->LayerResultsGetShape = LayerDefaultResultsGetShape;
+  vtable->LayerGetShape = LayerDefaultGetShape;
+  vtable->LayerClose = LayerDefaultClose;
+  vtable->LayerGetItems = LayerDefaultGetItems;
+  vtable->LayerGetExtent = LayerDefaultGetExtent;
 
-    vtable->LayerGetAutoStyle = LayerDefaultGetAutoStyle;
-    vtable->LayerCloseConnection = LayerDefaultCloseConnection;
-    vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+  vtable->LayerGetAutoStyle = LayerDefaultGetAutoStyle;
+  vtable->LayerCloseConnection = LayerDefaultCloseConnection;
+  vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
 
-    vtable->LayerApplyFilterToLayer = msLayerApplyPlainFilterToLayer;
+  vtable->LayerApplyFilterToLayer = msLayerApplyPlainFilterToLayer;
 
-    vtable->LayerCreateItems = LayerDefaultCreateItems;
+  vtable->LayerCreateItems = LayerDefaultCreateItems;
     
-    vtable->LayerGetNumFeatures = LayerDefaultGetNumFeatures;
+  vtable->LayerGetNumFeatures = LayerDefaultGetNumFeatures;
 
-    return MS_SUCCESS;
+  return MS_SUCCESS;
 }
 
-static int
-createVirtualTable(layerVTableObj **vtable)
+static int createVirtualTable(layerVTableObj **vtable)
 {
-    *vtable = malloc(sizeof(**vtable));
-    if ( ! *vtable) {
-        return MS_FAILURE;
-    }
-    return populateVirtualTable(*vtable);
+  *vtable = malloc(sizeof(**vtable));
+  if ( ! *vtable) {
+    return MS_FAILURE;
+  }
+  return populateVirtualTable(*vtable);
 }
 
-static int
-destroyVirtualTable(layerVTableObj **vtable)
+static int destroyVirtualTable(layerVTableObj **vtable)
 {
-    memset(*vtable, 0, sizeof(**vtable));
-    msFree(*vtable);
-    *vtable = NULL;
-    return MS_SUCCESS;
+  memset(*vtable, 0, sizeof(**vtable));
+  msFree(*vtable);
+  *vtable = NULL;
+  return MS_SUCCESS;
 }
 
-int
-msInitializeVirtualTable(layerObj *layer)
+int msInitializeVirtualTable(layerObj *layer)
 {
-    if (layer->vtable) {
-        destroyVirtualTable(&layer->vtable);
+  if (layer->vtable) {
+    destroyVirtualTable(&layer->vtable);
+  }
+  createVirtualTable(&layer->vtable);
+   
+  if(layer->features && layer->connectiontype != MS_GRATICULE ) 
+    layer->connectiontype = MS_INLINE;
+
+  if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
+    layer->connectiontype = MS_TILED_SHAPEFILE;
+
+  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS)
+    layer->connectiontype = MS_RASTER;
+
+  switch(layer->connectiontype) {
+    case(MS_INLINE):
+      return(msINLINELayerInitializeVirtualTable(layer));
+      break;
+    case(MS_SHAPEFILE):
+      return(msShapeFileLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_TILED_SHAPEFILE):
+      return(msTiledSHPLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_SDE):
+      return(msSDELayerInitializeVirtualTable(layer));
+      break;
+    case(MS_OGR):
+      return(msOGRLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_POSTGIS):
+      return(msPostGISLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_WMS):
+      /* WMS should be treated as a raster layer */
+      return(msRASTERLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_ORACLESPATIAL):
+      return(msOracleSpatialLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_WFS):
+      return(msWFSLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_GRATICULE):
+      return(msGraticuleLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_MYGIS):
+      return(msMYGISLayerInitializeVirtualTable(layer));
+      break;         
+    case(MS_RASTER):
+      return(msRASTERLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_PLUGIN):
+      return(msPluginLayerInitializeVirtualTable(layer));
+      break;
+    default:
+      msSetError(MS_MISCERR, "Unknown connectiontype, it was %d", "msInitializeVirtualTable()", layer->connectiontype);
+      return MS_FAILURE;
+      break;
     }
-    createVirtualTable(&layer->vtable);
 
-    
-    if(layer->features && layer->connectiontype != MS_GRATICULE ) 
-      layer->connectiontype = MS_INLINE;
-
-    if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
-      layer->connectiontype = MS_TILED_SHAPEFILE;
-
-    if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS)
-      layer->connectiontype = MS_RASTER;
-
-
-    switch(layer->connectiontype) {
-        case(MS_INLINE):
-            return(msINLINELayerInitializeVirtualTable(layer));
-            break;
-        case(MS_SHAPEFILE):
-            return(msShapeFileLayerInitializeVirtualTable(layer));
-            break;
-        case(MS_TILED_SHAPEFILE):
-            return(msTiledSHPLayerInitializeVirtualTable(layer));
-            break;
-        case(MS_SDE):
-            return(msSDELayerInitializeVirtualTable(layer));
-            break;
-        case(MS_OGR):
-            return(msOGRLayerInitializeVirtualTable(layer));
-            break;
-        case(MS_POSTGIS):
-            return(msPostGISLayerInitializeVirtualTable(layer));
-            break;
-        case(MS_WMS):
-              /* WMS should be treated as a raster layer */
-              return(msRASTERLayerInitializeVirtualTable(layer));
-              break;
-        case(MS_ORACLESPATIAL):
-            return(msOracleSpatialLayerInitializeVirtualTable(layer));
-            break;
-        case(MS_WFS):
-            return(msWFSLayerInitializeVirtualTable(layer));
-            break;
-        case(MS_GRATICULE):
-            return(msGraticuleLayerInitializeVirtualTable(layer));
-            break;
-        case(MS_MYGIS):
-            return(msMYGISLayerInitializeVirtualTable(layer));
-            break;         
-        case(MS_RASTER):
-            return(msRASTERLayerInitializeVirtualTable(layer));
-            break;
-        case(MS_PLUGIN):
-            return(msPluginLayerInitializeVirtualTable(layer));
-            break;
-        default:
-            msSetError(MS_MISCERR, 
-                       "Unknown connectiontype, it was %d", 
-                       "msInitializeVirtualTable()", layer->connectiontype);
-            return MS_FAILURE;
-            break;
-    }
     /* not reached */
     return MS_FAILURE;
 }
@@ -1237,6 +1233,7 @@ msINLINELayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msINLINELayerIsOpen;
     /* layer->vtable->LayerWhichShapes, use default */
     layer->vtable->LayerNextShape = msINLINELayerNextShape;
+    layer->vtable->LayerResultsGetShape = msINLINELayerGetShape; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msINLINELayerGetShape;
     /* layer->vtable->LayerClose, use default */
     /* layer->vtable->LayerGetItems, use default */

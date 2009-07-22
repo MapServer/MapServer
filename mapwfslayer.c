@@ -1183,17 +1183,14 @@ msWFSLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msWFSLayerIsOpen;
     layer->vtable->LayerWhichShapes = msWFSLayerWhichShapes;
     layer->vtable->LayerNextShape = msOGRLayerNextShape; /* yes, OGR */
+    layer->vtable->LayerResultsGetShape = msOGRLayerGetShape; /* yes, OGR but no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msOGRLayerGetShape; /* yes, OGR */
-
     layer->vtable->LayerClose = msWFSLayerClose;
     layer->vtable->LayerGetItems = msWFSLayerGetItems;
     layer->vtable->LayerGetExtent = msOGRLayerGetExtent; /* yes, OGR */
     /* layer->vtable->LayerGetAutoStyle, use default */
-
     /* layer->vtable->LayerApplyFilterToLayer, use default */
-
     /* layer->vtable->LayerCloseConnection, use default */
-
     layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */

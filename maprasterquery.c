@@ -1431,20 +1431,16 @@ msRASTERLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msRASTERLayerIsOpen;
     layer->vtable->LayerWhichShapes = msRASTERLayerWhichShapes;
     layer->vtable->LayerNextShape = msRASTERLayerNextShape;
+    layer->vtable->LayerResultsGetShape = msRASTERLayerGetShape; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msRASTERLayerGetShape;
-
     layer->vtable->LayerClose = msRASTERLayerClose;
     layer->vtable->LayerGetItems = msRASTERLayerGetItems;
     layer->vtable->LayerGetExtent = msRASTERLayerGetExtent;
-
     /* layer->vtable->LayerGetAutoStyle, use default */
     /* layer->vtable->LayerApplyFilterToLayer, use default */
-
     layer->vtable->LayerCloseConnection = msRASTERLayerClose;
-
     /* we use backtics for proper tileindex shapefile functioning */
     layer->vtable->LayerSetTimeFilter = msRASTERLayerSetTimeFilter;
-
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
 

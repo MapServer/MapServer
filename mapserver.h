@@ -1489,6 +1489,8 @@ struct layerVTable {
     int (*LayerIsOpen)(layerObj *layer);
     int (*LayerWhichShapes)(layerObj *layer, rectObj rect);
     int (*LayerNextShape)(layerObj *layer, shapeObj *shape);
+    int (*LayerResultsGetShape)(layerObj *layer, shapeObj *shape, 
+                         int tile, long record);
     int (*LayerGetShape)(layerObj *layer, shapeObj *shape, 
                          int tile, long record);
     int (*LayerClose)(layerObj *layer);

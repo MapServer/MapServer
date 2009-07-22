@@ -2179,6 +2179,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     vtable->LayerIsOpen = msSDELayerIsOpen;
     vtable->LayerWhichShapes = msSDELayerWhichShapes;
     vtable->LayerNextShape = msSDELayerNextShape;
+    vtable->LayerResultsGetShape = msSDELayerGetShapeVT; /* no special version, use ...GetShape() */
     vtable->LayerGetShape = msSDELayerGetShapeVT;
     vtable->LayerClose = msSDELayerClose;
     vtable->LayerGetItems = msSDELayerGetItems;
@@ -2211,17 +2212,14 @@ msSDELayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msSDELayerIsOpen;
     layer->vtable->LayerWhichShapes = msSDELayerWhichShapes;
     layer->vtable->LayerNextShape = msSDELayerNextShape;
+    layer->vtable->LayerResultsGetShape = msSDELayerGetShapeVT; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msSDELayerGetShapeVT;
     layer->vtable->LayerClose = msSDELayerClose;
     layer->vtable->LayerGetItems = msSDELayerGetItems;
     layer->vtable->LayerGetExtent = msSDELayerGetExtent;
-
     /* layer->vtable->LayerGetAutoStyle, use default */
     /* layer->vtable->LayerApplyFilterToLayer, use default */
-
-    /* SDE uses pooled connections, close from msCloseConnections */
-    layer->vtable->LayerCloseConnection = msSDELayerCloseConnection;
-
+    layer->vtable->LayerCloseConnection = msSDELayerCloseConnection; /* SDE uses pooled connections, close from msCloseConnections */
     layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     layer->vtable->LayerCreateItems = msSDELayerCreateItems;
     /* layer->vtable->LayerGetNumFeatures, use default */

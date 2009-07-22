@@ -547,13 +547,12 @@ int msGraticuleLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerIsOpen = msGraticuleLayerIsOpen;
   layer->vtable->LayerWhichShapes = msGraticuleLayerWhichShapes;
   layer->vtable->LayerNextShape = msGraticuleLayerNextShape;
+  /* layer->vtable->LayerResultsGetShape, use default */
   layer->vtable->LayerGetShape = msGraticuleLayerGetShape;
-
   layer->vtable->LayerClose = msGraticuleLayerClose;
   layer->vtable->LayerGetItems = msGraticuleLayerGetItems;
   layer->vtable->LayerGetExtent = msGraticuleLayerGetExtent;
   layer->vtable->LayerGetAutoStyle = msGraticuleLayerGetAutoStyle;
-
   /* layer->vtable->LayerCloseConnection, use default */;
   layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
   /* layer->vtable->LayerApplyFilterToLayer, use default */

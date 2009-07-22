@@ -2649,19 +2649,16 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     vtable->LayerIsOpen = msOracleSpatialLayerIsOpen;
     vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
     vtable->LayerNextShape = msOracleSpatialLayerNextShape;
+    vtable->LayerResultsGetShape = msOracleSpatialLayerGetShapeVT; /* no special version, use ...GetShape() */
     vtable->LayerGetShape = msOracleSpatialLayerGetShapeVT;
     vtable->LayerClose = msOracleSpatialLayerClose;
     vtable->LayerGetItems = msOracleSpatialLayerGetItems;
     vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;
-
     /* layer->vtable->LayerGetAutoStyle, use default */
     /* layer->vtable->LayerApplyFilterToLayer, use default */
-
     vtable->LayerCloseConnection = msOracleSpatialLayerClose;
     vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
-
     vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
-
     /* layer->vtable->LayerGetNumFeatures, use default */
 
     return MS_SUCCESS;
@@ -2680,18 +2677,14 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msOracleSpatialLayerIsOpen;
     layer->vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
     layer->vtable->LayerNextShape = msOracleSpatialLayerNextShape;
+    layer->vtable->LayerResultsGetShape = msOracleSpatialLayerGetShapeVT; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msOracleSpatialLayerGetShapeVT;
-
     layer->vtable->LayerClose = msOracleSpatialLayerClose;
     layer->vtable->LayerGetItems = msOracleSpatialLayerGetItems;
     layer->vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;
-
     /* layer->vtable->LayerGetAutoStyle, use default */
-
     layer->vtable->LayerCloseConnection = msOracleSpatialLayerClose;
-
     layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
-
     layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */

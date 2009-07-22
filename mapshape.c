@@ -2345,48 +2345,44 @@ int msTiledSHPLayerGetExtent(layerObj *layer, rectObj *extent)
 
 void msTiledSHPLayerFreeItemInfo(layerObj *layer)
 {
-	if(layer->iteminfo) {
-		free(layer->iteminfo);
-		layer->iteminfo = NULL;
-	}
+  if(layer->iteminfo) {
+    free(layer->iteminfo);
+    layer->iteminfo = NULL;
+  }
 }
 
 int msTiledSHPLayerIsOpen(layerObj *layer)
 {
-	if(layer->layerinfo)
-		return MS_TRUE;
-	else
-		return MS_FALSE;
+  if(layer->layerinfo)
+    return MS_TRUE;
+  else
+    return MS_FALSE;
 }
 
 int msTiledSHPLayerInitializeVirtualTable(layerObj *layer)
 {
-	assert(layer != NULL);
-	assert(layer->vtable != NULL);
+  assert(layer != NULL);
+  assert(layer->vtable != NULL);
 
-	layer->vtable->LayerInitItemInfo = msTiledSHPLayerInitItemInfo;
-	layer->vtable->LayerFreeItemInfo = msTiledSHPLayerFreeItemInfo;
-	layer->vtable->LayerOpen = msTiledSHPOpenFile;
-
-	layer->vtable->LayerIsOpen = msTiledSHPLayerIsOpen;
-	layer->vtable->LayerWhichShapes = msTiledSHPWhichShapes;
-	layer->vtable->LayerNextShape = msTiledSHPNextShape;
-	layer->vtable->LayerGetShape = msTiledSHPGetShape;
-
-	layer->vtable->LayerClose = msTiledSHPCloseVT;
-	layer->vtable->LayerGetItems = msTiledSHPLayerGetItems;
-	layer->vtable->LayerGetExtent = msTiledSHPLayerGetExtent;
-
+  layer->vtable->LayerInitItemInfo = msTiledSHPLayerInitItemInfo;
+  layer->vtable->LayerFreeItemInfo = msTiledSHPLayerFreeItemInfo;
+  layer->vtable->LayerOpen = msTiledSHPOpenFile;
+  layer->vtable->LayerIsOpen = msTiledSHPLayerIsOpen;
+  layer->vtable->LayerWhichShapes = msTiledSHPWhichShapes;
+  layer->vtable->LayerNextShape = msTiledSHPNextShape;
+  layer->vtable->LayerResultsGetShape = msTiledSHPGetShape; /* no special version, use ...GetShape() */
+  layer->vtable->LayerGetShape = msTiledSHPGetShape;
+  layer->vtable->LayerClose = msTiledSHPCloseVT;
+  layer->vtable->LayerGetItems = msTiledSHPLayerGetItems;
+  layer->vtable->LayerGetExtent = msTiledSHPLayerGetExtent;
   /* layer->vtable->LayerApplyFilterToLayer, use default */
-
-	/* layer->vtable->LayerGetAutoStyle, use default */
-	/* layer->vtable->LayerCloseConnection, use default */;
-
-	layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
-	/* layer->vtable->LayerCreateItems, use default */
+  /* layer->vtable->LayerGetAutoStyle, use default */
+  /* layer->vtable->LayerCloseConnection, use default */;
+  layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
+  /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */
 
-	return MS_SUCCESS;
+  return MS_SUCCESS;
 }
 
 /* SHAPEFILE Layer virtual table functions */
@@ -2605,6 +2601,7 @@ int msShapeFileLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerIsOpen = msShapeFileLayerIsOpen;
   layer->vtable->LayerWhichShapes = msShapeFileLayerWhichShapes;
   layer->vtable->LayerNextShape = msShapeFileLayerNextShape;
+  layer->vtable->LayerResultsGetShape = msShapeFileLayerGetShape; /* no special version, use ...GetShape() */
   layer->vtable->LayerGetShape = msShapeFileLayerGetShape;
   layer->vtable->LayerClose = msShapeFileLayerClose;
   layer->vtable->LayerGetItems = msShapeFileLayerGetItems;

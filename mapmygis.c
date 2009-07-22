@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implements the MySQL/"MyGIS" connection type support.
@@ -1980,22 +1980,17 @@ msMYGISLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msMYGISLayerIsOpen;
     layer->vtable->LayerWhichShapes = msMYGISLayerWhichShapes;
     layer->vtable->LayerNextShape = msMYGISLayerNextShape;
+    layer->vtable->LayerResultsGetShape = msMYGISLayerGetShapeVT; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msMYGISLayerGetShapeVT;
-
     layer->vtable->LayerClose = msMYGISLayerClose;
     layer->vtable->LayerGetItems = msMYGISLayerGetItems;
     layer->vtable->LayerGetExtent = msMYGISLayerGetExtent;
-
     /* layer->vtable->LayerGetAutoStyle, use default */
-
     layer->vtable->LayerCloseConnection = msMYGISLayerClose;
-    
     layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
-
     /* layer->vtable->LayerApplyFilterToLayer, use default */
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
-
 
     return MS_SUCCESS;
 }
