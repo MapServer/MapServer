@@ -10,8 +10,8 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (SVN branch, may never be released):
-----------------------------------------------------
+Version 4.10.5 (2009-07-23)
+---------------------------
 
 - Changing imagepath and imageurl no longer allowed via URL (#1836)
 
