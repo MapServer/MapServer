@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Changing imagepath and imageurl no longer allowed via URL (#1836)
+
 - New fix for incomplete CVE-2009-0840 security fix made in 5.2.2 (#2943)
 
 - Fixed seg fault if font not found with label ANGLE FOLLOW (#2973)
