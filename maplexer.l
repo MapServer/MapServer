@@ -184,8 +184,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL,OBJECT_STRING>imagetype	       { return(IMAGETYPE); }
 <INITIAL,OBJECT_STRING>imagequality	       { return(IMAGEQUALITY); }
 <INITIAL,OBJECT_STRING>imagemode	       { return(IMAGEMODE); }
-<INITIAL,OBJECT_STRING>imagepath	       { return(IMAGEPATH); }
-<INITIAL,OBJECT_STRING>imageurl		       { return(IMAGEURL); }
+<INITIAL>imagepath	                       { return(IMAGEPATH); }
+<INITIAL>imageurl          		       { return(IMAGEURL); }
 <INITIAL>include                               { BEGIN(INCLUDE); }
 <INITIAL,OBJECT_STRING>index                   { return(INDEX); }
 <INITIAL,OBJECT_STRING>interlace               { return(INTERLACE); }

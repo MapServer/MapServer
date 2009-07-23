@@ -4275,14 +4275,6 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
     msFree(web->header);
     web->header = strdup(value);
     break;
-  case(IMAGEPATH):
-    msFree(web->imagepath);
-    web->imagepath = strdup(value);
-    break;
-  case(IMAGEURL):
-    msFree(web->imageurl);
-    web->imageurl = strdup(value);
-    break;
   case(LEGENDFORMAT):
     msFree(web->legendformat);
     web->legendformat = strdup(value);
