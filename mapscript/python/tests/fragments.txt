@@ -1,0 +1,95 @@
+Functional tests of mapfile fragment loading
+============================================
+
+Setup
+-----
+
+Use pkg_resources to maintain sanity with setuptools develop builds
+
+  >>> try:
+  ...     import pkg_resources
+  ...     msg = pkg_resources.require('mapscript')
+  ... except:
+  ...     pass
+
+Loading a MAP string
+--------------------
+
+Empty map
+
+  >>> import mapscript
+  >>> mo = mapscript.fromstring("""MAP\nNAME "test"\nEND""")
+  >>> mo # doctest: +ELLIPSIS
+  <mapscript.mapObj; proxy of C mapObj instance at ...>
+  >>> mo.name
+  'test'
+
+  >>> del mo
+
+With map path
+
+  Read in the standard mapserver fixture, and verify quickly
+  
+  >>> import os
+  >>> mapfile = os.path.abspath('../../../tests/test.map')
+  >>> maproot = os.path.abspath("%s/.." % mapfile)
+  >>> f = file(mapfile, 'rb')
+  >>> mapstring = f.read()
+  >>> f.close()
+  >>> mapstring.startswith('MAP')
+  True
+
+  >>> mo = mapscript.fromstring(mapstring, maproot)
+  >>> mo # doctest: +ELLIPSIS
+  <mapscript.mapObj; proxy of C mapObj instance at ...>
+  >>> mo.name
+  'Testing'
+  >>> mo.numlayers
+  7
+
+  # Delete so next tests get a clean slate
+  >>> del mo
+
+Without map map
+
+  Massage the mapfile to use absolute paths to resources
+
+  >>> absmapstr = mapstring.replace('FONTSET "', 'FONTSET "%s/' % maproot)
+  >>> absmapstr = absmapstr.replace('SYMBOLSET "', 'SYMBOLSET "%s/' % maproot)
+  >>> absmapstr = absmapstr.replace('DATA "', 'DATA "%s/' % maproot)
+
+  >>> mo = mapscript.fromstring(absmapstr)
+  >>> mo # doctest: +ELLIPSIS
+  <mapscript.mapObj; proxy of C mapObj instance at ...>
+  >>> mo.name
+  'Testing'
+  >>> mo.numlayers
+  7
+
+Layers
+------
+
+  >>> lo = mapscript.fromstring("""LAYER NAME "test" TYPE POINT END""")
+  >>> lo #doctest: +ELLIPSIS
+  <mapscript.layerObj; proxy of C layerObj instance at ...>
+  >>> lo.name
+  'test'
+  >>> lo.type == mapscript.MS_LAYER_POINT
+  True
+
+Classes
+-------
+
+  >>> co = mapscript.fromstring("""CLASS TITLE "test" END""")
+  >>> co #doctest: +ELLIPSIS
+  <mapscript.classObj; proxy of C classObj instance at ...>
+  >>> co.title
+  'test'
+
+Styles
+------
+
+  >>> so = mapscript.fromstring("""STYLE END""")
+  >>> so #doctest: +ELLIPSIS
+  <mapscript.styleObj; proxy of C styleObj instance at ...>
+

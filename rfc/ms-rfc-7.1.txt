@@ -1,0 +1,177 @@
+===========================================
+MS RFC 7.1: MapServer SVN Commit Management
+===========================================
+
+:Date:  2008/07/02
+:Author: Frank Warmerdam and Tom Kralidis
+:Contact: warmerdam@pobox.com and tomkralidis@hotmail.com
+:Last Edited: $Date: 2008-07-02 09:05:32 -0400 (Wed, 02 Jul 2008) $
+:Status: Adopted
+
+(Note: this RFC obsoletes RFC 7)
+
+Purpose
+-------
+
+To formalize SVN commit access, and specify some guidelines for SVN 
+committers.
+
+
+Election to SVN Commit Access
+-----------------------------
+
+Permission for SVN commit access shall be provided to new developers only
+if accepted by the MapServer Project Steering Committee.   A proposal
+should be written to the PSC for new committers and voted on normally.  It
+is not necessary to write an RFC document for these votes ... email to 
+mapserver-dev is sufficient.
+
+Removal of SVN commit access should be handled by the same process.  
+
+The new committer should have demonstrated commitment to MapServer and
+knowledge of the MapServer source code and processes to the committee's
+satisfaction, usually by reporting tickets, submitting patches, and/or
+actively participating in the various MapServer forums.
+
+The new committer should also be prepared to support any new feature or
+changes that he/she commits to the MapServer source tree in future
+releases, or to find someone to which to delegate responsibility for
+them if he/she stops being available to support the portions of code
+that he/she is responsible for.
+
+All committers should also be a member of mapserver-dev mailing list
+so they can stay informed on policies, technical developments and 
+release preparation.
+
+
+Committer Tracking
+------------------
+
+A list of all project committers will be kept in the main mapserver 
+directory (called COMMITTERS) listing for each SVN committer:
+
+ * Userid: the id that will appear in the SVN logs for this person.
+
+ * Full name: the users actual name. 
+
+ * Email address: A current email address at which the committer can be
+   reached.  It may be altered in normal ways to make it harder to 
+   auto-harvest. 
+
+ * A brief indication of areas of responsibility.  
+
+
+SVN Administrator
+-----------------
+
+One member of the Project Steering Committee will be designed the SVN
+Administrator.  That person will be responsible for giving SVN commit
+access to folks, updating the COMMITTERS file, and other SVN related
+management.  Initially Steve Lime will be the SVN Adminstrator.
+
+SVN Commit Practices
+--------------------
+
+The following are considered good SVN commit practices for the MapServer
+project. 
+
+ * Use meaningful descriptions for SVN commit log entries. 
+
+ * Add a ticket reference like "(#1232)" at the end of SVN commit log entries
+   when committing changes related to a ticket in Trac.
+
+ * Include changeset revision numbers like "r7622" in tickets when discussng
+   relevant changes to the codebase.
+
+ * Include an entry in the HISTORY file for any significant change or fix
+   committed in the main MapServer source tree.  Make sure it is placed under 
+   the correct version heading and include ticket numbers in these messages too.
+
+ * Changes should not be committed in stable branches without a corresponding
+   ticket and HISTORY entry.  Any change worth pushing into the stable 
+   version is worth a Trac ticket and good HISTORY notations. 
+
+ * Never commit new features to a stable branch: only critical fixes. New
+   features can only go in the main development trunk.
+
+ * Only ticket defects should be committed to the code during pre-release
+   code freeze.  
+
+ * Significant changes to the main development version should be
+   discussed on the -dev list before you make them, and larger changes will
+   require an RFC approved by the PSC.
+
+ * Do not create new branches without the approval of the PSC.  Release
+   managers are assumed to have permission to create a branch. 
+
+ * All source code in SVN should be in Unix text format as opposed to DOS
+   text mode. 
+
+ * When committing new features or significant changes to existing source
+   code, the committer should take reasonable measures to insure that the
+   source code continues to build and work on the most commonly supported
+   platforms (currently Linux and Windows), either by testing on those
+   platforms directly, or by getting help from other developers working on
+   those platforms. If new files or library dependencies are added, then
+   the configure.in, Makefile.in, Makefile.vc and related documentations
+   should be kept up to date.
+
+
+Legal
+-----
+
+Commiters are the front line gatekeepers to keep the code base clear of
+improperly contributed code. It is important to the MapServer users,
+developers and the OSGeo foundation to avoid contributing any code to the
+project without it being clearly licensed under the project license.
+
+Generally speaking the key issues are that those providing code to be included
+in the repository understand that the code will be released under the
+MapServer License, and that the person providing the code has the right
+to contribute the code. For the commiter themselves understanding about the
+license is hopefully clear. For other contributors, the commiter should verify
+the understanding unless the commiter is very comfortable that the contributor
+understands the license (for instance frequent contributors).
+
+If the contribution was developed on behalf of an employer (on work time, as
+part of a work project, etc) then it is important that an appropriate
+representative of the employer understand that the code will be contributed
+under the MapServer License. The arrangement should be cleared with an
+authorized supervisor/manager, etc.
+
+The code should be developed by the contributor, or the code should be from a
+source which can be rightfully contributed such as from the public domain, or
+from an open source project under a compatible license.
+
+All unusual situations need to be discussed and/or documented.
+
+Commiters should adhere to the following guidelines, and may be personally
+legally liable for improperly contributing code to the source repository:
+
+    * Make sure the contributor (and possibly employer) is aware of the
+      contribution terms.
+    * Code coming from a source other than the contributor (such as adapted
+      from another project) should be clearly marked as to the original
+      source, copyright holders, license terms and so forth. This information
+      can be in the file headers, but should also be added to the project
+      licensing file if not exactly matching normal project licensing
+      (mapserver/LICENSE.txt).
+    * Existing copyright headers and license text should never be stripped
+      from a file. If a copyright holder wishes to give up copyright they must
+      do so in writing to the foundation before copyright messages are
+      removed. If license terms are changed it has to be by agreement (written
+      in email is ok) of the copyright holders.
+    * When substantial contributions are added to a file (such as substantial
+      patches) the author/contributor should be added to the list of copyright
+      holders for the file.
+    * If there is uncertainty about whether a change it proper to contribute
+      to the code base, please seek more information from the project steering
+      committee, or the foundation legal counsel. 
+
+
+Voting History
+--------------
+
+Adopted on 2008/07/02 with +1 from PericlesN, DanielM, TamasS, JeffM,
+UmbertoN, SteveW, AssefaY, FrankW, TomK
+
