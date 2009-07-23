@@ -1,0 +1,91 @@
+.. $Id$
+
+Python MapScript for MapServer 4.4 README
+================================================================
+
+:Author: Sean Gillies
+:Contact: sgillies@frii.com
+:Revision: $Revision$
+:Date: $Date$
+
+The Python mapscript module provides users an interface to MapServer
+classes on any platform, and has been well tested on Python versions
+2.1-2.3.4.
+
+
+Building the Mapscript Module
+-----------------------------
+
+if you are using Python 2.2+, copy the mapscript_wrap.c and mapscript.py
+files from python/modern up to python/, replacing the files in that
+location.  Before you begin, it's worth spending a few minutes to read the
+docs about Python distutils:
+
+    http://www.python.org/doc/current/dist/dist.html
+
+Now that you know what distutils does, use it like
+::
+
+    $ python setup.py build
+
+
+Building C Extension Wrappers
+-----------------------------
+
+If you are building the mapscript module from CVS, not from a release, the
+C extension wrappers will be absent and must then be generated using SWIG,
+the Simplified Wrapper and Interface Generator, http://www.swig.org.  SWIG
+version 1.3.19 or higher is recommended.
+
+From the mapscript/python directory execute
+::
+
+    $ swig -python -shadow -o mapscript_wrap.c ../mapscript.i
+
+and then proceed to the build step explained above.  If you are using
+Python 2.2 or 2.3, you should add a -modern option which produces a higher
+performance module.  ::
+
+    $ swig -python -shadow -modern -o mapscript_wrap.c ../mapscript.i
+
+Testing
+-------
+
+Make the appropriate edits to tests/test.map under the mapserver directory,
+change directory from mapscript/python and execute ::
+
+    $ cd tests/cases
+    $ python runalltests.py -v
+
+The tests can (and should) be run before the module is installed.
+
+Installing
+----------
+
+As root or superuser
+::
+    
+    $ python setup.py install
+
+That's it!
+  
+Credits
+-------
+
+Steve Lime (developer)
+Sean Gillies (developer)
+Frank Warmerdam (developer)
+Howard Butler (developer)
+Norman Vine (cygwin and distutils guru)
+Tim Cera (install)
+Michael Schultz (documentation)
+
+MapScript is now using code from gdmodule 
+
+  http://newcenturycomputers.net/projects/gdmodule.html
+
+which makes possible some new and cool imageObj tricks.  The use
+this code is **greatly** appreciated and MapServer developers look
+forward to being able to share advances with the gdmodule
+developers.
+
