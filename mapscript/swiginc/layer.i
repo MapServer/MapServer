@@ -381,8 +381,10 @@
     int addFeature(shapeObj *shape) 
     {    
         self->connectiontype = MS_INLINE;
-        if (self->features == NULL) shape->index = 0;
-        else shape->index = self->features->shape.index + 1;
+        if(self->features != NULL && self->features->tailifhead != NULL) 
+            shape->index = self->features->tailifhead->shape.index + 1;
+        else 
+            shape->index = 0;
         if (insertFeatureList(&(self->features), shape) == NULL) 
         return MS_FAILURE;
         return MS_SUCCESS;

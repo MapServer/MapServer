@@ -675,10 +675,12 @@ static int loadFeature(layerObj	*player, int type)
       msSetError(MS_EOFERR, NULL, "loadFeature()");      
       return(MS_FAILURE);
     case(END):
-      if (player->features == NULL) shape->index = 0;
-      else shape->index = player->features->shape.index + 1;
+      if(player->features != NULL && player->features->tailifhead != NULL) 
+            shape->index = player->features->tailifhead->shape.index + 1;
+        else 
+            shape->index = 0;
       if((node = insertFeatureList(list, shape)) == NULL) 
-	status = MS_FAILURE;
+	  status = MS_FAILURE;
 
       msFreeShape(shape); /* clean up */
       msFree(shape);

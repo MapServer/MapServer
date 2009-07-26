@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed the shape index for the inline layers (#3074)
+
 - Fixed MINDISTANCE not considering label size on lines (#3050)
 
 - Labeling enhancements: ability to repeat labels along a line/multiline (#3030)
