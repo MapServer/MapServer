@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Fixed the shape index for the inline layers (#3074)
+
 
 Version 5.4.2 (2009-07-23):
 ---------------------------
