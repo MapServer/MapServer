@@ -1981,9 +1981,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         {
           /* Bug #1620 implementation */
           if(layer->class[c]->label.autofollow == MS_TRUE) {
+            labelObj label;
             layer->class[c]->label.position = MS_CC; /* Force all label positions to MS_CC regardless if a path is computed */
             
-            labelObj label = layer->class[c]->label;
+            label = layer->class[c]->label;
             
             if(layer->labelcache) {
               if(msAddLabel(map, layer->index, c, shape, NULL, annopaths[i], shape->text, 0.0, &label) != MS_SUCCESS) return(MS_FAILURE);
