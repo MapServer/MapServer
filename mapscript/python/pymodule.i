@@ -158,12 +158,12 @@ MapServerChildError = _mapscript.MapServerChildError
 
 %feature("pythonappend") layerObj %{if args and len(args)!=0:
 		self.p_map=args[0]
-	else:
+else:
 		self.p_map=None%}
 
 %feature("pythonappend") classObj %{if args and len(args)!=0:
 		self.p_layer=args[0]
-	else:
+else:
 		self.p_layer=None%}
 
 %feature("shadow") insertClass %{
