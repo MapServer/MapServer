@@ -1870,6 +1870,7 @@ MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int get_all, char *metadata
 MS_DLL_EXPORT int msLayerNextShape(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msLayerGetItems(layerObj *layer);
 MS_DLL_EXPORT int msLayerSetItems(layerObj *layer, char **items, int numitems);
+MS_DLL_EXPORT int msLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 MS_DLL_EXPORT int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 MS_DLL_EXPORT int msLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msLayerSetExtent( layerObj *layer, double minx, double miny, double maxx, double maxy);
