@@ -1291,7 +1291,7 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid) {
 
 }
 
-int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
+int msPostGISReadShape(layerObj *layer, shapeObj *shape, int random) {
 
     char *wkbstr = NULL;
     unsigned char *wkb = NULL;
@@ -1388,16 +1388,21 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
                 msDebug("msPostGISReadShape: [%s] \"%s\"\n", layer->items[t], shape->values[t]);
             }
         }
-        /* t is the geometry, t+1 is the uid */
-        tmp = PQgetvalue(layerinfo->pgresult, layerinfo->rownum, t + 1);
-        if( tmp ) {
-            uid = strtol( tmp, NULL, 10 );
-        }
-        else {
-            uid = 0;
-        }
+        
+        if( random ) {
+            /* t is the geometry, t+1 is the uid */
+            tmp = PQgetvalue(layerinfo->pgresult, layerinfo->rownum, t + 1);
+            if( tmp ) {
+                uid = strtol( tmp, NULL, 10 );
+            }
+            else {
+                uid = 0;
+            }
 
-        shape->index = uid;
+            shape->index = uid;
+        } else {
+            shape->index = layerinfo->rownum;
+        }
 
         if( layer->debug > 2 ) {
             msDebug("msPostGISReadShape: [index] %d\n",  shape->index);
@@ -1700,7 +1705,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect) {
     pgresult = PQexec(layerinfo->pgconn, strSQL);
 
     if ( layer->debug > 1 ) {
-        msDebug("msPostGISLayerWhichShapes query status: %d\n", PQresultStatus(pgresult));
+        msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult)); 
     }
 
     /* Something went wrong. */
@@ -1762,8 +1767,8 @@ int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape) {
     while (shape->type == MS_SHAPE_NULL) {
         if (layerinfo->rownum < PQntuples(layerinfo->pgresult)) {
             int rv;
-            /* Retrieve this shape. */
-            rv = msPostGISReadShape(layer, shape);
+            /* Retrieve this shape, random access mode. */
+            rv = msPostGISReadShape(layer, shape, 1);
             if( shape->type != MS_SHAPE_NULL ) {
                 (layerinfo->rownum)++; /* move to next shape */
                 return MS_SUCCESS;
@@ -1783,6 +1788,71 @@ int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape) {
     msSetError( MS_MISCERR,
                 "PostGIS support is not available.",
                 "msPostGISLayerNextShape()");
+    return MS_FAILURE;
+#endif
+}
+
+/*
+** msPostGISLayerResultsGetShape()
+**
+** Registered vtable->LayerGetShape function. For pulling from a prepared and 
+** undisposed result set. We ignore the 'tile' parameter, as it means nothing to us.
+*/
+int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long record) {
+#ifdef USE_POSTGIS
+    
+    PGresult *pgresult = NULL;
+    msPostGISLayerInfo *layerinfo = NULL;
+	int result = MS_SUCCESS;
+
+    assert(layer != NULL);
+    assert(layer->layerinfo != NULL);
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerGetShape called for record = %i\n", record);
+    }
+
+    layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+
+    /* Check the validity of the open result. */
+    pgresult = layerinfo->pgresult;
+    if ( ! pgresult ) {
+        msSetError( MS_MISCERR,
+                    "PostgreSQL result set is null.",
+                    "msPostGISLayerResultsGetShape()");
+        return MS_FAILURE;
+    }
+    if ( layer->debug > 1 ) {
+        msDebug("msPostGISLayerResultsGetShape query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult));
+    }    
+    if( PQresultStatus(pgresult) != PGRES_COMMAND_OK ) {
+        msSetError( MS_MISCERR,
+                    "PostgreSQL result set is not ready.",
+                    "msPostGISLayerResultsGetShape()");
+        return MS_FAILURE;
+    }
+
+    /* Check the validity of the requested record number. */
+    if( record >= PQntuples(pgresult) ) {
+        msSetError( MS_MISCERR,
+                    "PostgreSQL result set is not ready.",
+                    "msPostGISLayerResultsGetShape()");
+        return MS_FAILURE;
+    }
+
+    layerinfo->rownum = record; /* Only return one result. */
+
+    /* We don't know the shape type until we read the geometry. */
+    shape->type = MS_SHAPE_NULL;
+
+	/* Return the shape, result set mode. */
+    result = msPostGISReadShape(layer, shape, 0);
+
+    return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : MS_SUCCESS;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISLayerResultsGetShape()");
     return MS_FAILURE;
 #endif
 }
@@ -1862,7 +1932,8 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long reco
     }
 
     if (num_tuples > 0) {
-         result = msPostGISReadShape(layer, shape);
+        /* Get shape in random access mode. */
+        result = msPostGISReadShape(layer, shape, 1);
     }
 
     return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : ( (num_tuples > 0) ? MS_SUCCESS : MS_DONE );
@@ -2397,7 +2468,7 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer) {
     layer->vtable->LayerIsOpen = msPostGISLayerIsOpen;
     layer->vtable->LayerWhichShapes = msPostGISLayerWhichShapes;
     layer->vtable->LayerNextShape = msPostGISLayerNextShape;
-    layer->vtable->LayerResultsGetShape = msPostGISLayerGetShape; /* no special version, use ...GetShape() */
+    layer->vtable->LayerResultsGetShape = msPostGISLayerResultsGetShape; 
     layer->vtable->LayerGetShape = msPostGISLayerGetShape;
     layer->vtable->LayerClose = msPostGISLayerClose;
     layer->vtable->LayerGetItems = msPostGISLayerGetItems;
