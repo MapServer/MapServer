@@ -1947,7 +1947,7 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
    
 #else
     /* No proj? Naive comparison. */
-    if( msRectOverlap( &(map->extent), &(layer->extent) ) return MS_TRUE;
+    if( msRectOverlap( &(map->extent), &(layer->extent) ) ) return MS_TRUE;
     return MS_FALSE;
 #endif
 
