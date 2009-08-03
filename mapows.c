@@ -134,6 +134,115 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int force_ows_mode)
                       * since we're not in force_ows_mode*/
 }
 
+
+/*
+** msOWSLookupMetadata()
+**
+** Attempts to lookup a given metadata name in multiple OWS namespaces.
+**
+** 'namespaces' is a string with a letter for each namespace to lookup 
+** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
+** If namespaces is NULL then this function just does a regular metadata
+** lookup.
+*/
+const char *msOWSLookupMetadata(hashTableObj *metadata, 
+                                const char *namespaces, const char *name)
+{
+    const char *value = NULL;
+
+    if (namespaces == NULL)
+    {
+        value = msLookupHashTable(metadata, (char*)name);
+    }
+    else
+    {
+        char buf[100] = "ows_";
+
+        strncpy(buf+4, name, 95);
+        buf[99] = '\0';
+
+        while (value == NULL && *namespaces != '\0')
+        {
+            switch (*namespaces)
+            {
+              case 'O':         /* ows_... */
+                buf[0] = 'o';
+                buf[1] = 'w';
+                buf[2] = 's';
+                break;
+              case 'M':         /* wms_... */
+                buf[0] = 'w';
+                buf[1] = 'm';
+                buf[2] = 's';
+                break;
+              case 'F':         /* wfs_... */
+                buf[0] = 'w';
+                buf[1] = 'f';
+                buf[2] = 's';
+                break;
+              case 'C':         /* wcs_... */
+                buf[0] = 'w';
+                buf[1] = 'c';
+                buf[2] = 's';
+                break;
+              case 'G':         /* gml_... */
+                buf[0] = 'g';
+                buf[1] = 'm';
+                buf[2] = 'l';
+                break;
+                case 'S':         /* sos_... */
+                buf[0] = 's';
+                buf[1] = 'o';
+                buf[2] = 's';
+                break;
+              default:
+                /* We should never get here unless an invalid code (typo) is */
+                /* present in the code, but since this happened before... */
+                msSetError(MS_WMSERR, 
+                           "Unsupported metadata namespace code (%c).",
+                           "msOWSLookupMetadata()", *namespaces );
+                assert(MS_FALSE);
+                return NULL;
+            }
+
+            value = msLookupHashTable(metadata, buf);
+            namespaces++;
+        }
+    }
+
+    return value;
+}
+
+/*
+** msOWSLookupMetadata2()
+**
+** Attempts to lookup a given metadata name in multiple hashTables, and
+** in multiple OWS namespaces within each. First searches the primary
+** table and if no result is found, attempts the search using the 
+** secondary (fallback) table.
+**
+** 'namespaces' is a string with a letter for each namespace to lookup 
+** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
+** If namespaces is NULL then this function just does a regular metadata
+** lookup.
+*/
+const char *msOWSLookupMetadata2(hashTableObj *pri,
+                                        hashTableObj *sec,
+                                        const char *namespaces,
+                                        const char *name)
+{
+    const char *result;
+    
+    if ((result = msOWSLookupMetadata(pri, namespaces, name)) == NULL)
+    {
+        /* Try the secondary table */
+        result = msOWSLookupMetadata(sec, namespaces, name);
+    }
+
+    return result;
+}
+
+
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
 #if !defined(USE_PROJ)
@@ -465,113 +574,6 @@ const char *msOWSGetVersionString(int nVersion, char *pszBuffer)
     return pszBuffer;
 }
 
-
-/*
-** msOWSLookupMetadata()
-**
-** Attempts to lookup a given metadata name in multiple OWS namespaces.
-**
-** 'namespaces' is a string with a letter for each namespace to lookup 
-** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
-** If namespaces is NULL then this function just does a regular metadata
-** lookup.
-*/
-const char *msOWSLookupMetadata(hashTableObj *metadata, 
-                                const char *namespaces, const char *name)
-{
-    const char *value = NULL;
-
-    if (namespaces == NULL)
-    {
-        value = msLookupHashTable(metadata, (char*)name);
-    }
-    else
-    {
-        char buf[100] = "ows_";
-
-        strncpy(buf+4, name, 95);
-        buf[99] = '\0';
-
-        while (value == NULL && *namespaces != '\0')
-        {
-            switch (*namespaces)
-            {
-              case 'O':         /* ows_... */
-                buf[0] = 'o';
-                buf[1] = 'w';
-                buf[2] = 's';
-                break;
-              case 'M':         /* wms_... */
-                buf[0] = 'w';
-                buf[1] = 'm';
-                buf[2] = 's';
-                break;
-              case 'F':         /* wfs_... */
-                buf[0] = 'w';
-                buf[1] = 'f';
-                buf[2] = 's';
-                break;
-              case 'C':         /* wcs_... */
-                buf[0] = 'w';
-                buf[1] = 'c';
-                buf[2] = 's';
-                break;
-              case 'G':         /* gml_... */
-                buf[0] = 'g';
-                buf[1] = 'm';
-                buf[2] = 'l';
-                break;
-                case 'S':         /* sos_... */
-                buf[0] = 's';
-                buf[1] = 'o';
-                buf[2] = 's';
-                break;
-              default:
-                /* We should never get here unless an invalid code (typo) is */
-                /* present in the code, but since this happened before... */
-                msSetError(MS_WMSERR, 
-                           "Unsupported metadata namespace code (%c).",
-                           "msOWSLookupMetadata()", *namespaces );
-                assert(MS_FALSE);
-                return NULL;
-            }
-
-            value = msLookupHashTable(metadata, buf);
-            namespaces++;
-        }
-    }
-
-    return value;
-}
-
-/*
-** msOWSLookupMetadata2()
-**
-** Attempts to lookup a given metadata name in multiple hashTables, and
-** in multiple OWS namespaces within each. First searches the primary
-** table and if no result is found, attempts the search using the 
-** secondary (fallback) table.
-**
-** 'namespaces' is a string with a letter for each namespace to lookup 
-** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
-** If namespaces is NULL then this function just does a regular metadata
-** lookup.
-*/
-const char *msOWSLookupMetadata2(hashTableObj *pri,
-                                        hashTableObj *sec,
-                                        const char *namespaces,
-                                        const char *name)
-{
-    const char *result;
-    
-    if ((result = msOWSLookupMetadata(pri, namespaces, name)) == NULL)
-    {
-        /* Try the secondary table */
-        result = msOWSLookupMetadata(sec, namespaces, name);
-    }
-
-    return result;
-}
 
 /*
 ** msOWSPrintMetadata()

@@ -167,6 +167,13 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
  *====================================================================*/
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request, int force_ows_mode);
 
+MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj *metadata, 
+                                    const char *namespaces, const char *name);
+MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
+                                                hashTableObj *sec,
+                                                const char *namespaces,
+                                                const char *name);
+
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
@@ -206,12 +213,6 @@ MS_DLL_EXPORT const char *msOWSGetVersionString(int nVersion, char *pszBuffer);
 #define OWS_WMS     1
 #define OWS_WFS     2
 
-MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj *metadata, 
-                                    const char *namespaces, const char *name);
-MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
-                                                hashTableObj *sec,
-                                                const char *namespaces,
-                                                const char *name);
 MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata, 
                        const char *namespaces, const char *name, 
                        int action_if_not_found, const char *format, 
