@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed msMSSQL2008LayerGetShape to retrieve proper wkb geometries (#3082)
+
 - Fixed the shape index for the inline layers (#3074)
 
 - Fixed MINDISTANCE not considering label size on lines (#3050)

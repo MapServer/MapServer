@@ -1436,7 +1436,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
     if(layer->numitems == 0) 
     {
-        snprintf(buffer, sizeof(buffer), "%s", layerinfo->geom_column);
+        snprintf(buffer, sizeof(buffer), "%s.STAsBinary()", layerinfo->geom_column);
         columns_wanted = _strdup(buffer);
     } 
     else 
@@ -1445,7 +1445,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
             snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
         }
 
-        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s", layerinfo->geom_column);
+        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary()", layerinfo->geom_column);
 
         columns_wanted = _strdup(buffer);
     }
