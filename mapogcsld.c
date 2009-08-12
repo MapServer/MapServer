@@ -311,6 +311,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
                         nLayerStatus =  GET_LAYER(map, i)->status;
                         GET_LAYER(map, i)->status = MS_ON;
+
+                        
+
                         FLTApplyFilterToLayer(psNode, map,  
                                               GET_LAYER(map, i)->index,
                                               !FLTIsSimpleFilter(psNode));
@@ -602,6 +605,9 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     int i=0, nNewClasses=0, nClassBeforeFilter=0, nClassAfterFilter=0;
     int nClassAfterRule=0, nClassBeforeRule=0;
     char *pszTmpFilter = NULL;
+    layerObj *psCurrentLayer = NULL;
+    const char *pszWmsName=NULL;
+    int j=0;
 
 
     if (psRoot && psLayer)
@@ -676,6 +682,30 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                             if (psNode)
                             {
+                                /*preparse the filter for possible gml aliases set on the layer's metada:
+                                  "gml_NA3DESC_alias" "alias_name" and filter could be  
+                                <ogc:PropertyName>alias_name</ogc:PropertyName> #3079*/
+                                for (j=0; j<psLayer->map->numlayers; j++)
+                                {
+                                    psCurrentLayer = GET_LAYER(psLayer->map, j);
+
+                                    pszWmsName = msOWSLookupMetadata(&(psCurrentLayer->metadata), "MO", "name");
+
+                                    if ((psCurrentLayer->name && psLayer->name && 
+                                         strcasecmp(psCurrentLayer->name, psLayer->name) == 0) ||
+                                        (psCurrentLayer->group && psLayer->name &&
+                                         strcasecmp(psCurrentLayer->group, psLayer->name) == 0) ||
+                                        (psLayer->name && pszWmsName &&
+                                         strcasecmp(pszWmsName, psLayer->name) == 0))
+                                      break;
+                                }
+                                if (j < psLayer->map->numlayers)
+                                {
+                                   
+                                    FLTPreParseFilterForAlias(psNode, psLayer->map, j, "G");
+                                }
+
+
 /* ==================================================================== */
 /*      If the filter has a spatial filter or is a simple, we keep      */
 /*      the node. This node will be parsed when applying the SLD and    */
@@ -687,8 +717,8 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 /* ==================================================================== */
                                 if (FLTHasSpatialFilter(psNode)) 
                                   psLayer->layerinfo = (void *)psNode;
-
-                              szExpression = FLTGetMapserverExpression(psNode, psLayer);
+                                
+                                szExpression = FLTGetMapserverExpression(psNode, psLayer);
 
                                 if (szExpression)
                                 {
