@@ -1408,6 +1408,8 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     int nLength = 0;
     char *pszSymbolName = NULL;
     int bFilled = 0, bStroked=0; 
+    
+    bPointLayer=0;
 
     if (psRoot && psStyle && map)
     {
@@ -3058,7 +3060,8 @@ void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
     CPLXMLNode *psAnchor, *psAnchorX, *psAnchorY;
     double dfAnchorX=0, dfAnchorY=0;
     CPLXMLNode *psDisplacement, *psDisplacementX, *psDisplacementY;
-    CPLXMLNode *psRotation;
+    CPLXMLNode *psRotation=NULL, *psPropertyName=NULL;
+    char szTmp[100];
 
     if (psRoot && psClass)
     {
@@ -3137,10 +3140,22 @@ void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
 /*      parse rotation.                                                 */
 /* -------------------------------------------------------------------- */
         psRotation = CPLGetXMLNode(psRoot, "Rotation");
-        if (psRotation && psRotation->psChild && psRotation->psChild->pszValue)
-          psClass->label.angle = atof(psRotation->psChild->pszValue);
-    }
-           
+        if (psRotation)
+        {
+            psPropertyName = CPLGetXMLNode(psRotation, "PropertyName");
+            if (psPropertyName)
+            {   
+                sprintf(szTmp, "%s", CPLGetXMLValue(psPropertyName, NULL, NULL));
+                psClass->label.bindings[MS_LABEL_BINDING_ANGLE].item = strdup(szTmp);
+                psClass->label.numbindings++;
+            }
+            else
+            {
+                if (psRotation->psChild && psRotation->psChild->pszValue)
+                  psClass->label.angle = atof(psRotation->psChild->pszValue);
+            }
+        }
+    }   
 }
 
 /************************************************************************/
