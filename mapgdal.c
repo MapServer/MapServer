@@ -82,10 +82,6 @@ void msGDALCleanup( void )
         GDALDestroyDriverManager();
 #endif
 
-#if GDAL_RELEASE_DATE > 20040101
-        CPLFreeConfig();
-#endif
-
         msReleaseLock( TLOCK_GDAL );
 
         bGDALInitialized = 0;

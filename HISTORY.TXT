@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Modern GDALs clear the config when destroying driver manager.  Skip this
+  call to avoid TLS leakage on cleanup (mapgdal.c).
+
 - Fixed msMSSQL2008LayerGetShape to retrieve proper wkb geometries (#3082)
 
 - Fixed the shape index for the inline layers (#3074)
