@@ -196,7 +196,7 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  /* build item list */
+  /* build item list, we want *all* items */
   status = msLayerWhichItems(lp, MS_TRUE, NULL);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
@@ -207,6 +207,7 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
   }
 
+  /* todo: will this work with the pseudo single pass query */
   status = msLayerGetShape(lp, &shape, tileindex, shapeindex);
   if(status != MS_SUCCESS) {
     msSetError(MS_NOTFOUND, "Not valid record request.", "msQueryByIndex()"); 
@@ -217,11 +218,13 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
   if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
     msSetError(MS_NOTFOUND, "Shape %d not valid against layer classification.", "msQueryByIndex()", shapeindex);
     msFreeShape(&shape);
+    msLayerClose(lp);
     return(MS_FAILURE);
   }
-    
+
   if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
     msFreeShape(&shape);
+    msLayerClose(lp);
     msSetError(MS_NOTFOUND, "Shape does not have a valid template, no way to present results.", "msQueryByIndex()"); 
     return(MS_FAILURE);
   }
@@ -233,7 +236,6 @@ int _msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex,
     msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
 
   msFreeShape(&shape);
-  msLayerClose(lp);
 
   return(MS_SUCCESS);
 }
@@ -335,20 +337,18 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   /* open this layer */
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) {
-      /* Manually reset the filter */
-      msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
-      return(MS_FAILURE);
+    msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
+    return(MS_FAILURE);
   }
   
-  /* build item list */
+  /* build item list, we want *all* items */
   status = msLayerWhichItems(lp, MS_TRUE, NULL);
   if(status != MS_SUCCESS) {
-      /* Manually reset the filter */
-      msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
-      return(MS_FAILURE);
+    msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
+    return(MS_FAILURE);
   }
 
-  /* identify target shapes */
+  /* identify candidate shapes */
   searchrect = map->extent;
 #ifdef USE_PROJ  
   if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))  
@@ -359,14 +359,12 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
 
   status = msLayerWhichShapes(lp, searchrect);
   if(status == MS_DONE) { /* no overlap */
-    /* Manually reset the filter */
-    msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
+    msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
     msLayerClose(lp);
     msSetError(MS_NOTFOUND, "No matching record(s) found, layer and area of interest do not overlap.", "msQueryByAttributes()");
     return(MS_FAILURE);
   } else if(status != MS_SUCCESS) {
-    /* Manually reset the filter */
-    msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
+    msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
     msLayerClose(lp);
     return(MS_FAILURE);
   }
@@ -379,11 +377,11 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   nclasses = 0;
   classgroup = NULL;
   if (lp->classgroup && lp->numclasses > 0)
-      classgroup = msAllocateValidClassGroups(lp, &nclasses);
+    classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
   while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-    shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses );    
+    shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
     if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
       msFreeShape(&shape);
       continue;
@@ -419,21 +417,18 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   if (classgroup)
     msFree(classgroup);
 
-  if(status != MS_DONE){
-     /* Manually reset the filter */
-     msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
-     return(MS_FAILURE);
+  msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
+
+  if(status != MS_DONE) {
+    msLayerClose(lp);
+    return(MS_FAILURE);
   }
 
-  /* Manually reset the filter */
-  msRestoreOldFilter(lp,old_filtertype,old_filteritem,old_filterstring);
-
-  msLayerClose(lp);
-
-  /* was anything found?  */
+  /* was anything found?  (if yes, don't close the layer) */
   if(lp->resultcache && lp->resultcache->numresults > 0)
     return(MS_SUCCESS);
- 
+
+  msLayerClose(lp);
   msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByAttributes()"); 
   return(MS_FAILURE);
 }
@@ -501,11 +496,11 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-    /* build item list */
+    /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-    /* identify target shapes */
+    /* identify candidate shapes */
     searchrect = rect;
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
@@ -536,13 +531,13 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
       shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
-	      msFreeShape(&shape);
-	      continue;
+        msFreeShape(&shape);
+        continue;
       }
 
       if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
         msFreeShape(&shape);
-	      continue;
+        continue;
       }
 
 #ifdef USE_PROJ
@@ -553,7 +548,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 #endif
 
       if(msRectContained(&shape.bounds, &rect) == MS_TRUE) { /* if the whole shape is in, don't intersect */	
-	      status = MS_TRUE;
+        status = MS_TRUE;
       } else {
 	switch(shape.type) { /* make sure shape actually intersects the rect (ADD FUNCTIONS SPECIFIC TO RECTOBJ) */
 	case MS_SHAPE_POINT:
@@ -587,7 +582,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
     if(status != MS_DONE) return(MS_FAILURE);
 
-    msLayerClose(lp);
+    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
  
   msFreeShape(&searchshape);
@@ -625,11 +620,8 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   int nclasses = 0;
   int *classgroup = NULL;
 
-  msInitShape(&shape);
-  msInitShape(&selectshape);
-
-  if( map->debug )
-      msDebug( "in msQueryByFeatures()\n" );
+  if(map->debug)
+    msDebug("in msQueryByFeatures()\n");
 
   /* is the selection layer valid and has it been queried */
   if(slayer < 0 || slayer >= map->numlayers) {
@@ -651,8 +643,12 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   else
     start = stop = qlayer;
 
-  status = msLayerOpen(slp);
-  if(status != MS_SUCCESS) return(MS_FAILURE);
+  /* selection layers should already be open */
+  /* status = msLayerOpen(slp);
+     if(status != MS_SUCCESS) return(MS_FAILURE); */
+
+  msInitShape(&shape); /* initialize a few things */
+  msInitShape(&selectshape);
 
   for(l=start; l>=stop; l--) {
     if(l == slayer) continue; /* skip the selection layer */
@@ -672,7 +668,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 
     if(!msIsLayerQueryable(lp)) continue;    
     if(lp->status == MS_OFF) continue;
-    
+
     if(map->scaledenom > 0) {
       if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
       if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
@@ -683,8 +679,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
     }
 
-    /* Get the layer tolerance
-       default is 3 for point and line layers, 0 for others */
+    /* Get the layer tolerance default is 3 for point and line layers, 0 for others */
     if(lp->tolerance == -1) {
       if(lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
         layer_tolerance = 3;
@@ -702,14 +697,14 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     
-    /* build item list */
+    /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     
     /* for each selection shape */
     for(i=0; i<slp->resultcache->numresults; i++) {
 
-      status = msLayerGetShape(slp, &selectshape, slp->resultcache->results[i].tileindex, slp->resultcache->results[i].shapeindex);
+      status = msLayerResultsGetShape(slp, &selectshape, slp->resultcache->results[i].tileindex, slp->resultcache->results[i].shapeindex);
       if(status != MS_SUCCESS) {
 	msLayerClose(lp);
 	msLayerClose(slp);
@@ -879,17 +874,13 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       msFreeShape(&selectshape);
     } /* next selection shape */
 
-    msLayerClose(lp);
+    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
-
-  msLayerClose(slp);
 
   /* was anything found? */
   for(l=start; l>=stop; l--) {  
     if(l == slayer) continue; /* skip the selection layer */
-
-    if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
-      return(MS_SUCCESS);
+    if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0) return(MS_SUCCESS);
   }
 
   msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFeatures()"); 
@@ -962,21 +953,19 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
 
     /* Raster layers are handled specially.  */
     if( lp->type == MS_LAYER_RASTER ) {
-        if( msRasterQueryByPoint( map, lp, mode, p, buffer )
-            == MS_FAILURE )
-            return MS_FAILURE;
-        continue;
+      if( msRasterQueryByPoint( map, lp, mode, p, buffer ) == MS_FAILURE )
+        return MS_FAILURE;
+      continue;
     }
 
-    /* Get the layer tolerance
-       default is 3 for point and line layers, 0 for others */
-    if(lp->tolerance == -1)
-        if(lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
-            layer_tolerance = 3;
-        else
-            layer_tolerance = 0;
-    else
-        layer_tolerance = lp->tolerance;
+    /* Get the layer tolerance default is 3 for point and line layers, 0 for others */
+    if(lp->tolerance == -1) {
+      if(lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
+        layer_tolerance = 3;
+      else
+        layer_tolerance = 0;
+    } else
+      layer_tolerance = lp->tolerance;
 
     if(buffer <= 0) { /* use layer tolerance */
       if(lp->toleranceunits == MS_PIXELS)
@@ -995,7 +984,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-    /* build item list */
+    /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
@@ -1064,11 +1053,10 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
  
       msFreeShape(&shape);
 
-      if (mode == MS_MULTIPLE && maxresults > 0 && lp->resultcache->numresults == maxresults) {
-          status = MS_DONE;   /* got enough results for this layer */
-          break;
+      if(mode == MS_MULTIPLE && maxresults > 0 && lp->resultcache->numresults == maxresults) {
+        status = MS_DONE;   /* got enough results for this layer */
+        break;
       }
-
     } /* next shape */
 
     if (classgroup)
@@ -1076,7 +1064,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer,
 
     if(status != MS_DONE) return(MS_FAILURE);
 
-    msLayerClose(lp);
+    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
 
     if((lp->resultcache->numresults > 0) && (mode == MS_SINGLE) && (maxresults == 0)) 
       break;   /* no need to search any further */
@@ -1147,24 +1135,20 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     }
 
     /* Raster layers are handled specially. */
-    if( lp->type == MS_LAYER_RASTER )
-    {
-        if( msRasterQueryByShape( map, lp, selectshape )
-            == MS_FAILURE )
-            return MS_FAILURE;
-
-        continue;
+    if( lp->type == MS_LAYER_RASTER ) {
+      if( msRasterQueryByShape(map, lp, selectshape) == MS_FAILURE )
+        return MS_FAILURE;
+      continue;
     }
 
-    /* Get the layer tolerance
-       default is 3 for point and line layers, 0 for others */
-    if(lp->tolerance == -1)
-        if(lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
-            layer_tolerance = 3;
-        else
-            layer_tolerance = 0;
-    else
-        layer_tolerance = lp->tolerance;
+    /* Get the layer tolerance default is 3 for point and line layers, 0 for others */
+    if(lp->tolerance == -1) {
+      if(lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
+        layer_tolerance = 3;
+      else
+        layer_tolerance = 0;
+    } else
+      layer_tolerance = lp->tolerance;
 
     if(lp->toleranceunits == MS_PIXELS)
       tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
@@ -1175,7 +1159,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-    /* build item list */
+    /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
@@ -1275,7 +1259,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
 
     if(status != MS_DONE) return(MS_FAILURE);
 
-    msLayerClose(lp);
+    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
 
   /* was anything found? */
@@ -1292,91 +1276,86 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
 /************************************************************************/
 /*                            msQueryByOperator                         */
 /*                                                                      */
-/*      query using a shape and a valid operator : all queries are       */
+/*      query using a shape and a valid operator : all queries are      */
 /*      done using geos.                                                */
 /************************************************************************/
-int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
-                      int geos_operator)
+int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape, int geos_operator)
 {
 #ifdef USE_GEOS
-    int start, stop=0, l;
-    shapeObj shape;
-    layerObj *lp;
-    int status;
-    rectObj searchrect;
+  int start, stop=0, l;
+  shapeObj shape;
+  layerObj *lp;
+  int status;
+  rectObj searchrect;
      
-    int nclasses = 0;
-    int *classgroup = NULL;
-    double dfValue;
+  int nclasses = 0;
+  int *classgroup = NULL;
+  double dfValue;
 
-    msInitShape(&shape);
+  msInitShape(&shape);
 
-    /* this should not be a necessary test for uries using geos*/
-    /*
-      if(selectshape->type != MS_SHAPE_POLYGON) {
+  /* this should not be a necessary test for queries using geos */
+  /*
+    if(selectshape->type != MS_SHAPE_POLYGON) {
       msSetError(MS_QUERYERR, "Search shape MUST be a polygon.", "msQueryByShape()"); 
       return(MS_FAILURE);
-      }
-    */
+    }
+  */
 
-    if(qlayer < 0 || qlayer >= map->numlayers)
-      start = map->numlayers-1;
-    else
-      start = stop = qlayer;
+  if(qlayer < 0 || qlayer >= map->numlayers)
+    start = map->numlayers-1;
+  else
+    start = stop = qlayer;
 
-    msComputeBounds(selectshape); /* make sure an accurate extent exists */
+  msComputeBounds(selectshape); /* make sure an accurate extent exists */
  
-    for(l=start; l>=stop; l--) { /* each layer */
-      lp = (GET_LAYER(map, l));
+  for(l=start; l>=stop; l--) { /* each layer */
+    lp = (GET_LAYER(map, l));
 
-      /* conditions may have changed since this layer last drawn, so set 
-         layer->project true to recheck projection needs (Bug #673) */ 
-      lp->project = MS_TRUE; 
+    /* conditions may have changed since this layer last drawn, so set 
+       layer->project true to recheck projection needs (Bug #673) */ 
+    lp->project = MS_TRUE; 
 
-      /* free any previous search results, do it now in case one of the next few tests fail */
-      if(lp->resultcache) {
-        if(lp->resultcache->results) free(lp->resultcache->results);
-        free(lp->resultcache);
-        lp->resultcache = NULL;
-      }
+    /* free any previous search results, do it now in case one of the next few tests fail */
+    if(lp->resultcache) {
+      if(lp->resultcache->results) free(lp->resultcache->results);
+      free(lp->resultcache);
+      lp->resultcache = NULL;
+    }
 
-      if(!msIsLayerQueryable(lp)) continue;
-      if(lp->status == MS_OFF) continue;
+    if(!msIsLayerQueryable(lp)) continue;
+    if(lp->status == MS_OFF) continue;
     
-      if(map->scaledenom > 0) {
-        if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
-        if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
-      }
+    if(map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
+    }
 
-      if (lp->maxscaledenom <= 0 && lp->minscaledenom <= 0) {
-        if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
-        if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
-      }
+    if (lp->maxscaledenom <= 0 && lp->minscaledenom <= 0) {
+      if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
+      if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
+    }
 
-      /* Raster layers are handled specially. */
-      if( lp->type == MS_LAYER_RASTER )
-      {
-        if( msRasterQueryByShape( map, lp, selectshape )
-            == MS_FAILURE )
-          return MS_FAILURE;
-
-        continue;
-      }
-
+    /* Raster layers are handled specially. */
+    if( lp->type == MS_LAYER_RASTER ) {
+      if( msRasterQueryByShape(map, lp, selectshape) == MS_FAILURE )
+        return MS_FAILURE;
+      continue;
+    }
     
-      /* open this layer */
-      status = msLayerOpen(lp);
-      if(status != MS_SUCCESS) return(MS_FAILURE);
+    /* open this layer */
+    status = msLayerOpen(lp);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
 
-      /* build item list */
-      status = msLayerWhichItems(lp, MS_TRUE, NULL);
-      if(status != MS_SUCCESS) return(MS_FAILURE);
+    /* build item list, we want *all* items */
+    status = msLayerWhichItems(lp, MS_TRUE, NULL);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
 
-/* identify target shapes */
-      searchrect.minx = map->extent.minx;
-      searchrect.miny = map->extent.miny;
-      searchrect.maxx = map->extent.maxx;
-      searchrect.maxy = map->extent.maxy;
+    /* identify target shapes */
+    searchrect.minx = map->extent.minx;
+    searchrect.miny = map->extent.miny;
+    searchrect.maxx = map->extent.maxx;
+    searchrect.maxy = map->extent.maxy;
       
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
@@ -1393,139 +1372,135 @@ int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape,
       return(MS_FAILURE);
     }
 
-      lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
-      lp->resultcache->results = NULL;
-      lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-      lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+    lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+    lp->resultcache->results = NULL;
+    lp->resultcache->numresults = lp->resultcache->cachesize = 0;
+    lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
-       classgroup = NULL;
-       if (lp->classgroup && lp->numclasses > 0)
-         classgroup = msAllocateValidClassGroups(lp, &nclasses);
+    classgroup = NULL;
+    if (lp->classgroup && lp->numclasses > 0)
+      classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
-      while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-        shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
-        if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
-          msFreeShape(&shape);
-          continue;
-        }
+      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
+      if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
+        msFreeShape(&shape);
+        continue;
+      }
 
-        if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
-          msFreeShape(&shape);
-          continue;
-        }
+      if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
+        msFreeShape(&shape);
+        continue;
+      }
 
 #ifdef USE_PROJ
-        if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
-          msProjectShape(&(lp->projection), &(map->projection), &shape);
-        else
-          lp->project = MS_FALSE;
+      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+        msProjectShape(&(lp->projection), &(map->projection), &shape);
+      else
+        lp->project = MS_FALSE;
 #endif
 
-        switch(geos_operator) 
-        { 
-          case MS_GEOS_EQUALS:
-            status = msGEOSEquals(&shape, selectshape);
-            if (status != MS_TRUE && status != MS_FALSE)
-              status = MS_FALSE;
-            break;
-        
-          case MS_GEOS_DISJOINT:
-            status = msGEOSDisjoint(&shape, selectshape);
-            if (status != MS_TRUE && status != MS_FALSE)
-              status = MS_FALSE;
-            break;
-
-          case MS_GEOS_TOUCHES:
-            status = msGEOSTouches(&shape, selectshape);
-            if (status != MS_TRUE && status != MS_FALSE)
-              status = MS_FALSE;
-            break;
-
-          case MS_GEOS_OVERLAPS:
-            status = msGEOSOverlaps(&shape, selectshape);
-            if (status != MS_TRUE && status != MS_FALSE)
-              status = MS_FALSE;
-            break;
-
-          case MS_GEOS_CROSSES:
-            status = msGEOSCrosses(&shape, selectshape);
-            if (status != MS_TRUE && status != MS_FALSE)
-              status = MS_FALSE;
-            break;
-        
-          case MS_GEOS_INTERSECTS:
-            status = msGEOSIntersects(&shape, selectshape);
-            if (status != MS_TRUE && status != MS_FALSE)
-              status = MS_FALSE;
-            break;
-
-          case MS_GEOS_WITHIN:
-            status = msGEOSWithin(&shape, selectshape);
-            if (status != MS_TRUE && status != MS_FALSE)
-              status = MS_FALSE;
-            break;
-          
-          case MS_GEOS_CONTAINS:
-            status = msGEOSContains(selectshape, &shape);
-            if (status != MS_TRUE && status != MS_FALSE)
-              status = MS_FALSE;
-            break;
-
-            /*beyond is opposite of dwithin use in filter encoding
-              see ticket 2105, 2564*/
-          case MS_GEOS_BEYOND:
+      switch(geos_operator) 
+      { 
+        case MS_GEOS_EQUALS:
+          status = msGEOSEquals(&shape, selectshape);
+          if (status != MS_TRUE && status != MS_FALSE)
             status = MS_FALSE;
-            dfValue = msGEOSDistance(&shape, selectshape);
-            if (dfValue > 0.0)
-               status = MS_TRUE;
           break;
 
-          /*dwithin is used with filter encoding (#2564)*/
-          case MS_GEOS_DWITHIN:
+        case MS_GEOS_DISJOINT:
+          status = msGEOSDisjoint(&shape, selectshape);
+          if (status != MS_TRUE && status != MS_FALSE)
             status = MS_FALSE;
-            dfValue = msGEOSDistance(&shape, selectshape);
-            if (dfValue == 0.0)
-              status = MS_TRUE;
-
           break;
 
-          default:
-            msSetError(MS_QUERYERR, "Unknown GEOS Operator.", "msQueryByOperator()"); 
-            return(MS_FAILURE);
-        }
+        case MS_GEOS_TOUCHES:
+          status = msGEOSTouches(&shape, selectshape);
+          if (status != MS_TRUE && status != MS_FALSE)
+            status = MS_FALSE;
+          break;
 
-        if(status == MS_TRUE) {
-          addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
+        case MS_GEOS_OVERLAPS:
+          status = msGEOSOverlaps(&shape, selectshape);
+          if (status != MS_TRUE && status != MS_FALSE)
+            status = MS_FALSE;
+          break;
+
+        case MS_GEOS_CROSSES:
+          status = msGEOSCrosses(&shape, selectshape);
+          if (status != MS_TRUE && status != MS_FALSE)
+            status = MS_FALSE;
+          break;
+
+        case MS_GEOS_INTERSECTS:
+          status = msGEOSIntersects(&shape, selectshape);
+          if (status != MS_TRUE && status != MS_FALSE)
+            status = MS_FALSE;
+          break;
+
+        case MS_GEOS_WITHIN:
+          status = msGEOSWithin(&shape, selectshape);
+          if (status != MS_TRUE && status != MS_FALSE)
+            status = MS_FALSE;
+          break;
+
+        case MS_GEOS_CONTAINS:
+          status = msGEOSContains(selectshape, &shape);
+          if (status != MS_TRUE && status != MS_FALSE)
+            status = MS_FALSE;
+          break;
+
+        /* beyond is opposite of dwithin use in filter encoding see tickets #2105 and #2564 */
+        case MS_GEOS_BEYOND:
+          status = MS_FALSE;
+          dfValue = msGEOSDistance(&shape, selectshape);
+          if (dfValue > 0.0)
+            status = MS_TRUE;
+          break;
+
+        /* dwithin is used with filter encoding (#2564) */
+        case MS_GEOS_DWITHIN:
+          status = MS_FALSE;
+          dfValue = msGEOSDistance(&shape, selectshape);
+          if (dfValue == 0.0)
+            status = MS_TRUE;
+          break;
+
+        default:
+          msSetError(MS_QUERYERR, "Unknown GEOS Operator.", "msQueryByOperator()"); 
+          return(MS_FAILURE);
+      }
+
+      if(status == MS_TRUE) {
+        addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
 	
-          if(lp->resultcache->numresults == 1)
-            lp->resultcache->bounds = shape.bounds;
-          else
-            msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
-        }
+        if(lp->resultcache->numresults == 1)
+          lp->resultcache->bounds = shape.bounds;
+        else
+          msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+      }
 
-        msFreeShape(&shape);
-      } /* next shape */
+      msFreeShape(&shape);
+    } /* next shape */
 
-      if(status != MS_DONE) return(MS_FAILURE);
+    if(status != MS_DONE) return(MS_FAILURE);
 
-      msLayerClose(lp);
-    } /* next layer */
+    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+  } /* next layer */
 
-    /* was anything found? */
-    for(l=start; l>=stop; l--) {    
-      if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
-        return(MS_SUCCESS);
-    }
-
+  /* was anything found? */
+  for(l=start; l>=stop; l--) {    
+    if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
+      return(MS_SUCCESS);
+  }
  
-    msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByOperator()"); 
-    return(MS_FAILURE);
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByOperator()"); 
+  return(MS_FAILURE);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msQueryByOperator()");
   return(MS_FAILURE);
 #endif
-
 }
 
 /* msGetQueryResultBounds()
@@ -1561,7 +1536,6 @@ int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
   return found;
 }
 
-
 /* msQueryFree()
  *
  * Free layer's query results. If qlayer == -1, all layers will be treated.
@@ -1588,4 +1562,3 @@ void msQueryFree(mapObj *map, int qlayer)
     }
   }
 }
-      

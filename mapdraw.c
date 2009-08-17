@@ -1121,7 +1121,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   int *mindistancebuffer = NULL;
 
   if(!layer->resultcache || map->querymap.style == MS_NORMAL)
-    return(msDrawLayer(map, layer, image));
+    return(msDrawLayer(map, layer, image)); /* FIX ME! */
 
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features) 
    return(MS_SUCCESS); /* no data associated with this layer, not an error since layer may be used as a template from MapScript */
@@ -1133,8 +1133,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
       return MS_FAILURE;
   }
 
-
-  if(map->querymap.style == MS_HILITE) { /* first, draw normally, but don't return */
+  if(map->querymap.style == MS_HILITE) { /* first, draw normally, but don't return (FIX ME!) */
     status = msDrawLayer(map, layer, image);
     if(status != MS_SUCCESS) return(MS_FAILURE); /* oops */
   }
@@ -1200,21 +1199,10 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
   }
 
-  /* open this layer */
-  status = msLayerOpen(layer);
-  if(status != MS_SUCCESS) {
-      msFree(colorbuffer);
-      msFree(mindistancebuffer);
-      return(MS_FAILURE);
-  }
+  /*
+  ** Layer was opened as part of the query process, msLayerWhichItems() has also been run, shapes have been classified - start processing!
+  */
 
-  /* build item list */
-  status = msLayerWhichItems(layer, MS_FALSE, NULL); /* FIX: results have already been classified (this may change) */
-  if(status != MS_SUCCESS) {
-      msFree(colorbuffer);
-      msFree(mindistancebuffer);
-      return(MS_FAILURE);
-  }
 #ifdef USE_AGG
   if(MS_RENDERER_AGG(map->outputformat))
       msAlphaGD2AGG(image);
@@ -1223,7 +1211,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   msInitShape(&shape);
 
   for(i=0; i<layer->resultcache->numresults; i++) {
-    status = msLayerGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
+    status = msLayerResultsGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
     if(status != MS_SUCCESS) {
         msFree(colorbuffer);
         msFree(mindistancebuffer);
@@ -1320,7 +1308,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     msFree(mindistancebuffer);
   }
 
-  msLayerClose(layer);
+  /* msLayerClose(layer); */
 
   return(MS_SUCCESS);
 }

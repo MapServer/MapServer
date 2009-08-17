@@ -2614,8 +2614,8 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion)
       if(lp->status != MS_ON || lp->resultcache==NULL || lp->resultcache->numresults == 0)
         continue;
 
-      if(msLayerOpen(lp) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
-        return msWMSException(map, nVersion, NULL);
+      /* if(msLayerOpen(lp) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
+	   return msWMSException(map, nVersion, NULL); */
 
       /* Use metadata to control which fields to output. We use the same 
        * metadata names as for GML:
@@ -2664,7 +2664,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion)
         shapeObj shape;
 
         msInitShape(&shape);
-        if (msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
+        if (msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
         {
             msFree(itemvisible);
             return msWMSException(map, nVersion, NULL);
@@ -2684,7 +2684,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion)
 
       msFree(itemvisible);
 
-      msLayerClose(lp);
+      /* msLayerClose(lp); */
     }
 
    return numresults;

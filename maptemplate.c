@@ -844,11 +844,11 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
   /* we know the layer has query results or we wouldn't be in this code */
 
-  status = msLayerOpen(layer); /* open the layer */
-  if(status != MS_SUCCESS) return status;
+  // status = msLayerOpen(layer); /* open the layer */
+  // if(status != MS_SUCCESS) return status;
   
-  status = msLayerGetItems(layer); /* retrieve all the item names */
-  if(status != MS_SUCCESS) return status;
+  // status = msLayerGetItems(layer); /* retrieve all the item names */
+  // if(status != MS_SUCCESS) return status;
 
   if(layer->numjoins > 0) { /* initialize necessary JOINs here */
     for(j=0; j<layer->numjoins; j++) {
@@ -867,7 +867,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     limit = MS_MIN(limit, layer->resultcache->numresults);
 
   for(i=0; i<limit; i++) {
-    status = msLayerGetShape(layer, &(mapserv->resultshape), layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
+    status = msLayerResultsGetShape(layer, &(mapserv->resultshape), layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
     if(status != MS_SUCCESS) return status;
 
     /* prepare any necessary JOINs here (one-to-one only) */
@@ -3632,13 +3632,13 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
       if(TEMPLATE_TYPE(template) == MS_URL) {
         mapserv->resultlayer = lp;
 
-        status = msLayerOpen(lp);
-        if(status != MS_SUCCESS) return status;
+        // status = msLayerOpen(lp);
+        // if(status != MS_SUCCESS) return status;
         
-        status = msLayerGetItems(lp); /* retrieve all the item names */
-        if(status != MS_SUCCESS) return status;
+        // status = msLayerGetItems(lp); /* retrieve all the item names */
+        // if(status != MS_SUCCESS) return status;
 
-        status = msLayerGetShape(lp, &(mapserv->resultshape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
+        status = msLayerResultsGetShape(lp, &(mapserv->resultshape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
         if(status != MS_SUCCESS) return status;
 
         if(lp->numjoins > 0) {
@@ -3656,7 +3656,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
         }
 
         msFreeShape(&(mapserv->resultshape));
-        msLayerClose(lp);
+        // msLayerClose(lp);
         mapserv->resultlayer = NULL;
           
         return MS_SUCCESS;
@@ -3710,11 +3710,11 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
 
     mapserv->NLR = lp->resultcache->numresults; 
 
-    status = msLayerOpen(lp); /* open this layer */
-    if(status != MS_SUCCESS) return status;
+    // status = msLayerOpen(lp); /* open this layer */
+    // if(status != MS_SUCCESS) return status;
 
-    status = msLayerGetItems(lp); /* retrieve all the item names */
-    if(status != MS_SUCCESS) return status;
+    // status = msLayerGetItems(lp); /* retrieve all the item names */
+    // if(status != MS_SUCCESS) return status;
     
     if(lp->numjoins > 0) { /* open any necessary JOINs here */
       for(k=0; k<lp->numjoins; k++) {
@@ -3729,7 +3729,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
 
     mapserv->LRN = 1; /* layer result number */
     for(j=0; j<lp->resultcache->numresults; j++) {
-      status = msLayerGetShape(lp, &(mapserv->resultshape), lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+      status = msLayerResultsGetShape(lp, &(mapserv->resultshape), lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
       if(status != MS_SUCCESS) return status;
 
       /* prepare any necessary JOINs here (one-to-one only) */
@@ -3759,7 +3759,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
       if(msReturnPage(mapserv, lp->footer, BROWSE, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
     }
 
-    msLayerClose(lp);
+    // msLayerClose(lp);
     mapserv->resultlayer = NULL;
   }
 

@@ -1261,14 +1261,6 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, "layername", OWS_NOERR, "\t<%s>\n", value);
       msFree(value);
 
-      /* actually open the layer */
-      status = msLayerOpen(lp);
-      if(status != MS_SUCCESS) return(status);
-
-      /* retrieve all the item names */
-      status = msLayerGetItems(lp);
-      if(status != MS_SUCCESS) return(status);
-
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
       itemList = msGMLGetItems(lp, "G");
       constantList = msGMLGetConstants(lp, "G");
@@ -1276,7 +1268,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       geometryList = msGMLGetGeometries(lp, "G");
 
       for(j=0; j<lp->resultcache->numresults; j++) {
-        status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+        status = msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
         if(status != MS_SUCCESS) return(status);
 
 #ifdef USE_PROJ
@@ -1351,7 +1343,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       msGMLFreeItems(itemList);
       msGMLFreeGeometries(geometryList);
 
-      msLayerClose(lp);
+      /* msLayerClose(lp); */
     }
   } /* next layer */
 
@@ -1408,14 +1400,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       const char *value;
       int featureIdIndex=-1; /* no feature id */
 
-      /* actually open the layer */
-      status = msLayerOpen(lp);
-      if(status != MS_SUCCESS) return(status);
-
-      /* retrieve all the item names. (Note : there might be no attributes) */
-      status = msLayerGetItems(lp);
-      /* if(status != MS_SUCCESS) return(status); */
-
       /* setup namespace, a layer can override the default */
       namespace_prefix = (char*) msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
       if(!namespace_prefix) namespace_prefix = default_namespace_prefix;
@@ -1448,7 +1432,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       }
 
       for(j=0; j<lp->resultcache->numresults; j++) {
-        status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+        status = msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
         if(status != MS_SUCCESS) 
             return(status);
 
@@ -1525,7 +1509,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       msGMLFreeItems(itemList);
       msGMLFreeGeometries(geometryList);
 
-      msLayerClose(lp);
+      /* msLayerClose(lp); */
     }
 
     if (maxfeatures > 0 && features == maxfeatures)
