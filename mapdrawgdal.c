@@ -54,10 +54,11 @@ extern int InvGeoTransform( double *gt_in, double *gt_out );
 #endif
 
 static int
-LoadGDALImage( GDALRasterBandH hBand, int iColorIndex, 
-               layerObj *layer, 
-               int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
-               GByte *pabyBuffer, int dst_xsize, int dst_ysize );
+LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
+		layerObj *layer, 
+		int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
+		GByte *pabyBuffer,
+		int dst_xsize, int dst_ysize );
 static int 
 msDrawRasterLayerGDAL_RawMode(
     mapObj *map, layerObj *layer, imageObj *image, GDALDatasetH hDS, 
@@ -118,11 +119,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                 *pabyRawAlpha = NULL;
   int truecolor = FALSE, classified = FALSE;
   int red_band=0, green_band=0, blue_band=0, alpha_band=0, cmt=0;
+  int band_count, band_numbers[4];
   gdImagePtr gdImg = NULL;
   GDALDatasetH hDS = hDSVoid;
   GDALColorTableH hColorMap;
-  GDALRasterBandH hBand1, hBand2, hBand3, hBandAlpha;
-
+  GDALRasterBandH hBand1=NULL, hBand2=NULL, hBand3=NULL, hBandAlpha=NULL;
   memset( cmap, 0xff, MAXCOLORS * sizeof(int) );
 
 /* -------------------------------------------------------------------- */
@@ -386,7 +387,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   }
   else
   {
-      int band_count, *band_list;
+      int *band_list;
 
       band_list = msGetGDALBandList( layer, hDS, 4, &band_count );
       if( band_list == NULL )
@@ -415,6 +416,26 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       free( band_list );
   }
 
+  band_numbers[0] = red_band;
+  band_numbers[1] = green_band;
+  band_numbers[2] = blue_band;
+  band_numbers[3] = 0;
+  
+  if( blue_band != 0 && alpha_band != 0 )
+  {
+      band_numbers[3] = alpha_band;
+      band_count = 4;
+  }
+  else if( blue_band != 0 && alpha_band == 0 )
+      band_count = 3;
+  else if( alpha_band != 0 )
+  {
+      band_numbers[1] = alpha_band;
+      band_count = 2;
+  }
+  else
+      band_count = 1;
+  
   if( layer->debug > 1 || (layer->debug > 0 && green_band != 0) )
   {
       msDebug( "msDrawGDAL(): red,green,blue,alpha bands = %d,%d,%d,%d\n", 
@@ -676,90 +697,40 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   }
 
   /*
-   * Read the entire region of interest in one gulp.  GDAL will take
-   * care of downsampling and window logic.  
+   * Allocate imagery buffers.
    */
-  pabyRaw1 = (unsigned char *) malloc(dst_xsize * dst_ysize);
+  pabyRaw1 = (unsigned char *) malloc(dst_xsize * dst_ysize * band_count);
   if( pabyRaw1 == NULL )
   {
-      msSetError(MS_MEMERR, "Allocating work image of size %dx%d failed.",
-                 "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize );
-      return -1;
-  }
-
-  if( LoadGDALImage( hBand1, 1, layer, 
-                     src_xoff, src_yoff, src_xsize, src_ysize, 
-                     pabyRaw1, dst_xsize, dst_ysize ) == -1 )
-  {
-      free( pabyRaw1 );
+      msSetError(MS_MEMERR, "Allocating work image of size %dx%dx%d failed.",
+                 "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize, band_count );
       return -1;
   }
 
   if( hBand2 != NULL && hBand3 != NULL )
   {
-      pabyRaw2 = (unsigned char *) malloc(dst_xsize * dst_ysize);
-      if( pabyRaw2 == NULL )
-      {
-          msSetError(MS_MEMERR, "Allocating work image of size %dx%d failed.",
-                     "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize );
-          return -1;
-      }
-      
-      if( LoadGDALImage( hBand2, 2, layer, 
-                         src_xoff, src_yoff, src_xsize, src_ysize, 
-                         pabyRaw2, dst_xsize, dst_ysize ) == -1 )
-      {
-          free( pabyRaw1 );
-          free( pabyRaw2 );
-          return -1;
-      }
-
-      pabyRaw3 = (unsigned char *) malloc(dst_xsize * dst_ysize);
-      if( pabyRaw3 == NULL )
-      {
-          msSetError(MS_MEMERR, "Allocating work image of size %dx%d failed.",
-                     "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize );
-          return -1;
-      }
-      
-      if( LoadGDALImage( hBand3, 3, layer, 
-                         src_xoff, src_yoff, src_xsize, src_ysize, 
-                         pabyRaw3, dst_xsize, dst_ysize ) == -1 )
-      {
-          free( pabyRaw1 );
-          free( pabyRaw2 );
-          free( pabyRaw3 );
-          return -1;
-      }
+      pabyRaw2 = pabyRaw1 + dst_xsize * dst_ysize * 1;
+      pabyRaw3 = pabyRaw1 + dst_xsize * dst_ysize * 2;
   }
 
   if( hBandAlpha != NULL )
   {
-      pabyRawAlpha = (unsigned char *) malloc(dst_xsize * dst_ysize);
-      if( pabyRawAlpha == NULL )
-      {
-          msSetError(MS_MEMERR, "Allocating work image of size %dx%d failed.",
-                     "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize );
-          return -1;
-      }
-      
-      if( LoadGDALImage( hBandAlpha, 4, layer, 
-                         src_xoff, src_yoff, src_xsize, src_ysize, 
-                         pabyRawAlpha, dst_xsize, dst_ysize ) == -1 )
-      {
-          free( pabyRaw1 );
-          if( pabyRaw3 != NULL )
-          {
-              free( pabyRaw2 );
-              free( pabyRaw3 );
-          }
-
-          free( pabyRawAlpha );
-          return -1;
-      }
+      if( hBand2 != NULL )
+          pabyRawAlpha = pabyRaw1 + dst_xsize * dst_ysize * 3;
+      else
+          pabyRawAlpha = pabyRaw1 + dst_xsize * dst_ysize * 1;
   }
-  else
-      pabyRawAlpha = NULL;
+
+  /*
+   * Load image data into buffers with scaling, etc.
+   */
+  if( LoadGDALImages( hDS, band_numbers, band_count, layer, 
+		      src_xoff, src_yoff, src_xsize, src_ysize, 
+		      pabyRaw1, dst_xsize, dst_ysize ) == -1 )
+  {
+      free( pabyRaw1 );
+      return -1;
+  }
 
 /* -------------------------------------------------------------------- */
 /*      Single band plus colormap with alpha blending to 8bit.          */
@@ -985,15 +956,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   /*
   ** Cleanup
   */
-
-  if( pabyRaw3 != NULL )
-  {
-      free( pabyRaw2 );
-      free( pabyRaw3 );
-  }
-
-  if( pabyRawAlpha != NULL )
-      free( pabyRawAlpha );
 
   free( pabyRaw1 );
 
@@ -1263,172 +1225,220 @@ static int ApplyLUT( int iColorIndex, layerObj *layer,
 }
 
 /************************************************************************/
-/*                           LoadGDALImage()                            */
+/*                           LoadGDALImages()                           */
 /*                                                                      */
-/*      This call will load and process one band of input for the       */
+/*      This call will load and process 1-4 bands of input for the      */
 /*      selected rectangle, loading the result into the passed 8bit     */
 /*      buffer.  The processing options include scaling.                */
 /************************************************************************/
 
 static int
-LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer, 
-               int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
-               GByte *pabyBuffer, int dst_xsize, int dst_ysize )
+LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
+		layerObj *layer, 
+		int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
+		GByte *pabyWholeBuffer,
+		int dst_xsize, int dst_ysize )
     
 {
+    int    iColorIndex, result_code=0;
     CPLErr eErr;
-    double dfScaleMin=0.0, dfScaleMax=255.0, dfScaleRatio, dfNoDataValue;
-    const char *pszScaleInfo;
-    float *pafRawData;
-    int   nPixelCount = dst_xsize * dst_ysize, i, bGotNoData = FALSE;
+    float *pafWholeRawData;
+
+/* -------------------------------------------------------------------- */
+/*      Are we doing a simple, non-scaling case?  If so, read directly  */
+/*      and return.                                                     */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( layer->processing, "SCALE" ) == NULL
+	&& CSLFetchNameValue( layer->processing, "SCALE_1" ) == NULL
+	&& CSLFetchNameValue( layer->processing, "SCALE_2" ) == NULL
+	&& CSLFetchNameValue( layer->processing, "SCALE_3" ) == NULL
+	&& CSLFetchNameValue( layer->processing, "SCALE_4" ) == NULL )
+    {
+        eErr = GDALDatasetRasterIO( hDS, GF_Read, 
+				    src_xoff, src_yoff, src_xsize, src_ysize, 
+				    pabyWholeBuffer, 
+				    dst_xsize, dst_ysize, GDT_Byte,
+				    band_count, band_numbers,
+				    0,0,0);
+
+        if( eErr != CE_None )
+	{
+            msSetError( MS_IOERR, "GDALDatasetRasterIO() failed: %s", 
+                        CPLGetLastErrorMsg(), "drawGDAL()" );
+	    return -1;
+	}
+
+	for( iColorIndex = 0; 
+	     iColorIndex < band_count && result_code == 0; iColorIndex++ )
+	{
+	    result_code = ApplyLUT( iColorIndex+1, layer, 
+				    pabyWholeBuffer 
+				    + dst_xsize*dst_ysize*iColorIndex, 
+				    dst_xsize, dst_ysize );
+	}
+	
+	return result_code;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We need to do some scaling.  Will load into either a 16bit      */
+/*      unsigned or a floating point buffer depending on the source     */
+/*      data.  We offer a special case for 16U data because it is       */
+/*      common and it is a substantial win to avoid alot of floating    */
+/*      point operations on it.                                         */
+/* -------------------------------------------------------------------- */
+    /* TODO */
+
+/* -------------------------------------------------------------------- */
+/*      Allocate the raw imagery buffer, and load into it (band         */
+/*      interleaved).                                                   */
+/* -------------------------------------------------------------------- */
+    pafWholeRawData = 
+        (float *) malloc(sizeof(float) * dst_xsize * dst_ysize * band_count );
+
+    if( pafWholeRawData == NULL )
+    {
+        msSetError(MS_MEMERR, 
+                   "Allocating work float image of size %dx%dx%d failed.",
+                   "msDrawRasterLayerGDAL()", 
+                   dst_xsize, dst_ysize, band_count );
+        return -1;
+    }
+	
+    eErr = GDALDatasetRasterIO( 
+        hDS, GF_Read, 
+        src_xoff, src_yoff, src_xsize, src_ysize, 
+        pafWholeRawData, dst_xsize, dst_ysize, GDT_Float32, 
+        band_count, band_numbers,
+        0, 0, 0 );
+    
+    if( eErr != CE_None )
+    {
+        msSetError( MS_IOERR, "GDALDatasetRasterIO() failed: %s", 
+                    CPLGetLastErrorMsg(), "drawGDAL()" );
+        
+        free( pafWholeRawData );
+        return -1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the scale processing option.                              */
 /* -------------------------------------------------------------------- */
-    pszScaleInfo = CSLFetchNameValue( layer->processing, "SCALE" );
-    if( pszScaleInfo == NULL )
+    for( iColorIndex = 0; iColorIndex < band_count; iColorIndex++ )
     {
-        char szBandScalingName[20];
-
-        sprintf( szBandScalingName, "SCALE_%d", iColorIndex );
-        pszScaleInfo = CSLFetchNameValue( layer->processing, 
-                                          szBandScalingName);
-    }
-
-    if( pszScaleInfo != NULL )
-    {
-        char **papszTokens;
-
-        papszTokens = CSLTokenizeStringComplex( pszScaleInfo, " ,", 
-                                                FALSE, FALSE );
-        if( CSLCount(papszTokens) == 1
-            && EQUAL(papszTokens[0],"AUTO") )
+	unsigned char *pabyBuffer;
+	double dfScaleMin=0.0, dfScaleMax=255.0, dfScaleRatio, dfNoDataValue;
+	const char *pszScaleInfo;
+	float *pafRawData;
+	int   nPixelCount = dst_xsize * dst_ysize, i, bGotNoData = FALSE;
+	GDALRasterBandH hBand =GDALGetRasterBand(hDS,band_numbers[iColorIndex]);
+	pszScaleInfo = CSLFetchNameValue( layer->processing, "SCALE" );
+	if( pszScaleInfo == NULL )
         {
-            dfScaleMin = dfScaleMax = 0.0;
+	    char szBandScalingName[20];
+	    
+	    sprintf( szBandScalingName, "SCALE_%d", iColorIndex+1 );
+	    pszScaleInfo = CSLFetchNameValue( layer->processing, 
+					      szBandScalingName);
         }
-        else if( CSLCount(papszTokens) != 2 )
+	
+	if( pszScaleInfo != NULL )
         {
-            msSetError( MS_MISCERR, 
-                        "SCALE PROCESSING option unparsable for layer %s.",
-                        layer->name, 
-                        "msDrawGDAL()" );
-            return -1;
+	    char **papszTokens;
+	    
+	    papszTokens = CSLTokenizeStringComplex( pszScaleInfo, " ,", 
+						    FALSE, FALSE );
+	    if( CSLCount(papszTokens) == 1
+		&& EQUAL(papszTokens[0],"AUTO") )
+            {
+		dfScaleMin = dfScaleMax = 0.0;
+            }
+	    else if( CSLCount(papszTokens) != 2 )
+            {
+                free( pafWholeRawData );
+		msSetError( MS_MISCERR, 
+			    "SCALE PROCESSING option unparsable for layer %s.",
+			    layer->name, 
+			    "msDrawGDAL()" );
+		return -1;
+            }
+	    else
+            {
+		dfScaleMin = atof(papszTokens[0]);
+		dfScaleMax = atof(papszTokens[1]);
+            }
+	    CSLDestroy( papszTokens );
         }
-        else
-        {
-            dfScaleMin = atof(papszTokens[0]);
-            dfScaleMax = atof(papszTokens[1]);
-        }
-        CSLDestroy( papszTokens );
-    }
     
-/* -------------------------------------------------------------------- */
-/*      If we have no scaling parameters, just truncate to 8bit.        */
-/* -------------------------------------------------------------------- */
-    if( pszScaleInfo == NULL )
-    {
-        eErr = GDALRasterIO( hBand, GF_Read, 
-                             src_xoff, src_yoff, src_xsize, src_ysize, 
-                             pabyBuffer, dst_xsize, dst_ysize, GDT_Byte, 0,0);
-
-        if( eErr != CE_None )
-            msSetError( MS_IOERR, "GDALRasterIO() failed: %s", 
-                        CPLGetLastErrorMsg(), "drawGDAL()" );
-
-        if( eErr == CE_None )
-        {
-            return ApplyLUT( iColorIndex, layer, 
-                             pabyBuffer, dst_xsize, dst_ysize );;
-        }
-        else
-            return -1;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Otherwise, allocate a temporary floating point buffer, and      */
-/*      load into that.                                                 */
-/* -------------------------------------------------------------------- */
-    pafRawData = (float *) malloc(sizeof(float) * dst_xsize * dst_ysize );
-
-    if( pafRawData == NULL )
-    {
-        msSetError(MS_MEMERR, 
-                   "Allocating work float image of size %dx%d failed.",
-                   "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize );
-        return -1;
-    }
-
-    eErr = GDALRasterIO( hBand, GF_Read, 
-                         src_xoff, src_yoff, src_xsize, src_ysize, 
-                         pafRawData, dst_xsize, dst_ysize, GDT_Float32, 0, 0 );
-    
-    if( eErr != CE_None )
-    {
-        msSetError( MS_IOERR, "GDALRasterIO() failed: %s", 
-                    CPLGetLastErrorMsg(), "drawGDAL()" );
-
-        free( pafRawData );
-        return -1;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      If we are using autoscaling, then compute the max and min       */
 /*      now.  Perhaps we should eventually honour the offsite value     */
 /*      as a nodata value, or get it from GDAL.                         */
 /* -------------------------------------------------------------------- */
-    if( dfScaleMin == dfScaleMax )
-    {
-        dfScaleMin = dfScaleMax = pafRawData[0];
+	pafRawData = pafWholeRawData + iColorIndex * dst_xsize * dst_ysize;
 
-        for( i = 1; i < nPixelCount; i++ )
+	if( dfScaleMin == dfScaleMax )
         {
-            dfScaleMin = MIN(dfScaleMin,pafRawData[i]);
-            dfScaleMax = MAX(dfScaleMax,pafRawData[i]);
+	    dfScaleMin = dfScaleMax = pafRawData[0];
+	    
+	    for( i = 1; i < nPixelCount; i++ )
+            {
+		dfScaleMin = MIN(dfScaleMin,pafRawData[i]);
+		dfScaleMax = MAX(dfScaleMax,pafRawData[i]);
+            }
+	    if( dfScaleMin == dfScaleMax )
+                dfScaleMax = dfScaleMin + 1.0;
         }
-        if( dfScaleMin == dfScaleMax )
-            dfScaleMax = dfScaleMin + 1.0;
-    }
-
-    if( layer->debug > 0 )
-        msDebug( "msDrawGDAL(%s): scaling to 8bit, src range=%g,%g\n",
-                 layer->name, dfScaleMin, dfScaleMax );
-
+	
+	if( layer->debug > 0 )
+            msDebug( "msDrawGDAL(%s): scaling to 8bit, src range=%g,%g\n",
+                     layer->name, dfScaleMin, dfScaleMax );
+	
 /* -------------------------------------------------------------------- */
 /*      Now process the data.                                           */
 /* -------------------------------------------------------------------- */
-    dfScaleRatio = 256.0 / (dfScaleMax - dfScaleMin);
+	dfScaleRatio = 256.0 / (dfScaleMax - dfScaleMin);
+	pabyBuffer = pabyWholeBuffer + iColorIndex * nPixelCount;
 
-    for( i = 0; i < nPixelCount; i++ )
-    {
-        float fScaledValue = (float) ((pafRawData[i]-dfScaleMin)*dfScaleRatio);
-
-        if( fScaledValue < 0.0 )
-            pabyBuffer[i] = 0;
-        else if( fScaledValue > 255.0 )
-            pabyBuffer[i] = 255;
-        else
-            pabyBuffer[i] = (int) fScaledValue;
-    }
-
-    free( pafRawData );
-
+	for( i = 0; i < nPixelCount; i++ )
+        {
+	    float fScaledValue = (float) ((pafRawData[i]-dfScaleMin)*dfScaleRatio);
+	    
+	    if( fScaledValue < 0.0 )
+                pabyBuffer[i] = 0;
+	    else if( fScaledValue > 255.0 )
+                pabyBuffer[i] = 255;
+	    else
+                pabyBuffer[i] = (int) fScaledValue;
+        }
+	
 /* -------------------------------------------------------------------- */
 /*      Report a warning if NODATA keyword was applied.  We are         */
 /*      unable to utilize it since we can't return any pixels marked    */
 /*      as nodata from this function.  Need to fix someday.             */
 /* -------------------------------------------------------------------- */
-    dfNoDataValue = msGetGDALNoDataValue( layer, hBand, &bGotNoData );
-    if( bGotNoData )
-        msDebug( "LoadGDALImage(%s): NODATA value %g in GDAL\n"
-                 "file or PROCESSING directive ignored.  Not yet supported for\n"
-                 "unclassified scaled data.\n",
-                 layer->name, dfNoDataValue );
-
+	dfNoDataValue = msGetGDALNoDataValue( layer, hBand, &bGotNoData );
+	if( bGotNoData )
+            msDebug( "LoadGDALImage(%s): NODATA value %g in GDAL\n"
+                     "file or PROCESSING directive ignored.  Not yet supported for\n"
+                     "unclassified scaled data.\n",
+                     layer->name, dfNoDataValue );
+	
 /* -------------------------------------------------------------------- */
 /*      Apply LUT if there is one.                                      */
 /* -------------------------------------------------------------------- */
-    return ApplyLUT( iColorIndex, layer, 
-                             pabyBuffer, dst_xsize, dst_ysize );;
+	result_code = ApplyLUT( iColorIndex+1, layer, 
+				pabyBuffer, dst_xsize, dst_ysize );;
+	if( result_code == -1 )
+        {
+            free( pafWholeRawData );
+            return result_code;
+        }
+    }
+
+    free( pafWholeRawData );
+
+    return result_code;
 }
 
 /************************************************************************/
