@@ -347,6 +347,18 @@ static int allocateExpressionItems(expressionObj *exp, int numitems)
   return MS_SUCCESS; 
 }
 
+static int isValidItem(char **list, int listsize, char *item) 
+{
+  int i;
+
+  for(i=0; i<listsize; i++) {
+    if(strcasecmp(list[i], item) == 0) return MS_TRUE; /* found it */
+  }
+
+  msSetError(MS_MISCERR, "Item %s not found", "isValidItem()", item);
+  return MS_FALSE;
+}
+
 int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 {
   char **items;
@@ -388,10 +400,19 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     freeitems = MS_TRUE;
   }
 
-  /* layer-level item use (TODO: consider making sure the item is valid before adding to the list some how) */
-  if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
-  if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
-  if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
+  /* layer-level item use */
+  if(layer->classitem) {
+    if(!isValidItem(items, numitems, layer->classitem)) return MS_FAILURE;
+    layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
+  }
+  if(layer->filteritem) {
+    if(!isValidItem(items, numitems, layer->filteritem)) return MS_FAILURE;
+    layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
+  }
+  if(layer->labelitem) {
+    if(!isValidItem(items, numitems, layer->labelitem)) return MS_FAILURE;
+    layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
+  }
 
   if(layer->filter.type == MS_EXPRESSION) {
     if(allocateExpressionItems(&layer->filter, numitems) != MS_SUCCESS) return MS_FAILURE;
@@ -410,14 +431,25 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
       expression2list(items, numitems, layer->items, &(layer->numitems), &(layer->class[i]->text));
     }
 
-    for(k=0; k<MS_LABEL_BINDING_LENGTH; k++)
-      if(layer->class[i]->label.bindings[k].item) layer->class[i]->label.bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->label.bindings[k].item);
+    for(k=0; k<MS_LABEL_BINDING_LENGTH; k++) {      
+      if(layer->class[i]->label.bindings[k].item) {
+        if(!isValidItem(items, numitems, layer->class[i]->label.bindings[k].item)) return MS_FAILURE;
+        layer->class[i]->label.bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->label.bindings[k].item);
+      }
+    }
 
     /* style-level item use */
     for(j=0; j<layer->class[i]->numstyles; j++) {
-      if(layer->class[i]->styles[j]->rangeitem) layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem);
-      for(k=0; k<MS_STYLE_BINDING_LENGTH; k++)
-	if(layer->class[i]->styles[j]->bindings[k].item) layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
+      if(layer->class[i]->styles[j]->rangeitem) {
+        if(!isValidItem(items, numitems, layer->class[i]->styles[j]->rangeitem)) return MS_FAILURE;
+        layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem);
+      }
+      for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
+	if(layer->class[i]->styles[j]->bindings[k].item) {
+          if(!isValidItem(items, numitems, layer->class[i]->styles[j]->bindings[k].item)) return MS_FAILURE;
+          layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
+        }
+      }
     }
   }
 
