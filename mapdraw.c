@@ -1510,14 +1510,15 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     center.y = (shape->line[0].point[0].y + shape->line[0].point[1].y)/2.0;
     r = MS_ABS(center.x - shape->line[0].point[0].x);
 
+    if(layer->transform == MS_TRUE) {
+
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
-      msProjectPoint(&layer->projection, &map->projection, &center);
-    else
-      layer->project = MS_FALSE;
+      if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+        msProjectPoint(&layer->projection, &map->projection, &center);
+      else
+        layer->project = MS_FALSE;
 #endif
 
-    if(layer->transform == MS_TRUE) {
       center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
       center.y = MS_MAP2IMAGE_Y(center.y, map->extent.maxy, map->cellsize);
       r /= map->cellsize;      
@@ -1543,8 +1544,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     if(!shape->text) return(MS_SUCCESS); /* nothing to draw */
 
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
-       msProjectShape(&layer->projection, &map->projection, shape);
+    if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+      msProjectShape(&layer->projection, &map->projection, shape);
     else
       layer->project = MS_FALSE;
 #endif
@@ -1821,7 +1822,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   case MS_LAYER_POINT:
 
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+    if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
       msProjectShape(&layer->projection, &map->projection, shape);
     else
       layer->project = MS_FALSE;
@@ -1838,16 +1839,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	} else
           msOffsetPointRelativeTo(point, layer);
 
-  for(s=0; s<layer->class[c]->numstyles; s++) {
-    styleObj *curStyle = layer->class[c]->styles[s];
-    if(map->scaledenom > 0) {
-      if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
-        continue;
-      if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
-        continue;
-    }
-    msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
-  }
+        for(s=0; s<layer->class[c]->numstyles; s++) {
+          styleObj *curStyle = layer->class[c]->styles[s];
+          if(map->scaledenom > 0) {
+            if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+              continue;
+            if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+              continue;
+	  }
+          msDrawMarkerSymbol(&map->symbolset, image, point, (layer->class[c]->styles[s]), layer->scalefactor);
+        }
 
 	if(shape->text) {
           labelObj label = layer->class[c]->label;
@@ -1871,7 +1872,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
 
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+    if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
       msProjectShape(&layer->projection, &map->projection, shape);
     else
       layer->project = MS_FALSE;
@@ -2072,13 +2073,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     break;
 
   case MS_LAYER_POLYGON:
-    if(shape->type != MS_SHAPE_POLYGON){
+    if(shape->type != MS_SHAPE_POLYGON) {
       msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a POLYGON layer definition.", "msDrawShape()");
       return(MS_FAILURE);
     }
 
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) {
+    if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) {
       if(msProjectShape(&layer->projection, &map->projection, shape) == MS_FAILURE ) {
 #ifdef notdef 
         msSetError(MS_PROJERR, "Reprojecting a shape failed.", "msDrawShape()" );
@@ -2198,7 +2199,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
   labelObj *label=&(theclass->label);
  
 #ifdef USE_PROJ
-  if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+  if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
     msProjectPoint(&layer->projection, &map->projection, point);
   else
     layer->project = MS_FALSE;
