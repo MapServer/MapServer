@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Avoid double free with postgresql joins. (#2936)
+
 - Don't attempt to project layers given in pixel coordinates (layer->transform != MS_TRUE) (#3096)
 
 - Modify loading imagery from GDAL to load all bands at once to avoid multiple

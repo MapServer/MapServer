@@ -400,9 +400,7 @@ int msPOSTGRESQLJoinClose(joinObj *join) {
       joininfo->conn = NULL;
     }
 
-    if(joininfo->to_column) {
-      free(joininfo->to_column);
-    }
+    /* removed free(joininfo->to_column), see bug #2936 */
 
     if(joininfo->from_value) {
       free(joininfo->from_value);
