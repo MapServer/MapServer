@@ -49,6 +49,10 @@
 
 #define PHPMS_VERSION "($Revision$ $Date$)"
 
+#ifdef PHP4
+#define ZEND_DEBUG 0
+#endif
+
 #ifndef DLEXPORT 
 #define DLEXPORT ZEND_DLEXPORT
 #endif
@@ -7043,6 +7047,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("styleitem",  self->styleitem)
     else IF_SET_STRING("requires",   self->requires)
     else IF_SET_STRING("labelrequires",   self->labelrequires)
+    else IF_SET_STRING("classgroup",   self->classgroup)
     else if (strcmp( "connectiontype", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR, "Property 'connectiontype' must be set "
@@ -14530,8 +14535,8 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
     add_property_double(return_value, "width",          pstyle->width);
     add_property_double(return_value, "minwidth",       pstyle->minwidth);
     add_property_double(return_value, "maxwidth",       pstyle->maxwidth);
-    add_property_long(return_value,   "offsetx",        pstyle->offsetx);
-    add_property_long(return_value,   "offsety",        pstyle->offsety);
+    add_property_double(return_value,   "offsetx",        pstyle->offsetx);
+    add_property_double(return_value,   "offsety",        pstyle->offsety);
     add_property_double(return_value, "angle",          pstyle->angle);
     add_property_long(return_value,   "antialias",      pstyle->antialias);
     add_property_double(return_value, "minvalue",       pstyle->minvalue);
@@ -15809,6 +15814,7 @@ DLEXPORT void php3_ms_symbol_setImagepath(INTERNAL_FUNCTION_PARAMETERS)
 
     if (msLoadImageSymbol(self, pFile->value.str.val) == MS_SUCCESS)
     {
+        _phpms_set_property_string(pThis,"imagepath", self->imagepath , E_ERROR TSRMLS_CC); 
         RETURN_TRUE;
     }
     else
