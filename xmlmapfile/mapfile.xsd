@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ms="http://mapserver.gis.umn.edu/mapserver" targetNamespace="http://mapserver.gis.umn.edu/mapserver" elementFormDefault="qualified" attributeFormDefault="unqualified" version="0.0.7">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ms="http://mapserver.gis.umn.edu/mapserver" targetNamespace="http://mapserver.gis.umn.edu/mapserver" elementFormDefault="qualified" attributeFormDefault="unqualified" version="5.6.0">
 	<!-- Definition of types -->
 	<xs:simpleType name="rgbColorValueType">
 		<xs:restriction base="xs:integer">
