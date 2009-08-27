@@ -49,10 +49,6 @@
 
 #define PHPMS_VERSION "($Revision$ $Date$)"
 
-#ifdef PHP4
-#define ZEND_DEBUG 0
-#endif
-
 #ifndef DLEXPORT 
 #define DLEXPORT ZEND_DLEXPORT
 #endif
