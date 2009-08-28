@@ -128,6 +128,7 @@ int main(int argc, char *argv[])
  
     if(strcmp(argv[i],"-m") == 0) {
       map = msLoadMap(argv[i+1], NULL);
+      msApplyDefaultSubstitutions(map);
       if(!map) {
 	msWriteError(stderr);
         msCleanup();

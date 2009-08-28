@@ -1574,6 +1574,9 @@ MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
 MS_DLL_EXPORT void freeExpression(expressionObj *exp);
 MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
 
+MS_DLL_EXPORT void msLayerSubstituteString(layerObj *layer, const char *from, const char *to);
+MS_DLL_EXPORT void msApplyDefaultSubstitutions(mapObj *map);
+
 MS_DLL_EXPORT int getClassIndex(layerObj *layer, char *str);
 
 /* For maplabel and mappdf */

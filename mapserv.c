@@ -176,13 +176,15 @@ static double getNumeric(char *s)
   return rv;
 }
 
+
+
 /*
 ** Extract Map File name from params and load it.  
 ** Returns map object or NULL on error.
 */
 mapObj *loadMap(void)
 {
-  int i,j,k;
+  int i,j;
   mapObj *map = NULL;
   char *tmpstr, *key, *value=NULL;
 
@@ -243,31 +245,22 @@ mapObj *loadMap(void)
     sprintf(key,"%s_validation_pattern", mapserv->request->ParamNames[i]);
         
     for(j=0; j<map->numlayers; j++) {
-      value = msLookupHashTable(&(GET_LAYER(map, j)->metadata), key);
+      layerObj *layer = GET_LAYER(map, j);
+      value = msLookupHashTable(&(layer->metadata), key);
       if(value) { /* validate parameter value */
         if(msEvalRegex(value, mapserv->request->ParamValues[i]) == MS_FALSE) {
           msSetError(MS_WEBERR, "Parameter '%s' value fails to validate.", "loadMap()", mapserv->request->ParamNames[i]);
           writeError();
         }
       }
-
-      if(GET_LAYER(map, j)->data && (strstr(GET_LAYER(map, j)->data, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->data = msReplaceSubstring(GET_LAYER(map, j)->data, tmpstr, mapserv->request->ParamValues[i]);
-      if(GET_LAYER(map, j)->tileindex && (strstr(GET_LAYER(map, j)->tileindex, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->tileindex = msReplaceSubstring(GET_LAYER(map, j)->tileindex, tmpstr, mapserv->request->ParamValues[i]);
-      if(GET_LAYER(map, j)->connection && (strstr(GET_LAYER(map, j)->connection, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->connection = msReplaceSubstring(GET_LAYER(map, j)->connection, tmpstr, mapserv->request->ParamValues[i]);
-      if(GET_LAYER(map, j)->filter.string && (strstr(GET_LAYER(map, j)->filter.string, tmpstr) != NULL)) 
-        GET_LAYER(map, j)->filter.string = msReplaceSubstring(GET_LAYER(map, j)->filter.string, tmpstr, mapserv->request->ParamValues[i]);
-      for(k=0; k<GET_LAYER(map, j)->numclasses; k++) {
-        if(GET_LAYER(map, j)->class[k]->expression.string && (strstr(GET_LAYER(map, j)->class[k]->expression.string, tmpstr) != NULL)) 
-          GET_LAYER(map, j)->class[k]->expression.string = msReplaceSubstring(GET_LAYER(map, j)->class[k]->expression.string, tmpstr, mapserv->request->ParamValues[i]);
-      }
+      msLayerSubstituteString(layer, key, mapserv->request->ParamValues[i]);
     }
     
     free(tmpstr);
     free(key);
   }
+
+  msApplyDefaultSubstitutions(map);
 
   /* check to see if a ogc map context is passed as argument. if there */
   /* is one load it */
@@ -286,6 +279,7 @@ mapObj *loadMap(void)
 
   return map;
 }
+
 
 /*
 ** Set operation mode. First look in MS_MODE env. var. as a

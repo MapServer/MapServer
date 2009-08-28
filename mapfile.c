@@ -5382,6 +5382,45 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
   return(MS_SUCCESS);
 }
 
+/* look in places authorized for url substitution and replace "from" by "to" */ 
+void msLayerSubstituteString(layerObj *layer, const char *from, const char *to) {
+  int k;
+  if(layer->data && (strstr(layer->data, from) != NULL)) 
+    layer->data = msReplaceSubstring(layer->data, from, to);
+  if(layer->tileindex && (strstr(layer->tileindex, from) != NULL)) 
+    layer->tileindex = msReplaceSubstring(layer->tileindex, from, to);
+  if(layer->connection && (strstr(layer->connection, from) != NULL)) 
+    layer->connection = msReplaceSubstring(layer->connection, from, to);
+  if(layer->filter.string && (strstr(layer->filter.string, from) != NULL)) 
+    layer->filter.string = msReplaceSubstring(layer->filter.string, from, to);
+  for(k=0; k<layer->numclasses; k++) {
+    if(layer->class[k]->expression.string && (strstr(layer->class[k]->expression.string, from) != NULL)) 
+      layer->class[k]->expression.string = msReplaceSubstring(layer->class[k]->expression.string, from, to);
+  }
+}
+  
+
+/* loop through layer metadata for keys that have a default_%key% pattern to replace
+* remaining %key% entries by their default value */
+void msApplyDefaultSubstitutions(mapObj *map) {
+  int i;
+  for(i=0;i<map->numlayers;i++) {
+    layerObj *layer = GET_LAYER(map, i);
+    const char *defaultkey = msFirstKeyFromHashTable(&(layer->metadata));
+    while(defaultkey) {
+      if(!strncmp(defaultkey,"default_",8)){
+        char *tmpstr = (char *)malloc(sizeof(char)*(strlen(defaultkey)-8));
+        sprintf(tmpstr,"%%%s%%", &(defaultkey[8]));
+
+        msLayerSubstituteString(layer,tmpstr,msLookupHashTable(&(layer->metadata),defaultkey));
+        defaultkey = msNextKeyFromHashTable(&(layer->metadata),defaultkey);
+        free(tmpstr);
+      }
+    }
+  }
+
+}
+
 /*
 ** Returns an array with one entry per mapfile token.  Useful to manipulate
 ** mapfiles in MapScript.
