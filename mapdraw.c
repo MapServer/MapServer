@@ -1910,7 +1910,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
 
     if(layer->transform == MS_TRUE) {
-      msClipPolylineRect(shape, cliprect);
+        if(shape->type == MS_SHAPE_POLYGON)
+          msClipPolygonRect(shape, cliprect);
+        else
+          msClipPolylineRect(shape, cliprect);
       if(shape->numlines == 0) {
         if(hasGeomTransform)
           msFreeShape(&nonClippedShape);   
