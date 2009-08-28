@@ -13,6 +13,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- Enable LOAD_WHOLE_IMAGE processing option by default when rendering
+  WMS client layer images (#3111). 
+
 - add default values for CGI %key% substitutions (#3108)
 
 - fix clipping of polygon shapes in line layers (#3059)

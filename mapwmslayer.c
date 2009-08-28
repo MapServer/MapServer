@@ -1364,6 +1364,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
         char *wldfile;
         /* OK, we have to resample the raster to map projection... */
         lp->transform = MS_TRUE;
+        msLayerSetProcessingKey( lp, "LOAD_WHOLE_IMAGE", "YES" ); 
 
         /* Create a world file with raster extents */
         /* One line per value, in this order: cx, 0, 0, cy, ulx, uly */
