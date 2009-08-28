@@ -14,7 +14,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
-- fix clipping of polygon shapes in line layers (#3509)
+- fix clipping of polygon shapes in line layers (#3059)
 
 - RFC 51 implementation: XML Mapfiles Format (#2872)
 
