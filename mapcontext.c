@@ -2157,7 +2157,10 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           }
 
           if(bDimensionList)
+          {
               msIO_fprintf( stream, "      </DimensionList>\n");
+              bDimensionList = 0;
+          }
 
           msIO_fprintf(stream, "    </Layer>\n");
       }
