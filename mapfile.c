@@ -5413,12 +5413,11 @@ void msApplyDefaultSubstitutions(mapObj *map) {
         sprintf(tmpstr,"%%%s%%", &(defaultkey[8]));
 
         msLayerSubstituteString(layer,tmpstr,msLookupHashTable(&(layer->metadata),defaultkey));
-        defaultkey = msNextKeyFromHashTable(&(layer->metadata),defaultkey);
         free(tmpstr);
       }
+      defaultkey = msNextKeyFromHashTable(&(layer->metadata),defaultkey);
     }
   }
-
 }
 
 /*
