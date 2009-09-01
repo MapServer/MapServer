@@ -124,11 +124,11 @@ void msFreeMap(mapObj *map) {
   msFree(map->templatepattern);
   msFree(map->datapattern);
   msFreeHashItems(&(map->configoptions));
-  if( map->outputformat && --map->outputformat->refcount < 1 )
+  if( map->outputformat && map->outputformat->refcount > 0 && --map->outputformat->refcount < 1 )
         msFreeOutputFormat( map->outputformat );
 
     for(i=0; i < map->numoutputformats; i++ ) {
-        if( --map->outputformatlist[i]->refcount < 1 )
+        if( map->outputformatlist[i]->refcount > 0 && --map->outputformatlist[i]->refcount < 1 )
         msFreeOutputFormat( map->outputformatlist[i] );
     }
     if( map->outputformatlist != NULL )
