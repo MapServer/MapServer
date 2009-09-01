@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Fixed msFreeMap causing memory corruption in msFreeOutputFormat (#3113)
+
 - Fix WMC XML output when Dimension is used (#3110)
 
 - Fix output for valid WCS 1.1 XML (#3086)
