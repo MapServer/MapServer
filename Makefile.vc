@@ -94,9 +94,9 @@ gd::
 .c.exe:
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
 !IFDEF DLLBUILD
-	$(LINK) $(LDFLAGS) $*.obj $(LIBS_DLL)
+	$(LINK) $(LDEBUG) $(LDFLAGS) $*.obj $(LIBS_DLL)
 !ELSE
-        $(LINK) $(LDFLAGS) $*.obj $(LIBS)
+        $(LINK) $(LDEBUG) $(LDFLAGS) $*.obj $(LIBS)
 !ENDIF
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
