@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed WCS processing when both crs and response_crs are specified (#3083)
+
 - Fixed msFreeMap causing memory corruption in msFreeOutputFormat (#3113)
 
 - Fix WMC XML output when Dimension is used (#3110)

@@ -1434,7 +1434,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* fill in bands rangeset info, if required.  */
   msWCSSetDefaultBandsRangeSetInfo(params, &cm, lp);
 
-  /* handle the response CRS, that is set the map object projection */
+  /* handle the response CRS, that is, set the map object projection */
   if(params->response_crs || params->crs ) {
     int iUnits;
     const char *crs_to_use = params->response_crs;
@@ -1442,18 +1442,16 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     if( crs_to_use == NULL )
       crs_to_use = params->crs;
 
-    if (strncasecmp(crs_to_use, "EPSG:", 5) == 0
-        || strncasecmp(crs_to_use,"urn:ogc:def:crs:",16) == 0 ) {
+    if (strncasecmp(crs_to_use, "EPSG:", 5) == 0 || strncasecmp(crs_to_use,"urn:ogc:def:crs:",16) == 0 ) {
       if (msLoadProjectionString(&(map->projection), (char *) crs_to_use) != 0)
-          return msWCSException( map, NULL, NULL,params->version);
+        return msWCSException( map, NULL, NULL,params->version);
     } else if( strcasecmp(crs_to_use,"imageCRS") == 0 ) {
-        /* use layer native CRS, and rework bounding box accordingly */
-        if( msWCSGetCoverage_ImageCRSSetup( map, request, params, &cm, lp )
-            != MS_SUCCESS )
-            return MS_FAILURE;
+      /* use layer native CRS, and rework bounding box accordingly */
+      if( msWCSGetCoverage_ImageCRSSetup( map, request, params, &cm, lp ) != MS_SUCCESS )
+        return MS_FAILURE;
     } else {  /* should we support WMS style AUTO: projections? (not for now) */
       msSetError(MS_WCSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
-      return msWCSException(map, "InvalidParameterValue", "srs",params->version);
+      return msWCSException(map, "InvalidParameterValue", "srs", params->version);
     }
 
     iUnits = GetMapserverUnitUsingProj(&(map->projection));
@@ -1471,28 +1469,24 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     /* check format of TIME parameter */
     if(strchr(params->time, ',')) {
       msSetError( MS_WCSERR, "Temporal lists are not supported, only individual values.", "msWCSGetCoverage()" );
-      return msWCSException(map, "InvalidParameterValue", "time",
-                            params->version);
+      return msWCSException(map, "InvalidParameterValue", "time", params->version);
     }
     if(strchr(params->time, '/')) {
       msSetError( MS_WCSERR, "Temporal ranges are not supported, only individual values.", "msWCSGetCoverage()" );
-      return msWCSException(map, "InvalidParameterValue", "time",
-                            params->version);
+      return msWCSException(map, "InvalidParameterValue", "time", params->version);
     }
       
     /* TODO: will need to expand this check if a time period is supported */
     value = msOWSLookupMetadata(&(lp->metadata), "COM", "timeposition");
     if(!value) {
       msSetError( MS_WCSERR, "The coverage does not support temporal subsetting.", "msWCSGetCoverage()" );
-      return msWCSException(map, "InvalidParameterValue", "time", 
-                            params->version );
+      return msWCSException(map, "InvalidParameterValue", "time", params->version );
     }
     
     /* check if timestamp is covered by the wcs_timeposition definition */
     if (msValidateTimeValue(params->time, value) == MS_FALSE) {
       msSetError( MS_WCSERR, "The coverage does not have a time position of %s.", "msWCSGetCoverage()", params->time );
-      return msWCSException(map, "InvalidParameterValue", "time",
-                            params->version);
+      return msWCSException(map, "InvalidParameterValue", "time", params->version);
     }
       
     /* make sure layer is tiled appropriately */
@@ -1527,84 +1521,72 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   }
            
   if( strncasecmp(params->version,"1.0",3) == 0 )
-      status = msWCSGetCoverageBands10( map, request, params, lp, &bandlist );
+    status = msWCSGetCoverageBands10( map, request, params, lp, &bandlist );
   else
-      status = msWCSGetCoverageBands11( map, request, params, lp, &bandlist );
+    status = msWCSGetCoverageBands11( map, request, params, lp, &bandlist );
   if( status != MS_SUCCESS )
-      return status;
+    return status;
 
   /* did we get BBOX values? if not use the exent stored in the coverageMetadataObj */
-  if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  
-      || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
+  if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
+    params->bbox = cm.extent;
 
-      params->bbox = cm.extent;
-
-      /* WCS 1.1 boundbox is center of pixel oriented. */
-      if( strncasecmp(params->version,"1.1",3) == 0 )
-      {
-          params->bbox.minx += cm.geotransform[1]/2 + cm.geotransform[2]/2;
-          params->bbox.maxx -= cm.geotransform[1]/2 + cm.geotransform[2]/2;
-          params->bbox.maxy += cm.geotransform[4]/2 + cm.geotransform[5]/2;
-          params->bbox.miny -= cm.geotransform[4]/2 + cm.geotransform[5]/2;
-      }
+    /* WCS 1.1 boundbox is center of pixel oriented. */
+    if( strncasecmp(params->version,"1.1",3) == 0 ) {
+      params->bbox.minx += cm.geotransform[1]/2 + cm.geotransform[2]/2;
+      params->bbox.maxx -= cm.geotransform[1]/2 + cm.geotransform[2]/2;
+      params->bbox.maxy += cm.geotransform[4]/2 + cm.geotransform[5]/2;
+      params->bbox.miny -= cm.geotransform[4]/2 + cm.geotransform[5]/2;
+    }
   }
 
   /* WCS 1.1+ GridOrigin is effectively resetting the minx/maxy 
      BOUNDINGBOX values, so apply that here */
-  if( params->originx != 0.0 || params->originy != 0.0 )
-  {
-      /* should never be 1.0 in this logic. */
-      assert( strncasecmp(params->version,"1.0",3) != 0 );
-      params->bbox.minx = params->originx;
-      params->bbox.maxy = params->originy;
+  if( params->originx != 0.0 || params->originy != 0.0 ) {
+    assert( strncasecmp(params->version,"1.0",3) != 0 ); /* should always be 1.0 in this logic. */
+    params->bbox.minx = params->originx;
+    params->bbox.maxy = params->originy;
   }
     
-  /* if necessary, project the BBOX */
+  /* if necessary, project the BBOX to the map->projection */
+  if(params->response_crs && params->crs) {
+    projectionObj tmp_proj;
+
+    msInitProjection(&tmp_proj);
+    if (msLoadProjectionString(&tmp_proj, (char *) params->crs) != 0)
+      return msWCSException( map, NULL, NULL, params->version);
+    msProjectRect(&tmp_proj, &map->projection, &(params->bbox));
+    msFreeProjection(&tmp_proj);
+  }
 
   /* in WCS 1.1 the default is full resolution */
-  if( strncasecmp(params->version,"1.1",3) == 0 
-      && params->resx == 0.0 && params->resy == 0.0 ) {
-
+  if( strncasecmp(params->version,"1.1",3) == 0 && params->resx == 0.0 && params->resy == 0.0 ) {
     params->resx = cm.geotransform[1];
     params->resy = fabs(cm.geotransform[5]);
   }
 
   /* compute width/height from BBOX and cellsize.  */
-  if( (params->resx == 0.0 || params->resy == 0.0) 
-      && params->width != 0 && params->height != 0 ) {
-
-    /* should always be 1.0 in this logic. */
-    assert( strncasecmp(params->version,"1.0",3) == 0 );
-
+  if( (params->resx == 0.0 || params->resy == 0.0) && params->width != 0 && params->height != 0 ) {
+    assert( strncasecmp(params->version,"1.0",3) == 0 ); /* should always be 1.0 in this logic. */
     params->resx = (params->bbox.maxx -params->bbox.minx) / params->width;
     params->resy = (params->bbox.maxy -params->bbox.miny) / params->height;
   }
     
   /* compute cellsize/res from bbox and raster size. */
-  if( (params->width == 0 || params->height == 0) 
-      && params->resx != 0 && params->resy != 0 ) {
+  if( (params->width == 0 || params->height == 0) && params->resx != 0 && params->resy != 0 ) {
 
     /* WCS 1.0 boundbox is edge of pixel oriented. */
-    if( strncasecmp(params->version,"1.0",3) == 0 )
-    {
-        params->width = (int) ((params->bbox.maxx - params->bbox.minx) 
-                               / params->resx + 0.5);
-        params->height = (int) ((params->bbox.maxy - params->bbox.miny) 
-                                / params->resy + 0.5);
-    }
-    else
-    {
-        params->width = (int) ((params->bbox.maxx - params->bbox.minx) 
-                               / params->resx + 1.000001);
-        params->height = (int) ((params->bbox.maxy - params->bbox.miny) 
-                                / params->resy + 1.000001);
+    if( strncasecmp(params->version,"1.0",3) == 0 ) {
+      params->width = (int) ((params->bbox.maxx - params->bbox.minx) / params->resx + 0.5);
+      params->height = (int) ((params->bbox.maxy - params->bbox.miny) / params->resy + 0.5);
+    } else {
+      params->width = (int) ((params->bbox.maxx - params->bbox.minx) / params->resx + 1.000001);
+      params->height = (int) ((params->bbox.maxy - params->bbox.miny) / params->resy + 1.000001);
 
-        /* recompute bounding box so we get exactly the origin and
-           resolution requested. */
-        params->bbox.maxx = params->bbox.minx 
-            + (params->width-1) * params->resx;
-        params->bbox.miny = params->bbox.maxy 
-            - (params->height-1) * params->resy;
+      /* recompute bounding box so we get exactly the origin and
+         resolution requested. */
+      params->bbox.maxx = params->bbox.minx + (params->width-1) * params->resx;
+      params->bbox.miny = params->bbox.maxy - (params->height-1) * params->resy;
     }
   }
 
@@ -1618,28 +1600,22 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
 
   /* Do we need to force special handling?  */
   if( fabs(params->resx/params->resy - 1.0) > 0.001 ) {
-      map->gt.need_geotransform = MS_TRUE;
-      if( map->debug )
-          msDebug( "RESX and RESY don't match.  Using geotransform/resample.\n");
+    map->gt.need_geotransform = MS_TRUE;
+    if( map->debug ) msDebug( "RESX and RESY don't match.  Using geotransform/resample.\n");
   }
 
   /* Do we have a specified interpolation method */
-  if( params->interpolation != NULL )
-  {
-      if( strncasecmp(params->interpolation,"NEAREST",7) == 0 )
-          msLayerSetProcessingKey(lp, "RESAMPLE", "NEAREST");
-      else if( strcasecmp(params->interpolation,"BILINEAR") == 0 )
-          msLayerSetProcessingKey(lp, "RESAMPLE", "BILINEAR");
-      else if( strcasecmp(params->interpolation,"AVERAGE") == 0 )
-          msLayerSetProcessingKey(lp, "RESAMPLE", "AVERAGE");
-      else
-      {
-          msSetError( MS_WCSERR, 
-                      "INTERPOLATION=%s specifies an unsupported interpolation method.",
-                      "msWCSGetCoverage()",
-                      params->interpolation );
-          return msWCSException(map, "InvalidParameterValue", "interpolation", params->version);
-      }
+  if( params->interpolation != NULL ) {
+    if( strncasecmp(params->interpolation,"NEAREST",7) == 0 )
+      msLayerSetProcessingKey(lp, "RESAMPLE", "NEAREST");
+    else if( strcasecmp(params->interpolation,"BILINEAR") == 0 )
+      msLayerSetProcessingKey(lp, "RESAMPLE", "BILINEAR");
+    else if( strcasecmp(params->interpolation,"AVERAGE") == 0 )
+      msLayerSetProcessingKey(lp, "RESAMPLE", "AVERAGE");
+    else {
+      msSetError( MS_WCSERR, "INTERPOLATION=%s specifies an unsupported interpolation method.", "msWCSGetCoverage()", params->interpolation );
+      return msWCSException(map, "InvalidParameterValue", "interpolation", params->version);
+    }
   }
    
   /* apply region and size to map object.  */
@@ -1647,12 +1623,11 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   map->height = params->height;
 
   /* adjust OWS BBOX to MapServer's pixel model */
-  if( strncasecmp(params->version,"1.0",3) == 0 )
-  {
-      params->bbox.minx += params->resx*0.5;
-      params->bbox.miny += params->resy*0.5;
-      params->bbox.maxx -= params->resx*0.5;
-      params->bbox.maxy -= params->resy*0.5;
+  if( strncasecmp(params->version,"1.0",3) == 0 ) {
+    params->bbox.minx += params->resx*0.5;
+    params->bbox.miny += params->resy*0.5;
+    params->bbox.maxx -= params->resx*0.5;
+    params->bbox.maxy -= params->resy*0.5;
   }
 
   map->extent = params->bbox;
