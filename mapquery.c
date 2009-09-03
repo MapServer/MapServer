@@ -31,6 +31,38 @@
 
 MS_CVSID("$Id$")
 
+int msInitQuery(queryObj *query)
+{
+  if(!query) return MS_FAILURE;
+
+  query->type = MS_QUERY_IS_NULL; /* nothing defined */
+  query->mode = MS_QUERY_SINGLE;
+
+  query->layer=-1;
+
+  query->point.x = query->point.y = -1;
+  query->rect.minx = query->rect.miny = query->rect.maxx = query->rect.maxy = -1;
+  query->shape = NULL;
+
+  query->index = -1;
+
+  query->item = NULL;
+  query->string = NULL;
+
+  return MS_SUCCESS;
+}
+
+void msFreeQuery(queryObj *query)
+{
+  if(query->shape) {
+    msFreeShape(query->shape);
+    free(query->shape);
+  }
+
+  if(query->item) free(query->item);
+  if(query->string) free(query->string);
+}
+
 /*
 ** msIsLayerQueryable()  returns MS_TRUE/MS_FALSE
 */
@@ -1536,6 +1568,7 @@ int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
   return found;
 }
 
+/* TODO: Rename this msFreeResultSet() or something along those lines... */
 /* msQueryFree()
  *
  * Free layer's query results. If qlayer == -1, all layers will be treated.

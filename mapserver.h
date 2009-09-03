@@ -393,7 +393,7 @@ enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE,
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
 enum MS_QUERY_MODE {MS_QUERY_SINGLE, MS_QUERY_MULTIPLE};
-enum MS_QUERY_TYPE {MS_QUERY_BY_POINT, MS_QUERY_BY_RECT, MS_QUERY_BY_SHAPE, MS_QUERY_BY_FEATURES, MS_QUERY_BY_OPERATOR};
+enum MS_QUERY_TYPE {MS_QUERY_IS_NULL, MS_QUERY_BY_POINT, MS_QUERY_BY_RECT, MS_QUERY_BY_SHAPE, MS_QUERY_BY_FEATURES, MS_QUERY_BY_OPERATOR};
 
 enum MS_ALIGN_VALUE {MS_ALIGN_LEFT, MS_ALIGN_CENTER, MS_ALIGN_RIGHT}; 
 
@@ -589,11 +589,17 @@ typedef struct {
 typedef struct {
   int type; /* MS_QUERY_TYPE */
   int mode; /* MS_QUERY_MODE */
-  int qlayer;
+
+  int layer;
 
   pointObj point; /* by point */
   rectObj rect; /* by rect */
-  shapeObj *shape;
+  shapeObj *shape; /* by shape */
+
+  long index; /* by index */
+
+  char *item; /* by attribute */
+  char *string;
 } queryObj;
 
 /************************************************************************/
@@ -1682,7 +1688,9 @@ MS_DLL_EXPORT int msIntersectPolylinePolygon(shapeObj *line, shapeObj *poly);
 MS_DLL_EXPORT int msIntersectPolygons(shapeObj *p1, shapeObj *p2);
 MS_DLL_EXPORT int msIntersectPolylines(shapeObj *line1, shapeObj *line2);
 
-MS_DLL_EXPORT int msSaveQuery(mapObj *map, char *filename); /* in mapquery.c */
+MS_DLL_EXPORT int msInitQuery(queryObj *query); /* in mapquery.c */
+MS_DLL_EXPORT void msFreeQuery(queryObj *query);
+MS_DLL_EXPORT int msSaveQuery(mapObj *map, char *filename);
 MS_DLL_EXPORT int msLoadQuery(mapObj *map, char *filename);
 MS_DLL_EXPORT int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex);
 MS_DLL_EXPORT int msQueryByIndexAdd(mapObj *map, int qlayer, int tileindex, int shapeindex);
