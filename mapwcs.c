@@ -374,8 +374,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
 	     params->interpolation = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "SERVICE") == 0)
 	     params->service = strdup(request->ParamValues[i]);
-	   else if(strcasecmp(request->ParamNames[i], "SECTION") == 0)
-	     params->section = strdup(request->ParamValues[i]); /* TODO: validate value here */
+       else if(strcasecmp(request->ParamNames[i], "SECTION") == 0) /* 1.0 */
+           params->section = strdup(request->ParamValues[i]); /* TODO: validate value here */
+       else if(strcasecmp(request->ParamNames[i], "SECTIONS") == 0) /* 1.1 */
+           params->section = strdup(request->ParamValues[i]); /* TODO: validate value here */
 
        /* GetCoverage parameters. */
        else if(strcasecmp(request->ParamNames[i], "BBOX") == 0) {
