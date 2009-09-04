@@ -35,32 +35,32 @@ int msInitQuery(queryObj *query)
 {
   if(!query) return MS_FAILURE;
 
-  query->type = MS_QUERY_IS_NULL; /* nothing defined */
-  query->mode = MS_QUERY_SINGLE;
+  query->qtype = MS_QUERY_IS_NULL; /* nothing defined */
+  query->qmode = MS_QUERY_SINGLE;
 
-  query->layer=-1;
+  query->qlayer=-1;
 
-  query->point.x = query->point.y = -1;
-  query->rect.minx = query->rect.miny = query->rect.maxx = query->rect.maxy = -1;
-  query->shape = NULL;
+  query->qpoint.x = query->qpoint.y = -1;
+  query->qrect.minx = query->qrect.miny = query->qrect.maxx = query->qrect.maxy = -1;
+  query->qshape = NULL;
 
-  query->index = -1;
+  query->qindex = -1;
 
-  query->item = NULL;
-  query->string = NULL;
+  query->qitem = NULL;
+  query->qstring = NULL;
 
   return MS_SUCCESS;
 }
 
 void msFreeQuery(queryObj *query)
 {
-  if(query->shape) {
-    msFreeShape(query->shape);
-    free(query->shape);
+  if(query->qshape) {
+    msFreeShape(query->qshape);
+    free(query->qshape);
   }
 
-  if(query->item) free(query->item);
-  if(query->string) free(query->string);
+  if(query->qitem) free(query->qitem);
+  if(query->qstring) free(query->qstring);
 }
 
 /*

@@ -586,21 +586,23 @@ typedef struct {
 /*                                                                      */
 /*      encapsulates the information necessary to perform a query       */
 /************************************************************************/
+#ifndef SWIG
 typedef struct {
-  int type; /* MS_QUERY_TYPE */
-  int mode; /* MS_QUERY_MODE */
+  int qtype; /* MS_QUERY_TYPE */
+  int qmode; /* MS_QUERY_MODE */
 
-  int layer;
+  int qlayer;
 
-  pointObj point; /* by point */
-  rectObj rect; /* by rect */
-  shapeObj *shape; /* by shape */
+  pointObj qpoint; /* by point */
+  rectObj qrect; /* by rect */
+  shapeObj *qshape; /* by shape */
 
-  long index; /* by index */
+  long qindex; /* by index */
 
-  char *item; /* by attribute */
-  char *string;
+  char *qitem; /* by attribute */
+  char *qstring;
 } queryObj;
+#endif
 
 /************************************************************************/
 /*                             queryMapObj                              */
