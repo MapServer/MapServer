@@ -51,6 +51,7 @@ MS_CVSID("$Id$")
 #define TEXT_SIZE                  4000 /* ticket #2260 */
 #define TYPE_OWNER                 "MDSYS"
 #define SDO_GEOMETRY               TYPE_OWNER".SDO_GEOMETRY"
+#define SDO_ORDINATE_ARRAY         TYPE_OWNER".SDO_ORDINATE_ARRAY"
 #define SDO_GEOMETRY_LEN           strlen( SDO_GEOMETRY )
 #define FUNCTION_FILTER            1
 #define FUNCTION_RELATE            2
@@ -147,6 +148,10 @@ typedef
         SDOGeometryObj *obj[ARRAY_SIZE]; /* spatial object buffer */
         SDOGeometryInd *ind[ARRAY_SIZE]; /* object indicator */
     } msOracleSpatialLayerInfo;
+    
+static OCIType  *ordinates_tdo = NULL;
+static OCIArray *ordinates;
+    
 
 /* local prototypes */
 static int TRY( msOracleSpatialHandler *hand, sword status );
@@ -161,6 +166,7 @@ static void msOCICloseHandlers( msOracleSpatialHandler *hand );
 static void msOCIClearLayerInfo( msOracleSpatialLayerInfo *layerinfo );
 static int msOCIGet2DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *obj, int s, int e, pointObj *pt );
 static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *obj, int s, int e, pointObj *pt );
+static int msOCIGet4DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *obj, int s, int e, pointObj *pt );
 static int msOCIConvertCircle( pointObj *pt );
 static void osFilteritem(layerObj *layer, int function, char *query_str, int mode);
 static void osAggrGetExtent(layerObj *layer, char *query_str, char *geom_column_name, char *table_name);
@@ -168,19 +174,20 @@ static void osConvexHullGetExtent(layerObj *layer, char *query_str, char *geom_c
 static void osGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *srid, rectObj rect);
 static void osNoGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *srid, rectObj rect);
 static double osCalculateArcRadius(pointObj *pnt);
-static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape);
-static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n, int data3d);
+static void osCalculateArc(pointObj *pnt, int data3d, int data4d, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape);
+static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n, int data3d, int data4d);
 static void osShapeBounds ( shapeObj *shp );
-static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d);
-static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int interpretation, int data3d);
-static void osPoint(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d);
-static void osClosedPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int elem_type, int data3d);
-static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d);
-static void osCircle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d);
-static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int data3d);
+static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d, int data4d);
+static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int interpretation, int data3d, int data4d);
+static void osPoint(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d);
+static void osClosedPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int elem_type, int data3d, int data4d);
+static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d);
+static void osCircle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d);
+static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int data3d, int data4d);
 static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, SDOGeometryInd *ind);
 static int osCheck2DGtype(int pIntGtype);
 static int osCheck3DGtype(int pIntGtype);
+static int osCheck4DGtype(int pIntGtype);
 
 /* if an error ocurred call msSetError, sets last_oci_status to MS_FAILURE and return 0;
  * otherwise returns 1 */
@@ -223,6 +230,26 @@ static int TRY( msOracleSpatialHandler *hand, sword status )
 
     return 0; /* error! */
 }
+
+OCIType *get_tdo(char *typename, msOracleSpatialHandler *hand, msOracleSpatialDataHandler *dthand )
+{
+	OCIParam *paramp = NULL;
+	OCIRef *type_ref = NULL;
+	OCIType *tdoe = NULL;
+	int success = 0;
+
+
+	success = TRY( hand, OCIDescribeAny(hand->svchp, hand->errhp, (text *)typename,  (ub4)strlen((char *)typename), OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE, dthand->dschp))
+	        &&TRY( hand, OCIAttrGet((dvoid *)dthand->dschp, (ub4)OCI_HTYPE_DESCRIBE, (dvoid *)&paramp, (ub4 *)0, (ub4)OCI_ATTR_PARAM, hand->errhp))
+	        &&TRY( hand, OCIAttrGet((dvoid *)paramp, (ub4)OCI_DTYPE_PARAM, (dvoid *)&type_ref, (ub4 *)0, (ub4)OCI_ATTR_REF_TDO, hand->errhp))
+	        &&TRY( hand, OCIObjectPin(hand->envhp, hand->errhp, type_ref, (OCIComplexObject *)0, OCI_PIN_ANY, OCI_DURATION_SESSION, OCI_LOCK_NONE, (dvoid **)&tdoe));
+   if (success) 
+    	return tdoe;
+
+   /* if failure, return NULL*/
+   return NULL;
+}
+
 
 /* check last_oci_status for MS_FAILURE (set by TRY()) if an error ocurred return 1;
  * otherwise, returns 0 */
@@ -567,9 +594,9 @@ static void osGeodeticData(int function, int version, char *query_str, char *geo
                      "SDO_FILTER( %s, SDO_CS.VIEWPORT_TRANSFORM(MDSYS.SDO_GEOMETRY("
                      "2003, 0, NULL,"
                      "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                     "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g) ), %s),"
+                     ":ordinates ), :srid),"
                      "'querytype=window') = 'TRUE'",
-                     geom_column_name, rect.minx, rect.miny, rect.maxx, rect.maxy, srid );
+                     geom_column_name);
             break;
         }
         case FUNCTION_RELATE:
@@ -578,9 +605,9 @@ static void osGeodeticData(int function, int version, char *query_str, char *geo
                      "SDO_RELATE( %s, SDO_CS.VIEWPORT_TRANSFORM(MDSYS.SDO_GEOMETRY("
                      "2003, 0, NULL,"
                      "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                     "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g) ), %s),"
+                     ":ordinates ), :srid),"
                      "'mask=anyinteract querytype=window') = 'TRUE'",
-                     geom_column_name, rect.minx, rect.miny, rect.maxx, rect.maxy, srid);
+                     geom_column_name);
             break;
         }
         case FUNCTION_GEOMRELATE:
@@ -589,9 +616,9 @@ static void osGeodeticData(int function, int version, char *query_str, char *geo
                      "SDO_GEOM.RELATE( %s, 'anyinteract', SDO_CS.VIEWPORT_TRANSFORM(MDSYS.SDO_GEOMETRY("
                      "2003, 0, NULL,"
                      "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                     "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g)), %s),"
+                     ":ordinates), :srid),"
                      "%f) = 'TRUE' AND %s IS NOT NULL",
-                     geom_column_name, rect.minx, rect.miny, rect.maxx, rect.maxy, srid, TOLERANCE, geom_column_name );
+                     geom_column_name,  TOLERANCE, geom_column_name );
             break;
         }
         case FUNCTION_NONE:
@@ -604,9 +631,9 @@ static void osGeodeticData(int function, int version, char *query_str, char *geo
                      "SDO_FILTER( %s, SDO_CS.VIEWPORT_TRANSFORM(MDSYS.SDO_GEOMETRY("
                      "2003, 0, NULL,"
                      "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                     "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g) ), %s),"
+                     ":ordinates), :srid),"
                      "'querytype=window') = 'TRUE'",
-                     geom_column_name, rect.minx, rect.miny, rect.maxx, rect.maxy, srid );
+                     geom_column_name );
         }
     }
 }
@@ -620,11 +647,12 @@ static void osNoGeodeticData(int function, int version, char *query_str, char *g
         {
             sprintf( query_str + strlen(query_str),
                      "SDO_FILTER( %s, MDSYS.SDO_GEOMETRY("
-                     "2003, %s, NULL,"
+                     "2003, :srid, NULL,"
                      "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                     "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g) ),"
-                     "'querytype=window') = 'TRUE'",
-                     geom_column_name, srid, rect.minx, rect.miny, rect.maxx, rect.maxy );
+                  //   "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g)"
+                     ":ordinates"
+                     " ),'querytype=window') = 'TRUE'",
+                     geom_column_name);
             break;
         }
         case FUNCTION_RELATE:
@@ -633,20 +661,20 @@ static void osNoGeodeticData(int function, int version, char *query_str, char *g
             {
                 sprintf( query_str + strlen(query_str),
                          "SDO_ANYINTERACT( %s, MDSYS.SDO_GEOMETRY("
-                         "2003, %s, NULL,"
+                         "2003, :srid, NULL,"
                          "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                         "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g))) = 'TRUE'",
-                         geom_column_name, srid, rect.minx, rect.miny, rect.maxx, rect.maxy);
+                         ":ordinates)) = 'TRUE'",
+                         geom_column_name);
             }
             else
             {
                 sprintf( query_str + strlen(query_str),
                          "SDO_RELATE( %s, MDSYS.SDO_GEOMETRY("
-                         "2003, %s, NULL,"
+                         "2003, :srid, NULL,"
                          "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                         "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g) ),"
+                         ":ordinates),"
                          "'mask=anyinteract querytype=window') = 'TRUE'",
-                         geom_column_name, srid, rect.minx, rect.miny, rect.maxx, rect.maxy);
+                         geom_column_name);
             }
             break;
         }
@@ -654,11 +682,11 @@ static void osNoGeodeticData(int function, int version, char *query_str, char *g
         {
             sprintf( query_str + strlen(query_str),
                      "SDO_GEOM.RELATE( %s, 'anyinteract', MDSYS.SDO_GEOMETRY("
-                     "2003, %s, NULL,"
+                     "2003, :srid, NULL,"
                      "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                     "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g)),"
+                     ":ordinates),"
                      "%f) = 'TRUE' AND %s IS NOT NULL",
-                     geom_column_name, srid, rect.minx, rect.miny, rect.maxx, rect.maxy, TOLERANCE, geom_column_name );
+                     geom_column_name, TOLERANCE, geom_column_name );
             break;
         }
         case FUNCTION_NONE:
@@ -669,11 +697,11 @@ static void osNoGeodeticData(int function, int version, char *query_str, char *g
         {
             sprintf( query_str + strlen(query_str),
                      "SDO_FILTER( %s, MDSYS.SDO_GEOMETRY("
-                     "2003, %s, NULL,"
+                     "2003, :srid, NULL,"
                      "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                     "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g) ),"
+                     ":ordinates),"
                      "'querytype=window') = 'TRUE'",
-                     geom_column_name, srid, rect.minx, rect.miny, rect.maxx, rect.maxy );
+                     geom_column_name);
         }
     }
 }
@@ -744,7 +772,7 @@ static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
             else
             {
                 hand->last_oci_status = MS_SUCCESS;
-                strcpy( hand->last_oci_error, "Retrieve z value, but NULL value for z. Setting z to 0." );
+                strcpy( (char *)hand->last_oci_error, "Retrieve z value, but NULL value for z. Setting z to 0." );
                 z = 0;
                 success = 1;
             }
@@ -755,12 +783,68 @@ static int msOCIGet3DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
             pt[n].x = x;
             pt[n].y = y;
 #ifdef USE_POINT_Z_M
-            pt[n].z = z;
+            pt[n].z = z; 
 #endif /* USE_POINT_Z_M */
         }
     }
 
     return success ? n : 0;
+}
+
+static int msOCIGet4DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *obj, int s, int e, pointObj *pt )
+{
+    double x, y;
+    int i, n, success = 1;
+    boolean exists;
+#ifdef USE_POINT_Z_M
+    double z;
+    boolean numnull;
+#endif /* USE_POINT_Z_M */
+    OCINumber *oci_number;
+    
+    for( i=s, n=0; i < e && success; i+=4, n++ ) 
+    {
+        success = TRY( hand,
+          OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
+               && TRY( hand,
+          OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&x ) )
+               && TRY( hand,
+          OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i+1, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
+               && TRY( hand,
+          OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&y ) )
+#ifdef USE_POINT_Z_M
+               && TRY( hand,
+          OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->ordinates, (sb4)i+2, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
+              
+#endif /* USE_POINT_Z_M */
+            ;
+#ifdef USE_POINT_Z_M
+        if (success)
+        {
+            success = TRY(hand, OCINumberIsZero( hand->errhp, oci_number, (boolean *)&numnull));
+            if (success)
+            {
+                success = TRY( hand, OCINumberToReal( hand->errhp, oci_number, (uword)sizeof(double), (dvoid *)&z ) );
+            }
+            else
+            {
+                hand->last_oci_status = MS_SUCCESS;
+                strcpy( (char *)hand->last_oci_error, "Retrieve z value, but NULL value for z. Setting z to 0." );
+                z = 0;
+                success = 1;
+            }
+        }
+#endif /* USE_POINT_Z_M */
+        if (success) 
+        {  
+            pt[n].x = x;
+            pt[n].y = y;
+#ifdef USE_POINT_Z_M
+            pt[n].z = z; 
+    
+#endif /* USE_POINT_Z_M */
+        }
+    }    return success ? n : 0;
 }
 
 /* convert three-point circle to two-point rectangular bounds */
@@ -897,7 +981,7 @@ static double osCalculateArcRadius(pointObj *pnt)
     return ( ( r1*r2*r3 )/( 4*sqrt( rc * (rc-r1) * (rc-r2) * (rc-r3) ) ) );
 }
 
-static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape)
+static void osCalculateArc(pointObj *pnt, int data3d, int data4d, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape)
 {
     double length, ctrl, angle;  
     double divbas, plusbas, cosbas, sinbas = 0;
@@ -912,7 +996,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
         ctrl = length/(2*radius);
 
 #ifdef USE_POINT_Z_M
-        if (data3d)
+        if (data3d||data4d)
         {
             zrange = labs(pnt[0].z-pnt[1].z)/npoints;
             if ((pnt[0].z > pnt[1].z) && side == 1)
@@ -938,7 +1022,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
             arcline.point[0].x = pnt[0].x;
             arcline.point[0].y = pnt[0].y;
 #ifdef USE_POINT_Z_M
-            if (data3d)
+            if (data3d||data4d)
                 arcline.point[0].z = pnt[0].z;
 #endif /* USE_POINT_Z_M */
 
@@ -949,7 +1033,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
                     arcline.point[i].x = pnt[3].x + radius * ((cosbas*cos(angle))-(sinbas*sin(angle)));
                     arcline.point[i].y = pnt[3].y + radius * ((sinbas*cos(angle))+(cosbas*sin(angle)));
 #ifdef USE_POINT_Z_M
-                    if (data3d)
+                    if (data3d||data4d)
                         arcline.point[i].z = pnt[0].z + (zrange*i);
 #endif /* USE_POINT_Z_M */
                 }
@@ -960,7 +1044,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
                         arcline.point[i].x = pnt[3].x + radius * ((cosbas*cos(angle))+(sinbas*sin(angle)));
                         arcline.point[i].y = pnt[3].y + radius * ((sinbas*cos(angle))-(cosbas*sin(angle)));
 #ifdef USE_POINT_Z_M
-                        if (data3d)
+                        if (data3d||data4d)
                             arcline.point[i].z = pnt[0].z + (zrange*i);
 #endif /* USE_POINT_Z_M */
                     }
@@ -969,7 +1053,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
                          arcline.point[i].x = pnt[0].x;
                          arcline.point[i].y = pnt[0].y;
 #ifdef USE_POINT_Z_M
-                         if (data3d)
+                         if (data3d||data4d)
                              arcline.point[i].z = pnt[0].z;
 #endif /* USE_POINT_Z_M */
                     }
@@ -991,7 +1075,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
         arcline.point[1].y = pnt[1].y;
 
 #ifdef USE_POINT_Z_M
-        if(data3d)
+        if(data3d||data4d)
         {
             arcline.point[0].z = pnt[0].z;
             arcline.point[1].z = pnt[1].z;
@@ -1008,7 +1092,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, double area, double radius
 /* Part of this function was based on Terralib function TeGenerateArc
  * found in TeGeometryAlgorith.cpp (www.terralib.org).
  * Part of this function was based on Dr. Ialo (Univali/Cttmar) functions. */
-static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n, int data3d)
+static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n, int data3d, int data4d)
 {
     double mult, plus1, plus2, plus3, bpoint;
     double cx, cy;
@@ -1069,11 +1153,11 @@ static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int 
 
         point5[0] = points.point[i];
         point5[1] = points.point[i+1];
-        osCalculateArc(point5, data3d, area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
+        osCalculateArc(point5, data3d, data4d, area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
 
         point5[0] = points.point[i+1];
         point5[1] = points.point[i+2];
-        osCalculateArc(point5, data3d, area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
+        osCalculateArc(point5, data3d, data4d,  area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
 
     }
     else
@@ -1085,7 +1169,7 @@ static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int 
         arcline.point[1].y = points.point[i+2].y;
 
 #ifdef USE_POINT_Z_M
-        if (data3d)
+        if (data3d||data4d)
         {
             arcline.point[0].z = points.point[i].z;
             arcline.point[1].z = points.point[i+2].z;
@@ -1127,7 +1211,7 @@ static void osShapeBounds ( shapeObj *shp )
     }
 }
 
-static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d)
+static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d, int data4d)
 {
     int max_points = 0;
     int i,f,g;
@@ -1147,7 +1231,7 @@ static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d)
             shapeline.point[g].x = shape->line[i].point[f].x;
             shapeline.point[g].y = shape->line[i].point[f].y;
 #ifdef USE_POINT_Z_M
-            if (data3d)
+            if (data3d||data4d)
                 shapeline.point[g].z = shape->line[i].point[f].z;
 #endif /* USE_POINT_Z_M */
         }
@@ -1161,17 +1245,23 @@ static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d)
     }
 }
 
-static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int interpretation, int data3d)
+static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int interpretation, int data3d, int data4d)
 {
     int n;
 
-    n = (end - start)/2;
-    if (n == interpretation)
-    {
+    //n = (end - start)/2;
+    //n = interpretation;
+    
+    // 
+    
+    //if (n == interpretation)
+   // {
         points.point = (pointObj *)malloc( sizeof(pointObj)*n );
 
         if (data3d)
             n = msOCIGet3DOrdinates( hand, obj, start, end, points.point );
+        else if (data4d)
+            n = msOCIGet4DOrdinates( hand, obj, start, end, points.point );    
         else
             n = msOCIGet2DOrdinates( hand, obj, start, end, points.point );
 
@@ -1182,15 +1272,17 @@ static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeo
             msAddLine( shape, &points );
         }
         free( points.point );
-    }
+   // }
 }
 
-static void osPoint(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d)
+static void osPoint(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d)
 {
     int n;
 
     if (data3d)
         n = msOCIGet3DOrdinates( hand, obj, start, end, pnt );
+    else if (data4d)
+        n = msOCIGet4DOrdinates( hand, obj, start, end,  pnt ); 
     else
         n = msOCIGet2DOrdinates( hand, obj, start, end, pnt ); /* n must be < 5 */
 
@@ -1203,7 +1295,7 @@ static void osPoint(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryOb
     }
 }
 
-static void osClosedPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int elem_type, int data3d)
+static void osClosedPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int elem_type, int data3d, int data4d)
 {
     int n;
 
@@ -1212,6 +1304,8 @@ static void osClosedPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGe
 
     if (data3d)
         n = msOCIGet3DOrdinates( hand, obj, start, end, points.point );
+    else if (data4d)
+      	n = msOCIGet4DOrdinates( hand, obj, start, end, points.point );
     else
         n = msOCIGet2DOrdinates( hand, obj, start, end, points.point );
 
@@ -1224,12 +1318,14 @@ static void osClosedPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGe
     free( points.point );
 }
 
-static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d)
+static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d)
 {
     int n;
 
     if (data3d)
         n = msOCIGet3DOrdinates( hand, obj, start, end, pnt ); /* n must be < 5 */
+    else if (data4d)
+        n = msOCIGet4DOrdinates( hand, obj, start, end, pnt ); /* n must be < 5 */    
     else
         n = msOCIGet2DOrdinates( hand, obj, start, end, pnt ); /* n must be < 5 */
 
@@ -1246,7 +1342,7 @@ static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeomet
         pnt[3].y = pnt[0].y;
         pnt[4] = pnt[0]; 
 #ifdef USE_POINT_Z_M
-        if (data3d)
+        if (data3d||data4d)
         {
             pnt[1].z = pnt[0].z;
             pnt[3].z = pnt[2].z;
@@ -1257,12 +1353,14 @@ static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeomet
     }
 }
 
-static void osCircle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d)
+static void osCircle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d)
 {
     int n;
 
     if (data3d)
         n = msOCIGet3DOrdinates( hand, obj, start, end, pnt ); /* n must be < 5 */
+    else if (data4d)
+        n = msOCIGet4DOrdinates( hand, obj, start, end, pnt ); /* n must be < 5 */    
     else
         n = msOCIGet2DOrdinates( hand, obj, start, end, pnt ); /* n must be < 5 */
 
@@ -1283,7 +1381,7 @@ static void osCircle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryO
     }
 }
 
-static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int data3d)
+static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int data3d, int data4d)
 {
     int n, i;
     lineObj points = {0, NULL};
@@ -1293,6 +1391,8 @@ static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeome
 
     if (data3d)
         n = msOCIGet3DOrdinates( hand, obj, start, end, points.point );
+    else if (data4d)
+        n = msOCIGet4DOrdinates( hand, obj, start, end, points.point );      
     else
         n = msOCIGet2DOrdinates( hand, obj, start, end, points.point );
 
@@ -1302,7 +1402,7 @@ static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeome
         points.numpoints = n;
 
         for (i = 0; i < n-2; i = i+2)
-            osGenerateArc(shape, arcpoints, points, i, n, data3d);
+            osGenerateArc(shape, arcpoints, points, i, n, data3d, data4d);
     }
     free (points.point);
 }
@@ -1335,13 +1435,32 @@ static int osCheck3DGtype(int pIntGtype)
    return MS_FALSE;
 }
 
+static int osCheck4DGtype(int pIntGtype)
+{
+  
+  if (pIntGtype > 4000 && pIntGtype < 4308)
+   {
+      if (pIntGtype > 4007)
+          pIntGtype-= 300;
+
+      if (pIntGtype <= 4007 && pIntGtype != 4004)
+           return MS_TRUE;
+      
+          
+    }
+    
+   return MS_FALSE;   
+}
+
+
+
 static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, SDOGeometryInd *ind)
 {
     int gtype, elem_type, compound_type;
     float compound_lenght, compound_count;
     ub4 etype;
     ub4 interpretation;
-    int nelems, nords, data3d;
+    int nelems, nords, data3d, data4d;
     int elem, ord_start, ord_end;
     boolean exists;
     OCINumber *oci_number;
@@ -1359,6 +1478,7 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
     compound_type = 0;
     compound_count = -1;
     data3d = 0;
+    data4d = 0;
 
     if (ind->_atomic != OCI_IND_NULL)  /* not a null object */
     {
@@ -1376,13 +1496,22 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
         {
             success = (nords%3==0 && nelems%3==0)?1:0; /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
             data3d = 1;
+            
         }
+         else if (success && osCheck4DGtype(gtype))
+        {   
+            success = (nords%4==0 && nelems%3==0)?1:0; /* check %2==0 for 2D geometries; and %3==0 for element info triplets */
+            data4d = 1;
+                  }
+       
 
         if (success)
         {
-            /* reading SDO_POINT from SDO_GEOMETRY for a 2D/3D point geometry */
-            if ((gtype==2001 || gtype==3001) && ind->point._atomic == OCI_IND_NOTNULL && ind->point.x == OCI_IND_NOTNULL && ind->point.y == OCI_IND_NOTNULL)
-            {
+        	 /* reading SDO_POINT from SDO_GEOMETRY for a 2D/3D point geometry */
+            if ((gtype==2001 || gtype==3001 || gtype==4001 ) && ind->point._atomic == OCI_IND_NOTNULL && ind->point.x == OCI_IND_NOTNULL && ind->point.y == OCI_IND_NOTNULL)
+            {   
+            	
+            
                 success = TRY( hand, OCINumberToReal( hand->errhp, &(obj->point.x), (uword)sizeof(double), (dvoid *)&x ) )
                        && TRY( hand, OCINumberToReal( hand->errhp, &(obj->point.y), (uword)sizeof(double), (dvoid *)&y ) );
 
@@ -1396,8 +1525,8 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
                 point5[0].x = x;
                 point5[0].y = y;
 #ifdef USE_POINT_Z_M
-                if (data3d)
-                {
+                if (data3d || data4d)
+                {   
                     if (ind->point.z == OCI_IND_NOTNULL)
                     {
                         success = TRY( hand, OCINumberToReal( hand->errhp, &(obj->point.z), (uword)sizeof(double), (dvoid *)&z ));
@@ -1407,7 +1536,7 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
                             point5[0].z = z;
                     }
                     else
-                        point5[0].z = 0;
+                        point5[0].z = z;
                 }
 #endif /* USE_POINT_Z_M */
                 msAddLine( shape, &points );
@@ -1453,40 +1582,43 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
 
               elem_type = (etype == 1 && interpretation > 1) ? 10 : ((etype%10)*10 + interpretation);
 
+
+//              msDebug("osGetOrdinates elem_type =  %d\n",elem_type);
+ 
               switch (elem_type)
               {
                   case 10: /* point cluster with 'interpretation'-points */
-                      osPointCluster (hand, shape, obj, ord_start, ord_end, points, interpretation, data3d);
+                      osPointCluster (hand, shape, obj, ord_start, ord_end, points, interpretation, data3d, data4d);
                       break;
                   case 11: /* point type */
-                      osPoint(hand, shape, obj, ord_start, ord_end, points, point5, data3d);
+                      osPoint(hand, shape, obj, ord_start, ord_end, points, point5, data3d, data4d);
                       break;
                   case 21: /* line string whose vertices are connected by straight line segments */
                       if (compound_type)
-                          osClosedPolygon(hand, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end, points, elem_type, data3d);
+                          osClosedPolygon(hand, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end, points, elem_type, data3d, data4d);
                       else
-                          osClosedPolygon(hand, shape, obj, ord_start, ord_end, points, elem_type, data3d);
+                          osClosedPolygon(hand, shape, obj, ord_start, ord_end, points, elem_type, data3d, data4d);
                       break;
                   case 22: /* compound type */
                       if (compound_type)
-                          osArcPolygon(hand, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end , points, data3d);
+                          osArcPolygon(hand, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end , points, data3d, data4d);
                       else
-                          osArcPolygon(hand, shape, obj, ord_start, ord_end, points, data3d);
+                          osArcPolygon(hand, shape, obj, ord_start, ord_end, points, data3d, data4d);
                       break;
                   case 31: /* simple polygon with n points, last point equals the first one */
-                      osClosedPolygon(hand, shape, obj, ord_start, ord_end, points, elem_type, data3d);
+                      osClosedPolygon(hand, shape, obj, ord_start, ord_end, points, elem_type, data3d, data4d);
                       break;
                   case 33: /* rectangle defined by 2 points */
-                      osRectangle(hand, shape, obj, ord_start, ord_end, points, point5, data3d);
+                      osRectangle(hand, shape, obj, ord_start, ord_end, points, point5, data3d, data4d);
                       break;
                   case 34: /* circle defined by 3 points */
-                      osCircle(hand, shape, obj, ord_start, ord_end, points, point5, data3d);
+                      osCircle(hand, shape, obj, ord_start, ord_end, points, point5, data3d, data4d);
                       break;
               }
 
               if (compound_count >= compound_lenght)
               {
-                  osCloneShape(&newshape, shape, data3d);
+                  osCloneShape(&newshape, shape, data3d, data4d);
                   msFreeShape(&newshape);
               }
 
@@ -1669,6 +1801,10 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     char table_name[2000], geom_column_name[100], unique[100], srid[100];
     OCIDefine *adtp = NULL;
     OCIDefine **items = NULL;
+    OCINumber oci_number;
+    OCIBind *bnd1p = NULL,  *bnd2p = NULL;
+    
+
 
     /* get layerinfo */
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
@@ -1710,6 +1846,10 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     if (unique[0] == '\0')
         strcpy( unique, "rownum" );
 
+    /* If no SRID is provided, set it to -1 (NULL) for binding */
+    if (strcmp(srid,"NULL") == 0)
+        strcpy(srid,"-1");
+
     sprintf( query_str, "SELECT %s", unique );
 
     /* allocate enough space for items */
@@ -1746,16 +1886,66 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     if (layer->debug)
         msDebug("msOracleSpatialLayerWhichShapes. Using this Sql to retrieve the data: %s\n", query_str);
-
+        
+     if (layer->debug)
+        msDebug("msOracleSpatialLayerWhichShapes. Bind values: srid:%s   minx:%f   miny:%f  maxx:%f   maxy:%f \n", srid, rect.minx, rect.miny, rect.maxx, rect.maxy);
+        
     /* prepare */
     success = TRY( hand, OCIStmtPrepare( dthand->stmthp, hand->errhp, (text *)query_str, (ub4)strlen(query_str), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DEFAULT) );
+    
+     if (layer->debug)
+        msDebug("msOracleSpatialLayerWhichShapes getting ordinate definition.\n");
+
+    /* get the object definition of the ordinate array */
+    ordinates_tdo = get_tdo(SDO_ORDINATE_ARRAY, hand, dthand );
+    
+     if (layer->debug)
+        msDebug("msOracleSpatialLayerWhichShapes converting to OCIColl.\n");
+        
+    /* initialized the collection array */      
+    success = TRY( hand, OCIObjectNew(hand->envhp, hand->errhp, hand->svchp, OCI_TYPECODE_VARRAY, ordinates_tdo, (dvoid *)NULL, OCI_DURATION_SESSION, FALSE, (dvoid **)&ordinates) );  
+    
+    /* convert it to a OCI number and then append minx...maxy to the collection */    
+  	success = TRY ( hand, OCINumberFromReal(hand->errhp, (dvoid *)&(rect.minx), (uword)sizeof(double),(dvoid *)&oci_number))
+  	        &&TRY ( hand, OCICollAppend(hand->envhp, hand->errhp,(dvoid *) &oci_number,(dvoid *)0, (OCIColl *)ordinates))  	        
+  	        &&TRY ( hand, OCINumberFromReal(hand->errhp, (dvoid *)&(rect.miny), (uword)sizeof(double),(dvoid *)&oci_number))
+  	        &&TRY ( hand, OCICollAppend(hand->envhp, hand->errhp,(dvoid *) &oci_number,(dvoid *)0, (OCIColl *)ordinates))
+  	        &&TRY ( hand, OCINumberFromReal(hand->errhp, (dvoid *)&(rect.maxx), (uword)sizeof(double),(dvoid *)&oci_number))
+  	        &&TRY ( hand, OCICollAppend(hand->envhp, hand->errhp,(dvoid *) &oci_number,(dvoid *)0, (OCIColl *)ordinates))
+  	        &&TRY ( hand, OCINumberFromReal(hand->errhp, (dvoid *)&(rect.maxy), (uword)sizeof(double),(dvoid *)&oci_number))
+  	        &&TRY ( hand, OCICollAppend(hand->envhp, hand->errhp,(dvoid *) &oci_number,(dvoid *)0, (OCIColl *)ordinates));
+
+
+ if (layer->debug)
+        msDebug("msOracleSpatialLayerWhichShapes bind by name and object.\n");
+        
+  /* do the actual binding */      
+
+ if (success) {
+     success = TRY( hand,
+            /* bind in srid */
+            OCIBindByName( dthand->stmthp, &bnd2p,  hand->errhp, (text *) ":srid", strlen(":srid"),(ub1 *) srid,  strlen(srid)+1, SQLT_STR, 
+              (dvoid *) 0, (ub2 *) 0, (ub2) 0, (ub4) 0, (ub4 *) 0, OCI_DEFAULT) )
+              && TRY(hand,
+            /* bind in rect by name */
+            OCIBindByName( dthand->stmthp, &bnd1p,  hand->errhp,  (text *)":ordinates", -1, (dvoid *)0, (sb4)0, SQLT_NTY, (dvoid *)0, (ub2 *)0,(ub2 *)0, (ub4)0, (ub4 *)0, (ub4)OCI_DEFAULT))
+              && TRY(hand,
+            /* bind in rect object */
+            OCIBindObject(bnd1p, hand->errhp, ordinates_tdo, (dvoid **)&ordinates, (ub4 *)0, (dvoid **)0, (ub4 *)0));
+   }       
+
+          
+  if (layer->debug)
+        msDebug("msOracleSpatialLayerWhichShapes name and object now bound.\n");
+        
 
     if (success && layer->numitems >= 0)
     {
         for( i=0; i <= layer->numitems && success; ++i )
             success = TRY( hand, OCIDefineByPos( dthand->stmthp, &items[i], hand->errhp, (ub4)i+1, (dvoid *)layerinfo->items[i], (sb4)TEXT_SIZE, SQLT_STR, (dvoid *)0, (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT ) );
     }
-
+    
+    
     if (success)
     {
         success = TRY( hand,
@@ -1764,7 +1954,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
                && TRY( hand,
             /* define object tdo from adtp */
             OCIDefineObject( adtp, hand->errhp, dthand->tdo, (dvoid **)layerinfo->obj, (ub4 *)0, (dvoid **)layerinfo->ind, (ub4 *)0 ) )
-               && TRY( hand,
+               && TRY(hand,
             /* execute */
             OCIStmtExecute( hand->svchp, dthand->stmthp, hand->errhp, (ub4)ARRAY_SIZE, (ub4)0, (OCISnapshot *)NULL, (OCISnapshot *)NULL, (ub4)OCI_DEFAULT ) )
                &&  TRY( hand,
@@ -1958,11 +2148,15 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
         return MS_FAILURE;
     }
 
-    sprintf( query_str, "SELECT * FROM %s", table_name );
+    sprintf( query_str, "SELECT * FROM %s", table_name ); 
+ 
 
     success =  TRY( hand, OCIStmtPrepare( dthand->stmthp, hand->errhp, (text *)query_str, (ub4)strlen(query_str), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DESCRIBE_ONLY) )
             && TRY( hand, OCIStmtExecute( hand->svchp, dthand->stmthp, hand->errhp, (ub4)QUERY_SIZE, (ub4)0, (OCISnapshot *)NULL, (OCISnapshot *)NULL, (ub4)OCI_DESCRIBE_ONLY ) )
             && TRY( hand, OCIAttrGet( (dvoid *)dthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&layer->numitems, (ub4 *)0, OCI_ATTR_PARAM_COUNT, hand->errhp) );
+            
+            
+            
 
     if (!success)
     {
@@ -2000,11 +2194,15 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
     /*Retrive columns name from the user table*/
     for (i = 0; i <= layer->numitems; i++)
     {
+    	 
         success = TRY( hand, OCIParamGet ((dvoid*) dthand->stmthp, (ub4)OCI_HTYPE_STMT,hand->errhp,(dvoid*)&pard, (ub4)i+1))
                && TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,(dvoid*)&rzttype,(ub4 *)0, (ub4) OCI_ATTR_DATA_TYPE, hand->errhp ))
                && TRY( hand, OCIParamGet ((dvoid*) dthand->stmthp, (ub4)OCI_HTYPE_STMT,hand->errhp,(dvoid*)&pard, (ub4)i+1))
                && TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,(dvoid*)&rzt,(ub4 *)&flk_len, (ub4) OCI_ATTR_NAME, hand->errhp ));
-
+              
+       /*   if (layer->debug)
+               msDebug("msOracleSpatialLayerGetItems checking type. Column = %s Type = %d\n", rzt, rzttype);  */    
+                      
         flk = (char *)malloc(sizeof(char*) * flk_len+1);
         if (flk == NULL)
         {
@@ -2016,10 +2214,10 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
             strncpy(flk, rzt, flk_len);
             flk[flk_len] = '\0';
         }
-
+ 
         /*Comapre the column name (flk) with geom_column_name and ignore with true*/
         if (strcmp(flk, geom_column_name) != 0)
-        {
+        {	
             layer->items[count_item] = (char *)malloc(sizeof(char) * flk_len+1);
             if (layer->items[count_item] == NULL)
             {
@@ -2029,19 +2227,18 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
             else
             {
               if (rzttype!=OCI_TYPECODE_BLOB) 
-              {
-                strcpy(layer->items[count_item], flk);
-              }
-              else
-              {
-                strcpy(layer->items[count_item], "null");
-              }
+               {
+               	 strcpy(layer->items[count_item], flk); 
+               }
+               else{
+               	 strcpy(layer->items[count_item], "null");
+               }	         	 
             }
             count_item++;
         }
         else
             existgeom = 1;
-
+     
         strcpy( rzt, "" );
         free(flk); /* Better?!*/
         flk_len = 0;
@@ -2089,8 +2286,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     /* allocate enough space for items */
     if (layer->numitems > 0)
     {
-        if (layerinfo->items_query == NULL)
-            layerinfo->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
+        layerinfo->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
 
         if (layerinfo->items_query == NULL)
         {
@@ -2649,16 +2845,18 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     vtable->LayerIsOpen = msOracleSpatialLayerIsOpen;
     vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
     vtable->LayerNextShape = msOracleSpatialLayerNextShape;
-    vtable->LayerResultsGetShape = msOracleSpatialLayerGetShapeVT; /* no special version, use ...GetShape() */
     vtable->LayerGetShape = msOracleSpatialLayerGetShapeVT;
     vtable->LayerClose = msOracleSpatialLayerClose;
     vtable->LayerGetItems = msOracleSpatialLayerGetItems;
     vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;
+
     /* layer->vtable->LayerGetAutoStyle, use default */
     /* layer->vtable->LayerApplyFilterToLayer, use default */
+
     vtable->LayerCloseConnection = msOracleSpatialLayerClose;
     vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
     vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+
     /* layer->vtable->LayerGetNumFeatures, use default */
 
     return MS_SUCCESS;
@@ -2677,15 +2875,18 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msOracleSpatialLayerIsOpen;
     layer->vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
     layer->vtable->LayerNextShape = msOracleSpatialLayerNextShape;
-    layer->vtable->LayerResultsGetShape = msOracleSpatialLayerGetShapeVT; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msOracleSpatialLayerGetShapeVT;
+
     layer->vtable->LayerClose = msOracleSpatialLayerClose;
     layer->vtable->LayerGetItems = msOracleSpatialLayerGetItems;
     layer->vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;
+
     /* layer->vtable->LayerGetAutoStyle, use default */
+
     layer->vtable->LayerCloseConnection = msOracleSpatialLayerClose;
     layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
     layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
 
