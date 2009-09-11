@@ -132,8 +132,10 @@ msNearestRasterResampler( imageObj *psSrcImage, colorObj offsite,
             /*
              * We test the original floating point values to 
              * avoid errors related to asymmetric rounding around zero.
+             * (Also note bug #3120 regarding nearly redundent x/y < 0 checks).
              */
             if( x[nDstX] < 0.0 || y[nDstX] < 0.0
+                || nSrcX < 0 || nSrcY < 0 
                 || nSrcX >= nSrcXSize || nSrcY >= nSrcYSize )
             {
                 continue;

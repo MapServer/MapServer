@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Improve safety of srcx/y checks in nearest neighbour raster resampler (#3120)
+
 - Added support for 4d geometry types and oci bind variables for Oracle (#3107)
 
 - Fixed WCS processing when both crs and response_crs are specified (#3083)
