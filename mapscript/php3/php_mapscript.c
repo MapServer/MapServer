@@ -47,6 +47,15 @@
 #include <errno.h>
 #endif
 
+/* All gd functions used in this extension (if they are renamed in the
+   "main/php_compat.h" file of php source) should be added here too for
+   compatibility reasons: when php compiles gd as a shared extention */
+#if defined(HAVE_GD_BUNDLED)
+#undef gdImageColorExact                                                                    
+#undef gdImageColorTransparent
+#undef gdImageCopy
+#endif
+
 #define PHPMS_VERSION "($Revision$ $Date$)"
 
 #ifndef DLEXPORT 
