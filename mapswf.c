@@ -1337,8 +1337,8 @@ void msDrawStartShapeUsingIdxSWF(mapObj *map, layerObj *layer, imageObj *image,
     if (map && layer && image && cachePtr->shapeindex >=0)
     {
         msInitShape(&shape);
-        retval = msLayerGetShape(layer, &shape, cachePtr->tileindex,
-                                 cachePtr->shapeindex);
+        retval = msLayerResultsGetShape(layer, &shape, cachePtr->tileindex,
+                                 cachePtr->shapeindex); 
 	  
         if (retval == MS_SUCCESS) 
         {
