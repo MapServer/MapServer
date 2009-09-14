@@ -1888,6 +1888,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   char *schemalocation = NULL;
   const char *updatesequence=NULL;
   const char *sldenabled=NULL;
+  char *pszTmp=NULL;
   int i;
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
@@ -2233,8 +2234,45 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                  map->name);
   msOWSPrintEncodeParam(stdout, "MAP.NAME", map->name, OWS_NOERR,
                         "    <Name>%s</Name>\n", NULL);
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "title",
-                           OWS_WARN, "    <Title>%s</Title>\n", map->name);
+
+  if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_title"))
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "rootlayer_title", OWS_WARN, "    <Title>%s</Title>\n", map->name);
+
+  else 
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "title", OWS_WARN, "    <Title>%s</Title>\n", map->name);
+
+  if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_abstract"))
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "rootlayer_abstract", OWS_NOERR, "    <Abstract>%s</Abstract>\n", map->name);
+  else
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "abstract", OWS_NOERR, "    <Abstract>%s</Abstract>\n", map->name);
+
+
+  if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_keywordlist"))
+    pszTmp = strdup("rootlayer_keywordlist");
+   else
+    pszTmp = strdup("keywordlist");
+
+  if (nVersion == OWS_1_0_0)
+  {
+     /* <Keywords> in V 1.0.0 */
+     /* The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces */
+     msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), "MO",
+                                  pszTmp,
+                                  "    <Keywords>",
+                                  "    </Keywords>\n",
+                                  "%s ", NULL);
+  }
+  else
+  {
+     /* <KeywordList><Keyword> ... in V1.0.6+ */
+     msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), "MO",
+                                  pszTmp,
+                                  "    <KeywordList>\n",
+                                  "    </KeywordList>\n",
+                                  "     <Keyword>%s</Keyword>\n", NULL);
+  }
+
+  msFree(pszTmp);
 
   /* According to normative comments in the 1.0.7 DTD, the root layer's SRS tag */
   /* is REQUIRED.  It also suggests that we use an empty SRS element if there */
