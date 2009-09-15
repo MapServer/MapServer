@@ -165,6 +165,16 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
           MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
           bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
         }
+
+        if(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
+          style->outlinewidth = 1;
+          bindDoubleAttribute(&style->outlinewidth, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index]);
+        }
+
+        if(style->bindings[MS_STYLE_BINDING_OPACITY].index != -1) {
+          style->opacity = 100;
+          bindIntegerAttribute(&style->opacity, shape->values[style->bindings[MS_STYLE_BINDING_OPACITY].index]);
+        }
       }
     } /* next styleObj */
 

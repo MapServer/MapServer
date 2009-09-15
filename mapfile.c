@@ -2053,7 +2053,15 @@ int loadStyle(styleObj *style) {
       if(getDouble(&(style->offsety)) == -1) return(MS_FAILURE);
       break;
     case(OPACITY):
-      if(getInteger(&(style->opacity)) == -1) return(MS_FAILURE);
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+      if(symbol == MS_NUMBER)
+        style->opacity = (int) msyynumber;
+      else {
+        if (style->bindings[MS_STYLE_BINDING_OPACITY].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_OPACITY].item);
+        style->bindings[MS_STYLE_BINDING_OPACITY].item = strdup(msyytext);
+        style->numbindings++;
+      }
       break;
     case(OUTLINECOLOR):
       if(loadColor(&(style->outlinecolor), &(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR])) != MS_SUCCESS) return(MS_FAILURE);
@@ -2095,10 +2103,19 @@ int loadStyle(styleObj *style) {
         return(-1);
       break;
     case(OUTLINEWIDTH):
-      if(getDouble(&(style->outlinewidth)) == -1) return(MS_FAILURE);
-      if(style->outlinewidth < 0) {
-          msSetError(MS_MISCERR, "Invalid WIDTH, must be greater than 0" , "loadStyle()");
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+      if(symbol == MS_NUMBER) {
+        style->outlinewidth = (double) msyynumber;
+        if(style->outlinewidth < 0) {
+          msSetError(MS_MISCERR, "Invalid OUTLINEWIDTH, must be greater than 0" , "loadStyle()");
           return(MS_FAILURE);
+        }
+      }
+      else {
+        if (style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item);
+        style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item = strdup(msyytext);
+        style->numbindings++;
       }
       break;
     case(SIZE):
@@ -2220,9 +2237,12 @@ void writeStyle(styleObj *style, FILE *stream) {
   if(style->minsize != MS_MINSYMBOLSIZE) fprintf(stream, "        MINSIZE %g\n", style->minsize);
   if(style->maxwidth != MS_MAXSYMBOLWIDTH) fprintf(stream, "        MAXWIDTH %g\n", style->maxwidth);
   if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %g\n", style->minwidth);  
-  if(style->opacity != 100) fprintf(stream, "        OPACITY %d\n", style->opacity);
-  if(style->outlinewidth > 0) fprintf(stream, "        OUTLINEWIDTH %g\n", style->outlinewidth);
-  
+  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OPACITY].item)
+    fprintf(stream, "        OPACITY [%s]\n", style->bindings[MS_STYLE_BINDING_OPACITY].item);
+  else if(style->opacity != 100) fprintf(stream, "        OPACITY %d\n", style->opacity);
+  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item)
+    fprintf(stream, "        OUTLINEWIDTH [%s]\n", style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item);
+  else if(style->outlinewidth > 0) fprintf(stream, "        OUTLINEWIDTH %g\n", style->outlinewidth);
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item)
       fprintf(stream, "        OUTLINECOLOR [%s]\n", style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item);
   else writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
