@@ -1402,9 +1402,14 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape, int random) {
             else {
                 uid = 0;
             }
-
+            if( layer->debug > 4 ) {
+                msDebug("msPostGISReadShape: Setting shape->index = %d\n", uid);
+            }
             shape->index = uid;
         } else {
+            if( layer->debug > 4 ) {
+                msDebug("msPostGISReadShape: Setting shape->index = %d\n", layerinfo->rownum);
+            }
             shape->index = layerinfo->rownum;
         }
 
@@ -1771,8 +1776,8 @@ int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape) {
     while (shape->type == MS_SHAPE_NULL) {
         if (layerinfo->rownum < PQntuples(layerinfo->pgresult)) {
             int rv;
-            /* Retrieve this shape, random access mode. */
-            rv = msPostGISReadShape(layer, shape, 1);
+            /* Retrieve this shape, cursor access mode. */
+            rv = msPostGISReadShape(layer, shape, 0);
             if( shape->type != MS_SHAPE_NULL ) {
                 (layerinfo->rownum)++; /* move to next shape */
                 return MS_SUCCESS;
@@ -1840,7 +1845,7 @@ int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, lo
 
     /* Check the validity of the requested record number. */
     if( record >= PQntuples(pgresult) ) {
-        msDebug("msPostGISLayerResultsGetShape got record request (%d) but only has %d tuples", record, PQntuples(pgresult));
+        msDebug("msPostGISLayerResultsGetShape got record request (%d) but only has %d tuples.\n", record, PQntuples(pgresult));
         msSetError( MS_MISCERR,
                     "Got request larger than result set.",
                     "msPostGISLayerResultsGetShape()");
@@ -1852,7 +1857,7 @@ int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, lo
     /* We don't know the shape type until we read the geometry. */
     shape->type = MS_SHAPE_NULL;
 
-	/* Return the shape, result set mode. */
+	/* Return the shape, cursor access mode. */
     result = msPostGISReadShape(layer, shape, 0);
 
     return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : MS_SUCCESS;

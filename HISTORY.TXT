@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fix problem with overflowing shape->index for (most) query modes (#2850)
+
 - Useful error message when PK is missing and data is subselect (#3124)
 
 - Add WMS root Layer metadata support (#3121)
