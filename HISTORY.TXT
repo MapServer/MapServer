@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Useful error message when PK is missing and data is subselect (#3124)
+
 - Add WMS root Layer metadata support (#3121)
 
 - Fixed build problem of PHP/Mapscript when php is compiled with gd as

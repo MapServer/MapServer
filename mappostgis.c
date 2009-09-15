@@ -677,6 +677,10 @@ int msPostGISParseData(layerObj *layer) {
     ** primary key on the table.
     */
     if ( ! (layerinfo->uid) ) {
+        if ( strstr(layerinfo->fromsource, " ") ) {
+            msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  You must specifiy 'using unique' when supplying a subselect in the data definition.", "msPostGISParseData()");
+            return MS_FAILURE;
+        }
         if ( msPostGISRetrievePK(layer) != MS_SUCCESS ) {
             /* No user specified unique id so we will use the PostgreSQL oid */
             /* TODO: Deprecate this, oids are deprecated in PostgreSQL */
