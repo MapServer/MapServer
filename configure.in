@@ -2223,8 +2223,8 @@ else
 
 
     dnl Check whether msDebug() calls need non-blocking stderr
-    if test -n "$APACHE_VERSION" -a `expr "$APACHE_VERSION" \>= "2000000"` = 1 ; then
-      AC_MSG_RESULT([        Your system is apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking for msDebug() due to Apache 2.x bug (see MapServer bug 458 or Apache bug 22030).])
+    if test -n "$APACHE_VERSION" -a `expr "$APACHE_VERSION" \>= "2000000"` = 1 -a `expr "$APACHE_VERSION" \< "2000049"` = 1 ; then
+      AC_MSG_RESULT([        Your system is apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking for msDebug() due to Apache 2.0.0-2.0.48 bug (see MapServer bug 458 or Apache bug 22030).])
       DEBUG_FLAGS="${DEBUG_FLAGS} -DNEED_NONBLOCKING_STDERR"
     fi
 
