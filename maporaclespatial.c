@@ -3021,6 +3021,12 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
   return MS_FAILURE;
 }
 
+int msOracleSpatialLayerResultGetShape(layerObj *layer, shapeObj *shape, int tile, long record )
+{
+  msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerResultGetShape" );
+  return MS_FAILURE;
+}
+
 int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
 {
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerGetExtent()" );
