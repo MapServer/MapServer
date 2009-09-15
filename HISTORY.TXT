@@ -23,6 +23,8 @@ Current Version (SVN trunk):
 
 - Added support for 4d geometry types and oci bind variables for Oracle (#3107)
 
+- Implement SECTION support for the WCS 1.1 GetCapabilities request (#3105)
+
 - Fixed WCS processing when both crs and response_crs are specified (#3083)
 
 - Fixed msFreeMap causing memory corruption in msFreeOutputFormat (#3113)
