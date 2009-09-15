@@ -1808,6 +1808,7 @@ int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, lo
     PGresult *pgresult = NULL;
     msPostGISLayerInfo *layerinfo = NULL;
 	int result = MS_SUCCESS;
+	int status;
 
     assert(layer != NULL);
     assert(layer->layerinfo != NULL);
@@ -1826,10 +1827,11 @@ int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, lo
                     "msPostGISLayerResultsGetShape()");
         return MS_FAILURE;
     }
+    status = PQresultStatus(pgresult);
     if ( layer->debug > 1 ) {
-        msDebug("msPostGISLayerResultsGetShape query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult));
+        msDebug("msPostGISLayerResultsGetShape query status: %s (%d)\n", PQresStatus(status), status);
     }    
-    if( PQresultStatus(pgresult) != PGRES_COMMAND_OK ) {
+    if( ! ( status == PGRES_COMMAND_OK || status == PGRES_TUPLES_OK) ) {
         msSetError( MS_MISCERR,
                     "PostgreSQL result set is not ready.",
                     "msPostGISLayerResultsGetShape()");
@@ -1838,8 +1840,9 @@ int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, lo
 
     /* Check the validity of the requested record number. */
     if( record >= PQntuples(pgresult) ) {
+        msDebug("msPostGISLayerResultsGetShape got record request (%d) but only has %d tuples", record, PQntuples(pgresult));
         msSetError( MS_MISCERR,
-                    "PostgreSQL result set is not ready.",
+                    "Got request larger than result set.",
                     "msPostGISLayerResultsGetShape()");
         return MS_FAILURE;
     }
