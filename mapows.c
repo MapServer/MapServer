@@ -1618,6 +1618,9 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
   } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=epsg:")) != NULL && strlen(value) < 20) {
     sprintf(epsgCode, "EPSG:%s", value+10);
     return epsgCode;
+  } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=crs:")) != NULL && strlen(value) < 20) {
+    sprintf(epsgCode, "CRS:%s", value+9);
+    return epsgCode;
   } else if (proj && proj->numargs > 0 && (strncasecmp(proj->args[0], "AUTO:", 5) == 0 ||
                                            strncasecmp(proj->args[0], "AUTO2:", 6) == 0)) {
     return proj->args[0];
