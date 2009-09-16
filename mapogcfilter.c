@@ -604,9 +604,14 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
     psLayer->resultcache->bounds.maxx = -1;
     psLayer->resultcache->bounds.maxy = -1;
 
+    /*
+      At this point a msQuery was called successfully and the layer is still open.
+      No need to reopen it and close it.
+      These changes are related to RFC #52 Bug 3069
     status = msLayerOpen(psLayer);
     if (status != MS_SUCCESS) 
       return;
+    */
     annotate = msEvalContext(map, psLayer, psLayer->labelrequires);
     if(map->scaledenom > 0) 
     {
@@ -642,8 +647,11 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
           msMergeRect(&(psLayer->resultcache->bounds), &shape.bounds);
     }
 
-    msLayerClose(psLayer);
-
+    /*
+      At this point a msQuery was called successfully and the layer is still open.
+      No need to reopen and close it. These changes are related to RFC #52 Bug 3069.
+      msLayerClose(psLayer);
+    */
 }
 
 /************************************************************************/
