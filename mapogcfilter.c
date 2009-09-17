@@ -604,14 +604,11 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
     psLayer->resultcache->bounds.maxx = -1;
     psLayer->resultcache->bounds.maxy = -1;
 
-    /*
-      At this point a msQuery was called successfully and the layer is still open.
-      No need to reopen it and close it.
-      These changes are related to RFC #52 Bug 3069
+
     status = msLayerOpen(psLayer);
     if (status != MS_SUCCESS) 
       return;
-    */
+    
     annotate = msEvalContext(map, psLayer, psLayer->labelrequires);
     if(map->scaledenom > 0) 
     {
@@ -620,14 +617,15 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
         if((psLayer->labelminscaledenom != -1) && (map->scaledenom < psLayer->labelminscaledenom)) 
           annotate = MS_FALSE;
     }
-    status = msLayerWhichItems(psLayer, MS_FALSE, NULL);
+    status = msLayerWhichItems(psLayer, MS_TRUE, NULL);
     if (status != MS_SUCCESS) 
       return;
 
     for (i=0; i<nSize; i++)
     {
         msInitShape(&shape);
-        status = msLayerGetShape(psLayer, &shape, -1, anValues[i]);
+        status = msLayerResultsGetShape(psLayer, &shape, -1, anValues[i]);
+
         if (status != MS_SUCCESS)
           nClassIndex = -1;
         else
