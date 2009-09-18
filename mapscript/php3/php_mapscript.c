@@ -231,6 +231,7 @@ DLEXPORT void php3_ms_lyr_moveClassDown(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_removeClass(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_isVisible(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setConnectionType(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getGridIntersectionCoordinates(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_updateFromString(INTERNAL_FUNCTION_PARAMETERS);
@@ -840,6 +841,7 @@ function_entry php_layer_class_functions[] = {
     {"moveclassdown",   php3_ms_lyr_moveClassDown,      NULL},
     {"removeclass",     php3_ms_lyr_removeClass,        NULL},
     {"isvisible",       php3_ms_lyr_isVisible,          NULL},
+    {"getgridintersectioncoordinates",       php3_ms_lyr_getGridIntersectionCoordinates,          NULL},
     {NULL, NULL, NULL}
 };
 
@@ -8952,6 +8954,158 @@ DLEXPORT void php3_ms_lyr_isVisible(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+
+/**********************************************************************
+ *                        layer->getGridIntersctionCoordinates()
+ **********************************************************************/
+
+/* {{{ proto int layer.getGridIntersctionCoordinates()
+
+*/
+DLEXPORT void php3_ms_lyr_getGridIntersectionCoordinates(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    layerObj    *self=NULL;
+    mapObj      *parent_map = NULL;
+    graticuleIntersectionObj *pasValues=NULL;
+    HashTable   *list=NULL;
+    pval *tmp_arr, *tmp_arr1;
+    int i=0;
+
+
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) > 0) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (array_init(return_value) == FAILURE) 
+      RETURN_FALSE;
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list TSRMLS_CC, E_ERROR);
+    if (self->connectiontype != MS_GRATICULE)
+    {
+        php3_error(E_ERROR, "GetGridIntersectionCoordinates failed: Layer is not of graticule type"); 
+        RETURN_FALSE;
+    }
+    if (self != NULL && parent_map != NULL)
+    {
+        pasValues = msGraticuleLayerGetIntersectionPoints(parent_map, self);
+        if (pasValues == NULL)
+          RETURN_FALSE;
+
+        /*TOP*/
+        add_assoc_double(return_value, "topnumpoints", pasValues->nTop);
+
+        MAKE_STD_ZVAL(tmp_arr1);
+        array_init(tmp_arr1);
+        for (i=0; i<pasValues->nTop; i++)
+        {
+            add_next_index_string(tmp_arr1, pasValues->papszTopLabels[i],1);
+        }
+        zend_hash_update(Z_ARRVAL_P(return_value), "toplabels", strlen("toplabels")+1, &tmp_arr1, 
+                         sizeof(tmp_arr1), NULL);
+
+        MAKE_STD_ZVAL(tmp_arr1);
+        array_init(tmp_arr1);
+        for (i=0; i<pasValues->nTop; i++)
+        {
+            add_next_index_double(tmp_arr1, pasValues->pasTop[i].x);
+            add_next_index_double(tmp_arr1, pasValues->pasTop[i].y);
+            
+        }
+
+        zend_hash_update(Z_ARRVAL_P(return_value), "toppoints", strlen("toppoints")+1, &tmp_arr1, 
+                         sizeof(tmp_arr1), NULL);
+
+        /*BOTTOM*/
+
+        add_assoc_double(return_value, "bottomnumpoints", pasValues->nBottom);
+
+        MAKE_STD_ZVAL(tmp_arr1);
+        array_init(tmp_arr1);
+        for (i=0; i<pasValues->nBottom; i++)
+        {
+            add_next_index_string(tmp_arr1, pasValues->papszBottomLabels[i],1);
+        }
+        zend_hash_update(Z_ARRVAL_P(return_value), "bottomlabels", strlen("bottomlabels")+1, &tmp_arr1, 
+                         sizeof(tmp_arr1), NULL);
+
+        MAKE_STD_ZVAL(tmp_arr1);
+        array_init(tmp_arr1);
+        for (i=0; i<pasValues->nBottom; i++)
+        {
+            add_next_index_double(tmp_arr1, pasValues->pasBottom[i].x);
+            add_next_index_double(tmp_arr1, pasValues->pasBottom[i].y);
+            
+        }
+
+        zend_hash_update(Z_ARRVAL_P(return_value), "bottompoints", strlen("bottompoints")+1, &tmp_arr1, 
+                         sizeof(tmp_arr1), NULL);
+
+
+        /*LEFT*/
+        add_assoc_double(return_value, "leftnumpoints", pasValues->nLeft);
+
+        MAKE_STD_ZVAL(tmp_arr1);
+        array_init(tmp_arr1);
+        for (i=0; i<pasValues->nLeft; i++)
+        {
+            add_next_index_string(tmp_arr1, pasValues->papszLeftLabels[i],1);
+        }
+        zend_hash_update(Z_ARRVAL_P(return_value), "leftlabels", strlen("leftlabels")+1, &tmp_arr1, 
+                         sizeof(tmp_arr1), NULL);
+
+        MAKE_STD_ZVAL(tmp_arr1);
+        array_init(tmp_arr1);
+        for (i=0; i<pasValues->nLeft; i++)
+        {
+            add_next_index_double(tmp_arr1, pasValues->pasLeft[i].x);
+            add_next_index_double(tmp_arr1, pasValues->pasLeft[i].y);
+            
+        }
+
+        zend_hash_update(Z_ARRVAL_P(return_value), "leftpoints", strlen("leftpoints")+1, &tmp_arr1, 
+                         sizeof(tmp_arr1), NULL);
+
+
+        /*RIGHT*/
+        add_assoc_double(return_value, "rightnumpoints", pasValues->nRight);
+
+        MAKE_STD_ZVAL(tmp_arr1);
+        array_init(tmp_arr1);
+        for (i=0; i<pasValues->nRight; i++)
+        {
+            add_next_index_string(tmp_arr1, pasValues->papszRightLabels[i],1);
+        }
+        zend_hash_update(Z_ARRVAL_P(return_value), "rightlabels", strlen("rightlabels")+1, &tmp_arr1, 
+                         sizeof(tmp_arr1), NULL);
+
+        MAKE_STD_ZVAL(tmp_arr1);
+        array_init(tmp_arr1);
+        for (i=0; i<pasValues->nRight; i++)
+        {
+            add_next_index_double(tmp_arr1, pasValues->pasRight[i].x);
+            add_next_index_double(tmp_arr1, pasValues->pasRight[i].y);
+            
+        }
+
+        zend_hash_update(Z_ARRVAL_P(return_value), "rightpoints", strlen("rightpoints")+1, &tmp_arr1, 
+                         sizeof(tmp_arr1), NULL);
+        
+        msGraticuleLayerFreeIntersectionPoints(pasValues);
+
+    }
+    else
+      RETURN_FALSE;
+}
+/* }}} */
 
 /*=====================================================================
  *                 PHP function wrappers - labelObj class

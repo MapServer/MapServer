@@ -1126,6 +1126,22 @@ typedef struct
   char    *labelformat;
 } graticuleObj;
 
+typedef struct
+{
+  int nTop;
+  pointObj *pasTop;
+  char  **papszTopLabels;
+  int nBottom;
+  pointObj *pasBottom;
+  char  **papszBottomLabels;
+  int nLeft;
+  pointObj *pasLeft;
+  char  **papszLeftLabels;
+  int nRight;
+  pointObj *pasRight;
+  char  **papszRightLabels;
+  
+}graticuleIntersectionObj;
 
 struct layerVTable;
 typedef struct layerVTable layerVTableObj;
@@ -2429,6 +2445,17 @@ MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *style, char *transform);
 MS_DLL_EXPORT char *msStyleGetGeomTransform(styleObj *style);
 /* ==================================================================== */
 /*      end of prototypes for functions in mapgeomtransform.c                 */
+/* ==================================================================== */
+
+
+/* ==================================================================== */
+/*      prototypes for functions in mapgraticule.c                      */
+/* ==================================================================== */
+MS_DLL_EXPORT graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map, layerObj *layer);
+MS_DLL_EXPORT void msGraticuleLayerFreeIntersectionPoints( graticuleIntersectionObj *psValue);
+
+/* ==================================================================== */
+/*      end of prototypes for functions in mapgraticule.c               */
 /* ==================================================================== */
 
 #endif

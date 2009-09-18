@@ -309,6 +309,9 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
       }
 
       dDeltaX = (pInfo->dwhichlongitude - pInfo->pboundinglines[1].point[0].x) / (pInfo->pboundinglines[1].point[1].x - pInfo->pboundinglines[1].point[0].x);
+      if (dDeltaX < 0)
+        dDeltaX=dDeltaX*-1;
+
       dStartY = (pInfo->pboundinglines[1].point[1].y - pInfo->pboundinglines[1].point[0].y) * dDeltaX + pInfo->pboundinglines[1].point[0].y;
       shape->line->numpoints = (int) 2;
       shape->line->point = (pointObj *) malloc( sizeof( pointObj ) * 2 );
@@ -333,6 +336,9 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
       }
 
       dDeltaX = (pInfo->dwhichlongitude - pInfo->pboundinglines[0].point[0].x) / (pInfo->pboundinglines[0].point[1].x - pInfo->pboundinglines[0].point[0].x );
+      if (dDeltaX < 0)
+        dDeltaX=dDeltaX*-1;
+
       dStartY = (pInfo->pboundinglines[0].point[1].y - pInfo->pboundinglines[0].point[0].y) * dDeltaX + pInfo->pboundinglines[0].point[1].y;
       shape->line->numpoints = (int) 2;
       shape->line->point = (pointObj *) malloc( sizeof( pointObj ) * 2 );
@@ -386,6 +392,9 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
       }
 
       dDeltaY = (pInfo->dwhichlatitude - pInfo->pboundinglines[2].point[0].y) / (pInfo->pboundinglines[2].point[1].y - pInfo->pboundinglines[2].point[0].y );
+      if (dDeltaY < 0)
+        dDeltaY= dDeltaY*-1;
+
       dStartX = (pInfo->pboundinglines[2].point[1].x - pInfo->pboundinglines[2].point[0].x) * dDeltaY + pInfo->pboundinglines[2].point[0].x;
       shape->line->numpoints = (int) 2;
       shape->line->point    = (pointObj *) malloc( sizeof( pointObj ) * 2 );
@@ -410,6 +419,9 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
       }
 
       dDeltaY = (pInfo->dwhichlatitude - pInfo->pboundinglines[3].point[0].y) / (pInfo->pboundinglines[3].point[1].y - pInfo->pboundinglines[3].point[0].y );
+      if (dDeltaY < 0)
+        dDeltaY= dDeltaY*-1;
+
       dStartX = (pInfo->pboundinglines[3].point[1].x - pInfo->pboundinglines[3].point[0].x) * dDeltaY + pInfo->pboundinglines[3].point[0].x;
       shape->line->numpoints = (int) 2;
       shape->line->point = (pointObj *) malloc( sizeof( pointObj ) * 2 );
@@ -532,6 +544,477 @@ int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int 
 {
   return MS_SUCCESS;
 }
+
+
+/************************************************************************/
+/*                  msGraticuleLayerFreeIntersectionPoints              */
+/*                                                                      */
+/*      Free intersection object.                                       */
+/************************************************************************/
+void msGraticuleLayerFreeIntersectionPoints( graticuleIntersectionObj *psValue)
+{
+    int i=0;
+    if (psValue)
+    {
+        for (i=0; i<psValue->nTop; i++)
+          msFree(psValue->papszTopLabels[i]);
+        msFree(psValue->papszTopLabels);
+        msFree(psValue->pasTop);
+
+        for (i=0; i<psValue->nBottom; i++)
+          msFree(psValue->papszBottomLabels[i]);
+        msFree(psValue->papszBottomLabels);
+        msFree(psValue->pasBottom);
+
+
+        for (i=0; i<psValue->nLeft; i++)
+          msFree(psValue->papszLeftLabels[i]);
+        msFree(psValue->papszLeftLabels);
+        msFree(psValue->pasLeft);
+        
+        for (i=0; i<psValue->nRight; i++)
+          msFree(psValue->papszRightLabels[i]);
+        msFree(psValue->papszRightLabels);
+        msFree(psValue->pasRight);
+
+        msFree(psValue);
+    }
+}
+
+
+/************************************************************************/
+/*                  msGraticuleLayerInitIntersectionPoints              */
+/*                                                                      */
+/*      init intersection object.                                       */
+/************************************************************************/
+static void msGraticuleLayerInitIntersectionPoints( graticuleIntersectionObj *psValue)
+{
+    if (psValue)
+    {
+        psValue->nTop = 0;
+        psValue->pasTop = NULL;
+        psValue->papszTopLabels = NULL;
+        psValue->nBottom = 0;
+        psValue->pasBottom = NULL;
+        psValue->papszBottomLabels = NULL;
+        psValue->nLeft = 0;
+        psValue->pasLeft = NULL;
+        psValue->papszLeftLabels = NULL;
+        psValue->nRight = 0;
+        psValue->pasRight = NULL;
+        psValue->papszRightLabels = NULL;
+    }
+}
+
+
+/************************************************************************/
+/*                  msGraticuleLayerGetIntersectionPoints               */
+/*                                                                      */
+/*      Utility function thar returns all intersection positions and    */
+/*      labels (4 sides of the map) for a grid layer.                   */
+/************************************************************************/
+graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map, 
+                                                                layerObj *layer)
+{
+    
+    shapeObj    shapegrid, tmpshape;
+    rectObj     searchrect;
+    int         status, retcode=MS_SUCCESS;
+    pointObj oFirstPoint;
+    pointObj oLastPoint;
+    lineObj oLineObj;
+    int bHori = 0;
+    rectObj cliprect;
+    graticuleObj   *pInfo  = NULL;
+    double dfTmp;
+    char *pszTmpText = NULL;
+    graticuleIntersectionObj *psValues = NULL;
+    int i=0;
+
+    if (layer->connectiontype != MS_GRATICULE)
+      return NULL;
+
+    pInfo  = (graticuleObj *) layer->layerinfo;
+
+    /*set cellsize if bnot already set*/
+    if (map->cellsize == 0)
+      map->cellsize = msAdjustExtent(&(map->extent),map->width,map->height);
+
+    psValues = (graticuleIntersectionObj *)malloc(sizeof(graticuleIntersectionObj));
+    msGraticuleLayerInitIntersectionPoints(psValues);
+
+    if(layer->transform == MS_TRUE)
+    searchrect = map->extent;
+    else {
+      searchrect.minx = searchrect.miny = 0;
+      searchrect.maxx = map->width-1;
+      searchrect.maxy = map->height-1;
+    }
+  
+#ifdef USE_PROJ
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+      msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
+#endif
+ 
+    msLayerOpen(layer);
+   
+    status = msLayerWhichShapes(layer, searchrect);
+    if(status == MS_DONE) { /* no overlap */
+      msLayerClose(layer);
+      return NULL;
+    } else if(status != MS_SUCCESS) {
+      msLayerClose(layer);
+      return NULL;
+    }
+  
+    /* step through the target shapes */
+    msInitShape(&shapegrid);
+    cliprect.minx = map->extent.minx- map->cellsize;
+    cliprect.miny = map->extent.miny- map->cellsize;
+    cliprect.maxx = map->extent.maxx + map->cellsize;
+    cliprect.maxy = map->extent.maxy + map->cellsize;
+
+    //clip using the layer projection
+    //msProjectRect(&map->projection , &layer->projection,  &cliprect);
+
+    while((status = msLayerNextShape(layer, &shapegrid)) == MS_SUCCESS) 
+    {
+        /*don't really need a class here*/
+        /*
+          shapegrid.classindex = msShapeGetClass(layer, &shapegrid, map->scaledenom, NULL, 0);
+          if((shapegrid.classindex == -1) || (layer->class[shapegrid.classindex]->status == MS_OFF)) {
+        msFreeShape(&shapegrid);
+        continue;
+        }
+        */
+       
+      msInitShape(&tmpshape);
+      msCopyShape(&shapegrid, &tmpshape);      
+      //status = msDrawShape(map, layer, &tmpshape, image, -1);
+      
+      if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+        msProjectShape(&layer->projection, &map->projection, &shapegrid);
+
+      msClipPolylineRect(&shapegrid, cliprect);
+     
+#ifdef USE_AGG
+      if(MS_RENDERER_AGG(map->outputformat))
+        msTransformShapeAGG(&shapegrid, map->extent, map->cellsize);
+#else
+      msTransformShapeToPixel(&shapegrid, map->extent, map->cellsize);
+#endif
+     
+ 
+      if(shapegrid.numlines <= 0 || shapegrid.line[0].numpoints < 2) { /* once clipped the shape didn't need to be drawn */
+        msFreeShape(&shapegrid);
+        msFreeShape(&tmpshape);
+        continue;
+      }
+
+      
+
+      if(shapegrid.numlines >= 1 && shapegrid.line[0].numpoints >=2)// && shapegrid.text)
+      {         
+          int iTmpLine = 0;
+          int nNumPoints = 0;
+          /*grid code seems to retunr lines that can double cross the extenst??*/
+          /*creating a more than one clipped shape. Take the shape that has the most
+            points, which should be the most likley to be correct*/
+          
+          if (shapegrid.numlines > 1)
+          {
+              for (i=0; i<shapegrid.numlines; i++)
+              {
+                  if (shapegrid.line[i].numpoints > nNumPoints)
+                  {
+                      nNumPoints = shapegrid.line[i].numpoints;
+                      iTmpLine = i;
+                  }
+              }
+          }
+          /* get the first and last point*/
+          oFirstPoint.x = shapegrid.line[iTmpLine].point[0].x;
+          oFirstPoint.y = shapegrid.line[iTmpLine].point[0].y;
+          oLineObj = shapegrid.line[iTmpLine];
+          oLastPoint.x = oLineObj.point[oLineObj.numpoints-1].x;
+          oLastPoint.y = oLineObj.point[oLineObj.numpoints-1].y;
+
+
+          //if (layer->numclasses > 0 && layer->class[0]->numstyles > 0)
+          
+          /*horzontal or Vertical*/
+          //bHori = 0;
+          //if (abs(oFirstPoint.x - oLastPoint.x) > abs(oFirstPoint.y - oLastPoint.y))
+          //bHori = 1;
+
+          if ( pInfo->bvertical) /*vertical*/
+            {
+              /*SHAPES ARE DRAWN FROM BOTTOM TO TOP.*/
+              /*Normally lines are drawn FROM BOTTOM TO TOP but not always for some reason, so
+                make sure that firstpoint < lastpoint in y, We are in pixel coordinates so y increases as we 
+              we go down*/
+              if (oFirstPoint.y < oLastPoint.y)
+                {
+                  dfTmp = oFirstPoint.x;
+                  oFirstPoint.x = oLastPoint.x;
+                  oLastPoint.x = dfTmp;
+                  dfTmp = oFirstPoint.y;
+                  oFirstPoint.y = oLastPoint.y;
+                  oLastPoint.y = dfTmp;
+                      
+                }
+
+              /*first point should cross the BOTTOM base where y== map->height*/
+                 
+              if (abs ((int)oFirstPoint.y - map->height)  <=1)
+              { 
+                  char *pszLabel=NULL;
+                  oFirstPoint.y = map->height;
+                      
+                  /*validate point is in map width/height*/
+                  if (oFirstPoint.x < 0 || oFirstPoint.x > map->width)
+                    continue;
+
+                  /*validate point is in map width/height*/
+                  if (oLastPoint.x < 0 || oLastPoint.x > map->width)
+                    continue;
+
+                  if (shapegrid.text)
+                    pszLabel =  strdup(shapegrid.text);
+                  else
+                  {
+                      _FormatLabel(layer, &tmpshape, tmpshape.line[0].point[tmpshape.line[0].numpoints-1].x );
+                      if (tmpshape.text)
+                        pszLabel = strdup(tmpshape.text);
+                      else
+                        pszLabel = strdup("unknown");
+                  }
+                  /*validate that the  value is not already in the array*/
+                  if ( psValues->nBottom > 0)
+                    {
+                      //if (psValues->pasBottom[psValues->nBottom-1].x == oFirstPoint.x)
+                      //continue;
+
+                      for (i=0; i<psValues->nBottom; i++)
+                        {
+                          if (psValues->pasBottom[i].x == oFirstPoint.x)
+                            break;
+                        }
+                      if (i  < psValues->nBottom)
+                        continue;
+                    }
+                  if (psValues->pasBottom == NULL)
+                    {
+                      psValues->pasBottom = (pointObj *)malloc(sizeof(pointObj));
+                      psValues->papszBottomLabels = (char **)malloc(sizeof(char *));
+                      psValues->nBottom = 1;
+                    }
+                  else
+                    {
+                      psValues->nBottom++;
+                      psValues->pasBottom = (pointObj *)realloc(psValues->pasBottom, sizeof(pointObj)*psValues->nBottom);
+                      psValues->papszBottomLabels = (char **)realloc(psValues->papszBottomLabels, sizeof(char *)*psValues->nBottom);
+                    }
+                      
+                  psValues->pasBottom[psValues->nBottom-1].x = oFirstPoint.x;
+                  psValues->pasBottom[psValues->nBottom-1].y = oFirstPoint.y;
+                  psValues->papszBottomLabels[psValues->nBottom-1] = strdup(pszLabel);
+
+                  msFree(pszLabel); 
+
+                }
+              /*first point should cross the TOP base where y==0*/
+              if (abs((int)oLastPoint.y) <=1)
+              {
+                  char *pszLabel=NULL;
+                  oLastPoint.y = 0;
+
+                  /*validate point is in map width/height*/
+                  if (oLastPoint.x < 0 || oLastPoint.x > map->width)
+                    continue;
+
+                  if (shapegrid.text)
+                    pszLabel =  strdup(shapegrid.text);
+                  else
+                  {
+                      _FormatLabel(layer, &tmpshape, tmpshape.line[0].point[tmpshape.line[0].numpoints-1].x );
+                       if (tmpshape.text)
+                         pszLabel = strdup(tmpshape.text);
+                       else
+                         pszLabel = strdup("unknown");
+                  }
+                  /*validate if same value is not already there*/
+                  if ( psValues->nTop > 0)
+                    {
+                      //if (psValues->pasTop[psValues->nTop-1].x == oLastPoint.x)
+                      //continue;
+
+                      for (i=0; i<psValues->nTop; i++)
+                        {
+                          if (psValues->pasTop[i].x == oLastPoint.x || 
+                              strcasecmp(pszLabel, psValues->papszTopLabels[i]) == 0)
+                            break;
+                        }
+                      if (i < psValues->nTop)
+                        continue;
+                    }
+                  
+                    
+                  if (psValues->pasTop == NULL)
+                    {
+                      psValues->pasTop = (pointObj *)malloc(sizeof(pointObj));
+                      psValues->papszTopLabels = (char **)malloc(sizeof(char *));
+                      psValues->nTop = 1;
+                    }
+                  else
+                    {
+                      psValues->nTop++;
+                      psValues->pasTop = (pointObj *)realloc(psValues->pasTop, sizeof(pointObj)*psValues->nTop);
+                      psValues->papszTopLabels = (char **)realloc(psValues->papszTopLabels, sizeof(char *)*psValues->nTop);
+                    }
+                      
+                  psValues->pasTop[psValues->nTop-1].x = oLastPoint.x;
+                  psValues->pasTop[psValues->nTop-1].y = oLastPoint.y;
+                  psValues->papszTopLabels[psValues->nTop-1] = strdup(pszLabel);
+
+                  msFree(pszLabel); 
+                }
+            }
+          else /*horzontal*/
+            {
+              /*Normally lines are drawn from left to right but not always for some reason, so
+                make sure that firstpoint < lastpoint in x*/
+              if (oFirstPoint.x > oLastPoint.x)
+              {
+                  
+                  dfTmp = oFirstPoint.x;
+                  oFirstPoint.x = oLastPoint.x;
+                  oLastPoint.x = dfTmp;
+                  dfTmp = oFirstPoint.y;
+                  oFirstPoint.y = oLastPoint.y;
+                  oLastPoint.y = dfTmp;
+                      
+                }
+              /*first point should cross the LEFT base where x=0 axis*/
+              if (abs((int)oFirstPoint.x) <=1)
+              {
+                  char *pszLabel=NULL;
+                  oFirstPoint.x = 0;
+
+                  /*validate point is in map width/height*/
+                  if (oFirstPoint.y < 0 || oFirstPoint.y > map->height)
+                    continue;
+
+                  if (shapegrid.text)
+                    pszLabel =  strdup(shapegrid.text);
+                  else
+                  {
+                      _FormatLabel(layer, &tmpshape, tmpshape.line[0].point[tmpshape.line[0].numpoints-1].y );
+                       if (tmpshape.text)
+                         pszLabel = strdup(tmpshape.text);
+                       else
+                         pszLabel = strdup("unknown");
+                  }
+
+                  /*validate that the previous value is not the same*/
+                  if ( psValues->nLeft > 0)
+                    {
+                      //if (psValues->pasLeft[psValues->nLeft-1].y == oFirstPoint.y)
+                      // continue;
+
+                      for (i=0; i<psValues->nLeft; i++)
+                        {
+                          if (psValues->pasLeft[i].y == oFirstPoint.y)
+                            break;
+                        }
+                      if (i < psValues->nLeft)
+                        continue;
+                    }
+                  if (psValues->pasLeft == NULL)
+                    {
+                      psValues->pasLeft = (pointObj *)malloc(sizeof(pointObj));
+                      psValues->papszLeftLabels = (char **)malloc(sizeof(char *));
+                      psValues->nLeft = 1;
+                    }
+                  else
+                    {
+                      psValues->nLeft++;
+                      psValues->pasLeft = (pointObj *)realloc(psValues->pasLeft, sizeof(pointObj)*psValues->nLeft);
+                      psValues->papszLeftLabels = (char **)realloc(psValues->papszLeftLabels, sizeof(char *)*psValues->nLeft);
+                    }
+                      
+                  psValues->pasLeft[psValues->nLeft-1].x = oFirstPoint.x;
+                  psValues->pasLeft[psValues->nLeft-1].y = oFirstPoint.y;
+                  psValues->papszLeftLabels[psValues->nLeft-1] = strdup(pszLabel);
+                  msFree(pszLabel); 
+                }
+              /*first point should cross the RIGHT base where x=map=>width axis*/
+              if (abs((int)oLastPoint.x - map->width) <=1)
+              {
+                  char *pszLabel=NULL;
+                  oLastPoint.x =  map->width;
+
+                  /*validate point is in map width/height*/
+                  if (oLastPoint.y < 0 || oLastPoint.y > map->height)
+                    continue;
+
+                  if (shapegrid.text)
+                    pszLabel =  strdup(shapegrid.text);
+                  else
+                  {
+                      _FormatLabel(layer, &tmpshape, tmpshape.line[0].point[tmpshape.line[0].numpoints-1].y );
+                       if (tmpshape.text)
+                         pszLabel = strdup(tmpshape.text);
+                       else
+                         pszLabel = strdup("unknown");
+                  }
+
+                  /*validate that the previous value is not the same*/
+                  if ( psValues->nRight > 0)
+                    {
+                      //if (psValues->pasRight[psValues->nRight-1].y == oLastPoint.y)
+                      // continue;
+                      for (i=0; i<psValues->nRight; i++)
+                        {     
+                          if (psValues->pasRight[i].y == oLastPoint.y)
+                            break;
+                        }
+                      if (i < psValues->nRight)
+                        continue;
+                    }
+                  if (psValues->pasRight == NULL)
+                    {
+                      psValues->pasRight = (pointObj *)malloc(sizeof(pointObj));
+                      psValues->papszRightLabels = (char **)malloc(sizeof(char *));
+                      psValues->nRight = 1;
+                    }
+                  else
+                    {
+                      psValues->nRight++;
+                      psValues->pasRight = (pointObj *)realloc(psValues->pasRight, sizeof(pointObj)*psValues->nRight);
+                      psValues->papszRightLabels = (char **)realloc(psValues->papszRightLabels, sizeof(char *)*psValues->nRight);
+                    }
+                      
+                  psValues->pasRight[psValues->nRight-1].x = oLastPoint.x;
+                  psValues->pasRight[psValues->nRight-1].y = oLastPoint.y;
+                  psValues->papszRightLabels[psValues->nRight-1] = strdup(pszLabel);
+
+                  msFree(pszLabel); 
+                }
+            }
+          msFreeShape(&shapegrid);
+          msFreeShape(&tmpshape);
+        }
+      msInitShape(&shapegrid);
+     
+
+  
+    }
+    msLayerClose(layer);
+    return psValues;
+    
+}
+
 
 /**********************************************************************************************************************
  *
