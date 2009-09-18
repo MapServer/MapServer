@@ -34,6 +34,7 @@ MS_CVSID("$Id$")
 
 #define MS_CHART_TYPE_PIE 1
 #define MS_CHART_TYPE_BAR 2
+#define MS_CHART_TYPE_VBAR 3
 
 /*
 ** check if an object of width w and height h placed at point x,y can fit in an image of width mw and height mh
@@ -138,47 +139,81 @@ int findChartPoint(mapObj *map, shapeObj *shape, int width, int height, pointObj
     }
 }
 
-int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image,
-                    int width, int height, float *maxVal, float *minVal, float barWidth)
+void drawRectangle(mapObj *map, imageObj *image, float mx, float my, float Mx, float My,
+        styleObj *style) {
+#ifdef USE_AGG
+    if(MS_RENDERER_AGG(map->outputformat)) {
+        msFilledRectangleAGG(image, style, mx, my, Mx, My);
+    }
+    else
+#endif
+    if(MS_RENDERER_GD(map->outputformat)) {
+        int color = gdImageColorResolve(image->img.gd, 
+                style->color.red,
+                style->color.green,
+                style->color.blue);
+        int outlinecolor=-1;
+        if(MS_VALID_COLOR(style->outlinecolor)) {
+            outlinecolor = gdImageColorResolve(image->img.gd, 
+                    style->outlinecolor.red,
+                    style->outlinecolor.green,
+                    style->outlinecolor.blue);
+        }
+        if(outlinecolor==-1) {
+            gdImageFilledRectangle(image->img.gd,mx,my,Mx,My,color);
+        } else {
+            int outlinewidth = style->width;
+            gdImageFilledRectangle(image->img.gd, mx, my, Mx, My, outlinecolor);
+            gdImageFilledRectangle(image->img.gd, mx+outlinewidth, my+outlinewidth, Mx-outlinewidth , My-outlinewidth,color);
+        }
+    }
+}
+
+int msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
+        float *values, styleObj **styles, int numvalues,            
+        float barWidth)
 {
 
-    pointObj center;
+    int c;
+    float left,bottom,cur; /*shortcut to pixel boundaries of the chart*/
+    float height = 0; 
+
+    for(c=0;c<numvalues;c++)
+    {
+        height += values[c];
+    }
+
+    cur = bottom = center->y+height/2.;
+    left = center->x-barWidth/2.;
+     
+    for(c=0;c<numvalues;c++)
+    {
+        drawRectangle(map, image, left, cur, left+barWidth, cur+values[c], styles[c]);
+        cur += values[c];
+    }
+    return MS_SUCCESS;
+}
+
+
+int msDrawBarChart(mapObj *map, imageObj *image, pointObj *center,
+        float *values, styleObj **styles, int numvalues,            
+        float width, float height, float *maxVal, float *minVal, float barWidth)
+{
+
     float upperLimit,lowerLimit;
-    float *values,shapeMaxVal,shapeMinVal,pixperval;
-    int c,color,outlinecolor,outlinewidth;
+    float shapeMaxVal,shapeMinVal,pixperval;
+    int c;
     float vertOrigin,vertOriginClipped,horizStart,y;
     float left,top,bottom; /*shortcut to pixel boundaries of the chart*/
-    msDrawStartShape(map, layer, image, shape);
-#ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
-        msProjectShape(&layer->projection, &map->projection, shape);
-    else
-        layer->project = MS_FALSE;
-#endif
-    if(layer->transform == MS_TRUE) {
-      if(findChartPoint(map, shape, width, height, &center)==MS_FAILURE)
-        return MS_SUCCESS; /*next shape*/
-    } else {
-        /* why would this ever be used? */
-        msOffsetPointRelativeTo(&center, layer); 
-    }
     
-    top=center.y-height/2.;
-    bottom=center.y+height/2.;
-    left=center.x-width/2.;
+    top=center->y-height/2.;
+    bottom=center->y+height/2.;
+    left=center->x-width/2.;
 
-    if(msBindLayerToShape(layer, shape, MS_FALSE) != MS_SUCCESS)
-        return MS_FAILURE; /* error message is set in msBindLayerToShape() */
-
-    values=(float*)calloc(layer->numclasses,sizeof(float));
-
-    shapeMaxVal=shapeMinVal=0;
-    for(c=0;c<layer->numclasses;c++)
+    shapeMaxVal=shapeMinVal=values[0];
+    for(c=1;c<numvalues;c++)
     {
-        values[c]=(layer->class[c]->styles[0]->size);
         if(maxVal==NULL || minVal==NULL) { /*compute bounds if not specified*/
-            if(c==0)
-                shapeMaxVal=shapeMinVal=values[0];
             if(values[c]>shapeMaxVal)
                 shapeMaxVal=values[c];
             if(values[c]<shapeMinVal)
@@ -202,200 +237,319 @@ int msDrawBarChart(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *imag
     color = gdImageColorAllocate(image->img.gd, 0,0,0);
     gdImageRectangle(image->img.gd, left-1,top-1, center.x+width/2.+1,bottom+1,color);
     */
-    for(c=0;c<layer->numclasses;c++)
+    for(c=0;c<numvalues;c++)
     {
         int barHeight=values[c]*pixperval;
         /*clip bars*/
         y=((vertOrigin-barHeight)<top) ? top : 
-                    (vertOrigin-barHeight>bottom) ? bottom : vertOrigin-barHeight;
+            (vertOrigin-barHeight>bottom) ? bottom : vertOrigin-barHeight;
         if(y!=vertOriginClipped) { /*don't draw bars of height == 0 (i.e. either values==0, or clipped)*/
-            if( MS_RENDERER_GD(map->outputformat) ) {
-                color = gdImageColorResolve(image->img.gd, 
-                        layer->class[c]->styles[0]->color.red,
-                        layer->class[c]->styles[0]->color.green,
-                        layer->class[c]->styles[0]->color.blue);
-                outlinecolor=-1;outlinewidth=1;
-                if(MS_VALID_COLOR(layer->class[c]->styles[0]->outlinecolor)) {
-                    outlinecolor = gdImageColorResolve(image->img.gd, 
-                            layer->class[c]->styles[0]->outlinecolor.red,
-                            layer->class[c]->styles[0]->outlinecolor.green,
-                            layer->class[c]->styles[0]->outlinecolor.blue);
-                }
-                if(layer->class[c]->styles[0]->width!=-1)
-                    outlinewidth=layer->class[c]->styles[0]->width;
-                if(values[c]>0) {
-                    if(outlinecolor==-1) {
-                        gdImageFilledRectangle(image->img.gd, horizStart,y, horizStart+barWidth-1 , vertOriginClipped,color);
-                    } else {
-                        gdImageFilledRectangle(image->img.gd, horizStart,y, horizStart+barWidth-1 , vertOriginClipped,outlinecolor);
-                        gdImageFilledRectangle(image->img.gd, horizStart+outlinewidth,y+outlinewidth, horizStart+barWidth-1-outlinewidth , vertOriginClipped-outlinewidth,color);
-                    }
-                }
-                else {
-                    if(outlinecolor==-1) {
-                        gdImageFilledRectangle(image->img.gd, horizStart, vertOriginClipped, horizStart+barWidth-1 , y,color);
-                    } else {
-                        gdImageFilledRectangle(image->img.gd, horizStart, vertOriginClipped, horizStart+barWidth-1 , y,outlinecolor);
-                        gdImageFilledRectangle(image->img.gd, horizStart+outlinewidth, vertOriginClipped+outlinewidth, horizStart+barWidth-1-outlinewidth , y-outlinewidth,color);  
-                    }
-                }
-                    
-            }
-            #ifdef USE_AGG
-            else if( MS_RENDERER_AGG(map->outputformat) ) {
-                int outline=0;
-                if(MS_VALID_COLOR(layer->class[c]->styles[0]->outlinecolor))
-                    outline=1; /*outlining is wierd if this isn't done*/
-                msFilledRectangleAGG(image, layer->class[c]->styles[0], horizStart, y, horizStart+barWidth-outline , vertOriginClipped);
-            }
-            #endif       
+            if(values[c]>0) 
+                drawRectangle(map, image, horizStart, y, horizStart+barWidth-1, vertOriginClipped, styles[c]);
+            else
+                drawRectangle(map,image, horizStart, vertOriginClipped, horizStart+barWidth-1 , y, styles[c]);
         }
         horizStart+=barWidth;
     }
-    free(values);
-
     return MS_SUCCESS;
 }
 
-int msDrawPieChart(mapObj *map, layerObj *layer, shapeObj *shape, 
-        imageObj *image, int diameter,
-        int range_class,
-        float mindiameter,float maxdiameter,
-        float minvalue,float maxvalue)
+int msDrawPieChart(mapObj *map, imageObj *image,
+        pointObj *center, float diameter,
+        float *values, styleObj **styles, int numvalues)
 {
-    int i,c,color,outlinecolor,outlinewidth;
-    pointObj center;
-    float *values;
+    int i,color,outlinecolor,outlinewidth;
     float dTotal=0.,start=0,center_x,center_y;
-    msDrawStartShape(map, layer, image, shape);
-#ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
-        msProjectShape(&layer->projection, &map->projection, shape);
-    else
-        layer->project = MS_FALSE;
-#endif
 
-    if(msBindLayerToShape(layer, shape, MS_FALSE) != MS_SUCCESS)
-        return MS_FAILURE; /* error message is set in msBindLayerToShape() */
-    
-    /*check if dynamic diameter was wanted*/
-    if(range_class>=0) {
-        diameter=layer->class[range_class]->styles[0]->size;
-        /*check if the diameter should be scaled according to specified bounds*/
-        if(mindiameter>=0) {
-            if(diameter<=minvalue)
-                diameter=mindiameter;
-            else if(diameter>=maxvalue)
-                diameter=maxdiameter;
-            else {
-                diameter=MS_NINT(
-                        mindiameter+
-                        ((diameter-minvalue)/(maxvalue-minvalue))*
-                        (maxdiameter-mindiameter)
-                );
-            }
-        }
-    }
-    
-    if(layer->transform == MS_TRUE) {
-          if(findChartPoint(map, shape, diameter, diameter, &center)==MS_FAILURE)
-            return MS_SUCCESS; /*next shape*/
-    } else {
-        /* why would this ever be used? */
-        msOffsetPointRelativeTo(&center, layer); 
-    }
-    values=(float*)calloc(layer->numclasses,sizeof(float));
-    for(c=0;c<layer->numclasses;c++)
+    for(i=0;i<numvalues;i++)
     {
-        if(c==range_class) continue; /*skip the class that gives the dynamic diameter*/
-        values[c]=(layer->class[c]->styles[0]->size);
-        if(values[c]<0.) {
+        if(values[i]<0.) {
             msSetError(MS_MISCERR, "cannot draw pie charts for negative values", "msDrawPieChart()");
             return MS_FAILURE;
         }
-        dTotal+=values[c];
+        dTotal+=values[i];
     }
 
-    for(i=0; i < layer->numclasses; i++)
+    for(i=0; i < numvalues; i++)
     {
-        if(i==range_class) continue; /*skip the class that gives the dynamic diameter*/
-        if(values[i]==0) continue; /*no need to draw. causes artifacts with outlines*/
-        values[i]*=360.0/dTotal;
+        float angle = values[i];
+        if(angle==0) continue; /*no need to draw. causes artifacts with outlines*/
+        angle*=360.0/dTotal;
         if( MS_RENDERER_GD(map->outputformat) )
         {
-            color = gdImageColorResolve(image->img.gd, layer->class[i]->styles[0]->color.red,
-                                                layer->class[i]->styles[0]->color.green,
-                                                layer->class[i]->styles[0]->color.blue);
+            color = gdImageColorResolve(image->img.gd, styles[i]->color.red,
+                                                styles[i]->color.green,
+                                                styles[i]->color.blue);
             outlinecolor=-1;outlinewidth=1;
-            if(MS_VALID_COLOR(layer->class[i]->styles[0]->outlinecolor)) {
-                outlinecolor = gdImageColorResolve(image->img.gd, layer->class[i]->styles[0]->outlinecolor.red,
-                        layer->class[i]->styles[0]->outlinecolor.green,
-                        layer->class[i]->styles[0]->outlinecolor.blue);
+            if(MS_VALID_COLOR(styles[i]->outlinecolor)) {
+                outlinecolor = gdImageColorResolve(image->img.gd, 
+                        styles[i]->outlinecolor.red,
+                        styles[i]->outlinecolor.green,
+                        styles[i]->outlinecolor.blue);
             }
-            if(layer->class[i]->styles[0]->width!=-1)
-                outlinewidth=layer->class[i]->styles[0]->width;
+            if(styles[i]->width!=-1)
+                outlinewidth=styles[i]->width;
             /* 
              * offset the center of the slice
              * NOTE: angles are anti-trigonometric
              * 
              */
-            if(layer->class[i]->styles[0]->offsetx>0) {
-                center_x=center.x+layer->class[i]->styles[0]->offsetx*cos(((-start-values[i]/2)*MS_PI/180.));
-                center_y=center.y-layer->class[i]->styles[0]->offsetx*sin(((-start-values[i]/2)*MS_PI/180.));
+            if(styles[i]->offsetx>0) {
+                center_x=center->x+styles[i]->offsetx*cos(((-start-angle/2)*MS_PI/180.));
+                center_y=center->y-styles[i]->offsetx*sin(((-start-angle/2)*MS_PI/180.));
             } else {
-                center_x=center.x;
-                center_y=center.y;
+                center_x=center->x;
+                center_y=center->y;
             }
             
             if(outlinecolor==-1) {
-                gdImageFilledArc(image->img.gd, center_x, center_y, diameter, diameter, (int)start, (int)(start+values[i]), color, gdPie);               
+                gdImageFilledArc(image->img.gd, center_x, center_y, diameter, diameter, (int)start, (int)(start+angle), color, gdPie);               
             }
             else {
-                gdImageFilledArc(image->img.gd, center_x, center_y, diameter, diameter, (int)start, (int)(start+values[i]), color, gdPie);
+                gdImageFilledArc(image->img.gd, center_x, center_y, diameter, diameter, (int)start, (int)(start+angle), color, gdPie);
                 gdImageSetThickness(image->img.gd, outlinewidth);
-                gdImageFilledArc(image->img.gd, center_x, center_y, diameter, diameter, (int)start, (int)(start+values[i]), outlinecolor,gdNoFill|gdEdged);
+                gdImageFilledArc(image->img.gd, center_x, center_y, diameter, diameter, (int)start, (int)(start+angle), outlinecolor,gdNoFill|gdEdged);
                 gdImageSetThickness(image->img.gd, 1);                              
             }
         }
         #ifdef USE_AGG
         else if( MS_RENDERER_AGG(map->outputformat) )
         {
-            msPieSliceAGG(image, layer->class[i]->styles[0], center.x, center.y, diameter/2., start, start+values[i]);
+            msPieSliceAGG(image, styles[i], center->x, center->y, diameter/2., start, start+angle);
         }
         #endif
 
-        start+=values[i];
+        start+=angle;
     }
-    free(values);
     return MS_SUCCESS;
 }
 
-int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image, 
-                        int radius,
-                        int range_class,
-                        float mindiameter,float maxdiameter,
-                        float minvalue,float maxvalue)
+int getNextShape(mapObj *map, layerObj *layer, float *values, styleObj **styles, shapeObj *shape) {
+    int status;
+    int c;
+    status = msLayerNextShape(layer, shape);
+    if(status == MS_SUCCESS) {
+#ifdef USE_PROJ
+        if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+            msProjectShape(&layer->projection, &map->projection, shape);
+        else
+            layer->project = MS_FALSE;
+#endif
+
+        if(msBindLayerToShape(layer, shape, MS_FALSE) != MS_SUCCESS)
+            return MS_FAILURE; /* error message is set in msBindLayerToShape() */
+
+        for(c=0;c<layer->numclasses;c++)
+        {
+            values[c]=(layer->class[c]->styles[0]->size);
+            styles[c]=layer->class[c]->styles[0];
+        }
+    }
+    return status;
+}
+
+/* eventually add a class to the layer to get the diameter from an attribute */
+int pieLayerProcessDynamicDiameter(layerObj *layer) {
+    const char *chartRangeProcessingKey=NULL;
+    char *attrib;
+    float mindiameter=-1, maxdiameter, minvalue, maxvalue;
+    const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
+    if(chartSizeProcessingKey != NULL)
+        return MS_FALSE;
+    chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );
+    if(chartRangeProcessingKey==NULL)
+        return MS_FALSE;
+    classObj *newclass;
+    styleObj *newstyle;
+    attrib = malloc(strlen(chartRangeProcessingKey)+1);
+    switch(sscanf(chartRangeProcessingKey,"%s %f %f %f %f",attrib,
+                &mindiameter,&maxdiameter,&minvalue,&maxvalue))
+    {
+        case 1: /*we only have the attribute*/
+        case 5: /*we have the attribute and the four range values*/
+            break;
+        default:
+            free(attrib);
+            msSetError(MS_MISCERR, "Chart Layer format error for processing key \"CHART_RANGE\"", "msDrawChartLayer()");
+            return MS_FAILURE;
+    }
+    /*create a new class in the layer containing the wanted attribute
+     * as the SIZE of its first STYLE*/
+    newclass=msGrowLayerClasses(layer);
+    if(newclass==NULL) {
+        free(attrib);
+        return MS_FAILURE;
+    }
+    initClass(newclass);
+    layer->numclasses++;
+
+    /*create and attach a new styleObj to our temp class
+     * and bind the wanted attribute to its SIZE
+     */
+    newstyle=msGrowClassStyles(newclass);
+    if(newstyle==NULL) {
+        free(attrib);
+        return MS_FAILURE;
+    }
+    initStyle(newstyle);
+    newclass->numstyles++;
+    newclass->name=strdup("__MS_SIZE_ATTRIBUTE_");
+    newstyle->bindings[MS_STYLE_BINDING_SIZE].item=strdup(attrib);
+    newstyle->numbindings++;
+    free(attrib);
+
+    return MS_TRUE;
+
+}
+
+
+int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
     shapeObj    shape;
     int         status=MS_SUCCESS;
+    const char *chartRangeProcessingKey=NULL;
+    const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
+    float diameter, mindiameter=-1, maxdiameter, minvalue, maxvalue;
+    float *values;
+    styleObj **styles;
+    pointObj center;
+    int numvalues = layer->numclasses; //the number of classes to represent in the graph
+    if(chartSizeProcessingKey==NULL)
+    {
+        chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );
+        if(chartRangeProcessingKey==NULL)
+            diameter=20;
+        else {
+            sscanf(chartRangeProcessingKey,"%*s %f %f %f %f",
+                &mindiameter,&maxdiameter,&minvalue,&maxvalue);
+        }
+    }
+    else
+    {
+        if(sscanf(chartSizeProcessingKey ,"%f",&diameter)!=1) {
+            msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawChartLayer()");
+            return MS_FAILURE;
+        }
+    }
     /* step through the target shapes */
     msInitShape(&shape);
-    while((status==MS_SUCCESS)&&(msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
-        status = msDrawPieChart(map, layer, &shape, image,radius,
-                range_class,mindiameter,maxdiameter,minvalue,maxvalue);
+    values=(float*)calloc(numvalues,sizeof(float));
+    styles = (styleObj**)malloc((numvalues)*sizeof(styleObj*));
+    if(chartRangeProcessingKey!=NULL) 
+        numvalues--;
+    while(MS_SUCCESS == getNextShape(map,layer,values,styles,&shape)) {
+        msDrawStartShape(map, layer, image, &shape);
+        if(chartRangeProcessingKey!=NULL) {
+            diameter = values[numvalues];
+            if(mindiameter>=0) {
+                if(diameter<=minvalue)
+                    diameter=mindiameter;
+                else if(diameter>=maxvalue)
+                    diameter=maxdiameter;
+                else {
+                    diameter=MS_NINT(
+                            mindiameter+
+                            ((diameter-minvalue)/(maxvalue-minvalue))*
+                            (maxdiameter-mindiameter)
+                    );
+                }
+            }
+        }
+        if(findChartPoint(map, &shape, diameter, diameter, &center) == MS_SUCCESS) {
+            status = msDrawPieChart(map,image, &center, diameter,
+                values,styles,numvalues);
+        }
+        msDrawEndShape(map,layer,image,&shape);
+        msFreeShape(&shape);
+    }
+    free(values);
+    free(styles);
+    return status;
+}
+
+int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
+{
+    shapeObj    shape;
+    int         status=MS_SUCCESS;
+    const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
+    const char *chartScaleProcessingKey=msLayerGetProcessingKey( layer,"CHART_SCALE" );
+    float barWidth,scale=1.0;
+    float *values;
+    styleObj **styles;
+    pointObj center;
+    int numvalues = layer->numclasses; 
+    if(chartSizeProcessingKey==NULL)
+    {
+        barWidth=20;
+    }
+    else
+    {
+        if(sscanf(chartSizeProcessingKey ,"%f",&barWidth) != 1) {
+            msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawChartLayer()");
+            return MS_FAILURE;
+        }
+    }
+
+    if(chartScaleProcessingKey){
+        if(sscanf(chartScaleProcessingKey,"%f",&scale)!=1) {
+            msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_SCALE\"", "msDrawBarChartLayerGD()");
+            return MS_FAILURE;
+        }
+    }
+    msInitShape(&shape);
+    values=(float*)calloc(numvalues,sizeof(float));
+    styles = (styleObj**)malloc(numvalues*sizeof(styleObj*));
+    while(MS_SUCCESS == getNextShape(map,layer,values,styles,&shape)) {
+        int i;
+        double h=0;
+        for(i=0;i<numvalues;i++) {
+            values[i]*=scale;
+            h += values[i];
+        }
+        msDrawStartShape(map, layer, image, &shape);
+        if(findChartPoint(map, &shape, barWidth,h, &center)==MS_SUCCESS) {
+            status = msDrawVBarChart(map,image,
+                &center,
+                values, styles, numvalues,
+                barWidth);
+        }
+        msDrawEndShape(map,layer,image,&shape);
         msFreeShape(&shape);
     }
     return status;
 }
 
-int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image, 
-                        int width, int height)
+
+int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
     shapeObj    shape;
     int         status=MS_SUCCESS;
+    const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
     const char *barMax=msLayerGetProcessingKey( layer,"CHART_BAR_MAXVAL" );
     const char *barMin=msLayerGetProcessingKey( layer,"CHART_BAR_MINVAL" );
+    float width,height;
     float barWidth;
+    float *values;
+    styleObj **styles;
+    pointObj center;
+    int numvalues = layer->numclasses; 
+    if(chartSizeProcessingKey==NULL)
+    {
+        width=height=20;
+    }
+    else
+    {
+        switch(sscanf(chartSizeProcessingKey ,"%f %f",&width,&height)) {
+            case 2:
+                break;
+            case 1:
+                height = width;
+                break;
+            default:
+                msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawChartLayer()");
+                return MS_FAILURE;
+        }
+    }
     float barMaxVal,barMinVal;
 
     if(barMax){
@@ -420,10 +574,22 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image,
         msSetError(MS_MISCERR, "Specified width of chart too small to fit given number of classes", "msDrawBarChartLayerGD()");
         return MS_FAILURE;
     }
-    /* step through the target shapes */
+
     msInitShape(&shape);
-    while((status==MS_SUCCESS)&&(msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
-        status = msDrawBarChart(map, layer, &shape, image,width,height,(barMax!=NULL)?&barMaxVal:NULL,(barMin!=NULL)?&barMinVal:NULL,barWidth);
+    values=(float*)calloc(numvalues,sizeof(float));
+    styles = (styleObj**)malloc(numvalues*sizeof(styleObj*));
+    while(MS_SUCCESS == getNextShape(map,layer,values,styles,&shape)) {
+        msDrawStartShape(map, layer, image, &shape);
+        if(findChartPoint(map, &shape, width,height, &center)==MS_SUCCESS) {
+            status = msDrawBarChart(map,image,
+                &center,
+                values, styles, numvalues,
+                width,height,
+                (barMax!=NULL)?&barMaxVal:NULL,
+                (barMin!=NULL)?&barMinVal:NULL,
+                barWidth);
+        }
+        msDrawEndShape(map,layer,image,&shape);
         msFreeShape(&shape);
     }
     return status;
@@ -435,15 +601,9 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image,
 int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
 
-    char        annotate=MS_TRUE;
     rectObj     searchrect;
     const char *chartTypeProcessingKey=msLayerGetProcessingKey( layer,"CHART_TYPE" );
-    const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
-    const char *chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );
     int chartType=MS_CHART_TYPE_PIE;
-    int width,height;
-    float mindiameter=-1.,maxdiameter=-1.,minvalue=-1.,maxvalue=-1.;
-    int tmpclassindex=-1;
     int status = MS_FAILURE;
     
     if (image && map && layer)
@@ -465,87 +625,18 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
             else if( strcasecmp(chartTypeProcessingKey,"BAR") == 0 ) {
                 chartType=MS_CHART_TYPE_BAR;
             }
+            else if( strcasecmp(chartTypeProcessingKey,"VBAR") == 0 ) {
+                chartType=MS_CHART_TYPE_VBAR;
+            }
             else {
                 msSetError(MS_MISCERR,"unknown chart type for processing key \"CHART_TYPE\", must be one of \"PIE\" or \"BAR\"", "msDrawChartLayer()");
                 return MS_FAILURE;
             }
         }
+        if(chartType == MS_CHART_TYPE_PIE) {
+            pieLayerProcessDynamicDiameter(layer);
+        }
             
-        if(chartSizeProcessingKey==NULL)
-        {
-            width=height=20;
-        }
-        else
-        {
-            switch(sscanf(chartSizeProcessingKey ,"%d %d",&width,&height))
-            {
-            case 2: 
-                if(chartType==MS_CHART_TYPE_PIE) {
-                    msSetError(MS_MISCERR,"only one size (radius) supported for processing key \"CHART_SIZE\" for pie chart layers", "msDrawChartLayer()");
-                    return MS_FAILURE;
-                }
-                break;
-            case 1: height=width;break;
-            default:
-                msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawChartLayer()");
-                return MS_FAILURE;
-            }
-        }
-        
-        if(chartType==MS_CHART_TYPE_PIE && chartRangeProcessingKey) { /*if CHART_SIZE_RANGE was specified*/
-            char *attrib;
-            classObj *newclass;
-            styleObj *newstyle;
-            attrib = malloc(strlen(chartRangeProcessingKey)+1);
-            switch(sscanf(chartRangeProcessingKey,"%s %f %f %f %f",attrib,
-                    &mindiameter,&maxdiameter,&minvalue,&maxvalue))
-            {
-            case 1: /*we only have the attribute*/
-            case 5: /*we have the attribute and the four range values*/
-                break;
-            default:
-                free(attrib);
-                msSetError(MS_MISCERR, "Chart Layer format error for processing key \"CHART_RANGE\"", "msDrawChartLayer()");
-                return MS_FAILURE;
-            }
-            /*create a new class in the layer containing the wanted attribute
-             * as the SIZE of its first STYLE*/
-            newclass=msGrowLayerClasses(layer);
-            if(newclass==NULL) {
-                free(attrib);
-                return MS_FAILURE;
-            }
-            initClass(newclass);
-            
-            /*remember the new class's index so that:
-             * - we can delete the class when we've finished processing the layer
-             * - we can tell the pie rendering functions where it should read the size value
-             */
-            tmpclassindex=layer->numclasses; 
-            layer->numclasses++;
-            
-            /*create and attach a new styleObj to our temp class
-             * and bind the wanted attribute to its SIZE
-             */
-            newstyle=msGrowClassStyles(newclass);
-            if(newstyle==NULL) {
-                free(attrib);
-                return MS_FAILURE;
-            }
-            initStyle(newstyle);
-            newclass->numstyles++;
-            newclass->name=strdup("__MS_SIZE_ATTRIBUTE_");
-            newstyle->bindings[MS_STYLE_BINDING_SIZE].item=strdup(attrib);
-            newstyle->numbindings++;
-            free(attrib);
-        }
-    
-        annotate = msEvalContext(map, layer, layer->labelrequires);
-        if(map->scaledenom > 0) {
-            if((layer->labelmaxscaledenom != -1) && (map->scaledenom >= layer->labelmaxscaledenom)) annotate = MS_FALSE;
-            if((layer->labelminscaledenom != -1) && (map->scaledenom < layer->labelminscaledenom)) annotate = MS_FALSE;
-        }
-    
         /* open this layer */
         status = msLayerOpen(layer);
         if(status != MS_SUCCESS) return MS_FAILURE;
@@ -579,26 +670,19 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         }
         switch(chartType) {
             case MS_CHART_TYPE_PIE:
-                status = msDrawPieChartLayer(map, layer, image,width,
-                        tmpclassindex,mindiameter,maxdiameter,minvalue,maxvalue);
+                status = msDrawPieChartLayer(map, layer, image);
                 break;
             case MS_CHART_TYPE_BAR:
-                status = msDrawBarChartLayer(map, layer, image,width,height);
+                status = msDrawBarChartLayer(map, layer, image);
+                break;
+            case MS_CHART_TYPE_VBAR:
+                status = msDrawVBarChartLayer(map, layer, image);
                 break;
             default:
                 return MS_FAILURE;/*shouldn't be here anyways*/
         }
     
         msLayerClose(layer);  
-    }
-    /*
-     * if we're using a dynamic size for pie layers, free the temporary class we used
-     * so it doesn't appear in legends, etc...
-     */
-    if(tmpclassindex>=0) {
-        classObj *c=msRemoveClass(layer,tmpclassindex);
-        freeClass(c);
-        msFree(c);
     }
     return status;
 }

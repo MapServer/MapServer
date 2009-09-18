@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- add vertical bar charts to dynamic charting (#3128)
+
 - Get the intersection points and labels #3101
 
 - Fixed shp2img not to cause a crash when the map couldn't be loaded
