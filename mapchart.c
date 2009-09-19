@@ -353,14 +353,14 @@ int pieLayerProcessDynamicDiameter(layerObj *layer) {
     const char *chartRangeProcessingKey=NULL;
     char *attrib;
     float mindiameter=-1, maxdiameter, minvalue, maxvalue;
+    classObj *newclass;
+    styleObj *newstyle;
     const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
     if(chartSizeProcessingKey != NULL)
         return MS_FALSE;
     chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );
     if(chartRangeProcessingKey==NULL)
         return MS_FALSE;
-    classObj *newclass;
-    styleObj *newstyle;
     attrib = malloc(strlen(chartRangeProcessingKey)+1);
     switch(sscanf(chartRangeProcessingKey,"%s %f %f %f %f",attrib,
                 &mindiameter,&maxdiameter,&minvalue,&maxvalue))
@@ -532,6 +532,7 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     float *values;
     styleObj **styles;
     pointObj center;
+    float barMaxVal,barMinVal;
     int numvalues = layer->numclasses; 
     if(chartSizeProcessingKey==NULL)
     {
@@ -550,7 +551,6 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
                 return MS_FAILURE;
         }
     }
-    float barMaxVal,barMinVal;
 
     if(barMax){
         if(sscanf(barMax,"%f",&barMaxVal)!=1) {
