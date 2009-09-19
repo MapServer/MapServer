@@ -168,6 +168,7 @@ static OCIType  *ordinates_tdo = NULL;
 static OCIArray *ordinates;
     
 
+	
 /* local prototypes */
 static int TRY( msOracleSpatialHandler *hand, sword status );
 static int ERROR( char *routine, msOracleSpatialHandler *hand, msOracleSpatialDataHandler *dthand );
@@ -1718,9 +1719,8 @@ int msOracleSpatialLayerOpen( layerObj *layer )
 	msOracleSpatialStatement *sthand = NULL, *sthand2 = NULL;
     msOracleSpatialHandler *hand = NULL;
 	
-	fprintf(stderr, "msOracleSpatialLayerOpen called with: %s. Layer %p\n",layer->data, layer);
     if (layer->debug)
-        msDebug("msOracleSpatialLayerOpen called with: %s\n",layer->data);
+        msDebug("msOracleSpatialLayerOpen called with: %s (Layer pointer %p)\n",layer->data, layer);
 
     if (layer->layerinfo != NULL) /* Skip if layer is already open */
         return MS_SUCCESS;
@@ -1821,9 +1821,9 @@ int msOracleSpatialLayerClose( layerObj *layer )
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
     /*int lIntSuccessFree = 0;*/
 
-	fprintf(stderr, "msOracleSpatialLayerClose was called. Layer name: %s. Layer connection: %s\n",layer->name, layer->connection);
     if (layer->debug)
-        msDebug("msOracleSpatialLayerClose was called. Layer name: %s. Layer connection: %s\n",layer->name, layer->connection);
+        msDebug("msOracleSpatialLayerClose was called. Layer: %p, Layer name: %s. Layer connection: %s\n", layer, layer->name, layer->connection);
+
     if (layerinfo != NULL)
     {
 
@@ -2100,22 +2100,29 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
     if (sthand->rows_fetched == 0)
         return MS_DONE;
 
+	if(layer->debug >=5 )
+		msDebug("msOracleSpatialLayerNextShape on layer %p, row_num: %d\n", layer, sthand->row_num);
+	
     do{
         /* is buffer empty? */
-        if (sthand->row_num >= sthand->rows_fetched)
+        if (sthand->row >= sthand->rows_fetched)
         {
             /* fetch more */
             success = TRY( hand, OCIStmtFetch2( sthand->stmthp, hand->errhp, (ub4)ARRAY_SIZE, (ub2)OCI_FETCH_NEXT, (sb4)0, (ub4)OCI_DEFAULT ) ) 
                    && TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) )
                    && TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_count, (ub4 *)0, (ub4)OCI_ATTR_ROW_COUNT, hand->errhp ) );
 
+			if(layer->debug >= 4 )
+				msDebug("msOracleSpatialLayerNextShape on layer %p, Fetched %d more rows (%d total)\n", layer, sthand->rows_fetched, sthand->rows_count);
+			
+			
             if (!success || sthand->rows_fetched == 0)
                 return MS_DONE;
 
             if (sthand->row_num >= sthand->rows_count)
                 return MS_DONE;
 
-            sthand->row = 0; /* reset row index */
+            sthand->row = 0; /* reset buffer row index */
         }
 
         /* set obj & ind for current row */
@@ -2198,19 +2205,21 @@ int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int re
 	
 	if (layer->resultcache == NULL)
 	{
-		//msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerResultGetShape called before msOracleSpatialLayerWhichShapes()","msOracleSpatialLayerResultGetShape()" );
-		//return MS_FAILURE;
-		fprintf(stderr, "WARNING: msOracleSpatialLayerResultGetShape called before msOracleSpatialLayerWhichShapes()\n");
-		return msOracleSpatialLayerGetShape(layer, shape, pkey);
+		msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerResultGetShape called before msOracleSpatialLayerWhichShapes()","msOracleSpatialLayerResultGetShape()" );
+		return MS_FAILURE;
+		/* TODO: do we need to fall back... we should never get here.
+		 * fprintf(stderr, "WARNING: msOracleSpatialLayerResultGetShape called before msOracleSpatialLayerWhichShapes()\n");
+		 * return msOracleSpatialLayerGetShape(layer, shape, pkey);*/
 	}
 	
-	if (layer->debug)
-		msDebug("msOracleSpatialLayerResultGetShape was called. Using the record = %ld of %ld. (shape %ld)\n", 
-				record, layer->resultcache->numresults, layer->resultcache->results[record].shapeindex);
+	if (layer->debug >= 5)
+		msDebug("msOracleSpatialLayerResultGetShape was called. Using the record = %ld of %ld. (shape: %ld should equal pkey: %ld)\n", 
+				record, layer->resultcache->numresults, layer->resultcache->results[record].shapeindex, pkey);
 	
+	//record = layer->resultcache->results[record].tileindex; // Do we need to do this? Is record our tile index or an index into the result cache?
+		
     if (record >= sthand->rows_count || record < 0)
 	{
-		fprintf(stderr, "record: %ld, row_count: %ld\n", record, sthand->rows_count);
 		msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerResultGetShape record out of range","msOracleSpatialLayerResultGetShape()" );
 		return MS_FAILURE;
 	}
@@ -2228,11 +2237,14 @@ int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int re
 	} 
 	else /* Item is not in buffer. Fetch item from Oracle */
 	{
-		if (layer->debug)
+		if (layer->debug >= 4)
 			msDebug("msOracleSpatialLayerResultGetShape: Fetching result from DB start: %ld end:%ld record: %ld\n", buffer_first_row_num, buffer_last_row_num, record);
 		
 		success = TRY( hand, OCIStmtFetch2( sthand->stmthp, hand->errhp, (ub4)ARRAY_SIZE, (ub2)OCI_FETCH_ABSOLUTE, (sb4)record+1, (ub4)OCI_DEFAULT ) ) 
-		&& TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) );
+				&& TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) );
+
+		ERROR("msOracleSpatialLayerResultGetShape", hand, dthand);
+
 		sthand->row_num = record;
 		sthand->row = 0; /* reset row index */
 		
@@ -2283,7 +2295,7 @@ int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int re
 	
 	osShapeBounds(shape);
 	if(shape->type == MS_SHAPE_NULL)  { 
-		fprintf(stderr, "\trecord: %ld, row: %d rownum: %ld pkey: %s\n", record, sthand->row, sthand->row_num, shape->values[0]);
+		/*fprintf(stderr, "\trecord: %ld, row: %d rownum: %ld pkey: %s\n", record, sthand->row, sthand->row_num, shape->values[0]);*/
         msSetError( MS_ORACLESPATIALERR, "Shape type is null... this probably means a record number was requested that could not have beeen in a result set (as returned by NextShape).", "msOracleSpatialLayerResultGetShape()" );
 		return MS_FAILURE;
 	}
