@@ -619,15 +619,13 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
     
     shapeObj    shapegrid, tmpshape;
     rectObj     searchrect;
-    int         status, retcode=MS_SUCCESS;
+    int         status;
     pointObj oFirstPoint;
     pointObj oLastPoint;
     lineObj oLineObj;
-    int bHori = 0;
     rectObj cliprect;
     graticuleObj   *pInfo  = NULL;
     double dfTmp;
-    char *pszTmpText = NULL;
     graticuleIntersectionObj *psValues = NULL;
     int i=0;
 
@@ -737,15 +735,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
           oFirstPoint.y = shapegrid.line[iTmpLine].point[0].y;
           oLineObj = shapegrid.line[iTmpLine];
           oLastPoint.x = oLineObj.point[oLineObj.numpoints-1].x;
-          oLastPoint.y = oLineObj.point[oLineObj.numpoints-1].y;
-
-
-          //if (layer->numclasses > 0 && layer->class[0]->numstyles > 0)
-          
-          /*horzontal or Vertical*/
-          //bHori = 0;
-          //if (abs(oFirstPoint.x - oLastPoint.x) > abs(oFirstPoint.y - oLastPoint.y))
-          //bHori = 1;
+          oLastPoint.y = oLineObj.point[oLineObj.numpoints-1].y;          
 
           if ( pInfo->bvertical) /*vertical*/
             {
