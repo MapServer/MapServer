@@ -8969,7 +8969,7 @@ DLEXPORT void php3_ms_lyr_getGridIntersectionCoordinates(INTERNAL_FUNCTION_PARAM
     mapObj      *parent_map = NULL;
     graticuleIntersectionObj *pasValues=NULL;
     HashTable   *list=NULL;
-    pval *tmp_arr, *tmp_arr1;
+    pval *tmp_arr1;
     int i=0;
 
 
