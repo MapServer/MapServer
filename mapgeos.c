@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  MapServer-GEOS integration.
@@ -628,7 +628,7 @@ char *msGEOSShapeToWKT(shapeObj *shape)
     return NULL;
     
   /* if we have a geometry, we should update it*/
-  msGEOSFreeGeometry(shape->geometry);
+  msGEOSFreeGeometry(shape);
 
   shape->geometry = (GEOSGeom) msGEOSShape2Geometry(shape);
   g = (GEOSGeom) shape->geometry;
