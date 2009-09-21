@@ -218,7 +218,7 @@
   
     int resultsGetShape(shapeObj *shape, int shapeindex, int tileindex=-1)
     {
-        return msLayerReultsGetShape(self, shape, tileindex, shapeindex);
+        return msLayerResultsGetShape(self, shape, tileindex, shapeindex);
     }
 
     int getNumResults() 
