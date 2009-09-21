@@ -1539,8 +1539,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                              /*check if the attribute specified in the procedure_item is available
                                on the layer*/
                              iItemPosition = -1;
-                             if (msLayerOpen(lpTmp) == MS_SUCCESS && 
-                                 msLayerGetItems(lpTmp) == MS_SUCCESS &&
+                             if (msLayerGetItems(lpTmp) == MS_SUCCESS &&
                                  lpTmp->resultcache && lpTmp->resultcache->numresults > 0)
                              {
                                  for(k=0; k<lpTmp->numitems; k++) 
@@ -1606,7 +1605,6 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                                    if (papsProcedures[k] != NULL)
                                      msFree(papsProcedures[k]);
                                  msFree(papsProcedures);
-                                 msLayerClose(lpTmp);
                                  
                              }
                              else
@@ -1966,7 +1964,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
               /*check if the attribute specified in the procedure_item is available */
               /*on the layer*/
               iItemPosition = -1;
-              if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS && lp->resultcache && lp->resultcache->numresults > 0) {
+              if (msLayerGetItems(lp) == MS_SUCCESS && lp->resultcache && lp->resultcache->numresults > 0) {
                 for(k=0; k<lp->numitems; k++) {
                   if (strcasecmp(lp->items[k], pszProcedureItem) == 0) {
                     iItemPosition = k;
@@ -2001,7 +1999,6 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
                   if (bLayerFound)
                     break;
                 }
-                msLayerClose(lp);
 
                if (bLayerFound == 0) {  
                  msSetError(MS_SOSERR, "Invalid procedure value %s", "msSOSGetCapabilities()", sosparams->pszProcedure);
@@ -2445,115 +2442,111 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
        for (i=0; i<map->numlayers; i++)
        {
           if (GET_LAYER(map, i)->resultcache && GET_LAYER(map, i)->resultcache->numresults > 0)
-          {       
-             if(msLayerOpen((GET_LAYER(map, i))) == MS_SUCCESS)
-             {
+            {       
                 msLayerGetItems((GET_LAYER(map, i)));
                 pszTmp = msOWSLookupMetadata(&(map->web.metadata), "SO", "maxfeatures");
                 if (pszTmp != NULL)
-                 n1 = atoi(pszTmp);
+                  n1 = atoi(pszTmp);
                 else
-                 n1 = 0;
+                  n1 = 0;
 
                 if (sosparams->pszResultModel == NULL || strcasecmp(sosparams->pszResultModel, "om:Measurement") == 0) 
-                {
-                    for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
-                    {
-                        msSOSAddMemberNode(psNsGml, psNsOm, psNsSwe, psNsXLink, psNsMs, psRootNode, map, (GET_LAYER(map, i)), j, script_url, opLayerName);
-                        if (j == n1-1) 
-                          break;
-                    }
-                }
+                  {
+                      for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
+                        {
+                            msSOSAddMemberNode(psNsGml, psNsOm, psNsSwe, psNsXLink, psNsMs, psRootNode, map, (GET_LAYER(map, i)), j, script_url, opLayerName);
+                            if (j == n1-1) 
+                              break;
+                        }
+                  }
                 else /*assuming here that pszResultModel = observation */
-                {
-                    /*layer does not define a procedure_item: this means one procedure per 
-                      layer defined using sos_procedure)*/
-                    if (msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "procedure_item") == NULL)
-                    {
-                        pszProcedure = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
-                        psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map, (GET_LAYER(map, i)),
-                                                                      pszProcedure);
-                        /*add a result node*/
-                        psResultNode = xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
-                        for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
+                  {
+                      /*layer does not define a procedure_item: this means one procedure per 
+                        layer defined using sos_procedure)*/
+                      if (msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "procedure_item") == NULL)
                         {
-                            /*add a block separator*/
-                            if (j > 0)
-                            {
-                                pszBlockSep = msOWSLookupMetadata(&(map->web.metadata), "S", 
-                                                                  "encoding_blockSeparator");
-                                 if (pszBlockSep)
-                                   xmlNodeAddContent(psResultNode, BAD_CAST pszBlockSep);
-                                 else
-                                   xmlNodeAddContent(psResultNode, BAD_CAST "\n");
-                            }
-                            pszResult = msSOSReturnMemberResult((GET_LAYER(map, i)), j, NULL);
-                            if (pszResult)
-                            {   
-                                xmlNodeAddContent(psResultNode, BAD_CAST pszResult);
-                                msFree(pszResult);
-                            }
+                            pszProcedure = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
+                            psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map, (GET_LAYER(map, i)),
+                                                                              pszProcedure);
+                            /*add a result node*/
+                            psResultNode = xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
+                            for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
+                              {
+                                  /*add a block separator*/
+                                  if (j > 0)
+                                    {
+                                        pszBlockSep = msOWSLookupMetadata(&(map->web.metadata), "S", 
+                                                                          "encoding_blockSeparator");
+                                        if (pszBlockSep)
+                                          xmlNodeAddContent(psResultNode, BAD_CAST pszBlockSep);
+                                        else
+                                          xmlNodeAddContent(psResultNode, BAD_CAST "\n");
+                                    }
+                                  pszResult = msSOSReturnMemberResult((GET_LAYER(map, i)), j, NULL);
+                                  if (pszResult)
+                                    {   
+                                        xmlNodeAddContent(psResultNode, BAD_CAST pszResult);
+                                        msFree(pszResult);
+                                    }
+                              }
                         }
-                    }
-                    /*this is the case where procedure_item is used. Needs more management since
-                     the same data on a layer contains different procedures (procedures are
-                    one of the fields of the record)*/
-                    else
-                    {
+                      /*this is the case where procedure_item is used. Needs more management since
+                        the same data on a layer contains different procedures (procedures are
+                        one of the fields of the record)*/
+                      else
+                        {
                         
-                        for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
-                        {
-                            pszResult = msSOSReturnMemberResult((GET_LAYER(map, i)), j, &pszProcedureValue);
-                            if (!pszProcedureValue || !pszResult)
-                              continue;
-                            for (k=0; k<nDiffrentProc; k++)
-                            {
-                                if (strcasecmp(paDiffrentProc[k].pszProcedure, pszProcedureValue) == 0)
-                                {
-                                    pszBlockSep = msOWSLookupMetadata(&(map->web.metadata), "S", 
-                                                                      "encoding_blockSeparator");
-                                    if (pszBlockSep)
-                                      xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST pszBlockSep);
-                                    else
-                                      xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST "\n");
-                                    xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST pszResult);
-                                    break;
-                                }
-                            }
-                            if (k == nDiffrentProc) /*a new procedure*/
-                            {
-                                nDiffrentProc++;
-                                if (paDiffrentProc == NULL)
-                                  paDiffrentProc = (SOSProcedureNode *)malloc(sizeof(SOSProcedureNode));
-                                else
-                                  paDiffrentProc = (SOSProcedureNode *)realloc(paDiffrentProc, 
-                                                                               sizeof(SOSProcedureNode)
-                                                                               *nDiffrentProc);
+                            for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) 
+                              {
+                                  pszResult = msSOSReturnMemberResult((GET_LAYER(map, i)), j, &pszProcedureValue);
+                                  if (!pszProcedureValue || !pszResult)
+                                    continue;
+                                  for (k=0; k<nDiffrentProc; k++)
+                                    {
+                                        if (strcasecmp(paDiffrentProc[k].pszProcedure, pszProcedureValue) == 0)
+                                          {
+                                              pszBlockSep = msOWSLookupMetadata(&(map->web.metadata), "S", 
+                                                                                "encoding_blockSeparator");
+                                              if (pszBlockSep)
+                                                xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST pszBlockSep);
+                                              else
+                                                xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST "\n");
+                                              xmlNodeAddContent(paDiffrentProc[k].psResultNode, BAD_CAST pszResult);
+                                              break;
+                                          }
+                                    }
+                                  if (k == nDiffrentProc) /*a new procedure*/
+                                    {
+                                        nDiffrentProc++;
+                                        if (paDiffrentProc == NULL)
+                                          paDiffrentProc = (SOSProcedureNode *)malloc(sizeof(SOSProcedureNode));
+                                        else
+                                          paDiffrentProc = (SOSProcedureNode *)realloc(paDiffrentProc, 
+                                                                                       sizeof(SOSProcedureNode)
+                                                                                       *nDiffrentProc);
 
-                                paDiffrentProc[nDiffrentProc-1].pszProcedure = strdup(pszProcedureValue);
-                                psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map, 
-                                                                                  (GET_LAYER(map, i)),
-                                                                                  pszProcedureValue);
-                                msFree(pszProcedureValue);
+                                        paDiffrentProc[nDiffrentProc-1].pszProcedure = strdup(pszProcedureValue);
+                                        psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map, 
+                                                                                          (GET_LAYER(map, i)),
+                                                                                          pszProcedureValue);
+                                        msFree(pszProcedureValue);
                                 
-                                paDiffrentProc[nDiffrentProc-1].psResultNode = 
-                                  xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
+                                        paDiffrentProc[nDiffrentProc-1].psResultNode = 
+                                          xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
 
-                                xmlNodeAddContent(paDiffrentProc[nDiffrentProc-1].psResultNode, BAD_CAST pszResult);
-                                msFree(pszResult);
-                            }
+                                        xmlNodeAddContent(paDiffrentProc[nDiffrentProc-1].psResultNode, BAD_CAST pszResult);
+                                        msFree(pszResult);
+                                    }
+                              }
+                            if (paDiffrentProc)
+                              {
+                                  for (k=0; k<nDiffrentProc; k++)
+                                    msFree(paDiffrentProc[k].pszProcedure);
+                                  free(paDiffrentProc);
+                              }
                         }
-                        if (paDiffrentProc)
-                        {
-                            for (k=0; k<nDiffrentProc; k++)
-                              msFree(paDiffrentProc[k].pszProcedure);
-                            free(paDiffrentProc);
-                        }
-                    }
-                }
-             }
-             msLayerClose((GET_LAYER(map, i)));
-          }
+                  }
+            }
        }
     }
    
@@ -2686,7 +2679,6 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
         map->query.rect = map->extent;
         msQueryByRect(map);
 
-        msLayerOpen(lp);
         msLayerGetItems(lp);
                 
         if (lp->resultcache && lp->resultcache->numresults > 0) {
@@ -2726,7 +2718,6 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
             }
           }
         }
-        msLayerClose(lp);
       }
     }
   }
