@@ -595,7 +595,7 @@ int layerObj_queryByShape(layerObj *self, mapObj *map, shapeObj *shape) {
 
     status = self->status;
     self->status = MS_ON;
-    retval = msQueryByShape(map, self->index, shape);
+    retval = msQueryByShape(map);
     self->status = status;
 
     return retval;
