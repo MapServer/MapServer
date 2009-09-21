@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Allow users to set wms getmap and getlegendgraphic image format list (#455)
+
 - Fixed MapScript shapeObj->toWkt() segfaults (#2763)
 
 - add vertical bar charts to dynamic charting (#3128)

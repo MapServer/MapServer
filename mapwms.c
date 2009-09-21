@@ -639,23 +639,48 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       map->height = atoi(values[i]);
     }
     else if (strcasecmp(names[i], "FORMAT") == 0) {
+      const char *format_list = NULL;
       formatfound = 1;
-      format = msSelectOutputFormat( map, values[i] );
 
-      if( format == NULL || 
-          (strncasecmp(format->driver, "GD/", 3) != 0 &&
-           strncasecmp(format->driver, "GDAL/", 5) != 0 && 
-           strncasecmp(format->driver, "AGG/", 4) != 0 &&
-           strncasecmp(format->driver, "CAIRO/", 6) != 0 &&
-           strncasecmp(format->driver, "SVG", 3) != 0))
-        {
-          msSetError(MS_IMGERR,
-                   "Unsupported output format (%s).",
-                   "msWMSLoadGetMapParams()",
-                   values[i] );
-        return msWMSException(map, nVersion, "InvalidFormat");
+      /*check to see if a predefined list is given*/
+      format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getmap_formatlist");
+      n = 0;
+      if ( format_list)
+        tokens = msStringSplit(format_list,  ',', &n);
+      
+      if (tokens && n > 0)
+      {
+          for (j=0; j<n; j++)
+          {
+              if (strcasecmp(tokens[j], values[i]) == 0)
+                break;
+          }
+          msFreeCharArray(tokens, n);
+          if (j == n || (format = msSelectOutputFormat( map, values[i])) == NULL)
+          {
+            msSetError(MS_IMGERR,
+                       "Unsupported output format (%s).",
+                       "msWMSLoadGetMapParams()",
+                       values[i] );
+            return msWMSException(map, nVersion, "InvalidFormat");
+          }
       }
-
+      else
+      {
+          format = msSelectOutputFormat( map, values[i] );
+          if( format == NULL || 
+              (strncasecmp(format->driver, "GD/", 3) != 0 &&
+               strncasecmp(format->driver, "GDAL/", 5) != 0 && 
+               strncasecmp(format->driver, "AGG/", 4) != 0 &&
+               strncasecmp(format->driver, "SVG", 3) != 0))
+          {
+              msSetError(MS_IMGERR,
+                         "Unsupported output format (%s).",
+                         "msWMSLoadGetMapParams()",
+                         values[i] );
+              return msWMSException(map, nVersion, "InvalidFormat");
+          }
+      }
       msFree( map->imagetype );
       map->imagetype = strdup(values[i]);
     }
@@ -2159,7 +2184,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
         else
            msWMSPrintRequestCap(nVersion, "DescribeLayer", script_url_encoded, "text/xml", NULL);
 
-        msGetOutputFormatMimeListGD(map,mime_list,sizeof(mime_list)/sizeof(char*));
+        msGetOutputFormatMimeListImg(map,mime_list,sizeof(mime_list)/sizeof(char*));
 
         if (nVersion >= OWS_1_1_1) {
            if (nVersion == OWS_1_3_0)
@@ -3149,7 +3174,9 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
     char *pszStyle = NULL;
     char *sld_version = NULL;
     const char *sldenabled = NULL;
-
+    const char *format_list = NULL;
+    char **tokens;
+    int n,j = 0;
     sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
     if (sldenabled == NULL)
@@ -3204,15 +3231,15 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      }
 
      if (nVersion >= OWS_1_3_0 && sld_version == NULL)
-  {
-      msSetError(MS_WMSERR, "Missing required parameter SLD_VERSION", "GetLegendGraphic()");
-      return msWMSException(map, nVersion, "MissingParameterValue");
-  }
-  if (nVersion >= OWS_1_3_0 && strcasecmp(sld_version, "1.1.0") != 0)
-  {
-      msSetError(MS_WMSERR, "SLD_VERSION must be 1.1.0", "GetLegendGraphic()");
-      return msWMSException(map, nVersion, "InvalidParameterValue");
-  }
+     {
+         msSetError(MS_WMSERR, "Missing required parameter SLD_VERSION", "GetLegendGraphic()");
+         return msWMSException(map, nVersion, "MissingParameterValue");
+     }
+     if (nVersion >= OWS_1_3_0 && strcasecmp(sld_version, "1.1.0") != 0)
+     {
+         msSetError(MS_WMSERR, "SLD_VERSION must be 1.1.0", "GetLegendGraphic()");
+         return msWMSException(map, nVersion, "InvalidParameterValue");
+     }
      /* check if layer name is valid. We only test the layer name and not */
      /* the group name. */
      for (i=0; i<map->numlayers; i++)
@@ -3233,20 +3260,47 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      }
 
      /* validate format */
-     psFormat = msSelectOutputFormat( map, pszFormat);
-     if( psFormat == NULL || 
-         (psFormat->renderer != MS_RENDER_WITH_GD
-                 &&
-          psFormat->renderer != MS_RENDER_WITH_AGG)) 
-          /* msDrawLegend and msCreateLegendIcon both switch the alpha channel to gd
-          ** after creation, so they can be called here without going through
-          ** the msAlphaGD2AGG functions */
+     
+     /*check to see if a predefined list is given*/
+     format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getlegendgraphic_formatlist");
+     n = 0;
+     if ( format_list)
+       tokens = msStringSplit(format_list,  ',', &n);
+      
+     if (tokens && n > 0)
      {
-         msSetError(MS_IMGERR,
-                    "Unsupported output format (%s).",
-                    "msWMSGetLegendGraphic()",
-                    pszFormat);
-         return msWMSException(map, nVersion, "InvalidFormat");
+         for (j=0; j<n; j++)
+         {
+             if (strcasecmp(tokens[j], pszFormat) == 0)
+               break;
+         }
+         msFreeCharArray(tokens, n);
+         if (j == n || (psFormat = msSelectOutputFormat( map, pszFormat)) == NULL)
+         {
+             msSetError(MS_IMGERR,
+                        "Unsupported output format (%s).",
+                        "msWMSGetLegendGraphic()",
+                        values[i] );
+             return msWMSException(map, nVersion, "InvalidFormat");
+         }
+     }
+     else
+     {
+         psFormat = msSelectOutputFormat( map, pszFormat);
+         if( psFormat == NULL || 
+             (psFormat->renderer != MS_RENDER_WITH_GD
+              &&
+              psFormat->renderer != MS_RENDER_WITH_AGG)) 
+           /* msDrawLegend and msCreateLegendIcon both switch the alpha channel to gd
+           ** after creation, so they can be called here without going through
+           ** the msAlphaGD2AGG functions */
+         {
+             msSetError(MS_IMGERR,
+                        "Unsupported output format (%s).",
+                        "msWMSGetLegendGraphic()",
+                        pszFormat);
+             return msWMSException(map, nVersion, "InvalidFormat");
+         }
      }
      msApplyOutputFormat(&(map->outputformat), psFormat, MS_NOOVERRIDE,
                           MS_NOOVERRIDE, MS_NOOVERRIDE );
@@ -3472,6 +3526,8 @@ int msWMSGetSchemaExtension(mapObj *map)
 
     return(MS_SUCCESS);
 }
+
+
 
 #endif /* USE_WMS_SVR */
 

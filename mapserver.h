@@ -2263,7 +2263,7 @@ MS_DLL_EXPORT outputFormatObj *msCreateDefaultOutputFormat( mapObj *map, const c
 MS_DLL_EXPORT int msPostMapParseOutputFormatSetup( mapObj *map );
 MS_DLL_EXPORT void msSetOutputFormatOption( outputFormatObj *format, const char *key, const char *value );
 MS_DLL_EXPORT void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime );
-MS_DLL_EXPORT void msGetOutputFormatMimeListGD( mapObj *map, char **mime_list, int max_mime );
+MS_DLL_EXPORT void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime );
 MS_DLL_EXPORT void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime );
 MS_DLL_EXPORT outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
 MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format );

@@ -872,45 +872,32 @@ void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime )
 /************************************************************************/
 /*                     msGetOutputFormatMimeList()                      */
 /************************************************************************/
-
-void msGetOutputFormatMimeListGD( mapObj *map, char **mime_list, int max_mime )
+void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
 
 {
-    int mime_count = 0, i;
+  int mime_count = 0, i,j;
+    const char *format_list = NULL;
+    char **tokens = NULL;
+    int numtokens = 0;
+    outputFormatObj *format;
 
-    for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ )
+    format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getlegendgraphic_formatlist");
+    if ( format_list && strlen(format_list) > 0)
+      tokens = msStringSplit(format_list,  ',', &numtokens);
+
+    if (tokens && numtokens > 0)
     {
-        int  j;
-        
-        if( map->outputformatlist[i]->mimetype == NULL )
-            continue;
-
-        for( j = 0; j < mime_count; j++ )
+        for(j = 0; j < numtokens; j++ )
         {
-            if( strcasecmp(mime_list[j],
-                           map->outputformatlist[i]->mimetype) == 0 )
-                break;
+            format = msSelectOutputFormat(map, tokens[j]);
+            if (format != NULL)
+            {
+                mime_list[mime_count++] = format->mimetype;
+            }
         }
-
-        if( j == mime_count && map->outputformatlist[i]->driver &&
-            strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0)
-            mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
+        msFreeCharArray(tokens, numtokens);
     }
-
-    if( mime_count < max_mime )
-        mime_list[mime_count] = NULL;
-}
-
-
-/************************************************************************/
-/*                  msGetOutputFormatMimeListRaster()                   */
-/************************************************************************/
-
-void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
-
-{
-    int mime_count = 0, i;
-
+    else
     for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ )
     {
         int  j;
@@ -927,14 +914,70 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
 
         if( j == mime_count && map->outputformatlist[i]->driver &&
             (strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
-             strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0 ||
-             strcasecmp(map->outputformatlist[i]->driver, "svg")==0)) 
+             strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0))
             mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
     }
 
     if( mime_count < max_mime )
         mime_list[mime_count] = NULL;
 }
+
+/************************************************************************/
+/*                  msGetOutputFormatMimeListWMS()                      */
+/************************************************************************/
+
+void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
+{
+    int mime_count = 0, i,j;
+    const char *format_list = NULL;
+    char **tokens = NULL;
+    int numtokens = 0;
+    outputFormatObj *format;
+
+    format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getmap_formatlist");
+    if ( format_list && strlen(format_list) > 0)
+      tokens = msStringSplit(format_list,  ',', &numtokens);
+
+    if (tokens && numtokens > 0)
+    {
+        for(j = 0; j < numtokens; j++ )
+        {
+            format = msSelectOutputFormat(map, tokens[j]);
+            if (format != NULL)
+            {
+                mime_list[mime_count++] = format->mimetype;
+            }
+        }
+        msFreeCharArray(tokens, numtokens);
+    }
+    else
+    {
+        for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ )
+        {
+            int  j;
+        
+            if( map->outputformatlist[i]->mimetype == NULL )
+              continue;
+
+            for( j = 0; j < mime_count; j++ )
+            {
+                if( strcasecmp(mime_list[j],
+                               map->outputformatlist[i]->mimetype) == 0 )
+                  break;
+            }
+
+            if( j == mime_count && map->outputformatlist[i]->driver &&
+               (strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
+                 strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0 ||
+                 strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0 ||
+                 strcasecmp(map->outputformatlist[i]->driver, "svg")==0)) 
+              mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
+        }
+    }
+    if( mime_count < max_mime )
+        mime_list[mime_count] = NULL;
+}
+
 
 /************************************************************************/
 /*                       msOutputFormatValidate()                       */
