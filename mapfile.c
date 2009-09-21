@@ -4560,6 +4560,8 @@ int initMap(mapObj *map)
   /* Encryption key information - see mapcrypto.c */
   map->encryption_key_loaded = MS_FALSE;
 
+  msInitQuery(&(map->query));
+
   return(0);
 }
 

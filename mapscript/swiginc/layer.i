@@ -216,6 +216,11 @@
         return msLayerGetShape(self, shape, tileindex, shapeindex);
     }
   
+    int resultsGetShape(shapeObj *shape, int shapeindex, int tileindex=-1)
+    {
+        return msLayerReultsGetShape(self, shape, tileindex, shapeindex);
+    }
+
     int getNumResults() 
     {
         if (!self->resultcache) return 0;
@@ -268,10 +273,18 @@
     {
         int status;
         int retval;
+
+        msInitQuery(&(map->query));
         
+        map->query.type = MS_QUERY_BY_ATTRIBUTE;
+        map->query.mode = mode;
+        if(qitem) map->query.item = strdup(qitem);
+        if(qstring) map->query.str = strdup(qstring);
+        map->query.layer = self->index;
+
         status = self->status;
         self->status = MS_ON;
-        retval = msQueryByAttributes(map, self->index, qitem, qstring, mode);
+        retval = msQueryByAttributes(map);
         self->status = status;
         return retval;
     }
@@ -280,10 +293,18 @@
     {
         int status;
         int retval;
+
+        msInitQuery(&(map->query));
+
+        map->query.type = MS_QUERY_BY_POINT;
+        map->query.mode = mode;
+        map->query.point = *point;
+        map->query.buffer = buffer;
+        map->query.layer = self->index;
         
         status = self->status;
         self->status = MS_ON;
-        retval = msQueryByPoint(map, self->index, mode, *point, buffer, 0);
+        retval = msQueryByPoint(map);
         self->status = status;
         return retval;
     }
@@ -292,10 +313,17 @@
     {
         int status;
         int retval;
-        
+
+        msInitQuery(&(map->query));
+
+        map->query.type = MS_QUERY_BY_RECT;
+        map->query.mode = MS_QUERY_MULTIPLE;
+        map->query.rect = rect; 
+        map->query.layer = self->index;
+
         status = self->status;
         self->status = MS_ON;
-        retval = msQueryByRect(map, self->index, rect);
+        retval = msQueryByRect(map);
         self->status = status;
         return retval;
     }
@@ -304,10 +332,13 @@
     {
         int status;
         int retval;
-        
+
+        map->query.slayer = slayer;
+        map->query.layer = self->index;
+
         status = self->status;
         self->status = MS_ON;
-        retval = msQueryByFeatures(map, self->index, slayer);
+        retval = msQueryByFeatures(map);
         self->status = status;
         return retval;
     }
@@ -317,25 +348,39 @@
         int status;
         int retval;
         
+        msInitQuery(&(map->query));
+
+        map->query.type = MS_QUERY_BY_SHAPE;
+        map->query.mode = MS_QUERY_MULTIPLE;
+        map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
+        msInitShape(map->query.shape);
+        msCopyShape(shape, map->query.shape);
+        map->query.layer = self->index;
+
         status = self->status;
         self->status = MS_ON;
-        retval = msQueryByShape(map, self->index, shape);
+        retval = msQueryByShape(map);
         self->status = status;
         return retval;
     }
 
-    int queryByIndex(mapObj *map, int tileindex, int shapeindex,
-                     int bAddToQuery=MS_FALSE)
+    int queryByIndex(mapObj *map, int tileindex, int shapeindex, int bAddToQuery=MS_FALSE)
     {
         int status;
         int retval;
         
+        msInitQuery(&(map->query));
+
+        map->query.type = MS_QUERY_BY_INDEX;
+        map->query.mode = MS_QUERY_SINGLE;
+        map->query.tileindex = tileindex;
+        map->query.shapeindex = shapeindex;
+        map->query.clear_resultcache = !bAddToQuery;
+        map->query.layer = self->index;
+
         status = self->status;
         self->status = MS_ON;
-        if (bAddToQuery == MS_FALSE)
-            retval = msQueryByIndex(map, self->index, tileindex, shapeindex);
-        else
-            retval = msQueryByIndexAdd(map, self->index, tileindex, shapeindex);
+        retval = msQueryByIndex(map);
         self->status = status;
         return retval;
     }

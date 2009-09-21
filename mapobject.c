@@ -79,9 +79,9 @@ void msFreeMap(mapObj *map) {
 
   if(!map) return;
 
-  /*printf("msFreeMap(): maybe freeing map at %p count=%d.\n",map, map->refcount);*/
-  if ( MS_REFCNT_DECR_IS_NOT_ZERO(map) ) { return; }
-  if (map->debug >= MS_DEBUGLEVEL_VV)
+  /* printf("msFreeMap(): maybe freeing map at %p count=%d.\n",map, map->refcount); */
+  if(MS_REFCNT_DECR_IS_NOT_ZERO(map)) { return; }
+  if(map->debug >= MS_DEBUGLEVEL_VV)
      msDebug("msFreeMap(): freeing map at %p.\n",map);
   
   msCloseConnections(map);
@@ -95,7 +95,7 @@ void msFreeMap(mapObj *map) {
 
   msFreeLabelCache(&(map->labelcache));
 
-  msFree( map->imagetype );
+  msFree(map->imagetype);
 
   msFreeFontSet(&(map->fontset));
 
@@ -109,30 +109,32 @@ void msFreeMap(mapObj *map) {
   freeLegend(&(map->legend));  
 
   for(i=0; i<map->maxlayers; i++) {
-    if (GET_LAYER(map, i)!=NULL) {
-    	GET_LAYER(map, i)->map=NULL;
-    	if ( freeLayer((GET_LAYER(map, i))) == MS_SUCCESS) {
-	    	free(GET_LAYER(map, i));
-	}
+    if(GET_LAYER(map, i) != NULL) {
+      GET_LAYER(map, i)->map = NULL;
+      if(freeLayer((GET_LAYER(map, i))) == MS_SUCCESS)
+        free(GET_LAYER(map, i));
     }
   }
   msFree(map->layers);
 
-  if (map->layerorder)
-      free(map->layerorder);
+  if(map->layerorder)
+    free(map->layerorder);
 
   msFree(map->templatepattern);
   msFree(map->datapattern);
   msFreeHashItems(&(map->configoptions));
-  if( map->outputformat && map->outputformat->refcount > 0 && --map->outputformat->refcount < 1 )
-        msFreeOutputFormat( map->outputformat );
+  if(map->outputformat && map->outputformat->refcount > 0 && --map->outputformat->refcount < 1)
+    msFreeOutputFormat(map->outputformat);
 
-    for(i=0; i < map->numoutputformats; i++ ) {
-        if( map->outputformatlist[i]->refcount > 0 && --map->outputformatlist[i]->refcount < 1 )
-        msFreeOutputFormat( map->outputformatlist[i] );
-    }
-    if( map->outputformatlist != NULL )
-        msFree( map->outputformatlist );
+  for(i=0; i<map->numoutputformats; i++ ) {
+    if(map->outputformatlist[i]->refcount > 0 && --map->outputformatlist[i]->refcount < 1)
+      msFreeOutputFormat(map->outputformatlist[i]);
+  }
+  if(map->outputformatlist != NULL)
+    msFree(map->outputformatlist);
+
+  msFreeQuery(&(map->query));
+
   msFree(map);
 }
 

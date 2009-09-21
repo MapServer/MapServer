@@ -2854,7 +2854,14 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   if (feature_count < 1)
       feature_count = 1;
 
-  if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), point, 0, feature_count) != MS_SUCCESS)
+  map->query.type = MS_QUERY_BY_POINT;
+  map->query.mode = (feature_count==1?MS_SINGLE:MS_MULTIPLE);
+  map->query.layer = -1;
+  map->query.point = point;
+  map->query.buffer = 0;
+  map->query.maxresults = feature_count; 
+
+  if(msQueryByPoint(map) != MS_SUCCESS)
       if((query_status=ms_error->code) != MS_NOTFOUND) return msWMSException(map, nVersion, NULL);
 
   /* Generate response */

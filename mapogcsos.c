@@ -1529,7 +1529,12 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                              lpTmp = GET_LAYER(map,j);
                              if (lpTmp->template == NULL)
                                lpTmp->template = strdup("ttt");
-                             msQueryByRect(map, j, map->extent);
+
+                             map->query.type = MS_QUERY_BY_RECT;
+                             map->query.mode = MS_QUERY_MULTIPLE;
+                             map->query.layer = j;
+                             map->query.rect = map->extent;
+                             msQueryByRect(map);
 
                              /*check if the attribute specified in the procedure_item is available
                                on the layer*/
@@ -1951,7 +1956,12 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
 
               if (lp->template == NULL)
                 lp->template = strdup("ttt");
-              msQueryByRect(map, i, map->extent);
+
+              map->query.type = MS_QUERY_BY_RECT;
+              map->query.mode = MS_QUERY_MULTIPLE;
+              map->query.layer = i;
+              map->query.rect = map->extent;
+              msQueryByRect(map);
 
               /*check if the attribute specified in the procedure_item is available */
               /*on the layer*/
@@ -2290,7 +2300,11 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
          If pszResult is available, the query on the layers will be done when the filter
          is parsed*/
       if (!sosparams->pszResult) {
-        msQueryByRect(map, -1, sBbox);
+        map->query.type = MS_QUERY_BY_RECT;
+        map->query.mode = MS_QUERY_MULTIPLE;
+        map->query.layer = -1;
+        map->query.rect = sBbox;
+        msQueryByRect(map);
       }
 
       /*get the first layers of the offering*/
@@ -2665,7 +2679,13 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       if (iItemPosition >=0) {
         if (lp->template == NULL)
           lp->template = strdup("ttt");
-        msQueryByRect(map, i, map->extent);
+
+        map->query.type = MS_QUERY_BY_RECT;
+        map->query.mode = MS_QUERY_MULTIPLE;
+        map->query.layer = i;
+        map->query.rect = map->extent;
+        msQueryByRect(map);
+
         msLayerOpen(lp);
         msLayerGetItems(lp);
                 

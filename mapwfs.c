@@ -1520,7 +1520,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     /* __TODO__ Using a rectangle query may not be the most efficient way */
     /* to do things here. */
     if (!bFilterSet) {
-      if(msQueryByRect(map, -1, bbox) != MS_SUCCESS) {
+
+      map->query.type = MS_QUERY_BY_RECT; /* setup the query */
+      map->query.mode = MS_QUERY_MULTIPLE;
+      map->query.rect = bbox;
+
+      if(msQueryByRect(map) != MS_SUCCESS) {
 	errorObj   *ms_error;
 	ms_error = msGetErrorObj();
 	

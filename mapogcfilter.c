@@ -369,10 +369,13 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     }
 
 
-    if (szExpression || bIsBBoxFilter || 
-        (bOnlySpatialFilter && !bIsBBoxFilter && !bPointQuery && !bShapeQuery))
-      status = msQueryByRect(map, lp->index, sQueryRect);
-    else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
+    if (szExpression || bIsBBoxFilter || (bOnlySpatialFilter && !bIsBBoxFilter && !bPointQuery && !bShapeQuery)) {
+      map->query.type = MS_QUERY_BY_RECT;
+      map->query.mode = MS_QUERY_MULTIPLE;
+      map->query.layer = lp->index;
+      map->query.rect = sQueryRect;
+      status = msQueryByRect(map);
+    } else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0) /* && dfDistance >=0) */
     {
         if (psNode->pszSRS &&  map->projection.numargs > 0 &&
@@ -391,12 +394,25 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                 psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
                 if (psTmpShape)
                 {
-                    status = msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
-                    msFreeShape(psTmpShape);
+                    map->query.type = MS_QUERY_BY_OPERATOR;
+                    map->query.mode = MS_QUERY_MULTIPLE;
+                    map->query.layer = lp->index;
+                    map->query.shape = psTmpShape;
+                    map->query.op = geos_operator;
+                    status = msQueryByOperator(map);
                 }
             }
-            else
-              status = msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
+            else 
+            {
+              map->query.type = MS_QUERY_BY_OPERATOR;
+              map->query.mode = MS_QUERY_MULTIPLE;
+              map->query.layer = lp->index;
+              map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
+              msInitShape(map->query.shape);
+              msCopyShape(psQueryShape, map->query.shape);
+              map->query.op = geos_operator;
+              status = msQueryByOperator(map);
+            }
         } 
         else
         {
@@ -411,8 +427,11 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                   lp->toleranceunits = nUnit;
             }
 
-            status = msQueryByPoint(map, lp->index, MS_MULTIPLE, 
-                                    psQueryShape->line[0].point[0], 0, 0);
+            map->query.type = MS_QUERY_BY_POINT;
+            map->query.mode = MS_QUERY_MULTIPLE;
+            map->query.layer = lp->index;
+            map->query.point = psQueryShape->line[0].point[0]; 
+            status = msQueryByPoint(map);
         }
     }
     else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0
@@ -439,12 +458,25 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                 psTmpShape = msGEOSBuffer(psQueryShape, dfDistance);
                 if (psTmpShape)
                 {
-                    status = msQueryByOperator(map, lp->index,  psTmpShape, geos_operator);
-                    msFreeShape(psTmpShape);
+                    map->query.type = MS_QUERY_BY_OPERATOR;
+                    map->query.mode = MS_QUERY_MULTIPLE;
+                    map->query.layer = lp->index;
+                    map->query.shape = psTmpShape;
+                    map->query.op = geos_operator;
+                    status = msQueryByOperator(map);
                 }
             } 
             else
-              status = msQueryByOperator(map, lp->index,  psQueryShape, geos_operator);
+            {
+              map->query.type = MS_QUERY_BY_OPERATOR;
+              map->query.mode = MS_QUERY_MULTIPLE;
+              map->query.layer = lp->index;
+              map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
+              msInitShape(map->query.shape);
+              msCopyShape(psQueryShape, map->query.shape);
+              map->query.op = geos_operator;
+              status = msQueryByOperator(map);
+            }
         }
         else
         {
@@ -461,8 +493,14 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                 if (nUnit >=0)
                   lp->toleranceunits = nUnit;
             }
-            status = msQueryByShape(map, lp->index,  psQueryShape);
-      
+            map->query.type = MS_QUERY_BY_SHAPE;
+            map->query.mode = MS_QUERY_MULTIPLE;
+            map->query.layer = lp->index;
+            map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
+            msInitShape(map->query.shape);
+            msCopyShape(psQueryShape, map->query.shape);
+            status = msQueryByShape(map);
+
             lp->tolerance = dfCurrentTolerance;
         }
     }
@@ -698,7 +736,11 @@ int FLTArraysNot(int *panArray, int nSize, mapObj *map,
      if (psLayer->template == NULL)
        psLayer->template = strdup("ttt.html");
 
-     msQueryByRect(map, psLayer->index, map->extent);
+     map->query.type = MS_QUERY_BY_RECT;
+     map->query.mode = MS_QUERY_MULTIPLE;
+     map->query.layer = psLayer->index;
+     map->query.rect = map->extent;
+     msQueryByRect(map);
 
      free(psLayer->template);
      psLayer->template = NULL;
@@ -1079,7 +1121,11 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     if (pszBuffer)
       free(pszBuffer);
 
-    return msQueryByRect(map, lp->index, sQueryRect);
+    map->query.type = MS_QUERY_BY_RECT;
+    map->query.mode = MS_QUERY_MULTIPLE;
+    map->query.layer = lp->index;
+    map->query.rect = sQueryRect;
+    return msQueryByRect(map);
 
     /* return MS_SUCCESS; */
 }

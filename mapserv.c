@@ -41,7 +41,6 @@
 
 MS_CVSID("$Id$")
 
-
 mapservObj* mapserv;
 
 int writeLog(int show_error)
@@ -1536,7 +1535,6 @@ int main(int argc, char *argv[]) {
       msFreeImage(img);
 
     } else if(mapserv->Mode >= QUERY) { /* query modes */
-
       if(QueryFile) { /* already got a completed query */
         status = msLoadQuery(mapserv->map, QueryFile);
         if(status != MS_SUCCESS) writeError();
@@ -1567,14 +1565,16 @@ int main(int argc, char *argv[]) {
           if(QueryCoordSource != NONE && !mapserv->UseShapes)
             setExtent(mapserv); /* set user area of interest */
 
-          if(mapserv->Mode == ITEMFEATUREQUERY || mapserv->Mode == ITEMFEATUREQUERYMAP) {
-            if((status = msQueryByAttributes(mapserv->map, SelectLayerIndex, QueryItem, QueryString, MS_SINGLE)) != MS_SUCCESS) writeError();
-          } else {
-            if((status = msQueryByAttributes(mapserv->map, SelectLayerIndex, QueryItem, QueryString, MS_MULTIPLE)) != MS_SUCCESS) writeError();
-          }
+	  mapserv->map->query.type = MS_QUERY_BY_ATTRIBUTE;
+          if(QueryItem) mapserv->map->query.item = strdup(QueryItem);
+          if(QueryString) mapserv->map->query.str = strdup(QueryString);
 
-          if(msQueryByFeatures(mapserv->map, QueryLayerIndex, SelectLayerIndex) != MS_SUCCESS) writeError();
+          mapserv->map->query.mode = MS_QUERY_MULTIPLE;
+          if(mapserv->Mode == ITEMFEATUREQUERY || mapserv->Mode == ITEMFEATUREQUERYMAP)
+            mapserv->map->query.mode = MS_QUERY_SINGLE;
 
+          mapserv->map->query.layer = QueryLayerIndex;
+	  mapserv->map->query.slayer = SelectLayerIndex; /* this will trigger the feature query eventually */
           break;
         case FEATUREQUERY:
         case FEATURENQUERY:
@@ -1591,40 +1591,50 @@ int main(int argc, char *argv[]) {
             case FROMIMGPNT:
               mapserv->map->extent = mapserv->ImgExt; /* use the existing map extent */    
               setCoordinate();
-              if((status = msQueryByPoint(mapserv->map, SelectLayerIndex, MS_SINGLE, mapserv->mappnt, 0, 0)) != MS_SUCCESS) writeError();
               break;
-            case FROMUSERPNT: /* only a buffer makes sense */
-              if(mapserv->Buffer == -1) {
-                msSetError(MS_WEBERR, "Point given but no search buffer specified.", "mapserv()");
-                writeError();
-              }
-              if((status = msQueryByPoint(mapserv->map, SelectLayerIndex, MS_SINGLE, mapserv->mappnt, mapserv->Buffer, 0)) != MS_SUCCESS) writeError();
+            case FROMUSERPNT:
               break;
             default:
-              msSetError(MS_WEBERR, "No way to the initial search, not enough information.", "mapserv()");
+              msSetError(MS_WEBERR, "No way to perform the initial search, not enough information.", "mapserv()");
               writeError();
               break;
             }      
+
+            mapserv->map->query.type = MS_QUERY_BY_POINT;
+            mapserv->map->query.mode = MS_QUERY_SINGLE;
+
+            mapserv->map->query.point = mapserv->mappnt;
+	    mapserv->map->query.buffer = mapserv->Buffer;
+
+            mapserv->map->query.layer = QueryLayerIndex;
+	    mapserv->map->query.slayer = SelectLayerIndex; /* this will trigger the feature query eventually */
           } else { /* FEATURENQUERY/FEATURENQUERYMAP */
             switch(QueryCoordSource) {
             case FROMIMGPNT:
               mapserv->map->extent = mapserv->ImgExt; /* use the existing map extent */    
               setCoordinate();
-              if((status = msQueryByPoint(mapserv->map, SelectLayerIndex, MS_MULTIPLE, mapserv->mappnt, 0, 0)) != MS_SUCCESS) writeError();
+              mapserv->map->query.type = MS_QUERY_BY_POINT;
               break;     
             case FROMIMGBOX:
+              /* TODO: this option was present but with no code to leverage the image box... */
               break;
-            case FROMUSERPNT: /* only a buffer makes sense */
-              if((status = msQueryByPoint(mapserv->map, SelectLayerIndex, MS_MULTIPLE, mapserv->mappnt, mapserv->Buffer, 0)) != MS_SUCCESS) writeError();
+            case FROMUSERPNT:
+              mapserv->map->query.type = MS_QUERY_BY_POINT;
             default:
               setExtent(mapserv);
-              if((status = msQueryByRect(mapserv->map, SelectLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
+              mapserv->map->query.type = MS_QUERY_BY_RECT;
               break;
             }
           }
-    
-          if(msQueryByFeatures(mapserv->map, QueryLayerIndex, SelectLayerIndex) != MS_SUCCESS) writeError();
-      
+
+          mapserv->map->query.mode = MS_QUERY_MULTIPLE;
+
+          mapserv->map->query.rect = mapserv->map->extent;
+          mapserv->map->query.point = mapserv->mappnt;
+          mapserv->map->query.buffer = mapserv->Buffer;
+
+          mapserv->map->query.layer = QueryLayerIndex;
+	  mapserv->map->query.slayer = SelectLayerIndex;
           break;
         case ITEMQUERY:
         case ITEMNQUERY:
@@ -1646,46 +1656,53 @@ int main(int argc, char *argv[]) {
           if(QueryCoordSource != NONE && !mapserv->UseShapes)
             setExtent(mapserv); /* set user area of interest */
 
-          if(mapserv->Mode == ITEMQUERY || mapserv->Mode == ITEMQUERYMAP) {
-            if((status = msQueryByAttributes(mapserv->map, QueryLayerIndex, QueryItem, QueryString, MS_SINGLE)) != MS_SUCCESS) writeError();
-          } else {
-            if((status = msQueryByAttributes(mapserv->map, QueryLayerIndex, QueryItem, QueryString, MS_MULTIPLE)) != MS_SUCCESS) writeError();
-          }
+	  mapserv->map->query.type = MS_QUERY_BY_ATTRIBUTE;
+	  mapserv->map->query.layer = QueryLayerIndex;
+          if(QueryItem) mapserv->map->query.item = strdup(QueryItem);
+          if(QueryString) mapserv->map->query.str = strdup(QueryString);
 
+	  mapserv->map->query.mode = MS_QUERY_MULTIPLE;
+          if(mapserv->Mode == ITEMQUERY || mapserv->Mode == ITEMQUERYMAP) mapserv->map->query.mode = MS_QUERY_SINGLE;
           break;
         case NQUERY:
         case NQUERYMAP:
+          mapserv->map->query.mode = MS_QUERY_MULTIPLE; /* all of these cases return multiple results */
+          mapserv->map->query.layer = QueryLayerIndex;
+
           switch(QueryCoordSource) {
           case FROMIMGPNT:      
             setCoordinate();
-      
+            
             if(SearchMap) { /* compute new extent, pan etc then search that extent */
               setExtent(mapserv);
               mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);
               if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
-              if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
+              mapserv->map->query.rect = mapserv->map->extent;
+	      mapserv->map->query.mode = MS_QUERY_BY_RECT; 
             } else {
               mapserv->map->extent = mapserv->ImgExt; /* use the existing image parameters */
               mapserv->map->width = mapserv->ImgCols;
               mapserv->map->height = mapserv->ImgRows;
               if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();     
-              if((status = msQueryByPoint(mapserv->map, QueryLayerIndex, MS_MULTIPLE, mapserv->mappnt, 0, 0)) != MS_SUCCESS) writeError();
+              mapserv->map->query.point = mapserv->mappnt;
+              mapserv->map->query.mode = MS_QUERY_BY_POINT;
             }
+
             break;      
           case FROMIMGBOX:      
             if(SearchMap) { /* compute new extent, pan etc then search that extent */
               setExtent(mapserv);
               if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
               mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);
-              if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
+              mapserv->map->query.rect = mapserv->map->extent;
+              mapserv->map->query.type = MS_QUERY_BY_RECT;
             } else {
               double cellx, celly;
         
               mapserv->map->extent = mapserv->ImgExt; /* use the existing image parameters */
               mapserv->map->width = mapserv->ImgCols;
               mapserv->map->height = mapserv->ImgRows;
-              if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();      
-        
+              if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();    
               cellx = MS_CELLSIZE(mapserv->ImgExt.minx, mapserv->ImgExt.maxx, mapserv->ImgCols); /* calculate the new search extent */
               celly = MS_CELLSIZE(mapserv->ImgExt.miny, mapserv->ImgExt.maxy, mapserv->ImgRows);
               mapserv->RawExt.minx = MS_IMAGE2MAP_X(mapserv->ImgBox.minx, mapserv->ImgExt.minx, cellx);          
@@ -1693,7 +1710,8 @@ int main(int argc, char *argv[]) {
               mapserv->RawExt.maxy = MS_IMAGE2MAP_Y(mapserv->ImgBox.miny, mapserv->ImgExt.maxy, celly); /* y's are flip flopped because img/map coordinate systems are */
               mapserv->RawExt.miny = MS_IMAGE2MAP_Y(mapserv->ImgBox.maxy, mapserv->ImgExt.maxy, celly);
 
-              if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->RawExt)) != MS_SUCCESS) writeError();
+              mapserv->map->query.rect = mapserv->RawExt;
+              mapserv->map->query.type = MS_QUERY_BY_RECT;
             }
             break;
           case FROMIMGSHAPE:
@@ -1710,12 +1728,15 @@ int main(int argc, char *argv[]) {
                 mapserv->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_Y(mapserv->SelectShape.line[i].point[j].y, mapserv->map->extent.maxy, mapserv->map->cellsize);
               }
             }
-      
-            if((status = msQueryByShape(mapserv->map, QueryLayerIndex, &mapserv->SelectShape)) != MS_SUCCESS) writeError();
+            mapserv->map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
+            msInitShape(mapserv->map->query.shape);
+            msCopyShape(&(mapserv->SelectShape), mapserv->map->query.shape);
+            mapserv->map->query.type = MS_QUERY_BY_SHAPE;
             break;      
           case FROMUSERPNT:
-            if(mapserv->Buffer == 0) {
-              if((status = msQueryByPoint(mapserv->map, QueryLayerIndex, MS_MULTIPLE, mapserv->mappnt, mapserv->Buffer, 0)) != MS_SUCCESS) writeError();
+            if(mapserv->Buffer == 0) { /* why == 0, makes no sense */
+	      mapserv->map->query.rect = mapserv->map->extent;
+              mapserv->map->query.type = MS_QUERY_BY_POINT;
               setExtent(mapserv);
             } else {
               setExtent(mapserv);
@@ -1723,22 +1744,28 @@ int main(int argc, char *argv[]) {
                 if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
                 mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height); 
               }
-              if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
+              mapserv->map->query.rect = mapserv->map->extent;
+              mapserv->map->query.type = MS_QUERY_BY_RECT;
             }
             break;
           case FROMUSERSHAPE:
-            setExtent(mapserv);        
-            if((status = msQueryByShape(mapserv->map, QueryLayerIndex, &mapserv->SelectShape)) != MS_SUCCESS) writeError();
-            break;      
+            setExtent(mapserv);
+            mapserv->map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
+            msInitShape(mapserv->map->query.shape);
+            msCopyShape(&(mapserv->SelectShape), mapserv->map->query.shape);
+            mapserv->map->query.type = MS_QUERY_BY_SHAPE;
+            break;
           default: /* from an extent of some sort */
             setExtent(mapserv);
             if(SearchMap) { /* the extent should be tied to a map, so we need to "adjust" it */
               if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
-              mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height); 
-            }        
-            if((status = msQueryByRect(mapserv->map, QueryLayerIndex, mapserv->map->extent)) != MS_SUCCESS) writeError();
+              mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);
+            }
+
+	    mapserv->map->query.rect = mapserv->map->extent;
+	    mapserv->map->query.type = MS_QUERY_BY_RECT;
             break;
-			    }      
+	  }
           break;
         case QUERY:
         case QUERYMAP:
@@ -1748,24 +1775,35 @@ int main(int argc, char *argv[]) {
             mapserv->map->extent = mapserv->ImgExt; /* use the existing image parameters */
             mapserv->map->width = mapserv->ImgCols;
             mapserv->map->height = mapserv->ImgRows;
-            if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();           
-            if((status = msQueryByPoint(mapserv->map, QueryLayerIndex, MS_SINGLE, mapserv->mappnt, 0, 0)) != MS_SUCCESS) writeError();
+            if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
             break;
           case FROMUSERPNT: /* only a buffer makes sense, DOES IT? */    
             setExtent(mapserv);    
-            if((status = msQueryByPoint(mapserv->map, QueryLayerIndex, MS_SINGLE, mapserv->mappnt, mapserv->Buffer, 0)) != MS_SUCCESS) writeError();
             break;
           default:
             msSetError(MS_WEBERR, "Query mode needs a point, imgxy and mapxy are not set.", "mapserv()");
             writeError();
             break;
           }
+
+          mapserv->map->query.type = MS_QUERY_BY_POINT;
+          mapserv->map->query.mode = MS_QUERY_SINGLE;
+          mapserv->map->query.layer = QueryLayerIndex;
+          mapserv->map->query.point = mapserv->mappnt;
+          mapserv->map->query.buffer = mapserv->Buffer;          
           break;
         case INDEXQUERY:
         case INDEXQUERYMAP:
-          if((status = msQueryByIndex(mapserv->map, QueryLayerIndex, TileIndex, ShapeIndex)) != MS_SUCCESS) writeError();
+          mapserv->map->query.type = MS_QUERY_BY_POINT;
+          mapserv->map->query.mode = MS_QUERY_SINGLE;
+          mapserv->map->query.layer = QueryLayerIndex;
+          mapserv->map->query.shapeindex = ShapeIndex;
+          mapserv->map->query.tileindex = TileIndex;
           break;
         } /* end mode switch */
+
+        /* finally execute the query */
+        if((status = msExecuteQuery(mapserv->map)) != MS_SUCCESS) writeError();
       }
       
       if(mapserv->map->querymap.width != -1) mapserv->map->width = mapserv->map->querymap.width; /* make sure we use the right size */

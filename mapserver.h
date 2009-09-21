@@ -166,9 +166,6 @@ extern "C" {
 #define MS_YES 1
 #define MS_NO 0
 
-#define MS_SINGLE 0 /* modes for searching (spatial/database) */
-#define MS_MULTIPLE 1
-
 /* For layer transparency, allows alpha transparent pixmaps to be used
    with RGB map images */
 #define MS_GD_ALPHA 1000
@@ -191,6 +188,8 @@ extern "C" {
 #define MS_TEMPLATE_EXPR "\\.(xml|wml|html|htm|svg|kml|gml|js|tmpl)$"
 
 #define MS_INDEX_EXTENSION ".qix"
+
+#define MS_QUERY_MAGIC_STRING "MapServer Query"
 #define MS_QUERY_EXTENSION ".qy"
 
 #define MS_DEG_TO_RAD .0174532925199432958
@@ -392,8 +391,11 @@ enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS
 enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
+#define MS_SINGLE 0 /* modes for searching (spatial/database) */
+#define MS_MULTIPLE 1
+
 enum MS_QUERY_MODE {MS_QUERY_SINGLE, MS_QUERY_MULTIPLE};
-enum MS_QUERY_TYPE {MS_QUERY_IS_NULL, MS_QUERY_BY_POINT, MS_QUERY_BY_RECT, MS_QUERY_BY_SHAPE, MS_QUERY_BY_FEATURES, MS_QUERY_BY_OPERATOR};
+enum MS_QUERY_TYPE {MS_QUERY_IS_NULL, MS_QUERY_BY_POINT, MS_QUERY_BY_RECT, MS_QUERY_BY_SHAPE, MS_QUERY_BY_ATTRIBUTE, MS_QUERY_BY_INDEX, MS_QUERY_BY_OPERATOR};
 
 enum MS_ALIGN_VALUE {MS_ALIGN_LEFT, MS_ALIGN_CENTER, MS_ALIGN_RIGHT}; 
 
@@ -401,7 +403,7 @@ enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_M
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, MS_IMAGEMODE_NULL };
 
-  enum MS_GEOS_OPERATOR {MS_GEOS_EQUALS, MS_GEOS_DISJOINT, MS_GEOS_TOUCHES, MS_GEOS_OVERLAPS, MS_GEOS_CROSSES, MS_GEOS_INTERSECTS, MS_GEOS_WITHIN, MS_GEOS_CONTAINS, MS_GEOS_BEYOND, MS_GEOS_DWITHIN};
+enum MS_GEOS_OPERATOR {MS_GEOS_EQUALS, MS_GEOS_DISJOINT, MS_GEOS_TOUCHES, MS_GEOS_OVERLAPS, MS_GEOS_CROSSES, MS_GEOS_INTERSECTS, MS_GEOS_WITHIN, MS_GEOS_CONTAINS, MS_GEOS_BEYOND, MS_GEOS_DWITHIN};
 #define MS_FILE_DEFAULT MS_FILE_MAP   
 
 #ifndef SWIG
@@ -588,19 +590,28 @@ typedef struct {
 /************************************************************************/
 #ifndef SWIG
 typedef struct {
-  int qtype; /* MS_QUERY_TYPE */
-  int qmode; /* MS_QUERY_MODE */
+  int type; /* MS_QUERY_TYPE */
+  int mode; /* MS_QUERY_MODE */
 
-  int qlayer;
+  int layer;
 
-  pointObj qpoint; /* by point */
-  rectObj qrect; /* by rect */
-  shapeObj *qshape; /* by shape */
+  pointObj point; /* by point */
+  double buffer;
+  int maxresults;
 
-  long qindex; /* by index */
+  rectObj rect; /* by rect */
+  shapeObj *shape; /* by shape & operator (OGC filter) */
 
-  char *qitem; /* by attribute */
-  char *qstring;
+  long shapeindex; /* by index */
+  long tileindex; 
+  int clear_resultcache;
+
+  char *item; /* by attribute */
+  char *str;
+
+  int op; /* by GEOS operator */
+
+  int slayer; /* selection layer, used for msQueryByFeatures() (note this is not a query mode per se) */
 } queryObj;
 #endif
 
@@ -618,7 +629,7 @@ typedef struct {
 
 /* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
 #define MS_STYLE_BINDING_LENGTH 8
-  enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_WIDTH, MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR, MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL, MS_STYLE_BINDING_OUTLINEWIDTH, MS_STYLE_BINDING_OPACITY};
+enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_WIDTH, MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR, MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL, MS_STYLE_BINDING_OUTLINEWIDTH, MS_STYLE_BINDING_OPACITY};
 #define MS_LABEL_BINDING_LENGTH 6
 enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR, MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, MS_LABEL_BINDING_PRIORITY};
 
@@ -1403,9 +1414,9 @@ typedef struct map_obj{ /* structure for a map */
 
   int *layerorder;
 
-  int debug;   
+  int debug;
 
-  char *datapattern, *templatepattern;   
+  char *datapattern, *templatepattern; /* depricated, use VALIDATION ... END block instead */
 
 #ifdef SWIG
 %immutable;
@@ -1419,6 +1430,8 @@ typedef struct map_obj{ /* structure for a map */
   /* Private encryption key information - see mapcrypto.c */
   int encryption_key_loaded;        /* MS_TRUE once key has been loaded */
   unsigned char encryption_key[MS_ENCRYPTION_KEY_SIZE]; /* 128bits encryption key */
+
+  queryObj query;
 #endif
 } mapObj;
 
@@ -1710,22 +1723,22 @@ MS_DLL_EXPORT int msInitQuery(queryObj *query); /* in mapquery.c */
 MS_DLL_EXPORT void msFreeQuery(queryObj *query);
 MS_DLL_EXPORT int msSaveQuery(mapObj *map, char *filename);
 MS_DLL_EXPORT int msLoadQuery(mapObj *map, char *filename);
-MS_DLL_EXPORT int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex);
-MS_DLL_EXPORT int msQueryByIndexAdd(mapObj *map, int qlayer, int tileindex, int shapeindex);
-MS_DLL_EXPORT int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int mode);
-MS_DLL_EXPORT int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer, int maxresults);
-MS_DLL_EXPORT int msQueryByRect(mapObj *map, int qlayer, rectObj rect);
-MS_DLL_EXPORT int msQueryByFeatures(mapObj *map, int qlayer, int slayer);
-MS_DLL_EXPORT int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape);
-MS_DLL_EXPORT int msQueryByOperator(mapObj *map, int qlayer, shapeObj *selectshape, 
-                                    int  geos_operator);
+MS_DLL_EXPORT int msExecuteQuery(mapObj *map);
+
+MS_DLL_EXPORT int msQueryByIndex(mapObj *map); /* various query methods, all rely on the queryObj hung off the mapObj */
+MS_DLL_EXPORT int msQueryByAttributes(mapObj *map);
+MS_DLL_EXPORT int msQueryByPoint(mapObj *map);
+MS_DLL_EXPORT int msQueryByRect(mapObj *map);
+MS_DLL_EXPORT int msQueryByFeatures(mapObj *map);
+MS_DLL_EXPORT int msQueryByShape(mapObj *map);
+MS_DLL_EXPORT int msQueryByOperator(mapObj *map);
+
 MS_DLL_EXPORT int msGetQueryResultBounds(mapObj *map, rectObj *bounds);
 MS_DLL_EXPORT int msIsLayerQueryable(layerObj *lp);
-MS_DLL_EXPORT void msQueryFree(mapObj *map, int qlayer);
+MS_DLL_EXPORT void msQueryFree(mapObj *map, int qlayer); /* todo: rename */
 MS_DLL_EXPORT int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape);
 MS_DLL_EXPORT int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect);
-MS_DLL_EXPORT int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, 
-                         pointObj p, double buffer );
+MS_DLL_EXPORT int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p, double buffer );
 
 /* in mapstring.c */
 MS_DLL_EXPORT void msStringTrim(char *str); 

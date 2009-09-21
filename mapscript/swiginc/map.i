@@ -241,19 +241,41 @@
   }
 
   int queryByPoint(pointObj *point, int mode, double buffer) {
-    return msQueryByPoint(self, -1, mode, *point, buffer, 0);
+    msInitQuery(&(self->query));
+
+    self->query.type = MS_QUERY_BY_POINT;
+    self->query.mode = mode;
+    self->query.point = *point;
+    self->query.buffer = buffer;
+
+    return msQueryByPoint(self);
   }
 
   int queryByRect(rectObj rect) {
-    return msQueryByRect(self, -1, rect);
+    msInitQuery(&(self->query));
+
+    self->query.type = MS_QUERY_BY_RECT;
+    self->query.mode = MS_QUERY_MULTIPLE;
+    self->query.rect = rect;
+
+    return msQueryByRect(self);
   }
 
   int queryByFeatures(int slayer) {
-    return msQueryByFeatures(self, -1, slayer);
+    self->query.slayer = slayer;
+    return msQueryByFeatures(self);
   }
 
   int queryByShape(shapeObj *shape) {
-    return msQueryByShape(self, -1, shape);
+    msInitQuery(&(self->query));
+    
+    self->query.type = MS_QUERY_BY_SHAPE;
+    self->query.mode = MS_QUERY_MULTIPLE;
+    self->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
+    msInitShape(self->query.shape);
+    msCopyShape(shape, self->query.shape);
+
+    return msQueryByShape(self);
   }
 
   int setWKTProjection(char *wkt) {
