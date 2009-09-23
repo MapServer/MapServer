@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+Version 5.6.0-beta1 (2009-09-23):
+--------------------------------
+
 - WMS 1.3.0 expects a CRS parameter instead of SRS (#2979)
 
 - Allow users to set wms getmap and getlegendgraphic image format list (#455)
@@ -60,7 +63,8 @@ Current Version (SVN trunk):
 
 - Avoid double free with postgresql joins. (#2936)
 
-- Don't attempt to project layers given in pixel coordinates (layer->transform != MS_TRUE) (#3096)
+- Don't attempt to project layers given in pixel coordinates 
+  (layer->transform != MS_TRUE) (#3096)
 
 - Modify loading imagery from GDAL to load all bands at once to avoid multiple
   passes through pixel interleaved data (mapdrawgdal.c).  This is just an
@@ -83,7 +87,8 @@ Current Version (SVN trunk):
 
 - Add MS_DEBUGLEVEL and MS_ERRORFILE commandline switches for mapserv.c. 
 
-- Exposed msMapOffsetExtent, msMapScaleExtent and msMapSetCenter methods in PHP/Mapscript (#2460)
+- Exposed msMapOffsetExtent, msMapScaleExtent and msMapSetCenter methods 
+  in PHP/Mapscript (#2460)
 
 - Removed ZEND_DEBUG define in PHP/Mapscript (#2717)
 
@@ -97,7 +102,8 @@ Current Version (SVN trunk):
 
 - make WFS numberOfFeatures match maxFeatures if passed (#2907)
 
-- Add logging in layer visibility tests to help users find why layers don't draw (#3054)
+- Add logging in layer visibility tests to help users find why layers 
+  don't draw (#3054)
 
 - include PNG libs first (#3046)
 
@@ -124,16 +130,19 @@ Current Version (SVN trunk):
 
 - Fixed a memory leak when unescaping quotes in	logical	expressions (#2938)
 
-- Fixed template code for item, shpxy and extent tags to properly initialize tag arguments in cases
-  where there are mutiple tags in one chunk of template (#2990)
+- Fixed template code for item, shpxy and extent tags to properly initialize
+  tag arguments in cases where there are mutiple tags in one chunk of
+  template (#2990)
 
-- Fix mapogcfilter.c not to cause syntax error if PROJ.4 is not compiled in (#2987)
+- Fix mapogcfilter.c not to cause syntax error if PROJ.4 is not compiled 
+  in (#2987)
 
 - Rework Python MapScript's setup.py to be more like Python's to fix
   a number of issues including (#2637) and to use mapserver-config 
   and ditch the old mapscriptvars approach
 
-- Prevent from changing the connection type to MS_RASTER when setConnectionType(MS_WMS) is used (#2908)
+- Prevent from changing the connection type to MS_RASTER when 
+  setConnectionType(MS_WMS) is used (#2908)
 
 - Improve rounding logic for computing the src_xoff/yoff (#2976)
 
@@ -142,7 +151,8 @@ Current Version (SVN trunk):
 
 - Improved security relative to untrusted directories and mapfiles (RFC 56)
 
-- Fixed several security issues found in an audit of the CGI application (#2939, #2941, #2942, #2943, #2944)
+- Fixed several security issues found in an audit of the CGI 
+  application (#2939, #2941, #2942, #2943, #2944)
 
 - setConnectionType(MS_WMS) doesn't work with mapscript (#2908)
 
@@ -185,6 +195,7 @@ Current Version (SVN trunk):
 
 - fix MIME type support (#3020)
 
+
 Version 5.4.0-beta3 (2009-3-5):
 --------------------------------
 
@@ -192,9 +203,11 @@ Version 5.4.0-beta3 (2009-3-5):
 
 - Added Java MapScript WIN64 support (#2250)
 
-- Fixed a problem with long running processes, embedded scalebars/legends and AGG. (#2887)
+- Fixed a problem with long running processes, embedded scalebars/legends 
+  and AGG. (#2887)
 
-- Applied patch to deal with a couple of WCS issues (time ranges, #2487) and PostGIS tileindex-based time filters (#1856)
+- Applied patch to deal with a couple of WCS issues (time ranges, #2487) 
+  and PostGIS tileindex-based time filters (#1856)
 
 - Adding -DUSE_GENERIC_MS_NINT to the WIN64 MapScript builds (#2250)
 
