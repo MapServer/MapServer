@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- WMS 1.3.0 expects a CRS parameter instead of SRS (#2979)
+
 - Allow users to set wms getmap and getlegendgraphic image format list (#455)
 
 - Fixed MapScript shapeObj->toWkt() segfaults (#2763)

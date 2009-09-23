@@ -521,7 +521,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         styles = values[i];
 
     }
-    else if (strcasecmp(names[i], "SRS") == 0 || strcasecmp(names[i], "CRS") == 0) {
+    else if ((strcasecmp(names[i], "SRS") == 0 && nVersion < OWS_1_3_0) || 
+             (strcasecmp(names[i], "CRS") == 0 && nVersion >= OWS_1_3_0)) {
       srsfound = 1;
       /* SRS is in format "EPSG:epsg_id" or "AUTO:proj_id,unit_id,lon0,lat0" */
       if (strncasecmp(values[i], "EPSG:", 5) == 0)
@@ -704,7 +705,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
   }
 
-   /*validate the exception format WMS 1.3.0 section 7.4.3.5*/
+   /*validate the exception format WMS 1.3.0 section 7.3.3.11*/
 
    if (nVersion >= OWS_1_3_0 && wms_exception_format != NULL)
    {    
@@ -1142,7 +1143,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   if (request && strcasecmp(request, "DescribeLayer") != 0) {
     if (srsfound == 0)
     {
-      msSetError(MS_WMSERR, "Missing required parameter SRS", "msWMSLoadGetMapParams()");
+      if ( nVersion >= OWS_1_3_0)
+        msSetError(MS_WMSERR, "Missing required parameter CRS", "msWMSLoadGetMapParams()");
+      else
+        msSetError(MS_WMSERR, "Missing required parameter SRS", "msWMSLoadGetMapParams()");
+
       return msWMSException(map, nVersion, "MissingParameterValue");
     }
 
