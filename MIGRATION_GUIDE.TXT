@@ -1,8 +1,66 @@
 =====================================
+MapServer 5.4 to 5.6 Migration Guide
+=====================================
+
+This section documents the changes that must be made to MapServer 
+applications when migrating from version 5.4.x (or earlier versions) 
+to 5.6 (i.e. backwards incompatibilities), as well as information
+on some of the new features.
+
+----------------------------------------------------
+MapScript changes related to single pass queries
+----------------------------------------------------
+
+In RFC-52, MapServer was modified to perform queries using a single pass
+on the data instead of two passes. This is transparent for CGI applications,
+but MapScript scripts must be modified to use the layer.resultsGetShape()
+method instead of layer.getShape().
+
+See also: http://mapserver.org/development/rfc/ms-rfc-52.html
+
+(Note: the new resultsGetShape() method is not yet available for PHP MapScript 
+in 5.6.0-beta1)
+
+
+=====================================
+MapServer 5.2 to 5.4 Migration Guide
+=====================================
+
+This section documents the changes that must be made to MapServer 
+applications when migrating from version 5.2. (or earlier versions) 
+to 5.4 (i.e. backwards incompatibilities), as well as information
+on some of the new features.
+
+--------------------------------------------------------
+New requirements for mapfiles, symbolsets and templates
+--------------------------------------------------------
+
+Due to some potential security vulnerabilities that were uncovered in previous
+versions of MapServer, RFC-56 introduced a number of changes to tighten 
+access control on mapfiles and templates and limit the risk of leaking 
+arbitrary file contents. These changes were introduced in version 5.4.0,
+and were also backported to v5.2.2 and 4.10.4.
+
+The new requirements are as follows:
+
+* The MAP and SYMBOLSET keywords must be added to any mapfile and symbolset
+  that did not contain them already.
+
+* All MapServer templates must be updated to contain the "MapServer Template"
+  magic string on the first line. This string can be embedded
+  in a commment depending on the template formet and the whole line will
+  be skipped in the output generation. e.g.
+   * In HTML: <!-- MapServer Template --> 
+   * In JavaScript: // MapServer Template
+
+See also: http://mapserver.org/development/rfc/ms-rfc-56.html
+
+
+=====================================
 MapServer 4.10 to 5.0 Migration Guide
 =====================================
 
-This page documents the changes that must be made to MapServer 
+This section documents the changes that must be made to MapServer 
 applications when migrating from version 4.10.x (or earlier versions) 
 to 5.x (i.e. backwards incompatibilities), as well as information
 on some of the new features.
