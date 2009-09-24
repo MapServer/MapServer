@@ -50,8 +50,8 @@ The new requirements are as follows:
   magic string on the first line. This string can be embedded
   in a commment depending on the template formet and the whole line will
   be skipped in the output generation. e.g.
-   * In HTML: <!-- MapServer Template --> 
-   * In JavaScript: // MapServer Template
+  * In HTML: <!-- MapServer Template --> 
+  * In JavaScript: // MapServer Template
 
 See also: http://mapserver.org/development/rfc/ms-rfc-56.html
 
