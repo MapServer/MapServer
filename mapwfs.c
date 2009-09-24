@@ -1168,33 +1168,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     }
   }
 
-  /*
-      srs is defined for wfs 1.1. If it is available. If it used to set 
-      the map projection. For EPSG codes between 4000 and 5000 
-      that coordinates order follow what is defined  in the ESPG database
-      see #2899
-  */
-  if (strncmp(paramsObj->pszVersion,"1.1",3) == 0 && paramsObj->pszSrs && pszOutputSRS)
-  {     
-      /*check if the srs passed is valid. Assuming that it is an EPSG:xxx format.
-       TODO: do we accept urn type projection strings*/
-      if (strncasecmp(paramsObj->pszSrs, "EPSG:", 5) == 0)
-      {
-          if (strcasecmp(paramsObj->pszSrs, pszOutputSRS) != 0)
-          {
-              msSetError(MS_WFSERR, 
-		       "Invalid GetFeature Request: SRSNAME value should be valid for all the TYPENAMES. Please check the capabilities and reformulate your request.",
-                         "msWFSGetFeature()");
-              return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
-          }
-          /*we load the projection sting in the map and possibly 
-            set the axis order*/
-          msFreeProjection(&map->projection);
-          msLoadProjectionStringEPSG(&(map->projection), paramsObj->pszSrs);
-      }
-  }
- 
-
   /* Validate outputformat */
   if (paramsObj->pszOutputFormat) {
     /* We support only GML2 and GML3 for now. */
@@ -1503,15 +1476,67 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       msFreeCharArray(layers, numlayers);
 
 
+    /*
+      srs is defined for wfs 1.1. If it is available. If it used to set 
+      the map projection. For EPSG codes between 4000 and 5000 
+      that coordinates order follow what is defined  in the ESPG database
+      see #2899
+  */
+    if (strncmp(paramsObj->pszVersion,"1.1",3) == 0 && paramsObj->pszSrs && pszOutputSRS)
+    {     
+          /*check if the srs passed is valid. Assuming that it is an EPSG:xxx format,
+            Or urn:ogc:def:crs:EPSG:xxx format. */
+        if (strncasecmp(paramsObj->pszSrs, "EPSG:", 5) == 0)
+        {
+            if (strcasecmp(paramsObj->pszSrs, pszOutputSRS) != 0)
+            {
+                msSetError(MS_WFSERR, 
+                           "Invalid GetFeature Request: SRSNAME value should be valid for all the TYPENAMES. Please check the capabilities and reformulate your request.",
+                           "msWFSGetFeature()");
+                return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
+            }
+                /*we load the projection sting in the map and possibly 
+                  set the axis order*/
+            msFreeProjection(&map->projection);
+            msLoadProjectionStringEPSG(&(map->projection), paramsObj->pszSrs);
+        }
+        else if (strncasecmp(paramsObj->pszSrs, "urn:EPSG:geographicCRC:",23) == 0)
+        {
+            char epsg_string[100];
+            const char *code;
+
+            code = paramsObj->pszSrs + 23;
+            
+            sprintf( epsg_string, "EPSG:%s", code );
+            if (strcasecmp(epsg_string, pszOutputSRS) != 0)
+            {
+                msSetError(MS_WFSERR, 
+                           "Invalid GetFeature Request: SRSNAME value should be valid for all the TYPENAMES. Please check the capabilities and reformulate your request.",
+                           "msWFSGetFeature()");
+                return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
+            }
+                /*we load the projection sting in the map and possibly 
+                  set the axis order*/
+            msFreeProjection(&map->projection);
+            msLoadProjectionStringEPSG(&(map->projection), epsg_string);
+        }
+    }
     /* Set map output projection to which output features should be reprojected */
-    if (pszOutputSRS && strncasecmp(pszOutputSRS, "EPSG:", 5) == 0) {
-      char szBuf[32];
-      sprintf(szBuf, "init=epsg:%.10s", pszOutputSRS+5);
-      
-      if (msLoadProjectionString(&(map->projection), szBuf) != 0) {
-        msSetError(MS_WFSERR, "msLoadProjectionString() failed", "msWFSGetFeature()");
-	return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
-      }
+    else if (pszOutputSRS && strncasecmp(pszOutputSRS, "EPSG:", 5) == 0) 
+    {
+        int nTmp =0;
+        msFreeProjection(&map->projection);
+        msInitProjection(&map->projection);
+
+        if (strncmp(paramsObj->pszVersion,"1.1",3) == 0)
+          nTmp = msLoadProjectionStringEPSG(&(map->projection), pszOutputSRS);
+        else
+          nTmp = msLoadProjectionString(&(map->projection), pszOutputSRS);
+
+        if (nTmp != 0) {
+            msSetError(MS_WFSERR, "msLoadProjectionString() failed", "msWFSGetFeature()");
+            return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
+        }
     }
 
     /*
