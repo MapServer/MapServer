@@ -73,6 +73,7 @@ def read_mapscriptvars():
     if version:
         version = version.split()[2]
         version = version.replace('#','')
+        version = version.replace('"','')
     
     output['version'] = version
     output['libs'] = libraries
