@@ -16,6 +16,8 @@ Current Version (SVN trunk):
 
  - support axis odering for WFS 1.1 (#2899)
 
+ - const changes to avoid warnings with msLoadProjectionString()
+
 Version 5.6.0-beta1 (2009-09-23):
 ---------------------------------
 

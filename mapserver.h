@@ -1600,9 +1600,6 @@ MS_DLL_EXPORT void freeWeb(webObj *web);
 MS_DLL_EXPORT featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
 
-MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, char *value);
-MS_DLL_EXPORT int msLoadProjectionStringEPSG(projectionObj *p, char *value);
-
 /* To be used *only* within the mapfile loading phase */
 MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, char *value);
 /* Use this next, thread safe wrapper, function everywhere else */

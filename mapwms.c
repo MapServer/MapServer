@@ -37,6 +37,7 @@
 #include "mapogcsld.h"
 
 #include "maptime.h"
+#include "mapproject.h"
 
 #include <stdarg.h>
 #include <time.h>

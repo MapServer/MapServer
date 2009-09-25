@@ -1105,7 +1105,7 @@ static int loadProjection(projectionObj *p)
 /*      certain code ranges.                                            */
 /*      Use for now in WMS 1.3.0                                        */
 /************************************************************************/
-int msLoadProjectionStringEPSG(projectionObj *p, char *value)
+int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 {
     p->gt.need_geotransform = MS_FALSE;
     
@@ -1133,7 +1133,7 @@ int msLoadProjectionStringEPSG(projectionObj *p, char *value)
 }
 
 
-int msLoadProjectionString(projectionObj *p, char *value)
+int msLoadProjectionString(projectionObj *p, const char *value)
 {
   p->gt.need_geotransform = MS_FALSE;
 
