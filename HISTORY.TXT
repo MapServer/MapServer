@@ -18,6 +18,8 @@ Current Version (SVN trunk):
 
  - const changes to avoid warnings with msLoadProjectionString()
 
+ - mapgd.c: removed unused drawVectorSymbolGD() function.
+
 Version 5.6.0-beta1 (2009-09-23):
 ---------------------------------
 
