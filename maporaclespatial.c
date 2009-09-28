@@ -133,13 +133,13 @@ typedef
 	struct
 	{
 		OCIStmt *stmthp;
-		
+
 		/* fetch data buffer */
-		long rows_count; /* total number of rows (so far) within cursor */
-		long row_num; /* current row index within cursor results */
-		int rows_fetched; /* total number of rows fetched into our buffer */
-		int row; /* current row index within our buffer */
-		
+		ub4 rows_count; /* total number of rows (so far) within cursor */
+		ub4 row_num; /* current row index within cursor results */
+		ub4 rows_fetched; /* total number of rows fetched into our buffer */
+		ub4 row; /* current row index within our buffer */
+
 		item_text_array *items; /* items buffer */
 		item_text_array_query *items_query; /* items buffer */
 		SDOGeometryObj *obj[ARRAY_SIZE]; /* spatial object buffer */
@@ -511,14 +511,13 @@ static int msOCIOpenStatement( msOracleSpatialHandler *hand, msOracleSpatialStat
 {
     int success = 0;
 
-    success = TRY( hand,
-				  /* allocate stmthp */
-				  OCIHandleAlloc( (dvoid *)hand->envhp, (dvoid **)&sthand->stmthp, (ub4)OCI_HTYPE_STMT, (size_t)0, (dvoid **)0 ) );
+    /* allocate stmthp */
+    success = TRY( hand, OCIHandleAlloc( (dvoid *)hand->envhp, (dvoid **)&sthand->stmthp, (ub4)OCI_HTYPE_STMT, (size_t)0, (dvoid **)0 ) );
 	
-	sthand->rows_count = -1;
-	sthand->row_num = -1;
-	sthand->rows_fetched = -1;
-	sthand->row = -1;
+	sthand->rows_count = 0;
+	sthand->row_num = 0;
+	sthand->rows_fetched = 0;
+	sthand->row = 0;
 	sthand->items = NULL;
 	sthand->items_query = NULL;
 
@@ -1302,7 +1301,7 @@ static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d, int da
     if (g)
     {
         shapeline.numpoints = g;
-        newshape->type = MS_SHAPE_POLYGON;
+        newshape->type = shape->type; /* jimk: 2009/09/23 Fixes compound linestrings being converted to polygons */
         msAddLine( newshape, &shapeline );
     }
 }
@@ -1645,7 +1644,7 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
               elem_type = (etype == 1 && interpretation > 1) ? 10 : ((etype%10)*10 + interpretation);
 
 
-//              msDebug("osGetOrdinates elem_type =  %d\n",elem_type);
+              // msDebug("osGetOrdinates shape->index = %ld\telem_type =  %d\n",shape->index, elem_type);
  
               switch (elem_type)
               {
@@ -1823,7 +1822,7 @@ int msOracleSpatialLayerClose( layerObj *layer )
 
     if (layer->debug)
         msDebug("msOracleSpatialLayerClose was called. Layer: %p, Layer name: %s. Layer connection: %s\n", layer, layer->name, layer->connection);
-
+    
     if (layerinfo != NULL)
     {
 
@@ -2093,7 +2092,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
     {
         dthand = (msOracleSpatialDataHandler *)layerinfo->oradatahandlers;
         hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
-		sthand = (msOracleSpatialStatement *)layerinfo->orastmt2;
+        sthand = (msOracleSpatialStatement *)layerinfo->orastmt2;
     }
 
     /* no rows fetched */
@@ -2220,6 +2219,10 @@ int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int re
 		
     if (record >= sthand->rows_count || record < 0)
 	{
+		/*msDebug("msOracleSpatialLayerResultGetShape problem with cursor. Trying to fetch record = %ld of %ld, falling back to GetShape\n", 
+		 *		record, sthand->rows_count);
+		 *return msOracleSpatialLayerGetShape(layer, shape, pkey); */
+
 		msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerResultGetShape record out of range","msOracleSpatialLayerResultGetShape()" );
 		return MS_FAILURE;
 	}
