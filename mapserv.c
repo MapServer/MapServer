@@ -252,7 +252,7 @@ mapObj *loadMap(void)
           writeError();
         }
       }
-      msLayerSubstituteString(layer, key, mapserv->request->ParamValues[i]);
+      msLayerSubstituteString(layer, tmpstr, mapserv->request->ParamValues[i]);
     }
     
     free(tmpstr);
