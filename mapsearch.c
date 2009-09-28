@@ -295,34 +295,50 @@ int msIntersectPolygons(shapeObj *p1, shapeObj *p2) {
 double msDistancePointToPoint(pointObj *a, pointObj *b)
 {
   double d;
+
+  d = sqrt(msSquareDistancePointToPoint(a, b));
+
+  return(d);
+}
+
+/*
+** Quickly compute the square of the distance; avoids expensive sqrt() call on each invocation
+*/
+double msSquareDistancePointToPoint(pointObj *a, pointObj *b)
+{
   double dx, dy;
   
   dx = a->x - b->x;
   dy = a->y - b->y;
-  d = sqrt(dx*dx + dy*dy);
-  return(d);
+
+  return(dx*dx + dy*dy);
 }
 
 double msDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b)
 {
-  double l; /* length of line ab */
+	return (sqrt(msSquareDistancePointToSegment(p, a, b)));
+}
+
+double msSquareDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b)
+{
+  double l_squared; /* squared length of line ab */
   double r,s;
 
-  l = msDistancePointToPoint(a,b);
+  l_squared = msSquareDistancePointToPoint(a,b);
 
-  if(l == 0.0) /* a = b */
-    return( msDistancePointToPoint(a,p));
+  if(l_squared == 0.0) /* a = b */
+    return(msSquareDistancePointToPoint(a,p));
 
-  r = ((a->y - p->y)*(a->y - b->y) - (a->x - p->x)*(b->x - a->x))/(l*l);
+  r = ((a->y - p->y)*(a->y - b->y) - (a->x - p->x)*(b->x - a->x))/(l_squared);
 
   if(r > 1) /* perpendicular projection of P is on the forward extention of AB */
-    return(MS_MIN(msDistancePointToPoint(p, b),msDistancePointToPoint(p, a)));
+    return(MS_MIN(msSquareDistancePointToPoint(p, b),msSquareDistancePointToPoint(p, a)));
   if(r < 0) /* perpendicular projection of P is on the backward extention of AB */
-    return(MS_MIN(msDistancePointToPoint(p, b),msDistancePointToPoint(p, a)));
+    return(MS_MIN(msSquareDistancePointToPoint(p, b),msSquareDistancePointToPoint(p, a)));
 
-  s = ((a->y - p->y)*(b->x - a->x) - (a->x - p->x)*(b->y - a->y))/(l*l);
+  s = ((a->y - p->y)*(b->x - a->x) - (a->x - p->x)*(b->y - a->y))/l_squared;
 
-  return(fabs(s*l));
+  return(fabs(s*s*l_squared));
 }
 
 #define SMALL_NUMBER 0.00000001
@@ -430,6 +446,18 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
 
 double msDistancePointToShape(pointObj *point, shapeObj *shape)
 {
+  double d;
+
+  d = msSquareDistancePointToShape(point, shape);
+
+  return(sqrt(d));
+}
+
+/*
+** As msDistancePointToShape; avoid expensive sqrt calls
+*/
+double msSquareDistancePointToShape(pointObj *point, shapeObj *shape)
+{
   int i, j;
   double dist, minDist=-1;
 
@@ -437,7 +465,7 @@ double msDistancePointToShape(pointObj *point, shapeObj *shape)
   case(MS_SHAPE_POINT):
     for(j=0;j<shape->numlines;j++) {
       for(i=0; i<shape->line[j].numpoints; i++) {
-        dist = msDistancePointToPoint(point, &(shape->line[j].point[i]));
+        dist = msSquareDistancePointToPoint(point, &(shape->line[j].point[i]));
         if((dist < minDist) || (minDist < 0)) minDist = dist;
       }
     }
@@ -445,7 +473,7 @@ double msDistancePointToShape(pointObj *point, shapeObj *shape)
   case(MS_SHAPE_LINE):
     for(j=0;j<shape->numlines;j++) {
       for(i=1; i<shape->line[j].numpoints; i++) {
-        dist = msDistancePointToSegment(point, &(shape->line[j].point[i-1]), &(shape->line[j].point[i]));
+        dist = msSquareDistancePointToSegment(point, &(shape->line[j].point[i-1]), &(shape->line[j].point[i]));
         if((dist < minDist) || (minDist < 0)) minDist = dist;
       }
     }
@@ -456,7 +484,7 @@ double msDistancePointToShape(pointObj *point, shapeObj *shape)
     else { /* treat shape just like a line */
       for(j=0;j<shape->numlines;j++) {
         for(i=1; i<shape->line[j].numpoints; i++) {
-          dist = msDistancePointToSegment(point, &(shape->line[j].point[i-1]), &(shape->line[j].point[i]));
+          dist = msSquareDistancePointToSegment(point, &(shape->line[j].point[i-1]), &(shape->line[j].point[i]));
           if((dist < minDist) || (minDist < 0)) minDist = dist;
         }
       }
@@ -478,22 +506,24 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
   case(MS_SHAPE_POINT): /* shape1 */
     for(i=0;i<shape1->numlines;i++) {
       for(j=0; j<shape1->line[i].numpoints; j++) {
-        dist = msDistancePointToShape(&(shape1->line[i].point[j]), shape2);
+        dist = msSquareDistancePointToShape(&(shape1->line[i].point[j]), shape2);
         if((dist < minDist) || (minDist < 0)) 
     minDist = dist;
       }
     }
+    minDist = sqrt(minDist);
     break;
   case(MS_SHAPE_LINE): /* shape1 */
     switch(shape2->type) {
     case(MS_SHAPE_POINT):
       for(i=0;i<shape2->numlines;i++) {
         for(j=0; j<shape2->line[i].numpoints; j++) {
-          dist = msDistancePointToShape(&(shape2->line[i].point[j]), shape1);
+          dist = msSquareDistancePointToShape(&(shape2->line[i].point[j]), shape1);
           if((dist < minDist) || (minDist < 0)) 
       minDist = dist;
         }
       }
+      minDist = sqrt(minDist);
       break;
     case(MS_SHAPE_LINE):
       for(i=0;i<shape1->numlines;i++) {
@@ -545,11 +575,12 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
     case(MS_SHAPE_POINT):
       for(i=0;i<shape2->numlines;i++) {
         for(j=0; j<shape2->line[i].numpoints; j++) {
-          dist = msDistancePointToShape(&(shape2->line[i].point[j]), shape1);
+          dist = msSquareDistancePointToShape(&(shape2->line[i].point[j]), shape1);
           if((dist < minDist) || (minDist < 0)) 
       minDist = dist;
         }
       }
+      minDist = sqrt(minDist);
       break;
     case(MS_SHAPE_LINE):
       /* shape1 (the polygon) could contain shape2 or one of it's parts       */

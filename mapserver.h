@@ -1704,8 +1704,11 @@ MS_DLL_EXPORT void msPointToFormattedString(pointObj *point, const char*format,
 
 MS_DLL_EXPORT void msMergeRect(rectObj *a, rectObj *b);
 MS_DLL_EXPORT double msDistancePointToPoint(pointObj *a, pointObj *b);
+MS_DLL_EXPORT double msSquareDistancePointToPoint(pointObj *a, pointObj *b);
 MS_DLL_EXPORT double msDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b);
+MS_DLL_EXPORT double msSquareDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b);
 MS_DLL_EXPORT double msDistancePointToShape(pointObj *p, shapeObj *shape);
+MS_DLL_EXPORT double msSquareDistancePointToShape(pointObj *p, shapeObj *shape);
 MS_DLL_EXPORT double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, pointObj *pd);
 MS_DLL_EXPORT double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2);
 MS_DLL_EXPORT int msIntersectSegments(pointObj *a, pointObj *b, pointObj *c, pointObj *d);

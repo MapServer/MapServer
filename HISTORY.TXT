@@ -14,11 +14,13 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
- - support axis odering for WFS 1.1 (#2899)
+- Reduce use of sqrt() calls when determining distances (#3134)
 
- - const changes to avoid warnings with msLoadProjectionString()
+- support axis odering for WFS 1.1 (#2899)
 
- - mapgd.c: removed unused drawVectorSymbolGD() function.
+- const changes to avoid warnings with msLoadProjectionString()
+
+- mapgd.c: removed unused drawVectorSymbolGD() function.
 
 Version 5.6.0-beta1 (2009-09-23):
 ---------------------------------

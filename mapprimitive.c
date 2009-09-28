@@ -1109,10 +1109,11 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
     /* compute a distance to the polygon */
     for(j=0;j<p->numlines;j++) {
       for(i=1; i<p->line[j].numpoints; i++) {
-        dist = msDistancePointToSegment(lp, &(p->line[j].point[i-1]), &(p->line[j].point[i]));
+        dist = msSquareDistancePointToSegment(lp, &(p->line[j].point[i-1]), &(p->line[j].point[i]));
         if((dist < min_dist) || (min_dist < 0)) min_dist = dist;
       }
     }
+    min_dist = sqrt(min_dist);
 
     if(min_dist > .1*MS_MAX(maxx-minx, maxy-miny))
       return(MS_SUCCESS); /* point is not too close to the edge */
