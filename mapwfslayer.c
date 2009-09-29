@@ -331,7 +331,8 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
     
    
     if (strncmp(pszVersion, "0.0.14", 6) != 0 &&
-        strncmp(pszVersion, "1.0.0", 5) != 0 )
+        strncmp(pszVersion, "1.0.0", 5) != 0 &&
+         strncmp(pszVersion, "1.1", 3) != 0)
     {
         msSetError(MS_WFSCONNERR, "MapServer supports only WFS 1.0.0 or 0.0.14 (please verify the version metadata wfs_version).", "msBuildWFSLayerGetURL()");
         return NULL;
@@ -779,6 +780,11 @@ int msWFSLayerOpen(layerObj *lp,
             (psInfo->pszGMLFilename && pszGMLFilename && 
              strcmp(psInfo->pszGMLFilename, pszGMLFilename) == 0) )
         {
+            if (lp->layerinfo == NULL)
+            {
+                if (msWFSLayerWhichShapes(lp, psInfo->rect) == MS_FAILURE)
+                  return MS_FAILURE;
+            }
             return MS_SUCCESS;  /* Nothing to do... layer is already opened */
         }
         else
@@ -975,8 +981,9 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
         msProjectRect(&(lp->map->latlon), &(lp->projection), &ext);
         if (!msRectOverlap(&rect, &ext))
         {
-            /* No overlap... nothing to do */
-            return MS_DONE;  /* No overlap. */
+            /* No overlap... nothing to do. If layer was never opened, go open it.*/
+            if (lp->layerinfo)
+              return MS_DONE;  /* No overlap. */
         }
     }
 

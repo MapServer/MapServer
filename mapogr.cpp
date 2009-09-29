@@ -2262,6 +2262,13 @@ int msOGRLayerGetItems(layerObj *layer)
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   
+  if (psInfo == NULL || psInfo->hLayer == NULL)
+  {
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+               "msOGRLayerGetItems()");
+    return(MS_FAILURE);
+  }
+
   if( layer->tileindex != NULL )
   {
       if( psInfo->poCurTile == NULL 
