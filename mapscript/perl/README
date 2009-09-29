@@ -14,5 +14,7 @@ If you need to change the name of the mapscript module (default=mapscript) you n
 
   1) edit ../mapscript.i and change the name of the swig module
   2) edit Makefile.PL and edit the name 'mapscript' in the WriteMakefile subroutine call
+  3) edit plmodule.i and change the name 'mapscript' to whatever the new name
+     will be throughout the file
 
 and now build as normal.
