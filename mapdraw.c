@@ -318,7 +318,6 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   if(querymap) { /* use queryMapObj image dimensions */
     if(map->querymap.width != -1) map->width = map->querymap.width;
     if(map->querymap.height != -1) map->height = map->querymap.height;
-    if(map->querymap.style == MS_NORMAL) querymap = MS_FALSE; /* draw as normal */
   }
 
   msApplyMapConfigOptions(map);
@@ -1106,7 +1105,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 }
 
 /*
-** Function to draw a layer IF it already has a result cache associated with it. Called by msDrawQueryMap and via MapScript.
+** Function to draw a layer IF it already has a result cache associated with it. Called by msDrawMap and via MapScript.
 */
 int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
@@ -1120,40 +1119,52 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   colorObj *colorbuffer = NULL;
   int *mindistancebuffer = NULL;
 
-  if(!layer->resultcache || map->querymap.style == MS_NORMAL)
-    return(msDrawLayer(map, layer, image)); /* FIX ME! */
+  if(!layer->resultcache) return(msDrawLayer(map, layer, image));
 
-  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features) 
-   return(MS_SUCCESS); /* no data associated with this layer, not an error since layer may be used as a template from MapScript */
+  if(!msLayerIsVisible(map, layer)) return(MS_SUCCESS); /* not an error, just nothing to do */
 
-  if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_SUCCESS); /* query and tileindex layers simply can't be drawn, not an error */
-  
   if( layer->type == MS_LAYER_RASTER ) {
-      msSetError( MS_QUERYERR, "Unable to draw raster layers (such as %s) as part of a query result.", "msDrawQueryLayer()", layer->name );
-      return MS_FAILURE;
+    msSetError( MS_QUERYERR, "Unable to draw raster layers (such as %s) as part of a query result.", "msDrawQueryLayer()", layer->name );
+    return MS_FAILURE;
   }
 
-  if(map->querymap.style == MS_HILITE) { /* first, draw normally, but don't return (FIX ME!) */
-    status = msDrawLayer(map, layer, image);
-    if(status != MS_SUCCESS) return(MS_FAILURE); /* oops */
-  }
-
-  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
-
-  if(msEvalContext(map, layer, layer->requires) == MS_FALSE) return(MS_SUCCESS);
+  /* set annotation status */
   annotate = msEvalContext(map, layer, layer->labelrequires);
-
   if(map->scaledenom > 0) {
-    if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom)) return(MS_SUCCESS);
-    if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom)) return(MS_SUCCESS);
-
     if((layer->labelmaxscaledenom != -1) && (map->scaledenom >= layer->labelmaxscaledenom)) annotate = MS_FALSE;
     if((layer->labelminscaledenom != -1) && (map->scaledenom < layer->labelminscaledenom)) annotate = MS_FALSE;
   }
 
-  if (layer->maxscaledenom <= 0 && layer->minscaledenom <= 0) {
-      if((layer->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > layer->maxgeowidth)) return(MS_SUCCESS);
-      if((layer->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < layer->mingeowidth)) return(MS_SUCCESS);
+  /*
+  ** Certain query map styles require us to render all features only (MS_NORMAL) or first (MS_HILITE). With 
+  ** single-pass queries we have to make a copy of the layer and work from it instead.
+  */
+  if(map->querymap.style == MS_NORMAL || map->querymap.style == MS_HILITE) {
+    char *tmp_name=NULL;
+    layerObj *tmp_layer=NULL;
+
+    tmp_name = (char *) malloc((strlen(layer->name)+5+1)*sizeof(char));
+    sprintf(tmp_name, "%s_copy", layer->name);
+
+    i = msGetLayerIndex(map, tmp_name);
+    if(i == -1) {
+      if(msGrowMapLayers(map) == NULL) return(MS_FAILURE);
+      i = map->numlayers;
+      map->layerorder[i] = i; /* important! */
+      map->numlayers++;
+      if(initLayer((GET_LAYER(map, i)), map) == -1) return(MS_FAILURE);      
+    }
+
+    tmp_layer = GET_LAYER(map, i);
+    msCopyLayer(tmp_layer, layer);
+
+    tmp_layer->index = i;
+    if(tmp_layer->name) free(tmp_layer->name); /* avoid leak */
+    tmp_layer->name = strdup(tmp_name);
+
+    status = msDrawLayer(map, tmp_layer, image);
+    tmp_layer->status = MS_DELETE; /* so we don't write the copy or draw it again */
+    if(map->querymap.style == MS_NORMAL || status != MS_SUCCESS) return(status);
   }
 
   /* reset layer pen values just in case the map has been previously processed */

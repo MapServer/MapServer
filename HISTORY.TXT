@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed query maps under the new single pass query process (#3069)
+
 - WFS Client seg fault (OGR layer not opened) (#3136)
 
 - Reduce use of sqrt() calls when determining distances (#3134)
