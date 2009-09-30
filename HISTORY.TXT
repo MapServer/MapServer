@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed a couple of issues with Oracle Spatial and single pass queries (#3069)
+
 - Fixed query maps under the new single pass query process (#3069)
 
 - WFS Client seg fault (OGR layer not opened) (#3136)
