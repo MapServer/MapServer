@@ -14,7 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
-- Useful error message for case where PK is missing and data is subselect (#3124)
+- Useful error message for case where PK is missing and data is 
+  subselect (#3124)
 
 - Fixed WCS processing when both crs and response_crs are specified (#3083)
 
@@ -30,6 +31,7 @@ Current Version:
 
 - Fixed the shape index for the inline layers (#3074)
 
+- Fixed build issue with PHP_REGEX_INC in mapscript/php3/Makefile.in (#3078)
 
 Version 5.4.2 (2009-07-23):
 ---------------------------
