@@ -1,0 +1,4 @@
+#!/bin/sh
+#export PYTHONPATH="YOUR_DEV_PYTHON_PATH"
+python runalldoctests.py
+
