@@ -2493,7 +2493,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
         if test -n "$PHP_NO_SOURCE" ; then
           dnl Found regex_extra.h
           USE_PHP_REGEX="-DUSE_PHP_REGEX"
-          PHP_REGEX_INC="$PHP_SRC_DIR/"
+          PHP_REGEX_INC="-I$PHP_SRC_DIR"
           PHP_REGEX_OBJ=php_regex.o
           AC_MSG_RESULT([        found regex_extra.h - building PHP MapScript with PHP's bundled regex ])
         else
@@ -2502,7 +2502,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
           if test -n "$PHP_NO_SOURCE" ; then
           dnl Found regex.h
           USE_PHP_REGEX="-DUSE_PHP_REGEX"
-          PHP_REGEX_INC="$PHP_SRC_DIR/ext/ereg/"
+          PHP_REGEX_INC="-I$PHP_SRC_DIR/ext/ereg/"
           PHP_REGEX_OBJ=php_regex.o
           AC_MSG_RESULT([        found regex.h - building PHP MapScript with PHP's bundled regex ])
           else

@@ -12973,7 +12973,7 @@ echo "${ECHO_T}yes" >&6
             test -f "$PHP_SRC_DIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
         if test -n "$PHP_NO_SOURCE" ; then
                     USE_PHP_REGEX="-DUSE_PHP_REGEX"
-          PHP_REGEX_INC="$PHP_SRC_DIR/"
+          PHP_REGEX_INC="-I$PHP_SRC_DIR"
           PHP_REGEX_OBJ=php_regex.o
           echo "$as_me:$LINENO: result:         found regex_extra.h - building PHP MapScript with PHP's bundled regex " >&5
 echo "${ECHO_T}        found regex_extra.h - building PHP MapScript with PHP's bundled regex " >&6
@@ -12981,7 +12981,7 @@ echo "${ECHO_T}        found regex_extra.h - building PHP MapScript with PHP's b
                     test -f "$PHP_SRC_DIR/ext/ereg/regex/regex.h" && PHP_NO_SOURCE="1"
           if test -n "$PHP_NO_SOURCE" ; then
                     USE_PHP_REGEX="-DUSE_PHP_REGEX"
-          PHP_REGEX_INC="$PHP_SRC_DIR/ext/ereg/"
+          PHP_REGEX_INC="-I$PHP_SRC_DIR/ext/ereg/"
           PHP_REGEX_OBJ=php_regex.o
           echo "$as_me:$LINENO: result:         found regex.h - building PHP MapScript with PHP's bundled regex " >&5
 echo "${ECHO_T}        found regex.h - building PHP MapScript with PHP's bundled regex " >&6
