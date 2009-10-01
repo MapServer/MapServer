@@ -140,7 +140,7 @@ files instead.
 MS_CVSID("$Id$")
 
 #if defined(USE_THREAD)
-static int thread_debug = 0;
+static int thread_debug = 1;
 
 static char *lock_names[] = 
 { NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", "POOL", "SDE", 
@@ -170,7 +170,7 @@ void msThreadInit()
     static pthread_mutex_t core_lock = PTHREAD_MUTEX_INITIALIZER;
 
     if( thread_debug )
-        msDebug( "msThreadInit() (posix)\n" );
+        fprintf( stderr, "msThreadInit() (posix)\n" );
 
     pthread_mutex_lock( &core_lock );
 
@@ -203,7 +203,7 @@ void msAcquireLock( int nLockId )
     assert( nLockId >= 0 && nLockId < mutexes_initialized );
 
     if( thread_debug )
-        msDebug( "msAcquireLock(%d/%s) (posix)\n", 
+        fprintf( stderr, "msAcquireLock(%d/%s) (posix)\n", 
                  nLockId, lock_names[nLockId] );
 
     pthread_mutex_lock( mutex_locks + nLockId );
@@ -220,7 +220,7 @@ void msReleaseLock( int nLockId )
     assert( nLockId >= 0 && nLockId < mutexes_initialized );
 
     if( thread_debug )
-        msDebug( "msReleaseLock(%d/%s) (posix)\n", 
+        fprintf( stderr, "msReleaseLock(%d/%s) (posix)\n", 
                  nLockId, lock_names[nLockId] );
 
     pthread_mutex_unlock( mutex_locks + nLockId );
@@ -255,7 +255,7 @@ void msThreadInit()
         return;
 
     if( thread_debug )
-        msDebug( "msThreadInit() (win32)\n" );
+        fprintf( stderr, "msThreadInit() (win32)\n" );
 
     if( core_lock == NULL )
         core_lock = CreateMutex( NULL, TRUE, NULL );
@@ -291,7 +291,7 @@ void msAcquireLock( int nLockId )
     assert( nLockId >= 0 && nLockId < mutexes_initialized );
 
     if( thread_debug )
-        msDebug( "msAcquireLock(%d/%s) (win32)\n", 
+        fprintf( stderr, "msAcquireLock(%d/%s) (win32)\n", 
                  nLockId, lock_names[nLockId] );
 
     WaitForSingleObject( mutex_locks[nLockId], INFINITE );
@@ -308,7 +308,7 @@ void msReleaseLock( int nLockId )
     assert( nLockId >= 0 && nLockId < mutexes_initialized );
 
     if( thread_debug )
-        msDebug( "msReleaseLock(%d/%s) (win32)\n", 
+        fprintf( stderr, "msReleaseLock(%d/%s) (win32)\n", 
                  nLockId, lock_names[nLockId] );
 
     ReleaseMutex( mutex_locks[nLockId] );
