@@ -211,6 +211,7 @@ DLEXPORT void php3_ms_lyr_nextShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getFeature(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_resultsGetShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getExtent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
@@ -821,6 +822,7 @@ function_entry php_layer_class_functions[] = {
     {"close",           php3_ms_lyr_close,              NULL},
     {"getshape",        php3_ms_lyr_getShape,           NULL},
     {"getfeature",      php3_ms_lyr_getFeature,         NULL},
+    {"resultsgetshape", php3_ms_lyr_resultsGetShape,    NULL},
     {"getextent",       php3_ms_lyr_getExtent,          NULL},
     {"getmetadata",     php3_ms_lyr_getMetaData,        NULL},
     {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
@@ -8111,17 +8113,9 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
     pval  *pThis, *pTileId, *pShapeId ;
     layerObj *self=NULL;
     shapeObj    *poShape;
- 
-    
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pTileId, &pShapeId) != SUCCESS) 
@@ -8210,6 +8204,66 @@ DLEXPORT void php3_ms_lyr_getFeature(INTERNAL_FUNCTION_PARAMETERS)
     if (self == NULL || 
         layerObj_getShape(self, poShape, nTileId, 
                           pShapeId->value.lval) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+        shapeObj_destroy(poShape);
+        RETURN_FALSE; 
+    }
+
+    /* Return valid object */
+    _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), self,
+                              list, return_value TSRMLS_CC);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        layer->resultsGetShape()
+ **********************************************************************/
+
+/* {{{ proto shapeObj layer.resultsGetShape(shapeindex, [tileindex])
+   Retrieve shapeObj from a resultset by index. */
+
+DLEXPORT void php3_ms_lyr_resultsGetShape(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis, *pTileId=NULL, *pShapeId ;
+    layerObj *self=NULL;
+    shapeObj    *poShape;
+    int      numArgs, nTileId = -1;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+    numArgs = ARG_COUNT(ht);
+    if (pThis == NULL || (numArgs != 1 && numArgs != 2) ||
+        getParameters(ht, numArgs, &pShapeId, &pTileId) != SUCCESS) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pShapeId);
+
+    if (numArgs >= 2)
+    {
+        convert_to_long(pTileId);
+        nTileId = pTileId->value.lval;
+    }
+        
+    /* Create a new shapeObj to hold the result 
+     * Note that the type used to create the shape (MS_NULL) does not matter
+     * at this point since it will be set by SHPReadShape().
+     */
+    if ((poShape = shapeObj_new(MS_SHAPE_NULL)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed creating new shape (out of memory?)");
+        RETURN_FALSE;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+
+    if (self == NULL || 
+        msLayerResultsGetShape(self, poShape, nTileId, 
+                               pShapeId->value.lval) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);
         shapeObj_destroy(poShape);
