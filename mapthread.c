@@ -140,7 +140,7 @@ files instead.
 MS_CVSID("$Id$")
 
 #if defined(USE_THREAD)
-static int thread_debug = 1;
+static int thread_debug = 0;
 
 static char *lock_names[] = 
 { NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", "POOL", "SDE", 
