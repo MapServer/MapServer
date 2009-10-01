@@ -30,6 +30,9 @@ Current Version (SVN trunk):
 
 - mapgd.c: removed unused drawVectorSymbolGD() function.
 
+- Use http://mapserver.org/mapserver namespace URI in XML mapfile 
+  schema (#3142)
+
 Version 5.6.0-beta1 (2009-09-23):
 ---------------------------------
 
