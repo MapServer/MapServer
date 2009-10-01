@@ -52,7 +52,7 @@ MS_CVSID("$Id$")
  * TODO/FIXME: function will produce erroneous/crashing? results
  * if the wrap character is encoded with multiple bytes
  *
- * see http://mapserver.gis.umn.edu/development/rfc/ms-rfc-40/
+ * see http://mapserver.org/development/rfc/ms-rfc-40.html
  * for a summary of how wrap/maxlength interact on the result
  * of the text transformation
  */
