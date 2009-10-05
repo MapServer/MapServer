@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed use of minfeaturesize auto with curved labels (#3151)
+
 - Fixed msRemoveHashTable function when 2 keys have the same hash (#3146)
 
 - Fix raster thread deadlock condition on posix/linux (#3145)

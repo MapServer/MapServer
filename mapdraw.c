@@ -1620,7 +1620,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
               labelObj label = layer->class[c]->label;
                 
               if(layer->labelcache) {
-                if(msAddLabel(map, layer->index, c, shape, NULL, annopaths[i], shape->text, 0.0, &label) != MS_SUCCESS) return(MS_FAILURE);
+                if(msAddLabel(map, layer->index, c, shape, NULL, annopaths[i], shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
               } else {
                 /* FIXME: Not sure how this should work with the label path yet */
                 /*
@@ -1990,7 +1990,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             label = layer->class[c]->label;
             
             if(layer->labelcache) {
-              if(msAddLabel(map, layer->index, c, shape, NULL, annopaths[i], shape->text, 0.0, &label) != MS_SUCCESS) return(MS_FAILURE);
+              if(msAddLabel(map, layer->index, c, shape, NULL, annopaths[i], shape->text, -1, &label) != MS_SUCCESS) return(MS_FAILURE);
             } else {
               /* FIXME: need to call msDrawTextLineGD() from here eventually */
               /* msDrawLabel(image, label_line->point[0], shape->text, &label, &map->fontset, layer->scalefactor); */
@@ -2455,8 +2455,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
           label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
           label_buffer = labelPtr->buffer*layerPtr->scalefactor;
           label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
-
-          if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
+          
+          /* if cachePtr->featuresize is set to -1, this check has been done in msPolylineLabelPath() */
+          if(labelPtr->autominfeaturesize && (cachePtr->featuresize != -1) && ((r.maxx-r.minx) > cachePtr->featuresize))
             continue; /* label too large relative to the feature */
 
           marker_offset_x = marker_offset_y = 0; /* assume no marker */
