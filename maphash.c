@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implement hashTableObj class.
@@ -197,7 +197,7 @@ int msRemoveHashTable(hashTableObj *table, const char *key)
                 break;
             }
             else {
-                table->items[hash(key)] = NULL;
+                table->items[hash(key)] = tp->next;
                 free(tp);
                 break;
             }
