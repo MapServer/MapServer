@@ -1040,8 +1040,8 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         size = size*scalefactor;
     } else
         size = style->size*scalefactor;
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
     width = style->width*scalefactor;
     width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -1203,8 +1203,8 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
         size = MS_NINT(size*scalefactor);
     } else
         size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
     if (symbol->sizey)
         d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
     else
@@ -1477,8 +1477,8 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
   }
   else
       size = style->size;
-  if(size*scalefactor > (style->maxsize*scalefactor)) scalefactor = (float)style->maxsize/(float)size;
-  if(size*scalefactor < (style->minsize*scalefactor)) scalefactor = (float)style->minsize/(float)size;
+  if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
+  if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
   gap = MS_ABS(symbol->gap)* (int) scalefactor;
   label.size = (size * scalefactor);
   // label.minsize = style->minsize; 
@@ -1571,8 +1571,8 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         size = style->size;
 
     size = (size*scalefactor);
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
     width = (style->width*scalefactor);
     width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -1760,8 +1760,8 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         size = size*scalefactor;
     } else
         size = style->size*scalefactor;
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
     width = style->width*scalefactor;
     width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -1979,8 +1979,8 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
         double size;
 
         size = label->size*scalefactor;
-        size = MS_MAX(size, (label->minsize*scalefactor));
-        size = MS_MIN(size, (label->maxsize*scalefactor));
+        size = MS_MAX(size, label->minsize);
+        size = MS_MIN(size, label->maxsize);
         outlinewidth = label->outlinewidth*scalefactor;
         shadowsizex = label->shadowsizex*scalefactor;
         shadowsizey = label->shadowsizey*scalefactor;
@@ -2069,8 +2069,8 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
         char s[11]; /* UTF-8 characters can be up to 6 bytes wide, entities 10 (&thetasym;) */
 
         size = label->size*scalefactor;
-        size = MS_MAX(size, (label->minsize*scalefactor));
-        size = MS_MIN(size, (label->maxsize*scalefactor));
+        size = MS_MAX(size, label->minsize);
+        size = MS_MIN(size, label->maxsize);
         outlinewidth = label->outlinewidth*scalefactor;
         shadowsizex = label->shadowsizex*scalefactor;
         shadowsizey = label->shadowsizey*scalefactor;

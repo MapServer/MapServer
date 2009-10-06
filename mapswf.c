@@ -1476,8 +1476,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     }
     else
         size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
@@ -1983,11 +1983,11 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         size = MS_NINT(style->size*scalefactor);
 
     /* TODO: Don't get this modification, is it needed elsewhere? */
-    if(size*scalefactor > (style->maxsize*scalefactor)) scalefactor = (float)style->maxsize/(float)size;
-    if(size*scalefactor < (style->minsize*scalefactor)) scalefactor = (float)style->minsize/(float)size;
+    if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
+    if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
     size = MS_NINT(size*scalefactor);
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
     width = MS_NINT(style->width*scalefactor);
     width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -2115,8 +2115,8 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     }
     else
         size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
 
     width = MS_NINT(style->width*scalefactor);

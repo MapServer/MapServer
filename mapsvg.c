@@ -542,11 +542,11 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
       size = style->size;
 
     /* TODO: Don't get this modification, is it needed elsewhere? */
-    if(size*scalefactor > (style->maxsize*scalefactor)) scalefactor = (float)style->maxsize/(float)size;
-    if(size*scalefactor < (style->minsize*scalefactor)) scalefactor = (float)style->minsize/(float)size;
+    if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
+    if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
     size = MS_NINT(size*scalefactor);
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
     width = MS_NINT(style->width*scalefactor);
     width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -756,8 +756,8 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     else
       size = MS_NINT(style->size*scalefactor);
 
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
     /* scale the symbol pattern */
     if (symbol->patternlength > 0)
@@ -1074,8 +1074,8 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
         /* position, offset, angle, buffer, antialias, wrap, encoding */
 
         size = label->size*scalefactor;
-        size = MS_MAX(size, (label->minsize*scalefactor));
-        size = MS_MIN(size, (label->maxsize*scalefactor));
+        size = MS_MAX(size, label->minsize);
+        size = MS_MIN(size, label->maxsize);
 
         if(!fontset) {
             msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextSVG()");
@@ -1360,8 +1360,8 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     size = MS_NINT(size*scalefactor);
     } else
       size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
     width = MS_NINT(style->width*scalefactor);
     width = MS_MAX(width, (style->minwidth*scalefactor));

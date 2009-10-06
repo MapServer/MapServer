@@ -72,8 +72,8 @@ int msImagePixmapPolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, 
         size = MS_NINT(size*scalefactor);
     } else
       size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
     gap = MS_ABS(symbol->gap)* (int) scalefactor;  
 
@@ -600,8 +600,8 @@ static gdImagePtr createHatch(gdImagePtr img, int sx, int sy, rectObj *clip, sty
     size = style->size;
 
   size = MS_NINT(size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
   width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -1072,8 +1072,8 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     size = style->size;
 
   size = MS_NINT(size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
   width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -1284,8 +1284,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
     size = MS_NINT(size*scalefactor);
   } else
     size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
   width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -1504,8 +1504,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     size = MS_NINT(size*scalefactor);
   } else
     size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
   width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -1748,8 +1748,8 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   /* if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size; */
   
   size = MS_NINT(size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
   width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -2025,8 +2025,8 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       size = MS_NINT(size*scalefactor);
   } else
       size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
   width = MS_MAX(width, (style->minwidth*scalefactor));
@@ -2882,8 +2882,8 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     double size;
 
     size = label->size*scalefactor;
-    size = MS_MAX(size, (label->minsize*scalefactor));
-    size = MS_MIN(size, (label->maxsize*scalefactor));
+    size = MS_MAX(size, label->minsize);
+    size = MS_MIN(size, label->maxsize);
 
 #ifdef USE_GD_FT
     if(!fontset) {
@@ -3004,8 +3004,8 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
     char s[11]; /* UTF-8 characters can be up to 6 bytes wide, html entities 10 */
 
     size = label->size*scalefactor;
-    size = MS_MAX(size, (label->minsize*scalefactor));
-    size = MS_MIN(size, (label->maxsize*scalefactor));
+    size = MS_MAX(size, label->minsize);
+    size = MS_MIN(size, label->maxsize);
     shadowsizex = label->shadowsizex*scalefactor;
     shadowsizey = label->shadowsizey*scalefactor;
 
