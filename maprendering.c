@@ -102,8 +102,8 @@ void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, dou
     
     if(MS_VALID_COLOR(s->outlinecolor)) {
         s->outlinewidth =  src->width * scalefactor;
-        s->outlinewidth = MS_MAX(s->outlinewidth, (src->minwidth*scalefactor));
-        s->outlinewidth = MS_MIN(s->outlinewidth, (src->maxwidth*scalefactor));
+        s->outlinewidth = MS_MAX(s->outlinewidth, src->minwidth);
+        s->outlinewidth = MS_MIN(s->outlinewidth, src->maxwidth);
     } else {
         s->outlinewidth = 0;
     }
@@ -417,9 +417,9 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             /* store a reference to the renderer to be used for freeing */
             symbol->renderer = renderer;
 
-            width = style->width * scalefactor;
-            width = MS_MIN(width, (style->maxwidth*scalefactor));
-            width = MS_MAX(width, (style->minwidth*scalefactor));
+			width = style->width * scalefactor;
+            width = MS_MIN(width,style->maxwidth);
+            width = MS_MAX(width,style->minwidth);
             
             if(style->offsety==-99) {
 				offsetLine = msOffsetPolyline(p,style->offsetx * width,-99);
@@ -588,8 +588,8 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
 			    size = MS_MIN(size, style->maxsize);
 
 			    width = style->width * scalefactor;
-			    width = MS_MAX(width, (style->minwidth*scalefactor));
-			    width = MS_MIN(width, (style->maxwidth*scalefactor));
+			    width = MS_MAX(width, style->minwidth);
+			    width = MS_MIN(width, style->maxwidth);
 
 			    if (symbol->sizey)
 			    	scaling = size / symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */

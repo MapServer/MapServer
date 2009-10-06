@@ -779,8 +779,8 @@ int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, 
     char *font=NULL;
 
     size = label->size*scalefactor;
-    size = MS_MAX(size, (label->minsize*scalefactor));
-    size = MS_MIN(size, (label->maxsize*scalefactor));
+    size = MS_MAX(size, label->minsize);
+    size = MS_MIN(size, label->maxsize);
 
     font = msLookupHashTable(&(fontset->fonts), label->font);
     if(!font) {

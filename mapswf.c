@@ -1990,8 +1990,8 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     size = MS_MIN(size, style->maxsize);
 
     width = MS_NINT(style->width*scalefactor);
-    width = MS_MAX(width, (style->minwidth*scalefactor));
-    width = MS_MIN(width, (style->maxwidth*scalefactor));
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
       return;
@@ -2120,8 +2120,8 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
 
     width = MS_NINT(style->width*scalefactor);
-    width = MS_MAX(width, (style->minwidth*scalefactor));
-    width = MS_MIN(width, (style->maxwidth*scalefactor));
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
         return;

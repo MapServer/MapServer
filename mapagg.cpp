@@ -1044,8 +1044,8 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
     size = MS_MIN(size, style->maxsize);
 
     width = style->width*scalefactor;
-    width = MS_MAX(width, (style->minwidth*scalefactor));
-    width = MS_MIN(width, (style->maxwidth*scalefactor));
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
 
     angle = (style->angle) ? style->angle : 0.0;
     angle_radians = angle*MS_DEG_TO_RAD;
@@ -1210,8 +1210,8 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     else
         d = 1;
     width = MS_NINT(style->width*scalefactor);
-    width = MS_MAX(width, (style->minwidth*scalefactor));
-    width = MS_MIN(width, (style->maxwidth*scalefactor));
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
 
     angle = (style->angle) ? style->angle : 0.0;
     angle_radians = angle*MS_DEG_TO_RAD;
@@ -1575,8 +1575,8 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     size = MS_MIN(size, style->maxsize);
 
     width = (style->width*scalefactor);
-    width = MS_MAX(width, (style->minwidth*scalefactor));
-    width = MS_MIN(width, (style->maxwidth*scalefactor));
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
     
     ox = style->offsetx * scalefactor;
     oy = style->offsety * scalefactor;
@@ -1764,8 +1764,8 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     size = MS_MIN(size, style->maxsize);
 
     width = style->width*scalefactor;
-    width = MS_MAX(width, (style->minwidth*scalefactor));
-    width = MS_MIN(width, (style->maxwidth*scalefactor));
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
 
     angle_radians = style->angle*MS_DEG_TO_RAD;
 

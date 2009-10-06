@@ -549,8 +549,8 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     size = MS_MIN(size, style->maxsize);
 
     width = MS_NINT(style->width*scalefactor);
-    width = MS_MAX(width, (style->minwidth*scalefactor));
-    width = MS_MIN(width, (style->maxwidth*scalefactor));
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
 
@@ -1364,8 +1364,8 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     size = MS_MIN(size, style->maxsize);
 
     width = MS_NINT(style->width*scalefactor);
-    width = MS_MAX(width, (style->minwidth*scalefactor));
-    width = MS_MIN(width, (style->maxwidth*scalefactor));
+    width = MS_MAX(width, style->minwidth);
+    width = MS_MIN(width, style->maxwidth);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
     

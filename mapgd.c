@@ -604,8 +604,8 @@ static gdImagePtr createHatch(gdImagePtr img, int sx, int sy, rectObj *clip, sty
   size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, (style->minwidth*scalefactor));
-  width = MS_MIN(width, (style->maxwidth*scalefactor));
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
   gdImageSetThickness(hatch, width);
 
   /* normalize the angle (180 to 0, 0 is east, 90 is north 180 is west) */
@@ -1076,8 +1076,8 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, (style->minwidth*scalefactor));
-  width = MS_MIN(width, (style->maxwidth*scalefactor));
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
 
   if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0) return; /* nothing to do */
@@ -1288,8 +1288,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj
   size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, (style->minwidth*scalefactor));
-  width = MS_MIN(width, (style->maxwidth*scalefactor));
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
 
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;
@@ -1508,8 +1508,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, (style->minwidth*scalefactor));
-  width = MS_MIN(width, (style->maxwidth*scalefactor));
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
 
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;
@@ -1752,8 +1752,8 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, (style->minwidth*scalefactor));
-  width = MS_MIN(width, (style->maxwidth*scalefactor));
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
 
   angle = (style->angle) ? style->angle : 0.0;
 
@@ -2029,8 +2029,8 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   size = MS_MIN(size, style->maxsize);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, (style->minwidth*scalefactor));
-  width = MS_MIN(width, (style->maxwidth*scalefactor));
+  width = MS_MAX(width, style->minwidth);
+  width = MS_MIN(width, style->maxwidth);
 
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;

@@ -745,8 +745,8 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
   }
   else
       size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
   switch(symbolset->symbol[style->symbol]->type) {  
    

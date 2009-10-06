@@ -806,8 +806,8 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
     }
     else
         size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, (style->minsize*scalefactor));
-    size = MS_MIN(size, (style->maxsize*scalefactor));
+    size = MS_MAX(size, style->minsize);
+    size = MS_MIN(size, style->maxsize);
 
     /* no such symbol, 0 is OK */
     if(style->symbol > symbolset->numsymbols || style->symbol < 0)

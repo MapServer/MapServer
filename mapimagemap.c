@@ -989,8 +989,8 @@ DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
   }
   else
       size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
 /* if(fc<0 && oc<0) return; // nothing to do */
@@ -1197,8 +1197,8 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
   }
   else
       size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
@@ -1410,8 +1410,8 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   }
   else
       size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, (style->minsize*scalefactor));
-  size = MS_MIN(size, (style->maxsize*scalefactor));
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
 
 /* DEBUG_IF printf ("a"); */
 /* if(fc==-1 && oc!=-1) { // use msDrawLineSymbolIM() instead (POLYLINE) */
