@@ -1670,7 +1670,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
         }
       }
 
-     if(maxfeatures > 0) {
+     if(maxfeatures > 0 && maxfeatures < iNumberOfFeatures) {
          iNumberOfFeatures = maxfeatures;
      }
 
