@@ -798,6 +798,10 @@ char *classObj_getExpressionString(classObj *self) {
 }
 
 int classObj_setText(classObj *self, layerObj *layer, char *string) {
+    if (!string || strlen(string) == 0) {
+        freeExpression(&self->text);
+        return MS_SUCCESS;
+    }
     return msLoadExpressionString(&self->text, string);
 }
 
