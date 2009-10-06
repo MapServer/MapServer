@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- Fixed anchor point of vertically stacked bar graphs
 
 - Fixed TEXT property cannot be removed in the CLASS object. PHP/Mapscript (#3063)
 

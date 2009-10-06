@@ -188,8 +188,8 @@ int msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
      
     for(c=0;c<numvalues;c++)
     {
-        drawRectangle(map, image, left, cur, left+barWidth, cur+values[c], styles[c]);
-        cur += values[c];
+        drawRectangle(map, image, left, cur, left+barWidth, cur-values[c], styles[c]);
+        cur -= values[c];
     }
     return MS_SUCCESS;
 }
