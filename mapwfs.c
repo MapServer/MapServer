@@ -1097,7 +1097,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	
 	if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, layers[k]) == 0) {
 	  const char *pszThisLayerSRS;
-          char szBuf[32];
           rectObj ext;
 	  bLayerFound = MS_TRUE;
 	  
@@ -1138,9 +1137,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
           /* if the client specifies BBOX or a spatial filter */
 
           if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
-            sprintf(szBuf, "init=epsg:%.10s", pszMapSRS+5);
+            char szBuf[32];
 
-            if (szBuf != NULL) {
+            if (pszMapSRS != NULL && strncmp(pszMapSRS, "EPSG:", 5) == 0) {
+              sprintf(szBuf, "init=epsg:%.10s", pszMapSRS+5);
+                
               if (msLoadProjectionString(&(map->projection), szBuf) != 0) {
                  msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s", "msWFSGetFeature()", szBuf);
                  return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);

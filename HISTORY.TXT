@@ -13,9 +13,14 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- Fixed possible crash with WFS GetFeature when no projection is specified 
+  at the map level (#3129)
+
 - Fixed anchor point of vertically stacked bar graphs
 
-- Fixed TEXT property cannot be removed in the CLASS object. PHP/Mapscript (#3063)
+- Fixed TEXT property that cannot be removed in the CLASS object. 
+  PHP/Mapscript (#3063)
 
 - Fixed use of minfeaturesize auto with curved labels (#3151)
 
