@@ -287,7 +287,12 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     MS_COPYSTELEM(buffer);
     MS_COPYSTELEM(antialias);
     MS_COPYSTELEM(wrap);
+    MS_COPYSTELEM(align);
+    MS_COPYSTELEM(maxlength);
     MS_COPYSTELEM(minfeaturesize);
+    
+    MS_COPYSTELEM(minscaledenom);
+    MS_COPYSTELEM(maxscaledenom);
 
     MS_COPYSTELEM(autominfeaturesize);
 
@@ -396,7 +401,9 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(_geomtransform);
     MS_COPYSTRING(dst->rangeitem, src->rangeitem);
     MS_COPYSTELEM(rangeitemindex);
-
+    MS_COPYSTELEM(outlinewidth);
+    MS_COPYSTELEM(minscaledenom);
+    MS_COPYSTELEM(maxscaledenom);
     /* TODO: add copy for bindings */
 
     return MS_SUCCESS;

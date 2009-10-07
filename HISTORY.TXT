@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- add RFC49 and RFC40 keywords to copy functions (#2865)
 
 - minor fix to correct numberOfResults when maxfeatures is set in mapfile (#2907)
 
