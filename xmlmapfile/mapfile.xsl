@@ -2,6 +2,7 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:dyn="http://exslt.org/dynamic"
+                xmlns:ms="http://www.mapserver.org/mapserver"
                 extension-element-prefixes="dyn">
 <xsl:output  method="text"/>
 

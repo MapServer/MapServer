@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Map name="xmlmapfile" xmlns="http://mapserver.gis.umn.edu/mapserver" status="ON" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver mapfile.xsd" version="5.6.0">
+<Map name="xmlmapfile" xmlns="http://www.mapserver.org/mapserver" status="ON" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mapserver.org/mapserver ../mapfile.xsd" version="5.6.0">
 	<angle>10</angle>
 	<Config>
 		<item name="CGI_CONTEXT_URL">http://mapgears.com/context/mapgears.xml</item>

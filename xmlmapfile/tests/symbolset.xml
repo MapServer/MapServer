@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SymbolSet xmlns="http://mapserver.gis.umn.edu/mapserver" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver mapfile.xsd">
+<SymbolSet xmlns="http://www.mapserver.org/mapserver" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mapserver.org/mapserver ../mapfile.xsd">
 	<Symbol name="mySymbol2" type="CARTOLINE">
 		<antialias>FALSE</antialias>
 		<character>C</character>

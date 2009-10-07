@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<LayerSet xmlns="http://mapserver.gis.umn.edu/mapserver" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver mapfile.xsd">
+<LayerSet xmlns="http://www.mapserver.org/mapserver" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mapserver.org/mapserver ../mapfile.xsd">
   <Layer name="layer1" type="CHART" status="DEFAULT">
     <Class name="class1Layer1" status="ON">
       <backgroundColor red="244" green="43" blue="22"/>
