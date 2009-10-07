@@ -1501,7 +1501,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
             msFreeProjection(&map->projection);
             msLoadProjectionStringEPSG(&(map->projection), paramsObj->pszSrs);
         }
-        else if (strncasecmp(paramsObj->pszSrs, "urn:EPSG:geographicCRC:",23) == 0)
+        else if (strncasecmp(paramsObj->pszSrs, "urn:EPSG:geographicCRS:",23) == 0)
         {
             char epsg_string[100];
             const char *code;
