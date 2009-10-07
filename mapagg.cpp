@@ -1981,7 +1981,7 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
         size = label->size*scalefactor;
         size = MS_MAX(size, label->minsize);
         size = MS_MIN(size, label->maxsize);
-        outlinewidth = label->outlinewidth*scalefactor;
+        outlinewidth = label->outlinewidth;
         shadowsizex = label->shadowsizex*scalefactor;
         shadowsizey = label->shadowsizey*scalefactor;
 
@@ -2071,7 +2071,7 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
         size = label->size*scalefactor;
         size = MS_MAX(size, label->minsize);
         size = MS_MIN(size, label->maxsize);
-        outlinewidth = label->outlinewidth*scalefactor;
+        outlinewidth = label->outlinewidth;
         shadowsizex = label->shadowsizex*scalefactor;
         shadowsizey = label->shadowsizey*scalefactor;
 
