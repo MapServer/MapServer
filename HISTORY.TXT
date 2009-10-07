@@ -40,6 +40,8 @@ Current Version (SVN trunk):
 
 - Do not route thread debug output through msDebug which requires locking.
 
+- Fix WCS coverage metadata handling if size/resolution missing (#2683).
+
 
 Version 5.6.0-beta2 (2009-10-01):
 ---------------------------------
