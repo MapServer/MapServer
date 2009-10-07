@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- fix URN typo in mapwfs.c 
+
 - don't apply scalefactor to label outlines (#3157)
 
 - update namespaces and schema pointers (#2872)
