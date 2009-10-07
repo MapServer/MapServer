@@ -737,7 +737,10 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->updatesequence, msOWSGetSchemasLocation(map), params->version); 
 
   for(i=0; i<map->numlayers; i++)
-    msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params);
+  {
+      if( msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params) != MS_SUCCESS )
+          return MS_FAILURE;
+  }
 
   /* done */
   msIO_printf("</ContentMetadata>\n");
@@ -1914,8 +1917,11 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
   /* -------------------------------------------------------------------- */
   /*      If we have "virtual dataset" metadata on the layer, then use    */
   /*      that in preference to inspecting the file(s).                   */
+  /*      We require extent and either size or resolution.                */
   /* -------------------------------------------------------------------- */
-  if( msOWSLookupMetadata(&(layer->metadata), "COM", "extent") != NULL ) {
+  if( msOWSLookupMetadata(&(layer->metadata), "COM", "extent") != NULL 
+      && (msOWSLookupMetadata(&(layer->metadata), "COM", "resolution") != NULL
+          || msOWSLookupMetadata(&(layer->metadata), "COM", "size") != NULL) ){
     const char *value;
 
     /* get extent */
@@ -1976,7 +1982,7 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 
     /* do we have information to do anything */
     if( cm->xresolution == 0.0 || cm->yresolution == 0.0 || cm->xsize == 0 || cm->ysize == 0 ) {
-      msSetError( MS_WCSERR, "Failed to collect extent and resolution for WCS coverage from metadata.  Need value wcs|ows_resolution or wcs|ows_size values.", "msWCSGetCoverageMetadata()");
+      msSetError( MS_WCSERR, "Failed to collect extent and resolution for WCS coverage from metadata for layer '%s'.  Need value wcs|ows_resolution or wcs|ows_size values.", "msWCSGetCoverageMetadata()", layer->name );
       return MS_FAILURE;
     }
         
