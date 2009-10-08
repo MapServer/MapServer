@@ -11,10 +11,11 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
 
-- fix URN typo in mapwfs.c 
+Version 5.6.0-beta3 (2009-10-07):
+---------------------------------
+
+- fix URN typo in mapwfs.c for urn:EPSG:geographicCRS:...
 
 - don't apply scalefactor to label outlines (#3157)
 
@@ -22,7 +23,8 @@ Current Version (SVN trunk):
 
 - add RFC49 and RFC40 keywords to copy functions (#2865)
 
-- minor fix to correct numberOfResults when maxfeatures is set in mapfile (#2907)
+- minor fix to correct numberOfResults when maxfeatures is set in 
+  mapfile (#2907)
 
 - Fixed possible crash with WFS GetFeature when no projection is specified 
   at the map level (#3129)
