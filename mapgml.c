@@ -1286,7 +1286,8 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         msFree(value);
 
         /* write the feature geometry and bounding box */
-        if(geometryList && geometryList->numgeometries > 0 && strcasecmp(geometryList->geometries[0].name, "none") != 0) {
+        if(!(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0)) { 
+//        if(geometryList && geometryList->numgeometries > 0 && strcasecmp(geometryList->geometries[0].name, "none") != 0) {
 
 #ifdef USE_PROJ
           if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) { /* use the map projection first */
