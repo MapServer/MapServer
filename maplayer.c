@@ -395,12 +395,8 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   **   note: if we don't reset then the items array is fully populated will ALL items
   */
   if(!get_all) {    
-    layer->items = (char **) calloc(numitems, sizeof(char *)); /* should be more than enough space */
-    if(!layer->items) {
-      msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-      return MS_FAILURE;
-    }
-    layer->numitems = 0;
+    rv = layer->vtable->LayerCreateItems(layer, numitems);
+    if(rv != MS_SUCCESS) return rv;
     freeitems = MS_TRUE;
   }
 
