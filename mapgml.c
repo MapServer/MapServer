@@ -1205,6 +1205,7 @@ static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, g
 }
 #endif
 
+/* Dump GML query results for WMS GetFeatureInfo */
 int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 {
 #if defined(USE_WMS_SVR)
@@ -1262,10 +1263,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       msFree(value);
 
       /* populate item and group metadata structures (TODO: test for NULLs here, shouldn't happen) */
-      itemList = msGMLGetItems(lp, "G");
-      constantList = msGMLGetConstants(lp, "G");
-      groupList = msGMLGetGroups(lp, "G");      
-      geometryList = msGMLGetGeometries(lp, "G");
+      itemList = msGMLGetItems(lp, namespaces);
+      constantList = msGMLGetConstants(lp, namespaces);
+      groupList = msGMLGetGroups(lp, namespaces);
+      geometryList = msGMLGetGeometries(lp, namespaces);
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         status = msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
@@ -1285,19 +1286,19 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         msFree(value);
 
         /* write the feature geometry and bounding box */
-        if(!(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0)) {
+        if(geometryList && geometryList->numgeometries > 0 && strcasecmp(geometryList->geometries[0].name, "none") != 0) {
 
 #ifdef USE_PROJ
           if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) { /* use the map projection first */
             gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), NULL, namespaces, MS_TRUE), "\t\t\t");
-            gmlWriteGeometry(stream, NULL, OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
+            gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
           } else { /* then use the layer projection and/or metadata */
             gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t");
-            gmlWriteGeometry(stream, NULL, OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
+            gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
           }
 #else
           gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "\t\t\t"); /* no projection information */
-          gmlWriteGeometry(stream, NULL, OWS_GML2, &(shape), NULL, NULL, "\t\t\t");
+          gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), NULL, NULL, "\t\t\t");
 #endif
 
         }
