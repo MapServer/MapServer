@@ -1285,21 +1285,24 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, "featurename", OWS_NOERR, "\t\t<%s>\n", value);
         msFree(value);
 
-        /* write the feature geometry and bounding box */
+        /* Write the feature geometry and bounding box unless 'none' was requested. */
+        /* Default to bbox only if nothing specified and output full geometry only if explicitly requested */
         if(!(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0)) { 
-//        if(geometryList && geometryList->numgeometries > 0 && strcasecmp(geometryList->geometries[0].name, "none") != 0) {
 
 #ifdef USE_PROJ
           if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) { /* use the map projection first */
             gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), NULL, namespaces, MS_TRUE), "\t\t\t");
-            gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
+            if (geometryList && geometryList->numgeometries > 0 )
+              gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
           } else { /* then use the layer projection and/or metadata */
             gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t");
-            gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
+            if (geometryList && geometryList->numgeometries > 0 )
+              gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
           }
 #else
           gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "\t\t\t"); /* no projection information */
-          gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), NULL, NULL, "\t\t\t");
+          if (geometryList && geometryList->numgeometries > 0 )
+            gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), NULL, NULL, "\t\t\t");
 #endif
 
         }
