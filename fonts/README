@@ -1,0 +1,12 @@
+Fontsets are very simple lookup tables so that you can use simple aliases to
+refer to fonts rather than cryptic file names. The format is as follows:
+
+[font file]	[font alias]
+
+The font file is either fullpath or a path relative to the fontset file. Font
+alias can be up to 20 chars and is a short name by which you may refer to fonts
+in your map files.
+
+We can't distribute any TrueType fonts with the system, but there are lots of good
+free ones available on the net. Visit the FreeType homepage (http://www.freetype.org/)
+for lots of good pointers.
