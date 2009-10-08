@@ -49,6 +49,8 @@ Version 5.6.0-beta3 (2009-10-07):
 
 - Fix WCS crash with use of datasets that aren't physical files (#2901).
 
+- Fix WCS failure with WCS 1.1 OGC URN (urn:ogc:def:crs:OGC::CRS84) (#3161).
+
 
 Version 5.6.0-beta2 (2009-10-01):
 ---------------------------------

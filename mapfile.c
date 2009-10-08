@@ -1225,9 +1225,9 @@ int msLoadProjectionString(projectionObj *p, const char *value)
 
       if( strcasecmp(id,"CRS84") == 0 )
           strcpy( init_string, "init=epsg:4326" );
-      if( strcasecmp(id,"CRS83") == 0 )
+      else if( strcasecmp(id,"CRS83") == 0 )
           strcpy( init_string, "init=epsg:4269" );
-      if( strcasecmp(id,"CRS27") == 0 )
+      else if( strcasecmp(id,"CRS27") == 0 )
           strcpy( init_string, "init=epsg:4267" );
       else
       {
