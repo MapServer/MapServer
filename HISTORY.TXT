@@ -17,7 +17,8 @@ Version 5.6.0-beta3 (2009-10-07):
 
 - Fixed SDE layer seg fault (#3152)
 
-- Fixed label placement using ANGLE AUTO are not always positioned correctly (#3160)
+- Fixed placement of labels using ANGLE AUTO which were not always positioned 
+  correctly (#3160)
 
 - Enable output of geometry in GML GetFeatureInfo if wms_geometries and
   wms_geom_type are specified (#2989)
