@@ -1578,7 +1578,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if(layer->class[c]->label.autofollow == MS_TRUE ) {
           annopaths = msPolylineLabelPath(image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
         } else {
-          annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints);
+            annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.autoangle);
         }
         
         msFreeShape(&annoshape);
@@ -1642,7 +1642,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if (numRegularLines > 0)
         {
 
-          annopoints = msPolylineLabelPointExtended(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, regularLines, numRegularLines);
+          annopoints = msPolylineLabelPointExtended(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, regularLines, numRegularLines, MS_FALSE);
           
           for (i = 0; i < numpoints; i++)
             {
@@ -1680,7 +1680,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
               angles = NULL;
               lengths = NULL;
             }
-            annopoints = msPolylineLabelPoint(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints);
+            annopoints = msPolylineLabelPoint(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.autoangle);
           }
           
           for (i = 0; i < numpoints; i++) {
@@ -1903,7 +1903,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       if(layer->class[c]->label.autofollow == MS_TRUE) {
         annopaths = msPolylineLabelPath(image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
       } else {
-        annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints);
+        annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.autoangle);
       }
       msFreeShape(&annoshape);
     }
@@ -2003,7 +2003,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if (numRegularLines > 0)
         {
 
-          annopoints = msPolylineLabelPointExtended(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, regularLines, numRegularLines);
+          annopoints = msPolylineLabelPointExtended(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, regularLines, numRegularLines, MS_FALSE);
           
           for (i = 0; i < numpoints; i++)
           {
@@ -2038,7 +2038,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             angles = NULL;
             lengths = NULL;
           }
-          annopoints = msPolylineLabelPoint(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints);
+          annopoints = msPolylineLabelPoint(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.autoangle);
         }
 
         for (i = 0; i < numpoints; i++) {

@@ -1304,16 +1304,17 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
  * max_line_index: out parameter, the index of the longest lineString of the multiLineString.
  * max_line_length: out parameter, the length of the longest lineString of the multiLineString.
  * total_length: out parameter, the total length of the MultiLineString
+ * segment_index: out parameter, the index of the longest lineString of the multiLineString.
 */
-void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, double **line_lengths, int *max_line_index, double *max_line_length, double *total_length)
+void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, double **line_lengths, int *max_line_index, double *max_line_length, int *segment_index, double *total_length)
 {
-  int i, j, segment_index, temp_segment_index;
+  int i, j, temp_segment_index;
   double segment_length, max_segment_length;
 
   (*segment_lengths) = (double **) malloc(sizeof(double *) * shape->numlines);
   (*line_lengths) = (double *) malloc(sizeof(double) * shape->numlines);
 
-  temp_segment_index = segment_index = *max_line_index = 0;
+  temp_segment_index = *segment_index = *max_line_index = 0;
 
   *total_length = 0;
   *max_line_length = 0;
@@ -1338,7 +1339,7 @@ void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, d
     if((*line_lengths)[i] > *max_line_length) {
       *max_line_length = (*line_lengths)[i];
       *max_line_index = i;
-      segment_index = temp_segment_index;
+      *segment_index = temp_segment_index;
     }
   }
 }
@@ -1347,15 +1348,15 @@ void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, d
 ** If no repeatdistance, find center of longest segment in polyline p. The polyline must have been converted
 ** to image coordinates before calling this function.
 */
-pointObj** msPolylineLabelPoint(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints)
+pointObj** msPolylineLabelPoint(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints, int center_on_longest_segment)
 {
-  return msPolylineLabelPointExtended(p, min_length, repeat_distance, angles, lengths, numpoints, NULL, 0);
+  return msPolylineLabelPointExtended(p, min_length, repeat_distance, angles, lengths, numpoints, NULL, 0, center_on_longest_segment);
 }
 
-pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints, int *regularLines, int numlines)
+pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints, int *regularLines, int numlines, int center_on_longest_segment)
 {
   double total_length, max_line_length;
-  int i,j, max_line_index, labelpoints_index, labelpoints_size;
+  int i,j, max_line_index, segment_index, labelpoints_index, labelpoints_size;
   double** segment_lengths;
   double* line_lengths;
   pointObj** labelpoints;
@@ -1368,22 +1369,22 @@ pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_length, int repeat_
   (*angles) = (double **) malloc(sizeof(double *) * labelpoints_size);
   (*lengths) = (double **) malloc(sizeof(double *) * labelpoints_size);
 
-  msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &total_length);
+  msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &segment_index, &total_length);
 
   if (repeat_distance > 0) {
     for(i=0; i<p->numlines; i++)
       if (numlines > 0) {
         for (j=0; j<numlines; j++)
           if (regularLines[j] == i) {
-            msPolylineLabelPointLineString(p, min_length, repeat_distance, angles, lengths, segment_lengths, i, line_lengths[i], total_length, &labelpoints_index, &labelpoints_size, &labelpoints);
+              msPolylineLabelPointLineString(p, min_length, repeat_distance, angles, lengths, segment_lengths, i, line_lengths[i], total_length, segment_index, &labelpoints_index, &labelpoints_size, &labelpoints, center_on_longest_segment);
             break;
           }
       } else {
-        msPolylineLabelPointLineString(p, min_length, repeat_distance, angles, lengths, segment_lengths, i, line_lengths[i], total_length, &labelpoints_index, &labelpoints_size, &labelpoints);
+          msPolylineLabelPointLineString(p, min_length, repeat_distance, angles, lengths, segment_lengths, i, line_lengths[i], total_length, segment_index, &labelpoints_index, &labelpoints_size, &labelpoints, center_on_longest_segment);
       }
   }
   else
-    msPolylineLabelPointLineString(p, min_length, repeat_distance, angles, lengths, segment_lengths, max_line_index, max_line_length, total_length, &labelpoints_index, &labelpoints_size, &labelpoints);
+      msPolylineLabelPointLineString(p, min_length, repeat_distance, angles, lengths, segment_lengths, max_line_index, max_line_length, total_length, segment_index, &labelpoints_index, &labelpoints_size, &labelpoints, center_on_longest_segment);
 
   *numpoints = labelpoints_index;
 
@@ -1400,7 +1401,7 @@ pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_length, int repeat_
 }
 
 void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, double** segment_lengths,
-                                    int line_index, double line_length, double total_length, int* labelpoints_index, int* labelpoints_size, pointObj ***labelpoints)
+                                    int line_index, double line_length, double total_length, int segment_index, int* labelpoints_index, int* labelpoints_size, pointObj ***labelpoints, int center_on_longest_segment)
 {
   int i, j, k, l, n, index, point_repeat;
   double t, tmp_length, theta, fwd_length, point_distance;
@@ -1448,19 +1449,13 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
     }
     
     do {
-      j=0;
-      fwd_length = 0;
-      while (fwd_length < point_position) {
-        fwd_length += segment_lengths[i][j++];
-      }
-      
       if (*labelpoints_index == *labelpoints_size) {
         *labelpoints_size *= 2;
         (*labelpoints) = (pointObj **) realloc(*labelpoints,sizeof(pointObj *) * (*labelpoints_size));
         (*angles) = (double **) realloc(*angles,sizeof(double *) * (*labelpoints_size));
         (*lengths) = (double **) realloc(*lengths,sizeof(double *) * (*labelpoints_size));
       }
-
+      
       index = (*labelpoints_index)++;
       (*labelpoints)[index] = (pointObj *) malloc(sizeof(pointObj));
       (*angles)[index] = (double *) malloc(sizeof(double));
@@ -1470,15 +1465,27 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
         *(*lengths)[index] = line_length;
       else
         *(*lengths)[index] = total_length;
-    
-      k = j;
-      if (j == p->line[i].numpoints-1)
+
+      /* if there is only 1 label to place... put it in the middle of the current segment (as old behavior) */
+      if (center_on_longest_segment && (point_repeat == 1))
+      {
+        j = segment_index;
+        (*labelpoints)[index]->x = (p->line[i].point[j].x + p->line[i].point[j-1].x)/2.0;
+        (*labelpoints)[index]->y = (p->line[i].point[j].y + p->line[i].point[j-1].y)/2.0;
+      } else {
+        j=0;
+        fwd_length = 0;
+        while (fwd_length < point_position) {
+          fwd_length += segment_lengths[i][j++];
+        }
+        
         k = j-1;
-    
-      t = 1 - (fwd_length - point_position) / segment_lengths[i][j-1];
-      (*labelpoints)[index]->x = t * (p->line[i].point[k+1].x - p->line[i].point[k].x) + p->line[i].point[k].x;
-      (*labelpoints)[index]->y = t * (p->line[i].point[k+1].y - p->line[i].point[k].y) + p->line[i].point[k].y;
-    
+
+        t = 1 - (fwd_length - point_position) / segment_lengths[i][j-1];
+        (*labelpoints)[index]->x = t * (p->line[i].point[k+1].x - p->line[i].point[k].x) + p->line[i].point[k].x;
+        (*labelpoints)[index]->y = t * (p->line[i].point[k+1].y - p->line[i].point[k].y) + p->line[i].point[k].y;
+      }
+
       theta = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2.0) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2.0))));
     
       if(p->line[i].point[j-1].x < p->line[i].point[j].x) { /* i.e. to the left */
@@ -1524,7 +1531,7 @@ labelPathObj** msPolylineLabelPath(imageObj *img,shapeObj *p, int min_length, fo
   labelpaths = (labelPathObj **) malloc(sizeof(labelPathObj *) * labelpaths_size);
   (*regular_lines) = (int *) malloc(sizeof(int) * regular_lines_size);
 
-  msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &total_length);
+  msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &segment_index, &total_length);
  
   if (label->repeatdistance > 0)
     for(i=0; i<p->numlines; i++) {
