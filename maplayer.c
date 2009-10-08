@@ -372,7 +372,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   }
 
   /* force get_all=MS_TRUE in some cases */
-  if(layer->connectiontype == MS_INLINE)
+  if(layer->connectiontype == MS_INLINE || layer->connectiontype == MS_SDE)
     get_all=MS_TRUE;
 
   /*
@@ -394,7 +394,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   ** reset things (if necessary)
   **   note: if we don't reset then the items array is fully populated will ALL items
   */
-  if(!get_all) {
+  if(!get_all) {    
     layer->items = (char **) calloc(numitems, sizeof(char *)); /* should be more than enough space */
     if(!layer->items) {
       msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
