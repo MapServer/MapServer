@@ -298,7 +298,7 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *
     image->imagepath = NULL;
     image->imageurl = NULL;
     image->resolution = resolution;
-    image->resolution_scale_factor = resolution/defresolution;
+    image->resolutionfactor = resolution/defresolution;
 
     if(imagepath) image->imagepath = strdup(imagepath);
     if(imageurl) image->imageurl = strdup(imageurl);

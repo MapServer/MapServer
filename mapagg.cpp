@@ -1040,12 +1040,12 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         size = size*scalefactor;
     } else
         size = style->size*scalefactor;
-    size = MS_MAX(size, style->minsize*image->resolution_scale_factor);
-    size = MS_MIN(size, style->maxsize*image->resolution_scale_factor);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
     width = style->width*scalefactor;
-    width = MS_MAX(width, style->minwidth*image->resolution_scale_factor);
-    width = MS_MIN(width, style->maxwidth*image->resolution_scale_factor);
+    width = MS_MAX(width, style->minwidth*image->resolutionfactor);
+    width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
 
     angle = (style->angle) ? style->angle : 0.0;
     angle_radians = angle*MS_DEG_TO_RAD;
@@ -1201,15 +1201,15 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
         size = MS_NINT(size*scalefactor);
     } else
         size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, style->minsize*image->resolution_scale_factor);
-    size = MS_MIN(size, style->maxsize*image->resolution_scale_factor);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
     if (symbol->sizey)
         d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
     else
         d = 1;
     width = MS_NINT(style->width*scalefactor);
-    width = MS_MAX(width, style->minwidth*image->resolution_scale_factor);
-    width = MS_MIN(width, style->maxwidth*image->resolution_scale_factor);
+    width = MS_MAX(width, style->minwidth*image->resolutionfactor);
+    width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
     
     scalefactor = size / style->size;
     ox = style->offsetx*scalefactor;
@@ -1480,8 +1480,8 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
   else
       size = style->size;
   label.size = size * scalefactor;
-  label.size = MS_MAX(label.size, style->minsize*image->resolution_scale_factor);
-  label.size = MS_MIN(label.size, style->maxsize*image->resolution_scale_factor);
+  label.size = MS_MAX(label.size, style->minsize*image->resolutionfactor);
+  label.size = MS_MIN(label.size, style->maxsize*image->resolutionfactor);
   scalefactor = label.size / size;
   gap = MS_MAX(MS_ABS(symbol->gap)*scalefactor,1);
 
@@ -1572,12 +1572,12 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         size = style->size;
 
     size = (size*scalefactor);
-    size = MS_MAX(size, style->minsize*image->resolution_scale_factor);
-    size = MS_MIN(size, style->maxsize*image->resolution_scale_factor);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
     width = (style->width*scalefactor);
-    width = MS_MAX(width, style->minwidth*image->resolution_scale_factor);
-    width = MS_MIN(width, style->maxwidth*image->resolution_scale_factor);
+    width = MS_MAX(width, style->minwidth*image->resolutionfactor);
+    width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
     scalefactor = width/style->width;
 
 
@@ -1763,12 +1763,12 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         size = size*scalefactor;
     } else
         size = style->size*scalefactor;
-    size = MS_MAX(size, style->minsize*image->resolution_scale_factor);
-    size = MS_MIN(size, style->maxsize*image->resolution_scale_factor);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
     width = style->width*scalefactor;
-    width = MS_MAX(width, style->minwidth*image->resolution_scale_factor);
-    width = MS_MIN(width, style->maxwidth*image->resolution_scale_factor);
+    width = MS_MAX(width, style->minwidth*image->resolutionfactor);
+    width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
     
     scalefactor = size / style->size;
 
@@ -1984,12 +1984,12 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
         double size;
 
         size = label->size*scalefactor;
-        size = MS_MAX(size, label->minsize*image->resolution_scale_factor);
-        size = MS_MIN(size, label->maxsize*image->resolution_scale_factor);
+        size = MS_MAX(size, label->minsize*image->resolutionfactor);
+        size = MS_MIN(size, label->maxsize*image->resolutionfactor);
         scalefactor = size / label->size;
-        outlinewidth = label->outlinewidth*image->resolution_scale_factor;
-        shadowsizex = label->shadowsizex*image->resolution_scale_factor;
-        shadowsizey = label->shadowsizey*image->resolution_scale_factor;
+        outlinewidth = label->outlinewidth*image->resolutionfactor;
+        shadowsizex = label->shadowsizex*image->resolutionfactor;
+        shadowsizey = label->shadowsizey*image->resolutionfactor;
 
         if(!fontset) {
             msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextAGG()");
@@ -2075,12 +2075,12 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
         char s[11]; /* UTF-8 characters can be up to 6 bytes wide, entities 10 (&thetasym;) */
 
         size = label->size*scalefactor;
-        size = MS_MAX(size, label->minsize*image->resolution_scale_factor);
-        size = MS_MIN(size, label->maxsize*image->resolution_scale_factor);
+        size = MS_MAX(size, label->minsize*image->resolutionfactor);
+        size = MS_MIN(size, label->maxsize*image->resolutionfactor);
         scalefactor = size / label->size;
-        outlinewidth = label->outlinewidth*image->resolution_scale_factor;
-        shadowsizex = label->shadowsizex*image->resolution_scale_factor;
-        shadowsizey = label->shadowsizey*image->resolution_scale_factor;
+        outlinewidth = label->outlinewidth*image->resolutionfactor;
+        shadowsizex = label->shadowsizex*image->resolutionfactor;
+        shadowsizey = label->shadowsizey*image->resolutionfactor;
 
         if(!fontset) {
             msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextLineAGG()");

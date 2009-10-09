@@ -331,7 +331,7 @@ DEBUG_IF printf("msImageCreateIM<BR>\n");
             image->imagepath = NULL;
             image->imageurl = NULL;
             image->resolution = resolution;
-            image->resolution_scale_factor = resolution/defresolution;
+            image->resolutionfactor = resolution/defresolution;
 
 	    if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0){
 		    dxf = 1;

@@ -1472,7 +1472,7 @@ typedef struct {
 #endif
   int width, height;
   double resolution;
-  double resolution_scale_factor;
+  double resolutionfactor;
 
   char *imagepath, *imageurl;
 

@@ -1005,7 +1005,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
                  */
                 
                 /* adapt width (must take scalefactor into account) */
-                pStyle->width += (pStyle->outlinewidth / (layer->scalefactor/image->resolution_scale_factor)) * 2;
+                pStyle->width += (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
                 pStyle->minwidth += pStyle->outlinewidth * 2;
                 pStyle->maxwidth += pStyle->outlinewidth * 2;
                 pStyle->size += (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
@@ -1026,7 +1026,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
                  */
                 
                 /* reset widths to original state */
-                pStyle->width -= (pStyle->outlinewidth / (layer->scalefactor/image->resolution_scale_factor)) * 2;
+                pStyle->width -= (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
                 pStyle->minwidth -= pStyle->outlinewidth * 2;
                 pStyle->maxwidth -= pStyle->outlinewidth * 2;
                 pStyle->size -= (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
