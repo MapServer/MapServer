@@ -310,7 +310,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"imagemap") == 0 )
     {
         format = msAllocOutputFormat( map, "imagemap", driver );
-        format->mimetype = strdup("text/html");
+        format->mimetype = strdup("text/html; driver=imagemap");
         format->extension = strdup("html");
         format->imagemode = 0;
         format->renderer = MS_RENDER_WITH_IMAGEMAP;
