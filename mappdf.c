@@ -226,7 +226,7 @@ imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format,
         oImage->img.pdf->imagetmp = (imageObj *) 
           msImageCreateGD(map->width, map->height,  
                           msCreateDefaultOutputFormat(map, driver),
-                          map->web.imagepath, map->web.imageurl, map->resolution);
+                          map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
     }
     return oImage;
 }
@@ -1484,7 +1484,7 @@ int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo,
     {
         image_tmp = msImageCreateGD(map->width, map->height,  
                                     msCreateDefaultOutputFormat(map, driver),
-                                    map->web.imagepath, map->web.imageurl, map->resolution);
+                                    map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
     }
     else
     {

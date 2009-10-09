@@ -165,7 +165,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     else if( MS_RENDERER_GD(map->outputformat) )
     {
         image = msImageCreateGD(map->width, map->height, map->outputformat, 
-				map->web.imagepath, map->web.imageurl, map->resolution);        
+				map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
         if( image != NULL ) msImageInitGD( image, &map->imagecolor );
         msPreAllocateColorsGD(image, map);
     }
@@ -173,14 +173,14 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     else if( MS_RENDERER_AGG(map->outputformat) )
     {
         image = msImageCreateAGG(map->width, map->height, map->outputformat, 
-                                 map->web.imagepath, map->web.imageurl, map->resolution);        
+                                 map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
         if( image != NULL ) msImageInitAGG( image, &map->imagecolor );
     }
 #endif
     else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
     {
         image = msImageCreateIM(map->width, map->height, map->outputformat, 
-				map->web.imagepath, map->web.imageurl, map->resolution);        
+				map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
         if( image != NULL ) msImageInitIM( image );
     }
     else if( MS_RENDERER_RAWDATA(map->outputformat) )
@@ -280,9 +280,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
       else if(GET_LAYER(map, i)->symbolscaledenom > 0 && map->scaledenom > 0)
         GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscaledenom/map->scaledenom;
       else
-        GET_LAYER(map, i)->scalefactor = 1;
-
-      GET_LAYER(map, i)->scalefactor *= map->resolution/map->defresolution;
+        GET_LAYER(map, i)->scalefactor *= map->resolution/map->defresolution;
     }
 
     return image;
@@ -725,7 +723,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(layer->opacity > 0 && layer->opacity < 100) {
       msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
       
-      image_draw = msImageCreateGD( image->width, image->height, transFormat, image->imagepath, image->imageurl, map->resolution );
+      image_draw = msImageCreateGD( image->width, image->height, transFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution );
       if(!image_draw) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
         return(MS_FAILURE);
@@ -768,7 +766,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(layer->opacity > 0 && layer->opacity < 100) {
       msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
-      image_draw = msImageCreateAGG(image->width, image->height, transFormat, image->imagepath, image->imageurl, map->resolution);
+      image_draw = msImageCreateAGG(image->width, image->height, transFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution);
       if(!image_draw) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
         return(MS_FAILURE);
@@ -1007,7 +1005,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
                  */
                 
                 /* adapt width (must take scalefactor into account) */
-                pStyle->width += (pStyle->outlinewidth / layer->scalefactor) * 2;
+                pStyle->width += (pStyle->outlinewidth / (layer->scalefactor/image->resolution_scale_factor)) * 2;
                 pStyle->minwidth += pStyle->outlinewidth * 2;
                 pStyle->maxwidth += pStyle->outlinewidth * 2;
                 pStyle->size += (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
@@ -1028,7 +1026,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
                  */
                 
                 /* reset widths to original state */
-                pStyle->width -= (pStyle->outlinewidth / layer->scalefactor) * 2;
+                pStyle->width -= (pStyle->outlinewidth / (layer->scalefactor/image->resolution_scale_factor)) * 2;
                 pStyle->minwidth -= pStyle->outlinewidth * 2;
                 pStyle->maxwidth -= pStyle->outlinewidth * 2;
                 pStyle->size -= (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));

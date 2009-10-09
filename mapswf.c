@@ -1146,7 +1146,7 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
         ((SWFObj *)image->img.swf)->imagetmp = (imageObj *) 
           msImageCreateGD(map->width, map->height,  
                           msCreateDefaultOutputFormat(map, driver),
-                          map->web.imagepath, map->web.imageurl, map->resolution);
+                          map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
     }
     free(driver);
     return image;
@@ -2849,7 +2849,7 @@ int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo,
     {
         image_tmp = msImageCreateGD(map->width, map->height,  
                                     msCreateDefaultOutputFormat(map, driver),
-                                    map->web.imagepath, map->web.imageurl, map->resolution);
+                                    map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
         bFreeImage = 1;
     }
     else
@@ -3444,7 +3444,7 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
     {
         imagetmp = msImageCreateGD(map->width, map->height,  
                                    msCreateDefaultOutputFormat(map, driver),
-                                   map->web.imagepath, map->web.imageurl, map->resolution);
+                                   map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
         bFreeImage = 1;
     }
     else

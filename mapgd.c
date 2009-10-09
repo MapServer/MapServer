@@ -269,7 +269,7 @@ void msPreAllocateColorsGD(imageObj *image, mapObj *map) {
  * Utility function to create a GD image. Returns
  * a pointer to an imageObj structure.
  */  
-imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution) 
+imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution) 
 {
   imageObj  *image;
 
@@ -298,6 +298,7 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *
     image->imagepath = NULL;
     image->imageurl = NULL;
     image->resolution = resolution;
+    image->resolution_scale_factor = resolution/defresolution;
 
     if(imagepath) image->imagepath = strdup(imagepath);
     if(imageurl) image->imageurl = strdup(imageurl);

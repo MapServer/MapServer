@@ -161,7 +161,7 @@ imageObj* msImageCreateOgl(int width, int height, outputFormatObj *format, color
 
 int msSaveImageOgl(imageObj *img, char *filename, outputFormatObj *format)
 {
-	imageObj* gdImg = msImageCreateGD(img->width, img->height, format, filename, NULL, 72);
+        imageObj* gdImg = msImageCreateGD(img->width, img->height, format, filename, NULL, 72, 72);
 
 	OglRenderer* ogl = getOglRenderer(img);
 	ogl->attach(gdImg);

@@ -203,10 +203,10 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   /* create image */
 #ifdef USE_AGG
   if(MS_RENDERER_AGG(map->outputformat))
-     image = msImageCreateAGG(width, height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution);        
+     image = msImageCreateAGG(width, height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
   else
 #endif
-    image = msImageCreateGD(width, height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution);
+    image = msImageCreateGD(width, height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
 
   /* drop this reference to output format */
   msApplyOutputFormat( &format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
@@ -458,10 +458,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   /* initialize the legend image */
 #ifdef USE_AGG
   if(MS_RENDERER_AGG(map->outputformat))
-    image = msImageCreateAGG(size_x, size_y, format, map->web.imagepath, map->web.imageurl, map->resolution);        
+    image = msImageCreateAGG(size_x, size_y, format, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
   else
 #endif
-    image = msImageCreateGD(size_x, size_y, format, map->web.imagepath, map->web.imageurl, map->resolution);
+    image = msImageCreateGD(size_x, size_y, format, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
 
   /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);

@@ -293,7 +293,7 @@ DEBUG_IF printf("addImageCache\n<BR>");
  * a pointer to an imageObj structure.
  */
 imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
-                          char *imagepath, char *imageurl, double resolution)
+                          char *imagepath, char *imageurl, double resolution, double defresolution)
 {
     imageObj  *image=NULL;
     if (setvbuf(stdout, NULL, _IONBF , 0)){
@@ -331,6 +331,7 @@ DEBUG_IF printf("msImageCreateIM<BR>\n");
             image->imagepath = NULL;
             image->imageurl = NULL;
             image->resolution = resolution;
+            image->resolution_scale_factor = resolution/defresolution;
 
 	    if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0){
 		    dxf = 1;

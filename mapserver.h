@@ -1472,6 +1472,8 @@ typedef struct {
 #endif
   int width, height;
   double resolution;
+  double resolution_scale_factor;
+
   char *imagepath, *imageurl;
 
   outputFormatObj *format;
@@ -2023,7 +2025,7 @@ MS_DLL_EXPORT void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
 /* ==================================================================== */
 /*      Prototypes for functions in mapimagemap.c                       */
 /* ==================================================================== */
-MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution);
+MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
 MS_DLL_EXPORT imageObj *msImageLoadIM( const char *filename );
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
 MS_DLL_EXPORT imageObj *msImageLoadGDCtx( gdIOCtx *ctx, const char *driver );
@@ -2050,7 +2052,7 @@ MS_DLL_EXPORT int msDrawLabelCacheIM(imageObj* img, mapObj *map);
 MS_DLL_EXPORT imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver);
 MS_DLL_EXPORT int msCompareColors(colorObj *c1, colorObj *c2);
 MS_DLL_EXPORT void msPreAllocateColorsGD(imageObj *image, mapObj *map);
-MS_DLL_EXPORT imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution);
+MS_DLL_EXPORT imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
 MS_DLL_EXPORT void msImageInitGD( imageObj *image, colorObj *background );
 MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
@@ -2081,7 +2083,7 @@ MS_DLL_EXPORT void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int 
 /*      Prototypes for functions in mapagg.cpp                          */
 /* ==================================================================== */
 
-MS_DLL_EXPORT imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution);
+MS_DLL_EXPORT imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
 MS_DLL_EXPORT void msImageInitAGG( imageObj *image, colorObj *background );
 
 MS_DLL_EXPORT int msSaveImageAGG(imageObj *img, char *filename, outputFormatObj *format);

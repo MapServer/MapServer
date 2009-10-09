@@ -1384,7 +1384,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     if( MS_RENDERER_GD(format) )
     {
         image = msImageCreateGD(width, height, format,
-                                imagepath, imageurl, map->resolution);
+                                imagepath, imageurl, map->resolution, map->defresolution);
         if( image != NULL && map) msImageInitGD( image, &map->imagecolor );
     }
     else if(MS_RENDERER_PLUGIN(format)) {
@@ -1410,7 +1410,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     else if( MS_RENDERER_AGG(format) )
     {
         image = msImageCreateAGG(width, height, format,
-                                 imagepath, imageurl, map->resolution);
+                                 imagepath, imageurl, map->resolution, map->defresolution);
         if( image != NULL && map) msImageInitAGG( image, &map->imagecolor );
     }
 #endif
@@ -1466,7 +1466,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     else if( MS_RENDERER_IMAGEMAP(format) )
     {
         image = msImageCreateIM(width, height, format,
-                                imagepath, imageurl, map->resolution);
+                                imagepath, imageurl, map->resolution, map->defresolution);
         if( image != NULL ) msImageInitIM( image );
     }
 #ifdef USE_MING_FLASH

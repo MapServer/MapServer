@@ -848,7 +848,7 @@ private:
 // Returns a pointer to a newly created imageObj structure.
 // a pointer to the AGG renderer is stored in the imageObj, used for caching
 // ----------------------------------------------------------------------
-imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution) 
+imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution) 
 {
     imageObj *pNewImage = NULL;
 
@@ -857,7 +857,7 @@ imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char 
       return NULL;
     }
 
-    pNewImage = msImageCreateGD(width, height, format, imagepath, imageurl, resolution);
+    pNewImage = msImageCreateGD(width, height, format, imagepath, imageurl, resolution, defresolution);
     if(!pNewImage)
       return pNewImage;
 
@@ -1040,12 +1040,12 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         size = size*scalefactor;
     } else
         size = style->size*scalefactor;
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolution_scale_factor);
+    size = MS_MIN(size, style->maxsize*image->resolution_scale_factor);
 
     width = style->width*scalefactor;
-    width = MS_MAX(width, style->minwidth);
-    width = MS_MIN(width, style->maxwidth);
+    width = MS_MAX(width, style->minwidth*image->resolution_scale_factor);
+    width = MS_MIN(width, style->maxwidth*image->resolution_scale_factor);
 
     angle = (style->angle) ? style->angle : 0.0;
     angle_radians = angle*MS_DEG_TO_RAD;
@@ -1195,23 +1195,25 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK   */
     symbolObj *symbol = symbolset->symbol[style->symbol];
 
-    ox = style->offsetx*scalefactor;
-    oy = style->offsety*scalefactor;
 
     if(style->size == -1) {
         size = msSymbolGetDefaultSize(symbolset->symbol[style->symbol]);
         size = MS_NINT(size*scalefactor);
     } else
         size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolution_scale_factor);
+    size = MS_MIN(size, style->maxsize*image->resolution_scale_factor);
     if (symbol->sizey)
         d = size/symbol->sizey; /* compute the scaling factor (d) on the unrotated symbol */
     else
         d = 1;
     width = MS_NINT(style->width*scalefactor);
-    width = MS_MAX(width, style->minwidth);
-    width = MS_MIN(width, style->maxwidth);
+    width = MS_MAX(width, style->minwidth*image->resolution_scale_factor);
+    width = MS_MIN(width, style->maxwidth*image->resolution_scale_factor);
+    
+    scalefactor = size / style->size;
+    ox = style->offsetx*scalefactor;
+    oy = style->offsety*scalefactor;
 
     angle = (style->angle) ? style->angle : 0.0;
     angle_radians = angle*MS_DEG_TO_RAD;
@@ -1477,12 +1479,11 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
   }
   else
       size = style->size;
-  if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
-  if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
-  gap = MS_ABS(symbol->gap)* (int) scalefactor;
-  label.size = (size * scalefactor);
-  // label.minsize = style->minsize; 
-  // label.maxsize = style->maxsize; 
+  label.size = size * scalefactor;
+  label.size = MS_MAX(label.size, style->minsize*image->resolution_scale_factor);
+  label.size = MS_MIN(label.size, style->maxsize*image->resolution_scale_factor);
+  scalefactor = label.size / size;
+  gap = MS_MAX(MS_ABS(symbol->gap)*scalefactor,1);
 
   label.color = style->color;
   label.outlinecolor = style->outlinecolor;
@@ -1571,13 +1572,15 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         size = style->size;
 
     size = (size*scalefactor);
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolution_scale_factor);
+    size = MS_MIN(size, style->maxsize*image->resolution_scale_factor);
 
     width = (style->width*scalefactor);
-    width = MS_MAX(width, style->minwidth);
-    width = MS_MIN(width, style->maxwidth);
-    
+    width = MS_MAX(width, style->minwidth*image->resolution_scale_factor);
+    width = MS_MIN(width, style->maxwidth*image->resolution_scale_factor);
+    scalefactor = width/style->width;
+
+
     ox = style->offsetx * scalefactor;
     oy = style->offsety * scalefactor;
 
@@ -1760,12 +1763,14 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         size = size*scalefactor;
     } else
         size = style->size*scalefactor;
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolution_scale_factor);
+    size = MS_MIN(size, style->maxsize*image->resolution_scale_factor);
 
     width = style->width*scalefactor;
-    width = MS_MAX(width, style->minwidth);
-    width = MS_MIN(width, style->maxwidth);
+    width = MS_MAX(width, style->minwidth*image->resolution_scale_factor);
+    width = MS_MIN(width, style->maxwidth*image->resolution_scale_factor);
+    
+    scalefactor = size / style->size;
 
     angle_radians = style->angle*MS_DEG_TO_RAD;
 
@@ -1979,11 +1984,12 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
         double size;
 
         size = label->size*scalefactor;
-        size = MS_MAX(size, label->minsize);
-        size = MS_MIN(size, label->maxsize);
-        outlinewidth = label->outlinewidth;
-        shadowsizex = label->shadowsizex*scalefactor;
-        shadowsizey = label->shadowsizey*scalefactor;
+        size = MS_MAX(size, label->minsize*image->resolution_scale_factor);
+        size = MS_MIN(size, label->maxsize*image->resolution_scale_factor);
+        scalefactor = size / label->size;
+        outlinewidth = label->outlinewidth*image->resolution_scale_factor;
+        shadowsizex = label->shadowsizex*image->resolution_scale_factor;
+        shadowsizey = label->shadowsizey*image->resolution_scale_factor;
 
         if(!fontset) {
             msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextAGG()");
@@ -2069,11 +2075,12 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
         char s[11]; /* UTF-8 characters can be up to 6 bytes wide, entities 10 (&thetasym;) */
 
         size = label->size*scalefactor;
-        size = MS_MAX(size, label->minsize);
-        size = MS_MIN(size, label->maxsize);
-        outlinewidth = label->outlinewidth;
-        shadowsizex = label->shadowsizex*scalefactor;
-        shadowsizey = label->shadowsizey*scalefactor;
+        size = MS_MAX(size, label->minsize*image->resolution_scale_factor);
+        size = MS_MIN(size, label->maxsize*image->resolution_scale_factor);
+        scalefactor = size / label->size;
+        outlinewidth = label->outlinewidth*image->resolution_scale_factor;
+        shadowsizex = label->shadowsizex*image->resolution_scale_factor;
+        shadowsizey = label->shadowsizey*image->resolution_scale_factor;
 
         if(!fontset) {
             msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextLineAGG()");
@@ -2091,9 +2098,30 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
             return(-1);
         }
 
-        /* Iterate over the label line and draw each letter.*/
-        string_ptr = string; 
+        /* Iterate over the label line and draw each letter.
+         * first draw all the outlines and shadows*/
+        if(agg_ocolor.a || agg_scolor.a) {
+            string_ptr = string; 
+            for (i = 0; i < labelpath->path.numpoints; i++) {
+                double x, y;
+                double theta;
+                
+                if (msGetNextGlyph(&string_ptr, s) == -1)
+                        break;  /* Premature end of string??? */
+                
+                theta = labelpath->angles[i];
+                x = labelpath->path.point[i].x;
+                y = labelpath->path.point[i].y;
 
+                ren->renderGlyphs(x,y,AGG_NO_COLOR,agg_ocolor,
+                        size,font,s,theta,agg_scolor,
+                        shadowsizex,shadowsizey,
+                        outlinewidth);
+            }
+        }
+        
+        /* then draw the actual text */
+        string_ptr = string; 
         for (i = 0; i < labelpath->path.numpoints; i++) {
             double x, y;
             double theta;
@@ -2105,8 +2133,8 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
             x = labelpath->path.point[i].x;
             y = labelpath->path.point[i].y;
 
-            ren->renderGlyphs(x,y,agg_color,agg_ocolor,
-                    size,font,s,theta,agg_scolor,
+            ren->renderGlyphs(x,y,agg_color,AGG_NO_COLOR,
+                    size,font,s,theta,AGG_NO_COLOR,
                     shadowsizex,shadowsizey,
                     outlinewidth);
         }      
