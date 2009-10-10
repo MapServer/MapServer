@@ -176,12 +176,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 /*      copy :  - class                                                 */
 /*              - layer's labelitem                                     */
 /* -------------------------------------------------------------------- */
-                if ((pszStyleLayerName == NULL && 
+                if ((pasLayers[j].name && pszStyleLayerName == NULL && 
                      ((strcasecmp(GET_LAYER(map, i)->name, pasLayers[j].name) == 0 ||
                       (pszTmp && strcasecmp(pszTmp, pasLayers[j].name) == 0))||
                      (GET_LAYER(map, i)->group && 
                        strcasecmp(GET_LAYER(map, i)->group, pasLayers[j].name) == 0))) ||
-                    (bUseSpecificLayer && pszStyleLayerName && 
+                    (bUseSpecificLayer && pszStyleLayerName && pasLayers[j].name &&
                      strcasecmp(pasLayers[j].name, pszStyleLayerName) == 0))
                 {
                     bSuccess =1;
@@ -4316,6 +4316,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
               sprintf(szTmp, "<se:Name>%s</se:Name>\n", pszEncoded);
             else
               sprintf(szTmp, "<Name>%s</Name>\n", pszEncoded);
+	     pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
             msFree(pszEncoded);
         }
         else if (psLayer->name)
