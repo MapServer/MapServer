@@ -990,6 +990,7 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   skipy = map->cellsize/cy;
 
   /* muck with scaling */
+  cinfo.scale_num = 1;
   if(MS_MIN(skipx, skipy) >= 8)
     cinfo.scale_denom = 8;
   else

@@ -17,6 +17,9 @@ Current Version (SVN trunk):
 
 - Correct sld generated from mapserver classes (#3133) 
 
+- Correct libjpeg v7 compatability issue in old jpeg interface code (#3167)
+
+
 Version 5.6.0-beta3 (2009-10-07):
 ---------------------------------
 
