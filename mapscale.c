@@ -502,3 +502,84 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
 
   return(0);
 }
+
+/************************************************************************/
+/* These two functions are used in PHP/Mapscript and Swig/Mapscript     */
+/************************************************************************/
+
+/************************************************************************/
+/*  double GetDeltaExtentsUsingScale(double scale, int units,           */
+/*                                   double centerLat, int width,       */
+/*                                   double resolution)                 */
+/*                                                                      */
+/*      Utility function to return the maximum extent using the         */
+/*      scale and the width of the image.                               */
+/*                                                                      */
+/*      Base on the function msCalculateScale (mapscale.c)              */
+/************************************************************************/
+double GetDeltaExtentsUsingScale(double scale, int units, double centerLat, int width, double resolution)
+{
+    double md = 0.0;
+    double dfDelta = -1.0;
+
+    if (scale <= 0 || width <=0)
+      return -1;
+
+    switch (units) 
+    {
+      case(MS_DD):
+      case(MS_METERS):    
+      case(MS_KILOMETERS):
+      case(MS_MILES):
+      case(MS_INCHES):  
+      case(MS_FEET):
+        /* remember, we use a pixel-center to pixel-center extent, hence the width-1 */
+        md = (width-1)/(resolution*msInchesPerUnit(units,centerLat));
+        dfDelta = md * scale;
+        break;
+          
+      default:
+        break;
+    }
+
+    return dfDelta;
+}
+
+/************************************************************************/
+/*    static double Pix2Georef(int nPixPos, int nPixMin, double nPixMax,*/
+/*                              double dfGeoMin, double dfGeoMax,       */
+/*                              bool bULisYOrig)                        */
+/*                                                                      */
+/*      Utility function to convert a pixel pos to georef pos. If       */
+/*      bULisYOrig parameter is set to true then the upper left is      */
+/*      considered to be the Y origin.                                  */
+/*                                                                      */
+/************************************************************************/
+double Pix2Georef(int nPixPos, int nPixMin, int nPixMax, 
+                         double dfGeoMin, double dfGeoMax, int bULisYOrig)
+{
+    double      dfWidthGeo = 0.0;
+    int         nWidthPix = 0;
+    double      dfPixToGeo = 0.0;
+    double      dfPosGeo = 0.0;
+    double      dfDeltaGeo = 0.0;
+    int         nDeltaPix = 0;
+
+    dfWidthGeo = dfGeoMax - dfGeoMin;
+    nWidthPix = nPixMax - nPixMin;
+   
+    if (dfWidthGeo > 0.0 && nWidthPix > 0)
+    {
+        dfPixToGeo = dfWidthGeo / (double)nWidthPix;
+
+        if (!bULisYOrig)
+            nDeltaPix = nPixPos - nPixMin;
+        else
+            nDeltaPix = nPixMax - nPixPos;
+        
+        dfDeltaGeo = nDeltaPix * dfPixToGeo;
+
+        dfPosGeo = dfGeoMin + dfDeltaGeo;
+    }
+    return (dfPosGeo);
+}

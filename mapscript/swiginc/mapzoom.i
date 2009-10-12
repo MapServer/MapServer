@@ -116,8 +116,11 @@
         /*  possible using the mincale set in the .map.                 */
         /* ============================================================ */
         if (self->web.minscaledenom > 0 && dfNewScale < self->web.minscaledenom && zoomfactor > 1) {
-            dfDeltaExt = (self->web.minscaledenom * self->width)/(self->resolution * msInchesPerUnit(self->units,0));
-            /* dfDeltaExt = GetDeltaExtentsUsingScale(self->web.minscaledenom, self->units, dfGeoPosY, self->width, self->resolution); */
+            /* To be consistent in swig mapscript and PHP mapscript, 
+               use the same function to calculate the delta extents. */
+            dfDeltaExt = GetDeltaExtentsUsingScale(self->web.minscaledenom, self->units, dfGeoPosY, 
+                                                   self->width, self->resolution);
+
             if (dfDeltaExt > 0.0) {
                 oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
                 oNewGeorefExt.miny = dfGeoPosY - (dfDeltaExt/2);
@@ -227,7 +230,7 @@
             msSetError(MS_MISCERR, "image rectangle minx >= maxx", "mapscript::mapObj::zoomRectangle()");
             return MS_FAILURE;
         }
-        if (poPixRect->maxy >= poPixRect->miny) {
+        if (poPixRect->miny >= poPixRect->maxy) {
             msSetError(MS_MISCERR, "image rectangle maxy >= miny", "mapscript::mapObj::zoomRectangle()");
             return MS_FAILURE;
         }
@@ -262,10 +265,10 @@
         dX = dfDeltaX/((double)width);
         dY = dfDeltaY/((double)height);
 
-        oNewGeorefExt.minx = poGeorefExt->minx + dX * (double)poPixRect->minx;
-        oNewGeorefExt.miny = poGeorefExt->maxy - dY * (double)poPixRect->miny;
-        oNewGeorefExt.maxx = poGeorefExt->minx + dX * (double)poPixRect->maxx;
-        oNewGeorefExt.maxy = poGeorefExt->maxy - dY * (double)poPixRect->maxy;
+        oNewGeorefExt.minx = Pix2Georef((int)poPixRect->minx, 0, width, poGeorefExt->minx, poGeorefExt->maxx, 0); 
+        oNewGeorefExt.maxx = Pix2Georef((int)poPixRect->maxx, 0, width, poGeorefExt->minx, poGeorefExt->maxx, 0); 
+        oNewGeorefExt.miny = Pix2Georef((int)poPixRect->miny, 0, height, poGeorefExt->miny, poGeorefExt->maxy, 1); 
+        oNewGeorefExt.maxy = Pix2Georef((int)poPixRect->maxy, 0, height, poGeorefExt->miny, poGeorefExt->maxy, 1); 
 
         msAdjustExtent(&oNewGeorefExt, self->width, self->height);
 
@@ -281,9 +284,10 @@
         if (self->web.minscaledenom > 0 && dfNewScale <  self->web.minscaledenom) {
             dfMiddleX = oNewGeorefExt.minx + ((oNewGeorefExt.maxx - oNewGeorefExt.minx)/2);
             dfMiddleY = oNewGeorefExt.miny + ((oNewGeorefExt.maxy - oNewGeorefExt.miny)/2);
-        
-            dfDeltaExt = (self->web.minscaledenom * self->width) / (self->resolution * msInchesPerUnit(self->units,0));
-            /* dfDeltaExt = GetDeltaExtentsUsingScale(self->web.minscaledenom, self->units, dfMiddleY, self->width, self->resolution); */
+
+            /* To be consistent in swig mapscript and PHP mapscript, 
+               use the same function to calculate the delta extents. */
+            dfDeltaExt = GetDeltaExtentsUsingScale(self->web.minscaledenom, self->units, dfMiddleY, self->width, self->resolution);
 
             if (dfDeltaExt > 0.0) {
                 oNewGeorefExt.minx = dfMiddleX - (dfDeltaExt/2);
@@ -331,7 +335,7 @@
         self->extent.miny = oNewGeorefExt.miny;
         self->extent.maxx = oNewGeorefExt.maxx;
         self->extent.maxy = oNewGeorefExt.maxy;
-    
+
         self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);    
         dfDeltaX = self->extent.maxx - self->extent.minx;
         dfDeltaY = self->extent.maxy - self->extent.miny; 
@@ -439,7 +443,9 @@
         else
             nTmp = self->height;
 
-        dfDeltaExt=scale*nTmp/(self->resolution*msInchesPerUnit(self->units,0));
+        /* To be consistent in swig mapscript and PHP mapscript, 
+           use the same function to calculate the delta extents. */
+        dfDeltaExt = GetDeltaExtentsUsingScale(scale, self->units, dfGeoPosY, nTmp, self->resolution);
 
         if (dfDeltaExt > 0.0) {
             oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
@@ -476,7 +482,9 @@
         /* possible using the mincale set in the .map.                  */
         /* ============================================================ */
         if (self->web.minscaledenom > 0 && dfNewScale <  self->web.minscaledenom && dfCurrentScale > dfNewScale) {
-            dfDeltaExt=scale*nTmp/(self->resolution*msInchesPerUnit(self->units,0));
+            /* To be consistent in swig mapscript and PHP mapscript, 
+               use the same function to calculate the delta extents. */
+            dfDeltaExt = GetDeltaExtentsUsingScale(scale, self->units, dfGeoPosY, nTmp, self->resolution);
             if (dfDeltaExt > 0.0) {
                 oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
                 oNewGeorefExt.miny = dfGeoPosY - (dfDeltaExt/2);

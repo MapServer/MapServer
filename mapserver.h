@@ -1692,6 +1692,8 @@ MS_DLL_EXPORT void msGDALInitialize(void);
 
 MS_DLL_EXPORT imageObj *msDrawScalebar(mapObj *map); /* in mapscale.c */
 MS_DLL_EXPORT int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scaledenom);
+MS_DLL_EXPORT double GetDeltaExtentsUsingScale(double scale, int units, double centerLat, int width, double resolution);
+MS_DLL_EXPORT double Pix2Georef(int nPixPos, int nPixMin, int nPixMax, double dfGeoMin, double dfGeoMax, int bULisYOrig);
 MS_DLL_EXPORT double msInchesPerUnit(int units, double center_lat);
 MS_DLL_EXPORT int msEmbedScalebar(mapObj *map, imageObj *img);
 

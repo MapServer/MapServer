@@ -485,10 +485,6 @@ DLEXPORT void php_ms_IO_stripStdoutBufferContentType(INTERNAL_FUNCTION_PARAMETER
 DLEXPORT void php_ms_IO_getStdoutBufferBytes(INTERNAL_FUNCTION_PARAMETERS);
 
 
-static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits, 
-                                        double dCenterLat,
-                                        int nWidth, double resolution);
-
 /*=====================================================================
  *               PHP Dynamically Loadable Library stuff
  *====================================================================*/
@@ -2356,46 +2352,6 @@ DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS)
 /* ==================================================================== */
 
 /************************************************************************/
-/*    static double Pix2Georef(int nPixPos, int nPixMin, double nPixMax,*/
-/*                              double dfGeoMin, double dfGeoMax,       */
-/*                              bool bULisYOrig)                        */
-/*                                                                      */
-/*        Utility function to convert a pixel pos to georef pos. If     */
-/*      bULisYOrig parameter is set to true then the upper left is      */
-/*      considered to be the Y origin.                                  */
-/*                                                                      */
-/************************************************************************/
-static double Pix2Georef(int nPixPos, int nPixMin, int nPixMax, 
-                         double dfGeoMin, double dfGeoMax, int bULisYOrig)
-
-{
-    double      dfWidthGeo = 0.0;
-    int         nWidthPix = 0;
-    double      dfPixToGeo = 0.0;
-    double      dfPosGeo = 0.0;
-    double      dfDeltaGeo = 0.0;
-    int         nDeltaPix = 0;
-
-    dfWidthGeo = dfGeoMax - dfGeoMin;
-    nWidthPix = nPixMax - nPixMin;
-   
-    if (dfWidthGeo > 0.0 && nWidthPix > 0)
-    {
-        dfPixToGeo = dfWidthGeo / (double)nWidthPix;
-
-        if (!bULisYOrig)
-            nDeltaPix = nPixPos - nPixMin;
-        else
-            nDeltaPix = nPixMax - nPixPos;
-        
-        dfDeltaGeo = nDeltaPix * dfPixToGeo;
-
-        dfPosGeo = dfGeoMin + dfDeltaGeo;
-    }
-    return (dfPosGeo);
-}
-
-/************************************************************************/
 /*                           map->zoomPoint()                           */
 /*                                                                      */
 /*      Parmeters are :                                                 */
@@ -2848,7 +2804,6 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
                                     (int)pHeight->value.lval, 
                                     poGeorefExt->miny, poGeorefExt->maxy, 1); 
     
-
     msAdjustExtent(&oNewGeorefExt, self->width, self->height);
 
 /* -------------------------------------------------------------------- */
@@ -2931,7 +2886,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     self->extent.miny = oNewGeorefExt.miny;
     self->extent.maxx = oNewGeorefExt.maxx;
     self->extent.maxy = oNewGeorefExt.maxy;
-    
+
     self->cellsize = msAdjustExtent(&(self->extent), self->width, 
                                     self->height);    
     dfDeltaX = self->extent.maxx - self->extent.minx;
@@ -16809,45 +16764,6 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
     }
     
     RETURN_DOUBLE(dfScale);
-}
-
-/************************************************************************/
-/*  static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits,*/
-/*                                              int nWidth)             */
-/*                                                                      */
-/*      Utility function to return the maximum extent using the         */
-/*      scale and the width of the image.                               */
-/*                                                                      */
-/*      Base on the function msCalculateScale (mapscale.c)              */
-/************************************************************************/
-static double GetDeltaExtentsUsingScale(double dfScale, int nUnits, 
-                                        double dCenterLat,
-                                        int nWidth, double resolution)
-{
-    double md = 0.0;
-    double dfDelta = -1.0;
-
-    if (dfScale <= 0 || nWidth <=0)
-      return -1;
-
-    switch (nUnits) 
-    {
-      case(MS_DD):
-      case(MS_METERS):    
-      case(MS_KILOMETERS):
-      case(MS_MILES):
-      case(MS_INCHES):  
-      case(MS_FEET):
-        /* remember, we use a pixel-center to pixel-center extent, hence the width-1 */
-        md = (nWidth-1)/(resolution*msInchesPerUnit(nUnits,dCenterLat));
-        dfDelta = md * dfScale;
-        break;
-          
-      default:
-        break;
-    }
-
-    return dfDelta;
 }
 
 /**********************************************************************
