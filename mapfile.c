@@ -3761,7 +3761,14 @@ static int loadOutputFormat(mapObj *map)
       if(getString(&mimetype) == MS_FAILURE) return(-1);
       break;
     case(DRIVER):
-      if(getString(&driver) == MS_FAILURE) return(-1);
+      {
+        int s;
+        if((s = getSymbol(2, MS_STRING, TEMPLATE)) == -1) return -1; /* allow the template to be quoted or not in the mapfile */
+        if(s == MS_STRING)
+          driver = strdup(msyytext);
+        else
+          driver = strdup("TEMPLATE");
+      }
       break;
     case(EXTENSION):
       if(getString(&extension) == MS_FAILURE) return(-1);
