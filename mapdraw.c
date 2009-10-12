@@ -2341,8 +2341,8 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
       /* draw the background and background shadow (if necessary) */
       if(MS_VALID_COLOR(label->backgroundshadowcolor)) {
 	MS_COPYCOLOR(&(style.color), &(label->backgroundshadowcolor));
-	style.offsetx = label->backgroundshadowsizex*scalefactor;
-	style.offsety = label->backgroundshadowsizey*scalefactor;
+	style.offsetx = label->backgroundshadowsizex*image->resolutionfactor;
+	style.offsety = label->backgroundshadowsizey*image->resolutionfactor;
 	msDrawShadeSymbol(&(map->symbolset), image, &billboard, &style, 1);
 	style.offsetx = 0;
 	style.offsety = 0;
@@ -2364,8 +2364,8 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
       /* draw the background and background shadow (if necessary) */
       if(MS_VALID_COLOR(label->backgroundshadowcolor)) {
         MS_COPYCOLOR(&(style.color), &(label->backgroundshadowcolor));
-        style.offsetx = label->backgroundshadowsizex*scalefactor;
-        style.offsety = label->backgroundshadowsizey*scalefactor;
+        style.offsetx = label->backgroundshadowsizex*image->resolutionfactor;
+        style.offsety = label->backgroundshadowsizey*image->resolutionfactor;
         msDrawShadeSymbol(&(map->symbolset), image, &billboard, &style, 1);
         style.offsetx = 0;
         style.offsety = 0;
@@ -2451,8 +2451,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
           label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
           label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
-          label_buffer = labelPtr->buffer*layerPtr->scalefactor;
-          label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
+          label_buffer = labelPtr->buffer*image->resolutionfactor;
+          label_mindistance = labelPtr->mindistance*image->resolutionfactor;
           
           /* if cachePtr->featuresize is set to -1, this check has been done in msPolylineLabelPath() */
           if(labelPtr->autominfeaturesize && (cachePtr->featuresize != -1) && ((r.maxx-r.minx) > cachePtr->featuresize))
@@ -2577,8 +2577,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             initStyle(&style);                    
             if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
               MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundshadowcolor));
-              style.offsetx = labelPtr->backgroundshadowsizex*layerPtr->scalefactor;
-              style.offsety = labelPtr->backgroundshadowsizey*layerPtr->scalefactor;
+              style.offsetx = labelPtr->backgroundshadowsizex*image->resolutionfactor;
+              style.offsety = labelPtr->backgroundshadowsizey*image->resolutionfactor;
               msDrawShadeSymbol(&map->symbolset,image,&billboard,&style,1);
               style.offsetx = 0;
               style.offsety = 0;

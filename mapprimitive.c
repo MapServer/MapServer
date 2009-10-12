@@ -1629,8 +1629,9 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
   }
 
   size = label->size*scalefactor;
-  size = MS_MAX(size, label->minsize);
-  size = MS_MIN(size, label->maxsize);
+  size = MS_MAX(size, label->minsize*img->resolutionfactor);
+  size = MS_MIN(size, label->maxsize*img->resolutionfactor);
+  scalefactor = size / label->size;
 
   font = msLookupHashTable(&(fontset->fonts), label->font);
   if(!font) {

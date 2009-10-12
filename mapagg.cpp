@@ -1770,8 +1770,6 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     width = MS_MAX(width, style->minwidth*image->resolutionfactor);
     width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
     
-    scalefactor = size / style->size;
-
     angle_radians = style->angle*MS_DEG_TO_RAD;
 
     ox = style->offsetx*scalefactor;
