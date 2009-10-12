@@ -280,7 +280,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
       else if(GET_LAYER(map, i)->symbolscaledenom > 0 && map->scaledenom > 0)
         GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscaledenom/map->scaledenom;
       else
-        GET_LAYER(map, i)->scalefactor *= map->resolution/map->defresolution;
+        GET_LAYER(map, i)->scalefactor = map->resolution/map->defresolution;
     }
 
     return image;
