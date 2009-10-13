@@ -1941,7 +1941,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     /* and scale the pattern */
     int n=0;
     for(i=0; i<symbol->patternlength; i++) {
-      symbol_pattern[i] = symbol->pattern[i]*scalefactor;
+      symbol_pattern[i] = symbol->pattern[i];
       n += symbol_pattern[i];
     }
     style = (int *) malloc (n * sizeof(int));
@@ -2873,8 +2873,8 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
   if(label->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->outlinecolor));
   if(label->shadowcolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(label->shadowcolor));
 
-  shadowsizex = label->shadowsizex*scalefactor;
-  shadowsizey = label->shadowsizey*scalefactor;
+  shadowsizex = label->shadowsizex;
+  shadowsizey = label->shadowsizey;
 
   if(label->type == MS_TRUETYPE) {
     char *error=NULL, *font=NULL;
@@ -3007,8 +3007,8 @@ int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj
     size = label->size*scalefactor;
     size = MS_MAX(size, label->minsize);
     size = MS_MIN(size, label->maxsize);
-    shadowsizex = label->shadowsizex*scalefactor;
-    shadowsizey = label->shadowsizey*scalefactor;
+    shadowsizex = label->shadowsizex;
+    shadowsizey = label->shadowsizey;
 
 #ifdef USE_GD_FT
     if(!fontset) {
