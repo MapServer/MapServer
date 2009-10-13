@@ -1498,7 +1498,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   cliprect.miny = map->extent.miny - csz*map->cellsize;
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;
   cliprect.maxy = map->extent.maxy + csz*map->cellsize;
-  minfeaturesize = layer->class[c]->label.minfeaturesize*layer->scalefactor;
+  minfeaturesize = layer->class[c]->label.minfeaturesize*image->resolutionfactor;
 
   if(msBindLayerToShape(layer, shape, querymapMode) != MS_SUCCESS)
     return MS_FAILURE; /* error message is set in msBindLayerToShape() */
