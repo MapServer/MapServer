@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Added resolution scaling of some properties for GD driver (#3157)
+
 - Modified GD functions API to be consistent with all others drivers (#3157)
 
 - OGC Filter: strip all namespaces (not only ogc, gml) (#1350)

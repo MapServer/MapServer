@@ -72,8 +72,8 @@ int msImagePixmapPolyline(symbolSetObj *symbolset, imageObj *img, shapeObj *p, s
         size = MS_NINT(size*scalefactor);
     } else
       size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*img->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
     gap = MS_ABS(symbol->gap)* (int) scalefactor;  
 
@@ -602,12 +602,12 @@ static gdImagePtr createHatch(imageObj *img, int sx, int sy, rectObj *clip, styl
     size = style->size;
 
   size = MS_NINT(size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  size = MS_MAX(size, style->minsize*img->resolutionfactor);
+  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, style->minwidth);
-  width = MS_MIN(width, style->maxwidth);
+  width = MS_MAX(width, style->minwidth*img->resolutionfactor);
+  width = MS_MIN(width, style->maxwidth*img->resolutionfactor);
   gdImageSetThickness(hatch, width);
 
   /* normalize the angle (180 to 0, 0 is east, 90 is north 180 is west) */
@@ -1074,12 +1074,12 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *
     size = style->size;
 
   size = MS_NINT(size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  size = MS_MAX(size, style->minsize*img->resolutionfactor);
+  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, style->minwidth);
-  width = MS_MIN(width, style->maxwidth);
+  width = MS_MAX(width, style->minwidth*img->resolutionfactor);
+  width = MS_MIN(width, style->maxwidth*img->resolutionfactor);
 
   if(style->symbol >= symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(fc < 0) return; /* nothing to do */
@@ -1286,12 +1286,12 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj 
     size = MS_NINT(size*scalefactor);
   } else
     size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  size = MS_MAX(size, style->minsize*img->resolutionfactor);
+  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, style->minwidth);
-  width = MS_MIN(width, style->maxwidth);
+  width = MS_MAX(width, style->minwidth*img->resolutionfactor);
+  width = MS_MIN(width, style->maxwidth*img->resolutionfactor);
 
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;
@@ -1506,12 +1506,12 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *p, s
     size = MS_NINT(size*scalefactor);
   } else
     size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  size = MS_MAX(size, style->minsize*img->resolutionfactor);
+  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, style->minwidth);
-  width = MS_MIN(width, style->maxwidth);
+  width = MS_MAX(width, style->minwidth*img->resolutionfactor);
+  width = MS_MIN(width, style->maxwidth*img->resolutionfactor);
 
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;
@@ -1746,16 +1746,16 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, imageObj *img, shapeObj *p, sty
     size = style->size;
 
   /* TODO: Don't get this modification, is it needed elsewhere? */
-  /* if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size; */
-  /* if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size; */
+  /* if(size*scalefactor > style->maxsize*img->resolutionfactor) scalefactor = (float)style->maxsize/(float)size; */
+  /* if(size*scalefactor < style->minsize*img->resolutionfactor) scalefactor = (float)style->minsize/(float)size; */
   
   size = MS_NINT(size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  size = MS_MAX(size, style->minsize*img->resolutionfactor);
+  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, style->minwidth);
-  width = MS_MIN(width, style->maxwidth);
+  width = MS_MAX(width, style->minwidth*img->resolutionfactor);
+  width = MS_MIN(width, style->maxwidth*img->resolutionfactor);
 
   angle = (style->angle) ? style->angle : 0.0;
 
@@ -1942,7 +1942,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, imageObj *img, shapeObj *p, sty
     /* and scale the pattern */
     int n=0;
     for(i=0; i<symbol->patternlength; i++) {
-      symbol_pattern[i] = symbol->pattern[i];
+      symbol_pattern[i] = symbol->pattern[i]*img->resolutionfactor;
       n += symbol_pattern[i];
     }
     style = (int *) malloc (n * sizeof(int));
@@ -2027,12 +2027,12 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, imageObj *img, shapeObj *p, st
       size = MS_NINT(size*scalefactor);
   } else
       size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  size = MS_MAX(size, style->minsize*img->resolutionfactor);
+  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   width = MS_NINT(style->width*scalefactor);
-  width = MS_MAX(width, style->minwidth);
-  width = MS_MIN(width, style->maxwidth);
+  width = MS_MAX(width, style->minwidth*img->resolutionfactor);
+  width = MS_MIN(width, style->maxwidth*img->resolutionfactor);
 
   angle = (style->angle) ? style->angle : 0.0;
   angle_radians = angle*MS_DEG_TO_RAD;
@@ -2874,8 +2874,8 @@ int msDrawTextGD(imageObj *img, pointObj labelPnt, char *string, labelObj *label
   if(label->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img->img.gd, &(label->outlinecolor));
   if(label->shadowcolor.pen == MS_PEN_UNSET) msImageSetPenGD(img->img.gd, &(label->shadowcolor));
 
-  shadowsizex = label->shadowsizex;
-  shadowsizey = label->shadowsizey;
+  shadowsizex = label->shadowsizex*img->resolutionfactor;
+  shadowsizey = label->shadowsizey*img->resolutionfactor;
 
   if(label->type == MS_TRUETYPE) {
     char *error=NULL, *font=NULL;
@@ -2884,8 +2884,8 @@ int msDrawTextGD(imageObj *img, pointObj labelPnt, char *string, labelObj *label
     double size;
 
     size = label->size*scalefactor;
-    size = MS_MAX(size, label->minsize);
-    size = MS_MIN(size, label->maxsize);
+    size = MS_MAX(size, label->minsize*img->resolutionfactor);
+    size = MS_MIN(size, label->maxsize*img->resolutionfactor);
 
 #ifdef USE_GD_FT
     if(!fontset) {
@@ -3006,10 +3006,10 @@ int msDrawTextLineGD(imageObj *img, char *string, labelObj *label, labelPathObj 
     char s[11]; /* UTF-8 characters can be up to 6 bytes wide, html entities 10 */
 
     size = label->size*scalefactor;
-    size = MS_MAX(size, label->minsize);
-    size = MS_MIN(size, label->maxsize);
-    shadowsizex = label->shadowsizex;
-    shadowsizey = label->shadowsizey;
+    size = MS_MAX(size, label->minsize*img->resolutionfactor);
+    size = MS_MIN(size, label->maxsize*img->resolutionfactor);
+    shadowsizex = label->shadowsizex*img->resolutionfactor;
+    shadowsizey = label->shadowsizey*img->resolutionfactor;
 
 #ifdef USE_GD_FT
     if(!fontset) {
