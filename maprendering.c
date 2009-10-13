@@ -482,7 +482,7 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 				msFreeShape(offsetLine);
 		}
     	else if( MS_RENDERER_GD(image->format) )
-            msDrawLineSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
+            msDrawLineSymbolGD(symbolset, image, p, style, scalefactor);
 #ifdef USE_AGG
         else if( MS_RENDERER_AGG(image->format) )
             msDrawLineSymbolAGG(symbolset, image, p, style, scalefactor);
@@ -638,7 +638,7 @@ cleanup:
 			}
             return;
 		} else if( MS_RENDERER_GD(image->format) )
-            msDrawShadeSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
+            msDrawShadeSymbolGD(symbolset, image, p, style, scalefactor);
 #ifdef USE_AGG
         else if( MS_RENDERER_AGG(image->format) )
             msDrawShadeSymbolAGG(symbolset, image, p, style, scalefactor);
@@ -731,7 +731,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
 			}
        }
        else if( MS_RENDERER_GD(image->format) )
-           msDrawMarkerSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
+           msDrawMarkerSymbolGD(symbolset, image, p, style, scalefactor);
 #ifdef USE_AGG
        else if( MS_RENDERER_AGG(image->format) )
            msDrawMarkerSymbolAGG(symbolset, image, p, style, scalefactor);
@@ -764,7 +764,7 @@ void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *
     if (image)
     {
         if( MS_RENDERER_GD(image->format) )
-            msCircleDrawLineSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
+            msCircleDrawLineSymbolGD(symbolset, image, p, r, style, scalefactor);
 #ifdef USE_AGG
         else if( MS_RENDERER_AGG(image->format) )
             msCircleDrawLineSymbolAGG(symbolset, image, p, r, style, scalefactor);
@@ -782,7 +782,7 @@ void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj 
     if (image)
     {
         if( MS_RENDERER_GD(image->format) )
-            msCircleDrawShadeSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
+            msCircleDrawShadeSymbolGD(symbolset, image, p, r, style, scalefactor);
 #ifdef USE_AGG
         else if( MS_RENDERER_AGG(image->format) )
             msCircleDrawShadeSymbolAGG(symbolset, image, p, r, style, scalefactor);
@@ -819,7 +819,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
 				renderer->renderGlyphs(image,x,y,&s,string);			}
 		}
 	else if( MS_RENDERER_GD(image->format) )
-      nReturnVal = msDrawTextGD(image->img.gd, labelPnt, string, label, fontset, scalefactor);
+      nReturnVal = msDrawTextGD(image, labelPnt, string, label, fontset, scalefactor);
 #ifdef USE_AGG
     else if( MS_RENDERER_AGG(image->format) )
       nReturnVal = msDrawTextAGG(image, labelPnt, string, label, fontset, scalefactor);
@@ -858,7 +858,7 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
             }
         }
     else if( MS_RENDERER_GD(image->format) )
-      nReturnVal = msDrawTextLineGD(image->img.gd, string, label, labelpath, fontset, scalefactor);
+      nReturnVal = msDrawTextLineGD(image, string, label, labelpath, fontset, scalefactor);
 #ifdef USE_AGG
     else if( MS_RENDERER_AGG(image->format) )
       nReturnVal = msDrawTextLineAGG(image, string, label, labelpath, fontset, scalefactor);

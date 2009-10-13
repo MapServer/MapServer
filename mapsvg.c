@@ -1796,7 +1796,7 @@ int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
                     "msImageCreateSVG()" );
             return MS_FAILURE;
         }
-        msSaveImageGD(imagetmp->img.gd, pszTmpfile, format);
+        msSaveImageGD(imagetmp, pszTmpfile, format);
         pszURL = (char *)malloc(sizeof(char)*(strlen(map->web.imageurl)+
                                               strlen(pszTmpfile)+
                                               strlen(format->extension)+2));

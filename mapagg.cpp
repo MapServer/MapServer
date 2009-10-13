@@ -2231,7 +2231,7 @@ int msSaveImageAGG(imageObj* image, char *filename, outputFormatObj *format)
 
     format->driver = &cGDFormat[0];
 
-    iReturn = msSaveImageGD(image->img.gd, filename, format);
+    iReturn = msSaveImageGD(image, filename, format);
 
     format->driver = pFormatBuffer;
 
@@ -2257,7 +2257,7 @@ int msSaveImageAGGCtx(imageObj* image, gdIOCtx *ctx, outputFormatObj *format)
 
     format->driver = &cGDFormat[0];
 
-    iReturn = msSaveImageGDCtx(image->img.gd, ctx, format);
+    iReturn = msSaveImageGDCtx(image, ctx, format);
 
     format->driver = pFormatBuffer;
 
@@ -2285,7 +2285,7 @@ unsigned char *msSaveImageBufferAGG(imageObj* image, int *size_ptr, outputFormat
 
     format->driver = pszGDFormat;
 
-    buf = msSaveImageBufferGD(image->img.gd, size_ptr, format);
+    buf = msSaveImageBufferGD(image, size_ptr, format);
 
     format->driver = pFormatBuffer;
 
@@ -2301,7 +2301,7 @@ void msFreeImageAGG(imageObj *img)
 {
     delete (AGGMapserverRenderer*)img->imageextra;
     if( img->img.gd != NULL )
-        msFreeImageGD(img->img.gd);
+        msFreeImageGD(img);
 }
 
 void msFreeSymbolCacheAGG(void *buffer) {

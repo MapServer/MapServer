@@ -374,7 +374,7 @@ void msWriteErrorXML(FILE *stream)
 
 void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   gdFontPtr font = gdFontSmall;
-  gdImagePtr img=NULL;
+  imageObj img;
   int width=400, height=300, color;
   int nMargin =5;
   int nTextLength = 0;
@@ -408,14 +408,14 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   if (format == NULL || (!MS_DRIVER_GD(format) && !MS_DRIVER_AGG(format))) 
     format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
 
-  img = gdImageCreate(width, height);
-  color = gdImageColorAllocate(img, map->imagecolor.red, 
+  img.img.gd = gdImageCreate(width, height);
+  color = gdImageColorAllocate(img.img.gd, map->imagecolor.red, 
                                map->imagecolor.green,
                                map->imagecolor.blue); /* BG color */
-  nBlack = gdImageColorAllocate(img, 0,0,0); /* Text color */
+  nBlack = gdImageColorAllocate(img.img.gd, 0,0,0); /* Text color */
 
   if (map->outputformat && map->outputformat->transparent)
-    gdImageColorTransparent(img, 0);
+    gdImageColorTransparent(img.img.gd, 0);
 
 
   nTextLength = strlen(errormsg); 
@@ -455,7 +455,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
       nYPos = (nSpaceBewteenLines) * ((i*2) +1); 
       nXPos = nSpaceBewteenLines;
 
-      gdImageString(img, font, nXPos, nYPos, (unsigned char *)papszLines[i], nBlack);
+      gdImageString(img.img.gd, font, nXPos, nYPos, (unsigned char *)papszLines[i], nBlack);
     }
     if (papszLines) {
       for (i=0; i<nLines; i++) {
@@ -469,18 +469,18 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   if(!filename) 
       msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(format), 10,10);
   if (MS_DRIVER_GD(format))
-    msSaveImageGD(img, filename, format);
+    msSaveImageGD(&img, filename, format);
   else
   {
       pFormatBuffer = format->driver;
       strcpy(cGDFormat, "gd/");
       strcat(cGDFormat, &(format->driver[4]));
       format->driver = &cGDFormat[0];
-      msSaveImageGD(img, filename, format);
+      msSaveImageGD(&img, filename, format);
       format->driver = pFormatBuffer;
   }
 
-  gdImageDestroy(img);
+  gdImageDestroy(img.img.gd);
 
   if (format->refcount == 0)
     msFreeOutputFormat(format);

@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Modified GD functions API to be consistent with all others drivers (#3157)
+
 - OGC Filter: strip all namespaces (not only ogc, gml) (#1350)
 
 - Use decimal values for size and width in SVG output format (#2835)

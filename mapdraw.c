@@ -813,9 +813,9 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   if( MS_RENDERER_GD(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
 
       if(layer->type == MS_LAYER_RASTER)
-          msImageCopyMerge(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
+          msImageCopyMerge(image, image_draw, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
       else {
-          msImageCopyMergeNoAlpha(image->img.gd, image_draw->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity, &map->imagecolor);
+          msImageCopyMergeNoAlpha(image, image_draw, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity, &map->imagecolor);
       }
       msFreeImage(image_draw);
 

@@ -1056,7 +1056,7 @@ int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 #endif
 }
 
-int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
+int msImageTruetypePolyline(symbolSetObj *symbolset, imageObj *img, shapeObj *p, styleObj *style, double scalefactor)
 {
 #ifdef USE_GD_FT
   int i,j;

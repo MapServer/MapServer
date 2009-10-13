@@ -1855,7 +1855,7 @@ MS_DLL_EXPORT void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelOb
 MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);
-MS_DLL_EXPORT int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT int msImageTruetypePolyline(symbolSetObj *symbolset, imageObj *img, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 
 MS_DLL_EXPORT void msFreeShape(shapeObj *shape); /* in mapprimitive.c */
@@ -2062,23 +2062,23 @@ MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 #define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
 
 MS_DLL_EXPORT gdIOCtx *msNewGDFileCtx(FILE *file);
-MS_DLL_EXPORT int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format);
-MS_DLL_EXPORT unsigned char *msSaveImageBufferGD(gdImagePtr img, int *bufsize, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageGDCtx(gdImagePtr img, gdIOCtx* ctx, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageGD_LL(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
-MS_DLL_EXPORT void msFreeImageGD(gdImagePtr img);
+MS_DLL_EXPORT int msSaveImageGD(imageObj *img, char *filename, outputFormatObj *format);
+MS_DLL_EXPORT unsigned char *msSaveImageBufferGD(imageObj *img, int *bufsize, outputFormatObj *format);
+MS_DLL_EXPORT int msSaveImageGDCtx(imageObj *img, gdIOCtx* ctx, outputFormatObj *format);
+MS_DLL_EXPORT int msSaveImageGD_LL(imageObj *img, char *filename, int type, int transparent, int interlace, int quality);
+MS_DLL_EXPORT void msFreeImageGD(imageObj *img);
 
-MS_DLL_EXPORT void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *p, double r, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *p, double r, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawMarkerSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawLineSymbolGD(symbolSetObj *symbolset, imageObj *img, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawShadeSymbolGD(symbolSetObj *symbolset, imageObj *img, shapeObj *p, styleObj *style, double scalefactor);
 
-MS_DLL_EXPORT int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawTextLineGD(gdImagePtr img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawTextGD(imageObj *img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT int msDrawTextLineGD(imageObj *img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
 
-MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
-MS_DLL_EXPORT void msImageCopyMergeNoAlpha (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct, colorObj *transparent);
+MS_DLL_EXPORT void msImageCopyMerge (imageObj *dst, imageObj *src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
+MS_DLL_EXPORT void msImageCopyMergeNoAlpha (imageObj *dst, imageObj *src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct, colorObj *transparent);
 
 #ifdef USE_AGG
 /* ==================================================================== */

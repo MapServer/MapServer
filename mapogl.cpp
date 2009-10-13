@@ -176,7 +176,7 @@ int msSaveImageOgl(imageObj *img, char *filename, outputFormatObj *format)
 
 	format->driver = &cGDFormat[0];
 
-	iReturn = msSaveImageGD(gdImg->img.gd, filename, format);
+	iReturn = msSaveImageGD(gdImg, filename, format);
 
 	format->driver = pFormatBuffer;
 
