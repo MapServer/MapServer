@@ -2981,7 +2981,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
     /*do not load all the movie for the layers automatically  if flag is set to off
       Bug 1696*/
     if (strcasecmp(msGetOutputFormatOption(image->format,
-                                           "LOAD_AUTOMATICALLY",""), "OFF") != 0)
+                                           "LOAD_AUTOMATICALLY",""), "OFF") == 0)
       bLoadAutomatically = MS_FALSE;
 
     if (image && MS_DRIVER_SWF(image->format))/* && filename) */
