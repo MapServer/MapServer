@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- OGC Filter: strip all namespaces (not only ogc, gml) (#1350)
+
 - Use decimal values for size and width in SVG output format (#2835)
 
 - Correct invalid test when loading movies in an swf ouput (#2524)

@@ -1322,9 +1322,8 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
     if( psRoot == NULL)
        return NULL;
 
-    /* strip namespaces */
-    CPLStripXMLNamespace(psRoot, "ogc", 1); 
-    CPLStripXMLNamespace(psRoot, "gml", 1);
+    /* strip namespaces. We srtip all name spaces (#1350)*/
+    CPLStripXMLNamespace(psRoot, NULL, 1);
 
 /* -------------------------------------------------------------------- */
 /*      get the root element (Filter).                                  */
