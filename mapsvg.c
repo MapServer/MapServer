@@ -314,7 +314,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
 /*      Draws an svg line element.                                      */
 /************************************************************************/
 static void imagePolyline(FILE *fp, int bCompressed, shapeObj *p, 
-                          colorObj *color, int size,
+                          colorObj *color, double size,
                           int symbolstylelength, int *symbolstyle, int bFullRes)
 {
     int i, j, k;
@@ -344,11 +344,11 @@ static void imagePolyline(FILE *fp, int bCompressed, shapeObj *p,
                 pszDashArray = msStringConcatenate(pszDashArray, szTmp);
             }
             
-            msIO_fprintfgz(fp, bCompressed, "<polyline fill=\"none\" stroke=\"#%02x%02x%02x\" stroke-width=\"%d\" stroke-dasharray=\"%s\" points=\"",color->red, color->green, 
+            msIO_fprintfgz(fp, bCompressed, "<polyline fill=\"none\" stroke=\"#%02x%02x%02x\" stroke-width=\"%0.2f\" stroke-dasharray=\"%s\" points=\"",color->red, color->green, 
                            color->blue,size, pszDashArray);
         }
         else
-          msIO_fprintfgz(fp, bCompressed,"<polyline fill=\"none\" stroke=\"#%02x%02x%02x\" stroke-width=\"%d\" points=\"",color->red, color->green, color->blue,size);
+          msIO_fprintfgz(fp, bCompressed,"<polyline fill=\"none\" stroke=\"#%02x%02x%02x\" stroke-width=\"%0.2f\" points=\"",color->red, color->green, color->blue,size);
         
         if (bFullRes) 
           msIO_fprintfgz(fp, bCompressed, "%.2f,%.2f", p->line[i].point[0].x, p->line[i].point[0].y); 
@@ -515,7 +515,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     /* int styleDashed[100]; */
     int ox, oy;
     double size;
-    int width;
+    double width;
     /* gdPoint points[MS_MAXVECTORPOINTS]; */
     symbolObj *symbol;
     int bFullRes;
@@ -536,7 +536,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
                    "TRUE") == 0)
       bFullRes = 1;
     if(style->size == -1) {
-      size = (int)msSymbolGetDefaultSize( symbolset->symbol[style->symbol] );
+      size = (double)msSymbolGetDefaultSize( symbolset->symbol[style->symbol] );
     }
     else
       size = style->size;
@@ -544,11 +544,11 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     /* TODO: Don't get this modification, is it needed elsewhere? */
     if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
     if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
-    size = MS_NINT(size*scalefactor);
+    size = size*scalefactor;
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
 
-    width = MS_NINT(style->width*scalefactor);
+    width = style->width*scalefactor;
     width = MS_MAX(width, style->minwidth);
     width = MS_MIN(width, style->maxwidth);
 
@@ -557,7 +557,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
      if (!MS_VALID_COLOR( style->color))
       return;
     
-    if(size < 1) return; /* size too small */
+    if(size < 0) return; /* size too small */
 
     /* TODO : do we need offset ?? */
     ox = MS_NINT(style->offsetx*scalefactor);
@@ -570,7 +570,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     {
         for (i=0; i<symbol->patternlength; i++)
         {
-            symbol_pattern[i] = symbol->pattern[i]*scalefactor;
+	  symbol_pattern[i] = MS_NINT(symbol->pattern[i]*scalefactor);
         }
     }
 
@@ -585,7 +585,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
                     symbol->patternlength,  symbol_pattern, bFullRes);
     else
       imagePolyline(image->img.svg->stream, image->img.svg->compressed, 
-                    p, &style->color, (int)size,
+                    p, &style->color, size,
                     symbol->patternlength,  symbol_pattern, bFullRes);
         return;
     
@@ -609,13 +609,12 @@ void msImageStartLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
 
 static void imageFillPolygon(FILE *fp, int bCompressed, 
                              shapeObj *p, colorObj *psFillColor, 
-                             colorObj *psOutlineColor, int size,
+                             colorObj *psOutlineColor, double size,
                              int symbolstylelength, int *symbolstyle, int bFullRes)
 {
     int i, j, k,max;
     char *pszDashArray = NULL;
     char szTmp[100];
-
 
     if (!fp || !p || (psFillColor==NULL && psOutlineColor==NULL) || size <0 )
       return;
@@ -659,7 +658,7 @@ static void imageFillPolygon(FILE *fp, int bCompressed,
                            psOutlineColor->red, psOutlineColor->green, 
                            psOutlineColor->blue,
                            size, pszDashArray);*/
-                msIO_fprintfgz(fp, bCompressed, "<path fill=\"#%02x%02x%02x\" stroke=\"#%02x%02x%02x\" stroke-width=\"%d\" %s d=\"",
+                msIO_fprintfgz(fp, bCompressed, "<path fill=\"#%02x%02x%02x\" stroke=\"#%02x%02x%02x\" stroke-width=\"%0.2f\" %s d=\"",
                            psFillColor->red, psFillColor->green, 
                            psFillColor->blue,
                            psOutlineColor->red, psOutlineColor->green, 
@@ -672,7 +671,7 @@ static void imageFillPolygon(FILE *fp, int bCompressed,
                            psOutlineColor->red, psOutlineColor->green, 
                            psOutlineColor->blue,
                            size, pszDashArray);*/
-                msIO_fprintfgz(fp,  bCompressed, "<path stroke=\"#%02x%02x%02x\" stroke-width=\"%d\" %s style=\"fill:none\" d=\"",
+                msIO_fprintfgz(fp,  bCompressed, "<path stroke=\"#%02x%02x%02x\" stroke-width=\"%0.2f\" %s style=\"fill:none\" d=\"",
                            psOutlineColor->red, psOutlineColor->green, 
                            psOutlineColor->blue,
                            size, pszDashArray);
@@ -728,7 +727,7 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     colorObj    sFc;
     colorObj    sOc;
     symbolObj   *symbol;
-    int         size;
+    double         size;
     int bFullRes = 0;
     int symbol_pattern[MS_MAXPATTERNLENGTH], i;
 
@@ -751,10 +750,10 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     if(style->size == -1) 
     {
         size = (int)msSymbolGetDefaultSize( symbolset->symbol[style->symbol] );
-        size = MS_NINT(size*scalefactor);
+        size = size*scalefactor;
     }
     else
-      size = MS_NINT(style->size*scalefactor);
+      size = style->size*scalefactor;
 
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
@@ -764,14 +763,14 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     {
         for (i=0; i<symbol->patternlength; i++)
         {
-            symbol_pattern[i] = symbol->pattern[i]*scalefactor;
+	  symbol_pattern[i] = MS_NINT(symbol->pattern[i]*scalefactor);
         }
     }
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
         return;
 
-    if(size < 1) /* size too small */
+    if(size < 0) /* size too small */
         return;
 
     sFc.red = style->color.red;
@@ -1205,10 +1204,10 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
     if(msGetLabelSize(image, cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
       return(-1);
 
-    label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
-    label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
-    label_buffer = labelPtr->buffer*layerPtr->scalefactor;
-    label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
+    label_offset_x = MS_NINT(labelPtr->offsetx*layerPtr->scalefactor);
+    label_offset_y = MS_NINT(labelPtr->offsety*layerPtr->scalefactor);
+    label_buffer = MS_NINT(labelPtr->buffer*layerPtr->scalefactor);
+    label_mindistance = MS_NINT(labelPtr->mindistance*layerPtr->scalefactor);
     
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
       continue; /* label too large relative to the feature */
@@ -1330,7 +1329,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     char szTmp[100];
     symbolObj *symbol=NULL;
     double size,d;
-    int width;
+    double width;
     int x,y,rx,ry;
     char *pszFill = NULL, *pszStroke=NULL;
     int bFillSetToNone = 0;
@@ -1363,7 +1362,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
 
-    width = MS_NINT(style->width*scalefactor);
+    width = style->width*scalefactor;
     width = MS_MAX(width, style->minwidth);
     width = MS_MIN(width, style->maxwidth);
 
@@ -1533,7 +1532,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
                             
                             msIO_fprintfgz(image->img.svg->stream, 
                                            image->img.svg->compressed,  
-                                         "<polygon %s %s stroke-width=\"%d\" points=\"", 
+                                         "<polygon %s %s stroke-width=\"%0.2f\" points=\"", 
                                          pszFill, pszStroke, width);
                             
                             for (i=0; i<k;i++)
@@ -1560,7 +1559,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
 
                 msIO_fprintfgz(image->img.svg->stream, 
                                image->img.svg->compressed,  
-                             "<polygon %s %s stroke-width=\"%d\" points=\"", 
+                             "<polygon %s %s stroke-width=\"%0.2f\" points=\"", 
                              pszFill, pszStroke, width);
                             
                 for (i=0; i<k;i++)
@@ -1594,7 +1593,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
                             newpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
                             msIO_fprintfgz(image->img.svg->stream, 
                                            image->img.svg->compressed,  
-                              "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" %s %s stroke-width=\"%d\" stroke-linecap=\"round\"/>\n",
+                              "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" %s %s stroke-width=\"%0.2f\" stroke-linecap=\"round\"/>\n",
                                          (int)oldpnt.x, (int)oldpnt.y, (int)newpnt.x, (int)newpnt.y,
                                          pszFill, pszStroke, width);
                             oldpnt = newpnt;
