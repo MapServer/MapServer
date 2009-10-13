@@ -1944,7 +1944,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
 
   if (nVersion < 0)
-      nVersion = OWS_1_1_1;     /* Default to 1.1.1 */
+      nVersion = OWS_1_3_0;     /* Default to 1.3.0 */
 
   /* Decide which version we're going to return. */
   if (nVersion < OWS_1_0_7) {
@@ -3607,7 +3607,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
                   strcasecmp(request, "GetCapabilities") == 0) )
   {
       if (nVersion == OWS_VERSION_NOTSET)
-          nVersion = OWS_1_1_1;/* VERSION is optional with getCapabilities only */
+          nVersion = OWS_1_3_0;/* VERSION is optional with getCapabilities only */
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
           return msWMSException(map, nVersion, NULL);
       return msWMSGetCapabilities(map, nVersion, req, updatesequence);
