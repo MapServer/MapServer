@@ -1216,6 +1216,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
   FILE *stream=stdout; /* defaults to stdout */
   char szPath[MS_MAXPATHLEN];
   char *value;
+  const char *pszMapSRS = NULL;
 
   gmlGroupListObj *groupList=NULL;
   gmlItemListObj *itemList=NULL;
@@ -1249,11 +1250,26 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
   /* a schema *should* be required */
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "description", OWS_NOERR, "\t<gml:description>%s</gml:description>\n", NULL);
 
+  /* Look up map SRS. We need an EPSG code for GML, if not then we get null and we'll fall back on the layer's SRS */
+  pszMapSRS = msOWSGetEPSGProj(&(map->projection), NULL, namespaces, MS_TRUE);
+
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
+    const char *pszOutputSRS = NULL;
     lp = (GET_LAYER(map, map->layerorder[i]));
 
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { /* found results */
+
+#ifdef USE_PROJ
+      /* Determine output SRS, if map has none, then try using layer's native SRS */
+      if ((pszOutputSRS = pszMapSRS) == NULL) {
+          pszOutputSRS = msOWSGetEPSGProj(&(lp->projection), NULL, namespaces, MS_TRUE);
+          if (pszOutputSRS == NULL) {
+              msSetError(MS_WMSERR, "No valid EPSG code in map or layer projection for GML output", "msGMLWriteQuery()");
+              continue;  /* No EPSG code, cannot output this layer */
+           }
+      }
+#endif
 
       /* start this collection (layer) */
       /* if no layer name provided fall back on the layer name + "_layer" */
@@ -1274,7 +1290,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
 #ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */
-        if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
+        if(pszOutputSRS == pszMapSRS && msProjectionsDiffer(&(lp->projection), &(map->projection)))
           msProjectShape(&lp->projection, &map->projection, &shape);
 #endif
 
@@ -1290,15 +1306,9 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         if(!(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0)) { 
 
 #ifdef USE_PROJ
-          if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) { /* use the map projection first */
-            gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), NULL, namespaces, MS_TRUE), "\t\t\t");
-            if (geometryList && geometryList->numgeometries > 0 )
-              gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
-          } else { /* then use the layer projection and/or metadata */
-            gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t");
-            if (geometryList && geometryList->numgeometries > 0 )
-              gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), NULL, "\t\t\t");
-          }
+          gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), pszOutputSRS, "\t\t\t");
+          if (geometryList && geometryList->numgeometries > 0 )
+              gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), pszOutputSRS, NULL, "\t\t\t");
 #else
           gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "\t\t\t"); /* no projection information */
           if (geometryList && geometryList->numgeometries > 0 )

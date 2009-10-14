@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed coordinate projection problem in some cases with WMS GetFeatureInfo
+  output in GML2 format (#2989)
+
 - Added resolution scaling of some properties for GD driver (#3157)
 
 - Modified GD functions API to be consistent with all others drivers (#3157)
