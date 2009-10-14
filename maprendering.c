@@ -526,9 +526,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
             if(MS_VALID_COLOR(style->outlinecolor))
 		        return msDrawLineSymbol(symbolset, image, p, style, scalefactor);
             else {
-                msSetError(MS_MISCERR,
-                        "no color set",
-                        "msDrawShadeSymbol()");
+                /* just do nothing if no color has been set */
                 return;
             }
         }
