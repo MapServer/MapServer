@@ -34,8 +34,8 @@
 
 MS_CVSID("$Id$")
 
-int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile, 
-                          long record);
+int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
+int msRASTERLayerGetItems(layerObj *layer);
 
 #ifdef USE_GDAL
 
@@ -864,6 +864,9 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 /* -------------------------------------------------------------------- */
     if( status == MS_FAILURE || rlinfo->query_results == 0 )
         msRasterLayerInfoFree( layer );
+
+    /* populate the items/numitems layer-level values */
+    msRASTERLayerGetItems(layer);
 
     return status;
 #endif /* def USE_GDAL */
