@@ -743,7 +743,7 @@ static void writeFeature(shapeObj *shape, FILE *stream)
   for(i=0; i<shape->numlines; i++) {
     fprintf(stream, "      POINTS\n");
     for(j=0; j<shape->line[i].numpoints; j++)
-      fprintf(stream, "        %g %g\n", shape->line[i].point[j].x, shape->line[i].point[j].y);
+      fprintf(stream, "        %.15g %.15g\n", shape->line[i].point[j].x, shape->line[i].point[j].y);
     fprintf(stream, "      END\n");
   }
 
@@ -3429,6 +3429,9 @@ static void writeLayer(layerObj *layer, FILE *stream)
   }
   if(layer->debug) fprintf(stream, "    DEBUG %d\n", layer->debug);
   if(layer->dump) fprintf(stream, "    DUMP TRUE\n");
+  
+  if(layer->extent.minx != -1 && layer->extent.maxx != -1 && layer->extent.miny != -1 && layer->extent.maxy != -1)
+    fprintf(stream, "    EXTENT %.15g %.15g %.15g %.15g\n", layer->extent.minx, layer->extent.miny, layer->extent.maxx, layer->extent.maxy);  
 
   if(layer->filter.string) {
     fprintf(stream, "      FILTER ");
@@ -3648,7 +3651,7 @@ static void writeReferenceMap(referenceMapObj *ref, FILE *stream)
 
   fprintf(stream, "  REFERENCE\n");
   fprintf(stream, "    COLOR %d %d %d\n", ref->color.red, ref->color.green, ref->color.blue);
-  fprintf(stream, "    EXTENT %g %g %g %g\n", ref->extent.minx, ref->extent.miny, ref->extent.maxx, ref->extent.maxy);
+  fprintf(stream, "    EXTENT %.15g %.15g %.15g %.15g\n", ref->extent.minx, ref->extent.miny, ref->extent.maxx, ref->extent.maxy);
   fprintf(stream, "    IMAGE \"%s\"\n", ref->image);
   fprintf(stream, "    OUTLINECOLOR %d %d %d\n", ref->outlinecolor.red, ref->outlinecolor.green, ref->outlinecolor.blue);
   fprintf(stream, "    SIZE %d %d\n", ref->width, ref->height);
@@ -4310,7 +4313,7 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->error) fprintf(stream, "    ERROR \"%s\"\n", web->error);
 
   if(MS_VALID_EXTENT(web->extent)) 
-    fprintf(stream, "  EXTENT %g %g %g %g\n", web->extent.minx, web->extent.miny, web->extent.maxx, web->extent.maxy);
+    fprintf(stream, "  EXTENT %.15g %.15g %.15g %.15g\n", web->extent.minx, web->extent.miny, web->extent.maxx, web->extent.maxy);
 
   if(web->footer) fprintf(stream, "    FOOTER \"%s\"\n", web->footer);
   if(web->header) fprintf(stream, "    HEADER \"%s\"\n", web->header);
