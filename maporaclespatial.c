@@ -201,7 +201,7 @@ static void osPoint(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryOb
 static void osClosedPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int elem_type, int data3d, int data4d);
 static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d);
 static void osCircle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d);
-static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int data3d, int data4d);
+static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints,int elem_type,int data3d, int data4d); 
 static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, SDOGeometryInd *ind);
 static int osCheck2DGtype(int pIntGtype);
 static int osCheck3DGtype(int pIntGtype);
@@ -1444,7 +1444,7 @@ static void osCircle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryO
     }
 }
 
-static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int data3d, int data4d)
+static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj arcpoints, int elem_type, int data3d, int data4d)
 {
     int n, i;
     lineObj points = {0, NULL};
@@ -1461,7 +1461,7 @@ static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeome
 
     if (n > 2)
     {
-        shape->type = MS_SHAPE_LINE;
+        shape->type = (elem_type==32) ? MS_SHAPE_POLYGON : MS_SHAPE_LINE; 
         points.numpoints = n;
 
         for (i = 0; i < n-2; i = i+2)
@@ -1664,12 +1664,15 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
                       break;
                   case 22: /* compound type */
                       if (compound_type)
-                          osArcPolygon(hand, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end , points, data3d, data4d);
+                          osArcPolygon(hand, &newshape, obj, ord_start, (compound_count<compound_lenght)?ord_end+2:ord_end , points, elem_type, data3d, data4d); 
                       else
-                          osArcPolygon(hand, shape, obj, ord_start, ord_end, points, data3d, data4d);
+                          osArcPolygon(hand, shape, obj, ord_start, ord_end, points, elem_type, data3d, data4d); 
                       break;
                   case 31: /* simple polygon with n points, last point equals the first one */
                       osClosedPolygon(hand, shape, obj, ord_start, ord_end, points, elem_type, data3d, data4d);
+                      break;
+                  case 32: /* Polygon with arcs */ 
+                      osArcPolygon(hand, shape, obj, ord_start, ord_end, points, elem_type, data3d, data4d); 
                       break;
                   case 33: /* rectangle defined by 2 points */
                       osRectangle(hand, shape, obj, ord_start, ord_end, points, point5, data3d, data4d);
