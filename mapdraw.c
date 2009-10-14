@@ -278,7 +278,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
       if(GET_LAYER(map, i)->sizeunits != MS_PIXELS)
         GET_LAYER(map, i)->scalefactor = (msInchesPerUnit(GET_LAYER(map, i)->sizeunits,0)/msInchesPerUnit(map->units,0)) / geo_cellsize;
       else if(GET_LAYER(map, i)->symbolscaledenom > 0 && map->scaledenom > 0)
-        GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscaledenom/map->scaledenom;
+        GET_LAYER(map, i)->scalefactor = GET_LAYER(map, i)->symbolscaledenom/map->scaledenom*map->resolution/map->defresolution;
       else
         GET_LAYER(map, i)->scalefactor = map->resolution/map->defresolution;
     }
@@ -2438,6 +2438,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
         cacheslot = &(map->labelcache.slots[priority]);
 
         for(l=cacheslot->numlabels-1; l>=0; l--) {
+          double scalefactor,size;
           cachePtr = &(cacheslot->labels[l]); /* point to right spot in the label cache */
 
           layerPtr = (GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
@@ -2448,9 +2449,14 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
           if(msGetLabelSize(image,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
             return(-1);
+          
+          size = labelPtr->size * layerPtr->scalefactor;
+          size = MS_MAX(size, labelPtr->minsize*image->resolutionfactor);
+          size = MS_MIN(size, labelPtr->maxsize*image->resolutionfactor);
+          scalefactor = size / labelPtr->size;
 
-          label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
-          label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
+          label_offset_x = labelPtr->offsetx*scalefactor;
+          label_offset_y = labelPtr->offsety*scalefactor;
           label_buffer = labelPtr->buffer*image->resolutionfactor;
           label_mindistance = labelPtr->mindistance*image->resolutionfactor;
           
