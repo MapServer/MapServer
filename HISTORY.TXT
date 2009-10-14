@@ -15,6 +15,11 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed problem of text/html WMS GetFeatureInfo which was returning HTML 
+  image map output instead of the expected text/html template output.
+  This was done by changing the imagemap outputformat to use the 
+  "text/html; driver=imagemap" mime type (#3024)
+
 - more resolution fixes for resolution scaling (symbolscale case) (#3157)
 
 - Make sure layer extents are saved when a mapfile is written (#2969)

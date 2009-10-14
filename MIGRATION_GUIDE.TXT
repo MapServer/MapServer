@@ -28,6 +28,23 @@ WFS 1.1 axis orientation
 
 The axis order in previous versions of the WFS specifications was to always use easting (x or lon ) and northing (y or lat).  WMS 1.1 specifies that, depending on the particular SRS, the x axis may or may not be oriented West-to-East, and the y axis may or may not be oriented South-to-North. The WFS portrayal operation shall account for axis order. This affects some of the EPSG codes that were commonly used such as ESPG:4326.  The current implementation makes sure that coordinates returned to the server for the GetFeature request reflect the inverse axis orders for EPSG codes between 4000 and 5000.
 
+---------------------------
+Change of mime-type for the imagemap outputformat
+---------------------------
+
+RFC 36 added support for templated outptformats, but this new feature
+was not available for WMS GetFeatureInfo ouptut (see ticket #3024). 
+In MapServer 5.6 this has been resolved by implementing lookup of output 
+formats for query templates by mime-type. However this caused a conflict 
+for the text/html mime-type between the actual text/html query 
+templates and the preconfigured imagemap outputformat which also used the
+text/html mime-type.
+
+In order to resolve this conflict, the mime-type of the imagemap outputformat
+has been changed to "text/html; driver=imagemap". This is unlikely to cause
+much side-effects to existing applications, but the change is documented here
+just in case.
+
 
 =====================================
 MapServer 5.2 to 5.4 Migration Guide
