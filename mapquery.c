@@ -1113,7 +1113,7 @@ int msQueryByPoint(mapObj *map)
 
     /* Raster layers are handled specially.  */
     if( lp->type == MS_LAYER_RASTER ) {
-      if( msRasterQueryByPoint( map, lp, map->query.mode, map->query.point, map->query.buffer ) == MS_FAILURE )
+      if( msRasterQueryByPoint( map, lp, map->query.mode, map->query.point, map->query.buffer, map->query.maxresults ) == MS_FAILURE )
         return MS_FAILURE;
       continue;
     }

@@ -909,7 +909,7 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
 /************************************************************************/
 
 int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p, 
-                         double buffer)
+                         double buffer, int maxresults)
 {
 #ifndef USE_GDAL
     msSetError( MS_IMGERR, 
@@ -918,6 +918,7 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
     return MS_FAILURE;
 #else
     int result;
+    int previous_maxresults;
     double layer_tolerance;
     rectObj bufferRect;
     rasterLayerInfo *rlinfo = NULL;
@@ -981,7 +982,6 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
 
         rlinfo->range_mode = MS_SINGLE;
         result = msRasterQueryByRect( map, layer, pointRect );
-
         if( rlinfo->query_results > 0 )
             return result;
     }
@@ -996,7 +996,10 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
     bufferRect.maxy = p.y + buffer;
 
     rlinfo->range_mode = mode;
+    previous_maxresults = rlinfo->query_result_hard_max;
+    rlinfo->query_result_hard_max = maxresults;
     result = msRasterQueryByRect( map, layer, bufferRect );
+    rlinfo->query_result_hard_max = previous_maxresults;
 
     return result;
 #endif /* USE_GDAL  */

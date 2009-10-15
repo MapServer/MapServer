@@ -1742,7 +1742,7 @@ MS_DLL_EXPORT int msIsLayerQueryable(layerObj *lp);
 MS_DLL_EXPORT void msQueryFree(mapObj *map, int qlayer); /* todo: rename */
 MS_DLL_EXPORT int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape);
 MS_DLL_EXPORT int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect);
-MS_DLL_EXPORT int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p, double buffer );
+MS_DLL_EXPORT int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p, double buffer, int maxresults );
 
 /* in mapstring.c */
 MS_DLL_EXPORT void msStringTrim(char *str); 
