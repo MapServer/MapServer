@@ -58,6 +58,8 @@ Current Version (SVN trunk):
 
 - Correct FEATURE_COUNT limits on WMS GetFeatureInfo raster queries (#3168)
 
+- Correct SCALE_BUCKETS issue with 16bit raster scaling (#3174)
+
 
 Version 5.6.0-beta3 (2009-10-07):
 ---------------------------------

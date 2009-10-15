@@ -1884,6 +1884,7 @@ msDrawRasterLayerGDAL_16BitClassification(
     GDALDataType eDataType;
     float fDataMin=0.0, fDataMax=255.0, fNoDataValue;
     const char *pszScaleInfo;
+    const char *pszBuckets;
     int  bUseIntegers = FALSE;
     int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
     gdImagePtr gdImg = image->img.gd;
@@ -1948,6 +1949,7 @@ msDrawRasterLayerGDAL_16BitClassification(
 /* -------------------------------------------------------------------- */
 /*      Fetch the scale processing option.                              */
 /* -------------------------------------------------------------------- */
+    pszBuckets = CSLFetchNameValue( layer->processing, "SCALE_BUCKETS" );
     pszScaleInfo = CSLFetchNameValue( layer->processing, "SCALE" );
 
     if( pszScaleInfo != NULL )
@@ -1987,10 +1989,17 @@ msDrawRasterLayerGDAL_16BitClassification(
     if( eDataType == GDT_Byte || eDataType == GDT_Int16 
         || eDataType == GDT_UInt16 )
     {
-        dfScaleMin = fDataMin - 0.5;
-        dfScaleMax = fDataMax + 0.5;
-        nBucketCount = (int) floor(fDataMax - fDataMin + 1.1);
-        bUseIntegers = TRUE;
+        if( pszScaleInfo == NULL )
+        {
+            dfScaleMin = fDataMin - 0.5;
+            dfScaleMax = fDataMax + 0.5;
+        }
+
+        if( pszBuckets == NULL )
+        {
+            nBucketCount = (int) floor(fDataMax - fDataMin + 1.1);
+            bUseIntegers = TRUE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -2006,25 +2015,22 @@ msDrawRasterLayerGDAL_16BitClassification(
 /* -------------------------------------------------------------------- */
 /*      How many buckets?  Only set if we don't already have a value.   */
 /* -------------------------------------------------------------------- */
-    if( nBucketCount == 0 )
+    if( pszBuckets == NULL )
     {
-        const char *pszBuckets;
-
-        pszBuckets = CSLFetchNameValue( layer->processing, "SCALE_BUCKETS" );
-        if( pszBuckets == NULL )
+        if( nBucketCount == 0 )
             nBucketCount = 65536;
-        else
+    }
+    else
+    {
+        nBucketCount = atoi(pszBuckets);
+        if( nBucketCount < 2 )
         {
-            nBucketCount = atoi(pszBuckets);
-            if( nBucketCount < 2 )
-            {
-                free( pafRawData );
-                msSetError( MS_MISCERR, 
-                            "SCALE_BUCKETS PROCESSING option is not a value of 2 or more: %s.",
-                            pszBuckets, 
-                            "msDrawRasterLayerGDAL_16BitClassification()" );
-                return -1;
-            }
+            free( pafRawData );
+            msSetError( MS_MISCERR, 
+                        "SCALE_BUCKETS PROCESSING option is not a value of 2 or more: %s.",
+                        pszBuckets, 
+                        "msDrawRasterLayerGDAL_16BitClassification()" );
+            return -1;
         }
     }
 
