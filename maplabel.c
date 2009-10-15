@@ -1082,8 +1082,8 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, imageObj *img, shapeObj *p,
   }
   else
       size = style->size;
-  if(size*scalefactor > style->maxsize*img->resolutionfactor) scalefactor = (float)style->maxsize/(float)size;
-  if(size*scalefactor < style->minsize*img->resolutionfactor) scalefactor = (float)style->minsize/(float)size;
+  if(size*scalefactor > style->maxsize*img->resolutionfactor) scalefactor = (float)style->maxsize*img->resolutionfactor/(float)size;
+  if(size*scalefactor < style->minsize*img->resolutionfactor) scalefactor = (float)style->minsize*img->resolutionfactor/(float)size;
   gap = MS_ABS(symbol->gap)* (int) scalefactor;
   label.size = size ;/* "* scalefactor" removed: this is already scaled in msDrawTextGD()*/
   /* label.minsize = style->minsize; */
