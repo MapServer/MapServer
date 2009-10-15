@@ -1483,7 +1483,7 @@ void msImageTruetypePolylineAGG(symbolSetObj *symbolset, imageObj *image, shapeO
   label.size = MS_MAX(label.size, style->minsize*image->resolutionfactor);
   label.size = MS_MIN(label.size, style->maxsize*image->resolutionfactor);
   scalefactor = label.size / size;
-  gap = MS_MAX(MS_ABS(symbol->gap)*scalefactor,1);
+  gap = MS_MAX(MS_NINT(MS_ABS(symbol->gap)*scalefactor),1);
 
   label.color = style->color;
   label.outlinecolor = style->outlinecolor;
@@ -1589,7 +1589,7 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
         int nonzeroexists=0;
         for (i=0; i<symbol->patternlength; i++)
         {
-            symbol_pattern[i] = symbol->pattern[i]*scalefactor;
+            symbol_pattern[i] = MS_NINT(symbol->pattern[i]*scalefactor);
             if(symbol_pattern[i]>0)
                 nonzeroexists=1;
         }
@@ -1837,8 +1837,8 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 for (int i=0; i<symbol->patternlength; i+=2) {
                     if (i < symbol->patternlength-1) {
                         /* scale the pattern and add it*/
-                        symbol_pattern[i] = symbol->pattern[i]*scalefactor;
-                        symbol_pattern[i+1] = symbol->pattern[i+1]*scalefactor;
+                        symbol_pattern[i] = MS_MAX(MS_NINT(symbol->pattern[i]*scalefactor),1);
+                        symbol_pattern[i+1] = MS_MAX(MS_NINT(symbol->pattern[i+1]*scalefactor),1);
                         dash.add_dash(symbol_pattern[i], symbol_pattern[i+1]);
                     }
                 }
@@ -1991,9 +1991,9 @@ int msDrawTextAGG(imageObj* image, pointObj labelPnt, char *string,
         size = MS_MAX(size, label->minsize*image->resolutionfactor);
         size = MS_MIN(size, label->maxsize*image->resolutionfactor);
         scalefactor = size / label->size;
-        outlinewidth = label->outlinewidth*image->resolutionfactor;
-        shadowsizex = label->shadowsizex*image->resolutionfactor;
-        shadowsizey = label->shadowsizey*image->resolutionfactor;
+        outlinewidth = MS_NINT(label->outlinewidth*image->resolutionfactor);
+        shadowsizex = MS_NINT(label->shadowsizex*image->resolutionfactor);
+        shadowsizey = MS_NINT(label->shadowsizey*image->resolutionfactor);
 
         if(!fontset) {
             msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextAGG()");
@@ -2082,9 +2082,9 @@ int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label,
         size = MS_MAX(size, label->minsize*image->resolutionfactor);
         size = MS_MIN(size, label->maxsize*image->resolutionfactor);
         scalefactor = size / label->size;
-        outlinewidth = label->outlinewidth*image->resolutionfactor;
-        shadowsizex = label->shadowsizex*image->resolutionfactor;
-        shadowsizey = label->shadowsizey*image->resolutionfactor;
+        outlinewidth = MS_NINT(label->outlinewidth*image->resolutionfactor);
+        shadowsizex = MS_NINT(label->shadowsizex*image->resolutionfactor);
+        shadowsizey = MS_NINT(label->shadowsizey*image->resolutionfactor);
 
         if(!fontset) {
             msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextLineAGG()");
