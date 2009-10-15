@@ -1586,9 +1586,15 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
 
     if (symbol->patternlength > 0)
     {
+        int nonzeroexists=0;
         for (i=0; i<symbol->patternlength; i++)
         {
-            symbol_pattern[i] = MS_MAX(symbol->pattern[i]*scalefactor,1);
+            symbol_pattern[i] = symbol->pattern[i]*scalefactor;
+            if(symbol_pattern[i]>0)
+                nonzeroexists=1;
+        }
+        if(!nonzeroexists){
+            return;
         }
     }
 
