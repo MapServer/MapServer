@@ -447,7 +447,7 @@ typedef struct ms_wfs_layer_info_t
     rectObj     rect;                     /* set by WhichShapes */
     char        *pszGetUrl;
     int         nStatus;           /* HTTP status */
-    int         bLayerOpened;      /* False until msWFSLayerOpen() is called*/
+    int         bLayerHasValidGML;  /* False until msWFSLayerWhichShapes() is called and determines the result GML is valid with features*/
 } msWFSLayerInfo;
 
 
@@ -467,7 +467,6 @@ static msWFSLayerInfo *msAllocWFSLayerInfo(void)
         psInfo->rect.miny = psInfo->rect.maxy = 0;
         psInfo->pszGetUrl = NULL;
         psInfo->nStatus = 0;
-        psInfo->bLayerOpened = MS_FALSE;
     }
     else
     {
@@ -846,7 +845,6 @@ int msWFSLayerOpen(layerObj *lp,
     if (msWFSLayerWhichShapes(lp, psInfo->rect) == MS_FAILURE)
         status = MS_FAILURE;
     
-    psInfo->bLayerOpened = MS_TRUE;
 
     return status;
 #else
@@ -911,6 +909,90 @@ int msWFSLayerInitItemInfo(layerObj *layer)
 }
 
 /**********************************************************************
+ *                          msWFSLayerGetShape()
+ *
+ **********************************************************************/
+int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, int tile, 
+                       long record)
+{
+    msWFSLayerInfo* psInfo = NULL;
+
+    if(layer != NULL && layer->wfslayerinfo != NULL)
+    	psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
+    else
+    {
+	msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerGetShape()");
+	return MS_FAILURE;
+    }
+
+    if(psInfo->bLayerHasValidGML)
+      return msOGRLayerGetShape(layer, shape, tile, record);
+    else
+    {
+          /* Layer is successful, but there is no data to process */
+        msFreeShape(shape);
+        shape->type = MS_SHAPE_NULL;
+        return MS_FAILURE;
+    }
+}
+
+
+
+
+/**********************************************************************
+ *                          msWFSLayerGetNextShape()
+ *
+ **********************************************************************/
+int msWFSLayerNextShape(layerObj *layer, shapeObj *shape)
+{
+    msWFSLayerInfo* psInfo = NULL;
+
+    if(layer != NULL && layer->wfslayerinfo != NULL)
+      psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
+    else
+    {
+	msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerNextShape()");
+	return MS_FAILURE;
+    }
+
+    if(psInfo->bLayerHasValidGML)
+      return msOGRLayerNextShape(layer, shape);
+    else
+    {
+        /* Layer is successful, but there is no data to process */
+        msFreeShape(shape);
+        shape->type = MS_SHAPE_NULL;
+        return MS_FAILURE;
+    }
+}
+
+/**********************************************************************
+ *                          msWFSLayerGetExtent()
+ *
+ **********************************************************************/
+int msWFSLayerGetExtent(layerObj *layer, rectObj *extent) 
+{
+    msWFSLayerInfo* psInfo = NULL;
+
+    if(layer != NULL && layer->wfslayerinfo != NULL)
+      psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
+    else
+    {
+	msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerGetExtent()");
+	return MS_FAILURE;
+    }
+
+    if(psInfo->bLayerHasValidGML)
+      return msOGRLayerGetExtent(layer, extent);
+    else
+    {
+        /* Layer is successful, but there is no data to process */
+        msSetError(MS_WFSERR, "Unable to get extents for this layer.", "msWFSLayerGetExtent()");
+        return MS_FAILURE;
+    }
+}
+
+/**********************************************************************
  *                          msWFSLayerGetItems()
  *
  **********************************************************************/
@@ -922,7 +1004,25 @@ int msWFSLayerGetItems(layerObj *layer)
     /* It could also be implemented to call DescribeFeatureType for */
     /* this layer, but we don't need to do it so why waste resources? */
 
-    return msOGRLayerGetItems(layer);
+    msWFSLayerInfo* psInfo = NULL;
+
+    if(layer != NULL && layer->wfslayerinfo != NULL)
+    	psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
+    else
+    {
+	msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerGetItems()");
+	return MS_FAILURE;
+    }
+
+    if(psInfo->bLayerHasValidGML)
+        return msOGRLayerGetItems(layer);
+    else
+    {
+        /* Layer is successful, but there is no data to process */
+        layer->numitems = 0;
+	layer->items = NULL;
+        return MS_SUCCESS;
+    }
 }
 
 /**********************************************************************
@@ -1091,7 +1191,10 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
         return status;
     
     status = msOGRLayerWhichShapes(lp, rect);
-
+   
+    /* Mark that the OGR Layer is valid */
+    psInfo->bLayerHasValidGML = MS_TRUE;
+    
     return status;
 #else
 /* ------------------------------------------------------------------
@@ -1189,12 +1292,12 @@ msWFSLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerOpen = msWFSLayerOpenVT;
     layer->vtable->LayerIsOpen = msWFSLayerIsOpen;
     layer->vtable->LayerWhichShapes = msWFSLayerWhichShapes;
-    layer->vtable->LayerNextShape = msOGRLayerNextShape; /* yes, OGR */
-    layer->vtable->LayerResultsGetShape = msOGRLayerGetShape; /* yes, OGR but no special version, use ...GetShape() */
-    layer->vtable->LayerGetShape = msOGRLayerGetShape; /* yes, OGR */
+    layer->vtable->LayerNextShape = msWFSLayerNextShape;
+    layer->vtable->LayerResultsGetShape = msWFSLayerGetShape; 
+    layer->vtable->LayerGetShape = msWFSLayerGetShape;
     layer->vtable->LayerClose = msWFSLayerClose;
     layer->vtable->LayerGetItems = msWFSLayerGetItems;
-    layer->vtable->LayerGetExtent = msOGRLayerGetExtent; /* yes, OGR */
+    layer->vtable->LayerGetExtent = msWFSLayerGetExtent;
     /* layer->vtable->LayerGetAutoStyle, use default */
     /* layer->vtable->LayerApplyFilterToLayer, use default */
     /* layer->vtable->LayerCloseConnection, use default */

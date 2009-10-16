@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Correct cases where a valid WFS Layer might return errors if
+  map extent does not overlap the layer extent (#3139)
+
 - fix problem with 0-length line patterns in AGG
 
 - Fixed problem of text/html WMS GetFeatureInfo which was returning HTML 
