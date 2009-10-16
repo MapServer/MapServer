@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Added resolution scaling for swf, svg, pdf and imagemap drivers (#3157)
+
 - Correct cases where a valid WFS Layer might return errors if
   map extent does not overlap the layer extent (#3139)
 

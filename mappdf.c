@@ -159,6 +159,8 @@ imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format,
     oImage->height = height;
     oImage->imagepath = NULL;
     oImage->imageurl = NULL;
+    oImage->resolution = map->resolution;
+    oImage->resolutionfactor = map->resolution/map->defresolution;
 
     if (imagepath)
     {
@@ -288,7 +290,7 @@ void drawPolylinePDF(PDF *pdf, shapeObj *p, colorObj  *c, double width)
     /* scale the pattern */
     for (i=0; i<s->patternlength; i++)
     {
-        symbol_pattern[i] = s->pattern[i]*scalefactor;
+        symbol_pattern[i] = MS_NINT(s->pattern[i]*scalefactor);
     }
 
      for(i=0;i<s->patternlength;i++) {
@@ -557,10 +559,10 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
 
         label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
         label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
-        label_buffer = labelPtr->buffer*layerPtr->scalefactor;
-        label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
+        label_buffer = MS_NINT(labelPtr->buffer*image->resolutionfactor);
+        label_mindistance = MS_NINT(labelPtr->mindistance*image->resolutionfactor);
         
-        if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
+        if(labelPtr->autominfeaturesize && (cachePtr->featuresize != -1) && ((r.maxx-r.minx) > cachePtr->featuresize))
             continue; /* label too large relative to the feature */
 
         draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
@@ -806,8 +808,8 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
     }
     else
         size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
     /* no such symbol, 0 is OK */
     if(style->symbol > symbolset->numsymbols || style->symbol < 0)

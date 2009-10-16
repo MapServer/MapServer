@@ -990,8 +990,8 @@ DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
   }
   else
       size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  size = MS_MAX(size, style->minsize*img->resolutionfactor);
+  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
 /* if(fc<0 && oc<0) return; // nothing to do */
@@ -1198,8 +1198,8 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
   }
   else
       size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  size = MS_MAX(size, style->minsize*img->resolutionfactor);
+  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
@@ -1411,8 +1411,8 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   }
   else
       size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  size = MS_MAX(size, style->minsize*img->resolutionfactor);
+  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
 /* DEBUG_IF printf ("a"); */
 /* if(fc==-1 && oc!=-1) { // use msDrawLineSymbolIM() instead (POLYLINE) */
@@ -1862,10 +1862,10 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 
     label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
     label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
-    label_buffer = labelPtr->buffer*layerPtr->scalefactor;
-    label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
+    label_buffer = MS_NINT(labelPtr->buffer*img->resolutionfactor);
+    label_mindistance = MS_NINT(labelPtr->mindistance*img->resolutionfactor);
 
-    if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
+    if(labelPtr->autominfeaturesize && (cachePtr->featuresize != -1) && ((r.maxx-r.minx) > cachePtr->featuresize))
       continue; /* label too large relative to the feature */
 
     marker_offset_x = marker_offset_y = 0; /* assume no marker */

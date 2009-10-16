@@ -1062,6 +1062,7 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     image->imagepath = NULL;
     image->imageurl = NULL;
     image->resolution = map->resolution;
+    image->resolutionfactor = map->resolution/map->defresolution;
 
     if (imagepath)
     {
@@ -1476,8 +1477,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     }
     else
         size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
@@ -1983,15 +1984,15 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         size = MS_NINT(style->size*scalefactor);
 
     /* TODO: Don't get this modification, is it needed elsewhere? */
-    if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
-    if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
+    if(size*scalefactor > style->maxsize*image->resolutionfactor) scalefactor = (float)style->maxsize*image->resolutionfactor/(float)size;
+    if(size*scalefactor < style->minsize*image->resolutionfactor) scalefactor = (float)style->minsize*image->resolutionfactor/(float)size;
     size = MS_NINT(size*scalefactor);
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
     width = MS_NINT(style->width*scalefactor);
-    width = MS_MAX(width, style->minwidth);
-    width = MS_MIN(width, style->maxwidth);
+    width = MS_MAX(width, style->minwidth*image->resolutionfactor);
+    width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
       return;
@@ -2115,13 +2116,13 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     }
     else
         size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
 
     width = MS_NINT(style->width*scalefactor);
-    width = MS_MAX(width, style->minwidth);
-    width = MS_MIN(width, style->maxwidth);
+    width = MS_MAX(width, style->minwidth*image->resolutionfactor);
+    width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) /* no such symbol, 0 is OK */
         return;
@@ -2304,8 +2305,8 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 /* double angle_radians = MS_DEG_TO_RAD*label->angle; */
 
     size = label->size*scalefactor;
-    shadowsizex = label->shadowsizex*scalefactor;
-    shadowsizey = label->shadowsizey*scalefactor;
+    shadowsizex = MS_NINT(label->shadowsizex*image->resolutionfactor);
+    shadowsizey = MS_NINT(label->shadowsizey*image->resolutionfactor);
 
     if(!fontset) 
     {
@@ -2627,10 +2628,10 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
         label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
         label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
-        label_buffer = labelPtr->buffer*layerPtr->scalefactor;
-        label_mindistance = labelPtr->mindistance*layerPtr->scalefactor;
+        label_buffer = MS_NINT(labelPtr->buffer*image->resolutionfactor);
+        label_mindistance = MS_NINT(labelPtr->mindistance*image->resolutionfactor);
 
-        if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
+        if(labelPtr->autominfeaturesize && (cachePtr->featuresize != -1) && ((r.maxx-r.minx) > cachePtr->featuresize))
             continue; /* label too large relative to the feature */
 
         draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */

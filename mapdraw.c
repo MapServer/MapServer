@@ -2457,8 +2457,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
           label_offset_x = labelPtr->offsetx*scalefactor;
           label_offset_y = labelPtr->offsety*scalefactor;
-          label_buffer = labelPtr->buffer*image->resolutionfactor;
-          label_mindistance = labelPtr->mindistance*image->resolutionfactor;
+          label_buffer = MS_NINT(labelPtr->buffer*image->resolutionfactor);
+          label_mindistance = MS_NINT(labelPtr->mindistance*image->resolutionfactor);
           
           /* if cachePtr->featuresize is set to -1, this check has been done in msPolylineLabelPath() */
           if(labelPtr->autominfeaturesize && (cachePtr->featuresize != -1) && ((r.maxx-r.minx) > cachePtr->featuresize))

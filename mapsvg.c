@@ -102,7 +102,9 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
     image->height = height;
     image->imagepath = NULL;
     image->imageurl = NULL;
-    
+    image->resolution = map->resolution;
+    image->resolutionfactor = map->resolution/map->defresolution;
+
     if (imagepath)
       image->imagepath = strdup(imagepath);
 
@@ -542,15 +544,15 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
       size = style->size;
 
     /* TODO: Don't get this modification, is it needed elsewhere? */
-    if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
-    if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
+    if(size*scalefactor > style->maxsize*image->resolutionfactor) scalefactor = (float)style->maxsize*image->resolutionfactor/(float)size;
+    if(size*scalefactor < style->minsize*image->resolutionfactor) scalefactor = (float)style->minsize*image->resolutionfactor/(float)size;
     size = size*scalefactor;
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
     width = style->width*scalefactor;
-    width = MS_MAX(width, style->minwidth);
-    width = MS_MIN(width, style->maxwidth);
+    width = MS_MAX(width, style->minwidth*image->resolutionfactor);
+    width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
 
@@ -755,8 +757,8 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     else
       size = style->size*scalefactor;
 
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
     /* scale the symbol pattern */
     if (symbol->patternlength > 0)
@@ -1073,8 +1075,8 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
         /* position, offset, angle, buffer, antialias, wrap, encoding */
 
         size = label->size*scalefactor;
-        size = MS_MAX(size, label->minsize);
-        size = MS_MIN(size, label->maxsize);
+        size = MS_MAX(size, label->minsize*image->resolutionfactor);
+        size = MS_MIN(size, label->maxsize*image->resolutionfactor);
 
         if(!fontset) {
             msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextSVG()");
@@ -1206,10 +1208,10 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 
     label_offset_x = MS_NINT(labelPtr->offsetx*layerPtr->scalefactor);
     label_offset_y = MS_NINT(labelPtr->offsety*layerPtr->scalefactor);
-    label_buffer = MS_NINT(labelPtr->buffer*layerPtr->scalefactor);
-    label_mindistance = MS_NINT(labelPtr->mindistance*layerPtr->scalefactor);
+    label_buffer = MS_NINT(labelPtr->buffer*image->resolutionfactor);
+    label_mindistance = MS_NINT(labelPtr->mindistance*image->resolutionfactor);
     
-    if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
+    if(labelPtr->autominfeaturesize && (cachePtr->featuresize != -1) && ((r.maxx-r.minx) > cachePtr->featuresize))
       continue; /* label too large relative to the feature */
 
     marker_offset_x = marker_offset_y = 0; /* assume no marker */
@@ -1359,12 +1361,12 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     size = MS_NINT(size*scalefactor);
     } else
       size = MS_NINT(style->size*scalefactor);
-    size = MS_MAX(size, style->minsize);
-    size = MS_MIN(size, style->maxsize);
+    size = MS_MAX(size, style->minsize*image->resolutionfactor);
+    size = MS_MIN(size, style->maxsize*image->resolutionfactor);
 
     width = style->width*scalefactor;
-    width = MS_MAX(width, style->minwidth);
-    width = MS_MIN(width, style->maxwidth);
+    width = MS_MAX(width, style->minwidth*image->resolutionfactor);
+    width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
 
     if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
     

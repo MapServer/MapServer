@@ -1396,8 +1396,10 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 		image->height = height;
 		image->imagepath = NULL;
 		image->imageurl = NULL;
-        image->tilecache = NULL;
-        image->ntiles = 0;
+                image->tilecache = NULL;
+                image->ntiles = 0;
+                image->resolution = map->resolution;
+                image->resolutionfactor = map->resolution/map->defresolution;
 
 		if (imagepath)
 			image->imagepath = strdup(imagepath);
@@ -1455,6 +1457,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         image->imagepath = NULL;
         image->imageurl = NULL;
         image->resolution = map->resolution;
+        image->resolutionfactor = map->resolution/map->defresolution;
 
         if (imagepath)
             image->imagepath = strdup(imagepath);
