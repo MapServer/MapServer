@@ -915,6 +915,7 @@ int msWFSLayerInitItemInfo(layerObj *layer)
 int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, int tile, 
                        long record)
 {
+#ifdef USE_WFS_LYR
     msWFSLayerInfo* psInfo = NULL;
 
     if(layer != NULL && layer->wfslayerinfo != NULL)
@@ -934,6 +935,15 @@ int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
         shape->type = MS_SHAPE_NULL;
         return MS_FAILURE;
     }
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msWFSLayerGetShape()");
+  return(MS_FAILURE);
+#endif /* USE_WFS_LYR */
+
 }
 
 
@@ -945,6 +955,7 @@ int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
  **********************************************************************/
 int msWFSLayerNextShape(layerObj *layer, shapeObj *shape)
 {
+#ifdef USE_WFS_LYR
     msWFSLayerInfo* psInfo = NULL;
 
     if(layer != NULL && layer->wfslayerinfo != NULL)
@@ -964,6 +975,15 @@ int msWFSLayerNextShape(layerObj *layer, shapeObj *shape)
         shape->type = MS_SHAPE_NULL;
         return MS_FAILURE;
     }
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msWFSLayerNextShape()");
+  return(MS_FAILURE);
+#endif /* USE_WFS_LYR */
+
 }
 
 /**********************************************************************
@@ -972,6 +992,7 @@ int msWFSLayerNextShape(layerObj *layer, shapeObj *shape)
  **********************************************************************/
 int msWFSLayerGetExtent(layerObj *layer, rectObj *extent) 
 {
+#ifdef USE_WFS_LYR
     msWFSLayerInfo* psInfo = NULL;
 
     if(layer != NULL && layer->wfslayerinfo != NULL)
@@ -990,6 +1011,15 @@ int msWFSLayerGetExtent(layerObj *layer, rectObj *extent)
         msSetError(MS_WFSERR, "Unable to get extents for this layer.", "msWFSLayerGetExtent()");
         return MS_FAILURE;
     }
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msWFSLayerGetExtent()");
+  return(MS_FAILURE);
+#endif /* USE_WFS_LYR */
+
 }
 
 /**********************************************************************
@@ -999,6 +1029,7 @@ int msWFSLayerGetExtent(layerObj *layer, rectObj *extent)
 
 int msWFSLayerGetItems(layerObj *layer)
 {
+#ifdef USE_WFS_LYR
     /* For now this method simply lets OGR parse the GML and figure the  */
     /* schema itself. */
     /* It could also be implemented to call DescribeFeatureType for */
@@ -1023,6 +1054,15 @@ int msWFSLayerGetItems(layerObj *layer)
 	layer->items = NULL;
         return MS_SUCCESS;
     }
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msWFSLayerGetItems()");
+  return(MS_FAILURE);
+#endif /* USE_WFS_LYR */
+
 }
 
 /**********************************************************************
