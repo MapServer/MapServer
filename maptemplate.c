@@ -206,7 +206,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
 
   i = msGetOutputFormatIndex(mapserv->map, queryFormat); /* queryFormat can be a mime-type or name */
   if(i >= 0) outputFormat = mapserv->map->outputformatlist[i];
-  
+
   if(outputFormat) {
      if( !MS_RENDERER_TEMPLATE(outputFormat) ) { /* got an image format, return the query results that way */
        outputFormatObj *tempOutputFormat = mapserv->map->outputformat; /* save format */
@@ -233,7 +233,8 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
   */ 
   if(mapserv->map->querymap.status) {
     checkWebScale(mapserv);
-    msGenerateImages(mapserv, MS_TRUE, MS_TRUE);
+    if(msGenerateImages(mapserv, MS_TRUE, MS_TRUE) != MS_SUCCESS)
+      return MS_FAILURE;
   }
 
   if(outputFormat) {
@@ -3920,18 +3921,18 @@ int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
     /* render the map OR query map */
     if((!bQueryMap && mapserv->map->status == MS_ON) || (bQueryMap && mapserv->map->querymap.status == MS_ON)) {
       imageObj *image = NULL;
-      image = msDrawMap(mapserv->map, bQueryMap);
 
+      image = msDrawMap(mapserv->map, bQueryMap);
       if(image) { 
         snprintf(buffer, sizeof(buffer), "%s%s%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
 
         if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
-          return MS_FALSE;
+          return MS_FAILURE;
         }
         msFreeImage(image);
       } else if(bReturnOnError)
-        return MS_FALSE;
+        return MS_FAILURE;
     }
 
     /* render the legend */
@@ -3943,11 +3944,11 @@ int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
                 
         if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
-          return MS_FALSE;
+          return MS_FAILURE;
         }
         msFreeImage(image);
       } else if(bReturnOnError)
-        return MS_FALSE;
+        return MS_FAILURE;
     }
 
     /* render the scalebar */
@@ -3958,11 +3959,11 @@ int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
         snprintf(buffer, sizeof(buffer), "%s%ssb%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
         if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
-          return MS_FALSE;
+          return MS_FAILURE;
         }
         msFreeImage(image);
       } else if(bReturnOnError)
-        return MS_FALSE;
+        return MS_FAILURE;
     }
 
     /* render the reference map */
@@ -3973,16 +3974,16 @@ int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
         snprintf(buffer, sizeof(buffer), "%s%sref%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
         if(msSaveImage(mapserv->map, image, buffer) != MS_SUCCESS && bReturnOnError) {
           msFreeImage(image);
-          return MS_FALSE;
+          return MS_FAILURE;
         }
         msFreeImage(image);
       } else if(bReturnOnError)
-        return MS_FALSE;
+        return MS_FAILURE;
     }
         
   }
     
-  return MS_TRUE;
+  return MS_SUCCESS;
 }
 
 /*

@@ -1372,7 +1372,7 @@ int main(int argc, char *argv[]) {
       /* -------------------------------------------------------------------- */
       /*      generate map, legend, scalebar and refernce images.             */
       /* -------------------------------------------------------------------- */
-      if(msGenerateImages(mapserv, MS_FALSE, MS_TRUE) == MS_FALSE)
+      if(msGenerateImages(mapserv, MS_FALSE, MS_TRUE) != MS_SUCCESS)
         writeError();
       
       if(QueryFile) {
