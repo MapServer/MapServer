@@ -1,0 +1,62 @@
+Ruby MapScript Interface
+------------------------
+
+BUILD
+-----
+
+The files that are required to create the library 'mapscript.so' : 
+ mapscript.i 
+ extconf.rb
+
+Be sure that you have installed SWIG version 1.3a5 or greater.
+The installation is tested with ruby version 1.6 and 1.8.
+
+To build type :
+
+# ruby extconf.rb
+# make
+
+
+INSTALL
+-------
+
+If you don't want to install the library, you have to add the library
+path as argument to the command (ruby -I[path/to/the/library] ...).
+
+To install type as 'root' user : 
+
+# make install
+
+
+EXAMPLES
+--------
+
+To run the examples:
+Go to the directory of the examples
+
+# cd examples
+
+
+Run the example to receive information about a shape file
+
+# ruby shpinfo.rb [path/shapefile.shp]
+or if you don't have executed 'make install'
+# ruby -I[path/to/mapscript.so] shpinfo.rb [path/shapefile.shp]
+
+e.g.: # ruby -I.. shpinfo.rb lake2spy.shp
+
+Run the example to create a PNG file from a shape file. The output
+will be in the file [shapefile].png.
+
+# ruby shp2img.rb [path/shapefile.shp]
+or
+# ruby -I[path/to/mapscript.so] shp2img.rb [path/shapefile.shp]
+e.g.: # ruby -I.. shp2img.rb lake2spy.shp
+
+
+AUTHOR
+------
+
+Markus Schnider
+msr@sourcepole.ch
+http://www.sourcepole.com
