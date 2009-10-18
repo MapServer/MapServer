@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Allow processing of single shapefiles with no items (e.g. an empty dbf file) (#3147)
+
 - Added resolution scaling for swf, svg, pdf and imagemap drivers (#3157)
 
 - Correct cases where a valid WFS Layer might return errors if

@@ -2578,7 +2578,8 @@ int msShapeFileLayerGetItems(layerObj *layer)
   }
 
   layer->numitems = msDBFGetFieldCount(shpfile->hDBF);
-  layer->items = msDBFGetItems(shpfile->hDBF);    
+  layer->items = msDBFGetItems(shpfile->hDBF);
+  if(layer->numitems == 0) return MS_SUCCESS; /* No items is a valid case (#3147) */
   if(!layer->items) return MS_FAILURE;
 
   return msLayerInitItemInfo(layer);
