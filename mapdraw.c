@@ -233,8 +233,6 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         double cellsize_x = (map->extent.maxx - map->extent.minx)/map->width;
         double cellsize_y = (map->extent.maxy - map->extent.miny)/map->height;
 
-        fprintf(stderr, "ans: %g %g %g %g\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
-
         if( cellsize_y != 0.0 
             && (fabs(cellsize_x/cellsize_y) > 1.00001
                 || fabs(cellsize_x/cellsize_y) < 0.99999) )
@@ -320,15 +318,8 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     if(map->querymap.height != -1) map->height = map->querymap.height;
   }
 
-  fprintf(stderr, "1: %g %g %g %g\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
-
   msApplyMapConfigOptions(map);
-
-  fprintf(stderr, "2: %g %g %g %g\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
-
   image = msPrepareImage(map, MS_TRUE);
-
-  fprintf(stderr, "3: %g %g %g %g\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
 
   if(!image) {
     msSetError(MS_IMGERR, "Unable to initialize image.", "msDrawMap()");
