@@ -9155,11 +9155,13 @@ static long _phpms_build_label_object(labelObj *plabel,
     add_property_long(return_value,   "offsety",    plabel->offsety);
     add_property_double(return_value, "angle",      plabel->angle);
     add_property_long(return_value,   "autoangle",  plabel->autoangle);
+    add_property_long(return_value,   "autofollow",  plabel->autofollow);
     add_property_long(return_value,   "buffer",     plabel->buffer);
     add_property_long(return_value,   "antialias",  plabel->antialias);
     add_property_long(return_value,   "wrap",       plabel->wrap);
     add_property_long(return_value,   "minfeaturesize",plabel->minfeaturesize);
     add_property_long(return_value,   "autominfeaturesize",plabel->autominfeaturesize);
+    add_property_long(return_value,   "repeatdistance",plabel->repeatdistance);
     add_property_long(return_value,   "mindistance",plabel->mindistance);
     add_property_long(return_value,   "partials",   plabel->partials);
     add_property_long(return_value,   "force",      plabel->force);
@@ -9245,15 +9247,9 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     labelObj *self;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -9285,11 +9281,14 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "offsety",      self->offsety)
     else IF_SET_DOUBLE("angle",        self->angle)
     else IF_SET_LONG(  "autoangle",    self->autoangle)
+    else IF_SET_LONG(  "autofollow",  self->autofollow)
     else IF_SET_LONG(  "buffer",       self->buffer)
     else IF_SET_LONG(  "antialias",    self->antialias)
     else IF_SET_BYTE(  "wrap",         self->wrap)
     else IF_SET_LONG(  "minfeaturesize", self->minfeaturesize)
     else IF_SET_LONG(  "autominfeaturesize", self->autominfeaturesize)
+    else IF_SET_LONG(  "autofollow",  self->autofollow)
+    else IF_SET_LONG(  "repeatdistance",  self->repeatdistance)
     else IF_SET_LONG(  "mindistance",  self->mindistance)
     else IF_SET_LONG(  "partials",     self->partials)
     else IF_SET_LONG(  "force",        self->force)
