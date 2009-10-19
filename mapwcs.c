@@ -127,6 +127,7 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
                    const char *version )
 {
   char *pszEncodedVal = NULL;
+  const char *encoding;
 
   if( version == NULL )
       version = "1.0.0";
@@ -134,7 +135,12 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
   if( msOWSParseVersionString(version) >= OWS_1_1_0 )
       return msWCSException11( map, code, locator, version );
 
-  msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
+  if (encoding)
+      msIO_printf("Content-type: application/vnd.ogc.se_xml; charset=%s%c%c", encoding,10,10);
+  else
+      msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+
   /* msIO_printf("Content-type: text/xml%c%c",10,10); */
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
@@ -759,6 +765,9 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   int wcsSupportedVersions[] = {OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
   int wcsNumSupportedVersions = 3;
   const char *updatesequence=NULL;
+  const char *encoding;
+
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
 /* if version is not passed/set, set it to 1.1.1, this will trigger
     msOWSNegotiateVersion to handle accordingly
@@ -808,7 +817,10 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
       strcasecmp(params->section, "/WCS_Capabilities/Capability") != 0 &&
       strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata") != 0 &&
       strcasecmp(params->section, "/") != 0) {
-      msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+      if (encoding)
+          msIO_printf("Content-type: application/vnd.ogc.se_xml; charset=%s%c%c", encoding,10,10);
+      else
+          msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
       msSetError( MS_WCSERR,
         "Invalid SECTION parameter \"%s\"",
         "msWCSGetCapabilities()", params->section);
@@ -817,7 +829,10 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   }
 
   else {
-    msIO_printf("Content-type: text/xml%c%c",10,10);
+      if (encoding)
+          msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+      else
+          msIO_printf("Content-type: text/xml%c%c",10,10);
   
     /* print common capability elements  */
     /* TODO: DocType? */
@@ -1138,9 +1153,11 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
   const char *updatesequence=NULL;
   char **coverages=NULL;
   int numcoverages=0;
+  const char *encoding;
 
   char *coverageName=NULL; 
 
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 /* -------------------------------------------------------------------- */
 /*      1.1.x is sufficiently different we have a whole case for        */
 /*      it.  The remainder of this function is for 1.0.0.               */
@@ -1176,7 +1193,10 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
     updatesequence = strdup("0");
 
   /* printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10); */
-  msIO_printf("Content-type: text/xml%c%c",10,10);
+  if (encoding)
+      msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+  else
+      msIO_printf("Content-type: text/xml%c%c",10,10);
 
   /* print common capability elements  */
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");

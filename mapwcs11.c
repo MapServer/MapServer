@@ -59,6 +59,7 @@ int msWCSException11(mapObj *map, const char *locator,
   char *errorString     = NULL;
   char *errorMessage    = NULL;
   char *schemasLocation = NULL;
+  const char * encoding;
 
   xmlDocPtr  psDoc      = NULL;   
   xmlNodePtr psRootNode = NULL;
@@ -67,6 +68,7 @@ int msWCSException11(mapObj *map, const char *locator,
 
   psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
   errorString = msGetErrorString("\n");
   errorMessage = msEncodeHTMLEntities(errorString);
   schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
@@ -79,7 +81,11 @@ int msWCSException11(mapObj *map, const char *locator,
 
   psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
-  msIO_printf("Content-type: text/xml%c%c",10,10);
+  if (encoding)
+      msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+  else
+      msIO_printf("Content-type: text/xml%c%c",10,10);
+
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
     
   msIO_printf("%s", buffer);
@@ -342,6 +348,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     xmlNodePtr psTmpNode;
     char *identifier_list = NULL, *format_list = NULL;
     const char *updatesequence=NULL;
+    const char *encoding;
     xmlNsPtr psOwsNs, psXLinkNs;
     char *schemaLocation = NULL;
     char *xsi_schemaLocation = NULL;
@@ -358,6 +365,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
 
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
     if (params->updatesequence != NULL) {
       i = msOWSNegotiateUpdateSequence(params->updatesequence, updatesequence);
@@ -554,7 +562,10 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     if( msIO_needBinaryStdout() == MS_FAILURE )
         return MS_FAILURE;
      
-    msIO_printf("Content-type: text/xml%c%c",10,10);
+    if (encoding)
+        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+    else
+        msIO_printf("Content-type: text/xml%c%c",10,10);
     
     context = msIO_getHandler(stdout);
 
@@ -842,8 +853,11 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
     xmlNsPtr psOwsNs, psXLinkNs;
     char *schemaLocation = NULL;
     char *xsi_schemaLocation = NULL;
+    const char *encoding;
 
     int i,j;
+
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
 /* -------------------------------------------------------------------- */
 /*      We will actually get the coverages list as a single item in     */
@@ -932,7 +946,10 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
         if( msIO_needBinaryStdout() == MS_FAILURE )
             return MS_FAILURE;
      
-        msIO_printf("Content-type: text/xml%c%c",10,10);
+        if (encoding)
+            msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        else
+            msIO_printf("Content-type: text/xml%c%c",10,10);
     
         context = msIO_getHandler(stdout);
 
@@ -1099,6 +1116,9 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 {
     int status, i;
     char *filename = NULL;
+    const char *encoding;
+
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the driver we will be using and check if it supports      */
@@ -1150,22 +1170,41 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 /* -------------------------------------------------------------------- */
 /*      Output stock header.                                            */
 /* -------------------------------------------------------------------- */
-    msIO_fprintf( 
-        stdout, 
-        "Content-Type: multipart/mixed; boundary=wcs%c%c"
-        "--wcs\n"
-        "Content-Type: text/xml\n"
-        "Content-ID: wcs.xml%c%c"
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        "<Coverages\n"
-        "     xmlns=\"http://www.opengis.net/wcs/1.1\"\n"
-        "     xmlns:ows=\"http://www.opengis.net/ows\"\n"
-        "     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
-        "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-        "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
-        "  <Coverage>\n",
-        10, 10,
-        10, 10 );
+    if (encoding)
+        msIO_fprintf( 
+            stdout, 
+            "Content-Type: multipart/mixed; boundary=wcs%c%c"
+            "--wcs\n"
+            "Content-Type: text/xml; charset=%s\n"
+            "Content-ID: wcs.xml%c%c"
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<Coverages\n"
+            "     xmlns=\"http://www.opengis.net/wcs/1.1\"\n"
+            "     xmlns:ows=\"http://www.opengis.net/ows\"\n"
+            "     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
+            "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+            "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
+            "  <Coverage>\n",
+            10, 10,
+            encoding,
+            10, 10 );
+    else
+        msIO_fprintf( 
+            stdout, 
+            "Content-Type: multipart/mixed; boundary=wcs%c%c"
+            "--wcs\n"
+            "Content-Type: text/xml\n"
+            "Content-ID: wcs.xml%c%c"
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<Coverages\n"
+            "     xmlns=\"http://www.opengis.net/wcs/1.1\"\n"
+            "     xmlns:ows=\"http://www.opengis.net/ows\"\n"
+            "     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
+            "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+            "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
+            "  <Coverage>\n",
+            10, 10,
+            10, 10 );
 
 /* -------------------------------------------------------------------- */
 /*      If we weren't able to write data under /vsimem, then we just    */

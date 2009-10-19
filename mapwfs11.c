@@ -45,6 +45,7 @@ int msWFSException11(mapObj *map, const char *locator,
     char *errorString     = NULL;
     char *errorMessage    = NULL;
     char *schemasLocation = NULL;
+    const char *encoding;
 
     xmlDocPtr  psDoc      = NULL;   
     xmlNodePtr psRootNode = NULL;
@@ -55,6 +56,8 @@ int msWFSException11(mapObj *map, const char *locator,
        version = "1.1.0";
 
     psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
+
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
 
     errorString = msGetErrorString("\n");
     errorMessage = msEncodeHTMLEntities(errorString);
@@ -68,7 +71,11 @@ int msWFSException11(mapObj *map, const char *locator,
 
     psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
-    msIO_printf("Content-type: text/xml%c%c",10,10);
+    if (encoding)
+        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+    else
+        msIO_printf("Content-type: text/xml%c%c",10,10);
+
     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
     
     msIO_printf("%s", buffer);
@@ -208,6 +215,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
     char *script_url=NULL, *script_url_encoded=NULL;
     const char *value = NULL;
+    const char *encoding;
 
     xmlChar *buffer = NULL;
     int size = 0, i;
@@ -220,6 +228,8 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 /* -------------------------------------------------------------------- */
 
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
+
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
 
     if (params->pszUpdateSequence != NULL) {
       i = msOWSNegotiateUpdateSequence(params->pszUpdateSequence, updatesequence);
@@ -394,7 +404,10 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     if( msIO_needBinaryStdout() == MS_FAILURE )
         return MS_FAILURE;
      
-    msIO_printf("Content-type: text/xml%c%c",10,10);
+    if (encoding)
+        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+    else
+        msIO_printf("Content-type: text/xml%c%c",10,10);
     
     context = msIO_getHandler(stdout);
 

@@ -46,6 +46,7 @@ MS_CVSID("$Id$")
 int msWFSException(mapObj *map, const char *locator, const char *code,
                    const char *version )
 {
+    const char *encoding;
     char *schemalocation = NULL;
     /* In WFS, exceptions are always XML.
     */
@@ -56,7 +57,12 @@ int msWFSException(mapObj *map, const char *locator, const char *code,
     if( msOWSParseVersionString(version) >= OWS_1_1_0 )
       return msWFSException11( map, code, locator, version );
 
-    msIO_printf("Content-type: text/xml%c%c",10,10);
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
+    if (encoding)
+        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+    else
+        msIO_printf("Content-type: text/xml%c%c",10,10);
+
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
 
@@ -304,13 +310,13 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   char *script_url=NULL, *script_url_encoded;
   const char *updatesequence=NULL;
   const char *wmtver=NULL;
+  const char *encoding;
   char tmpString[OWS_VERSION_MAXLEN];
   int wfsSupportedVersions[] = {OWS_1_1_0, OWS_1_0_0};
   int wfsNumSupportedVersions = 2;
 
   int i=0, tmpInt=0;
 
-  
   /* negotiate version */
   tmpInt = msOWSNegotiateVersion(msOWSParseVersionString(wfsparams->pszVersion), wfsSupportedVersions, 
                                  wfsNumSupportedVersions);
@@ -351,7 +357,12 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       }
   }
 
-  msIO_printf("Content-type: text/xml%c%c",10,10);
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
+    if (encoding)
+        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+    else
+        msIO_printf("Content-type: text/xml%c%c",10,10);
+
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n",
                 "ISO-8859-1");
@@ -763,7 +774,11 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   /*
   ** DescribeFeatureType response
   */
-  msIO_printf("Content-type: text/xml%c%c",10,10);
+  value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
+  if (value)
+      msIO_printf("Content-type: text/xml; charset=%s%c%c", value,10,10);
+  else
+      msIO_printf("Content-type: text/xml%c%c",10,10);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
 			   "<?xml version='1.0' encoding=\"%s\" ?>\n",
@@ -1005,7 +1020,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   int iFIDLayers = 0;
   int iNumberOfFeatures = 0;
   int iResultTypeHits = 0;
-
+  
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
 
   /* Default filter is map extents */
@@ -1586,7 +1601,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     */
     namespaceList = msGMLGetNamespaces(&(map->web), "G");
 
-    msIO_printf("Content-type: text/xml%c%c",10,10);
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
+    if (value)
+        msIO_printf("Content-type: text/xml; charset=%s%c%c", value,10,10);
+    else
+        msIO_printf("Content-type: text/xml%c%c",10,10);
 
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", 
                              "encoding", OWS_NOERR,

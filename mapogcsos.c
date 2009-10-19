@@ -79,6 +79,7 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
   char *errorString     = NULL;
   char *errorMessage    = NULL;
   char *schemasLocation = NULL;
+  const char *encoding;
 
   xmlDocPtr  psDoc      = NULL;   
   xmlNodePtr psRootNode = NULL;
@@ -87,6 +88,7 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
 
   psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "SO", "encoding");
   errorString = msGetErrorString("\n");
   errorMessage = msEncodeHTMLEntities(errorString);
   schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
@@ -99,7 +101,11 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
 
   psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
-  msIO_printf("Content-type: text/xml%c%c",10,10);
+  if (encoding)
+      msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+  else
+      msIO_printf("Content-type: text/xml%c%c",10,10);
+
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
     
   msIO_printf("%s", buffer);
@@ -1172,6 +1178,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
     char *xsi_schemaLocation = NULL;
     const char *script_url=NULL;
     const char *updatesequence=NULL;
+    const char *encoding;
 
     int i,j,k;
     layerObj *lp = NULL, *lpTmp = NULL;
@@ -1247,6 +1254,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
 
     /* updateSequence */
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "SO", "updatesequence");
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "SO", "encoding");
 
     if (sosparams->pszUpdateSequence != NULL) {
       i = msOWSNegotiateUpdateSequence(sosparams->pszUpdateSequence, updatesequence);
@@ -1693,7 +1701,10 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
      if ( msIO_needBinaryStdout() == MS_FAILURE )
        return MS_FAILURE;
      
-     msIO_printf("Content-type: text/xml%c%c",10,10);
+     if (encoding)
+         msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+     else
+         msIO_printf("Content-type: text/xml%c%c",10,10);
     
     /*TODO* : check the encoding validity. Internally libxml2 uses UTF-8
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -1802,6 +1813,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   xmlNodePtr psObservationNode = NULL, psResultNode=NULL;
   const char *pszProcedure = NULL;
   const char *pszBlockSep=NULL;
+  const char *encoding;
   char *pszResult=NULL;
   int nDiffrentProc = 0;
   SOSProcedureNode *paDiffrentProc = NULL;
@@ -1813,6 +1825,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
 
   /* establish local namespace */
   pszTmp = msOWSLookupMetadata(&(map->web.metadata), "SFO", "namespace_uri");
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "SO", "encoding");
+
   if(pszTmp) user_namespace_uri = pszTmp;
 
   pszTmp = msOWSLookupMetadata(&(map->web.metadata), "SFO", "namespace_prefix");
@@ -2551,7 +2565,11 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
     }
    
     /* output results */    
-     msIO_printf("Content-type: text/xml%c%c",10,10);
+    if (encoding)
+        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+    else
+        msIO_printf("Content-type: text/xml%c%c",10,10);
+
      
      context = msIO_getHandler(stdout);
      xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);

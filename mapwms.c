@@ -69,6 +69,7 @@ static char *wms_exception_format=NULL;
 
 int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 {
+    const char *encoding;
     char *schemalocation = NULL;
 
     /* Default to WMS 1.1.1 exceptions if version not set yet */
@@ -77,6 +78,8 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 
     /* get scheam location */
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
+
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
   /* Establish default exception format depending on VERSION */
   if (wms_exception_format == NULL)
@@ -109,7 +112,11 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
   }
   else if (strcasecmp(wms_exception_format, "WMS_XML") == 0) /* Only in V1.0.0 */
   {
-    msIO_printf("Content-type: text/xml%c%c",10,10);
+      if (encoding)
+          msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+      else
+          msIO_printf("Content-type: text/xml%c%c",10,10);
+
     msIO_printf("<WMTException version=\"1.0.0\">\n");
     msWriteErrorXML(stdout);
     msIO_printf("</WMTException>\n");
@@ -120,7 +127,10 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     if (nVersion <= OWS_1_0_7)
     {
       /* In V1.0.1 to 1.0.7, the MIME type was text/xml */
-      msIO_printf("Content-type: text/xml%c%c",10,10);
+        if (encoding)
+            msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        else
+            msIO_printf("Content-type: text/xml%c%c",10,10);
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                                "MO", "encoding", OWS_NOERR,
@@ -134,8 +144,11 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     {
       /* In V1.1.0 and later, we have OGC-specific MIME types */
       /* we cannot return anything else than application/vnd.ogc.se_xml here. */
-      msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
-
+        if (encoding)
+            msIO_printf("Content-type: application/vnd.ogc.se_xml; charset=%s%c%c", encoding,10,10);
+        else
+            msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+        
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                                "MO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
@@ -148,7 +161,11 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     }
     else if (nVersion <= OWS_1_1_1)/* 1.1.1 */
     {
-        msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+        if (encoding)
+            msIO_printf("Content-type: application/vnd.ogc.se_xml; charset=%s%c%c", encoding,10,10);
+        else
+            msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+
 
         msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                                  "MO", "encoding", OWS_NOERR,
@@ -160,9 +177,15 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     else /*1.3.0*/
     {
         if (strcasecmp(wms_exception_format, "application/vnd.ogc.se_xml") == 0)
-          msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+            if (encoding)
+                msIO_printf("Content-type: application/vnd.ogc.se_xml; charset=%s%c%c", encoding,10,10);
+            else
+                msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
         else
-          msIO_printf("Content-type: text/xml%c%c",10,10);
+            if (encoding)
+                msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+            else
+                msIO_printf("Content-type: text/xml%c%c",10,10);
 
         msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                                  "MO", "encoding", OWS_NOERR,
@@ -1919,12 +1942,15 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   char *schemalocation = NULL;
   const char *updatesequence=NULL;
   const char *sldenabled=NULL;
+  const char *encoding;
   char *pszTmp=NULL;
   int i;
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
 
   sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
+
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
   if (sldenabled == NULL)
       sldenabled = strdup("true");
@@ -1984,10 +2010,16 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
       return msWMSException(map, nVersion, NULL);
   }
 
-  if (nVersion <= OWS_1_0_7 || nVersion >= OWS_1_3_0)
-      msIO_printf("Content-type: text/xml%c%c",10,10);  /* 1.0.0 to 1.0.7 and >=1.3.0*/
-  else
-      msIO_printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  /* 1.1.0 and later */
+  if (nVersion <= OWS_1_0_7 || nVersion >= OWS_1_3_0)   /* 1.0.0 to 1.0.7 and >=1.3.0*/
+      if (encoding)
+          msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+      else
+          msIO_printf("Content-type: text/xml%c%c",10,10);
+  else /* 1.1.0 and later */
+      if (encoding)
+          msIO_printf("Content-type: application/vnd.ogc.wms_xml; charset=%s%c%c", encoding,10,10);
+      else
+          msIO_printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                            "MO", "encoding", OWS_NOERR,
@@ -2772,10 +2804,13 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   errorObj *ms_error = msGetErrorObj();
   int query_status=MS_NOERR;
   const char *pszMimeType=NULL;
+  const char *encoding;
   int query_layer = 0;
 
 
   pszMimeType = msOWSLookupMetadata(&(map->web.metadata), "MO", "FEATURE_INFO_MIME_TYPE");
+
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
   for(i=0; map && i<numentries; i++) {
     if(strcasecmp(names[i], "QUERY_LAYERS") == 0) {
@@ -2902,7 +2937,10 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     /* MIME response... we're free to use any valid MIME type */
     int numresults = 0;
 
-    msIO_printf("Content-type: text/plain%c%c", 10,10);
+    if (encoding)
+        msIO_printf("Content-type: text/plain; charset=%s%c%c", encoding,10,10);
+    else
+        msIO_printf("Content-type: text/plain%c%c",10,10);
     msIO_printf("GetFeatureInfo results:\n");
 
     numresults = msDumpResult(map, 0, nVersion);
@@ -2913,9 +2951,15 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
              strcasecmp(info_format, "application/vnd.ogc.gml") == 0) {
 
     if (nVersion <= OWS_1_0_7)
-        msIO_printf("Content-type: text/xml%c%c", 10,10);
+        if (encoding)
+            msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        else
+            msIO_printf("Content-type: text/xml%c%c",10,10);
     else
-        msIO_printf("Content-type: application/vnd.ogc.gml%c%c", 10,10);
+        if (encoding)
+            msIO_printf("Content-type: application/vnd.ogc.gml; charset=%s%c%c", encoding,10,10);
+        else
+            msIO_printf("Content-type: application/vnd.ogc.gml%c%c",10,10);
 
     msGMLWriteQuery(map, NULL, "GMO"); /* default is stdout */
 
@@ -2983,6 +3027,9 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
   char *schemalocation = NULL;
   char *version = NULL;
   char *sld_version = NULL;
+  const char *encoding;
+
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
   for(i=0; map && i<numentries; i++) {
       if(strcasecmp(names[i], "LAYERS") == 0) {
@@ -3006,8 +3053,12 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
       msSetError(MS_WMSERR, "SLD_VERSION must be 1.1.0", "DescribeLayer()");
       return msWMSException(map, nVersion, "InvalidParameterValue");
   }
-  msIO_printf("Content-type: text/xml\n\n");
-  
+
+  if (encoding)
+      msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+  else
+      msIO_printf("Content-type: text/xml%c%c",10,10);
+
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                             "MO", "encoding", OWS_NOERR,
                             "<?xml version='1.0' encoding=\"%s\"?>\n",
@@ -3450,6 +3501,9 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
     int numlayers = 0;
     char **layers = NULL;
     char  *sld = NULL;
+    const char *encoding;
+
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
     for(i=0; map && i<numentries; i++)
     {
@@ -3493,14 +3547,20 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
 
     if (nVersion <= OWS_1_1_1)
     {
-      msIO_printf("Content-type: application/vnd.ogc.sld+xml%c%c",10,10);
-      sld = msSLDGenerateSLD(map, -1, "1.0.0");
+        if (encoding)
+            msIO_printf("Content-type: application/vnd.ogc.sld+xml; charset=%s%c%c", encoding,10,10);
+        else
+            msIO_printf("Content-type: application/vnd.ogc.sld+xml%c%c",10,10);
+        sld = msSLDGenerateSLD(map, -1, "1.0.0");
     }
     else
     {   
       /*for wms 1.3.0 generate a 1.1 sld*/
-       msIO_printf("Content-type: text/xml%c%c",10,10);
-       sld = msSLDGenerateSLD(map, -1, "1.1.0");
+        if (encoding)
+            msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        else
+            msIO_printf("Content-type: text/xml%c%c",10,10);
+        sld = msSLDGenerateSLD(map, -1, "1.1.0");
     }
     if (sld)
     {
@@ -3514,10 +3574,16 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
 int msWMSGetSchemaExtension(mapObj *map) 
 {
     char *schemalocation = NULL;
+    const char *encoding;
 
     schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
-    msIO_printf("Content-type: text/xml\n\n");
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
+
+    if (encoding)
+        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+    else
+        msIO_printf("Content-type: text/xml%c%c",10,10);
 
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                             "MO", "encoding", OWS_NOERR,
@@ -3551,6 +3617,9 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
 #ifdef USE_WMS_SVR
   int i, status, nVersion=OWS_VERSION_NOTSET;
   const char *version=NULL, *request=NULL, *service=NULL, *format=NULL, *updatesequence=NULL;
+  const char * encoding;
+
+  encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
   /*
   ** Process Params common to all requests
@@ -3644,7 +3713,12 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
 
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
           return msWMSException(map, nVersion, NULL);
-      msIO_printf("Content-type: text/xml\n\n");
+
+      if (encoding)
+          msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+      else
+          msIO_printf("Content-type: text/xml%c%c",10,10);
+
       if ( msWriteMapContext(map, stdout) != MS_SUCCESS )
           return msWMSException(map, nVersion, NULL);
       /* Request completed */
@@ -3654,7 +3728,10 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
            format && strcasecmp(format,  "image/txt") == 0)
   {
       /* Until someone adds full support for ASCII graphics this should do. ;) */
-      msIO_printf("Content-type: text/plain\n\n");
+      if (encoding)
+          msIO_printf("Content-type: text/plain; charset=%s%c%c", encoding,10,10);
+      else
+          msIO_printf("Content-type: text/plain%c%c",10,10);
       msIO_printf(".\n               ,,ggddY\"\"\"Ybbgg,,\n          ,agd888b,_ "
              "\"Y8, ___'\"\"Ybga,\n       ,gdP\"\"88888888baa,.\"\"8b    \""
              "888g,\n     ,dP\"     ]888888888P'  \"Y     '888Yb,\n   ,dP\""
