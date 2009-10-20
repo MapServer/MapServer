@@ -106,7 +106,7 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
   else
       msIO_printf("Content-type: text/xml%c%c",10,10);
 
-  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
     
   msIO_printf("%s", buffer);
 
@@ -1712,14 +1712,14 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                              "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                              "ISO-8859-1");
     */
-     /*xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);*/
+     /*xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);*/
      
      /* xmlDocDump crashs withe the prebuild windows binaries distibutes at the libxml site???.
       It works with locally build binaries*/
      
      context = msIO_getHandler(stdout);
 
-     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
      msIO_contextWrite(context, buffer, size);
      xmlFree(buffer);
 
@@ -2572,7 +2572,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
 
      
      context = msIO_getHandler(stdout);
-     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
      msIO_contextWrite(context, buffer, size);
      free(schemalocation);
      free(xsi_schemaLocation);

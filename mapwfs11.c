@@ -76,7 +76,7 @@ int msWFSException11(mapObj *map, const char *locator,
     else
         msIO_printf("Content-type: text/xml%c%c",10,10);
 
-    xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+    xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
     
     msIO_printf("%s", buffer);
 
@@ -411,7 +411,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     
     context = msIO_getHandler(stdout);
 
-    xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "ISO-8859-1", 1);
+    xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
     msIO_contextWrite(context, buffer, size);
     xmlFree(buffer);
 
