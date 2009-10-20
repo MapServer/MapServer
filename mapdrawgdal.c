@@ -177,9 +177,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
               CSLFetchNameValue( layer->processing, "RAW_WINDOW" ) );
       
       if( layer->debug )
-          msDebug( "msDrawGDAL(%s): using RAW_WINDOW=%s\n",
+          msDebug( "msDrawGDAL(%s): using RAW_WINDOW=%s, dst=0,0,%d,%d\n",
                    layer->name,
-                   CSLFetchNameValue( layer->processing, "RAW_WINDOW" ) );
+                   CSLFetchNameValue( layer->processing, "RAW_WINDOW" ),
+                   image->width, image->height );
 
       if( CSLCount(papszTokens) != 4 )
       {
