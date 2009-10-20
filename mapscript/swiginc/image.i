@@ -104,7 +104,7 @@
             
             /* we wrap msSaveImageGDCtx in the same way that 
                gdImageJpeg() wraps gdImageJpegCtx()  (bug 1047). */
-            retval = msSaveImageGDCtx(self->img.gd, ctx, self->format);
+            retval = msSaveImageGDCtx(self, ctx, self->format);
             ctx->gd_free(ctx);
         }
         else
