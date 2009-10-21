@@ -39,8 +39,8 @@ MS_CVSID("$Id$")
 /*
 ** Match this with with unit enumerations is mapserver.h
 */
-static char *unitText[5]={"in", "ft", "mi", "m", "km"};
-double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
+static char *unitText[6]={"in", "ft", "mi", "m", "km", "NM"};
+double inchesPerUnit[7]={1, 12, 63360.0, 39.3701, 39370.1, 72913.3858, 4374754};
 
 
 static double roundInterval(double d)
@@ -95,6 +95,7 @@ int msCalculateScale(rectObj extent, int units, int width, int height, double re
   case(MS_METERS):    
   case(MS_KILOMETERS):
   case(MS_MILES):
+  case(MS_NAUTICALMILES):
   case(MS_INCHES):  
   case(MS_FEET):
     center_y = (extent.miny+extent.maxy)/2.0;
@@ -118,6 +119,7 @@ double msInchesPerUnit(int units, double center_lat)
   case(MS_METERS):    
   case(MS_KILOMETERS):
   case(MS_MILES):
+  case(MS_NAUTICALMILES):
   case(MS_INCHES):  
   case(MS_FEET):
     ipu = inchesPerUnit[units]; 
@@ -531,6 +533,7 @@ double GetDeltaExtentsUsingScale(double scale, int units, double centerLat, int 
       case(MS_METERS):    
       case(MS_KILOMETERS):
       case(MS_MILES):
+      case(MS_NAUTICALMILES):
       case(MS_INCHES):  
       case(MS_FEET):
         /* remember, we use a pixel-center to pixel-center extent, hence the width-1 */

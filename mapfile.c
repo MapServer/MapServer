@@ -67,7 +67,7 @@ static int loadGrid( layerObj *pLayer );
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in mapserver.h.
 */
-static char *msUnits[8]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS", "PERCENTAGES"};
+static char *msUnits[9]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "NAUTICALMILES", "DD", "PIXELS", "PERCENTAGES"};
 static char *msLayerTypes[9]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX","CHART"};
 char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY", "FOLLOW"}; /* msLabelPositions[] also used in mapsymbols.c (not static) */
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
@@ -3281,7 +3281,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       }
       break;
     case(SIZEUNITS):
-      if((layer->sizeunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
+      if((layer->sizeunits = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS)) == -1) return(-1);
       break;
     case(STATUS):
       if((layer->status = getSymbol(3, MS_ON,MS_OFF,MS_DEFAULT)) == -1) return(-1);
@@ -3334,7 +3334,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getDouble(&(layer->tolerance)) == -1) return(-1);
       break;
     case(TOLERANCEUNITS):
-      if((layer->toleranceunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
+      if((layer->toleranceunits = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS)) == -1) return(-1);
       break;
     case(TRANSFORM):
       if((layer->transform = getSymbol(11, MS_TRUE,MS_FALSE, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) return(-1);
@@ -3344,7 +3344,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(layer->type == TILEINDEX) layer->type = MS_LAYER_TILEINDEX; /* TILEINDEX is also a parameter */
       break;    
     case(UNITS):
-      if((layer->units = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return(-1);
+      if((layer->units = getSymbol(9, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return(-1);
       break;
     case(VALIDATION):
       if(loadHashTable(&(layer->validation)) != MS_SUCCESS) return(-1);
@@ -4108,7 +4108,7 @@ int loadScalebar(scalebarObj *scalebar)
       if((scalebar->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;
     case(UNITS):
-      if((scalebar->units = getSymbol(5, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS)) == -1) return(-1);
+      if((scalebar->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES)) == -1) return(-1);
       break;
     default:
       if(strlen(msyytext) > 0) {
@@ -5038,7 +5038,7 @@ static int loadMapInternal(mapObj *map)
       if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
       break;
     case(UNITS):
-      if((map->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD)) == -1) return MS_FAILURE;
+      if((map->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD)) == -1) return MS_FAILURE;
       break;
     case(WEB):
       if(loadWeb(&(map->web), map) == -1) return MS_FAILURE;
@@ -5397,7 +5397,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       msyystate = MS_TOKENIZE_URL_STRING; msyystring = string;
       msyylex();
 
-      if((map->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD)) == -1) break;
+      if((map->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD)) == -1) break;
       break;
     case(WEB):
       return msUpdateWebFromString(&(map->web), string, MS_TRUE);

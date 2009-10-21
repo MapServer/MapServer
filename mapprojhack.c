@@ -43,8 +43,8 @@
 #include <string.h>
 #include "mapproject.h"
 
-enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, 
-               MS_PIXELS};
+enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS,
+               MS_NAUTICALMILES, MS_DD, MS_PIXELS};
 
 
 /************************************************************************/
@@ -76,6 +76,10 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
     else if (strcmp(pszProjUnit, "ft") ==0 || strcmp(pszProjUnit, "us-ft") ==0)
     {
         return MS_FEET;
+    }
+    else if (strcmp(pszProjUnit, "kmi") == 0)
+    {
+        return MS_NAUTICALMILES;
     }
     
     return -1;              

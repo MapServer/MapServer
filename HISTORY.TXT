@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Added support for nautical miles unit (#3173)
+
 - Fixed encoding metadata ignored by a few wcs/wfs 1.1 and sos requests (#3182)
 
 - PHP/Mapscript: added "autofollow" and "repeatdistance" in labelObj (#3175)

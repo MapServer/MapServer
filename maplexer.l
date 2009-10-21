@@ -351,6 +351,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>lr                         { return(MS_LR); }
 <INITIAL>medium                                { return(MS_MEDIUM); }
 <INITIAL,URL_STRING>meters                     { return(MS_METERS); }
+<INITIAL,URL_STRING>nauticalmiles              { return(MS_NAUTICALMILES); }
 <INITIAL,URL_STRING>miles                      { return(MS_MILES); }
 <INITIAL>miter                                 { return(MS_CJC_MITER); }
 <INITIAL>multiple                              { return(MS_MULTIPLE); }

@@ -2589,6 +2589,9 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
                             else if (strcasecmp(szUnit,"km") == 0 || 
                                      strcasecmp(szUnit,"kilometers") == 0)
                               *pnUnit = MS_KILOMETERS;
+                            else if (strcasecmp(szUnit,"NM") == 0 || 
+                                     strcasecmp(szUnit,"nauticalmiles") == 0)
+                              *pnUnit = MS_NAUTICALMILES;
                             else if (strcasecmp(szUnit,"mi") == 0 || 
                                      strcasecmp(szUnit,"miles") == 0)
                               *pnUnit = MS_MILES;
