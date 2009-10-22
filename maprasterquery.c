@@ -866,7 +866,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
         msRasterLayerInfoFree( layer );
 
     /* populate the items/numitems layer-level values */
-    msRASTERLayerGetItems(layer);
+    if( layer->layerinfo != NULL )
+        msRASTERLayerGetItems(layer);
 
     return status;
 #endif /* def USE_GDAL */
@@ -996,10 +997,17 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
     bufferRect.maxy = p.y + buffer;
 
     rlinfo->range_mode = mode;
-    previous_maxresults = rlinfo->query_result_hard_max;
-    rlinfo->query_result_hard_max = maxresults;
+
+    if( maxresults != 0 )
+    {
+        previous_maxresults = rlinfo->query_result_hard_max;
+        rlinfo->query_result_hard_max = maxresults;
+    }
+
     result = msRasterQueryByRect( map, layer, bufferRect );
-    rlinfo->query_result_hard_max = previous_maxresults;
+
+    if( rlinfo != NULL && maxresults != 0 )
+        rlinfo->query_result_hard_max = previous_maxresults;
 
     return result;
 #endif /* USE_GDAL  */
@@ -1268,6 +1276,9 @@ int msRASTERLayerGetItems(layerObj *layer)
     return MS_FAILURE;
 #else
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
+
+    if( rlinfo == NULL )
+        return MS_FAILURE;
 
     layer->items = (char **) calloc(sizeof(char *),10);
 
