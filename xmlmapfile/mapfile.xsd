@@ -158,7 +158,6 @@
 			<xs:element name="Metadata" type="ms:itemType" minOccurs="0"/>
 			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="minTemplate" type="xs:string" minOccurs="0"/>
-			<xs:element name="outputFormat" type="xs:string" minOccurs="0"/>
 			<xs:element name="queryFormat" type="xs:string" minOccurs="0"/>
 			<xs:element name="template" type="xs:string" minOccurs="0"/>
 			<xs:element name="Validation" type="ms:itemType" minOccurs="0"/>

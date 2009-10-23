@@ -69,9 +69,13 @@
           <transparent>ON</transparent>
         </OutputFormat>
 	<projection>
-        init=epsg:4326
-        ellps=WGS84
-        datum=WGS84
+          proj=utm
+          ellps=GRS80
+          datum=NAD83
+          zone=15
+          units=m
+          north
+          no_defs
         </projection>
 	<QueryMap status="ON">
 		<color red="244" green="43" blue="22"/>
@@ -131,7 +135,7 @@
 		<size x="90" y="8"/>
 		<style>0</style>
                 <transparent>ON</transparent>
-		<units>METERS</units>
+		<units>NAUTICALMILES</units>
 	</ScaleBar>
 	<shapePath>../data</shapePath>
 	<size x="600" y="400"/>
@@ -172,29 +176,29 @@
 	<units>MILES</units>
         <Web>
           <browseFormat>text/html</browseFormat>
-		<empty>../errors/queryfail1.html</empty>
-		<error>../errors/error1.html</error>
-		<footer>../templates/footer1.html</footer>
-		<header>../templates/header.html</header>
-		<imagePath>/tmp/ms_tmp/</imagePath>
-		<imageUrl>/ms_tmp/</imageUrl>
-                <legendFormat>text/html</legendFormat>
-		<log>../logs/ms.log</log>
-		<maxScaleDenom>240000</maxScaleDenom>
-		<maxTemplate>../templates/maxtemplate1.html</maxTemplate>
-		<Metadata>
-			<item name="description">Cities</item>
-			<item name="title">The Cities</item>
-			<item name="author">Norm</item>
-		</Metadata>
-		<minScaleDenom>120000</minScaleDenom>
-		<minTemplate>../templates/mintemplate1.html</minTemplate>
-                <queryFormat>text/html</queryFormat>
-		<template>http://mapgears.com/templates/myTemplates1.html</template>
-                <Validation>
-                  <item name="firstname">^[a-zA-Z\-]+$</item>
-                  <item name="taxid">^[A-Z]{2}[0-9]{6}$</item>
-                </Validation>
+          <empty>../errors/queryfail1.html</empty>
+          <error>../errors/error1.html</error>
+          <footer>../templates/footer1.html</footer>
+          <header>../templates/header.html</header>
+          <imagePath>/tmp/ms_tmp/</imagePath>
+          <imageUrl>/ms_tmp/</imageUrl>
+          <legendFormat>text/html</legendFormat>
+          <log>../logs/ms.log</log>
+          <maxScaleDenom>240000</maxScaleDenom>
+          <maxTemplate>../templates/maxtemplate1.html</maxTemplate>
+          <Metadata>
+            <item name="description">Cities</item>
+            <item name="title">The Cities</item>
+            <item name="author">Norm</item>
+          </Metadata>
+          <minScaleDenom>120000</minScaleDenom>
+          <minTemplate>../templates/mintemplate1.html</minTemplate>
+          <queryFormat>text/html</queryFormat>
+          <template>http://mapgears.com/templates/myTemplates1.html</template>
+          <Validation>
+            <item name="firstname">^[a-zA-Z\-]+$</item>
+            <item name="taxid">^[A-Z]{2}[0-9]{6}$</item>
+          </Validation>
 	</Web>
 </Map>
 
