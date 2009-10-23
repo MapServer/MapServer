@@ -1860,7 +1860,7 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
             /* If the difference between subsequent angles is > 80% of 180deg
                bail because the line likely overlaps itself. */
    
-            if ( k > 2 && abs(theta - labelpath->angles[k-2]) > 0.4 * MS_PI ) {
+            if ( k > 2 && fabs(theta - labelpath->angles[k-2]) > 0.4 * MS_PI ) {
                 goto LABEL_FAILURE;
             }
       

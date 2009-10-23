@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- Fix abs/fabs usage that prevented angle follow labels to be discarded if they
+  were too wrapped on themselves
 
 - Allow CGI mapshape and imgshape variables to consume WKT strings (#3185)
 
