@@ -91,6 +91,7 @@
 			<xs:enumeration value="KILOMETERS"/>
 			<xs:enumeration value="METERS"/>
 			<xs:enumeration value="MILES"/>
+			<xs:enumeration value="NAUTICALMILES"/>
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="extendedUnitType">
