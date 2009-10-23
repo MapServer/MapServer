@@ -1585,7 +1585,6 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
   double dx, dy, w, cos_t, sin_t;
 
   labelPathObj *labelpath = NULL;
-  char *font = NULL;
 
   /* Line smoothing kernel */
   double kernel[] = {0.1, 0.2, 2, 0.2, 0.1}; /* {1.5, 2, 15, 2, 1.5}; */
@@ -1633,15 +1632,6 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
   size = MS_MIN(size, label->maxsize*img->resolutionfactor);
   scalefactor = size / label->size;
 
-  font = msLookupHashTable(&(fontset->fonts), label->font);
-  if(!font) {
-    if(label->font) 
-      msSetError(MS_TTFERR, "Requested font (%s) not found.", "msPolylineLabelPathSegment()", label->font);
-    else
-      msSetError(MS_TTFERR, "Requested font (NULL) not found.", "msPolylineLabelPathSegment()");
-    goto FAILURE;
-  }
-  
   text_length = letterspacing * (bbox.maxx - bbox.minx);
 
   /* 
