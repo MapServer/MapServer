@@ -79,7 +79,7 @@ typedef struct
    
   int UseShapes; /* are results of a query to be used in calculating an extent of some sort */
 
-  shapeObj SelectShape, resultshape;
+  shapeObj resultshape;
 
   rectObj RawExt;
 

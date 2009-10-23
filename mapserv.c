@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $id: mapserv.c 9470 2009-10-16 16:09:31Z sdlime $
  *
  * Project:  MapServer
  * Purpose:  MapServer CGI mainline.
@@ -526,41 +526,64 @@ void loadForm(void)
       continue;
     }
 
-    if(strcasecmp(mapserv->request->ParamNames[i],"mapshape") == 0) { /* query shape */
-      lineObj line={0,NULL};
-      char **tmp=NULL;
-      int n, j;
+    /*
+    ** Query shape consisting of map or image coordinates. It's almost identical processing so we'll do either in this block...
+    */
+    if(strcasecmp(mapserv->request->ParamNames[i], "mapshape") == 0 || strcasecmp(mapserv->request->ParamNames[i], "imgshape") == 0) {
+      if(strcasecmp(mapserv->request->ParamNames[i],"mapshape") == 0)
+        QueryCoordSource = FROMUSERSHAPE;
+      else
+        QueryCoordSource = FROMIMGSHAPE;
+
+      if(strchr(mapserv->request->ParamValues[i], '(') != NULL) { /* try WKT */
+        if((mapserv->map->query.shape = msShapeFromWKT(mapserv->request->ParamValues[i])) == NULL) {
+          msSetError(MS_WEBERR, "WKT parse failed for mapshape/imgshape.", "loadForm()");
+          writeError();
+        }
+      } else {
+        lineObj line={0,NULL};
+        char **tmp=NULL;
+        int n, j;
       
-      tmp = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
+        tmp = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
-      if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
-        msSetError(MS_MEMERR, NULL, "loadForm()");
-        writeError();
-      }
-      line.numpoints = n/2;
+        if(n%2 != 0 || n<8) { /* n must be even and be at least 8 */
+          msSetError(MS_WEBERR, "Malformed polygon geometry for mapshape/imgshape.", "loadForm()");
+          writeError();
+        }
 
-      msInitShape(&(mapserv->SelectShape));
-      mapserv->SelectShape.type = MS_SHAPE_POLYGON;
+        line.numpoints = n/2;
+        if((line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints)) == NULL) {
+          msSetError(MS_MEMERR, NULL, "loadForm()");
+          writeError();
+        }
 
-      for(j=0; j<n/2; j++) {
-        line.point[j].x = atof(tmp[2*j]);
-        line.point[j].y = atof(tmp[2*j+1]);
+        if((mapserv->map->query.shape = (shapeObj *) malloc(sizeof(shapeObj))) == NULL) {
+          msSetError(MS_MEMERR, NULL, "loadForm()");
+          writeError();
+	}
+        msInitShape(mapserv->map->query.shape);
+        mapserv->map->query.shape->type = MS_SHAPE_POLYGON;
+
+        for(j=0; j<line.numpoints; j++) {
+          line.point[j].x = atof(tmp[2*j]);
+          line.point[j].y = atof(tmp[2*j+1]);
 
 #ifdef USE_PROJ
-        if(mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
-           && (line.point[j].x >= -180.0 && line.point[j].x <= 180.0) 
-           && (line.point[j].y >= -90.0 && line.point[j].y <= 90.0)) {
-          msProjectPoint(&(mapserv->map->latlon), &(mapserv->map->projection), &line.point[j]); /* point is a in lat/lon */
-        }
+          if(QueryCoordSource == FROMUSERSHAPE && mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
+             && (line.point[j].x >= -180.0 && line.point[j].x <= 180.0) 
+             && (line.point[j].y >= -90.0 && line.point[j].y <= 90.0)) {
+            msProjectPoint(&(mapserv->map->latlon), &(mapserv->map->projection), &line.point[j]); /* point is a in lat/lon */
+          }
 #endif
+        }
+
+        if(msAddLine(mapserv->map->query.shape, &line) == -1) writeError();
+
+        msFree(line.point);
+        msFreeCharArray(tmp, n);
       }
 
-      if(msAddLine(&mapserv->SelectShape, &line) == -1) writeError();
-
-      msFree(line.point);    
-      msFreeCharArray(tmp, n);
-
-      QueryCoordSource = FROMUSERSHAPE;
       continue;
     }
 
@@ -642,36 +665,6 @@ void loadForm(void)
         mapserv->CoordSource = FROMIMGBOX;
         QueryCoordSource = FROMIMGBOX;
       }
-      continue;
-    }
-
-    if(strcasecmp(mapserv->request->ParamNames[i],"imgshape") == 0) { /* shape given in image coordinates */
-      lineObj line={0,NULL};
-      char **tmp=NULL;
-      int n, j;
-      
-      tmp = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
-
-      if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
-        msSetError(MS_MEMERR, NULL, "loadForm()");
-        writeError();
-      }
-      line.numpoints = n/2;
-
-      msInitShape(&mapserv->SelectShape);
-      mapserv->SelectShape.type = MS_SHAPE_POLYGON;
-
-      for(j=0; j<n/2; j++) {
-        line.point[j].x = atof(tmp[2*j]);
-        line.point[j].y = atof(tmp[2*j+1]);
-      }
-
-      if(msAddLine(&mapserv->SelectShape, &line) == -1) writeError();
-
-      msFree(line.point);
-      msFreeCharArray(tmp, n);
-
-      QueryCoordSource = FROMIMGSHAPE;
       continue;
     }
 
@@ -1722,15 +1715,13 @@ int main(int argc, char *argv[]) {
             if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
       
             /* convert from image to map coordinates here (see setCoordinate) */
-            for(i=0; i<mapserv->SelectShape.numlines; i++) {
-              for(j=0; j<mapserv->SelectShape.line[i].numpoints; j++) {
-                mapserv->SelectShape.line[i].point[j].x = MS_IMAGE2MAP_X(mapserv->SelectShape.line[i].point[j].x, mapserv->map->extent.minx, mapserv->map->cellsize);
-                mapserv->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_Y(mapserv->SelectShape.line[i].point[j].y, mapserv->map->extent.maxy, mapserv->map->cellsize);
+            for(i=0; i<mapserv->map->query.shape->numlines; i++) {
+              for(j=0; j<mapserv->map->query.shape->line[i].numpoints; j++) {
+                mapserv->map->query.shape->line[i].point[j].x = MS_IMAGE2MAP_X(mapserv->map->query.shape->line[i].point[j].x, mapserv->map->extent.minx, mapserv->map->cellsize);
+                mapserv->map->query.shape->line[i].point[j].y = MS_IMAGE2MAP_Y(mapserv->map->query.shape->line[i].point[j].y, mapserv->map->extent.maxy, mapserv->map->cellsize);             
               }
             }
-            mapserv->map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
-            msInitShape(mapserv->map->query.shape);
-            msCopyShape(&(mapserv->SelectShape), mapserv->map->query.shape);
+
             mapserv->map->query.type = MS_QUERY_BY_SHAPE;
             break;      
           case FROMUSERPNT:
@@ -1750,9 +1741,6 @@ int main(int argc, char *argv[]) {
             break;
           case FROMUSERSHAPE:
             setExtent(mapserv);
-            mapserv->map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
-            msInitShape(mapserv->map->query.shape);
-            msCopyShape(&(mapserv->SelectShape), mapserv->map->query.shape);
             mapserv->map->query.type = MS_QUERY_BY_SHAPE;
             break;
           default: /* from an extent of some sort */
