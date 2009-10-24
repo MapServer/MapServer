@@ -2292,8 +2292,16 @@ void msTiledSHPClose(layerObj *layer)
 /************************************************************************/
 int msTiledSHPCloseVT(layerObj *layer) 
 {
-	msTiledSHPClose(layer);
-	return MS_SUCCESS;
+  msTiledSHPClose(layer);
+  return MS_SUCCESS;
+}
+
+void msTiledSHPLayerFreeItemInfo(layerObj *layer)
+{
+  if(layer->iteminfo) {
+    free(layer->iteminfo);
+    layer->iteminfo = NULL;
+  }
 }
 
 int msTiledSHPLayerInitItemInfo(layerObj *layer)
@@ -2306,6 +2314,7 @@ int msTiledSHPLayerInitItemInfo(layerObj *layer)
     return MS_FAILURE;
   }
 
+  msTiledSHPLayerFreeItemInfo(layer);
   layer->iteminfo = (int *) msDBFGetItemIndexes(tSHP->shpfile->hDBF, layer->items, layer->numitems);
   if(!layer->iteminfo) return(MS_FAILURE);
 
@@ -2341,14 +2350,6 @@ int msTiledSHPLayerGetExtent(layerObj *layer, rectObj *extent)
 
   *extent = tSHP->tileshpfile->bounds;
   return MS_SUCCESS;
-}
-
-void msTiledSHPLayerFreeItemInfo(layerObj *layer)
-{
-  if(layer->iteminfo) {
-    free(layer->iteminfo);
-    layer->iteminfo = NULL;
-  }
 }
 
 int msTiledSHPLayerIsOpen(layerObj *layer)
@@ -2387,6 +2388,14 @@ int msTiledSHPLayerInitializeVirtualTable(layerObj *layer)
 
 /* SHAPEFILE Layer virtual table functions */
 
+void msShapeFileLayerFreeItemInfo(layerObj *layer) 
+{ 
+  if(layer->iteminfo) {
+    free(layer->iteminfo);
+    layer->iteminfo = NULL;
+  }
+}
+
 int msShapeFileLayerInitItemInfo(layerObj *layer) 
 {
   shapefileObj *shpfile = shpfile = layer->layerinfo;
@@ -2396,6 +2405,7 @@ int msShapeFileLayerInitItemInfo(layerObj *layer)
   }
 
   /* iteminfo needs to be a bit more complex, a list of indexes plus the length of the list */
+  msShapeFileLayerFreeItemInfo(layer);
   layer->iteminfo = (int *) msDBFGetItemIndexes(shpfile->hDBF, layer->items, layer->numitems);
   if( ! layer->iteminfo) {
     return MS_FAILURE;
@@ -2403,16 +2413,6 @@ int msShapeFileLayerInitItemInfo(layerObj *layer)
 
   return MS_SUCCESS;
 }
-
-
-void msShapeFileLayerFreeItemInfo(layerObj *layer) 
-{ 
-  if(layer->iteminfo) {
-    free(layer->iteminfo);
-    layer->iteminfo = NULL;
-  }
-}
-
 
 int msShapeFileLayerOpen(layerObj *layer)
 {

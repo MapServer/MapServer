@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- Fixed memory leak with shapefiles associated with one-pass query implementation (#3188)
+
 - Fix abs/fabs usage that prevented angle follow labels to be discarded if they
   were too wrapped on themselves
 
