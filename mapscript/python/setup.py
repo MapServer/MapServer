@@ -26,15 +26,23 @@ from distutils import sysconfig
 from distutils.command.build_ext import build_ext
 from distutils.ccompiler import get_default_compiler
 from distutils.sysconfig import get_python_inc
-import popen2
+
+try:
+    import subprocess
+except ImportError:
+    import popen2
 
 # 
 # # Function needed to make unique lists.
 def unique(list):
+    ret_list = []
     dict = {}
     for item in list:
-        dict[item] = ''
-    return dict.keys()
+        if not dict.has_key(item):
+            dict[item] = ''
+            ret_list.append( item )
+    return ret_list
+
 
 # ---------------------------------------------------------------------------
 # Default build options
@@ -91,12 +99,18 @@ def get_config(option, config='mapserver-config'):
     if sys.platform == 'win32':
         v = read_mapscriptvars()
         return v[option]
-    
     command = config + " --%s" % option
-    p = popen2.popen3(command)
-    r = p[0].readline().strip()
-    if not r:
-        raise Warning(p[2].readline())
+    try:
+        subprocess
+        command, args = command.split()[0], command.split()[1]
+        p = subprocess.Popen([command, args], stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+        (child_stdout, child_stdin) = (p.stdout, p.stdin)
+        r = child_stdout.read().strip()
+    except NameError:
+        p = popen2.popen3(command)
+        r = p[0].readline().strip()
+        if not r:
+            raise Warning(p[2].readline())
     return r
     
 
@@ -205,7 +219,8 @@ py_modules = ['mapscript',]
 readme = file('README','rb').read()
 
 if not os.path.exists('mapscript_wrap.c') :
-	os.system('swig -python -shadow -modern %s -o mapscript_wrap.c ../mapscript.i' % get_config('defines'))
+    swig_cmd = """swig -python -shadow -modern -templatereduce -fastdispatch -fvirtual -fastproxy -modernargs -castmode -dirvtable -fastinit -fastquery -noproxydel -nobuildnone %s -o mapscript_wrap.c ../mapscript.i"""
+    os.system(swig_cmd % get_config('defines', config='../../mapserver-config'))
 
 classifiers = [
         'Development Status :: 4 - Beta',

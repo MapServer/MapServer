@@ -14,6 +14,12 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Ensure Python MapScript building doesn't reorder the libraries, support the 
+  'subprocess' module where available for setup.py, and default to using the 
+  "super" swig invocation described in the Python MapScript README when 
+  mapscript_wrap.c isn't available on the file system.  #2663 contains the 
+  reordering issue.
+
 - Fixed memory leak with shapefiles associated with one-pass query implementation (#3188)
 
 - Fix abs/fabs usage that prevented angle follow labels to be discarded if they
@@ -29,7 +35,7 @@ Current Version (SVN trunk):
 
 - Added charset in content-type http header for wms/wfs/sos/wcs requests (#2583)
 
-- Python/MapScript: improve compatability for different swig versions (#3180)
+- Python/MapScript: improve compatibility for different swig versions (#3180)
 
 - maprasterquery.c: a few fixes since beta4 (#3181, #3168).
 
