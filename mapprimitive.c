@@ -1742,14 +1742,20 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
             segment_length = segment_lengths[i][j];
 
             /* determine how far along the segment we need to go */
-            t = 1 - (fwd_line_length - text_start_length) / segment_length;
+            if(text_start_length < 0.0)
+              t = text_start_length / segment_length;
+            else
+              t = 1 - (fwd_line_length - text_start_length) / segment_length;
         } else {
             j = final_j;
             inc = -1;
       
             /* length of the segment containing the starting point */
             segment_length = segment_lengths[i][j-1];
-            t = 1 - (rev_line_length - text_end_length) / segment_length;    
+            if(text_start_length < 0.0)
+              t = text_start_length / segment_length;
+            else
+              t = 1 - (rev_line_length - text_end_length) / segment_length;    
         }
     
         distance_along_segment = t * segment_length; /* starting point */
