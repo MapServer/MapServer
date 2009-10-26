@@ -41,6 +41,8 @@ Current Version (SVN trunk):
 
 - maprasterquery.c: a few fixes since beta4 (#3181, #3168).
 
+- mapows.c: Generate WMS LatLongBoundingBox in WGS84 datum (#2578)
+
 
 Version 5.6.0-beta4 (2009-10-18):
 ---------------------------------
