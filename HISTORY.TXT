@@ -14,8 +14,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
-- Applied code clean up patch for mapsearch.c. Results in some modest
-  performance gains in certain query use cases.
+- Applied code clean up patch for mapsearch.c. (#3189)
 
 - Fixed labels centering when the label is longer than the line (#2867)
 
