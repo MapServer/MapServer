@@ -228,56 +228,48 @@ int msIntersectPolylines(shapeObj *line1, shapeObj *line2) {
   for(c1=0; c1<line1->numlines; c1++)
     for(v1=1; v1<line1->line[c1].numpoints; v1++)
       for(c2=0; c2<line2->numlines; c2++)
-  for(v2=1; v2<line2->line[c2].numpoints; v2++)
-    if(msIntersectSegments(&(line1->line[c1].point[v1-1]), &(line1->line[c1].point[v1]), &(line2->line[c2].point[v2-1]), &(line2->line[c2].point[v2])) ==  MS_TRUE)
-      return(MS_TRUE);
+        for(v2=1; v2<line2->line[c2].numpoints; v2++)
+          if(msIntersectSegments(&(line1->line[c1].point[v1-1]), &(line1->line[c1].point[v1]),
+              &(line2->line[c2].point[v2-1]), &(line2->line[c2].point[v2])) ==  MS_TRUE)
+            return(MS_TRUE);
 
   return(MS_FALSE);
 }
 
 int msIntersectPolylinePolygon(shapeObj *line, shapeObj *poly) {
-  int c1,v1,c2,v2;
+  int i;
 
   /* STEP 1: polygon might competely contain the polyline or one of it's parts (only need to check one point from each part) */
-  for(c1=0; c1<line->numlines; c1++) {
-    if(msIntersectPointPolygon(&(line->line[c1].point[0]), poly) == MS_TRUE) /* this considers holes and multiple parts */
+  for(i=0; i<line->numlines; i++) {
+    if(msIntersectPointPolygon(&(line->line[i].point[0]), poly) == MS_TRUE) /* this considers holes and multiple parts */
       return(MS_TRUE);
   }
 
-
   /* STEP 2: look for intersecting line segments */
-  for(c1=0; c1<line->numlines; c1++)
-    for(v1=1; v1<line->line[c1].numpoints; v1++)
-      for(c2=0; c2<poly->numlines; c2++)
-  for(v2=1; v2<poly->line[c2].numpoints; v2++)
-    if(msIntersectSegments(&(line->line[c1].point[v1-1]), &(line->line[c1].point[v1]), &(poly->line[c2].point[v2-1]), &(poly->line[c2].point[v2])) ==  MS_TRUE)
-      return(MS_TRUE);
-  
+  if (msIntersectPolylines(line, poly) == MS_TRUE)
+    return (MS_TRUE);
+
   return(MS_FALSE);
 }
 
 int msIntersectPolygons(shapeObj *p1, shapeObj *p2) {
-  int c1,v1,c2,v2;
+  int i;
 
   /* STEP 1: polygon 1 completely contains 2 (only need to check one point from each part) */
-  for(c2=0; c2<p2->numlines; c2++) {
-    if(msIntersectPointPolygon(&(p2->line[c2].point[0]), p1) == MS_TRUE) /* this considers holes and multiple parts */
+  for(i=0; i<p2->numlines; i++) {
+    if(msIntersectPointPolygon(&(p2->line[i].point[0]), p1) == MS_TRUE) /* this considers holes and multiple parts */
       return(MS_TRUE);
   }
 
   /* STEP 2: polygon 2 completely contains 1 (only need to check one point from each part) */
-  for(c1=0; c1<p1->numlines; c1++) {
-    if(msIntersectPointPolygon(&(p1->line[c1].point[0]), p2) == MS_TRUE) /* this considers holes and multiple parts */
+  for(i=0; i<p1->numlines; i++) {
+    if(msIntersectPointPolygon(&(p1->line[i].point[0]), p2) == MS_TRUE) /* this considers holes and multiple parts */
       return(MS_TRUE);
   }
 
   /* STEP 3: look for intersecting line segments */
-  for(c1=0; c1<p1->numlines; c1++)
-    for(v1=1; v1<p1->line[c1].numpoints; v1++)
-      for(c2=0; c2<p2->numlines; c2++)
-  for(v2=1; v2<p2->line[c2].numpoints; v2++)
-    if(msIntersectSegments(&(p1->line[c1].point[v1-1]), &(p1->line[c1].point[v1]), &(p2->line[c2].point[v2-1]), &(p2->line[c2].point[v2])) ==  MS_TRUE)     
-      return(MS_TRUE);
+  if (msIntersectPolylines(p1, p2) == MS_TRUE)
+    return(MS_TRUE);
 
   /*
   ** At this point we know there are are no intersections between edges. There may be other tests necessary
