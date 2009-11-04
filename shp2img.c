@@ -263,6 +263,8 @@ int main(int argc, char *argv[])
             break;
           }
           else {
+            if (invalid_layer)
+              free(invalid_layer);
             invalid_layer = strdup(layers[j]);
           }
         }
@@ -271,6 +273,8 @@ int main(int argc, char *argv[])
           msCleanup();
           exit(0);
         }
+        if (invalid_layer)
+          free(invalid_layer);
       }
 
       for(j=0; j<map->numlayers; j++) {
