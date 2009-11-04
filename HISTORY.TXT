@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- apply a minimum width on label outline (new outlines were too thin by default)
 
 - don't apply scalefactor to polygon outline widths (but apply the resolutionfactor)
 

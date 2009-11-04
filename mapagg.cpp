@@ -810,7 +810,7 @@ public:
             ras_aa.reset();
             ras_aa.filling_rule(mapserver::fill_non_zero);
             mapserver::conv_contour<mapserver::path_storage> cc(glyphs);
-            cc.width(outlinewidth);
+            cc.width(MS_MAX(2,outlinewidth));
             ras_aa.add_path(cc);
             ren_aa.color(outlinecolor);
             mapserver::render_scanlines(ras_aa, sl_line, ren_aa);
