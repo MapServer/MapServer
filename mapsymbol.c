@@ -329,6 +329,8 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       break;
     case(POINTS):
       done = MS_FALSE;
+      s->sizex = 0;
+      s->sizey = 0;
       for(;;) {
 	switch(msyylex()) { 
 	case(END):

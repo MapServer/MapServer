@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- Fix vector symbol size calculation (#2896)
 
 - Applied code clean up patch for mapsearch.c. (#3189)
 
