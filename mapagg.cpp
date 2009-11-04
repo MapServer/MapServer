@@ -1806,7 +1806,7 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     
     if(style->symbol == 0 || symbol->type==MS_SYMBOL_SIMPLE) {
         // simply draw a solid fill and outline of the specified colors
-        ren->renderPathSolid(*polygons,agg_color,agg_ocolor,width);
+        ren->renderPathSolid(*polygons,agg_color,agg_ocolor,style->width*image->resolutionfactor);
     }
     else {
         switch(symbol->type) {
