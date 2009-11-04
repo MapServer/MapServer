@@ -11,11 +11,13 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
-- apply a minimum width on label outline (new outlines were too thin by default)
+Version 5.6.0-beta5 (2009-11-04):
+---------------------------------
 
-- don't apply scalefactor to polygon outline widths (but apply the resolutionfactor)
+- Apply a minimum width on label outline (new outlines were too thin by default)
+
+- Don't apply scalefactor to polygon outline widths (but apply the 
+  resolutionfactor)
 
 - Fix vector symbol size calculation (#2896)
 
@@ -29,10 +31,11 @@ Current Version (SVN trunk):
   mapscript_wrap.c isn't available on the file system.  #2663 contains the 
   reordering issue.
 
-- Fixed memory leak with shapefiles associated with one-pass query implementation (#3188)
+- Fixed memory leak with shapefiles associated with one-pass query 
+  implementation (#3188)
 
-- Fix abs/fabs usage that prevented angle follow labels to be discarded if they
-  were too wrapped on themselves
+- Fix abs/fabs usage that prevented angle follow labels to be discarded if 
+  they were too wrapped on themselves
 
 - Allow CGI mapshape and imgshape variables to consume WKT strings (#3185)
 
