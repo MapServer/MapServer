@@ -12274,7 +12274,7 @@ echo "${ECHO_T}requested." >&6
     FASTCGI_INC=""
     FASTCGI_LIB="-lfcgi"
   else
-    FASTCGI_INC="-I$with_fastcgi/include"
+    FASTCGI_INC="-I$with_fastcgi/include -I$with_fastcgi/include/fastcgi"
     FASTCGI_LIB="-L$with_fastcgi/lib -lfcgi"
   fi
 

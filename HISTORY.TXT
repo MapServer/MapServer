@@ -16,6 +16,9 @@ Current Version (SVN trunk):
 
 - Fixed buffer overflow in oracle spatial driver with large sql data (#2694)
 
+- Improve FastCGI include file finding logic (#3200)
+
+
 Version 5.6.0-beta5 (2009-11-04):
 ---------------------------------
 
