@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed when saving a map, layer->transform isn't written properly in all cases. (#3198)
+
 - Fixed buffer overflow in oracle spatial driver with large sql data (#2694)
 
 - Improve FastCGI include file finding logic (#3200)

@@ -3477,7 +3477,27 @@ static void writeLayer(layerObj *layer, FILE *stream)
 
   if(layer->tolerance != -1) fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
   if(layer->toleranceunits != MS_PIXELS) fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
-  if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
+  if(layer->transform == MS_FALSE) 
+      fprintf(stream, "    TRANSFORM FALSE\n");
+  else if (layer->transform == MS_UL)
+      fprintf(stream, "    TRANSFORM UL\n");
+  else if (layer->transform == MS_UC)
+      fprintf(stream, "    TRANSFORM UC\n");
+  else if (layer->transform == MS_UR)
+      fprintf(stream, "    TRANSFORM UR\n");
+  else if (layer->transform == MS_CL)
+      fprintf(stream, "    TRANSFORM CL\n");
+  else if (layer->transform == MS_CC)
+      fprintf(stream, "    TRANSFORM CC\n");
+  else if (layer->transform == MS_CR)
+      fprintf(stream, "    TRANSFORM CR\n");
+  else if (layer->transform == MS_LL)
+      fprintf(stream, "    TRANSFORM LL\n");
+  else if (layer->transform == MS_LC)
+      fprintf(stream, "    TRANSFORM LC\n");
+  else if (layer->transform == MS_LR)
+      fprintf(stream, "    TRANSFORM LR\n");
+
 
   if(layer->opacity == MS_GD_ALPHA) 
     fprintf(stream, "    OPACITY ALPHA\n");
