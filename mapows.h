@@ -108,6 +108,7 @@ typedef struct
   char *pszFeatureId;
   char *pszSrs;
   char *pszResultType;
+  char *pszPropertyName;
 } wfsParamsObj;
 
 /*

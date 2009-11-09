@@ -1022,6 +1022,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   int iResultTypeHits = 0;
   
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
+  char **papszPropertyName = NULL;
+  int nPropertyNames = 0;
 
   /* Default filter is map extents */
   bbox = map->extent;
@@ -1048,10 +1050,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   }
 
   if(paramsObj->pszTypeName) {
-    int j, k;
+    int j, k, z;
     const char *pszMapSRS = NULL;
     char **tokens;
     int n=0, i=0;
+    char szTmp[256];
+    const char *pszFullName = NULL;
 
     /* keep a ref for layer use. */
     typename = paramsObj->pszTypeName;
@@ -1064,7 +1068,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     
     /* ==================================================================== */
     /*      TODO: check if the typename contains namespaces (ex cdf:Other), */
-    /*      If that is the case extarct only the layer name.                */
+    /*      If that is the case extract only the layer name.                */
     /* ==================================================================== */
     
     if (layers==NULL || numlayers < 1) {
@@ -1107,7 +1111,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       
       for (j=0; j<map->numlayers; j++) {
 	layerObj *lp;
-	
+        char   *pszPropertyName = NULL;
+
 	lp = GET_LAYER(map, j);
 	
 	if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, layers[k]) == 0) {
@@ -1121,6 +1126,91 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	    lp->template = strdup("ttt.html");
 	  }
 
+          /* set the gml_include_items METADATA */
+          if (paramsObj->pszPropertyName) 
+          {
+              pszPropertyName = paramsObj->pszPropertyName;
+
+              /*we parse the propertyname parameter only once*/
+              if (papszPropertyName == NULL)
+              {
+                  if (strlen(pszPropertyName) > 0 && pszPropertyName[0] == '(') 
+                  {
+                      tokens = msStringSplit(pszPropertyName+1, '(', &nPropertyNames);
+                      /*expecting to always have a list of property names equal to
+                        the number of layers(typename)*/
+                      if (nPropertyNames != numlayers)
+                      {
+                          if (tokens) 
+                            msFreeCharArray(tokens, nPropertyNames);
+                          msSetError(MS_WFSERR, 
+                                     "Optional PROPERTYNAME parameter. A list of properties may be specified for each type name. Example TYPENAME=name1&name2&PROPERTYNAME=(prop1,prop2)(prop1)", 
+                                     "msWFSGetFeature()");
+                          return msWFSException(map, "PROPERTYNAME", "InvalidParameterValue", paramsObj->pszVersion);
+                      }
+                      
+                      papszPropertyName = (char **)malloc(sizeof(char *)*nPropertyNames);
+                      for (i=0; i<nPropertyNames; i++) 
+                      {
+                          if (strlen(tokens[i]) > 0)
+                          {
+                              papszPropertyName[i] = strdup(tokens[i]);
+                              /* remove trailing ) */
+                              papszPropertyName[i][strlen(papszPropertyName[i])-1] = '\0';
+                          }
+                          else
+                            papszPropertyName[i] = NULL; /*should return an error*/
+                      }
+                      if (tokens) 
+                        msFreeCharArray(tokens, nPropertyNames);
+                  }
+                  else
+                  {
+                      msSetError(MS_WFSERR, 
+                                     "Optional PROPERTYNAME parameter. A list of properties may be specified for each type name. Example TYPENAME=name1&name2&PROPERTYNAME=(prop1,prop2)(prop1)", 
+                                     "msWFSGetFeature()");
+                          return msWFSException(map, "PROPERTYNAME", "InvalidParameterValue", paramsObj->pszVersion);
+                  }
+              }
+              /*do an alias replace for the current layer*/
+              if (papszPropertyName && msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) 
+              {
+                  for(z=0; z<lp->numitems; z++) 
+                  {
+                      if (!lp->items[z] || strlen(lp->items[z]) <= 0)
+                        continue;
+                      sprintf(szTmp, "%s_alias", lp->items[z]);
+                      pszFullName = msOWSLookupMetadata(&(lp->metadata), "G", szTmp);
+                      if (pszFullName)
+                        papszPropertyName[k] = msReplaceSubstring(papszPropertyName[i], pszFullName, lp->items[z]);
+                  
+                  }
+              } 
+                      
+
+              if (papszPropertyName) 
+              {
+                  if (strlen(papszPropertyName[k]) > 0)
+                  {
+                      msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", papszPropertyName[k]);
+
+                      /* exclude geometry if it was not asked for */
+                      if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL) 
+                        sprintf(szTmp, "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
+                      else
+                        sprintf(szTmp, OWS_GML_DEFAULT_GEOMETRY_NAME);
+                  
+                      if (strstr(papszPropertyName[k], szTmp) == NULL) 
+                        msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+                  }
+                  else /*empty string*/
+                     msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+
+              }
+          }
+              
+
+          
 	  /* See comments in msWFSGetCapabilities() about the rules for SRS. */
 	  if ((pszThisLayerSRS = pszMapSRS) == NULL) {
 	    pszThisLayerSRS = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
@@ -1183,6 +1273,14 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       }
     }
   }
+  if (papszPropertyName && nPropertyNames > 0)
+  {
+    for (i=0; i<nPropertyNames; i++)
+      msFree(papszPropertyName[i]);
+
+    msFree(papszPropertyName);
+  }
+
 
   /* Validate outputformat */
   if (paramsObj->pszOutputFormat) {
@@ -2013,6 +2111,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
 
                  else if (strcasecmp(request->ParamNames[i], "FEATUREID") == 0)
                   wfsparams->pszFeatureId = strdup(request->ParamValues[i]);
+                
+                else if (strcasecmp(request->ParamNames[i], "PROPERTYNAME") == 0)
+                  wfsparams->pszPropertyName = strdup(request->ParamValues[i]);
             }
         }
         /* version is optional is the GetCapabilities. If not */
@@ -2028,12 +2129,12 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
 #ifdef USE_OGR
     if (request->postrequest)
     {
-        CPLXMLNode *psRoot, *psQuery, *psFilter, *psTypeName = NULL;
+        CPLXMLNode *psRoot, *psQuery, *psFilter, *psTypeName,  *psPropertyName  = NULL;
         CPLXMLNode *psGetFeature = NULL;
         CPLXMLNode  *psGetCapabilities = NULL;
         CPLXMLNode *psDescribeFeature = NULL;
         CPLXMLNode *psOperation = NULL;
-        char *pszValue, *pszSerializedFilter, *pszTmp = NULL;
+        char *pszValue, *pszSerializedFilter, *pszTmp, *pszTmp2 = NULL;
         int bMultiLayer = 0;
 
         psRoot = CPLParseXMLString(request->postrequest);
@@ -2142,6 +2243,7 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
 /*      typenames will be build with comma between thme                 */
 /*      (typename1,typename2,...) and filters will be build with        */
 /*      bracets enclosinf the filters :(filter1)(filter2)...            */
+/*      propertynames are stored like (property1,property2)(property1)  */
 /* -------------------------------------------------------------------- */
                     while (psQuery &&  psQuery->pszValue && 
                            strcasecmp(psQuery->pszValue, "Query") == 0)
@@ -2173,7 +2275,59 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                                 free(pszTmp);
                             }
                         }
+                        
+                        /*parse property name*/
+                        psPropertyName = CPLGetXMLNode(psQuery, "PropertyName");
+                        pszTmp2= NULL;
 
+                        /*when there is no PropertyName, we outpout () so that it is parsed properly in GetFeature*/
+                        if (psPropertyName == NULL)
+                          pszTmp2 = strdup("");
+
+                        while (psPropertyName)
+                        {
+                            if (!psPropertyName->pszValue || 
+                                strcasecmp(psPropertyName->pszValue, "PropertyName") != 0)
+                            {
+                                psPropertyName = psPropertyName->psNext;
+                                continue;
+                            }
+                            pszValue = (char *) CPLGetXMLValue(psPropertyName, NULL, NULL);
+                            if (pszTmp2 == NULL) {
+                                pszTmp2 = strdup(pszValue);
+                            } 
+                            else 
+                            {
+                                pszTmp = strdup(pszTmp2);
+                                pszTmp2 = (char *)realloc(pszTmp2, sizeof(char)* (strlen(pszTmp)+ strlen(pszValue)+2));
+                                sprintf(pszTmp2,"%s,%s",pszTmp, pszValue);
+                                msFree(pszTmp);
+                            }
+                            psPropertyName = psPropertyName->psNext;
+                        }
+                        if (pszTmp2)
+                        {
+                            pszTmp = strdup(pszTmp2);
+                            pszTmp2 = (char *)realloc(pszTmp2, sizeof(char)* (strlen(pszTmp)+ 3));
+                            sprintf(pszTmp2,"(%s)", pszTmp);
+                            msFree(pszTmp);
+
+                            if (wfsparams->pszPropertyName == NULL)
+                              wfsparams->pszPropertyName = strdup(pszTmp2);
+                            else
+                            {
+                                pszTmp = strdup(wfsparams->pszPropertyName);
+                                wfsparams->pszPropertyName =
+                                  (char *)realloc(wfsparams->pszPropertyName,
+                                                  sizeof(char)*(strlen(pszTmp)+ strlen(pszTmp2)+1));
+                                sprintf(wfsparams->pszPropertyName,"%s%s",wfsparams->pszPropertyName,
+                                        pszTmp2);
+                                msFree(pszTmp);
+                            }
+                            msFree(pszTmp2);
+                            pszTmp2 = NULL;
+                        }
+                            
                         /* parse filter */
                         psFilter = CPLGetXMLNode(psQuery, "Filter");
 
