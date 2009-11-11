@@ -1941,7 +1941,9 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             if(!font)
                 break;
             double gap=(symbol->gap>0)?symbol->gap*size:0;
-            ren->renderPathTruetypeTiled(*polygons,font,(unsigned int)((unsigned char)symbol->character[0]),size,
+            int unicode;
+            msUTF8ToUniChar(symbol->character, &unicode);
+            ren->renderPathTruetypeTiled(*polygons,font,unicode,size,
                     gap,agg_color,agg_bcolor,agg_ocolor);
             //FIXME: allow drawing an outline on the polygon to avoid
             //faint outlines
