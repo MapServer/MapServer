@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- [WMC] embedded SLD in context does not work with namespace prefix (#3115)
+
 - Support name aliases used in sld text symbolizer (#3114)
 
 - decode html and unicode entities for polygon truetype symbol fills

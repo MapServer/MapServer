@@ -549,6 +549,11 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
   sprintf(pszStyle, "wms_style_%s_sld_body", pszStyleName);
 
   psStyleSLDBody = CPLGetXMLNode(psStyle, "SLD.StyledLayerDescriptor");
+  /*some clients such as OpenLayers add a name space, which I believe is wrong but
+   added this additional test for compatibility #3115*/
+  if (psStyleSLDBody == NULL)
+    psStyleSLDBody = CPLGetXMLNode(psStyle, "SLD.sld:StyledLayerDescriptor");
+
   if(psStyleSLDBody != NULL && &(layer->metadata) != NULL)
   {
       pszValue = CPLSerializeXMLTree(psStyleSLDBody);
