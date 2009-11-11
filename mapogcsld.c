@@ -145,7 +145,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
     int nLayers = 0;
     layerObj *pasLayers = NULL;
-    int i, j, k, iClass;
+    int i, j, k, z, iClass;
     int bUseSpecificLayer = 0;
     int bSuccess =0;
     const char *pszTmp = NULL;
@@ -153,6 +153,10 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     int nLayerStatus = 0;
     /*const char *pszSLDNotSupported = NULL;*/
     char *tmpfilename = NULL;
+    const char *pszFullName = NULL; 
+    char szTmp[256]; 
+    char *pszTmp1=NULL;
+    char *pszTmp2 = NULL; 
 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
 
@@ -220,6 +224,35 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                             GET_LAYER(map, i)->class[iClass]->layer = GET_LAYER(map, i);
                             GET_LAYER(map, i)->class[iClass]->type = GET_LAYER(map, i)->type;
                             GET_LAYER(map, i)->numclasses++;
+                            
+                            /*aliases may have been used as part of the sld text symbolizer for
+                              label element. Try to process it if that is the case #3114*/
+                            if (msLayerOpen(GET_LAYER(map, i)) == MS_SUCCESS && 
+                                msLayerGetItems(GET_LAYER(map, i)) == MS_SUCCESS) 
+                            { 
+                                if (GET_LAYER(map, i)->class[iClass]->text.string)
+                                {
+                                    for(z=0; z<GET_LAYER(map, i)->numitems; z++) 
+                                    { 
+                                        if (!GET_LAYER(map, i)->items[z] || strlen(GET_LAYER(map, i)->items[z]) <= 0) 
+                                          continue; 
+                                        sprintf(szTmp, "%s_alias", GET_LAYER(map, i)->items[z]); 
+                                        pszFullName = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "G", szTmp); 
+                                        pszTmp1 = strdup( GET_LAYER(map, i)->class[iClass]->text.string);
+                                        if (pszFullName != NULL && (strstr(pszTmp1, pszFullName) != NULL)) 
+                                        { 
+                                            char *tmpstr1= NULL; 
+                                            tmpstr1 = msReplaceSubstring(pszTmp1, pszFullName, GET_LAYER(map, i)->items[z]); 
+                                            pszTmp2 = (char *)malloc(sizeof(char)*(strlen(tmpstr1)+3)); 
+                                            sprintf(pszTmp2,"(%s)",tmpstr1); 
+                                            msLoadExpressionString(&(GET_LAYER(map, i)->class[iClass]->text), pszTmp2); 
+                                            msFree(pszTmp2); 
+                                        } 
+                                        msFree(pszTmp1);
+                                    }
+                                }
+                            } 
+
                             iClass++;
                         }
                     }
@@ -2864,25 +2897,13 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                     pszClassText = msStringConcatenate(pszClassText, "])");
                 }
             }
-            /*
-            psPropertyName = CPLGetXMLNode(psLabel, "PropertyName");
-            if (psPropertyName && psPropertyName->psChild &&
-                psPropertyName->psChild->pszValue)
-              pszItem = psPropertyName->psChild->pszValue;
-            else if (psLabel->psChild && psLabel->psChild->pszValue)
-              pszItem = psLabel->psChild->pszValue;
-            */
+            
             if (pszClassText) /* pszItem) */
             {
-                /* if (psLayer->labelitem)
-                   free (psLayer->labelitem);
-                   psLayer->labelitem = strdup(pszItem);
-                */
-
                 
-
                 msLoadExpressionString(&psClass->text, pszClassText);
                 free(pszClassText);
+
                 /* font */
                 psFont = CPLGetXMLNode(psRoot, "Font");
                 if (psFont)
