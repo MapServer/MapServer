@@ -18,7 +18,7 @@ Current Version (SVN trunk):
 
 - Support name aliases used in sld text symbolizer (#3114)
 
-- decode html and unicode entities for polygon truetype symbol fills
+- decode html and unicode entities for polygon truetype symbol fills (#3203)
 
 - Parse PropertyName parameter for wfs requests (#675)
 
