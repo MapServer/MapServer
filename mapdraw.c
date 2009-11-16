@@ -1121,6 +1121,10 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if(!msLayerIsVisible(map, layer)) return(MS_SUCCESS); /* not an error, just nothing to do */
 
+  /* conditions may have changed since this layer last drawn, so set
+     layer->project true to recheck projection needs (Bug #673) */
+  layer->project = MS_TRUE;
+
   if( layer->type == MS_LAYER_RASTER ) {
     msSetError( MS_QUERYERR, "Unable to draw raster layers (such as %s) as part of a query result.", "msDrawQueryLayer()", layer->name );
     return MS_FAILURE;

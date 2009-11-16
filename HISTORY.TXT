@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- layer->project flag not being reset properly for drawquerylayer (#673 #2079)
+
 - OGC SLD: support multi-polygons geometries for filters embedded in an SLD (#3097)
 
 - [WMC] embedded SLD in context does not work with namespace prefix (#3115)
