@@ -901,7 +901,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     mapserv->LRN++;
   }
 
-  msLayerClose(layer);
+  // msLayerClose(layer);
   mapserv->resultlayer = NULL; /* necessary? */
 
   *line = msStringConcatenate(*line, postTag);
