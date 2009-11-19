@@ -120,6 +120,8 @@ typedef
 		OCISvcCtx *svchp;
 		int last_oci_status;
 		text last_oci_error[2048];
+	        /* This references counter is to avoid the cache freed if there are other layers that could use it */
+	        int ref_count;
 	} msOracleSpatialHandler;
 
 typedef
@@ -592,6 +594,7 @@ static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password,
     }
     memset( hand, 0, sizeof(msOracleSpatialHandler) );
 
+    hand->ref_count = 1;
     hand->last_oci_status = MS_SUCCESS;
     hand->last_oci_error[0] = (text)'\0';
 
@@ -1791,6 +1794,7 @@ int msOracleSpatialLayerOpen( layerObj *layer )
     }
     else
     {
+        hand->ref_count++;
         hand->last_oci_status = MS_SUCCESS;
         hand->last_oci_error[0] = (text)'\0';
     }
@@ -1865,6 +1869,11 @@ int msOracleSpatialLayerClose( layerObj *layer )
           msDebug("msOracleSpatialLayerClose. Cleaning layerinfo handlers.\n");
         msOCICloseDataHandlers( layerinfo->oradatahandlers );
         layerinfo->oradatahandlers = NULL;
+
+	/* Free the OCI cache only if there is no more layer that could use it */
+	layerinfo->orahandlers->ref_count--;
+	if (layerinfo->orahandlers->ref_count == 0)
+	  OCICacheFree (layerinfo->orahandlers->envhp, layerinfo->orahandlers->errhp, layerinfo->orahandlers->svchp);
 
         /* Release Mapserver Pool */
         if (layer->debug)
