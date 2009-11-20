@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Added simplfy and topologyPreservingSimplify to MapScript (#2753)
+
 - Fixed Oracle FastCGI memory leak (#3187)
  
 - layer->project flag not being reset properly for drawquerylayer (#673 #2079)

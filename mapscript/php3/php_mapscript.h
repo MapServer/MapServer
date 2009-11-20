@@ -261,6 +261,8 @@ pointObj        *shapeObj_getpointusingmeasure(shapeObj *self, double m);
 pointObj        *shapeObj_getmeasureusingpoint(shapeObj *self, pointObj *point);
 
 shapeObj        *shapeObj_buffer(shapeObj *self, double width);
+shapeObj        *shapeObj_simplify(shapeObj *self, double tolerance);
+shapeObj        *shapeObj_topologypreservingsimplify(shapeObj *self, double tolerance);
 shapeObj        *shapeObj_convexHull(shapeObj *self);
 shapeObj        *shapeObj_boundary(shapeObj *self);
 int             shapeObj_contains_geos(shapeObj *self, shapeObj *poshape);

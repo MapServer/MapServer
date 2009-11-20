@@ -2346,6 +2346,8 @@ MS_DLL_EXPORT shapeObj *msGEOSShapeFromWKT(const char *string);
 MS_DLL_EXPORT char *msGEOSShapeToWKT(shapeObj *shape);
 
 MS_DLL_EXPORT shapeObj *msGEOSBuffer(shapeObj *shape, double width);
+MS_DLL_EXPORT shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance);
+MS_DLL_EXPORT shapeObj *msGEOSTopologyPreservingSimplify(shapeObj *shape, double tolerance);
 MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
 MS_DLL_EXPORT shapeObj *msGEOSBoundary(shapeObj *shape);
 MS_DLL_EXPORT pointObj *msGEOSGetCentroid(shapeObj *shape);

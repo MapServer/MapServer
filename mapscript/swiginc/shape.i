@@ -123,6 +123,12 @@
     %newobject buffer;
     shapeObj *buffer(double width) { return msGEOSBuffer(self, width); }
 
+    %newobject simplify;
+    shapeObj *simplify(double tolerance) { return msGEOSSimplify(self, tolerance); }
+
+    %newobject topologyPreservingSimplify;
+    shapeObj *topologyPreservingSimplify(double tolerance) { return msGEOSTopologyPreservingSimplify(self, tolerance); }
+
     %newobject convexHull;
     shapeObj *convexHull() { return msGEOSConvexHull(self); }
 

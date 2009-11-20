@@ -667,6 +667,50 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
 #endif
 }
 
+shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
+{
+#ifdef USE_GEOS
+  GEOSGeom g1, g2; 
+
+  if(!shape) 
+    return NULL;
+
+  if(!shape->geometry) /* if no geometry for the shape then build one */
+    shape->geometry = (GEOSGeom) msGEOSShape2Geometry(shape);
+
+  g1 = (GEOSGeom) shape->geometry;
+  if(!g1) return NULL;
+  
+  g2 = GEOSSimplify(g1, tolerance);
+  return msGEOSGeometry2Shape(g2);
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSTopologyPreservingSimplifier()");
+  return NULL;
+#endif
+}
+
+shapeObj *msGEOSTopologyPreservingSimplify(shapeObj *shape, double tolerance)
+{
+#ifdef USE_GEOS
+  GEOSGeom g1, g2; 
+
+  if(!shape) 
+    return NULL;
+
+  if(!shape->geometry) /* if no geometry for the shape then build one */
+    shape->geometry = (GEOSGeom) msGEOSShape2Geometry(shape);
+
+  g1 = (GEOSGeom) shape->geometry;
+  if(!g1) return NULL;
+  
+  g2 = GEOSTopologyPreserveSimplify(g1, tolerance);
+  return msGEOSGeometry2Shape(g2);
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSTopologyPreservingSimplifier()");
+  return NULL;
+#endif
+}
+
 shapeObj *msGEOSConvexHull(shapeObj *shape)
 {
 #ifdef USE_GEOS

@@ -303,6 +303,8 @@ DLEXPORT void php3_ms_shape_setbounds(INTERNAL_FUNCTION_PARAMETERS);
 
 /*geos related functions*/
 DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_topologypreservingsimplify(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_simplify(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_convexhull(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_boundary(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_Union(INTERNAL_FUNCTION_PARAMETERS);
@@ -907,6 +909,8 @@ function_entry php_shape_class_functions[] = {
     {"getpointusingmeasure", php3_ms_shape_getpointusingmeasure, NULL},
     {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint, NULL},
     {"buffer",          php3_ms_shape_buffer,           NULL},
+    {"topologypreservingsimplify", php3_ms_shape_topologypreservingsimplify, NULL},
+    {"simplify",        php3_ms_shape_simplify,         NULL},
     {"convexhull",      php3_ms_shape_convexhull,       NULL},
     {"boundary",        php3_ms_shape_boundary,         NULL},
     {"containsshape",   php3_ms_shape_contains_geos,    NULL},
@@ -12053,6 +12057,89 @@ DLEXPORT void php3_ms_shape_buffer(INTERNAL_FUNCTION_PARAMETERS)
       RETURN_FALSE;
 
     return_shape = shapeObj_buffer(self, pWidth->value.dval);
+    if (return_shape  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_shape_object(return_shape, 
+                              PHPMS_GLOBAL(le_msshape_new), NULL,
+                              list, return_value TSRMLS_CC);
+}
+ 
+
+
+/**********************************************************************
+ *                        shape->topologypreservingsimplify(tolerance)
+ **********************************************************************/
+/* {{{ proto int shape.topologypreservingsimplify(double tolerance)
+   Given a shape and a tolerance, return a simplified shape object using 
+   underlying GEOS library*/
+
+DLEXPORT void php3_ms_shape_topologypreservingsimplify(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pTolerance;
+    shapeObj     *self = NULL;
+    shapeObj    *return_shape = NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pTolerance) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_double(pTolerance);
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    return_shape = shapeObj_topologypreservingsimplify(self, 
+                                                     pTolerance->value.dval);
+    if (return_shape  == NULL)
+       RETURN_FALSE;
+        
+    _phpms_build_shape_object(return_shape, 
+                              PHPMS_GLOBAL(le_msshape_new), NULL,
+                              list, return_value TSRMLS_CC);
+}
+
+/**********************************************************************
+ *                        shape->simplify(tolerance)
+ **********************************************************************/
+/* {{{ proto int shape.simplify(double tolerance)
+   Given a shape and a tolerance, return a simplified shape object using 
+   underlying GEOS library*/
+
+DLEXPORT void php3_ms_shape_simplify(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pTolerance;
+    shapeObj     *self = NULL;
+    shapeObj    *return_shape = NULL;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pTolerance) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_double(pTolerance);
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list TSRMLS_CC);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    return_shape = shapeObj_simplify(self, pTolerance->value.dval);
     if (return_shape  == NULL)
        RETURN_FALSE;
         

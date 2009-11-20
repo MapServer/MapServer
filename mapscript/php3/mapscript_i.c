@@ -1080,6 +1080,18 @@ shapeObj *shapeObj_buffer(shapeObj *self, double width)
     return msGEOSBuffer(self, width);
 }
 
+
+shapeObj *shapeObj_simplify(shapeObj *self, double tolerance)
+{
+    return msGEOSSimplify(self, tolerance);
+}
+
+
+shapeObj *shapeObj_topologypreservingsimplify(shapeObj *self, double tolerance)
+{
+    return msGEOSTopologyPreservingSimplify(self, tolerance);
+}
+
  
 shapeObj *shapeObj_convexHull(shapeObj *self)
 {
