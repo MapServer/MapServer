@@ -627,8 +627,6 @@ static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password,
 /* disconnect from database */
 static void msOCICloseHandlers( msOracleSpatialHandler *hand )
 {
-    if (hand->envhp != NULL && hand->errhp != NULL && hand->svchp != NULL)
-        OCICacheFree (hand->envhp,hand->errhp,hand->svchp);
     if (hand->svchp != NULL)
         OCILogoff( hand->svchp, hand->errhp );
     if (hand->errhp != NULL)
