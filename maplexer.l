@@ -48,7 +48,8 @@ char path[MS_MAXPATHLEN];
 %s MSSTR
 
 %%
-       char string_buf[1024];
+       char *string_buf=NULL;
+       int exp_string_size=1024;
        char *string_buf_ptr=NULL;
 
        switch(msyystate) {
@@ -509,15 +510,16 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>\"|\'     		       {
 						 /* Beginning of a new String, skip the quote and enter the MSSTR context */
 						 int idx=0;
+						 string_buf = (char*) malloc(sizeof(char) * exp_string_size);
 						 msyytext++;
-						 for(idx=0; idx<1024; string_buf[idx++]='\0');
+						 for(idx=0; idx<exp_string_size; string_buf[idx++]='\0');
 						 string_buf_ptr = string_buf;
 						 BEGIN(MSSTR);
                                                }
 											   
 <MSSTR>\\(.|\n)  			       {
 						  /* Escape code: skip the slash and use the escaped char */
-						  if(strlen(string_buf) < (1024-2))
+						  if(strlen(string_buf) < (exp_string_size-2))
 						    *string_buf_ptr++ = msyytext[1];
 						}
 
@@ -531,20 +533,25 @@ char path[MS_MAXPATHLEN];
 						  *string_buf_ptr = '\0';
 						  msyylval.strval = strdup(string_buf);
 						  msyytext++;
+                                                  free(string_buf);
 						  return(STRING);
 						}
 
 <MSSTR>[^\\\"\\\']+        			{
 						  char *yptr = msyytext;
-							
-						  /*
-						    when the text is longer than the buffer we simply discard it.
-						    TODO: This should be improved.
-						  */
-						  while ( *yptr && strlen(string_buf) < (1024-1) ) {
-						    *string_buf_ptr = *yptr;
+                                                  int i=0;
+						  while ( *yptr ) {
+                                                    if (i == exp_string_size) {
+                                                      exp_string_size *= 2;
+                                                      string_buf = (char *) realloc(string_buf,sizeof(char *) * exp_string_size);
+                                                      /* update the pointer */
+                                                      string_buf_ptr = string_buf;
+                                                      string_buf_ptr += (exp_string_size/2);
+                                                    }                                                
+                                                    *string_buf_ptr = *yptr;
 						    string_buf_ptr++;
 						    yptr++;
+                                                    ++i;
 						  }
 						}
 
