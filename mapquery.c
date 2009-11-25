@@ -847,7 +847,7 @@ int msQueryByFeatures(mapObj *map)
       tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
     else
       tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
-   
+
     /* open this layer */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -884,17 +884,17 @@ int msQueryByFeatures(mapObj *map)
       /* identify target shapes */
       searchrect = selectshape.bounds;
 
+      searchrect.minx -= tolerance; /* expand the search box to account for layer tolerances (e.g. buffered searches) */
+      searchrect.maxx += tolerance;
+      searchrect.miny -= tolerance;
+      searchrect.maxy += tolerance;
+
 #ifdef USE_PROJ
       if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))      
 	msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
       else
 	lp->project = MS_FALSE;
 #endif
-
-      searchrect.minx -= tolerance; /* expand the search box to account for layer tolerances (e.g. buffered searches) */
-      searchrect.maxx += tolerance;
-      searchrect.miny -= tolerance;
-      searchrect.maxy += tolerance;
 
       status = msLayerWhichShapes(lp, searchrect);
       if(status == MS_DONE) { /* no overlap */
@@ -1334,17 +1334,18 @@ int msQueryByShape(mapObj *map)
 
     /* identify target shapes */
     searchrect = qshape->bounds;
+
+    searchrect.minx -= tolerance; /* expand the search box to account for layer tolerances (e.g. buffered searches) */
+    searchrect.maxx += tolerance;
+    searchrect.miny -= tolerance;
+    searchrect.maxy += tolerance;
+
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
     else
       lp->project = MS_FALSE;
 #endif
-
-    searchrect.minx -= tolerance; /* expand the search box to account for layer tolerances (e.g. buffered searches) */
-    searchrect.maxx += tolerance;
-    searchrect.miny -= tolerance;
-    searchrect.maxy += tolerance;
 
     status = msLayerWhichShapes(lp, searchrect);
     if(status == MS_DONE) { /* no overlap */

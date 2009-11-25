@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed a problem with shape-based queries against projected layers when using a tolerance (#3211)
+
 - Fixed long expression evaluation (#2123) 
 
 - Added simplfy and topologyPreservingSimplify to MapScript (#2753)
