@@ -11,10 +11,11 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
+Version 5.6.0-rc1 (2009-11-27):
+-------------------------------
 
-- Fixed a problem with shape-based queries against projected layers when using a tolerance (#3211)
+- Fixed a problem with shape-based queries against projected layers when 
+  using a tolerance (#3211)
 
 - Fixed long expression evaluation (#2123) 
 
@@ -24,7 +25,8 @@ Current Version (SVN trunk):
  
 - layer->project flag not being reset properly for drawquerylayer (#673 #2079)
 
-- OGC SLD: support multi-polygons geometries for filters embedded in an SLD (#3097)
+- OGC SLD: support multi-polygons geometries for filters embedded in 
+  an SLD (#3097)
 
 - [WMC] embedded SLD in context does not work with namespace prefix (#3115)
 
@@ -34,7 +36,8 @@ Current Version (SVN trunk):
 
 - Parse PropertyName parameter for wfs requests (#675)
 
-- Fixed when saving a map, layer->transform isn't written properly in all cases. (#3198)
+- Fixed when saving a map, layer->transform isn't written properly in 
+  all cases. (#3198)
 
 - Fixed buffer overflow in oracle spatial driver with large sql data (#2694)
 
