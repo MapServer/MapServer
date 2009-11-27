@@ -1319,6 +1319,12 @@ if test -n "$with_geos" -a "$with_geos" != "no" ; then
 
   GEOS_ENABLED=-DUSE_GEOS
 
+  dnl GEOS 3.0+ required for GEOSSimplify
+  if test 300000 -le $ac_geos_version  ; then
+    AC_MSG_RESULT([GEOS >= 3.0.0 found. Adding -DGEOS_HAS_SIMPLIFY])
+    GEOS_ENABLED="$GEOS_ENABLED -DGEOS_HAS_SIMPLIFY"
+  fi
+
   GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
   GEOS_LIB="`$GEOS_CONFIG --libs`_c"
