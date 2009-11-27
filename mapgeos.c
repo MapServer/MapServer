@@ -669,7 +669,7 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
 
 shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
 {
-#ifdef USE_GEOS
+#if defined(USE_GEOS) && defined(GEOS_HAS_SIMPLIFY)
   GEOSGeom g1, g2; 
 
   if(!shape) 
@@ -684,14 +684,14 @@ shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
   g2 = GEOSSimplify(g1, tolerance);
   return msGEOSGeometry2Shape(g2);
 #else
-  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSTopologyPreservingSimplifier()");
+  msSetError(MS_GEOSERR, "GEOS Simplify support is not available.", "msGEOSTopologyPreservingSimplifier()");
   return NULL;
 #endif
 }
 
 shapeObj *msGEOSTopologyPreservingSimplify(shapeObj *shape, double tolerance)
 {
-#ifdef USE_GEOS
+#if defined(USE_GEOS) && defined(GEOS_HAS_SIMPLIFY)
   GEOSGeom g1, g2; 
 
   if(!shape) 
@@ -706,7 +706,7 @@ shapeObj *msGEOSTopologyPreservingSimplify(shapeObj *shape, double tolerance)
   g2 = GEOSTopologyPreserveSimplify(g1, tolerance);
   return msGEOSGeometry2Shape(g2);
 #else
-  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSTopologyPreservingSimplifier()");
+  msSetError(MS_GEOSERR, "GEOS Simplify support is not available.", "msGEOSTopologyPreservingSimplifier()");
   return NULL;
 #endif
 }

@@ -10919,6 +10919,12 @@ echo "$as_me: error: geos-config reports version ${geos_major_version}.${geos_mi
 
   GEOS_ENABLED=-DUSE_GEOS
 
+    if test 300000 -le $ac_geos_version  ; then
+    echo "$as_me:$LINENO: result: GEOS >= 3.0.0 found. Adding -DGEOS_HAS_SIMPLIFY" >&5
+echo "${ECHO_T}GEOS >= 3.0.0 found. Adding -DGEOS_HAS_SIMPLIFY" >&6
+    GEOS_ENABLED="$GEOS_ENABLED -DGEOS_HAS_SIMPLIFY"
+  fi
+
   GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
   GEOS_LIB="`$GEOS_CONFIG --libs`_c"
