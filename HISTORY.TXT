@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- WFS hits count is incorrect if the request contain 2 layers or more (#3244)
+
 - Fixed a problem with layer plugin where copyVirtualTable didn't copy
 the LayerResultsGetShape function pointer (#3223)
 

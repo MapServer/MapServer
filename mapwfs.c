@@ -1680,7 +1680,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       if (GET_LAYER(map, j)->resultcache && GET_LAYER(map, j)->resultcache->numresults > 0)
       {
         iNumberOfFeatures += GET_LAYER(map, j)->resultcache->numresults;
-        break;
       }
     }
 
