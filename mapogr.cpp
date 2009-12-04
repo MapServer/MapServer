@@ -2778,6 +2778,28 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               // OGR default is anchor point = LL, so label is at UR of anchor
               c->label.position = MS_UR;
 
+              int nPosition = OGR_ST_GetParamNum(hLabelStyle, 
+                                                 OGRSTLabelAnchor,
+                                                 &bIsNull);
+              if( !bIsNull )
+              {
+                  switch( nPosition ) {
+                    case 1: c->label.position = MS_UR; break;
+                    case 2: c->label.position = MS_UC; break;
+                    case 3: c->label.position = MS_UL; break;
+                    case 4: c->label.position = MS_CR; break;
+                    case 5: c->label.position = MS_CC; break;
+                    case 6: c->label.position = MS_CL; break;
+                    case 7: c->label.position = MS_LR; break;
+                    case 8: c->label.position = MS_LC; break;
+                    case 9: c->label.position = MS_LL; break;
+                    case 10: c->label.position = MS_LR; break; /*approximate*/
+                    case 11: c->label.position = MS_LC; break;
+                    case 12: c->label.position = MS_LL; break;
+                    default: break;
+                  }
+              }
+
               const char *pszColor = OGR_ST_GetParamStr(hLabelStyle, 
                                                         OGRSTLabelFColor,
                                                         &bIsNull);
