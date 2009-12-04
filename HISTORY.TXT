@@ -11,8 +11,9 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
+
+Version 5.6.0 (2009-12-04):
+---------------------------
 
 - WFS hits count is incorrect if the request contain 2 layers or more (#3244)
 
