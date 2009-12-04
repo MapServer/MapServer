@@ -1806,7 +1806,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     if(maxfeatures != 0 && iResultTypeHits == 0)
       msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
 
-    if (((j==map->numlayers) || (maxfeatures == 0)) && iResultTypeHits == 0) {
+    if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
       msIO_printf("   <gml:boundedBy>\n"); 
       msIO_printf("      <gml:null>missing</gml:null>\n");
       msIO_printf("   </gml:boundedBy>\n"); 
