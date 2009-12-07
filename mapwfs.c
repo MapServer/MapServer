@@ -989,7 +989,8 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   /* const char *wmtver, char **names, char **values, int numentries) */
 {
-  int         i, j, maxfeatures=-1;
+  int   i, j; 
+  int   maxfeatures=-1,startindex=-1;
   const char *typename="";
   char       *script_url=NULL, *script_url_encoded;
   rectObj     bbox;
@@ -1316,6 +1317,34 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   if (paramsObj->nMaxFeatures > 0) {
     if (maxfeatures < 0 || (maxfeatures > 0 && paramsObj->nMaxFeatures < maxfeatures))
       maxfeatures = paramsObj->nMaxFeatures;
+  }
+
+  if (paramsObj->nStartIndex >= 0)
+    startindex = paramsObj->nStartIndex;
+
+  /* set the max features to each layer that is available. Note that maxfeatures is
+     the total number of features that is returned and setting this for each layer
+     is not entirely exact (it is only exact if we query one layer) but overall it
+     should be better */
+  if (maxfeatures > 0)
+  {
+      /*if startindex is specified, do not set the maxfeatures on the layers. What we want is to retreive all
+        features that meet the criteria and then filter it when writing the gml (msGMLWriteWFSQuery)*/
+      if (startindex < 0)
+      {
+          for(j=0; j<map->numlayers; j++) 
+          {
+              layerObj *lp;
+              lp = GET_LAYER(map, j);
+              if (lp->status == MS_ON)
+              {
+                  /*over-ride the value only if it is unset or wfs maxfeattures is
+                    lower that what is currently set*/
+                  if (lp->maxfeatures <=0 || lp->maxfeatures > 0 && maxfeatures < lp->maxfeatures)
+                    lp->maxfeatures = maxfeatures;
+              }
+          }
+      }
   }
 
   /* if (strcasecmp(names[i], "FEATUREID") == 0) */
@@ -1802,14 +1831,25 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     msFree(encoded_schema);
     msFree(encoded_typename);
 
-    /* handle case of maxfeatures = 0 */
-    if(maxfeatures != 0 && iResultTypeHits == 0)
-      msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
+    /*some validations on startindex, it should not be > that the total elements
+     TODO: should we send an exception?*/
+    if (startindex >=0 && startindex >=iNumberOfFeatures)
+    {   
+        msIO_printf("   <gml:boundedBy>\n"); 
+        msIO_printf("      <gml:null>missing</gml:null>\n");
+        msIO_printf("   </gml:boundedBy>\n"); 
+    }
+    else
+    {
+        /* handle case of maxfeatures = 0 */
+        if(maxfeatures != 0 && iResultTypeHits == 0)
+          msGMLWriteWFSQuery(map, stdout, startindex, maxfeatures, pszNameSpace, outputformat);
 
-    if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
-      msIO_printf("   <gml:boundedBy>\n"); 
-      msIO_printf("      <gml:null>missing</gml:null>\n");
-      msIO_printf("   </gml:boundedBy>\n"); 
+        if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
+          msIO_printf("   <gml:boundedBy>\n"); 
+          msIO_printf("      <gml:null>missing</gml:null>\n");
+          msIO_printf("   </gml:boundedBy>\n"); 
+        }
     }
 
     if(outputformat == OWS_GML2)
@@ -2017,6 +2057,7 @@ wfsParamsObj *msWFSCreateParamsObj()
     if (paramsObj)
     {
         paramsObj->nMaxFeatures = -1;
+        paramsObj->nStartIndex = -1;
     }
 
     return paramsObj;
@@ -2089,6 +2130,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
              
                 else if (strcasecmp(request->ParamNames[i], "MAXFEATURES") == 0)
                   wfsparams->nMaxFeatures = atoi(request->ParamValues[i]);
+
+                else if (strcasecmp(request->ParamNames[i], "STARTINDEX") == 0)
+                  wfsparams->nStartIndex = atoi(request->ParamValues[i]);
                 
                 else if (strcasecmp(request->ParamNames[i], "BBOX") == 0)
                   wfsparams->pszBbox = strdup(request->ParamValues[i]);
@@ -2218,6 +2262,11 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                                                  NULL);
                 if (pszValue)
                   wfsparams->nMaxFeatures = atoi(pszValue);
+
+                 pszValue = (char*)CPLGetXMLValue(psGetFeature,  "startIndex", 
+                                                 NULL);
+                if (pszValue)
+                  wfsparams->nStartIndex = atoi(pszValue);
 
                 psQuery = CPLGetXMLNode(psGetFeature, "Query");
                 if (psQuery)

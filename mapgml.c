@@ -1414,7 +1414,7 @@ void msAxisSwapShape(shapeObj *shape)
 **
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
 */
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default_namespace_prefix, int outputformat)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeatures, char *default_namespace_prefix, int outputformat)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -1423,7 +1423,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
   shapeObj shape;
   rectObj  resultBounds = {-1.0,-1.0,-1.0,-1.0};
   int features = 0;
-  
+  int currentfeature =0;
+
   gmlGroupListObj *groupList=NULL;
   gmlItemListObj *itemList=NULL;
   gmlConstantListObj *constantList=NULL;
@@ -1478,6 +1479,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       const char *value;
       int featureIdIndex=-1; /* no feature id */
 
+      
       /* setup namespace, a layer can override the default */
       namespace_prefix = (char*) msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
       if(!namespace_prefix) namespace_prefix = default_namespace_prefix;
@@ -1510,6 +1512,13 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       }
 
       for(j=0; j<lp->resultcache->numresults; j++) {
+
+        if (startindex > 0 && currentfeature < startindex)
+        {
+            currentfeature++;
+            continue;
+        }
+
         status = msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
         if(status != MS_SUCCESS) 
             return(status);
