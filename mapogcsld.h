@@ -86,6 +86,6 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
 char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
 char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
 char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion);
-
+FilterEncodingNode *BuildExpressionTree(char *pszExpression, FilterEncodingNode *psNode);
 
 #endif

@@ -223,7 +223,6 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     char *szEPSG = NULL;
     rectObj sQueryRect = map->extent;
     layerObj *lp = NULL;
-    char *szClassItem = NULL;
     projectionObj sProjTmp;
     int bPointQuery = 0, bShapeQuery=0;
     shapeObj *psQueryShape = NULL;
@@ -273,13 +272,18 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 
     if (szExpression)
     {
-        szClassItem = FLTGetMapserverExpressionClassItem(psNode);
-        
-        /* TODO: Doesn't this code leak the contents of any pre-existing class
-         * in the layer???
-         */
-        if (lp->numclasses == 0 &&
-            msGrowLayerClasses(lp) == NULL)
+        for(i=0;i<lp->numclasses;i++) 
+        {
+            if (lp->class[i] != NULL) {
+                lp->class[i]->layer=NULL;
+                if ( freeClass(lp->class[i]) == MS_SUCCESS ) {
+                    msFree(lp->class[i]);
+                    lp->class[i] = NULL;
+                }
+            }
+        }
+        lp->numclasses = 0;
+        if (msGrowLayerClasses(lp) == NULL)
             return MS_FAILURE;
        	initClass(lp->class[0]);
 
@@ -287,45 +291,6 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         lp->numclasses = 1;
         msLoadExpressionString(&lp->class[0]->expression, 
                                szExpression);
-/* -------------------------------------------------------------------- */
-/*      classitems are necessary for filter type PropertyIsLike         */
-/* -------------------------------------------------------------------- */
-        if (szClassItem)
-        {
-            if (lp->classitem)
-              free (lp->classitem);
-            lp->classitem = strdup(szClassItem);
-
-/* ==================================================================== */
-/*      If there is a case where PorprtyIsLike is combined with an      */
-/*      Or, then we need to create a second class with the              */
-/*      PrpertyIsEqual expression. Note that the first expression       */
-/*      returned does not include the IslikePropery.                    */
-/* ==================================================================== */
-            if (!FLTIsOnlyPropertyIsLike(psNode))
-            {
-                szExpression = 
-                  FLTGetMapserverIsPropertyExpression(psNode, lp);
-                if (szExpression)
-                {
-                    /* TODO: Doesn't this code leak the contents of any 
-                     * pre-existing class in the layer???
-                     */
-                    if (lp->numclasses <2 &&
-                        msGrowLayerClasses(lp) == NULL)
-                        return MS_FAILURE;
-                    initClass(lp->class[1]);
-                    
-                    lp->class[1]->type = lp->type;
-                    /* TODO: if numclasses was already > 1 then this increment is wrong and leaves class[numclasses] non-initialized */
-                    lp->numclasses++;
-                    msLoadExpressionString(&lp->class[1]->expression, 
-                                         szExpression);
-                    if (!lp->class[1]->template)
-                      lp->class[1]->template = strdup("ttt.html");
-                }
-            }
-        }
 
         if (!lp->class[0]->template)
           lp->class[0]->template = strdup("ttt.html");
@@ -976,7 +941,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     char *pszBuffer = NULL;
     int bConcatWhere = 0;
     int bHasAWhere =0;
-    char *pszFilterItem=NULL;
+    char *pszTmp = NULL;
 
     lp = (GET_LAYER(map, iLayerIndex));
 
@@ -1026,9 +991,6 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 #endif
     }
 
-    /* TODO: Doesn't this code leak the contents of any pre-existing class
-     * in the layer???
-     */
     /* make sure that the layer can be queried*/
     if (!lp->template)
       lp->template = strdup("ttt.html");
@@ -1046,7 +1008,17 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     bHasAWhere = 0;
     if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
         lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN)
-      szExpression = FLTGetSQLExpression(psNode, lp);
+    {
+        szExpression = FLTGetSQLExpression(psNode, lp);
+        if (szExpression)
+        {
+            pszTmp = strdup("(");
+            pszTmp = msStringConcatenate(pszTmp, szExpression);
+            pszTmp = msStringConcatenate(pszTmp, ")");
+            msFree(szExpression);
+            szExpression = pszTmp;
+        }
+    }
     /* concatenates the WHERE clause for OGR layers. This only applies if
        the expression was empty or not of an expression string. If there
        is an sql type expression, it is assumed to have the WHERE clause. 
@@ -1076,15 +1048,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     else
     {
       szExpression = FLTGetMapserverExpression(psNode, lp);
-        /*if there is a filter item set it (this is only for propertislike with 
-          non db layers*/
-        pszFilterItem = FLTGetMapserverExpressionClassItem(psNode);
-        if (pszFilterItem)
-        {
-            if (lp->filteritem)
-              free (lp->filteritem);
-            lp->filteritem = strdup(pszFilterItem);
-        }
+        
     }
    
 
@@ -1125,6 +1089,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.layer = lp->index;
     map->query.rect = sQueryRect;
+
     return msQueryByRect(map);
 
     /* return MS_SUCCESS; */
@@ -1132,7 +1097,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
 int FLTIsSimpleFilter(FilterEncodingNode *psNode)
 {
-  if (FLTValidForBBoxFilter(psNode) && FLTValidForPropertyIsLikeFilter(psNode))
+    if (FLTValidForBBoxFilter(psNode))
     {
         if (FLTNumberOfFilterType(psNode, "DWithin") == 0 &&
             FLTNumberOfFilterType(psNode, "Intersect") == 0 &&
@@ -2031,7 +1996,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     CPLSearchXMLNode(psXMLNode,  "PropertyName") &&
                     CPLGetXMLValue(psXMLNode, "wildCard", "") &&
                     CPLGetXMLValue(psXMLNode, "singleChar", "") &&
-                    CPLGetXMLValue(psXMLNode, "escape", ""))
+                    (CPLGetXMLValue(psXMLNode, "escape", "") || 
+                     CPLGetXMLValue(psXMLNode, "escapeChar", "")))
                   /*
                     psXMLNode->psChild &&  
                     strcasecmp(psXMLNode->psChild->pszValue, "wildCard") == 0 &&
@@ -2061,10 +2027,16 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                       ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar = 
                         strdup(pszTmp);
                     pszTmp = (char *)CPLGetXMLValue(psXMLNode, "escape", "");
-                    if (pszTmp)
+                    if (pszTmp && strlen(pszTmp)>0)
                       ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar = 
                         strdup(pszTmp);
-
+                    else
+                    {
+                        pszTmp = (char *)CPLGetXMLValue(psXMLNode, "escapeChar", "");
+                        if (pszTmp)
+                          ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar = 
+                            strdup(pszTmp);
+                    }
                     pszTmp = (char *)CPLGetXMLValue(psXMLNode, "matchCase", "");
                     if (pszTmp && strlen(pszTmp) > 0 && 
                         strcasecmp(pszTmp, "false") == 0)
@@ -2339,93 +2311,6 @@ int FLTNumberOfFilterType(FilterEncodingNode *psFilterNode, const char *szType)
 }
     
 
-/************************************************************************/
-/*                     FLTValidForPropertyIsLikeFilter                  */
-/*                                                                      */
-/*      Check if there is only none or one PropertyIsLikeFilter.        */
-/************************************************************************/
-int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
-{
-    int nCount = 0;
-   
-    if (!psFilterNode)
-      return 1;
-
-    nCount = FLTNumberOfFilterType(psFilterNode, "PropertyIsLike");
-
-    if (nCount == 0)
-       return 1;
-
-    if (nCount > 1)
-      return 0;
-
-    /*make sure that if there is properyisequal, it is the only one*/
-    if (psFilterNode->psLeftNode == NULL && psFilterNode->psRightNode == NULL)
-      return 1;
-
-    return 0;
-}
-
-int FLTIsPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
-{
-    if (!psFilterNode || !psFilterNode->pszValue)
-      return 0;
-    
-    if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
-      return 1;
-
-    if (strcasecmp(psFilterNode->pszValue, "OR") == 0)
-    {
-      if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") ==0 ||
-          strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") ==0)
-        return 1;
-    }
-
-    return 0;
-}       
- 
-
-/************************************************************************/
-/*                         FLTIsOnlyPropertyIsLike                      */
-/*                                                                      */
-/*      Check if the only expression expression in the node tree is     */
-/*      of type PropertyIsLIke. 2 cases :                               */
-/*        - one node with PropertyIsLike                                */
-/*        - or PropertyIsLike combined with BBOX                        */
-/************************************************************************/
-int FLTIsOnlyPropertyIsLike(FilterEncodingNode *psFilterNode)
-{
-    if (psFilterNode && psFilterNode->pszValue)
-    {
-        
-        if (strcmp(psFilterNode->pszValue, "PropertyIsLike") ==0)
-          return 1;
-        else if (FLTNumberOfFilterType(psFilterNode, "PropertyIsLike") == 1 &&
-                 FLTNumberOfFilterType(psFilterNode, "BBOX") == 1)
-          return 1;
-    }
-    return 0;
-}
-
-char *FLTGetMapserverIsPropertyExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
-{
-    char *pszExpression = NULL;
-
-    if (psFilterNode && psFilterNode->pszValue && 
-         strcmp(psFilterNode->pszValue, "PropertyIsLike") ==0)
-      return FLTGetMapserverExpression(psFilterNode, lp);
-    else
-    {
-        if (psFilterNode->psLeftNode)
-          pszExpression = 
-            FLTGetMapserverIsPropertyExpression(psFilterNode->psLeftNode, lp);
-        if (!pszExpression && psFilterNode->psRightNode)
-          pszExpression = 
-            FLTGetMapserverIsPropertyExpression(psFilterNode->psRightNode, lp);
-    }
-
-    return pszExpression;
-}
 
 
 /************************************************************************/
@@ -2666,38 +2551,7 @@ char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect)
 
     return pszReturn;
 }
-/************************************************************************/
-/*                     GetMapserverExpressionClassItem                  */
-/*                                                                      */
-/*      Check if one of the node is a PropertyIsLike filter node. If    */
-/*      that is the case return the value that will be used as a        */
-/*      ClassItem in mapserver.                                         */
-/*      NOTE : only the first one is used.                              */
-/************************************************************************/
-char *FLTGetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode)
-{
-    char *pszReturn = NULL;
 
-    if (!psFilterNode)
-      return NULL;
-
-    if (psFilterNode->pszValue && 
-        strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
-    {
-        if (psFilterNode->psLeftNode)
-          return psFilterNode->psLeftNode->pszValue;
-    }
-    else
-    {
-        pszReturn = FLTGetMapserverExpressionClassItem(psFilterNode->psLeftNode);
-        if (pszReturn)
-          return pszReturn;
-        else
-          return  FLTGetMapserverExpressionClassItem(psFilterNode->psRightNode);
-    }
-
-    return pszReturn;
-}
 /************************************************************************/
 /*                          GetMapserverExpression                      */
 /*                                                                      */
@@ -2912,6 +2766,7 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 #endif
 
     }
+    
     return pszExpression;
 }
   
@@ -3079,37 +2934,19 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
         
         pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) + 3));
         pszBuffer[0] = '\0';
+        /*
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") == 0 ||
             strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") == 0)
           sprintf(pszBuffer, "%s", pszTmp);
         else
-          sprintf(pszBuffer, "(%s)", pszTmp);
+        */
+        sprintf(pszBuffer, "(%s)", pszTmp);
         
         
         return pszBuffer;
     }
 
-/* ==================================================================== */
-/*      special case for PropertyIsLike.                                */
-/* ==================================================================== */
-    if (psFilterNode->psLeftNode && psFilterNode->psRightNode &&
-        ((strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") == 0) ||
-         (strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") == 0)))
-    {
-        if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") != 0)
-          pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode, lp);
-        else
-          pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode, lp);
-
-        if (!pszTmp)
-          return NULL;
-        pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) + 1));
-        pszBuffer[0] = '\0';
-        sprintf(pszBuffer, "%s", pszTmp);
-        
-
-        return pszBuffer;
-    }
+    
 /* -------------------------------------------------------------------- */
 /*      OR and AND                                                      */
 /* -------------------------------------------------------------------- */
@@ -3571,6 +3408,7 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode,
 char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 {
     char szBuffer[1024];
+    char szTmp[256];
     char *pszValue = NULL;
     
     char *pszWild = NULL;
@@ -3578,7 +3416,7 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
     char *pszEscape = NULL;
     int  bCaseInsensitive = 0;
 
-    int nLength=0, i=0, iBuffer = 0;
+    int nLength=0, i=0, iTmp=0;
 
 
     if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
@@ -3597,23 +3435,34 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 
  
 /* -------------------------------------------------------------------- */
-/*      Use only the right node (which is the value), to build the      */
-/*      regular expresssion. The left node will be used to build the    */
-/*      classitem.                                                      */
+/*      Use operand with regular expressions.                           */
 /* -------------------------------------------------------------------- */
-    iBuffer = 0;
-    szBuffer[iBuffer++] = '/';
-    szBuffer[iBuffer] = '\0';
-    /*szBuffer[1] = '^';*/
+    szBuffer[0] = '\0';
+    sprintf(szTmp, "%s", " (\"[");
+    szTmp[4] = '\0';
+
+    strcat(szBuffer, szTmp);
+
+    /* attribute */
+    strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
+    szBuffer[strlen(szBuffer)] = '\0';
+
+    sprintf(szTmp, "%s", "]\" =~ /");
+    szTmp[7] = '\0';
+    strcat(szBuffer, szTmp);
+    szBuffer[strlen(szBuffer)] = '\0';
+
+
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);
     
+    iTmp =0;
     if (nLength > 0 && pszValue[0] != pszWild[0] && 
         pszValue[0] != pszSingle[0] &&
         pszValue[0] != pszEscape[0])
     {
-        szBuffer[iBuffer++] = '^';
-        szBuffer[iBuffer] = '\0';
+      szTmp[iTmp]= '^';
+      iTmp++;
     }
     for (i=0; i<nLength; i++)
     {
@@ -3621,40 +3470,41 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
             pszValue[i] != pszSingle[0] &&
             pszValue[i] != pszEscape[0])
         {
-            szBuffer[iBuffer] = pszValue[i];
-            iBuffer++;
-            szBuffer[iBuffer] = '\0';
+            szTmp[iTmp] = pszValue[i];
+            iTmp++;
+            szTmp[iTmp] = '\0';
         }
         else if  (pszValue[i] == pszSingle[0])
         {
-             szBuffer[iBuffer] = '.';
-             iBuffer++;
-             szBuffer[iBuffer] = '\0';
+             szTmp[iTmp] = '.';
+             iTmp++;
+             szTmp[iTmp] = '\0';
         }
         else if  (pszValue[i] == pszEscape[0])
         {
-            szBuffer[iBuffer] = '\\';
-            iBuffer++;
-            szBuffer[iBuffer] = '\0';
+            szTmp[iTmp] = '\\';
+            iTmp++;
+            szTmp[iTmp] = '\0';
 
         }
         else if (pszValue[i] == pszWild[0])
         {
             /* strcat(szBuffer, "[0-9,a-z,A-Z,\\s]*"); */
             /* iBuffer+=17; */
-            strcat(szBuffer, ".*");
-            iBuffer+=2;
-            szBuffer[iBuffer] = '\0';
+            szTmp[iTmp++] = '.';
+            szTmp[iTmp++] = '*';
+            szTmp[iTmp] = '\0';
         }
     }   
-    szBuffer[iBuffer] = '/';
+    szTmp[iTmp] = '/';
     if (bCaseInsensitive == 1)
     {
-      szBuffer[++iBuffer] = 'i';
+      szTmp[++iTmp] = 'i';
     } 
-    szBuffer[++iBuffer] = '\0';
+    szTmp[++iTmp] = '\0';
     
-        
+    strcat(szBuffer, szTmp);
+    strcat(szBuffer, ")");     
     return strdup(szBuffer);
 }
 
@@ -4057,6 +3907,12 @@ static void FLTReplacePropertyName(FilterEncodingNode *psFilterNode,
 }
 
 
+/************************************************************************/
+/*                        FLTPreParseFilterForAlias                     */
+/*                                                                      */
+/*      Utility function to replace aliased' attributes with their      */
+/*      real name.                                                      */
+/************************************************************************/
 void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode, 
                                mapObj *map, int i, const char *namespaces)
 {

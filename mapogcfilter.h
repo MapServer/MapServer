@@ -92,7 +92,6 @@ MS_DLL_EXPORT int FLTIsSpatialFilterType(char *pszValue);
 MS_DLL_EXPORT int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode);
 
 MS_DLL_EXPORT char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
-MS_DLL_EXPORT char *FLTGetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode);
 MS_DLL_EXPORT char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
 

@@ -74,7 +74,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
     char *pszSLDbuf=NULL;
     FILE *fp = NULL;               
     int nStatus = MS_FAILURE;
-
+    
     if (map && szURL)
     {
         pszSLDTmpFile = msTmpFile(map->mappath, map->web.imagepath, "sld.xml");
@@ -154,10 +154,15 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     /*const char *pszSLDNotSupported = NULL;*/
     char *tmpfilename = NULL;
     const char *pszFullName = NULL; 
-    char szTmp[256]; 
+    char szTmp[512]; 
     char *pszTmp1=NULL;
     char *pszTmp2 = NULL; 
-
+    char *pszBuffer = NULL;
+    layerObj *lp = NULL;
+    char *pszSqlExpression=NULL;
+    FilterEncodingNode *psExpressionNode =NULL;
+    int bFailedExpression=0;
+ 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
 
     if (pasLayers && nLayers > 0)
@@ -203,7 +208,19 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                     {
                         GET_LAYER(map, i)->type = pasLayers[j].type;
 
-                        /* TODO: Setting numclasses=0 here results in leaking the contents of any pre-existing classes!?! */
+                        for(k=0;k<GET_LAYER(map, i)->numclasses;k++) 
+                        {
+                            if (GET_LAYER(map, i)->class[k] != NULL) 
+                            {
+                                GET_LAYER(map, i)->class[k]->layer=NULL;
+                                if (freeClass(GET_LAYER(map, i)->class[k]) == MS_SUCCESS )
+                                {
+                                    msFree(GET_LAYER(map, i)->class[k]);
+                                    GET_LAYER(map, i)->class[k] = NULL;
+                                }
+                            }
+                        }
+
                         GET_LAYER(map, i)->numclasses = 0;
 
                         /*unset the classgroup on the layer if it was set. This allows the layer to render
@@ -359,6 +376,75 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                             free(GET_LAYER(map, i)->template);
                             GET_LAYER(map, i)->template = NULL;
                         }
+                    }
+                    else
+                    {
+                        /*in some cases it would make sense to concatenate all the class
+                          expressions and use it to set the filter on the layer. This   
+                          could increase performace. Will do it for db types layers #2840*/
+                        lp = GET_LAYER(map, i);
+                        if (lp->filter.string == NULL || 
+                            (lp->filter.string && lp->filter.type == MS_EXPRESSION))
+                        {
+                            if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
+                                lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN)
+                            {
+                                if (lp->numclasses > 0)
+                                {
+                                    /*check first that all classes have an expression type. That is
+                                      the only way we can concatenate them and set the filter 
+                                      expression*/
+                                    for (k=0;k<lp->numclasses;k++)
+                                    {
+                                        if (lp->class[k]->expression.type != MS_EXPRESSION)
+                                          break;
+                                    }
+                                    if (k == lp->numclasses)
+                                    {
+                                        bFailedExpression = 0;
+                                        for (k=0;k<lp->numclasses;k++)
+                                        {
+                                            if (pszBuffer == NULL)
+                                              sprintf(szTmp, "%s", "((");
+                                            else
+                                               sprintf(szTmp, "%s", " OR ");
+
+                                            pszBuffer =msStringConcatenate(pszBuffer, szTmp);
+                                            psExpressionNode = BuildExpressionTree(lp->class[k]->expression.string,NULL);
+                                            if (psExpressionNode)
+                                            {
+                                                pszSqlExpression = FLTGetSQLExpression(psExpressionNode,lp);
+                                                if (pszSqlExpression)
+                                                {
+                                                    pszBuffer =
+                                                      msStringConcatenate(pszBuffer, pszSqlExpression);
+                                                    msFree(pszSqlExpression);
+                                                }
+                                                else
+                                                {
+                                                    bFailedExpression =1;
+                                                    break;
+                                                }
+                                                FLTFreeFilterEncodingNode(psExpressionNode);
+                                            }
+                                            else
+                                            {
+                                                bFailedExpression =1;
+                                                break;
+                                            }
+                                        }
+                                        if (!bFailedExpression)
+                                        {
+                                            sprintf(szTmp, "%s", "))");
+                                            pszBuffer =msStringConcatenate(pszBuffer, szTmp);
+                                            msLoadExpressionString(&lp->filter, pszBuffer);
+                                        }
+                                        msFree(pszBuffer);
+                                    }
+                                }    
+                            }       
+                        }
+                        
                     }
                     break;
                 }
@@ -634,7 +720,6 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     CPLXMLNode *psTmpNode = NULL;
     FilterEncodingNode *psNode = NULL;
     char *szExpression = NULL;
-    char *szClassItem = NULL;
     int i=0, nNewClasses=0, nClassBeforeFilter=0, nClassAfterFilter=0;
     int nClassAfterRule=0, nClassBeforeRule=0;
     char *pszTmpFilter = NULL;
@@ -755,8 +840,6 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                                 if (szExpression)
                                 {
-                                    szClassItem = 
-                                      FLTGetMapserverExpressionClassItem(psNode);
                                     nNewClasses = 
                                       nClassAfterFilter - nClassBeforeFilter;
                                     for (i=0; i<nNewClasses; i++)
@@ -765,8 +848,6 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                                              class[psLayer->numclasses-1-i]->
                                                              expression, szExpression);
                                     }
-                                    if (szClassItem)
-                                      psLayer->classitem = strdup(szClassItem);
                                 }
                             }
                         }
@@ -2737,15 +2818,17 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
             if (nValues == nThresholds+1)
             {
                 /*free existing classes*/
-                for(i=0;i<psLayer->maxclasses;i++) {
+                for(i=0;i<psLayer->numclasses;i++) {
                     if (psLayer->class[i] != NULL) 
                     {
                         psLayer->class[i]->layer=NULL;
                         if ( freeClass(psLayer->class[i]) == MS_SUCCESS ) {
                             msFree(psLayer->class[i]);
+                            psLayer->class[i]=NULL;
                         }
                     }
                 }
+                psLayer->numclasses=0;
                 for (i=0; i<nValues; i++)
                 {
                     pszTmp = (papszValues[i]);
@@ -4593,6 +4676,8 @@ char *msSLDGetComparisonValue(char *pszExpression)
 
     if (strstr(pszExpression, "<=") || strstr(pszExpression, " le "))
       pszValue = strdup("PropertyIsLessThanOrEqualTo");
+     else if (strstr(pszExpression, "=~"))
+      pszValue = strdup("PropertyIsLike");
     else if (strstr(pszExpression, ">=") || strstr(pszExpression, " ge "))
       pszValue = strdup("PropertyIsGreaterThanOrEqualTo");
     else if (strstr(pszExpression, "!=") || strstr(pszExpression, " ne "))
@@ -4603,6 +4688,7 @@ char *msSLDGetComparisonValue(char *pszExpression)
       pszValue = strdup("PropertyIsLessThan");
     else if (strstr(pszExpression, ">") || strstr(pszExpression, " gt "))
       pszValue = strdup("PropertyIsGreaterThan");
+   
 
     return pszValue;
 }
@@ -4864,6 +4950,18 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
 
         bOneCharCompare =0;
     }
+    else if (strcasecmp(pszComparionValue, "PropertyIsLike") == 0)
+    {
+        szCompare[0] = '=';
+        szCompare[1] = '~';
+        szCompare[2] = '\0';
+
+        szCompare2[0] = '=';
+        szCompare2[1] = '~';
+        szCompare2[2] = '\0';
+
+        bOneCharCompare =0;
+    }
     else if (strcasecmp(pszComparionValue, "PropertyIsLessThan") == 0)
     {
         cCompare = '<';
@@ -4941,6 +5039,8 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
                 }
                 pszAttributeName[iValue] = '\0';
             }
+
+            
         }
     }
     else if (bOneCharCompare == 0)
@@ -5052,7 +5152,23 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
             }
             pszFinalAttributeValue[iAtt] = '\0';
         }
-            
+         
+        /*trim  for regular expressions*/
+        if (pszFinalAttributeValue && strlen(pszFinalAttributeValue) > 2 && 
+            strcasecmp(pszComparionValue, "PropertyIsLike") == 0)
+        {
+            msStringTrimBlanks(pszFinalAttributeValue);
+            if (pszFinalAttributeValue[0] == '/' &&  pszFinalAttributeValue[strlen(pszFinalAttributeValue)-1] == '/')
+            {
+                pszFinalAttributeValue[strlen(pszFinalAttributeValue)-1] = '\0';
+                pszFinalAttributeValue = pszFinalAttributeValue++;
+                if (pszFinalAttributeValue[0] == '^')
+                  pszFinalAttributeValue++;
+
+                /*replace wild card string .* with * */
+                pszFinalAttributeValue = msReplaceSubstring(pszFinalAttributeValue, ".*", "*");
+            }
+        }
         return pszFinalAttributeValue;
     }
 }
@@ -5115,7 +5231,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
 
 /* -------------------------------------------------------------------- */
 /*      First we check how many logical operators are there :           */
-/*       - if none : It means It is a coamrision operator (like =,      */
+/*       - if none : It means It is a comparision operator (like =,      */
 /*      >, >= .... We get the comparison value as well as the           */
 /*      attribute and the attribut's value and assign it to the node    */
 /*      passed in argument.                                             */
@@ -5144,6 +5260,14 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
             psNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
             psNode->psRightNode->pszValue = strdup(pszAttibuteValue);
 
+            if (strcasecmp(pszComparionValue, "PropertyIsLike") == 0)
+            {
+                psNode->pOther = (FEPropertyIsLike *)malloc(sizeof(FEPropertyIsLike));
+                ((FEPropertyIsLike *)psNode->pOther)->bCaseInsensitive = 0;
+                ((FEPropertyIsLike *)psNode->pOther)->pszWildCard = strdup("*");
+                 ((FEPropertyIsLike *)psNode->pOther)->pszSingleChar = strdup("#");
+                 ((FEPropertyIsLike *)psNode->pOther)->pszEscapeChar = strdup("!");
+            }
             free(pszComparionValue);
             free(pszAttibuteName);
             free(pszAttibuteValue);
@@ -5636,7 +5760,7 @@ char *msSLDConvertRegexExpToOgcIsLike(char *pszRegex)
 /************************************************************************/
 /*                              msSLDGetFilter                          */
 /*                                                                      */
-/*      Get the correspondinf ogc Filter based on the class             */
+/*      Get the corresponding ogc Filter based on the class             */
 /*      expression. TODO : move function to mapogcfilter.c when         */
 /*      finished.                                                       */
 /************************************************************************/
