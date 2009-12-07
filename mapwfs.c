@@ -1340,7 +1340,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
               {
                   /*over-ride the value only if it is unset or wfs maxfeattures is
                     lower that what is currently set*/
-                  if (lp->maxfeatures <=0 || lp->maxfeatures > 0 && maxfeatures < lp->maxfeatures)
+		if (lp->maxfeatures <=0 || (lp->maxfeatures > 0 && maxfeatures < lp->maxfeatures))
                     lp->maxfeatures = maxfeatures;
               }
           }
