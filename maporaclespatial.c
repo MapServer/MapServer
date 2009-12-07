@@ -1021,7 +1021,20 @@ static void osAggrGetExtent(layerObj *layer, char *query_str, char *geom_column_
 
     osFilteritem(layer, FUNCTION_NONE, query_str2, 1);
 
+    if (layer->maxfeatures > 0)
+    {
+        if(layer->filter.string != NULL)
+           sprintf (query_str2 + strlen(query_str2), " AND ");
+        else
+           sprintf (query_str2 + strlen(query_str2), " WHERE ");
+
+        sprintf( query_str2 + strlen(query_str2), " ROWNUM <= %d ", layer->maxfeatures);
+    }
+
     sprintf( query_str, "SELECT SDO_AGGR_MBR(%s) AS GEOM from %s)", geom_column_name, query_str2);
+
+     if (layer->debug)
+       msDebug("osAggrGetExtent was called: %s.\n", query_str);
 }
 
 static void osConvexHullGetExtent(layerObj *layer, char *query_str, char *geom_column_name, char *table_name)
@@ -1036,7 +1049,17 @@ static void osConvexHullGetExtent(layerObj *layer, char *query_str, char *geom_c
     sprintf( query_str2 + strlen(query_str2), " %s FROM %s", geom_column_name, table_name);
 
     osFilteritem(layer, FUNCTION_NONE, query_str2, 1);
+    if (layer->maxfeatures > 0)
+    {
+        if(layer->filter.string != NULL)
+           sprintf (query_str2 + strlen(query_str2), " AND ");
+        else
+          sprintf (query_str2 + strlen(query_str2), " WHERE ");
 
+        sprintf( query_str2 + strlen(query_str2), " ROWNUM <= %d ", layer->maxfeatures);
+            
+    }
+    
     sprintf( query_str, "SELECT SDO_GEOM.SDO_CONVEXHULL(%s, %f) AS GEOM from %s)", geom_column_name, TOLERANCE, query_str2);
 }
 
@@ -1984,6 +2007,14 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     osFilteritem(layer, function, query_str, 1);
 
+    if (layer->maxfeatures > 0)
+    {
+        sprintf( query_str + strlen(query_str), " ROWNUM<=%d ", layer->maxfeatures);
+        if (function != FUNCTION_NONE)
+          sprintf (query_str + strlen(query_str), " AND ");
+      
+    }
+
     if ((((atol(srid) >= 8192) && (atol(srid) <= 8330)) || (atol(srid) == 2) || (atol(srid) == 5242888) || (atol(srid) == 2000001)) && (version == VERSION_9i))
         osGeodeticData(function, version, query_str, geom_column_name, srid, rect);
     else
@@ -2635,6 +2666,15 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
         sprintf( query_str + strlen(query_str), " AND %s", (layer->filter.string));*/
     osFilteritem(layer, FUNCTION_NONE, query_str, 2);
 
+    if (layer->maxfeatures > 0)
+    {
+        if(layer->filter.string != NULL)
+           sprintf (query_str + strlen(query_str), " AND ");
+        else
+           sprintf (query_str + strlen(query_str), " WHERE ");
+
+        sprintf( query_str + strlen(query_str), " ROWNUM<=%d ", layer->maxfeatures);
+    }
     if (layer->debug)
       msDebug("msOracleSpatialLayerGetShape. Sql: %s\n", query_str);
 
