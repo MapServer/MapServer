@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed joins do not accept crypted passwords (#2912)
+
 - Fixed HTML legend image samples truncated (#2636)
 
 - WMS GetFeatureInfo should respect the scale like GetMap does (#842)

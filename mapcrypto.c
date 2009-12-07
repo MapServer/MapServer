@@ -487,9 +487,10 @@ char *msDecryptStringTokens(mapObj *map, const char *in)
                 pszTmp[pszEnd-pszStart] = '\0';
 
                 msDecryptStringWithKey(map->encryption_key, pszTmp, out);
-
+                
                 out += strlen(out);
                 in = pszEnd+1;
+                free(pszTmp);
             }
             else
             {

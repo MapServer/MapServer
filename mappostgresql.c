@@ -74,6 +74,7 @@ typedef struct {
 
 int msPOSTGRESQLJoinConnect(layerObj *layer, joinObj *join) {
     char *maskeddata, *temp, *sql, *column;
+    char *conn_decrypted;
     int i, count, test;
     PGresult *query_result;
     msPOSTGRESQLJoinInfo *joininfo;
@@ -117,7 +118,11 @@ int msPOSTGRESQLJoinConnect(layerObj *layer, joinObj *join) {
     }
 
     /* Establish database connection */
-    joininfo->conn = PQconnectdb(join->connection);
+    conn_decrypted = msDecryptStringTokens(layer->map, join->connection);
+    if (conn_decrypted != NULL) {
+      joininfo->conn = PQconnectdb(conn_decrypted);
+      free(conn_decrypted);
+    }
     if(!joininfo->conn || PQstatus(joininfo->conn) == CONNECTION_BAD) {
         maskeddata = (char *)malloc(strlen(layer->connection) + 1);
         strcpy(maskeddata, join->connection);

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implements MapServer joins. 
@@ -549,6 +549,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
 #else
   int i;
   char qbuf[4000];
+  char *conn_decrypted;
   msMySQLJoinInfo *joininfo;
 
   MYDEBUG if (setvbuf(stdout, NULL, _IONBF , 0)){printf("Whoops...");};
@@ -576,11 +577,20 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
 
         return(MS_FAILURE);
     }
+  
+    conn_decrypted = msDecryptStringTokens(layer->map, join->connection);
+    if (conn_decrypted == NULL) {
+      msSetError(MS_QUERYERR, "Error parsing MYSQL JOIN: unable to decrypt CONNECTION statement.",
+                 "msMySQLJoinConnect()");
+      return(MS_FAILURE);
+    }
+  
     delim = strdup(":");
-    DB_HOST = strdup(strtok(join->connection, delim));
+    DB_HOST = strdup(strtok(conn_decrypted, delim));
     DB_USER = strdup(strtok(NULL, delim));
     DB_PASSWD = strdup(strtok(NULL, delim));
     DB_DATABASE = strdup(strtok(NULL, delim));
+    free(conn_decrypted);
 
     if (DB_HOST == NULL || DB_USER == NULL || DB_PASSWD == NULL || DB_DATABASE == NULL)
     {
