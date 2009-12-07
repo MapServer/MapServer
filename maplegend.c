@@ -44,6 +44,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
         int width, int height, imageObj *image, int dstX, int dstY)
 {
   int i, type;
+  double offset;
   shapeObj box, zigzag;
   pointObj marker;
   char szPath[MS_MAXPATHLEN];
@@ -54,7 +55,6 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
 	if(MS_VALID_COLOR(map->legend.outlinecolor))
 	  gdImageSetClip(image->img.gd, dstX, dstY, dstX + width - 1, dstY + height - 1);
   
-
   /* initialize the box used for polygons and for outlines */
   box.line = (lineObj *)malloc(sizeof(lineObj));
   box.numlines = 1;
@@ -137,19 +137,24 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     }
     break;
   case MS_LAYER_LINE:
+    offset = 1;
+    /* To set the offset, we only check the size/width parameter of the first style */
+    if (theclass->numstyles > 0) {
+      offset = (theclass->styles[0]->size != -1) ? theclass->styles[0]->size/2 : theclass->styles[0]->width/2;
+    }
     zigzag.line = (lineObj *)malloc(sizeof(lineObj));
     zigzag.numlines = 1;
     zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
     zigzag.line[0].numpoints = 4;
 
-    zigzag.line[0].point[0].x = dstX;
-    zigzag.line[0].point[0].y = dstY + height - 1;
+    zigzag.line[0].point[0].x = dstX + offset;
+    zigzag.line[0].point[0].y = dstY + height - offset;
     zigzag.line[0].point[1].x = dstX + MS_NINT(width / 3.0) - 1; 
-    zigzag.line[0].point[1].y = dstY;
+    zigzag.line[0].point[1].y = dstY + offset;
     zigzag.line[0].point[2].x = dstX + MS_NINT(2.0 * width / 3.0) - 1; 
-    zigzag.line[0].point[2].y = dstY + height - 1; 
-    zigzag.line[0].point[3].x = dstX + width - 1; 
-    zigzag.line[0].point[3].y = dstY; 
+    zigzag.line[0].point[2].y = dstY + height - offset; 
+    zigzag.line[0].point[3].x = dstX + width - offset; 
+    zigzag.line[0].point[3].y = dstY + offset;
 
     for(i=0; i<theclass->numstyles; i++)
       msDrawLineSymbol(&map->symbolset, image, &zigzag, theclass->styles[i], lp->scalefactor); 
