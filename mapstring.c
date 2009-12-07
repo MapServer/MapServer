@@ -755,6 +755,45 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
   return(token);
 }
 
+/*
+ If GDAL is not available, msStringSplit is used: flags are ignored and only the 
+ first char of the delimiters variable is passed through msStringSplit.
+ 
+ See the port/cpl_string.cpp file in gdal source for the complete documentation.
+ Available Flags:
+ * - CSLT_ALLOWEMPTYTOKENS: allow the return of empty tokens when two 
+ * delimiters in a row occur with no other text between them.  If not set, 
+ * empty tokens will be discarded;
+ * - CSLT_STRIPLEADSPACES: strip leading space characters from the token (as
+ * reported by isspace());
+ * - CSLT_STRIPENDSPACES: strip ending space characters from the token (as
+ * reported by isspace());
+ * - CSLT_HONOURSTRINGS: double quotes can be used to hold values that should 
+ * not be broken into multiple tokens; 
+ * - CSLT_PRESERVEQUOTES: string quotes are carried into the tokens when this
+ * is set, otherwise they are removed;
+ * - CSLT_PRESERVEESCAPES: if set backslash escapes (for backslash itself, 
+ * and for literal double quotes) will be preserved in the tokens, otherwise
+ * the backslashes will be removed in processing.
+ */
+char **msStringSplitComplex(const char *string, const char *delimiters, int *num_tokens, int CSLTFlags) 
+{
+    char **tokens;
+#ifdef USE_GDAL
+    int i;
+    tokens = CSLTokenizeString2(string, delimiters, CSLTFlags);
+    *num_tokens = 0;
+    for (i = 0; tokens != NULL && tokens[i] != NULL; ++i) 
+        ++(*num_tokens);
+#else
+    tokens = msStringSplit(string, 
+                           delimiters ? (char)delimiters[0] : '\0',
+                           num_tokens);
+#endif
+
+    return tokens;
+}
+
 /* This method is similar to msStringSplit but support quoted strings. 
    It also support multi-characters delimiter and allows to preserve quotes */
 char **msStringTokenize( const char *pszLine, const char *pszDelim, 
