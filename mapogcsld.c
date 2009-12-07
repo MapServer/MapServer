@@ -5161,7 +5161,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
             if (pszFinalAttributeValue[0] == '/' &&  pszFinalAttributeValue[strlen(pszFinalAttributeValue)-1] == '/')
             {
                 pszFinalAttributeValue[strlen(pszFinalAttributeValue)-1] = '\0';
-                pszFinalAttributeValue = pszFinalAttributeValue++;
+                pszFinalAttributeValue = pszFinalAttributeValue+1;
                 if (pszFinalAttributeValue[0] == '^')
                   pszFinalAttributeValue++;
 
@@ -5629,8 +5629,8 @@ char *msSLDParseExpression(char *pszExpression)
         {
             if (i > 0 && i < nElements-1)
             {
-                sprintf(szAttribute, aszElements[i-1]);
-                sprintf(szValue, aszElements[i+1]);
+	      sprintf(szAttribute, "%s", aszElements[i-1]);
+	      sprintf(szValue, "%s", aszElements[i+1]);
 
                 /* parse attribute */
                 nLength = strlen(szAttribute);
@@ -5664,7 +5664,7 @@ char *msSLDParseExpression(char *pszExpression)
                     else if (szValue[0] == '\"')
                        bDoublequote = 1;
                     else
-                      sprintf(szFinalValue,szValue);
+                      sprintf(szFinalValue,"%s", szValue);
                     
                     iVal = 0;
                     if (bSinglequote || bDoublequote)
