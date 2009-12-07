@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- WMS GetFeatureInfo should respect the scale like GetMap does (#842)
+
 - Filter encoding: simple filters using propertyislike not applied properly
   #2720, #2840
 

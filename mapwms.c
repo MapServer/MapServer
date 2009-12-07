@@ -2825,17 +2825,18 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
         return msWMSException(map, nVersion, "LayerNotDefined");
       }
 
+      
+        
       for(j=0; j<map->numlayers; j++) {
         /* Force all layers OFF by default */
 	GET_LAYER(map, j)->status = MS_OFF;
-
         for(k=0; k<numlayers; k++) {
           if ((GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
               (map->name && strcasecmp(map->name, layers[k]) == 0) ||
               (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0))
             {
-              GET_LAYER(map, j)->status = MS_ON;
-              numlayers_found++;
+                numlayers_found++;     
+                GET_LAYER(map, j)->status = MS_ON;               
             }
         }
       }
@@ -2883,6 +2884,9 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 /*      check if all layers selected are queryable. If not send an      */
 /*      exception.                                                      */
 /* -------------------------------------------------------------------- */
+  /*make sure to initialize the map scale so that layers that are scale dependent are resepected for 
+    the query*/ 
+  msCalculateScale(map->extent,map->units,map->width,map->height, map->resolution, &map->scaledenom);
   for (i=0; i<map->numlayers; i++)
   {
       if (GET_LAYER(map, i)->status == MS_ON && !msIsLayerQueryable(GET_LAYER(map, i)))
