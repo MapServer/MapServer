@@ -1025,6 +1025,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
   char **papszPropertyName = NULL;
   int nPropertyNames = 0;
+  const char *pszMapSRS = NULL;
 
   /* Default filter is map extents */
   bbox = map->extent;
@@ -1052,7 +1053,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
   if(paramsObj->pszTypeName) {
     int j, k, z;
-    const char *pszMapSRS = NULL;
+    
     char **tokens;
     int n=0, i=0;
     char szTmp[256];
@@ -1118,7 +1119,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	
 	if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, layers[k]) == 0) {
 	  const char *pszThisLayerSRS;
-          rectObj ext;
 	  bLayerFound = MS_TRUE;
 	  
 	  lp->status = MS_ON;
@@ -1235,31 +1235,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 		       "Invalid GetFeature Request: All TYPENAMES in a single GetFeature request must have been advertized in the same SRS.  Please check the capabilities and reformulate your request.",
 		       "msWFSGetFeature()");
 	    return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
-	  }
+	  }         
 
-          /* set the map extent to the layer extent */
-
-          /* get the extent of the layer (bbox will get further filtered later */
-          /* if the client specifies BBOX or a spatial filter */
-
-          if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
-            char szBuf[32];
-
-            if (pszMapSRS != NULL && strncmp(pszMapSRS, "EPSG:", 5) == 0) {
-              sprintf(szBuf, "init=epsg:%.10s", pszMapSRS+5);
-                
-              if (msLoadProjectionString(&(map->projection), szBuf) != 0) {
-                 msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s", "msWFSGetFeature()", szBuf);
-                 return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
-              }
-            }
-
-            if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
-               msProjectRect(&lp->projection, &map->projection, &(ext));
-            }
-
-            bbox = map->extent = ext;
-          }
         }
       }
 
@@ -1689,18 +1666,66 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     /* to do things here. */
     if (!bFilterSet) {
 
-      map->query.type = MS_QUERY_BY_RECT; /* setup the query */
-      map->query.mode = MS_QUERY_MULTIPLE;
-      map->query.rect = bbox;
+      if (!bBBOXSet)
+      {
+          bbox = map->extent;
+          map->query.type = MS_QUERY_BY_RECT; /* setup the query */
+          map->query.mode = MS_QUERY_MULTIPLE;
+          for(j=0; j<map->numlayers; j++) 
+          {
+              layerObj *lp;
+              rectObj ext;
+              lp = GET_LAYER(map, j);
+              if (lp->status == MS_ON)
+              {
+                   if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) 
+                   {
+                       char szBuf[32];
 
-      if(msQueryByRect(map) != MS_SUCCESS) {
-	errorObj   *ms_error;
-	ms_error = msGetErrorObj();
+                       if (pszMapSRS != NULL && strncmp(pszMapSRS, "EPSG:", 5) == 0) {
+                           sprintf(szBuf, "init=epsg:%.10s", pszMapSRS+5);
+                
+                           if (msLoadProjectionString(&(map->projection), szBuf) != 0) {
+                               msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s", "msWFSGetFeature()", szBuf);
+                               return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
+                           }
+                       }
+
+                       if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
+                           msProjectRect(&lp->projection, &map->projection, &(ext));
+                       }
+                       bbox = ext;
+                   }
+                   map->query.rect = bbox;
+                   map->query.layer = j;
+                   if(msQueryByRect(map) != MS_SUCCESS) 
+                   {
+                       errorObj   *ms_error;
+                       ms_error = msGetErrorObj();
 	
-	if(ms_error->code != MS_NOTFOUND) {
-          msSetError(MS_WFSERR, "ms_error->code not found", "msWFSGetFeature()");
-	  return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
-        }
+                       if(ms_error->code != MS_NOTFOUND) {
+                           msSetError(MS_WFSERR, "ms_error->code not found", "msWFSGetFeature()");
+                           return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
+                       }
+                   }
+              }
+          }
+      }
+      else
+      {
+          map->query.type = MS_QUERY_BY_RECT; /* setup the query */
+          map->query.mode = MS_QUERY_MULTIPLE;
+          map->query.rect = bbox;
+
+          if(msQueryByRect(map) != MS_SUCCESS) {
+              errorObj   *ms_error;
+              ms_error = msGetErrorObj();
+	
+              if(ms_error->code != MS_NOTFOUND) {
+                  msSetError(MS_WFSERR, "ms_error->code not found", "msWFSGetFeature()");
+                  return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
+              }
+          }
       }
     }
 

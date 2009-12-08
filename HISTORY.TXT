@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- MAP EXTENT truncates GetFeature requests for data outside bounds (#1287)
+
 - Added msStringSplitComplex function (#471)
 
 - Mapserver WFS should send maxfeatures to the spatial database (#2605)
