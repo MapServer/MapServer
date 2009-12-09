@@ -126,10 +126,6 @@ typedef ms_uint32 *     ms_bitarray;
 
 #include <gd.h>
 
-#ifdef USE_GDAL
-#include "cpl_string.h"
-#endif
-
 #if defined USE_PDF
 #include <pdflib.h>
 #endif
@@ -249,6 +245,14 @@ extern "C" {
 #define MS_IREGEX 2005
 #define MS_ISTRING 2006
 #define MS_BINDING 2007
+
+/* string split flags */
+#define MS_HONOURSTRINGS      0x0001
+#define MS_ALLOWEMPTYTOKENS   0x0002
+#define MS_PRESERVEQUOTES     0x0004
+#define MS_PRESERVEESCAPES    0x0008
+#define MS_STRIPLEADSPACES    0x0010
+#define MS_STRIPENDSPACES     0x0020
 
 /* boolean options for the expression object. */
 #define MS_EXP_INSENSITIVE 1
@@ -1764,7 +1768,7 @@ MS_DLL_EXPORT char *msBuildPath3(char *pszReturnPath, const char *abs_path, cons
 MS_DLL_EXPORT char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path);
 MS_DLL_EXPORT char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path1, const char *path2);
 MS_DLL_EXPORT char **msStringSplit(const char *string, char cd, int *num_tokens);
-MS_DLL_EXPORT char **msStringSplitComplex(const char *string, char ch, int *num_tokens, int CSLTFlags);
+MS_DLL_EXPORT char ** msStringSplitComplex( const char * pszString, const char * pszDelimiters, int *num_tokens, int nFlags);
 MS_DLL_EXPORT char **msStringTokenize( const char *pszLine, const char *pszDelim, int *num_tokens, int preserve_quote);
 MS_DLL_EXPORT int msCountChars(char *str, char ch);
 MS_DLL_EXPORT char *msLongToString(long value);

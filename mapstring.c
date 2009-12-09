@@ -756,41 +756,175 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
 }
 
 /*
- If GDAL is not available, msStringSplit is used: flags are ignored and only the 
- first char of the delimiters variable is passed through msStringSplit.
- 
+ This function is a copy of CSLTokenizeString2() function of the CPL component.
  See the port/cpl_string.cpp file in gdal source for the complete documentation.
  Available Flags:
- * - CSLT_ALLOWEMPTYTOKENS: allow the return of empty tokens when two 
+ * - MS_ALLOWEMPTYTOKENS: allow the return of empty tokens when two 
  * delimiters in a row occur with no other text between them.  If not set, 
  * empty tokens will be discarded;
- * - CSLT_STRIPLEADSPACES: strip leading space characters from the token (as
+ * - MS_STRIPLEADSPACES: strip leading space characters from the token (as
  * reported by isspace());
- * - CSLT_STRIPENDSPACES: strip ending space characters from the token (as
+ * - MS_STRIPENDSPACES: strip ending space characters from the token (as
  * reported by isspace());
- * - CSLT_HONOURSTRINGS: double quotes can be used to hold values that should 
+ * - MS_HONOURSTRINGS: double quotes can be used to hold values that should 
  * not be broken into multiple tokens; 
- * - CSLT_PRESERVEQUOTES: string quotes are carried into the tokens when this
+ * - MS_PRESERVEQUOTES: string quotes are carried into the tokens when this
  * is set, otherwise they are removed;
- * - CSLT_PRESERVEESCAPES: if set backslash escapes (for backslash itself, 
+ * - MS_PRESERVEESCAPES: if set backslash escapes (for backslash itself, 
  * and for literal double quotes) will be preserved in the tokens, otherwise
  * the backslashes will be removed in processing.
  */
-char **msStringSplitComplex(const char *string, char ch, int *num_tokens, int CSLTFlags) 
-{
-    char **tokens;
-#ifdef USE_GDAL
-    char delimiter[2] = {ch, '\0'};
-    int i;
-    tokens = CSLTokenizeString2(string, &delimiter[0], CSLTFlags);
-    *num_tokens = 0;
-    for (i = 0; tokens != NULL && tokens[i] != NULL; ++i) 
-        ++(*num_tokens);
-#else
-    tokens = msStringSplit(string, ch, num_tokens);
-#endif
+char ** msStringSplitComplex( const char * pszString,
+                              const char * pszDelimiters,
+                              int *num_tokens,
+                              int nFlags )
 
-    return tokens;
+{
+    char        **papszRetList = NULL;
+    int         nRetMax = 0, nRetLen = 0;
+    char        *pszToken;
+    int         nTokenMax, nTokenLen;
+    int         bHonourStrings = (nFlags & MS_HONOURSTRINGS);
+    int         bAllowEmptyTokens = (nFlags & MS_ALLOWEMPTYTOKENS);
+    int         bStripLeadSpaces = (nFlags & MS_STRIPLEADSPACES);
+    int         bStripEndSpaces = (nFlags & MS_STRIPENDSPACES);
+
+    pszToken = (char *) malloc(sizeof(char*)*10);;
+    nTokenMax = 10;
+    
+    while( pszString != NULL && *pszString != '\0' )
+    {
+        int     bInString = FALSE;
+        int     bStartString = TRUE;
+
+        nTokenLen = 0;
+        
+        /* Try to find the next delimeter, marking end of token */
+        for( ; *pszString != '\0'; pszString++ )
+        {
+
+            /* End if this is a delimeter skip it and break. */
+            if( !bInString && strchr(pszDelimiters, *pszString) != NULL )
+            {
+                pszString++;
+                break;
+            }
+            
+            /* If this is a quote, and we are honouring constant
+               strings, then process the constant strings, with out delim
+               but don't copy over the quotes */
+            if( bHonourStrings && *pszString == '"' )
+            {
+                if( nFlags & MS_PRESERVEQUOTES )
+                {
+                    pszToken[nTokenLen] = *pszString;
+                    nTokenLen++;
+                }
+
+                if( bInString )
+                {
+                    bInString = FALSE;
+                    continue;
+                }
+                else
+                {
+                    bInString = TRUE;
+                    continue;
+                }
+            }
+
+            /*
+             * Within string constants we allow for escaped quotes, but in
+             * processing them we will unescape the quotes and \\ sequence
+             * reduces to \
+             */
+            if( bInString && pszString[0] == '\\' )
+            {
+                if ( pszString[1] == '"' || pszString[1] == '\\' )
+                {
+                    if( nFlags & MS_PRESERVEESCAPES )
+                    {
+                        pszToken[nTokenLen] = *pszString;
+                        nTokenLen++;
+                    }
+
+                    pszString++;
+                }
+            }
+
+            /*
+             * Strip spaces at the token start if requested.
+             */
+            if ( !bInString && bStripLeadSpaces
+                 && bStartString && isspace((unsigned char)*pszString) )
+                continue;
+
+            bStartString = FALSE;
+
+            /*
+             * Extend token buffer if we are running close to its end.
+             */
+            if( nTokenLen >= nTokenMax-3 )
+            {
+                nTokenMax = nTokenMax * 2 + 10;
+                pszToken = (char *) realloc(pszToken, sizeof(char*)*nTokenMax);
+            }
+
+            pszToken[nTokenLen] = *pszString;
+            nTokenLen++;
+        }
+
+        /*
+         * Strip spaces at the token end if requested.
+         */
+        if ( !bInString && bStripEndSpaces )
+        {
+            while ( nTokenLen && isspace((unsigned char)pszToken[nTokenLen - 1]) )
+                nTokenLen--;
+        }
+
+        pszToken[nTokenLen] = '\0';
+
+        /*
+         * Add the token.
+         */
+        if( pszToken[0] != '\0' || bAllowEmptyTokens )
+        {
+            if( nRetLen >= nRetMax - 1 )
+            {
+                nRetMax = nRetMax * 2 + 10;
+                papszRetList = (char **) realloc(papszRetList, sizeof(char*)*nRetMax);
+            }
+
+            papszRetList[nRetLen++] = strdup( pszToken );
+            papszRetList[nRetLen] = NULL;
+        }
+    }
+
+    /*
+     * If the last token was empty, then we need to capture
+     * it now, as the loop would skip it.
+     */
+    if( *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0 
+        && strchr(pszDelimiters,*(pszString-1)) != NULL )
+    {
+        if( nRetLen >= nRetMax - 1 )
+        {
+            nRetMax = nRetMax * 2 + 10;
+            papszRetList = (char **) realloc(papszRetList, sizeof(char*)*nRetMax);
+        }
+
+        papszRetList[nRetLen++] = strdup("");
+        papszRetList[nRetLen] = NULL;
+    }
+
+    if( papszRetList == NULL )
+        papszRetList = (char **) malloc(sizeof(char *)*1);
+
+    *num_tokens = nRetLen;
+    free(pszToken);
+
+    return papszRetList;
 }
 
 /* This method is similar to msStringSplit but support quoted strings. 
