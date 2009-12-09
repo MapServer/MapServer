@@ -776,19 +776,18 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
  * and for literal double quotes) will be preserved in the tokens, otherwise
  * the backslashes will be removed in processing.
  */
-char **msStringSplitComplex(const char *string, const char *delimiters, int *num_tokens, int CSLTFlags) 
+char **msStringSplitComplex(const char *string, char ch, int *num_tokens, int CSLTFlags) 
 {
     char **tokens;
 #ifdef USE_GDAL
+    char delimiter[2] = {ch, '\0'};
     int i;
-    tokens = CSLTokenizeString2(string, delimiters, CSLTFlags);
+    tokens = CSLTokenizeString2(string, &delimiter[0], CSLTFlags);
     *num_tokens = 0;
     for (i = 0; tokens != NULL && tokens[i] != NULL; ++i) 
         ++(*num_tokens);
 #else
-    tokens = msStringSplit(string, 
-                           delimiters ? (char)delimiters[0] : '\0',
-                           num_tokens);
+    tokens = msStringSplit(string, ch, num_tokens);
 #endif
 
     return tokens;
