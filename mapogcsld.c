@@ -712,7 +712,7 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
 /*                                                                      */
 /*      Parse NamedLayer root.                                          */
 /************************************************************************/
-void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
+int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
     CPLXMLNode *psFeatureTypeStyle, *psRule, *psUserStyle; 
     CPLXMLNode *psSLDName = NULL, *psNamedStyle=NULL;
@@ -728,8 +728,9 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     int j=0;
 
 
-    if (psRoot && psLayer)
-    {
+    if (!psRoot || !psLayer)
+        return MS_FAILURE;
+
         psUserStyle = CPLGetXMLNode(psRoot, "UserStyle");
         if (psUserStyle)
         {
@@ -902,7 +903,8 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                   psLayer->classgroup = strdup(psSLDName->psChild->pszValue);
             }
         }
-    }
+
+        return MS_SUCCESS;
 }
 
 
@@ -911,7 +913,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 /*                                                                      */
 /*      Parse a Rule node into classes for a spcific layer.             */
 /************************************************************************/
-void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
+int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 {
     CPLXMLNode *psLineSymbolizer = NULL;
     CPLXMLNode *psPolygonSymbolizer = NULL;
@@ -922,8 +924,9 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
     int bSymbolizer = 0;
     int bNewClass=0, nSymbolizer=0;
 
-    if (psRoot && psLayer)
-    {
+    if (!psRoot || !psLayer)
+        return MS_FAILURE;
+
         /* TODO : parse name of the rule */
 /* -------------------------------------------------------------------- */
 /*      The SLD specs assumes here that a certain FeatureType can only have*/
@@ -1049,7 +1052,8 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
             psRasterSymbolizer = psRasterSymbolizer->psNext;
             psLayer->type = MS_LAYER_RASTER;
         } 
-    }
+
+        return MS_SUCCESS;
 }
 
 
@@ -1098,22 +1102,23 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      </Rule>                                                         */
 /*       ...                                                            */
 /************************************************************************/
-void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
+int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                               int bNewClass)
 {
     int nClassId = 0;
     CPLXMLNode *psStroke=NULL, *psOffset=NULL;
     int iStyle = 0;
 
-    if (psRoot && psLayer)
-    {
+    if (!psRoot || !psLayer)
+        return MS_FAILURE;
+
         psStroke =  CPLGetXMLNode(psRoot, "Stroke");
         if (psStroke)
         {
             if (bNewClass || psLayer->numclasses <= 0)
             {
         	if (msGrowLayerClasses(psLayer) == NULL)
-                    return; /* MS_FAILURE */
+                    return MS_FAILURE;
                 initClass(psLayer->class[psLayer->numclasses]);
                 nClassId = psLayer->numclasses;
                 psLayer->numclasses++;
@@ -1135,7 +1140,8 @@ void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
               psLayer->class[nClassId]->styles[iStyle]->offsety = psLayer->class[nClassId]->styles[iStyle]->offsetx;
             }
         }
-    }
+
+    return MS_SUCCESS;
 }
 
 
@@ -1151,8 +1157,8 @@ void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /*        1 : outlinecolor                                              */
 /*        2 : backgroundcolor                                           */
 /************************************************************************/
-void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
-                      mapObj *map, int iColorParam)
+int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
+                     mapObj *map, int iColorParam)
 {
     CPLXMLNode *psCssParam = NULL, *psGraphicFill=NULL;
     char *psStrkName = NULL;
@@ -1160,8 +1166,9 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
     int nLength = 0;
     char *pszDashValue = NULL;
 
-    if (psStroke && psStyle)
-    {
+    if (!psStroke || !psStyle)
+        return MS_FAILURE;
+
         /* parse css parameters */
         psCssParam =  CPLGetXMLNode(psStroke, "CssParameter");
         /*sld 1.1 used SvgParameter*/ 
@@ -1273,7 +1280,8 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
 
         if (pszDashValue)
           free(pszDashValue);
-    }
+
+        return MS_SUCCESS;
 }
 
 
@@ -1354,7 +1362,7 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
 /*      marks may be made solid or hollow depending on Fill and Stroke elements.*/
 /*                                                                      */
 /************************************************************************/
-void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer, 
+int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer, 
                                  int bNewClass)
 {
     CPLXMLNode *psFill, *psStroke;
@@ -1362,8 +1370,9 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
     CPLXMLNode *psDisplacement=NULL, *psDisplacementX=NULL, *psDisplacementY=NULL;
     int nOffsetX=-1, nOffsetY=-1;
 
-    if (psRoot && psLayer)
-    {
+    if (!psRoot || !psLayer)
+        return MS_FAILURE;
+
         /*parse displacement for SLD 1.1.0*/
         psDisplacement = CPLGetXMLNode(psRoot, "Displacement");
         if (psDisplacement)
@@ -1389,7 +1398,7 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             if (bNewClass || psLayer->numclasses <= 0)
             {
         	if (msGrowLayerClasses(psLayer) == NULL)
-                    return; /* MS_FAILURE */
+                    return MS_FAILURE;
                 initClass(psLayer->class[psLayer->numclasses]);
                 nClassId = psLayer->numclasses;
                 psLayer->numclasses++;
@@ -1429,7 +1438,7 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                 if (bNewClass || psLayer->numclasses <= 0)
                 {
         	    if (msGrowLayerClasses(psLayer) == NULL)
-                        return; /* MS_FAILURE */
+                        return MS_FAILURE;
                     initClass(psLayer->class[psLayer->numclasses]);
                     nClassId = psLayer->numclasses;
                     psLayer->numclasses++;
@@ -1450,7 +1459,8 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                 psLayer->class[nClassId]->styles[iStyle]->offsety = nOffsetY;  
             }
         }
-    }
+
+        return MS_SUCCESS;
 }
   
 
@@ -1460,15 +1470,16 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /*                                                                      */
 /*      Parse the Fill node for a polygon into a style.                 */
 /************************************************************************/
-void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
-                           mapObj *map)
+int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
+                          mapObj *map)
 {
     CPLXMLNode *psCssParam, *psGraphicFill;
     char *psColor=NULL, *psFillName=NULL;
     int nLength = 0;
 
-    if (psFill && psStyle && map)
-    {
+    if (!psFill || !psStyle || !map)
+        return MS_FAILURE;
+
         /* sets the default fill color defined in the spec #808080 */
         psStyle->color.red = 128;
         psStyle->color.green = 128;
@@ -1529,7 +1540,7 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
           msSLDParseGraphicFillOrStroke(psGraphicFill, NULL, psStyle, map, 0);
 
         
-    }
+        return MS_SUCCESS;
 }
 
 
@@ -1539,7 +1550,7 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
 /*      Parse the GraphicFill Or GraphicStroke node : look for a        */
 /*      Marker symbol and set the style for that symbol.                */
 /************************************************************************/
-void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot, 
+int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot, 
                                    char *pszDashValue,
                                    styleObj *psStyle, mapObj *map,
                                    int bPointLayer)
@@ -1555,8 +1566,8 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     
     bPointLayer=0;
 
-    if (psRoot && psStyle && map)
-    {
+    if (!psRoot || !psStyle || !map)
+        return MS_FAILURE;
 /* ==================================================================== */
 /*      This a definition taken from the specification (11.3.2) :       */
 /*      Graphics can either be referenced from an external URL in a common format (such as*/
@@ -1749,7 +1760,8 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                   msSLDParseExternalGraphic(psExternalGraphic, psStyle, map);
             }
         }
-    }
+
+        return MS_SUCCESS;
 }
   
 /************************************************************************/
@@ -2235,18 +2247,19 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
 /*      </xs:complexType>                                               */
 /*      </xs:element>                                                   */
 /************************************************************************/
-void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
+int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                                int bNewClass)
 {
     int nClassId = 0;
     int iStyle = 0;
 
-    if (psRoot && psLayer)
-    {
+    if (!psRoot || !psLayer)
+        return MS_FAILURE;
+
         if (bNewClass || psLayer->numclasses <= 0)
         {
             if (msGrowLayerClasses(psLayer) == NULL)
-                return; /* MS_FAILURE */
+                return MS_FAILURE;
             initClass(psLayer->class[psLayer->numclasses]);
             nClassId = psLayer->numclasses;
             psLayer->numclasses++;
@@ -2261,7 +2274,8 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         msSLDParseGraphicFillOrStroke(psRoot, NULL,
                                       psLayer->class[nClassId]->styles[iStyle],
                                       psLayer->map, 1);
-    }
+
+        return MS_SUCCESS;
 }
 
 
@@ -2272,7 +2286,7 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /*      by the URL and create a PIXMAP inmap symbol. Only GIF and       */
 /*      PNG are supported.                                              */
 /************************************************************************/
-void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, 
+int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, 
                                styleObj *psStyle,  mapObj *map)
 {
 /* needed for libcurl function msHTTPGetFile in maphttp.c */
@@ -2284,8 +2298,9 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
     int status;
 
 
-    if (psExternalGraphic && psStyle && map)
-    {
+    if (!psExternalGraphic || !psStyle || !map)
+        return MS_FAILURE;
+
         psFormat = CPLGetXMLNode(psExternalGraphic, "Format");
         if (psFormat && psFormat->psChild && psFormat->psChild->pszValue)
           pszFormat = psFormat->psChild->pszValue;
@@ -2367,7 +2382,8 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                 }
             }
         }
-    }
+        
+        return MS_SUCCESS;
 #endif
 }
 
@@ -2464,17 +2480,18 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
 /*      </xs:complexType>                                               */
 /*      </xs:element>                                                   */
 /************************************************************************/
-void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
+int msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                               int bOtherSymboliser)
 {
     int nStyleId=0, nClassId=0;
 
-    if (psRoot && psLayer)
-    {
+    if (!psRoot || !psLayer)
+        return MS_FAILURE;
+
         if (!bOtherSymboliser)
         {	
             if (msGrowLayerClasses(psLayer) == NULL)
-                return; /* MS_FAILURE */
+                return MS_FAILURE;
             initClass(psLayer->class[psLayer->numclasses]);
             nClassId = psLayer->numclasses;
             psLayer->numclasses++;
@@ -2491,7 +2508,8 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         if (nStyleId >= 0 && nClassId >= 0) /* should always be true */
           msSLDParseTextParams(psRoot, psLayer,
                                psLayer->class[nClassId]);
-    }
+
+        return MS_SUCCESS;
 }
 
 
@@ -2588,7 +2606,7 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /*      </xsd:simpleType>                                               */
 /*                                                                      */
 /************************************************************************/
-void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
+int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
     CPLXMLNode  *psColorMap = NULL, *psColorEntry = NULL, *psOpacity=NULL;
     char *pszColor=NULL, *pszQuantity=NULL;
@@ -2608,7 +2626,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
     int i,nMaxValues= 100, nMaxThreshold=100;
 
     if (!psRoot || !psLayer)
-      return;
+      return MS_FAILURE;
 
 /* ==================================================================== */
 /*      The default opacity value is 0 : we set it here to -1           */
@@ -2630,6 +2648,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
         else
         {
             msSetError(MS_WMSERR, "Invalid opacity value. Values should be between 0.0 and 1.0", "msSLDParseRasterSymbolizer()");
+            return MS_FAILURE;
         }
     }
     psColorMap = CPLGetXMLNode(psRoot, "ColorMap");
@@ -2685,7 +2704,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 
 
                             if (msGrowLayerClasses(psLayer) == NULL)
-                              return/* MS_FAILURE */;
+                              return MS_FAILURE;
                             else
                             {
                                 initClass(psLayer->class[psLayer->numclasses]);
@@ -2724,6 +2743,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                             msSetError(MS_WMSERR, 
                                        "Invalid ColorMap Entry.", 
                                        "msSLDParseRasterSymbolizer()");
+                            return MS_FAILURE;
                         }
 
                     }
@@ -2753,7 +2773,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                     }
 
                     if (msGrowLayerClasses(psLayer) == NULL)
-                      return/* MS_FAILURE */;
+                      return MS_FAILURE;
                     else
                     {
                         initClass(psLayer->class[psLayer->numclasses]);
@@ -2893,20 +2913,23 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
             free(papszThresholds);
 
             
-        }
+        } 
         else
         {
             msSetError(MS_WMSERR, "Invalid SLD document. msSLDParseRaster", "");
+            return MS_FAILURE;
         }
     }
+
+    return MS_SUCCESS;
 }
 /************************************************************************/
 /*                           msSLDParseTextParams                       */
 /*                                                                      */
 /*      Parse text paramaters like font, placement and color.           */
 /************************************************************************/
-void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, 
-                          classObj *psClass)
+int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, 
+                         classObj *psClass)
 {
     char szFontName[100];
     double  dfFontSize = 10;
@@ -2927,8 +2950,9 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 
     szFontName[0]='\0';
 
-    if (psRoot && psClass && psLayer)
-    {
+    if (!psRoot || !psClass || !psLayer)
+        return MS_FAILURE;
+    
         /*set the angle by default to auto. the angle can be
           modified Label Placement #2806*/
         psClass->label.autoangle = MS_TRUE;
@@ -3181,7 +3205,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
             }/* labelitem */
         }
 
-    }
+        return MS_SUCCESS;
 }
 
 /************************************************************************/
@@ -3189,7 +3213,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 /*                                                                      */
 /*      point placement node for the text symbolizer.                  */
 /************************************************************************/
-void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
+int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
 {
     CPLXMLNode *psAnchor, *psAnchorX, *psAnchorY;
     double dfAnchorX=0, dfAnchorY=0;
@@ -3197,8 +3221,9 @@ void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
     CPLXMLNode *psRotation=NULL, *psPropertyName=NULL;
     char szTmp[100];
 
-    if (psRoot && psClass)
-    {
+    if (!psRoot || !psClass)
+        return MS_FAILURE;
+
         /* init the label with the default position */
         psClass->label.position = MS_CL;
 
@@ -3289,7 +3314,8 @@ void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
                   psClass->label.angle = atof(psRotation->psChild->pszValue);
             }
         }
-    }   
+        
+        return MS_SUCCESS;
 }
 
 /************************************************************************/
@@ -3297,11 +3323,13 @@ void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
 /*                                                                      */
 /*      Lineplacement node fro the text symbolizer.                     */
 /************************************************************************/
-void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
+int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
 {
   CPLXMLNode *psOffset = NULL, *psAligned=NULL;
-    if (psRoot && psClass)
-    {
+
+  if (!psRoot || !psClass)
+      return MS_FAILURE;
+
         /*if there is a line placement, we will assume that the 
           best setting for mapserver would be for the text to follow
           the line #2806*/
@@ -3333,8 +3361,8 @@ void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
                 psClass->label.autofollow = MS_FALSE; 
             }
         }
-    }
-            
+
+        return MS_SUCCESS;
 }
 
 
@@ -3346,7 +3374,7 @@ void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
 /*      color string (format is : #aaff08) and set it in the color      */
 /*      object.                                                         */
 /************************************************************************/
-void msSLDSetColorObject(char *psHexColor, colorObj *psColor)
+int msSLDSetColorObject(char *psHexColor, colorObj *psColor)
 {
     if (psHexColor && psColor && strlen(psHexColor)== 7 && 
         psHexColor[0] == '#')
@@ -3356,6 +3384,8 @@ void msSLDSetColorObject(char *psHexColor, colorObj *psColor)
         psColor->green = msHexToInt(psHexColor+3);
         psColor->blue= msHexToInt(psHexColor+5);
     }
+
+    return MS_SUCCESS;
 }   
 
 #endif

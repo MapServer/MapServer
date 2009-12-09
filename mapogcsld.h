@@ -44,27 +44,27 @@ MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
 layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers);
-void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *layer);
-void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer);
-void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
-                      mapObj *map, int iColorParam);
-void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
+int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *layer);
+int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer);
+int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
+                     mapObj *map, int iColorParam);
+int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
                            mapObj *map);
 
-void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,  
+int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,  
+                             int bNewClass);
+int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
+                                int bNewClass);
+int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer, 
                               int bNewClass);
-void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                                  int bNewClass);
-void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer, 
-                               int bNewClass);
-void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
+int msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                               int bOtherSymboliser);
-void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer);
+int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer);
 
-void msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill,
-                                   char *pszDashValue,
-                                   styleObj *psStyle, mapObj *map, int bPointLayer);
-void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle, 
+int msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill,
+                                  char *pszDashValue,
+                                  styleObj *psStyle, mapObj *map, int bPointLayer);
+int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle, 
                               mapObj *map);
 
 int msSLDGetLineSymbol(mapObj *map);
@@ -73,11 +73,11 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
                        char *pszDashValue);
 int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName, char *extGraphicName, int nGap);
 
-void msSLDSetColorObject(char *psHexColor, colorObj *psColor);
+int msSLDSetColorObject(char *psHexColor, colorObj *psColor);
 
-void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psClass);
-void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass);
-void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass);
+int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psClass);
+int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass);
+int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass);
 
 char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion);
 
