@@ -37,7 +37,7 @@ Version 5.6.0 (2009-12-04):
 - WFS hits count is incorrect if the request contain 2 layers or more (#3244)
 
 - Fixed a problem with layer plugin where copyVirtualTable didn't copy
-the LayerResultsGetShape function pointer (#3223)
+  the LayerResultsGetShape function pointer (#3223)
 
 
 Version 5.6.0-rc1 (2009-11-27):
