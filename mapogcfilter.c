@@ -942,6 +942,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     int bConcatWhere = 0;
     int bHasAWhere =0;
     char *pszTmp = NULL;
+    char *tmpfilename = NULL;
 
     lp = (GET_LAYER(map, iLayerIndex));
 
@@ -1089,6 +1090,25 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.layer = lp->index;
     map->query.rect = sQueryRect;
+
+    if(map->debug == MS_DEBUGLEVEL_VVV)
+    {
+        tmpfilename = msTmpFile(map->mappath, map->web.imagepath, "_filter.map");
+        if (tmpfilename == NULL)
+        {
+#ifndef _WIN32
+            tmpfilename = msTmpFile(NULL, "/tmp/", "_filter.map" );
+#else
+            tmpfilename = msTmpFile(NULL, "C:\\", "_filter.map");
+#endif
+        }
+        if (tmpfilename)
+        {
+            msSaveMap(map,tmpfilename);
+            msDebug("FLTApplySimpleSQLFilter(): Map file after Filter was applied %s", tmpfilename);
+            msFree(tmpfilename);
+        }
+    }
 
     return msQueryByRect(map);
 

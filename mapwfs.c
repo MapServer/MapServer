@@ -1186,6 +1186,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                         papszPropertyName[k] = msReplaceSubstring(papszPropertyName[i], pszFullName, lp->items[z]);
                   
                   }
+                  msLayerClose(lp);
               } 
                       
 
