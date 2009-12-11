@@ -191,6 +191,7 @@ int msSaveQuery(mapObj *map, char *filename) {
     int i, j;
     shapeObj *s = map->query.shape;
 
+    fprintf(stream, "%d\n", s->type);
     fprintf(stream, "%d\n", s->numlines);
     for(i=0; i<s->numlines; i++) {
       fprintf(stream, "%d\n", s->line[i].numpoints);
@@ -198,7 +199,7 @@ int msSaveQuery(mapObj *map, char *filename) {
         fprintf(stream, "%.15g %.15g\n", s->line[i].point[j].x, s->line[i].point[j].y);
     }
   } else {
-    fprintf(stream, "0\n"); /* no lines/parts */
+    fprintf(stream, "%d\n", MS_SHAPE_NULL); /* NULL shape */
   }
 
   fclose(stream);
@@ -210,7 +211,7 @@ int msLoadQuery(mapObj *map, char *filename) {
   char buffer[MS_BUFFER_LENGTH];
   int lineno;
 
-  int numlines, numpoints;
+  int shapetype, numlines, numpoints;
 
   if(!filename) {
     msSetError(MS_MISCERR, "No filename provided to load query from.", "msLoadQuery()");
@@ -272,16 +273,17 @@ int msLoadQuery(mapObj *map, char *filename) {
       if(sscanf(buffer, "%d\n", &map->query.op) != 1) goto parse_error;
       break;
     case 9:
-      if(sscanf(buffer, "%d\n", &numlines) != 1) goto parse_error;
+      if(sscanf(buffer, "%d\n", &shapetype) != 1) goto parse_error;
 
-      if(numlines > 0) { /* load the rest of the shape */
+      if(shapetype != MS_SHAPE_NULL) { /* load the rest of the shape */
         int i, j;
         lineObj line;
 
         map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
         msInitShape(map->query.shape);
-        map->query.shape->type = MS_SHAPE_POLYGON; /* for now we just support polygons */
+        map->query.shape->type = shapetype;
 
+        if(fscanf(stream, "%d\n", &numlines) != 1) goto parse_error;
 	for(i=0; i<numlines; i++) {
           if(fscanf(stream, "%d\n", &numpoints) != 1) goto parse_error;
 
@@ -1261,8 +1263,8 @@ int msQueryByShape(mapObj *map)
     msSetError(MS_QUERYERR, "Query shape is not defined.", "msQueryByShape()");
     return(MS_FAILURE);
   }
-  if(map->query.shape->type != MS_SHAPE_POLYGON) {
-    msSetError(MS_QUERYERR, "Query shape MUST be a polygon.", "msQueryByShape()"); 
+  if(map->query.shape->type != MS_SHAPE_POLYGON && map->query.shape->type != MS_SHAPE_LINE && map->query.shape->type != MS_SHAPE_POINT) {
+    msSetError(MS_QUERYERR, "Query shape MUST be a polygon, line or point.", "msQueryByShape()");
     return(MS_FAILURE);
   }
 
@@ -1386,33 +1388,77 @@ int msQueryByShape(mapObj *map)
 	lp->project = MS_FALSE;
 #endif
 
-      switch(shape.type) { /* make sure shape actually intersects the shape */
-      case MS_SHAPE_POINT:
-        if(tolerance == 0) /* just test for intersection */
-	  status = msIntersectMultipointPolygon(&shape, qshape);
-	else { /* check distance, distance=0 means they intersect */
-	  distance = msDistanceShapeToShape(qshape, &shape);
-	  if(distance < tolerance) status = MS_TRUE;
-        }
-	break;
-      case MS_SHAPE_LINE:
-        if(tolerance == 0) { /* just test for intersection */
-	  status = msIntersectPolylinePolygon(&shape, qshape);
-	} else { /* check distance, distance=0 means they intersect */
-	  distance = msDistanceShapeToShape(qshape, &shape);
-	  if(distance < tolerance) status = MS_TRUE;
-        }
-	break;
-      case MS_SHAPE_POLYGON:	
-	if(tolerance == 0) /* just test for intersection */
-	  status = msIntersectPolygons(&shape, qshape);
-	else { /* check distance, distance=0 means they intersect */
-	  distance = msDistanceShapeToShape(qshape, &shape);
-	  if(distance < tolerance) status = MS_TRUE;
+      switch(qshape->type) { /* may eventually support types other than polygon or line */
+      case MS_SHAPE_POLYGON:
+        switch(shape.type) { /* make sure shape actually intersects the shape */
+        case MS_SHAPE_POINT:
+          if(tolerance == 0) /* just test for intersection */
+	     status = msIntersectMultipointPolygon(&shape, qshape);
+	  else { /* check distance, distance=0 means they intersect */
+	    distance = msDistanceShapeToShape(qshape, &shape);
+	    if(distance < tolerance) status = MS_TRUE;
+          }
+	  break;
+        case MS_SHAPE_LINE:
+          if(tolerance == 0) { /* just test for intersection */
+	    status = msIntersectPolylinePolygon(&shape, qshape);
+	  } else { /* check distance, distance=0 means they intersect */
+	    distance = msDistanceShapeToShape(qshape, &shape);
+	    if(distance < tolerance) status = MS_TRUE;
+          }
+	  break;
+        case MS_SHAPE_POLYGON:	
+	  if(tolerance == 0) /* just test for intersection */
+	    status = msIntersectPolygons(&shape, qshape);
+	  else { /* check distance, distance=0 means they intersect */
+	    distance = msDistanceShapeToShape(qshape, &shape);
+	    if(distance < tolerance) status = MS_TRUE;
+          }
+          break;
+        default:
+	  break;
         }
         break;
-      default:
+      case MS_SHAPE_LINE:
+	switch(shape.type) { /* make sure shape actually intersects the selectshape */
+	case MS_SHAPE_POINT:
+	  if(tolerance == 0) { /* just test for intersection */
+	    distance = msDistanceShapeToShape(qshape, &shape);
+	    if(distance == 0) status = MS_TRUE;
+	  } else {
+	    distance = msDistanceShapeToShape(qshape, &shape);
+	    if(distance < tolerance) status = MS_TRUE;
+	  }
+	  break;
+	case MS_SHAPE_LINE:
+	  if(tolerance == 0) { /* just test for intersection */
+	    status = msIntersectPolylines(&shape, qshape);
+	  } else { /* check distance, distance=0 means they intersect */
+	    distance = msDistanceShapeToShape(qshape, &shape);
+	    if(distance < tolerance) status = MS_TRUE;
+	  }
+	  break;
+	case MS_SHAPE_POLYGON:
+	  if(tolerance == 0) /* just test for intersection */
+	    status = msIntersectPolylinePolygon(qshape, &shape);
+	  else { /* check distance, distance=0 means they intersect */
+	    distance = msDistanceShapeToShape(qshape, &shape);
+	    if(distance < tolerance) status = MS_TRUE;
+	  }
+	  break;
+	default:
+	  status = MS_FALSE;
+	  break;
+	}
 	break;
+      case MS_SHAPE_POINT:
+        distance = msDistanceShapeToShape(qshape, &shape);
+        status = MS_FALSE;
+        if(tolerance == 0 && distance == 0) status = MS_TRUE; /* shapes intersect */
+        else if(distance < tolerance) status = MS_TRUE; /* shapes are close enough */
+        break;
+      default:
+	break; /* should never get here as we test for selection shape type explicitly earlier */
       }
 
       if(status == MS_TRUE) {
