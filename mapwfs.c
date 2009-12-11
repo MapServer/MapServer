@@ -1183,7 +1183,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                       sprintf(szTmp, "%s_alias", lp->items[z]);
                       pszFullName = msOWSLookupMetadata(&(lp->metadata), "G", szTmp);
                       if (pszFullName)
-                        papszPropertyName[k] = msReplaceSubstring(papszPropertyName[i], pszFullName, lp->items[z]);
+                        papszPropertyName[k] = msReplaceSubstring(papszPropertyName[k], pszFullName, lp->items[z]);
                   
                   }
                   msLayerClose(lp);
