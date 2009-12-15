@@ -1344,7 +1344,7 @@ static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeo
 {
     int n;
 
-    //n = (end - start)/2;
+    n = (end - start)/2;
     //n = interpretation;
     
     // 
