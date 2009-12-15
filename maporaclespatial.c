@@ -1918,6 +1918,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     int success, i;
     int function = 0;
     int version = 0;
+    int existunique = MS_FALSE;
     char query_str[6000];
     char *table_name;
     char geom_column_name[100], unique[100], srid[100];
@@ -1976,7 +1977,18 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     if (strcmp(srid,"NULL") == 0)
         strcpy(srid,"-1");
 
-    sprintf( query_str, "SELECT %s", unique );
+    /* Check if the unique field is already in the items list */
+    for( i=0; i < layer->numitems; ++i ) {
+        if (strcmp(unique, layer->items[i])==0) {
+            existunique = MS_TRUE;
+            break;
+        }
+    }
+        
+    if (existunique)
+        sprintf( query_str, "SELECT");
+    else
+        sprintf( query_str, "SELECT %s", unique );
 
     /* allocate enough space for items */
     if (layer->numitems >= 0)
@@ -2508,24 +2520,21 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
         /*Comapre the column name (flk) with geom_column_name and ignore with true*/
         if (strcmp(flk, geom_column_name) != 0)
         {	
-            layer->items[count_item] = (char *)malloc(sizeof(char) * flk_len+1);
-            if (layer->items[count_item] == NULL)
+            if (rzttype!=OCI_TYPECODE_BLOB) 
             {
-                msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer", "msOracleSpatialLayerGetItems()" );
-                free(table_name);
-                return MS_FAILURE;
+                layer->items[count_item] = (char *)malloc(sizeof(char) * flk_len+1);
+                if (layer->items[count_item] == NULL)
+                {
+                    msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer", "msOracleSpatialLayerGetItems()" );
+                    free(table_name);
+                    return MS_FAILURE;
+                }
+                
+                strcpy(layer->items[count_item], flk); 
+                count_item++;
             }
             else
-            {
-              if (rzttype!=OCI_TYPECODE_BLOB) 
-               {
-               	 strcpy(layer->items[count_item], flk); 
-               }
-               else{
-               	 strcpy(layer->items[count_item], "null");
-               }	         	 
-            }
-            count_item++;
+                layer->numitems--;
         }
         else
             existgeom = 1;
