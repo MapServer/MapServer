@@ -1650,7 +1650,7 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
     const char *oldStyle = msOWSGetEPSGProj( proj, metadata, namespaces, 
                                              bReturnOnlyFirstOne );
 
-    if( strncmp(oldStyle,"EPSG:",5) != 0 )
+    if( oldStyle == NULL || strncmp(oldStyle,"EPSG:",5) != 0 )
         return NULL;
 
     result = strdup("");
