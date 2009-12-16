@@ -1502,7 +1502,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
       itemList = msGMLGetItems(lp, "G");
       constantList = msGMLGetConstants(lp, "G");
       groupList = msGMLGetGroups(lp, "G");
-      geometryList = msGMLGetGeometries(lp, "G");
+      geometryList = msGMLGetGeometries(lp, "GFO");
 
       if (namespace_prefix) {
         layerName = (char *) malloc(strlen(namespace_prefix)+strlen(lp->name)+2);
