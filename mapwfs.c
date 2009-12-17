@@ -889,7 +889,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
           itemList = msGMLGetItems(lp, "G"); /* GML-related metadata */
           constantList = msGMLGetConstants(lp, "G");
           groupList = msGMLGetGroups(lp, "G");
-          geometryList = msGMLGetGeometries(lp, "G");
+          geometryList = msGMLGetGeometries(lp, "GFO");
 
           value = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
           if(value) 
