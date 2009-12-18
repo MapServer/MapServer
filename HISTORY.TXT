@@ -12,12 +12,10 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (SVN branch-5-6):
---------------------------------
-
-
-Version 5.6.0 (2009-12-04):
+Version 5.6.0 (2009-12-18):
 ---------------------------
+
+- Fixed potential leak of env. vars through msEvalRegex() (#2989)
 
 - WFS hits count is incorrect if the request contain 2 layers or more (#3244)
 
