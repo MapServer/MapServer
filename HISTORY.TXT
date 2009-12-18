@@ -12,6 +12,10 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
+Current Version (SVN branch-5-6):
+--------------------------------
+
+
 Version 5.6.0 (2009-12-18):
 ---------------------------
 
