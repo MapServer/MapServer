@@ -1,0 +1,178 @@
+#!/bin/sh
+
+# not a normal autoconf configure script
+# grab the file ../../perlvars that mapserver made for the perl mapscript
+# build, and use gcc and ld flags
+
+if [ ! -f ../../perlvars ] ; then
+   echo "you must build MapServer first."
+   exit
+fi
+
+MAPSERVERHOME=`head -1 ../../mapscriptvars | tail -1`
+MAPSERVERDEFS=`head -2 ../../mapscriptvars | tail -1`
+MAPSERVERINCS=`head -3 ../../mapscriptvars | tail -1`
+MAPSERVERLIBS=`head -4 ../../mapscriptvars | tail -1`
+
+# make sure link to mapscript.i exists
+
+if [ ! -f mapscript.i ] ; then
+    ln -s ../mapscript.i mapscript.i
+fi
+
+# check for --with-tcl= and/or --with-swig=
+with_tcl=/usr/local
+with_swig=/usr/local
+with_linker_cc=no
+for arg in $*
+do
+    case $arg in
+	--help)
+		echo "mapscript tcl configure options:"
+		echo "--with-tcl=dir   where to find tcl  (lib/tclConfig.sh)"
+		echo "--with-swig=dir  where to find swig (include/swig.h)"
+		echo "--with-linker-cc use the compiler as linker front-end \
+				(see README)"
+		exit	
+		;;
+        --with-tcl=*)
+		save_if=$IFS
+		IFS==
+		set -- $arg
+		with_tcl=$2
+		IFS=$save_ifs
+		;;
+	--with-swig=*)
+		save_if=$IFS
+		IFS==
+		set -- $arg
+		with_swig=$2
+		IFS=$save_ifs
+		;;
+	--with-linker-cc)
+		with_linker_cc=yes
+		;;
+    esac
+done
+
+
+# look for Tcl configs
+
+echo "looking for Tcl in $with_tcl"
+if [ ! -f $with_tcl/lib/tclConfig.sh ] ; then
+    echo "can not find tclConfig.sh in $with_tcl"
+    exit
+fi
+echo "                  found lib/tclConfig.sh in $with_tcl"
+
+# look for swig
+
+echo "looking for Swig in $with_swig"
+if [ ! -f $with_swig/include/swig.h ] ; then
+    echo "can not find swig.h in $with_swig/include"
+    echo "using pre-built swig tcl interface"
+    # mapscript_wrap.c included in package
+else
+    echo "                  found include/swig.h in $with_swig"
+fi
+SWIGDIR=$with_swig
+
+
+# source the tcl Configs
+
+. $with_tcl/lib/tclConfig.sh
+echo "tcl version = $TCL_VERSION"
+
+
+# if --with-linker-cc option set, then change ld command to use TCL_CC
+
+if test "$with_linker_cc" = "yes" ; then
+    # get cc command, without any options that may be present
+    eval set -- $TCL_CC
+    cc="$1"
+    # get any linker command options
+    eval set -- $TCL_SHLIB_LD
+    shift
+    # build the new command using cc and linker options
+    TCL_SHLIB_LD="$cc $*"
+fi
+
+
+# ugh.  Tcl's tclConfig.sh only provides TCL_LD_SEARCH_FLAGS appropriate for
+#       use with 'cc'.  if 'ld' is the shared library loader, the flags
+#       might be wrong, try to fix.  this problem is often found on 
+#       Solaris, HP-UX, IRIX, {Free,Open,Net}BSD, OSF, Dec/Compaq Unix
+
+# first, get the shared lib loader command, should be ld or *cc
+
+eval set -- $TCL_SHLIB_LD
+ldcmd=`basename $1`
+if test "$ldcmd" = "ld" ; then
+
+    # this machine uses ld, now see if a flag begins with -Wl
+
+    newarg=""
+    eval set -- $TCL_LD_SEARCH_FLAGS
+    space=""
+    for arg in $*
+    do
+        case $TCL_LD_SEARCH_FLAGS in
+	    -Wl*)
+	        # yep, here's our problem child
+	        # strip off first arg, change "," to " " via sh set hack
+                IFSsave="$IFS"
+	        IFS=","
+	        eval set -- $arg
+	        IFS="$IFSsave"
+	        shift
+	        arg="$*"
+	        ;;
+	    *)
+		newarg="$newarg$space$arg"
+		;;
+        esac
+	space=" "
+    done
+    TCL_LD_SEARCH_FLAGS="$newarg"
+fi
+
+# also check for Solaris loader flags '-z text', which causes unresolved
+# link errors, because we're mixing -fPIC code (mapscript_wrap.o) with 
+# non -fPIC code (libmap.a, etc.)  the resulting libMapscript.so will be
+# mixed, so don't cause the link to fail.
+
+TCL_SHLIB_LD=`echo $TCL_SHLIB_LD | sed -e 's/-z text//'` 
+
+
+# fix up LIB_RUNTIME_DIR for those systems that leave it out
+
+if test -z "$LIB_RUNTIME_DIR" ; then
+    LIB_RUNTIME_DIR=$with_tcl/lib
+fi
+
+
+# create our Makefile
+
+echo "creating Makefile"
+
+sed -e "s%@MAPSERVERHOME@%$MAPSERVERHOME%g" \
+    -e "s%@MAPSERVERDEFS@%$MAPSERVERDEFS%g" \
+    -e "s%@MAPSERVERINCS@%$MAPSERVERINCS%g" \
+    -e "s%@MAPSERVERLIBS@%$MAPSERVERLIBS%g" \
+    -e "s%@TCL_PREFIX@%$TCL_PREFIX%g" \
+    -e "s%@TCL_EXEC_PREFIX@%$TCL_EXEC_PREFIX%g" \
+    -e "s%@TCL_CC@%$TCL_CC%g" \
+    -e "s%@TCL_DEFS@%$TCL_DEFS%g" \
+    -e "s%@TCL_SHLIB_SUFFIX@%$TCL_SHLIB_SUFFIX%g" \
+    -e "s%@TCL_SHLIB_CFLAGS@%$TCL_SHLIB_CFLAGS%g" \
+    -e "s%@TCL_LD_SEARCH_FLAGS@%$TCL_LD_SEARCH_FLAGS%g" \
+    -e "s%@TCL_SHLIB_LD@%$TCL_SHLIB_LD%g" \
+    -e "s%@TCL_LIB_SPEC@%$TCL_LIB_SPEC%g" \
+    -e "s%@TCL_STUB_LIB_SPEC@%$TCL_STUB_LIB_SPEC%g" \
+    -e "s%@TCL_LIBS@%$TCL_LIBS%g" \
+    -e "s%@LIB_RUNTIME_DIR@%$LIB_RUNTIME_DIR%g" \
+    -e "s%@TCL_DBGX@%$TCL_DBGX%g" \
+    -e "s%@SWIGDIR@%$SWIGDIR%g" \
+ <Makefile.in >Makefile
+
+
