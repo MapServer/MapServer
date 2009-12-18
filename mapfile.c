@@ -105,7 +105,7 @@ int msEvalRegex(char *e, char *s) {
   
   if(ms_regexec(&re, s, 0, NULL, 0) != 0) { /* no match */
     ms_regfree(&re);
-    msSetError(MS_REGEXERR, "String (%s) failed expression test.", "msEvalRegex()", s);
+    msSetError(MS_REGEXERR, "String failed expression test.", "msEvalRegex()");
     return(MS_FALSE);
   }
   ms_regfree(&re);
@@ -5172,9 +5172,15 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   }
   
   if(getenv("MS_MAPFILE_PATTERN")) { /* user override */
-    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) return(NULL);
+    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) {
+      msSetError(MS_REGEXERR, "MS_MAPFILE_PATTERN validation failed." , "msLoadMap()");
+      return(NULL);
+    }
   } else { /* check the default */
-    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) return(NULL);
+    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) {
+      msSetError(MS_REGEXERR, "MS_DEFAULT_MAPFILE_PATTERN validation failed." , "msLoadMap()");
+      return(NULL);
+    }
   }
   
   /*
@@ -5497,11 +5503,17 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
   ** Check map filename to make sure it's legal
   */
   if(getenv("MS_MAPFILE_PATTERN")) { /* user override */
-    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) return(NULL);
+    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) {
+      msSetError(MS_REGEXERR, "MS_MAPFILE_PATTERN validation failed." , "msLoadMap()");
+      return(NULL);
+    }
   } else { /* check the default */
-    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) return(NULL);
+    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) {
+      msSetError(MS_REGEXERR, "MS_DEFAULT_MAPFILE_PATTERN validation failed." , "msLoadMap()");
+      return(NULL);
+    }
   }
-  
+
   if((msyyin = fopen(filename,"r")) == NULL) {
     msSetError(MS_IOERR, "(%s)", "msTokenizeMap()", filename);
     return NULL;
