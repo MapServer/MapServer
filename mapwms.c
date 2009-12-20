@@ -397,17 +397,15 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   char srsbuffer[100];
   int epsgvalid = MS_FALSE;
   const char *projstring;
-   char **tokens;
-   int n,j = 0;
    int timerequest = 0;
    char *stime = NULL;
-
+   char **tokens=NULL;
+   int n,j;
   int srsfound = 0;
   int bboxfound = 0;
   int formatfound = 0;
   int widthfound = 0;
   int heightfound = 0;
-
   char *request = NULL;
   int status = 0;
 
@@ -665,29 +663,22 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
     else if (strcasecmp(names[i], "FORMAT") == 0) {
       const char *format_list = NULL;
+      outputFormatObj *psFormat=NULL;
       formatfound = 1;
 
       /*check to see if a predefined list is given*/
       format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getmap_formatlist");
-      n = 0;
-      if ( format_list)
-        tokens = msStringSplit(format_list,  ',', &n);
-      
-      if (tokens && n > 0)
+      if (format_list)
       {
-          for (j=0; j<n; j++)
+          psFormat = msOwsIsOutputFormatValid(map, values[i], &(map->web.metadata),
+                                             "M", "getmap_formatlist");
+          if (psFormat == NULL)
           {
-              if (strcasecmp(tokens[j], values[i]) == 0)
-                break;
-          }
-          msFreeCharArray(tokens, n);
-          if (j == n || (format = msSelectOutputFormat( map, values[i])) == NULL)
-          {
-            msSetError(MS_IMGERR,
+              msSetError(MS_IMGERR,
                        "Unsupported output format (%s).",
                        "msWMSLoadGetMapParams()",
                        values[i] );
-            return msWMSException(map, nVersion, "InvalidFormat");
+              return msWMSException(map, nVersion, "InvalidFormat");
           }
       }
       else
@@ -1842,6 +1833,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
   }
 }
 
+
 /*
  * msWMSIsSubGroup
  */
@@ -1937,7 +1929,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
 {
   char *dtd_url = NULL;
   char *script_url=NULL, *script_url_encoded=NULL;
-  const char *pszMimeType=NULL;
+  
   char szVersionBuf[OWS_VERSION_MAXLEN];
   char *schemalocation = NULL;
   const char *updatesequence=NULL;
@@ -1945,7 +1937,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   const char *encoding;
   char *pszTmp=NULL;
   int i;
-
+  const char *format_list=NULL;
+  char *final_format_list=NULL;
+  char **tokens = NULL;
+  int numtokens = 0;
+   
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
 
   sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
@@ -2169,7 +2165,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   else
   {
     char *mime_list[20];
-
+     int mime_count = 0;
+     int max_mime = 20;
     /* WMS 1.1.0 and later */
     /* Note changes to the request names, their ordering, and to the formats */
 
@@ -2191,30 +2188,74 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                     mime_list[16], mime_list[17], mime_list[18], mime_list[19],
                     NULL );
 
-    pszMimeType = msOWSLookupMetadata(&(map->web.metadata), "MO", 
-                                      "feature_info_mime_type");
-
-    if (pszMimeType) {
-      if (strcasecmp(pszMimeType, "text/plain") == 0) {
-        msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
-                             pszMimeType,
-                             "application/vnd.ogc.gml",
-                             NULL);
-      }
-      else {
-        msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
-                             "text/plain",
-                             pszMimeType,
-                             "application/vnd.ogc.gml",
-                             NULL);
-      }
-    }
-    else {
-       msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
+    format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
+                                      "getfeatureinfo_formatlist");
+    /*feature_info_mime_type depricated for MapServer 6.0*/
+    if (!format_list)
+       format_list = msOWSLookupMetadata(&(map->web.metadata), "MO", 
+                                         "feature_info_mime_type");
+    
+    if (format_list && strlen(format_list) > 0) 
+    {
+        tokens = msStringSplit(format_list,  ',', &numtokens);
+        if (tokens && numtokens > 0)
+        {
+            mime_count = 0;
+            for(i=0; i < numtokens; i++ )
+            {
+                msStringTrim(tokens[i]);
+                /*text plain and gml do not need to be a format and accepted by default*/
+                /*can not really validate since the old way of using template
+                  with wei->header, layer->template ... should be kept*/
+                if (strlen(tokens[i]) > 0 && mime_count<max_mime)
+                    mime_list[mime_count++] = tokens[i];
+            }
+        }
+        /*add text/plain and gml */
+        if (msCaseFindSubstring(format_list, "GML") == 0 &&
+            msCaseFindSubstring(format_list, "application/vnd.ogc.gml") == 0)
+        {
+            if (mime_count<max_mime)
+              mime_list[mime_count++] = "application/vnd.ogc.gml";
+        }
+        if (msCaseFindSubstring(format_list, "text/plain") == 0 &&
+            msCaseFindSubstring(format_list, "MIME") == 0)
+        {
+            if (mime_count<max_mime)
+              mime_list[mime_count++] = "text/plain";
+            else /*force always this format*/
+              mime_list[max_mime-1] = "text/plain";
+        }
+        
+        
+        if (mime_count>0)
+        {
+            if (mime_count<max_mime)
+              mime_list[mime_count] = NULL;
+           msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
+                                mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                                mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                                mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                                mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                                mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                                NULL);
+        }
+        /*if all formats given are invalid go to default*/
+        else
+            msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
                        "text/plain",
                        "application/vnd.ogc.gml",
                        NULL);
+
+        if (numtokens>0)
+          msFreeCharArray(tokens, numtokens);
     }
+    else 
+        msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
+                             "text/plain",
+                             "application/vnd.ogc.gml",
+                             NULL);
+    
 
     if (strcasecmp(sldenabled, "true") == 0) {
         if (nVersion == OWS_1_3_0)
@@ -2803,12 +2844,12 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   double cellx, celly;
   errorObj *ms_error = msGetErrorObj();
   int query_status=MS_NOERR;
-  const char *pszMimeType=NULL;
   const char *encoding;
   int query_layer = 0;
-
-
-  pszMimeType = msOWSLookupMetadata(&(map->web.metadata), "MO", "FEATURE_INFO_MIME_TYPE");
+  const char *format_list=NULL;
+  outputFormatObj *psFormat=NULL;
+  int valid_format=MS_FALSE;
+  int format_found = MS_FALSE;
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
@@ -2843,7 +2884,13 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
       msFreeCharArray(layers, numlayers);
     } else if (strcasecmp(names[i], "INFO_FORMAT") == 0)
-      info_format = values[i];
+    {
+        if (values[i] && strlen(values[i]) > 0)
+        {
+            info_format = values[i];
+            format_found = MS_TRUE;
+        }
+    }
     else if (strcasecmp(names[i], "FEATURE_COUNT") == 0)
       feature_count = atoi(values[i]);
     else if(strcasecmp(names[i], "X") == 0 || strcasecmp(names[i], "I") == 0)
@@ -2934,6 +2981,46 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   if(msQueryByPoint(map) != MS_SUCCESS)
       if((query_status=ms_error->code) != MS_NOTFOUND) return msWMSException(map, nVersion, NULL);
 
+  /*validate the INFO_FORMAT*/
+   valid_format = MS_FALSE;
+  format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
+                                      "getfeatureinfo_formatlist");
+   /*feature_info_mime_type depricated for MapServer 6.0*/
+  if (!format_list)
+    format_list = msOWSLookupMetadata(&(map->web.metadata), "MO", 
+                                       "feature_info_mime_type");
+  if (format_list)
+  {
+      /*can not really validate if it is a valid output format
+        since old way of using template with web->header/footer and
+        layer templates need to still be supported. 
+        We can only validate if it was part of the format list*/
+      if (msCaseFindSubstring(format_list, info_format))
+        valid_format = MS_TRUE;
+  }
+   /*check to see if the format passed is text/plain or GML and if is
+     defined in the formatlist. If that is the case, It is a valid format*/
+   if (strcasecmp(info_format, "MIME") == 0 ||
+       strcasecmp(info_format, "text/plain") == 0 ||
+       strncasecmp(info_format, "GML", 3) == 0 || 
+       strcasecmp(info_format, "application/vnd.ogc.gml") == 0) 
+     valid_format = MS_TRUE;
+   
+   
+   /*last case: if the info_format is not part of the request, it defaults to MIME*/
+   if (!valid_format && format_found == MS_FALSE)
+     valid_format =MS_TRUE;
+
+   if (!valid_format)
+   {
+       msSetError(MS_WMSERR, "Unsupported INFO_FORMAT value (%s).", 
+                  "msWMSFeatureInfo()", info_format);
+       if (nVersion >= OWS_1_3_0)
+         return msWMSException(map, nVersion, "InvalidFormat");
+       else
+         return msWMSException(map, nVersion, NULL);
+   }
+           
   /* Generate response */
   if (strcasecmp(info_format, "MIME") == 0 ||
       strcasecmp(info_format, "text/plain") == 0) {
@@ -2967,8 +3054,8 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
     msGMLWriteQuery(map, NULL, "GMO"); /* default is stdout */
 
-  } else
-  if (pszMimeType && (strcmp(pszMimeType, info_format) == 0))
+  } 
+  else
   {
      mapservObj *msObj;
 
@@ -2990,7 +3077,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
          if(msReturnURL(msObj, msObj->map->web.empty, BROWSE) != MS_SUCCESS)
              return msWMSException(map, nVersion, NULL);
      }
-     else if (msReturnTemplateQuery(msObj, (char*)pszMimeType, NULL) != MS_SUCCESS)
+     else if (msReturnTemplateQuery(msObj, (char *)info_format, NULL) != MS_SUCCESS)
          return msWMSException(map, nVersion, NULL);
 
      /* We don't want to free the map, and param names/values since they */
@@ -3001,14 +3088,6 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
      msObj->request->NumParams = 0;
 
      msFreeMapServObj(msObj);
-  }
-  else
-  {
-     msSetError(MS_WMSERR, "Unsupported INFO_FORMAT value (%s).", "msWMSFeatureInfo()", info_format);
-     if (nVersion >= OWS_1_3_0)
-       return msWMSException(map, nVersion, "InvalidFormat");
-     else
-       return msWMSException(map, nVersion, NULL); 
   }
 
   return(MS_SUCCESS);
@@ -3236,8 +3315,6 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
     char *sld_version = NULL;
     const char *sldenabled = NULL;
     const char *format_list = NULL;
-    char **tokens;
-    int n,j = 0;
     sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
     if (sldenabled == NULL)
@@ -3323,25 +3400,17 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      /* validate format */
      
      /*check to see if a predefined list is given*/
-     format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getlegendgraphic_formatlist");
-     n = 0;
-     if ( format_list)
-       tokens = msStringSplit(format_list,  ',', &n);
-      
-     if (tokens && n > 0)
+     format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getlegendgraphic_formatlist");        
+     if (format_list)
      {
-         for (j=0; j<n; j++)
-         {
-             if (strcasecmp(tokens[j], pszFormat) == 0)
-               break;
-         }
-         msFreeCharArray(tokens, n);
-         if (j == n || (psFormat = msSelectOutputFormat( map, pszFormat)) == NULL)
+         psFormat = msOwsIsOutputFormatValid(map, pszFormat, &(map->web.metadata),
+                                             "M", "getlegendgraphic_formatlist");
+         if (psFormat == NULL)
          {
              msSetError(MS_IMGERR,
                         "Unsupported output format (%s).",
                         "msWMSGetLegendGraphic()",
-                        values[i] );
+                        pszFormat);
              return msWMSException(map, nVersion, "InvalidFormat");
          }
      }

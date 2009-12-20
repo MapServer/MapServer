@@ -303,6 +303,8 @@ void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension,
 
 int msOWSNegotiateUpdateSequence(const char *requested_updateSequence, const char *updatesequence);
 
+outputFormatObj *msOwsIsOutputFormatValid(mapObj *map, const char *format, hashTableObj *metadata, 
+                                          const char *namespaces, const char *name);
 #endif
 
 /*====================================================================

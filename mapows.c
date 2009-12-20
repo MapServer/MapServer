@@ -1863,6 +1863,47 @@ int msOWSNegotiateUpdateSequence(const char *requested_updatesequence, const cha
   return -1;
 }
 
+
+/************************************************************************/
+/*                         msOwsIsOutputFormatValid                     */
+/*                                                                      */
+/*      Utlity function to parse a comma separated list in a            */
+/*      metedata object and select and outputformat.                    */
+/************************************************************************/
+outputFormatObj* msOwsIsOutputFormatValid(mapObj *map, const char *format, 
+                                          hashTableObj *metadata, 
+                                          const char *namespaces, const char *name)
+{
+    int bValid = MS_FALSE;
+    char **tokens=NULL;
+    int i,n;
+    outputFormatObj *psFormat = NULL;
+    const char * format_list=NULL;
+    
+    if (map && format && metadata && namespaces && name)
+    {
+        format_list = msOWSLookupMetadata(metadata, namespaces, name);
+        n = 0;
+        if ( format_list)
+          tokens = msStringSplit(format_list,  ',', &n);
+
+        if (tokens && n > 0)
+        {
+            for (i=0; i<n; i++)
+            {
+                msStringTrim(tokens[i]);
+                if (strcasecmp(tokens[i], format) == 0)
+                  break;
+            }
+            msFreeCharArray(tokens, n);
+            if (i < n)
+              psFormat = msSelectOutputFormat( map, format);
+        }
+    }
+
+    return psFormat;
+}
+
 #endif /* USE_WMS_SVR || USE_WFS_SVR  || USE_WCS_SVR */
 
 
