@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Honour MAXSIZE for WCS responses (#3204)
+
 - Implemented RFC 52 LayerResultsGetShape support for OGR connection type.
 
 - Fixed uninitialized variable with malloc used in osPointCluster() (#3236)

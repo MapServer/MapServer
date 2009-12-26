@@ -1647,6 +1647,15 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   map->width = params->width;
   map->height = params->height;
 
+  /* Are we exceeding the MAXSIZE limit on result size? */
+  if(map->width > map->maxsize || map->height > map->maxsize )
+  {
+      msSetError(MS_WCSERR, "Raster size out of range, width and height must be no more than MAXSIZE=%d.", "msWCSGetCoverage()", map->maxsize);
+
+      return msWCSException(map, "InvalidParameterValue", 
+                            "width/height", params->version);
+  }
+
   /* adjust OWS BBOX to MapServer's pixel model */
   if( strncasecmp(params->version,"1.0",3) == 0 ) {
     params->bbox.minx += params->resx*0.5;
