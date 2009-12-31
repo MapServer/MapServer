@@ -80,6 +80,8 @@ typedef struct {
 
     int      current_tile;
 
+    double   shape_tolerance;
+
 } rasterLayerInfo;
 
 #define RQM_UNKNOWN               0
@@ -186,6 +188,7 @@ static void msRasterLayerInfoInitialize( layerObj *layer )
     rlinfo->raster_query_mode = RQM_ENTRY_PER_PIXEL;
     rlinfo->range_mode = -1; /* inactive */
     rlinfo->refcount = 0;
+    rlinfo->shape_tolerance = 0.0;
     
     /* We need to do this or the layer->layerinfo will be interpreted */
     /* as shapefile access info because the default connectiontype is */
@@ -603,10 +606,33 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
                 msProjectPoint( &(layer->projection), &(map->projection), 
                                 &sPixelLocation );
 
-            if( rlinfo->searchshape != NULL
-                && msIntersectPointPolygon( &sPixelLocation, 
-                                            rlinfo->searchshape ) == MS_FALSE )
-                continue;
+            /* If we are doing QueryByShape, check against the shape now */
+            if( rlinfo->searchshape != NULL )
+            {
+                if( rlinfo->shape_tolerance == 0.0 
+                    && rlinfo->searchshape->type == MS_SHAPE_POLYGON )
+                {
+                    if( msIntersectPointPolygon( 
+                            &sPixelLocation, rlinfo->searchshape ) == MS_FALSE )
+                        continue;
+                }
+                else
+                {
+                    shapeObj  tempShape;
+                    lineObj   tempLine;
+                    
+                    memset( &tempShape, 0, sizeof(shapeObj) );
+                    tempShape.type = MS_SHAPE_POINT;
+                    tempShape.numlines = 1;
+                    tempShape.line = &tempLine;
+                    tempLine.numpoints = 1;
+                    tempLine.point = &sPixelLocation;
+                    
+                    if( msDistanceShapeToShape(rlinfo->searchshape, &tempShape)
+                        > rlinfo->shape_tolerance )
+                        continue;
+                }
+            }
 
             if( rlinfo->range_mode >= 0 )
             {
@@ -888,14 +914,46 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
 #else
     rasterLayerInfo *rlinfo = NULL;
     int status;
+    double tolerance;
+    rectObj searchrect;
 
     msRasterLayerInfoInitialize( layer );
 
     rlinfo = (rasterLayerInfo *) layer->layerinfo;
-    rlinfo->searchshape = selectshape;
 
+    /* If the selection shape is point or line we use the default tolerance of 
+       3, but for polygons we require an exact hit. */
+    if(layer->tolerance == -1)
+    {
+        if(selectshape->type == MS_SHAPE_POINT || 
+           selectshape->type == MS_SHAPE_LINE)
+            tolerance = 3;
+        else
+            tolerance = 0;
+    }
+    else
+        tolerance = layer->tolerance;
+    
+    if(layer->toleranceunits == MS_PIXELS)
+        tolerance = tolerance 
+            * msAdjustExtent(&(map->extent), map->width, map->height);
+    else
+        tolerance = tolerance
+            * (msInchesPerUnit(layer->toleranceunits,0)
+               / msInchesPerUnit(map->units,0));
+    
+    rlinfo->searchshape = selectshape;
+    rlinfo->shape_tolerance = tolerance;
+    
     msComputeBounds( selectshape );
-    status = msRasterQueryByRect( map, layer, selectshape->bounds );
+    searchrect = selectshape->bounds;
+
+    searchrect.minx -= tolerance; /* expand the search box to account for layer tolerances (e.g. buffered searches) */
+    searchrect.maxx += tolerance;
+    searchrect.miny -= tolerance;
+    searchrect.maxy += tolerance;
+    
+    status = msRasterQueryByRect( map, layer, searchrect );
 
     rlinfo = (rasterLayerInfo *) layer->layerinfo;
     if( rlinfo )
@@ -937,15 +995,8 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
 /*      underlying pixels.                                              */
 /* -------------------------------------------------------------------- */
     if(buffer <= 0) { /* use layer tolerance */
-
-        /* Get the layer tolerance
-           default is 3 for point and line layers, 0 for others */
         if(layer->tolerance == -1)
-            if(layer->status == MS_LAYER_POINT || 
-               layer->status == MS_LAYER_LINE)
-                layer_tolerance = 3;
-            else
-                layer_tolerance = 0;
+            layer_tolerance = 3;
         else
             layer_tolerance = layer->tolerance;
 
