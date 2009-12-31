@@ -1986,9 +1986,9 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     }
         
     if (existunique)
-        sprintf( query_str, "SELECT");
+        sprintf( query_str, "SELECT ");
     else
-        sprintf( query_str, "SELECT %s,", unique );
+        sprintf( query_str, "SELECT %s, ", unique );
 
     /* allocate enough space for items */
     if (layer->numitems >= 0)
@@ -2013,9 +2013,9 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     /* define SQL query */
     for( i=0; i < layer->numitems; ++i )
-        sprintf( query_str + strlen(query_str), "%s %s", (i!=0 ? ",":""),layer->items[i] );
+        sprintf( query_str + strlen(query_str), "%s, ", layer->items[i] );
 
-    sprintf( query_str + strlen(query_str), ", %s FROM %s", geom_column_name, table_name );
+    sprintf( query_str + strlen(query_str), "%s FROM %s", geom_column_name, table_name );
 
     osFilteritem(layer, function, query_str, 1);
 
