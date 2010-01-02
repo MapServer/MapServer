@@ -15,6 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-6):
 --------------------------------
 
+- Fixed problems with point queries not working via the CGI (mode=query or mode=nquery) (#3246)
 
 Version 5.6.0 (2009-12-18):
 ---------------------------

@@ -1671,14 +1671,14 @@ int main(int argc, char *argv[]) {
               mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height);
               if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();
               mapserv->map->query.rect = mapserv->map->extent;
-	      mapserv->map->query.mode = MS_QUERY_BY_RECT; 
+	      mapserv->map->query.type = MS_QUERY_BY_RECT; 
             } else {
               mapserv->map->extent = mapserv->ImgExt; /* use the existing image parameters */
               mapserv->map->width = mapserv->ImgCols;
               mapserv->map->height = mapserv->ImgRows;
               if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) writeError();     
               mapserv->map->query.point = mapserv->mappnt;
-              mapserv->map->query.mode = MS_QUERY_BY_POINT;
+              mapserv->map->query.type = MS_QUERY_BY_POINT;
             }
 
             break;      
@@ -1725,8 +1725,8 @@ int main(int argc, char *argv[]) {
             mapserv->map->query.type = MS_QUERY_BY_SHAPE;
             break;      
           case FROMUSERPNT:
-            if(mapserv->Buffer == 0) { /* why == 0, makes no sense */
-	      mapserv->map->query.rect = mapserv->map->extent;
+            if(mapserv->Buffer == 0) { /* do a *pure* point query */
+	      mapserv->map->query.point = mapserv->mappnt;
               mapserv->map->query.type = MS_QUERY_BY_POINT;
               setExtent(mapserv);
             } else {
