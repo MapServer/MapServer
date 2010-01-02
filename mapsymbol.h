@@ -73,9 +73,9 @@ typedef struct {
 typedef struct {
   char *name;
   int type;
-#ifndef SWIG
   int inmapfile; /* boolean value for writing */
 
+#ifndef SWIG
   /*
   ** Pointer to his map
   */
