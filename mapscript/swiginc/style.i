@@ -162,4 +162,14 @@
 
     return self->bindings[binding].item;
   }
+  
+  char *getGeomTransform() 
+  {
+    return self->_geomtransformexpression;
+  }
+  
+  void setGeomTransform(char *transform) 
+  {
+    msStyleSetGeomTransform(self, transform);
+  }
 }
