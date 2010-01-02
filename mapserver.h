@@ -776,11 +776,12 @@ typedef struct {
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
-  
+
+#ifndef SWIG
   /*private vars for rfc48*/
-  /*TODO: how/if to expose these two to swig*/
   char *_geomtransformexpression;
   int _geomtransform;
+#endif
   
   /*should an angle be automatically computed*/
   int autoangle;
