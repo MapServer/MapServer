@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Expose symbolObj.inmapfile to the SWIG API, have already been exposed to PHP (#3233)
+
 - Expose getGeomTransform/setGeomTransform to SWIG instead of exposing the private vars for rfc48 (#3214)
 
 - Fixed writeSymbol to support writing 'ANGLE AUTO' (#3214)
