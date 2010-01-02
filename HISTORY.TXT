@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed writeSymbol to support writing 'ANGLE AUTO' (#3214)
+
 - Fixed problems with point queries not working via the CGI (mode=query or mode=nquery) (#3246)
 
 - Support QueryByShape() with point and line geometries (#3248)

@@ -2214,6 +2214,8 @@ void writeStyle(styleObj *style, FILE *stream) {
   fprintf(stream, "      STYLE\n");
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_ANGLE].item)
      fprintf(stream, "        ANGLE [%s]\n", style->bindings[MS_STYLE_BINDING_ANGLE].item);
+  else if(style->autoangle)
+     fprintf(stream, "        ANGLE AUTO\n");
   else if(style->angle != 0) fprintf(stream, "        ANGLE %g\n", style->angle);
 
   if(style->antialias) fprintf(stream, "        ANTIALIAS TRUE\n");
