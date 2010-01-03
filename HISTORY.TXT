@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-6):
 --------------------------------
 
+- SQL Server 2008 plugin is not handling null field values correctly (#2893)
+
 - Hatch symbol not properly saved (#2905)
 
 - Expose symbolObj.inmapfile to the SWIG API, have already been exposed to PHP (#3233)
