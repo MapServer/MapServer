@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Hatch symbol not properly saved (#2905)
+
 - Expose symbolObj.inmapfile to the SWIG API, have already been exposed to PHP (#3233)
 
 - Expose getGeomTransform/setGeomTransform to SWIG instead of exposing the private vars for rfc48 (#3214)

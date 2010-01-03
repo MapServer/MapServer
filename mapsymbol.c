@@ -387,7 +387,7 @@ void writeSymbol(symbolObj *s, FILE *stream)
   
   switch (s->type) {
   case(MS_SYMBOL_HATCH):
-    /* todo! */
+    fprintf(stream, "    TYPE HATCH\n");
     break;
   case(MS_SYMBOL_PIXMAP):
     fprintf(stream, "    TYPE PIXMAP\n");
