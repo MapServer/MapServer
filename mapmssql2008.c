@@ -1264,22 +1264,28 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 				/* figure out how big the buffer needs to be */
                 rc = SQLGetData(layerinfo->conn->hstmt, t + 1, SQL_C_BINARY, dummyBuffer, 0, &needLen);
 
-				/* allocate the buffer - this will be a null-terminated string so alloc for the null too */
-				valueBuffer = (char*) malloc( needLen + 1 );
-				if ( valueBuffer == NULL )
-				{
-					msSetError( MS_QUERYERR, "Could not allocate value buffer.", "msMSSQL2008LayerGetShapeRandom()" );
-					return MS_FAILURE;
-				}
+                if (needLen > 0)
+                {
+				    /* allocate the buffer - this will be a null-terminated string so alloc for the null too */
+				    valueBuffer = (char*) malloc( needLen + 1 );
+				    if ( valueBuffer == NULL )
+				    {
+					    msSetError( MS_QUERYERR, "Could not allocate value buffer.", "msMSSQL2008LayerGetShapeRandom()" );
+					    return MS_FAILURE;
+				    }
 
-				/* Now grab the data */
-                rc = SQLGetData(layerinfo->conn->hstmt, t + 1, SQL_C_BINARY, valueBuffer, needLen, &retLen);
+				    /* Now grab the data */
+                    rc = SQLGetData(layerinfo->conn->hstmt, t + 1, SQL_C_BINARY, valueBuffer, needLen, &retLen);
 
-				/* Terminate the buffer */
-                valueBuffer[retLen] = 0; /* null terminate it */
+				    /* Terminate the buffer */
+                    valueBuffer[retLen] = 0; /* null terminate it */
 
-				/* Pop the value into the shape's value array */
-                shape->values[t] = valueBuffer;
+				    /* Pop the value into the shape's value array */
+                    shape->values[t] = valueBuffer;
+                }
+                else
+                    /* Copy empty sting for NULL values */
+                    shape->values[t] = strdup("");
             }
 
             /* Get shape geometry */
