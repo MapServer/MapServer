@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Changed the query map rendering implementation without adding extra layers to the map (#3069)
+
 - SQL Server 2008 plugin is not handling null field values correctly (#2893)
 
 - Hatch symbol not properly saved (#2905)
