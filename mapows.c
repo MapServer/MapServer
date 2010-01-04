@@ -1874,7 +1874,6 @@ outputFormatObj* msOwsIsOutputFormatValid(mapObj *map, const char *format,
                                           hashTableObj *metadata, 
                                           const char *namespaces, const char *name)
 {
-    int bValid = MS_FALSE;
     char **tokens=NULL;
     int i,n;
     outputFormatObj *psFormat = NULL;

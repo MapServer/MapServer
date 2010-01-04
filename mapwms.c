@@ -1938,7 +1938,6 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   char *pszTmp=NULL;
   int i;
   const char *format_list=NULL;
-  char *final_format_list=NULL;
   char **tokens = NULL;
   int numtokens = 0;
    
@@ -2847,7 +2846,6 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   const char *encoding;
   int query_layer = 0;
   const char *format_list=NULL;
-  outputFormatObj *psFormat=NULL;
   int valid_format=MS_FALSE;
   int format_found = MS_FALSE;
 
