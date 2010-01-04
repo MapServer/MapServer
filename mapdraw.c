@@ -1142,30 +1142,18 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   ** single-pass queries we have to make a copy of the layer and work from it instead.
   */
   if(map->querymap.style == MS_NORMAL || map->querymap.style == MS_HILITE) {
-    char *tmp_name=NULL;
-    layerObj *tmp_layer=NULL;
+    layerObj tmp_layer;
 
-    tmp_name = (char *) malloc((strlen(layer->name)+5+1)*sizeof(char));
-    sprintf(tmp_name, "%s_copy", layer->name);
+    if(initLayer(&tmp_layer, map) == -1) 
+		return(MS_FAILURE);
 
-    i = msGetLayerIndex(map, tmp_name);
-    if(i == -1) {
-      if(msGrowMapLayers(map) == NULL) return(MS_FAILURE);
-      i = map->numlayers;
-      map->layerorder[i] = i; /* important! */
-      map->numlayers++;
-      if(initLayer((GET_LAYER(map, i)), map) == -1) return(MS_FAILURE);      
-    }
+	if (msCopyLayer(&tmp_layer, layer) != MS_SUCCESS)
+		return(MS_FAILURE);
 
-    tmp_layer = GET_LAYER(map, i);
-    msCopyLayer(tmp_layer, layer);
+    status = msDrawLayer(map, &tmp_layer, image);
 
-    tmp_layer->index = i;
-    if(tmp_layer->name) free(tmp_layer->name); /* avoid leak */
-    tmp_layer->name = strdup(tmp_name);
+	freeLayer(&tmp_layer);
 
-    status = msDrawLayer(map, tmp_layer, image);
-    tmp_layer->status = MS_DELETE; /* so we don't write the copy or draw it again */
     if(map->querymap.style == MS_NORMAL || status != MS_SUCCESS) return(status);
   }
 
