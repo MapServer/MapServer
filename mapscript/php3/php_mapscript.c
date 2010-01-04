@@ -6772,7 +6772,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_double(return_value, "tolerance",  player->tolerance);
     add_property_long(return_value,   "toleranceunits",player->toleranceunits);
     add_property_long(return_value,   "sizeunits",  player->sizeunits);
-
+    add_property_long(return_value,  "units",     player->units);
     add_property_double(return_value, "symbolscaledenom",player->symbolscaledenom);
     add_property_double(return_value, "minscaledenom",   player->minscaledenom);
     add_property_double(return_value, "maxscaledenom",   player->maxscaledenom);
@@ -6988,6 +6988,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_DOUBLE("tolerance",  self->tolerance)
     else IF_SET_LONG(  "toleranceunits",self->toleranceunits)
     else IF_SET_LONG(  "sizeunits",  self->sizeunits)
+    else IF_SET_LONG(  "units",       self->units)
     else IF_SET_DOUBLE("symbolscaledenom",self->symbolscaledenom)
     else IF_SET_DOUBLE("minscaledenom",   self->minscaledenom)
     else IF_SET_DOUBLE("maxscaledenom",   self->maxscaledenom)
