@@ -1379,6 +1379,8 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   double adfGeoTransform[6];
   int nXSize, nYSize;
   GDALDatasetH hDS;
+  shapefileObj *tileshpfile;
+  int tilelayerindex = -1; 
 
   /*
   ** For the time being we only automatically derive extents from
@@ -1388,9 +1390,9 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   ** the polygons but that is quite complicated code wise, so I am leaving
   ** that till someone cares more about the issue.  (#79)
   */
-  if( !layer->data 
-      || strlen(layer->data) == 0 
-      || layer->tileindex != NULL )
+
+  if( (!layer->data || strlen(layer->data) == 0) 
+      && layer->tileindex == NULL)
   {
     /* should we be issuing a specific error about not supporting 
        extents for tileindexed raster layers? */
@@ -1399,6 +1401,26 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
   if( map == NULL )
     return MS_FAILURE;
+
+  /* If the layer use a tileindex...*/
+  if (layer->tileindex)
+  {
+    tilelayerindex = msGetLayerIndex(map, layer->tileindex);
+    if(tilelayerindex != -1) /* does the tileindex reference another layer */
+      return msLayerGetExtent(GET_LAYER(map, tilelayerindex), extent);
+    else 
+    {
+      tileshpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
+      if(msShapefileOpen(tileshpfile, "rb", msBuildPath3(szPath, map->mappath, map->shapepath, layer->tileindex), MS_TRUE) == -1)
+        if(msShapefileOpen(tileshpfile, "rb", msBuildPath(szPath, map->mappath, layer->tileindex), MS_TRUE) == -1)
+          return MS_FAILURE;
+      
+      *extent = tileshpfile->bounds;
+      msShapefileClose(tileshpfile);
+      free(tileshpfile);
+      return MS_SUCCESS;
+    }
+  }
 
   msTryBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
 
