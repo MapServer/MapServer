@@ -1019,17 +1019,7 @@ static void osAggrGetExtent(layerObj *layer, char *query_str, char *geom_column_
 
     sprintf( query_str2 + strlen(query_str2), " %s FROM %s", geom_column_name, table_name);
 
-    osFilteritem(layer, FUNCTION_NONE, query_str2, 1);
-
-    if (layer->maxfeatures > 0)
-    {
-        if(layer->filter.string != NULL)
-           sprintf (query_str2 + strlen(query_str2), " AND ");
-        else
-           sprintf (query_str2 + strlen(query_str2), " WHERE ");
-
-        sprintf( query_str2 + strlen(query_str2), " ROWNUM <= %d ", layer->maxfeatures);
-    }
+    osFilteritem(layer, FUNCTION_NONE, query_str2, 1);    
 
     sprintf( query_str, "SELECT SDO_AGGR_MBR(%s) AS GEOM from %s)", geom_column_name, query_str2);
 
@@ -1049,16 +1039,7 @@ static void osConvexHullGetExtent(layerObj *layer, char *query_str, char *geom_c
     sprintf( query_str2 + strlen(query_str2), " %s FROM %s", geom_column_name, table_name);
 
     osFilteritem(layer, FUNCTION_NONE, query_str2, 1);
-    if (layer->maxfeatures > 0)
-    {
-        if(layer->filter.string != NULL)
-           sprintf (query_str2 + strlen(query_str2), " AND ");
-        else
-          sprintf (query_str2 + strlen(query_str2), " WHERE ");
-
-        sprintf( query_str2 + strlen(query_str2), " ROWNUM <= %d ", layer->maxfeatures);
-            
-    }
+    
     
     sprintf( query_str, "SELECT SDO_GEOM.SDO_CONVEXHULL(%s, %f) AS GEOM from %s)", geom_column_name, TOLERANCE, query_str2);
 }
@@ -1920,6 +1901,8 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     int version = 0;
     int existunique = MS_FALSE;
     char query_str[6000];
+    char query_str2[256];
+    char *tmp_str=NULL, *tmp1_str=NULL;
     char *table_name;
     char geom_column_name[100], unique[100], srid[100];
     OCIDefine *adtp = NULL;
@@ -1977,6 +1960,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     if (strcmp(srid,"NULL") == 0)
         strcpy(srid,"-1");
 
+
     /* Check if the unique field is already in the items list */
     for( i=0; i < layer->numitems; ++i ) {
         if (strcmp(unique, layer->items[i])==0) {
@@ -1984,11 +1968,22 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
             break;
         }
     }
-        
+       
+     /*always select rownum to allow paging*/
     if (existunique)
-        sprintf( query_str, "SELECT ");
+    {
+        if (strcasecmp(unique, "rownum") == 0)
+          sprintf( query_str, "SELECT");
+        else
+          sprintf( query_str, "SELECT %s,", "rownum");
+    }
     else
-        sprintf( query_str, "SELECT %s, ", unique );
+    {
+        if (strcasecmp(unique, "rownum") == 0)
+          sprintf( query_str, "SELECT %s,", unique );
+        else
+          sprintf( query_str, "SELECT %s, %s,", "rownum", unique );
+    }
 
     /* allocate enough space for items */
     if (layer->numitems >= 0)
@@ -2013,14 +2008,17 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     /* define SQL query */
     for( i=0; i < layer->numitems; ++i )
+    {
         sprintf( query_str + strlen(query_str), "%s, ", layer->items[i] );
-
+    }
     sprintf( query_str + strlen(query_str), "%s FROM %s", geom_column_name, table_name );
 
     osFilteritem(layer, function, query_str, 1);
 
-    if (layer->maxfeatures > 0)
+    if (layer->maxfeatures > 0 && layer->startindex < 0)
     {
+       if (function == FUNCTION_NONE)
+         sprintf( query_str + strlen(query_str), "%s"," WHERE ");
         sprintf( query_str + strlen(query_str), " ROWNUM<=%d ", layer->maxfeatures);
         if (function != FUNCTION_NONE)
           sprintf (query_str + strlen(query_str), " AND ");
@@ -2032,6 +2030,34 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     else
         osNoGeodeticData(function, version, query_str, geom_column_name, srid, rect);
 
+
+    /*assuming startindex starts at 1*/
+    if (layer->startindex > 0)
+     {
+       tmp1_str = strdup("SELECT * from (SELECT atmp.*, ROWNUM rnum from (");
+       tmp_str = msStringConcatenate(tmp_str,  tmp1_str);
+       msFree(tmp1_str);
+       tmp_str = msStringConcatenate(tmp_str, query_str);
+       /*oder by rowid does not seem to work with function using the spatial filter, at least
+         on layers loaded using ogr in a 11g database*/
+       if (function == FUNCTION_NONE  || function == FUNCTION_RELATE || function == FUNCTION_GEOMRELATE)
+         tmp1_str = strdup( "order by rowid");
+       else
+         tmp1_str = strdup("");
+
+       if (layer->maxfeatures > 0)
+         sprintf(query_str2,  " %s) atmp where ROWNUM<=%d) where rnum >=%d",   tmp1_str, 
+                 layer->maxfeatures+layer->startindex-1,  layer->startindex);
+       else
+         sprintf( query_str2,  " %s) atmp) where rnum >=%d",  tmp1_str, layer->startindex);
+       msFree(tmp1_str);
+       
+       tmp_str = msStringConcatenate(tmp_str,  query_str2);
+       sprintf (query_str, "%s", tmp_str);
+       msFree(tmp_str);
+     } 
+    
+    
     if (layer->debug)
         msDebug("msOracleSpatialLayerWhichShapes. Using this Sql to retrieve the data: %s\n", query_str);
         
@@ -2069,7 +2095,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
         
   /* do the actual binding */      
 
- if (success) {
+ if (success && function != FUNCTION_NONE) {
      success = TRY( hand,
             /* bind in srid */
             OCIBindByName( sthand->stmthp, &bnd2p,  hand->errhp, (text *) ":srid", strlen(":srid"),(ub1 *) srid,  strlen(srid)+1, SQLT_STR, 

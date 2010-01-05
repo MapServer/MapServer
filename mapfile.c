@@ -2795,6 +2795,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->sizeunits = MS_PIXELS;
 
   layer->maxfeatures = -1; /* no quota */
+  layer->startindex = -1; /*used for pagination*/
   
   layer->template = layer->header = layer->footer = NULL;
 

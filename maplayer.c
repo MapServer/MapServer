@@ -977,6 +977,14 @@ msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 #endif
 }
 
+int msLayerSupportsPaging(layerObj *layer)
+{
+    if (layer && layer->connectiontype == MS_ORACLESPATIAL)
+      return MS_TRUE;
+
+    return MS_FALSE;
+}
+
 int 
 msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                                int iLayerIndex, int bOnlySpatialFilter)

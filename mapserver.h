@@ -1229,7 +1229,8 @@ typedef struct layer_obj {
 
   int sizeunits; /* applies to all classes */
 
-  int maxfeatures;
+  int maxfeatures;      
+  int startindex;
 
   colorObj offsite; /* transparent pixel value for raster images */
 
@@ -1957,6 +1958,8 @@ MS_DLL_EXPORT int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, map
 
 /* maplayer.c */
 MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
+
+MS_DLL_EXPORT int msLayerSupportsPaging(layerObj *layer);
 
 /* These are special because SWF is using these */
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);

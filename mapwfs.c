@@ -1026,6 +1026,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   char **papszPropertyName = NULL;
   int nPropertyNames = 0;
   const char *pszMapSRS = NULL;
+  int nQueriedLayers=0;
+  layerObj *lpQueried=NULL;
 
   /* Default filter is map extents */
   bbox = map->extent;
@@ -1297,38 +1299,65 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       maxfeatures = paramsObj->nMaxFeatures;
   }
 
-  if (paramsObj->nStartIndex >= 0)
+  nQueriedLayers=0;
+  for(j=0; j<map->numlayers; j++) 
+  {
+      layerObj *lp;
+      lp = GET_LAYER(map, j);
+      if (lp->status == MS_ON)
+      {
+          lpQueried = GET_LAYER(map, j);
+          nQueriedLayers++;
+      }
+  }
+  
+  if (paramsObj->nStartIndex > 0)
     startindex = paramsObj->nStartIndex;
 
-  /* set the max features to each layer that is available. Note that maxfeatures is
-     the total number of features that is returned and setting this for each layer
-     is not entirely exact (it is only exact if we query one layer) but overall it
-     should be better */
-  if (maxfeatures > 0)
+
+  /*maxfeatures set but no startindex*/
+  if (maxfeatures > 0 && startindex < 0)
   {
-      /*if startindex is specified, do not set the maxfeatures on the layers. What we want is to retreive all
-        features that meet the criteria and then filter it when writing the gml (msGMLWriteWFSQuery)*/
-      if (startindex < 0)
+      for(j=0; j<map->numlayers; j++) 
       {
-          for(j=0; j<map->numlayers; j++) 
+          layerObj *lp;
+          lp = GET_LAYER(map, j);
+          if (lp->status == MS_ON)
           {
-              layerObj *lp;
-              lp = GET_LAYER(map, j);
-              if (lp->status == MS_ON)
-              {
-                  /*over-ride the value only if it is unset or wfs maxfeattures is
-                    lower that what is currently set*/
-		if (lp->maxfeatures <=0 || (lp->maxfeatures > 0 && maxfeatures < lp->maxfeatures))
-                    lp->maxfeatures = maxfeatures;
-              }
+              /*over-ride the value only if it is unset or wfs maxfeattures is
+                lower that what is currently set*/
+              if (lp->maxfeatures <=0 || (lp->maxfeatures > 0 && maxfeatures < lp->maxfeatures))
+                lp->maxfeatures = maxfeatures;
           }
       }
   }
+  
+  /*no maxfeatures set but startindex set*/
+  if (maxfeatures <=0 && startindex > 0)
+  {
+      if (nQueriedLayers == 1 && msLayerSupportsPaging(lpQueried))
+      {
+          lpQueried->startindex = startindex;
+          startindex = -1;
+      }
+  }
 
-  /* if (strcasecmp(names[i], "FEATUREID") == 0) */
-  /* { */
-  /*  */
-  /* } */
+  /*maxfeatures set and startindex set*/
+  if (maxfeatures >0 && startindex > 0)
+  {
+      if (nQueriedLayers == 1 && msLayerSupportsPaging(lpQueried))
+      {
+          lpQueried->startindex = startindex;
+          if (lpQueried->maxfeatures <=0 || 
+              (lpQueried->maxfeatures > 0 && maxfeatures < lpQueried->maxfeatures))
+            lpQueried->maxfeatures = maxfeatures;
+          
+          startindex = -1;
+          maxfeatures = -1;
+      }
+  }
+
+
   
   if (paramsObj->pszFilter) {
     bFilterSet = 1;
@@ -1859,7 +1888,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     /*some validations on startindex, it should not be > that the total elements
      TODO: should we send an exception?*/
-    if (startindex >=0 && startindex >=iNumberOfFeatures)
+    if (startindex >0 && startindex >=iNumberOfFeatures)
     {   
         msIO_printf("   <gml:boundedBy>\n"); 
         msIO_printf("      <gml:null>missing</gml:null>\n");
@@ -1868,8 +1897,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     else
     {
         /* handle case of maxfeatures = 0 */
+        /*internally use a start index that start with with 0 as the first index*/
         if(maxfeatures != 0 && iResultTypeHits == 0)
-          msGMLWriteWFSQuery(map, stdout, startindex, maxfeatures, pszNameSpace, outputformat);
+          msGMLWriteWFSQuery(map, stdout, startindex-1, maxfeatures, pszNameSpace, outputformat);
 
         if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
           msIO_printf("   <gml:boundedBy>\n"); 
