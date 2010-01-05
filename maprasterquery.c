@@ -1402,7 +1402,7 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   if( map == NULL )
     return MS_FAILURE;
 
-  /* If the layer use a tileindex...*/
+  /* If the layer use a tileindex, return the extent of the tileindex shapefile/referenced layer */
   if (layer->tileindex)
   {
     tilelayerindex = msGetLayerIndex(map, layer->tileindex);
