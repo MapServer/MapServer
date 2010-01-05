@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed configure to support FTGL 2.1.2 (#3247)
+
 - Changed msSaveImageBufferGD to be in accordance with msSaveImageGD (#3201)
 
 - PHP/Mapscript: added layerObj units property (#3249)

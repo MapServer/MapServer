@@ -6,7 +6,12 @@
 
 #include <vector>
 #include <map>
-#include <FTGL/ftgl.h>
+
+#ifdef USE_FTGL_2_1_2
+#include <FTGL/FTGL.h> 
+#else
+#include <FTGL/ftgl.h> 
+#endif
 #include <FTGL/FTGLTextureFont.h>
 
 #include "mapoglcontext.h"

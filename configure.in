@@ -849,10 +849,16 @@ if test -n "$with_ftgl" -a "$with_ftgl" != "no" ; then
 
   AC_EXPAND_PATH($with_ftgl, FTGL_DIR)
 
-  test -f $FTGL_DIR/include/FTGL/ftgl.h -a -f $FTGL_DIR/include/FTGL/FTGLTextureFont.h && FTGL_INCLUDE="-I$FTGL_DIR/include/FTGL/"
+  FTGL_FLAG=""
+  if [ test -f $FTGL_DIR/include/FTGL/ftgl.h -a -f $FTGL_DIR/include/FTGL/FTGLTextureFont.h ]; then
+      FTGL_INCLUDE="-I$FTGL_DIR/include/FTGL/"
+  elif [ test -f $FTGL_DIR/include/FTGL/FTGL.h -a -f $FTGL_DIR/include/FTGL/FTGLTextureFont.h ]; then
+      FTGL_INCLUDE="-I$FTGL_DIR/include/FTGL/"
+      FTGL_FLAG="-DUSE_FTGL_2_1_2"
+  fi
 
   if test -z "$FTGL_INCLUDE" ; then
-      AC_MSG_ERROR("could not find ftgl.h in $FTGL_DIR/include/FTGL.")
+      AC_MSG_ERROR("could not find ftgl.h/FTGL.h in $FTGL_DIR/include/FTGL.")
   fi
   
   test -f $FTGL_DIR/lib/libftgl.so && FTGL_LIBDIR="$FTGL_DIR/lib"
@@ -865,7 +871,7 @@ if test -n "$with_ftgl" -a "$with_ftgl" != "no" ; then
   
 
   dnl If we got this far all is well!
-  FTGL_ENABLED="-DUSE_FTGL"
+  FTGL_ENABLED="-DUSE_FTGL $FTGL_FLAG"
   FTGL_INC="$FTGL_INCLUDE"
   FTGL_LIB="-L$FTGL_LIBDIR -lftgl"
   AC_ADD_RUNPATH("$FTGL_LIBDIR")

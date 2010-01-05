@@ -8965,11 +8965,17 @@ if test -n "$with_ftgl" -a "$with_ftgl" != "no" ; then
   fi
 
 
-  test -f $FTGL_DIR/include/FTGL/ftgl.h -a -f $FTGL_DIR/include/FTGL/FTGLTextureFont.h && FTGL_INCLUDE="-I$FTGL_DIR/include/FTGL/"
+  FTGL_FLAG=""
+  if  test -f $FTGL_DIR/include/FTGL/ftgl.h -a -f $FTGL_DIR/include/FTGL/FTGLTextureFont.h ; then
+      FTGL_INCLUDE="-I$FTGL_DIR/include/FTGL/"
+  elif  test -f $FTGL_DIR/include/FTGL/FTGL.h -a -f $FTGL_DIR/include/FTGL/FTGLTextureFont.h ; then
+      FTGL_INCLUDE="-I$FTGL_DIR/include/FTGL/"
+      FTGL_FLAG="-DUSE_FTGL_2_1_2"
+  fi
 
   if test -z "$FTGL_INCLUDE" ; then
-      { { echo "$as_me:$LINENO: error: \"could not find ftgl.h in $FTGL_DIR/include/FTGL.\"" >&5
-echo "$as_me: error: \"could not find ftgl.h in $FTGL_DIR/include/FTGL.\"" >&2;}
+      { { echo "$as_me:$LINENO: error: \"could not find ftgl.h/FTGL.h in $FTGL_DIR/include/FTGL.\"" >&5
+echo "$as_me: error: \"could not find ftgl.h/FTGL.h in $FTGL_DIR/include/FTGL.\"" >&2;}
    { (exit 1); exit 1; }; }
   fi
 
@@ -8984,7 +8990,7 @@ echo "$as_me: error: \"could not find libftgl in $FTGL_DIR.\"" >&2;}
 
 
 
-    FTGL_ENABLED="-DUSE_FTGL"
+    FTGL_ENABLED="-DUSE_FTGL $FTGL_FLAG"
   FTGL_INC="$FTGL_INCLUDE"
   FTGL_LIB="-L$FTGL_LIBDIR -lftgl"
 
