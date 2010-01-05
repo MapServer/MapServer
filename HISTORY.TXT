@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Changed msSaveImageBufferGD to be in accordance with msSaveImageGD (#3201)
+
 - PHP/Mapscript: added layerObj units property (#3249)
 
 - Changed the query map rendering implementation without adding extra layers to the map (#3069)

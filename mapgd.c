@@ -3506,99 +3506,13 @@ unsigned char *msSaveImageBufferGD(imageObj *img, int *size_ptr, outputFormatObj
 {
   unsigned char *imgbytes;
     
-  if(format->imagemode == MS_IMAGEMODE_RGBA) 
-    gdImageSaveAlpha(img->img.gd, 1);
-  else if(format->imagemode == MS_IMAGEMODE_RGB)
-    gdImageSaveAlpha(img->img.gd, 0);
+   gdIOCtx *ctx = gdNewDynamicCtx (2048, NULL);
+  if (msSaveImageGDCtx( img, ctx, format ) == MS_SUCCESS)
+    imgbytes = gdDPExtractData (ctx, size_ptr);
+  else
+    imgbytes = NULL;
 
-  if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON" )) == 0) 
-    gdImageInterlace(img->img.gd, 1);
-
-  if(format->transparent)
-    gdImageColorTransparent(img->img.gd, 0);
-
-  if(strcasecmp(format->driver, "gd/gif") == 0) {
-#ifdef USE_GD_GIF
-    imgbytes = gdImageGifPtr(img->img.gd, size_ptr);
-#else
-    msSetError(MS_IMGERR, "GIF output is not available.", "msSaveImageBufferGD()");
-    return NULL;
-#endif
-  } else if (strcasecmp(format->driver, "gd/png") == 0) {
-#ifdef USE_GD_PNG
-    int force_pc256 = MS_FALSE;
-    int force_palette = MS_FALSE;
-
-    if( format->imagemode == MS_IMAGEMODE_RGB  || format->imagemode == MS_IMAGEMODE_RGBA ) {
-      const char *force_string = msGetOutputFormatOption( format, "QUANTIZE_FORCE", "OFF" );
-      if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
-        force_pc256 = MS_TRUE;
-
-      force_string = msGetOutputFormatOption( format, "PALETTE_FORCE", "OFF" );
-      if( strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0 )
-        force_palette = MS_TRUE;
-    }
-
-    if( force_palette ) {
-      gdImagePtr gdPImg;
-      int method=0;
-      const char *palette = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
-      const char *palette_method = msGetOutputFormatOption( format, "PALETTE_MEM", "0");
-      if(strcasecmp(palette_method,"conservative")==0)
-          method=1;
-      else if(strcasecmp(palette_method,"liberal")==0)
-          method=2;
-
-      gdPImg = msImageCreateWithPaletteGD(img->img.gd, palette, gdImageSX(img->img.gd), gdImageSY(img->img.gd));
-      if(!gdPImg) return NULL; /* most likely a bad palette */
-
-      msImageCopyForcePaletteGD(img->img.gd, gdPImg, method);
-      imgbytes = gdImagePngPtr(gdPImg, size_ptr);
-      gdImageDestroy(gdPImg);
-    }
-    else if ( force_pc256 ) {
-      gdImagePtr gdPImg;
-      int dither, i;
-      int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
-      const char *dither_string = msGetOutputFormatOption( format, "QUANTIZE_DITHER", "YES");
-
-      if( strcasecmp(dither_string,"on") == 0 || strcasecmp(dither_string,"yes") == 0 || strcasecmp(dither_string,"true") == 0 )
-        dither = 1;
-      else
-        dither = 0;
-      
-      gdPImg = gdImageCreatePaletteFromTrueColor(img->img.gd,dither,colorsWanted);
-      /* It seems there is a bug in gd 2.0.33 and earlier that leaves the 
-         colors open[] flag set to one. */
-      for( i = 0; i < gdPImg->colorsTotal; i++ )
-        gdPImg->open[i] = 0;
-      imgbytes = gdImagePngPtr(gdPImg, size_ptr);
-      gdImageDestroy(gdPImg);
-    }
-    else
-      imgbytes = gdImagePngPtr(img->img.gd, size_ptr);
-#else
-    msSetError(MS_IMGERR, "PNG output is not available.", "msSaveImageBufferGD()");
-    return NULL;
-#endif
-  } else if (strcasecmp(format->driver, "gd/jpeg") == 0) {
-#ifdef USE_GD_JPEG
-    imgbytes = gdImageJpegPtr(img->img.gd, size_ptr, atoi(msGetOutputFormatOption(format, "QUALITY", "75" )));
-#else
-    msSetError(MS_IMGERR, "JPEG output is not available.", "msSaveImageBufferGD()");
-    return NULL;
-#endif
-  } else if (strcasecmp(format->driver, "gd/wbmp") == 0) {
-#ifdef USE_GD_WBMP
-    imgbytes = gdImageWBMPPtr(img->img.gd, size_ptr, 1);
-#else
-    msSetError(MS_IMGERR, "WBMP output is not available.", "msSaveImageBufferGD()");
-    return NULL;
-#endif
-  } else {
-    msSetError(MS_IMGERR, "Unknown output image type driver: %s.", "msSaveImageBufferGD()", format->driver );
-    return NULL;
-  } 
+  ctx->gd_free(ctx);
 
   return imgbytes;
 }
