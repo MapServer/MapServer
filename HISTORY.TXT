@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-6):
 --------------------------------
 
+- Changed msSaveImageBufferGD to be in accordance with msSaveImageGD (#3201)
+
 - Changed the query map rendering implementation without adding extra layers to the map (#3069)
 
 - SQL Server 2008 plugin is not handling null field values correctly (#2893)
