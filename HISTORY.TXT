@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Made %substitution% strings case insensitive (#3250)
+
 - Added support to get the extent of a raster layer that use a tileindex (#3252)
 
 - Fixed configure to support FTGL 2.1.2 (#3247)

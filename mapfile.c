@@ -5449,17 +5449,17 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 /* look in places authorized for url substitution and replace "from" by "to" */ 
 void msLayerSubstituteString(layerObj *layer, const char *from, const char *to) {
   int k;
-  if(layer->data && (strstr(layer->data, from) != NULL)) 
-    layer->data = msReplaceSubstring(layer->data, from, to);
-  if(layer->tileindex && (strstr(layer->tileindex, from) != NULL)) 
-    layer->tileindex = msReplaceSubstring(layer->tileindex, from, to);
-  if(layer->connection && (strstr(layer->connection, from) != NULL)) 
-    layer->connection = msReplaceSubstring(layer->connection, from, to);
-  if(layer->filter.string && (strstr(layer->filter.string, from) != NULL)) 
-    layer->filter.string = msReplaceSubstring(layer->filter.string, from, to);
+  if(layer->data && (strcasestr(layer->data, from) != NULL)) 
+    layer->data = msCaseReplaceSubstring(layer->data, from, to);
+  if(layer->tileindex && (strcasestr(layer->tileindex, from) != NULL)) 
+    layer->tileindex = msCaseReplaceSubstring(layer->tileindex, from, to);
+  if(layer->connection && (strcasestr(layer->connection, from) != NULL)) 
+    layer->connection = msCaseReplaceSubstring(layer->connection, from, to);
+  if(layer->filter.string && (strcasestr(layer->filter.string, from) != NULL)) 
+    layer->filter.string = msCaseReplaceSubstring(layer->filter.string, from, to);
   for(k=0; k<layer->numclasses; k++) {
-    if(layer->class[k]->expression.string && (strstr(layer->class[k]->expression.string, from) != NULL)) 
-      layer->class[k]->expression.string = msReplaceSubstring(layer->class[k]->expression.string, from, to);
+    if(layer->class[k]->expression.string && (strcasestr(layer->class[k]->expression.string, from) != NULL)) 
+      layer->class[k]->expression.string = msCaseReplaceSubstring(layer->class[k]->expression.string, from, to);
   }
 }
   
