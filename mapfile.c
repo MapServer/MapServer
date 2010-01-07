@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define _GNU_SOURCE
 
 #include <stdarg.h>
 #include <assert.h>
