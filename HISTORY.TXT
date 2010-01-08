@@ -12,24 +12,29 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (SVN branch-5-6):
---------------------------------
+Version 5.6.1 (2010-01-08):
+---------------------------
 
 - Changed msSaveImageBufferGD to be in accordance with msSaveImageGD (#3201)
 
-- Changed the query map rendering implementation without adding extra layers to the map (#3069)
+- Changed the query map rendering implementation without adding extra layers
+  to the map (#3069)
 
 - SQL Server 2008 plugin is not handling null field values correctly (#2893)
 
 - Hatch symbol not properly saved (#2905)
 
-- Expose symbolObj.inmapfile to the SWIG API, have already been exposed to PHP (#3233)
+- Expose symbolObj.inmapfile to the SWIG API, have already been exposed 
+  to PHP (#3233)
 
-- Expose getGeomTransform/setGeomTransform to SWIG instead of exposing the private vars for rfc48 (#3214)
+- Expose getGeomTransform/setGeomTransform to SWIG instead of exposing the
+  private vars for rfc48 (#3214)
 
 - Fixed writeSymbol to support writing 'ANGLE AUTO' (#3214)
 
-- Fixed problems with point queries not working via the CGI (mode=query or mode=nquery) (#3246)
+- Fixed problems with point queries not working via the CGI (mode=query
+  or mode=nquery) (#3246)
+
 
 Version 5.6.0 (2009-12-18):
 ---------------------------
