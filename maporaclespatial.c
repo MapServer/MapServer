@@ -2026,7 +2026,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
         
   /* do the actual binding */      
 
- if (success) {
+ if (success && function != FUNCTION_NONE ) { 
      success = TRY( hand,
             /* bind in srid */
             OCIBindByName( sthand->stmthp, &bnd2p,  hand->errhp, (text *) ":srid", strlen(":srid"),(ub1 *) srid,  strlen(srid)+1, SQLT_STR, 

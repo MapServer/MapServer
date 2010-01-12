@@ -15,6 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-6):
 --------------------------------
 
+- Fixed problem with the oracle driver w/FUNCTION=NONE (#3260)
 
 Version 5.6.1 (2010-01-08):
 ---------------------------
