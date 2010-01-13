@@ -1450,9 +1450,9 @@ msOGRFileOpen(layerObj *layer, const char *connection )
                      "ExecuteSQL(%s) failed.\n%s",
                      "msOGRFileOpen()", 
                      pszLayerDef, CPLGetLastErrorMsg() );
-          OGR_DS_Destroy( hDS );
-          CPLFree( pszLayerDef );
           RELEASE_OGR_LOCK;
+          msConnPoolRelease( layer, hDS );
+          CPLFree( pszLayerDef );
           return NULL;
       }
       RELEASE_OGR_LOCK;
@@ -1465,9 +1465,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
                  "msOGRFileOpen()", 
                  pszLayerDef, connection );
       CPLFree( pszLayerDef );
-      ACQUIRE_OGR_LOCK;
-      OGR_DS_Destroy( hDS );
-      RELEASE_OGR_LOCK;
+      msConnPoolRelease( layer, hDS );
       return NULL;
   }
 
