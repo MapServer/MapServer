@@ -2777,12 +2777,13 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
  * ------------------------------------------------------------------ */
   ACQUIRE_OGR_LOCK;
   if (psInfo->hLastFeature == NULL || 
-      OGR_F_GetFID( psInfo->hLastFeature ) != record)
+      psInfo->last_record_index_read != record)
   {
-      if (psInfo->hLastFeature)
-          OGR_F_Destroy( psInfo->hLastFeature );
-
-      psInfo->hLastFeature = OGR_L_GetFeature( psInfo->hLayer, record );
+      RELEASE_OGR_LOCK;
+      msSetError(MS_MISCERR, 
+                 "Assertion failed: AutoStyle not requested on loaded shape.",
+                 "msOGRLayerGetAutoStyle()");
+      return(MS_FAILURE);
   }
 
 /* ------------------------------------------------------------------
