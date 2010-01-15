@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- PHP/MapScript: removed deprecated class properties (#2170)
+
 - Fixed OGR datasource double free (#3261)
  
 - Fix compilation warnings around use of strcasestr (#3257)

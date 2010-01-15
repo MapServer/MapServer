@@ -1,4 +1,20 @@
 =====================================
+MapServer 5.6 to 6.0 Migration Guide
+=====================================
+
+This section documents the changes that must be made to MapServer 
+applications when migrating from version 5.6.x (or earlier versions) 
+to 6.0 (i.e. backwards incompatibilities), as well as information
+on some of the new features.
+
+--------------
+PHP MapScript
+--------------
+
+* All deprecated class properties have been removed.
+  See mapscript/php3/README for the list.
+
+=====================================
 MapServer 5.4 to 5.6 Migration Guide
 =====================================
 

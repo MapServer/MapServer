@@ -1,2 +1,42 @@
 Please see the PHP MapScript documentation at: 
 http://www.mapserver.org/mapscript/php/index.html
+
+--------------------------------------------------------------------
+In MapServer 6.0, the following class properties have been removed
+--------------------------------------------------------------------
+
+mapObj
+-------
+ imagequality
+ interlace
+ scale
+ transparent
+
+classObj
+---------
+ maxscale
+ minscale
+
+layerObj
+---------
+ labelmaxscale
+ labelminscale
+ maxscale
+ minscale
+ symbolscale
+ transparency
+
+legendObj
+----------
+ interlace
+ transparent
+
+scalebarObj
+------------
+ interlace
+ transparent
+
+symbolObj
+----------
+ gap
+ stylelength

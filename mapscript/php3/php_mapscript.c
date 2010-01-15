@@ -1589,10 +1589,7 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     add_property_long(return_value,  "width",     pMap->width);
     add_property_long(return_value,  "height",    pMap->height);
     add_property_long(return_value,  "maxsize",   pMap->maxsize);
-    add_property_long(return_value,  "transparent", pMap->transparent);
-    add_property_long(return_value,  "interlace", pMap->interlace);
     PHPMS_ADD_PROP_STR(return_value,  "imagetype", pMap->imagetype);
-    add_property_long(return_value,  "imagequality", pMap->imagequality);
 
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
     _phpms_build_rect_object(&(pMap->extent), PHPMS_GLOBAL(le_msrect_ref),
@@ -1603,8 +1600,6 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     add_property_long(return_value,  "units",     pMap->units);
 
     add_property_double(return_value,"scaledenom",pMap->scaledenom);
-    /* TODO: scale deprecated in v5.0 remove in future release */
-    add_property_double(return_value,"scale",     pMap->scaledenom);
 
     add_property_double(return_value,"resolution",pMap->resolution);
     add_property_double(return_value,"defresolution",pMap->defresolution);
@@ -1895,14 +1890,9 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "width",       self->width)
     else IF_SET_LONG(  "height",      self->height)
     else IF_SET_LONG(  "maxsize",     self->maxsize)
-    else IF_SET_LONG(  "transparent", self->transparent)
-    else IF_SET_LONG(  "interlace",   self->interlace)
-    else IF_SET_LONG(  "imagequality",self->imagequality)
     else IF_SET_DOUBLE("cellsize",    self->cellsize)
     else IF_SET_LONG(  "units",       self->units)
     else IF_SET_DOUBLE("scaledenom",  self->scaledenom)
-    /* TODO: scale deprecated in v5.0 remove in future release */
-    else IF_SET_DOUBLE("scale",       self->scaledenom)
     else IF_SET_DOUBLE("resolution",  self->resolution)
     else IF_SET_DOUBLE("defresolution",  self->defresolution)
     else IF_SET_STRING("shapepath",   self->shapepath)
@@ -6779,12 +6769,6 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_double(return_value, "labelminscaledenom",player->labelminscaledenom);
     add_property_double(return_value, "labelmaxscaledenom",player->labelmaxscaledenom);
 
-    /* TODO: *scale deprecated in v5.0. Remove in future release */
-    add_property_double(return_value, "symbolscale",player->symbolscaledenom);
-    add_property_double(return_value, "minscale",   player->minscaledenom);
-    add_property_double(return_value, "maxscale",   player->maxscaledenom);
-    add_property_double(return_value, "labelminscale",player->labelminscaledenom);
-    add_property_double(return_value, "labelmaxscale",player->labelmaxscaledenom);
 
     add_property_long(return_value,   "maxfeatures",player->maxfeatures);
     add_property_long(return_value,   "transform",  player->transform);
@@ -6800,8 +6784,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "filteritem", player->filteritem);
     PHPMS_ADD_PROP_STR(return_value,  "template", player->template);
     add_property_long(return_value,   "opacity", player->opacity);
-    /* TODO: transparency deprecated in v5.0. Remove in future release */
-    add_property_long(return_value,   "transparency", player->opacity);
+
     PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
     add_property_long(return_value,   "num_processing",player->numprocessing);
     PHPMS_ADD_PROP_STR(return_value,  "requires",   player->requires);
@@ -6994,13 +6977,6 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_DOUBLE("maxscaledenom",   self->maxscaledenom)
     else IF_SET_DOUBLE("labelminscaledenom",self->labelminscaledenom)
     else IF_SET_DOUBLE("labelmaxscaledenom",self->labelmaxscaledenom)
-    /* TODO: *scale deprecated in v5.0. Remove in future release */
-    else IF_SET_DOUBLE("symbolscale",self->symbolscaledenom)
-    else IF_SET_DOUBLE("minscale",   self->minscaledenom)
-    else IF_SET_DOUBLE("maxscale",   self->maxscaledenom)
-    else IF_SET_DOUBLE("labelminscale",self->labelminscaledenom)
-    else IF_SET_DOUBLE("labelmaxscale",self->labelmaxscaledenom)
-
     else IF_SET_LONG(  "maxfeatures",self->maxfeatures)
     else IF_SET_LONG(  "transform",  self->transform)
     else IF_SET_LONG(  "labelcache", self->labelcache)
@@ -7014,8 +6990,6 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("filteritem", self->filteritem)
     else IF_SET_STRING("template",   self->template)
     else IF_SET_LONG(  "opacity", self->opacity)
-    /* TODO: transparency deprecated in v5.0. Remove in future release */
-    else IF_SET_LONG(  "transparency",self->opacity)
     else IF_SET_STRING("styleitem",  self->styleitem)
     else IF_SET_STRING("requires",   self->requires)
     else IF_SET_STRING("labelrequires",   self->labelrequires)
@@ -9506,9 +9480,6 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
 
     add_property_double(return_value,  "minscaledenom", pclass->minscaledenom);
     add_property_double(return_value,  "maxscaledenom", pclass->maxscaledenom);
-    /* TODO: *scale deprecated in v5.0. Remove in future release */
-    add_property_double(return_value,  "minscale", pclass->minscaledenom);
-    add_property_double(return_value,  "maxscale", pclass->maxscaledenom);
 
     PHPMS_ADD_PROP_STR(return_value,   "keyimage",  pclass->keyimage);
 
@@ -9680,10 +9651,6 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "status",        self->status)
     else IF_SET_DOUBLE("minscaledenom", self->minscaledenom)
     else IF_SET_DOUBLE("maxscaledenom", self->maxscaledenom)
-    /* TODO: *scale deprecated in v5.0. Remove in future release */
-    else IF_SET_DOUBLE("minscale",      self->minscaledenom)
-    else IF_SET_DOUBLE("maxscale",      self->maxscaledenom)
-
     else IF_SET_STRING("template",      self->template)
     else IF_SET_STRING("keyimage",      self->keyimage)       
     else if (strcmp( "numstyles", pPropertyName->value.str.val) == 0)
@@ -14392,12 +14359,9 @@ static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
     add_property_long(return_value,  "width",           pscalebar->width);
     add_property_long(return_value,  "style",           pscalebar->style);
     add_property_long(return_value,  "intervals",       pscalebar->intervals);
-
     add_property_long(return_value,  "units",           pscalebar->units);
     add_property_long(return_value,  "status",          pscalebar->status);
     add_property_long(return_value,  "position",        pscalebar->position);
-    add_property_long(return_value,  "transparent",     pscalebar->transparent);
-    add_property_long(return_value,  "interlace",       pscalebar->interlace);
     add_property_long(return_value,  "postlabelcache",  
                       pscalebar->postlabelcache);
     add_property_long(return_value,  "align",           pscalebar->align);
@@ -14512,8 +14476,6 @@ DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "units",         self->units)
     else IF_SET_LONG(  "status",        self->status)
     else IF_SET_LONG(  "position",      self->position)
-    else IF_SET_LONG(  "transparent",   self->transparent)
-    else IF_SET_LONG(  "interlace",     self->interlace)
     else IF_SET_LONG(  "postlabelcache",self->postlabelcache)
     else IF_SET_LONG(  "align",         self->align)
     else
@@ -14613,8 +14575,6 @@ static long _phpms_build_legend_object(legendObj *plegend,
     add_property_long(return_value,  "keyspacingy",     plegend->keyspacingy);
     add_property_long(return_value,  "status",          plegend->status);
     add_property_long(return_value,  "position",        plegend->position);
-    add_property_long(return_value,  "transparent",     plegend->transparent);
-    add_property_long(return_value,  "interlace",       plegend->interlace);
     add_property_long(return_value,  "postlabelcache",  
                       plegend->postlabelcache);
     PHPMS_ADD_PROP_STR(return_value, "template", plegend->template);
@@ -14733,8 +14693,6 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "keyspacingy",   self->keyspacingy)
     else IF_SET_LONG(  "status",        self->status)
     else IF_SET_LONG(  "position",      self->position)
-    else IF_SET_LONG(  "transparent",   self->transparent)
-    else IF_SET_LONG(  "interlace",     self->interlace)
     else IF_SET_LONG(  "postlabelcache",self->postlabelcache)
     else IF_SET_STRING( "template",     self->template)
     else
@@ -15733,9 +15691,6 @@ static long _phpms_build_symbol_object(symbolObj *psSymbol,
     add_property_long(return_value,   "filled",     psSymbol->filled);
     add_property_long(return_value,   "patternlength", psSymbol->patternlength);
 
-    /* TODO: stylelength deprecated in v5.0. To be removed in a later release*/
-    add_property_long(return_value,   "stylelength", psSymbol->patternlength);
-
     /* MS_SYMBOL_PIXMAP */ 
     PHPMS_ADD_PROP_STR(return_value,  "imagepath", psSymbol->imagepath);
     add_property_long(return_value,   "transparent",     psSymbol->transparent);
@@ -15745,7 +15700,6 @@ static long _phpms_build_symbol_object(symbolObj *psSymbol,
     PHPMS_ADD_PROP_STR(return_value,  "character",  psSymbol->character); 
     add_property_long(return_value,   "antialias",  psSymbol->antialias); 
     PHPMS_ADD_PROP_STR(return_value,  "font",       psSymbol->font); 
-    add_property_long(return_value,   "gap",        psSymbol->gap); 
     add_property_long(return_value,   "position",   psSymbol->position); 
     
     //TODO : true type and cartoline parameters to add.
@@ -15794,11 +15748,9 @@ DLEXPORT void php3_ms_symbol_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("character",   self->character) 
     else IF_SET_LONG(  "antialias",   self->antialias) 
     else IF_SET_STRING("font",        self->font) 
-    else IF_SET_LONG(  "gap",         self->gap) 
     else IF_SET_LONG(  "position",    self->position)        
     else if (strcmp( "numpoints", pPropertyName->value.str.val) == 0 ||
              strcmp( "patternlength", pPropertyName->value.str.val) == 0 ||
-             strcmp( "stylelength", pPropertyName->value.str.val) == 0 ||
              strcmp( "imagepath", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
