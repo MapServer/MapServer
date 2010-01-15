@@ -592,7 +592,7 @@ static zend_class_entry *querymap_class_entry_ptr;
 static zend_class_entry *cgirequest_class_entry_ptr;
 static zend_class_entry *hashtable_class_entry_ptr;
 
-#ifdef ZEND_ENGINE_2  // PHP5
+// ZEND_ENGINE_2: PHP5
 ZEND_BEGIN_ARG_INFO(one_arg_force_ref, 0)
     ZEND_ARG_PASS_INFO(1)
 ZEND_END_ARG_INFO()
@@ -601,12 +601,6 @@ ZEND_BEGIN_ARG_INFO(two_args_first_arg_force_ref, 0)
     ZEND_ARG_PASS_INFO(1)
     ZEND_ARG_PASS_INFO(0)
 ZEND_END_ARG_INFO()
-#else   // PHP4
-static unsigned char one_arg_force_ref[] = 
-  { 1, BYREF_FORCE};
-static unsigned char two_args_first_arg_force_ref[] = 
-    { 2, BYREF_FORCE, BYREF_NONE };
-#endif
 
 function_entry phpms_functions[] = {
     {"ms_getversion",   php3_ms_getversion,     NULL},
@@ -1858,16 +1852,9 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self;
     pval   *pPropertyName, *pNewValue;
     pval *pThis;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -2207,17 +2194,9 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
     pval                *pThis;
     int                 nStatus = 0;
     int                 nArgs = ARG_COUNT(ht);
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
  
     if (pThis == NULL ||
         (nArgs != 1 && nArgs != 2))
@@ -2258,16 +2237,9 @@ DLEXPORT void php3_ms_map_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS)
     pval                *pThis;
     int                 nStatus = 0;
     int                 nArgs = ARG_COUNT(ht);
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
  
     if (pThis == NULL ||
         (nArgs != 1 && nArgs != 2))
@@ -2307,17 +2279,9 @@ DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self;
     pval        *pThis = NULL;
     char        *pszPojString = NULL;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
 
     if (pThis == NULL)
     {
@@ -2366,11 +2330,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 {
     mapObj      *self;
     pval        *pThis;
-#ifdef PHP4
-    pval   **pExtent;
-#else
-    pval   *pExtent;
-#endif
+    pval        **pExtent;
     pval        *pZoomFactor;
     pval        *pPixelPos;
     pval        *pWidth, *pHeight;
@@ -2679,12 +2639,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
 {
     mapObj      *self;
     pval        *pThis;
-#ifdef PHP4
-    pval   **pExtent;
-#else
-    pval   *pExtent;
-#endif
-
+    pval       **pExtent;
     pval        *pPixelExt;
     pval        *pWidth, *pHeight;
     pval        *pGeorefExt;
@@ -2701,7 +2656,6 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     int         nArgs = ARG_COUNT(ht);
     double      dfDeltaX = 0;
     double      dfDeltaY = 0;
-
     HashTable   *list=NULL;
 
     pThis = getThis();
@@ -3274,16 +3228,9 @@ DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pSymName;
     mapObj      *self=NULL;
     int         nSymbolId = -1;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pSymName) == FAILURE) 
@@ -3321,16 +3268,9 @@ DLEXPORT void php3_ms_map_getSymbolObjectById(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self=NULL;
     symbolObj *psSymbol = NULL;
     int map_id;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pSymId) == FAILURE) 
@@ -3373,15 +3313,9 @@ DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     mapObj *self;
     imageObj *im = NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -3409,15 +3343,9 @@ DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     mapObj *self;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -3579,15 +3507,9 @@ DLEXPORT void php3_ms_map_drawLegend(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     mapObj *self;
     imageObj *im = NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -3616,15 +3538,9 @@ DLEXPORT void php3_ms_map_drawReferenceMap(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     mapObj *self;
     imageObj *im = NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -3653,16 +3569,9 @@ DLEXPORT void php3_ms_map_drawScaleBar(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     mapObj *self;
     imageObj *im = NULL;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -3692,15 +3601,9 @@ DLEXPORT void php3_ms_map_embedScalebar(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self;
     imageObj *im = NULL;
     int    retVal=0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &imgObj) == FAILURE) 
@@ -3732,15 +3635,9 @@ DLEXPORT void php3_ms_map_embedLegend(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self;
     imageObj *im = NULL;
     int    retVal=0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &imgObj) == FAILURE) 
@@ -3773,15 +3670,9 @@ DLEXPORT void php3_ms_map_drawLabelCache(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self;
     imageObj *im = NULL;
     int    retVal=0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &imgObj) == FAILURE) 
@@ -3818,15 +3709,9 @@ DLEXPORT void php3_ms_map_getLayer(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self=NULL;
     layerObj *newLayer=NULL;
     int map_id;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pLyrIndex) == FAILURE) 
@@ -3872,16 +3757,9 @@ DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self=NULL;
     layerObj *newLayer=NULL;
     int map_id;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pLyrName) == FAILURE) 
@@ -3929,16 +3807,9 @@ DLEXPORT void php3_ms_map_getLayersIndexByGroup(INTERNAL_FUNCTION_PARAMETERS)
     int         *aiIndex = NULL;
     int         nCount = 0;
     int         i = 0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pGrpName) == FAILURE) 
@@ -3994,16 +3865,9 @@ DLEXPORT void php3_ms_map_getAllLayerNames(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self=NULL;
     int         nCount = 0;
     int         i = 0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -4047,16 +3911,9 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self=NULL;
     int         i = 0;
     char        **papszGroups = NULL;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -4108,15 +3965,9 @@ DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self=NULL;
     paletteObj  palette;
     colorObj    oColor;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pColorIndex) == FAILURE) 
@@ -4175,15 +4026,9 @@ DLEXPORT void php3_ms_map_queryByPoint(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self=NULL;
     pointObj *poPoint=NULL;
     int      nStatus = MS_FAILURE;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 3, &pPoint, &pType, &pBuffer) == FAILURE) 
@@ -4231,18 +4076,9 @@ DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self=NULL;
     rectObj *poRect=NULL;
     int      nStatus = MS_FAILURE;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pRect) == FAILURE) 
@@ -4277,16 +4113,9 @@ DLEXPORT void php3_ms_map_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS)
     pval   *pThis, *pSLayer;
     mapObj *self=NULL;
     int      nStatus = MS_FAILURE;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pSLayer) == FAILURE) 
@@ -4323,17 +4152,9 @@ DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self=NULL;
     shapeObj    *poShape=NULL;
     int         nStatus = MS_FAILURE;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pShape) == FAILURE) 
@@ -4377,16 +4198,9 @@ DLEXPORT void php3_ms_map_queryByIndex(INTERNAL_FUNCTION_PARAMETERS)
     int         nStatus = MS_FAILURE;
     int         bAddToQuery = -1;
     int         nArgs = ARG_COUNT(ht);
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         (nArgs != 3 && nArgs != 4))
@@ -4442,17 +4256,9 @@ DLEXPORT void php3_ms_map_savequery(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis, *pFileName;
     mapObj      *self=NULL;
     int         nStatus = MS_FAILURE;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pFileName) == FAILURE) 
@@ -4483,17 +4289,9 @@ DLEXPORT void php3_ms_map_loadquery(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis, *pFileName;
     mapObj      *self=NULL;
     int         nStatus = MS_FAILURE;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pFileName) == FAILURE) 
@@ -4525,17 +4323,9 @@ DLEXPORT void php3_ms_map_freequery(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis, *pQlayer;
     mapObj      *self=NULL;
     int         nStatus = MS_SUCCESS;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pQlayer) == FAILURE) 
@@ -4568,17 +4358,9 @@ DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS)
     pval  *pThis, *pFname;
     mapObj *self;
     int    retVal=0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pFname) == FAILURE) 
@@ -4613,16 +4395,9 @@ DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis;
     mapObj      *self=NULL;
     rectObj     oGeorefExt;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -4665,16 +4440,9 @@ DLEXPORT void php3_ms_map_getMetaData(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self;
     pval   *pThis, *pName;
     char   *pszValue = NULL;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pName) != SUCCESS)
@@ -4708,15 +4476,9 @@ DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self;
     pval   *pThis, *pName, *pValue;
     int    nStatus = MS_FAILURE;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pName, &pValue) != SUCCESS)
@@ -4794,16 +4556,9 @@ DLEXPORT void php3_ms_map_moveLayerUp(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval  *pLyrIdx, *pThis;
     mapObj *self=NULL;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pLyrIdx) == FAILURE) 
@@ -4839,16 +4594,9 @@ DLEXPORT void php3_ms_map_moveLayerDown(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval  *pLyrIdx, *pThis;
     mapObj *self=NULL;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pLyrIdx) == FAILURE) 
@@ -4887,16 +4635,9 @@ DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
     int         nCount = 0;
     int         i = 0;
     int         *panLayers = NULL;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -5375,24 +5116,13 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
     pval        *pThis;
     pval        *pParamFileName;
     mapObj      *self=NULL;
     int         retVal=0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
 
-#else
-    pval        *pValue = NULL;
-#endif
-
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -5429,7 +5159,6 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
                                        self->symbolset.filename:"", E_ERROR TSRMLS_CC); 
 
     RETURN_LONG(retVal);
-#endif
 }
 
 /**********************************************************************
@@ -5443,15 +5172,9 @@ DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval  *pThis;
     mapObj *self=NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0) 
@@ -5481,19 +5204,9 @@ DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pParamFileName;
     mapObj      *self=NULL;
     int         retVal=0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
 
-#else
-    pval        *pValue = NULL;
-#endif
-
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -5548,19 +5261,9 @@ DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pParamFileName;
     mapObj      *self=NULL;
     int         retVal=0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
 
-#else
-    pval        *pValue = NULL;
-#endif
-
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -6121,17 +5824,11 @@ DLEXPORT void php3_ms_map_insertLayer(INTERNAL_FUNCTION_PARAMETERS)
   layerObj *poLayer=NULL;
   int nLyrIndex = -1, iReturn=-1;
   int nArgs;
+  HashTable   *list=NULL;
 
-#ifdef PHP4
-    HashTable   *list=NULL;
-#endif
     nArgs = ARG_COUNT(ht);
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         (nArgs != 1 && nArgs != 2) ||
@@ -6833,10 +6530,7 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS)
     int         map_id;
     int         nArgs;
     int         nOrigIndex = 0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
     nArgs = ARG_COUNT(ht);
     if ((nArgs != 1 && nArgs != 2) ||
@@ -6936,15 +6630,9 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     layerObj *self;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -7032,18 +6720,9 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS)
     layerObj *self;
     imageObj *im = NULL;
     int    retVal=0;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
 
     if (pThis == NULL ||
         getParameters(ht, 1, &imgObj) == FAILURE) 
@@ -7082,15 +6761,9 @@ DLEXPORT void php3_ms_lyr_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
     layerObj *self;
     imageObj *im = NULL;
     int    retVal=0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &imgObj) == FAILURE) 
@@ -7133,15 +6806,9 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
     layerObj *self=NULL;
     classObj *newClass=NULL;
     int layer_id, map_id;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pClassIndex) == FAILURE) 
@@ -7193,15 +6860,9 @@ DLEXPORT void php3_ms_lyr_queryByAttributes(INTERNAL_FUNCTION_PARAMETERS)
     layerObj *self=NULL;
     mapObj   *parent_map;
     int      nStatus = MS_FAILURE;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 3, &pQItem, &pQString, &pType) == FAILURE) 
@@ -7251,15 +6912,9 @@ DLEXPORT void php3_ms_lyr_queryByPoint(INTERNAL_FUNCTION_PARAMETERS)
     mapObj   *parent_map;
     pointObj *poPoint=NULL;
     int      nStatus = MS_FAILURE;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 3, &pPoint, &pType, &pBuffer) == FAILURE) 
@@ -7308,15 +6963,9 @@ DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     mapObj   *parent_map;
     rectObj *poRect=NULL;
     int      nStatus = MS_FAILURE;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pRect) == FAILURE) 
@@ -7356,16 +7005,9 @@ DLEXPORT void php3_ms_lyr_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS)
     layerObj *self=NULL;
     mapObj   *parent_map;
     int      nStatus = MS_FAILURE;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pSLayer) == FAILURE) 
@@ -7408,15 +7050,9 @@ DLEXPORT void php3_ms_lyr_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
     mapObj   *parent_map;
     shapeObj *poShape=NULL;
     int      nStatus = MS_FAILURE;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pShape) == FAILURE) 
@@ -7741,16 +7377,9 @@ DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *self=NULL;
     shapeObj    *poShape=NULL;
     int         nResult = -1;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pShape) == FAILURE) 
@@ -7787,15 +7416,9 @@ DLEXPORT void php3_ms_lyr_getNumResults(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval  *pThis;
     layerObj *self=NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0) 
@@ -7826,15 +7449,9 @@ DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis, *pIndex;
     layerObj *self;
     resultCacheMemberObj *poResult;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pIndex) !=SUCCESS)
@@ -7875,15 +7492,9 @@ DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
     pval  *pThis;
     layerObj *self=NULL;
     int         nStatus = MS_FAILURE;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL || ARG_COUNT(ht) > 0)
     {
@@ -8012,15 +7623,9 @@ DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval  *pThis;
     layerObj *self=NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -8273,16 +7878,9 @@ DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS)
     layerObj *self;
     pval   *pThis, *pName;
     char   *pszValue = NULL;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pName) != SUCCESS)
@@ -8316,15 +7914,9 @@ DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
     layerObj *self;
     pval   *pThis, *pName, *pValue;
     int    nStatus = MS_FAILURE;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pName, &pValue) != SUCCESS)
@@ -8400,16 +7992,9 @@ DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS)
     pval   *pThis, *pX, *pY, *pCount, *pFormat;
     char   *pszValue = NULL;
     mapObj *parent_map;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 4, &pX, &pY, &pCount, &pFormat) != SUCCESS)
@@ -8461,16 +8046,9 @@ DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *self=NULL;
     int         i = 0;
     int         res = 0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -9434,13 +9012,7 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
                                       pval *return_value TSRMLS_DC)
 {
     int class_id;
-#ifdef PHP4
     pval        *new_obj_ptr;
-#else
-    pval        new_obj_param;  /* No, it's not a pval * !!! */
-    pval        *new_obj_ptr;
-    new_obj_ptr = &new_obj_param;
-#endif
 
     if (pclass == NULL)
         return 0;
@@ -9450,19 +9022,11 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
     _phpms_object_init(return_value, class_id, php_class_class_functions,
                        PHP4_CLASS_ENTRY(class_class_entry_ptr) TSRMLS_CC);
 
-#ifdef PHP4
     add_property_resource(return_value, "_layer_handle_", parent_layer_id);
     zend_list_addref(parent_layer_id);
-#else
-    add_property_long(return_value, "_layer_handle_", parent_layer_id);
-#endif
-   
-#ifdef PHP4
     add_property_resource(return_value, "_map_handle_", parent_map_id);
     zend_list_addref(parent_map_id);
-#else
-    add_property_long(return_value, "_map_handle_", parent_map_id);
-#endif   
+
 
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "name",       pclass->name);
@@ -9472,9 +9036,8 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "template",   pclass->template);
     add_property_long(return_value,   "numstyles",  pclass->numstyles);
     
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
-#endif
+
     _phpms_build_label_object(&(pclass->label), list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR TSRMLS_CC);
 
@@ -9508,11 +9071,7 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
     classObj *class_obj = NULL;
     int layer_id, map_id;
     int         nArgs = ARG_COUNT(ht);
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
-
 
     if (nArgs != 1 && nArgs != 2)
     {
@@ -9615,15 +9174,9 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     classObj *self;
     mapObj *parent_map;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -9687,15 +9240,9 @@ DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS)
     pval   *pThis, *pString;
     classObj *self=NULL;
     int     nStatus=-1;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pString) == FAILURE)
@@ -9778,16 +9325,9 @@ DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *parent_layer;
     int         nStatus=-1;
     int         nArgs;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     nArgs = ARG_COUNT(ht);
     if ((nArgs != 1 && nArgs != 2) || pThis == NULL)
@@ -9883,15 +9423,9 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
     layerObj *parent_layer;
     imageObj *im = NULL;
     int    retVal=0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 5, &pWidth, &pHeight, &imgObj, &pDstX, &pDstY) == FAILURE)
@@ -9956,16 +9490,9 @@ DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
     classObj *self;
     layerObj *parent_layer;
     imageObj *im = NULL;
-   
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pWidth, &pHeight) == FAILURE) 
@@ -10200,16 +9727,9 @@ DLEXPORT void php3_ms_class_getMetaData(INTERNAL_FUNCTION_PARAMETERS)
     classObj *self;
     pval   *pThis, *pName;
     char   *pszValue = NULL;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pName) != SUCCESS)
@@ -10243,15 +9763,9 @@ DLEXPORT void php3_ms_class_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
     classObj *self;
     pval   *pThis, *pName, *pValue;
     int    nStatus = MS_FAILURE;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pName, &pValue) != SUCCESS)
@@ -10356,15 +9870,9 @@ DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS)
 {
     colorObj *self;
     pval   *pR, *pG, *pB, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 3, &pR, &pG, &pB) != SUCCESS)
@@ -10439,9 +9947,7 @@ static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
 DLEXPORT void php3_ms_point_new(INTERNAL_FUNCTION_PARAMETERS)
 {
     pointObj *pNewPoint;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
     if (ARG_COUNT(ht) > 0)
     {
@@ -10473,16 +9979,9 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
     pointObj    *self;
     pval        *pX, *pY, *pM, *pThis;
     int         nArgs = ARG_COUNT(ht);
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         (nArgs != 2 && nArgs != 3))
@@ -10547,16 +10046,9 @@ DLEXPORT void php3_ms_point_setXYZ(INTERNAL_FUNCTION_PARAMETERS)
     pointObj    *self;
     pval        *pX, *pY, *pZ,*pM, *pThis;
     int         nArgs = ARG_COUNT(ht);
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         (nArgs != 3 && nArgs != 4))
@@ -10624,17 +10116,9 @@ DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS)
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
     int                 status=MS_FAILURE;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pIn, &pOut) !=SUCCESS)
@@ -10687,17 +10171,9 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *poLayer;
     imageObj    *im;
     int         nRetVal=MS_FAILURE;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 5, &pMap, &pLayer, &pImg, &pClass, &pText) !=SUCCESS)
@@ -10743,15 +10219,9 @@ DLEXPORT void php3_ms_point_distanceToPoint(INTERNAL_FUNCTION_PARAMETERS)
     pointObj    *self;
     pointObj    *poPoint;
     double         dfDist=-1.0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pPoint) !=SUCCESS)
@@ -10790,16 +10260,9 @@ DLEXPORT void php3_ms_point_distanceToLine(INTERNAL_FUNCTION_PARAMETERS)
     pointObj    *poPoint1;
     pointObj    *poPoint2;
     double         dfDist=-1.0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPoint1, &pPoint2) !=SUCCESS)
@@ -10841,16 +10304,9 @@ DLEXPORT void php3_ms_point_distanceToShape(INTERNAL_FUNCTION_PARAMETERS)
     pointObj    *self;
     shapeObj    *poShape;
     double         dfDist=-1.0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pShape) !=SUCCESS)
@@ -10959,9 +10415,7 @@ static long _phpms_build_line_object(lineObj *pline, int handle_type,
 DLEXPORT void php3_ms_line_new(INTERNAL_FUNCTION_PARAMETERS)
 {
     lineObj *pNewLine;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
     if (ARG_COUNT(ht) > 0)
     {
@@ -10994,16 +10448,9 @@ DLEXPORT void php3_ms_line_project(INTERNAL_FUNCTION_PARAMETERS)
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
     int                 status=MS_FAILURE;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
      if (pThis == NULL ||
         getParameters(ht, 2, &pIn, &pOut) !=SUCCESS)
@@ -11049,17 +10496,9 @@ DLEXPORT void php3_ms_line_add(INTERNAL_FUNCTION_PARAMETERS)
     lineObj     *self;
     pointObj    *poPoint;
     int         nRetVal=0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pPoint) !=SUCCESS)
@@ -11103,16 +10542,9 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
     pointObj    oPoint;
     int         nRetVal=0;
     int         nArgs = ARG_COUNT(ht);
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
      if (pThis == NULL ||
          (nArgs != 2 && nArgs != 3))
@@ -11176,16 +10608,9 @@ DLEXPORT void php3_ms_line_addXYZ(INTERNAL_FUNCTION_PARAMETERS)
     pointObj    oPoint;
     int         nRetVal=0;
     int         nArgs = ARG_COUNT(ht);
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
      if (pThis == NULL ||
          (nArgs != 3 && nArgs != 4))
@@ -11245,15 +10670,9 @@ DLEXPORT void php3_ms_line_point(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis, *pIndex;
     lineObj     *self;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pIndex) !=SUCCESS)
@@ -11341,13 +10760,7 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
                                       HashTable *list, pval *return_value TSRMLS_DC)
 {
     int     shape_id;
-#ifdef PHP4
     pval        *new_obj_ptr;
-#else
-    pval        new_obj_param;  /* No, it's not a pval * !!! */
-    pval        *new_obj_ptr;
-    new_obj_ptr = &new_obj_param;
-#endif
 
     if (pshape == NULL)
         return 0;
@@ -11366,9 +10779,8 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
     add_property_long(return_value, "numvalues", pshape->numvalues);
     PHPMS_ADD_PROP_STR(return_value,"text",     pshape->text);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
-#endif
+
     _phpms_build_rect_object(&(pshape->bounds), PHPMS_GLOBAL(le_msrect_ref), 
                              list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "bounds", new_obj_ptr,E_ERROR TSRMLS_CC);
@@ -11382,9 +10794,8 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
          (pshape->numvalues == 0 && pLayer->numitems == -1)))
     {
         int i;
-#ifdef PHP4
+
         MAKE_STD_ZVAL(new_obj_ptr);
-#endif
         array_init(new_obj_ptr);
         for(i=0; i<pshape->numvalues; i++)
         {
@@ -11416,9 +10827,7 @@ DLEXPORT void php3_ms_shape_new(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pType;
     shapeObj *pNewShape;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
     if (getParameters(ht, 1, &pType) !=SUCCESS)
     {
@@ -11484,15 +10893,9 @@ DLEXPORT void php3_ms_shape_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     shapeObj *self;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -11613,15 +11016,9 @@ DLEXPORT void php3_ms_shape_add(INTERNAL_FUNCTION_PARAMETERS)
     shapeObj     *self;
     lineObj    *poLine;
     int         nRetVal=0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pLine) !=SUCCESS)
@@ -11661,15 +11058,9 @@ DLEXPORT void php3_ms_shape_line(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis, *pIndex;
     shapeObj     *self;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pIndex) !=SUCCESS)
@@ -11714,16 +11105,9 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *poLayer;
     imageObj    *im;
     int         nRetVal=MS_FAILURE;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 3, &pMap, &pLayer, &pImg) !=SUCCESS)
@@ -11763,15 +11147,9 @@ DLEXPORT void php3_ms_shape_contains(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis, *pPoint;
     shapeObj     *self;
     pointObj    *poPoint;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pPoint) !=SUCCESS)
@@ -11805,15 +11183,9 @@ DLEXPORT void php3_ms_shape_intersects(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis, *pShape;
     shapeObj     *self;
     shapeObj    *poShape;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pShape) !=SUCCESS)
@@ -11849,15 +11221,9 @@ DLEXPORT void php3_ms_shape_getvalue(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis, *pLayer, *pFieldName;
     shapeObj    *self;
     layerObj    *poLayer;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pLayer, &pFieldName) !=SUCCESS)
@@ -11902,15 +11268,9 @@ DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis, *pMeasure;
     shapeObj     *self = NULL;
     pointObj    *point = NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pMeasure) !=SUCCESS)
@@ -11951,15 +11311,9 @@ DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS)
     shapeObj     *self = NULL;
     pointObj    *point = NULL;
     pointObj    *intersection = NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pPoint) !=SUCCESS)
@@ -13095,15 +12449,9 @@ DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     webObj *self;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -13204,9 +12552,7 @@ static long _phpms_build_rect_object(rectObj *prect, int handle_type,
 DLEXPORT void php3_ms_rect_new(INTERNAL_FUNCTION_PARAMETERS)
 {
     rectObj *pNewRect;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
     if (ARG_COUNT(ht) > 0)
     {
@@ -13240,16 +12586,9 @@ DLEXPORT void php3_ms_rect_project(INTERNAL_FUNCTION_PARAMETERS)
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
     int                 status=MS_FAILURE;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pIn, &pOut) !=SUCCESS)
@@ -13297,15 +12636,9 @@ DLEXPORT void php3_ms_rect_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     rectObj *self;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -13354,15 +12687,9 @@ DLEXPORT void php3_ms_rect_setExtent(INTERNAL_FUNCTION_PARAMETERS)
 {
     rectObj *self;
     pval   *pXMin, *pYMin, *pXMax, *pYMax, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 4, &pXMin, &pYMin, &pXMax, &pYMax) != SUCCESS)
@@ -13414,17 +12741,9 @@ DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *poLayer;
     imageObj    *im;
     int         nRetVal=MS_FAILURE;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
 
     if (pThis == NULL ||
         getParameters(ht, 5, &pMap, &pLayer, &pImg, &pClass, &pText) !=SUCCESS)
@@ -13470,16 +12789,9 @@ DLEXPORT void php3_ms_rect_fit(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis, *pWidth, *pHeight;
     rectObj     *self;
     double      dfRetVal=0.0;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pWidth, &pHeight) !=SUCCESS)
@@ -13554,13 +12866,7 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
                                     HashTable *list, pval *return_value TSRMLS_DC)
 {
     int         reference_id;
-#ifdef PHP4
     pval        *new_obj_ptr;
-#else
-    pval        new_obj_param;  /* No, it's not a pval * !!! */
-    pval        *new_obj_ptr;
-    new_obj_ptr = &new_obj_param;
-#endif
 
     if (preference == NULL)
         return 0;
@@ -13576,22 +12882,19 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
     add_property_long(return_value,   "height",  preference->height);
     add_property_long(return_value,   "status",  preference->status);
     
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
-#endif
+
     _phpms_build_rect_object(&(preference->extent), 
                              PHPMS_GLOBAL(le_msrect_ref),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR TSRMLS_CC);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
-#endif
+
     _phpms_build_color_object(&(preference->color),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "color", new_obj_ptr, E_ERROR TSRMLS_CC);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
-#endif
+
     _phpms_build_color_object(&(preference->outlinecolor),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "outlinecolor", 
                                new_obj_ptr, E_ERROR TSRMLS_CC);
@@ -13647,15 +12950,9 @@ DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     referenceMapObj *self;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -13711,13 +13008,7 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
                                           HashTable *list, pval *return_value TSRMLS_DC)
 {
     int shapefile_id;
-#ifdef PHP4
     pval        *new_obj_ptr;
-#else
-    pval        new_obj_param;  /* No, it's not a pval * !!! */
-    pval        *new_obj_ptr;
-    new_obj_ptr = &new_obj_param;
-#endif
 
     if (pshapefile == NULL)
         return 0;
@@ -13733,9 +13024,8 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
     add_property_long(return_value, "type",       pshapefile->type);
     PHPMS_ADD_PROP_STR(return_value,"source",     pshapefile->source);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
-#endif
+
     _phpms_build_rect_object(&(pshapefile->bounds), 
                              PHPMS_GLOBAL(le_msrect_ref), list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "bounds", new_obj_ptr,E_ERROR TSRMLS_CC);
@@ -13754,9 +13044,7 @@ DLEXPORT void php3_ms_shapefile_new(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pFname, *pType;
     shapefileObj *pNewObj = NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
     if (getParameters(ht, 2, &pFname, &pType) != SUCCESS)
     {
@@ -13796,16 +13084,9 @@ DLEXPORT void php3_ms_shapefile_addshape(INTERNAL_FUNCTION_PARAMETERS)
     shapefileObj *self;
     shapeObj    *poShape;
     int         nRetVal=0;
-    
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pShape) !=SUCCESS)
@@ -13843,16 +13124,9 @@ DLEXPORT void php3_ms_shapefile_addpoint(INTERNAL_FUNCTION_PARAMETERS)
     shapefileObj *self;
     pointObj    *poPoint;
     int         nRetVal=0;
-    
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pPoint) !=SUCCESS)
@@ -13889,16 +13163,9 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis, *pIndex;
     shapefileObj *self;
     shapeObj    *poShape;
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pIndex) !=SUCCESS)
@@ -13952,15 +13219,9 @@ DLEXPORT void php3_ms_shapefile_getpoint(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis, *pIndex;
     shapefileObj *self;
     pointObj    *poPoint;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pIndex) !=SUCCESS)
@@ -14011,15 +13272,9 @@ DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS)
     shapefileObj *self;
     shapeObj    *poShape;
     mapObj      *poMap;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pMap, &pIndex) !=SUCCESS)
@@ -14075,15 +13330,9 @@ DLEXPORT void php3_ms_shapefile_getextent(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis, *pIndex;
     shapefileObj *self;
     rectObj      *poRect;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pIndex) !=SUCCESS)
@@ -14228,9 +13477,7 @@ DLEXPORT void php3_ms_projection_new(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pString;
     projectionObj *pNewProj = NULL;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
     if (getParameters(ht, 1, &pString) != SUCCESS)
     {
@@ -14551,13 +13798,7 @@ static long _phpms_build_legend_object(legendObj *plegend,
                                        HashTable *list, pval *return_value TSRMLS_DC)
 {
     int         legend_id;
-#ifdef PHP4
     pval        *new_obj_ptr;
-#else
-    pval        new_obj_param;  /* No, it's not a pval * !!! */
-    pval        *new_obj_ptr;
-    new_obj_ptr = &new_obj_param;
-#endif
 
     if (plegend == NULL)
         return 0;
@@ -14579,16 +13820,13 @@ static long _phpms_build_legend_object(legendObj *plegend,
                       plegend->postlabelcache);
     PHPMS_ADD_PROP_STR(return_value, "template", plegend->template);
     
-    
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
-#endif
+
     _phpms_build_label_object(&(plegend->label), list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR TSRMLS_CC);
 
-#ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
-#endif
+
     _phpms_build_color_object(&(plegend->imagecolor),list, new_obj_ptr TSRMLS_CC);
     _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR TSRMLS_CC);
 
@@ -14651,15 +13889,9 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     legendObj *self;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -14892,15 +14124,9 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     styleObj *self;
     mapObj *parent_map;
     pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
@@ -16773,9 +15999,7 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pUnit, *pResolution;
     rectObj     *poGeorefExt = NULL;
     double      dfScale = 0.0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
     if (getParameters(ht, 5, 
                       &pGeorefExt, &pWidth, &pHeight, 

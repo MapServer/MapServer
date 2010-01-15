@@ -29,13 +29,8 @@
  **********************************************************************/
  
 
-#if defined (PHP4) || defined (PHP5)
 #include "php.h"
 #include "php_globals.h"
-#else
-#include "phpdl.h"
-#include "php3_list.h"
-#endif
 
 #if ZEND_MODULE_API_NO < 20010901
 #define TSRMLS_D	void
@@ -106,12 +101,7 @@
 int _phpms_object_init(pval *return_value, int  handle_id,
                        function_entry *class_functions,
                        void           *zend_class_entry_ptr TSRMLS_DC);
-#if defined (PHP4) || defined (PHP5)
 #  define PHP4_CLASS_ENTRY(a) a
-#else
-#  define PHP4_CLASS_ENTRY(a) NULL
-#endif
-
 
 /* -------------------------------------------------------------------- */
 /*      prototypes                                                      */
