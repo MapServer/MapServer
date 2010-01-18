@@ -1923,12 +1923,22 @@ if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
 
   CURL_VERNUM=`$LIBCURL_CONFIG --vernum`
   CURL_VER=`$LIBCURL_CONFIG --version | awk '{print $2}'`
+  CURL_FLAGS=""
 
   AC_MSG_RESULT([        found libcurl version $CURL_VER])
   
   dnl Need libcurl 7.10.1 or more recent
   if test -z "$CURL_VERNUM" -o `expr "0x$CURL_VERNUM" \< "0x070a01"` = 1; then
     AC_MSG_ERROR([libcurl version 7.10.1 or more recent is required.])
+  fi
+
+  dnl Verify if the the PROXYAUTH support is avaible (>= 7.10.7)
+  AC_MSG_CHECKING(for CURLOPT_PROXYAUTH support)
+  if test -z "$CURL_VERNUM" -o `expr "0x$CURL_VERNUM" \>= "0x070a07"` = 1; then
+    AC_MSG_RESULT([yes.])
+    CURL_FLAGS="-DUSE_CURLOPT_PROXYAUTH"
+  else
+    AC_MSG_RESULT([no.])
   fi
 
   dnl set WMS_LYR_ENABLED/WFS_LYR_ENABLED here, Makefile substitutions are
@@ -1945,7 +1955,7 @@ if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-  CURL_ENABLED=-DUSE_CURL
+  CURL_ENABLED="-DUSE_CURL $CURL_FLAGS"
 
 fi
 

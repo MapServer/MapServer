@@ -442,7 +442,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                 && strlen(pasReqInfo[i].pszProxyPassword) > 0)
             {
                 char    szUsernamePasswd[128];    
-#ifdef CURLOPT_PROXYAUTH
+#ifdef USE_CURLOPT_PROXYAUTH
                 long    nProxyAuthType = CURLAUTH_BASIC;
                 /* CURLOPT_PROXYAUTH available only in Curl 7.10.7 and up */
                 nProxyAuthType = msGetCURLAuthType(pasReqInfo[i].eProxyAuthType);

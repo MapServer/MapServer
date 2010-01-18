@@ -11917,6 +11917,7 @@ echo "$as_me: error: couldn't find curl-config, try using --with-curl-config=PAT
 
   CURL_VERNUM=`$LIBCURL_CONFIG --vernum`
   CURL_VER=`$LIBCURL_CONFIG --version | awk '{print $2}'`
+  CURL_FLAGS=""
 
   echo "$as_me:$LINENO: result:         found libcurl version $CURL_VER" >&5
 echo "${ECHO_T}        found libcurl version $CURL_VER" >&6
@@ -11925,6 +11926,17 @@ echo "${ECHO_T}        found libcurl version $CURL_VER" >&6
     { { echo "$as_me:$LINENO: error: libcurl version 7.10.1 or more recent is required." >&5
 echo "$as_me: error: libcurl version 7.10.1 or more recent is required." >&2;}
    { (exit 1); exit 1; }; }
+  fi
+
+    echo "$as_me:$LINENO: checking for CURLOPT_PROXYAUTH support" >&5
+echo $ECHO_N "checking for CURLOPT_PROXYAUTH support... $ECHO_C" >&6
+  if test -z "$CURL_VERNUM" -o `expr "0x$CURL_VERNUM" \>= "0x070a07"` = 1; then
+    echo "$as_me:$LINENO: result: yes." >&5
+echo "${ECHO_T}yes." >&6
+    CURL_FLAGS="-DUSE_CURLOPT_PROXYAUTH"
+  else
+    echo "$as_me:$LINENO: result: no." >&5
+echo "${ECHO_T}no." >&6
   fi
 
       if test "$WMS_REQUESTED" = "yes" ; then
@@ -11941,7 +11953,7 @@ echo "${ECHO_T}        OGC WFS Client Connections enabled ($WFS_LYR_ENABLED)." >
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-  CURL_ENABLED=-DUSE_CURL
+  CURL_ENABLED="-DUSE_CURL $CURL_FLAGS"
 
 fi
 
