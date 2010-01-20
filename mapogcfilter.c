@@ -925,6 +925,21 @@ int FLTArraysAnd(int *aFirstArray, int nSizeFirst,
 }
 
 /************************************************************************/
+/*                        FLTIsSimpleFilterNoSpatial                    */
+/*                                                                      */
+/*      Filter encoding with only attribute queries                     */
+/************************************************************************/
+int FLTIsSimpleFilterNoSpatial(FilterEncodingNode *psNode)
+{
+    if (FLTIsSimpleFilter(psNode) &&
+        FLTNumberOfFilterType(psNode, "BBOX") == 0)
+      return MS_TRUE;
+
+    return MS_FALSE;
+}
+
+
+/************************************************************************/
 /*                      FLTApplySimpleSQLFilter()                       */
 /************************************************************************/
 
@@ -941,7 +956,8 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     char *pszBuffer = NULL;
     int bConcatWhere = 0;
     int bHasAWhere =0;
-    char *pszTmp = NULL;
+    char *pszTmp = NULL, *pszTmp2 = NULL;
+    
     char *tmpfilename = NULL;
 
     lp = (GET_LAYER(map, iLayerIndex));
@@ -1110,11 +1126,59 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
         }
     }
 
+    /*for oracle connection, if we have a simple filter with no spatial constraints 
+      we should set the connection function to NONE to have a better performance
+      (#2725)*/
+      
+    if (lp->connectiontype ==  MS_ORACLESPATIAL && FLTIsSimpleFilterNoSpatial(psNode))
+    {
+        if (msCaseFindSubstring(lp->data, "USING") == 0)
+          lp->data = msStringConcatenate(lp->data, " USING NONE"); 
+        else if (msCaseFindSubstring(lp->data, "NONE") == 0)
+        {
+            /*if one of the functions is used, just replace it with NONE*/
+            if (msCaseFindSubstring(lp->data, "FILTER"))
+              lp->data = msCaseReplaceSubstring(lp->data, "FILTER", "NONE");
+            else if (msCaseFindSubstring(lp->data, "GEOMRELATE"))
+              lp->data = msCaseReplaceSubstring(lp->data, "GEOMRELATE", "NONE");
+            else if (msCaseFindSubstring(lp->data, "RELATE"))
+              lp->data = msCaseReplaceSubstring(lp->data, "RELATE", "NONE");
+            else if (msCaseFindSubstring(lp->data, "VERSION"))
+            {
+                /*should add NONE just before the VERSION. Cases are:
+                  DATA "ORA_GEOMETRY FROM data USING VERSION 10g
+                  DATA "ORA_GEOMETRY FROM data  USING UNIQUE FID VERSION 10g"
+                 */
+                pszTmp = (char *)msCaseFindSubstring(lp->data, "VERSION");
+                pszTmp2 = msStringConcatenate(pszTmp2, " NONE ");
+                pszTmp2 = msStringConcatenate(pszTmp2, pszTmp);
+                
+                lp->data = msCaseReplaceSubstring(lp->data, pszTmp, pszTmp2);
+
+                msFree(pszTmp2);
+                
+            }
+            else if (msCaseFindSubstring(lp->data, "SRID"))
+            {
+                lp->data = msStringConcatenate(lp->data, " NONE"); 
+            }
+        }
+    }
+    
     return msQueryByRect(map);
 
     /* return MS_SUCCESS; */
 }
 
+
+       
+
+
+/************************************************************************/
+/*                            FLTIsSimpleFilter                         */
+/*                                                                      */
+/*      Filter encoding with only attribute queries and only one bbox.  */
+/************************************************************************/
 int FLTIsSimpleFilter(FilterEncodingNode *psNode)
 {
     if (FLTValidForBBoxFilter(psNode))
