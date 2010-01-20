@@ -1514,10 +1514,10 @@ static int osCheck3DGtype(int pIntGtype)
 static int osCheck4DGtype(int pIntGtype)
 {
   
-  if (pIntGtype > 4000 && pIntGtype < 4308)
+  if (pIntGtype > 4000 && pIntGtype < 4408)
    {
       if (pIntGtype > 4007)
-          pIntGtype-= 300;
+          pIntGtype-= 400;
 
       if (pIntGtype <= 4007 && pIntGtype != 4004)
            return MS_TRUE;
