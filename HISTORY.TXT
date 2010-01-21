@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed memory leak related to templates (#2996)
+
 - Added support of 44xx gtypes in oracle spatial driver (#2830)
 
 - Fixed curl proxy auth support for http connections (#571)

@@ -3748,7 +3748,10 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
       else 
         template = lp->template;
 
-      if(msReturnPage(mapserv, template, QUERY, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
+      if(msReturnPage(mapserv, template, QUERY, papszBuffer) != MS_SUCCESS) {
+        msFreeShape(&(mapserv->resultshape)); 
+        return MS_FAILURE;
+      }
 
       msFreeShape(&(mapserv->resultshape)); /* init too */
 
