@@ -592,7 +592,7 @@ static zend_class_entry *querymap_class_entry_ptr;
 static zend_class_entry *cgirequest_class_entry_ptr;
 static zend_class_entry *hashtable_class_entry_ptr;
 
-// ZEND_ENGINE_2: PHP5
+#ifdef ZEND_ENGINE_2  // PHP5
 ZEND_BEGIN_ARG_INFO(one_arg_force_ref, 0)
     ZEND_ARG_PASS_INFO(1)
 ZEND_END_ARG_INFO()
@@ -601,6 +601,12 @@ ZEND_BEGIN_ARG_INFO(two_args_first_arg_force_ref, 0)
     ZEND_ARG_PASS_INFO(1)
     ZEND_ARG_PASS_INFO(0)
 ZEND_END_ARG_INFO()
+#else   // PHP4
+static unsigned char one_arg_force_ref[] = 
+  { 1, BYREF_FORCE};
+static unsigned char two_args_first_arg_force_ref[] = 
+    { 2, BYREF_FORCE, BYREF_NONE };
+#endif
 
 function_entry phpms_functions[] = {
     {"ms_getversion",   php3_ms_getversion,     NULL},
