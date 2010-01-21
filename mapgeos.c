@@ -669,7 +669,7 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
 
 shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
 {
-#if defined(USE_GEOS) && defined(GEOS_HAS_SIMPLIFY)
+#ifdef USE_GEOS
   GEOSGeom g1, g2; 
 
   if(!shape) 
@@ -691,7 +691,7 @@ shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
 
 shapeObj *msGEOSTopologyPreservingSimplify(shapeObj *shape, double tolerance)
 {
-#if defined(USE_GEOS) && defined(GEOS_HAS_SIMPLIFY)
+#ifdef USE_GEOS
   GEOSGeom g1, g2; 
 
   if(!shape) 

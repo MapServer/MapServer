@@ -1286,11 +1286,11 @@ if test -n "$with_geos" -a "$with_geos" != "no" ; then
   fi
 
   dnl
-  dnl Test that we have at least version 2.2.2
+  dnl Test that we have at least version 3.0.0
   dnl (Version check code borrowed from GDAL's geos.m4)
   dnl
 
-  min_geos_version=2.2.2
+  min_geos_version=3.0.0
 
   AC_MSG_CHECKING(for GEOS version >= $min_geos_version)
 
@@ -1324,12 +1324,6 @@ if test -n "$with_geos" -a "$with_geos" != "no" ; then
   dnl
 
   GEOS_ENABLED=-DUSE_GEOS
-
-  dnl GEOS 3.0+ required for GEOSSimplify
-  if test 300000 -le $ac_geos_version  ; then
-    AC_MSG_RESULT([GEOS >= 3.0.0 found. Adding -DGEOS_HAS_SIMPLIFY])
-    GEOS_ENABLED="$GEOS_ENABLED -DGEOS_HAS_SIMPLIFY"
-  fi
 
   GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
