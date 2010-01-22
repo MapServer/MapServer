@@ -1963,8 +1963,6 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
     _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
-    /* TODO: scale deprecated in v5.0 remove in future release */
-    _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"),
                        (void *)&pExtent) == SUCCESS)
@@ -2068,7 +2066,6 @@ DLEXPORT void php3_ms_map_setSize(INTERNAL_FUNCTION_PARAMETERS)
      */
     _phpms_set_property_double(pThis, "cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
     _phpms_set_property_double(pThis, "scaledenom",self->scaledenom,E_ERROR TSRMLS_CC); 
-    /* TODO: scale deprecated in v5.0 remove in future release */
     _phpms_set_property_double(pThis, "scale",    self->scaledenom,E_ERROR TSRMLS_CC); 
     _phpms_set_property_double(pThis, "width",    self->width,    E_ERROR TSRMLS_CC); 
     _phpms_set_property_double(pThis, "height",   self->height,   E_ERROR TSRMLS_CC); 
@@ -2160,8 +2157,6 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
 
             _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
             _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
-            /* TODO: scale deprecated in v5.0 remove in future release */
-            _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
             _phpms_set_property_long(pThis,"units", self->units, E_ERROR TSRMLS_CC); 
 
             if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
@@ -2608,8 +2603,6 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
     _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
-    /* TODO: scale deprecated in v5.0 remove in future release */
-    _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void *)&pExtent) == SUCCESS)
@@ -2879,8 +2872,6 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
     _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
-    /* TODO: scale deprecated in v5.0 remove in future release */
-    _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                         (void *)&pExtent) == SUCCESS)
@@ -3198,8 +3189,6 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR TSRMLS_CC); 
     _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
-    /* TODO: scale deprecated in v5.0 remove in future release */
-    _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
                        (void *)&pExtent) == SUCCESS)
@@ -3343,7 +3332,7 @@ DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS)
  **********************************************************************/
 
 /* {{{ proto int map.prepareQuery()
-   Calculate the scale of the map and assign it to the map->scale */
+   Calculate the scale of the map and assign it to the map->scaledenom */
 
 DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -3367,8 +3356,6 @@ DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
                                  E_ERROR TSRMLS_CC); 
         _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
-        /* TODO: scale deprecated in v5.0 remove in future release */
-        _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
     }
     
 }
@@ -3411,8 +3398,6 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
          _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
                                     E_ERROR TSRMLS_CC); 
          _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
-         /* TODO: scale deprecated in v5.0 remove in future release */
-         _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
          if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                             sizeof("extent"), (void *)&pExtent) == SUCCESS)
@@ -3474,8 +3459,6 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
          _phpms_set_property_double(pThis,"cellsize", self->cellsize, 
                                     E_ERROR TSRMLS_CC); 
          _phpms_set_property_double(pThis,"scaledenom", self->scaledenom, E_ERROR TSRMLS_CC); 
-         /* TODO: scale deprecated in v5.0 remove in future release */
-         _phpms_set_property_double(pThis,"scale", self->scaledenom, E_ERROR TSRMLS_CC); 
 
          if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
                             sizeof("extent"), (void *)&pExtent) == SUCCESS)
@@ -5401,8 +5384,6 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"cellsize",  self->cellsize, E_ERROR TSRMLS_CC);
     _phpms_set_property_long(pThis,  "units",     self->units, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis,"scaledenom",self->scaledenom, E_ERROR TSRMLS_CC);
-    /* TODO: scale deprecated in v5.0 remove in future release */
-    _phpms_set_property_double(pThis,"scale",     self->scaledenom, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis,  "resolution",self->resolution, E_ERROR TSRMLS_CC);
     _phpms_set_property_double(pThis,  "defresolution",self->defresolution, E_ERROR TSRMLS_CC);
     if(self->shapepath)
