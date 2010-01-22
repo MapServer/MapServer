@@ -871,6 +871,13 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     status = msLayerResultsGetShape(layer, &(mapserv->resultshape), layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
     if(status != MS_SUCCESS) return status;
 
+    mapserv->resultshape.classindex = msShapeGetClass(layer, &mapserv->resultshape, 
+                                                      layer->map->scaledenom, NULL, -1);
+    if ( mapserv->resultshape.classindex>=0 &&
+         (layer->class[mapserv->resultshape.classindex]->text.string || layer->labelitem) && 
+         layer->class[mapserv->resultshape.classindex]->label.size != -1)
+      mapserv->resultshape.text = msShapeGetAnnotation(layer, & mapserv->resultshape);
+
     /* prepare any necessary JOINs here (one-to-one only) */
     if(layer->numjoins > 0) {
       for(j=0; j<layer->numjoins; j++) {
@@ -1430,6 +1437,339 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   return(MS_SUCCESS);
 }
 
+
+static int processShplabelTag(layerObj *layer, char **line, shapeObj *shape) 
+{
+    char *tag, *tagStart, *tagEnd;
+    char *tagValue=NULL;
+    hashTableObj *tagArgs=NULL;
+    int tagOffset, tagLength;
+    char *format;
+    char *argValue=NULL;
+    char *projectionString=NULL;
+    shapeObj tShape;
+    int precision=0;
+    int clip_to_map=MS_TRUE;
+    int use_label_settings=MS_FALSE;
+    double cellsize=0;
+    int labelposvalid = MS_FALSE;
+    pointObj labelPos;
+    int i,status;
+    char number[64]; /* holds a single number in the extent */
+    char numberFormat[16];
+
+    if(!*line) {
+    msSetError(MS_WEBERR, "Invalid line pointer.", "processShplabelTag()");
+    return(MS_FAILURE);
+    }
+    if( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+      return MS_FAILURE;
+  
+    tagStart = findTag(*line, "shplabel");
+
+    /* It is OK to have no shplabel tags, just return. */
+    if( !tagStart )
+      return MS_SUCCESS;
+
+    if(!shape || shape->numlines <= 0) { /* I suppose we need to make sure the part has vertices (need shape checker?) */
+      msSetError(MS_WEBERR, "Null or empty shape.", "processShplabelTag()");
+      return(MS_FAILURE);
+    }
+
+    while (tagStart) 
+    {
+        projectionString = NULL;
+        format = "$x,$y";
+        tagOffset = tagStart - *line;
+
+        if(getTagArgs("shplabel", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+        if(tagArgs) 
+        {
+            argValue = msLookupHashTable(tagArgs, "format");
+            if(argValue) format = argValue;
+
+            argValue = msLookupHashTable(tagArgs, "precision");
+            if(argValue) precision = atoi(argValue);
+
+            argValue = msLookupHashTable(tagArgs, "proj");
+            if(argValue) projectionString = argValue;
+
+            argValue = msLookupHashTable(tagArgs, "clip_to_map");
+            if(argValue) 
+              if(strcasecmp(argValue,"false") == 0) clip_to_map = MS_FALSE;
+
+            argValue = msLookupHashTable(tagArgs, "use_label_settings");
+            if(argValue) 
+              if(strcasecmp(argValue,"true") == 0) use_label_settings = MS_TRUE;
+        }
+
+        msInitShape(&tShape);
+
+        tShape.type = MS_SHAPE_LINE;
+        tShape.line = (lineObj *) malloc(sizeof(lineObj));
+        tShape.numlines = 1;
+        tShape.line[0].point = NULL; /* initialize the line */
+        tShape.line[0].numpoints = 0;
+
+        if (layer->map->cellsize <= 0)
+        cellsize = MS_MAX(MS_CELLSIZE(layer->map->extent.minx, layer->map->extent.maxx, layer->map->width), 
+                          MS_CELLSIZE(layer->map->extent.miny, layer->map->extent.maxy, layer->map->height));
+        else
+          cellsize = layer->map->cellsize ;
+
+        if (shape->type == MS_SHAPE_POINT)
+        {
+            labelposvalid = MS_FALSE;
+            if (shape->numlines > 0 && shape->line[0].numpoints > 0)
+            {
+                labelposvalid = MS_TRUE;
+                labelPos = shape->line[0].point[0];
+                if(layer->transform == MS_TRUE) 
+                {
+                    if (layer->project && 
+                        msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+                      msProjectShape(&layer->projection, &layer->map->projection, shape);
+              
+                    labelPos = shape->line[0].point[0];
+                    labelPos.x = MS_MAP2IMAGE_X(labelPos.x, layer->map->extent.minx, cellsize);
+                    labelPos.y = MS_MAP2IMAGE_Y(labelPos.y, layer->map->extent.maxy, cellsize);
+                }
+            }
+          
+        }
+        else if (shape->type == MS_SHAPE_LINE)
+        {
+            pointObj     **annopoints = NULL;
+            double** angles = NULL, **lengths = NULL;
+            int numpoints = 1;
+
+            labelposvalid = MS_FALSE;
+            if(layer->transform == MS_TRUE) {
+                if (layer->project && 
+                    msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+                  msProjectShape(&layer->projection, &layer->map->projection, shape);
+                if (clip_to_map)
+                  msClipPolylineRect(shape, layer->map->extent);
+         
+
+                msTransformShapeToPixel(shape, layer->map->extent, cellsize);
+            }
+            else
+              msOffsetShapeRelativeTo(shape, layer);
+
+            if (shape->numlines > 0)
+            {
+                annopoints = msPolylineLabelPoint(shape, -1, 0, &angles, &lengths, &numpoints, MS_FALSE);
+                if (numpoints > 0)
+                {
+                    /*convert to geo*/
+                    labelPos.x = annopoints[0]->x;
+                    labelPos.y = annopoints[0]->y;
+                
+                    labelposvalid = MS_TRUE;
+                    for (i=0; i<numpoints; i++)
+                    {
+                        if (annopoints[i])
+                          msFree(annopoints[i]);
+                        if (angles[i])
+                          msFree(angles[i]);
+                        if (lengths[i])
+                          msFree(lengths[i]);
+                    }
+                    msFree(angles);
+                    msFree(annopoints);
+                    msFree(lengths);
+                }      
+            }
+        
+        }
+        else if (shape->type == MS_SHAPE_POLYGON)
+        {
+            labelposvalid = MS_FALSE;
+            if(layer->transform == MS_TRUE) 
+            {
+                if (layer->project && 
+                    msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+                  msProjectShape(&layer->projection, &layer->map->projection, shape);
+          
+                if (clip_to_map)
+                  msClipPolygonRect(shape, layer->map->extent);
+
+                msTransformShapeToPixel(shape, layer->map->extent, cellsize);
+            }
+            else
+              msOffsetShapeRelativeTo(shape, layer);
+
+            if (shape->numlines > 0)
+            {
+                labelposvalid = MS_TRUE;
+                msPolygonLabelPoint(shape, &labelPos, -1);
+            }
+        }
+        if (labelposvalid == MS_TRUE)
+        {
+            pointObj p1;
+            pointObj p2;
+            int label_offset_x, label_offset_y;
+            labelObj *label=NULL;
+            rectObj r;
+            shapeObj poly;
+            double tmp;
+
+            msInitShape(&poly);
+
+            p1.x =labelPos.x;
+            p1.y =labelPos.y; 
+
+            p2.x =labelPos.x;
+            p2.y =labelPos.y;  
+            if (use_label_settings == MS_TRUE)
+            {
+                if (shape->text && shape->classindex >=0)
+                {
+                    label = &layer->class[shape->classindex]->label;
+                    if(msGetLabelSize(NULL, shape->text, label, 
+                                      &r, &(layer->map->fontset), layer->scalefactor, MS_FALSE,NULL) != -1)
+                    {
+                        label_offset_x = (int)(label->offsetx*layer->scalefactor);
+                        label_offset_y = (int)(label->offsety*layer->scalefactor);
+
+                        p1 = get_metrics(&labelPos, label->position, r, label_offset_x, label_offset_y, 
+                                              label->angle, 0, &poly);
+                        /*should we use the point returned from  get_metrics?. From few test done, It seems
+                         to return the UL corner of the text. For now use the bounds.minx/miny*/
+
+                        p1.x = poly.bounds.minx;
+                        p1.y = poly.bounds.miny;
+                        p2.x = poly.bounds.maxx;
+                        p2.y = poly.bounds.maxy;
+                        
+                    }
+                }
+            }
+            /* y's are flipped because it is in image coordinate systems */
+            p1.x = MS_IMAGE2MAP_X(p1.x, layer->map->extent.minx, cellsize);
+            tmp = p1.y;
+            p1.y = MS_IMAGE2MAP_Y(p2.y, layer->map->extent.maxy, cellsize);
+            p2.x = MS_IMAGE2MAP_X(p2.x, layer->map->extent.minx, cellsize);
+            p2.y = MS_IMAGE2MAP_Y(tmp, layer->map->extent.maxy, cellsize);
+            if(layer->transform == MS_TRUE) {
+                if (layer->project && 
+                    msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+                {
+                    msProjectPoint(&layer->map->projection, &layer->projection, &p1);
+                    msProjectPoint(&layer->map->projection, &layer->projection, &p2);
+                }
+            }
+            msAddPointToLine(&(tShape.line[0]), &p1);
+            msAddPointToLine(&(tShape.line[0]), &p2);
+        }
+        else
+          tShape.numlines = 0;
+
+         if(projectionString && strcasecmp(projectionString,"image") == 0) {
+             precision = 0;
+
+             /* if necessary, project the shape to match the map */
+             if(msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+               msProjectShape(&layer->projection, &layer->map->projection, &tShape);
+      
+              msClipPolylineRect(&tShape, layer->map->extent);
+
+              msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize);
+
+         } else if(projectionString) {
+             projectionObj projection;
+             msInitProjection(&projection);
+
+             status = msLoadProjectionString(&projection, projectionString);
+             if(status != MS_SUCCESS) return MS_FAILURE;
+
+             if(msProjectionsDiffer(&(layer->projection), &projection)) 
+               msProjectShape(&layer->projection, &projection, &tShape);
+         }
+         
+          
+
+          /* find the end of the tag */
+          tagEnd = findTagEnd(tagStart);
+          tagEnd++;
+
+          /* build the complete tag so we can do substitution */
+          tagLength = tagEnd - tagStart;
+          tag = (char *) malloc(tagLength + 1);
+          strncpy(tag, tagStart, tagLength);
+          tag[tagLength] = '\0';
+
+          /* do the replacement */
+          tagValue = strdup(format);
+          if(precision > 0)
+            snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
+          else
+            snprintf(numberFormat, sizeof(numberFormat), "%%f");
+
+          if (tShape.numlines > 0)
+          {
+              if(msCaseFindSubstring(tagValue, "$x") != 0)
+              {
+                  snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[0].x);
+                  tagValue = msReplaceSubstring(tagValue, "$x", number);
+              }
+              if(msCaseFindSubstring(tagValue, "$y") != 0)
+              {
+                  snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[0].y);
+                  tagValue = msReplaceSubstring(tagValue, "$y", number);
+              }
+          
+              if(msCaseFindSubstring(tagValue, "$minx") != 0)
+              {
+                  snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[0].x);
+                  tagValue = msReplaceSubstring(tagValue, "$minx", number);
+              }
+              if(msCaseFindSubstring(tagValue, "$miny") != 0)
+              {
+                  snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[0].y);
+                  tagValue = msReplaceSubstring(tagValue, "$miny", number);
+              }
+              if(msCaseFindSubstring(tagValue, "$maxx") != 0)
+              {
+                  snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[1].x);
+                  tagValue = msReplaceSubstring(tagValue, "$maxx", number);
+              }
+              if(msCaseFindSubstring(tagValue, "$maxy") != 0)
+              {
+                  snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[1].y);
+                  tagValue = msReplaceSubstring(tagValue, "$maxy", number);
+              }
+          }
+           /* find the end of the tag */
+          tagEnd = findTagEnd(tagStart);
+          tagEnd++;
+
+          /* build the complete tag so we can do substitution */
+          tagLength = tagEnd - tagStart;
+          tag = (char *) malloc(tagLength + 1);
+          strncpy(tag, tagStart, tagLength);
+          tag[tagLength] = '\0';
+
+          *line = msReplaceSubstring(*line, tag, tagValue);
+
+          /* clean up */
+          msFreeShape(&tShape);
+          free(tag); tag = NULL;
+          msFreeHashTable(tagArgs); tagArgs=NULL;
+          msFree(tagValue); tagValue=NULL;
+             
+
+         if((*line)[tagOffset] != '\0')
+          tagStart = findTag(*line+tagOffset+1, "shplabel");
+         else
+           tagStart = NULL; 
+    }
+
+    return(MS_SUCCESS);
+}
+
 /*
 ** Function to process a [shpxy ...] tag: line contains the tag, shape holds the coordinates. 
 **
@@ -1474,6 +1814,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   shapeObj tShape;
   char *coords=NULL, point[128];  
   
+
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processShpxyTag()");
     return(MS_FAILURE);
@@ -1548,6 +1889,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       if(argValue) 
         if(strcasecmp(argValue,"true") == 0) centroid = MS_TRUE;
 
+
       argValue = msLookupHashTable(tagArgs, "proj");
       if(argValue) projectionString = argValue;
     }
@@ -1575,6 +1917,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
       msAddPointToLine(&(tShape.line[0]), &p);      
     } 
+    
 #ifdef USE_GEOS
     else if(buffer != 0 && bufferUnits != MS_PIXELS) {
       shapeObj *bufferShape=NULL;
@@ -3360,6 +3703,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     outstr = msReplaceSubstring(outstr, "[shpclass]", repstr);
 
     if(processShpxyTag(mapserv->resultlayer, &outstr, &mapserv->resultshape) != MS_SUCCESS)
+      return(NULL);
+
+     if(processShplabelTag(mapserv->resultlayer, &outstr, &mapserv->resultshape) != MS_SUCCESS)
       return(NULL);
 
     sprintf(repstr, "%f", mapserv->resultshape.bounds.minx);
