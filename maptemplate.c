@@ -1602,8 +1602,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *shape)
 
             if (shape->numlines > 0)
             {
+              if (msPolygonLabelPoint(shape, &labelPos, -1) == MS_SUCCESS)
                 labelposvalid = MS_TRUE;
-                msPolygonLabelPoint(shape, &labelPos, -1);
             }
         }
         if (labelposvalid == MS_TRUE)
