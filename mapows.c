@@ -1665,9 +1665,9 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
         else if( strcasecmp(tokens[i],"imageCRS") == 0 )
             sprintf( urn, "urn:ogc:def:crs:OGC::imageCRS" );
         else if( strncmp(tokens[i],"urn:ogc:def:crs:",16) == 0 )
-            sprintf( urn, tokens[i] );
+            strncpy( urn, tokens[i], 100 );
         else
-            strcpy( urn, "" );
+            strncpy( urn, "", 100 );
 
         if( strlen(urn) > 0 )
         {
