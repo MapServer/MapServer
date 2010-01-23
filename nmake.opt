@@ -612,7 +612,9 @@ JPEG_INC = -I$(JPEG_DIR)
 # In that case the PHP regex library will be used instead
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !IFNDEF PHP_REGEX
+!IFNDEF REGEX_DIR
 REGEX_DIR=$(MS_BASE)\..\regex-0.12
+!ENDIF
 !ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
