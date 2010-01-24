@@ -847,7 +847,6 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src, int srclen) {
     return 0;
 }
 
-
 /*
 ** msPostGISBuildSQLBox()
 **
@@ -887,6 +886,7 @@ char *msPostGISBuildSQLBox(layerObj *layer, rectObj *rect, char *strSRID) {
     return strBox;
 
 }
+
 
 /*
 ** msPostGISBuildSQLItems()
@@ -1050,41 +1050,21 @@ char *msPostGISBuildSQLSRID(layerObj *layer) {
     return strSRID;
 }
 
+
 /*
-** msPostGISBuildSQLFrom()
+** msPostGISReplaceBoxToken()
+** 
+** Convert a fromsource data statement into something usable by replacing the !BOX! token.
 **
 ** Returns malloc'ed char* that must be freed by caller.
 */
-char *msPostGISBuildSQLFrom(layerObj *layer, rectObj *rect) {
-    char *fromsource =0;
-    char *strFrom = 0;
-    static char *boxToken = "!BOX!";
-    static int boxTokenLength = 5;
-    msPostGISLayerInfo *layerinfo;
-
-    if (layer->debug) {
-        msDebug("msPostGISBuildSQLFrom called.\n");
-    }
-
-    assert( layer->layerinfo != NULL);
-
-    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
-
-    if ( ! layerinfo->fromsource ) {
-        msSetError(MS_MISCERR, "Layerinfo->fromsource is not initialized.", "msPostGISBuildSQLFrom()");
-        return 0;
-    }
+static char *msPostGISReplaceBoxToken(layerObj *layer, rectObj *rect, const char *fromsource) 
+{
+    char *result = NULL;
     
-    fromsource = layerinfo->fromsource;
-
-    /*
-    ** If there's a '!BOX!' in our source we need to substitute the
-    ** current rectangle for it...
-    */
-    if ( strstr(fromsource, boxToken) && rect ) {
-        char *result = NULL;
-        char *strBox;
-        char *strSRID;
+    if ( strstr(fromsource, BOXTOKEN) && rect ) {
+        char *strBox = NULL;
+        char *strSRID = NULL;
 
         /* We see to set the SRID on the box, but to what SRID? */
         strSRID = msPostGISBuildSQLSRID(layer);
@@ -1095,17 +1075,17 @@ char *msPostGISBuildSQLFrom(layerObj *layer, rectObj *rect) {
         /* Create a suitable SQL string from the rectangle and SRID. */
         strBox = msPostGISBuildSQLBox(layer, rect, strSRID);
         if ( ! strBox ) {
-            msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISBuildSQLFrom()");
+            msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISReplaceBoxToken()");
             if (strSRID) free(strSRID);
             return 0;
         }
 
         /* Do the substitution. */
-        while ( strstr(fromsource,boxToken) ) {
+        while ( strstr(fromsource, BOXTOKEN) ) {
             char    *start, *end;
             char    *oldresult = result;
-            start = strstr(fromsource, boxToken);
-            end = start + boxTokenLength;
+            start = strstr(fromsource, BOXTOKEN);
+            end = start + BOXTOKENLENGTH;
 
             result = (char*)malloc((start - fromsource) + strlen(strBox) + strlen(end) +1);
 
@@ -1120,12 +1100,42 @@ char *msPostGISBuildSQLFrom(layerObj *layer, rectObj *rect) {
 
         if (strSRID) free(strSRID);
         if (strBox) free(strBox);
-
+    }    
+    else
+    {
+        result = strdup(fromsource);
     }
+    return result;
+    
+}
+
+/*
+** msPostGISBuildSQLFrom()
+**
+** Returns malloc'ed char* that must be freed by caller.
+*/
+char *msPostGISBuildSQLFrom(layerObj *layer, rectObj *rect) {
+    char *strFrom = 0;
+    msPostGISLayerInfo *layerinfo;
+
+    if (layer->debug) {
+        msDebug("msPostGISBuildSQLFrom called.\n");
+    }
+
+    assert( layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+
+    if ( ! layerinfo->fromsource ) {
+        msSetError(MS_MISCERR, "Layerinfo->fromsource is not initialized.", "msPostGISBuildSQLFrom()");
+        return 0;
+    }
+
     /*
-    ** Otherwise we can just take the fromsource "as is".
+    ** If there's a '!BOX!' in our source we need to substitute the
+    ** current rectangle for it...
     */
-    strFrom = strdup(fromsource);
+    strFrom = msPostGISReplaceBoxToken(layer, rect, layerinfo->fromsource);
 
     return strFrom;
 }
@@ -1157,7 +1167,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
     layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
 
     if ( ! layerinfo->fromsource ) {
-        msSetError(MS_MISCERR, "Layerinfo->fromsource is not initialized.", "msPostGISBuildSQLFrom()");
+        msSetError(MS_MISCERR, "Layerinfo->fromsource is not initialized.", "msPostGISBuildSQLWhere()");
         return 0;
     }
 
@@ -1274,12 +1284,20 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid) {
     }
 
     strFrom = msPostGISBuildSQLFrom(layer, rect);
+
     if ( ! strFrom ) {
         msSetError(MS_MISCERR, "Failed to build SQL 'from'.", "msPostGISBuildSQL()");
         return 0;
     }
 
-    strWhere = msPostGISBuildSQLWhere(layer, rect, uid);
+    /* If there's BOX hackery going on, we don't want to append a box index test at
+       the end of the query, the user is going to be responsible for making things
+       work with their hackery. */
+    if ( strstr(layerinfo->fromsource, BOXTOKEN) )
+        strWhere = msPostGISBuildSQLWhere(layer, NULL, uid);
+    else
+        strWhere = msPostGISBuildSQLWhere(layer, rect, uid);
+
     if ( ! strWhere ) {
         msSetError(MS_MISCERR, "Failed to build SQL 'where'.", "msPostGISBuildSQL()");
         return 0;
@@ -1579,7 +1597,7 @@ int msPostGISLayerClose(layerObj *layer) {
 #else
     msSetError( MS_MISCERR,
                 "PostGIS support is not available.",
-                "msPostGISLayerOpen()");
+                "msPostGISLayerClose()");
     return MS_FAILURE;
 #endif
 }
@@ -1819,7 +1837,7 @@ int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, lo
     assert(layer->layerinfo != NULL);
 
     if (layer->debug) {
-        msDebug("msPostGISLayerGetShape called for record = %i\n", record);
+        msDebug("msPostGISLayerResultsGetShape called for record = %i\n", record);
     }
 
     layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
@@ -1967,14 +1985,18 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long reco
 */
 int msPostGISLayerGetItems(layerObj *layer) {
 #ifdef USE_POSTGIS
-    msPostGISLayerInfo *layerinfo;
-    char *sql = 0;
+    msPostGISLayerInfo *layerinfo = NULL;
     static char *strSQLTemplate = "select * from %s where false limit 0";
-    PGresult *pgresult;
-    int t;
-    char *col;
-    char found_geom = 0;
-    int item_num;
+    PGresult *pgresult = NULL;
+    char *col = NULL;
+    char *sql = NULL;
+    char *strFrom = NULL;
+    char found_geom = NULL;
+    int t, item_num;
+    rectObj rect;
+
+    /* A useless rectangle for our useless query */
+    rect.minx = rect.miny = rect.maxx = rect.maxy = 0.0;
 
     assert(layer != NULL);
     assert(layer->layerinfo != NULL);
@@ -1994,12 +2016,16 @@ int msPostGISLayerGetItems(layerObj *layer) {
 
     layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
 
+    /* This allocates a fresh string, so remember to free it... */
+    strFrom = msPostGISReplaceBoxToken(layer, &rect, layerinfo->fromsource);
+
     /*
     ** Both the "table" and "(select ...) as sub" cases can be handled with the 
     ** same SQL.
     */
-    sql = (char*) malloc(strlen(strSQLTemplate) + strlen(layerinfo->fromsource));
-    sprintf(sql, strSQLTemplate, layerinfo->fromsource);
+    sql = (char*) malloc(strlen(strSQLTemplate) + strlen(strFrom));
+    sprintf(sql, strSQLTemplate, strFrom);
+    free(strFrom);
 
     if (layer->debug) {
         msDebug("msPostGISLayerGetItems executing SQL: %s\n", sql);
@@ -2046,7 +2072,7 @@ int msPostGISLayerGetItems(layerObj *layer) {
 #else
     msSetError( MS_MISCERR,
                 "PostGIS support is not available.",
-                "msPostGISLayerGetShape()");
+                "msPostGISLayerGetItems()");
     return MS_FAILURE;
 #endif
 }

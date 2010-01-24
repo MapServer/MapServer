@@ -12,6 +12,10 @@
 /* HEX = 16 or BASE64 = 64*/
 #define TRANSFER_ENCODING 16
 
+/* Substitution token for box hackery */
+#define BOXTOKEN "!BOX!"
+#define BOXTOKENLENGTH 5
+
 /*
 ** msPostGISLayerInfo
 **
