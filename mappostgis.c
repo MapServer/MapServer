@@ -1991,7 +1991,7 @@ int msPostGISLayerGetItems(layerObj *layer) {
     char *col = NULL;
     char *sql = NULL;
     char *strFrom = NULL;
-    char found_geom = NULL;
+    char found_geom = 0;
     int t, item_num;
     rectObj rect;
 
