@@ -120,7 +120,7 @@ DLEXPORT void php3_ms_map_getAllLayerNames(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_map_nextLabel(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getLabel(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_queryByPoint(INTERNAL_FUNCTION_PARAMETERS);
@@ -454,6 +454,10 @@ static long _phpms_build_labelcache_object(labelCacheObj *plabelcache,
                                            HashTable *list, 
                                            pval *return_value TSRMLS_DC);
 
+static long _phpms_build_labelcachemember_object(labelCacheMemberObj *plabelcachemember,
+                                           HashTable *list, 
+                                           pval *return_value TSRMLS_DC);
+
 static long _phpms_build_symbol_object(symbolObj *psSymbol, 
                                        int parent_map_id, 
                                        HashTable *list, 
@@ -519,6 +523,7 @@ static int le_msoutputformat;
 static int le_msgrid;
 static int le_mserror_ref;
 static int le_mslabelcache;
+static int le_mslabelcachemember;
 static int le_mssymbol;
 static int le_msquerymap;
 static int le_mscgirequest;
@@ -587,6 +592,7 @@ static zend_class_entry *outputformat_class_entry_ptr;
 static zend_class_entry *grid_class_entry_ptr;
 static zend_class_entry *error_class_entry_ptr;
 static zend_class_entry *labelcache_class_entry_ptr;
+static zend_class_entry *labelcachemember_class_entry_ptr;
 static zend_class_entry *symbol_class_entry_ptr;
 static zend_class_entry *querymap_class_entry_ptr;
 static zend_class_entry *cgirequest_class_entry_ptr;
@@ -698,6 +704,7 @@ function_entry php_map_class_functions[] = {
     {"getalllayernames",php3_ms_map_getAllLayerNames,   NULL},
     {"getallgroupnames",php3_ms_map_getAllGroupNames,   NULL},
     {"getcolorbyindex", php3_ms_map_getColorByIndex,    NULL},
+    {"getLabel",        php3_ms_map_getLabel,           NULL},
     {"setextent",       php3_ms_map_setExtent,          NULL},
     {"setrotation",     php3_ms_map_setRotation,        NULL},
     {"setsize",         php3_ms_map_setSize,            NULL},
@@ -989,6 +996,10 @@ function_entry php_labelcache_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
+static zend_function_entry php_labelcachemember_class_functions[] = {
+    {NULL, NULL, NULL}
+};
+
 function_entry php_symbol_class_functions[] = {
     {"set",             php3_ms_symbol_setProperty,     NULL},    
     {"setpoints",       php3_ms_symbol_setPoints,       NULL},    
@@ -1132,6 +1143,9 @@ PHP_MINIT_FUNCTION(phpms)
                                                          NULL);
 
     PHPMS_GLOBAL(le_mslabelcache)= register_list_destructors(php3_ms_free_stub,
+                                                             NULL);
+
+    PHPMS_GLOBAL(le_mslabelcachemember)= register_list_destructors(php3_ms_free_stub,
                                                              NULL);
 
     PHPMS_GLOBAL(le_msquerymap)= register_list_destructors(php3_ms_free_stub, 
@@ -1426,6 +1440,10 @@ PHP_MINIT_FUNCTION(phpms)
      INIT_CLASS_ENTRY(tmp_class_entry, "ms_labelcache_obj", 
                       php_labelcache_class_functions);
      labelcache_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_labelcachemember_obj", 
+                      php_labelcachemember_class_functions);
+     labelcachemember_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
      INIT_CLASS_ENTRY(tmp_class_entry, "ms_symbol_obj", 
                       php_symbol_class_functions);
@@ -3415,7 +3433,7 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
                                         self->extent.maxy, 
                                         E_ERROR TSRMLS_CC);
          }
-         
+     
          _phpms_build_img_object(im, &(self->web), list, return_value TSRMLS_CC);
     }
 }
@@ -3934,6 +3952,46 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
     {
         RETURN_FALSE;
     }
+}
+/* }}} */
+
+/**********************************************************************
+ *                        map->getLabel()
+ *
+ * Return the next label from the map’s labelcache, allowing iteration 
+ * over labels. Return NULL when the labelcache is empty.
+ *
+ **********************************************************************/
+
+/* {{{ proto int map.getLabel(). */
+
+DLEXPORT void php3_ms_map_getLabel(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval   *pThis;
+    mapObj *self=NULL;
+    labelCacheMemberObj* pLabelCacheMember = NULL;
+    HashTable   *list=NULL;
+    int i;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &i) == FAILURE))
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+    if (self)
+        pLabelCacheMember=mapObj_getLabel(self, i);
+
+    if (pLabelCacheMember==NULL)
+        RETURN_NULL();
+
+       /* Return labelCacheMember object */
+    _phpms_build_labelcachemember_object(pLabelCacheMember, list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -14839,6 +14897,39 @@ DLEXPORT void php_ms_labelcache_free(INTERNAL_FUNCTION_PARAMETERS)
      RETURN_TRUE;
 }
 
+/*=====================================================================
+ *                 PHP function wrappers - labelcachemember class
+ *====================================================================*/
+/**********************************************************************
+ *                     _phpms_build_labelcachemember_object()
+ **********************************************************************/
+static long _phpms_build_labelcachemember_object(labelCacheMemberObj *plabelcachemember, 
+                                           HashTable *list, 
+                                           pval *return_value TSRMLS_DC)
+{
+    int         labelcachemember_id;
+
+    if (plabelcachemember == NULL)
+        return 0;
+
+    labelcachemember_id = 
+      php3_list_insert(plabelcachemember, PHPMS_GLOBAL(le_mslabelcachemember));
+
+    _phpms_object_init(return_value, labelcachemember_id, 
+                       php_labelcachemember_class_functions,
+                       PHP4_CLASS_ENTRY(labelcachemember_class_entry_ptr) TSRMLS_CC);
+
+    add_property_long(return_value,   "classindex",   plabelcachemember->classindex);
+    add_property_long(return_value,   "featuresize",  plabelcachemember->featuresize);
+    add_property_long(return_value,   "layerindex",   plabelcachemember->layerindex);
+    add_property_long(return_value,   "numstyles",    plabelcachemember->numstyles);
+    add_property_long(return_value,   "shapeindex",   plabelcachemember->shapeindex);
+    add_property_long(return_value,   "status",       plabelcachemember->status);
+    PHPMS_ADD_PROP_STR(return_value,  "text",         plabelcachemember->text);
+    add_property_long(return_value,   "tileindex",    plabelcachemember->tileindex);
+   
+    return labelcachemember_id;
+}
 
 /*=====================================================================
  *                 PHP function wrappers - symbol object

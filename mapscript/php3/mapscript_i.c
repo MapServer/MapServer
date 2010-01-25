@@ -154,6 +154,11 @@ int mapObj_drawLabelCache(mapObj* self, imageObj *img) {
     return msDrawLabelCache(img, self);
   }
 
+labelCacheMemberObj* mapObj_getLabel(mapObj* self, int i)
+{
+    return msGetLabelCacheMember(&(self->labelcache), i);
+}
+
 int mapObj_queryByPoint(mapObj* self, pointObj *point, int mode, double buffer) {
     msInitQuery(&(self->query));
 

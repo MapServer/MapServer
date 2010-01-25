@@ -78,7 +78,7 @@ imageObj        *mapObj_drawReferenceMap(mapObj* self);
 int             mapObj_embedScalebar(mapObj* self, imageObj *img);
 int             mapObj_embedLegend(mapObj* self, imageObj *img);
 int             mapObj_drawLabelCache(mapObj* self, imageObj *img);
-labelCacheMemberObj *mapObj_nextLabel(mapObj* self);
+labelCacheMemberObj *mapObj_getLabel(mapObj* self, int i);
 int             mapObj_queryByPoint(mapObj* self, pointObj *point, 
                                     int mode, double buffer);
 int             mapObj_queryByRect(mapObj* self, rectObj rect);

@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- PHP/Mapscript: added labelCacheMember object and mapObj::getLabel() method (#1794)
+
 - Add shplabel tag support in templates (#3241)
 
 - Bumped GEOS requirement to version 3.0+ (#3215)
