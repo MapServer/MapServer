@@ -1452,7 +1452,32 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       strcpy( szPath, filename );
 #endif
     } else {
-      fread(dd,8,1,f); /* read some bytes to try and identify the file */
+      /* read some bytes to try and identify the file */
+      if( ! fread(dd,8,1,f) ) {
+        /* zero-length file or corrupt file */
+        int ignore_missing = msMapIgnoreMissingData(map);
+        if(ignore_missing == MS_MISSING_DATA_FAIL) {
+          msSetError(MS_IOERR, "Corrupt or empty file '%s' for layer '%s'", "msDrawRasterLayerLow()", szPath, layer->name);
+          return(MS_FAILURE); 
+        }
+        else if( ignore_missing == MS_MISSING_DATA_LOG ) {
+          if( layer->debug || layer->map->debug ) {
+            msDebug( "Corrupt or empty file '%s' for layer '%s' ... ignoring this missing data.\n", szPath, layer->name );
+          }
+          done = MS_TRUE;
+          continue;
+        }
+        else if( ignore_missing == MS_MISSING_DATA_IGNORE ) {
+          done = MS_TRUE;
+          continue;
+        }
+        else {
+          /* never get here */
+          msSetError(MS_IOERR, "msIgnoreMissingData returned unexpected value.", "msDrawRasterLayerLow()");
+          return(MS_FAILURE);
+        }
+        
+      }
       fclose(f);
     }
 
