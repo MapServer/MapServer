@@ -5187,13 +5187,13 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
         if (pszFinalAttributeValue && strlen(pszFinalAttributeValue) > 2 && 
             strcasecmp(pszComparionValue, "PropertyIsLike") == 0)
         {
+            int len = strlen(pszFinalAttributeValue);
             msStringTrimBlanks(pszFinalAttributeValue);
-            if (pszFinalAttributeValue[0] == '/' &&  pszFinalAttributeValue[strlen(pszFinalAttributeValue)-1] == '/')
+            if (pszFinalAttributeValue[0] == '/' &&  pszFinalAttributeValue[len-1] == '/')
             {
-                pszFinalAttributeValue[strlen(pszFinalAttributeValue)-1] = '\0';
-                pszFinalAttributeValue = pszFinalAttributeValue+1;
-                if (pszFinalAttributeValue[0] == '^')
-                  pszFinalAttributeValue++;
+                pszFinalAttributeValue[len-1] = '\0';
+                memmove(pszFinalAttributeValue, pszFinalAttributeValue +
+                        ((pszFinalAttributeValue[1] == '^') ? 2 : 1), len-1);
 
                 /*replace wild card string .* with * */
                 pszFinalAttributeValue = msReplaceSubstring(pszFinalAttributeValue, ".*", "*");
