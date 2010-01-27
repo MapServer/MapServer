@@ -658,6 +658,8 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 {
   int nRecordOffset, i, j, k, nRecordSize=0;
   uchar	*pabyRec;
+  int nShapeType;
+
   ms_int32	i32, nPoints, nParts;
 #ifdef USE_POINT_Z_M
   double dfMMin, dfMMax = 0;
@@ -693,12 +695,16 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   psSHP->panRecOffset[psSHP->nRecords-1] = nRecordOffset = psSHP->nFileSize;
   
   pabyRec = (uchar *) malloc(nPoints * 4 * sizeof(double) + nParts * 8 + 128);
+  nShapeType = psSHP->nShapeType;
   
-  
+  if (shape->type == MS_SHAPE_NULL) {
+      nShapeType = 0;
+      nRecordSize = 12;
+  }
   /* -------------------------------------------------------------------- */
   /*  Write vertices for a Polygon or Arc.				    */
   /* -------------------------------------------------------------------- */
-  if(psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_ARC ||
+  else if(psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_ARC ||
      psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM ||
      psSHP->nShapeType == SHP_ARCZ ||  psSHP->nShapeType == SHP_POLYGONZ) {
     ms_int32 t_nParts, t_nPoints, partSize;
@@ -919,7 +925,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   if( !bBigEndian ) i32 = SWAP_FOUR_BYTES(i32);
   ByteCopy( &i32, pabyRec + 4, 4 );
   
-  i32 = psSHP->nShapeType;				/* shape type */
+  i32 = nShapeType;     /* shape type */
   if( bBigEndian ) i32 = SWAP_FOUR_BYTES(i32);
   ByteCopy( &i32, pabyRec + 8, 4 );
   
