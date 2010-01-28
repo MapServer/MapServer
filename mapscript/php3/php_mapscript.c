@@ -704,7 +704,7 @@ function_entry php_map_class_functions[] = {
     {"getalllayernames",php3_ms_map_getAllLayerNames,   NULL},
     {"getallgroupnames",php3_ms_map_getAllGroupNames,   NULL},
     {"getcolorbyindex", php3_ms_map_getColorByIndex,    NULL},
-    {"getLabel",        php3_ms_map_getLabel,           NULL},
+    {"getlabel",        php3_ms_map_getLabel,           NULL},
     {"setextent",       php3_ms_map_setExtent,          NULL},
     {"setrotation",     php3_ms_map_setRotation,        NULL},
     {"setsize",         php3_ms_map_setSize,            NULL},
