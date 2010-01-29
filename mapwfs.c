@@ -1766,6 +1766,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
         iNumberOfFeatures += GET_LAYER(map, j)->resultcache->numresults;
       }
     }
+    if(maxfeatures > 0 && maxfeatures < iNumberOfFeatures)
+      iNumberOfFeatures = maxfeatures;
 
     /*
     ** GetFeature response
@@ -1885,8 +1887,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     msFree(encoded_typename);
 
      
-    if(maxfeatures > 0 && maxfeatures < iNumberOfFeatures)
-      iNumberOfFeatures = maxfeatures;
     
 
     
