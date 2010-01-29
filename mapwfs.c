@@ -1870,9 +1870,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
         }
       }
 
-     if(maxfeatures > 0 && maxfeatures < iNumberOfFeatures) {
-         iNumberOfFeatures = maxfeatures;
-     }
+
 
       if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
         msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\" numberOfFeatures=\"%d\">\n",
@@ -1886,27 +1884,24 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     msFree(encoded_schema);
     msFree(encoded_typename);
 
-    /*some validations on startindex, it should not be > that the total elements
-     TODO: should we send an exception?*/
-    if (startindex >0 && startindex >=iNumberOfFeatures)
-    {   
-        msIO_printf("   <gml:boundedBy>\n"); 
-        msIO_printf("      <gml:null>missing</gml:null>\n");
-        msIO_printf("   </gml:boundedBy>\n"); 
-    }
-    else
-    {
-        /* handle case of maxfeatures = 0 */
-        /*internally use a start index that start with with 0 as the first index*/
-        if(maxfeatures != 0 && iResultTypeHits == 0)
-          msGMLWriteWFSQuery(map, stdout, startindex-1, maxfeatures, pszNameSpace, outputformat);
+     
+    if(maxfeatures > 0 && maxfeatures < iNumberOfFeatures)
+      iNumberOfFeatures = maxfeatures;
+    
 
-        if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
-          msIO_printf("   <gml:boundedBy>\n"); 
-          msIO_printf("      <gml:null>missing</gml:null>\n");
-          msIO_printf("   </gml:boundedBy>\n"); 
-        }
+    
+    
+    /* handle case of maxfeatures = 0 */
+    /*internally use a start index that start with with 0 as the first index*/
+    if(maxfeatures != 0 && iResultTypeHits == 0)
+      msGMLWriteWFSQuery(map, stdout, startindex-1, maxfeatures, pszNameSpace, outputformat);
+    
+    if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
+      msIO_printf("   <gml:boundedBy>\n"); 
+      msIO_printf("      <gml:null>missing</gml:null>\n");
+      msIO_printf("   </gml:boundedBy>\n"); 
     }
+    
 
     if(outputformat == OWS_GML2)
       msIO_printf("</wfs:FeatureCollection>\n\n");
