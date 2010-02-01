@@ -2479,7 +2479,7 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 if (pszValue)
                   wfsparams->pszVersion = strdup(pszValue);
                 else
-                  wfsparams->pszVersion = strdup("1.0.0");
+                  wfsparams->pszVersion = strdup("1.1.0");
 
                  pszValue = 
                    (char*)CPLGetXMLValue(psGetCapabilities, "service", 
