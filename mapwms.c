@@ -665,6 +665,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
     else if (strcasecmp(names[i], "FORMAT") == 0) {
       const char *format_list = NULL;
+      char **tokens = NULL;
+	
       formatfound = 1;
 
       /*check to see if a predefined list is given*/
