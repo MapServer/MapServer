@@ -621,8 +621,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       }
     }
     else if (strcasecmp(names[i], "BBOX") == 0) {
-      char **tokens;
-      int n;
+      char **tokens = 0;
+      int n = 0;
       bboxfound = 1;
       tokens = msStringSplit(values[i], ',', &n);
       if (tokens==NULL || n != 4) {
