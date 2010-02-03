@@ -1560,6 +1560,46 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
     msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
   }
 
+  /* AuthorityURL support and Identifier support, only available > WMS 1.1.0 */
+  if(nVersion >= OWS_1_1_0)
+  {
+    const char *pszWmsAuthorityName = msOWSLookupMetadata(&(lp->metadata), "MO", "authorityurl_name");
+    const char *pszWMSAuthorityHref = msOWSLookupMetadata(&(lp->metadata), "MO", "authorityurl_href");
+    const char *pszWMSIdentifierAuthority = msOWSLookupMetadata(&(lp->metadata), "MO", "identifier_authority");
+    const char *pszWMSIdentifierValue = msOWSLookupMetadata(&(lp->metadata), "MO", "identifier_value");
+
+    /* AuthorityURL only makes sense if you have *both* the name and url */
+    if( pszWmsAuthorityName && pszWMSAuthorityHref )
+    {
+       msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "authorityurl_name",
+                                OWS_NOERR, "        <AuthorityURL name=\"%s\">\n",
+                                NULL);
+       msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "authorityurl_href",
+                                OWS_NOERR, "          <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n",
+                                NULL);
+       msIO_printf("        </AuthorityURL>\n");
+    }
+    else if ( pszWmsAuthorityName || pszWMSAuthorityHref )
+    {
+       msIO_printf("        <!-- WARNING: Both wms_authorityurl_name and wms_authorityurl_href must be set to output an AuthorityURL -->\n");
+    }
+    /* Identifier only makes sense if you have *both* the authority and value */
+    if( pszWMSIdentifierAuthority && pszWMSIdentifierValue )
+    {
+      msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "identifier_authority",
+                               OWS_NOERR, "        <Identifier authority=\"%s\">",
+                               NULL);
+      msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "identifier_value",
+                               OWS_NOERR, "%s</Identifier>\n",
+                               NULL);
+    }
+    else if ( pszWMSIdentifierAuthority || pszWMSIdentifierValue )
+    {
+       msIO_printf("        <!-- WARNING: Both wms_identifier_authority and wms_identifier_value must be set to output an Identifier -->\n");
+    }
+
+  }
+
    if(nVersion >= OWS_1_1_0)
        msOWSPrintURLType(stdout, &(lp->metadata), "MO", "metadataurl", 
                          OWS_NOERR, NULL, "MetadataURL", " type=\"%s\"", 
@@ -1583,47 +1623,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                          "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ", 
                          MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, 
                          NULL, NULL, NULL, NULL, NULL, "        ");
-
-  /* AuthorityURL support and Identifier support, only available > WMS 1.1.0 */
-  if(nVersion >= OWS_1_1_0)
-  {
-    const char *pszWmsAuthorityName = msOWSLookupMetadata(&(lp->metadata), "MO", "authorityurl_name");
-    const char *pszWMSAuthorityHref = msOWSLookupMetadata(&(lp->metadata), "MO", "authorityurl_href");
-    const char *pszWMSIdentifierAuthority = msOWSLookupMetadata(&(lp->metadata), "MO", "identifier_authority");
-    const char *pszWMSIdentifierValue = msOWSLookupMetadata(&(lp->metadata), "MO", "identifier_value");
-
-    /* AuthorityURL only makes sense if you have *both* the name and url */
-    if( pszWmsAuthorityName && pszWMSAuthorityHref )
-    {
-       msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "authorityurl_name",
-                                OWS_NOERR, "        <AuthorityURL name=\"%s\">\n", 
-                                NULL);
-       msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "authorityurl_href",
-                                OWS_NOERR, "          <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", 
-                                NULL);
-       msIO_printf("        </AuthorityURL>\n");      
-    }
-    else if ( pszWmsAuthorityName || pszWMSAuthorityHref ) 
-    {
-       msIO_printf("        <!-- WARNING: Both wms_authorityurl_name and wms_authorityurl_href must be set to output an AuthorityURL -->\n");
-    }
-    /* Identifier only makes sense if you have *both* the authority and value */
-    if( pszWMSIdentifierAuthority && pszWMSIdentifierValue )
-    {
-      msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "identifier_authority",
-                               OWS_NOERR, "        <Identifier authority=\"%s\">", 
-                               NULL);
-      msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "identifier_value",
-                               OWS_NOERR, "%s</Identifier>\n", 
-                               NULL);
-    }
-    else if ( pszWMSIdentifierAuthority || pszWMSIdentifierValue )
-    {
-       msIO_printf("        <!-- WARNING: Both wms_identifier_authority and wms_identifier_value must be set to output an Identifier -->\n");
-    }
-    
-  }                       
-
 
    /* The LegendURL reside in a style. The Web Map Context spec already  */
    /* included the support on this in mapserver. However, it is not in the  */
