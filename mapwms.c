@@ -1614,7 +1614,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                OWS_NOERR, "        <Identifier authority=\"%s\">", 
                                NULL);
       msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "identifier_value",
-                               OWS_NOERR, "%s</Identifier>\n>", 
+                               OWS_NOERR, "%s</Identifier>\n", 
                                NULL);
     }
     else if ( pszWMSIdentifierAuthority || pszWMSIdentifierValue )
