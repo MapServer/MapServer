@@ -4100,8 +4100,8 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTempor
     psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "Between");
     
     psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Id_Capabilities", NULL);
+    xmlNewChild(psNode, psNsOgc, BAD_CAST "EID", NULL);
     xmlNewChild(psNode, psNsOgc, BAD_CAST "FID", NULL);
-
     return psRootNode;
 }
 #endif
