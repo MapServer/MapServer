@@ -73,7 +73,7 @@ static int FLTIsNumeric(char *pszValue)
         if (!bString)
           return MS_TRUE;
 #else
-        if (msEvalRegex("[-+]?\\b([0-9]*\\.[0-9]+|[0-9]+)\\b", pszValue) == MS_TRUE)
+        if (msEvalRegex("^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$", pszValue) == MS_TRUE)
           return MS_TRUE;
 #endif
     }
