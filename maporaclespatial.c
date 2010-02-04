@@ -2017,10 +2017,12 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     if (layer->maxfeatures > 0 && layer->startindex < 0)
     {
-       if (function == FUNCTION_NONE)
+       if (function == FUNCTION_NONE && layer->filter.string == NULL)
          sprintf( query_str + strlen(query_str), "%s"," WHERE ");
-        sprintf( query_str + strlen(query_str), " ROWNUM<=%d ", layer->maxfeatures);
-        if (function != FUNCTION_NONE)
+       else if (function == FUNCTION_NONE && layer->filter.string != NULL)
+         sprintf( query_str + strlen(query_str), "%s"," AND ");
+       sprintf( query_str + strlen(query_str), " ROWNUM<=%d ", layer->maxfeatures);
+       if (function != FUNCTION_NONE)
           sprintf (query_str + strlen(query_str), " AND ");
       
     }
