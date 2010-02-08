@@ -710,6 +710,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   int outputformat = OWS_DEFAULT_SCHEMA; /* default output is GML 2.1 compliant schema*/
 
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
+  char *mimetype = NULL;
 
   if(paramsObj->pszTypeName && numlayers == 0) {
     /* Parse comma-delimited list of type names (layers) */
@@ -741,15 +742,24 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 
   /*set the output format to gml3 for wfs1.1*/
   if(paramsObj->pszVersion == NULL || strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
-    outputformat = OWS_SFE_SCHEMA;
+  {
+      mimetype = msEncodeHTMLEntities("text/xml; subtype=gml/3.1.1");
+      outputformat = OWS_SFE_SCHEMA;
+  }
 
   if (paramsObj->pszOutputFormat) {
     if(strcasecmp(paramsObj->pszOutputFormat, "XMLSCHEMA") == 0 ||
        strstr(paramsObj->pszOutputFormat, "gml/2")!= NULL)
-      outputformat = OWS_DEFAULT_SCHEMA;
+    {
+	mimetype = msEncodeHTMLEntities("text/xml; subtype=gml/2.1.2");
+	outputformat = OWS_DEFAULT_SCHEMA;
+    }
     else if(strcasecmp(paramsObj->pszOutputFormat, "SFE_XMLSCHEMA") == 0 ||
             strstr(paramsObj->pszOutputFormat, "gml/3")!= NULL)
-      outputformat = OWS_SFE_SCHEMA;
+    {
+	mimetype = msEncodeHTMLEntities("text/xml; subtype=gml/3.1.1");
+	outputformat = OWS_SFE_SCHEMA;
+    }
     else {
       msSetError(MS_WFSERR, "Unsupported DescribeFeatureType outputFormat (%s).", "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
       return msWFSException(map, "outputformat", "InvalidParameterValue", paramsObj->pszVersion);
@@ -775,10 +785,14 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   ** DescribeFeatureType response
   */
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
+  
   if (value)
-      msIO_printf("Content-type: text/xml; charset=%s%c%c", value,10,10);
+    msIO_printf("Content-type: %s charset=%s%c%c", mimetype,value,10,10);
   else
-      msIO_printf("Content-type: text/xml%c%c",10,10);
+    msIO_printf("Content-type: %s%c%c",mimetype,10,10);
+
+  if (mimetype)
+    msFree(mimetype);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
 			   "<?xml version='1.0' encoding=\"%s\" ?>\n",
