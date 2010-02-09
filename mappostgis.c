@@ -407,11 +407,11 @@ static int msPostGISRetrievePgVersion(PGconn *pgconn) {
         return(MS_FAILURE); 
     } 
 
-    strVersion = (char *)PQparameterStatus(pgconn, "server_version");
-    if (strVersion == NULL)
+    if ( ! PQparameterStatus(pgconn, "server_version") )
         return(MS_FAILURE); 
  
-    strVersion = strdup(strVersion); 
+    strVersion = strdup(PQparameterStatus(pgconn, "server_version")); 
+
     if( ! strVersion ) 
         return MS_FAILURE; 
     strParts[j] = strVersion; 
