@@ -195,138 +195,6 @@ static void msProjectGrowRect(projectionObj *in, projectionObj *out,
 #endif /* def USE_PROJ */
 
 /************************************************************************/
-/*                           msProjectRect()                            */
-/************************************************************************/
-
-#define NUMBER_OF_SAMPLE_POINTS 100
-
-int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) 
-{
-#ifdef USE_PROJ
-  pointObj prj_point;
-  rectObj prj_rect;
-  int	  rect_initialized = MS_FALSE, failure=0;
-  int     ix, iy;
-
-  double dx, dy;
-  double x, y;
-
-  dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
-  dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
-
-  /* first ensure the top left corner is processed, even if the rect
-     turns out to be degenerate. */
-
-  prj_point.x = rect->minx;
-  prj_point.y = rect->miny;
-#ifdef USE_POINT_Z_M
-  prj_point.z = 0.0;
-  prj_point.m = 0.0;
-#endif /* USE_POINT_Z_M */
-
-  msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
-                    &failure);
-
-  /* sample along top and bottom */
-  if(dx > 0) {
-    for(ix = 0; ix <= NUMBER_OF_SAMPLE_POINTS; ix++ )
-    {
-      x = rect->minx + ix * dx;
-
-      prj_point.x = x;
-      prj_point.y = rect->miny;
-      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
-                        &failure);
-      
-      prj_point.x = x;
-      prj_point.y = rect->maxy;
-      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
-                        &failure);
-    }
-  }
-
-  /* sample along left and right */
-  if(dy > 0) {
-    for(iy = 0; iy <= NUMBER_OF_SAMPLE_POINTS; iy++ )
-    {
-      y = rect->miny + iy * dy;
-
-      prj_point.y = y;
-      prj_point.x = rect->minx;    
-      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
-                        &failure);
-      
-      prj_point.x = rect->maxx;
-      prj_point.y = y;
-      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
-                        &failure);
-    }
-  }
-
-  /*
-  ** If there have been any failures around the edges, then we had better
-  ** try and fill in the interior to get a close bounds. 
-  */
-  if( failure > 0 )
-  {
-      failure = 0;
-      for(ix = 0; ix <= NUMBER_OF_SAMPLE_POINTS; ix++ )
-      {
-          x = rect->minx + ix * dx;
-
-          for(iy = 0; iy <= NUMBER_OF_SAMPLE_POINTS; iy++ )
-          {
-              y = rect->miny + iy * dy;
-
-              prj_point.x = x;
-              prj_point.y = y;
-              msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
-                                &failure);
-          }
-      }
-
-      if( !rect_initialized )
-      {
-          if( out == NULL || out->proj == NULL 
-              || pj_is_latlong(in->proj) )
-          {
-              prj_rect.minx = -180;
-              prj_rect.maxx = 180;
-              prj_rect.miny = -90;
-              prj_rect.maxy = 90;
-          }
-          else
-          {
-              prj_rect.minx = -22000000;
-              prj_rect.maxx = 22000000;
-              prj_rect.miny = -11000000;
-              prj_rect.maxy = 11000000;
-          }
-
-          msDebug( "msProjectRect(): all points failed to reproject, trying to fall back to using world bounds ... hope this helps.\n" );
-      }
-      else
-      {
-          msDebug( "msProjectRect(): some points failed to reproject, doing internal sampling.\n" );
-      }
-  }
-
-  rect->minx = prj_rect.minx;
-  rect->miny = prj_rect.miny;
-  rect->maxx = prj_rect.maxx;
-  rect->maxy = prj_rect.maxy;
-
-  if( !rect_initialized )
-      return MS_FAILURE;
-  else
-      return(MS_SUCCESS);
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
-  return(MS_FAILURE);
-#endif
-}
-
-/************************************************************************/
 /*                          msProjectSegment()                          */
 /*                                                                      */
 /*      Interpolate along a line segment for which one end              */
@@ -418,7 +286,7 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
     int line_alloc = numpoints_in;
     int wrap_test;
 
-    wrap_test = out->proj != NULL && pj_is_latlong(out->proj)
+    wrap_test = out != NULL && out->proj != NULL && pj_is_latlong(out->proj)
         && !pj_is_latlong(in->proj);
 
     line->numpoints = 0;
@@ -694,6 +562,311 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
   msSetError(MS_PROJERR, "Projection support is not available.", "msProjectLine()");
   return(MS_FAILURE);
 #endif
+}
+
+/************************************************************************/
+/*                           msProjectRectGrid()                        */
+/************************************************************************/
+
+//#define NUMBER_OF_SAMPLE_POINTS 100
+#define NUMBER_OF_SAMPLE_POINTS 5
+
+int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect) 
+{
+#ifdef USE_PROJ
+  pointObj prj_point;
+  rectObj prj_rect;
+  int	  rect_initialized = MS_FALSE, failure=0;
+  int     ix, iy;
+
+  double dx, dy;
+  double x, y;
+
+  dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
+  dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
+
+  /* first ensure the top left corner is processed, even if the rect
+     turns out to be degenerate. */
+
+  prj_point.x = rect->minx;
+  prj_point.y = rect->miny;
+#ifdef USE_POINT_Z_M
+  prj_point.z = 0.0;
+  prj_point.m = 0.0;
+#endif /* USE_POINT_Z_M */
+
+  msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                    &failure);
+
+  failure = 0;
+  for(ix = 0; ix <= NUMBER_OF_SAMPLE_POINTS; ix++ )
+  {
+      x = rect->minx + ix * dx;
+      
+      for(iy = 0; iy <= NUMBER_OF_SAMPLE_POINTS; iy++ )
+      {
+          y = rect->miny + iy * dy;
+          
+          prj_point.x = x;
+          prj_point.y = y;
+          msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                            &failure);
+      }
+  }
+  
+  if( !rect_initialized )
+  {
+      if( out == NULL || out->proj == NULL 
+          || pj_is_latlong(in->proj) )
+      {
+          prj_rect.minx = -180;
+          prj_rect.maxx = 180;
+          prj_rect.miny = -90;
+          prj_rect.maxy = 90;
+      }
+      else
+      {
+          prj_rect.minx = -22000000;
+          prj_rect.maxx = 22000000;
+          prj_rect.miny = -11000000;
+          prj_rect.maxy = 11000000;
+      }
+      
+      msDebug( "msProjectRect(): all points failed to reproject, trying to fall back to using world bounds ... hope this helps.\n" );
+  }
+  else
+  {
+      msDebug( "msProjectRect(): some points failed to reproject, doing internal sampling.\n" );
+  }
+
+  rect->minx = prj_rect.minx;
+  rect->miny = prj_rect.miny;
+  rect->maxx = prj_rect.maxx;
+  rect->maxy = prj_rect.maxy;
+
+  if( !rect_initialized )
+      return MS_FAILURE;
+  else
+      return(MS_SUCCESS);
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
+  return(MS_FAILURE);
+#endif
+}
+
+/************************************************************************/
+/*                    msProjectRectTraditionalEdge()                    */
+/************************************************************************/
+
+static int 
+msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out, 
+                             rectObj *rect) 
+{
+#ifdef USE_PROJ
+  pointObj prj_point;
+  rectObj prj_rect;
+  int	  rect_initialized = MS_FALSE, failure=0;
+  int     ix, iy;
+
+  double dx, dy;
+  double x, y;
+
+  dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
+  dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
+
+  /* first ensure the top left corner is processed, even if the rect
+     turns out to be degenerate. */
+
+  prj_point.x = rect->minx;
+  prj_point.y = rect->miny;
+#ifdef USE_POINT_Z_M
+  prj_point.z = 0.0;
+  prj_point.m = 0.0;
+#endif /* USE_POINT_Z_M */
+
+  msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                    &failure);
+
+  /* sample along top and bottom */
+  if(dx > 0) {
+    for(ix = 0; ix <= NUMBER_OF_SAMPLE_POINTS; ix++ )
+    {
+      x = rect->minx + ix * dx;
+
+      prj_point.x = x;
+      prj_point.y = rect->miny;
+      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                        &failure);
+      
+      prj_point.x = x;
+      prj_point.y = rect->maxy;
+      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                        &failure);
+    }
+  }
+
+  /* sample along left and right */
+  if(dy > 0) {
+    for(iy = 0; iy <= NUMBER_OF_SAMPLE_POINTS; iy++ )
+    {
+      y = rect->miny + iy * dy;
+
+      prj_point.y = y;
+      prj_point.x = rect->minx;    
+      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                        &failure);
+      
+      prj_point.x = rect->maxx;
+      prj_point.y = y;
+      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                        &failure);
+    }
+  }
+
+  /*
+  ** If there have been any failures around the edges, then we had better
+  ** try and fill in the interior to get a close bounds. 
+  */
+  if( failure > 0 )
+      return msProjectRectGrid( in, out, rect );
+
+  rect->minx = prj_rect.minx;
+  rect->miny = prj_rect.miny;
+  rect->maxx = prj_rect.maxx;
+  rect->maxy = prj_rect.maxy;
+
+  if( !rect_initialized )
+      return MS_FAILURE;
+  else
+      return(MS_SUCCESS);
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
+  return(MS_FAILURE);
+#endif
+}
+
+/************************************************************************/
+/*                       msProjectRectAsPolygon()                       */
+/************************************************************************/
+
+static int 
+msProjectRectAsPolygon(projectionObj *in, projectionObj *out, 
+                       rectObj *rect) 
+{
+#ifdef USE_PROJ
+  shapeObj polygonObj;
+  lineObj  ring;
+  pointObj ringPoints[NUMBER_OF_SAMPLE_POINTS*4+4];
+  int     ix, iy;
+
+  double dx, dy;
+
+  ring.point = &(ringPoints[0]);
+  ring.numpoints = 0;
+
+  polygonObj.type = MS_SHAPE_POLYGON;
+  polygonObj.line = &ring;
+  polygonObj.numlines = 1;
+  polygonObj.numvalues = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Build polygon as steps around the source rectangle.             */
+/* -------------------------------------------------------------------- */
+  dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
+  dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
+
+  /* sample along top */
+  if(dx != 0) {
+    for(ix = 0; ix <= NUMBER_OF_SAMPLE_POINTS; ix++ )
+    {
+      ringPoints[ring.numpoints].x = rect->minx + ix * dx;
+      ringPoints[ring.numpoints++].y = rect->miny;
+    }
+  }
+
+  /* sample on along right side */
+  if(dy != 0) {
+    for(iy = 1; iy <= NUMBER_OF_SAMPLE_POINTS; iy++ )
+    {
+      ringPoints[ring.numpoints].x = rect->maxx;
+      ringPoints[ring.numpoints++].y = rect->miny + iy * dy;
+    }
+  }
+
+  /* sample along bottom */
+  if(dx != 0) {
+    for(ix = NUMBER_OF_SAMPLE_POINTS-1; ix >= 0; ix-- )
+    {
+      ringPoints[ring.numpoints].x = rect->minx + ix * dx;
+      ringPoints[ring.numpoints++].y = rect->maxy;
+    }
+  }
+
+  /* sample on along left side */
+  if(dy != 0) {
+    for(iy = NUMBER_OF_SAMPLE_POINTS-1; iy >= 0; iy-- )
+    {
+      ringPoints[ring.numpoints].x = rect->minx;
+      ringPoints[ring.numpoints++].y = rect->miny + iy * dy;
+    }
+  }
+
+/* -------------------------------------------------------------------- */
+/*      Attempt to reproject.                                           */
+/* -------------------------------------------------------------------- */
+  msProjectShapeLine( in, out, &polygonObj, 0 );
+
+  /* If no points reprojected, try a grid sampling */
+  if( ring.numpoints == 0 )
+  {
+      return msProjectRectGrid( in, out, rect );
+  }
+
+/* -------------------------------------------------------------------- */
+/*      Collect bounds.                                                 */
+/* -------------------------------------------------------------------- */
+  rect->minx = rect->maxx = ringPoints[0].x;
+  rect->miny = rect->maxy = ringPoints[0].y;
+  
+  for( ix = 1; ix < ring.numpoints; ix++ )
+  {
+      rect->minx = MIN(rect->minx,ringPoints[ix].x);
+      rect->maxx = MAX(rect->maxx,ringPoints[ix].x);
+      rect->miny = MIN(rect->miny,ringPoints[ix].y);
+      rect->maxy = MAX(rect->maxy,ringPoints[ix].y);
+  }
+
+/* -------------------------------------------------------------------- */
+/*      Special case to handle reprojection from "more than the         */
+/*      whole world" projected coordinates that sometimes produce a     */
+/*      region greater than 360 degrees wide due to various wrapping    */
+/*      logic.                                                          */
+/* -------------------------------------------------------------------- */
+  if( out && pj_is_latlong(out->proj) && in && !pj_is_latlong(in->proj) 
+      && rect->maxx - rect->minx > 360.0 )
+  {
+      rect->maxx = 180;
+      rect->minx = -180;
+  }
+
+  return MS_SUCCESS;
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
+  return(MS_FAILURE);
+#endif
+}
+
+/************************************************************************/
+/*                           msProjectRect()                            */
+/************************************************************************/
+
+int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) 
+{
+#ifdef notdef
+    return msProjectRectTraditionalEdge( in, out, rect );
+#else
+    return msProjectRectAsPolygon( in, out, rect );
+#endif    
 }
 
 /************************************************************************/
