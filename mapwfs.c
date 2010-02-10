@@ -1889,8 +1889,20 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
 
       if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
-        msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\" numberOfFeatures=\"%d\">\n",
-		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format, iNumberOfFeatures);
+      {
+	  char timestring[100];
+	  struct tm *now;
+	  time_t tim=time(NULL);
+	  
+	  now=localtime(&tim);
+
+	  sprintf(timestring, "%d-%02d-%02dT%02d:%02d:%02d",
+		  now->tm_year+1900, now->tm_mon+1, now->tm_mday,
+		  now->tm_hour, now->tm_min, now->tm_sec);
+
+	  msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\" timeStamp=\"%s\" numberOfFeatures=\"%d\">\n",
+		      user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format, timestring, iNumberOfFeatures);
+      }
       else
         msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
 		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format);
