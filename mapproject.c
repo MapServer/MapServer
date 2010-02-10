@@ -756,18 +756,18 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 #ifdef USE_PROJ
   shapeObj polygonObj;
   lineObj  ring;
-  pointObj ringPoints[NUMBER_OF_SAMPLE_POINTS*4+4];
+//  pointObj ringPoints[NUMBER_OF_SAMPLE_POINTS*4+4];
+  pointObj *ringPoints;
   int     ix, iy;
 
   double dx, dy;
 
-  ring.point = &(ringPoints[0]);
+  ringPoints = (pointObj*) calloc(sizeof(pointObj),NUMBER_OF_SAMPLE_POINTS*4+4);
+  ring.point = ringPoints;
   ring.numpoints = 0;
 
+  msInitShape( &polygonObj );
   polygonObj.type = MS_SHAPE_POLYGON;
-  polygonObj.line = &ring;
-  polygonObj.numlines = 1;
-  polygonObj.numvalues = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Build polygon as steps around the source rectangle.             */
@@ -811,6 +811,8 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     }
   }
 
+  msAddLineDirectly( &polygonObj, &ring );
+
 /* -------------------------------------------------------------------- */
 /*      Attempt to reproject.                                           */
 /* -------------------------------------------------------------------- */
@@ -819,6 +821,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   /* If no points reprojected, try a grid sampling */
   if( ring.numpoints == 0 )
   {
+      msFreeShape( &polygonObj );
       return msProjectRectGrid( in, out, rect );
   }
 
@@ -835,6 +838,8 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
       rect->miny = MIN(rect->miny,ringPoints[ix].y);
       rect->maxy = MAX(rect->maxy,ringPoints[ix].y);
   }
+
+  msFreeShape( &polygonObj );
 
 /* -------------------------------------------------------------------- */
 /*      Special case to handle reprojection from "more than the         */
