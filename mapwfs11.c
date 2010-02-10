@@ -103,10 +103,20 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
    
     xmlNodePtr psRootNode, psNode;
     const char *value    = NULL;
+    const char *encoding = NULL;
+    char *encoded=NULL;
+      
+
+    encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
+    if (!encoding)
+      encoding = "ISO-8859-1";
 
     psRootNode = xmlNewNode(NULL, BAD_CAST "FeatureType");
 
-    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST lp->name);
+
+    /*if there is an encoding using it on some of the items*/
+    msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", lp->name, encoding);
+
 
     if (lp->name && strlen(lp->name) > 0 &&
         (msIsXMLTagValid(lp->name) == MS_FALSE || isdigit(lp->name[0])))
@@ -115,24 +125,32 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
                                   "invalid characters or may start with a number. This could lead to potential problems"));
    
     value = msOWSLookupMetadata(&(lp->metadata), "FO", "title");
-    if (value)
-      psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Title", BAD_CAST value);
-    else
-      psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Title", BAD_CAST lp->name);
+    if (!value)
+      value =(const char*)lp->name;
 
+    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Title", value, encoding);
 
+ 
     value = msOWSLookupMetadata(&(lp->metadata), "FO", "abstract");
     if (value)
-      psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Abstract", BAD_CAST value);
+      psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Abstract", value, encoding);
+
 
 
     value = msOWSLookupMetadata(&(lp->metadata), "FO", "keywordlist");
 
     if (value)
+    {
+	if (encoding)
+	  encoded = msGetEncodedString(value, encoding);
+        else
+          encoded = msGetEncodedString(value, "ISO-8859-1");
+
         msLibXml2GenerateList(
             xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL),
-            NULL, "Keyword", value, ',' );
-
+            NULL, "Keyword", encoded, ',' );
+	msFree(encoded);
+    }
     /*srs only supposrt DefaultSRS with the same logic as for wfs1.0
       TODO support OtherSRS*/
     value = msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE);

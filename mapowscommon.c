@@ -637,4 +637,20 @@ int _validateNamespace(xmlNsPtr psNsOws) {
     return MS_FAILURE;
 }
 
+xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, const char* name, 
+					  const char *content, const char *encoding)
+{
+    char *encoded = NULL;
+    xmlNodePtr psNode;
+
+    if (encoding && content)
+    {
+	encoded = msGetEncodedString(content, encoding);
+	psNode =  xmlNewChild(psParent, psNs, BAD_CAST name, BAD_CAST encoded);
+	msFree(encoded);
+	return psNode;
+    }
+    else
+      return xmlNewChild(psParent, psNs, BAD_CAST name, BAD_CAST content);
+}
 #endif /* defined(USE_LIBXML2) */
