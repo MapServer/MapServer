@@ -115,7 +115,7 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
 
 
     /*if there is an encoding using it on some of the items*/
-    msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", lp->name, encoding);
+    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", lp->name, encoding);
 
 
     if (lp->name && strlen(lp->name) > 0 &&
