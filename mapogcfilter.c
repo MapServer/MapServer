@@ -3991,6 +3991,36 @@ static void FLTReplacePropertyName(FilterEncodingNode *psFilterNode,
 }
 
 
+static void FLTStripNameSpacesFromPropertyName(FilterEncodingNode *psFilterNode)
+{
+    char **tokens=NULL;
+    int n=0;
+
+    if (psFilterNode)
+    {
+         if (psFilterNode->eType == FILTER_NODE_TYPE_PROPERTYNAME)
+         {
+             if (psFilterNode->pszValue &&  
+                 strstr(psFilterNode->pszValue, ":"))
+             {
+                 tokens = msStringSplit(psFilterNode->pszValue, ':', &n);
+                 if (tokens && n==2)
+                 {
+                     msFree(psFilterNode->pszValue);
+                     psFilterNode->pszValue = strdup(tokens[1]);
+                 }
+                 if (tokens && n>0)
+                   msFreeCharArray(tokens, n);
+             }
+         }
+         if (psFilterNode->psLeftNode)
+           FLTStripNameSpacesFromPropertyName(psFilterNode->psLeftNode);
+         if (psFilterNode->psRightNode)
+           FLTStripNameSpacesFromPropertyName(psFilterNode->psRightNode);
+    }
+
+}
+
 /************************************************************************/
 /*                        FLTPreParseFilterForAlias                     */
 /*                                                                      */
@@ -4008,6 +4038,9 @@ void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
 
     if (psFilterNode && map && i>=0 && i<map->numlayers)
     {
+        /*strip name speces befor hand*/
+        FLTStripNameSpacesFromPropertyName(psFilterNode);
+
         lp = GET_LAYER(map, i);
         if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
         {
