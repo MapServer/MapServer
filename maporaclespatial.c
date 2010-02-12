@@ -146,7 +146,10 @@ typedef
 		item_text_array *items; /* items buffer */
 		item_text_array_query *items_query; /* items buffer */
 		SDOGeometryObj *obj[ARRAY_SIZE]; /* spatial object buffer */
-		SDOGeometryInd *ind[ARRAY_SIZE]; /* object indicator (null) buffer */	
+		SDOGeometryInd *ind[ARRAY_SIZE]; /* object indicator (null) buffer */
+
+          int uniqueidindex; /*allows to keep whic attribute id index is used as unique id*/ 
+
 	} msOracleSpatialStatement;
 
 typedef
@@ -1899,7 +1902,6 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     int success, i;
     int function = 0;
     int version = 0;
-    int existunique = MS_FALSE;
     char query_str[6000];
     char query_str2[256];
     char *tmp_str=NULL, *tmp1_str=NULL;
@@ -1910,13 +1912,15 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     OCINumber oci_number;
     OCIBind *bnd1p = NULL,  *bnd2p = NULL;
     
-
+    int existunique = MS_FALSE;
+    int rownumisuniquekey = MS_FALSE;
+    int numitemsinselect = 0;
 
     /* get layerinfo */
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
     msOracleSpatialDataHandler *dthand = NULL;
     msOracleSpatialHandler *hand = NULL;
-	msOracleSpatialStatement *sthand = NULL;
+    msOracleSpatialStatement *sthand = NULL;
 
     if (layer->debug)
         msDebug("msOracleSpatialLayerWhichShapes was called.\n");
@@ -1936,6 +1940,9 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 		sthand = (msOracleSpatialStatement *)layerinfo->orastmt2;
     }
 
+    /*init uniqueindex field*/
+    sthand->uniqueidindex=0;
+
     table_name = (char *) malloc(sizeof(char) * TABLE_NAME_SIZE);
     /* parse geom_column_name and table_name */
     if (!msSplitData( layer->data, geom_column_name, &table_name, unique, srid, &function, &version)) 
@@ -1952,43 +1959,50 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
         return MS_FAILURE;
     }
 
+    /*rownum will be the first in the select if no UNIQUE key is defined or 
+      will be added at the end of the select*/
+    rownumisuniquekey = MS_TRUE;
     /*Define the unique*/
     if (unique[0] == '\0')
         strcpy( unique, "rownum" );
+    else
+      rownumisuniquekey = MS_FALSE;
+
+    /* Check if the unique field is already in the items list */
+    existunique = MS_FALSE;
+    for( i=0; i < layer->numitems; ++i ) {
+        if (strcasecmp(unique, layer->items[i])==0) {
+            sthand->uniqueidindex = i;
+            existunique = MS_TRUE;
+            break;
+        }
+    }
 
     /* If no SRID is provided, set it to -1 (NULL) for binding */
     if (strcmp(srid,"NULL") == 0)
         strcpy(srid,"-1");
 
 
-    /* Check if the unique field is already in the items list */
-    for( i=0; i < layer->numitems; ++i ) {
-        if (strcasecmp(unique, layer->items[i])==0) {
-            existunique = MS_TRUE;
-            break;
-        }
-    }
-       
-     /*always select rownum to allow paging*/
-    if (existunique)
-    {
-        if (strcasecmp(unique, "rownum") == 0)
-          sprintf( query_str, "SELECT");
-        else
-          sprintf( query_str, "SELECT %s,", "rownum");
-    }
-    else
-    {
-        if (strcasecmp(unique, "rownum") == 0)
-          sprintf( query_str, "SELECT %s,", unique );
-        else
-          sprintf( query_str, "SELECT %s, %s,", "rownum", unique );
-    }
+    sprintf( query_str, "SELECT ");
 
+    
+    numitemsinselect = layer->numitems;
     /* allocate enough space for items */
     if (layer->numitems >= 0)
     {
-        sthand->items = (item_text_array *)malloc( sizeof(item_text_array) * (layer->numitems+1) );
+        /*we will always add a rownumber in the selection*/
+        numitemsinselect++;
+
+        /*if unique key in the data is specfied and is not part of the current item lists,
+          we should add it to the select*/
+        if(existunique == MS_FALSE && rownumisuniquekey == MS_FALSE)
+          numitemsinselect++;
+
+        /*the usinque index is there was no uniqueid given or the uniqueid given was not part of the items lists*/
+        if (existunique == MS_FALSE)
+          sthand->uniqueidindex = layer->numitems;
+
+        sthand->items = (item_text_array *)malloc( sizeof(item_text_array) * (numitemsinselect) );
         if (sthand->items == NULL)
         {
             msSetError( MS_ORACLESPATIALERR,"Cannot allocate layerinfo->items buffer","msOracleSpatialLayerWhichShapes()" );
@@ -1996,14 +2010,14 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
             return MS_FAILURE;
         }
 
-        items = (OCIDefine **)malloc(sizeof(OCIDefine *)*(layer->numitems+1));
+        items = (OCIDefine **)malloc(sizeof(OCIDefine *)*(numitemsinselect));
         if (items == NULL)
         {
             msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer","msOracleSpatialLayerWhichShapes()" );
             free(table_name);
             return MS_FAILURE;
         }
-        memset(items ,0,sizeof(OCIDefine *)*(layer->numitems+1));
+        memset(items ,0,sizeof(OCIDefine *)*(numitemsinselect));
     }
 
     /* define SQL query */
@@ -2011,6 +2025,15 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     {
         sprintf( query_str + strlen(query_str), "%s, ", layer->items[i] );
     }
+
+    /*we add the uniqueid if it was not part of the current item list*/
+    if(existunique == MS_FALSE && rownumisuniquekey == MS_FALSE)
+      sprintf( query_str + strlen(query_str), "%s", unique);
+
+    /*we always want to add rownum is the selection to allow paging to work*/
+    sprintf( query_str + strlen(query_str), "%s, ", "rownum");
+
+
     sprintf( query_str + strlen(query_str), "%s FROM %s", geom_column_name, table_name );
 
     osFilteritem(layer, function, query_str, 1);
@@ -2117,7 +2140,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     if (success && layer->numitems >= 0)
     {
-        for( i=0; i <= layer->numitems && success; ++i )
+        for( i=0; i < numitemsinselect && success; ++i )
             success = TRY( hand, OCIDefineByPos( sthand->stmthp, &items[i], hand->errhp, (ub4)i+1, (dvoid *)sthand->items[i], (sb4)TEXT_SIZE, SQLT_STR, (dvoid *)0, (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT ) );
     }
     
@@ -2126,7 +2149,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     {
         success = TRY( hand,
             /* define spatial position adtp ADT object */
-            OCIDefineByPos( sthand->stmthp, &adtp, hand->errhp, (ub4)layer->numitems+2, (dvoid *)0, (sb4)0, SQLT_NTY, (dvoid *)0, (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT) )
+            OCIDefineByPos( sthand->stmthp, &adtp, hand->errhp, (ub4)numitemsinselect+1, (dvoid *)0, (sb4)0, SQLT_NTY, (dvoid *)0, (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT) )
                && TRY( hand,
             /* define object tdo from adtp */
             OCIDefineObject( adtp, hand->errhp, dthand->tdo, (dvoid **)sthand->obj, (ub4 *)0, (dvoid **)sthand->ind, (ub4 *)0 ) )
@@ -2222,8 +2245,8 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
         ind = sthand->ind[ sthand->row ];
 
         /* get the items for the shape */
-        shape->index = atol( (char *)(sthand->items[0][ sthand->row ])); /* Primary Key */
-		shape->tileindex = sthand->row_num; /* Index into cursor */
+        shape->index = atol( (char *)(sthand->items[sthand->uniqueidindex][ sthand->row ])); /* Primary Key */
+        shape->tileindex = sthand->row_num; /* Index into cursor */
         shape->numvalues = layer->numitems;
 
         shape->values = (char **)malloc( sizeof(char*) * shape->numvalues );
@@ -2235,7 +2258,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
 
         for( i=0; i < shape->numvalues; ++i )
         {
-            shape->values[i] = (char *)malloc(strlen((char *)sthand->items[i+1][ sthand->row ])+1);
+            shape->values[i] = (char *)malloc(strlen((char *)sthand->items[i][ sthand->row ])+1);
             if (shape->values[i] == NULL)
             {
                 msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items", "msOracleSpatialLayerNextShape()" );
@@ -2243,8 +2266,8 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
             }
             else
             {
-                strcpy(shape->values[i], (char *)sthand->items[i+1][ sthand->row ]);
-                shape->values[i][strlen((char *)sthand->items[i+1][ sthand->row ])] = '\0';
+                strcpy(shape->values[i], (char *)sthand->items[i][ sthand->row ]);
+                shape->values[i][strlen((char *)sthand->items[i][ sthand->row ])] = '\0';
             }
         }
 
@@ -2367,7 +2390,7 @@ int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int re
 	
 	for( i=0; i < shape->numvalues; ++i )
 	{
-		shape->values[i] = (char *)malloc(strlen((char *)sthand->items[i+1][ sthand->row ])+1);
+		shape->values[i] = (char *)malloc(strlen((char *)sthand->items[i][ sthand->row ])+1);
 		if (shape->values[i] == NULL)
 		{
 			msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items", "msOracleSpatialLayerNextShape()" );
@@ -2375,8 +2398,8 @@ int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int re
 		}
 		else
 		{
-			strcpy(shape->values[i], (char *)sthand->items[i+1][ sthand->row ]);
-			shape->values[i][strlen((char *)sthand->items[i+1][ sthand->row ])] = '\0';
+			strcpy(shape->values[i], (char *)sthand->items[i][ sthand->row ]);
+			shape->values[i][strlen((char *)sthand->items[i][ sthand->row ])] = '\0';
 		}
 	}
 	
@@ -2703,15 +2726,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
         sprintf( query_str + strlen(query_str), " AND %s", (layer->filter.string));*/
     osFilteritem(layer, FUNCTION_NONE, query_str, 2);
 
-    if (layer->maxfeatures > 0)
-    {
-        if(layer->filter.string != NULL)
-           sprintf (query_str + strlen(query_str), " AND ");
-        else
-           sprintf (query_str + strlen(query_str), " WHERE ");
-
-        sprintf( query_str + strlen(query_str), " ROWNUM<=%d ", layer->maxfeatures);
-    }
+    
     if (layer->debug)
       msDebug("msOracleSpatialLayerGetShape. Sql: %s\n", query_str);
 
