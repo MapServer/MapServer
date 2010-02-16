@@ -1068,7 +1068,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   }
 
   if(paramsObj->pszTypeName) {
-    int j, k, z;
+      int j, k, y,z;
     
     char **tokens;
     int n=0, i=0;
@@ -1234,6 +1234,29 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                         papszPropertyName[k] = msReplaceSubstring(papszPropertyName[k], pszFullName, lp->items[z]);
                   
                   }
+
+                  /*validate that the property names passed are part of the items list*/
+                  tokens = msStringSplit(papszPropertyName[k], ',', &n);
+                  for (y=0; y<n; y++)
+                  {
+                      if (tokens[y] && strlen(tokens[y]) > 0)
+                      {
+                          for(z=0; z<lp->numitems; z++) 
+                          {
+                              if (strcasecmp(tokens[y], lp->items[z]) == 0)
+                                break;
+                          }
+                          if (z == lp->numitems)
+                          {
+                              msSetError(MS_WFSERR, 
+                                         "Invalid PROPERTYNAME %s",  "msWFSGetFeature()", tokens[y]);
+                              msFreeCharArray(tokens, n);
+                              return msWFSException(map, "PROPERTYNAME", "InvalidParameterValue", paramsObj->pszVersion);
+                          }
+                      }
+                  }
+                  if (tokens && n > 0)
+                    msFreeCharArray(tokens, n);
                   msLayerClose(lp);
               } 
                       
