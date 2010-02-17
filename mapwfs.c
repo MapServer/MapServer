@@ -740,13 +740,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     }
   } 
 
-  /*set the output format to gml3 for wfs1.1*/
-  if(paramsObj->pszVersion == NULL || strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
-  {
-      mimetype = msEncodeHTMLEntities("text/xml; subtype=gml/3.1.1");
-      outputformat = OWS_SFE_SCHEMA;
-  }
-
+  
   if (paramsObj->pszOutputFormat) {
     if(strcasecmp(paramsObj->pszOutputFormat, "XMLSCHEMA") == 0 ||
        strstr(paramsObj->pszOutputFormat, "gml/2")!= NULL)
@@ -764,6 +758,18 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       msSetError(MS_WFSERR, "Unsupported DescribeFeatureType outputFormat (%s).", "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
       return msWFSException(map, "outputformat", "InvalidParameterValue", paramsObj->pszVersion);
     }
+  }
+
+  /*set the output format to gml3 for wfs1.1*/
+  if(mimetype == NULL)
+  {
+      if (paramsObj->pszVersion == NULL || strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
+      {
+          mimetype = msEncodeHTMLEntities("text/xml; subtype=gml/3.1.1");
+          outputformat = OWS_SFE_SCHEMA;
+      }
+      else
+        mimetype = msEncodeHTMLEntities("text/xml");
   }
 
   /* Validate layers */
