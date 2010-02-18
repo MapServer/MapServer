@@ -833,10 +833,10 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   
   for( ix = 1; ix < ring.numpoints; ix++ )
   {
-      rect->minx = MIN(rect->minx,ringPoints[ix].x);
-      rect->maxx = MAX(rect->maxx,ringPoints[ix].x);
-      rect->miny = MIN(rect->miny,ringPoints[ix].y);
-      rect->maxy = MAX(rect->maxy,ringPoints[ix].y);
+      rect->minx = MS_MIN(rect->minx,ringPoints[ix].x);
+      rect->maxx = MS_MAX(rect->maxx,ringPoints[ix].x);
+      rect->miny = MS_MIN(rect->miny,ringPoints[ix].y);
+      rect->maxy = MS_MAX(rect->maxy,ringPoints[ix].y);
   }
 
   msFreeShape( &polygonObj );
