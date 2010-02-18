@@ -794,8 +794,8 @@ char ** msStringSplitComplex( const char * pszString,
     
     while( pszString != NULL && *pszString != '\0' )
     {
-        int     bInString = FALSE;
-        int     bStartString = TRUE;
+        int     bInString = MS_FALSE;
+        int     bStartString = MS_TRUE;
 
         nTokenLen = 0;
         
@@ -823,12 +823,12 @@ char ** msStringSplitComplex( const char * pszString,
 
                 if( bInString )
                 {
-                    bInString = FALSE;
+                    bInString = MS_FALSE;
                     continue;
                 }
                 else
                 {
-                    bInString = TRUE;
+                    bInString = MS_TRUE;
                     continue;
                 }
             }
@@ -859,7 +859,7 @@ char ** msStringSplitComplex( const char * pszString,
                  && bStartString && isspace((unsigned char)*pszString) )
                 continue;
 
-            bStartString = FALSE;
+            bStartString = MS_FALSE;
 
             /*
              * Extend token buffer if we are running close to its end.
