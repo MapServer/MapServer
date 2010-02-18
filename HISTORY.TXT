@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Avoid memory error when building SQL bbox (#3324)
+
 - Reproject rectangles as polygons to get datelin wrapping (#3179)
 
 - Add support for the WMS capabilities items AuthorityURL, Identifier (#3251)
