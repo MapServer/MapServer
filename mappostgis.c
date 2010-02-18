@@ -912,32 +912,44 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src, int srclen) {
 char *msPostGISBuildSQLBox(layerObj *layer, rectObj *rect, char *strSRID) {
 
     char *strBox = NULL;
+    size_t sz;
 
     if (layer->debug) {
         msDebug("msPostGISBuildSQLBox called.\n");
     }
 
     if ( strSRID ) {
-        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)";
+        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15f %.15f,%.15f %.15f,%.15f %.15f,%.15f %.15f,%.15f %.15f))',%s)";
         /* 10 doubles + 1 integer + template characters */
-        strBox = (char*)malloc(10 * 15 + strlen(strSRID) + strlen(strBoxTemplate));
-        sprintf(strBox, strBoxTemplate,
+        sz = 10 * 15 + strlen(strSRID) + strlen(strBoxTemplate);
+        strBox = (char*)malloc(sz+1); /* add space for terminating NULL */
+        if ( sz <= snprintf(strBox, sz, strBoxTemplate,
                 rect->minx, rect->miny,
                 rect->minx, rect->maxy,
                 rect->maxx, rect->maxy,
                 rect->maxx, rect->miny,
                 rect->minx, rect->miny,
-                strSRID);
+                strSRID) )
+	{
+        	msSetError(MS_MISCERR,"Bounding box digits truncated.","msPostGISBuildSQLBox");
+        	return 0;
+	}
     } else {
-        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))')";
+        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15f %.15f,%.15f %.15f,%.15f %.15f,%.15f %.15f,%.15f %.15f))')";
         /* 10 doubles + template characters */
-        strBox = (char*)malloc(10 * 15 + strlen(strBoxTemplate));
-        sprintf(strBox, strBoxTemplate,
+        sz = 10 * 15 + strlen(strBoxTemplate);
+        strBox = (char*)malloc(sz+1); /* add space for terminating NULL */
+        if ( sz <= snprintf(strBox, sz, strBoxTemplate,
                 rect->minx, rect->miny,
                 rect->minx, rect->maxy,
                 rect->maxx, rect->maxy,
                 rect->maxx, rect->miny,
-                rect->minx, rect->miny);
+                rect->minx, rect->miny) )
+	{
+        	msSetError(MS_MISCERR,"Bounding box digits truncated.","msPostGISBuildSQLBox");
+        	return 0;
+	}
+	
     }
 
     return strBox;
