@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Enhance error messages in msGetTruetypeTextBBox() (#3314)
+
 - Report parsing errors in INCUDEd files using the line number within the file (#3329)
 
 - Avoid memory error when building SQL bbox (#3324)

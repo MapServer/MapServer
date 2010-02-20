@@ -673,9 +673,9 @@ int msGetTruetypeTextBBox(imageObj *img, char *font, double size, char *string, 
 	} else 
 #ifdef USE_AGG
 	if(img!=NULL && MS_RENDERER_AGG(img->format)) {
-        msGetTruetypeTextBBoxAGG(img,font,size,string,rect,advances);
+        	return msGetTruetypeTextBBoxAGG(img,font,size,string,rect,advances);
         //printf("%s: %f %f %f %f\n",string,rect->minx,rect->miny,rect->maxx,rect->maxy);
-        return MS_SUCCESS;
+        //return MS_SUCCESS;
     } else
 #endif
     {
@@ -718,7 +718,7 @@ int msGetTruetypeTextBBox(imageObj *img, char *font, double size, char *string, 
         } else {
             error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
             if(error) {
-                msSetError(MS_TTFERR, error, "msGetTruetypeTextBBox()");
+                msSetError(MS_TTFERR, "gdImageStringFT: %s (%s)", "msGetTruetypeTextBBox()", error, font);
                 return(MS_FAILURE);
             }
 
