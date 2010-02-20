@@ -1389,14 +1389,6 @@ int main(int argc, char *argv[]) {
       setExtent(mapserv);
       checkWebScale(mapserv);
       
-      /*
-      ** We set tile extents here instead of setExtent so that all the 
-      ** non-CGI utilities don't require maptile.o in their build.
-      */
-      if( mapserv->Mode == TILE ) {
-        msTileSetExtent(mapserv);
-      }
-            
       switch(mapserv->Mode) {
       case MAP:
         if(QueryFile) {
@@ -1414,8 +1406,8 @@ int main(int argc, char *argv[]) {
         img = msDrawScalebar(mapserv->map);
         break;
       case TILE:
-        /* TODO: we may need an msDrawTile for doing "draw large then clip" tricks */
-        img = msDrawMap(mapserv->map, MS_FALSE);
+        msTileSetExtent(mapserv);
+        img = msTileDraw(mapserv);
         break;
       }
       
