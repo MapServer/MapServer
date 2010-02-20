@@ -36,6 +36,7 @@ int msyyreturncomments = 0;
 
 #define MAX_INCLUDE_DEPTH 5
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
+int include_lineno[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
 char path[MS_MAXPATHLEN];
 %}
@@ -61,7 +62,7 @@ char path[MS_MAXPATHLEN];
          msyystate=MS_TOKENIZE_DEFAULT;
          msyystring=NULL;
          msyyreturncomments=0;
-         include_stack_ptr=0; 
+         include_stack_ptr=0;
          return(0);
          break;
        case(MS_TOKENIZE_STRING):
@@ -480,7 +481,9 @@ char path[MS_MAXPATHLEN];
                                                    return(-1);
                                                  }
 
-                                                 include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
+                                                 include_stack[include_stack_ptr] = YY_CURRENT_BUFFER; /* save state */
+                                                 include_lineno[include_stack_ptr] = msyylineno;
+                                                 include_stack_ptr++;
 
                                                  msyyin = fopen(msBuildPath(path, msyybasepath, msyytext), "r");
                                                  if(!msyyin) {
@@ -489,6 +492,7 @@ char path[MS_MAXPATHLEN];
                                                  }
 
                                                  msyy_switch_to_buffer( msyy_create_buffer(msyyin, YY_BUF_SIZE) );
+                                                 msyylineno = 1;
 
                                                  BEGIN(INITIAL);
                                                }
@@ -566,6 +570,7 @@ char path[MS_MAXPATHLEN];
                                                     fclose(YY_CURRENT_BUFFER->yy_input_file);
                                                     msyy_delete_buffer( YY_CURRENT_BUFFER );
                                                     msyy_switch_to_buffer(include_stack[include_stack_ptr]);
+                                                    msyylineno = include_lineno[include_stack_ptr];
                                                   }
                                                 }
 
