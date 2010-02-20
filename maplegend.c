@@ -635,7 +635,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   GET_LAYER(map, l)->status = MS_ON;
 
-  if(msMaybeAllocateStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
+  if(msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
   GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
   GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
   GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;

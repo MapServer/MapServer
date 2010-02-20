@@ -651,71 +651,6 @@ typedef struct {
 } attributeBindingObj;
 #endif
 
-
-/************************************************************************/
-/*                               labelObj                               */
-/*                                                                      */
-/*      parameters needed to annotate a layer, legend or scalebar       */
-/************************************************************************/
-
-typedef struct {
-  char *font;
-  enum MS_FONT_TYPE type;
-    
-  colorObj color;
-  colorObj outlinecolor;
-  int outlinewidth;
-  
-  colorObj shadowcolor;
-  int shadowsizex, shadowsizey;
-
-  colorObj backgroundcolor;
-  colorObj backgroundshadowcolor;
-  int backgroundshadowsizex, backgroundshadowsizey;
-
-  double size;
-  double minsize, maxsize;
-
-  int position;
-  int offsetx, offsety;
-
-  double angle;
-  int autoangle; /* true or false */
-  int autofollow;  /* true or false, bug #1620 implementation */
-
-  int buffer; /* space to reserve around a label */
-
-  int antialias;
-  int align;
-
-  char wrap;
-  int maxlength;
-  int minlength;
-  double space_size_10; /*cached size of a single space character -
-                       used for label text alignment of rfc40 */
-
-  int minfeaturesize; /* minimum feature size (in pixels) to label */
-  int autominfeaturesize; /* true or false */
-
-  double minscaledenom,maxscaledenom;
-  
-  int mindistance;
-  int repeatdistance;
-  int partials; /* can labels run of an image */
-
-  int force; /* labels *must* be drawn */
-
-  char *encoding;
-
-  int priority;  /* Priority level 1 to MS_MAX_LABEL_PRIORITY, default=1 */
-
-#ifndef SWIG
-  attributeBindingObj bindings[MS_LABEL_BINDING_LENGTH];
-  int numbindings;
-#endif
-
-} labelObj;
-
 /************************************************************************/
 /*                                webObj                                */
 /*                                                                      */
@@ -834,6 +769,76 @@ typedef struct {
 } styleObj;
 
 /************************************************************************/
+/*                               labelObj                               */
+/*                                                                      */
+/*      parameters needed to annotate a layer, legend or scalebar       */
+/************************************************************************/
+
+typedef struct {
+  char *font;
+  enum MS_FONT_TYPE type;
+    
+  colorObj color;
+  colorObj outlinecolor;
+  int outlinewidth;
+  
+  colorObj shadowcolor;
+  int shadowsizex, shadowsizey;
+
+  colorObj backgroundcolor;
+  colorObj backgroundshadowcolor;
+  int backgroundshadowsizex, backgroundshadowsizey;
+
+  double size;
+  double minsize, maxsize;
+
+  int position;
+  int offsetx, offsety;
+
+  double angle;
+  int autoangle; /* true or false */
+  int autofollow;  /* true or false, bug #1620 implementation */
+
+  int buffer; /* space to reserve around a label */
+
+  int antialias;
+  int align;
+
+  char wrap;
+  int maxlength;
+  int minlength;
+  double space_size_10; /*cached size of a single space character -
+                       used for label text alignment of rfc40 */
+
+  int minfeaturesize; /* minimum feature size (in pixels) to label */
+  int autominfeaturesize; /* true or false */
+
+  double minscaledenom, maxscaledenom;
+  
+  int mindistance;
+  int repeatdistance;
+  int partials; /* can labels run of an image */
+
+  int force; /* labels *must* be drawn */
+
+  char *encoding;
+
+  int priority;  /* Priority level 1 to MS_MAX_LABEL_PRIORITY, default=1 */
+
+#ifndef SWIG
+  styleObj **styles;
+  int maxstyles;
+#endif
+  int numstyles;
+
+#ifndef SWIG
+  attributeBindingObj bindings[MS_LABEL_BINDING_LENGTH];
+  int numbindings;
+#endif
+
+} labelObj;
+
+/************************************************************************/
 /*                               classObj                               */
 /*                                                                      */
 /*      basic symbolization and classification information              */
@@ -850,7 +855,6 @@ typedef struct class_obj{
   styleObj **styles;
   int maxstyles;
 #endif
-
   int numstyles;
 
 #ifdef SWIG
@@ -1598,7 +1602,8 @@ MS_DLL_EXPORT classObj *msGrowLayerClasses( layerObj *layer );
 MS_DLL_EXPORT int initClass(classObj *_class);
 MS_DLL_EXPORT int freeClass( classObj * );
 MS_DLL_EXPORT styleObj *msGrowClassStyles( classObj *_class );
-MS_DLL_EXPORT int msMaybeAllocateStyle(classObj* c, int idx);
+MS_DLL_EXPORT styleObj *msGrowLabelStyles( labelObj *label );
+MS_DLL_EXPORT int msMaybeAllocateClassStyle(classObj* c, int idx);
 MS_DLL_EXPORT void initLabel(labelObj *label);
 MS_DLL_EXPORT void resetClassStyle(classObj *_class);
 MS_DLL_EXPORT int initStyle(styleObj *style);

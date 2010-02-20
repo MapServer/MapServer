@@ -1343,6 +1343,12 @@ void initLabel(labelObj *label)
   label->force = MS_FALSE;
   label->priority = MS_DEFAULT_LABEL_PRIORITY;
 
+  /* Set maxstyles = 0, styles[] will be allocated as needed on first call 
+   * to msGrowLabelStyles()
+   */
+  label->numstyles = label->maxstyles = 0;   
+  label->styles = NULL;  
+
   label->numbindings = 0;
   for(i=0; i<MS_LABEL_BINDING_LENGTH; i++) {
     label->bindings[i].item = NULL;
@@ -1358,6 +1364,15 @@ static void freeLabel(labelObj *label)
 
   msFree(label->font);
   msFree(label->encoding);
+
+  for(i=0;i<label->numstyles;i++) { /* each style */
+    if(label->styles[i]!=NULL) {
+      if(freeStyle(label->styles[i]) == MS_SUCCESS) {
+        msFree(label->styles[i]);
+      }
+    }
+  }
+  msFree(label->styles);
 
   for(i=0; i<MS_LABEL_BINDING_LENGTH; i++)
     msFree(label->bindings[i].item);
@@ -2312,9 +2327,7 @@ int initClass(classObj *class)
   /* Set maxstyles = 0, styles[] will be allocated as needed on first call 
    * to msGrowClassStyles()
    */
-  class->numstyles = 0;  
-  class->maxstyles = 0;
-   
+  class->numstyles = class->maxstyles = 0;   
   class->styles = NULL;  
 
   class->keyimage = NULL;
@@ -2403,18 +2416,54 @@ styleObj *msGrowClassStyles( classObj *class )
     return class->styles[class->numstyles];
 }
 
+/* exactly the same as for a classObj */
+styleObj *msGrowLabelStyles( labelObj *label )
+{
+    /* Do we need to increase the size of styles[] by  MS_STYLE_ALLOCSIZE?
+     */
+    if (label->numstyles == label->maxstyles) {
+        styleObj **newStylePtr;
+        int i, newsize;
 
-/* msMaybeAllocateStyle()
+        newsize = label->maxstyles + MS_STYLE_ALLOCSIZE;
+
+        /* Alloc/realloc styles */
+        newStylePtr = (styleObj**)realloc(label->styles,
+                                          newsize*sizeof(styleObj*));
+        if (newStylePtr == NULL) {
+            msSetError(MS_MEMERR, "Failed to allocate memory for styles array.", "msGrowLabelStyles()");
+            return NULL;
+        }
+
+        label->styles = newStylePtr;
+        label->maxstyles = newsize;
+        for(i=label->numstyles; i<label->maxstyles; i++) {
+            label->styles[i] = NULL;
+        }
+    }
+
+    if (label->styles[label->numstyles]==NULL) {
+        label->styles[label->numstyles]=(styleObj*)calloc(1,sizeof(styleObj));
+        if (label->styles[label->numstyles]==NULL) {
+          msSetError(MS_MEMERR, "Failed to allocate memory for a styleObj", "msGrowLabelStyles()");
+          return NULL;
+        }
+    }
+
+    return label->styles[label->numstyles];
+}
+
+/* msMaybeAllocateClassStyle()
 **
 ** Ensure that requested style index exists and has been initialized.
 **
 ** Returns MS_SUCCESS/MS_FAILURE.
 */
-int msMaybeAllocateStyle(classObj* c, int idx) {
+int msMaybeAllocateClassStyle(classObj* c, int idx) {
     if (c==NULL) return MS_FAILURE;
 
     if ( idx < 0 ) {
-        msSetError(MS_MISCERR, "Invalid style index: %d", "msMaybeAllocateStyle()", idx);
+        msSetError(MS_MISCERR, "Invalid style index: %d", "msMaybeAllocateClassStyle()", idx);
         return MS_FAILURE;
     }
 
@@ -2427,7 +2476,7 @@ int msMaybeAllocateStyle(classObj* c, int idx) {
 
         if ( initStyle(c->styles[c->numstyles]) == MS_FAILURE ) {
             msSetError(MS_MISCERR, "Failed to init new styleObj", 
-                       "msMaybeAllocateStyle()");
+                       "msMaybeAllocateClassStyle()");
             return(MS_FAILURE);
         }
         c->numstyles++;
@@ -2591,40 +2640,40 @@ int loadClass(classObj *class, layerObj *layer)
     ** for backwards compatability, these are shortcuts for style 0
     */
     case(BACKGROUNDCOLOR):
-      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
       if(loadColor(&(class->styles[0]->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(COLOR):
-      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
       if(loadColor(&(class->styles[0]->color), NULL) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color or outlinecolor */
       break;
 #if ALPHACOLOR_ENABLED
     case(ALPHACOLOR):
-      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
       if(loadColorWithAlpha(&(class->styles[0]->color)) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color, symbol or outlinecolor */
       break;
 #endif
     case(MAXSIZE):
-      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
       if(getDouble(&(class->styles[0]->maxsize)) == -1) return(-1);
       break;
     case(MINSIZE):      
-      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
       if(getDouble(&(class->styles[0]->minsize)) == -1) return(-1);
       break;
     case(OUTLINECOLOR):            
-      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
       if(loadColor(&(class->styles[0]->outlinecolor), NULL) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(SIZE):
-      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
       if(getDouble(&(class->styles[0]->size)) == -1) return(-1);
       break;
     case(SYMBOL):
-      if (msMaybeAllocateStyle(class, 0)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
       if(state == MS_NUMBER)
 	class->styles[0]->symbol = (int) msyynumber;
@@ -2641,33 +2690,33 @@ int loadClass(classObj *class, layerObj *layer)
     ** for backwards compatability, these are shortcuts for style 1
     */
     case(OVERLAYBACKGROUNDCOLOR):
-      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
       if(loadColor(&(class->styles[1]->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
       break;
     case(OVERLAYCOLOR):
-      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
       if(loadColor(&(class->styles[1]->color), NULL) != MS_SUCCESS) return(-1);
       class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(OVERLAYMAXSIZE):
-      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
       if(getDouble(&(class->styles[1]->maxsize)) == -1) return(-1);
       break;
     case(OVERLAYMINSIZE):      
-      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
       if(getDouble(&(class->styles[1]->minsize)) == -1) return(-1);
       break;
     case(OVERLAYOUTLINECOLOR):      
-      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
       if(loadColor(&(class->styles[1]->outlinecolor), NULL) != MS_SUCCESS) return(-1);
       class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
       break;
     case(OVERLAYSIZE):
-      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
       if(getDouble(&(class->styles[1]->size)) == -1) return(-1);
       break;
     case(OVERLAYSYMBOL):
-      if (msMaybeAllocateStyle(class, 1)) return MS_FAILURE;
+      if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
       if(state == MS_NUMBER)
 	class->styles[1]->symbol = (int) msyynumber;
