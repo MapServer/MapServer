@@ -1993,3 +1993,21 @@ void msPointToFormattedString(pointObj *point, const char *format, char *buffer,
   snprintf(buffer, buffer_length, format, point->x, point->y);
 #endif
 }
+
+/* Returns true if a shape contains only degenerate parts */
+int msIsDegenerateShape(shapeObj *shape)
+{
+  int i;
+  int non_degenerate_parts = 0;
+  for(i=0; i<shape->numlines; i++) { /* e.g. part */
+	
+    /* skip degenerate parts, really should only happen with pixel output */ 
+    if((shape->type == MS_SHAPE_LINE && shape->line[i].numpoints < 2) ||
+       (shape->type == MS_SHAPE_POLYGON && shape->line[i].numpoints < 3))
+     continue;
+	
+    non_degenerate_parts++;
+  }
+  return( non_degenerate_parts == 0 );
+}
+

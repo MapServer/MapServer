@@ -1964,12 +1964,16 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       if(buffer != 0 && bufferUnits == MS_PIXELS) {
         shapeObj *bufferShape=NULL;
 
-	bufferShape = msGEOSBuffer(&tShape, buffer);
-	if(!bufferShape) return(MS_FAILURE); /* buffer failed */
-	msFreeShape(&tShape); /* avoid memory leak */
-	msCopyShape(bufferShape, &tShape);
-	msFreeShape(bufferShape);
-      }
+        bufferShape = msGEOSBuffer(&tShape, buffer);
+        if(!bufferShape) {
+          if(!msIsDegenerateShape(&tShape)) /* If shape is degenerate this is expected. */
+            return(MS_FAILURE); /* buffer failed */
+        } else {
+          msFreeShape(&tShape); /* avoid memory leak */
+          msCopyShape(bufferShape, &tShape);
+          msFreeShape(bufferShape);
+        }
+      } 
 #endif
 
     } else if(projectionString) {

@@ -1715,6 +1715,7 @@ MS_DLL_EXPORT void msRectToFormattedString(rectObj *rect, char *format,
                                            char *buffer, int buffer_length);
 MS_DLL_EXPORT void msPointToFormattedString(pointObj *point, const char*format,
                                            char *buffer, int buffer_length);
+MS_DLL_EXPORT int msIsDegenerateShape(shapeObj *shape);
 
 MS_DLL_EXPORT void msMergeRect(rectObj *a, rectObj *b);
 MS_DLL_EXPORT double msDistancePointToPoint(pointObj *a, pointObj *b);
