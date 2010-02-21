@@ -1034,6 +1034,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   const char *tmpmaxfeatures = NULL;
 
   const char *output_schema_format = "XMLSCHEMA";  
+  const char *output_mime_type = "text/xml; subtype=gml/3.1.1";  
   int outputformat = OWS_GML2; /* default output is GML 2.1 */
    
   char **aFIDLayers = NULL;
@@ -1341,15 +1342,18 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   /* Validate outputformat */
   if (paramsObj->pszOutputFormat) {
     /* We support only GML2 and GML3 for now. */
-    if(strcasecmp(paramsObj->pszOutputFormat, "GML2") == 0) {
+    if(strcasecmp(paramsObj->pszOutputFormat, "GML2") == 0 || strcasecmp(paramsObj->pszOutputFormat, "text/xml; subtype=gml/2.1.2") == 0) {
       outputformat = OWS_GML2;
       output_schema_format = "XMLSCHEMA";
-    } else if(strcasecmp(paramsObj->pszOutputFormat, "GML3") == 0) {
+      output_mime_type = "text/xml; subtype=gml/2.1.2";
+    } else if(strcasecmp(paramsObj->pszOutputFormat, "GML3") == 0 || strcasecmp(paramsObj->pszOutputFormat, "text/xml; subtype=gml/3.1.1") == 0) {
       outputformat = OWS_GML3;
       output_schema_format = "SFE_XMLSCHEMA";
+      output_mime_type = "text/xml; subtype=gml/3.1.1";
     } else {
       outputformat = OWS_GML2;
       output_schema_format = "XMLSCHEMA";
+      output_mime_type = "text/xml; subtype=gml/2.1.2";
     }
   }
   else
@@ -1359,8 +1363,14 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       {
           outputformat = OWS_GML3;
           output_schema_format = "text/xml; subtype=gml/3.1.1";
+          output_mime_type = "text/xml; subtype=gml/3.1.1";
       }
   }
+
+  if(strncmp(paramsObj->pszVersion,"1.0",3) == 0 ) {
+          output_mime_type = "text/xml";
+  }
+
   /* else if (strcasecmp(names[i], "PROPERTYNAME") == 0) */
   /* { */
   /*  */
@@ -1861,9 +1871,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
     if (value)
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", value,10,10);
+        msIO_printf("Content-type: %s; charset=%s%c%c", output_mime_type, value,10,10);
     else
-        msIO_printf("Content-type: text/xml%c%c",10,10);
+        msIO_printf("Content-type: %s%c%c", output_mime_type,10,10);
 
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", 
                              "encoding", OWS_NOERR,

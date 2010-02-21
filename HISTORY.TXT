@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- support corrent MIME type output for WFS 1.1.0 (#3295)
+
 - add WMS 1.3.0 LayerLimit support (#3284)
 
 - fix WFS 1.1.0 exception attributes (#3301)
