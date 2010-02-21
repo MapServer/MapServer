@@ -727,6 +727,13 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         stime = values[i];
         timerequest = 1;
     }
+    /* Vendor-specific ANGLE param (for map rotation), added in ticket #3332,
+     * also supported by GeoServer
+     */
+    else if (strcasecmp(names[i], "ANGLE") == 0)
+    {
+        msMapSetRotation(map, atof(values[i]));
+    }
   }
 
    /*validate the exception format WMS 1.3.0 section 7.3.3.11*/
