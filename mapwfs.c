@@ -55,7 +55,7 @@ int msWFSException(mapObj *map, const char *locator, const char *code,
       version = "1.0.0";
 
     if( msOWSParseVersionString(version) >= OWS_1_1_0 )
-      return msWFSException11( map, code, locator, version );
+      return msWFSException11( map, locator, code, version );
 
     encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
     if (encoding)
