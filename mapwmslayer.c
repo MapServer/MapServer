@@ -1349,7 +1349,9 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     if (lp->data) free(lp->data);
     lp->data =  strdup(pasReqInfo[iReq].pszOutputFile);
 
-    if (!msProjectionsDiffer(&(map->projection), &(lp->projection)))
+    /* #3138 If PROCESSING "RESAMPLE=..." is set we cannot use the simple case */
+    if (!msProjectionsDiffer(&(map->projection), &(lp->projection)) && 
+         (msLayerGetProcessingKey(lp, "RESAMPLE") == NULL) )
     {
         /* The simple case... no reprojection needed... render layer directly. */
         lp->transform = MS_FALSE;
