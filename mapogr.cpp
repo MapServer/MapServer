@@ -2789,7 +2789,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
  * the only members we don't touch are name, expression, and join/query stuff
  * ------------------------------------------------------------------ */
   resetClassStyle(c);
-  if (msMaybeAllocateStyle(c, 0)) {
+  if (msMaybeAllocateClassStyle(c, 0)) {
       RELEASE_OGR_LOCK;
       return(MS_FAILURE);
   }
@@ -3119,7 +3119,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               {
                   // This is a multipart symbology, so pen defn goes in the
                   // overlaysymbol params 
-                  if (msMaybeAllocateStyle(c, 1))
+                  if (msMaybeAllocateClassStyle(c, 1))
                   {
                       RELEASE_OGR_LOCK;
                       return(MS_FAILURE);
@@ -3133,7 +3133,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               else
               {
                   // Single part symbology
-                  if (msMaybeAllocateStyle(c, 0))
+                  if (msMaybeAllocateClassStyle(c, 0))
                   {
                       RELEASE_OGR_LOCK;
                       return(MS_FAILURE);
@@ -3196,7 +3196,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               {
                   // This is a multipart symbology, so pen defn goes in the
                   // overlaysymbol params 
-                  if (msMaybeAllocateStyle(c, 1))
+                  if (msMaybeAllocateClassStyle(c, 1))
                   {
                       RELEASE_OGR_LOCK;
                       return(MS_FAILURE);
@@ -3210,7 +3210,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               else
               {
                   // Single part symbology
-                  if (msMaybeAllocateStyle(c, 0))
+                  if (msMaybeAllocateClassStyle(c, 0))
                   {
                       RELEASE_OGR_LOCK;
                       return(MS_FAILURE);
@@ -3239,7 +3239,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               if (bIsNull) pszBrushName = NULL;
 
               /* We need 1 style */
-              if (msMaybeAllocateStyle(c, 0))
+              if (msMaybeAllocateClassStyle(c, 0))
               {
                   RELEASE_OGR_LOCK;
                   return(MS_FAILURE);
@@ -3295,7 +3295,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               if (bIsNull) pszBrushName = NULL;
 
               /* We need 1 style */
-              if (msMaybeAllocateStyle(c, 0))
+              if (msMaybeAllocateClassStyle(c, 0))
               {
                   RELEASE_OGR_LOCK;
                   return(MS_FAILURE);
@@ -3343,7 +3343,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               OGRStyleToolH hSymbolStyle = hStylePart;
 
               /* We need 1 style */
-              if (msMaybeAllocateStyle(c, 0))
+              if (msMaybeAllocateClassStyle(c, 0))
               {
                   RELEASE_OGR_LOCK;
                   return(MS_FAILURE);
@@ -3397,7 +3397,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
 
               /* We need 1 style */
-              if (msMaybeAllocateStyle(c, 0))
+              if (msMaybeAllocateClassStyle(c, 0))
               {
                   RELEASE_OGR_LOCK;
                   return(MS_FAILURE);
