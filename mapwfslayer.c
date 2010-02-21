@@ -514,7 +514,6 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     int nTimeout;
     int nStatus = MS_SUCCESS;
     msWFSLayerInfo *psInfo = NULL;
-    char *pszHashFileName = NULL;
     int bPostRequest = 0;
     wfsParamsObj *psParams = NULL;
     char *pszHTTPCookieData = NULL;
