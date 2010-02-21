@@ -225,7 +225,7 @@ int msLoadQuery(mapObj *map, char *filename) {
 
   stream = fopen(filename, "r");
   if(!stream) {
-    msSetError(MS_IOERR, "(%s)", "msLoadQuery()", filename);
+    msSetError(MS_IOERR, "Query file extension check failed on %s (extension must be .qy)", "msLoadQuery()", filename);
     return(MS_FAILURE);
   }
 
