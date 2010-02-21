@@ -478,8 +478,11 @@ void renderGlyphsCairo(imageObj *img,double x, double y, labelStyleObj *style, c
         cairo_restore(r->cr);
     }
 
-    msCairoSetSourceColor(r->cr, &style->color);
-    cairo_fill(r->cr);
+    if(MS_VALID_COLOR(style->color)) {
+    	msCairoSetSourceColor(r->cr, &style->color);
+    	cairo_fill(r->cr);
+    }
+    cairo_new_path(r->cr);
     cairo_restore(r->cr);
     return;
 }

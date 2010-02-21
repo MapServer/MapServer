@@ -149,6 +149,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     }
     else if (MS_RENDERER_PLUGIN(map->outputformat)) {
 		rendererVTableObj *renderer = map->outputformat->vtable;
+        map->imagecolor.alpha=255;
 		image = renderer->createImage(map->width, map->height, map->outputformat,&map->imagecolor);
         if (image == NULL)
             return(NULL);
@@ -156,6 +157,9 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
 		image->format->refcount++;
 		image->width = map->width;
 		image->height = map->height;
+
+        image->resolution = map->resolution;
+        image->resolutionfactor = map->resolution/map->defresolution;
 		if (map->web.imagepath)
 			image->imagepath = strdup(map->web.imagepath);
 		if (map->web.imageurl)

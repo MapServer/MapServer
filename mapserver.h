@@ -325,6 +325,7 @@ extern "C" {
 #define MS_DRIVER_IMAGEMAP(format)  (strncasecmp((format)->driver,"imagemap",8)==0)
 #define MS_DRIVER_SVG(format) (strncasecmp((format)->driver,"svg",3)==0)
 #define MS_DRIVER_AGG(format) (strncasecmp((format)->driver,"agg/",4)==0)
+#define MS_DRIVER_AGG2(format) (strncasecmp((format)->driver,"agg2/",5)==0)
 #define MS_DRIVER_CAIRO(format) (strncasecmp((format)->driver,"cairo/",6)==0)
 #define MS_DRIVER_OGL(format) (strncasecmp((format)->driver,"ogl/",4)==0)
 #define MS_DRIVER_TEMPLATE(format) (strncasecmp((format)->driver,"template",8)==0)
@@ -341,6 +342,7 @@ extern "C" {
 #define MS_RENDER_WITH_CAIRO_PDF 10
 #define MS_RENDER_WITH_CAIRO_SVG 11
 #define MS_RENDER_WITH_OGL      12
+#define MS_RENDER_WITH_AGG2 13
 
 #define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
@@ -2600,6 +2602,7 @@ MS_DLL_EXPORT int msPopulateRendererVTableCairoRaster( rendererVTableObj *render
 MS_DLL_EXPORT int msPopulateRendererVTableCairoSVG( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableCairoPDF( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableOGL( rendererVTableObj *renderer );
+MS_DLL_EXPORT int msPopulateRendererVTableAGG( rendererVTableObj *renderer );
 
 //allocate 50k for starters
 #define MS_DEFAULT_BUFFER_ALLOC 50000

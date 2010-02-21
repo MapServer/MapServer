@@ -219,6 +219,14 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->renderer = MS_RENDER_WITH_AGG;
     }
 #endif
+    if( strcasecmp(driver,"AGG2/PNG") == 0 )
+    {
+        format = msAllocOutputFormat( map, "agg2png", driver );
+        format->mimetype = strdup("image/png; mode=24bit");
+        format->imagemode = MS_IMAGEMODE_RGB;
+        format->extension = strdup("png");
+        format->renderer = MS_RENDER_WITH_AGG2;
+    }
     
 #if defined(USE_CAIRO)
     if( strcasecmp(driver,"CAIRO/PNG") == 0 )
@@ -290,6 +298,14 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->renderer = MS_RENDER_WITH_PDF;
     }
 #endif
+    if( strcasecmp(driver,"agg2png") == 0 )
+	{
+		format = msAllocOutputFormat( map, "agg2png", driver );
+		format->mimetype = strdup("image/png");
+		format->imagemode = MS_IMAGEMODE_RGB;
+		format->extension = strdup("png");
+		format->renderer = MS_RENDER_WITH_AGG2;
+	}
 #ifdef USE_GDAL
     if( strncasecmp(driver,"gdal/",5) == 0 )
     {
@@ -375,6 +391,9 @@ void msApplyDefaultOutputFormats( mapObj *map )
 
     if( msSelectOutputFormat( map, "aggjpeg" ) == NULL )
         msCreateDefaultOutputFormat( map, "AGG/JPEG" );
+
+    if( msSelectOutputFormat( map, "agg2png" ) == NULL )
+        msCreateDefaultOutputFormat( map, "AGG2/PNG" );
     
     if( msSelectOutputFormat( map, "cairopng" ) == NULL )
         msCreateDefaultOutputFormat( map, "CAIRO/PNG" );
@@ -1044,6 +1063,8 @@ int msInitializeRendererVTable(outputFormatObj *format) {
     format->vtable = (rendererVTableObj*)malloc(sizeof(rendererVTableObj));
     
     switch(format->renderer) {
+        case MS_RENDER_WITH_AGG2:
+            return msPopulateRendererVTableAGG(format->vtable);
         case MS_RENDER_WITH_CAIRO_RASTER:
             return msPopulateRendererVTableCairoRaster(format->vtable);
         case MS_RENDER_WITH_CAIRO_PDF:

@@ -844,17 +844,50 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
     int nReturnVal = -1;
     if(image) {
         if (MS_RENDERER_PLUGIN(image->format)) {
-            rendererVTableObj *renderer = image->format->vtable;
-            labelStyleObj s;
-            if (!string || !strlen(string))
-                return (0); // not errors, just don't want to do anything
+
+         rendererVTableObj *renderer = image->format->vtable;
+         labelStyleObj s;
+         if (!string || !strlen(string))
+            return (0); // not errors, just don't want to do anything
 
 
-            computeLabelStyle(&s,label,fontset,scalefactor);
-            if (label->type == MS_TRUETYPE) {
-                renderer->renderGlyphsLine(image,labelpath,&s,string);			
+         computeLabelStyle(&s, label, fontset, scalefactor);
+         if (label->type == MS_TRUETYPE) {
+            const char* string_ptr = string;
+            int i;
+            double x, y;
+            char glyph[11];
+            if(MS_VALID_COLOR(s.outlinecolor)) {
+               colorObj storecolor;
+               MS_COPYCOLOR(&storecolor,&(s.color));
+               MS_INIT_COLOR(s.color,-1,-1,-1);
+               for (i = 0; i < labelpath->path.numpoints; i++) {
+                  if (msGetNextGlyph(&string_ptr, glyph) == -1)
+                     break; /* Premature end of string??? */
+
+                  s.rotation = labelpath->angles[i];
+                  x = labelpath->path.point[i].x;
+                  y = labelpath->path.point[i].y;
+
+                  renderer->renderGlyphs(image, x, y, &s, glyph);
+               }
+               MS_INIT_COLOR(s.outlinecolor,-1,-1,-1);
+               MS_COPYCOLOR(&(s.color),&storecolor);
+               string_ptr = string;
             }
-        }
+            s.outlinewidth = 0;
+            for (i = 0; i < labelpath->path.numpoints; i++) {
+               if (msGetNextGlyph(&string_ptr, glyph) == -1)
+                  break; /* Premature end of string??? */
+
+               s.rotation = labelpath->angles[i];
+               x = labelpath->path.point[i].x;
+               y = labelpath->path.point[i].y;
+
+               renderer->renderGlyphs(image, x, y, &s, glyph);
+            }
+         }
+    }
     else if( MS_RENDERER_GD(image->format) )
       nReturnVal = msDrawTextLineGD(image, string, label, labelpath, fontset, scalefactor);
 #ifdef USE_AGG
