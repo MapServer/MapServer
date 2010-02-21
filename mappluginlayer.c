@@ -175,6 +175,7 @@ copyVirtualTable(layerVTableObj *dest,
     dest->LayerApplyFilterToLayer = src->LayerApplyFilterToLayer ? src->LayerApplyFilterToLayer : dest->LayerApplyFilterToLayer;
     dest->LayerCreateItems = src->LayerCreateItems ? src->LayerCreateItems : dest->LayerCreateItems;
     dest->LayerGetNumFeatures = src->LayerGetNumFeatures ? src->LayerGetNumFeatures : dest->LayerGetNumFeatures;
+    dest->LayerGetAutoProjection = src->LayerGetAutoProjection ? src->LayerGetAutoProjection: dest->LayerGetAutoProjection;
 }
 
 int

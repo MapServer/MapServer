@@ -3503,6 +3503,7 @@ msOGRLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
+    /* layer->vtable->LayerGetAutoProjection, use defaut*/
 
     return MS_SUCCESS;
 }

@@ -1033,6 +1033,13 @@ int LayerDefaultGetNumFeatures(layerObj *layer)
   return MS_FAILURE;
 }
 
+int LayerDefaultAutoProjection(layerObj *layer, projectionObj* projection)
+{
+
+    msSetError(MS_MISCERR, "This data driver does not implement AUTO projection support", "LayerDefaultAutoProjection()");
+    return MS_FAILURE;
+}
+
 /*
  * msConnectLayer
  *
@@ -1089,6 +1096,8 @@ static int populateVirtualTable(layerVTableObj *vtable)
   vtable->LayerCreateItems = LayerDefaultCreateItems;
     
   vtable->LayerGetNumFeatures = LayerDefaultGetNumFeatures;
+  
+  vtable->LayerGetAutoProjection = LayerDefaultAutoProjection;
 
   return MS_SUCCESS;
 }

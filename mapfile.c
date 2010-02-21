@@ -1084,6 +1084,7 @@ static int loadProjection(projectionObj *p)
     case(MS_STRING):
     case(MS_AUTO):
       p->args[i] = strdup(msyytext);
+      p->automatic = MS_TRUE;
       i++;
       break;
     default:

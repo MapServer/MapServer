@@ -47,6 +47,7 @@ typedef struct {
   %immutable;
 #endif
   int numargs; /* actual number of projection args */
+  int automatic; /* projection object was to fetched from the layer */ 
 #ifdef SWIG
   %mutable;
 #endif

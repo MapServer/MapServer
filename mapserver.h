@@ -1564,6 +1564,7 @@ struct layerVTable {
 
     int (*LayerCreateItems)(layerObj *layer, int nt);
     int (*LayerGetNumFeatures)(layerObj *layer);
+    int (*LayerGetAutoProjection)(layerObj *layer, projectionObj *projection);
 };
 #endif /*SWIG*/
 

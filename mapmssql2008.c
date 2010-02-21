@@ -1878,6 +1878,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     /* vtable->LayerCreateItems, use default */
     /* vtable->LayerGetNumFeatures, use default */
+    /* layer->vtable->LayerGetAutoProjection, use defaut*/
 
     return MS_SUCCESS;
 }
