@@ -214,8 +214,6 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
   return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }
 
-
-
 void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
 {
     char *time = NULL;
@@ -408,6 +406,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int heightfound = 0;
   char *request = NULL;
   int status = 0;
+  const char *layerlimit = NULL;
 
   char *bboxrequest=NULL;
   const char *sldenabled=NULL;
@@ -479,6 +478,16 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         return msWMSException(map, nVersion, NULL);
       }
 
+      if (nVersion >= OWS_1_3_0) {
+        layerlimit = msOWSLookupMetadata(&(map->web.metadata), "MO", "layerlimit");
+        if(layerlimit) {
+          if (numlayers > atoi(layerlimit)) {
+            msSetError(MS_WMSERR, "Number of layers requested exceeds LayerLimit.",
+                     "msWMSLoadGetMapParams()");
+            return msWMSException(map, nVersion, NULL);
+          }
+        }
+      }
 
       for (iLayer=0; iLayer < map->numlayers; iLayer++)
       {
@@ -1975,6 +1984,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   const char *updatesequence=NULL;
   const char *sldenabled=NULL;
   const char *encoding;
+  const char *layerlimit=NULL;
   char *pszTmp=NULL;
   int i;
   const char *format_list=NULL;
@@ -2169,7 +2179,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
 
   if (nVersion >= OWS_1_3_0)
   {
-      /* LayerLimit not supported. No restriction in MapServer at this point*/
+      layerlimit = msOWSLookupMetadata(&(map->web.metadata), "MO", "layerlimit");
+      if (layerlimit) {
+        msIO_printf("  <LayerLimit>%s</LayerLimit>\n", layerlimit);
+      }
       msIO_printf("  <MaxWidth>%d</MaxWidth>\n", map->maxsize);
       msIO_printf("  <MaxHeight>%d</MaxHeight>\n", map->maxsize);
   }
@@ -3736,8 +3749,6 @@ int msWMSGetSchemaExtension(mapObj *map)
 
     return(MS_SUCCESS);
 }
-
-
 
 #endif /* USE_WMS_SVR */
 
