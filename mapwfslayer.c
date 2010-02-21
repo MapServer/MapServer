@@ -648,7 +648,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     /* We'll store the remote server's response to a tmp file. */
     pasReqInfo[(*numRequests)].pszOutputFile = msTmpFile(map->mappath, 
                                                  map->web.imagepath, ".tmp.gml"); 
-	/* TODO: Implement Caching of GML responses. There was an older caching 
+    /* TODO: Implement Caching of GML responses. There was an older caching 
      * method, but it suffered from a race condition. See #3137.
      */ 
 
