@@ -2042,6 +2042,117 @@ AC_SUBST(SOS_SVR_ENABLED,$SOS_SVR_ENABLED)
 
 ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $SOS_SVR_ENABLED $XML2_ENABLED $CURL_ENABLED $ALL_ENABLED"
 
+dnl ---------------------------------------------------------------------
+dnl Check if xml-mapfile requested
+dnl ---------------------------------------------------------------------
+
+AC_ARG_WITH(xml-mapfile,
+[  --with-xml-mapfile=                Include xml-mapfile Support (ARG=yes/no).],
+   XMLMAPFILE_REQUESTED="")
+
+AC_MSG_CHECKING(if xml-mapfile is requested)
+XMLMAPFILE_ENABLED=""
+
+if test "$with_xml_mapfile" = "yes"; then
+  XMLMAPFILE_ENABLED="-DUSE_XMLMAPFILE"
+  AC_MSG_RESULT(yes.. xslt and exslt support needed)
+else
+  AC_MSG_RESULT(no)
+fi
+
+ALL_ENABLED="$XMLMAPFILE_ENABLED $ALL_ENABLED"
+
+dnl ---------------------------------------------------------------------
+dnl Check if xslt requested
+dnl ---------------------------------------------------------------------
+
+AC_ARG_WITH(xslt,
+[  --with-xslt=DIR         Include xslt Support (ARG=yes/path to 
+                          to xslt install dir).],
+    XSLT_DIR=$withval,XSLT_DIR='')
+
+AC_MSG_CHECKING(if xslt is requested)
+XSLT_LIB=''
+
+if test -z "$XMLMAPFILE_ENABLED" -a \( "$with_xslt" = "no" -o "$with_xslt" = ""  \); then
+  AC_MSG_RESULT(no)
+else
+
+  if test "$XSLT_DIR" = "yes" -o "$XSLT_DIR" = ""; then
+     XSLT_DIR="/usr"
+  fi
+
+  test -f $XSLT_DIR/include/libxslt/xslt.h && XSLT_INCDIR="$XSLT_DIR/include"
+  test -f $XSLT_DIR/lib/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib"
+
+  if test -n "$XSLT_LIBDIR" -a -n "$XSLT_INCDIR" ; then
+    dnl
+    dnl Found xslt runtime and headers. Enable USE_XSLT .
+    dnl
+    XSLT_ENABLED="-DUSE_XSLT"
+    XSLT_INC="-I$XSLT_INCDIR"
+    XSLT_LIB="-L$XSLT_LIBDIR -lxslt"
+    AC_MSG_RESULT([using xslt from $XSLT_LIB ($XSLT_ENABLED)])
+    AC_ADD_RUNPATH("$XSLT_DIR")
+
+  else
+    AC_MSG_ERROR(['$XSLT_DIR' not a valid installation path of xslt.])
+  fi
+fi
+
+AC_SUBST(XSLT_ENABLED,$XSLT_ENABLED)
+AC_SUBST(XSLT_INC,    $XSLT_INC)
+AC_SUBST(XSLT_LIB,    $XSLT_LIB)
+
+ALL_ENABLED="$XSLT_ENABLED $ALL_ENABLED"
+ALL_INC="$XSLT_INC $ALL_INC"
+ALL_LIB="$XSLT_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
+dnl Check if exslt requested
+dnl ---------------------------------------------------------------------
+
+AC_ARG_WITH(exslt,
+[  --with-exslt=DIR         Include exslt Support (ARG=yes/path to 
+                           to exslt install dir).],
+    EXSLT_DIR=$withval,EXSLT_DIR='')
+
+AC_MSG_CHECKING(if exslt is requested)
+EXSLT_LIB=''
+
+if test -z "$XMLMAPFILE_ENABLED" -a \( "$with_exslt" = "no" -o "$with_exslt" = ""  \); then
+  AC_MSG_RESULT(no)
+else
+
+  if test "$EXSLT_DIR" = "yes" -o "$EXSLT_DIR" = ""; then
+     EXSLT_DIR="/usr"
+  fi
+
+  test -f $EXSLT_DIR/include/libexslt/exslt.h && EXSLT_INCDIR="$EXSLT_DIR/include"
+  test -f $EXSLT_DIR/lib/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib"
+
+  if test -n "$EXSLT_LIBDIR" -a -n "$EXSLT_INCDIR" ; then
+    dnl
+    dnl Found exslt runtime and headers. Enable USE_EXSLT .
+    dnl
+    EXSLT_ENABLED="-DUSE_EXSLT"
+    EXSLT_INC="-I$EXSLT_INCDIR"
+    EXSLT_LIB="-L$EXSLT_LIBDIR -lexslt"
+    AC_MSG_RESULT([using exslt from $EXSLT_LIB ($EXSLT_ENABLED)])
+    AC_ADD_RUNPATH("$EXSLT_DIR")
+  else
+    AC_MSG_ERROR(['$EXSLT_DIR' not a valid installation path of exslt.])
+  fi
+fi
+
+AC_SUBST(EXSLT_ENABLED,$EXSLT_ENABLED)
+AC_SUBST(EXSLT_INC,    $EXSLT_INC)
+AC_SUBST(EXSLT_LIB,    $EXSLT_LIB)
+
+ALL_ENABLED="$EXSLT_ENABLED $ALL_ENABLED"
+ALL_INC="$EXSLT_INC $ALL_INC"
+ALL_LIB="$EXSLT_LIB $ALL_LIB"
+
 
 dnl ---------------------------------------------------------------------------
 dnl Look for FriBidi if requested.
@@ -2755,6 +2866,9 @@ AC_MSG_RESULT([  Curl support:              ${CURL_ENABLED}])
 AC_MSG_RESULT([  FastCGI support:           ${FASTCGI_ENABLED}])
 AC_MSG_RESULT([  Threading support:         ${THREAD_FLAG}])
 AC_MSG_RESULT([  GEOS support:              ${GEOS_ENABLED}])
+AC_MSG_RESULT([  XML Mapfile support:        ${XMLMAPFILE_ENABLED}])
+AC_MSG_RESULT([  XSLT support:              ${XSLT_ENABLED}])
+AC_MSG_RESULT([  EXSLT support:              ${EXSLT_ENABLED}])
 AC_MSG_RESULT()
 
 AC_MSG_RESULT([ -------------- Data Format Drivers ------- ])

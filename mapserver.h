@@ -182,8 +182,12 @@ extern "C" {
 
 /* General defines, not wrapable */
 #ifndef SWIG
+#ifdef USE_XMLMAPFILE
+#define MS_DEFAULT_MAPFILE_PATTERN "\\.(map|xml)$"
+#define MS_DEFAULT_XMLMAPFILE_PATTERN "\\.xml$"
+#else
 #define MS_DEFAULT_MAPFILE_PATTERN "\\.map$"
-
+#endif
 #define MS_TEMPLATE_MAGIC_STRING "MapServer Template"
 #define MS_TEMPLATE_EXPR "\\.(xml|wml|html|htm|svg|kml|gml|js|tmpl)$"
 
@@ -1679,6 +1683,7 @@ MS_DLL_EXPORT int msValidateParameter(char *value, char *pattern1, char *pattern
 MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, char *name);
 MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
 MS_DLL_EXPORT mapObj  *msLoadMap(char *filename, char *new_mappath);
+MS_DLL_EXPORT int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile);
 MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
 MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);
 MS_DLL_EXPORT int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_string);

@@ -1282,7 +1282,7 @@
       <xsl:with-param name="indent" select="$indent + 1"/>
     </xsl:apply-templates>
     <xsl:call-template name="print">
-      <xsl:with-param name="text" select="'END'"/>
+      <xsl:with-param name="text" select="'END&#xa;'"/>
       <xsl:with-param name="indent" select="$indent - 1"/>
     </xsl:call-template>
   </xsl:template>

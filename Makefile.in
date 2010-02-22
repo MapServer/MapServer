@@ -179,6 +179,16 @@ FRIBIDI_LIB=@FRIBIDI_LIB@
 XML2_INC=@XML2_INC@
 XML2_LIB=@XML2_LIB@
 
+# libxslt ... required for xml mapfile
+XSLT_INC=@XSLT_INC@
+XSLT_LIB=@XSLT_LIB@
+
+# libexslt ... required for xml mapfile
+EXSLT_INC=@EXSLT_INC@
+EXSLT_LIB=@EXSLT_LIB@
+
+
+
 # Optional FastCGI
 FASTCGI=@FASTCGI_ENABLED@
 FASTCGI_INC=@FASTCGI_INC@
@@ -257,7 +267,7 @@ CXXFLAGS = @CXXFLAGS@ $(FLAGS)
 SUP_LIBS =  $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(PNG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
 	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
-	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) \
+	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
 	  $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
@@ -267,7 +277,7 @@ EXE_LDFLAGS =	$(RUNPATHS) -L. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
-OBJS= $(AGG_OBJ) mapogl.o mapoglrenderer.o mapoglcontext.o mapimageio.o mapcairo.o maprendering.o mapgeomtransform.o maprgbapng.o maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapagg.o mapagg2.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o  mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o maplibxml2.o mapdebug.o mapchart.o maptclutf.o $(EPPL_OBJ) 
+OBJS= $(AGG_OBJ) mapogl.o mapoglrenderer.o mapoglcontext.o mapimageio.o mapcairo.o maprendering.o mapgeomtransform.o maprgbapng.o maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapagg.o mapagg2.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o  mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o maplibxml2.o mapdebug.o mapchart.o maptclutf.o mapxml.o $(EPPL_OBJ) 
 
 EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms \
@@ -302,7 +312,7 @@ mapogr.o:	mapogr.cpp
 mapagg.o: mapagg.cpp mapagg.h
 	$(CXX) -c $(CXXFLAGS) -Wno-uninitialized mapagg.cpp -o mapagg.o
 
-mapagg2.o: mapagg2.cpp mapagg.h
+mapagg2.o: mapagg2.cpp mapagg.h 
 	$(CXX) -c $(CXXFLAGS) -Wno-uninitialized mapagg2.cpp -o mapagg2.o
 
 php3_mapscript:: $(LIBMAP_STATIC)

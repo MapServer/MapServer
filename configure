@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION PKG_CONFIG FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB FTGL_ENABLED FTGL_INC FTGL_LIB OGL_ENABLED OGL_INC OGL_LIB AGG_ENABLED AGG_INC AGG_OBJ RGBA_PNG_ENABLED PNG_INC PNG_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED FRIBIDI_CONFIG FRIBIDI_ENABLED FRIBIDI_INC FRIBIDI_LIB CAIRO_ENABLED CAIRO_INC CAIRO_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION PKG_CONFIG FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB FTGL_ENABLED FTGL_INC FTGL_LIB OGL_ENABLED OGL_INC OGL_LIB AGG_ENABLED AGG_INC AGG_OBJ RGBA_PNG_ENABLED PNG_INC PNG_LIB EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED XSLT_ENABLED XSLT_INC XSLT_LIB EXSLT_ENABLED EXSLT_INC EXSLT_LIB FRIBIDI_CONFIG FRIBIDI_ENABLED FRIBIDI_INC FRIBIDI_LIB CAIRO_ENABLED CAIRO_INC CAIRO_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -922,6 +922,11 @@ Optional Packages:
                           OGR required).
   --with-curl-config=PATH Specify path to curl-config.
   --with-xml2-config=PATH Specify path to xml2-config.
+  --with-xml-mapfile=                Include xml-mapfile Support (ARG=yes/no).
+  --with-xslt=DIR         Include xslt Support (ARG=yes/path to
+                          to xslt install dir).
+  --with-exslt=DIR         Include exslt Support (ARG=yes/path to
+                           to exslt install dir).
   --with-fribidi-config[=ARG]
                           Include FriBidi Support (ARG=yes/path to
                           fribidi-config or fribidi.pc)
@@ -11416,6 +11421,79 @@ echo "$as_me: error: '$PG_CONFIG' is not an executable.  Make sure you use --wit
       POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
   fi
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
+
+  old_LDFLAGS="$LDFLAGS"
+  LDFLAGS="$LDFLAGS -L`$PG_CONFIG --libdir`"
+  echo "$as_me:$LINENO: checking for PQserverVersion in -lpq" >&5
+echo $ECHO_N "checking for PQserverVersion in -lpq... $ECHO_C" >&6
+if test "${ac_cv_lib_pq_PQserverVersion+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpq  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char PQserverVersion ();
+int
+main ()
+{
+PQserverVersion ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pq_PQserverVersion=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pq_PQserverVersion=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pq_PQserverVersion" >&5
+echo "${ECHO_T}$ac_cv_lib_pq_PQserverVersion" >&6
+if test $ac_cv_lib_pq_PQserverVersion = yes; then
+  POSTGIS_ENABLED="$POSTGIS_ENABLED -DPOSTGIS_HAS_SERVER_VERSION"
+fi
+
+  LDFLAGS="$old_LDFLAGS"
+
 fi
 
 POSTGIS_ENABLED=$POSTGIS_ENABLED
@@ -12086,6 +12164,174 @@ SOS_SVR_ENABLED=$SOS_SVR_ENABLED
 
 
 ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $SOS_SVR_ENABLED $XML2_ENABLED $CURL_ENABLED $ALL_ENABLED"
+
+
+
+# Check whether --with-xml-mapfile or --without-xml-mapfile was given.
+if test "${with_xml_mapfile+set}" = set; then
+  withval="$with_xml_mapfile"
+  XMLMAPFILE_REQUESTED=""
+fi;
+
+echo "$as_me:$LINENO: checking if xml-mapfile is requested" >&5
+echo $ECHO_N "checking if xml-mapfile is requested... $ECHO_C" >&6
+XMLMAPFILE_ENABLED=""
+
+if test "$with_xml_mapfile" = "yes"; then
+  XMLMAPFILE_ENABLED="-DUSE_XMLMAPFILE"
+  echo "$as_me:$LINENO: result: yes.. xslt and exslt support needed" >&5
+echo "${ECHO_T}yes.. xslt and exslt support needed" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+ALL_ENABLED="$XMLMAPFILE_ENABLED $ALL_ENABLED"
+
+
+
+# Check whether --with-xslt or --without-xslt was given.
+if test "${with_xslt+set}" = set; then
+  withval="$with_xslt"
+  XSLT_DIR=$withval
+else
+  XSLT_DIR=''
+fi;
+
+echo "$as_me:$LINENO: checking if xslt is requested" >&5
+echo $ECHO_N "checking if xslt is requested... $ECHO_C" >&6
+XSLT_LIB=''
+
+if test -z "$XMLMAPFILE_ENABLED" -a \( "$with_xslt" = "no" -o "$with_xslt" = ""  \); then
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+else
+
+  if test "$XSLT_DIR" = "yes" -o "$XSLT_DIR" = ""; then
+     XSLT_DIR="/usr"
+  fi
+
+  test -f $XSLT_DIR/include/libxslt/xslt.h && XSLT_INCDIR="$XSLT_DIR/include"
+  test -f $XSLT_DIR/lib/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib"
+
+  if test -n "$XSLT_LIBDIR" -a -n "$XSLT_INCDIR" ; then
+                XSLT_ENABLED="-DUSE_XSLT"
+    XSLT_INC="-I$XSLT_INCDIR"
+    XSLT_LIB="-L$XSLT_LIBDIR -lxslt"
+    echo "$as_me:$LINENO: result: using xslt from $XSLT_LIB ($XSLT_ENABLED)" >&5
+echo "${ECHO_T}using xslt from $XSLT_LIB ($XSLT_ENABLED)" >&6
+
+  if test ""$XSLT_DIR"" != "/usr/lib"; then
+
+  if test -z ""$XSLT_DIR"" || echo ""$XSLT_DIR"" | grep '^/' >/dev/null ; then
+    ai_p=""$XSLT_DIR""
+  else
+    ai_p="`pwd`/"$XSLT_DIR""
+  fi
+
+
+  unique=`echo $ac_n "$ai_p$ac_c" | tr -c -d a-zA-Z0-9`
+  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
+  if test -n "$unique" && test "`eval $cmd`" = "" ; then
+    eval "LIBPATH$unique=set"
+
+      EXTRA_LIBS="$EXTRA_LIBS -L$ai_p"
+        RPATHS="$RPATHS ${ld_runpath_switch}$ai_p"
+
+  fi
+
+  fi
+
+
+  else
+    { { echo "$as_me:$LINENO: error: '$XSLT_DIR' not a valid installation path of xslt." >&5
+echo "$as_me: error: '$XSLT_DIR' not a valid installation path of xslt." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+fi
+
+XSLT_ENABLED=$XSLT_ENABLED
+
+XSLT_INC=$XSLT_INC
+
+XSLT_LIB=$XSLT_LIB
+
+
+ALL_ENABLED="$XSLT_ENABLED $ALL_ENABLED"
+ALL_INC="$XSLT_INC $ALL_INC"
+ALL_LIB="$XSLT_LIB $ALL_LIB"
+
+
+
+# Check whether --with-exslt or --without-exslt was given.
+if test "${with_exslt+set}" = set; then
+  withval="$with_exslt"
+  EXSLT_DIR=$withval
+else
+  EXSLT_DIR=''
+fi;
+
+echo "$as_me:$LINENO: checking if exslt is requested" >&5
+echo $ECHO_N "checking if exslt is requested... $ECHO_C" >&6
+EXSLT_LIB=''
+
+if test -z "$XMLMAPFILE_ENABLED" -a \( "$with_exslt" = "no" -o "$with_exslt" = ""  \); then
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+else
+
+  if test "$EXSLT_DIR" = "yes" -o "$EXSLT_DIR" = ""; then
+     EXSLT_DIR="/usr"
+  fi
+
+  test -f $EXSLT_DIR/include/libexslt/exslt.h && EXSLT_INCDIR="$EXSLT_DIR/include"
+  test -f $EXSLT_DIR/lib/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib"
+
+  if test -n "$EXSLT_LIBDIR" -a -n "$EXSLT_INCDIR" ; then
+                EXSLT_ENABLED="-DUSE_EXSLT"
+    EXSLT_INC="-I$EXSLT_INCDIR"
+    EXSLT_LIB="-L$EXSLT_LIBDIR -lexslt"
+    echo "$as_me:$LINENO: result: using exslt from $EXSLT_LIB ($EXSLT_ENABLED)" >&5
+echo "${ECHO_T}using exslt from $EXSLT_LIB ($EXSLT_ENABLED)" >&6
+
+  if test ""$EXSLT_DIR"" != "/usr/lib"; then
+
+  if test -z ""$EXSLT_DIR"" || echo ""$EXSLT_DIR"" | grep '^/' >/dev/null ; then
+    ai_p=""$EXSLT_DIR""
+  else
+    ai_p="`pwd`/"$EXSLT_DIR""
+  fi
+
+
+  unique=`echo $ac_n "$ai_p$ac_c" | tr -c -d a-zA-Z0-9`
+  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
+  if test -n "$unique" && test "`eval $cmd`" = "" ; then
+    eval "LIBPATH$unique=set"
+
+      EXTRA_LIBS="$EXTRA_LIBS -L$ai_p"
+        RPATHS="$RPATHS ${ld_runpath_switch}$ai_p"
+
+  fi
+
+  fi
+
+  else
+    { { echo "$as_me:$LINENO: error: '$EXSLT_DIR' not a valid installation path of exslt." >&5
+echo "$as_me: error: '$EXSLT_DIR' not a valid installation path of exslt." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+fi
+
+EXSLT_ENABLED=$EXSLT_ENABLED
+
+EXSLT_INC=$EXSLT_INC
+
+EXSLT_LIB=$EXSLT_LIB
+
+
+ALL_ENABLED="$EXSLT_ENABLED $ALL_ENABLED"
+ALL_INC="$EXSLT_INC $ALL_INC"
+ALL_LIB="$EXSLT_LIB $ALL_LIB"
 
 
 
@@ -14116,6 +14362,12 @@ s,@XML2_LIB@,$XML2_LIB,;t t
 s,@WMS_LYR_ENABLED@,$WMS_LYR_ENABLED,;t t
 s,@WFS_LYR_ENABLED@,$WFS_LYR_ENABLED,;t t
 s,@SOS_SVR_ENABLED@,$SOS_SVR_ENABLED,;t t
+s,@XSLT_ENABLED@,$XSLT_ENABLED,;t t
+s,@XSLT_INC@,$XSLT_INC,;t t
+s,@XSLT_LIB@,$XSLT_LIB,;t t
+s,@EXSLT_ENABLED@,$EXSLT_ENABLED,;t t
+s,@EXSLT_INC@,$EXSLT_INC,;t t
+s,@EXSLT_LIB@,$EXSLT_LIB,;t t
 s,@FRIBIDI_CONFIG@,$FRIBIDI_CONFIG,;t t
 s,@FRIBIDI_ENABLED@,$FRIBIDI_ENABLED,;t t
 s,@FRIBIDI_INC@,$FRIBIDI_INC,;t t
@@ -14480,6 +14732,12 @@ echo "$as_me:$LINENO: result:   Threading support:         ${THREAD_FLAG}" >&5
 echo "${ECHO_T}  Threading support:         ${THREAD_FLAG}" >&6
 echo "$as_me:$LINENO: result:   GEOS support:              ${GEOS_ENABLED}" >&5
 echo "${ECHO_T}  GEOS support:              ${GEOS_ENABLED}" >&6
+echo "$as_me:$LINENO: result:   XML Mapfile support:        ${XMLMAPFILE_ENABLED}" >&5
+echo "${ECHO_T}  XML Mapfile support:        ${XMLMAPFILE_ENABLED}" >&6
+echo "$as_me:$LINENO: result:   XSLT support:              ${XSLT_ENABLED}" >&5
+echo "${ECHO_T}  XSLT support:              ${XSLT_ENABLED}" >&6
+echo "$as_me:$LINENO: result:   EXSLT support:              ${EXSLT_ENABLED}" >&5
+echo "${ECHO_T}  EXSLT support:              ${EXSLT_ENABLED}" >&6
 echo "$as_me:$LINENO: result: " >&5
 echo "${ECHO_T}" >&6
 

@@ -5236,7 +5236,7 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
       return(NULL);
     }
   }
-  
+ 
   /*
   ** Allocate mapObj structure
   */
@@ -5252,12 +5252,37 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   }
   
   msAcquireLock( TLOCK_PARSER );  /* Steve: might need to move this lock a bit higher; Umberto: done */
-  
-  if((msyyin = fopen(filename,"r")) == NULL) {
-    msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
-    msReleaseLock( TLOCK_PARSER );
-    return(NULL);
+
+#ifdef USE_XMLMAPFILE
+  /* If the mapfile is an xml mapfile, transform it */
+  if ((getenv("MS_XMLMAPFILE_XSLT")) && 
+      (msEvalRegex(MS_DEFAULT_XMLMAPFILE_PATTERN, filename) == MS_TRUE)) {
+
+      msyyin = tmpfile();
+      if (msyyin == NULL)
+      {
+          msSetError(MS_IOERR, "tmpfile() failed to create temporary file", "msLoadMap()");
+          msReleaseLock( TLOCK_PARSER );
+      }
+      
+      if (msTransformXmlMapfile(getenv("MS_XMLMAPFILE_XSLT"), filename, msyyin) != MS_SUCCESS)
+      {
+          fclose(msyyin);
+          return NULL;
+      }
+      fseek ( msyyin , 0 , SEEK_SET );
   }
+  else
+  {
+#endif
+      if((msyyin = fopen(filename,"r")) == NULL) {
+          msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
+          msReleaseLock( TLOCK_PARSER );
+          return NULL;
+      }
+#ifdef USE_XMLMAPFILE
+  }
+#endif
 
   msyystate = MS_TOKENIZE_FILE;
   msyylex(); /* sets things up, but doesn't process any tokens */
