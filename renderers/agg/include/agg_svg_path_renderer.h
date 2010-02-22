@@ -297,7 +297,6 @@ namespace svg
             }
         }
 
-		path_storage path_renderer::get_path_storage();
     private:
         path_attributes& cur_attr();
 

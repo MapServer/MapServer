@@ -39,11 +39,6 @@ namespace svg
         m_curved_trans_contour.auto_detect_orientation(false);
     }
 
-
-	path_storage path_renderer::get_path_storage() {
-		return m_storage;
-	}
-	
     //------------------------------------------------------------------------
     void path_renderer::remove_all()
     {
