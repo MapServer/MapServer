@@ -149,6 +149,8 @@ void initSymbol(symbolObj *s)
   s->linecap = MS_CJC_BUTT;
   s->linejoin = MS_CJC_NONE;
   s->linejoinmaxsize = 3;
+  
+  s->svg_text = NULL;
 }
 
 int msFreeSymbol(symbolObj *s) {
@@ -185,6 +187,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
   FILE *stream;
   char bytes[8], szPath[MS_MAXPATHLEN];
   gdIOCtx *ctx;
+  int file_len = 0;
   
   initSymbol(s);
 
@@ -198,7 +201,10 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       if(getString(&s->character) == MS_FAILURE) return(-1);
       break;
     case(END): /* do some error checking */
-
+      if((s->type == MS_SYMBOL_SVG) && (s->imagepath == NULL)) {
+	    msSetError(MS_SYMERR, "Symbol of type SVG has no file path specified.", "loadSymbol()");
+		return(-1);
+	  }
       if((s->type == MS_SYMBOL_PIXMAP) && (s->img == NULL)) {
 	msSetError(MS_SYMERR, "Symbol of type PIXMAP has no image data.", "loadSymbol()"); 
 	return(-1);
@@ -243,13 +249,25 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	msSetError(MS_IOERR, "Parsing error near (%s):(line %d)", "loadSymbol()", 
                    msyytext, msyylineno);
 	return(-1);
-      }
+      }      
       
       /* Set imagepath */
       s->imagepath = strdup(msyytext);
 
       fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
       rewind(stream); /* reset the image for the readers */
+	  
+      /* if this is SVG, load the SVG and
+         punt if this is for a SVG symbol */
+      if(s->type == MS_SYMBOL_SVG) {
+        fseek(stream, 0, SEEK_END);
+        file_len = ftell(stream);
+        rewind(stream);
+        s->svg_text = (char*)malloc(sizeof(char) * file_len);
+        fread(s->svg_text, file_len, 1, stream);
+        fclose(stream);
+	    break;
+      }
       if (memcmp(bytes,"GIF8",4)==0) 
       {
 #ifdef USE_GD_GIF
@@ -360,7 +378,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       break;
     case(TYPE):
 #ifdef USE_GD_FT
-      if((s->type = getSymbol(7,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_TRUETYPE,MS_SYMBOL_CARTOLINE,MS_SYMBOL_HATCH)) == -1)
+      if((s->type = getSymbol(8,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_TRUETYPE,MS_SYMBOL_CARTOLINE,MS_SYMBOL_HATCH,MS_SYMBOL_SVG)) == -1)
 	return(-1);	
 #else
       if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_CARTOLINE,MS_SYMBOL_HATCH)) == -1)

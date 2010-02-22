@@ -383,6 +383,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>single                                { return(MS_SINGLE); }
 <INITIAL>small                                 { return(MS_SMALL); }
 <INITIAL>square                                { return(MS_CJC_SQUARE); }
+<INITIAL>svg                                   { return(MS_SYMBOL_SVG); }
 <INITIAL>tiny                                  { return(MS_TINY); }
 <INITIAL>triangle                              { return(MS_CJC_TRIANGLE); }
 <INITIAL,URL_STRING>true                       { return(MS_TRUE); }

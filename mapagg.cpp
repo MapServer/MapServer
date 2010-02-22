@@ -79,6 +79,8 @@
 #include "renderers/agg/include/agg_renderer_raster_text.h"
 #include "renderers/agg/include/agg_embedded_raster_fonts.h"
 
+#include "renderers/agg/include/agg_svg_parser.h"
+
 #define LINESPACE 1.33 //space beween text lines... from GD
 #define _EPSILON 0.00001 //used for double equality testing
 
@@ -183,9 +185,8 @@ static mapserver::rendering_buffer gdImg2AGGRB_BGRA(gdImagePtr img) {
 inline mapserver::rgba8 getAGGColor(colorObj* c, int opacity) {
     if(c && MS_VALID_COLOR(*c)) {
         return mapserver::rgba8_pre(c->red,c->green,c->blue,MS_NINT(opacity*2.55));
-    } else {
-        return mapserver::rgba8(0,0,0,0);
     }
+    return mapserver::rgba8(0,0,0,0);
 }
 
 
@@ -212,6 +213,67 @@ static GDpixfmt loadSymbolPixmap(symbolObj *sym) {
     }
     return pixf;
 }
+
+    
+/*
+ * loadSymbolSVG
+ * returns a GDpixfmt from a parsed SVG file, which is scaled
+ * using the scale parameter.
+ * TODO: Create a cache for the various symbol sizes.
+ */
+static GDpixfmt loadSymbolSVG(symbolObj *sym, double scale) {
+    /* setup the SVG tools */
+    mapserver::svg::path_renderer m_path;
+    mapserver::svg::parser p(m_path);
+    /* size/extent variables for the SVG image */
+    double minx,maxx,miny,maxy;
+    int width, height;
+    
+    /* parse the svg file */
+    try {
+        p.parse(sym->imagepath);
+    } catch(mapserver::svg::exception err) {
+        /* throw an error if we get one from parsing the SVG file */
+        msSetError(MS_IOERR, err.msg(), "loadSymbolSVG()");
+        exit(-1);   /* TODO: This should probably not be "exit" */
+    }
+    
+    /* get the size */
+    m_path.arrange_orientations();
+    m_path.bounding_rect(&minx,&miny,&maxx,&maxy);
+    width = (int)(maxx - minx) * scale;
+    height = (int)(maxy - miny) * scale;
+    
+    /* build the image buffer */
+    mapserver::int8u*           im_data;
+    mapserver::rendering_buffer *im_data_rbuf = new mapserver::rendering_buffer;
+    
+    im_data = new mapserver::int8u[width * height * 4];
+    im_data_rbuf->attach(im_data, width, height, width*4);
+    
+    GDpixfmt pixf(*im_data_rbuf);
+    mapserver::renderer_base<GDpixfmt> rb(pixf);
+    mapserver::renderer_scanline_aa_solid<mapserver::renderer_base<GDpixfmt> > rs(rb);
+
+    /* update the symbol size for scaling */
+    sym->sizey = height;
+    sym->sizex = width;
+    
+    /* set the image to transparent */
+    rb.clear(mapserver::rgba(0,0,0,0));
+ 
+    /* initialize the raster, scanlines, and setup the scale */
+    mapserver::rasterizer_scanline_aa<> ras;
+    mapserver::scanline_u8 sl;
+    mapserver::trans_affine mtx = mapserver::trans_affine_scaling(scale);
+    /* render the path into raster */
+    m_path.render(ras, sl, rs, mtx, rb.clip_box(), 1.0);
+
+    
+    delete [] im_data;
+    return pixf;
+}
+
 
 /* 
  * selection from the list of raster fonts provided with agg
@@ -591,7 +653,6 @@ public:
     void renderPixmapBGRA(GDpixfmt &img_pixf, double x, double y, double angle, double scale) {
         ras_aa.reset();
         ras_aa.filling_rule(mapserver::fill_non_zero);
-        
         if( (fabs(angle)>_EPSILON) || (fabs(MS_2PI-angle)>_EPSILON) || scale !=1) {
             mapserver::trans_affine image_mtx;
             image_mtx *= mapserver::trans_affine_translation(-(double)img_pixf.width()/2.,
@@ -1089,6 +1150,13 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         ren->renderPathSolid(circle,AGG_NO_COLOR,agg_ocolor,width);
         return;
     }
+    case(MS_SYMBOL_SVG): {
+        GDpixfmt img_pixf=loadSymbolSVG(symbol, size);
+        ren->renderPathSolid(circle,agg_bcolor,AGG_NO_COLOR,width);
+        ren->renderPathTiledPixmapBGRA(circle,img_pixf);
+        ren->renderPathSolid(circle,AGG_NO_COLOR,agg_ocolor,width); 
+    }
+    break;
     case(MS_SYMBOL_PIXMAP): {
         //TODO: rotate and scale image before tiling ?
         //TODO: treat symbol GAP ?
@@ -1223,7 +1291,8 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
            symbol->type != MS_SYMBOL_PIXMAP) 
        return; // nothing to do if no color, except for pixmap symbols
    
-    if(size < 1) return; // size too small 
+   /* SVG files can be huge, so having a size less than 1 is possible, and a good idea */
+    if(size < 1 && symbol->type != MS_SYMBOL_SVG) return; // size too small 
     mapserver::rgba8 agg_color,agg_ocolor,agg_bcolor;
     agg_color=getAGGColor(&style->color,style->opacity);
     agg_ocolor=getAGGColor(&style->outlinecolor,style->opacity);
@@ -1241,6 +1310,12 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
                 size,font,symbol->character,angle_radians,AGG_NO_COLOR,0,0,MS_NINT(width),true);
     }
     break;    
+    case(MS_SYMBOL_SVG): {
+        /* scaling size is better done in the vector ops of the SVG */
+        GDpixfmt buffer = loadSymbolSVG(symbol, style->size); 
+        ren->renderPixmapBGRA(buffer, p->x,p->y, angle_radians, 1.0);
+    }
+	break;
     case(MS_SYMBOL_PIXMAP): {
         GDpixfmt img_pixf = loadSymbolPixmap(symbol);
         ren->renderPixmapBGRA(img_pixf,p->x+ox,p->y+oy,angle_radians,d);
@@ -1331,10 +1406,13 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
         d = size/symbol->sizey; // compute the scaling factor
     else
         d = 1;
-    
+        
     //preload the symbol if necessary
     if(symbol->type==MS_SYMBOL_PIXMAP) {
         img_pixf = loadSymbolPixmap(symbol);
+    } 
+    else if(symbol->type==MS_SYMBOL_SVG) {
+        img_pixf = loadSymbolSVG(symbol, d);
     }
     else if(symbol->type==MS_SYMBOL_VECTOR) {
         if(style->angle != 0.0 && style->angle != 360.0) {      
@@ -1678,6 +1756,11 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     }
     else { // from here on, the symbol is treated as a brush for the line
         switch(symbol->type) {
+        case MS_SYMBOL_SVG: {
+            GDpixfmt img_pixf = loadSymbolSVG(symbol, size);
+            ren->renderPathPixmapBGRA(*lines,img_pixf);
+        }
+        break;
         case MS_SYMBOL_PIXMAP: {
              GDpixfmt img_pixf = loadSymbolPixmap(symbol);
             ren->renderPathPixmapBGRA(*lines,img_pixf);
@@ -1897,6 +1980,13 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 msFreeSymbol(symbol);
                 msFree(symbol);
             }
+        }
+        break;
+        case MS_SYMBOL_SVG: {
+            GDpixfmt img_pixf = loadSymbolSVG(symbol, size);
+            ren->renderPathSolid(*polygons,agg_bcolor,agg_bcolor,1);
+            ren->renderPathTiledPixmapBGRA(*polygons,img_pixf);
+            ren->renderPathSolid(*polygons,AGG_NO_COLOR,agg_ocolor,width);
         }
         break;
         case MS_SYMBOL_PIXMAP: {

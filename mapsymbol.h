@@ -32,7 +32,7 @@
 
 #include <gd.h>
 
-enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE, MS_SYMBOL_HATCH};
+enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE, MS_SYMBOL_HATCH, MS_SYMBOL_SVG};
 
 #define MS_SYMBOL_ALLOCSIZE 64      /* number of symbolObj ptrs to allocate for a symbolset at once */
 #define MS_MAXVECTORPOINTS 100      /* shade, marker and line symbol parameters */
@@ -142,6 +142,8 @@ typedef struct {
   */
   int linecap, linejoin; /*deprecated, moved to styleObj*/
   double linejoinmaxsize;/*deprecated, moved to styleObj*/
+
+  char* svg_text;
 
 } symbolObj;
 
