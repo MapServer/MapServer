@@ -2588,14 +2588,11 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             continue; /* next label */
 
           /* here's where we draw the label styles */
-          fprintf(stderr, "%d\n", cachePtr->label.numstyles);
           if(cachePtr->label.numstyles > 0) {
             for(i=0; i<cachePtr->label.numstyles; i++) {
-              fprintf(stderr, "gt=%d\n", cachePtr->label.styles[i]->_geomtransform);
               if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOINT)
                 msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), cachePtr->label.styles[i], layerPtr->scalefactor);
               else if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOLY) {
-                fprintf(stderr, "HERE!\n");
                 msDrawShadeSymbol(&map->symbolset, image, &billboard, cachePtr->label.styles[i], layerPtr->scalefactor);
               } else {
                 /* need error msg about unsupported geomtransform */
@@ -2632,7 +2629,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             msDrawText(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
           }
 
-          fprintf(stderr, "Finished %s, next label...\n", cachePtr->text);
 	} /* next label */
       } /* next priority */
 

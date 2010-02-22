@@ -1367,7 +1367,6 @@ static void freeLabel(labelObj *label)
   msFree(label->font);
   msFree(label->encoding);
 
-  fprintf(stderr, "in freeLabel %d\n", label->numstyles);
   for(i=0;i<label->numstyles;i++) { /* each style */
     if(label->styles[i]!=NULL) {
       if(freeStyle(label->styles[i]) == MS_SUCCESS) {
@@ -2224,8 +2223,6 @@ int msUpdateStyleFromString(styleObj *style, char *string, int url_string)
 int freeStyle(styleObj *style) {
   int i;
 
-  fprintf(stderr, "%g\n", style->size);
-
   if( MS_REFCNT_DECR_IS_NOT_ZERO(style) ) { return MS_FAILURE; }
 
   msFree(style->symbolname);
@@ -2367,7 +2364,6 @@ int freeClass(classObj *class)
   if (&(class->metadata)) msFreeHashItems(&(class->metadata));
   if (&(class->validation)) msFreeHashItems(&(class->validation));
   
-  fprintf(stderr, "in freeClass %d\n", class->numstyles);
   for(i=0;i<class->numstyles;i++) { /* each style */
     if(class->styles[i]!=NULL) {
       if(freeStyle(class->styles[i]) == MS_SUCCESS) {
