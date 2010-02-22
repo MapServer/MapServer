@@ -19,9 +19,14 @@ Current Version (SVN branch-5-6):
 
 - Determine PgSQL version in a more backwards compatible way (#3291)
 
-- Implemented RFC 52 LayerResultsGetShape support for OGR connection type. (#3069)
+- Implemented RFC 52 LayerResultsGetShape support for OGR connection 
+  type. (#3069)
 
 - Fixed problem with the oracle driver w/FUNCTION=NONE (#3260)
+
+- Got rid of invalid warning about missing EPSG proj in WMs GetCapabilities
+  when map has a valid EPSG proj, but layer doesn't (#2028)
+
 
 Version 5.6.1 (2010-01-08):
 ---------------------------

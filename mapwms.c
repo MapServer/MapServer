@@ -1446,9 +1446,10 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    if (msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),
                         "MO", MS_FALSE) == NULL)
    {
-       /* starting 1.1.1 SRS are given in individual tags */
+       /* If map has no proj then every layer MUST have one or produce a warning */
        if (nVersion > OWS_1_1_0)
        {
+           /* starting 1.1.1 SRS are given in individual tags */
            if (nVersion >= OWS_1_3_0)
              msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                        "MAP.PROJECTION, LAYER.PROJECTION "
@@ -1469,7 +1470,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                      "        <SRS>%s</SRS>\n", NULL);
        }
        else
-         /* If map has no proj then every layer MUST have one or produce a warning */
          msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, "
                                "LAYER.PROJECTION or wms_srs metadata",
                                msOWSGetEPSGProj(&(lp->projection),
@@ -1478,9 +1478,10 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    }
    else
    {
-       /* starting 1.1.1 SRS are given in individual tags */
+       /* No warning required in this case since there's at least a map proj. */
        if (nVersion > OWS_1_1_0)
        {
+           /* starting 1.1.1 SRS are given in individual tags */
            if (nVersion >=  OWS_1_3_0)
              msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                      "MAP.PROJECTION, LAYER.PROJECTION "
@@ -1488,7 +1489,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                      msOWSGetEPSGProj(&(lp->projection), 
                                                       &(lp->metadata),
                                                       "MO", MS_FALSE),
-                                     OWS_WARN, ' ', NULL, NULL, 
+                                     OWS_NOERR, ' ', NULL, NULL, 
                                      "        <CRS>%s</CRS>\n", NULL);
            else
              msOWSPrintEncodeParamList(stdout, "(at least one of) "
@@ -1497,11 +1498,10 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                      msOWSGetEPSGProj(&(lp->projection), 
                                                       &(lp->metadata),
                                                       "MO", MS_FALSE),
-                                     OWS_WARN, ' ', NULL, NULL, 
+                                     OWS_NOERR, ' ', NULL, NULL, 
                                      "        <SRS>%s</SRS>\n", NULL);
        }
        else
-       /* No warning required in this case since there's at least a map proj. */
          msOWSPrintEncodeParam(stdout,
                                " LAYER.PROJECTION (or wms_srs metadata)",
                                msOWSGetEPSGProj(&(lp->projection),
