@@ -2534,7 +2534,8 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
                msDebug("Found WKT projection for table %s: %s\n", table_name, wktext);
 
            if(wktext != NULL && projection != NULL)
-               msOGCWKT2ProjectionObj(wktext, projection, layer->debug);
+               if(msOGCWKT2ProjectionObj(wktext, projection, layer->debug) == MS_FAILURE)
+                   return(MS_FAILURE);
        }
     } while (sthand->rows_fetched > 0);
 
