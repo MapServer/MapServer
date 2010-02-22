@@ -1060,8 +1060,6 @@ int msGetPolygonCentroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
   return(MS_SUCCESS);
 }
 
-#define NUM_SCANLINES 5
-
 /*
 ** Find a label point in a polygon.
 */
