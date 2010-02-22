@@ -1,0 +1,140 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  MapServer
+ * Purpose:  GD rendering functions (using renderer plugin API)
+ * Author:   Stephen Lime, Thomas Bonfort
+ *
+ ******************************************************************************
+ * Copyright (c) 1996-2009 Regents of the University of Minnesota.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies of this Software or works derived from this Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
+#include "mapserver.h"
+#include "mapthread.h"
+#include <time.h>
+
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
+void startNewLayerGD(imageObj *img, double opacity) {
+}
+
+void closeNewLayerGD(imageObj *img, double opacity) { 
+}
+
+/*
+** GD driver-specific image handling functions.
+*/
+imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj* bg) {
+  return NULL;
+}
+
+int saveImageGD(imageObj *img, FILE *fp, outputFormatObj *format) {
+  return MS_SUCCESS;
+}
+
+void freeImageGD(imageObj *img) {
+}
+
+/*
+** GD driver-specific rendering functions.
+*/
+void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke) {
+}
+
+void renderPolygonGD(imageObj *img, shapeObj *p, colorObj *c) {
+}
+
+void renderGlyphsLineGD(imageObj *img, labelPathObj *labelpath, labelStyleObj *style, char *text) {
+}
+
+void renderGlyphsGD(imageObj *img,double x, double y, labelStyleObj *style, char *text) {
+}
+
+void renderEllipseSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style) {
+}
+
+void renderVectorSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style) {
+}
+
+void renderTruetypeSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *s) {
+}
+
+void renderPixmapSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style) {
+}
+
+void renderTileGD(imageObj *img, imageObj *tile, double x, double y) {
+}
+
+void renderPolygonTiledGD(imageObj *img, shapeObj *p,  imageObj *tile) {
+}
+
+/*
+** GD driver-specific raster buffer functions.
+*/
+void getRasterBufferGD(imageObj *img, rasterBufferObj *rb) {
+}
+
+void mergeRasterBufferGD(imageObj *img, rasterBufferObj *rb, double opacity, int dstX, int dstY) {
+}
+
+int getTruetypeTextBBoxGD(imageObj *img,char *font, double size, char *text, rectObj *rect, double **advances) {
+  return MS_SUCCESS;
+}
+
+/*
+** Misc. cleanup functions for GD driver.
+*/
+void freeTileGD(imageObj *tile) {
+  freeImageGD(tile);
+}
+
+void freeSymbol(symbolObj *s) {
+}
+
+inline int populateRendererVTableGD( rendererVTableObj *renderer ) {
+  renderer->supports_imagecache=0;
+  renderer->supports_pixel_buffer=1;
+  renderer->supports_transparent_layers = 0;
+  renderer->startNewLayer = startNewLayerGD;
+  renderer->closeNewLayer = closeNewLayerGD;
+  renderer->renderLine=&renderLineGD;
+  renderer->createImage=&createImage;
+  renderer->saveImage=&saveImageCairo;
+  renderer->getRasterBuffer=&getRasterBufferCairo;
+  renderer->transformShape=&msTransformShapeAGG;
+  renderer->renderPolygon=&renderPolygonCairo;
+  renderer->renderGlyphsLine=&renderGlyphsLineCairo;
+  renderer->renderGlyphs=&renderGlyphsCairo;
+  renderer->freeImage=&freeImageCairo;
+  renderer->renderEllipseSymbol = &renderEllipseSymbolCairo;
+  renderer->renderVectorSymbol = &renderVectorSymbolCairo;
+  renderer->renderTruetypeSymbol = &renderTruetypeSymbolCairo;
+  renderer->renderPixmapSymbol = &renderPixmapSymbolCairo;
+  renderer->mergeRasterBuffer = &mergeRasterBufferCairo;
+  renderer->getTruetypeTextBBox = &getTruetypeTextBBoxCairo;
+  renderer->renderTile = &renderTileCairo;
+  renderer->renderPolygonTiled = &renderPolygonTiledCairo;
+  renderer->freeTile = &freeTileCairo;
+  renderer->freeSymbol = &freeSymbolCairo;
+  return MS_SUCCESS;
+}
