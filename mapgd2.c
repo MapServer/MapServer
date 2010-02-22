@@ -44,15 +44,49 @@ void closeNewLayerGD(imageObj *img, double opacity) {
 /*
 ** GD driver-specific image handling functions.
 */
-imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj* bg) {
-  return NULL;
+imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj* bg) 
+{
+  imageObj *img = NULL;
+  gdImagePtr ip;
+
+  img = (imageObj *) calloc(1, sizeof (imageObj));
+
+  /* we're only doing PC256 for the moment */
+  ip = gdImageCreate(width, height);
+  gdImageColorAllocate(ip, bg->red, bg->green, bg->blue); /* set the background color */
+
+  img->img.plugin = (void *) ip;
+  return img;
 }
 
-int saveImageGD(imageObj *img, FILE *fp, outputFormatObj *format) {
+int saveImageGD(imageObj *img, FILE *fp, outputFormatObj *format) 
+{
+  gdImagePtr ip;
+
+  if(!img || !fp) return NULL;
+  ip = (gdImagePtr) img->img.plugin;
+
+  if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
+    gdImageInterlace(ip, 1);
+
+  if(format->transparent)
+    gdImageColorTransparent(ip, 0);
+
+  if(strcasecmp(format->driver, "gd2/gif") == 0)
+    gdImageGif(ip, fp);
+  else if(strcasecmp(format->driver, "gd2/png") == 0)
+    gdImagePng(ip, fp);
+  else if(strcasecmp(format->driver, "gd2/jpeg") == 0)
+    gdImageJpeg(ip, fp, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
+  else
+    return MS_FAILURE; /* unsupported format */
+  
   return MS_SUCCESS;
 }
 
-void freeImageGD(imageObj *img) {
+void freeImageGD(imageObj *img) 
+{
+  if(img->img.plugin) gdImageDestroy((gdImagePtr)img->img.plugin);
 }
 
 /*
@@ -108,7 +142,7 @@ void freeTileGD(imageObj *tile) {
   freeImageGD(tile);
 }
 
-void freeSymbol(symbolObj *s) {
+void freeSymbolGD(symbolObj *s) {
 }
 
 inline int populateRendererVTableGD( rendererVTableObj *renderer ) {
@@ -117,15 +151,15 @@ inline int populateRendererVTableGD( rendererVTableObj *renderer ) {
   renderer->supports_transparent_layers = 0;
   renderer->startNewLayer = startNewLayerGD;
   renderer->closeNewLayer = closeNewLayerGD;
-  renderer->renderLine=&renderLineGD;
-  renderer->createImage=&createImageGD;
-  renderer->saveImage=&saveImageGD;
-  renderer->getRasterBuffer=&getRasterBufferGD;
-  renderer->transformShape=&msTransformShape;
-  renderer->renderPolygon=&renderPolygonGD;
-  renderer->renderGlyphsLine=&renderGlyphsLineGD;
-  renderer->renderGlyphs=&renderGlyphsGD;
-  renderer->freeImage=&freeImageGD;
+  renderer->renderLine = &renderLineGD;
+  renderer->createImage = &createImageGD;
+  renderer->saveImage = &saveImageGD;
+  renderer->getRasterBuffer = &getRasterBufferGD;
+  renderer->transformShape = &msTransformShapeToPixel;
+  renderer->renderPolygon = &renderPolygonGD;
+  renderer->renderGlyphsLine = &renderGlyphsLineGD;
+  renderer->renderGlyphs = &renderGlyphsGD;
+  renderer->freeImage = &freeImageGD;
   renderer->renderEllipseSymbol = &renderEllipseSymbolGD;
   renderer->renderVectorSymbol = &renderVectorSymbolGD;
   renderer->renderTruetypeSymbol = &renderTruetypeSymbolGD;
