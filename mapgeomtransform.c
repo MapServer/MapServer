@@ -44,8 +44,11 @@ void msStyleSetGeomTransform(styleObj *s, char *transform) {
   else if(!strncasecmp("bbox",transform,4)) {
     s->_geomtransform = MS_GEOMTRANSFORM_BBOX;
   }
-  else if(!strncasecmp("centroid",transform,8)) {
-    s->_geomtransform = MS_GEOMTRANSFORM_CENTROID;
+  else if(!strncasecmp("labelpnt",transform,8)) {
+    s->_geomtransform = MS_GEOMTRANSFORM_LABELPOINT;
+  }
+  else if(!strncasecmp("labelpoly",transform,9)) {
+    s->_geomtransform = MS_GEOMTRANSFORM_LABELPOLY;
   }
   else {
     s->_geomtransform = MS_GEOMTRANSFORM_NONE;
@@ -170,9 +173,13 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
           msDrawMarkerSymbol(symbolset,image,&centroid,style,scalefactor);
         }
       }
+      break;
+    case MS_GEOMTRANSFORM_LABELPOINT:
+    case MS_GEOMTRANSFORM_LABELPOLY:
+      break;
     default:
-     msSetError(MS_MISCERR, "unknown geomtransform", "msDrawTransformedShape()");
-     return MS_FAILURE;
+      msSetError(MS_MISCERR, "unknown geomtransform", "msDrawTransformedShape()");
+      return MS_FAILURE;
   }
   return MS_SUCCESS;
 }

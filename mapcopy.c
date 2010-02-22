@@ -247,7 +247,7 @@ int msCopyQueryMap(queryMapObj *dst, queryMapObj *src)
 /***********************************************************************
  * msCopyLabel()                                                       *
  *                                                                     *
- * Copy a labelObj, using msCopyColor()                                *
+ * Copy a labelObj, using msCopyColor() and msCopyStyle()              *
  **********************************************************************/
 
 int msCopyLabel(labelObj *dst, labelObj *src) 
@@ -260,52 +260,80 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   }
   MS_COPYSTELEM(numbindings);
 
-    MS_COPYSTRING(dst->font, src->font);
-    MS_COPYSTELEM(type);
+  MS_COPYSTRING(dst->font, src->font);
+  MS_COPYSTELEM(type);
 
-    MS_COPYCOLOR(&(dst->color), &(src->color));
-    MS_COPYCOLOR(&(dst->outlinecolor), &(src->outlinecolor));
-    MS_COPYCOLOR(&(dst->shadowcolor), &(src->shadowcolor));
+  MS_COPYCOLOR(&(dst->color), &(src->color));
+  MS_COPYCOLOR(&(dst->outlinecolor), &(src->outlinecolor));
+  MS_COPYCOLOR(&(dst->shadowcolor), &(src->shadowcolor));
 
-    MS_COPYSTELEM(shadowsizex);
-    MS_COPYSTELEM(shadowsizey);
+  MS_COPYSTELEM(shadowsizex);
+  MS_COPYSTELEM(shadowsizey);
 
-    MS_COPYCOLOR(&(dst->backgroundcolor), &(src->backgroundcolor));
-    MS_COPYCOLOR(&(dst->backgroundshadowcolor), &(src->backgroundshadowcolor));
+  MS_COPYCOLOR(&(dst->backgroundcolor), &(src->backgroundcolor));
+  MS_COPYCOLOR(&(dst->backgroundshadowcolor), &(src->backgroundshadowcolor));
 
-    MS_COPYSTELEM(backgroundshadowsizex);
-    MS_COPYSTELEM(backgroundshadowsizey);
-    MS_COPYSTELEM(size);
-    MS_COPYSTELEM(minsize);
-    MS_COPYSTELEM(maxsize);
-    MS_COPYSTELEM(position);
-    MS_COPYSTELEM(offsetx);
-    MS_COPYSTELEM(offsety);
-    MS_COPYSTELEM(angle);
-    MS_COPYSTELEM(autoangle);    
-    MS_COPYSTELEM(autofollow);
-    MS_COPYSTELEM(buffer);
-    MS_COPYSTELEM(antialias);
-    MS_COPYSTELEM(wrap);
-    MS_COPYSTELEM(align);
-    MS_COPYSTELEM(maxlength);
-    MS_COPYSTELEM(minfeaturesize);
+  MS_COPYSTELEM(backgroundshadowsizex);
+  MS_COPYSTELEM(backgroundshadowsizey);
+  MS_COPYSTELEM(size);
+  MS_COPYSTELEM(minsize);
+  MS_COPYSTELEM(maxsize);
+  MS_COPYSTELEM(position);
+  MS_COPYSTELEM(offsetx);
+  MS_COPYSTELEM(offsety);
+  MS_COPYSTELEM(angle);
+  MS_COPYSTELEM(autoangle);    
+  MS_COPYSTELEM(autofollow);
+  MS_COPYSTELEM(buffer);
+  MS_COPYSTELEM(antialias);
+  MS_COPYSTELEM(wrap);
+  MS_COPYSTELEM(align);
+  MS_COPYSTELEM(maxlength);
+  MS_COPYSTELEM(minfeaturesize);
     
-    MS_COPYSTELEM(minscaledenom);
-    MS_COPYSTELEM(maxscaledenom);
+  MS_COPYSTELEM(minscaledenom);
+  MS_COPYSTELEM(maxscaledenom);
 
-    MS_COPYSTELEM(autominfeaturesize);
+  MS_COPYSTELEM(autominfeaturesize);
 
-    MS_COPYSTELEM(mindistance);
-    MS_COPYSTELEM(partials);
-    MS_COPYSTELEM(force);
-    MS_COPYSTELEM(priority);
+  MS_COPYSTELEM(mindistance);
+  MS_COPYSTELEM(partials);
+  MS_COPYSTELEM(force);
+  MS_COPYSTELEM(priority);
 
-    MS_COPYSTRING(dst->encoding, src->encoding);
+  MS_COPYSTRING(dst->encoding, src->encoding);
 
-    MS_COPYSTELEM(outlinewidth);
+  MS_COPYSTELEM(outlinewidth);
 
-    return MS_SUCCESS;
+  /* 
+  ** now the styles 
+  */
+
+  /* free any previous styles on the dst label */
+  for(i=0;i<dst->numstyles;i++) { /* each style */
+    if (dst->styles[i]!=NULL) {
+      if( freeStyle(dst->styles[i]) == MS_SUCCESS ) msFree(dst->styles[i]);
+    }
+  }
+  msFree(dst->styles);
+  dst->numstyles = 0;
+
+  for (i = 0; i < src->numstyles; i++) {
+    if (msGrowLabelStyles(dst) == NULL)
+      return MS_FAILURE;
+    if (initStyle(dst->styles[i]) != MS_SUCCESS) {
+      msSetError(MS_MEMERR, "Failed to init style.", "msCopyLabel()");
+      return MS_FAILURE;
+    }
+    if (msCopyStyle(dst->styles[i], src->styles[i]) != MS_SUCCESS) {
+      msSetError(MS_MEMERR, "Failed to copy style.", "msCopyLabel()");
+      return MS_FAILURE;
+    }
+    dst->numstyles++;
+  }
+
+
+  return MS_SUCCESS;
 }
 
 /***********************************************************************
@@ -428,8 +456,8 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
 
     MS_COPYSTELEM(status);
 
-    /* free any previous styles on the dst layer*/
-    for(i=0;i<dst->numstyles;i++) { /* each style     */
+    /* free any previous styles on the dst layer */
+    for(i=0;i<dst->numstyles;i++) { /* each style */
       if (dst->styles[i]!=NULL) {
     	if( freeStyle(dst->styles[i]) == MS_SUCCESS ) {
           msFree(dst->styles[i]);

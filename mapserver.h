@@ -947,6 +947,8 @@ typedef struct {
 #ifndef SWIG
   labelPathObj *labelpath;  /* Path & bounds of curved labels.  Bug #1620 implementation */
 #endif /* SWIG */
+
+  int markerid; /* corresponding marker (POINT layers only) */
   
 } labelCacheMemberObj;
 
@@ -2475,16 +2477,20 @@ int msSaveImageRGBAPalette(gdImagePtr img, gdIOCtx *ctx ,outputFormatObj *format
 /* ==================================================================== */
 
 /* ==================================================================== */
-/*      prototypes for functions in mapgeomtransform.c                        */
+/*      prototypes for functions in mapgeomtransform.c                  */
 /* ==================================================================== */
-#define MS_GEOMTRANSFORM_NONE 0
-#define MS_GEOMTRANSFORM_START 1
-#define MS_GEOMTRANSFORM_END 2
-#define MS_GEOMTRANSFORM_VERTICES 3
-#define MS_GEOMTRANSFORM_BBOX 4
-#define MS_GEOMTRANSFORM_CENTROID 5
-#define MS_GEOMTRANSFORM_BUFFER 6
-#define MS_GEOMTRANSFORM_CONVEXHULL 7
+enum MS_GEOMTRANSFORM_TYPE {
+  MS_GEOMTRANSFORM_NONE,
+  MS_GEOMTRANSFORM_START,
+  MS_GEOMTRANSFORM_END,
+  MS_GEOMTRANSFORM_VERTICES,
+  MS_GEOMTRANSFORM_BBOX,
+  MS_GEOMTRANSFORM_CENTROID,
+  MS_GEOMTRANSFORM_BUFFER,
+  MS_GEOMTRANSFORM_CONVEXHULL,
+  MS_GEOMTRANSFORM_LABELPOINT,
+  MS_GEOMTRANSFORM_LABELPOLY
+};
 
 MS_DLL_EXPORT int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *style, char *transform);

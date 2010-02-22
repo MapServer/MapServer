@@ -387,12 +387,14 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
 
   cachePtr->text = strdup(string); /* the actual text */
 
+  /* TODO: perhaps we can get rid of this next section and just store a marker size? Why do we cache the styles for a point layer? */
+
   /* copy the styles (only if there is an accompanying marker)
    * We cannot simply keeep refs because the rendering code alters some members of the style objects
    */
   cachePtr->styles = NULL;
   cachePtr->numstyles = 0;
-  if((layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) {
+  if(layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) {
     cachePtr->numstyles = classPtr->numstyles;
     cachePtr->styles = (styleObj *) malloc(sizeof(styleObj)*classPtr->numstyles);
     if (classPtr->numstyles > 0) {
@@ -404,8 +406,10 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
   }
 
   /* copy the label */
-  cachePtr->label = *label; /* this copies all non-pointers */
-  if(label->font) cachePtr->label.font = strdup(label->font);
+  initLabel(&(cachePtr->label));
+  msCopyLabel(&(cachePtr->label), label);
+
+  cachePtr->markerid = -1;
 
   cachePtr->featuresize = featuresize;
 
@@ -447,6 +451,8 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
     rect.maxy = rect.miny + (h-1);
     msRectToPolygon(rect, cacheslot->markers[i].poly);    
     cacheslot->markers[i].id = cacheslot->numlabels;
+ 
+    cachePtr->markerid = i;
 
     cacheslot->nummarkers++;
   }

@@ -63,6 +63,7 @@ extern int msyyreturncomments;
 extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
 extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
 static int loadGrid( layerObj *pLayer );
+static int loadStyle(styleObj *style);
 
 /*
 ** Symbol to string static arrays needed for writing map files.
@@ -1366,6 +1367,7 @@ static void freeLabel(labelObj *label)
   msFree(label->font);
   msFree(label->encoding);
 
+  fprintf(stderr, "in freeLabel %d\n", label->numstyles);
   for(i=0;i<label->numstyles;i++) { /* each style */
     if(label->styles[i]!=NULL) {
       if(freeStyle(label->styles[i]) == MS_SUCCESS) {
@@ -1489,9 +1491,7 @@ static int loadLabel(labelObj *label)
       if(getInteger(&(label->repeatdistance)) == -1) return(-1);
       break;
     case(MINFEATURESIZE):
-      if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1) 
-	return(-1);
-
+      if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1)  return(-1);
       if(symbol == MS_NUMBER)
 	label->minfeaturesize = (int)msyynumber;
       else
@@ -1568,6 +1568,15 @@ static int loadLabel(labelObj *label)
         return(-1);
 #endif
       break; 
+    case(STYLE):
+      if(msGrowLabelStyles(label) == NULL)
+        return(-1);
+      initStyle(label->styles[label->numstyles]);
+      if(loadStyle(label->styles[label->numstyles]) != MS_SUCCESS) return(-1);
+      if(label->styles[label->numstyles]->_geomtransform == MS_GEOMTRANSFORM_NONE) 
+        label->styles[label->numstyles]->_geomtransform = MS_GEOMTRANSFORM_LABELPOINT; /* set a default, a marker? */
+      label->numstyles++;
+      break;
     case(TYPE):
       if((label->type = getSymbol(2, MS_TRUETYPE,MS_BITMAP)) == -1) return(-1);
       break;    
@@ -2215,6 +2224,8 @@ int msUpdateStyleFromString(styleObj *style, char *string, int url_string)
 int freeStyle(styleObj *style) {
   int i;
 
+  fprintf(stderr, "%g\n", style->size);
+
   if( MS_REFCNT_DECR_IS_NOT_ZERO(style) ) { return MS_FAILURE; }
 
   msFree(style->symbolname);
@@ -2356,6 +2367,7 @@ int freeClass(classObj *class)
   if (&(class->metadata)) msFreeHashItems(&(class->metadata));
   if (&(class->validation)) msFreeHashItems(&(class->validation));
   
+  fprintf(stderr, "in freeClass %d\n", class->numstyles);
   for(i=0;i<class->numstyles;i++) { /* each style */
     if(class->styles[i]!=NULL) {
       if(freeStyle(class->styles[i]) == MS_SUCCESS) {
@@ -4943,6 +4955,8 @@ static int loadMapInternal(mapObj *map)
       /* step through layers and classes to resolve symbol names */
       for(i=0; i<map->numlayers; i++) {
         for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
+
+          /* class styles */
 	  for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
             if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
               if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
@@ -4951,6 +4965,17 @@ static int loadMapInternal(mapObj *map)
               }
             }
           }
+
+          /* label styles */
+          for(k=0; k<GET_LAYER(map, i)->class[j]->label.numstyles; k++) {
+            if(GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname) {
+              if((GET_LAYER(map, i)->class[j]->label.styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname, MS_TRUE)) == -1) {
+                msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, label style %d of layer %s.", 
+                                       "msLoadMap()", GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
+                return MS_FAILURE;
+              }
+            }
+          }          
         }
       }
       
