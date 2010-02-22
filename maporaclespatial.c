@@ -2450,6 +2450,98 @@ int msOracleSpatialLayerInitItemInfo( layerObj *layer )
     return MS_SUCCESS;
 }
 
+/* AutoProjection Support for RFC 37 #3333
+ * TODO: Needs testing
+ */
+int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *projection )
+{
+    char *table_name;
+    char *query_str, geom_column_name[100], unique[100], srid[100];
+    int success;
+    int function = 0;
+    int version = 0;
+    char wktext[4000];
+    
+    OCIDefine *def1p = NULL;
+    OCIBind *bnd1p = NULL,  *bnd2p = NULL;
+    
+    msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
+    msOracleSpatialDataHandler *dthand = NULL;
+    msOracleSpatialHandler *hand = NULL;
+    msOracleSpatialStatement *sthand = NULL;
+
+    if (layer->debug)
+        msDebug("msOracleSpatialLayerGetAutoProjection was called.\n");
+    
+    if (layerinfo == NULL)
+    {
+        msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerGetAutoProjection called on unopened layer","msOracleSpatialLayerGetAutoProjection()");
+        return MS_FAILURE;
+    }
+    else
+    {
+        dthand = (msOracleSpatialDataHandler *)layerinfo->oradatahandlers;
+        hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
+        sthand = (msOracleSpatialStatement *) layerinfo->orastmt;
+    }
+    
+    table_name = (char *) malloc(sizeof(char) * TABLE_NAME_SIZE);
+    if (!msSplitData( layer->data, geom_column_name, &table_name, unique, srid, &function, &version )) 
+    {
+        msSetError( MS_ORACLESPATIALERR, 
+                   "Error parsing OracleSpatial DATA variable. Must be: "
+                   "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
+                   "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
+                   "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
+                   "Your data statement: %s", 
+                   "msOracleSpatialLayerGetAutoProjection()", layer->data );
+        free(table_name);
+        
+        return MS_FAILURE;
+    }
+
+    query_str = "SELECT wktext FROM mdsys.all_sdo_geom_metadata m, mdsys.cs_srs c WHERE c.srid = m.srid and m.owner||'.'||m.table_name = :table_name and m.column_name = :geo_col_name "
+                "UNION SELECT wktext from mdsys.user_sdo_geom_metadata m, mdsys.cs_srs c WHERE c.srid = m.srid and m.table_name = :table_name and m.column_name = :geo_col_name";
+    
+    if (layer->debug)
+        msDebug("msOracleSpatialLayerGetAutoProjection. Using this Sql to retrieve the projection: %s.\n", query_str);
+    
+    /*Prepare the handlers to the query*/
+    success = TRY( hand, OCIStmtPrepare( sthand->stmthp, hand->errhp, (text *)query_str, (ub4)strlen(query_str), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DEFAULT ) )
+           && TRY( hand, OCIBindByName( sthand->stmthp, &bnd2p, hand->errhp, (text *) ":table_name", strlen(":table_name"), (ub1*) table_name, strlen(table_name)+1, SQLT_STR, (dvoid *) 0, (ub2 *) 0, (ub2) 0, (ub4) 0, (ub4 *) 0, OCI_DEFAULT ) )
+           && TRY( hand, OCIBindByName( sthand->stmthp, &bnd1p, hand->errhp, (text *) ":geo_col_name", strlen(":geo_col_name"), (ub1*) geom_column_name, strlen(geom_column_name)+1, SQLT_STR, (dvoid *) 0, (ub2 *) 0, (ub2) 0, (ub4) 0, (ub4 *) 0, OCI_DEFAULT ) )
+           && TRY( hand, OCIDefineByPos( sthand->stmthp, &def1p, hand->errhp, (ub4)1, (dvoid *)wktext, (sb4)4000, SQLT_STR, (dvoid *)0, (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT ) )
+           && TRY( hand, OCIStmtExecute( hand->svchp, sthand->stmthp, hand->errhp, (ub4)0, (ub4)0, (OCISnapshot *)NULL, (OCISnapshot *)NULL, (ub4)OCI_DEFAULT ) )
+           && TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) );
+    
+    if(!success)
+    {
+        msSetError( MS_ORACLESPATIALERR,
+                   "Error: %s . "
+                   "Query statement: %s . "
+                   "Check your data statement.",
+                   "msOracleSpatialLayerGetAutoProjection()", hand->last_oci_error, query_str );
+
+        free(table_name);
+        return MS_FAILURE;
+    }
+   do {
+       success = TRY( hand, OCIStmtFetch( sthand->stmthp, hand->errhp, (ub4)1, (ub2)OCI_FETCH_NEXT, (ub4)OCI_DEFAULT ) ) 
+              && TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) );
+       if (success && sthand->rows_fetched > 0) {
+       
+           if( layer->debug )
+               msDebug("Found WKT projection for table %s: %s\n", table_name, wktext);
+
+           if(wktext != NULL && projection != NULL)
+               msOGCWKT2ProjectionObj(wktext, projection, layer->debug);
+       }
+    } while (sthand->rows_fetched > 0);
+
+    free(table_name);
+    return MS_SUCCESS;    
+}
+
 int msOracleSpatialLayerGetItems( layerObj *layer )
 {
     char *rzt = "";
@@ -3261,6 +3353,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
     vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     /* layer->vtable->LayerGetNumFeatures, use default */
+    /* layer->vtable->LayerGetAutoProjection = msOracleSpatialLayerGetAutoProjection; Disabled until tested */
 
     return MS_SUCCESS;
 }
@@ -3289,7 +3382,7 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
-    /* layer->vtable->LayerGetAutoProjection, use defaut*/
+    /* layer->vtable->LayerGetAutoProjection = msOracleSpatialLayerGetAutoProjection; Disabled until tested */
 
     return MS_SUCCESS;
 }
