@@ -2336,7 +2336,8 @@ MS_DLL_EXPORT void copyProperty(void *dst, void *src, int size);
 MS_DLL_EXPORT char *copyStringProperty(char **dst, char *src);
 MS_DLL_EXPORT int msCopyClass(classObj *dst, classObj *src, layerObj *layer);
 MS_DLL_EXPORT int msCopyStyle(styleObj *dst, styleObj *src);
- 
+MS_DLL_EXPORT int msCopyLabel(labelObj *dst, labelObj *src);
+
 /* ==================================================================== */
 /*      end prototypes for functions in mapcopy                         */
 /* ==================================================================== */
