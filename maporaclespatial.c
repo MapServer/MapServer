@@ -2121,6 +2121,9 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   /* do the actual binding */      
 
  if (success && function != FUNCTION_NONE) {
+   char* bind_key;
+   char* bind_value;
+   char* bind_tag;
      success = TRY( hand,
             /* bind in srid */
             OCIBindByName( sthand->stmthp, &bnd2p,  hand->errhp, (text *) ":srid", strlen(":srid"),(ub1 *) srid,  strlen(srid)+1, SQLT_STR, 
@@ -2133,9 +2136,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
             OCIBindObject(bnd1p, hand->errhp, ordinates_tdo, (dvoid **)&ordinates, (ub4 *)0, (dvoid **)0, (ub4 *)0));
 
 	/* bind the variables from the bindvals hash */
-	char* bind_key = (char*)msFirstKeyFromHashTable(&layer->bindvals);
-	char* bind_value;
-	char* bind_tag;
+	bind_key = (char*)msFirstKeyFromHashTable(&layer->bindvals);
 	while(bind_key != NULL) {
 		bind_value = msLookupHashTable(&layer->bindvals, bind_key);
 		bind_tag = (char*)malloc(sizeof(char) * strlen(bind_key) + 1);
