@@ -289,6 +289,7 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 #is used in Mapserver to putput high class rendering
 #
 AGG=-DUSE_AGG
+EXPAT_DIR = $(MS_BASE)\Expat 2.0.1
 
 # If you wish to use OpenGl
 #
@@ -758,14 +759,23 @@ CAIRO_INC= -I$(CAIRO_DIR)\src
 CAIRO_LIB= $(CAIRO_DIR)\src\cairo.lib
 !ENDIF
 
+# Setup EXPAT
+!IFDEF EXPAT_DIR
+EXPAT_INC = -I$(EXPAT_DIR)\source\lib
+EXPAT_LIB = $(EXPAT_DIR)\bin\libexpat.lib
+!ENDIF
+
 # Setup AGG
 !IFDEF AGG
-AGG_INC=-I$(FT_DIR)\include
+AGG_INC=-I$(FT_DIR)\include -Irenderers\agg\include
 AGG_OBJ=renderers\agg\src\agg_arc.obj renderers\agg\src\agg_curves.obj renderers\agg\src\agg_vcgen_contour.obj \
 renderers\agg\src\agg_vcgen_dash.obj renderers\agg\src\agg_vcgen_stroke.obj renderers\agg\src\agg_image_filters.obj \
-renderers\agg\src\agg_line_aa_basics.obj renderers\agg\src\agg_line_profile_aa.obj renderers\agg\src\agg_sqrt_tables.obj \
-renderers\agg\src\agg_embedded_raster_fonts.obj renderers\agg\src\agg_trans_affine.obj \
-renderers\agg\src\agg_vpgen_clip_polygon.obj renderers\agg\src\agg_vpgen_clip_polyline.obj renderers\agg\src\agg_font_freetype.obj
+renderers\agg\src\agg_line_aa_basics.obj renderers\agg\src\agg_line_profile_aa.obj \
+renderers\agg\src\agg_sqrt_tables.obj renderers\agg\src\agg_embedded_raster_fonts.obj \
+renderers\agg\src\agg_trans_affine.obj renderers\agg\src\agg_vpgen_clip_polygon.obj \
+renderers\agg\src\agg_vpgen_clip_polyline.obj renderers\agg\src\agg_font_freetype.obj \
+renderers\agg\src\agg_svg_parser.obj renderers\agg\src\agg_svg_path_renderer.obj \
+renderers\agg\src\agg_svg_path_tokenizer.obj
 !ENDIF
 
 # Setup PDF includes and libs
@@ -836,7 +846,7 @@ EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
      $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
-     $(LIBXML_LIB) $(AGG_LIB) $(OGL_LIB) $(CAIRO_LIB) $(FRIBIDI_LIB)
+     $(LIBXML_LIB) $(EXPAT_LIB) $(OGL_LIB) $(CAIRO_LIB) $(FRIBIDI_LIB)
 !ENDIF
 
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
@@ -848,7 +858,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
-         $(AGG_INC) $(OGL_INC) $(CAIRO_INC) $(PNG_INC) $(FRIBIDI_INC)
+         $(AGG_INC) $(EXPAT_INC) $(OGL_INC) $(CAIRO_INC) $(PNG_INC) $(FRIBIDI_INC)
 !ENDIF
 
 

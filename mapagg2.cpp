@@ -272,7 +272,7 @@ void agg2RenderVectorSymbol(imageObj *img, double x, double y,
 
 void* agg2CreateVectorSymbolTile(int width, int height,
         symbolObj *symbol, symbolStyleObj * style) {
-
+    return NULL;
 }
 
 void agg2RenderPixmapSymbol(imageObj *img, double x, double y,
@@ -282,7 +282,7 @@ void agg2RenderPixmapSymbol(imageObj *img, double x, double y,
 
 void* agg2CreatePixmapSymbolTile(int width, int height,
         symbolObj *symbol, symbolStyleObj * style) {
-
+    return NULL;
 }
 
 void agg2RenderEllipseSymbol(imageObj *image, double x, double y,
@@ -292,7 +292,7 @@ void agg2RenderEllipseSymbol(imageObj *image, double x, double y,
 
 void* agg2CreateEllipseSymbolTile(int width, int height,
         symbolObj *symbol, symbolStyleObj * style) {
-
+    return NULL;
 }
 
 void agg2RenderTruetypeSymbol(imageObj *img, double x, double y,
@@ -355,7 +355,7 @@ void agg2RenderTruetypeSymbol(imageObj *img, double x, double y,
 
 void* agg2CreateTruetypeSymbolTile(int width, int height,
         symbolObj *symbol, symbolStyleObj * style) {
-
+    return NULL;
 }
 
 void agg2RenderTile(imageObj *img, imageObj *tile, double x, double y) {
