@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  Low level PNG/JPEG image io functions independent of GD.
+ * Purpose:  Low level PNG/JPEG/GIF image io native functions
  * Author:   Thomas Bonfort (tbonfort)
  *
  ******************************************************************************
@@ -269,6 +269,57 @@ int saveAsPNG(rasterBufferObj *data, streamInfo *info) {
     free(rowdata);
     png_destroy_write_struct(&png_ptr, &info_ptr);
     return MS_SUCCESS;
+}
+
+rasterBufferObj* readPNG(FILE *stream) {
+    rasterBufferObj *rb = (rasterBufferObj*)malloc(sizeof(rasterBufferObj));
+    png_uint_32 width,height;
+    int bit_depth,color_type;
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+    
+    /* could pass pointers to user-defined error handlers instead of NULLs: */
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_ptr)
+        return NULL;   /* out of memory */
+
+    info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr) {
+        png_destroy_read_struct(&png_ptr, NULL, NULL);
+        return NULL;   /* out of memory */
+    }
+
+    if(setjmp(png_jmpbuf(png_ptr))) {
+        png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
+        return NULL;
+    }
+
+    png_init_io(png_ptr,stream);
+    png_read_info(png_ptr,info_ptr);
+    png_get_IHDR(png_ptr, info_ptr, &width, &height,
+            &bit_depth, &color_type,
+            NULL,NULL,NULL);
+    
+    rb->width = width;
+    rb->height = height;
+    
+    return rb; 
+
+}
+
+rasterBufferObj *readImage(FILE *stream) {
+    unsigned char signature[8];
+    fread(signature,1,8,stream);
+    rewind(stream);
+    if(png_check_sig(signature,8)) {
+        return readPNG(stream);
+#if 0
+    } else if () {//GIF loading
+#endif
+    } else {
+        msSetError(MS_MISCERR,"unsupported pixmap format","readImage()");
+        return NULL;
+    }
 }
 
 int msSaveRasterBuffer(rasterBufferObj *data, FILE *stream,
