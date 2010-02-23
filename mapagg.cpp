@@ -79,7 +79,9 @@
 #include "renderers/agg/include/agg_renderer_raster_text.h"
 #include "renderers/agg/include/agg_embedded_raster_fonts.h"
 
+#ifdef USE_AGG_SVG_SYMBOLS
 #include "renderers/agg/include/agg_svg_parser.h"
+#endif
 
 #define LINESPACE 1.33 //space beween text lines... from GD
 #define _EPSILON 0.00001 //used for double equality testing
@@ -221,7 +223,8 @@ static GDpixfmt loadSymbolPixmap(symbolObj *sym) {
  * using the scale parameter.
  * TODO: Create a cache for the various symbol sizes.
  */
-static GDpixfmt loadSymbolSVG(symbolObj *sym, double scale) {
+static int loadSymbolSVG(symbolObj *sym, double scale, GDpixfmt &gdpix) {
+#ifdef USE_AGG_SVG_SYMBOLS
     /* setup the SVG tools */
     mapserver::svg::path_renderer m_path;
     mapserver::svg::parser p(m_path);
@@ -235,7 +238,7 @@ static GDpixfmt loadSymbolSVG(symbolObj *sym, double scale) {
     } catch(mapserver::svg::exception err) {
         /* throw an error if we get one from parsing the SVG file */
         msSetError(MS_IOERR, err.msg(), "loadSymbolSVG()");
-        exit(-1);   /* TODO: This should probably not be "exit" */
+        return MS_FAILURE;  /* TODO: This should probably not be "exit" */
     }
     
     /* get the size */
@@ -271,7 +274,12 @@ static GDpixfmt loadSymbolSVG(symbolObj *sym, double scale) {
 
     
     delete [] im_data;
-    return pixf;
+	gdpix = pixf;
+	return MS_SUCCESS;
+#else
+	msSetError(MS_IOERR, "SVG Symbol Support has not been compiled in, recompile with --with-agg-svg-symbols<br>\n", "loadSymbolSVG()");
+	return MS_FAILURE;
+#endif
 }
 
 
@@ -1151,10 +1159,12 @@ void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointO
         return;
     }
     case(MS_SYMBOL_SVG): {
-        GDpixfmt img_pixf=loadSymbolSVG(symbol, size);
-        ren->renderPathSolid(circle,agg_bcolor,AGG_NO_COLOR,width);
-        ren->renderPathTiledPixmapBGRA(circle,img_pixf);
-        ren->renderPathSolid(circle,AGG_NO_COLOR,agg_ocolor,width); 
+        GDpixfmt img_pixf;
+		if(loadSymbolSVG(symbol, size, img_pixf)) {
+			ren->renderPathSolid(circle,agg_bcolor,AGG_NO_COLOR,width);
+			ren->renderPathTiledPixmapBGRA(circle,img_pixf);
+			ren->renderPathSolid(circle,AGG_NO_COLOR,agg_ocolor,width); 
+		}
     }
     break;
     case(MS_SYMBOL_PIXMAP): {
@@ -1312,8 +1322,10 @@ void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p
     break;    
     case(MS_SYMBOL_SVG): {
         /* scaling size is better done in the vector ops of the SVG */
-        GDpixfmt buffer = loadSymbolSVG(symbol, style->size); 
-        ren->renderPixmapBGRA(buffer, p->x,p->y, angle_radians, 1.0);
+        GDpixfmt buffer;
+		if(loadSymbolSVG(symbol, style->size, buffer) == MS_SUCCESS) {
+			ren->renderPixmapBGRA(buffer, p->x,p->y, angle_radians, 1.0);
+		}
     }
 	break;
     case(MS_SYMBOL_PIXMAP): {
@@ -1412,7 +1424,9 @@ void drawPolylineMarkers(imageObj *image, shapeObj *p, symbolSetObj *symbolset,
         img_pixf = loadSymbolPixmap(symbol);
     } 
     else if(symbol->type==MS_SYMBOL_SVG) {
-        img_pixf = loadSymbolSVG(symbol, d);
+        if(loadSymbolSVG(symbol, d, img_pixf) == MS_FAILURE) {
+			return;
+		}
     }
     else if(symbol->type==MS_SYMBOL_VECTOR) {
         if(style->angle != 0.0 && style->angle != 360.0) {      
@@ -1757,8 +1771,10 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
     else { // from here on, the symbol is treated as a brush for the line
         switch(symbol->type) {
         case MS_SYMBOL_SVG: {
-            GDpixfmt img_pixf = loadSymbolSVG(symbol, size);
-            ren->renderPathPixmapBGRA(*lines,img_pixf);
+            GDpixfmt img_pixf;
+			if(loadSymbolSVG(symbol, size, img_pixf) == MS_SUCCESS) {
+				ren->renderPathPixmapBGRA(*lines,img_pixf);
+			}
         }
         break;
         case MS_SYMBOL_PIXMAP: {
@@ -1983,10 +1999,12 @@ void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         }
         break;
         case MS_SYMBOL_SVG: {
-            GDpixfmt img_pixf = loadSymbolSVG(symbol, size);
-            ren->renderPathSolid(*polygons,agg_bcolor,agg_bcolor,1);
-            ren->renderPathTiledPixmapBGRA(*polygons,img_pixf);
-            ren->renderPathSolid(*polygons,AGG_NO_COLOR,agg_ocolor,width);
+            GDpixfmt img_pixf;
+            if(loadSymbolSVG(symbol, size, img_pixf) == MS_SUCCESS) {
+                ren->renderPathSolid(*polygons,agg_bcolor,agg_bcolor,1);
+                ren->renderPathTiledPixmapBGRA(*polygons,img_pixf);
+                ren->renderPathSolid(*polygons,AGG_NO_COLOR,agg_ocolor,width);
+            }
         }
         break;
         case MS_SYMBOL_PIXMAP: {

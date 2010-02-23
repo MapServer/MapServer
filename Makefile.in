@@ -72,6 +72,7 @@ GD_STATIC = @GD_STATIC@
 AGG=     @AGG_ENABLED@
 AGG_INC=  @AGG_INC@
 AGG_OBJ=  @AGG_OBJ@
+AGG_LIB= @AGG_LIB@
 
 #
 # Optional Opengl Support.
