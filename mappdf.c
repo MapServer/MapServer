@@ -1019,7 +1019,7 @@ int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image)
       return -1;
 
   
-    if (msDrawRasterLayerLow(map, layer, image_tmp) != -1)
+    if (msDrawRasterLayerLow(map, layer, image_tmp, NULL) != -1)
     {
 /* -------------------------------------------------------------------- */
 /*      if it is a RASTER output, just return. At save time the         */

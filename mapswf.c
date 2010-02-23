@@ -2921,7 +2921,7 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
     if( image_tmp == NULL )
       return -1;
 
-    if (msDrawRasterLayerLow(map, layer, image_tmp) != -1)
+    if (msDrawRasterLayerLow(map, layer, image_tmp, NULL) != -1)
     {
         oShape = gdImage2Shape(image_tmp->img.gd, image);
         /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
