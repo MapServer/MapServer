@@ -926,12 +926,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           {
               int	src_pixel, src_alpha, cmap_alpha, merged_alpha;
 
-              src_alpha = pabyRawAlpha[k];
-              cmap_alpha = rb_cmap[3][k];
-
-              merged_alpha = (src_alpha * cmap_alpha) / 256;
-
               src_pixel = pabyRaw1[k];
+              src_alpha = pabyRawAlpha[k];
+              cmap_alpha = rb_cmap[3][src_pixel];
+
+              merged_alpha = (src_alpha * cmap_alpha) / 255;
+
               if( merged_alpha < 2 )
                   /* do nothing - transparent */;
               else if( merged_alpha > 253 )

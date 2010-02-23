@@ -1880,7 +1880,8 @@ void msAlphaBlend2( int red_src, int green_src,
         *red_dst = red_src;
         *green_dst = green_src;
         *blue_dst = blue_src;
-        *alpha_dst = alpha_src;
+        if( alpha_dst )
+            *alpha_dst = alpha_src;
         return;
     }
 
@@ -1902,11 +1903,11 @@ void msAlphaBlend2( int red_src, int green_src,
     if( alpha_dst != NULL )
         *alpha_dst = tot_weight;
 
-    *red_dst   = ((src_weight * *red_dst  ) + (dst_weight * red_src  )) 
+    *red_dst   = ((dst_weight * *red_dst  ) + (src_weight * red_src  )) 
         / tot_weight;
-    *green_dst = ((src_weight * *green_dst) + (dst_weight * green_src)) 
+    *green_dst = ((dst_weight * *green_dst) + (src_weight * green_src)) 
         / tot_weight;
-    *blue_dst  = ((src_weight * *blue_dst ) + (dst_weight * blue_src )) 
+    *blue_dst  = ((dst_weight * *blue_dst ) + (src_weight * blue_src )) 
         / tot_weight;
 }
 

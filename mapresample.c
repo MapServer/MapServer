@@ -82,8 +82,10 @@ int InvGeoTransform( double *gt_in, double *gt_out )
 /************************************************************************/
 
 static int 
-msNearestRasterResampler( imageObj *psSrcImage, colorObj offsite,
-                          imageObj *psDstImage, int *panCMap,
+msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb, 
+                          colorObj offsite,
+                          imageObj *psDstImage, rasterBufferObj *dst_rb,
+                          int *panCMap,
                           SimpleTransformer pfnTransform, void *pCBData,
                           int debug )
 
@@ -172,6 +174,56 @@ msNearestRasterResampler( imageObj *psSrcImage, colorObj offsite,
                             gdAlphaBlend( dstImg->tpixels[nDstY][nDstX], 
                                           nValue );
                     }
+                }
+            }
+            else if( MS_RENDERER_PLUGIN(psSrcImage->format) )
+            {
+                int src_rb_off;
+
+                src_rb_off = nSrcX * src_rb->pixel_step 
+                    + nSrcY * src_rb->row_step;
+
+                assert( src_rb && dst_rb );
+
+                if( src_rb->a == NULL || src_rb->a[src_rb_off] > 253 )
+                {
+                    int dst_rb_off;
+
+                    dst_rb_off = nDstX * dst_rb->pixel_step 
+                        + nDstY * dst_rb->row_step;
+
+                    nSetPoints++;
+
+                    dst_rb->r[dst_rb_off] = src_rb->r[src_rb_off];
+                    dst_rb->g[dst_rb_off] = src_rb->g[src_rb_off];
+                    dst_rb->b[dst_rb_off] = src_rb->b[src_rb_off];
+                    if( dst_rb->a )
+                    {
+                        if( src_rb->a )
+                            dst_rb->a[dst_rb_off] = src_rb->a[src_rb_off];
+                        else
+                            dst_rb->a[dst_rb_off] = 255;
+                    }
+                }
+                else if( src_rb->a[src_rb_off] != 0 )
+                {
+                    int dst_rb_off;
+
+                    dst_rb_off = nDstX * dst_rb->pixel_step 
+                        + nDstY * dst_rb->row_step;
+
+                    nSetPoints++;
+                    
+                    /* actual alpha blending is required */
+                    msAlphaBlend2( src_rb->r[src_rb_off],
+                                   src_rb->g[src_rb_off],
+                                   src_rb->b[src_rb_off],
+                                   src_rb->a[src_rb_off],
+                                   dst_rb->r + dst_rb_off, 
+                                   dst_rb->g + dst_rb_off, 
+                                   dst_rb->b + dst_rb_off, 
+                                   dst_rb->a + dst_rb_off );
+                    
                 }
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
@@ -264,8 +316,8 @@ msNearestRasterResampler( imageObj *psSrcImage, colorObj offsite,
 /*                            msSourceSample()                          */
 /************************************************************************/
 
-static void msSourceSample( imageObj *psSrcImage, int iSrcX, int iSrcY,
-                            double *padfPixelSum,
+static void msSourceSample( imageObj *psSrcImage, rasterBufferObj *rb,
+                            int iSrcX, int iSrcY, double *padfPixelSum,
                             double dfWeight, double *pdfWeightSum,
                             colorObj *offsite )
 
@@ -293,7 +345,7 @@ static void msSourceSample( imageObj *psSrcImage, int iSrcX, int iSrcY,
             }
         }
     }
-    else
+    else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
     {
         int band;
 
@@ -348,6 +400,18 @@ static void msSourceSample( imageObj *psSrcImage, int iSrcX, int iSrcY,
         }
         *pdfWeightSum += dfWeight;
     }
+    else if( rb && MS_RENDERER_PLUGIN(psSrcImage->format) )
+    {
+        int rb_off = iSrcX * rb->pixel_step + iSrcY * rb->row_step;
+
+        if( rb->a == NULL || rb->a[rb_off] > 1 )
+        {
+            padfPixelSum[0] += rb->r[rb_off] * dfWeight;
+            padfPixelSum[1] += rb->g[rb_off] * dfWeight;
+            padfPixelSum[2] += rb->b[rb_off] * dfWeight;
+            *pdfWeightSum += dfWeight; /* should we be using src alpha? */
+        }
+    }
 }
 
 /************************************************************************/
@@ -355,8 +419,10 @@ static void msSourceSample( imageObj *psSrcImage, int iSrcX, int iSrcY,
 /************************************************************************/
 
 static int 
-msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
-                           imageObj *psDstImage, int *panCMap,
+msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb, 
+                           colorObj offsite,
+                           imageObj *psDstImage, rasterBufferObj *dst_rb,
+                           int *panCMap,
                            SimpleTransformer pfnTransform, void *pCBData,
                            int debug )
 
@@ -432,19 +498,19 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
 
             memset( padfPixelSum, 0, sizeof(double) * bandCount);
 
-            msSourceSample( psSrcImage, nSrcX, nSrcY, padfPixelSum, 
+            msSourceSample( psSrcImage, src_rb, nSrcX, nSrcY, padfPixelSum, 
                             (1.0 - dfRatioX2) * (1.0 - dfRatioY2),
                             &dfWeightSum, &offsite );
             
-            msSourceSample( psSrcImage, nSrcX2, nSrcY, padfPixelSum, 
+            msSourceSample( psSrcImage, src_rb, nSrcX2, nSrcY, padfPixelSum, 
                             (dfRatioX2) * (1.0 - dfRatioY2),
                             &dfWeightSum, &offsite );
             
-            msSourceSample( psSrcImage, nSrcX, nSrcY2, padfPixelSum, 
+            msSourceSample( psSrcImage, src_rb, nSrcX, nSrcY2, padfPixelSum, 
                             (1.0 - dfRatioX2) * (dfRatioY2),
                             &dfWeightSum, &offsite );
             
-            msSourceSample( psSrcImage, nSrcX2, nSrcY2, padfPixelSum, 
+            msSourceSample( psSrcImage, src_rb, nSrcX2, nSrcY2, padfPixelSum, 
                             (dfRatioX2) * (dfRatioY2),
                             &dfWeightSum, &offsite );
 
@@ -490,6 +556,27 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
                                           gd_color );
                     }
                 }
+            }
+            else if( MS_RENDERER_PLUGIN(psSrcImage->format) )
+            {
+                int dst_rb_off;
+
+                assert( src_rb != NULL && dst_rb != NULL );
+
+                dst_rb_off = nDstX * dst_rb->pixel_step \
+                    + nDstY * dst_rb->row_step;
+
+                nSetPoints++;
+
+                if( dfWeightSum > 0.001 )
+                    msAlphaBlend2( (unsigned char) padfPixelSum[0],
+                                   (unsigned char) padfPixelSum[1],
+                                   (unsigned char) padfPixelSum[2],
+                                   (unsigned char) (dfWeightSum * 255),
+                                   dst_rb->r + dst_rb_off, 
+                                   dst_rb->g + dst_rb_off, 
+                                   dst_rb->b + dst_rb_off, 
+                                   (dst_rb->a == NULL) ? NULL : dst_rb->a + dst_rb_off );
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
             {
@@ -550,7 +637,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, colorObj offsite,
 /************************************************************************/
 
 static int
-msAverageSample( imageObj *psSrcImage, 
+msAverageSample( imageObj *psSrcImage, rasterBufferObj *src_rb,
                  double dfXMin, double dfYMin, double dfXMax, double dfYMax,
                  colorObj *offsite, double *padfPixelSum, 
                  double *pdfAlpha01 )
@@ -583,7 +670,7 @@ msAverageSample( imageObj *psSrcImage,
 
             dfWeight = (dfXCellMax-dfXCellMin) * (dfYCellMax-dfYCellMin);
 
-            msSourceSample( psSrcImage, iX, iY, padfPixelSum, 
+            msSourceSample( psSrcImage, src_rb, iX, iY, padfPixelSum, 
                             dfWeight, &dfWeightSum, offsite );
             dfMaxWeight += dfWeight;
         }
@@ -605,8 +692,10 @@ msAverageSample( imageObj *psSrcImage,
 /************************************************************************/
 
 static int 
-msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
-                          imageObj *psDstImage, int *panCMap,
+msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
+                          colorObj offsite,
+                          imageObj *psDstImage, rasterBufferObj *dst_rb,
+                          int *panCMap,
                           SimpleTransformer pfnTransform, void *pCBData,
                           int debug )
 
@@ -675,7 +764,8 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
                 
             memset( padfPixelSum, 0, sizeof(double)*bandCount );
     
-            if( !msAverageSample( psSrcImage, dfXMin, dfYMin, dfXMax, dfYMax,
+            if( !msAverageSample( psSrcImage, src_rb,
+                                  dfXMin, dfYMin, dfXMax, dfYMax,
                                   &offsite, padfPixelSum, &dfAlpha01 ) )
                 continue;
 
@@ -715,6 +805,26 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
                                           gd_color );
                         
                     }
+                }
+            }
+            else if( MS_RENDERER_PLUGIN(psSrcImage->format) )
+            {
+                int dst_rb_off;
+
+                assert( src_rb != NULL && dst_rb != NULL );
+
+                dst_rb_off = nDstX * dst_rb->pixel_step \
+                    + nDstY * dst_rb->row_step;
+
+                nSetPoints++;
+
+                if( dfAlpha01 > 0 )
+                {
+                    dst_rb->r[dst_rb_off] = (unsigned char) padfPixelSum[0];
+                    dst_rb->g[dst_rb_off] = (unsigned char) padfPixelSum[1];
+                    dst_rb->b[dst_rb_off] = (unsigned char) padfPixelSum[2];
+                    if( dst_rb->a )
+                        dst_rb->a[dst_rb_off] = (unsigned char) dfAlpha01*255;
                 }
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
@@ -1335,6 +1445,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     char       **papszAlteredProcessing = NULL;
     int         nLoadImgXSize, nLoadImgYSize;
     double      dfOversampleRatio;
+    rasterBufferObj *src_rb = NULL, src_rb_buffer;
     const char *resampleMode = CSLFetchNameValue( layer->processing, 
                                                   "RESAMPLE" );
 
@@ -1560,6 +1671,23 @@ about AGG here, and create a GD imageObj
         sDummyMap.imagecolor.blue = map->imagecolor.blue;
     }
 /* -------------------------------------------------------------------- */
+/*      We are using a plugable image.                                  */
+/* -------------------------------------------------------------------- */
+    else if( MS_RENDERER_PLUGIN(sDummyMap.outputformat) )
+    {
+        assert( sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGB
+                || sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGBA );
+
+        /* does forcing this stuff make sense in the plugin context? */
+        sDummyMap.outputformat->transparent = MS_TRUE;
+        sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
+
+        sDummyMap.imagecolor.red = map->imagecolor.red;
+        sDummyMap.imagecolor.green = map->imagecolor.green;
+        sDummyMap.imagecolor.blue = map->imagecolor.blue;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Setup a dummy map object we can use to read from the source     */
 /*      raster, with the newly established extents, and resolution.     */
 /* -------------------------------------------------------------------- */
@@ -1569,6 +1697,16 @@ about AGG here, and create a GD imageObj
 
     if (srcImage == NULL)
         return -1; /* msSetError() should have been called already */
+
+    if( MS_RENDERER_PLUGIN( srcImage->format ) )
+    {
+        if( srcImage->format->vtable->supports_pixel_buffer )
+        {
+            memset( &src_rb_buffer, 0, sizeof(src_rb_buffer) );
+            src_rb = &src_rb_buffer;
+            srcImage->format->vtable->getRasterBuffer( srcImage, src_rb );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Draw into the temporary image.  Temporarily replace the         */
@@ -1580,7 +1718,7 @@ about AGG here, and create a GD imageObj
         layer->processing = papszAlteredProcessing;
 
         result = msDrawRasterLayerGDAL( &sDummyMap, layer, srcImage, 
-                                        NULL, hDS );
+                                        src_rb, hDS );
 
         layer->processing = papszSavedProcessing;
         CSLDestroy( papszAlteredProcessing );
@@ -1644,17 +1782,20 @@ about AGG here, and create a GD imageObj
 /* -------------------------------------------------------------------- */
     if( EQUAL(resampleMode,"AVERAGE") )
         result = 
-            msAverageRasterResampler( srcImage, layer->offsite, image,
+            msAverageRasterResampler( srcImage, src_rb, layer->offsite, 
+                                      image, rb, 
                                       anCMap, msApproxTransformer, pACBData,
                                       layer->debug );
     else if( EQUAL(resampleMode,"BILINEAR") )
         result = 
-            msBilinearRasterResampler( srcImage, layer->offsite, image,
+            msBilinearRasterResampler( srcImage, src_rb, layer->offsite, 
+                                       image, rb,
                                        anCMap, msApproxTransformer, pACBData,
                                        layer->debug );
     else
         result = 
-            msNearestRasterResampler( srcImage, layer->offsite, image,
+            msNearestRasterResampler( srcImage, src_rb, layer->offsite, 
+                                      image, rb,
                                       anCMap, msApproxTransformer, pACBData,
                                       layer->debug );
 
