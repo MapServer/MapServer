@@ -467,7 +467,6 @@ int agg2GetTruetypeTextBBox(imageObj *img, char *font, double size, char *string
       string += msUTF8ToUniChar(string, &unicode);
       glyph = r->m_fman.glyph(unicode);
       if (glyph) {
-         double t;
          rect->minx = MS_MIN(rect->minx, fx+glyph->bounds.x1);
          rect->miny = MS_MIN(rect->miny, fy+glyph->bounds.y1);
          rect->maxx = MS_MAX(rect->maxx, fx+glyph->bounds.x2);
@@ -496,7 +495,7 @@ void agg2TransformShape(shapeObj *shape, rectObj extend, double cellsize) {
 void agg2FreeImage(imageObj * image) {
 
    AGG2Renderer *r = agg2GetRenderer(image);
-   delete r->buffer;
+   delete[] r->buffer;
    delete r;
    image->img.plugin = NULL;
 }
