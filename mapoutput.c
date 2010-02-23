@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * $Id$
  *
@@ -152,6 +153,14 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->extension = strdup("gif");
         format->renderer = MS_RENDER_WITH_GD;
     }
+    if( strcasecmp(driver,"GD2/GIF") == 0 )
+    {
+        format = msAllocOutputFormat( map, "gif2", driver );
+        format->mimetype = strdup("image/gif");
+        format->imagemode = MS_IMAGEMODE_PC256;
+        format->extension = strdup("gif");
+        format->renderer = MS_RENDER_WITH_GD2;
+    }
 #endif
 
 #ifdef USE_GD_PNG
@@ -163,8 +172,15 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->extension = strdup("png");
         format->renderer = MS_RENDER_WITH_GD;
     }
+    if( strcasecmp(driver,"GD2/PNG") == 0 )
+    {
+        format = msAllocOutputFormat( map, "png2", driver );
+        format->mimetype = strdup("image/png");
+        format->imagemode = MS_IMAGEMODE_PC256;
+        format->extension = strdup("png");
+        format->renderer = MS_RENDER_WITH_GD2;
+    }
 #endif /* USE_GD_PNG */
-
 
 #if defined(USE_GD_PNG) && GD2_VERS > 1
     if( strcasecmp(driver,"GD/PNG24") == 0 )
@@ -186,6 +202,14 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->extension = strdup("jpg");
         format->renderer = MS_RENDER_WITH_GD;
     }
+    if( strcasecmp(driver,"GD2/JPEG") == 0 )
+    {
+        format = msAllocOutputFormat( map, "jpeg2", driver );
+        format->mimetype = strdup("image/jpeg");
+        format->imagemode = MS_IMAGEMODE_PC256; // ???
+        format->extension = strdup("jpg");
+        format->renderer = MS_RENDER_WITH_GD2;
+     }
 #endif
 #ifdef USE_GD_WBMP
     if( strcasecmp(driver,"GD/WBMP") == 0 )
@@ -373,15 +397,21 @@ void msApplyDefaultOutputFormats( mapObj *map )
 
     if( msSelectOutputFormat( map, "gif" ) == NULL )
         msCreateDefaultOutputFormat( map, "GD/GIF" );
+    if( msSelectOutputFormat( map, "gif2" ) == NULL )
+        msCreateDefaultOutputFormat( map, "GD2/GIF" );
 
     if( msSelectOutputFormat( map, "png" ) == NULL )
         msCreateDefaultOutputFormat( map, "GD/PNG" );
+    if( msSelectOutputFormat( map, "png2" ) == NULL )
+        msCreateDefaultOutputFormat( map, "GD2/PNG" );
 
     if( msSelectOutputFormat( map, "png24" ) == NULL )
         msCreateDefaultOutputFormat( map, "GD/PNG24" );
 
     if( msSelectOutputFormat( map, "jpeg" ) == NULL )
         msCreateDefaultOutputFormat( map, "GD/JPEG" );
+    if( msSelectOutputFormat( map, "jpeg2" ) == NULL )
+        msCreateDefaultOutputFormat( map, "GD2/JPEG" );
 
     if( msSelectOutputFormat( map, "wbmp" ) == NULL )
         msCreateDefaultOutputFormat( map, "GD/WBMP" );
@@ -1065,6 +1095,8 @@ int msInitializeRendererVTable(outputFormatObj *format) {
     switch(format->renderer) {
         case MS_RENDER_WITH_AGG2:
             return msPopulateRendererVTableAGG(format->vtable);
+        case MS_RENDER_WITH_GD2:
+            return msPopulateRendererVTableGD(format->vtable);
         case MS_RENDER_WITH_CAIRO_RASTER:
             return msPopulateRendererVTableCairoRaster(format->vtable);
         case MS_RENDER_WITH_CAIRO_PDF:

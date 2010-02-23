@@ -323,6 +323,7 @@ extern "C" {
 #define MS_IMAGE_EXTENSION(format)  (format->extension ? format->extension : "unknown")
 
 #define MS_DRIVER_GD(format)  (strncasecmp((format)->driver,"gd/",3)==0)
+#define MS_DRIVER_GD2(format)  (strncasecmp((format)->driver,"gd2/",4)==0)
 #define MS_DRIVER_SWF(format) (strncasecmp((format)->driver,"swf",3)==0)
 #define MS_DRIVER_GDAL(format)  (strncasecmp((format)->driver,"gdal/",5)==0)
 #define MS_DRIVER_PDF(format) (strncasecmp((format)->driver,"pdf",3)==0)
@@ -347,6 +348,7 @@ extern "C" {
 #define MS_RENDER_WITH_CAIRO_SVG 11
 #define MS_RENDER_WITH_OGL      12
 #define MS_RENDER_WITH_AGG2 13
+#define MS_RENDER_WITH_GD2 14
 
 #define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
@@ -2621,6 +2623,7 @@ MS_DLL_EXPORT int msPopulateRendererVTableCairoSVG( rendererVTableObj *renderer 
 MS_DLL_EXPORT int msPopulateRendererVTableCairoPDF( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableOGL( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableAGG( rendererVTableObj *renderer );
+MS_DLL_EXPORT int msPopulateRendererVTableGD( rendererVTableObj *renderer );
 
 //allocate 50k for starters
 #define MS_DEFAULT_BUFFER_ALLOC 50000
