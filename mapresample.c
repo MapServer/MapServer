@@ -1309,7 +1309,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 /************************************************************************/
 
 int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
-                         GDALDatasetH hDS )
+                         rasterBufferObj *rb, GDALDatasetH hDS )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1579,7 +1579,8 @@ about AGG here, and create a GD imageObj
 
         layer->processing = papszAlteredProcessing;
 
-        result = msDrawRasterLayerGDAL( &sDummyMap, layer, srcImage, hDS );
+        result = msDrawRasterLayerGDAL( &sDummyMap, layer, srcImage, 
+                                        NULL, hDS );
 
         layer->processing = papszSavedProcessing;
         CSLDestroy( papszAlteredProcessing );

@@ -1750,7 +1750,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       return msWCSException(map, NULL, NULL, params->version );
 
   /* Actually produce the "grid". */
-  status = msDrawRasterLayerLow( map, lp, image );
+  status = msDrawRasterLayerLow( map, lp, image, NULL );
   if( status != MS_SUCCESS ) {
       return msWCSException(map, NULL, NULL, params->version );
   }

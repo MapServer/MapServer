@@ -1194,7 +1194,8 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 /*      tile indexing.                                                  */
 /************************************************************************/
 
-int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) 
+int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
+                         rasterBufferObj *rb ) 
 {
   int status, i, done;
   FILE *f;  
@@ -1575,7 +1576,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
                                         &(layer->projection) ) 
                 || CSLFetchNameValue( layer->processing, "RESAMPLE" ) != NULL )
             {
-                status = msResampleGDALToMap( map, layer, image, hDS );
+                status = msResampleGDALToMap( map, layer, image, rb, hDS );
             }
             else
 #endif
@@ -1590,7 +1591,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
                             layer->name );
                     
                 }
-                status = msDrawRasterLayerGDAL(map, layer, image, hDS );
+                status = msDrawRasterLayerGDAL(map, layer, image, rb, hDS );
             }
 
             if( status == -1 )

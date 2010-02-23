@@ -2152,7 +2152,7 @@ MS_DLL_EXPORT int msJoinNext(joinObj *join);
 MS_DLL_EXPORT int msJoinClose(joinObj *join);
 
 /*in mapraster.c */
-MS_DLL_EXPORT int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
+MS_DLL_EXPORT int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image, rasterBufferObj *rb );
 MS_DLL_EXPORT int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
 #ifdef USE_AGG
 MS_DLL_EXPORT int msAddColorAGG(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
@@ -2161,7 +2161,7 @@ MS_DLL_EXPORT int msGetClass(layerObj *layer, colorObj *color);
 MS_DLL_EXPORT int msGetClass_Float(layerObj *layer, float fValue);
 
 /* in mapdrawgdal.c */
-MS_DLL_EXPORT int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, void *hDSVoid );
+MS_DLL_EXPORT int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, rasterBufferObj *rb, void *hDSVoid );
 MS_DLL_EXPORT int msGetGDALGeoTransform(void *hDS, mapObj *map, layerObj *layer, double *padfGeoTransform );
 MS_DLL_EXPORT int *msGetGDALBandList( layerObj *layer, void *hDS, int max_bands, int *band_count );
 MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand, int *pbGotNoData );
@@ -2227,6 +2227,11 @@ MS_DLL_EXPORT void msForceTmpFileBase( const char *new_base );
 MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
 
 MS_DLL_EXPORT int msAlphaBlend (int dst, int src);
+MS_DLL_EXPORT void msAlphaBlend2( 
+    int red_src, int green_src,
+    int blue_src, int alpha_src, 
+    unsigned char *red_dst, unsigned char *green_dst,
+    unsigned char *blue_dst, unsigned char *alpha_dst );
 
 MS_DLL_EXPORT int msCheckParentPointer(void* p, char* objname);
 

@@ -51,7 +51,7 @@ int msProjTransformer( void *pCBData, int nPoints,
                        double *x, double *y, int *panSuccess );
 #ifdef USE_GDAL
 int msResampleGDALToMap( mapObj *map, layerObj *layer, 
-                         imageObj *image,
+                         imageObj *image, rasterBufferObj *rb, 
                          GDALDatasetH hDS );
 #endif
 #endif /* ndef RESAMPLE_H */

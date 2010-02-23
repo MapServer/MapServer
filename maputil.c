@@ -1851,6 +1851,65 @@ int msAlphaBlend (int dst, int src)
     return ((alpha << 24) + (red << 16) + (green << 8) + blue);
 }
 
+/************************************************************************/
+/*                           msAlphaBlend2()                            */
+/*                                                                      */
+/*      Function to overlay/blend an RGBA value into an existing        */
+/*      RGBA value.  Primarily intended for use with rasterBufferObj    */
+/*      raster rendering.  The "src" is the overlay value, and "dst"    */
+/*      is the existing value being overlaid.                           */
+/*                                                                      */
+/*      NOTE: alpha_dst may be NULL.                                    */
+/************************************************************************/
+
+void msAlphaBlend2( int red_src, int green_src,
+                    int blue_src, int alpha_src, 
+                    unsigned char *red_dst, unsigned char *green_dst,
+                    unsigned char *blue_dst, unsigned char *alpha_dst )
+{
+    int src_weight, dst_weight, tot_weight;
+
+/* -------------------------------------------------------------------- */
+/*      Simple cases we want to handle fast.                            */
+/* -------------------------------------------------------------------- */
+    if( alpha_src < 2 )
+        return;
+    
+    if( alpha_src > 253 || (alpha_dst && *alpha_dst < 2) )
+    {
+        *red_dst = red_src;
+        *green_dst = green_src;
+        *blue_dst = blue_src;
+        *alpha_dst = alpha_src;
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      What will the source and destination alphas be?  Note that      */
+/*      the destination weighting is substantially reduced as the       */
+/*      overlay becomes quite opaque.                                   */
+/* -------------------------------------------------------------------- */
+    src_weight = alpha_src;
+    if( alpha_dst )
+        dst_weight = *alpha_dst * (255-alpha_src) / 255;
+    else
+        dst_weight = 255 - alpha_src;
+    tot_weight = src_weight + dst_weight;
+    
+/* -------------------------------------------------------------------- */
+/*      What red, green and blue result values will we use?             */
+/* -------------------------------------------------------------------- */
+    if( alpha_dst != NULL )
+        *alpha_dst = tot_weight;
+
+    *red_dst   = ((src_weight * *red_dst  ) + (dst_weight * red_src  )) 
+        / tot_weight;
+    *green_dst = ((src_weight * *green_dst) + (dst_weight * green_src)) 
+        / tot_weight;
+    *blue_dst  = ((src_weight * *blue_dst ) + (dst_weight * blue_src )) 
+        / tot_weight;
+}
+
 /*
  RFC 24: check if the parent pointer is NULL and raise an error otherwise
 */

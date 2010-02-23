@@ -1319,20 +1319,72 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 }
 
 /**
+ * msDrawRasterLayerPlugin()
+ */
+
+static int 
+msDrawRasterLayerPlugin( mapObj *map, layerObj *layer, imageObj *image) 
+
+{
+    rendererVTableObj *vtable = image->format->vtable;
+
+    if( vtable->supports_pixel_buffer )
+    {
+        rasterBufferObj  rb;
+
+        /* perhaps later there will be more formal initialization? */
+        memset( &rb, 0, sizeof(rb) ); 
+        
+        vtable->getRasterBuffer( image, &rb );
+
+        return msDrawRasterLayerLow( map, layer, image, &rb );
+    }
+    else
+    {
+        return 0; /* not yet implemented */
+
+#ifdef notdef /* implement something like this */
+        rasterBufferObj rb;
+        int ret;
+
+        /* perhaps later there will be more formal initialization? */
+        memset( &rb, 0, sizeof(rb) ); 
+
+        vtable->initializeRasterBuffer( &rb, image->width, image->height );
+
+        ret = msDrawRasterLayerLow( map, layer, image, &rb );
+        
+        if( ret == 0 )
+        {
+            vtable->mergeRasterBuffer( image, &rb, 100.0, 0, 0 );
+        }
+
+        msFreeRasterBuffer( &rb );
+        
+        return ret;
+#endif
+    }
+}
+
+/**
  * Generic function to render raster layers.
  */
 int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image) 
 {
     if (image && map && layer)
     {
-        if( MS_RENDERER_GD(image->format) )
-            return msDrawRasterLayerLow(map, layer, image);
+        if( MS_RENDERER_PLUGIN(image->format) )
+        {
+            return msDrawRasterLayerPlugin(map, layer, image);
+        }
+        else if( MS_RENDERER_GD(image->format) )
+            return msDrawRasterLayerLow(map, layer, image, NULL);
 #ifdef USE_AGG
         else if( MS_RENDERER_AGG(image->format) )
-            return msDrawRasterLayerLow(map, layer, image);
+            return msDrawRasterLayerLow(map, layer, image, NULL);
 #endif
         else if( MS_RENDERER_RAWDATA(image->format) )
-            return msDrawRasterLayerLow(map, layer, image);
+            return msDrawRasterLayerLow(map, layer, image, NULL);
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
             return  msDrawRasterLayerSWF(map, layer, image);

@@ -1789,7 +1789,7 @@ int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
 
     /* TODO : msDrawRasterLayerLow returns 0 (ms_success) in some cases */
     /* without drawing anything (ex : if it does not fit in scale) */
-    if (msDrawRasterLayerLow(map, layer, imagetmp) != MS_FAILURE)
+    if (msDrawRasterLayerLow(map, layer, imagetmp, NULL) != MS_FAILURE)
     {
         pszTmpfile = msTmpFile(map->mappath,map->web.imagepath,format->extension);
         if (!pszTmpfile)
