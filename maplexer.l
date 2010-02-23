@@ -151,6 +151,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>backgroundshadowcolor      { return(BACKGROUNDSHADOWCOLOR); }
 <INITIAL,URL_STRING>backgroundshadowsize       { return(BACKGROUNDSHADOWSIZE); }
 <INITIAL>bandsitem                             { return(BANDSITEM); }
+<INITIAL>bindvals                              { return(BINDVALS); }
 <INITIAL>browseformat                          { return(BROWSEFORMAT); }
 <INITIAL>buffer                                { return(BUFFER); }
 <INITIAL>character                             { return(CHARACTER); }

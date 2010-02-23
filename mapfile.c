@@ -2910,6 +2910,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->requires = layer->labelrequires = NULL;
 
   initHashTable(&(layer->metadata));
+  initHashTable(&(layer->bindvals));
   initHashTable(&(layer->validation));
   
   layer->dump = MS_FALSE;
@@ -3063,6 +3064,9 @@ int loadLayer(layerObj *layer, mapObj *map)
 
   for(;;) {
     switch(msyylex()) {
+    case(BINDVALS):
+      if(loadHashTable(&(layer->bindvals)) != MS_SUCCESS) return(-1);
+      break;
     case(CLASS):
       if (msGrowLayerClasses(layer) == NULL)
 	return(-1);
@@ -5546,6 +5550,9 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 /* look in places authorized for url substitution and replace "from" by "to" */ 
 void msLayerSubstituteString(layerObj *layer, const char *from, const char *to) {
   int k;
+  char* bindvals_key = msFirstKeyFromHashTable(&layer->bindvals);
+  char* bindvals_val;
+
   if(layer->data && (strcasestr(layer->data, from) != NULL)) 
     layer->data = msCaseReplaceSubstring(layer->data, from, to);
   if(layer->tileindex && (strcasestr(layer->tileindex, from) != NULL)) 
@@ -5557,6 +5564,13 @@ void msLayerSubstituteString(layerObj *layer, const char *from, const char *to) 
   for(k=0; k<layer->numclasses; k++) {
     if(layer->class[k]->expression.string && (strcasestr(layer->class[k]->expression.string, from) != NULL)) 
       layer->class[k]->expression.string = msCaseReplaceSubstring(layer->class[k]->expression.string, from, to);
+  }
+
+ /* The bindvalues are most useful when able to substitute values from the URL */
+  while(bindvals_key != NULL) {
+    bindvals_val = strdup((char*)msLookupHashTable(&layer->bindvals, bindvals_key));
+    msInsertHashTable(&layer->bindvals, bindvals_key, msCaseReplaceSubstring(bindvals_val, from, to));
+    bindvals_key = msNextKeyFromHashTable(&layer->bindvals, bindvals_key);
   }
 }
   

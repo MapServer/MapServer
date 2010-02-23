@@ -929,7 +929,7 @@ char *msPostGISBuildSQLBox(layerObj *layer, rectObj *rect, char *strSRID) {
                 rect->maxx, rect->maxy,
                 rect->maxx, rect->miny,
                 rect->minx, rect->miny,
-                strSRID) )
+                strSRID))
 	{
         	msSetError(MS_MISCERR,"Bounding box digits truncated.","msPostGISBuildSQLBox");
         	return 0;
@@ -1768,6 +1768,24 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect) {
     msPostGISLayerInfo *layerinfo = NULL;
     char *strSQL = NULL;
     PGresult *pgresult = NULL;
+    char** layer_bind_values = (char**)malloc(sizeof(char*) * 1000);
+    char* bind_value;
+    char* bind_key = (char*)malloc(3);
+
+    int num_bind_values = 0;
+
+	/* try to get the first bind value */
+	bind_value = msLookupHashTable(&layer->bindvals, "1");
+	while(bind_value != NULL) {
+		/* put the bind value on the stack */
+		layer_bind_values[num_bind_values] = bind_value;
+		/* increment the counter */
+		num_bind_values++;
+		/* create a new lookup key */
+		sprintf(bind_key, "%d", num_bind_values+1);
+		/* get the bind_value */
+		bind_value = msLookupHashTable(&layer->bindvals, bind_key);
+	}
 
     assert(layer != NULL);
     assert(layer->layerinfo != NULL);
@@ -1798,7 +1816,11 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect) {
         msDebug("msPostGISLayerWhichShapes query: %s\n", strSQL);
     }
 
-    pgresult = PQexec(layerinfo->pgconn, strSQL);
+    if(num_bind_values > 0) {
+        pgresult = PQexecParams(layerinfo->pgconn, strSQL, num_bind_values, NULL, (const char**)layer_bind_values, NULL, NULL, 1);
+    } else {
+        pgresult = PQexec(layerinfo->pgconn, strSQL);
+    }
 
     if ( layer->debug > 1 ) {
         msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult)); 

@@ -2131,6 +2131,20 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
               && TRY(hand,
             /* bind in rect object */
             OCIBindObject(bnd1p, hand->errhp, ordinates_tdo, (dvoid **)&ordinates, (ub4 *)0, (dvoid **)0, (ub4 *)0));
+
+	/* bind the variables from the bindvals hash */
+	char* bind_key = (char*)msFirstKeyFromHashTable(&layer->bindvals);
+	char* bind_value;
+	char* bind_tag;
+	while(bind_key != NULL) {
+		bind_value = msLookupHashTable(&layer->bindvals, bind_key);
+		bind_tag = (char*)malloc(sizeof(char) * strlen(bind_key) + 1);
+		sprintf(bind_tag, ":%s", bind_key);
+
+		success = success && TRY(hand, OCIBindByName( sthand->stmthp, &bnd2p,  hand->errhp, (text *)bind_tag, strlen(bind_tag),(ub1 *) bind_value,  strlen(bind_value)+1, SQLT_STR,
+	              (dvoid *) 0, (ub2 *) 0, (ub2) 0, (ub4) 0, (ub4 *) 0, OCI_DEFAULT));
+		bind_key = msNextKeyFromHashTable(&layer->bindvals, bind_key);
+	}
    }       
 
           

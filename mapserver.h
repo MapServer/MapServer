@@ -1314,6 +1314,7 @@ typedef struct layer_obj {
 #endif /* SWIG */
   hashTableObj metadata;
   hashTableObj validation;
+  hashTableObj bindvals;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
