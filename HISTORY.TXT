@@ -27,6 +27,13 @@ Current Version (SVN branch-5-6):
 - Got rid of invalid warning about missing EPSG proj in WMs GetCapabilities
   when map has a valid EPSG proj, but layer doesn't (#2028)
 
+Current Version
+---------------
+
+- Correct one pass query problems and OGC filter query (#3305)
+
+- Correct QueryByOperator (#3346)
+
 
 Version 5.6.1 (2010-01-08):
 ---------------------------
