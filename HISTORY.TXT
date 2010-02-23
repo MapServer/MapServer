@@ -11,6 +11,13 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Current Version
+---------------
+
+- Correct one pass query problems and OGC filter query (#3305)
+
+- Correct QueryByOperator (#3346)
+
 
 Version 5.6.1 (2010-01-08):
 ---------------------------
