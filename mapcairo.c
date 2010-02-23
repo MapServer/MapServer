@@ -677,7 +677,7 @@ void renderEllipseSymbolCairo(imageObj *img, double x, double y, symbolObj *symb
 	cairo_set_line_join(r->cr, CAIRO_LINE_JOIN_MITER);
 	cairo_translate(r->cr,x,y);
 	cairo_rotate(r->cr,-style->rotation);
-	cairo_scale(r->cr,symbol->sizex*style->scale,symbol->sizey*style->scale);
+	cairo_scale(r->cr,symbol->sizex*style->scale/2,symbol->sizey*style->scale/2);
 	cairo_append_path(r->cr,arc);
 	cairo_restore(r->cr);
 	if(MS_VALID_COLOR(style->color)) {
