@@ -275,7 +275,18 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
   free(edge);
 }
 
-void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke) {
+void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke) 
+{
+  int i, j;
+  gdImagePtr ip;
+
+  if(!img || !p || !stroke) return;
+  ip = (gdImagePtr) img->img.plugin;
+
+  if(stroke->color.pen == MS_PEN_UNSET) setPen(ip, &stroke->color);
+  for (i=0; i < p->numlines; i++)
+    for(j=1; j<p->line[i].numpoints; j++)
+      gdImageLine(ip, (int) p->line[i].point[j-1].x, (int) p->line[i].point[j-1].y, (int) p->line[i].point[j].x, (int) p->line[i].point[j].y, stroke->color.pen);
 }
 
 void renderPolygonGD(imageObj *img, shapeObj *p, colorObj *c) 
