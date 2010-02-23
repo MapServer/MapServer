@@ -1025,9 +1025,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   char **papszPropertyName = NULL;
   int nPropertyNames = 0;
 
+  /*use msLayerGetShape instead of msLayerResultsGetShape of complex filter #3305*/
+  int bUseGetShape = MS_FALSE;
+
   /* Default filter is map extents */
   bbox = map->extent;
   
+
   /* Read CGI parameters */
   /*  */
   /* __TODO__ Need to support XML encoded requests */
@@ -1453,6 +1457,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                 return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
             }
         }
+        
+        if (bUseGetShape == MS_FALSE)
+          bUseGetShape = (!FLTIsSimpleFilter(psNode));
 
         FLTFreeFilterEncodingNode( psNode );
         psNode = NULL;
@@ -1547,6 +1554,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                        msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature");
                        return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
                      }
+
+                     if (bUseGetShape == MS_FALSE)
+                       bUseGetShape = (!FLTIsSimpleFilter(psNode));
 
                      FLTFreeFilterEncodingNode( psNode );
                      psNode = NULL;
@@ -1804,7 +1814,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     /* handle case of maxfeatures = 0 */
     if(maxfeatures != 0 && iResultTypeHits == 0)
-      msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat);
+      msGMLWriteWFSQuery(map, stdout, maxfeatures, pszNameSpace, outputformat,bUseGetShape);
 
     if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
       msIO_printf("   <gml:boundedBy>\n"); 
