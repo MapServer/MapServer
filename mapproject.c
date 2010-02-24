@@ -818,7 +818,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   msProjectShapeLine( in, out, &polygonObj, 0 );
 
   /* If no points reprojected, try a grid sampling */
-  if( ring.numpoints == 0 )
+  if( polygonObj.numlines == 0 || polygonObj.line[0].numpoints == 0 )
   {
       msFreeShape( &polygonObj );
       return msProjectRectGrid( in, out, rect );
@@ -827,15 +827,17 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 /* -------------------------------------------------------------------- */
 /*      Collect bounds.                                                 */
 /* -------------------------------------------------------------------- */
-  rect->minx = rect->maxx = ringPoints[0].x;
-  rect->miny = rect->maxy = ringPoints[0].y;
+  rect->minx = rect->maxx = polygonObj.line[0].point[0].x;
+  rect->miny = rect->maxy = polygonObj.line[0].point[0].y;
   
-  for( ix = 1; ix < ring.numpoints; ix++ )
+  for( ix = 1; ix < polygonObj.line[0].numpoints; ix++ )
   {
-      rect->minx = MS_MIN(rect->minx,ringPoints[ix].x);
-      rect->maxx = MS_MAX(rect->maxx,ringPoints[ix].x);
-      rect->miny = MS_MIN(rect->miny,ringPoints[ix].y);
-      rect->maxy = MS_MAX(rect->maxy,ringPoints[ix].y);
+      pointObj  *pnt = polygonObj.line[0].point + ix;
+
+      rect->minx = MS_MIN(rect->minx,pnt->x);
+      rect->maxx = MS_MAX(rect->maxx,pnt->x);
+      rect->miny = MS_MIN(rect->miny,pnt->y);
+      rect->maxy = MS_MAX(rect->maxy,pnt->y);
   }
 
   msFreeShape( &polygonObj );
