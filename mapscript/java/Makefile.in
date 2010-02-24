@@ -62,20 +62,10 @@ PDF_INC=  @PDF_INC@
 PDF_LIB=  @PDF_LIB@
 PDF=      @PDF_ENABLED@
 
-# TIFF distribution (raster support for TIFF and GEOTIFF imagery). (RECOMMENDED)
-TIFF_INC= @TIFF_INC@
-TIFF_LIB= @TIFF_LIB@
-TIFF=     @TIFF_ENABLED@
-
 # JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
 JPEG_INC= @JPEG_INC@
 JPEG_LIB= @JPEG_LIB@
 JPEG=     @JPEG_ENABLED@
-
-# EPPL7 Support (this activates ERDAS as well) Included in the distribution. Probably the best raster alternative if
-# you've got EPPL7 laying around. See http://www.lmic.state.mn.us/ for more information. (RECOMMENDED)
-EPPL=     @EPPL_ENABLED@
-EPPL_OBJ= @EPPL_OBJ@
 
 # ESRI SDE Support. You MUST have the SDE Client libraries and include files
 # on your system someplace. The actual SDE server you wish to connect to can
@@ -176,15 +166,15 @@ XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
 CCFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
-        $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(OWS) $(MING) \
-	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(AGG) $(PDF) $(SDE) $(OGR) $(GDAL) $(GEOS) $(ICONV) \
+        $(IGNORE_MISSING_DATA) $(STRINGS) $(PROJ) $(OWS) $(MING) \
+	$(ORACLESPATIAL) $(JPEG) $(GD) $(AGG) $(PDF) $(SDE) $(OGR) $(GDAL) $(GEOS) $(ICONV) \
 	$(POSTGIS) $(MYGIS) $(THREAD) $(GD_INC) $(AGG_INC) $(PDF_INC) \
-	$(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
+	$(PROJ_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
 	$(REGEX_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
 	$(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) $(XML2_INC)
 
 # Link flags and shared libs only
-SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
+SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
 	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
 	  $(THREAD_LIB) $(XTRALIBS) $(GEOS_LIB) $(ICONV_INC) $(XML2_LIB)
