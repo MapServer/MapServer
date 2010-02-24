@@ -107,20 +107,10 @@ PDF_INC=  @PDF_INC@
 PDF_LIB=  @PDF_LIB@
 PDF=      @PDF_ENABLED@
 
-# TIFF distribution (raster support for TIFF and GEOTIFF imagery). (RECOMMENDED)
-TIFF_INC= @TIFF_INC@
-TIFF_LIB= @TIFF_LIB@
-TIFF=     @TIFF_ENABLED@
-
 # JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
 JPEG_INC= @JPEG_INC@
 JPEG_LIB= @JPEG_LIB@
 JPEG=     @JPEG_ENABLED@
-
-# EPPL7 Support (this activates ERDAS as well) Included in the distribution. Probably the best raster alternative if
-# you've got EPPL7 laying around. See http://www.lmic.state.mn.us/ for more information. (RECOMMENDED)
-EPPL=     @EPPL_ENABLED@
-EPPL_OBJ= @EPPL_OBJ@
 
 # ESRI SDE Support. You MUST have the SDE Client libraries and include files
 # on your system someplace. The actual SDE server you wish to connect to can
@@ -254,7 +244,7 @@ RUNPATHS= @RPATHS@
 
 DEFINES = $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ $(FRIBIDI)
 
-INCLUDES = $(REGEX_INC) $(PNG_INC) $(GD_INC) $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PDF_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) \
+INCLUDES = $(REGEX_INC) $(PNG_INC) $(GD_INC) $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PDF_INC) $(PROJ_INC) $(JPEG_INC) $(EGIS_INC) \
         $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
         $(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
         $(FASTCGI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC)
@@ -265,7 +255,7 @@ CFLAGS   = @CFLAGS@ $(FLAGS)
 CXXFLAGS = @CXXFLAGS@ $(FLAGS)
 
 # Link flags and shared libs only
-SUP_LIBS =  $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIBS) \
+SUP_LIBS =  $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PDF_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(PNG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
 	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
 	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
@@ -278,7 +268,7 @@ EXE_LDFLAGS =	$(RUNPATHS) -L. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
-OBJS= $(AGG_OBJ) mapogl.o mapoglrenderer.o mapoglcontext.o mapimageio.o mapcairo.o maprendering.o mapgeomtransform.o maprgbapng.o maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapgd2.o mapagg.o mapagg2.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o  mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o maplibxml2.o mapdebug.o mapchart.o maptclutf.o mapxml.o $(EPPL_OBJ) 
+OBJS= $(AGG_OBJ) mapogl.o mapoglrenderer.o mapoglcontext.o mapimageio.o mapcairo.o maprendering.o mapgeomtransform.o maprgbapng.o maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapgd2.o mapagg.o mapagg2.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o  mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o maplibxml2.o mapdebug.o mapchart.o maptclutf.o mapxml.o
 
 EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms \
@@ -398,7 +388,7 @@ mapscriptvars:	Makefile
 	touch mapscriptvars
 	pwd > mapscriptvars
 	echo $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ >> mapscriptvars
-	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) $(GEOS_INC) >> mapscriptvars
+	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) $(GEOS_INC) >> mapscriptvars
 	echo $(EXE_LDFLAGS) >> mapscriptvars
 	echo $(STATIC_LIBS) >> mapscriptvars
 	grep '#define MS_VERSION ' mapserver.h >> mapscriptvars

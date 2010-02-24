@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Remove "legacy" raster support, all raster rendering via GDAL now.
+
 - Very preliminary render plugin support for raster rendering. (RFC 54)
 
 - support correct MIME type output for WFS 1.1.0 (#3295)

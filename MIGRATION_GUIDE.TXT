@@ -14,6 +14,25 @@ PHP MapScript
 * All deprecated class properties have been removed.
   See mapscript/php3/README for the list.
 
+------------
+OUTPUTFORMAT
+------------
+
+The OUTPUTFORMAT parameter validation when reading from the mapfile 
+will now trigger an error on some problems that in the past were 
+silently fixed up.  For instance using RGBA IMAGEMODE with JPEG format 
+not triggers an error instead of switching to IMAGEMODE RGB silently.  
+
+-------
+Rasters
+-------
+
+* The support for rendering rasters without GDAL has been removed.  Now 
+  RASTER layers (or WMS layers) require that MapServer be built against 
+  the GDAL library.  
+* The above change also means there is no longer support for EPPL raster layers.
+
+
 =====================================
 MapServer 5.4 to 5.6 Migration Guide
 =====================================

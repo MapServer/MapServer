@@ -1060,30 +1060,6 @@ ALL_ENABLED="$RGBA_PNG_ENABLED $ALL_ENABLED"
 ALL_INC="$PNG_INC $ALL_INC"
 
 dnl ---------------------------------------------------------------------
-dnl EPPL7 support (included by default)
-dnl ---------------------------------------------------------------------
-
-AC_CHECKING(whether we should include EPPL7 support)
-AC_ARG_WITH(eppl,
-[  --without-eppl          Disable EPPL7 support.
-  --with-eppl             Include EPPL7 support.],,)
-if test "$with_eppl" = "no" ; then
-  AC_MSG_RESULT([        disabled by --without-eppl])
-else
-
-  EPPL_OBJ="epplib.o"
-  EPPL_ENABLED="-DUSE_EPPL"
-
-  AC_MSG_RESULT([        including EPPL7 support.])
-
-fi
-
-AC_SUBST(EPPL_ENABLED,$EPPL_ENABLED)
-AC_SUBST(EPPL_OBJ,    $EPPL_OBJ)
-
-ALL_ENABLED="$EPPL_ENABLED $ALL_ENABLED"
-
-dnl ---------------------------------------------------------------------
 dnl Find PROJ.4 ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
 
@@ -1475,78 +1451,6 @@ if test -n "$JPEG_ENABLED" ; then
     AC_MSG_RESULT([yes, GDAL is not available but libjpeg is.])
   fi
 fi
-
-dnl ---------------------------------------------------------------------
-dnl libTIFF (included by default if found on system).
-dnl ---------------------------------------------------------------------
-
-dnl Clear some cache variables
-unset ac_cv_lib_tiff_TIFFOpen
-
-AC_CHECKING(whether we should include TIFF support)
-AC_ARG_WITH(tiff,
-[  --without-tiff          Disable TIFF support.
-  --with-tiff[[=DIR]]       Include TIFF support (DIR is LibTIFF's install dir).],,)
-if test -z "$with_tiff" -a -n "$GDAL_ENABLED" ; then
-  AC_MSG_RESULT([        disabled since gdal is in use])
-
-elif test "$with_tiff" = "no" ; then
-  AC_MSG_RESULT([        disabled by --without-tiff])
-
-elif test -n "$with_tiff" -a "$with_tiff" != "yes" ; then
-
-  AC_EXPAND_PATH($with_tiff, TIFF_DIR)
-  test -f $TIFF_DIR/include/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/include"
-  test -f $TIFF_DIR/libtiff/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/libtiff"
-  test -f $TIFF_DIR/include/libtiff/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/include/libtiff"
-  test -f $TIFF_DIR/tiffio.h && TIFF_INCLUDE="$TIFF_DIR"
-
-  test -f $TIFF_DIR/lib/libtiff.a && TIFF_LIBDIR="$TIFF_DIR/lib"
-  test -f $TIFF_DIR/lib64/libtiff.a && TIFF_LIBDIR="$TIFF_DIR/lib64"
-  test -f $TIFF_DIR/libtiff/libtiff.a && TIFF_LIBDIR="$TIFF_DIR/libtiff"
-  test -f $TIFF_DIR/libtiff.a && TIFF_LIBDIR="$TIFF_DIR"
-
-  test -f $TIFF_DIR/lib/libtiff.so -o $TIFF_DIR/lib/libtiff.sl -o -f $TIFF_DIR/lib/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/lib"
-  test -f $TIFF_DIR/lib64/libtiff.so -o $TIFF_DIR/lib64/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/lib64"
-  test -f $TIFF_DIR/libtiff/libtiff.so -o -f $TIFF_DIR/libtiff/libtiff.sl -o -f $TIFF_DIR/libtiff/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/libtiff"
-  test -f $TIFF_DIR/libtiff.so -o -f $TIFF_DIR/libtiff.sl -o -f $TIFF_DIR/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR"
-
-  if test -n "$TIFF_INCLUDE" -a -n "$TIFF_LIBDIR" ; then
-
-      TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
-      TIFF_INC=-I$TIFF_INCLUDE
-      AC_ADD_RUNPATH("$TIFF_LIBDIR")
-  else
-      AC_MSG_ERROR("Could not find tiffio.h or libtiff.a/libtiff.so in $TIFF_DIR.")
-  fi
-
-  TIFF_ENABLED="-DUSE_TIFF"
-  AC_MSG_RESULT([        using libtiff from $TIFF_LIB.])
-
-else
-
-  AC_CHECK_LIB(tiff,TIFFOpen,TIFF_LIB="-ltiff",,$GD_XTRA_LIBS)
-  if test -n "$TIFF_LIB" ; then
-      TIFF_ENABLED=-DUSE_TIFF
-      AC_MSG_RESULT([        using libtiff from system libs.])
-  else
-      AC_MSG_RESULT([        libtiff not found... TIFF support not included.])
-  fi
-
-fi
-
-dnl
-dnl libtiff may need the same libs (libz, libjpeg) that are included with GD
-dnl
-TIFF_LIB="$TIFF_LIB $GD_XTRA_LIBS"
-
-AC_SUBST(TIFF_ENABLED,$TIFF_ENABLED)
-AC_SUBST(TIFF_INC,    $TIFF_INC)
-AC_SUBST(TIFF_LIB,    $TIFF_LIB)
-
-ALL_ENABLED="$TIFF_ENABLED $ALL_ENABLED"
-ALL_INC="$TIFF_INC $ALL_INC"
-ALL_LIB="$TIFF_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------------
 dnl Try to find PostgreSQL if PostGIS support requested.
@@ -2884,9 +2788,7 @@ AC_MSG_RESULT([  EXSLT support:              ${EXSLT_ENABLED}])
 AC_MSG_RESULT()
 
 AC_MSG_RESULT([ -------------- Data Format Drivers ------- ])
-AC_MSG_RESULT([  native tiff support:       ${TIFF_ENABLED}])
 AC_MSG_RESULT([  PostGIS support:           ${POSTGIS_ENABLED}])
-AC_MSG_RESULT([  EPPL7 support:             ${EPPL_ENABLED}])
 AC_MSG_RESULT([  ArcSDE support:            ${SDE_ENABLED}])
 AC_MSG_RESULT([  OGR support:               ${OGR_ENABLED}])
 AC_MSG_RESULT([  GDAL support:              ${GDAL_ENABLED}])
