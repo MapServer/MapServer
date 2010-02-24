@@ -3839,7 +3839,8 @@ static int loadOutputFormat(mapObj *map)
 
         format->inmapfile = MS_TRUE;
 
-        msOutputFormatValidate( format );
+        if( !msOutputFormatValidate( format, MS_TRUE ) )
+            return -1;
         return(0);
     }
     case(NAME):

@@ -665,7 +665,7 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
     }
 
     if( format != NULL )
-        msOutputFormatValidate( format );
+        msOutputFormatValidate( format, MS_FALSE );
 
     return format;
 }
@@ -686,7 +686,6 @@ void msApplyOutputFormat( outputFormatObj **target,
     outputFormatObj *formatToFree = NULL;
 
     assert( target != NULL );
-
     
     if( *target != NULL && --((*target)->refcount) < 1 )
     {
@@ -701,7 +700,7 @@ void msApplyOutputFormat( outputFormatObj **target,
         return;
     }
 
-    msOutputFormatValidate( format );
+    msOutputFormatValidate( format, MS_FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to change any values?  If not, then just apply       */
@@ -1032,7 +1031,7 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
 /*      possible.                                                       */
 /************************************************************************/
 
-int msOutputFormatValidate( outputFormatObj *format )
+int msOutputFormatValidate( outputFormatObj *format, int issue_error )
 
 {
     int result = MS_TRUE;
@@ -1043,9 +1042,16 @@ int msOutputFormatValidate( outputFormatObj *format )
     /* Enforce the requirement that GD/JPEG be RGB and TRANSPARENT=OFF */
     if( strcasecmp(format->driver,"GD/JPEG") == 0 && format->transparent )
     {
-        msDebug( "GD/JPEG OUTPUTFORMAT %s has TRANSPARENT set ON, but this is not supported.\n"
-                 "It has been disabled.\n", 
-                 format->name );
+        if( issue_error )
+            msSetError( MS_MISCERR,
+                        "GD/JPEG OUTPUTFORMAT %s has TRANSPARENT set ON, but this is not supported.\n"
+                        "It has been disabled.\n", 
+                        "msOutputFormatValidate()", format->name );
+        else
+            msDebug( "GD/JPEG OUTPUTFORMAT %s has TRANSPARENT set ON, but this is not supported.\n"
+                     "It has been disabled.\n", 
+                     format->name );
+
         format->transparent = MS_FALSE;
         result = MS_FALSE;
     }
@@ -1053,31 +1059,63 @@ int msOutputFormatValidate( outputFormatObj *format )
     if( strcasecmp(format->driver,"GD/JPEG") == 0 
         && format->imagemode == MS_IMAGEMODE_RGBA )
     {
-        msDebug( "GD/JPEG OUTPUTFORMAT %s has IMAGEMODE RGBA, but this is not supported.\n"
-                 "IMAGEMODE forced to RGB.\n", 
-                 format->name );
+        if( issue_error )
+            msSetError( MS_MISCERR,
+                        "GD/JPEG OUTPUTFORMAT %s has IMAGEMODE RGBA, but this is not supported.\n"
+                        "IMAGEMODE forced to RGB.\n", 
+                        "msOutputFormatValidate()", format->name );
+        else
+            msDebug( "GD/JPEG OUTPUTFORMAT %s has IMAGEMODE RGBA, but this is not supported.\n"
+                     "IMAGEMODE forced to RGB.\n", 
+                     format->name );
+
         format->imagemode = MS_IMAGEMODE_RGB;
         result = MS_FALSE;
     }
 
     if( format->transparent && format->imagemode == MS_IMAGEMODE_RGB )
     {
-        msDebug( "OUTPUTFORMAT %s has TRANSPARENT set ON, but an IMAGEMODE\n"
-                 " of RGB instead of RGBA.  Changing imagemode to RGBA.\n", 
-                 format->name );
+        if( issue_error )
+            msSetError( MS_MISCERR,
+                   "OUTPUTFORMAT %s has TRANSPARENT set ON, but an IMAGEMODE\n"
+                   "of RGB instead of RGBA.  Changing imagemode to RGBA.\n", 
+                   "msOutputFormatValidate()", format->name );
+        else
+            msDebug("OUTPUTFORMAT %s has TRANSPARENT set ON, but an IMAGEMODE\n"
+                    "of RGB instead of RGBA.  Changing imagemode to RGBA.\n", 
+                    format->name );
+
         format->imagemode = MS_IMAGEMODE_RGBA;
         result = MS_FALSE;
     }
 
-    /* see bug 724 */
-    if( ( format->imagemode == MS_IMAGEMODE_INT16 
-          || format->imagemode == MS_IMAGEMODE_FLOAT32 
-          || format->imagemode == MS_IMAGEMODE_BYTE )
-        && format->renderer != MS_RENDER_WITH_RAWDATA )
-        format->renderer = MS_RENDER_WITH_RAWDATA;
+    /* Special checking around RAWMODE image modes. */
+    if( format->imagemode == MS_IMAGEMODE_INT16 
+        || format->imagemode == MS_IMAGEMODE_FLOAT32 
+        || format->imagemode == MS_IMAGEMODE_BYTE )
+    {
+        if( strncmp(format->driver,"GDAL/",5) != 0 )
+        {
+            result = MS_FALSE;
+            if( issue_error )
+                msSetError( MS_MISCERR,
+                            "OUTPUTFORMAT %s has IMAGEMODE BYTE/INT16/FLOAT32, but this is only supported for GDAL drivers.",
+                            "msOutputFormatValidate()", format->name );
+            else
+                msDebug( "OUTPUTFORMAT %s has IMAGEMODE BYTE/INT16/FLOAT32, but this is only supported for GDAL drivers.",
+                         format->name );
+        }
+
+        if( format->renderer != MS_RENDER_WITH_RAWDATA ) /* see bug 724 */
+            format->renderer = MS_RENDER_WITH_RAWDATA;
+    }
 
     return result;
 }
+
+/************************************************************************/
+/*                     msInitializeRendererVTable()                     */
+/************************************************************************/
 
 int msInitializeRendererVTable(outputFormatObj *format) {
     assert(format);

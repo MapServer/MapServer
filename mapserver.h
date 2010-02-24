@@ -2307,7 +2307,8 @@ MS_DLL_EXPORT void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int
 MS_DLL_EXPORT void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime );
 MS_DLL_EXPORT void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime );
 MS_DLL_EXPORT outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
-MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format );
+MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format, 
+                                          int issue_error );
 
 #ifndef gdImageTrueColor
 #  define gdImageTrueColor(x) (0)
