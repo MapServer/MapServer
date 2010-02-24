@@ -568,8 +568,7 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 /*                           msProjectRectGrid()                        */
 /************************************************************************/
 
-//#define NUMBER_OF_SAMPLE_POINTS 100
-#define NUMBER_OF_SAMPLE_POINTS 5
+#define NUMBER_OF_SAMPLE_POINTS 100
 
 int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect) 
 {
