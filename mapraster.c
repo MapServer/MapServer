@@ -548,18 +548,16 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
         msReleaseLock( TLOCK_GDAL );
 
         if(ignore_missing == MS_MISSING_DATA_FAIL) {
-          msSetError(MS_IOERR, "Corrupt or empty file '%s' for layer '%s'", "msDrawRasterLayerLow()", szPath, layer->name);
+          msSetError(MS_IOERR, "Corrupt, empty or missing file '%s' for layer '%s'", "msDrawRasterLayerLow()", szPath, layer->name);
           return(MS_FAILURE); 
         }
         else if( ignore_missing == MS_MISSING_DATA_LOG ) {
           if( layer->debug || layer->map->debug ) {
-            msDebug( "Corrupt or empty file '%s' for layer '%s' ... ignoring this missing data.\n", szPath, layer->name );
+            msDebug( "Corrupt, empty or missing file '%s' for layer '%s' ... ignoring this missing data.\n", szPath, layer->name );
           }
-          done = MS_TRUE;
           continue;
         }
         else if( ignore_missing == MS_MISSING_DATA_IGNORE ) {
-          done = MS_TRUE;
           continue;
         }
         else {
