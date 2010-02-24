@@ -44,8 +44,8 @@ extern char *msyytext;
 extern int msyylineno;
 extern FILE *msyyin;
 
-extern unsigned char PNGsig[8];
-extern unsigned char JPEGsig[3];
+static const unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
+static const unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
 
 /*
 ** Symbol to string static arrays needed for writing map files.
