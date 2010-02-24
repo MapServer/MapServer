@@ -14562,7 +14562,7 @@ DLEXPORT void php_ms_outputformat_validate(INTERNAL_FUNCTION_PARAMETERS)
     if (self == NULL)
       RETURN_LONG(MS_FALSE);
 
-    if ( (retVal = msOutputFormatValidate( self )) != MS_SUCCESS )
+    if ( (retVal = msOutputFormatValidate( self, MS_FALSE )) != MS_SUCCESS )
     {
         _phpms_report_mapserver_error(E_WARNING);
     }

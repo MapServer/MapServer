@@ -86,7 +86,7 @@
 
     int validate() 
     {
-       	return msOutputFormatValidate( self );
+       	return msOutputFormatValidate( self, MS_FALSE );
     }
 
     %newobject getOption;
