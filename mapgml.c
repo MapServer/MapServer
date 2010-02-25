@@ -1413,11 +1413,8 @@ void msAxisSwapShape(shapeObj *shape)
 ** msGMLWriteWFSQuery()
 **
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
-** bUseGetShape is used when the query passed through a commplex filter
-** encoding #3305
 */
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default_namespace_prefix, 
-                       int outputformat, int bUseGetShape)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default_namespace_prefix, int outputformat)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -1513,11 +1510,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *default
       }
 
       for(j=0; j<lp->resultcache->numresults; j++) {
-        if (bUseGetShape)
-          status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);  
-        else
-          status =  msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);  
-
+        status = msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
         if(status != MS_SUCCESS) 
             return(status);
 
