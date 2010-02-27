@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fix crash with GRID layers with no classes (#3352)
+
 - Remove "legacy" raster support, all raster rendering via GDAL now.
 
 - Very preliminary render plugin support for raster rendering. (RFC 54)
