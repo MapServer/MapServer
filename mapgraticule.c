@@ -79,8 +79,11 @@ int msGraticuleLayerOpen(layerObj *layer)
   pInfo->dwhichlatitude = -90.0;
   pInfo->dwhichlongitude = -180.0;
   pInfo->bvertical = 1;
-  
-  if( layer->class[0]->label.size == -1 )
+
+  if( layer->numclasses == 0 )
+      msDebug( "GRID layer has no classes, nothing will be rendered.\n" );
+
+  if( layer->numclasses == 0 || layer->class[0]->label.size == -1 )
     pInfo->blabelaxes = 0;
   else
     pInfo->blabelaxes = 1;
