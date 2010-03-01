@@ -275,28 +275,37 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
   free(edge);
 }
 
-void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke) 
+static void imagePolyline(gdImagePtr im, shapeObj *p, int c)
 {
   int i, j;
+
+  for (i=0; i < p->numlines; i++)
+    for(j=1; j<p->line[i].numpoints; j++)
+      gdImageLine(im, (int) p->line[i].point[j-1].x, (int) p->line[i].point[j-1].y, (int) p->line[i].point[j].x, (int) p->line[i].point[j].y, c);
+}
+
+void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke) 
+{
   gdImagePtr ip;
+  int c;
 
   if(!img || !p || !stroke) return;
   ip = (gdImagePtr) img->img.plugin;
 
   if(stroke->color.pen == MS_PEN_UNSET) setPen(ip, &stroke->color);
-  for (i=0; i < p->numlines; i++)
-    for(j=1; j<p->line[i].numpoints; j++)
-      gdImageLine(ip, (int) p->line[i].point[j-1].x, (int) p->line[i].point[j-1].y, (int) p->line[i].point[j].x, (int) p->line[i].point[j].y, stroke->color.pen);
+  c = stroke->color.pen;
+
+  imagePolyline(ip, p, c);
 }
 
-void renderPolygonGD(imageObj *img, shapeObj *p, colorObj *c) 
+void renderPolygonGD(imageObj *img, shapeObj *p, colorObj *color) 
 {  
   gdImagePtr ip;
-  fprintf(stderr, "in renderPolygonGD(), r=%d, g=%d, b=%d\n", c->red, c->green, c->blue);
-  if(!img || !p || !c) return;
+
+  if(!img || !p || !color) return;
   ip = (gdImagePtr) img->img.plugin;
-  if(c->pen == MS_PEN_UNSET) setPen(ip, c);
-  imageFilledPolygon(ip, p, c->pen, 0, 0);
+  if(color->pen == MS_PEN_UNSET) setPen(ip, color);
+  imageFilledPolygon(ip, p, color->pen, 0, 0);
 }
 
 void renderGlyphsLineGD(imageObj *img, labelPathObj *labelpath, labelStyleObj *style, char *text) {
