@@ -891,7 +891,7 @@ Optional Packages:
   --with-ftgl[=DIR]       Include OpenGl support (DIR is OpenGL's install dir).
   --with-opengl[=DIR]     Include OpenGl support (DIR is OpenGL's install dir).
   --with-agg[=DIR]        Include AGG support (DIR is AGG's install dir).
-  --with-arg-svg-symbols[=yes/no]
+  --with-agg-svg-symbols[=yes/no]
                           Include AGG SVG symbol support (Requires expat).
   --with-experimental-png Include experimental palette support for rgba png.
   --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
@@ -9221,14 +9221,13 @@ echo "$as_me: error: the freetype-config executable could not be found and is re
 
     AGG_ENABLED="-DUSE_AGG"
   AGG_INC="$FT_INC -Irenderers/agg/include"
- # AGG_OBJ="renderers/agg/src/agg_arc.o renderers/agg/src/agg_arrowhead.o renderers/agg/src/agg_bezier_arc.o renderers/agg/src/agg_bspline.o renderers/agg/src/agg_curves.o renderers/agg/src/agg_vcgen_contour.o renderers/agg/src/agg_vcgen_dash.o renderers/agg/src/agg_vcgen_markers_term.o renderers/agg/src/agg_vcgen_smooth_poly1.o renderers/agg/src/agg_vcgen_stroke.o renderers/agg/src/agg_vcgen_bspline.o renderers/agg/src/agg_gsv_text.o renderers/agg/src/agg_image_filters.o renderers/agg/src/agg_line_aa_basics.o renderers/agg/src/agg_line_profile_aa.o renderers/agg/src/agg_rounded_rect.o renderers/agg/src/agg_sqrt_tables.o renderers/agg/src/agg_embedded_raster_fonts.o renderers/agg/src/agg_trans_affine.o renderers/agg/src/agg_trans_warp_magnifier.o renderers/agg/src/agg_trans_single_path.o renderers/agg/src/agg_trans_double_path.o renderers/agg/src/agg_vpgen_clip_polygon.o renderers/agg/src/agg_vpgen_clip_polyline.o renderers/agg/src/agg_vpgen_segmentator.o renderers/agg/src/agg_font_freetype.o"
 
  AGG_OBJ="renderers/agg/src/agg_arc.o renderers/agg/src/agg_curves.o renderers/agg/src/agg_vcgen_contour.o renderers/agg/src/agg_vcgen_dash.o renderers/agg/src/agg_vcgen_stroke.o renderers/agg/src/agg_image_filters.o renderers/agg/src/agg_line_aa_basics.o renderers/agg/src/agg_line_profile_aa.o renderers/agg/src/agg_sqrt_tables.o renderers/agg/src/agg_embedded_raster_fonts.o renderers/agg/src/agg_trans_affine.o renderers/agg/src/agg_vpgen_clip_polygon.o renderers/agg/src/agg_vpgen_clip_polyline.o renderers/agg/src/agg_font_freetype.o"
 
- if test "$with_agg_svg_symbols" != "no" ; then
-	    AGG_OBJ="$AGG_OBJ renderers/agg/src/agg_svg_parser.o renderers/agg/src/agg_svg_path_renderer.o renderers/agg/src/agg_svg_path_tokenizer.o"
-	AGG_LIB=" -lexpat"
-	AGG_SVG_SYMBOLS_ENABLED="-DUSE_AGG_SVG_SYMBOLS"
+ if test "$with_agg_svg_symbols" = "yes" ; then
+        AGG_OBJ="$AGG_OBJ renderers/agg/src/agg_svg_parser.o renderers/agg/src/agg_svg_path_renderer.o renderers/agg/src/agg_svg_path_tokenizer.o"
+    AGG_LIB=" -lexpat"
+    AGG_SVG_SYMBOLS_ENABLED="-DUSE_AGG_SVG_SYMBOLS"
  fi
 else
 
