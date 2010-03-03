@@ -598,15 +598,11 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
     }
 
     psLayer->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj));
+    initResultCache(psLayer->resultcache);
 
-    psLayer->resultcache->results = NULL;
-    psLayer->resultcache->numresults =  0;
-    psLayer->resultcache->cachesize = 0;
-    psLayer->resultcache->bounds.minx = -1;
-    psLayer->resultcache->bounds.miny = -1;
-    psLayer->resultcache->bounds.maxx = -1;
-    psLayer->resultcache->bounds.maxy = -1;
-
+    /*this will force the queries to retrive the shapes using
+     their unique id #3305*/
+    psLayer->resultcache->usegetshape = MS_TRUE;
 
     status = msLayerOpen(psLayer);
     if (status != MS_SUCCESS) 
@@ -627,7 +623,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
     for (i=0; i<nSize; i++)
     {
         msInitShape(&shape);
-        status = msLayerResultsGetShape(psLayer, &shape, -1, anValues[i]);
+        status = msLayerGetShape(psLayer, &shape, -1, anValues[i]);
 
         if (status != MS_SUCCESS)
           nClassIndex = -1;
