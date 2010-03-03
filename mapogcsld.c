@@ -723,7 +723,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     layerObj *psCurrentLayer = NULL;
     const char *pszWmsName=NULL;
     int j=0;
-
+    const char *key=NULL;
 
     if (!psRoot || !psLayer)
         return MS_FAILURE;
@@ -817,7 +817,18 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                 }
                                 if (j < psLayer->map->numlayers)
                                 {
-                                   
+                                    /*make sure that the tmp layer has all the metadata that
+                                      the orinal layer has, allowing to do parsing for
+                                      such things as gml_attribute_type #3052*/
+                                    while (1) 
+                                    {
+                                        key = msNextKeyFromHashTable(&psCurrentLayer->metadata, key);
+                                        if (!key) 
+                                          break;
+                                        else 
+                                          msInsertHashTable(&psLayer->metadata, key, 
+                                                            msLookupHashTable(&psCurrentLayer->metadata, key));
+                                    }
                                     FLTPreParseFilterForAlias(psNode, psLayer->map, j, "G");
                                 }
 
