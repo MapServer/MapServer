@@ -15868,7 +15868,7 @@ DLEXPORT void php3_ms_hashtable_nextkey(INTERNAL_FUNCTION_PARAMETERS)
 {
     hashTableObj *self;
     pval         *pPreviousKey, *pThis;
-    char         *pszKey = "", *pszValue = NULL;
+    char         *pszKey = NULL, *pszValue = NULL;
     HashTable   *list=NULL;
 
     pThis = getThis();
@@ -15884,6 +15884,7 @@ DLEXPORT void php3_ms_hashtable_nextkey(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_string(pPreviousKey);
 
+    /* pszKey=NULL is used for first call */
     if (strcmp(pPreviousKey->value.str.val,"") != 0)
     {
        pszKey = pPreviousKey->value.str.val;
