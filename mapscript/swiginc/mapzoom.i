@@ -226,13 +226,13 @@
         /* ----------------------------------------------------------- */
         /*      check if the values passed are consistent min <= max.   */
         /* ----------------------------------------------------------- */
-        /* This is not a typo: "maxx >= minx". For historical reason, we
-         * keep this as it is. See documentation for more info about this check. */
-        if (poPixRect->maxx >= poPixRect->minx) {
+        if (poPixRect->minx >= poPixRect->maxx) {
             msSetError(MS_MISCERR, "image rectangle minx >= maxx", "mapscript::mapObj::zoomRectangle()");
             return MS_FAILURE;
         }
-        if (poPixRect->miny >= poPixRect->maxy) {
+        /* This is not a typo: "maxx >= minx". For historical reason, we
+         * keep this as it is. See documentation for more info about this check. */
+        if (poPixRect->maxy >= poPixRect->miny) {
             msSetError(MS_MISCERR, "image rectangle maxy >= miny", "mapscript::mapObj::zoomRectangle()");
             return MS_FAILURE;
         }
