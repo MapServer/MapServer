@@ -200,7 +200,7 @@ static void msMSSQL2008CloseConnection(void *conn_handle)
 
 	if (conn->hstmt)
 	{
-		SQLFreeHandle(SQL_HANDLE_DBC, conn->hstmt);
+		SQLFreeHandle(SQL_HANDLE_STMT, conn->hstmt);
 	}
 	if (conn->hdbc)
 	{
