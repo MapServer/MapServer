@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed msMSSQL2008CloseConnection() to free the statement handle properly (#3244)
+
 - Fixed the query handling with the MSSQL2008 driver (#3058)
 
 - Fixed swig zoomRectangle() method: the maxy in the rect object have to be < miny value (#3286)
