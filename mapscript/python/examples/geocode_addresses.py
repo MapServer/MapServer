@@ -3,7 +3,7 @@
 # Script : geocode_addresses.py
 #
 # Purpose: simple script to read a csv file, geocode the addresses
-# with the Google Maps API and write to a new shapefile
+# with the Geocoder API and write to a new shapefile
 #
 # $Id$
 #
