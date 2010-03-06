@@ -97,6 +97,30 @@ void setMSSQL2008LayerInfo(layerObj *layer, msMSSQL2008LayerInfo *MSSQL2008layer
      layer->layerinfo = (void*) MSSQL2008layerinfo;
 }
 
+void handleSQLError(layerObj *layer)
+{
+   SQLCHAR       SqlState[6], Msg[SQL_MAX_MESSAGE_LENGTH];
+   SQLINTEGER    NativeError;
+   SQLSMALLINT   i, MsgLen;
+   SQLRETURN  rc;
+   msMSSQL2008LayerInfo *layerinfo = getMSSQL2008LayerInfo(layer);
+
+   if (layerinfo == NULL)
+       return;
+   
+    // Get the status records.
+   i = 1;
+   while ((rc = SQLGetDiagRec(SQL_HANDLE_STMT, layerinfo->conn->hstmt, i, SqlState, &NativeError,
+            Msg, sizeof(Msg), &MsgLen)) != SQL_NO_DATA) 
+   {
+      if(layer->debug) 
+      {
+            msDebug("SQLError: %s\n", Msg);
+      }
+      i++;
+   }
+}
+
 /* remove white space */
 /* dont send in empty strings or strings with just " " in them! */
 static char* removeWhite(char *str)
@@ -415,9 +439,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
 	{
 		msSetError( MS_QUERYERR, "Could not parse the layer data", "msMSSQL2008LayerOpen()");
         return MS_FAILURE;
-    } 
-
-    //setMSSQL2008LayerInfo(layer, layerinfo);
+    }
 
     return MS_SUCCESS;
 }
@@ -492,7 +514,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 		Plus 10 formatted doubles (15 digits of precision, a decimal point, a space/comma delimiter each = 17 chars each)
 		Plus SRID + comma - if SRID is a long...we'll be safe with 10 chars 
 	*/
-	char        box3d[40 + 10 * 17 + 11];
+	char        box3d[40 + 10 * 22 + 11];
     char        query_string_temp[10000];       /* Should be big enough */
     int         t;
 
@@ -568,14 +590,23 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
         columns_wanted = _strdup(buffer);
     }
 
-	sprintf(box3d, "Geometry::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
-		rect.minx, rect.miny, 
-		rect.maxx, rect.miny, 
-		rect.maxx, rect.maxy, 
-		rect.minx, rect.maxy,
-		rect.minx, rect.miny,
-        layerinfo->user_srid
-        );
+	if (rect.minx == rect.maxx || rect.miny == rect.maxy)
+    {
+        /* create point shape for rectangles with zero area */
+        sprintf(box3d, "Geometry::STGeomFromText('POINT(%.15g %.15g)',%s)", /* %s.STSrid)", */
+		    rect.minx, rect.miny, layerinfo->user_srid);
+    }
+    else
+    {
+	    sprintf(box3d, "Geometry::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
+		    rect.minx, rect.miny, 
+		    rect.maxx, rect.miny, 
+		    rect.maxx, rect.maxy, 
+		    rect.minx, rect.maxy,
+		    rect.minx, rect.miny,
+            layerinfo->user_srid
+            );
+    }
 
     /* substitute token '!BOX!' in geom_table with the box3d - do an unlimited # of subs */
     /* to not undo the work here, we need to make sure that data_source is malloc'd here */
@@ -1249,6 +1280,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
         /* Any error assume out of recordset bounds */
         if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
         {
+            handleSQLError(layer);
             return MS_DONE;
         }
 
@@ -1263,6 +1295,8 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 			{
 				/* figure out how big the buffer needs to be */
                 rc = SQLGetData(layerinfo->conn->hstmt, t + 1, SQL_C_BINARY, dummyBuffer, 0, &needLen);
+                if (rc == SQL_ERROR)
+                    handleSQLError(layer);
 
                 if (needLen > 0)
                 {
@@ -1276,6 +1310,8 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
 				    /* Now grab the data */
                     rc = SQLGetData(layerinfo->conn->hstmt, t + 1, SQL_C_BINARY, valueBuffer, needLen, &retLen);
+                    if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
+                        handleSQLError(layer);
 
 				    /* Terminate the buffer */
                     valueBuffer[retLen] = 0; /* null terminate it */
@@ -1292,6 +1328,8 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
             {
 				/* Set up to request the size of the buffer needed */
                 rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 1, SQL_C_BINARY, dummyBuffer, 0, &needLen);
+                if (rc == SQL_ERROR)
+                    handleSQLError(layer);
 
                 /* allow space for coercion to geometry collection if needed*/
                 wkbTemp = (char*)malloc(needLen+9);  
@@ -1307,6 +1345,8 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
 				/* Grab the WKB */
                 rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 1, SQL_C_BINARY, wkbBuffer, needLen, &retLen);
+                if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
+                    handleSQLError(layer);
 
                 memcpy(&geomType, wkbBuffer + 1, 4);
 
@@ -1368,6 +1408,9 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
             /* Next get unique id for row - since the OID shouldn't be larger than a long we'll assume billions as a limit */
             rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 2, SQL_C_BINARY, oidBuffer, sizeof(oidBuffer) - 1, &retLen);
+            if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
+                    handleSQLError(layer);
+
 			oidBuffer[retLen] = 0;
             record_oid = strtol(oidBuffer, NULL, 10);
 
@@ -1442,7 +1485,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
     if(layer->numitems == 0) 
     {
-        snprintf(buffer, sizeof(buffer), "%s.STAsBinary()", layerinfo->geom_column);
+        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(), convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
         columns_wanted = _strdup(buffer);
     } 
     else 
@@ -1451,7 +1494,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
             snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
         }
 
-        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary()", layerinfo->geom_column);
+        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(), convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = _strdup(buffer);
     }
@@ -1476,6 +1519,9 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
         return MS_FAILURE;
     }
+
+    layerinfo->sql = query_str;
+    layerinfo->row_num = 0;
 
 	return msMSSQL2008LayerGetShapeRandom(layer, shape, &(layerinfo->row_num));
 }
@@ -1864,6 +1910,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     vtable->LayerWhichShapes = msMSSQL2008LayerWhichShapes;
     vtable->LayerNextShape = msMSSQL2008LayerNextShape;
     vtable->LayerGetShape = msMSSQL2008LayerGetShapeVT;
+    vtable->LayerResultsGetShape = msMSSQL2008LayerGetShapeVT; /* no special version, use ...GetShape() */
 
     vtable->LayerClose = msMSSQL2008LayerClose;
 
@@ -1898,6 +1945,7 @@ msMSSQL2008LayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerWhichShapes = msMSSQL2008LayerWhichShapes;
     layer->vtable->LayerNextShape = msMSSQL2008LayerNextShape;
     layer->vtable->LayerGetShape = msMSSQL2008LayerGetShapeVT;
+    layer->vtable->LayerResultsGetShape = msMSSQL2008LayerGetShapeVT; /* no special version, use ...GetShape() */
 
     layer->vtable->LayerClose = msMSSQL2008LayerClose;
 
