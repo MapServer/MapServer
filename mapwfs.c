@@ -2082,7 +2082,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
   /* VERSION *and* REQUEST *and* SERVICE required by all WFS requests including 
    * GetCapabilities.
    */
-  if (paramsObj->pszVersion==NULL)
+  if (paramsObj->pszVersion==NULL || strlen(paramsObj->pszVersion)<=0)
   {
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: VERSION parameter missing", 
@@ -2094,8 +2094,8 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       paramsObj = NULL;
       return returnvalue;
   }
-
-  if (paramsObj->pszRequest==NULL)
+  
+  if (paramsObj->pszRequest==NULL || strlen(paramsObj->pszRequest)<=0)
   {
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: REQUEST parameter missing", 
@@ -2106,8 +2106,8 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
       paramsObj = NULL;
       return returnvalue;
   }
-
-  if (paramsObj->pszService==NULL)
+  
+  if (paramsObj->pszService==NULL || strlen(paramsObj->pszService)<=0)
   {
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: SERVICE parameter missing", 
