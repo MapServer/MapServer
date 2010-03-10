@@ -15,11 +15,16 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-6):
 --------------------------------
 
-- Fixed msMSSQL2008CloseConnection() to free the statement handle properly (#3244)
+- Fixed msMSSQL2008CloseConnection() to free the statement handle 
+  properly (#3244)
+
+- Fixed PHP MapScript's metadata.nextkey() that was sometimes skipping some
+  entries on first call because the NULL arg was not properly handled (#3363)
 
 - Fixed the query handling with the MSSQL2008 driver (#3058)
 
-- Fixed swig zoomRectangle() method: the maxy in the rect object have to be < miny value (#3286)
+- Fixed swig zoomRectangle() method: the maxy in the rect object have to 
+  be < miny value (#3286)
 
 - Backport fix for SLD filters column names detection (#3052)
 
