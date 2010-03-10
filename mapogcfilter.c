@@ -3221,7 +3221,12 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
       
 
     /*opening bracket*/
-    strcat(szBuffer, " (");
+    /*for postgis layers double quote the attribute name, allowing reserved names to
+ *       be used as attribute name #3311*/
+    if (lp->connectiontype == MS_POSTGIS)
+      strcat(szBuffer, " (\"");
+    else
+      strcat(szBuffer, " (");
 
     /* attribute */
     /*case insensitive set ? */
@@ -3237,7 +3242,9 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     else
       strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
 
-    
+    if (lp->connectiontype == MS_POSTGIS)
+     strcat(szBuffer, "\"");
+
 
     /* logical operator */
     if (strcasecmp(psFilterNode->pszValue, 
