@@ -1216,7 +1216,10 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   msInitShape(&shape);
 
   for(i=0; i<layer->resultcache->numresults; i++) {
-    status = msLayerResultsGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
+    if(layer->resultcache->usegetshape) 
+      status = msLayerGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
+    else
+      status = msLayerResultsGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
     if(status != MS_SUCCESS) {
         msFree(colorbuffer);
         msFree(mindistancebuffer);

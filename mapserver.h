@@ -1018,6 +1018,9 @@ typedef struct {
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
+  
+  /*used to force the result retreiving to use getshape instead of resultgetshape*/
+  int usegetshape;
 
 } resultCacheObj;
 
@@ -1625,6 +1628,7 @@ MS_DLL_EXPORT void initScalebar(scalebarObj *scalebar);
 MS_DLL_EXPORT void initGrid( graticuleObj *pGraticule );
 MS_DLL_EXPORT void initWeb(webObj *web);
 MS_DLL_EXPORT void freeWeb(webObj *web);
+MS_DLL_EXPORT void initResultCache(resultCacheObj *resultcache);
 
 MS_DLL_EXPORT featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);

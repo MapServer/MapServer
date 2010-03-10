@@ -5729,3 +5729,14 @@ void msCloseConnections(mapObj *map) {
   }
 }
 
+void initResultCache(resultCacheObj *resultcache)
+{
+    if (resultcache)
+    {
+        resultcache->results = NULL;
+        resultcache->numresults = 0;
+        resultcache->cachesize = 0;
+        resultcache->bounds.minx = resultcache->bounds.miny = resultcache->bounds.maxx = resultcache->bounds.maxy = -1;
+        resultcache->usegetshape = MS_FALSE;
+    }
+}

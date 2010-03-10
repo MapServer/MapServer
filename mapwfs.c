@@ -1050,6 +1050,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   int nQueriedLayers=0;
   layerObj *lpQueried=NULL;
 
+  /*use msLayerGetShape instead of msLayerResultsGetShape of complex filter #3305*/
+  int bComplexFilter = MS_FALSE;
+
   /* Default filter is map extents */
   bbox = map->extent;
   
@@ -1552,6 +1555,20 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	}
 	psNode = FLTParseFilterEncoding(paszFilter[i]);
 	
+        /*if we have a complex filter, make sure that paging is done at the gml output level
+          and not at the driver level #3305*/
+        bComplexFilter = (!FLTIsSimpleFilter(psNode));
+        if (bComplexFilter && nQueriedLayers == 1 && lpQueried &&
+            msLayerSupportsPaging(lpQueried) && 
+            (lpQueried->startindex > 0 && lpQueried->maxfeatures > 0))
+        {
+            startindex = lpQueried->startindex;
+            lpQueried->startindex = -1;
+
+            maxfeatures = lpQueried->maxfeatures;
+            lpQueried->maxfeatures = -1;
+        }
+
 	if (!psNode) {
 	  msSetError(MS_WFSERR, 
 		     "Invalid or Unsupported FILTER in GetFeature : %s", 
@@ -1575,7 +1592,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
             }
         }
 
-        FLTFreeFilterEncodingNode( psNode );
+         FLTFreeFilterEncodingNode( psNode );
         psNode = NULL;
       }
 

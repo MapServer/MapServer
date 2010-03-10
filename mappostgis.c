@@ -1382,7 +1382,7 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid) {
 
 }
 
-int msPostGISReadShape(layerObj *layer, shapeObj *shape, int random) {
+int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
 
     char *wkbstr = NULL;
     unsigned char *wkb = NULL;
@@ -1480,26 +1480,21 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape, int random) {
             }
         }
         
-        if( random ) {
-            /* t is the geometry, t+1 is the uid */
-            tmp = PQgetvalue(layerinfo->pgresult, layerinfo->rownum, t + 1);
-            if( tmp ) {
-                uid = strtol( tmp, NULL, 10 );
-            }
-            else {
-                uid = 0;
-            }
-            if( layer->debug > 4 ) {
-                msDebug("msPostGISReadShape: Setting shape->index = %d\n", uid);
-            }
-            shape->index = uid;
-        } else {
-            if( layer->debug > 4 ) {
-                msDebug("msPostGISReadShape: Setting shape->index = %d\n", layerinfo->rownum);
-            }
-            shape->index = layerinfo->rownum;
+        /* t is the geometry, t+1 is the uid */
+        tmp = PQgetvalue(layerinfo->pgresult, layerinfo->rownum, t + 1);
+        if( tmp ) {
+            uid = strtol( tmp, NULL, 10 );
         }
-
+        else {
+            uid = 0;
+        }
+        if( layer->debug > 4 ) {
+            msDebug("msPostGISReadShape: Setting shape->index = %d\n", uid);
+            msDebug("msPostGISReadShape: Setting shape->tileindex = %d\n", layerinfo->rownum);
+        }
+        shape->index = uid;
+        shape->tileindex = layerinfo->rownum;
+        
         if( layer->debug > 2 ) {
             msDebug("msPostGISReadShape: [index] %d\n",  shape->index);
         }
@@ -1886,7 +1881,7 @@ int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape) {
         if (layerinfo->rownum < PQntuples(layerinfo->pgresult)) {
             int rv;
             /* Retrieve this shape, cursor access mode. */
-            rv = msPostGISReadShape(layer, shape, 0);
+            rv = msPostGISReadShape(layer, shape);
             if( shape->type != MS_SHAPE_NULL ) {
                 (layerinfo->rownum)++; /* move to next shape */
                 return MS_SUCCESS;
@@ -1931,6 +1926,11 @@ int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, lo
         msDebug("msPostGISLayerResultsGetShape called for record = %i\n", record);
     }
 
+    if( tile < 0 ) {
+        msDebug("msPostGISLayerResultsGetShape called for record = %i\n", record);
+        return msPostGISLayerResultsGetShape(layer, shape, tile, record);
+    }
+
     layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
 
     /* Check the validity of the open result. */
@@ -1953,21 +1953,21 @@ int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, lo
     }
 
     /* Check the validity of the requested record number. */
-    if( record >= PQntuples(pgresult) ) {
-        msDebug("msPostGISLayerResultsGetShape got record request (%d) but only has %d tuples.\n", record, PQntuples(pgresult));
+    if( tile >= PQntuples(pgresult) ) {
+        msDebug("msPostGISLayerResultsGetShape got request for (%d) but only has %d tuples.\n", tile, PQntuples(pgresult));
         msSetError( MS_MISCERR,
                     "Got request larger than result set.",
                     "msPostGISLayerResultsGetShape()");
         return MS_FAILURE;
     }
 
-    layerinfo->rownum = record; /* Only return one result. */
+    layerinfo->rownum = tile; /* Only return one result. */
 
     /* We don't know the shape type until we read the geometry. */
     shape->type = MS_SHAPE_NULL;
 
 	/* Return the shape, cursor access mode. */
-    result = msPostGISReadShape(layer, shape, 0);
+    result = msPostGISReadShape(layer, shape);
 
     return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : MS_SUCCESS;
 #else
@@ -2054,7 +2054,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long reco
 
     if (num_tuples > 0) {
         /* Get shape in random access mode. */
-        result = msPostGISReadShape(layer, shape, 1);
+        result = msPostGISReadShape(layer, shape);
     }
 
     return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : ( (num_tuples > 0) ? MS_SUCCESS : MS_DONE );

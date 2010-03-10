@@ -364,9 +364,7 @@ int msQueryByIndex(mapObj *map)
 
   if(map->query.clear_resultcache || lp->resultcache == NULL) {
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
-    lp->resultcache->results = NULL;
-    lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-    lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+    initResultCache( lp->resultcache);
   }
 
   msInitShape(&shape);
@@ -523,9 +521,7 @@ int msQueryByAttributes(mapObj *map)
   }
 
   lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
-  lp->resultcache->results = NULL;
-  lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-  lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+  initResultCache( lp->resultcache);
   
   nclasses = 0;
   classgroup = NULL;
@@ -676,9 +672,7 @@ int msQueryByRect(mapObj *map)
     }
 
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
-    lp->resultcache->results = NULL;
-    lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-    lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+    initResultCache( lp->resultcache);
 
     nclasses = 0;
     classgroup = NULL;
@@ -910,9 +904,8 @@ int msQueryByFeatures(mapObj *map)
 
       if(i == 0) {
 	lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
-	lp->resultcache->results = NULL;
-	lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-	lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;    
+        initResultCache( lp->resultcache);
+
       }      
 
       nclasses = 0;
@@ -1169,9 +1162,7 @@ int msQueryByPoint(mapObj *map)
     }
 
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
-    lp->resultcache->results = NULL;
-    lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-    lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+    initResultCache( lp->resultcache);
 
     nclasses = 0;
     classgroup = NULL;
@@ -1360,9 +1351,7 @@ int msQueryByShape(mapObj *map)
     }
 
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
-    lp->resultcache->results = NULL;
-    lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-    lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+    initResultCache( lp->resultcache);
 
     nclasses = 0;
     classgroup = NULL;
@@ -1575,10 +1564,8 @@ int msQueryByOperator(mapObj *map)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     /* identify target shapes */
-    searchrect.minx = map->extent.minx;
-    searchrect.miny = map->extent.miny;
-    searchrect.maxx = map->extent.maxx;
-    searchrect.maxy = map->extent.maxy;
+    searchrect = qshape->bounds;
+
       
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
@@ -1596,9 +1583,7 @@ int msQueryByOperator(mapObj *map)
     }
 
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
-    lp->resultcache->results = NULL;
-    lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-    lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+    initResultCache( lp->resultcache);
 
     classgroup = NULL;
     if (lp->classgroup && lp->numclasses > 0)
