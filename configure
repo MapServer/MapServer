@@ -932,7 +932,7 @@ Optional Packages:
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
   --with-httpd            Specify path to 'httpd' executable.
   --with-warnings[=flags] Enable strict warnings (or user defined warnings)
-  --with-php=DIR          Specify directory where PHP4's include files are
+  --with-php=DIR          Specify directory where PHP5's include files are
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
                           module.
@@ -12996,16 +12996,11 @@ PHP_LD_SHARED=$PHP_LD_SHARED
     PHP_LD="$PHP_LD_SHARED $PHP_LD_XTRAFLAGS"
   fi
 
-          echo "$as_me:$LINENO: checking for location of config.h or php_config.h" >&5
-echo $ECHO_N "checking for location of config.h or php_config.h... $ECHO_C" >&6
-    test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
-
-    test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
-
-    test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
+          echo "$as_me:$LINENO: checking for location of php_config.h" >&5
+echo $ECHO_N "checking for location of php_config.h... $ECHO_C" >&6
+    test -f "$PHP_SRC_DIR/main/php_config.h" && test -f "$PHP_SRC_DIR/main/php_version.h"  && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
 
     test -f "$PHP_SRC_DIR/include/php/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
-
     test -f "$PHP_SRC_DIR/include/php5/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php5/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
 
   if test -n "$PHP_CONFIG_H" ; then
@@ -13013,27 +13008,31 @@ echo $ECHO_N "checking for location of config.h or php_config.h... $ECHO_C" >&6
 echo "${ECHO_T}$PHP_CONFIG_H" >&6
   else
     { { echo "$as_me:$LINENO: error:
-!!! Could not find config.h or php_config.h in $PHP_SRC_DIR.          !!!
+!!! Could not find php_config.h and php_version.h in $PHP_SRC_DIR.          !!!
 !!! Has PHP been configured yet?                                      !!!" >&5
 echo "$as_me: error:
-!!! Could not find config.h or php_config.h in $PHP_SRC_DIR.          !!!
+!!! Could not find php_config.h and php_version.h in $PHP_SRC_DIR.          !!!
 !!! Has PHP been configured yet?                                      !!!" >&2;}
    { (exit 1); exit 1; }; }
   fi
 
-          echo "$as_me:$LINENO: checking whether we have PHP3 or PHP4" >&5
-echo $ECHO_N "checking whether we have PHP3 or PHP4... $ECHO_C" >&6
-  if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
-    PHP_VERSION_FLAG="-DPHP4"
-  else
-    PHP_VERSION_FLAG="-DPHP3"
+
+        echo "$as_me:$LINENO: checking if we have PHP 5.2.0+" >&5
+echo $ECHO_N "checking if we have PHP 5.2.0+... $ECHO_C" >&6
+  PHP_VERSION=`grep 'PHP_VERSION_ID' $PHP_SRC_DIR/main/php_version.h | cut -d' ' -f3`
+  if test -z "$PHP_VERSION" || test $PHP_VERSION -lt 50200; then
     { { echo "$as_me:$LINENO: error:
-!!! PHP MapScript now requires PHP 4.1.2 or more recent.              !!!
-!!! Support for PHP3 has been dropped after MapServer version 3.5.    !!!" >&5
+!!! PHP MapScript now requires PHP 5.2.0 or more recent.              !!!
+!!! Support for PHP3 has been dropped after MapServer version 3.5.    !!!
+!!! Support for PHP4 has been dropped after MapServer version 5.6.    !!!" >&5
 echo "$as_me: error:
-!!! PHP MapScript now requires PHP 4.1.2 or more recent.              !!!
-!!! Support for PHP3 has been dropped after MapServer version 3.5.    !!!" >&2;}
+!!! PHP MapScript now requires PHP 5.2.0 or more recent.              !!!
+!!! Support for PHP3 has been dropped after MapServer version 3.5.    !!!
+!!! Support for PHP4 has been dropped after MapServer version 5.6.    !!!" >&2;}
    { (exit 1); exit 1; }; }
+  else
+     echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
   fi
   echo "$as_me:$LINENO: result: $PHP_VERSION_FLAG" >&5
 echo "${ECHO_T}$PHP_VERSION_FLAG" >&6

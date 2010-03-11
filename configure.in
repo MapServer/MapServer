@@ -2438,7 +2438,7 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(for PHP/MapScript module options)
 AC_ARG_WITH(php,
-[  --with-php=DIR          Specify directory where PHP4's include files are
+[  --with-php=DIR          Specify directory where PHP5's include files are
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript 
                           module.],,)
@@ -2485,22 +2485,15 @@ if test -n "$with_php" -a -d "$with_php" ; then
   fi
 
   dnl
-  dnl Look for PHP3's config.h or PHP4's php_config.h.
+  dnl Look for PHP5's php_config.h.
   dnl We'll need the config file to find info about the PHP configuration
   dnl
-  AC_MSG_CHECKING([for location of config.h or php_config.h])
-  dnl In PHP3, it was called config.h
-  test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
-
-  dnl In PHP 4.0.1 to 4.0.3, it was php-4.0.x/php_config.h
-  test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
-
-  dnl Starting with PHP 4.0.4, it's php-4.0.x/main/php_config.h
-  test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
+  AC_MSG_CHECKING([for location of php_config.h])
+  dnl Look for the main/php_config.h
+  test -f "$PHP_SRC_DIR/main/php_config.h" && test -f "$PHP_SRC_DIR/main/php_version.h"  && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
 
   dnl If php was installed, then the headers are under $prefix/include/php/*
   test -f "$PHP_SRC_DIR/include/php/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
-
   dnl In PHP 5, few distributions use "/usr/include/php5" directory
   test -f "$PHP_SRC_DIR/include/php5/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php5/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
 
@@ -2508,22 +2501,23 @@ if test -n "$with_php" -a -d "$with_php" ; then
     AC_MSG_RESULT([$PHP_CONFIG_H])
   else
     AC_MSG_ERROR([
-!!! Could not find config.h or php_config.h in $PHP_SRC_DIR.          !!!
+!!! Could not find php_config.h and php_version.h in $PHP_SRC_DIR.          !!!
 !!! Has PHP been configured yet?                                      !!!])
   fi
 
-  dnl
+
   dnl Check which PHP version we're using.
   dnl Default is PHP3, and if ZEND_API is set then we assume that we have PHP4.
   dnl
-  AC_MSG_CHECKING([whether we have PHP3 or PHP4])
-  if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
-    PHP_VERSION_FLAG="-DPHP4"
-  else
-    PHP_VERSION_FLAG="-DPHP3"
+  AC_MSG_CHECKING([if we have PHP 5.2.0+])
+  PHP_VERSION=`grep 'PHP_VERSION_ID' $PHP_SRC_DIR/main/php_version.h | cut -d' ' -f3`
+  if test -z "$PHP_VERSION" || test $PHP_VERSION -lt 50200; then
     AC_MSG_ERROR([
-!!! PHP MapScript now requires PHP 4.1.2 or more recent.              !!!
-!!! Support for PHP3 has been dropped after MapServer version 3.5.    !!!])
+!!! PHP MapScript now requires PHP 5.2.0 or more recent.              !!!
+!!! Support for PHP3 has been dropped after MapServer version 3.5.    !!!
+!!! Support for PHP4 has been dropped after MapServer version 5.6.    !!!])
+  else
+     AC_MSG_RESULT([yes])
   fi
   AC_MSG_RESULT([$PHP_VERSION_FLAG])
 

@@ -138,14 +138,8 @@
 #include <projects.h>
 #include "php_mapscript_util.h"
 
-#if defined (PHP4) || defined (PHP5)
 #include "php.h"
 #include "php_globals.h"
-#else
-#include "phpdl.h"
-#include "php3_list.h"
-#include "functions/head.h"   /* php3_header() */
-#endif
 
 #include "maperror.h"
 
@@ -157,9 +151,7 @@
 #include <errno.h>
 #endif
 
-#if defined (PHP4) || defined (PHP5)
 #define ZEND_DEBUG 0
-#endif
 
 #ifndef DLEXPORT
 #define DLEXPORT ZEND_DLEXPORT
@@ -190,9 +182,7 @@ PHP_MINFO_FUNCTION(phpproj);
 DLEXPORT void php_info_proj(void);
 #endif
 
-#if defined (PHP4) || defined (PHP5)
 static zend_class_entry *proj_class_entry_ptr;
-#endif
 
 #define PHPMS_GLOBAL(a) a
 static int le_projobj;
@@ -256,18 +246,14 @@ DLEXPORT void php_info_proj(void)
 
 DLEXPORT int php_init_proj(INIT_FUNC_ARGS)
 {
-#if defined (PHP4) || defined (PHP5)
     zend_class_entry tmp_class_entry;
-#endif
 
     PHPMS_GLOBAL(le_projobj)  =
         register_list_destructors(php_proj_pj_free,
                                   NULL);
 
-#if defined (PHP4) || defined (PHP5)
     INIT_CLASS_ENTRY(tmp_class_entry, "proj", php_proj_class_functions);
     proj_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
-#endif
 
     return SUCCESS;
 }
@@ -332,12 +318,8 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pArrayOfParams = NULL;
 
-#if defined (PHP4) || defined (PHP5)
     pval        **pParam = NULL;
     HashTable   *list=NULL;
-#else
-    pval        *pParam = NULL;
-#endif
 
     int         nParamCount = 0;
     int         i = 0;
@@ -372,15 +354,9 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
         if (_php3_hash_index_find(pArrayOfParams->value.ht, i,
                                   (void **)&pParam) != FAILURE)
         {
-#if defined (PHP4) || defined (PHP5)
             convert_to_string((*pParam));
             if ((*pParam)->value.str.val != NULL)
               papszBuf[i] = strdup((*pParam)->value.str.val);
-#else
-            convert_to_string(pParam);
-            if (pParam->value.str.val != NULL)
-              papszBuf[i] = strdup(pParam->value.str.val);
-#endif
         }
     }
      papszBuf[i] = NULL;
@@ -413,9 +389,7 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
 {
-#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
-#endif
     pval        *p1, *p2;
     pval        *pj = NULL;
     PJ          *popj = NULL;
@@ -483,9 +457,7 @@ DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 {
-#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
-#endif
     pval        *p1, *p2;
     pval        *pj = NULL;
     PJ          *popj = NULL;
@@ -543,9 +515,7 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
 {
-#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
-#endif
     pval        *p1, *p2;
     pval        *pjin, *pjout = NULL;
     PJ          *in = NULL;
@@ -631,9 +601,7 @@ DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)
 {
-#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
-#endif
     pval        *p1, *p2;
     pval        *pjin, *pjout = NULL;
     PJ          *in = NULL;
@@ -712,12 +680,9 @@ DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS)
 /* ==================================================================== */
 /*      TODO : freeing does not work properly on PHP4.                  */
 /* ==================================================================== */
-#ifndef PHP4
+#ifdef PHP4_BAD_FREEING
 
-#if defined (PHP4) || defined (PHP5)
     HashTable   *list=NULL;
-#endif
-
     pval        *pj = NULL;
     PJ          *popj = NULL;
 /* -------------------------------------------------------------------- */
