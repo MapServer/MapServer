@@ -306,8 +306,8 @@ mapagg.o: mapagg.cpp mapagg.h
 mapagg2.o: mapagg2.cpp mapagg.h 
 	$(CXX) -c $(CXXFLAGS) -Wno-uninitialized mapagg2.cpp -o mapagg2.o
 
-php3_mapscript:: $(LIBMAP_STATIC)
-	cd mapscript/php3; $(MAKE); cd ../..
+php_mapscript:: $(LIBMAP_STATIC)
+	cd mapscript/php; $(MAKE); cd ../..
 
 maplexer.o: maplexer.c mapserver.h mapfile.h
 
@@ -405,8 +405,8 @@ mapserver-config: Makefile
 	cat mapserver-config.in >> mapserver-config
 	chmod a+x mapserver-config
 
-php3_mapscript_clean::
-	cd mapscript/php3; $(MAKE) clean; cd ../..
+php_mapscript_clean::
+	cd mapscript/php; $(MAKE) clean; cd ../..
 
 install:
 	@echo ""

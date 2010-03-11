@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- PHP Mapscript refactoring: take full advantage of PHP 5 / Zend Engine 2 (#3278)"
+
 - Fixed msRemoveHashTable() to return the proper value on failure/success.
 
 - Correct one pass query problems and OGC filter query (#3305)

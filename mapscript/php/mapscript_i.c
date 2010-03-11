@@ -630,7 +630,7 @@ char *layerObj_getProjection(layerObj* self) {
 int layerObj_setProjection(layerObj *self, char *string) {
   int nReturn;
   nReturn = msLoadProjectionString(&(self->projection), string);
-  if (nReturn == 0)
+  if (nReturn == MS_SUCCESS)
     self->project = MS_TRUE;
   return nReturn;
 
@@ -642,9 +642,9 @@ int layerObj_addFeature(layerObj *self, shapeObj *shape) {
       else 
           shape->index = 0;
     if(insertFeatureList(&(self->features), shape) == NULL) 
-      return -1;
+      return MS_FAILURE;
     else
-      return 0;
+      return MS_SUCCESS;
   }
 
 char *layerObj_getMetaData(layerObj *self, char *name) {
@@ -869,21 +869,6 @@ int classObj_deleteStyle(classObj *self, int index)
     return msDeleteStyle(self, index);
 }
 
-char *classObj_getMetaData(classObj *self, char *name) {
-    return(msLookupHashTable(&(self->metadata), name));
-  }
-
-
-int classObj_setMetaData(classObj *self, char *name, char *value) {
-    if (msInsertHashTable(&(self->metadata), name, value) == NULL)
-	return MS_FAILURE;
-    return MS_SUCCESS;
-  }
-
-int classObj_removeMetaData(classObj *self, char *name) {
-    return(msRemoveHashTable(&(self->metadata), name));
-  }
-
 /**********************************************************************
  * class extensions for pointObj, useful many places
  **********************************************************************/
@@ -953,11 +938,11 @@ int lineObj_add(lineObj *self, pointObj *p) {
     if(self->numpoints == 0) { /* new */	
       self->point = (pointObj *)malloc(sizeof(pointObj));      
       if(!self->point)
-	return -1;
+	return MS_FAILURE;
     } else { /* extend array */
       self->point = (pointObj *)realloc(self->point, sizeof(pointObj)*(self->numpoints+1));
       if(!self->point)
-	return -1;
+	return MS_FAILURE;
     }
 
     self->point[self->numpoints].x = p->x;
@@ -967,7 +952,7 @@ int lineObj_add(lineObj *self, pointObj *p) {
 #endif
     self->numpoints++;
 
-    return 0;
+    return MS_SUCCESS;
   }
 
 
@@ -1280,15 +1265,14 @@ int shapefileObj_get(shapefileObj *self, int i, shapeObj *shape) {
     msFreeShape(shape); /* frees all lines and points before re-filling */
     msSHPReadShape(self->hSHP, i, shape);
 
-    return 0;
+    return MS_SUCCESS;
   }
 
 int shapefileObj_getPoint(shapefileObj *self, int i, pointObj *point) {
     if(i<0 || i>=self->numshapes)
       return -1;
 
-    msSHPReadPoint(self->hSHP, i, point);
-    return 0;
+    return msSHPReadPoint(self->hSHP, i, point);
   }
 
 int shapefileObj_getTransformed(shapefileObj *self, mapObj *map, 
@@ -1404,10 +1388,6 @@ styleObj *styleObj_new(classObj *class, styleObj *style) {
     return class->styles[class->numstyles-1];
   }
 
-void  styleObj_destroy(styleObj *self) {
-    return; /* do nothing, map deconstrutor takes care of it all */
-  }
-
 int styleObj_updateFromString(styleObj *self, char *snippet) {
    return msUpdateStyleFromString(self, snippet, MS_FALSE);
 }
@@ -1514,11 +1494,6 @@ void cgirequestObj_destroy(cgiRequestObj *self)
 // New instance
 hashTableObj *hashTableObj_new() {
    return msCreateHashTable();
-}
-
-// Destroy instance
-void hashTableObj_destroy(hashTableObj *self) {
-   msFreeHashTable(self);
 }
 
 // set a hash item given key and value

@@ -13075,9 +13075,9 @@ echo "$as_me: error:
 echo "${ECHO_T}no" >&6
   fi
 
-  PHPMS_MAKEFILE=mapscript/php3/Makefile
-  MAKE_PHPMS=php3_mapscript
-  MAKE_PHPMS_CLEAN=php3_mapscript_clean
+  PHPMS_MAKEFILE=mapscript/php/Makefile
+  MAKE_PHPMS=php_mapscript
+  MAKE_PHPMS_CLEAN=php_mapscript_clean
 
   PHP_VERSION_FLAG=$PHP_VERSION_FLAG
 

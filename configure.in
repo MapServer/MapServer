@@ -2564,9 +2564,9 @@ if test -n "$with_php" -a -d "$with_php" ; then
     AC_MSG_RESULT(no)
   fi
 
-  PHPMS_MAKEFILE=mapscript/php3/Makefile
-  MAKE_PHPMS=php3_mapscript
-  MAKE_PHPMS_CLEAN=php3_mapscript_clean
+  PHPMS_MAKEFILE=mapscript/php/Makefile
+  MAKE_PHPMS=php_mapscript
+  MAKE_PHPMS_CLEAN=php_mapscript_clean
 
   AC_SUBST(PHP_VERSION_FLAG, $PHP_VERSION_FLAG)
   AC_SUBST(PHP_SRC_DIR, $PHP_SRC_DIR)

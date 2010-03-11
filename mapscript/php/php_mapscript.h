@@ -29,8 +29,11 @@
  **********************************************************************/
 
 
-#ifndef _PHP_MAPSCRIPT_H_INCLUDED_
-#define _PHP_MAPSCRIPT_H_INCLUDED_
+#ifndef PHP_MAPSCRIPT_H
+#define PHP_MAPSCRIPT_H
+
+#include "php.h"
+#include "php_mapscript_util.h"
 
 #ifdef USE_PHP_REGEX
 #include <stdio.h>
@@ -53,6 +56,410 @@
 
 #include "maptemplate.h"
 #include "mapogcsld.h"
+
+#define MAPSCRIPT_VERSION "($Revision$ $Date$)"
+
+extern zend_module_entry mapscript_module_entry;
+#define phpext_mapscript_ptr &mapscript_module_entry
+
+#ifndef zend_parse_parameters_none
+#define zend_parse_parameters_none()			  \
+	zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
+#endif
+
+#ifndef Z_ADDREF_P
+#define Z_ADDREF_P(pz)                (pz)->refcount++
+#endif
+
+#ifndef Z_DELREF_P
+#define Z_DELREF_P(pz)                (pz)->refcount--
+#endif
+
+#ifndef Z_SET_REFCOUNT_P
+#define Z_SET_REFCOUNT_P(pz, rc)      (pz)->refcount = rc
+#endif
+
+/* Taken from the CAIRO php extension */
+/* turn error handling to exception mode and restore */
+#if defined(PHP_VERSION_ID) && PHP_VERSION_ID >= 50300
+/* 5.3 version of the macros */
+#define PHP_MAPSCRIPT_ERROR_HANDLING(force_exceptions) \
+	zend_error_handling error_handling; \
+	if(force_exceptions || getThis()) { \
+		zend_replace_error_handling(EH_THROW, mapscript_ce_mapscriptexception, &error_handling TSRMLS_CC); \
+	}
+
+#define PHP_MAPSCRIPT_RESTORE_ERRORS(force_exceptions) \
+	if(force_exceptions || getThis()) { \
+		zend_restore_error_handling(&error_handling TSRMLS_CC); \
+	}
+
+#else
+/* 5.2 versions of the macros */
+#define PHP_MAPSCRIPT_ERROR_HANDLING(force_exceptions) \
+	if(force_exceptions || getThis()) { \
+		php_set_error_handling(EH_THROW, mapscript_ce_mapscriptexception TSRMLS_CC); \
+	}
+
+#define PHP_MAPSCRIPT_RESTORE_ERRORS(force_exceptions) \
+	if(force_exceptions || getThis()) { \
+		php_std_error_handling(); \
+	}
+
+#endif
+
+/* MapScript objects */
+typedef struct _php_color_object {
+    zend_object std;
+    zval *parent;
+    colorObj *color;
+} php_color_object;
+
+typedef struct _php_rect_object {
+    zend_object std;
+    zval *parent;
+    int is_ref;
+    rectObj *rect;
+} php_rect_object;
+
+typedef struct _php_hashtable_object {
+    zend_object std;
+    zval *parent;
+    hashTableObj *hashtable;
+} php_hashtable_object;
+
+typedef struct _php_symbol_object {
+    zend_object std;
+    zval *parent;
+    symbolObj *symbol;
+} php_symbol_object;
+
+typedef struct _php_class_object {
+    zend_object std;
+    zval *layer;
+    zval *metadata;
+    zval *label;
+    classObj *class;
+} php_class_object;
+
+typedef struct _php_image_object {
+    zend_object std;
+    imageObj *image;
+} php_image_object;
+
+typedef struct _php_web_object {
+    zend_object std;
+    zval *parent;
+    zval *extent;
+    zval *metadata;
+    webObj *web;
+} php_web_object;
+
+typedef struct _php_legend_object {
+    zend_object std;
+    zval *parent;
+    zval *outlinecolor;
+    zval *label;
+    zval *imagecolor;
+    legendObj *legend;
+} php_legend_object;
+
+typedef struct _php_outputformat_object {
+    zend_object std;
+    zval *parent;
+    outputFormatObj *outputformat;
+} php_outputformat_object;
+
+typedef struct _php_querymap_object {
+    zend_object std;
+    zval *parent;
+    zval *color;
+    queryMapObj *querymap;
+} php_querymap_object;
+
+typedef struct _php_grid_object {
+    zend_object std;
+    zval *parent;
+    graticuleObj *grid;
+} php_grid_object;
+
+typedef struct _php_error_object {
+    zend_object std;
+    errorObj *error;
+} php_error_object;
+
+typedef struct _php_referencemap_object {
+    zend_object std;
+    zval *parent;
+    zval *extent;
+    zval *color;
+    zval *outlinecolor;
+    referenceMapObj *referencemap;
+} php_referencemap_object;
+
+typedef struct _php_label_object {
+    zend_object std;
+    zval *parent;
+    zval *color;
+    zval *outlinecolor;
+    zval *shadowcolor;
+    zval *backgroundcolor;
+    zval *backgroundshadowcolor;
+    labelObj *label;
+} php_label_object;
+
+typedef struct _php_style_object {
+    zend_object std;
+    zval *parent;
+    zval *color;
+    zval *outlinecolor;
+    zval *backgroundcolor;
+    styleObj *style;
+} php_style_object;
+
+typedef struct _php_projection_object {
+    zend_object std;
+    zval *parent;
+    int is_ref;
+    projectionObj *projection;
+} php_projection_object;
+
+typedef struct _php_point_object {
+    zend_object std;
+    zval *parent;
+    int is_ref;
+    pointObj *point;
+} php_point_object;
+
+typedef struct _php_line_object {
+    zend_object std;
+    zval *parent;
+    int is_ref;
+    lineObj *line;
+} php_line_object;
+
+typedef struct _php_shape_object {
+    zend_object std;
+    zval *parent;
+    zval *bounds;
+    zval *values;
+    int is_ref;
+    shapeObj *shape;
+} php_shape_object;
+
+typedef struct _php_shapefile_object {
+    zend_object std;
+    zval *bounds;
+    shapefileObj *shapefile;
+} php_shapefile_object;
+
+typedef struct _php_labelcache_object {
+    zend_object std;
+    zval *parent;
+    labelCacheObj *labelcache;
+} php_labelcache_object;
+
+typedef struct _php_labelcachemember_object {
+    zend_object std;
+    zval *parent;
+    zval *label; /* should be immutable */
+    zval *point; /* should be immutable */
+    zval *styles; /* should be immutable */
+    zval *poly; /* should be immutable */
+    labelCacheMemberObj *labelcachemember;
+} php_labelcachemember_object;
+
+typedef struct _php_resultcachemember_object {
+    zend_object std;
+    zval *parent;
+    resultCacheMemberObj *resultcachemember;
+} php_resultcachemember_object;
+
+typedef struct _php_scalebar_object {
+    zend_object std;
+    zval *parent;
+    zval *color;
+    zval *backgroundcolor;
+    zval *outlinecolor;
+    zval *label;
+    zval *imagecolor;
+    scalebarObj *scalebar;
+} php_scalebar_object;
+
+typedef struct _php_owsrequest_object {
+    zend_object std;
+    cgiRequestObj *cgirequest;
+} php_owsrequest_object;
+
+typedef struct _php_layer_object {
+    zend_object std;
+    zval *map;
+    zval *offsite;
+    zval *grid;
+    zval *metadata;
+    zval *projection;
+    int is_ref;
+    layerObj *layer;
+} php_layer_object;
+
+typedef struct _php_map_object {
+    zend_object std;
+    zval *outputformat;
+    zval *extent;
+    zval *web;
+    zval *reference;
+    zval *imagecolor;
+    zval *scalebar;
+    zval *legend;
+    zval *querymap;
+    zval *labelcache;
+    zval *projection;
+    zval *metadata;
+    mapObj *map;
+} php_map_object;
+
+/* Lifecyle functions*/
+PHP_MINIT_FUNCTION(mapscript);
+PHP_MINFO_FUNCTION(mapscript);
+PHP_MSHUTDOWN_FUNCTION(mapscript);
+PHP_RINIT_FUNCTION(mapscript);
+PHP_RSHUTDOWN_FUNCTION(mapscript);
+
+PHP_MINIT_FUNCTION(mapscript_error);
+PHP_MINIT_FUNCTION(color);
+PHP_MINIT_FUNCTION(label);
+PHP_MINIT_FUNCTION(style);
+PHP_MINIT_FUNCTION(symbol);
+PHP_MINIT_FUNCTION(image);
+PHP_MINIT_FUNCTION(web);
+PHP_MINIT_FUNCTION(legend);
+PHP_MINIT_FUNCTION(outputformat);
+PHP_MINIT_FUNCTION(querymap);
+PHP_MINIT_FUNCTION(grid);
+PHP_MINIT_FUNCTION(error);
+PHP_MINIT_FUNCTION(referencemap);
+PHP_MINIT_FUNCTION(class);
+PHP_MINIT_FUNCTION(projection);
+PHP_MINIT_FUNCTION(labelcachemember);
+PHP_MINIT_FUNCTION(labelcache);
+PHP_MINIT_FUNCTION(resultcachemember);
+PHP_MINIT_FUNCTION(scalebar);
+PHP_MINIT_FUNCTION(owsrequest);
+PHP_MINIT_FUNCTION(point);
+PHP_MINIT_FUNCTION(rect);
+PHP_MINIT_FUNCTION(hashtable);
+PHP_MINIT_FUNCTION(line);
+PHP_MINIT_FUNCTION(shape);
+PHP_MINIT_FUNCTION(shapefile);
+PHP_MINIT_FUNCTION(layer);
+PHP_MINIT_FUNCTION(map);
+
+/* mapscript functions */
+PHP_FUNCTION(ms_GetVersion);
+PHP_FUNCTION(ms_GetVersionInt);
+PHP_FUNCTION(ms_GetErrorObj);
+PHP_FUNCTION(ms_ResetErrorList);
+PHP_FUNCTION(ms_getCwd);
+PHP_FUNCTION(ms_getPid);
+PHP_FUNCTION(ms_getScale);
+PHP_FUNCTION(ms_tokenizeMap);
+PHP_FUNCTION(ms_ioInstallStdoutToBuffer);
+PHP_FUNCTION(ms_ioInstallStdinFromBuffer);
+PHP_FUNCTION(ms_ioGetStdoutBufferString);
+PHP_FUNCTION(ms_ioResetHandlers);
+PHP_FUNCTION(ms_ioStripStdoutBufferContentType);
+PHP_FUNCTION(ms_ioGetStdoutBufferBytes);
+
+/* object constructors */
+PHP_FUNCTION(ms_newLineObj);
+PHP_FUNCTION(ms_newRectObj);
+PHP_FUNCTION(ms_newShapeObj);
+PHP_FUNCTION(ms_shapeObjFromWkt);
+PHP_FUNCTION(ms_newOWSRequestObj);
+PHP_FUNCTION(ms_newShapeFileObj);
+PHP_FUNCTION(ms_newMapObj);
+PHP_FUNCTION(ms_newMapObjFromString);
+PHP_FUNCTION(ms_newLayerObj);
+PHP_FUNCTION(ms_newPointObj);
+PHP_FUNCTION(ms_newProjectionObj);
+PHP_FUNCTION(ms_newStyleObj);
+PHP_FUNCTION(ms_newSymbolObj);
+PHP_FUNCTION(ms_newClassObj);
+PHP_FUNCTION(ms_newGridObj);
+
+/* mapscript zend class entries */
+extern zend_object_handlers mapscript_std_object_handlers;
+extern zend_class_entry *mapscript_ce_mapscriptexception;
+extern zend_class_entry *mapscript_ce_color;
+extern zend_class_entry *mapscript_ce_label;
+extern zend_class_entry *mapscript_ce_projection;
+extern zend_class_entry *mapscript_ce_point;
+extern zend_class_entry *mapscript_ce_rect;
+extern zend_class_entry *mapscript_ce_hashtable;
+extern zend_class_entry *mapscript_ce_style;
+extern zend_class_entry *mapscript_ce_class;
+extern zend_class_entry *mapscript_ce_symbol;
+extern zend_class_entry *mapscript_ce_image;
+extern zend_class_entry *mapscript_ce_web;
+extern zend_class_entry *mapscript_ce_legend;
+extern zend_class_entry *mapscript_ce_outputformat;
+extern zend_class_entry *mapscript_ce_querymap;
+extern zend_class_entry *mapscript_ce_grid;
+extern zend_class_entry *mapscript_ce_error;
+extern zend_class_entry *mapscript_ce_referencemap;
+extern zend_class_entry *mapscript_ce_line;
+extern zend_class_entry *mapscript_ce_shape;
+extern zend_class_entry *mapscript_ce_shapefile;
+extern zend_class_entry *mapscript_ce_labelcachemember;
+extern zend_class_entry *mapscript_ce_labelcache;
+extern zend_class_entry *mapscript_ce_resultcachemember;
+extern zend_class_entry *mapscript_ce_scalebar;
+extern zend_class_entry *mapscript_ce_owsrequest;
+extern zend_class_entry *mapscript_ce_layer;
+extern zend_class_entry *mapscript_ce_map;
+
+/* PHP Object constructors */
+extern zend_object_value mapscript_object_new(zend_object *zobj, zend_class_entry *ce,
+                                              void (*zend_objects_free_object));
+extern void mapscript_create_color(colorObj *color, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_rect(rectObj *rect, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_hashtable(hashTableObj *hashtable, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_label(labelObj *label, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_style(styleObj *style, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_symbol(symbolObj *symbol, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_class(classObj *class, zval *php_layer, zval *return_value TSRMLS_DC);
+extern void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemember, 
+                                              zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_labelcache(labelCacheObj *labelcache, 
+                                              zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_resultcachemember(resultCacheMemberObj *resultcachemember, 
+                                               zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_scalebar(scalebarObj *scalebar, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_owsrequest(cgiRequestObj *cgirequest, zval *return_value TSRMLS_DC);
+extern void mapscript_create_image(imageObj *image, zval *return_value TSRMLS_DC);
+extern void mapscript_create_web(webObj *web, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_legend(legendObj *legend, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_outputformat(outputFormatObj *outputformat, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_querymap(queryMapObj *querymap, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_grid(graticuleObj *grid, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_error(errorObj *error, zval *return_value TSRMLS_DC);
+extern void mapscript_create_referencemap(referenceMapObj *referenceMap, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_point(pointObj *point, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_projection(projectionObj *projection, 
+                                        zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_line(lineObj *line, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_shape(shapeObj *shape, zval *php_parent, php_layer_object *php_layer, zval *return_value TSRMLS_DC);
+extern void mapscript_create_shapefile(shapefileObj *shapefile, zval *return_value TSRMLS_DC);
+extern void mapscript_create_layer(layerObj *layer, zval *php_map, zval *return_value TSRMLS_DC);
+extern void mapscript_create_map(mapObj *map, zval *return_value TSRMLS_DC);
+
+/* Exported functions for PHP Mapscript API */
+/* throw a MapScriptException */
+extern zval * mapscript_throw_exception(char *format, ...);
+/* print all MapServer errors (as Warning) and throw a MapScriptException */
+extern zval* mapscript_throw_mapserver_exception(char *format, ...);
+extern void mapscript_report_mapserver_error(int error_type);
+extern void mapscript_report_php_error(int error_type, char *format, ...);
 
 /*=====================================================================
  *                   Internal functions from mapscript_i.c
@@ -313,7 +720,6 @@ int             DBFInfo_getFieldDecimals(DBFInfo *self, int iField);
 DBFFieldType    DBFInfo_getFieldType(DBFInfo *self, int iField);
 
 styleObj       *styleObj_new(classObj *class, styleObj *style);
-void            styleObj_destroy(styleObj* self);
 int             styleObj_updateFromString(styleObj *self, char *snippet);
 int             styleObj_setSymbolByName(styleObj *self, mapObj *map, 
                                          char* pszSymbolName);
@@ -336,4 +742,4 @@ char *cgirequestObj_getValue(cgiRequestObj *self, int index);
 char *cgirequestObj_getValueByName(cgiRequestObj *self, const char *name);
 void cgirequestObj_destroy(cgiRequestObj *self);
 
-#endif /* _PHP_MAPSCRIPT_H_INCLUDED_ */
+#endif /* PHP_MAPSCRIPT_H */
