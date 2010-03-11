@@ -175,7 +175,7 @@ int msRemoveHashTable(hashTableObj *table, const char *key)
 { 
     struct hashObj *tp;
     struct hashObj *prev_tp=NULL;
-    int success = 0;
+    int status = MS_FAILURE;
 
     if (!table || !key) {
         msSetError(MS_HASHERR, "No hash table", "msRemoveHashTable");
@@ -191,6 +191,7 @@ int msRemoveHashTable(hashTableObj *table, const char *key)
     prev_tp = NULL;
     while (tp != NULL) {
         if (strcasecmp(key, tp->key) == 0) {
+            status = MS_SUCCESS;
             if (prev_tp) {     
                 prev_tp->next = tp->next;
                 free(tp);
@@ -201,18 +202,15 @@ int msRemoveHashTable(hashTableObj *table, const char *key)
                 free(tp);
                 break;
             }
-            success =1;
         }
         prev_tp = tp;
         tp = tp->next;
     }
 
-    if (success) {
+    if (status == MS_SUCCESS)
         table->numitems--;
-        return MS_SUCCESS;
-    }
 
-    return MS_FAILURE;
+    return status;
 }
       
 const char *msFirstKeyFromHashTable( hashTableObj *table )
