@@ -2363,7 +2363,7 @@ PHP_METHOD(mapObj, getLayersIndexByGroup)
 PHP_METHOD(mapObj, getAllGroupNames)
 {
     zval *zobj = getThis();
-    int i, numTok;;
+    int i, numTok;
     char **groups = NULL;
     php_map_object *php_map;
 
