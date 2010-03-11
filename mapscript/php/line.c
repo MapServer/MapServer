@@ -85,7 +85,7 @@ PHP_METHOD(lineObj, __construct)
     
     if ((php_line->line = lineObj_new()) == NULL)
     {
-        mapscript_throw_exception("Unable to construct lineObj.");
+        mapscript_throw_exception("Unable to construct lineObj." TSRMLS_CC);
         return;
     }
 }
@@ -111,7 +111,7 @@ PHP_METHOD(lineObj, __get)
     IF_GET_LONG("numpoints", php_line->line->numpoints) 
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -135,11 +135,11 @@ PHP_METHOD(lineObj, __set)
 
     if (STRING_EQUAL("numpoints", property))
     {
-        mapscript_throw_exception("Property '%s' is read-only and cannot be set.", property);
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -265,7 +265,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     status = lineObj_project(php_line->line, php_proj_in->projection, php_proj_out->projection);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -291,7 +291,7 @@ PHP_METHOD(lineObj, point)
 
     if ( (index < 0) || (index >= php_line->line->numpoints))
     {
-        mapscript_throw_exception("Point '%d' does not exist in this object.", index);
+        mapscript_throw_exception("Point '%d' does not exist in this object." TSRMLS_CC, index);
         return;
     }
 
@@ -348,7 +348,7 @@ static zend_object_value mapscript_line_object_new(zend_class_entry *ce TSRMLS_D
     MAPSCRIPT_ALLOC_OBJECT(php_line, php_line_object);
 
     retval = mapscript_object_new(&php_line->std, ce,
-                                  &mapscript_line_object_destroy);
+                                  &mapscript_line_object_destroy TSRMLS_CC);
     php_line->is_ref = 0;
     php_line->parent = NULL;
 

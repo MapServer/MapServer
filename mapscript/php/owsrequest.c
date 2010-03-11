@@ -78,7 +78,7 @@ PHP_METHOD(OWSRequestObj, __construct)
  
     if ((request = cgirequestObj_new()) == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
     
@@ -108,7 +108,7 @@ PHP_METHOD(OWSRequestObj, __get)
     else IF_GET_LONG("type", php_owsrequest->cgirequest->type)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -133,11 +133,11 @@ PHP_METHOD(OWSRequestObj, __set)
     if ( (STRING_EQUAL("numparams", property)) ||
          (STRING_EQUAL("type", property)))
     {
-        mapscript_throw_exception("Property '%s' is read-only and cannot be set.", property);
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -313,7 +313,7 @@ static zend_object_value mapscript_owsrequest_object_new(zend_class_entry *ce TS
     MAPSCRIPT_ALLOC_OBJECT(php_owsrequest, php_owsrequest_object);
 
     retval = mapscript_object_new(&php_owsrequest->std, ce,
-                                  &mapscript_owsrequest_object_destroy);
+                                  &mapscript_owsrequest_object_destroy TSRMLS_CC);
     return retval;
 }
 

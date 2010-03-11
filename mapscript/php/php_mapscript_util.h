@@ -145,7 +145,7 @@
         convert_to_long(value); \
         /* validate the color value */ \
         if (Z_LVAL_P(value) < 0 || Z_LVAL_P(value) > 255) {             \
-            mapscript_throw_exception("Invalid color value. It must be between 0 and 255."); \
+            mapscript_throw_exception("Invalid color value. It must be between 0 and 255." TSRMLS_CC); \
             return;   \
         }             \
         internal = Z_LVAL_P(value);             \
@@ -154,7 +154,7 @@
 
 zend_object_value mapscript_object_new(zend_object *zobj,
                                        zend_class_entry *ce,
-                                       void (*zend_objects_free_object));
+                                       void (*zend_objects_free_object) TSRMLS_DC);
 
 
 int mapscript_extract_associative_array(HashTable *php, char **array);

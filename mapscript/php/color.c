@@ -52,7 +52,7 @@ ZEND_END_ARG_INFO()
    colorObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(colorObj, __construct)
 {
-    mapscript_throw_exception("colorObj cannot be constructed");
+    mapscript_throw_exception("colorObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -78,7 +78,7 @@ PHP_METHOD(colorObj, __get)
     else IF_GET_LONG("blue", php_color->color->blue)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -105,7 +105,7 @@ PHP_METHOD(colorObj, __set)
     else IF_SET_COLOR("blue", php_color->color->blue, value)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
          
 }
@@ -177,7 +177,7 @@ static zend_object_value mapscript_color_object_new(zend_class_entry *ce TSRMLS_
     MAPSCRIPT_ALLOC_OBJECT(php_color, php_color_object);
 
     retval = mapscript_object_new(&php_color->std, ce,
-                                  &mapscript_color_object_destroy);
+                                  &mapscript_color_object_destroy TSRMLS_CC);
 
     php_color->parent = NULL;
 

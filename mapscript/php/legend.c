@@ -50,7 +50,7 @@ ZEND_END_ARG_INFO()
    legendObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(legendObj, __construct)
 {
-    mapscript_throw_exception("legendObj cannot be constructed");
+    mapscript_throw_exception("legendObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -88,7 +88,7 @@ PHP_METHOD(legendObj, __get)
     else IF_GET_OBJECT("imagecolor", php_legend->imagecolor)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -126,11 +126,11 @@ PHP_METHOD(legendObj, __set)
               (STRING_EQUAL("imagecolor", property)) ||
               (STRING_EQUAL("label", property)))
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -158,7 +158,7 @@ PHP_METHOD(legendObj, updateFromString)
     
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -220,7 +220,7 @@ static zend_object_value mapscript_legend_object_new(zend_class_entry *ce TSRMLS
     MAPSCRIPT_ALLOC_OBJECT(php_legend, php_legend_object);
 
     retval = mapscript_object_new(&php_legend->std, ce,
-                                  &mapscript_legend_object_destroy);
+                                  &mapscript_legend_object_destroy TSRMLS_CC);
 
     php_legend->parent = NULL;
     php_legend->outlinecolor = NULL;

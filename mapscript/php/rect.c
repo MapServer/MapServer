@@ -84,7 +84,7 @@ PHP_METHOD(rectObj, __construct)
     
     if ((php_rect->rect = rectObj_new()) == NULL)
     {
-        mapscript_throw_exception("Unable to construct rectObj.");
+        mapscript_throw_exception("Unable to construct rectObj." TSRMLS_CC);
         return;
     }
 }
@@ -113,7 +113,7 @@ PHP_METHOD(rectObj, __get)
     else IF_GET_DOUBLE("maxy", php_rect->rect->maxy) 
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -151,7 +151,7 @@ PHP_METHOD(rectObj, draw)
     if ((status = rectObj_draw(php_rect->rect, php_map->map, php_layer->layer, php_image->image, 
                                classIndex, text)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -183,7 +183,7 @@ PHP_METHOD(rectObj, __set)
     else IF_SET_DOUBLE("maxy", php_rect->rect->maxy, value) 
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -213,7 +213,7 @@ PHP_METHOD(rectObj, project)
     status = rectObj_project(php_rect->rect, php_proj_in->projection, php_proj_out->projection);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -323,7 +323,7 @@ static zend_object_value mapscript_rect_object_new(zend_class_entry *ce TSRMLS_D
     MAPSCRIPT_ALLOC_OBJECT(php_rect, php_rect_object);
 
     retval = mapscript_object_new(&php_rect->std, ce,
-                                  &mapscript_rect_object_destroy);
+                                  &mapscript_rect_object_destroy TSRMLS_CC);
 
     php_rect->is_ref = 0;
     php_rect->parent = NULL;

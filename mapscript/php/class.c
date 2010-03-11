@@ -128,7 +128,7 @@ PHP_METHOD(classObj, __construct)
 
     if ((class = classObj_new(php_layer->layer, (zclass ? php_class2->class:NULL))) == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -176,7 +176,7 @@ PHP_METHOD(classObj, __get)
     else IF_GET_OBJECT("metadata", php_class->metadata) 
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -210,15 +210,15 @@ PHP_METHOD(classObj, __set)
     else if ( (STRING_EQUAL("label", property)) ||
               (STRING_EQUAL("metadata", property)))
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else if (STRING_EQUAL("numstyles", property))
     {
-        mapscript_throw_exception("Property '%s' is read-only and cannot be set.", property);
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -243,7 +243,7 @@ PHP_METHOD(classObj, __clone)
     
     if (class == NULL)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         RETURN_NULL();
     }
       
@@ -275,7 +275,7 @@ PHP_METHOD(classObj, updateFromString)
     
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -308,7 +308,7 @@ PHP_METHOD(classObj, setExpression)
     
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -370,7 +370,7 @@ PHP_METHOD(classObj, setText)
     
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -427,7 +427,7 @@ PHP_METHOD(classObj, getStyle)
 
     if (index < 0 || index >= php_class->class->numstyles)
     {
-        mapscript_throw_exception("Invalid style index.");
+        mapscript_throw_exception("Invalid style index." TSRMLS_CC);
         return;
     }
     
@@ -629,7 +629,7 @@ PHP_METHOD(classObj, createLegendIcon)
 
     if (!php_layer->map)
     {
-        mapscript_throw_exception("No map object associated with this class object.");
+        mapscript_throw_exception("No map object associated with this class object." TSRMLS_CC);
         return;
     }
 
@@ -640,7 +640,7 @@ PHP_METHOD(classObj, createLegendIcon)
                                            php_layer->layer, 
                                            width, height)) == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
     
@@ -679,7 +679,7 @@ PHP_METHOD(classObj, drawLegendIcon)
 
     if (!php_layer->map)
     {
-        mapscript_throw_exception("No map object associated with this class object.");
+        mapscript_throw_exception("No map object associated with this class object." TSRMLS_CC);
         return;
     }
 
@@ -687,8 +687,8 @@ PHP_METHOD(classObj, drawLegendIcon)
 
     if (!(MS_DRIVER_GD(php_image->image->format)|| MS_DRIVER_AGG(php_image->image->format)))
     {
-        mapscript_report_mapserver_error(E_WARNING);
-        mapscript_report_php_error(E_WARNING, "DrawLegendicon function is only available for GD and AGG drivers");
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
+        mapscript_report_php_error(E_WARNING, "DrawLegendicon function is only available for GD and AGG drivers" TSRMLS_CC);
         RETURN_LONG(MS_FAILURE);
     }
 
@@ -699,7 +699,7 @@ PHP_METHOD(classObj, drawLegendIcon)
                                           php_image->image, 
                                           dstX, dstY)) != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
    
     RETURN_LONG(status);       
@@ -770,7 +770,7 @@ static zend_object_value mapscript_class_object_new(zend_class_entry *ce TSRMLS_
     MAPSCRIPT_ALLOC_OBJECT(php_class, php_class_object);
 
     retval = mapscript_object_new(&php_class->std, ce,
-                                  &mapscript_class_object_destroy);
+                                  &mapscript_class_object_destroy TSRMLS_CC);
 
     php_class->layer = NULL;
     php_class->label = NULL;

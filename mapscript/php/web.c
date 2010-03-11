@@ -50,7 +50,7 @@ ZEND_END_ARG_INFO()
    webObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(webObj, __construct)
 {
-    mapscript_throw_exception("webObj cannot be constructed");
+    mapscript_throw_exception("webObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -90,7 +90,7 @@ PHP_METHOD(webObj, __get)
     else IF_GET_OBJECT("metadata", php_web->metadata)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -129,15 +129,15 @@ PHP_METHOD(webObj, __set)
               (STRING_EQUAL("error", property)) ||
               (STRING_EQUAL("extent", property)))
     {
-        mapscript_throw_exception("Property '%s' is read-only and cannot be set.", property);
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else if (STRING_EQUAL("metadata", property))
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -165,7 +165,7 @@ PHP_METHOD(webObj, updateFromString)
     
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -223,7 +223,7 @@ static zend_object_value mapscript_web_object_new(zend_class_entry *ce TSRMLS_DC
     MAPSCRIPT_ALLOC_OBJECT(php_web, php_web_object);
 
     retval = mapscript_object_new(&php_web->std, ce,
-                                  &mapscript_web_object_destroy);
+                                  &mapscript_web_object_destroy TSRMLS_CC);
 
     php_web->parent = NULL;
     php_web->extent = NULL;

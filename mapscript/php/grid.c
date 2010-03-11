@@ -110,7 +110,7 @@ PHP_METHOD(gridObj, __get)
     else IF_GET_STRING("labelformat", php_grid->grid->labelformat)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -141,7 +141,7 @@ PHP_METHOD(gridObj, __set)
     else IF_SET_STRING("labelformat", php_grid->grid->labelformat, value)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -185,7 +185,7 @@ static zend_object_value mapscript_grid_object_new(zend_class_entry *ce TSRMLS_D
     MAPSCRIPT_ALLOC_OBJECT(php_grid, php_grid_object);
 
     retval = mapscript_object_new(&php_grid->std, ce,
-                                  &mapscript_grid_object_destroy);
+                                  &mapscript_grid_object_destroy TSRMLS_CC);
 
     php_grid->parent = NULL;
 

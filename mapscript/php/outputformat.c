@@ -55,7 +55,7 @@ ZEND_END_ARG_INFO()
    outputFormatObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(outputFormatObj, __construct)
 {
-    mapscript_throw_exception("outputFormatObj cannot be constructed");
+    mapscript_throw_exception("outputFormatObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -86,7 +86,7 @@ PHP_METHOD(outputFormatObj, __get)
     else IF_GET_LONG("transparent", php_outputformat->outputformat->transparent)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -117,7 +117,7 @@ PHP_METHOD(outputFormatObj, __set)
     else IF_SET_LONG("transparent", php_outputformat->outputformat->transparent, value)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -196,7 +196,7 @@ PHP_METHOD(outputFormatObj, validate)
 
     status = msOutputFormatValidate(php_outputformat->outputformat, MS_TRUE);
     if (status != MS_SUCCESS)
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         
     RETURN_LONG(status);
 }
@@ -245,7 +245,7 @@ static zend_object_value mapscript_outputformat_object_new(zend_class_entry *ce 
     MAPSCRIPT_ALLOC_OBJECT(php_outputformat, php_outputformat_object);
 
     retval = mapscript_object_new(&php_outputformat->std, ce,
-                                  &mapscript_outputformat_object_destroy);
+                                  &mapscript_outputformat_object_destroy TSRMLS_CC);
 
     php_outputformat->parent = NULL;
 

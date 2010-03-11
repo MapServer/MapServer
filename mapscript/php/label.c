@@ -64,7 +64,7 @@ ZEND_END_ARG_INFO()
    labelObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(labelObj, __construct)
 {
-    mapscript_throw_exception("labelObj cannot be constructed");
+    mapscript_throw_exception("labelObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -122,7 +122,7 @@ PHP_METHOD(labelObj, __get)
     else IF_GET_OBJECT("backgroundshadowcolor", php_label->backgroundshadowcolor) 
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -180,11 +180,11 @@ PHP_METHOD(labelObj, __set)
               (STRING_EQUAL("backgroundcolor", property)) ||
               (STRING_EQUAL("backgroundshadowcolor", property)) )
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
          
 }
@@ -211,7 +211,7 @@ PHP_METHOD(labelObj, updateFromString)
 
     if ((status = labelObj_updateFromString(php_label->label, snippet)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -241,13 +241,13 @@ PHP_METHOD(labelObj, setBinding)
 
     if (bindingId < 0 || bindingId > MS_LABEL_BINDING_LENGTH)
     {
-        mapscript_throw_exception("Invalid binding id.");
+        mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
         return;
     }
 
     if (!value || strlen(value) <= 0)
     {
-        mapscript_throw_exception("Invalid binding value.");
+        mapscript_throw_exception("Invalid binding value." TSRMLS_CC);
         return;
     }
 
@@ -287,7 +287,7 @@ PHP_METHOD(labelObj, getBinding)
 
     if (bindingId < 0 || bindingId > MS_LABEL_BINDING_LENGTH)
     {
-        mapscript_throw_exception("Invalid binding id.");
+        mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
         return;
     }
 
@@ -321,7 +321,7 @@ PHP_METHOD(labelObj, removeBinding)
 
     if (bindingId < 0 || bindingId > MS_LABEL_BINDING_LENGTH)
     {
-        mapscript_throw_exception("Invalid binding id.");
+        mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
         return;
     }
 
@@ -405,7 +405,7 @@ static zend_object_value mapscript_label_object_new(zend_class_entry *ce TSRMLS_
     MAPSCRIPT_ALLOC_OBJECT(php_label, php_label_object);
 
     retval = mapscript_object_new(&php_label->std, ce,
-                                  &mapscript_label_object_destroy);
+                                  &mapscript_label_object_destroy TSRMLS_CC);
 
     php_label->parent = NULL;
     php_label->color = NULL;

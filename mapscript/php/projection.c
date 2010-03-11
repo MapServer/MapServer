@@ -56,7 +56,7 @@ PHP_METHOD(projectionObj, __construct)
     
     if ((php_projection->projection = projectionObj_new(projString)) == NULL)
     {
-        mapscript_throw_mapserver_exception("Unable to construct projectionObj.");
+        mapscript_throw_mapserver_exception("Unable to construct projectionObj." TSRMLS_CC);
         return;
     }
 }
@@ -124,7 +124,7 @@ static zend_object_value mapscript_projection_object_new(zend_class_entry *ce TS
     MAPSCRIPT_ALLOC_OBJECT(php_projection, php_projection_object);
 
     retval = mapscript_object_new(&php_projection->std, ce,
-                                  &mapscript_projection_object_destroy);
+                                  &mapscript_projection_object_destroy TSRMLS_CC);
     php_projection->is_ref = 0;
     php_projection->parent = NULL;
     

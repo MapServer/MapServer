@@ -46,18 +46,18 @@ ZEND_END_ARG_INFO()
    labelCacheObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(labelCacheObj, __construct)
 {
-    mapscript_throw_exception("labelCacheObj cannot be constructed");
+    mapscript_throw_exception("labelCacheObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
 PHP_METHOD(labelCacheObj, __get)
 {
-    mapscript_throw_exception("labelCacheObj has no property.");
+    mapscript_throw_exception("labelCacheObj has no property." TSRMLS_CC);
 }
 
 PHP_METHOD(labelCacheObj, __set)
 {
-    mapscript_throw_exception("labelCacheObj has no property.");
+    mapscript_throw_exception("labelCacheObj has no property." TSRMLS_CC);
 }
 
 /* {{{ proto int labelcache->free(()
@@ -124,7 +124,7 @@ static zend_object_value mapscript_labelcache_object_new(zend_class_entry *ce TS
     MAPSCRIPT_ALLOC_OBJECT(php_labelcache, php_labelcache_object);
 
     retval = mapscript_object_new(&php_labelcache->std, ce,
-                                  &mapscript_labelcache_object_destroy);
+                                  &mapscript_labelcache_object_destroy TSRMLS_CC);
 
     php_labelcache->parent = NULL;
 

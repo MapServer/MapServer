@@ -50,7 +50,7 @@ ZEND_END_ARG_INFO()
    queryMapObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(queryMapObj, __construct)
 {
-    mapscript_throw_exception("queryMapObj cannot be constructed");
+    mapscript_throw_exception("queryMapObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -77,7 +77,7 @@ PHP_METHOD(queryMapObj, __get)
     else IF_GET_OBJECT("color", php_querymap->color)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -104,11 +104,11 @@ PHP_METHOD(queryMapObj, __set)
     else IF_SET_LONG("style", php_querymap->querymap->style, value)
     else if ( (STRING_EQUAL("color", property)))
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -136,7 +136,7 @@ PHP_METHOD(queryMapObj, updateFromString)
     
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -190,7 +190,7 @@ static zend_object_value mapscript_querymap_object_new(zend_class_entry *ce TSRM
     MAPSCRIPT_ALLOC_OBJECT(php_querymap, php_querymap_object);
 
     retval = mapscript_object_new(&php_querymap->std, ce,
-                                  &mapscript_querymap_object_destroy);
+                                  &mapscript_querymap_object_destroy TSRMLS_CC);
 
     php_querymap->parent = NULL;
     php_querymap->color = NULL;

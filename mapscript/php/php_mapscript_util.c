@@ -34,7 +34,7 @@
 
 zend_object_value mapscript_object_new(zend_object *zobj,
                                        zend_class_entry *ce,
-                                       void (*zend_objects_free_object))
+                                       void (*zend_objects_free_object) TSRMLS_DC)
 {
     zend_object_value retval;
     zval *temp;

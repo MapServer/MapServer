@@ -320,7 +320,7 @@ PHP_METHOD(mapObj, __construct)
 
     if (map == NULL)
     {
-        mapscript_throw_mapserver_exception("Failed to open map file %s",  filename);
+        mapscript_throw_mapserver_exception("Failed to open map file %s" TSRMLS_CC,  filename);
         return;
     }
 
@@ -411,7 +411,7 @@ PHP_METHOD(mapObj, __get)
     else IF_GET_OBJECT("metadata", php_map->metadata) 
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -461,18 +461,18 @@ PHP_METHOD(mapObj, __set)
               (STRING_EQUAL("metadata", property)) ||
               (STRING_EQUAL("imagecolor", property)) )
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else if ( (STRING_EQUAL("numlayers", property)) ||
               (STRING_EQUAL("symbolsetfilename", property)) ||
               (STRING_EQUAL("mappath", property)) ||
               (STRING_EQUAL("fontsetfilename", property)) )
     {
-        mapscript_throw_exception("Property '%s' is read-only and cannot be set.", property);
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }         
 }
 
@@ -496,7 +496,7 @@ PHP_METHOD(mapObj, __clone)
     /* Make a copy of current map object */
     if ((map = mapObj_clone(php_map->map)) == NULL)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         RETURN_NULL();
     }
 
@@ -553,7 +553,7 @@ PHP_METHOD(mapObj, getSymbolObjectById)
     
     if ( symbolId < 0 || symbolId >= php_map->map->symbolset.numsymbols)
     {
-        mapscript_throw_exception("Invalid symbol index.");
+        mapscript_throw_exception("Invalid symbol index." TSRMLS_CC);
         return;
     }
 
@@ -604,7 +604,7 @@ PHP_METHOD(mapObj, prepareImage)
     image = mapObj_prepareImage(php_map->map);
     if (image == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -634,7 +634,7 @@ PHP_METHOD(mapObj, draw)
     image = mapObj_draw(php_map->map);
     if (image == NULL)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         RETURN_NULL();
     }
      
@@ -662,7 +662,7 @@ PHP_METHOD(mapObj, drawQuery)
     image = mapObj_drawQuery(php_map->map);
     if (image == NULL)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         RETURN_NULL();
     }
      
@@ -690,7 +690,7 @@ PHP_METHOD(mapObj, drawLegend)
     image = mapObj_drawLegend(php_map->map);
     if (image == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -719,7 +719,7 @@ PHP_METHOD(mapObj, drawReferenceMap)
     image = mapObj_drawReferenceMap(php_map->map);
     if (image == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -748,7 +748,7 @@ PHP_METHOD(mapObj, drawScaleBar)
     image = mapObj_drawScalebar(php_map->map);
     if (image == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -781,7 +781,7 @@ PHP_METHOD(mapObj, embedLegend)
     retval = mapObj_embedLegend(php_map->map, php_image->image);
     if ( (retval == MS_FAILURE) || (retval == -1) )
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -814,7 +814,7 @@ PHP_METHOD(mapObj, embedScaleBar)
     retval = mapObj_embedScalebar(php_map->map, php_image->image);
     if ( (retval == MS_FAILURE) || (retval == -1) )
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -847,7 +847,7 @@ PHP_METHOD(mapObj, drawLabelCache)
     retval = mapObj_drawLabelCache(php_map->map, php_image->image);
     if ( (retval == MS_FAILURE) || (retval == -1) )
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -878,7 +878,7 @@ PHP_METHOD(mapObj, getLayer)
     layer = mapObj_getLayer(php_map->map, index);
     if  (layer == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -911,7 +911,7 @@ PHP_METHOD(mapObj, getLayerByName)
     layer = mapObj_getLayerByName(php_map->map, layerName);
     if  (layer == NULL)
     {
-        mapscript_report_php_error(E_WARNING, "getLayerByName failed for : %s\n", layerName);
+        mapscript_report_php_error(E_WARNING, "getLayerByName failed for : %s\n" TSRMLS_CC, layerName);
         RETURN_NULL();
     }
 
@@ -951,7 +951,7 @@ PHP_METHOD(mapObj, getColorByIndex)
     }
     else
     {
-        mapscript_throw_mapserver_exception("Index shoud not be higher than %d\n", palette.numcolors-1);
+        mapscript_throw_mapserver_exception("Index shoud not be higher than %d\n" TSRMLS_CC, palette.numcolors-1);
         return;
     }
 
@@ -985,7 +985,7 @@ PHP_METHOD(mapObj, setExtent)
     
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
     
@@ -1017,7 +1017,7 @@ PHP_METHOD(mapObj, setCenter)
     status = mapObj_setCenter(php_map->map, php_point->point);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
  
     RETURN_LONG(status);
@@ -1046,7 +1046,7 @@ PHP_METHOD(mapObj, offsetExtent)
     status = mapObj_offsetExtent(php_map->map, x, y);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
     
     RETURN_LONG(status);
@@ -1076,7 +1076,7 @@ PHP_METHOD(mapObj, scaleExtent)
     status = mapObj_scaleExtent(php_map->map, zoomFactor, minScaleDenom, maxScaleDenom);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
     
     RETURN_LONG(status);
@@ -1108,7 +1108,7 @@ PHP_METHOD(mapObj, setRotation)
     status = mapObj_setRotation(php_map->map, angle);
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
     
@@ -1139,7 +1139,7 @@ PHP_METHOD(mapObj, setSize)
     status = msMapSetSize(php_map->map, width, height);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
     
     RETURN_LONG(status);
@@ -1191,7 +1191,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         php_pixelPosition->point == NULL ||
         (zmaxGeoRefExtent && php_maxGeoRefExtent->rect == NULL))
     {
-        mapscript_throw_mapserver_exception("Incorrect parameters\n");
+        mapscript_throw_mapserver_exception("Incorrect parameters\n" TSRMLS_CC);
         return;
     }
 
@@ -1200,12 +1200,12 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 /* -------------------------------------------------------------------- */
     if (php_geoRefExtent->rect->minx >= php_geoRefExtent->rect->maxx)
     {
-        mapscript_throw_mapserver_exception("Georeferenced coordinates minx >= maxx\n");
+        mapscript_throw_mapserver_exception("Georeferenced coordinates minx >= maxx\n" TSRMLS_CC);
         return;
     }
     if (php_geoRefExtent->rect->miny >= php_geoRefExtent->rect->maxy)
     {
-        mapscript_throw_mapserver_exception("Georeferenced coordinates miny >= maxy\n");
+        mapscript_throw_mapserver_exception("Georeferenced coordinates miny >= maxy\n" TSRMLS_CC);
         return;
     }
 
@@ -1213,12 +1213,12 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     {
         if (php_maxGeoRefExtent->rect->minx >= php_maxGeoRefExtent->rect->maxx)
         {
-            mapscript_throw_mapserver_exception("Max Georeferenced coordinates minx >= maxx\n");
+            mapscript_throw_mapserver_exception("Max Georeferenced coordinates minx >= maxx\n" TSRMLS_CC);
             return;
         }
         if (php_maxGeoRefExtent->rect->miny >= php_maxGeoRefExtent->rect->maxy)
         {
-            mapscript_throw_mapserver_exception("Max Georeferenced coordinates miny >= maxy\n");
+            mapscript_throw_mapserver_exception("Max Georeferenced coordinates miny >= maxy\n" TSRMLS_CC);
             return;
         }
     }
@@ -1275,7 +1275,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
                          php_map->map->width, php_map->map->height, 
                          php_map->map->resolution, &dfNewScale) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -1385,7 +1385,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     if (msCalculateScale(php_map->map->extent, php_map->map->units, php_map->map->width, php_map->map->height, 
                          php_map->map->resolution, &(php_map->map->scaledenom)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -1436,7 +1436,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         php_pixelExtent->rect == NULL ||
         (zmaxGeoRefExtent && php_maxGeoRefExtent->rect == NULL))
     {
-        mapscript_throw_mapserver_exception("Incorrect parameters\n");
+        mapscript_throw_mapserver_exception("Incorrect parameters\n" TSRMLS_CC);
         return;
     }
 
@@ -1445,24 +1445,24 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 /* -------------------------------------------------------------------- */
     if (php_geoRefExtent->rect->minx >= php_geoRefExtent->rect->maxx)
     {
-        mapscript_throw_mapserver_exception("Georeferenced coordinates minx >= maxx\n");
+        mapscript_throw_mapserver_exception("Georeferenced coordinates minx >= maxx\n" TSRMLS_CC);
         return;
     }
     if (php_geoRefExtent->rect->miny >= php_geoRefExtent->rect->maxy)
     {
-        mapscript_throw_mapserver_exception("Georeferenced coordinates miny >= maxy\n");
+        mapscript_throw_mapserver_exception("Georeferenced coordinates miny >= maxy\n" TSRMLS_CC);
         return;
     }
     if (zmaxGeoRefExtent)
     {
         if (php_maxGeoRefExtent->rect->minx >= php_maxGeoRefExtent->rect->maxx)
         {
-            mapscript_throw_mapserver_exception("Max Georeferenced coordinates minx >= maxx\n");
+            mapscript_throw_mapserver_exception("Max Georeferenced coordinates minx >= maxx\n" TSRMLS_CC);
             return;
         }
         if (php_maxGeoRefExtent->rect->miny >= php_maxGeoRefExtent->rect->maxy)
         {
-            mapscript_throw_mapserver_exception("Max Georeferenced coordinates miny >= maxy\n");
+            mapscript_throw_mapserver_exception("Max Georeferenced coordinates miny >= maxy\n" TSRMLS_CC);
             return;
         }
     }
@@ -1491,7 +1491,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
                          php_map->map->width, php_map->map->height, 
                          php_map->map->resolution, &dfNewScale) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -1597,7 +1597,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     if (msCalculateScale(php_map->map->extent, php_map->map->units, php_map->map->width, php_map->map->height, 
                          php_map->map->resolution, &(php_map->map->scaledenom)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -1653,7 +1653,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         php_pixelPosition->point == NULL ||
         (zmaxGeoRefExtent && php_maxGeoRefExtent->rect == NULL))
     {
-        mapscript_throw_mapserver_exception("Incorrect parameters\n");
+        mapscript_throw_mapserver_exception("Incorrect parameters\n" TSRMLS_CC);
         return;
     }
 
@@ -1662,24 +1662,24 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 /* -------------------------------------------------------------------- */
     if (php_geoRefExtent->rect->minx >= php_geoRefExtent->rect->maxx)
     {
-        mapscript_throw_mapserver_exception("Georeferenced coordinates minx >= maxx\n");
+        mapscript_throw_mapserver_exception("Georeferenced coordinates minx >= maxx\n" TSRMLS_CC);
         return;
     }
     if (php_geoRefExtent->rect->miny >= php_geoRefExtent->rect->maxy)
     {
-        mapscript_throw_mapserver_exception("Georeferenced coordinates miny >= maxy\n");
+        mapscript_throw_mapserver_exception("Georeferenced coordinates miny >= maxy\n" TSRMLS_CC);
         return;
     }
     if (zmaxGeoRefExtent)
     {
         if (php_maxGeoRefExtent->rect->minx >= php_maxGeoRefExtent->rect->maxx)
         {
-            mapscript_throw_mapserver_exception("Max Georeferenced coordinates minx >= maxx\n");
+            mapscript_throw_mapserver_exception("Max Georeferenced coordinates minx >= maxx\n" TSRMLS_CC);
             return;
         }
         if (php_maxGeoRefExtent->rect->miny >= php_maxGeoRefExtent->rect->maxy)
         {
-            mapscript_throw_mapserver_exception("Max Georeferenced coordinates miny >= maxy\n");
+            mapscript_throw_mapserver_exception("Max Georeferenced coordinates miny >= maxy\n" TSRMLS_CC);
             return;
         }
     }
@@ -1728,7 +1728,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
                          php_map->map->width, php_map->map->height,
                          php_map->map->resolution, &dfCurrentScale) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -1745,7 +1745,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
                          php_map->map->width, php_map->map->height,
                          php_map->map->resolution, &dfNewScale) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -1856,7 +1856,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     if (msCalculateScale(php_map->map->extent, php_map->map->units, php_map->map->width, php_map->map->height, 
                          php_map->map->resolution, &(php_map->map->scaledenom)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -1900,7 +1900,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     status = mapObj_queryByPoint(php_map->map, php_point->point, mode, buffer);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -1930,7 +1930,7 @@ PHP_METHOD(mapObj, queryByRect)
     status = mapObj_queryByRect(php_map->map, *(php_rect->rect));
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -1967,7 +1967,7 @@ PHP_METHOD(mapObj, queryByShape)
     status = mapObj_queryByShape(php_map->map, php_shape->shape);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -1995,7 +1995,7 @@ PHP_METHOD(mapObj, queryByFeatures)
     status = mapObj_queryByFeatures(php_map->map, slayer);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -2037,7 +2037,7 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
                                  addToQuery);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -2144,7 +2144,7 @@ PHP_METHOD(mapObj, save)
     status = mapObj_loadQuery(php_map->map, filename); 
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -2630,7 +2630,7 @@ PHP_METHOD(mapObj, processTemplate)
     else
     {
         // Failed for some reason
-        mapscript_report_php_error(E_WARNING, "processTemplate: failed reading array");
+        mapscript_report_php_error(E_WARNING, "processTemplate: failed reading array" TSRMLS_CC);
         RETURN_NULL();
     }
     efree(papszNameValue);
@@ -2648,7 +2648,7 @@ PHP_METHOD(mapObj, processTemplate)
     }
     else
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         RETURN_STRING("", 0);
     }
 }
@@ -2710,7 +2710,7 @@ PHP_METHOD(mapObj, processQueryTemplate)
     else
     {
         // Failed for some reason
-        mapscript_report_php_error(E_WARNING, "processQueryTemplate: failed reading array");
+        mapscript_report_php_error(E_WARNING, "processQueryTemplate: failed reading array" TSRMLS_CC);
         RETURN_NULL();
     }
     efree(papszNameValue);
@@ -2729,7 +2729,7 @@ PHP_METHOD(mapObj, processQueryTemplate)
     }
     else
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         RETURN_STRING("", 0);
     }
 }
@@ -2790,7 +2790,7 @@ PHP_METHOD(mapObj, processLegendTemplate)
     else
     {
         // Failed for some reason
-        mapscript_report_php_error(E_WARNING, "processLegendTemplate: failed reading array");
+        mapscript_report_php_error(E_WARNING, "processLegendTemplate: failed reading array" TSRMLS_CC);
         RETURN_NULL();
     }
     efree(papszNameValue);
@@ -2809,7 +2809,7 @@ PHP_METHOD(mapObj, processLegendTemplate)
     }
     else
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         RETURN_STRING("", 0);
     }
 }
@@ -2839,7 +2839,7 @@ PHP_METHOD(mapObj, setSymbolSet)
         if ((status = mapObj_setSymbolSet(php_map->map, 
                                           filename)) != 0)
         {
-            mapscript_throw_mapserver_exception("Failed loading symbolset from %s",
+            mapscript_throw_mapserver_exception("Failed loading symbolset from %s" TSRMLS_CC,
                                                 filename);
             return;
         }
@@ -2894,7 +2894,7 @@ PHP_METHOD(mapObj, setFontSet)
         if ((status = mapObj_setFontSet(php_map->map, 
                                         filename)) != 0)
         {
-            mapscript_throw_mapserver_exception("Failed loading fontset from %s",
+            mapscript_throw_mapserver_exception("Failed loading fontset from %s" TSRMLS_CC,
                                                 filename);
             return;
         }
@@ -2930,7 +2930,7 @@ PHP_METHOD(mapObj, selectOutputFormat)
                                             type)) != MS_SUCCESS)
 
     {
-        mapscript_report_php_error(E_WARNING, "Unable to set output format to '%s'", 
+        mapscript_report_php_error(E_WARNING, "Unable to set output format to '%s'" TSRMLS_CC, 
                                    type);
     }
     else
@@ -2965,8 +2965,8 @@ PHP_METHOD(mapObj, saveMapContext)
     {
         if ((status = mapObj_saveMapContext(php_map->map, filename)) != MS_SUCCESS)
         {
-            mapscript_report_mapserver_error(E_WARNING);
-            mapscript_report_php_error(E_WARNING, "Failed saving map context from %s",
+            mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
+            mapscript_report_php_error(E_WARNING, "Failed saving map context from %s" TSRMLS_CC,
                                        filename);
             RETURN_LONG(MS_FAILURE);
         }
@@ -3000,8 +3000,8 @@ PHP_METHOD(mapObj, loadMapContext)
     {
         if ((status = mapObj_loadMapContext(php_map->map, filename, unique)) != MS_SUCCESS)
         {
-            mapscript_report_mapserver_error(E_WARNING);
-            mapscript_report_php_error(E_WARNING, "Failed loading map context from %s",
+            mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
+            mapscript_report_php_error(E_WARNING, "Failed loading map context from %s" TSRMLS_CC,
                                        filename);
             RETURN_LONG(MS_FAILURE);
         }
@@ -3090,7 +3090,7 @@ PHP_METHOD(mapObj, generateSLD)
     }
     else
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         RETURN_STRING("", 0);
     }
 }
@@ -3269,7 +3269,7 @@ PHP_METHOD(mapObj, insertLayer)
 
     if ((retval = mapObj_insertLayer(php_map->map, php_layer->layer, index)) < 0)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -3300,7 +3300,7 @@ PHP_METHOD(mapObj, removeLayer)
     
     if ((layer = mapObj_removeLayer(php_map->map, index)) == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -3378,7 +3378,7 @@ PHP_METHOD(mapObj, getLatLongExtent)
     mapscript_create_rect(&geoRefExt, zobj, return_value TSRMLS_CC);
 
 #else
-    mapscript_throw_exception("Available only with PROJ.4 support.");
+    mapscript_throw_exception("Available only with PROJ.4 support." TSRMLS_CC);
     return;
 #endif
 }
@@ -3502,7 +3502,7 @@ static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
 
     if (status == -1)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return MS_FAILURE;
     }
     else
@@ -3533,7 +3533,7 @@ static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
 
     return status;
 #else
-    mapscript_throw_exception("Available only with PROJ.4 support.");
+    mapscript_throw_exception("Available only with PROJ.4 support." TSRMLS_CC);
     return MS_FAILURE;
 #endif
 }
@@ -3610,7 +3610,7 @@ static zend_object_value mapscript_map_object_new(zend_class_entry *ce TSRMLS_DC
     MAPSCRIPT_ALLOC_OBJECT(php_map, php_map_object);
 
     retval = mapscript_object_new(&php_map->std, ce,
-                                  &mapscript_map_object_destroy);
+                                  &mapscript_map_object_destroy TSRMLS_CC);
 
     php_map->outputformat = NULL;
     php_map->extent = NULL;

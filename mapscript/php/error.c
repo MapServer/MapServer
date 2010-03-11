@@ -46,7 +46,7 @@ ZEND_END_ARG_INFO()
    errorObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(errorObj, __construct)
 {
-    mapscript_throw_exception("errorObj cannot be constructed");
+    mapscript_throw_exception("errorObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -72,7 +72,7 @@ PHP_METHOD(errorObj, __get)
     else IF_GET_STRING("message", php_error->error->message)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -98,11 +98,11 @@ PHP_METHOD(errorObj, __set)
          (STRING_EQUAL("routine", property)) ||
          (STRING_EQUAL("message", property)))
     {
-        mapscript_throw_exception("Property '%s' is read-only and cannot be set.", property);
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -133,7 +133,7 @@ PHP_METHOD(errorObj, next)
     {
         if (error->next == NULL)
         {
-            mapscript_throw_exception("Trying to access an errorObj that has expired.");
+            mapscript_throw_exception("Trying to access an errorObj that has expired." TSRMLS_CC);
             return;
         }
         error = error->next;
@@ -181,7 +181,7 @@ static zend_object_value mapscript_error_object_new(zend_class_entry *ce TSRMLS_
     MAPSCRIPT_ALLOC_OBJECT(php_error, php_error_object);
 
     retval = mapscript_object_new(&php_error->std, ce,
-                                  &mapscript_error_object_destroy);
+                                  &mapscript_error_object_destroy TSRMLS_CC);
 
     return retval;
 }

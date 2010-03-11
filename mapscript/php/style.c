@@ -90,7 +90,7 @@ PHP_METHOD(styleObj, __construct)
 
     if ((style = styleObj_new(php_class->class, (zstyle ? php_style2->style : NULL))) == NULL)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -147,7 +147,7 @@ PHP_METHOD(styleObj, __get)
     else IF_GET_OBJECT("backgroundcolor", php_style->backgroundcolor) 
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -199,7 +199,7 @@ PHP_METHOD(styleObj, __set)
             php_layer = (php_layer_object *) zend_object_store_get_object(php_class->layer TSRMLS_CC);
             if (!php_layer->map)
             {
-                mapscript_throw_exception("No map object associated with this style object.");
+                mapscript_throw_exception("No map object associated with this style object." TSRMLS_CC);
                 return;
             }
             php_map = (php_map_object *) zend_object_store_get_object(php_layer->map TSRMLS_CC);
@@ -210,7 +210,7 @@ PHP_METHOD(styleObj, __set)
             php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(php_style->parent TSRMLS_CC);
             if (!php_labelcachemember->parent)
             {
-                mapscript_throw_exception("No map object associated with this style object.");
+                mapscript_throw_exception("No map object associated with this style object." TSRMLS_CC);
                 return;
             }
             php_map = (php_map_object *) zend_object_store_get_object(php_labelcachemember->parent TSRMLS_CC);
@@ -224,11 +224,11 @@ PHP_METHOD(styleObj, __set)
               (STRING_EQUAL("outlinecolor", property)) ||
               (STRING_EQUAL("backgroundcolor", property)))
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
          
 }
@@ -250,7 +250,7 @@ PHP_METHOD(styleObj, __clone)
     
     if ((style = styleObj_clone(php_style->style)) == NULL)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
         RETURN_NULL();
     }
     
@@ -280,7 +280,7 @@ PHP_METHOD(styleObj, updateFromString)
 
     if ((status = styleObj_updateFromString(php_style->style, snippet)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -310,13 +310,13 @@ PHP_METHOD(styleObj, setBinding)
 
     if (bindingId < 0 || bindingId > MS_STYLE_BINDING_LENGTH)
      {
-        mapscript_throw_exception("Invalid binding id.");
+        mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
         return;
      }
 
     if (!value || strlen(value) <= 0)
     {
-        mapscript_throw_exception("Invalid binding value.");
+        mapscript_throw_exception("Invalid binding value." TSRMLS_CC);
         return;
     }
 
@@ -356,7 +356,7 @@ PHP_METHOD(styleObj, getBinding)
 
     if (bindingId < 0 || bindingId > MS_STYLE_BINDING_LENGTH)
     {
-        mapscript_throw_exception("Invalid binding id.");
+        mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
         return;
     }
 
@@ -390,7 +390,7 @@ PHP_METHOD(styleObj, removeBinding)
 
     if (bindingId < 0 || bindingId > MS_STYLE_BINDING_LENGTH)
     {
-        mapscript_throw_exception("Invalid binding id.");
+        mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
         return;
     }
 
@@ -467,7 +467,7 @@ static zend_object_value mapscript_style_object_new(zend_class_entry *ce TSRMLS_
     MAPSCRIPT_ALLOC_OBJECT(php_style, php_style_object);
 
     retval = mapscript_object_new(&php_style->std, ce,
-                                  &mapscript_style_object_destroy);
+                                  &mapscript_style_object_destroy TSRMLS_CC);
 
     php_style->parent = NULL;
     php_style->color = NULL;

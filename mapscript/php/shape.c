@@ -162,7 +162,7 @@ PHP_METHOD(shapeObj, __construct)
     
     if ((php_shape->shape = shapeObj_new(type)) == NULL)
     {
-        mapscript_throw_exception("Unable to construct shapeObj.");
+        mapscript_throw_exception("Unable to construct shapeObj." TSRMLS_CC);
         return;
     }
 
@@ -202,7 +202,7 @@ PHP_METHOD(shapeObj, __get)
     else IF_GET_OBJECT("values", php_shape->values) 
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -234,11 +234,11 @@ PHP_METHOD(shapeObj, __set)
               (STRING_EQUAL("values", property)) ||
               (STRING_EQUAL("numvalues", property)) )
     {
-        mapscript_throw_exception("Property '%s' is read-only and cannot be set.", property);
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -290,7 +290,7 @@ PHP_METHOD(shapeObj, line)
     
     if (index < 0 || index >= php_shape->shape->numlines)
     {
-        mapscript_throw_exception("Line '%d' does not exist in this object.", index);
+        mapscript_throw_exception("Line '%d' does not exist in this object." TSRMLS_CC, index);
         return;
     }
 
@@ -377,7 +377,7 @@ PHP_METHOD(shapeObj, project)
     status = shapeObj_project(php_shape->shape, php_proj_in->projection, php_proj_out->projection);
     if (status != MS_SUCCESS)
     {
-        mapscript_report_mapserver_error(E_WARNING);
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
     }
 
     RETURN_LONG(status);
@@ -1122,7 +1122,7 @@ PHP_METHOD(shapeObj, draw)
     if ((status = shapeObj_draw(php_shape->shape, php_map->map, php_layer->layer, 
                                 php_image->image)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -1198,7 +1198,7 @@ void mapscript_create_shape(shapeObj *shape, zval *php_parent, php_layer_object 
         }
         else
         {
-            mapscript_throw_exception("Assertion failed, Could not set shape values: %d, %d",
+            mapscript_throw_exception("Assertion failed, Could not set shape values: %d, %d" TSRMLS_CC,
                                       php_shape->shape->numvalues, php_layer->layer->numitems);
             return;
         }
@@ -1236,7 +1236,7 @@ static zend_object_value mapscript_shape_object_new(zend_class_entry *ce TSRMLS_
     MAPSCRIPT_ALLOC_OBJECT(php_shape, php_shape_object);
 
     retval = mapscript_object_new(&php_shape->std, ce,
-                                  &mapscript_shape_object_destroy);
+                                  &mapscript_shape_object_destroy TSRMLS_CC);
 
     php_shape->is_ref = 0;
     php_shape->parent = NULL;

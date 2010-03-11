@@ -46,7 +46,7 @@ ZEND_END_ARG_INFO()
    labelCacheMemberObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(labelCacheMemberObj, __construct)
 {
-    mapscript_throw_exception("labelCacheMemberObj cannot be constructed");
+    mapscript_throw_exception("labelCacheMemberObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -81,7 +81,7 @@ PHP_METHOD(labelCacheMemberObj, __get)
     else IF_GET_OBJECT("poly", php_labelcachemember->poly) 
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -116,11 +116,11 @@ PHP_METHOD(labelCacheMemberObj, __set)
          (STRING_EQUAL("poly", property)) ||
          (STRING_EQUAL("point", property)))
     {
-        mapscript_throw_exception("Property '%s' is read-only and cannot be set.", property);
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
          
 }
@@ -190,7 +190,7 @@ static zend_object_value mapscript_labelcachemember_object_new(zend_class_entry 
     MAPSCRIPT_ALLOC_OBJECT(php_labelcachemember, php_labelcachemember_object);
 
     retval = mapscript_object_new(&php_labelcachemember->std, ce,
-                                  &mapscript_labelcachemember_object_destroy);
+                                  &mapscript_labelcachemember_object_destroy TSRMLS_CC);
 
     php_labelcachemember->parent = NULL;
     php_labelcachemember->point = NULL;

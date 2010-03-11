@@ -63,18 +63,18 @@ ZEND_END_ARG_INFO()
    Create a new hashtableObj instance. */
 PHP_METHOD(hashtableObj, __construct)
 {
-    mapscript_throw_exception("hashTableObj cannot be constructed");
+    mapscript_throw_exception("hashTableObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
 PHP_METHOD(hashtableObj, __get)
 {
-    mapscript_throw_exception("hashTableObj has no property.");
+    mapscript_throw_exception("hashTableObj has no property." TSRMLS_CC);
 }
 
 PHP_METHOD(hashtableObj, __set)
 {
-    mapscript_throw_exception("hashTableObj has no property.");
+    mapscript_throw_exception("hashTableObj has no property." TSRMLS_CC);
 }
 
 /* {{{ proto int hashtable.get(string key)
@@ -129,7 +129,7 @@ PHP_METHOD(hashtableObj, set)
 
     if ((status = hashTableObj_set(php_hashtable->hashtable, key, value)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -159,7 +159,7 @@ PHP_METHOD(hashtableObj, remove)
 
     if ((status = hashTableObj_remove(php_hashtable->hashtable, key)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
     
@@ -262,7 +262,7 @@ static zend_object_value mapscript_hashtable_object_new(zend_class_entry *ce TSR
     MAPSCRIPT_ALLOC_OBJECT(php_hashtable, php_hashtable_object);
 
     retval = mapscript_object_new(&php_hashtable->std, ce,
-                                  &mapscript_hashtable_object_destroy);
+                                  &mapscript_hashtable_object_destroy TSRMLS_CC);
 
     php_hashtable->parent = NULL;
 

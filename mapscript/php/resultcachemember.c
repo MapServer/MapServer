@@ -46,7 +46,7 @@ ZEND_END_ARG_INFO()
    resultCacheMemberObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(resultCacheMemberObj, __construct)
 {
-    mapscript_throw_exception("resultCacheMemberObj cannot be constructed");
+    mapscript_throw_exception("resultCacheMemberObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -72,7 +72,7 @@ PHP_METHOD(resultCacheMemberObj, __get)
     else IF_GET_LONG("classindex", php_resultcachemember->resultcachemember->classindex)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -98,11 +98,11 @@ PHP_METHOD(resultCacheMemberObj, __set)
          (STRING_EQUAL("tileindex", property)) ||
          (STRING_EQUAL("classindex", property)))
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -147,7 +147,7 @@ static zend_object_value mapscript_resultcachemember_object_new(zend_class_entry
     MAPSCRIPT_ALLOC_OBJECT(php_resultcachemember, php_resultcachemember_object);
 
     retval = mapscript_object_new(&php_resultcachemember->std, ce,
-                                  &mapscript_resultcachemember_object_destroy);
+                                  &mapscript_resultcachemember_object_destroy TSRMLS_CC);
 
     php_resultcachemember->parent = NULL;
 

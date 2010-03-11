@@ -420,7 +420,7 @@ extern zend_class_entry *mapscript_ce_map;
 
 /* PHP Object constructors */
 extern zend_object_value mapscript_object_new(zend_object *zobj, zend_class_entry *ce,
-                                              void (*zend_objects_free_object));
+                                              void (*zend_objects_free_object) TSRMLS_DC);
 extern void mapscript_create_color(colorObj *color, zval *php_parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_rect(rectObj *rect, zval *php_parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_hashtable(hashTableObj *hashtable, zval *php_parent, zval *return_value TSRMLS_DC);
@@ -455,11 +455,11 @@ extern void mapscript_create_map(mapObj *map, zval *return_value TSRMLS_DC);
 
 /* Exported functions for PHP Mapscript API */
 /* throw a MapScriptException */
-extern zval * mapscript_throw_exception(char *format, ...);
+extern zval * mapscript_throw_exception(char *format TSRMLS_DC, ...);
 /* print all MapServer errors (as Warning) and throw a MapScriptException */
-extern zval* mapscript_throw_mapserver_exception(char *format, ...);
-extern void mapscript_report_mapserver_error(int error_type);
-extern void mapscript_report_php_error(int error_type, char *format, ...);
+extern zval* mapscript_throw_mapserver_exception(char *format TSRMLS_DC, ...);
+extern void mapscript_report_mapserver_error(int error_type TSRMLS_DC);
+extern void mapscript_report_php_error(int error_type, char *format TSRMLS_DC, ...);
 
 /*=====================================================================
  *                   Internal functions from mapscript_i.c

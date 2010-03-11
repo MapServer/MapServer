@@ -56,7 +56,7 @@ ZEND_END_ARG_INFO()
    scalebarObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(scalebarObj, __construct)
 {
-    mapscript_throw_exception("scalebarObj cannot be constructed");
+    mapscript_throw_exception("scalebarObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -95,7 +95,7 @@ PHP_METHOD(scalebarObj, __get)
     else IF_GET_OBJECT("imagecolor", php_scalebar->imagecolor)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -134,11 +134,11 @@ PHP_METHOD(scalebarObj, __set)
               (STRING_EQUAL("label", property)) ||
               (STRING_EQUAL("imagecolor", property)))
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -166,7 +166,7 @@ PHP_METHOD(scalebarObj, updateFromString)
     
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
 
@@ -266,7 +266,7 @@ static zend_object_value mapscript_scalebar_object_new(zend_class_entry *ce TSRM
     MAPSCRIPT_ALLOC_OBJECT(php_scalebar, php_scalebar_object);
 
     retval = mapscript_object_new(&php_scalebar->std, ce,
-                                  &mapscript_scalebar_object_destroy);
+                                  &mapscript_scalebar_object_destroy TSRMLS_CC);
 
     php_scalebar->parent = NULL;
     php_scalebar->color = NULL;

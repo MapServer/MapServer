@@ -50,7 +50,7 @@ ZEND_END_ARG_INFO()
    referenceMapObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(referenceMapObj, __construct)
 {
-    mapscript_throw_exception("referenceMapObj cannot be constructed");
+    mapscript_throw_exception("referenceMapObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
@@ -85,7 +85,7 @@ PHP_METHOD(referenceMapObj, __get)
     else IF_GET_OBJECT("outlinecolor", php_referencemap->outlinecolor)
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -120,11 +120,11 @@ PHP_METHOD(referenceMapObj, __set)
               (STRING_EQUAL("color", property)) ||
               (STRING_EQUAL("outlinecolor", property)))
     {
-        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors.", property);
+        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else 
     {
-        mapscript_throw_exception("Property '%s' does not exist in this object.", property);
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
@@ -152,7 +152,7 @@ PHP_METHOD(referenceMapObj, updateFromString)
     
     if (status != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("");
+        mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
     
@@ -214,7 +214,7 @@ static zend_object_value mapscript_referencemap_object_new(zend_class_entry *ce 
     MAPSCRIPT_ALLOC_OBJECT(php_referencemap, php_referencemap_object);
 
     retval = mapscript_object_new(&php_referencemap->std, ce,
-                                  &mapscript_referencemap_object_destroy);
+                                  &mapscript_referencemap_object_destroy TSRMLS_CC);
 
     php_referencemap->parent = NULL;
     php_referencemap->extent = NULL;
