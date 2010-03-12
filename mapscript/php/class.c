@@ -626,7 +626,6 @@ PHP_METHOD(classObj, createLegendIcon)
     php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     php_layer = (php_layer_object *) zend_object_store_get_object(php_class->layer TSRMLS_CC);
     
-
     if (!php_layer->map)
     {
         mapscript_throw_exception("No map object associated with this class object." TSRMLS_CC);

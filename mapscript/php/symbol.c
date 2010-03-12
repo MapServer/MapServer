@@ -255,14 +255,15 @@ PHP_METHOD(symbolObj, getPointsArray)
 
     php_symbol = (php_symbol_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    if (php_symbol->symbol->numpoints < 0)
-        RETURN_FALSE;
-
     array_init(return_value);
-    for (index=0; index < php_symbol->symbol->numpoints; index++)
+
+    if (php_symbol->symbol->numpoints > 0)
     {
-        add_next_index_double(return_value, php_symbol->symbol->points[index].x);
-        add_next_index_double(return_value, php_symbol->symbol->points[index].y);
+        for (index=0; index < php_symbol->symbol->numpoints; index++)
+        {
+            add_next_index_double(return_value, php_symbol->symbol->points[index].x);
+            add_next_index_double(return_value, php_symbol->symbol->points[index].y);
+        }
     }
 }
 /* }}} */
@@ -329,16 +330,17 @@ PHP_METHOD(symbolObj, getPatternArray)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-
+    
     php_symbol = (php_symbol_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-
-    if (php_symbol->symbol->patternlength < 0)
-        RETURN_FALSE;
-
+    
     array_init(return_value);
-    for (index=0; index < php_symbol->symbol->patternlength; index++)
+    
+    if (php_symbol->symbol->patternlength > 0)
     {
-        add_next_index_long(return_value, php_symbol->symbol->pattern[index]);
+        for (index=0; index < php_symbol->symbol->patternlength; index++)
+        {
+            add_next_index_long(return_value, php_symbol->symbol->pattern[index]);
+        }
     }
 }
 /* }}} */

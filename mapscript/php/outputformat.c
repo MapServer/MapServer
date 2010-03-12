@@ -195,10 +195,13 @@ PHP_METHOD(outputFormatObj, validate)
     php_outputformat = (php_outputformat_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
     status = msOutputFormatValidate(php_outputformat->outputformat, MS_TRUE);
-    if (status != MS_SUCCESS)
+    if (status != MS_TRUE)
+    {
         mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        
-    RETURN_LONG(status);
+        RETURN_LONG(MS_FAILURE);
+    }
+    else
+        RETURN_LONG(MS_SUCCESS);
 }
 /* }}} */
 

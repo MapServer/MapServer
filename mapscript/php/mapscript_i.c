@@ -1256,7 +1256,7 @@ shapefileObj *shapefileObj_new(char *filename, int type) {
 void shapefileObj_destroy(shapefileObj *self) {
     msShapefileClose(self);
     free(self);  
-  }
+}
 
 int shapefileObj_get(shapefileObj *self, int i, shapeObj *shape) {
     if(i<0 || i>=self->numshapes)

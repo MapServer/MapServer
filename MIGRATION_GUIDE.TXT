@@ -7,13 +7,80 @@ applications when migrating from version 5.6.x (or earlier versions)
 to 6.0 (i.e. backwards incompatibilities), as well as information
 on some of the new features.
 
---------------
-PHP MapScript
---------------
+---------------------
+PHP MapScript Changes
+---------------------
 
-* All deprecated class properties have been removed.
-  See mapscript/php3/README for the list.
+* PHP 5.2.0 or more recent is required.
+* PHP/MapScript now uses exceptions for error report. All errors are catchable.
+* Object properties can be set like all other php object. ie. myObj->myProperty = 10;
+  
+  NOTE: The set/setProperty methods are still available. 
 
+* All object constructors throw an exception on failure
+* Objects can be created with the php "new" operator. ie.
+  $myShape = ms_newShapeObj(MS_SHAPE_LINE); // or
+  $myShape = new shapeObj(MS_SHAPE_LINE);
+
+  NOTE: "ms_newSymbolObj()" and "new symbolObj" are different:
+        - ms_newSymbolObj() returns the id of the new/existing symbol.
+        - new symbolObj() returns the symbolObj. You don't need to 
+                          get it with getSymbolObjectById().
+
+* Class properties that have been removed
+
+  - mapObj: imagequality, interlace, scale, transparent
+  - classObj: maxscale, minscale
+  - layerObj: labelsizeitem, labelangleitem, labelmaxscale, labelminscale, 
+              maxscale, minscale, symbolscale, transparency
+  - legendObj: interlace, transparent
+  - scalebarObj: interlace, transparent
+  - symbolObj: gap, stylelength
+  - webObj: minscale, maxscale
+  - mapObj: imagetype
+  
+* Class methods that have been removed
+
+  - projectionObj: free
+  - lineObj: free
+  - pointObj: free
+  - rectObj: free
+  - shapeObj: free, union_geos
+  - symbolObj: free, getstylearray
+  - imageObj: free
+  - outputFormatObj: getformatoption, setformatoption
+  - shapefileObj: free
+  - layerObj: getFilter, getShape
+
+* referenceMapObj has new properties: marker, markername, markersize, maxboxsize, minboxsize
+* labelCacheObj has a new function: freeCache(). free() is an alias to this function.
+* shapeFileObj is automatically closed/writed on destroy. (At the end of the script or with an explicit unset())
+* layerObj->clearProcessing() method now returns void.
+* mapObj->queryByIndex(): default behavior for the addToQuery parameter was not ok, now it is.
+
+* Methods that now return MS_SUCCESS/MS_FAILURE:
+  
+  - symbolObj: setPoints, setPattern
+  - scalebarObj: setImageColor
+  - outputFormatObj: validate
+  - layerObj: setProcessing, addFeature, draw
+  - mapObj: moveLayerUp, moveLayerDown, zoomRectangle, zoomScale, setProjection,
+            setWKTProjection, setLayersDrawingOrder
+
+* Methods that now return NULL on failure:
+
+  - classObj: clone
+  - styleObj: clone  
+  - layerObj: nextShape, getExtent
+  - mapObj: clone, draw, drawQuery getLayerByName, getProjection, 
+            processTemplate, processQueryTemplate, processLegendTemplate
+
+* Methods that now return an empty array 
+
+  - symbolObj: getPatternArray
+  - layerObj: getItems, getProcessing, getGridIntersectionCoordinates
+  - mapObj: getLayersIndexByGroup, getAllGroupNames, getLayersDrawingOrder getAllLayerNames
+  
 ------------
 OUTPUTFORMAT
 ------------

@@ -1416,9 +1416,9 @@ PHP_METHOD(mapObj, zoomRectangle)
                               &zgeoRefExtent , mapscript_ce_rect,
                               &zmaxGeoRefExtent , mapscript_ce_rect) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-return;
+        return;
     }
-PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     php_pixelExtent = (php_rect_object *) zend_object_store_get_object(zpixelExtent TSRMLS_CC);
@@ -2511,7 +2511,7 @@ PHP_METHOD(mapObj, getLayersDrawingOrder)
 }
 /* }}} */
 
-/* {{{ proto int map.getLayersDrawingOrder(array_layer_index)
+/* {{{ proto int map.setLayersDrawingOrder(array_layer_index)
    Set the array used for the drawing order. 
    array_layers_index : an array containing all the layer's index ordered
                         by the drawing priority.
@@ -2521,7 +2521,7 @@ PHP_METHOD(mapObj, getLayersDrawingOrder)
                             array[2] = 1
                             will set the darwing order to layer 2, layer 0,
                             and then layer 1.
-   Return TRUE on success or FALSE.
+   Return MS_SUCCESS on success or MS_FAILURE.
    Note : the first element in the array is the one drawn first.*/
 PHP_METHOD(mapObj, setLayersDrawingOrder)
 {
