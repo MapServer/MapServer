@@ -29,6 +29,7 @@
 
 #include "mapserver.h"
 #include "maptime.h"
+#include "maptemplate.h"
 
 #include <ctype.h> /* isalnum() */
 #include <stdarg.h> 
@@ -46,13 +47,18 @@ MS_CVSID("$Id$")
 **   request then MS_DONE is returned and MapServer is expected to process 
 **   this as a regular MapServer (traditional CGI) request.
 */
-int msOWSDispatch(mapObj *map, cgiRequestObj *request, int force_ows_mode)
+int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 {
     int i, status = MS_DONE;
     const char *service=NULL;
+    int force_ows_mode = 0;
+
 
     if (!request)
       return status;
+
+    if (ows_mode == OWS || ows_mode == WFS)
+      force_ows_mode = 1;
 
     for( i=0; i<request->NumParams; i++ ) 
     {
@@ -64,7 +70,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int force_ows_mode)
     /* Note: SERVICE param did not exist in WMS 1.0.0, it was added only in WMS 1.1.0,
      * so we need to let msWMSDispatch check for known REQUESTs even if SERVICE is not set.
      */
-    if ((status = msWMSDispatch(map, request)) != MS_DONE )
+    if ((status = msWMSDispatch(map, request, MS_FALSE)) != MS_DONE )
         return status;
 #else
     if( service != NULL && strcasecmp(service,"WMS") == 0 )
@@ -77,7 +83,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int force_ows_mode)
     /* Note: WFS supports POST requests, so the SERVICE param may only be in the post data
      * and not be present in the GET URL
      */
-    if ((status = msWFSDispatch(map, request)) != MS_DONE )
+    if ((status = msWFSDispatch(map, request, (ows_mode == WFS))) != MS_DONE )
         return status;
 #else
     if( service != NULL && strcasecmp(service,"WFS") == 0 )

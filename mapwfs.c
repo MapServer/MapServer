@@ -52,7 +52,7 @@ int msWFSException(mapObj *map, const char *locator, const char *code,
     */
 
     if( version == NULL )
-      version = "1.0.0";
+      version = "1.1.0";
 
     if( msOWSParseVersionString(version) >= OWS_1_1_0 )
       return msWFSException11( map, locator, code, version );
@@ -2059,7 +2059,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 **   is returned and MapServer is expected to process this as a regular
 **   MapServer request.
 */
-int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
+int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, int force_wfs_mode)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -2075,6 +2075,86 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
   /* into the paramsObj.  */
   msWFSParseRequest(requestobj, paramsObj);
 
+  if (force_wfs_mode)
+  {
+      /*request is always required*/
+      if (paramsObj->pszRequest==NULL || strlen(paramsObj->pszRequest)<=0)
+      {
+          msSetError(MS_WFSERR, 
+                 "Incomplete WFS request: REQUEST parameter missing", 
+                     "msWFSDispatch()");
+          returnvalue = msWFSException(map, "request", "MissingParameterValue", paramsObj->pszVersion);
+          msWFSFreeParamsObj(paramsObj);
+          free(paramsObj);
+          paramsObj = NULL;
+          return returnvalue;
+      }
+      
+      /*version:
+        wfs 1.0 and 1.1.0 POST request: optional
+        wfs 1.0 and 1.1.0 GET request: optional for getcapabilities and required for describefeatute and getfeature
+       */
+      if (paramsObj->pszVersion == NULL && requestobj && requestobj->postrequest == MS_FALSE && 
+          strcasecmp(paramsObj->pszRequest, "GetCapabilities") != 0)
+      {
+          msSetError(MS_WFSERR, 
+                 "Invalid WFS request: VERSION parameter missing", 
+                 "msWFSDispatch()");
+          returnvalue = msWFSException(map, "version", "MissingParameterValue", paramsObj->pszVersion);
+          msWFSFreeParamsObj(paramsObj);
+          free(paramsObj);
+          paramsObj = NULL;
+          return returnvalue;
+      }
+
+      if (paramsObj->pszVersion == NULL || strlen(paramsObj->pszVersion) <=0)
+        paramsObj->pszVersion = strdup("1.1.0");
+
+      /*service 
+        wfs 1.0 and 1.1.0 GET: required and should be set to WFS
+        wfs 1.0 POST: required
+        wfs 1.1.1 POST: optional
+      */
+      if ((paramsObj->pszService == NULL || strlen(paramsObj->pszService) == 0) &&
+          ((requestobj && requestobj->postrequest == MS_FALSE) || strcasecmp(paramsObj->pszVersion,"1.0") ==0))
+      {
+            msSetError(MS_WFSERR, 
+                 "Invalid WFS request: Missing SERVICE parameter", 
+                 "msWFSDispatch()");
+          returnvalue = msWFSException(map, "service", "MissingParameterValue", paramsObj->pszVersion);
+          msWFSFreeParamsObj(paramsObj);
+          free(paramsObj);
+          paramsObj = NULL;
+          return returnvalue;
+      }
+
+      if (paramsObj->pszService == NULL || strlen(paramsObj->pszService) == 0)
+        paramsObj->pszService = strdup("WFS");
+
+      if (paramsObj->pszService!=NULL && strcasecmp(paramsObj->pszService, "WFS") != 0)
+      {
+          msSetError(MS_WFSERR, 
+                 "Invalid WFS request: SERVICE parameter must be set to WFS", 
+                 "msWFSDispatch()");
+          returnvalue = msWFSException(map, "service", "InvalidParameterValue", paramsObj->pszVersion);
+          msWFSFreeParamsObj(paramsObj);
+          free(paramsObj);
+          paramsObj = NULL;
+          return returnvalue;
+      }
+      if (paramsObj->pszService == NULL && strcasecmp(paramsObj->pszVersion, "1.0") == 0)
+      {
+          msSetError(MS_WFSERR, 
+                 "Invalid WFS request: SERVICE parameter missing", 
+                 "msWFSDispatch()");
+          returnvalue = msWFSException(map, "service", "MissingParameterValue", paramsObj->pszVersion);
+          msWFSFreeParamsObj(paramsObj);
+          free(paramsObj);
+          paramsObj = NULL;
+          return returnvalue;
+      }
+      
+  }
   /* If SERVICE is specified then it MUST be "WFS" */
   if (paramsObj->pszService != NULL && 
       strcasecmp(paramsObj->pszService, "WFS") != 0)

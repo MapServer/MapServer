@@ -1259,9 +1259,9 @@ int main(int argc, char *argv[]) {
     ** Start by calling the WMS/WFS/WCS Dispatchers.  If they fail then we'll 
     ** process this as a regular MapServer request.
     */
-    if((mapserv->Mode == -1 || mapserv->Mode == OWS) &&
-       (status = msOWSDispatch(mapserv->map, mapserv->request,
-                               (mapserv->Mode == OWS))) != MS_DONE  )  {
+    if((mapserv->Mode == -1 || mapserv->Mode == OWS || mapserv->Mode == WFS) &&
+       (status = msOWSDispatch(mapserv->map, mapserv->request, 
+                               mapserv->Mode)) != MS_DONE  )  {
       /*
       ** OWSDispatch returned either MS_SUCCESS or MS_FAILURE
       **

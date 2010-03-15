@@ -3770,7 +3770,7 @@ int msWMSGetSchemaExtension(mapObj *map)
 **   is returned and MapServer is expected to process this as a regular
 **   MapServer request.
 */
-int msWMSDispatch(mapObj *map, cgiRequestObj *req)
+int msWMSDispatch(mapObj *map, cgiRequestObj *req, int force_wms_mode)
 {
 #ifdef USE_WMS_SVR
   int i, status, nVersion=OWS_VERSION_NOTSET;
@@ -3822,8 +3822,13 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
        strcasecmp(request, "GetCapabilities") == 0) &&
       (nVersion >= OWS_1_0_7 || nVersion == OWS_VERSION_NOTSET))
   {
-      msSetError(MS_WMSERR, "Required SERVICE parameter missing.", "msWMSDispatch");
-      return msWMSException(map, nVersion, "ServiceNotDefined");
+      if (force_wms_mode)
+      {
+          msSetError(MS_WMSERR, "Required SERVICE parameter missing.", "msWMSDispatch");
+          return msWMSException(map, nVersion, "ServiceNotDefined");
+      }
+      else
+        return MS_DONE;
   }
 
   /*
