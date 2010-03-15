@@ -36,6 +36,7 @@
 #include "zlib.h"
 #endif
 #include "mapserver.h"
+#include "mapcopy.h"
 
 MS_CVSID("$Id$")
 
@@ -911,6 +912,8 @@ static void drawSVGText(FILE *fp, int bCompressed, int x, int y,
     char szTmp[100];
     /*    char *next; */
     /*    int len, i, ch; */
+    int nTokens = 0, i=0;
+    char **tokens = NULL;
 
     pszFontStyleString = msStringConcatenate(pszFontStyleString, "");
     pszFontWeightString = msStringConcatenate(pszFontWeightString, "");
@@ -957,52 +960,40 @@ static void drawSVGText(FILE *fp, int bCompressed, int x, int y,
         pszAngleString = msStringConcatenate(pszAngleString, szTmp);
     }
 
+    /*anchor positions are alreay taken into account when calculationg the
+      label position. Do not write them here*/
     /* anchor point */
-    if (nAnchorPosition == MS_UL || nAnchorPosition == MS_CL ||
-        nAnchorPosition == MS_LL)
-    {
-        sprintf(szTmp, " text-anchor=\"end\"");
-        pszAngleAnchorString = msStringConcatenate(pszAngleAnchorString, szTmp);
-    }
-    else if (nAnchorPosition == MS_UC || nAnchorPosition == MS_CC ||
-             nAnchorPosition == MS_LC)
-    {
-        sprintf(szTmp, " text-anchor=\"middle\"");
-        pszAngleAnchorString = msStringConcatenate(pszAngleAnchorString, szTmp);
-    }
-    else if (nAnchorPosition == MS_UR || nAnchorPosition == MS_CR ||
-             nAnchorPosition == MS_LR)
-    {
-        sprintf(szTmp, " text-anchor=\"start\"");
-        pszAngleAnchorString = msStringConcatenate(pszAngleAnchorString, szTmp);
-    }
+    
 
-/*    if (bEncoding)
+    pszFinalString = string;
+
+    /*check for line breaks and produce multi lines if needed*/
+    nTokens = 0;
+    tokens = msStringSplit(pszFinalString, '\n', &nTokens);
+    if (tokens && nTokens > 1)
     {
-        pszTmpStr = msStringConcatenate(pszTmpStr, string);
-        next = pszTmpStr;
-        for (i=0; *next; i++)
+        /*+1 postion the text better. More inline with what we see froma raster(agg) output*/
+        msIO_fprintfgz(fp, bCompressed,"<text x=\"%d\" y=\"%d\" font-family=\"%s\" font-size=\"%dpt\"%s%s%s%s%s>\n",
+                       x, (y-((int)(size+1))), pszFontFamilily, (int)size, 
+                     pszFontStyleString, pszFontWeightString, 
+                       pszFillString, pszStrokeString, pszAngleString);
+        for (i=0; i<nTokens; i++)
         {
-            ch = *next;
-            
-            
-            len = gdTcl_UtfToUniChar (next, &ch);
-            next += len;
-        
-            sprintf(szTmp, "&#x%x;",ch);
-            pszFinalString = msStringConcatenate(pszFinalString, szTmp);
-        }
+            msIO_fprintfgz(fp, bCompressed,"<tspan x=\"%d\" dy=\"%dpt\">%s</tspan>\n",x,(int)size,tokens[i]);
+        }       
+        msIO_fprintfgz(fp, bCompressed, "</text>\n");
     }
-    else*/
-      pszFinalString = string;
+    else
+      /* TODO : font size set to unit pt */
+      msIO_fprintfgz(fp, bCompressed,"<text x=\"%d\" y=\"%d\" font-family=\"%s\" font-size=\"%dpt\"%s%s%s%s%s>%s</text>\n" ,
+                     x, y, pszFontFamilily, (int)size, 
+                     pszFontStyleString, pszFontWeightString, 
+                     pszFillString, pszStrokeString, pszAngleString, 
+                     pszFinalString);
 
-    /* TODO : font size set to unit pt */
-    msIO_fprintfgz(fp, bCompressed,"<text x=\"%d\" y=\"%d\" font-family=\"%s\" font-size=\"%dpt\"%s%s%s%s%s%s>%s</text>\n",
-                 x, y, pszFontFamilily, (int)size, 
-                 pszFontStyleString, pszFontWeightString, 
-                 pszFillString, pszStrokeString, pszAngleString, 
-                 pszAngleAnchorString, pszFinalString);
-
+      
+    if (tokens && nTokens > 0)
+      msFreeCharArray(tokens, nTokens);
     if (pszFontStyleString)
       msFree(pszFontStyleString);
     if (pszFontWeightString)
@@ -1167,12 +1158,16 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
 int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 {
   pointObj p;
-  int i, j, l, priority;
+  int i, l, priority;
   rectObj r;
   
   labelCacheMemberObj *cachePtr=NULL;
   layerObj *layerPtr=NULL;
   labelObj *labelPtr=NULL;
+
+  shapeObj billboard;
+  lineObj billboard_line;
+  pointObj billboard_points[5];
 
   int marker_width, marker_height, label_offset_x, label_offset_y;
   int marker_offset_x, marker_offset_y;
@@ -1188,7 +1183,11 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
     if (!image || !map || !MS_DRIVER_SVG(image->format) )
       return (0);
 
-  
+    billboard.numlines = 1;
+    billboard.line = &billboard_line;
+    billboard.line->numpoints = 5;
+    billboard.line->point = billboard_points;
+    
   for(priority=MS_MAX_LABEL_PRIORITY-1; priority>=0; priority--) {
    labelCacheSlotObj *cacheslot;
    cacheslot = &(map->labelcache.slots[priority]);
@@ -1231,62 +1230,68 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
     }
 
     if(labelPtr->position == MS_AUTO) {
+              int positions[MS_POSITIONS_LENGTH], npositions=0;
 
-      if(layerPtr->type == MS_LAYER_LINE) {
-	int position = MS_UC;
+              /*
+	      ** If the ANNOTATION has an associated marker then the position is handled like a point regardless of underlying shape type. (#2993)
+              **   (Note: might be able to re-order this for more speed.)
+              */
+              if(layerPtr->type == MS_LAYER_POLYGON || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_POLYGON && cachePtr->numstyles == 0)) {
+		positions[0]=MS_CC; positions[1]=MS_UC; positions[2]=MS_LC; positions[3]=MS_CL; positions[4]=MS_CR;
+                npositions = 5;
+              } else if(layerPtr->type == MS_LAYER_LINE || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_LINE && cachePtr->numstyles == 0)) {
+                positions[0]=MS_UC; positions[1]=MS_LC; positions[2]=MS_CC;
+                npositions = 3;
+              } else {
+                positions[0]=MS_UL; positions[1]=MS_LR; positions[2]=MS_UR; positions[3]=MS_LL; positions[4]=MS_CR; positions[5]=MS_CL; positions[6]=MS_UC; positions[7]=MS_LC;
+                npositions = 8;
+              }
 
-	for(j=0; j<2; j++) { /* Two angles or two positions, depending on angle. Steep angles will use the angle approach, otherwise we'll rotate between UC and LC. */
+              for(i=0; i<npositions; i++) {
+                msFreeShape(cachePtr->poly);
+                cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-	  msFreeShape(cachePtr->poly);
-	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+                p = get_metrics(&(cachePtr->point), positions[i], r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
+                if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
+                  msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
-	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
+                /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
+                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
 
-	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
+                if(cachePtr->status) /* found a suitable place for this label */ {
+                  if(MS_VALID_COLOR(labelPtr->backgroundcolor))
+                    get_metrics_line(&(cachePtr->point), positions[i], r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, 1, billboard.line);
+                  break; /* ...out of position loop */
+                }
 
-          /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
-          msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
-                                     map->width, map->height, 
-                                     label_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
+              } /* next position */
 
+              if(labelPtr->force) {
 
-	  if(cachePtr->status) /* found a suitable place for this label */
-	    break;
+                  /*billboard wasn't initialized if no non-coliding position was found*/
+                  if(!cachePtr->status && MS_VALID_COLOR(labelPtr->backgroundcolor))
+                      get_metrics_line(&(cachePtr->point), positions[npositions-1], r,
+                              (marker_offset_x + label_offset_x),
+                              (marker_offset_y + label_offset_y),
+                              labelPtr->angle, 1, billboard.line);
 
-	} /* next angle */
+                  cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
+              }
 
-      } else {
-	for(j=0; j<=7; j++) { /* loop through the outer label positions */
-
-	  msFreeShape(cachePtr->poly);
-	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-
-	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
-
-	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
-
-          /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
-          msTestLabelCacheCollisions(&(map->labelcache), labelPtr, 
-                                     map->width, map->height, 
-                                     label_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
-
-	  if(cachePtr->status) /* found a suitable place for this label */
-	    break;
-	} /* next position */
-      }
-
-      if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
-
-    } else {
+            } else {
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-      if(labelPtr->position == MS_CC) /* don't need the marker_offset */
+      if(labelPtr->position == MS_CC) { /* don't need the marker_offset */
         p = get_metrics(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, label_buffer, cachePtr->poly);
-      else
+        if(MS_VALID_COLOR(labelPtr->backgroundcolor))
+                  get_metrics_line(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, 1, billboard.line);
+      }
+      else {
         p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
-
+        if(MS_VALID_COLOR(labelPtr->backgroundcolor))
+                  get_metrics_line(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, 1, billboard.line);
+      }
+        
       if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
@@ -1309,7 +1314,23 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
         msDrawMarkerSymbolSVG(&map->symbolset, image, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
     }
 
-    /* background not supported */
+    
+    /*draw the background, only if we're not using FOLLOW labels*/
+    if(!cachePtr->labelpath && MS_VALID_COLOR(labelPtr->backgroundcolor)) {
+        styleObj style;
+
+        initStyle(&style);                    
+        if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
+            MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundshadowcolor));
+            style.offsetx = labelPtr->backgroundshadowsizex*image->resolutionfactor;
+            style.offsety = labelPtr->backgroundshadowsizey*image->resolutionfactor;
+            msDrawShadeSymbol(&map->symbolset,image,&billboard,&style,1);
+            style.offsetx = 0;
+            style.offsety = 0;
+        }
+        MS_COPYCOLOR(&(style.color), &(labelPtr->backgroundcolor));
+        msDrawShadeSymbol(&map->symbolset, image, &billboard, &style, 1);
+    }
     /* if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardGD(img, cachePtr->poly, labelPtr); */
     msDrawTextSVG(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
 
