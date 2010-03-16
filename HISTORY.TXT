@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-6):
 --------------------------------
 
+- Fixed problem with isValidItem vs OGR special attributes (#3356)
+
 - Support wrap character for SVG output (#3367)
 
 - Fixed msMSSQL2008CloseConnection() to free the statement handle 
@@ -45,7 +47,6 @@ Current Version (SVN branch-5-6):
 
 - Got rid of invalid warning about missing EPSG proj in WMs GetCapabilities
   when map has a valid EPSG proj, but layer doesn't (#2028)
-
 
 - Correct one pass query problems and OGC filter query (#3305)
 
