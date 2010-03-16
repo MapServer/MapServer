@@ -1472,7 +1472,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 
     memcpy( adfDstGeoTransform, map->gt.geotransform, sizeof(double)*6 );
 
+    msReleaseLock( TLOCK_GDAL );
     msGetGDALGeoTransform( hDS, map, layer, adfSrcGeoTransform );
+    msAcquireLock( TLOCK_GDAL );
 
     nSrcXSize = GDALGetRasterXSize( hDS );
     nSrcYSize = GDALGetRasterYSize( hDS );
