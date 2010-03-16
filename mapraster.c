@@ -527,12 +527,12 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     ** If using a tileindex then build the path relative to that file if SHAPEPATH is not set.
     */
     if(layer->tileindex && !map->shapepath) { 
-      msBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
+      msTryBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
       tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
       msBuildPath(szPath, tiAbsDirPath, filename); 
       free(tiAbsDirPath);
     } else {
-      msBuildPath3(szPath, map->mappath, map->shapepath, filename);
+      msTryBuildPath3(szPath, map->mappath, map->shapepath, filename);
     }
 
     msAcquireLock( TLOCK_GDAL );
