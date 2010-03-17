@@ -735,7 +735,11 @@ char           *hashTableObj_nextKey(hashTableObj *self, const char *prevkey);
 
 
 cgiRequestObj *cgirequestObj_new();
-int cgirequestObj_loadParams(cgiRequestObj *self);
+int cgirequestObj_loadParams(cgiRequestObj *self, 
+                             char* (*getenv2)(const char*, void* thread_context), 
+                             char *raw_post_data,
+                             uint raw_post_data_length,
+                             void* thread_context);
 void cgirequestObj_setParameter(cgiRequestObj *self, char *name, char *value);
 char *cgirequestObj_getName(cgiRequestObj *self, int index);
 char *cgirequestObj_getValue(cgiRequestObj *self, int index);

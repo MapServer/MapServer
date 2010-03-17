@@ -76,7 +76,7 @@
 
     int loadParams()
     {
-	self->NumParams = loadParams( self );
+	self->NumParams = loadParams( self, NULL, NULL, 0, NULL);
 	return self->NumParams;
     }
 

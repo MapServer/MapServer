@@ -74,7 +74,8 @@ typedef struct
 ** Function prototypes
 */
 #ifndef SWIG
-MS_DLL_EXPORT  int loadParams(cgiRequestObj *);
+MS_DLL_EXPORT int loadParams(cgiRequestObj *request, char* (*getenv2)(const char*, void* thread_context), 
+                             char *raw_post_data, uint raw_post_data_length, void* thread_context);
 MS_DLL_EXPORT void getword(char *, char *, char);
 MS_DLL_EXPORT char *makeword_skip(char *, char, char);
 MS_DLL_EXPORT char *makeword(char *, char);

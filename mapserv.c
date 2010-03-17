@@ -1207,7 +1207,7 @@ int main(int argc, char *argv[]) {
       writeError();
     }
 
-    mapserv->request->NumParams = loadParams(mapserv->request);
+    mapserv->request->NumParams = loadParams(mapserv->request, NULL, NULL, 0, NULL);
     if( mapserv->request->NumParams == -1 ) {
 #ifdef USE_FASTCGI
       /* FCGI_ --- return to top of loop */

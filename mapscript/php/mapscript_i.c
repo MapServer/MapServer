@@ -1422,10 +1422,14 @@ cgiRequestObj *cgirequestObj_new()
     return request;
 }
 
-int cgirequestObj_loadParams(cgiRequestObj *self)
+int cgirequestObj_loadParams(cgiRequestObj *self, 
+                             char* (*getenv2)(const char*, void* thread_context), 
+                             char *raw_post_data,
+                             uint raw_post_data_length,
+                             void* thread_context)
 {
-  self->NumParams = loadParams(self);
-  return self->NumParams;
+    self->NumParams = loadParams(self, getenv2, raw_post_data, raw_post_data_length, thread_context);
+    return self->NumParams;
 }
 
 

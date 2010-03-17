@@ -1208,15 +1208,15 @@ PHP_MINIT_FUNCTION(mapscript)
     PHP_MINIT(shapefile)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(layer)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(map)(INIT_FUNC_ARGS_PASSTHRU);
-     
+
     return SUCCESS;
 }
 
 PHP_MSHUTDOWN_FUNCTION(mapscript)
 {
     /* Cleanup MapServer resources */
-    msCleanup();
-
+    msCleanup();    
+    
     return SUCCESS;
 }
 
