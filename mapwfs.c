@@ -206,7 +206,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
     {
         for (i=0; i<map->numlayers; i++)
         {
-            lp = lp = GET_LAYER(map, i);
+            lp = GET_LAYER(map, i);
             if (lp->status != MS_ON)
               continue;
 
@@ -258,7 +258,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
         {
             for (i=0; i<map->numlayers; i++)
             {
-                lp = lp = GET_LAYER(map, i);
+                lp = GET_LAYER(map, i);
                 if (lp->status != MS_ON)
                   continue;
                 
