@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Add support for multiliple srs in  WFS 1.1.0 (#3227)
+
 - Fixed PHP/MapScript owsRequestObj->loadParams() method when using php in a non cgi/fcgi/cli mode. (#1975)
 
 - Ensure that non-file raster datasets work (#3253) 

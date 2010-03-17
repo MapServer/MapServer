@@ -105,14 +105,14 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
     const char *value    = NULL;
     const char *encoding = NULL;
     char *encoded=NULL;
-      
+    char **tokens;
+    int n=0,i=0;      
 
     encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
     if (!encoding)
       encoding = "ISO-8859-1";
 
     psRootNode = xmlNewNode(NULL, BAD_CAST "FeatureType");
-
 
     /*if there is an encoding using it on some of the items*/
     psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", lp->name, encoding);
@@ -151,14 +151,24 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
             NULL, "Keyword", encoded, ',' );
 	msFree(encoded);
     }
-    /*srs only supposrt DefaultSRS with the same logic as for wfs1.0
-      TODO support OtherSRS*/
-    value = msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE);
+      /*support DefaultSRS and OtherSRS*/
+    value = msOWSGetProjURN(&(map->projection),&(map->web.metadata),"FO",MS_FALSE);
     if (!value)
-      value =  msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
-  
-    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST value);
-    if (!value)
+      value = msOWSGetProjURN(&(lp->projection), &(lp->metadata), "FO", MS_FALSE);
+
+    if (value)
+    {
+        tokens = msStringSplit(value, ' ', &n);
+        if (tokens && n > 0)
+        {
+            psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]);
+            for (i=1; i<n; i++)
+              psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "OtherSRS", BAD_CAST tokens[i]);
+
+            msFreeCharArray(tokens, n);
+        }
+    }
+    else
       xmlAddSibling(psNode,
                     xmlNewComment(BAD_CAST "WARNING: Mandatory mapfile parameter: (at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs/ows_srs metadata was missing in this context."));
 

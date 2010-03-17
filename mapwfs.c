@@ -131,6 +131,209 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
   msIO_printf("    </%s>\n", request);
 }
 
+
+/* msWFSLocateSRSInList()
+**
+** Utility function to check if a space separated list contains of srs
+** contain the one passed in argument.  The list comes normaly
+** from ows_srs metadata, and is expected to using the simple EPSG notation
+** (EPSG:4326 ESPG:42304 ...). The srs comes from the query strin and can either
+** be of simple EPSG format or using gc:def:crs:EPSG:xxx format
+*/
+int msWFSLocateSRSInList(const char *pszList, const char *srs)
+{
+    int nTokens,i;
+    char **tokens = NULL;
+    int bFound = MS_FALSE;
+    char epsg_string[100];
+    const char *code;
+
+    if (!pszList || !srs)
+      return MS_FALSE;
+
+    if (strncasecmp(srs, "EPSG:",5) == 0)
+      code = srs+5;
+    else if (strncasecmp(srs, "urn:ogc:def:crs:EPSG:",21) == 0)
+      code = srs+21;
+    else if (strncasecmp(srs, "urn:EPSG:geographicCRS:",23) == 0)
+      code = srs + 23;
+    else
+      return MS_FALSE;
+    
+    sprintf( epsg_string, "EPSG:%s", code );
+
+    tokens = msStringSplit(pszList, ' ', &nTokens );
+    if (tokens && nTokens > 0)
+    {
+        for (i=0; i<nTokens; i++)
+        {
+            if (strcasecmp(tokens[i],  epsg_string) == 0)
+            {
+                bFound = MS_TRUE;
+                break;
+            }
+        }
+        msFreeCharArray(tokens, nTokens);
+    }
+    
+    return bFound;
+}
+
+/* msWFSGetFeatureApplySRS()
+**
+** Utility function called from msWFSGetFeature. It is assumed that at this point
+** all queried layers are turned ON
+*/
+static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *version)
+{
+    int nVersion = OWS_1_1_0;
+    const char *pszLayerSRS=NULL;
+    const char *pszMapSRS=NULL;
+    char *pszOutputSRS=NULL;
+    layerObj *lp;
+    int i;
+    
+    if (version && strncmp(version,"1.0",3)==0)
+      nVersion = OWS_1_0_0;
+
+    /*validation of SRS
+      - wfs 1.0 does not have an srsname parameter so all queried layers should be advertized using the
+        same srs. For wfs 1.1.0 an srsName can be passed, we should validate that It is valid for all 
+        queries layers
+    */
+    pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
+    if (srs == NULL || nVersion == OWS_1_0_0)
+    {
+        for (i=0; i<map->numlayers; i++)
+        {
+            lp = lp = GET_LAYER(map, i);
+            if (lp->status != MS_ON)
+              continue;
+
+            if (pszMapSRS)
+              pszLayerSRS = pszMapSRS;
+            else
+              pszLayerSRS = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
+              
+            if (pszLayerSRS == NULL) 
+            {
+                msSetError(MS_WFSERR, 
+                           "Server config error: SRS must be set at least at the map or at the layer level.",
+                           "msWFSGetFeature()");
+                if (pszOutputSRS)
+                  msFree(pszOutputSRS);
+                return MS_FAILURE;
+            }
+            if (pszOutputSRS == NULL)
+              pszOutputSRS = strdup(pszLayerSRS);
+            else if (strcasecmp(pszLayerSRS,pszOutputSRS) != 0) 
+            {
+                msSetError(MS_WFSERR, 
+                           "Invalid GetFeature Request: All TYPENAMES in a single GetFeature request must have been advertized in the same SRS.  Please check the capabilities and reformulate your request.",
+                           "msWFSGetFeature()");
+                if (pszOutputSRS)
+                  msFree(pszOutputSRS);
+                return MS_FAILURE;
+            }
+            
+        }
+    }
+    else /*srs is given so it should be valid for all layers*/
+    {
+        /*get all the srs defined at the map level and check them aginst the srsName passed
+          as argument*/
+        pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_FALSE);
+        if (pszMapSRS)
+        {
+            if (!msWFSLocateSRSInList(pszMapSRS, srs))
+            {
+                msSetError(MS_WFSERR, 
+                           "Invalid GetFeature Request:Invalid SRS.  Please check the capabilities and reformulate your request.",
+                           "msWFSGetFeature()");
+                return MS_FAILURE;
+            }
+            pszOutputSRS = strdup(srs);
+        }
+        else
+        {
+            for (i=0; i<map->numlayers; i++)
+            {
+                lp = lp = GET_LAYER(map, i);
+                if (lp->status != MS_ON)
+                  continue;
+                
+                pszLayerSRS = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_FALSE);
+                if (!pszLayerSRS)
+                {
+                    msSetError(MS_WFSERR, 
+		       "Server config error: SRS must be set at least at the map or at the layer level.",
+		       "msWFSGetFeature()");
+                    return MS_FAILURE;
+                }
+                if (!msWFSLocateSRSInList(pszLayerSRS, srs))
+                {
+                    msSetError(MS_WFSERR, 
+                               "Invalid GetFeature Request:Invalid SRS.  Please check the capabilities and reformulate your request.",
+                               "msWFSGetFeature()");
+                    return MS_FAILURE;
+                }
+            }
+            pszOutputSRS = strdup(srs);
+        }
+    }
+
+    if (pszOutputSRS && nVersion >= OWS_1_1_0)
+    {     
+          /*check if the srs passed is valid. Assuming that it is an EPSG:xxx format,
+            Or urn:ogc:def:crs:EPSG:xxx format. */
+        if (strncasecmp(pszOutputSRS, "EPSG:", 5) == 0 ||
+            strncasecmp(pszOutputSRS, "urn:ogc:def:crs:EPSG:",21) == 0)
+        {
+            /*we load the projection sting in the map and possibly 
+              set the axis order*/
+            msFreeProjection(&map->projection);
+            msLoadProjectionStringEPSG(&(map->projection), pszOutputSRS);
+        }
+        else if (strncasecmp(pszOutputSRS, "urn:EPSG:geographicCRS:",23) == 0)
+        {
+            char epsg_string[100];
+            const char *code;
+
+            code = pszOutputSRS + 23;
+            
+            sprintf( epsg_string, "EPSG:%s", code );
+            
+            /*we load the projection sting in the map and possibly 
+              set the axis order*/
+            msFreeProjection(&map->projection);
+            msLoadProjectionStringEPSG(&(map->projection), epsg_string);
+        }
+    }
+    /* Set map output projection to which output features should be reprojected */
+    else if (pszOutputSRS && strncasecmp(pszOutputSRS, "EPSG:", 5) == 0) 
+    {
+        int nTmp =0;
+        msFreeProjection(&map->projection);
+        msInitProjection(&map->projection);
+
+        if (nVersion >= OWS_1_1_0)
+          nTmp = msLoadProjectionStringEPSG(&(map->projection), pszOutputSRS);
+        else
+          nTmp = msLoadProjectionString(&(map->projection), pszOutputSRS);
+
+        if (nTmp != 0) {
+            msSetError(MS_WFSERR, "msLoadProjectionString() failed", "msWFSGetFeature()");
+            return MS_FAILURE;
+        }
+    }
+    
+
+    if (pszOutputSRS)
+      msFree(pszOutputSRS);
+    return MS_SUCCESS;
+}
+
+
 /* msWFSIsLayerSupported()
 **
 ** Returns true (1) is this layer meets the requirements to be served as
@@ -256,7 +459,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    else
    {
        /* Map has no SRS.  Use layer SRS or produce a warning. */
-       pszWfsSrs = msOWSGetEPSGProj(&(map->projection),&(map->web.metadata), "FO", MS_TRUE);
+       pszWfsSrs = msOWSGetEPSGProj(&(lp->projection),&(lp->metadata), "FO", MS_TRUE);
    }
 
    msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
@@ -1014,7 +1217,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   const char *typename="";
   char       *script_url=NULL, *script_url_encoded;
   rectObj     bbox;
-  const char  *pszOutputSRS = NULL;
   
   char **layers = NULL;
   int numlayers = 0;
@@ -1046,7 +1248,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
   char **papszPropertyName = NULL;
   int nPropertyNames = 0;
-  const char *pszMapSRS = NULL;
   int nQueriedLayers=0;
   layerObj *lpQueried=NULL;
 
@@ -1122,7 +1323,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       msFreeCharArray(tokens, n);
 
    
-    pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
 
     /* Keep only selected layers, set to OFF by default. */
     for(j=0; j<map->numlayers; j++) {
@@ -1144,7 +1344,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	lp = GET_LAYER(map, j);
 	
 	if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, layers[k]) == 0) {
-	  const char *pszThisLayerSRS;
 	  bLayerFound = MS_TRUE;
 	  
 	  lp->status = MS_ON;
@@ -1291,34 +1490,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
               }
           }
-              
-
-          
-	  /* See comments in msWFSGetCapabilities() about the rules for SRS. */
-	  if ((pszThisLayerSRS = pszMapSRS) == NULL) {
-	    pszThisLayerSRS = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
-	  }
-	  
-	  if (pszThisLayerSRS == NULL) {
-	    msSetError(MS_WFSERR, 
-		       "Server config error: SRS must be set at least at the map or at the layer level.",
-		       "msWFSGetFeature()");
-	    return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
-	  }
-
-	  /* Keep track of output SRS.  If different from value */
-	  /* from previous layers then this is an invalid request */
-	  /* i.e. all layers in a single request must be in the */
-	  /* same SRS. */
-	  if (pszOutputSRS == NULL) {
-	    pszOutputSRS = pszThisLayerSRS;
-	  } else if (strcasecmp(pszThisLayerSRS,pszOutputSRS) != 0) {
-	    msSetError(MS_WFSERR, 
-		       "Invalid GetFeature Request: All TYPENAMES in a single GetFeature request must have been advertized in the same SRS.  Please check the capabilities and reformulate your request.",
-		       "msWFSGetFeature()");
-	    return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
-	  }         
-
         }
       }
 
@@ -1333,6 +1504,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       }
     }
   }
+
+
   if (papszPropertyName && nPropertyNames > 0)
   {
     for (i=0; i<nPropertyNames; i++)
@@ -1600,6 +1773,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	free(paszFilter);
     }/* end if filter set */
 
+
     if (bFeatureIdSet)
     {
         char **tokens = NULL, **tokens1=NULL ;
@@ -1724,72 +1898,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     }
 #endif
 
+    
     if(layers)
       msFreeCharArray(layers, numlayers);
 
-
-    /*
-      srs is defined for wfs 1.1. If it is available. If it used to set 
-      the map projection. For EPSG codes between 4000 and 5000 
-      that coordinates order follow what is defined  in the ESPG database
-      see #2899
-  */
-    if (strncmp(paramsObj->pszVersion,"1.1",3) == 0 && paramsObj->pszSrs && pszOutputSRS)
-    {     
-          /*check if the srs passed is valid. Assuming that it is an EPSG:xxx format,
-            Or urn:ogc:def:crs:EPSG:xxx format. */
-        if (strncasecmp(paramsObj->pszSrs, "EPSG:", 5) == 0)
-        {
-            if (strcasecmp(paramsObj->pszSrs, pszOutputSRS) != 0)
-            {
-                msSetError(MS_WFSERR, 
-                           "Invalid GetFeature Request: SRSNAME value should be valid for all the TYPENAMES. Please check the capabilities and reformulate your request.",
-                           "msWFSGetFeature()");
-                return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
-            }
-                /*we load the projection sting in the map and possibly 
-                  set the axis order*/
-            msFreeProjection(&map->projection);
-            msLoadProjectionStringEPSG(&(map->projection), paramsObj->pszSrs);
-        }
-        else if (strncasecmp(paramsObj->pszSrs, "urn:EPSG:geographicCRS:",23) == 0)
-        {
-            char epsg_string[100];
-            const char *code;
-
-            code = paramsObj->pszSrs + 23;
-            
-            sprintf( epsg_string, "EPSG:%s", code );
-            if (strcasecmp(epsg_string, pszOutputSRS) != 0)
-            {
-                msSetError(MS_WFSERR, 
-                           "Invalid GetFeature Request: SRSNAME value should be valid for all the TYPENAMES. Please check the capabilities and reformulate your request.",
-                           "msWFSGetFeature()");
-                return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
-            }
-                /*we load the projection sting in the map and possibly 
-                  set the axis order*/
-            msFreeProjection(&map->projection);
-            msLoadProjectionStringEPSG(&(map->projection), epsg_string);
-        }
-    }
-    /* Set map output projection to which output features should be reprojected */
-    else if (pszOutputSRS && strncasecmp(pszOutputSRS, "EPSG:", 5) == 0) 
-    {
-        int nTmp =0;
-        msFreeProjection(&map->projection);
-        msInitProjection(&map->projection);
-
-        if (strncmp(paramsObj->pszVersion,"1.1",3) == 0)
-          nTmp = msLoadProjectionStringEPSG(&(map->projection), pszOutputSRS);
-        else
-          nTmp = msLoadProjectionString(&(map->projection), pszOutputSRS);
-
-        if (nTmp != 0) {
-            msSetError(MS_WFSERR, "msLoadProjectionString() failed", "msWFSGetFeature()");
-            return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
-        }
-    }
+    if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
+      return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
 
     /*
     ** Perform Query (only BBOX for now)
@@ -1800,9 +1914,15 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
       if (!bBBOXSet)
       {
+          const char *pszMapSRS=NULL, *pszLayerSRS=NULL;
           bbox = map->extent;
           map->query.type = MS_QUERY_BY_RECT; /* setup the query */
           map->query.mode = MS_QUERY_MULTIPLE;
+
+          /*if srsName was given for wfs 1.1.0, It is at this point loaded into the 
+            map object and should be used*/
+          if(!paramsObj->pszSrs)
+            pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
           for(j=0; j<map->numlayers; j++) 
           {
               layerObj *lp;
@@ -1818,8 +1938,26 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                            sprintf(szBuf, "init=epsg:%.10s", pszMapSRS+5);
                 
                            if (msLoadProjectionString(&(map->projection), szBuf) != 0) {
-                               msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s", "msWFSGetFeature()", szBuf);
-                               return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
+                               msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s", 
+                                          "msWFSGetFeature()", szBuf);        
+                               return msWFSException(map, "mapserv", "NoApplicableCode", 
+                                                     paramsObj->pszVersion);
+                           }
+                           
+                       }
+
+                       /*make sure that the layer projectsion is loaded. 
+                         It could come from a ows/wfs_srs metadata*/
+                       if (lp->projection.numargs == 0)
+                       {
+                           pszLayerSRS = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
+                           if (pszLayerSRS)
+                           {
+                               if (strncmp(pszLayerSRS, "EPSG:", 5) == 0) 
+                               {
+                                   sprintf(szBuf, "init=epsg:%.10s", pszLayerSRS+5);
+                                   msLoadProjectionString(&(lp->projection), szBuf);
+                               }
                            }
                        }
 
@@ -2674,7 +2812,7 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 wfsparams->pszRequest = strdup("GetCapabilities");
                 pszValue = (char*)CPLGetXMLValue(psGetCapabilities,  "version", 
                                                  NULL);
-                /* version is optional is the GetCapabilities. If not */
+                /* version is optional for the GetCapabilities. If not */
                 /* provided, set it. */
                 if (pszValue)
                   wfsparams->pszVersion = strdup(pszValue);

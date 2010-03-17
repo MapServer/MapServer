@@ -1414,7 +1414,8 @@ void msAxisSwapShape(shapeObj *shape)
 **
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
 */
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeatures, char *default_namespace_prefix, int outputformat)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeatures, 
+                       char *default_namespace_prefix, int outputformat)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -1436,6 +1437,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
   const char *axis = NULL;
   int bSwapAxis = 0;
   double tmp;
+  const char *srsMap =  NULL;
 
   msInitShape(&shape);
 
@@ -1467,7 +1469,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
           resultBounds.maxy = tmp;
 
       }
-      gmlWriteBounds(stream, outputformat, &resultBounds, msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "      ");
+      srsMap = msOWSGetEPSGProj(&(map->projection), NULL, "FGO", MS_TRUE);
+      if (!srsMap)
+        msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE);
+
+      gmlWriteBounds(stream, outputformat, &resultBounds, srsMap, "      ");
   }
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
@@ -1552,9 +1558,12 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
         /* write the feature geometry and bounding box */
         if(!(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0)) {
 #ifdef USE_PROJ
-          if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) { /* use the map projection first*/
-            gmlWriteBounds(stream, outputformat, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "        ");
-            gmlWriteGeometry(stream, geometryList, outputformat, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), namespace_prefix, "        "); 
+          srsMap = msOWSGetEPSGProj(&(map->projection), NULL, "FGO", MS_TRUE);
+          if (!srsMap)
+            msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE);
+          if(srsMap) { /* use the map projection first*/
+            gmlWriteBounds(stream, outputformat, &(shape.bounds), srsMap, "        ");
+            gmlWriteGeometry(stream, geometryList, outputformat, &(shape), srsMap, namespace_prefix, "        "); 
           } else { /* then use the layer projection and/or metadata */
             gmlWriteBounds(stream, outputformat, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "        ");
             gmlWriteGeometry(stream, geometryList, outputformat, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), namespace_prefix, "        ");
