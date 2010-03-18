@@ -32,6 +32,7 @@
 #ifndef CGIUTIL_H
 #define CGIUTIL_H
 
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define MS_DLL_EXPORT     __declspec(dllexport)
 #else
@@ -75,7 +76,7 @@ typedef struct
 */
 #ifndef SWIG
 MS_DLL_EXPORT int loadParams(cgiRequestObj *request, char* (*getenv2)(const char*, void* thread_context), 
-                             char *raw_post_data, uint raw_post_data_length, void* thread_context);
+                             char *raw_post_data, ms_uint32 raw_post_data_length, void* thread_context);
 MS_DLL_EXPORT void getword(char *, char *, char);
 MS_DLL_EXPORT char *makeword_skip(char *, char, char);
 MS_DLL_EXPORT char *makeword(char *, char);

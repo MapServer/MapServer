@@ -33,8 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "cgiutil.h"
 #include "mapserver.h"
+#include "cgiutil.h"
 
 MS_CVSID("$Id$")
 
@@ -119,7 +119,7 @@ static char* msGetEnv(const char *name, void* thread_context)
 int loadParams(cgiRequestObj *request, 
                char* (*getenv2)(const char*, void* thread_context),
                char *raw_post_data,
-               uint raw_post_data_length,
+               ms_uint32 raw_post_data_length,
                void* thread_context) {
   register int x,m=0;
   char *s, *queryString = NULL, *httpCookie = NULL;
