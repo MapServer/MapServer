@@ -762,6 +762,13 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                     else
                         shape->values[i] = msConvertWideStringToUTF8((const wchar_t*) wide, "UTF-16LE");
                     msFree(wide);
+                    if (!shape->values[i]) {  /* There was an error */
+                        msSetError( MS_SDEERR,
+                                 "msConvertWideStringToUTF8()==NULL.",
+                                 "sdeGetRecord()");
+                        shape->values[i] = (char *)malloc(itemdefs[i].size*sizeof(char)+1);
+                        shape->values[i][0] = '\0'; /* empty string */
+                    }                    
                 }
                 break;
 #endif

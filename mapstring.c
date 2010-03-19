@@ -1676,8 +1676,8 @@ char *msGetEncodedString(const char *string, const char *encoding)
 char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
 #ifdef USE_ICONV
 
-    int bconvFailed = MS_TRUE;
     char* output = NULL;
+    char* errormessage = NULL;
     iconv_t cd = NULL;
     size_t nStr;
     size_t nInSize;
@@ -1708,27 +1708,41 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
         nOutSize = nBufferSize;
         if ((iconv_t)-1 != cd)
         {  
-           nInSize = sizeof (wchar_t)*nStr;
-           pszUTF8 = output;
-           pwszWide = string;
-           nConv = iconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
-           if ((size_t)-1 != nConv &&  nOutSize != nBufferSize)
-               bconvFailed = MS_FALSE;
-           iconv_close(cd);
+            nInSize = sizeof (wchar_t)*nStr;
+            pszUTF8 = output;
+            pwszWide = string;
+            nConv = iconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
+            if ((size_t)-1 != nConv &&  nOutSize != nBufferSize) {
+                switch (errno) {
+                    case E2BIG:
+                    errormessage = "There is not sufficient room in buffer";
+                    break;
+                    case EILSEQ:
+                    errormessage = "An invalid multibyte sequence has been encountered in the input";
+                    break;
+                    case EINVAL:
+                    errormessage = "An incomplete multibyte sequence has been encountered in the input";
+                    break;
+                    default:
+                    errormessage = "Unknown";
+                    break;
+                }
+                msSetError(MS_MISCERR, "Unable to convert string in encoding '%s' to UTF8 %s",
+                                       "msConvertWideStringToUTF8()",
+                           encoding,errormessage);
+                iconv_close(cd);
+                msFree(output);
+                return NULL;
+            }
+            iconv_close(cd);
         } else {
             msSetError(MS_MISCERR, "Encoding not supported by libiconv (%s).", 
                                    "msConvertWideStringToUTF8()", 
                                    encoding);
+            msFree(output);
             return NULL;
         }
    
-        if (bconvFailed) {
-            msFree(output);
-            output = NULL;
-            msSetError(MS_MISCERR, "Unable to convert string in encoding '%s' to UTF8",
-                                   "msConvertWideStringToUTF8()",
-                                   encoding);
-        }
     } else {
         /* we were given a NULL wide string, nothing we can do here */
         return NULL;
