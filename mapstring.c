@@ -1446,7 +1446,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
   iconv_t cd = NULL;
   const char *inp;
   char *outp, *out = NULL;
-  size_t len, bufsize, bufleft, status;
+  size_t len, bufsize, bufleft, iconv_status;
 
 #ifdef USE_FRIBIDI
   if(fribidi_parse_charset ((char*)encoding))
@@ -1476,11 +1476,11 @@ char *msGetEncodedString(const char *string, const char *encoding)
   outp = out;
 
   bufleft = bufsize;
-  status = -1;
+  iconv_status = -1;
 
   while (len > 0){
-    status = iconv(cd, (char**)&inp, &len, &outp, &bufleft);
-    if(status == -1){
+    iconv_status = iconv(cd, (char**)&inp, &len, &outp, &bufleft);
+    if(iconv_status == -1){
       msFree(out);
       iconv_close(cd);
       return strdup(string);
@@ -1510,7 +1510,7 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
     size_t nStr;
     size_t nInSize;
     size_t nOutSize;
-    size_t nConv;
+    size_t iconv_status = -1;
     size_t nBufferSize;
 
     char* pszUTF8 = NULL;
@@ -1522,7 +1522,7 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
         nBufferSize = ((nStr * 6) + 1);
         output = (char*) malloc (nBufferSize);
         if (output == NULL) {
-            msSetError(MS_MEMERR, NULL, "msGetEncodedString()");
+            msSetError(MS_MEMERR, NULL, "msConvertWideStringToUTF8()");
             return NULL;
         }
         if (nStr == 0) {
@@ -1539,8 +1539,8 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
             nInSize = sizeof (wchar_t)*nStr;
             pszUTF8 = output;
             pwszWide = string;
-            nConv = iconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
-            if ((size_t)-1 != nConv &&  nOutSize != nBufferSize) {
+            iconv_status = iconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
+            if ((size_t)-1 == iconv_status) {
                 switch (errno) {
                     case E2BIG:
                     errormessage = "There is not sufficient room in buffer";
