@@ -86,7 +86,7 @@
   <xsl:if test="$node">
     <xsl:variable name="quote">
       <xsl:choose>
-        <xsl:when test="dyn:evaluate($node)/@type = 'CONSTANT'">
+        <xsl:when test="(dyn:evaluate($node)/@type = 'CONSTANT') or (not(dyn:evaluate($node)/@type))">
           <xsl:value-of select='1'/>
         </xsl:when>
         <xsl:otherwise>
