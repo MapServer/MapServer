@@ -919,9 +919,9 @@ char *msPostGISBuildSQLBox(layerObj *layer, rectObj *rect, char *strSRID) {
     }
 
     if ( strSRID ) {
-        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15f %.15f,%.15f %.15f,%.15f %.15f,%.15f %.15f,%.15f %.15f))',%s)";
+        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)";
         /* 10 doubles + 1 integer + template characters */
-        sz = 10 * 26 + strlen(strSRID) + strlen(strBoxTemplate);
+        sz = 10 * 22 + strlen(strSRID) + strlen(strBoxTemplate);
         strBox = (char*)malloc(sz+1); /* add space for terminating NULL */
         if ( sz <= snprintf(strBox, sz, strBoxTemplate,
                 rect->minx, rect->miny,
@@ -935,9 +935,9 @@ char *msPostGISBuildSQLBox(layerObj *layer, rectObj *rect, char *strSRID) {
         	return 0;
 	}
     } else {
-        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15f %.15f,%.15f %.15f,%.15f %.15f,%.15f %.15f,%.15f %.15f))')";
+        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))')";
         /* 10 doubles + template characters */
-        sz = 10 * 26 + strlen(strBoxTemplate);
+        sz = 10 * 22 + strlen(strBoxTemplate);
         strBox = (char*)malloc(sz+1); /* add space for terminating NULL */
         if ( sz <= snprintf(strBox, sz, strBoxTemplate,
                 rect->minx, rect->miny,
