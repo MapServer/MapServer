@@ -5,7 +5,7 @@
       <backgroundColor red="244" green="43" blue="22"/>
       <color red="244" green="43" blue="22"/>
       <debug>ON</debug>
-      <expression>(length('[NAME_E]') &lt; 8)</expression>
+      <expression type="MSEXPR">(length('[NAME_E]') &lt; 8)</expression>
       <group>group1</group>
       <keyImage>/home/myusername/layer1.png</keyImage>
       <Label type="TRUETYPE">
@@ -56,10 +56,10 @@
         <opacity>1253</opacity>
         <outlineColorAttribute>[myOulineColorAttribute]</outlineColorAttribute>
         <size>[mySize]</size>
-        <symbol>star.gif</symbol>
+        <symbol type="NAME">star.gif</symbol>
         <width>[myWidth]</width>
       </Style>
-      <symbol>261</symbol>
+      <symbol type="ID">261</symbol>
       <template>http://mapgears.com/templates/myTemplates1.html</template>
       <text>myText1</text>
     </Class>
@@ -74,7 +74,7 @@
     <Feature>
       <wkt>POINT(2000 2500)</wkt>
     </Feature>
-    <filter>type=’road’ and size &lt; 2</filter>
+    <filter type="MSEXPR">(type=’road’ and size &lt; 2)</filter>
     <filterItem>pop</filterItem>
     <footer>http://mapgears.com/templates/myfooter1.html</footer>
     <Grid>

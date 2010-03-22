@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ms="http://www.mapserver.org/mapserver" targetNamespace="http://www.mapserver.org/mapserver" elementFormDefault="qualified" attributeFormDefault="unqualified" version="5.6.0">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ms="http://www.mapserver.org/mapserver" targetNamespace="http://www.mapserver.org/mapserver" elementFormDefault="qualified" attributeFormDefault="unqualified" version="5.6.3">
 	<!-- Definition of types -->
 	<xs:simpleType name="rgbColorValueType">
 		<xs:restriction base="xs:integer">
@@ -123,6 +123,35 @@
 			<xs:enumeration value="RIGHT"/>
 		</xs:restriction>
 	</xs:simpleType>
+	<xs:complexType name="expressionType">
+          <xs:simpleContent>
+	    <xs:extension base="xs:string">
+	      <xs:attribute name="type" default="CONSTANT">
+                <xs:simpleType>
+	          <xs:restriction base="xs:string">
+	            <xs:enumeration value="CONSTANT"/>
+	            <xs:enumeration value="REGEX"/>
+                    <xs:enumeration value="MSEXPR"/>
+		  </xs:restriction>
+                </xs:simpleType>
+              </xs:attribute>
+	    </xs:extension>
+	  </xs:simpleContent>
+	</xs:complexType>
+	<xs:complexType name="symbolType">
+          <xs:simpleContent>
+	    <xs:extension base="xs:string">
+	      <xs:attribute name="type" default="ID">
+                <xs:simpleType>
+	          <xs:restriction base="xs:string">
+	            <xs:enumeration value="ID"/>
+                    <xs:enumeration value="NAME"/>
+		  </xs:restriction>
+                </xs:simpleType>
+              </xs:attribute>
+	    </xs:extension>
+	  </xs:simpleContent>
+	</xs:complexType>
 	<!-- Definition of Mapfile elements -->
 	<!-- QUERYMAP Definition -->
 	<xs:complexType name="QueryMap">
@@ -371,11 +400,7 @@
 					<xs:union memberTypes="xs:positiveInteger ms:attributeType"/>
 				</xs:simpleType>
 			</xs:element>
-			<xs:element name="symbol" default="1" minOccurs="0">
-				<xs:simpleType>
-					<xs:union memberTypes="xs:positiveInteger xs:string"/>
-				</xs:simpleType>
-			</xs:element>
+			<xs:element name="symbol" type="ms:symbolType" default="1" minOccurs="0"/>
 			<xs:element name="width" default="1" minOccurs="0">
 				<xs:simpleType>
 					<xs:union memberTypes="xs:positiveInteger ms:attributeType"/>
@@ -389,7 +414,7 @@
 			<xs:element name="backgroundColor" type="ms:rgbColorType" minOccurs="0"/>
 			<xs:element name="color" type="ms:rgbColorType" minOccurs="0"/>
 			<xs:element name="debug" type="ms:stateEnum" minOccurs="0"/>
-			<xs:element name="expression" type="xs:string" minOccurs="0"/>
+			<xs:element name="expression" type="ms:expressionType" minOccurs="0"/>
 			<xs:element name="group" type="xs:string" minOccurs="0"/>
 			<xs:element name="keyImage" type="xs:string" minOccurs="0"/>
 			<xs:element name="Label" type="ms:Label" minOccurs="0"/>
@@ -403,11 +428,7 @@
 			</xs:choice>
 			<xs:element name="size" type="xs:positiveInteger" default="1" minOccurs="0"/>
 			<xs:element name="Style" type="ms:Style" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="symbol" default="1" minOccurs="0">
-				<xs:simpleType>
-					<xs:union memberTypes="xs:positiveInteger xs:string"/>
-				</xs:simpleType>
-			</xs:element>
+			<xs:element name="symbol" type="ms:symbolType" default="1" minOccurs="0"/>
 			<xs:element name="template" type="xs:string" minOccurs="0"/>
 			<xs:element name="text" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
@@ -580,7 +601,7 @@
 				</xs:simpleType>
 			</xs:element>
 			<xs:element name="Feature" type="ms:Feature" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="filter" type="xs:string" minOccurs="0"/>
+			<xs:element name="filter" type="ms:expressionType" minOccurs="0"/>
 			<xs:element name="filterItem" type="xs:string" minOccurs="0"/>
 			<xs:element name="footer" type="xs:string" minOccurs="0"/>
 			<xs:element name="Grid" type="ms:Grid" minOccurs="0"/>
