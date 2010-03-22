@@ -110,6 +110,7 @@ typedef struct
   char *pszResultType;
   char *pszPropertyName;
   int nStartIndex;
+  char *pszAcceptVersions;
 } wfsParamsObj;
 
 /*

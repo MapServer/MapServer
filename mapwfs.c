@@ -36,7 +36,7 @@ MS_CVSID("$Id$")
 #include "cpl_minixml.h"
 
 #include "mapogcfilter.h"
-
+#include "mapowscommon.h"
 /*
 ** msWFSException()
 **
@@ -520,9 +520,41 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
 
   int i=0, tmpInt=0;
 
+  /* acceptversions: do OWS Common style of version negotiation */
+  if (wfsparams->pszAcceptVersions && strlen(wfsparams->pszAcceptVersions) > 0)
+  {     
+      char **tokens;
+      int i, j;
+
+      tokens = msStringSplit(wfsparams->pszAcceptVersions, ',', &j);
+      for (i=0; i<j;i++) 
+      {
+          int iVersion = 0;
+        
+          iVersion = msOWSParseVersionString(tokens[i]);
+
+          if (iVersion == -1) {
+              msSetError(MS_WFSERR, "Invalid version format.", "msWFSGetCapabilities()", tokens[i]);
+              msFreeCharArray(tokens, j);
+              return msWFSException(map, "acceptversions", "VersionNegotiationFailed",wmtver);
+          }
+
+          /* negotiate version */
+          tmpInt = msOWSCommonNegotiateVersion(iVersion, wfsSupportedVersions, wfsNumSupportedVersions);
+          if (tmpInt != -1)
+            break;
+      }
+       msFreeCharArray(tokens, j);
+       if(tmpInt == -1)
+       {
+           msSetError(MS_WFSERR, "ACCEPTVERSIONS list (%s) does not match supported versions", "msWFSGetCapabilities()", wfsparams->pszAcceptVersions);
+           return msWFSException(map, "acceptversions", "VersionNegotiationFailed",wmtver);
+       }
+  }
+  else
   /* negotiate version */
-  tmpInt = msOWSNegotiateVersion(msOWSParseVersionString(wfsparams->pszVersion), wfsSupportedVersions, 
-                                 wfsNumSupportedVersions);
+    tmpInt = msOWSNegotiateVersion(msOWSParseVersionString(wfsparams->pszVersion), wfsSupportedVersions, 
+                                   wfsNumSupportedVersions);
 
   /* set result as string and carry on */
   if (wfsparams->pszVersion)
@@ -2483,6 +2515,8 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
           free(wfsparams->pszSrs);
         if (wfsparams->pszResultType)
           free(wfsparams->pszResultType);
+        if (wfsparams->pszAcceptVersions)
+          free(wfsparams->pszAcceptVersions);
     }
 }
 
@@ -2541,11 +2575,16 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                 else if (strcasecmp(request->ParamNames[i], "OUTPUTFORMAT") == 0)
                   wfsparams->pszOutputFormat = strdup(request->ParamValues[i]);
 
-                 else if (strcasecmp(request->ParamNames[i], "FEATUREID") == 0)
+                else if (strcasecmp(request->ParamNames[i], "FEATUREID") == 0)
                   wfsparams->pszFeatureId = strdup(request->ParamValues[i]);
                 
                 else if (strcasecmp(request->ParamNames[i], "PROPERTYNAME") == 0)
                   wfsparams->pszPropertyName = strdup(request->ParamValues[i]);
+                
+                else if (strcasecmp(request->ParamNames[i], "ACCEPTVERSIONS") == 0)
+                  wfsparams->pszAcceptVersions = strdup(request->ParamValues[i]);
+
+                
             }
         }
         /* version is optional is the GetCapabilities. If not */
