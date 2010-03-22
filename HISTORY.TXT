@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed XML transformation issues with expressions and symbols (#3397)
+
 - Check error returns from mapstring functions (#2988)
 
 - Add support for multiliple srs in  WFS 1.1.0 (#3227)

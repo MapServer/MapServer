@@ -79,6 +79,69 @@
   </xsl:choose>
 </xsl:template>
 
+<xsl:template name="printExpression">
+  <xsl:param name="indent"/>
+  <xsl:param name="node" select="/"/>
+
+  <xsl:if test="$node">
+    <xsl:variable name="quote">
+      <xsl:choose>
+        <xsl:when test="dyn:evaluate($node)/@type = 'CONSTANT'">
+          <xsl:value-of select='1'/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select='0'/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:variable name="textValue">
+      <xsl:call-template name="getString">
+        <xsl:with-param name="nodeName" select="$node"/>
+        <xsl:with-param name="quote" select="$quote"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="quote" select="$quote"/>
+      <xsl:with-param name="text" select="$textValue"/>
+    </xsl:call-template>
+
+  </xsl:if>
+</xsl:template>
+
+<xsl:template name="printSymbol">
+  <xsl:param name="indent"/>
+  <xsl:param name="node" select="/"/>
+
+  <xsl:if test="$node">
+    <xsl:variable name="quote">
+      <xsl:choose>
+        <xsl:when test="dyn:evaluate($node)/@type = 'NAME'">
+          <xsl:value-of select='1'/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select='0'/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:variable name="textValue">
+      <xsl:call-template name="getString">
+        <xsl:with-param name="nodeName" select="$node"/>
+        <xsl:with-param name="quote" select="$quote"/>
+      </xsl:call-template>
+    </xsl:variable>
+    
+    <xsl:call-template name="print">
+      <xsl:with-param name="quote" select="$quote"/>
+      <xsl:with-param name="text" select="$textValue"/>
+      <xsl:with-param name="indent" select="$indent"/>
+    </xsl:call-template>
+
+  </xsl:if>
+</xsl:template>
+
   <xsl:template match="/">
     <xsl:apply-templates select="ms:SymbolSet"/>
     <xsl:apply-templates select="ms:LayerSet"/>
@@ -746,7 +809,7 @@
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:size'"/>
     </xsl:call-template>
-    <xsl:call-template name="print">
+    <xsl:call-template name="printSymbol">
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:symbol'"/>
     </xsl:call-template>
@@ -788,10 +851,9 @@
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:debug'"/>
     </xsl:call-template>
-    <xsl:call-template name="print">
+    <xsl:call-template name="printExpression">
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:expression'"/>
-      <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
@@ -836,7 +898,7 @@
     <xsl:apply-templates select="ms:Style">
       <xsl:with-param name="indent" select="$indent + 1"/>
     </xsl:apply-templates>
-    <xsl:call-template name="print">
+    <xsl:call-template name="printSymbol">
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:symbol'"/>
     </xsl:call-template>
@@ -1129,10 +1191,9 @@
     <xsl:apply-templates select="ms:Feature">
       <xsl:with-param name="indent" select="$indent + 1"/>
     </xsl:apply-templates>
-    <xsl:call-template name="print">
+    <xsl:call-template name="printExpression">
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:filter'"/>
-      <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
@@ -1288,7 +1349,7 @@
   </xsl:template>
   
   <xsl:template match="ms:SymbolSet">
-    <xsl:param name="indent" select="1"/>
+    <xsl:param name="indent" select="0"/>
     <xsl:call-template name="print">
       <xsl:with-param name="text" select="'SYMBOLSET&#xa;'"/>
     </xsl:call-template>
@@ -1301,14 +1362,14 @@
   </xsl:template>
 
   <xsl:template match="ms:LayerSet">
-    <xsl:param name="indent" select="1"/>
+    <xsl:param name="indent" select="0"/>
     <xsl:apply-templates select="ms:Layer">
       <xsl:with-param name="indent" select="$indent + 1"/>
     </xsl:apply-templates>
   </xsl:template>
 
   <xsl:template match="ms:Map">
-    <xsl:param name="indent" select="1"/>
+    <xsl:param name="indent" select="0"/>
     <xsl:call-template name="print">
       <xsl:with-param name="text" select="'MAP&#xa;'"/>
     </xsl:call-template>
