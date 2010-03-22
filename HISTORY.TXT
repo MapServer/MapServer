@@ -15,7 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch-5-6):
 --------------------------------
 
-- ...
+- Fixed problem with PostGIS SQL bbox introduced in 5.6.2 (#3324)
 
 
 Version 5.6.2 (2010-03-20):
