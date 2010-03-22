@@ -121,13 +121,22 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     if(theclass->keyimage != NULL) {
       int symbolNum;
       styleObj imgStyle;
+      symbolObj *symbol=NULL;
       symbolNum = msAddImageSymbol(&(map->symbolset), msBuildPath(szPath, map->mappath, theclass->keyimage));
       if(symbolNum == -1) { 
           msSetError(MS_GDERR, "Failed to open legend key image", "msCreateLegendIcon()");
           return(MS_FAILURE);
       }
+      
+      symbol = map->symbolset.symbol[symbolNum];
+      
       initStyle(&imgStyle);
-      imgStyle.size = width;
+      /*set size so thet symbol will be scaled properly #3296*/
+      if (width/symbol->sizex <= height/symbol->sizey)
+        imgStyle.size = symbol->sizey*(width/symbol->sizex);
+      else
+        imgStyle.size = symbol->sizey*(height/symbol->sizey);
+
       imgStyle.symbol = symbolNum;
       msDrawMarkerSymbol(&map->symbolset,image,&marker,&imgStyle,lp->scalefactor);
       /* TO DO: we may want to handle this differently depending on the relative size of the keyimage */
