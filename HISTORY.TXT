@@ -26,6 +26,8 @@ Current Version (SVN trunk):
 
 - Correct mutex locking problem with rasters with no inherent georef. (#3368) 
 
+- Correct ungeoreferenced defaults via GetExtent() on raster layer (#3368)
+
 - PHP Mapscript refactoring: take full advantage of PHP 5 / Zend Engine 2 (#3278)"
 
 - Fixed msRemoveHashTable() to return the proper value on failure/success.

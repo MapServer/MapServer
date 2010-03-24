@@ -2062,7 +2062,6 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
       return MS_FAILURE;
     }
 
-
     msGetGDALGeoTransform( hDS, layer->map, layer, cm->geotransform );
 
     cm->xsize = GDALGetRasterXSize( hDS );

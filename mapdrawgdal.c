@@ -1819,7 +1819,8 @@ static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
 /*                       msGetGDALGeoTransform()                        */
 /*                                                                      */
 /*      Cover function that tries GDALGetGeoTransform(), a world        */
-/*      file or OWS extents.                                            */
+/*      file or OWS extents.  It is assumed that TLOCK_GDAL is held     */
+/*      before this function is called.                                 */
 /************************************************************************/
 
 int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer, 
@@ -1827,6 +1828,8 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 
 {
     const char *extent_priority = NULL;
+    const char *value;
+
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
     rectObj  rect;
 #endif
@@ -1881,29 +1884,42 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 /* -------------------------------------------------------------------- */
 /*      Try worldfile.                                                  */
 /* -------------------------------------------------------------------- */
-    else if( GDALGetDescription(hDS) != NULL 
-             && GDALReadWorldFile(GDALGetDescription(hDS), "wld", 
-                                  padfGeoTransform) )
+    if( GDALGetDescription(hDS) != NULL 
+        && GDALReadWorldFile(GDALGetDescription(hDS), "wld", 
+                             padfGeoTransform) )
     {
         return MS_SUCCESS;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Try OWS extent metadata.                                        */
+/*      Try OWS extent metadata.  We only try this if we know there     */
+/*      is metadata so that we don't end up going into the layer        */
+/*      getextent function which will in turn reopen the file with      */
+/*      potential performance and locking problems.                     */
 /* -------------------------------------------------------------------- */
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
-    else if( msOWSGetLayerExtent( map, layer, "MFCO", &rect ) == MS_SUCCESS )
+    if ((value = msOWSLookupMetadata(&(layer->metadata), "MFCO", "extent"))
+        != NULL)
     {
-        padfGeoTransform[0] = rect.minx;
-        padfGeoTransform[1] = (rect.maxx - rect.minx) /
-            (double) GDALGetRasterXSize( hDS );
-        padfGeoTransform[2] = 0;
-        padfGeoTransform[3] = rect.maxy;
-        padfGeoTransform[4] = 0;
-        padfGeoTransform[5] = (rect.miny - rect.maxy) /
-            (double) GDALGetRasterYSize( hDS );
+        int success;
 
-        return MS_SUCCESS;
+        msReleaseLock( TLOCK_GDAL );
+        success = msOWSGetLayerExtent( map, layer, "MFCO", &rect );
+        msAcquireLock( TLOCK_GDAL );
+
+        if( success == MS_SUCCESS )
+        {
+            padfGeoTransform[0] = rect.minx;
+            padfGeoTransform[1] = (rect.maxx - rect.minx) /
+                (double) GDALGetRasterXSize( hDS );
+            padfGeoTransform[2] = 0;
+            padfGeoTransform[3] = rect.maxy;
+            padfGeoTransform[4] = 0;
+            padfGeoTransform[5] = (rect.miny - rect.maxy) /
+                (double) GDALGetRasterYSize( hDS );
+            
+            return MS_SUCCESS;
+        }
     }
 #endif
 
@@ -1912,17 +1928,14 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 /*      Reset our default geotransform.  GDALGetGeoTransform() may      */
 /*      have altered it even if GDALGetGeoTransform() failed.           */
 /* -------------------------------------------------------------------- */
-    else
-    {
-        padfGeoTransform[0] = 0.0;
-        padfGeoTransform[1] = 1.0;
-        padfGeoTransform[2] = 0.0;
-        padfGeoTransform[3] = GDALGetRasterYSize(hDS);
-        padfGeoTransform[4] = 0.0;
-        padfGeoTransform[5] = -1.0;
-
-        return MS_FAILURE;
-    }
+    padfGeoTransform[0] = 0.0;
+    padfGeoTransform[1] = 1.0;
+    padfGeoTransform[2] = 0.0;
+    padfGeoTransform[3] = GDALGetRasterYSize(hDS);
+    padfGeoTransform[4] = 0.0;
+    padfGeoTransform[5] = -1.0;
+    
+    return MS_FAILURE;
 }
 
 /************************************************************************/

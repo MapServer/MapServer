@@ -601,9 +601,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
         }
     }
 
-    msReleaseLock( TLOCK_GDAL );
     msGetGDALGeoTransform( hDS, map, layer, adfGeoTransform );
-    msAcquireLock( TLOCK_GDAL );
 
     /* 
     ** We want to resample if the source image is rotated, if

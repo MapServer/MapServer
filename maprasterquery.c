@@ -1381,6 +1381,7 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   GDALDatasetH hDS;
   shapefileObj *tileshpfile;
   int tilelayerindex = -1; 
+  CPLErr eErr = CE_Failure;
 
   /*
   ** For the time being we only automatically derive extents from
@@ -1431,16 +1432,24 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   {
     nXSize = GDALGetRasterXSize( hDS );
     nYSize = GDALGetRasterYSize( hDS );
-    GDALGetGeoTransform( hDS, adfGeoTransform );
+    eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
     
     GDALClose( hDS );
   }
   
   msReleaseLock( TLOCK_GDAL );
 
-  if( hDS == NULL )
+  if( hDS == NULL || eErr != CE_None )
   {
       return MS_FAILURE;
+  }
+
+  /* If this appears to be an ungeoreferenced raster than flip it for
+     mapservers purposes. */
+  if( adfGeoTransform[5] == 1.0 && adfGeoTransform[3] == 0.0 )
+  {
+      adfGeoTransform[5] = -1.0;
+      adfGeoTransform[3] = nYSize;
   }
   
   extent->minx = adfGeoTransform[0];
