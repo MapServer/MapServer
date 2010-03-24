@@ -37,6 +37,7 @@ MS_CVSID("$Id$")
 
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
 
 /*
  * Find the first occurrence of find in s, ignore case.

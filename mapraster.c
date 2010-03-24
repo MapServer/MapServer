@@ -323,6 +323,18 @@ int msAddColorAGG(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
                          rasterBufferObj *rb ) 
 {
+/* -------------------------------------------------------------------- */
+/*      As of MapServer 6.0 GDAL is required for rendering raster       */
+/*      imagery.                                                        */
+/* -------------------------------------------------------------------- */
+#if !defined(USE_GDAL)
+  msSetError(MS_MISCERR, 
+             "Attempt to render a RASTER (or WMS) layer but without\n"
+             "GDAL support enabled.  Raster rendering requires GDAL.",
+             "msDrawRasterLayerLow()" );
+  return MS_FAILURE;
+
+#else /* defined(USE_GDAL) */
   int status, i, done;
   char *filename=NULL, tilename[MS_MAXPATHLEN];
 
@@ -340,19 +352,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
   GDALDatasetH  hDS;
   double	adfGeoTransform[6];
   const char *close_connection;
-
-/* -------------------------------------------------------------------- */
-/*      As of MapServer 6.0 GDAL is required for rendering raster       */
-/*      imagery.                                                        */
-/* -------------------------------------------------------------------- */
-#if !defined(USE_GDAL)
-  msSetError(MS_MISCERR, 
-             "Attempt to render a RASTER (or WMS) layer but without\n"
-             "GDAL support enabled.  Raster rendering requires GDAL.",
-             "msDrawRasterLayerLow()" );
-  return MS_FAILURE;
-
-#else /* defined(USE_GDAL) */
 
   msGDALInitialize();
 
