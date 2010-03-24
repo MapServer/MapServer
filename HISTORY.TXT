@@ -17,6 +17,11 @@ Version 5.6.4 (????-??-??):
 
 - Fixed mapstring.c build problem related to errno (#3401).
 
+- Correct ungeoreferenced defaults via GetExtent() on raster layer (#3368)
+
+- More adjustments to how TLOCK_GDAL held around msGetGDALGeoTransform (#3368)
+
+
 Version 5.6.3 (2010-03-22):
 ---------------------------
 
