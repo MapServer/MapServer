@@ -1989,6 +1989,7 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
 int msOGRLayerGetItems(layerObj *layer);
 void msOGRLayerFreeItemInfo(layerObj *layer);
 int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
+int msOGRLayerResultGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
 
 #ifdef USE_OGR
