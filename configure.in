@@ -669,6 +669,25 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
   dnl getter functions.
   AC_CHECK_LIB($GD_CHECKLIB, gdFontGetTiny, GD_DEF="$GD_DEF -DGD_HAS_GETBITMAPFONTS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
+  dnl check for gdImageGetTrueColorPixel.
+  dnl In some GD versions this function is defined, but not declared in gd.h,
+  dnl so check headers first
+  GD_HAS_GET_TRUE_COLOR_PIXEL=
+
+  dnl AC_CHECK_DECL needs to know the gd include path
+  CFLAGS_BACKUP="$CFLAGS"
+  CXXFLAGS_BACKUP="$CXXFLAGS"
+  CFLAGS="$CFLAGS $GD_INC"
+  CXXFLAGS="$CXXFLAGS $GD_INC"
+  AC_CHECK_DECL(gdImageGetTrueColorPixel,[GD_HAS_GET_TRUE_COLOR_PIXEL=yes],,[#include <gd.h>])
+  CFLAGS="$CFLAGS_BACKUP"
+  CXXFLAGS="$CXXFLAGS_BACKUP"
+
+  dnl if it's declared, check if we can link with it
+  if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
+    AC_CHECK_LIB($GD_CHECKLIB, gdImageGetTrueColorPixel, GD_DEF="$GD_DEF -DGD_HAS_GET_TRUE_COLOR_PIXEL",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+  fi
+
   AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
 
 else
@@ -708,6 +727,16 @@ else
 
   if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
      GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
+  fi
+
+  dnl check for gdImageGetTrueColorPixel.
+  dnl In some GD versions this function is defined, but not declared in gd.h,
+  dnl so check headers first
+  GD_HAS_GET_TRUE_COLOR_PIXEL=
+  AC_CHECK_DECL(gdImageGetTrueColorPixel,[GD_HAS_GET_TRUE_COLOR_PIXEL=yes],,[#include <gd.h>])
+  dnl if it's declared, check if we can link with it
+  if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
+    AC_CHECK_LIB(gd, gdImageGetTrueColorPixel, GD_DEF="$GD_DEF -DGD_HAS_GET_TRUE_COLOR_PIXEL",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
   fi
 
   if test -n "$GD_DEF" ; then

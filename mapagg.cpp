@@ -165,7 +165,17 @@ static mapserver::rendering_buffer gdImg2AGGRB_BGRA(gdImagePtr img) {
     for(int row=0;row<height;row++) {
         unsigned int* rowptr=(unsigned int*)im_data_rbuf.row_ptr(row);
         for(int col=0;col<width;col++){
+#ifdef GD_HAS_GET_TRUE_COLOR_PIXEL
             int gdpix = gdImageGetTrueColorPixel(img,col,row);
+#else
+            int gdpix = gdImageGetPixel(img,col,row);
+            if(!img->trueColor)
+              gdpix = gdTrueColorAlpha(
+                  img->red[gdpix],
+                  img->green[gdpix],
+                  img->blue[gdpix],
+                  (img->transparent == gdpix) ? gdAlphaTransparent : img->alpha[gdpix]);
+#endif
             //extract the alpha value from the pixel
             int gdpixalpha = ((gdpix) & 0x7F000000) >> 24;
 

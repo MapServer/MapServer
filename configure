@@ -7228,6 +7228,148 @@ if test `eval echo '${'$as_ac_Lib'}'` = yes; then
 fi
 
 
+        GD_HAS_GET_TRUE_COLOR_PIXEL=
+
+    CFLAGS_BACKUP="$CFLAGS"
+  CXXFLAGS_BACKUP="$CXXFLAGS"
+  CFLAGS="$CFLAGS $GD_INC"
+  CXXFLAGS="$CXXFLAGS $GD_INC"
+  echo "$as_me:$LINENO: checking whether gdImageGetTrueColorPixel is declared" >&5
+echo $ECHO_N "checking whether gdImageGetTrueColorPixel is declared... $ECHO_C" >&6
+if test "${ac_cv_have_decl_gdImageGetTrueColorPixel+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <gd.h>
+
+int
+main ()
+{
+#ifndef gdImageGetTrueColorPixel
+  char *p = (char *) gdImageGetTrueColorPixel;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_have_decl_gdImageGetTrueColorPixel=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_have_decl_gdImageGetTrueColorPixel=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_have_decl_gdImageGetTrueColorPixel" >&5
+echo "${ECHO_T}$ac_cv_have_decl_gdImageGetTrueColorPixel" >&6
+if test $ac_cv_have_decl_gdImageGetTrueColorPixel = yes; then
+  GD_HAS_GET_TRUE_COLOR_PIXEL=yes
+fi
+
+  CFLAGS="$CFLAGS_BACKUP"
+  CXXFLAGS="$CXXFLAGS_BACKUP"
+
+    if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
+    as_ac_Lib=`echo "ac_cv_lib_$GD_CHECKLIB''_gdImageGetTrueColorPixel" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for gdImageGetTrueColorPixel in -l$GD_CHECKLIB" >&5
+echo $ECHO_N "checking for gdImageGetTrueColorPixel in -l$GD_CHECKLIB... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$GD_CHECKLIB $GD_STATIC $GD_LIB $GD_XTRA_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gdImageGetTrueColorPixel ();
+int
+main ()
+{
+gdImageGetTrueColorPixel ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_Lib=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_Lib=no"
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
+  GD_DEF="$GD_DEF -DGD_HAS_GET_TRUE_COLOR_PIXEL"
+fi
+
+  fi
+
   echo "$as_me:$LINENO: result:         using GD ($GD_DEF) from $GD_DIR." >&5
 echo "${ECHO_T}        using GD ($GD_DEF) from $GD_DIR." >&6
 
@@ -7930,6 +8072,139 @@ fi
 
   if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
      GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
+  fi
+
+        GD_HAS_GET_TRUE_COLOR_PIXEL=
+  echo "$as_me:$LINENO: checking whether gdImageGetTrueColorPixel is declared" >&5
+echo $ECHO_N "checking whether gdImageGetTrueColorPixel is declared... $ECHO_C" >&6
+if test "${ac_cv_have_decl_gdImageGetTrueColorPixel+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <gd.h>
+
+int
+main ()
+{
+#ifndef gdImageGetTrueColorPixel
+  char *p = (char *) gdImageGetTrueColorPixel;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_have_decl_gdImageGetTrueColorPixel=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_have_decl_gdImageGetTrueColorPixel=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_have_decl_gdImageGetTrueColorPixel" >&5
+echo "${ECHO_T}$ac_cv_have_decl_gdImageGetTrueColorPixel" >&6
+if test $ac_cv_have_decl_gdImageGetTrueColorPixel = yes; then
+  GD_HAS_GET_TRUE_COLOR_PIXEL=yes
+fi
+
+    if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
+    echo "$as_me:$LINENO: checking for gdImageGetTrueColorPixel in -lgd" >&5
+echo $ECHO_N "checking for gdImageGetTrueColorPixel in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdImageGetTrueColorPixel+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgd $GD_STATIC $GD_LIB $GD_XTRA_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gdImageGetTrueColorPixel ();
+int
+main ()
+{
+gdImageGetTrueColorPixel ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_gd_gdImageGetTrueColorPixel=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_gd_gdImageGetTrueColorPixel=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageGetTrueColorPixel" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdImageGetTrueColorPixel" >&6
+if test $ac_cv_lib_gd_gdImageGetTrueColorPixel = yes; then
+  GD_DEF="$GD_DEF -DGD_HAS_GET_TRUE_COLOR_PIXEL"
+fi
+
   fi
 
   if test -n "$GD_DEF" ; then
