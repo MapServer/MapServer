@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Version 5.6.4 (????-??-??):
 ---------------------------
 
+- Fix getFeatureInfo quries on WFS layers (#3403)
+
 - Fixed mapstring.c build problem related to errno (#3401).
 
 - Correct ungeoreferenced defaults via GetExtent() on raster layer (#3368)
