@@ -1964,10 +1964,7 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 {
     const char *extent_priority = NULL;
     const char *value;
-
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
     rectObj  rect;
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      some GDAL drivers (ie. GIF) don't set geotransform on failure.  */
@@ -1988,7 +1985,7 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
     if( extent_priority != NULL
         && EQUALN(extent_priority,"WORLD",5) )
     {
-	        if( GDALGetDescription(hDS) != NULL 
+        if( GDALGetDescription(hDS) != NULL 
             && GDALReadWorldFile(GDALGetDescription(hDS), "wld", 
                                  padfGeoTransform) )
         {
@@ -2023,6 +2020,30 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
         && GDALReadWorldFile(GDALGetDescription(hDS), "wld", 
                              padfGeoTransform) )
     {
+        return MS_SUCCESS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the extent keyword on the layer?  We only use        */
+/*      this if we have a single raster associated with the layer as    */
+/*      opposed to a tile index.                                        */
+/*                                                                      */
+/*      Arguably this ought to take priority over all the other         */
+/*      stuff.                                                          */
+/* -------------------------------------------------------------------- */
+    if (MS_VALID_EXTENT(layer->extent) && layer->data != NULL)
+    {
+        rect = layer->extent;
+
+        padfGeoTransform[0] = rect.minx;
+        padfGeoTransform[1] = (rect.maxx - rect.minx) /
+            (double) GDALGetRasterXSize( hDS );
+        padfGeoTransform[2] = 0;
+        padfGeoTransform[3] = rect.maxy;
+        padfGeoTransform[4] = 0;
+        padfGeoTransform[5] = (rect.miny - rect.maxy) /
+            (double) GDALGetRasterYSize( hDS );
+        
         return MS_SUCCESS;
     }
 
