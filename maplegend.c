@@ -131,11 +131,14 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
       symbol = map->symbolset.symbol[symbolNum];
       
       initStyle(&imgStyle);
-      /*set size so thet symbol will be scaled properly #3296*/
-      if (width/symbol->sizex <= height/symbol->sizey)
+      /*set size so that symbol will be scaled properly #3296*/
+      if (width/symbol->sizex < height/symbol->sizey)
         imgStyle.size = symbol->sizey*(width/symbol->sizex);
       else
         imgStyle.size = symbol->sizey*(height/symbol->sizey);
+
+      if (imgStyle.size > imgStyle.maxsize)
+        imgStyle.maxsize = imgStyle.size;
 
       imgStyle.symbol = symbolNum;
       msDrawMarkerSymbol(&map->symbolset,image,&marker,&imgStyle,lp->scalefactor);
