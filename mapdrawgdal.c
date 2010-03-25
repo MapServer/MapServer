@@ -829,6 +829,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /*      load it as massage it so it will function as our alpha for      */
 /*      transparency purposes.                                          */
 /* -------------------------------------------------------------------- */
+#if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1500 
     if( hBandAlpha == NULL )
     {
         int nMaskFlags = GDALGetMaskFlags(hBand1); 
@@ -891,6 +892,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             } 
         } 
     }
+#endif /* defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1500 */
 
 /* -------------------------------------------------------------------- */
 /*      Single band plus colormap with alpha blending to 8bit.          */
