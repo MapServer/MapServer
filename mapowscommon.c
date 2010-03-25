@@ -44,35 +44,6 @@
 
 MS_CVSID("$Id$")
 
-/**
- * msOWSCommonNegotiateVersion()
- *
- * returns a supported version as per subclause 7.3.2
- *
- * @param requested_version the version passed by the client
- * @param supported_versions an array of supported versions
- * @param num_supported_versions size of supported_versions
- *
- * @return supported version integer, or -1 on error
- *
- */
-
-int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions) {
-  int i;
-
-  /* if version is not set return error */
-  if (! requested_version)
-    return -1;
-
-  /* return the first entry that's equal to the requested version */
-  for (i = 0; i < num_supported_versions; i++) {
-    if (supported_versions[i] == requested_version)
-      return supported_versions[i];
-  }
-
-  /* no match; calling code should throw an exception */
-  return -1;
-}
 
 
 /**
@@ -654,3 +625,34 @@ xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, co
       return xmlNewChild(psParent, psNs, BAD_CAST name, BAD_CAST content);
 }
 #endif /* defined(USE_LIBXML2) */
+
+
+/**
+ * msOWSCommonNegotiateVersion()
+ *
+ * returns a supported version as per subclause 7.3.2
+ *
+ * @param requested_version the version passed by the client
+ * @param supported_versions an array of supported versions
+ * @param num_supported_versions size of supported_versions
+ *
+ * @return supported version integer, or -1 on error
+ *
+ */
+
+int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions) {
+  int i;
+
+  /* if version is not set return error */
+  if (! requested_version)
+    return -1;
+
+  /* return the first entry that's equal to the requested version */
+  for (i = 0; i < num_supported_versions; i++) {
+    if (supported_versions[i] == requested_version)
+      return supported_versions[i];
+  }
+
+  /* no match; calling code should throw an exception */
+  return -1;
+}

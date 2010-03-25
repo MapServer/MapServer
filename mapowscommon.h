@@ -70,7 +70,6 @@
 
 /* function prototypes */
 
-int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
 
 xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version, const char *namespaces);
 
@@ -97,5 +96,7 @@ int _validateNamespace(xmlNsPtr psNsOws);
 xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, const char* name,
                                           const char *content, const char *encoding);
 #endif /* defined(USE_LIBXML2) */
+
+int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
 
 #endif /* MAPOWSCOMMON_H */
