@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Incorporate support for GDAL nodata on RGB images (#2404)
+
 - Incorporated support for GDAL masks (GDAL RFC 15) (#2640)
 
 - Fixed XML transformation issues with expressions and symbols (#3397)

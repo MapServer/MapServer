@@ -58,7 +58,9 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
 		layerObj *layer, 
 		int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
 		GByte *pabyBuffer,
-		int dst_xsize, int dst_ysize );
+		int dst_xsize, int dst_ysize,
+                int *pbHaveRGBNoData, 
+                int *pnNoData1, int *pnNoData2, int *pnNoData3 );
 static int 
 msDrawRasterLayerGDAL_RawMode(
     mapObj *map, layerObj *layer, imageObj *image, GDALDatasetH hDS, 
@@ -151,6 +153,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     GDALDatasetH hDS = hDSVoid;
     GDALColorTableH hColorMap;
     GDALRasterBandH hBand1=NULL, hBand2=NULL, hBand3=NULL, hBandAlpha=NULL;
+    int bHaveRGBNoData = FALSE;
+    int nNoData1=-1,nNoData2=-1,nNoData3=-1;
   
     memset( cmap, 0xff, MAXCOLORS * sizeof(int) );
     memset( rb_cmap, 0, sizeof(rb_cmap) );
@@ -818,11 +822,16 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
      */
     if( LoadGDALImages( hDS, band_numbers, band_count, layer, 
                         src_xoff, src_yoff, src_xsize, src_ysize, 
-                        pabyRaw1, dst_xsize, dst_ysize ) == -1 )
+                        pabyRaw1, dst_xsize, dst_ysize,
+                        &bHaveRGBNoData, 
+                        &nNoData1, &nNoData2, &nNoData3 ) == -1 )
     {
         free( pabyRaw1 );
         return -1;
     }
+
+    if( bHaveRGBNoData && layer->debug )
+        msDebug( "msDrawGDAL(): using RGB nodata values from GDAL dataset.\n" );
 
 /* -------------------------------------------------------------------- */
 /*      If there was no alpha band, but we have a dataset level mask    */
@@ -1097,7 +1106,13 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                     && pabyRaw2[k] == layer->offsite.green
                     && pabyRaw3[k] == layer->offsite.blue )
                     continue;
-              
+
+                if( bHaveRGBNoData 
+                    && pabyRaw1[k] == nNoData1 
+                    && pabyRaw2[k] == nNoData2 
+                    && pabyRaw3[k] == nNoData3 )
+                    continue;
+
                 if( pabyRawAlpha == NULL || pabyRawAlpha[k] == 255 )
                 {
                     RB_SET_PIXEL( rb, j, i, 
@@ -1154,6 +1169,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                         && pabyRaw3[k] == layer->offsite.blue )
                         continue;
 
+                    if( bHaveRGBNoData 
+                        && pabyRaw1[k] == nNoData1 
+                        && pabyRaw2[k] == nNoData2 
+                        && pabyRaw3[k] == nNoData3 )
+                        continue;
+
                     if( pabyRawAlpha != NULL && pabyRawAlpha[k] == 0 )
                         continue;
 
@@ -1185,6 +1206,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                         && pabyRaw3[k] == layer->offsite.blue )
                         continue;
                   
+                    if( bHaveRGBNoData 
+                        && pabyRaw1[k] == nNoData1 
+                        && pabyRaw2[k] == nNoData2 
+                        && pabyRaw3[k] == nNoData3 )
+                        continue;
+
                     if( pabyRawAlpha != NULL && pabyRawAlpha[k] == 0 )
                         continue;
 
@@ -1206,6 +1233,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                         && pabyRaw3[k] == layer->offsite.blue )
                         continue;
                   
+                    if( bHaveRGBNoData 
+                        && pabyRaw1[k] == nNoData1 
+                        && pabyRaw2[k] == nNoData2 
+                        && pabyRaw3[k] == nNoData3 )
+                        continue;
+
                     if( pabyRawAlpha == NULL || pabyRawAlpha[k] == 255 )
                     {
                         gdImg->tpixels[i][j] = 
@@ -1514,12 +1547,39 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
 		layerObj *layer, 
 		int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
 		GByte *pabyWholeBuffer,
-		int dst_xsize, int dst_ysize )
+		int dst_xsize, int dst_ysize,
+                int *pbHaveRGBNoData, 
+                int *pnNoData1, int *pnNoData2, int *pnNoData3 )
     
 {
     int    iColorIndex, result_code=0;
     CPLErr eErr;
     float *pafWholeRawData;
+
+/* -------------------------------------------------------------------- */
+/*      If we have no alpha band, but we do have three input            */
+/*      bands, then check for nodata values.  If we only have one       */
+/*      input band, then nodata will already have been adderssed as     */
+/*      part of the real or manufactured color table.                   */
+/* -------------------------------------------------------------------- */
+    if( band_count == 3 )
+    {
+        *pnNoData1 = (int) 
+            msGetGDALNoDataValue( layer, 
+                                  GDALGetRasterBand(hDS,band_numbers[0]), 
+                                  pbHaveRGBNoData);
+
+        if( *pbHaveRGBNoData )
+            *pnNoData2 = (int) 
+                msGetGDALNoDataValue( layer, 
+                                  GDALGetRasterBand(hDS,band_numbers[1]), 
+                                  pbHaveRGBNoData);
+        if( *pbHaveRGBNoData )
+            *pnNoData3 = (int) 
+                msGetGDALNoDataValue( layer, 
+                                  GDALGetRasterBand(hDS,band_numbers[2]), 
+                                  pbHaveRGBNoData);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Are we doing a simple, non-scaling case?  If so, read directly  */
@@ -1556,6 +1616,11 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
 	
 	return result_code;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Disable use of nodata if we are doing scaling.                  */
+/* -------------------------------------------------------------------- */
+    *pbHaveRGBNoData = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      We need to do some scaling.  Will load into either a 16bit      */
