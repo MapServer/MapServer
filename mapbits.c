@@ -40,7 +40,6 @@ MS_CVSID("$Id$")
  * Hardcoded size of our bit array. 
  * See function msGetNextBit for another hardcoded value.
  */
-#define MS_ARRAY_BIT 32
 
 /* #define msGetBit(array, index) (*((array) + (index)/MS_ARRAY_BIT) & ( 1 << ((index) % MS_ARRAY_BIT))) */
 

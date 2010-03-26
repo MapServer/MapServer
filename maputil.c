@@ -870,6 +870,9 @@ void msFreeImage(imageObj *image)
         image->imagepath = NULL;
         image->imageurl = NULL;
 
+        msFree( image->img_mask );
+        image->img_mask= NULL;
+
         msFree( image );
     }     
 }
@@ -1390,23 +1393,23 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     else if(MS_RENDERER_PLUGIN(format)) {
     	image = format->vtable->createImage(width,height,format,&map->imagecolor);
     	image->format = format;
-		format->refcount++;
+        format->refcount++;
 
-		image->width = width;
-		image->height = height;
-		image->imagepath = NULL;
-		image->imageurl = NULL;
-                image->tilecache = NULL;
-                image->ntiles = 0;
-                image->resolution = map->resolution;
-                image->resolutionfactor = map->resolution/map->defresolution;
+        image->width = width;
+        image->height = height;
+        image->imagepath = NULL;
+        image->imageurl = NULL;
+        image->tilecache = NULL;
+        image->ntiles = 0;
+        image->resolution = map->resolution;
+        image->resolutionfactor = map->resolution/map->defresolution;
 
-		if (imagepath)
-			image->imagepath = strdup(imagepath);
-		if (imageurl)
-			image->imageurl = strdup(imageurl);
+        if (imagepath)
+            image->imagepath = strdup(imagepath);
+        if (imageurl)
+            image->imageurl = strdup(imageurl);
 
-		return image;
+        return image;
     }
 #ifdef USE_AGG
     else if( MS_RENDERER_AGG(format) )
@@ -1423,7 +1426,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
             && format->imagemode != MS_IMAGEMODE_BYTE )
         {
             msSetError(MS_IMGERR, 
-                    "Attempt to use illegal imagemode with rawdata renderer.",
+                       "Attempt to use illegal imagemode with rawdata renderer.",
                        "msImageCreate()" );
             return NULL;
         }
@@ -1448,6 +1451,8 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
                        "msImageCreate()" );
             return NULL;
         }
+
+        image->img_mask = msAllocBitArray( width*height );
             
         image->format = format;
         format->refcount++;
@@ -1490,7 +1495,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     else 
     {
         msSetError(MS_MISCERR, 
-               "Unsupported renderer requested, unable to initialize image.", 
+                   "Unsupported renderer requested, unable to initialize image.", 
                    "msImageCreate()");
         return NULL;
     }

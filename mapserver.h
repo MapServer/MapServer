@@ -1521,7 +1521,7 @@ typedef struct {
 
 #ifndef SWIG
   union {
-	void *plugin;
+    void *plugin;
     gdImagePtr gd;
 #ifdef USE_MING_FLASH
     void *swf;
@@ -1537,6 +1537,7 @@ typedef struct {
     float *raw_float;
     unsigned char *raw_byte;
   } img;
+  ms_bitarray  img_mask;
 #endif
 } imageObj;
 
@@ -1931,6 +1932,14 @@ MS_DLL_EXPORT int msGetPolygonCentroid(shapeObj *p, pointObj *lp, double *miny, 
 MS_DLL_EXPORT int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image); /* in mapraster.c */
 MS_DLL_EXPORT imageObj *msDrawReferenceMap(mapObj *map);
 
+/* mapbits.c - bit array handling functions and macros */
+
+#define MS_ARRAY_BIT 32
+
+#define MS_GET_BIT(array,i) (array[i>>5] & (1 <<(i & 0x3f)))
+#define MS_SET_BIT(array,i) {array[i>>5] |= (1 <<(i & 0x3f));}
+#define MS_CLR_BIT(array,i) {array[i>>5] &= (~(1 <<(i & 0x3f)));}
+
 MS_DLL_EXPORT size_t msGetBitArraySize(int numbits); /* in mapbits.c */
 MS_DLL_EXPORT ms_bitarray msAllocBitArray(int numbits);
 MS_DLL_EXPORT int msGetBit(ms_bitarray array, int index);
@@ -1938,6 +1947,8 @@ MS_DLL_EXPORT void msSetBit(ms_bitarray array, int index, int value);
 MS_DLL_EXPORT void msSetAllBits(ms_bitarray array, int index, int value);
 MS_DLL_EXPORT void msFlipBit(ms_bitarray array, int index);
 MS_DLL_EXPORT int msGetNextBit(ms_bitarray array, int index, int size);
+
+/* maplayer.c - layerObj  api */
 
 MS_DLL_EXPORT int msLayerInitItemInfo(layerObj *layer);
 MS_DLL_EXPORT void msLayerFreeItemInfo(layerObj *layer); 

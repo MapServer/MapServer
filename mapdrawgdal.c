@@ -2112,6 +2112,10 @@ msDrawRasterLayerGDAL_RawMode(
     int *band_list, band_count;
     int  i, j, k, band;
     CPLErr eErr;
+    float *f_nodatas = NULL;
+    unsigned char *b_nodatas = NULL;
+    GInt16 *i_nodatas = NULL;
+    int got_nodata=FALSE;
 
     if( image->format->bands > 256 )
     {
@@ -2119,6 +2123,18 @@ msDrawRasterLayerGDAL_RawMode(
                     "msDrawRasterLayerGDAL_RawMode()" );
         return -1;
     }
+
+/* -------------------------------------------------------------------- */
+/*      We need at least GDAL 1.2.0 for the DatasetRasterIO             */
+/*      function.                                                       */
+/* -------------------------------------------------------------------- */
+#if !defined(GDAL_VERSION_NUM) || GDAL_VERSION_NUM < 1200
+    msSetError(MS_IMGERR, 
+               "RAWMODE raster support requires GDAL 1.2.0 or newer.", 
+               "msDrawRasterLayerGDAL_RawMode()" );
+    free( pBuffer );
+    return -1;
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      What data type do we need?                                      */
@@ -2150,6 +2166,53 @@ msDrawRasterLayerGDAL_RawMode(
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have nodata values?                                       */
+/* -------------------------------------------------------------------- */
+    f_nodatas = (float *) calloc(sizeof(float),band_count);
+    
+    if( band_count <= 3
+        && (layer->offsite.red != -1
+            || layer->offsite.green != -1
+            || layer->offsite.blue != -1) )
+    {
+        if( band_count > 0 )
+            f_nodatas[0] = layer->offsite.red;
+        if( band_count > 1 )
+            f_nodatas[1] = layer->offsite.green;
+        if( band_count > 2 )
+            f_nodatas[2] = layer->offsite.blue;
+        got_nodata = TRUE;
+    }
+
+    if( !got_nodata )
+    {
+        got_nodata = TRUE;
+        for( band = 0; band < band_count && got_nodata; band++ )
+        {
+            f_nodatas[band] = msGetGDALNoDataValue( 
+                layer, GDALGetRasterBand(hDS,band_list[band]), &got_nodata );
+        }
+    }
+    
+    if( !got_nodata )
+    {
+        msFree( f_nodatas );
+        f_nodatas = NULL;
+    }
+    else if( eDataType == GDT_Byte )
+    {
+        b_nodatas = (unsigned char *) f_nodatas;
+        for( band = 0; band < band_count; band++ )
+            b_nodatas[band] = (unsigned char) f_nodatas[band];
+    }
+    else if( eDataType == GDT_Int16 )
+    {
+        i_nodatas = (GInt16 *) f_nodatas;
+        for( band = 0; band < band_count; band++ )
+            i_nodatas[band] = (GInt16) f_nodatas[band];
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Allocate buffer, and read data into it.                         */
 /* -------------------------------------------------------------------- */
     pBuffer = malloc(dst_xsize * dst_ysize * image->format->bands
@@ -2162,7 +2225,6 @@ msDrawRasterLayerGDAL_RawMode(
         return -1;
     }
 
-#if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1199
     eErr = GDALDatasetRasterIO( hDS, GF_Read,  
                                 src_xoff, src_yoff, src_xsize, src_ysize, 
                                 pBuffer, dst_xsize, dst_ysize, eDataType, 
@@ -2176,20 +2238,9 @@ msDrawRasterLayerGDAL_RawMode(
                     CPLGetLastErrorMsg(), 
                     "msDrawRasterLayerGDAL_RawMode()" );
         free( pBuffer );
+        free( f_nodatas );
         return -1;
     }
-#else
-    /*
-     * The above could actually be implemented for pre-1.2.0 GDALs
-     * reading band by band, but it would be hard to do and test and would
-     * be very rarely useful so we skip it.
-     */
-    msSetError(MS_IMGERR, 
-               "RAWMODE raster support requires GDAL 1.2.0 or newer.", 
-               "msDrawRasterLayerGDAL_RawMode()" );
-    free( pBuffer );
-    return -1;
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Transfer the data to the imageObj.                              */
@@ -2203,27 +2254,54 @@ msDrawRasterLayerGDAL_RawMode(
             {
                 for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
                 {
-                    image->img.raw_16bit[j + i * image->width
-                                         + band*image->width*image->height] = 
-                        ((GInt16 *) pBuffer)[k++];
+                    int off = j + i * image->width
+                        + band*image->width*image->height;
+
+                    if( i_nodatas 
+                        && ((GInt16 *) pBuffer)[k] == i_nodatas[band] )
+                    {
+                        k++;
+                        continue;
+                    }
+
+                    image->img.raw_16bit[off] = ((GInt16 *) pBuffer)[k++];
+                    MS_SET_BIT(image->img_mask,off);
                 }
             }
             else if( image->format->imagemode == MS_IMAGEMODE_FLOAT32 )
             {
                 for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
                 {
-                    image->img.raw_float[j + i * image->width
-                                         + band*image->width*image->height] = 
-                        ((float *) pBuffer)[k++];
+                    int off = j + i * image->width
+                        + band*image->width*image->height;
+
+                    if( f_nodatas 
+                        && ((float *) pBuffer)[k] == f_nodatas[band] )
+                    {
+                        k++;
+                        continue;
+                    }
+
+                    image->img.raw_float[off] = ((float *) pBuffer)[k++];
+                    MS_SET_BIT(image->img_mask,off);
                 }
             }
             else if( image->format->imagemode == MS_IMAGEMODE_BYTE )
             {
                 for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
                 {
-                    image->img.raw_byte[j + i * image->width
-                                        + band*image->width*image->height] = 
-                        ((unsigned char *) pBuffer)[k++];
+                    int off = j + i * image->width
+                        + band*image->width*image->height;
+
+                    if( b_nodatas 
+                        && ((unsigned char *) pBuffer)[k] == b_nodatas[band] )
+                    {
+                        k++;
+                        continue;
+                    }
+
+                    image->img.raw_byte[off] = ((unsigned char *) pBuffer)[k++];
+                    MS_SET_BIT(image->img_mask,off);
                 }
             }
         }
