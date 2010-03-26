@@ -321,6 +321,7 @@ char path[MS_MAXPATHLEN];
 
 <INITIAL,URL_STRING>annotation                 { return(MS_LAYER_ANNOTATION); }
 <INITIAL,URL_STRING>auto                       { return(MS_AUTO); }
+<INITIAL,URL_STRING>auto2                      { return(MS_AUTO2); }
 <INITIAL>bevel                                 { return(MS_CJC_BEVEL); }
 <INITIAL>bitmap                                { return(MS_BITMAP); }
 <INITIAL>butt                                  { return(MS_CJC_BUTT); }

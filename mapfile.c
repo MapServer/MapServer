@@ -1322,8 +1322,7 @@ void initLabel(labelObj *label)
 
   label->position = MS_CC;
   label->angle = 0;
-  label->autoangle = MS_FALSE;
-  label->autofollow = MS_FALSE;
+  label->anglemode = MS_NONE;
   label->minsize = MS_MINFONTSIZE;
   label->maxsize = MS_MAXFONTSIZE;
   label->buffer = 0;
@@ -1387,7 +1386,7 @@ static int loadLabel(labelObj *label)
   for(;;) {
     switch(msyylex()) {
     case(ANGLE):
-      if((symbol = getSymbol(4, MS_NUMBER,MS_AUTO,MS_FOLLOW,MS_BINDING)) == -1) 
+      if((symbol = getSymbol(4, MS_NUMBER,MS_AUTO,MS_AUTO2,MS_FOLLOW,MS_BINDING)) == -1) 
 	return(-1);
 
       if(symbol == MS_NUMBER)
@@ -1402,11 +1401,12 @@ static int loadLabel(labelObj *label)
 	msSetError(MS_IDENTERR, "Keyword FOLLOW is not valid without TrueType font support and GD version 2.0.29 or higher.", "loadlabel()");
 	return(-1);
 #else 
-        label->autofollow = MS_TRUE;         
-        label->autoangle = MS_TRUE; /* Fallback in case ANGLE FOLLOW fails */
+        label->anglemode = MS_FOLLOW;         
 #endif
+      } else if ( symbol == MS_AUTO2 ) {
+	label->anglemode = MS_AUTO2;
       } else
-	label->autoangle = MS_TRUE;
+	label->anglemode = MS_AUTO;
       break;
     case(ALIGN):
       if((label->align = getSymbol(3, MS_ALIGN_LEFT,MS_ALIGN_CENTER,MS_ALIGN_RIGHT)) == -1) return(-1);
@@ -1628,9 +1628,11 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
       fprintf(stream, "  %sANGLE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_ANGLE].item);
     else {
-      if (label->autofollow) 
+      if (label->anglemode == MS_FOLLOW) 
         fprintf(stream, "  %sANGLE FOLLOW\n", tab);
-      else if(label->autoangle)
+      else if(label->anglemode == MS_AUTO2)
+        fprintf(stream, "  %sANGLE AUTO2\n", tab);
+      else if(label->anglemode == MS_AUTO)
         fprintf(stream, "  %sANGLE AUTO\n", tab);
       else
         fprintf(stream, "  %sANGLE %f\n", tab, label->angle);

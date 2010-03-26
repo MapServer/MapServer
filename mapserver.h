@@ -398,8 +398,8 @@ enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NU
 enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX, MS_LAYER_CHART};
 enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 
-#define MS_POSITIONS_LENGTH 12
-enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY, MS_FOLLOW}; /* Added MS_FOLLOW for bug #1620 implementation. */
+#define MS_POSITIONS_LENGTH 14
+enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY, MS_FOLLOW, MS_NONE, MS_AUTO2}; /* Added MS_FOLLOW for bug #1620 implementation. */
 
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
@@ -804,8 +804,7 @@ typedef struct {
   int offsetx, offsety;
 
   double angle;
-  int autoangle; /* true or false */
-  int autofollow;  /* true or false, bug #1620 implementation */
+  int anglemode;
 
   int buffer; /* space to reserve around a label */
 

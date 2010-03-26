@@ -1624,10 +1624,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msCopyShape(shape, &annoshape);
         msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
-        if(layer->class[c]->label.autofollow == MS_TRUE ) {
+        if(layer->class[c]->label.anglemode == MS_FOLLOW ) {
           annopaths = msPolylineLabelPath(image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
         } else {
-            annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.autoangle);
+            annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.anglemode);
         }
         
         msFreeShape(&annoshape);
@@ -1641,7 +1641,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msOffsetShapeRelativeTo(shape, layer);
 
       
-      if (layer->class[c]->label.autofollow == MS_TRUE) 
+      if (layer->class[c]->label.anglemode == MS_FOLLOW) 
       {
         /* Determine the label path if it has not been computed above */
         if (bLabelNoClip == MS_FALSE) {
@@ -1662,7 +1662,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         for (i = 0; i < numpaths; i++)
         {
           /* Bug #1620 implementation */
-          if(layer->class[c]->label.autofollow == MS_TRUE) {
+          if(layer->class[c]->label.anglemode == MS_FOLLOW) {
             layer->class[c]->label.position = MS_CC; /* Force all label positions to MS_CC regardless if a path is computed */
 
             if( annopaths[i] ) {
@@ -1700,7 +1700,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
               if(label.angle != 0)
                 label.angle -= map->gt.rotation_angle;
               
-              if(label.autoangle) label.angle = *angles[i];
+              if(label.anglemode == MS_AUTO || label.anglemode == MS_AUTO2) label.angle = *angles[i];
               
               if(layer->labelcache) {
                 if(msAddLabel(map, layer->index, c, shape, annopoints[i], NULL, shape->text, *lengths[i], &label) != MS_SUCCESS) return(MS_FAILURE);
@@ -1729,7 +1729,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
               angles = NULL;
               lengths = NULL;
             }
-            annopoints = msPolylineLabelPoint(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.autoangle);
+            annopoints = msPolylineLabelPoint(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.anglemode);
           }
           
           for (i = 0; i < numpoints; i++) {
@@ -1739,7 +1739,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
                 label.angle -= map->gt.rotation_angle;
               
               /* Angle derived from line overrides even the rotation value. */
-              if(label.autoangle) label.angle = *angles[i];
+              if(label.anglemode == MS_AUTO || label.anglemode == MS_AUTO2) label.angle = *angles[i];
               
               if(layer->labelcache) {
                 if(msAddLabel(map, layer->index, c, shape, annopoints[i], NULL, shape->text, *lengths[i], &label) != MS_SUCCESS) return(MS_FAILURE);
@@ -1949,10 +1949,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msCopyShape(shape, &annoshape);
       msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
-      if(layer->class[c]->label.autofollow == MS_TRUE) {
+      if(layer->class[c]->label.anglemode == MS_FOLLOW) {
         annopaths = msPolylineLabelPath(image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
       } else {
-        annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.autoangle);
+        annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.anglemode);
       }
       msFreeShape(&annoshape);
     }
@@ -2011,7 +2011,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     
     if(shape->text) {
 
-      if (layer->class[c]->label.autofollow == MS_TRUE) 
+      if (layer->class[c]->label.anglemode == MS_FOLLOW) 
       {
         /* Determine the label path if it has not been computed above */
         if (bLabelNoClip == MS_FALSE) {
@@ -2032,7 +2032,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         for (i = 0; i < numpaths; i++)
         {
           /* Bug #1620 implementation */
-          if(layer->class[c]->label.autofollow == MS_TRUE) {
+          if(layer->class[c]->label.anglemode == MS_FOLLOW) {
             labelObj label;
             layer->class[c]->label.position = MS_CC; /* Force all label positions to MS_CC regardless if a path is computed */
             
@@ -2061,7 +2061,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             if(label.angle != 0)
               label.angle -= map->gt.rotation_angle;
             
-            if(label.autoangle) label.angle = *angles[i];
+            if(label.anglemode == MS_AUTO || label.anglemode == MS_AUTO2) label.angle = *angles[i];
             
             if(layer->labelcache) {
               if(msAddLabel(map, layer->index, c, shape, annopoints[i], NULL, shape->text, *lengths[i], &label) != MS_SUCCESS) return(MS_FAILURE);
@@ -2087,7 +2087,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             angles = NULL;
             lengths = NULL;
           }
-          annopoints = msPolylineLabelPoint(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.autoangle);
+          annopoints = msPolylineLabelPoint(shape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.anglemode);
         }
 
         for (i = 0; i < numpoints; i++) {
@@ -2096,7 +2096,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           if(label.angle != 0)
             label.angle -= map->gt.rotation_angle;
           
-          if(label.autoangle) label.angle = *angles[i];
+          if(label.anglemode == MS_AUTO || label.anglemode == MS_AUTO2) label.angle = *angles[i];
           
           if(layer->labelcache) {
             if(msAddLabel(map, layer->index, c, shape, annopoints[i], NULL, shape->text, *lengths[i], &label) != MS_SUCCESS) return(MS_FAILURE);
