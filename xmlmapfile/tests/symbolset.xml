@@ -14,7 +14,7 @@
 		<Points>
 			<point x="2" y="-3"/>
 		</Points>
-		<transparent>123</transparent>
+		<transparent>0</transparent>
 	</Symbol>
         <Symbol name="mySymbol222" type="CARTOLINE">
           <antialias>FALSE</antialias>

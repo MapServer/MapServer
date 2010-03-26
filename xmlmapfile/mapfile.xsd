@@ -476,7 +476,7 @@
 					</xs:sequence>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="transparent" type="xs:positiveInteger" minOccurs="0"/>
+			<xs:element name="transparent" type="xs:integer" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:string"/>
 		<xs:attribute name="type" use="required">
