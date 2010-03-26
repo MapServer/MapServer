@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Preliminary implementation of validity mask (imageObj->img_mask) for raw
+  raster data (#2181)
+
 - Added libgd < 2.0.30 compatibility (#3293)
 
 - Incorporate support for GDAL nodata on RGB images (#2404)
