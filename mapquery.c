@@ -221,11 +221,14 @@ int msLoadQuery(mapObj *map, char *filename) {
   /* 
   ** Make sure the file at least has the right extension. 
   */ 
-  if(msEvalRegex("\\.qy$", filename) != MS_TRUE) return MS_FAILURE; 
+  if(msEvalRegex("\\.qy$", filename) != MS_TRUE) {
+    msSetError(MS_MISCERR, "Query file extension check failed on %s (extension must be .qy)", "msLoadQuery()", filename);
+    return MS_FAILURE; 
+  }
 
   stream = fopen(filename, "r");
   if(!stream) {
-    msSetError(MS_IOERR, "Query file extension check failed on %s (extension must be .qy)", "msLoadQuery()", filename);
+    msSetError(MS_IOERR, "(%s)", "msLoadQuery()", filename);
     return(MS_FAILURE);
   }
 
