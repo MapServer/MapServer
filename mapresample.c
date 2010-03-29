@@ -1471,8 +1471,14 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     if( !bSuccess )
     {
         if( layer->debug )
-            msDebug( "msTransformMapToSource(): "
-                     "pj_transform() failed.  Out of bounds?  Loading whole image.\n" );
+        {
+            if( CSLFetchBoolean( layer->processing, "LOAD_WHOLE_IMAGE", FALSE ))
+                msDebug( "msResampleGDALToMap(): "
+                         "LOAD_WHOLE_IMAGE set, loading whole image.\n" );
+            else
+                msDebug( "msTransformMapToSource(): "
+                         "pj_transform() failed.  Out of bounds?  Loading whole image.\n" );
+        }
 
         sSrcExtent.minx = 0;
         sSrcExtent.maxx = nSrcXSize;
