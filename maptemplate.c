@@ -145,9 +145,10 @@ int checkWebExtent(mapservObj *mapserv)
 int checkWebScale(mapservObj *mapserv) 
 {
   int status;
+  rectObj work_extent = mapserv->map->extent;
 
-  mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent), mapserv->map->width, mapserv->map->height); /* we do this cause we need a scale */
-  if((status = msCalculateScale(mapserv->map->extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) return status;
+  mapserv->map->cellsize = msAdjustExtent(&(work_extent), mapserv->map->width, mapserv->map->height); /* we do this cause we need a scale */
+  if((status = msCalculateScale(work_extent, mapserv->map->units, mapserv->map->width, mapserv->map->height, mapserv->map->resolution, &mapserv->map->scaledenom)) != MS_SUCCESS) return status;
 
   if((mapserv->map->scaledenom < mapserv->map->web.minscaledenom) && (mapserv->map->web.minscaledenom > 0)) {
     if(mapserv->map->web.mintemplate) { /* use the template provided */

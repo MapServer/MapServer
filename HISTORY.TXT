@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fix MS_NONSQUARE to work in mode=map (#3413)
+
 - Support inclusion of raster layers in query map drawing even if the results
   may not be that useful (#1842).
 
