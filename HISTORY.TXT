@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Support inclusion of raster layers in query map drawing even if the results
+  may not be that useful (#1842).
+
 - Fixed auto angle: incorrectly rotated Labels. Added AUTO2 angle mode. (#1688)
 
 - Preliminary implementation of validity mask (imageObj->img_mask) for raw

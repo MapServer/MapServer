@@ -1129,11 +1129,6 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
      layer->project true to recheck projection needs (Bug #673) */
   layer->project = MS_TRUE;
 
-  if( layer->type == MS_LAYER_RASTER ) {
-    msSetError( MS_QUERYERR, "Unable to draw raster layers (such as %s) as part of a query result.", "msDrawQueryLayer()", layer->name );
-    return MS_FAILURE;
-  }
-
   /* set annotation status */
   annotate = msEvalContext(map, layer, layer->labelrequires);
   if(map->scaledenom > 0) {
@@ -1880,6 +1875,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     break;  /* end MS_LAYER_ANNOTATION */
 
   case MS_LAYER_POINT:
+  case MS_LAYER_RASTER:
 
 #ifdef USE_PROJ
     if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
