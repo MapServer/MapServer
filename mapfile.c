@@ -1194,6 +1194,7 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       const char *code;
 
       code = value + 21;
+
       while( *code != ':' && *code != '\0' )
           code++;
       if( *code == ':' )
@@ -1211,6 +1212,39 @@ int msLoadProjectionString(projectionObj *p, const char *value)
           p->args[1] = strdup("+epsgaxis=ne");
           p->numargs = 2;
       }
+  }
+  else if (strncasecmp(value, "urn:x-ogc:def:crs:EPSG:",23) == 0)
+  { /*this case is to account for OGC CITE tests where x-ogc was used
+      before the ogc name became an official NID. Note also we also account
+      for the fact that a space for the version of the espg is not used with CITE tests. 
+      (Syntax used could be urn:ogc:def:objectType:authority:code)*/ 
+    
+      char init_string[100];
+      const char *code;
+
+      if (value[23] == ':')
+        code = value + 23;
+      else
+        code = value + 22;
+
+      while( *code != ':' && *code != '\0' )
+          code++;
+      if( *code == ':' )
+          code++;
+
+      /* translate into PROJ.4 format. */
+      sprintf( init_string, "init=epsg:%s", code );
+
+      p->args = (char**)malloc(sizeof(char*) * 2);
+      p->args[0] = strdup(init_string);
+      p->numargs = 1;
+
+      if( atoi(code) >= 4000 && atoi(code) < 5000 )
+      {
+          p->args[1] = strdup("+epsgaxis=ne");
+          p->numargs = 2;
+      }
+    
   }
   else if (strncasecmp(value, "urn:ogc:def:crs:OGC:",20) == 0 )
   { /* this is very preliminary urn support ... expand later */ 

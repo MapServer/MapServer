@@ -1256,6 +1256,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   char   *pszFilter = NULL;
   int bFilterSet = 0;
   int bBBOXSet = 0;
+  char *sBBoxSrs = NULL;
   int bFeatureIdSet = 0;
 
   char *pszNameSpace = NULL;
@@ -1659,8 +1660,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   if (paramsObj->pszBbox) {
     char **tokens;
     int n;
+    
+
     tokens = msStringSplit(paramsObj->pszBbox, ',', &n);
-    if (tokens==NULL || n != 4) {
+    if (tokens==NULL || (n != 4 && n !=5)) {
       msSetError(MS_WFSERR, "Wrong number of arguments for BBOX.", "msWFSGetFeature()");
       return msWFSException(map, "bbox", "InvalidParameterValue", paramsObj->pszVersion);
     }
@@ -1668,6 +1671,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     bbox.miny = atof(tokens[1]);
     bbox.maxx = atof(tokens[2]);
     bbox.maxy = atof(tokens[3]);
+    /*5th aregument is assumed to be projection*/
+    if (n == 5)
+      sBBoxSrs = strdup(tokens[4]);
+
     msFreeCharArray(tokens, n);
     bBBOXSet = 1;
     /* Note: BBOX SRS is implicit, it is the SRS of the selected */
@@ -2015,6 +2022,31 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       }
       else
       {
+          if (sBBoxSrs)
+          {
+              int status;
+              projectionObj sProjTmp;
+
+              msInitProjection(&sProjTmp);
+              /*do the axis order for now. It is unclear if the bbox are expected
+                ro respect the axis oder defined in the projectsion #3296*/
+              
+              if(strncmp(paramsObj->pszVersion,"1.1",3) == 0)
+              {
+                  if ((status=msLoadProjectionStringEPSG(&sProjTmp, sBBoxSrs)) == 0)
+                  {
+                      msAxisNormalizePoints( &sProjTmp, 1, &bbox.minx, &bbox.miny );
+                      msAxisNormalizePoints( &sProjTmp, 1, &bbox.maxx, &bbox.maxy );
+                  }
+              }
+              else
+                status = msLoadProjectionString(&sProjTmp, sBBoxSrs);
+               
+               if (status == 0 &&  map->projection.numargs > 0)
+                 msProjectRect(&sProjTmp, &map->projection, &bbox);
+
+               msFree(sBBoxSrs);
+          }
           map->query.type = MS_QUERY_BY_RECT; /* setup the query */
           map->query.mode = MS_QUERY_MULTIPLE;
           map->query.rect = bbox;
