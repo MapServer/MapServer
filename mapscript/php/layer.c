@@ -55,6 +55,13 @@ ZEND_BEGIN_ARG_INFO_EX(layer_getClass_args, 0, 0, 1)
   ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(layer_getClassIndex_args, 0, 0, 2)
+  ZEND_ARG_OBJ_INFO(0, shape, shapeObj, 0)
+  ZEND_ARG_INFO(0, scaledenom)
+  ZEND_ARG_INFO(0, classGroup)
+  ZEND_ARG_INFO(0, numClasses)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(layer_setFilter_args, 0, 0, 1)
   ZEND_ARG_INFO(0, expression)
 ZEND_END_ARG_INFO()
@@ -695,6 +702,57 @@ PHP_METHOD(layerObj, getClass)
 
     /* Return class object */
     mapscript_create_class(class, zobj, return_value TSRMLS_CC);
+}
+/* }}} */
+
+/* {{{ proto int layer.getClassIndex(shapeObj shape, int scaledenom [, string classGroup, int numClasses])
+   Returns the class index for the shape */
+PHP_METHOD(layerObj, getClassIndex)
+{
+    zval *zobj = getThis();
+    zval *zshape, **ppzval, *zclassgroup = NULL;
+    int numElements, *classGroups = NULL;
+    int retval = -1, i = 0;
+    long numClasses = 0;
+    double scaledenom;
+    HashTable *classgroup_hash = NULL;
+    php_shape_object *php_shape;
+    php_layer_object *php_layer;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Od|a!l",
+                              &zshape, mapscript_ce_shape,
+                              &scaledenom, &zclassgroup,
+                              &numClasses) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_shape = (php_shape_object *) zend_object_store_get_object(zshape TSRMLS_CC);
+
+    if (zclassgroup)
+    {
+        classgroup_hash = Z_ARRVAL_P(zclassgroup);
+        numElements = zend_hash_num_elements(classgroup_hash);
+        classGroups = (int*)malloc(sizeof(int)*numElements);
+        
+        for(zend_hash_internal_pointer_reset(classgroup_hash); 
+            zend_hash_has_more_elements(classgroup_hash) == SUCCESS; 
+            zend_hash_move_forward(classgroup_hash), ++i)
+        {     
+            zend_hash_get_current_data(classgroup_hash, (void **)&ppzval);
+            classGroups[i] = Z_LVAL_PP(ppzval);
+        }
+    }
+    
+    retval = layerObj_getClassIndex(php_layer->layer, php_shape->shape, scaledenom, classGroups, numClasses);
+  
+    if (zclassgroup)
+        free(classGroups);
+
+    RETURN_LONG(retval);
 }
 /* }}} */
 
@@ -1848,6 +1906,7 @@ zend_function_entry layer_functions[] = {
     PHP_ME(layerObj, drawQuery, layer_drawQuery_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, updateFromString, layer_updateFromString_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, getClass, layer_getClass_args, ZEND_ACC_PUBLIC)
+    PHP_ME(layerObj, getClassIndex, layer_getClassIndex_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, queryByPoint, layer_queryByPoint_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, queryByRect, layer_queryByRect_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, queryByShape, layer_queryByShape_args, ZEND_ACC_PUBLIC)

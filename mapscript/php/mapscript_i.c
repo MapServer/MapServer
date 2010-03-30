@@ -503,6 +503,11 @@ classObj *layerObj_getClass(layerObj *self, int i) { // returns an EXISTING clas
       return(NULL);
   }
 
+int layerObj_getClassIndex(layerObj *self, shapeObj *shape, double scaledenom, 
+                           int *classgroup, int numclasses) {
+    return msShapeGetClass(self, shape, scaledenom, classgroup, numclasses);
+}
+
 int layerObj_draw(layerObj *self, mapObj *map, imageObj *img) {
     return msDrawLayer(map, self, img);
   }
