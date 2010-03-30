@@ -71,7 +71,7 @@ PHP_METHOD(labelObj, __construct)
 PHP_METHOD(labelObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_label_object *php_label;
 
@@ -128,7 +128,7 @@ PHP_METHOD(labelObj, __get)
 PHP_METHOD(labelObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_label_object *php_label;
@@ -193,7 +193,7 @@ PHP_METHOD(labelObj, updateFromString)
 {
     zval *zobj = getThis();
     char *snippet;
-    int snippet_len;
+    long snippet_len;
     int status = MS_FAILURE;
     php_label_object *php_label;
 
@@ -223,8 +223,8 @@ PHP_METHOD(labelObj, setBinding)
 {
     zval *zobj = getThis();
     char *value;
-    int value_len;
-    int bindingId;
+    long value_len;
+    long bindingId;
     php_label_object *php_label;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -269,7 +269,7 @@ PHP_METHOD(labelObj, setBinding)
 PHP_METHOD(labelObj, getBinding)
 {
     zval *zobj = getThis();
-    int bindingId;
+    long bindingId;
     char *value = NULL;
     php_label_object *php_label;
 
@@ -304,7 +304,7 @@ PHP_METHOD(labelObj, getBinding)
 PHP_METHOD(labelObj, removeBinding)
 {
     zval *zobj = getThis();
-    int bindingId;
+    long bindingId;
     php_label_object *php_label;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);

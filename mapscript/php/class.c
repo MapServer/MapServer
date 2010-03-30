@@ -148,7 +148,7 @@ PHP_METHOD(classObj, __construct)
 PHP_METHOD(classObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_class_object *php_class;
 
@@ -183,7 +183,7 @@ PHP_METHOD(classObj, __get)
 PHP_METHOD(classObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_class_object *php_class;
@@ -256,7 +256,7 @@ PHP_METHOD(classObj, __clone)
 PHP_METHOD(classObj, updateFromString)
 {
     char *snippet;
-    int snippet_len;
+    long snippet_len;
     zval *zobj = getThis();
     php_class_object *php_class;
     int status = MS_FAILURE;
@@ -289,7 +289,7 @@ PHP_METHOD(classObj, updateFromString)
 PHP_METHOD(classObj, setExpression)
 {
     char *expression;
-    int expression_len;
+    long expression_len;
     zval *zobj = getThis();
     php_class_object *php_class;
     int status = MS_FAILURE;
@@ -349,7 +349,7 @@ PHP_METHOD(classObj, getExpressionString)
 PHP_METHOD(classObj, setText)
 {
     char *text;
-    int text_len;
+    long text_len;
     zval *zobj = getThis();
     php_class_object *php_class;
     php_layer_object *php_layer;
@@ -410,7 +410,7 @@ PHP_METHOD(classObj, getTextString)
    return the style object. */
 PHP_METHOD(classObj, getStyle)
 {
-    int index;
+    long index;
     zval *zobj = getThis();
     php_class_object *php_class;
     styleObj *style = NULL;
@@ -444,7 +444,7 @@ PHP_METHOD(classObj, getStyle)
    position 1. */
 PHP_METHOD(classObj, moveStyleUp)
 {
-    int index;
+    long index;
     zval *zobj = getThis();
     php_class_object *php_class;
     int status = MS_FAILURE;
@@ -472,7 +472,7 @@ PHP_METHOD(classObj, moveStyleUp)
    will be moved to position 0. */
 PHP_METHOD(classObj, moveStyleDown)
 {
-    int index;
+    long index;
     zval *zobj = getThis();
     php_class_object *php_class;
     int status = MS_FAILURE;
@@ -498,7 +498,7 @@ PHP_METHOD(classObj, moveStyleDown)
   style, their index will decrease by 1. */
 PHP_METHOD(classObj, deleteStyle)
 {
-    int index;
+    long index;
     zval *zobj = getThis();
     php_class_object *php_class;
     int status = MS_FAILURE;
@@ -609,7 +609,7 @@ PHP_METHOD(classObj, removeMetaData)
 PHP_METHOD(classObj, createLegendIcon)
 {
     zval *zobj = getThis();
-    int width, height;
+    long width, height;
     imageObj *image = NULL;
     php_class_object *php_class;
     php_layer_object *php_layer;
@@ -654,7 +654,7 @@ PHP_METHOD(classObj, drawLegendIcon)
 {
     zval *zobj = getThis();
     zval *zimage;
-    int width, height, dstX, dstY;
+    long width, height, dstX, dstY;
     int status = MS_FAILURE;
     php_class_object *php_class;
     php_image_object *php_image;

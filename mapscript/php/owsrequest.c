@@ -93,7 +93,7 @@ PHP_METHOD(OWSRequestObj, __construct)
 PHP_METHOD(OWSRequestObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_owsrequest_object *php_owsrequest;
 
@@ -119,7 +119,7 @@ PHP_METHOD(OWSRequestObj, __get)
 PHP_METHOD(OWSRequestObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_owsrequest_object *php_owsrequest;
@@ -209,9 +209,9 @@ PHP_METHOD(OWSRequestObj, loadParams)
 PHP_METHOD(OWSRequestObj, setParameter)
 {
     char *name;
-    int name_len;
+    long name_len;
     char *value;
-    int value_len;
+    long value_len;
     zval *zobj = getThis();
     php_owsrequest_object *php_owsrequest;
 
@@ -235,7 +235,7 @@ PHP_METHOD(OWSRequestObj, setParameter)
    Return the name of the parameter at index in the request’s array of parameter names. */
 PHP_METHOD(OWSRequestObj, getName)
 {
-    int index;
+    long index;
     zval *zobj = getThis();
     char *value = NULL;
     php_owsrequest_object *php_owsrequest;
@@ -262,7 +262,7 @@ PHP_METHOD(OWSRequestObj, getName)
    Return the value of the parameter at index in the request’s array of parameter values.*/
 PHP_METHOD(OWSRequestObj, getValue)
 {
-    int index;
+    long index;
     zval *zobj = getThis();
     char *value = NULL;
     php_owsrequest_object *php_owsrequest;
@@ -290,7 +290,7 @@ PHP_METHOD(OWSRequestObj, getValue)
 PHP_METHOD(OWSRequestObj, getValueByName)
 {
     char *name;
-    int name_len;
+    long name_len;
     zval *zobj = getThis();
     char *value = NULL;
     php_owsrequest_object *php_owsrequest;

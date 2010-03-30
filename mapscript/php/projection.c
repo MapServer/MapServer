@@ -42,7 +42,7 @@ ZEND_END_ARG_INFO()
 PHP_METHOD(projectionObj, __construct)
 {
     char *projString;
-    int projString_len;
+    long projString_len;
     php_projection_object *php_projection;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);

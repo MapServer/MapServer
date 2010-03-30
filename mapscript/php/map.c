@@ -299,9 +299,9 @@ PHP_METHOD(mapObj, __construct)
 {
     zval *zobj = getThis();
     char *filename;
-    int filename_len;
+    long filename_len;
     char *path = NULL;
-    int path_len;
+    long path_len;
     mapObj *map;
     php_map_object *php_map;
 
@@ -364,7 +364,7 @@ PHP_METHOD(mapObj, __construct)
 PHP_METHOD(mapObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_map_object *php_map;
 
@@ -418,7 +418,7 @@ PHP_METHOD(mapObj, __get)
 PHP_METHOD(mapObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_map_object *php_map;
@@ -511,7 +511,7 @@ PHP_METHOD(mapObj, getSymbolByName)
 {
     zval *zobj = getThis();
     char *symbolName;
-    int symbolName_len;
+    long symbolName_len;
     int symbolId = -1;
     php_map_object *php_map;
 
@@ -537,7 +537,7 @@ PHP_METHOD(mapObj, getSymbolByName)
 PHP_METHOD(mapObj, getSymbolObjectById)
 {
     zval *zobj = getThis();
-    int symbolId;
+    long symbolId;
     symbolObj *symbol = NULL;
     php_map_object *php_map;
 
@@ -861,7 +861,7 @@ PHP_METHOD(mapObj, drawLabelCache)
 PHP_METHOD(mapObj, getLayer)
 {
     zval *zobj = getThis();
-    int index;
+    long index;
     layerObj *layer = NULL;
     php_map_object *php_map;
 
@@ -894,7 +894,7 @@ PHP_METHOD(mapObj, getLayerByName)
 {
     zval *zobj = getThis();
     char *layerName;
-    int layerName_len;
+    long layerName_len;
     layerObj *layer = NULL;
     php_map_object *php_map;
 
@@ -926,7 +926,7 @@ PHP_METHOD(mapObj, getLayerByName)
 PHP_METHOD(mapObj, getColorByIndex)
 {
     zval *zobj = getThis();
-    int index;
+    long index;
     paletteObj palette;
     colorObj color;
     php_map_object *php_map;
@@ -1122,7 +1122,7 @@ PHP_METHOD(mapObj, setRotation)
 PHP_METHOD(mapObj, setSize)
 {
     zval *zobj = getThis();
-    int width, height;
+    long width, height;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -1153,7 +1153,7 @@ PHP_METHOD(mapObj, zoomPoint)
 {
     zval *zobj = getThis();
     zval *zpoint, *zgeoRefExtent, *zmaxGeoRefExtent = NULL;
-    int zoomFactor, width, height;
+    long zoomFactor, width, height;
     double      dfGeoPosX, dfGeoPosY;
     double      dfDeltaX, dfDeltaY;
     rectObj     newGeoRefExtent;    
@@ -1399,7 +1399,7 @@ PHP_METHOD(mapObj, zoomRectangle)
 {
     zval *zobj = getThis();
     zval *zpixelExtent, *zgeoRefExtent, *zmaxGeoRefExtent = NULL;
-    int width, height;
+    long width, height;
     double      dfDeltaX, dfDeltaY;
     rectObj     newGeoRefExtent;    
     double      dfNewScale = 0.0;
@@ -1612,7 +1612,7 @@ PHP_METHOD(mapObj, zoomScale)
 {
     zval *zobj = getThis();
     zval *zpoint, *zgeoRefExtent, *zmaxGeoRefExtent = NULL;
-    int width, height;
+    long width, height;
     double scaleDenom;
     double      dfGeoPosX, dfGeoPosY;
     double      dfDeltaX, dfDeltaY;
@@ -1879,7 +1879,7 @@ PHP_METHOD(mapObj, queryByPoint)
 {
     zval *zobj = getThis();
     zval *zpoint;
-    int mode;
+    long mode;
     double buffer;
     int status = MS_FAILURE;
     php_point_object *php_point;
@@ -1978,7 +1978,7 @@ PHP_METHOD(mapObj, queryByShape)
 PHP_METHOD(mapObj, queryByFeatures)
 {
     zval *zobj = getThis();
-    int slayer;
+    long slayer;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2016,7 +2016,7 @@ PHP_METHOD(mapObj, queryByFeatures)
 PHP_METHOD(mapObj, queryByIndex)
 {
     zval *zobj = getThis();
-    int layerIndex, tileIndex, shapeIndex, addToQuery = MS_FALSE;
+    long layerIndex, tileIndex, shapeIndex, addToQuery = MS_FALSE;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2050,7 +2050,7 @@ PHP_METHOD(mapObj, saveQuery)
 {
     zval *zobj = getThis();
     char *filename;
-    int filename_len;
+    long filename_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2076,7 +2076,7 @@ PHP_METHOD(mapObj, loadQuery)
 {
     zval *zobj = getThis();
     char *filename;
-    int filename_len;
+    long filename_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2102,7 +2102,7 @@ PHP_METHOD(mapObj, loadQuery)
 PHP_METHOD(mapObj, freeQuery)
 {
     zval *zobj = getThis();
-    int qlayer;
+    long qlayer;
     php_map_object *php_map;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -2127,7 +2127,7 @@ PHP_METHOD(mapObj, save)
 {
     zval *zobj = getThis();
     char *filename;
-    int filename_len;
+    long filename_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2159,9 +2159,9 @@ PHP_METHOD(mapObj, setProjection)
 {
     zval *zobj = getThis();
     char *projection;
-    int projection_len;
+    long projection_len;
     int status = MS_FAILURE;
-    int setUnitsAndExtents = MS_FALSE;
+    long setUnitsAndExtents = MS_FALSE;
     php_map_object *php_map;
     php_projection_object *php_projection;
 
@@ -2216,9 +2216,9 @@ PHP_METHOD(mapObj, setWKTProjection)
 {
     zval *zobj = getThis();
     char *projection;
-    int projection_len;
+    long projection_len;
     int status = MS_FAILURE;
-    int setUnitsAndExtents = MS_FALSE;
+    long setUnitsAndExtents = MS_FALSE;
     php_map_object *php_map;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -2328,7 +2328,7 @@ PHP_METHOD(mapObj, getLayersIndexByGroup)
 {
     zval *zobj = getThis();
     char *groupName;
-    int groupName_len;
+    long groupName_len;
     int *indexes = NULL;
     int count = 0;
     int i;
@@ -2424,7 +2424,7 @@ PHP_METHOD(mapObj, getAllLayerNames)
 PHP_METHOD(mapObj, moveLayerUp)
 {
     zval *zobj = getThis();
-    int index;
+    long index;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2449,7 +2449,7 @@ PHP_METHOD(mapObj, moveLayerUp)
 PHP_METHOD(mapObj, moveLayerDown)
 {
     zval *zobj = getThis();
-    int index;
+    long index;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2581,7 +2581,7 @@ PHP_METHOD(mapObj, processTemplate)
     zval *zobj = getThis();
     zval *zindexes;
     HashTable *indexes_hash = NULL;
-    int generateImages;
+    long generateImages;
     char *buffer = NULL;
     int index = 0;
     int numElements = 0;
@@ -2660,7 +2660,7 @@ PHP_METHOD(mapObj, processQueryTemplate)
     zval *zobj = getThis();
     zval *zindexes;
     HashTable *indexes_hash = NULL;
-    int generateImages = MS_TRUE;
+    long generateImages = MS_TRUE;
     char *buffer = NULL;
     int index = 0;
     int numElements = 0;
@@ -2820,7 +2820,7 @@ PHP_METHOD(mapObj, setSymbolSet)
 {
     zval *zobj = getThis();
     char *filename;
-    int filename_len;
+    long filename_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2875,7 +2875,7 @@ PHP_METHOD(mapObj, setFontSet)
 {
     zval *zobj = getThis();
     char *filename;
-    int filename_len;
+    long filename_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2910,7 +2910,7 @@ PHP_METHOD(mapObj, selectOutputFormat)
 {
     zval *zobj = getThis();
     char *type;
-    int type_len;
+    long type_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
     php_outputformat_object *php_outputformat;
@@ -2947,7 +2947,7 @@ PHP_METHOD(mapObj, saveMapContext)
 {
     zval *zobj = getThis();
     char *filename;
-    int filename_len;
+    long filename_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -2981,8 +2981,8 @@ PHP_METHOD(mapObj, loadMapContext)
 {
     zval *zobj = getThis();
     char *filename;
-    int filename_len;
-    int unique = MS_FALSE;
+    long filename_len;
+    long unique = MS_FALSE;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -3017,7 +3017,7 @@ PHP_METHOD(mapObj, applySLD)
 {
     zval *zobj = getThis();
     char *sldxml;
-    int sldxml_len;
+    long sldxml_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -3044,7 +3044,7 @@ PHP_METHOD(mapObj, applySLDURL)
 {
     zval *zobj = getThis();
     char *sldurl;
-    int sldurl_len;
+    long sldurl_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
@@ -3104,7 +3104,7 @@ PHP_METHOD(mapObj, getConfigOption)
 {
     zval *zobj = getThis();
     char *key;
-    int key_len;
+    long key_len;
     char *value = NULL;
     php_map_object *php_map;
     
@@ -3135,9 +3135,9 @@ PHP_METHOD(mapObj, setConfigOption)
 {
     zval *zobj = getThis();
     char *key;
-    int key_len;
+    long key_len;
     char *value;
-    int value_len;
+    long value_len;
     php_map_object *php_map;
     
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -3184,7 +3184,7 @@ PHP_METHOD(mapObj, loadOwsParameters)
     zval *zobj = getThis();
     zval *zrequest;
     char *version = NULL;
-    int version_len;
+    long version_len;
     int isZval = 1;
     int status = MS_FAILURE;
     php_owsrequest_object *php_request;
@@ -3250,7 +3250,7 @@ PHP_METHOD(mapObj, insertLayer)
 {
     zval *zobj = getThis();
     zval *zlayer;
-    int index = -1;
+    long index = -1;
     int retval = -1;
     php_layer_object *php_layer;
     php_map_object *php_map;
@@ -3284,7 +3284,7 @@ PHP_METHOD(mapObj, insertLayer)
 PHP_METHOD(mapObj, removeLayer)
 {
     zval *zobj = getThis();
-    int index = -1;
+    long index = -1;
     layerObj *layer = NULL;
     php_map_object *php_map;
 
@@ -3315,7 +3315,7 @@ PHP_METHOD(mapObj, removeLayer)
 PHP_METHOD(mapObj, getLabel)
 {
     zval *zobj = getThis();
-    int index = -1;
+    long index = -1;
     labelCacheMemberObj *labelCacheMember = NULL; 
     php_map_object *php_map;
 

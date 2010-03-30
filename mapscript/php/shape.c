@@ -148,7 +148,7 @@ PHP_METHOD(shapeObj, __construct)
 {
     zval *zobj = getThis();
     php_shape_object *php_shape;
-    int type;
+    long type;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -177,7 +177,7 @@ PHP_METHOD(shapeObj, __construct)
 PHP_METHOD(shapeObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_shape_object *php_shape;
 
@@ -209,7 +209,7 @@ PHP_METHOD(shapeObj, __get)
 PHP_METHOD(shapeObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_shape_object *php_shape;
@@ -274,7 +274,7 @@ PHP_METHOD(shapeObj, add)
 PHP_METHOD(shapeObj, line)
 {
     zval *zobj =  getThis();
-    int index;
+    long index;
     php_shape_object *php_shape;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -450,7 +450,7 @@ PHP_METHOD(shapeObj, getValue)
     zval *zobj =  getThis();
     zval *zlayer;
     char *fieldName;
-    int fieldName_len;
+    long fieldName_len;
     int i;
     php_layer_object *php_layer;
     php_shape_object *php_shape;
@@ -1105,7 +1105,7 @@ PHP_METHOD(shapeObj, draw)
     php_image_object *php_image;
     
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "OOOls",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "OOO",
                               &zmap, mapscript_ce_map,
                               &zlayer, mapscript_ce_layer,
                               &zimage, mapscript_ce_image) == FAILURE) {

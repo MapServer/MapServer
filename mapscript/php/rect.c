@@ -93,7 +93,7 @@ PHP_METHOD(rectObj, __construct)
 PHP_METHOD(rectObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_rect_object *php_rect;
 
@@ -124,8 +124,8 @@ PHP_METHOD(rectObj, draw)
     zval *zobj =  getThis();
     zval *zmap, *zlayer, *zimage;
     char *text;
-    int text_len;
-    int classIndex;
+    long text_len;
+    long classIndex;
     int status = MS_FAILURE;
     php_rect_object *php_rect;
     php_map_object *php_map;
@@ -162,7 +162,7 @@ PHP_METHOD(rectObj, draw)
 PHP_METHOD(rectObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_rect_object *php_rect;

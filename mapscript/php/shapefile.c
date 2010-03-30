@@ -79,8 +79,8 @@ PHP_METHOD(shapeFileObj, __construct)
     zval *zobj = getThis();
     php_shapefile_object *php_shapefile;
     char *filename;
-    int filename_len;
-    int type;
+    long filename_len;
+    long type;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl",
@@ -107,7 +107,7 @@ PHP_METHOD(shapeFileObj, __construct)
 PHP_METHOD(shapeFileObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_shapefile_object *php_shapefile;
 
@@ -134,7 +134,7 @@ PHP_METHOD(shapeFileObj, __get)
 PHP_METHOD(shapeFileObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_shapefile_object *php_shapefile;
@@ -167,7 +167,7 @@ PHP_METHOD(shapeFileObj, __set)
 PHP_METHOD(shapeFileObj, getShape)
 {
     zval *zobj =  getThis();
-    int index;
+    long index;
     shapeObj *shape;
     php_shapefile_object *php_shapefile;
 
@@ -207,7 +207,7 @@ PHP_METHOD(shapeFileObj, getShape)
 PHP_METHOD(shapeFileObj, getPoint)
 {
     zval *zobj =  getThis();
-    int index;
+    long index;
     pointObj *point;
     php_shapefile_object *php_shapefile;
 
@@ -250,7 +250,7 @@ PHP_METHOD(shapeFileObj, getPoint)
 PHP_METHOD(shapeFileObj, getExtent)
 {
     zval *zobj =  getThis();
-    int index;
+    long index;
     rectObj *rect;
     php_shapefile_object *php_shapefile;
 
@@ -341,7 +341,7 @@ PHP_METHOD(shapeFileObj, getTransformed)
 {
     zval *zobj =  getThis();
     zval *zmap;
-    int index;
+    long index;
     php_shapefile_object *php_shapefile;
     php_map_object *php_map;
     shapeObj *shape = NULL;    

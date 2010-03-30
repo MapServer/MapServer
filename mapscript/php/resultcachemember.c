@@ -53,7 +53,7 @@ PHP_METHOD(resultCacheMemberObj, __construct)
 PHP_METHOD(resultCacheMemberObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_resultcachemember_object *php_resultcachemember;
 
@@ -79,7 +79,7 @@ PHP_METHOD(resultCacheMemberObj, __get)
 PHP_METHOD(resultCacheMemberObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_resultcachemember_object *php_resultcachemember;

@@ -57,7 +57,7 @@ PHP_METHOD(referenceMapObj, __construct)
 PHP_METHOD(referenceMapObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_referencemap_object *php_referencemap;
 
@@ -92,7 +92,7 @@ PHP_METHOD(referenceMapObj, __get)
 PHP_METHOD(referenceMapObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_referencemap_object *php_referencemap;
@@ -133,7 +133,7 @@ PHP_METHOD(referenceMapObj, __set)
 PHP_METHOD(referenceMapObj, updateFromString)
 {
     char *snippet;
-    int snippet_len;
+    long snippet_len;
     zval *zobj = getThis();
     php_referencemap_object *php_referencemap;
     int status = MS_FAILURE;

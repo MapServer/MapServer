@@ -237,7 +237,7 @@ PHP_METHOD(layerObj, __construct)
 PHP_METHOD(layerObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_layer_object *php_layer;
 
@@ -302,7 +302,7 @@ PHP_METHOD(layerObj, __get)
 PHP_METHOD(layerObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_layer_object *php_layer;
@@ -453,7 +453,7 @@ PHP_METHOD(layerObj, queryByPoint)
     zval *zobj = getThis();
     zval *zpoint;
     int status = MS_FAILURE;
-    int mode;
+    long mode;
     double buffer;
     php_layer_object *php_layer;
     php_map_object *php_map;
@@ -566,7 +566,7 @@ PHP_METHOD(layerObj, queryByShape)
 PHP_METHOD(layerObj, queryByFeatures)
 {
     zval *zobj = getThis();
-    int slayer;
+    long slayer;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
     php_map_object *php_map;
@@ -602,10 +602,10 @@ PHP_METHOD(layerObj, queryByAttributes)
 {
     zval *zobj = getThis();
     char *item;
-    int item_len;
+    long item_len;
     char *string;
-    int string_len;
-    int mode;
+    long string_len;
+    long mode;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
     php_map_object *php_map;
@@ -613,7 +613,8 @@ PHP_METHOD(layerObj, queryByAttributes)
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssl",
                               &item, &item_len,
-                              &string, &string_len) == FAILURE) {
+                              &string, &string_len,
+                              &mode) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
     }
@@ -643,7 +644,7 @@ PHP_METHOD(layerObj, updateFromString)
 {
     zval *zobj = getThis();
     char *snippet;
-    int snippet_len;
+    long snippet_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
 
@@ -672,7 +673,7 @@ PHP_METHOD(layerObj, updateFromString)
 PHP_METHOD(layerObj, getClass)
 {
     zval *zobj = getThis();
-    int index;
+    long index;
     classObj *class = NULL;
     php_layer_object *php_layer;
 
@@ -704,7 +705,7 @@ PHP_METHOD(layerObj, setFilter)
 {
     zval *zobj = getThis();
     char *expression;
-    int expression_len;
+    long expression_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
 
@@ -762,7 +763,7 @@ PHP_METHOD(layerObj, setProjection)
 {
     zval *zobj = getThis();
     char *projection;
-    int projection_len;
+    long projection_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
     php_projection_object *php_projection;
@@ -824,7 +825,7 @@ PHP_METHOD(layerObj, setWKTProjection)
 {
     zval *zobj = getThis();
     char *projection;
-    int projection_len;
+    long projection_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
     php_projection_object *php_projection;
@@ -881,7 +882,7 @@ PHP_METHOD(layerObj, getNumResults)
 PHP_METHOD(layerObj, getResult)
 {
     zval *zobj = getThis();
-    int index;
+    long index;
     resultCacheMemberObj *resultcachemember = NULL;
     php_layer_object *php_layer;
 
@@ -1028,7 +1029,7 @@ PHP_METHOD(layerObj, close)
 PHP_METHOD(layerObj, getFeature)
 {
     zval *zobj = getThis();
-    int shapeindex, tileindex = -1;
+    long shapeindex, tileindex = -1;
     shapeObj *shape = NULL;
     php_layer_object *php_layer;
 
@@ -1218,9 +1219,9 @@ PHP_METHOD(layerObj, removeMetaData)
 PHP_METHOD(layerObj, getWMSFeatureInfoURL)
 {
     zval *zobj = getThis();
-    int clickx, clicky, featureCount;
+    long clickx, clicky, featureCount;
     char *infoFormat = NULL;
-    int infoFormat_len;
+    long infoFormat_len;
     char *value =  NULL;
     php_layer_object *php_layer;
     php_map_object *php_map;
@@ -1296,7 +1297,7 @@ PHP_METHOD(layerObj, setProcessing)
 {
     zval *zobj = getThis();
     char *string = NULL;
-    int string_len;
+    long string_len;
     php_layer_object *php_layer;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -1412,9 +1413,9 @@ PHP_METHOD(layerObj, applySLD)
 {
     zval *zobj = getThis();
     char *sldxml;
-    int sldxml_len;
+    long sldxml_len;
     char *namedLayer = NULL;
-    int namedLayer_len;
+    long namedLayer_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
 
@@ -1445,9 +1446,9 @@ PHP_METHOD(layerObj, applySLDURL)
 {
     zval *zobj = getThis();
     char *sldurl;
-    int sldurl_len;
+    long sldurl_len;
     char *namedLayer = NULL;
-    int namedLayer_len;
+    long namedLayer_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
 
@@ -1507,7 +1508,7 @@ PHP_METHOD(layerObj, generateSLD)
 PHP_METHOD(layerObj, moveClassUp)
 {
     zval *zobj = getThis();
-    int index;
+    long index;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
 
@@ -1533,7 +1534,7 @@ PHP_METHOD(layerObj, moveClassUp)
 PHP_METHOD(layerObj, moveClassDown)
 {
     zval *zobj = getThis();
-    int index;
+    long index;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
 
@@ -1559,7 +1560,7 @@ PHP_METHOD(layerObj, moveClassDown)
 PHP_METHOD(layerObj, removeClass)
 {
     zval *zobj = getThis();
-    int index;
+    long index;
     classObj *class;
     php_layer_object *php_layer;
 
@@ -1622,9 +1623,9 @@ PHP_METHOD(layerObj, isVisible)
 PHP_METHOD(layerObj, setConnectionType)
 {
     zval *zobj = getThis();
-    int type;
+    long type;
     char *plugin = "";
-    int plugin_len;
+    long plugin_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
 
@@ -1801,7 +1802,7 @@ PHP_METHOD(layerObj, getGridIntersectionCoordinates)
 PHP_METHOD(layerObj, resultsGetShape)
 {
     zval *zobj = getThis();
-    int shapeindex, tileindex = -1;
+    long shapeindex, tileindex = -1;
     shapeObj *shape = NULL;
     php_layer_object *php_layer;
 

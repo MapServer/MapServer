@@ -112,7 +112,7 @@ PHP_METHOD(styleObj, __construct)
 PHP_METHOD(styleObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_style_object *php_style;
 
@@ -154,7 +154,7 @@ PHP_METHOD(styleObj, __get)
 PHP_METHOD(styleObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_style_object *php_style;
@@ -264,7 +264,7 @@ PHP_METHOD(styleObj, updateFromString)
 {
     zval *zobj = getThis();
     char *snippet;
-    int snippet_len;
+    long snippet_len;
     int status = MS_FAILURE;
     php_style_object *php_style;
 
@@ -294,8 +294,8 @@ PHP_METHOD(styleObj, setBinding)
 {
     zval *zobj = getThis();
     char *value;
-    int value_len;
-    int bindingId;
+    long value_len;
+    long bindingId;
     php_style_object *php_style;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -340,7 +340,7 @@ PHP_METHOD(styleObj, setBinding)
 PHP_METHOD(styleObj, getBinding)
 {
     zval *zobj = getThis();
-    int bindingId;
+    long bindingId;
     char *value = NULL;
     php_style_object *php_style;
 
@@ -375,7 +375,7 @@ PHP_METHOD(styleObj, getBinding)
 PHP_METHOD(styleObj, removeBinding)
 {
     zval *zobj = getThis();
-    int bindingId;
+    long bindingId;
     php_style_object *php_style;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);

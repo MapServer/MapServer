@@ -122,9 +122,9 @@ ZEND_END_ARG_INFO()
 PHP_FUNCTION(ms_newMapObj)
 {
     char *filename;
-    int filename_len;
+    long filename_len;
     char *path = NULL;
-    int path_len;
+    long path_len;
     mapObj *map = NULL;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -153,9 +153,9 @@ PHP_FUNCTION(ms_newMapObj)
 PHP_FUNCTION(ms_newMapObjFromString)
 {
     char *string;
-    int string_len;
+    long string_len;
     char *path = NULL;
-    int path_len;
+    long path_len;
     mapObj *map = NULL;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -226,7 +226,7 @@ PHP_FUNCTION(ms_newLayerObj)
 PHP_FUNCTION(ms_newProjectionObj)
 {
     char *projString;
-    int projString_len;
+    long projString_len;
     projectionObj *projection = NULL;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -396,7 +396,7 @@ PHP_FUNCTION(ms_newSymbolObj)
 {
     zval *zmap;
     char *symbolName;
-    int symbolName_len;
+    long symbolName_len;
     int retval = 0;
     php_map_object *php_map;
 
@@ -422,7 +422,7 @@ PHP_FUNCTION(ms_newSymbolObj)
 PHP_FUNCTION(ms_newShapeObj)
 {
     php_shape_object * php_shape;
-    int type;
+    long type;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -455,7 +455,7 @@ PHP_FUNCTION(ms_shapeObjFromWkt)
 {
     php_shape_object * php_shape;
     char *wkt;
-    int str_len;
+    long str_len;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
@@ -487,8 +487,8 @@ PHP_FUNCTION(ms_shapeObjFromWkt)
 PHP_FUNCTION(ms_newShapeFileObj)
 {
     char *filename;
-    int filename_len;
-    int type;
+    long filename_len;
+    long type;
     shapefileObj *shapefile;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -811,7 +811,7 @@ PHP_FUNCTION(ms_getPid)
 PHP_FUNCTION(ms_getScale)
 {
     zval *zgeoRefExt = NULL;
-    int width, height,unit;
+    long width, height,unit;
     double resolution;
     php_rect_object *php_geoRefExt;
     double dfScale = 0.0;
@@ -849,7 +849,7 @@ PHP_FUNCTION(ms_getScale)
 PHP_FUNCTION(ms_tokenizeMap)
 { 
     char *filename;
-    int filename_len;
+    long filename_len;
     char  **tokens;
     int i, numtokens=0;
 

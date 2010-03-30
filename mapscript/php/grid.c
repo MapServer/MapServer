@@ -87,7 +87,7 @@ PHP_METHOD(gridObj, __construct)
 PHP_METHOD(gridObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_grid_object *php_grid;
 
@@ -117,7 +117,7 @@ PHP_METHOD(gridObj, __get)
 PHP_METHOD(gridObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_grid_object *php_grid;

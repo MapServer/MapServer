@@ -94,7 +94,7 @@ PHP_METHOD(lineObj, __construct)
 PHP_METHOD(lineObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_line_object *php_line;
 
@@ -118,7 +118,7 @@ PHP_METHOD(lineObj, __get)
 PHP_METHOD(lineObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_line_object *php_line;
@@ -278,7 +278,7 @@ PHP_METHOD(lineObj, point)
 {
     zval *zobj = getThis();
     php_line_object *php_line;
-    int index;
+    long index;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &index) == FAILURE) {

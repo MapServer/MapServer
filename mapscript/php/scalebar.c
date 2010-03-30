@@ -63,7 +63,7 @@ PHP_METHOD(scalebarObj, __construct)
 PHP_METHOD(scalebarObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_scalebar_object *php_scalebar;
 
@@ -102,7 +102,7 @@ PHP_METHOD(scalebarObj, __get)
 PHP_METHOD(scalebarObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_scalebar_object *php_scalebar;
@@ -147,7 +147,7 @@ PHP_METHOD(scalebarObj, __set)
 PHP_METHOD(scalebarObj, updateFromString)
 {
     char *snippet;
-    int snippet_len;
+    long snippet_len;
     zval *zobj = getThis();
     php_scalebar_object *php_scalebar;
     int status = MS_FAILURE;
@@ -179,7 +179,7 @@ PHP_METHOD(scalebarObj, updateFromString)
 PHP_METHOD(scalebarObj, setImageColor)
 {
     zval *zobj = getThis();
-    int red, green, blue;
+    long red, green, blue;
     php_scalebar_object *php_scalebar;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);

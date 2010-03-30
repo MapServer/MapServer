@@ -62,7 +62,7 @@ PHP_METHOD(outputFormatObj, __construct)
 PHP_METHOD(outputFormatObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_outputformat_object *php_outputformat;
 
@@ -93,7 +93,7 @@ PHP_METHOD(outputFormatObj, __get)
 PHP_METHOD(outputFormatObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_outputformat_object *php_outputformat;
@@ -126,9 +126,9 @@ PHP_METHOD(outputFormatObj, __set)
 PHP_METHOD(outputFormatObj, setOption)
 {
     char *property;
-    int property_len;
+    long property_len;
     char *value;
-    int value_len;
+    long value_len;
     zval *zobj = getThis();
     php_outputformat_object *php_outputformat;
 
@@ -154,7 +154,7 @@ PHP_METHOD(outputFormatObj, setOption)
 PHP_METHOD(outputFormatObj, getOption)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     const char *value = NULL;
     php_outputformat_object *php_outputformat;

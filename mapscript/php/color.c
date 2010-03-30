@@ -59,7 +59,7 @@ PHP_METHOD(colorObj, __construct)
 PHP_METHOD(colorObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_color_object *php_color;
 
@@ -85,7 +85,7 @@ PHP_METHOD(colorObj, __get)
 PHP_METHOD(colorObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_color_object *php_color;
@@ -115,7 +115,7 @@ PHP_METHOD(colorObj, __set)
 PHP_METHOD(colorObj, setRGB)
 {
     zval *zobj = getThis();
-    int red, green, blue;
+    long red, green, blue;
     php_color_object *php_color;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);

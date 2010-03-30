@@ -53,7 +53,7 @@ PHP_METHOD(labelCacheMemberObj, __construct)
 PHP_METHOD(labelCacheMemberObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_labelcachemember_object *php_labelcachemember;
 
@@ -88,7 +88,7 @@ PHP_METHOD(labelCacheMemberObj, __get)
 PHP_METHOD(labelCacheMemberObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_labelcachemember_object *php_labelcachemember;

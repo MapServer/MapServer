@@ -114,7 +114,7 @@ PHP_METHOD(pointObj, __construct)
 PHP_METHOD(pointObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_point_object *php_point;
 
@@ -143,7 +143,7 @@ PHP_METHOD(pointObj, __get)
 PHP_METHOD(pointObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_point_object *php_point;
@@ -390,8 +390,8 @@ PHP_METHOD(pointObj, draw)
     zval *zobj =  getThis();
     zval *zmap, *zlayer, *zimage;
     char *text;
-    int text_len;
-    int classIndex;
+    long text_len;
+    long classIndex;
     int status = MS_FAILURE;
     php_point_object *php_point;
     php_map_object *php_map;

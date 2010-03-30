@@ -68,7 +68,7 @@ PHP_METHOD(imageObj, __construct)
 PHP_METHOD(imageObj, __get)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *zobj = getThis();
     php_image_object *php_image;
 
@@ -96,7 +96,7 @@ PHP_METHOD(imageObj, __get)
 PHP_METHOD(imageObj, __set)
 {
     char *property;
-    int property_len;
+    long property_len;
     zval *value;
     zval *zobj = getThis();
     php_image_object *php_image;
@@ -173,7 +173,8 @@ PHP_METHOD(imageObj, saveWebImage)
 */
 PHP_METHOD(imageObj, pasteImage)
 {
-    int  transparent=-1, dstx=0, dsty=0, angle=0, angleSet=MS_FALSE;
+    long transparent=-1, dstx=0, dsty=0, angle=0;
+    int angleSet=MS_FALSE;
     zval *zimage;
     zval *zobj = getThis();
     php_image_object *php_image, *php_imageSrc;
@@ -252,7 +253,7 @@ PHP_METHOD(imageObj, saveImage)
     zval *zobj = getThis();
     zval *zmap = NULL;
     char *filename = NULL;
-    int filename_len = 0;
+    long filename_len = 0;
     php_image_object *php_image;
     php_map_object *php_map;
     int status = MS_SUCCESS;
