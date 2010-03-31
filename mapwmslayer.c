@@ -675,42 +675,6 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                 && (strcasecmp(nonsquare_ok,"no") == 0 
                     || strcasecmp(nonsquare_ok,"false") == 0) )
             {
-#ifdef notdef
-                double cellsize_x = (bbox.maxx-bbox.minx) / bbox_width;
-                double cellsize_y = (bbox.maxy-bbox.miny) / bbox_height;
-                
-
-                if( cellsize_x < cellsize_y * 0.999999 )
-                {
-                    double new_deltax = cellsize_y * bbox_width;
-                    double middle_x = (bbox.maxx + bbox.minx)/2;
-                    
-                    bbox.minx = middle_x - new_deltax * 0.5;
-                    bbox.maxx = middle_x + new_deltax * 0.5;
-
-                    if (lp->debug)
-                        msDebug("NONSQUARE_OK=%s, adjusted x cellsize from %.15gto %.15g.\n",
-                                nonsquare_ok, cellsize_x, cellsize_y );
-                }
-                else if( cellsize_y < cellsize_x * 0.999999 )
-                {
-                    double new_deltay = cellsize_x * bbox_height;
-                    double middle_y = (bbox.maxy + bbox.miny)/2;
-                    
-                    bbox.miny = middle_y - new_deltay * 0.5;
-                    bbox.maxy = middle_y + new_deltay * 0.5;
-
-                    if (lp->debug)
-                        msDebug("NONSQUARE_OK=%s, adjusted y cellsize from %.15gto %.15g.\n",
-                                nonsquare_ok, cellsize_y, cellsize_x );
-                }
-                else
-                {
-                    if (lp->debug)
-                        msDebug("NONSQUARE_OK=%s, but cellsize was already square - no change.\n",
-                                nonsquare_ok );
-                }
-#else
 
                 double cellsize_x = (bbox.maxx-bbox.minx) / bbox_width;
                 double cellsize_y = (bbox.maxy-bbox.miny) / bbox_height;
@@ -744,10 +708,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                         msDebug("NONSQUARE_OK=%s, but cellsize was already square - no change.\n",
                                 nonsquare_ok );
                 }
-
-#endif
             }
-
         }
     }
 
