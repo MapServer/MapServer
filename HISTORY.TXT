@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Implement wms_nonsquare_ok metadata item for WMS servers that do
+  not support non-square pixels (#3409)
+
 - Fixed MapScript shape->classindex is always 0 (#3406)
 
 - Fixed PHP MapScript integer passing broken on 64bit systems (#3412)

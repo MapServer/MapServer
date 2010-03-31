@@ -67,6 +67,8 @@ typedef struct http_request_info
     char    *pszOutputFile;
     int     nTimeout;
     rectObj bbox;
+    int     width;
+    int     height;
     int     nStatus;            /* 200=success, value < 0 if request failed */
     char    *pszContentType;    /* Content-Type of the response */
     char    *pszErrBuf;         /* Buffer where curl can write errors */

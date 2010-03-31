@@ -450,15 +450,18 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 #define WMS_GETMAP         1
 #define WMS_GETFEATUREINFO 2
 
-int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
-                       int nClickX, int nClickY, int nFeatureCount,
-                       const char *pszInfoFormat, rectObj *bbox_ret,
-                       wmsParamsObj *psWMSParams)
+static int
+msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
+                   int nClickX, int nClickY, int nFeatureCount,
+                   const char *pszInfoFormat, rectObj *bbox_ret,
+                   int *width_ret, int *height_ret,
+                   wmsParamsObj *psWMSParams)
 {
 #ifdef USE_WMS_LYR
     char *pszEPSG = NULL;
     const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam, *pszQueryLayers=NULL;
     rectObj bbox;
+    int bbox_width = map->width, bbox_height = map->height;
     int nVersion=OWS_VERSION_NOTSET;
     
     if (lp->connectiontype != MS_WMS)
@@ -538,8 +541,6 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
              return MS_FAILURE;
         }
     }
-
-
 
 /* ------------------------------------------------------------------
  * Figure the SRS we'll use for the request.
@@ -641,7 +642,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
 /* ------------------------------------------------------------------
  * Adjust for MapServer EXTENT being center of pixel and WMS BBOX being 
- * edge of pixel (#2843), and then reproject if needed.
+ * edge of pixel (#2843).
  * ------------------------------------------------------------------ */
     bbox = map->extent;
 
@@ -650,13 +651,117 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     bbox.miny -= map->cellsize * 0.5;
     bbox.maxy += map->cellsize * 0.5;
 
+/* -------------------------------------------------------------------- */
+/*      Reproject if needed.                                            */
+/* -------------------------------------------------------------------- */
     if (msProjectionsDiffer(&(map->projection), &(lp->projection)))
     {
         msProjectRect(&(map->projection), &(lp->projection), &bbox);
+
+/* -------------------------------------------------------------------- */
+/*      Sometimes our remote WMS only accepts square pixel              */
+/*      requests.  If this is the case adjust grow the bbox so that     */
+/*      the pixels will be square given our map width/height.  It       */
+/*      seems it is difficult to adjust width/height the way things     */
+/*      are structured now.                                             */
+/* -------------------------------------------------------------------- */
+        {
+            const char *nonsquare_ok = 
+                msOWSLookupMetadata(&(lp->metadata), 
+                                    "MO", "nonsquare_ok");
+            
+            /* assume nonsquare_ok is false */
+            if( nonsquare_ok != NULL 
+                && (strcasecmp(nonsquare_ok,"no") == 0 
+                    || strcasecmp(nonsquare_ok,"false") == 0) )
+            {
+#ifdef notdef
+                double cellsize_x = (bbox.maxx-bbox.minx) / bbox_width;
+                double cellsize_y = (bbox.maxy-bbox.miny) / bbox_height;
+                
+
+                if( cellsize_x < cellsize_y * 0.999999 )
+                {
+                    double new_deltax = cellsize_y * bbox_width;
+                    double middle_x = (bbox.maxx + bbox.minx)/2;
+                    
+                    bbox.minx = middle_x - new_deltax * 0.5;
+                    bbox.maxx = middle_x + new_deltax * 0.5;
+
+                    if (lp->debug)
+                        msDebug("NONSQUARE_OK=%s, adjusted x cellsize from %.15gto %.15g.\n",
+                                nonsquare_ok, cellsize_x, cellsize_y );
+                }
+                else if( cellsize_y < cellsize_x * 0.999999 )
+                {
+                    double new_deltay = cellsize_x * bbox_height;
+                    double middle_y = (bbox.maxy + bbox.miny)/2;
+                    
+                    bbox.miny = middle_y - new_deltay * 0.5;
+                    bbox.maxy = middle_y + new_deltay * 0.5;
+
+                    if (lp->debug)
+                        msDebug("NONSQUARE_OK=%s, adjusted y cellsize from %.15gto %.15g.\n",
+                                nonsquare_ok, cellsize_y, cellsize_x );
+                }
+                else
+                {
+                    if (lp->debug)
+                        msDebug("NONSQUARE_OK=%s, but cellsize was already square - no change.\n",
+                                nonsquare_ok );
+                }
+#else
+
+                double cellsize_x = (bbox.maxx-bbox.minx) / bbox_width;
+                double cellsize_y = (bbox.maxy-bbox.miny) / bbox_height;
+                
+
+                if( cellsize_x < cellsize_y * 0.999999 )
+                {
+                    int new_bbox_height = 
+                        ceil((cellsize_y/cellsize_x) * bbox_height);
+
+                    if (lp->debug)
+                        msDebug("NONSQUARE_OK=%s, adjusted HEIGHT from %d to %d to equalize cellsize at %g.\n",
+                                nonsquare_ok, 
+                                bbox_height, new_bbox_height, cellsize_x );
+                    bbox_height = new_bbox_height;
+                }
+                else if( cellsize_y < cellsize_x * 0.999999 )
+                {
+                    int new_bbox_width = 
+                        ceil((cellsize_x/cellsize_y) * bbox_width);
+
+                    if (lp->debug)
+                        msDebug("NONSQUARE_OK=%s, adjusted WIDTH from %d to %d to equalize cellsize at %g.\n",
+                                nonsquare_ok,
+                                bbox_width, new_bbox_width, cellsize_y );
+                    bbox_width = new_bbox_width;
+                }
+                else
+                {
+                    if (lp->debug)
+                        msDebug("NONSQUARE_OK=%s, but cellsize was already square - no change.\n",
+                                nonsquare_ok );
+                }
+
+#endif
+            }
+
+        }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Potentially return the bbox.                                    */
+/* -------------------------------------------------------------------- */
     if (bbox_ret != NULL)
         *bbox_ret = bbox;
+
+    if( width_ret != NULL )
+        *width_ret = bbox_width;
+
+    if( height_ret != NULL )
+        *height_ret = bbox_height;
 
 /* ------------------------------------------------------------------
  * Build the request URL.
@@ -698,8 +803,8 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             pszExceptionsParam = "WMS_XML";
 
         msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE);
-        msSetWMSParamInt(   psWMSParams, "WIDTH",   map->width);
-        msSetWMSParamInt(   psWMSParams, "HEIGHT",  map->height);
+        msSetWMSParamInt(   psWMSParams, "WIDTH",   bbox_width);
+        msSetWMSParamInt(   psWMSParams, "HEIGHT",  bbox_height);
         msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
 
         snprintf(szBuf, 100, "%.15g,%.15g,%.15g,%.15g", 
@@ -745,8 +850,8 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         }
 
         msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE);
-        msSetWMSParamInt(   psWMSParams, "WIDTH",   map->width);
-        msSetWMSParamInt(   psWMSParams, "HEIGHT",  map->height);
+        msSetWMSParamInt(   psWMSParams, "WIDTH",   bbox_width);
+        msSetWMSParamInt(   psWMSParams, "HEIGHT",  bbox_height);
         msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
 
         snprintf(szBuf, 100, "%.15g,%.15g,%.15g,%.15g", 
@@ -791,7 +896,8 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
 
     if (msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
                            nClickX, nClickY, nFeatureCount,
-                           pszInfoFormat, NULL, &sThisWMSParams)!= MS_SUCCESS)
+                           pszInfoFormat, NULL, NULL, NULL,
+                           &sThisWMSParams)!= MS_SUCCESS)
     {
         return NULL;
     }
@@ -817,6 +923,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     char *pszURL = NULL, *pszHTTPCookieData = NULL;
     const char *pszTmp;
     rectObj bbox;
+    int bbox_width, bbox_height;
     int nTimeout, bOkToMerge, bForceSeparateRequest;
     wmsParamsObj sThisWMSParams;
     
@@ -838,7 +945,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * compute BBOX in that projection.
  * ------------------------------------------------------------------ */
     if ( msBuildWMSLayerURL(map, lp, WMS_GETMAP,
-                            0, 0, 0, NULL, &bbox, 
+                            0, 0, 0, NULL, &bbox, &bbox_width, &bbox_height,
                             &sThisWMSParams) != MS_SUCCESS)
     {
         /* an error was already reported. */
@@ -1178,7 +1285,9 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                                                             "img.tmp");
         pasReqInfo[(*numRequests)].nStatus = 0;
         pasReqInfo[(*numRequests)].nTimeout = nTimeout;
-        pasReqInfo[(*numRequests)].bbox = bbox;
+        pasReqInfo[(*numRequests)].bbox   = bbox;
+        pasReqInfo[(*numRequests)].width  = bbox_width;
+        pasReqInfo[(*numRequests)].height = bbox_height;
         pasReqInfo[(*numRequests)].debug = lp->debug;
         
         pasReqInfo[(*numRequests)].pszProxyAddress  = pszProxyHost;
@@ -1377,10 +1486,10 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
         {
             double dfCellSizeX = MS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
                                              pasReqInfo[iReq].bbox.maxx, 
-                                             map->width);
+                                             pasReqInfo[iReq].width);	
             double dfCellSizeY = MS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
                                              pasReqInfo[iReq].bbox.miny, 
-                                             map->height);
+                                             pasReqInfo[iReq].height);
                 
             fprintf(fp, "%.12f\n", dfCellSizeX );
             fprintf(fp, "0\n");
