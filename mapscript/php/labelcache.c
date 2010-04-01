@@ -88,7 +88,6 @@ zend_function_entry labelcache_functions[] = {
     PHP_ME(labelCacheObj, __get, labelcache___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelCacheObj, __set, labelcache___set_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelCacheObj, free, NULL, ZEND_ACC_PUBLIC)
-    PHP_MALIAS(labelCacheObj, freeCache, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 

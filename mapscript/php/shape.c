@@ -1058,7 +1058,7 @@ PHP_METHOD(shapeObj, simplify)
 
     shape = shapeObj_simplify(php_shape->shape, tolerance);
     if (shape  == NULL)
-       RETURN_FALSE;
+        RETURN_NULL();
 
     mapscript_create_shape(shape, NULL, NULL, return_value TSRMLS_CC);
 }
@@ -1086,7 +1086,7 @@ PHP_METHOD(shapeObj, topologyPreservingSimplify)
 
     shape = shapeObj_topologypreservingsimplify(php_shape->shape, tolerance);
     if (shape  == NULL)
-       RETURN_FALSE;
+        RETURN_NULL();
 
     mapscript_create_shape(shape, NULL, NULL, return_value TSRMLS_CC);
 }

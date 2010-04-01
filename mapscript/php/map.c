@@ -2631,7 +2631,7 @@ PHP_METHOD(mapObj, processTemplate)
     {
         // Failed for some reason
         mapscript_report_php_error(E_WARNING, "processTemplate: failed reading array" TSRMLS_CC);
-        RETURN_NULL();
+        RETURN_STRING("", 0);
     }
     efree(papszNameValue);
 
@@ -2711,7 +2711,7 @@ PHP_METHOD(mapObj, processQueryTemplate)
     {
         // Failed for some reason
         mapscript_report_php_error(E_WARNING, "processQueryTemplate: failed reading array" TSRMLS_CC);
-        RETURN_NULL();
+        RETURN_STRING("", 0);
     }
     efree(papszNameValue);
 
@@ -2791,7 +2791,7 @@ PHP_METHOD(mapObj, processLegendTemplate)
     {
         // Failed for some reason
         mapscript_report_php_error(E_WARNING, "processLegendTemplate: failed reading array" TSRMLS_CC);
-        RETURN_NULL();
+        RETURN_STRING("", 0);
     }
     efree(papszNameValue);
 

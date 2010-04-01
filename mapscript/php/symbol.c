@@ -127,7 +127,6 @@ PHP_METHOD(symbolObj, __get)
     else IF_GET_STRING("character", php_symbol->symbol->character)
     else IF_GET_LONG("antialias", php_symbol->symbol->antialias) 
     else IF_GET_STRING("font", php_symbol->symbol->font)
-    else IF_GET_LONG("gap", php_symbol->symbol->gap) 
     else IF_GET_LONG("position", php_symbol->symbol->position) 
     else 
     {
@@ -164,7 +163,6 @@ PHP_METHOD(symbolObj, __set)
     else IF_SET_STRING("character", php_symbol->symbol->character, value)
     else IF_SET_LONG("antialias", php_symbol->symbol->antialias, value) 
     else IF_SET_STRING("font", php_symbol->symbol->font, value)
-    else IF_SET_LONG("gap", php_symbol->symbol->gap, value) 
     else IF_SET_LONG("position", php_symbol->symbol->position, value) 
     if ( (STRING_EQUAL("numpoints", property)) ||
          (STRING_EQUAL("patternlength", property)) ||
