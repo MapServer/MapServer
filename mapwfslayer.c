@@ -156,9 +156,14 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "filter");
     if (pszTmp && strlen(pszTmp) > 0)
     {
-        psParams->pszFilter = malloc(sizeof(char)*(strlen(pszTmp)+17+1));
-        sprintf(psParams->pszFilter, "<Filter>%s</Filter>", pszTmp);
-        /* <Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/ogc ../filter/1.0.0/filter.xsd http://www.opengis.net/gml../gml/2.1/geometry.xsd\"> */
+        if (strstr(pszTmp, "<Filter>") !=NULL || strstr(pszTmp, "<ogc:Filter>") != NULL)
+          psParams->pszFilter = strdup(pszTmp);
+        else
+        {
+            psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter>");
+            psParams->pszFilter = msStringConcatenate(psParams->pszFilter, pszTmp);
+            psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "</ogc:Filter>");
+        }
     }
 
      pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "maxfeatures");
@@ -246,38 +251,38 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
     else
     {
         pszFilter = (char *)malloc(sizeof(char)*500);
-        sprintf(pszFilter, "<Filter>\n"
-"<BBOX>\n"
-"<PropertyName>Geometry</PropertyName>\n"
-"<Box>\n"
-"<coordinates>%f,%f %f,%f</coordinates>\n"
-"</Box>\n"
-"</BBOX>\n"
-"</Filter>",bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
+        sprintf(pszFilter, "<ogc:Filter>\n"
+"<ogc:BBOX>\n"
+"<ogc:PropertyName>Geometry</ogc:PropertyName>\n"
+"<gml:Box>\n"
+"<gml:coordinates>%f,%f %f,%f</gml:coordinates>\n"
+"</gml:Box>\n"
+"</ogc:BBOX>\n"
+"</ogc:Filter>",bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
     }
 
     pszPostReq = (char *)malloc(sizeof(char)*(strlen(pszFilter)+500));
     if (psParams->nMaxFeatures > 0)
       sprintf(pszPostReq, "<?xml version=\"1.0\" ?>\n"
-"<GetFeature\n"
+"<wfs:GetFeature\n"
 "service=\"WFS\"\n"
 "version=\"1.0.0\"\n"
 "maxFeatures=\"%d\"\n"
 "outputFormat=\"GML2\">\n"
-"<Query typeName=\"%s\">\n"
+"<wfs:Query typeName=\"%s\">\n"
 "%s"
-"</Query>\n"
-"</GetFeature>\n", psParams->nMaxFeatures, psParams->pszTypeName, pszFilter);
+"</wfs:Query>\n"
+"</wfs:GetFeature>\n", psParams->nMaxFeatures, psParams->pszTypeName, pszFilter);
     else
       sprintf(pszPostReq, "<?xml version=\"1.0\" ?>\n"
-"<GetFeature\n"
+"<wfs:GetFeature\n"
 "service=\"WFS\"\n"
 "version=\"1.0.0\"\n"
 "outputFormat=\"GML2\">\n"
-"<Query typeName=\"%s\">\n"
+"<wfs:Query typeName=\"%s\">\n"
 "%s"
-"</Query>\n"
-"</GetFeature>\n", psParams->pszTypeName, pszFilter);
+"</wfs:Query>\n"
+"</wfs:GetFeature>\n", psParams->pszTypeName, pszFilter);
     if (psParams->pszFilter == NULL)
       free(pszFilter);
 
