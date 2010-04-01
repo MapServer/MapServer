@@ -436,11 +436,12 @@
       <xsl:with-param name="node" select="'ms:extension'"/>
       <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>
-    <xsl:call-template name="print">
-      <xsl:with-param name="indent" select="$indent"/>
-      <xsl:with-param name="node" select="'ms:formatOption'"/>
-      <xsl:with-param name="quote" select="1"/>
-    </xsl:call-template>
+    <xsl:for-each select="ms:formatOption">
+       <xsl:call-template name="print">
+         <xsl:with-param name="indent" select="$indent"/>
+         <xsl:with-param name="text" select="concat('FORMATOPTION ','&#34;',.,'&#34;')"/>
+       </xsl:call-template>
+    </xsl:for-each>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:imageMode'"/>

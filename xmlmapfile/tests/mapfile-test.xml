@@ -56,6 +56,7 @@
           <driver>GDAL/GTIFF</driver>
           <extension>tiff</extension>
           <formatOption>TILED=YES</formatOption>
+          <formatOption>TRANSPARENCY=TRUE</formatOption>
           <imageMode>FLOAT32</imageMode>
           <mimeType>image/tiff</mimeType>
           <transparent>OFF</transparent>
