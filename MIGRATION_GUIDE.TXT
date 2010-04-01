@@ -53,7 +53,6 @@ PHP MapScript Changes
   - layerObj: getFilter, getShape
 
 * referenceMapObj has new properties: marker, markername, markersize, maxboxsize, minboxsize
-* labelCacheObj has a new function: freeCache(). free() is an alias to this function.
 * shapeFileObj is automatically closed/writed on destroy. (At the end of the script or with an explicit unset())
 * layerObj->clearProcessing() method now returns void.
 * mapObj->queryByIndex(): default behavior for the addToQuery parameter was not ok, now it is.
@@ -73,13 +72,12 @@ PHP MapScript Changes
   - styleObj: clone  
   - layerObj: nextShape, getExtent
   - mapObj: clone, draw, drawQuery getLayerByName, getProjection, 
-            processTemplate, processQueryTemplate, processLegendTemplate
 
 * Methods that now return an empty array 
 
   - symbolObj: getPatternArray
   - layerObj: getItems, getProcessing, getGridIntersectionCoordinates
-  - mapObj: getLayersIndexByGroup, getAllGroupNames, getLayersDrawingOrder getAllLayerNames
+  - mapObj: getLayersIndexByGroup, getAllGroupNames, getLayersDrawingOrder, getAllLayerNames
   
 ------------
 OUTPUTFORMAT
