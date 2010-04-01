@@ -36,6 +36,8 @@
 #include<libxml/tree.h>
 #include<libxml/xpath.h>
 #include<libxml/xpathInternals.h>
+#include <libxml/xmlschemas.h>
+#include <libxml/xmlschemastypes.h>
 
 xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath);
 

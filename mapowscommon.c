@@ -624,6 +624,71 @@ xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, co
     else
       return xmlNewChild(psParent, psNs, BAD_CAST name, BAD_CAST content);
 }
+
+/*
+ * Valid an xml string against an XML schema
+ * Inpired from: http://xml.developpez.com/sources/?page=validation#validate_XSD_CppCLI_2
+ * taken from tinyows.org
+ */
+int msOWSSchemaValidation(const char* xml_schema, const char* xml)
+{
+    xmlSchemaPtr schema;
+    xmlSchemaParserCtxtPtr ctxt;
+    xmlSchemaValidCtxtPtr validctxt;
+    int ret;
+    xmlDocPtr doc;
+
+    if (!xml_schema || !xml)
+      return MS_FAILURE;
+
+    xmlInitParser();
+    schema = NULL;
+    ret = -1;
+
+    /* Open XML Schema File */
+    ctxt = xmlSchemaNewParserCtxt(xml_schema);
+    /*
+    else ctxt = xmlSchemaNewMemParserCtxt(xml_schema);
+    */
+    /*
+    xmlSchemaSetParserErrors(ctxt,
+                             (xmlSchemaValidityErrorFunc) libxml2_callback,
+                             (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
+    */
+
+    schema = xmlSchemaParse(ctxt);
+    xmlSchemaFreeParserCtxt(ctxt);
+
+    /* If XML Schema hasn't been rightly loaded */
+    if (schema == NULL) {
+        xmlSchemaCleanupTypes();
+        xmlMemoryDump();
+        xmlCleanupParser();
+        return ret;
+    }
+
+    doc = xmlParseDoc((xmlChar *)xml);
+
+    if (doc != NULL) {
+        /* Loading XML Schema content */
+        validctxt = xmlSchemaNewValidCtxt(schema);
+        /*
+        xmlSchemaSetValidErrors(validctxt,
+                                (xmlSchemaValidityErrorFunc) libxml2_callback,
+                                (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
+        */
+        /* validation */
+        ret = xmlSchemaValidateDoc(validctxt, doc);
+        xmlSchemaFreeValidCtxt(validctxt);
+    }
+
+    xmlSchemaFree(schema);
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
+
+    return ret;
+}
+
 #endif /* defined(USE_LIBXML2) */
 
 

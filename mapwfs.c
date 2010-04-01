@@ -37,6 +37,11 @@ MS_CVSID("$Id$")
 
 #include "mapogcfilter.h"
 #include "mapowscommon.h"
+
+#ifdef WFS_USE_LIBXML2
+#include "maplibxml2.h"
+#endif
+
 /*
 ** msWFSException()
 **
@@ -2275,8 +2280,8 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, int force_wfs_mode)
   paramsObj = msWFSCreateParamsObj();
   /* TODO : store also parameters that are inside the map object */
   /* into the paramsObj.  */
-  msWFSParseRequest(requestobj, paramsObj);
-
+  if (msWFSParseRequest(map, requestobj, paramsObj, force_wfs_mode) == MS_FAILURE)
+    return msWFSException(map, "request", "InvalidRequest", NULL);
   if (force_wfs_mode)
   {
       /*request is always required*/
@@ -2557,13 +2562,14 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
 /*                                                                      */
 /*      Parse request into the params object.                           */
 /************************************************************************/
-void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
+int msWFSParseRequest(mapObj *map, cgiRequestObj *request, 
+                      wfsParamsObj *wfsparams, int force_wfs_mode)
 {
 #ifdef USE_WFS_SVR
     int i = 0;
         
     if (!request || !wfsparams)
-      return;
+      return MS_FAILURE;
     
     if (request->NumParams > 0)
     {
@@ -2632,6 +2638,230 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
 #ifdef USE_OGR
     if (request->postrequest)
     {
+#ifdef WFS_USE_LIBXML2
+        xmlDocPtr doc;
+        xmlNodePtr rootnode, node, node1;
+        char *schema_file =NULL;
+        const char *schema_location=NULL, *validate=NULL;
+        char *pszValue=NULL, *pszTmp=NULL;
+        char *pszLayerPropertyName=NULL, *pszLayerFilter=NULL;
+
+        //xmlXPathAxisFunc
+        /* load document */
+        doc = xmlParseDoc((xmlChar *)request->postrequest);
+        if (doc == NULL || (rootnode = xmlDocGetRootElement(doc)) == NULL) 
+        {
+            msSetError(MS_WFSERR, "Invalid POST request.  XML is not well-formed", "msWFSParseRequest()");
+            return MS_FAILURE;
+        }
+        
+        /*get the request*/
+        if (strcasecmp((char *)rootnode->name, "GetCapabilities") == 0)
+          wfsparams->pszRequest = "GetCapabilities";
+        else if (strcasecmp((char *)rootnode->name, "GetFeature") == 0)
+          wfsparams->pszRequest = "GetFeature";
+        else if (strcasecmp((char *)rootnode->name, "DescribeFeatureType") == 0)
+          wfsparams->pszRequest = "DescribeFeatureType";
+        
+        if (wfsparams->pszRequest == NULL)
+        {
+          /* Unsupported WFS request */
+            msSetError(MS_WFSERR, "Unsupported WFS request", "msWFSParseRequest()");
+            return MS_FAILURE;
+        }
+
+        /*get version and service if available*/
+        pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"version");
+        if (pszValue)
+          wfsparams->pszVersion = strdup(pszValue);
+        pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"service");
+        if (pszValue)
+          wfsparams->pszService = strdup(pszValue);     
+
+        
+        /* version is optional for the GetCapabilities. If not provided, set it*/
+        if (wfsparams->pszVersion == NULL && 
+            strcmp(wfsparams->pszRequest,"GetCapabilities") == 0)
+           wfsparams->pszVersion = strdup("1.1.0");
+
+
+        /*do we validate the xml ?*/
+        validate = msOWSLookupMetadata(&(map->web.metadata), "FO", "validate_xml");
+        if (validate && strcasecmp(validate, "true") == 0 &&
+            (schema_location = msOWSLookupMetadata(&(map->web.metadata), "FO", "schemas_dir")))
+        {       
+            if ((wfsparams->pszService  && strcmp(wfsparams->pszService, "WFS") == 0) ||
+                force_wfs_mode)
+            {
+                schema_file = msStringConcatenate(schema_file, (char *)schema_location);
+                if (wfsparams->pszVersion == NULL || 
+                    strncasecmp(wfsparams->pszVersion, "1.1", 3) ==0)
+                {
+                    schema_file = msStringConcatenate(schema_file,  "wfs/1.1.0/wfs.xsd");
+                    if (msOWSSchemaValidation(schema_file, request->postrequest) != 0)
+                    {
+                        msSetError(MS_WFSERR, "Invalid POST request.  XML is not valid", "msWFSParseRequest()");
+                        return MS_FAILURE;
+                    }
+                }
+            }
+        } 
+
+        /*parse describefeature*/
+        if (strcmp(wfsparams->pszRequest,"DescribeFeatureType") == 0)
+        {
+            /*look for TypeName and outputFormat*/
+            for (node = rootnode->children; node; node = node->next) 
+            {
+                if (node->type != XML_ELEMENT_NODE)
+                  continue;
+
+                if (strcmp((char *)node->name, "TypeName") == 0) 
+                {
+                    pszValue = (char *)xmlNodeGetContent(node);
+                    if (wfsparams->pszTypeName == NULL)
+                      wfsparams->pszTypeName = strdup(pszValue);
+                    else
+                    {
+                        wfsparams->pszTypeName = 
+                          msStringConcatenate(wfsparams->pszTypeName, ",");
+                        wfsparams->pszTypeName = 
+                          msStringConcatenate(wfsparams->pszTypeName, pszValue);
+                    }
+                }
+            }
+            pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"outputFormat");
+            if (pszValue)
+              wfsparams->pszOutputFormat = strdup(pszValue);            
+        }  
+
+        /*parse GetFeature*/
+        if (strcmp(wfsparams->pszRequest,"GetFeature") == 0)
+        {
+            pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"resultType");
+            if (pszValue)
+              wfsparams->pszResultType = strdup(pszValue);
+
+            pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"maxFeatures");
+            if (pszValue)
+              wfsparams->nMaxFeatures = atoi(pszValue);
+
+            pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"startIndex");
+            if (pszValue)
+              wfsparams->nStartIndex = atoi(pszValue);
+            
+             /* free typname and filter. There may have been */
+            /* values if they were passed in the URL */
+            if (wfsparams->pszTypeName)    
+              free(wfsparams->pszTypeName);
+            wfsparams->pszTypeName = NULL;
+                        
+            if (wfsparams->pszFilter)    
+              free(wfsparams->pszFilter);
+            wfsparams->pszFilter = NULL;
+
+            for (node = rootnode->children; node; node = node->next) 
+            {
+                if (node->type != XML_ELEMENT_NODE)
+                  continue;
+
+                if (strcmp((char *)node->name, "Query") == 0) 
+                {
+                    /* get SRS: TODO support srs per layer. Now we only have one srs 
+                     that applies to al layers*/
+                    pszValue = (char *)xmlGetProp(node, (xmlChar *)"srsName");
+                    if (pszValue)
+                    {
+                        if (wfsparams->pszSrs )
+                          msFree( wfsparams->pszSrs);
+                        wfsparams->pszSrs = strdup(pszValue);
+                    }
+                    /*type name*/
+                    pszValue = (char *)xmlGetProp(node, (xmlChar *)"typeName");
+                    if (pszValue)
+                    {   
+                        if (wfsparams->pszTypeName == NULL)
+                          wfsparams->pszTypeName = strdup(pszValue);
+                        else
+                        {
+                            wfsparams->pszTypeName = 
+                              msStringConcatenate(wfsparams->pszTypeName, ",");
+                            wfsparams->pszTypeName = 
+                              msStringConcatenate(wfsparams->pszTypeName, pszValue);
+                        }
+                    }
+                    /*PropertyName and Filter*/
+                    pszLayerPropertyName = NULL;
+                    pszLayerFilter = NULL;
+                    for (node1 = node->children; node1; node1 = node1->next) 
+                    {
+                        if (node1->type != XML_ELEMENT_NODE)
+                          continue;
+
+                        if (strcmp((char *)node1->name, "PropertyName") == 0) 
+                        {
+                            pszValue = (char *)xmlNodeGetContent(node1);
+                            if (pszLayerPropertyName == NULL)
+                              pszLayerPropertyName = strdup(pszValue);
+                            else
+                            {   
+                                pszLayerPropertyName= 
+                                  msStringConcatenate(pszLayerPropertyName, ",");
+                                pszLayerPropertyName = 
+                                  msStringConcatenate(pszLayerPropertyName, pszValue);
+                            }
+                        }
+                        if (strcmp((char *)node1->name, "Filter") == 0) 
+                        {
+                            
+                            pszValue = (char *)xmlNodeGetContent(node1);
+                            if (pszValue)
+                            {   
+                                xmlBufferPtr buffer;
+
+                                pszTmp = NULL;
+                                buffer = xmlBufferCreate();
+                                xmlNodeDump(buffer, node1->doc, node1, 0, 0);
+
+                                pszTmp = msStringConcatenate(pszTmp, "(");
+                                pszTmp = msStringConcatenate(pszTmp, (char *)buffer->content);
+                                pszTmp = msStringConcatenate(pszTmp, ")");
+                                
+                                xmlBufferFree(buffer);
+                                wfsparams->pszFilter = 
+                                  msStringConcatenate(wfsparams->pszFilter,pszTmp);
+                                msFree(pszTmp);
+                            }
+                        }
+                    }
+                    pszTmp = NULL;
+                    if (pszLayerPropertyName == NULL)
+                      pszTmp = strdup("()");
+                    else
+                    {
+                        pszTmp = msStringConcatenate(pszTmp, "(");
+                        pszTmp = msStringConcatenate(pszTmp, pszLayerPropertyName);
+                        pszTmp = msStringConcatenate(pszTmp, ")");
+                        msFree(pszLayerPropertyName);
+                    }
+                    wfsparams->pszPropertyName = msStringConcatenate(wfsparams->pszPropertyName, pszTmp);
+                    msFree(pszTmp);
+                        
+                }/*Query node*/
+            }
+
+        }              
+        
+        
+         /* check for request */
+        /* only works??? if <wfs:getCapbilites ...>
+        psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/wfs:GetCapabilities|/GetCapabilities");
+        psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/GetCapabilities");
+        psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/wfs:GetCapabilities");
+        psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"GetCapabilities");
+        psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"//GetCapabilities");
+        */
+#else /*#ifdef WFS_USE_LIBXML2*/
         CPLXMLNode *psRoot, *psQuery, *psFilter, *psTypeName,  *psPropertyName  = NULL;
         CPLXMLNode *psGetFeature = NULL;
         CPLXMLNode  *psGetCapabilities = NULL;
@@ -2641,7 +2871,10 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
         int bMultiLayer = 0;
 
         psRoot = CPLParseXMLString(request->postrequest);
-
+        if(map->debug == MS_DEBUGLEVEL_VVV)
+        {
+            msDebug("msWFSParseRequest(): WFS post request: %s\n", request->postrequest);
+        }
         if (psRoot)
         {
             /* need to strip namespaces */
@@ -2956,8 +3189,11 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
 
             }/* end of DescibeFeatureType */
         }
+#endif /*USE_LIBXML2_WFS*/
+        
     }
 #endif
 #endif
+    return MS_SUCCESS;
 }
 

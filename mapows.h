@@ -448,7 +448,7 @@ MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
 #define OWS_SFE_SCHEMA 1 /* GML for simple feature exchange (formerly GML3L0) */
 
 MS_DLL_EXPORT int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, int force_wfs_mode);
-void msWFSParseRequest(cgiRequestObj *, wfsParamsObj *);
+int msWFSParseRequest(mapObj *map, cgiRequestObj *, wfsParamsObj *, int force_wfs_mode);
 wfsParamsObj *msWFSCreateParamsObj(void);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
 int msWFSIsLayerSupported(layerObj *lp);
