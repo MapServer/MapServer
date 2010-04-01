@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed PHP/MapScript imageObj->saveImage() function (#3410)
+
 - Implement wms_nonsquare_ok metadata item for WMS servers that do
   not support non-square pixels (#3409)
 

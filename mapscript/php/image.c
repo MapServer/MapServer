@@ -151,6 +151,7 @@ PHP_METHOD(imageObj, saveWebImage)
     if (msSaveImage(NULL, php_image->image, imageFile) != MS_SUCCESS)
     {
         mapscript_throw_mapserver_exception("Failed writing image to %s" TSRMLS_CC, imageFile);
+        return;
     }
 
     imageUrlFull = msBuildPath(path, php_image->image->imageurl, imageFilename);
@@ -286,6 +287,8 @@ PHP_METHOD(imageObj, saveImage)
             mapscript_throw_mapserver_exception("Failed writing image to %s" TSRMLS_CC, filename);
             return;
         }
+
+        RETURN_LONG(status);
     }
 
     /* no filename - read stdout */
