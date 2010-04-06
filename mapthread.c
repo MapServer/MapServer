@@ -259,8 +259,8 @@ void msThreadInit()
 
     if( core_lock == NULL )
         core_lock = CreateMutex( NULL, TRUE, NULL );
-    
-    WaitForSingleObject( core_lock, INFINITE );
+    else
+        WaitForSingleObject( core_lock, INFINITE );
 
     for( ; mutexes_initialized < TLOCK_STATIC_MAX; mutexes_initialized++ )
         mutex_locks[mutexes_initialized] = CreateMutex( NULL, FALSE, NULL );
