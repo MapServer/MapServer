@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Avoid use of inline keyword for C code (#3327)
+
 - Support WFS parsing through libxml2 (#3364)
 
 - Fixed PHP/MapScript imageObj->saveImage() function (#3410)
