@@ -35,6 +35,8 @@
 #include <io.h>
 #endif
 
+#define MS_IMAGE_GET_GDIMAGEPTR(image) ((gdImagePtr) image->img.plugin)
+
 void startNewLayerGD(imageObj *img, double opacity) {
 }
 
@@ -67,8 +69,8 @@ int saveImageGD(imageObj *img, FILE *fp, outputFormatObj *format)
 
   fprintf(stderr, "in saveImageGD()\n");
 
-  if(!img || !fp) return NULL;
-  ip = (gdImagePtr) img->img.plugin;
+  if(!img || !fp) return MS_FAILURE;
+  ip = MS_IMAGE_GET_GDIMAGEPTR(img);
 
   if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
     gdImageInterlace(ip, 1);
@@ -76,21 +78,43 @@ int saveImageGD(imageObj *img, FILE *fp, outputFormatObj *format)
   if(format->transparent)
     gdImageColorTransparent(ip, 0);
 
-  if(strcasecmp(format->driver, "gd2/gif") == 0)
+  if(strcasecmp(format->driver, "gd2/gif") == 0) {
+#ifdef USE_GD_GIF
     gdImageGif(ip, fp);
-  else if(strcasecmp(format->driver, "gd2/png") == 0)
+#else
+    msSetError(MS_MISCERR, "GIF output is not available.", "saveImageGD()");
+    return(MS_FAILURE);
+#endif
+  } else if(strcasecmp(format->driver, "gd2/png") == 0) {
+#ifdef USE_GD_PNG
     gdImagePng(ip, fp);
-  else if(strcasecmp(format->driver, "gd2/jpeg") == 0)
+#else
+    msSetError(MS_MISCERR, "PNG output is not available.", "saveImageGD()");
+    return(MS_FAILURE);
+#endif
+  } else if(strcasecmp(format->driver, "gd2/jpeg") == 0) {
+#ifdef USE_GD_JPEG
     gdImageJpeg(ip, fp, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
-  else
-    return MS_FAILURE; /* unsupported format */
-  
+#else
+    msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageGD()");
+    return(MS_FAILURE);
+#endif
+  } else {
+    msSetError(MS_MISCERR, "Unknown or unsupported format.", "saveImageGD()");
+    return(MS_FAILURE);
+  }
+
   return MS_SUCCESS;
 }
 
 void freeImageGD(imageObj *img) 
 {
-  if(img->img.plugin) gdImageDestroy((gdImagePtr)img->img.plugin);
+  gdImagePtr ip;
+
+  if(img) {
+    ip = MS_IMAGE_GET_GDIMAGEPTR(img);
+    if(ip) gdImageDestroy(ip);
+  }
 }
 
 /*
@@ -290,7 +314,7 @@ void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
   int c;
 
   if(!img || !p || !stroke) return;
-  ip = (gdImagePtr) img->img.plugin;
+  ip = MS_IMAGE_GET_GDIMAGEPTR(img);
 
   if(stroke->color.pen == MS_PEN_UNSET) setPen(ip, &stroke->color);
   c = stroke->color.pen;
@@ -303,7 +327,7 @@ void renderPolygonGD(imageObj *img, shapeObj *p, colorObj *color)
   gdImagePtr ip;
 
   if(!img || !p || !color) return;
-  ip = (gdImagePtr) img->img.plugin;
+  ip = MS_IMAGE_GET_GDIMAGEPTR(img);
   if(color->pen == MS_PEN_UNSET) setPen(ip, color);
   imageFilledPolygon(ip, p, color->pen, 0, 0);
 }
