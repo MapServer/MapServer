@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed segfault when using shapefile with empty geometry and tileindex (#3365)
+
 - Avoid race condition on core_lock on win32 mutex init (#3396)
 
 - Avoid use of inline keyword for C code (#3327)

@@ -1327,6 +1327,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         while(--i >= 0)
           free(shape->line[i].point);
         free(shape->line);
+        shape->line = NULL;
         shape->numlines = 0;
         shape->type = MS_SHAPE_NULL;
         return;

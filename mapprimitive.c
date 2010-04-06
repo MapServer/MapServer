@@ -148,8 +148,8 @@ void msFreeShape(shapeObj *shape)
 
   for (c= 0; c < shape->numlines; c++)
     free(shape->line[c].point);
-  free(shape->line);
 
+  if (shape->line) free(shape->line);
   if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
   if(shape->text) free(shape->text);
   
