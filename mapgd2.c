@@ -51,8 +51,6 @@ imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj
   imageObj *img = NULL;
   gdImagePtr ip;
 
-  fprintf(stderr, "in createImageGD() w=%d h=%d\n", width, height);
-
   img = (imageObj *) calloc(1, sizeof (imageObj));
 
   /* we're only doing PC256 for the moment */
@@ -66,8 +64,6 @@ imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj
 int saveImageGD(imageObj *img, FILE *fp, outputFormatObj *format) 
 {
   gdImagePtr ip;
-
-  fprintf(stderr, "in saveImageGD()\n");
 
   if(!img || !fp) return MS_FAILURE;
   ip = MS_IMAGE_GET_GDIMAGEPTR(img);
