@@ -2050,17 +2050,39 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     GDALDatasetH hDS;
     GDALRasterBandH hBand;
     char szPath[MS_MAXPATHLEN];
-  
+    char *decrypted_path;
+
     msGDALInitialize();
 
     msTryBuildPath3(szPath,  layer->map->mappath, layer->map->shapepath, layer->data);
+    decrypted_path = msDecryptStringTokens( layer->map, szPath );
+    if( !decrypted_path )
+        return MS_FAILURE;
+
     msAcquireLock( TLOCK_GDAL );
-    hDS = GDALOpen( szPath, GA_ReadOnly );
+
+    hDS = GDALOpen( decrypted_path, GA_ReadOnly );
     if( hDS == NULL ) {
+      const char *cpl_error_msg = CPLGetLastErrorMsg();
+        
+      /* we wish to avoid reporting decrypted paths */
+      if( cpl_error_msg != NULL 
+          && strstr(cpl_error_msg,decrypted_path) != NULL
+          && strcmp(decrypted_path,szPath) != 0 )
+          cpl_error_msg = NULL;
+      
+      if( cpl_error_msg == NULL )
+          cpl_error_msg = "";
+
       msReleaseLock( TLOCK_GDAL );
-      msSetError( MS_IOERR, "%s", "msWCSGetCoverageMetadata()", CPLGetLastErrorMsg() );
+
+      msSetError( MS_IOERR, "%s", "msWCSGetCoverageMetadata()",
+                  cpl_error_msg );
+
+      msFree( decrypted_path );
       return MS_FAILURE;
     }
+    msFree( decrypted_path );
 
     msGetGDALGeoTransform( hDS, layer->map, layer, cm->geotransform );
 

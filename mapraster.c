@@ -343,6 +343,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
   shapeObj tshp;
 
   char szPath[MS_MAXPATHLEN];
+  char *decrypted_path;
   int final_status = MS_SUCCESS;
 
   rectObj searchrect;
@@ -534,8 +535,19 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
       msTryBuildPath3(szPath, map->mappath, map->shapepath, filename);
     }
 
+    /* 
+    ** Note: because we do decryption after the above path expansion 
+    ** which depends on actually finding a file, it essentially means that
+    ** fancy path manipulation is essentially disabled when using encrypted
+    ** components. But that is mostly ok, since stuff like sde,postgres and
+    ** oracle georaster do not use real paths. 
+    */
+    decrypted_path = msDecryptStringTokens( map, szPath );
+    if( decrypted_path == NULL )
+        return MS_FAILURE;
+
     msAcquireLock( TLOCK_GDAL );
-    hDS = GDALOpenShared(szPath, GA_ReadOnly );
+    hDS = GDALOpenShared( decrypted_path, GA_ReadOnly );
 
     /*
     ** If GDAL doesn't recognise it, and it wasn't successfully opened 
@@ -543,16 +555,35 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     */
     if(hDS == NULL) {
         int ignore_missing = msMapIgnoreMissingData(map);
+        const char *cpl_error_msg = CPLGetLastErrorMsg();
+
+        /* we wish to avoid reporting decrypted paths */
+        if( cpl_error_msg != NULL 
+            && strstr(cpl_error_msg,decrypted_path) != NULL
+            && strcmp(decrypted_path,szPath) != 0 )
+            cpl_error_msg = NULL;
+
+        /* we wish to avoid reporting the stock GDALOpen error messages */
+        if( cpl_error_msg != NULL
+            && (strstr(cpl_error_msg,"not recognised as a supported") != NULL
+                || strstr(cpl_error_msg,"does not exist") != NULL) )
+            cpl_error_msg = NULL;
+
+        if( cpl_error_msg == NULL )
+            cpl_error_msg = "";
+
+        msFree( decrypted_path );
+        decrypted_path = NULL;
 
         msReleaseLock( TLOCK_GDAL );
 
         if(ignore_missing == MS_MISSING_DATA_FAIL) {
-          msSetError(MS_IOERR, "Corrupt, empty or missing file '%s' for layer '%s'", "msDrawRasterLayerLow()", szPath, layer->name);
+          msSetError(MS_IOERR, "Corrupt, empty or missing file '%s' for layer '%s'. %s", "msDrawRasterLayerLow()", szPath, layer->name, cpl_error_msg );
           return(MS_FAILURE); 
         }
         else if( ignore_missing == MS_MISSING_DATA_LOG ) {
           if( layer->debug || layer->map->debug ) {
-            msDebug( "Corrupt, empty or missing file '%s' for layer '%s' ... ignoring this missing data.\n", szPath, layer->name );
+            msDebug( "Corrupt, empty or missing file '%s' for layer '%s' ... ignoring this missing data.  %s\n", szPath, layer->name, cpl_error_msg );
           }
           continue;
         }
@@ -565,6 +596,9 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
           return(MS_FAILURE);
         }
     }        
+
+    msFree( decrypted_path );
+    decrypted_path = NULL;
 
     /*
     ** Generate the projection information if using AUTO.

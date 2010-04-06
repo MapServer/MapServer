@@ -775,6 +775,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     for(t=0; t<numtiles && status == MS_SUCCESS; t++) { 
 
         GDALDatasetH  hDS;
+        char *decrypted_path = NULL;
 
         rlinfo->current_tile = t;
 
@@ -812,29 +813,49 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
             msTryBuildPath3(szPath, map->mappath, map->shapepath, filename);
         }
 
+        decrypted_path = msDecryptStringTokens( map, szPath );
+        if( !decrypted_path )
+            return MS_FAILURE;
+
         msAcquireLock( TLOCK_GDAL );
-        hDS = GDALOpen(szPath, GA_ReadOnly );
+        hDS = GDALOpen(decrypted_path, GA_ReadOnly );
         
         if( hDS == NULL )
         {
             int ignore_missing = msMapIgnoreMissingData( map );
+            const char *cpl_error_msg = CPLGetLastErrorMsg();
+        
+            /* we wish to avoid reporting decrypted paths */
+            if( cpl_error_msg != NULL 
+                && strstr(cpl_error_msg,decrypted_path) != NULL
+                && strcmp(decrypted_path,szPath) != 0 )
+                cpl_error_msg = NULL;
+            if( cpl_error_msg == NULL )
+                cpl_error_msg = "";
+
+            msFree( decrypted_path );
+            decrypted_path = NULL;
+            
             msReleaseLock( TLOCK_GDAL );
 
             if ( ignore_missing == MS_MISSING_DATA_FAIL ) {
               if( layer->debug || map->debug )
                 msSetError( MS_IMGERR, 
                             "Unable to open file %s for layer %s ... fatal error.\n%s", 
-                            szPath, layer->name, CPLGetLastErrorMsg(),
+                            szPath, layer->name, cpl_error_msg,
                             "msRasterQueryByRect()" );
               return(MS_FAILURE);
             }
             if( ignore_missing == MS_MISSING_DATA_LOG ) {
               if( layer->debug || map->debug )
                 msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n%s", 
-                         filename, layer->name, CPLGetLastErrorMsg() );
+                         filename, layer->name, cpl_error_msg );
             }
             continue;
         }
+
+        msFree( decrypted_path );
+        decrypted_path = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Update projectionObj if AUTO.                                   */
@@ -1382,6 +1403,7 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   shapefileObj *tileshpfile;
   int tilelayerindex = -1; 
   CPLErr eErr = CE_Failure;
+  char *decrypted_path;
 
   /*
   ** For the time being we only automatically derive extents from
@@ -1424,9 +1446,16 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   }
 
   msTryBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
+  decrypted_path = msDecryptStringTokens( map, szPath );
 
   msAcquireLock( TLOCK_GDAL );
-  hDS = GDALOpen(szPath, GA_ReadOnly );
+  if( decrypted_path )
+  {
+      hDS = GDALOpen(decrypted_path, GA_ReadOnly );
+      msFree( decrypted_path );
+  }
+  else
+      hDS = NULL;
   
   if( hDS != NULL )
   {
