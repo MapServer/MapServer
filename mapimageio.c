@@ -32,6 +32,9 @@
 #include "mapserver.h"
 
 #include "jpeglib.h"
+#if 0
+#include "gif_lib.h"
+#endif
 
 MS_CVSID("$Id$")
 
@@ -357,3 +360,105 @@ int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer,
         return MS_FAILURE;
     }
 }
+
+#if 0
+/* not fully implemented and tested */
+/* missing: set the first pointer to a,r,g,b */
+rasterBufferObj* readGIF(FILE *stream)
+{
+    rasterBufferObj *rb = NULL;
+    int i, p, codeSize, extCode, firstImageRead = MS_FALSE;
+    GifFileType *image;
+    GifPixelType *line;;
+    GifRecordType recordType;
+    GifByteType *codeBlock, *extension;
+        
+
+    rb = (rasterBufferObj*)malloc(sizeof(rasterBufferObj));
+    image =  DGifOpenFileHandle(fileno(stream));
+    if (image == NULL) {
+        /* MS_SETERROR ... */
+        return NULL;
+    }
+
+    rb->row_step = rb->width*sizeof(int);
+    rb->pixel_step = sizeof(int);
+    
+    do 
+    {  
+        if (DGifGetRecordType(image, &recordType) == GIF_ERROR) {
+            /* MS_SETERROR ... */
+            return NULL;
+	}
+
+        switch (recordType)
+        {
+        case SCREEN_DESC_RECORD_TYPE:
+            DGifGetScreenDesc(image);
+            break;
+        case IMAGE_DESC_RECORD_TYPE:
+            if (DGifGetImageDesc(image) == GIF_ERROR) {
+                return NULL;
+            }
+            if (!firstImageRead)
+            {
+                p = 0;
+                rb->width = image->Image.Width;
+                rb->height = image->Image.Height;
+                rb->pixelbuffer = (unsigned char*)malloc(rb->width*rb->height*sizeof(int));
+                
+                line = (GifPixelType *) malloc(image->Image.Width *
+                                               sizeof(GifPixelType));
+                for (i = 0; i < image->Image.Height; i++) {
+                    if (DGifGetLine(image, line, image->Image.Width) == GIF_ERROR) {
+                        return NULL;
+                    }
+                    memcpy(rb->pixelbuffer+p, line, image->Image.Width);
+                    p += image->Image.Width;
+                }
+                free((char *) line);
+                firstImageRead = MS_TRUE;
+            } 
+            else
+            {  /* Skip all next images */
+                if (DGifGetCode(image, &codeSize, &codeBlock) == GIF_ERROR) {
+                    return NULL;
+                }
+                while (codeBlock != NULL) {
+                    if (DGifGetCodeNext(image, &codeBlock) == GIF_ERROR) {
+                        return NULL;
+                    }
+                }
+            }
+            break;
+        case EXTENSION_RECORD_TYPE:
+            /* skip all extension blocks */
+            if (DGifGetExtension(image, &extCode, &extension) == GIF_ERROR) {
+                return NULL;
+            }
+            for (;;) {
+                if (DGifGetExtensionNext(image, &extension) == GIF_ERROR) {
+                    return NULL;
+                }
+                if (extension == NULL)
+                    break;
+            }
+            break;
+        case UNDEFINED_RECORD_TYPE:
+            break;
+        case TERMINATE_RECORD_TYPE:
+            break;
+        default:
+            break;
+        }
+        
+    } while (recordType != TERMINATE_RECORD_TYPE);
+
+    if (DGifCloseFile(image) == GIF_ERROR) {
+        /* MS_SETERROR ... */
+    }
+
+    return rb;
+}
+
+#endif
