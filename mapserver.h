@@ -2657,10 +2657,10 @@ int msSaveRasterBuffer(rasterBufferObj *data, FILE *stream,
 int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer,
         outputFormatObj *format);
 
-inline void msBufferInit(bufferObj *buffer);
-inline void msBufferResize(bufferObj *buffer, size_t target_size);
-MS_DLL_EXPORT  inline void msBufferFree(bufferObj *buffer);
-MS_DLL_EXPORT  inline void msBufferAppend(bufferObj *buffer, void *data, size_t length);
+void msBufferInit(bufferObj *buffer);
+void msBufferResize(bufferObj *buffer, size_t target_size);
+MS_DLL_EXPORT void msBufferFree(bufferObj *buffer);
+MS_DLL_EXPORT void msBufferAppend(bufferObj *buffer, void *data, size_t length);
 
 struct rendererVTable {
 	int supports_transparent_layers;

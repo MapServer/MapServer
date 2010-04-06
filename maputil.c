@@ -1939,14 +1939,14 @@ int msCheckParentPointer(void* p, char *objname) {
     return MS_SUCCESS;
 }
 
-inline void msBufferInit(bufferObj *buffer) {
+void msBufferInit(bufferObj *buffer) {
     buffer->data=NULL;
     buffer->size=0;
     buffer->available=0;
     buffer->_next_allocation_size = MS_DEFAULT_BUFFER_ALLOC;
 }
 
-inline void msBufferResize(bufferObj *buffer, size_t target_size){
+void msBufferResize(bufferObj *buffer, size_t target_size){
     while(buffer->available <= target_size) {
         buffer->data = realloc(buffer->data,buffer->available+buffer->_next_allocation_size);
         buffer->available += buffer->_next_allocation_size;
@@ -1954,7 +1954,7 @@ inline void msBufferResize(bufferObj *buffer, size_t target_size){
     }
 }
 
-inline void msBufferAppend(bufferObj *buffer, void *data, size_t length) {
+void msBufferAppend(bufferObj *buffer, void *data, size_t length) {
     if(buffer->available < buffer->size+length) {
         msBufferResize(buffer,buffer->size+length);
     }
@@ -1962,7 +1962,7 @@ inline void msBufferAppend(bufferObj *buffer, void *data, size_t length) {
     buffer->size += length;
 }
 
-inline void msBufferFree(bufferObj *buffer) {
+void msBufferFree(bufferObj *buffer) {
     if(buffer->available>0)
         free(buffer->data);
 }
