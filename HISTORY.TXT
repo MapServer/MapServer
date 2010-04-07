@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Avoid automatically regenerating maplexer.c (#2310)
+
 - Change rounding rules for average resampling (#1932)
 
 - Implement support for filename encryption per RFC 18 for rasters (#3416)

@@ -279,6 +279,17 @@ EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 #
 all: $(MAKE_GD) libmapserver.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@ 
 
+# Explicitly invoke this rule when maplexer.l is altered.  We don't do
+# it automatically for the reasons listed in #2310
+
+lexer:
+	$(LEX) --nounistd -Pmsyy -i -omaplexer.c maplexer.l
+
+maplexer.c:	maplexer.l
+	@echo '----------------------------------------------------------------'
+	@echo '--  Please run "make lexer" if you have altered maplexer.l     -'
+	@echo '----------------------------------------------------------------'
+
 #
 # Non-gnumake's don't seem to use this pattern rule, 
 # but have a similar built-in rule for C code.  So try not
@@ -310,9 +321,6 @@ php_mapscript:: $(LIBMAP_STATIC)
 	cd mapscript/php; $(MAKE); cd ../..
 
 maplexer.o: maplexer.c mapserver.h mapfile.h
-
-maplexer.c: maplexer.l
-	$(LEX) --nounistd -Pmsyy -i -omaplexer.c maplexer.l
 
 mapparser.o: mapparser.c mapserver.h
 

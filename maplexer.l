@@ -1,4 +1,13 @@
 %{
+/*
+** READ ME FIRST!
+**
+** When this file is altered, it is necessary to do "make lexer".  Due to
+** problems detailed in #2310 the lexer is no longer automatically rebuilt
+** when maplexer.l is altered.
+*/
+
+
 /* C declarations */
 #include <stdlib.h>
 #include <stdio.h>
