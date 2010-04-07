@@ -751,9 +751,9 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                     nSetPoints++;
                     if( dfAlpha01 > 0.99 )
                         dstImg->tpixels[nDstY][nDstX] = 
-                            gdTrueColor( (int) padfPixelSum[0], 
-                                         (int) padfPixelSum[1], 
-                                         (int) padfPixelSum[2] );
+                            gdTrueColor( (int) (padfPixelSum[0]+0.5), 
+                                         (int) (padfPixelSum[1]+0.5), 
+                                         (int) (padfPixelSum[2]+0.5) );
                     else
                     {
                         int gd_color;
@@ -761,9 +761,9 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
                         gd_alpha = MAX(0,MIN(127,gd_alpha));
                         gd_color = gdTrueColorAlpha(
-                            (int) padfPixelSum[0], 
-                            (int) padfPixelSum[1], 
-                            (int) padfPixelSum[2], 
+                            (int) (padfPixelSum[0]+0.5), 
+                            (int) (padfPixelSum[1]+0.5), 
+                            (int) (padfPixelSum[2]+0.5), 
                             gd_alpha );
                         
                         dstImg->tpixels[nDstY][nDstX] = 
@@ -786,11 +786,15 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
                 if( dfAlpha01 > 0 )
                 {
-                    dst_rb->r[dst_rb_off] = (unsigned char) padfPixelSum[0];
-                    dst_rb->g[dst_rb_off] = (unsigned char) padfPixelSum[1];
-                    dst_rb->b[dst_rb_off] = (unsigned char) padfPixelSum[2];
+                    dst_rb->r[dst_rb_off] = 
+                        (unsigned char) (padfPixelSum[0]+0.5);
+                    dst_rb->g[dst_rb_off] = 
+                        (unsigned char) (padfPixelSum[1]+0.5);
+                    dst_rb->b[dst_rb_off] = 
+                        (unsigned char) (padfPixelSum[2]+0.5);
                     if( dst_rb->a )
-                        dst_rb->a[dst_rb_off] = (unsigned char) dfAlpha01*255;
+                        dst_rb->a[dst_rb_off] = 
+                            (unsigned char) (dfAlpha01*255+0.5);
                 }
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
@@ -805,7 +809,7 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                     if( psSrcImage->format->imagemode == MS_IMAGEMODE_INT16 )
                     {
                         psDstImage->img.raw_16bit[dst_off] 
-                            = (short) padfPixelSum[band];
+                            = (short) (padfPixelSum[band]+0.5);
                     }
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32)
                     {
