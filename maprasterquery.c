@@ -301,39 +301,9 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle classification.                                          */
-/*                                                                      */
-/*      NOTE: The following is really quite inadequate to deal with     */
-/*      classifications based on [red], [green] and [blue] as           */
-/*      described in:                                                   */
-/*       http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1021         */
-/* -------------------------------------------------------------------- */
-    if( rlinfo->qc_class != NULL )
-    {
-        p_class = msGetClass_Float(layer, values[0] );
-
-        if( p_class == -1 )
-            nodata = TRUE;
-        else
-        {
-            rlinfo->qc_class[rlinfo->query_results] = p_class;
-            if( layer->class[p_class]->numstyles > 0 )
-            {
-                red   = layer->class[p_class]->styles[0]->color.red;
-                green = layer->class[p_class]->styles[0]->color.green;
-                blue  = layer->class[p_class]->styles[0]->color.blue;
-            }
-            else
-            {
-                red = green = blue = 0;
-            }
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Handle colormap                                                 */
 /* -------------------------------------------------------------------- */
-    else if( rlinfo->hCT != NULL )
+    if( rlinfo->hCT != NULL )
     {
         int pct_index = (int) floor(values[0]);
         GDALColorEntry sEntry;
@@ -365,6 +335,38 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
         else
         {
             red = green = blue = (int) MAX(0,MIN(255,values[0]));
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle classification.                                          */
+/*                                                                      */
+/*      NOTE: The following is really quite inadequate to deal with     */
+/*      classifications based on [red], [green] and [blue] as           */
+/*      described in:                                                   */
+/*       http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1021         */
+/* -------------------------------------------------------------------- */
+    if( rlinfo->qc_class != NULL )
+    {
+        p_class = msGetClass_FloatRGB(layer, values[0],
+                                      red, green, blue );
+
+        if( p_class == -1 )
+            nodata = TRUE;
+        else
+        {
+            nodata = FALSE;
+            rlinfo->qc_class[rlinfo->query_results] = p_class;
+            if( layer->class[p_class]->numstyles > 0 )
+            {
+                red   = layer->class[p_class]->styles[0]->color.red;
+                green = layer->class[p_class]->styles[0]->color.green;
+                blue  = layer->class[p_class]->styles[0]->color.blue;
+            }
+            else
+            {
+                red = green = blue = 0;
+            }
         }
     }
 

@@ -2176,7 +2176,8 @@ MS_DLL_EXPORT int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int 
 MS_DLL_EXPORT int msAddColorAGG(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
 #endif
 MS_DLL_EXPORT int msGetClass(layerObj *layer, colorObj *color);
-MS_DLL_EXPORT int msGetClass_Float(layerObj *layer, float fValue);
+MS_DLL_EXPORT int msGetClass_FloatRGB(layerObj *layer, float fValue,
+                                      int red, int green, int blue );
 
 /* in mapdrawgdal.c */
 MS_DLL_EXPORT int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, rasterBufferObj *rb, void *hDSVoid );

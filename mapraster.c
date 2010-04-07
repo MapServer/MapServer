@@ -129,13 +129,14 @@ int msGetClass(layerObj *layer, colorObj *color)
 }
 
 /************************************************************************/
-/*                          msGetClass_Float()                          */
+/*                          msGetClass_FloatRGB()                       */
 /*                                                                      */
 /*      Returns the class based on classification of a floating         */
 /*      pixel value.                                                    */
 /************************************************************************/
 
-int msGetClass_Float(layerObj *layer, float fValue)
+int msGetClass_FloatRGB(layerObj *layer, float fValue,
+                        int red, int green, int blue )
 {
     int i;
     char *tmpstr1=NULL;
@@ -170,6 +171,16 @@ int msGetClass_Float(layerObj *layer, float fValue)
 
           case(MS_EXPRESSION):
             tmpstr1 = strdup(layer->class[i]->expression.string);
+
+            if( red != -1 && green != -1 && blue != -1 )
+            {
+                sprintf(tmpstr2, "%d", red);
+                tmpstr1 = msReplaceSubstring(tmpstr1, "[red]", tmpstr2);
+                sprintf(tmpstr2, "%d", green);
+                tmpstr1 = msReplaceSubstring(tmpstr1, "[green]", tmpstr2);
+                sprintf(tmpstr2, "%d", blue);
+                tmpstr1 = msReplaceSubstring(tmpstr1, "[blue]", tmpstr2);
+            }
 
             sprintf(tmpstr2, "%18g", fValue);
             tmpstr1 = msReplaceSubstring(tmpstr1, "[pixel]", tmpstr2);

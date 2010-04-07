@@ -2515,7 +2515,7 @@ msDrawRasterLayerGDAL_16BitClassification(
 
         dfOriginalValue = (i+0.5) / dfScaleRatio + dfScaleMin;
             
-        c = msGetClass_Float(layer, (float) dfOriginalValue);
+        c = msGetClass_FloatRGB(layer, (float) dfOriginalValue, -1, -1, -1);
         if( c != -1 )
         {
             int s;
