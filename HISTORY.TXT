@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed imageObj->saveImage() sends unnecessary headers (#3418)
+
 - Avoid automatically regenerating maplexer.c (#2310)
 
 - Change rounding rules for average resampling (#1932)

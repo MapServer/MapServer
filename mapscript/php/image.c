@@ -31,6 +31,7 @@
 
 #include "php_mapscript.h"
 #include "ext/standard/head.h"
+#include "main/php_output.h"
 
 zend_class_entry *mapscript_ce_image;
 
@@ -293,7 +294,12 @@ PHP_METHOD(imageObj, saveImage)
 
     /* no filename - read stdout */
 
-    php_header(TSRMLS_C);
+    /* if there is no output buffer active, set the header */
+    if (OG(ob_nesting_level)<=0)
+    {
+        php_header(TSRMLS_C);
+    }
+   
 
     if( MS_DRIVER_GD(php_image->image->format) || MS_DRIVER_AGG(php_image->image->format))
     {
