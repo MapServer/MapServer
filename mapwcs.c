@@ -697,10 +697,10 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
                     " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE, 
                     MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
 
-  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
-  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);
+  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "description", OWS_NOERR, "    <description>%s</description>\n", NULL);
+  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "name", OWS_NOERR, "    <name>%s</name>\n", layer->name);
 
-  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
+  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "label", OWS_WARN, "    <label>%s</label>\n", NULL);
 
   /* TODO: add elevation ranges to lonLatEnvelope (optional) */
   msIO_printf("    <lonLatEnvelope srsName=\"urn:ogc:def:crs:OGC:1.3:CRS84\">\n");
