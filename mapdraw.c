@@ -1695,7 +1695,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
               if(label.angle != 0)
                 label.angle -= map->gt.rotation_angle;
               
-              if(label.anglemode == MS_AUTO || label.anglemode == MS_AUTO2) label.angle = *angles[i];
+              if(label.anglemode != MS_NONE) label.angle = *angles[i];
               
               if(layer->labelcache) {
                 if(msAddLabel(map, layer->index, c, shape, annopoints[i], NULL, shape->text, *lengths[i], &label) != MS_SUCCESS) return(MS_FAILURE);
@@ -1734,7 +1734,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
                 label.angle -= map->gt.rotation_angle;
               
               /* Angle derived from line overrides even the rotation value. */
-              if(label.anglemode == MS_AUTO || label.anglemode == MS_AUTO2) label.angle = *angles[i];
+              if(label.anglemode != MS_NONE) label.angle = *angles[i];
               
               if(layer->labelcache) {
                 if(msAddLabel(map, layer->index, c, shape, annopoints[i], NULL, shape->text, *lengths[i], &label) != MS_SUCCESS) return(MS_FAILURE);
@@ -2057,7 +2057,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             if(label.angle != 0)
               label.angle -= map->gt.rotation_angle;
             
-            if(label.anglemode == MS_AUTO || label.anglemode == MS_AUTO2) label.angle = *angles[i];
+            if(label.anglemode != MS_NONE) label.angle = *angles[i];
             
             if(layer->labelcache) {
               if(msAddLabel(map, layer->index, c, shape, annopoints[i], NULL, shape->text, *lengths[i], &label) != MS_SUCCESS) return(MS_FAILURE);
@@ -2092,7 +2092,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           if(label.angle != 0)
             label.angle -= map->gt.rotation_angle;
           
-          if(label.anglemode == MS_AUTO || label.anglemode == MS_AUTO2) label.angle = *angles[i];
+          if(label.anglemode != MS_NONE) label.angle = *angles[i];
           
           if(layer->labelcache) {
             if(msAddLabel(map, layer->index, c, shape, annopoints[i], NULL, shape->text, *lengths[i], &label) != MS_SUCCESS) return(MS_FAILURE);
