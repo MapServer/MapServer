@@ -32,7 +32,7 @@
 #include "mapresample.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$")
+MS_CVSID("$Id$");
 
 int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msRASTERLayerGetItems(layerObj *layer);
@@ -295,7 +295,7 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
         if( rlinfo->qc_count != NULL )
             rlinfo->qc_count = realloc(rlinfo->qc_count,
                                        sizeof(int) * rlinfo->query_alloc_max);
-        if( rlinfo->qc_count != NULL )
+        if( rlinfo->qc_tileindex != NULL )
             rlinfo->qc_tileindex = realloc(rlinfo->qc_tileindex,
                                        sizeof(int) * rlinfo->query_alloc_max);
     }
@@ -689,10 +689,12 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     char *filename=NULL;
 
     int t;
-    int tileitemindex=-1;
-    shapefileObj tilefile;
+    layerObj *tlp=NULL; /* pointer to the tile layer either real or temporary */
+    int tileitemindex=-1, tilelayerindex=-1;
+    shapeObj tshp;
     char tilename[MS_PATH_LENGTH];
-    int numtiles=1; /* always at least one tile */
+    int  done;
+
     char szPath[MS_MAXPATHLEN];
     rectObj searchrect;
     rasterLayerInfo *rlinfo = NULL;
@@ -744,37 +746,106 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
         return MS_SUCCESS;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open tile index if we have one.                                 */
-/* -------------------------------------------------------------------- */
-    if(layer->tileindex) { /* we have in index file */
-        if(msShapefileOpen(&tilefile, "rb", 
-                         msBuildPath3(szPath, map->mappath, map->shapepath, 
-                                      layer->tileindex), MS_TRUE) == -1) 
-            if(msShapefileOpen(&tilefile, "rb", msBuildPath(szPath, map->mappath, layer->tileindex), MS_TRUE) == -1) 
-                return(MS_FAILURE);    
+/* ==================================================================== */
+/*      Handle setting up tileindex layer.                              */
+/* ==================================================================== */
+    if(layer->tileindex) { /* we have an index file */
+        int i;
 
-        tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem);
-        if(tileitemindex == -1) 
-            return(MS_FAILURE);
+        msInitShape(&tshp);
+    
+        tilelayerindex = msGetLayerIndex(layer->map, layer->tileindex);
+        if(tilelayerindex == -1) { /* the tileindex references a file, not a layer */
+            
+            /* so we create a temporary layer */
+            tlp = (layerObj *) malloc(sizeof(layerObj));
+            if(!tlp) {
+                msSetError(MS_MEMERR, "Error allocating temporary layerObj.", "msDrawRasterLayerLow()");
+                return(MS_FAILURE);
+            }
+            initLayer(tlp, map);
+            
+            /* set a few parameters for a very basic shapefile-based layer */
+            tlp->name = strdup("TILE");
+            tlp->type = MS_LAYER_TILEINDEX;
+            tlp->data = strdup(layer->tileindex);
+            if (layer->filteritem)
+                tlp->filteritem = strdup(layer->filteritem);
+            if (layer->filter.string)
+            {
+                char *pszTmp;
+                if (layer->filter.type == MS_EXPRESSION)
+                {
+                    pszTmp = 
+                        (char *)malloc(sizeof(char)*(strlen(layer->filter.string)+3));
+                    sprintf(pszTmp,"(%s)",layer->filter.string);
+                    msLoadExpressionString(&tlp->filter, pszTmp);
+                    free(pszTmp);
+                }
+                else if (layer->filter.type == MS_REGEX || 
+                         layer->filter.type == MS_IREGEX)
+                {
+                    pszTmp = 
+                        (char *)malloc(sizeof(char)*(strlen(layer->filter.string)+3));
+                    sprintf(pszTmp,"/%s/",layer->filter.string);
+                    msLoadExpressionString(&tlp->filter, pszTmp);
+                    free(pszTmp);
+                }
+                else
+                    msLoadExpressionString(&tlp->filter, layer->filter.string);
+                
+                tlp->filter.type = layer->filter.type;
+            }
 
+        } else {
+            if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+                return MS_FAILURE;
+            tlp = (GET_LAYER(layer->map, tilelayerindex));
+        }
+        status = msLayerOpen(tlp);
+        if(status != MS_SUCCESS)
+        {
+            goto cleanup;
+        }
+
+        status = msLayerWhichItems(tlp, MS_FALSE, layer->tileitem);
+        if(status != MS_SUCCESS)
+        {
+            goto cleanup;
+        }
+ 
+        /* get the tileitem index */
+        for(i=0; i<tlp->numitems; i++) {
+            if(strcasecmp(tlp->items[i], layer->tileitem) == 0) {
+                tileitemindex = i;
+                break;
+            }
+        }
+        if(i == tlp->numitems) { /* didn't find it */
+            msSetError(MS_MEMERR, 
+                       "Could not find attribute %s in tileindex.", 
+                       "msDrawRasterLayerLow()", 
+                       layer->tileitem);
+            status = MS_FAILURE;
+            goto cleanup;
+        }
+ 
         searchrect = queryRect;
-
 #ifdef USE_PROJ
-        if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-            msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
+        /* if necessary, project the searchrect to source coords */
+        if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) msProjectRect(&map->projection, &layer->projection, &searchrect);
 #endif
-        status = msShapefileWhichShapes(&tilefile, searchrect, layer->debug);
-        if(status != MS_SUCCESS) 
-            numtiles = 0; /* could be MS_DONE or MS_FAILURE */
-        else
-            numtiles = tilefile.numshapes;
+        status = msLayerWhichShapes(tlp, searchrect);
+        if (status != MS_SUCCESS) {
+            goto cleanup;
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Iterate over all tiles (just one in untiled case).              */
 /* -------------------------------------------------------------------- */
-    for(t=0; t<numtiles && status == MS_SUCCESS; t++) { 
+    done = MS_FALSE;
+    while( done == MS_FALSE && status == MS_SUCCESS ) { 
 
         GDALDatasetH  hDS;
         char *decrypted_path = NULL;
@@ -785,15 +856,22 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 /*      Get filename.                                                   */
 /* -------------------------------------------------------------------- */
         if(layer->tileindex) {
-            if(!msGetBit(tilefile.status,t)) continue; /* on to next tile */
-            if(layer->data == NULL) /* assume whole filename is in attribute field */
-                filename = (char*)msDBFReadStringAttribute(tilefile.hDBF, t, tileitemindex);
-            else {  
-                sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tilefile.hDBF, t, tileitemindex) , layer->data);
-                filename = tilename;
-            }
+            status = msLayerNextShape(tlp, &tshp);
+            if( status == MS_FAILURE)
+                break;
+            
+            if(status == MS_DONE) break; /* no more tiles/images */
+            
+            if(layer->data == NULL || strlen(layer->data) == 0 ) /* assume whole filename is in attribute field */
+                strcpy( tilename, tshp.values[tileitemindex] );
+            else
+                sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
+            filename = tilename;
+            
+            msFreeShape(&tshp); /* done with the shape */
         } else {
             filename = layer->data;
+            done = MS_TRUE; /* only one image so we're done after this */
         }
 
         if(strlen(filename) == 0) continue;
@@ -904,8 +982,17 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 
     } /* next tile */
 
-    if(layer->tileindex) /* tiling clean-up */
-        msShapefileClose(&tilefile);    
+/* -------------------------------------------------------------------- */
+/*      Cleanup tileindex if it is open.                                */
+/* -------------------------------------------------------------------- */
+  cleanup:
+    if(layer->tileindex) { /* tiling clean-up */
+        msLayerClose(tlp);
+        if(tilelayerindex == -1) {
+            freeLayer(tlp);
+            free(tlp);
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      On failure, or empty result set, cleanup the rlinfo since we    */
