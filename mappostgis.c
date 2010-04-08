@@ -1336,7 +1336,9 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid) {
     char *strItems = 0;
     char *strWhere = 0;
     char *strSQL = 0;
-    static char *strSQLTemplate = "select %s from %s where %s";
+    static char *strSQLTemplate0 = "select %s from %s where %s";
+    static char *strSQLTemplate1 = "select %s from %s%s";
+    char *strSQLTemplate = 0;
 
     if (layer->debug) {
         msDebug("msPostGISBuildSQL called.\n");
@@ -1371,6 +1373,8 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid) {
         msSetError(MS_MISCERR, "Failed to build SQL 'where'.", "msPostGISBuildSQL()");
         return 0;
     }
+
+    strSQLTemplate = strlen(strWhere) ? strSQLTemplate0 : strSQLTemplate1;
 
     strSQL = malloc(strlen(strSQLTemplate) + strlen(strFrom) + strlen(strItems) + strlen(strWhere));
     sprintf(strSQL, strSQLTemplate, strItems, strFrom, strWhere);

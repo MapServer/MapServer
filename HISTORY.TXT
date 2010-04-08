@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Generate good SQL when using !BOX! token and no filter. (#3422)
+
 - Implement non-shapefile tileindex support for raster query (#2796).
 
 - Improve support for [red/green/blue] classification expressions for
