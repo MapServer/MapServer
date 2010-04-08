@@ -1,4 +1,3 @@
-
 /******************************************************************************
  * $Id$
  *
@@ -298,6 +297,17 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     } 
 #endif 
 
+#if defined(USE_KML) 
+    if( strcasecmp(driver,"KML") == 0 ) 
+    { 
+        format = msAllocOutputFormat( map, "kml", driver ); 
+        format->mimetype = strdup("application/vnd.google-earth.kml+xml"); 
+        format->imagemode = MS_IMAGEMODE_RGB; 
+        format->extension = strdup("kml"); 
+        format->renderer = MS_RENDER_WITH_KML; 
+    } 
+#endif
+
 #ifdef USE_MING_FLASH
     if( strcasecmp(driver,"swf") == 0 )
     {
@@ -458,6 +468,11 @@ void msApplyDefaultOutputFormats( mapObj *map )
         msCreateDefaultOutputFormat( map, "CAIRO/PDF" );
     if( msSelectOutputFormat( map, "cairosvg" ) == NULL )
         msCreateDefaultOutputFormat( map, "CAIRO/SVG" );
+#endif
+
+#if defined(USE_KML)
+    if( msSelectOutputFormat( map, "kml" ) == NULL )
+        msCreateDefaultOutputFormat( map, "kml" );
 #endif
 
     if( map->imagetype != NULL )
@@ -1012,9 +1027,10 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
 
             if( j == mime_count && map->outputformatlist[i]->driver &&
                (strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
-                 strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0 ||
-                 strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0 ||
-                 strcasecmp(map->outputformatlist[i]->driver, "svg")==0)) 
+                strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0 ||
+                strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0 ||
+                strcasecmp(map->outputformatlist[i]->driver, "svg")==0 ||
+                strcasecmp(map->outputformatlist[i]->driver, "kml")==0))
               mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
         }
     }
@@ -1139,6 +1155,8 @@ int msInitializeRendererVTable(outputFormatObj *format) {
             return msPopulateRendererVTableCairoSVG(format->vtable);
         case MS_RENDER_WITH_OGL:
             return msPopulateRendererVTableOGL(format->vtable);
+        case MS_RENDER_WITH_KML:
+            return msPopulateRendererVTableKML(format->vtable);    
         default:
             msSetError(MS_MISCERR, "unsupported RendererVtable renderer %d",
                     "msInitializeRendererVTable()",format->renderer);

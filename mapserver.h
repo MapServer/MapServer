@@ -349,6 +349,7 @@ extern "C" {
 #define MS_RENDER_WITH_OGL      12
 #define MS_RENDER_WITH_AGG2 13
 #define MS_RENDER_WITH_GD2 14
+#define MS_RENDER_WITH_KML 15
 
 #define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
@@ -1906,6 +1907,8 @@ MS_DLL_EXPORT void msRectToPolygon(rectObj rect, shapeObj *poly);
 MS_DLL_EXPORT void msClipPolylineRect(shapeObj *shape, rectObj rect);
 MS_DLL_EXPORT void msClipPolygonRect(shapeObj *shape, rectObj rect);
 MS_DLL_EXPORT void msTransformShape(shapeObj *shape, rectObj extent, double cellsize, imageObj *image);
+MS_DLL_EXPORT void msTransformPoint(pointObj *point, rectObj *extent, double cellsize, imageObj *image);
+
 MS_DLL_EXPORT void msOffsetPointRelativeTo(pointObj *point, layerObj *layer);
 MS_DLL_EXPORT void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer);
 MS_DLL_EXPORT void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize);
@@ -2595,6 +2598,10 @@ typedef struct {
     /* rotation to apply on the symbol (and the tile?)
      * in radians */
     double rotation;
+
+   /* style object, necessary for vector type renderes to be able
+   to render symbols through other renders such as cairo/agg*/
+      styleObj *style;
 } symbolStyleObj;
 
 struct tilecache {
@@ -2641,6 +2648,7 @@ MS_DLL_EXPORT int msPopulateRendererVTableCairoPDF( rendererVTableObj *renderer 
 MS_DLL_EXPORT int msPopulateRendererVTableOGL( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableAGG( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableGD( rendererVTableObj *renderer );
+MS_DLL_EXPORT  int msPopulateRendererVTableKML( rendererVTableObj *renderer );
 
 //allocate 50k for starters
 #define MS_DEFAULT_BUFFER_ALLOC 50000
@@ -2718,9 +2726,12 @@ struct rendererVTable {
     int (*getTruetypeTextBBox)(imageObj *img,char *font, double size, char *string,
     		rectObj *rect, double **advances);
     
-	void (*startNewLayer)(imageObj *img, double opacity);
-	void (*closeNewLayer)(imageObj *img, double opacity);
-	
+  void (*startNewLayer)(imageObj *img, layerObj *layer, double opacity);
+  void (*closeNewLayer)(imageObj *img, layerObj *layer, double opacity);
+
+  void (*startShape)(imageObj *img, shapeObj *shape);
+  void (*endShape)(imageObj *img, shapeObj *shape);
+ 	
     void (*transformShape)(shapeObj *shape, rectObj extend, double cellsize);
     void (*freeImage)(imageObj *image);
     void (*freeTile)(imageObj *tile);

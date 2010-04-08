@@ -756,10 +756,9 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 							"msDrawLayer()");
 					return (MS_FAILURE);
 				}
-			} else {
-				image_draw->format->vtable->startNewLayer(image_draw,layer->opacity);
-			}
+			} 
 		} 
+                image_draw->format->vtable->startNewLayer(image_draw,layer, layer->opacity);
   }
 #ifdef USE_AGG
   else if(MS_RENDERER_AGG(image_draw->format)) {
@@ -826,7 +825,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     /* deref and possibly free temporary transparent output format.  */
     msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
-  else if( MS_RENDERER_PLUGIN(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
+  else if( MS_RENDERER_PLUGIN(image_draw->format)) {
+    if (layer->opacity > 0 && layer->opacity < 100 ) {
 	  rendererVTableObj *renderer = image_draw->format->vtable;
       if (!renderer->supports_transparent_layers) {
           rasterBufferObj rb;
@@ -836,9 +836,9 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 	
 		  /* deref and possibly free temporary transparent output format.  */
 		  msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-	  } else {
-		  renderer->closeNewLayer(image_draw,layer->opacity*0.01);
 	  }
+    }
+    image_draw->format->vtable->closeNewLayer(image_draw,layer, layer->opacity*0.01);
   }
 #ifdef USE_AGG
   else if( MS_RENDERER_AGG(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
@@ -1890,8 +1890,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 	if(layer->transform == MS_TRUE) {
 	  if(!msPointInRect(point, &map->extent)) continue; /* next point */
-	  point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
-	  point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
+          msTransformPoint(point, &map->extent, map->cellsize, image);
 	} else
           msOffsetPointRelativeTo(point, layer);
 
@@ -2759,7 +2758,11 @@ void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
         if( MS_RENDERER_PDF(map->outputformat) )
             msDrawStartShapePDF(map, layer, image, shape);
 #endif
-               
+        if(MS_RENDERER_PLUGIN(image->format))
+        {
+          if (image->format->vtable->startShape)
+            image->format->vtable->startShape(image, shape);
+        }
     }
 }
 
@@ -2772,6 +2775,11 @@ void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
 void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image, 
                     shapeObj *shape)
 {
+    if(MS_RENDERER_PLUGIN(image->format))
+    {
+      if (image->format->vtable->endShape)
+        image->format->vtable->endShape(image, shape);
+    }
 }
 /**
  * take the value from the shape and use it to change the 

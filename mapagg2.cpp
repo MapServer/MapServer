@@ -482,10 +482,10 @@ int agg2GetTruetypeTextBBox(imageObj *img, char *font, double size, char *string
    return MS_SUCCESS;
 }
 
-void agg2StartNewLayer(imageObj *img, double opacity) {
+void agg2StartNewLayer(imageObj *img, layerObj *layer, double opacity) {
 }
 
-void agg2CloseNewLayer(imageObj *img, double opacity) {
+void agg2CloseNewLayer(imageObj *img, layerObj *layer, double opacity) {
 }
 
 void agg2TransformShape(shapeObj *shape, rectObj extend, double cellsize) {

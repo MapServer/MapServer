@@ -1508,6 +1508,23 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 
 
 /**
+ * Generic function to transorm a point.
+ * 
+ */
+void  msTransformPoint(pointObj *point, rectObj *extent, double cellsize, 
+                       imageObj *image)   
+{
+    /*We should probabaly have a function defined at all the renders*/
+    if (image != NULL && MS_RENDERER_PLUGIN(image->format) && 
+        image->format->renderer == MS_RENDER_WITH_KML)
+      return;
+
+    point->x = MS_MAP2IMAGE_X(point->x, extent->minx, cellsize);
+    point->y = MS_MAP2IMAGE_Y(point->y, extent->maxy, cellsize);
+}
+
+
+/**
  * Generic function to transorm the shape coordinates to output coordinates
  */
 void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize, 

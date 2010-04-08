@@ -471,6 +471,10 @@ JPEG_INC = -I$(JPEG_DIR)
 #FRIBIDI_DIR=$(MS_BASE)\..\fribidi-0.19.1
 
 
+# ----------------------------------------------------------------------
+# Enable KML support
+#----------------------------------------------------------------------
+#KML=-DUSE_KML
 
 ########################################################################
 # Section IV: Mapserver OGC Configuration
@@ -875,7 +879,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
           $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) \
-          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(AGG_SVG_SYMBOLS)
+          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(AGG_SVG_SYMBOLS) $(KML)
 
 !IFDEF WIN64
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT

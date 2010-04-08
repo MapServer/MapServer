@@ -47,6 +47,10 @@
 
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* stdio analogs */
 int MS_DLL_EXPORT msIO_printf( const char *format, ... );
 int MS_DLL_EXPORT msIO_fprintf( FILE *stream, const char *format, ... );
@@ -116,5 +120,9 @@ char MS_DLL_EXPORT *msIO_stripStdoutBufferContentType(void);
 
 int msIO_needBinaryStdout( void );
 int msIO_needBinaryStdin( void );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* nef MAPIO_H */

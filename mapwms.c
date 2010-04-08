@@ -699,7 +699,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                strncasecmp(format->driver, "AGG/", 4) != 0 &&
                strncasecmp(format->driver, "AGG2/", 5) != 0 &&
                strncasecmp(format->driver, "CAIRO/", 6) != 0 &&
-               strncasecmp(format->driver, "SVG", 3) != 0))
+               strncasecmp(format->driver, "SVG", 3) != 0 &&
+               strncasecmp(format->driver, "KML", 3) != 0))
+               
           {
               msSetError(MS_IMGERR,
                          "Unsupported output format (%s).",

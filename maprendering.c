@@ -675,7 +675,10 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
     	    /* store a reference to the renderer to be used for freeing */
             symbol->renderer = renderer;
             
+            initSymbolStyle(&s);
             computeSymbolStyle(&s,style,symbol,scalefactor);
+            s.style = style;
+
             if (!MS_VALID_COLOR(s.color) && !MS_VALID_COLOR(s.outlinecolor) && symbol->type != MS_SYMBOL_PIXMAP)
 				return; // nothing to do if no color, except for pixmap symbols
             
