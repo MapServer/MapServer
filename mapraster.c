@@ -153,7 +153,12 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue,
         switch(layer->class[i]->expression.type) {
           case(MS_STRING):
             sprintf(tmpstr2, "%18g", fValue );
-            if(strcmp(layer->class[i]->expression.string, tmpstr2) == 0) return(i); /* matched */
+            /* trim junk white space */
+            tmpstr1= tmpstr2;
+            while( *tmpstr1 == ' ' )
+                tmpstr1++;
+
+            if(strcmp(layer->class[i]->expression.string, tmpstr1) == 0) return(i); /* matched */
             break;
 
           case(MS_REGEX):
