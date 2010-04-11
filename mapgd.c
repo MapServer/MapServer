@@ -34,6 +34,7 @@
 #include "mapserver.h"
 #include "mapthread.h"
 #include <time.h>
+#include <assert.h>
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -44,6 +45,34 @@ MS_CVSID("$Id$")
 
 static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
 static unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
+
+/*
+ * Create a stratafyied (reduced number of colors) image from a 24bit image.
+ * This is mostly useful when copying into an 8bit image to try and avoid
+ * unnecessary color table exhaustion.
+ */
+
+static gdImagePtr msColorStratefyImageGD( gdImagePtr src_image )
+
+{
+    gdImagePtr dst_image = gdImageCreateTrueColor(src_image->sx,src_image->sy);
+    int  ix,iy;
+
+    assert( src_image->trueColor );
+
+    gdImageCopy( dst_image, src_image, 
+                 0, 0, 0, 0, src_image->sx, src_image->sy );
+
+    for( iy = 0; iy < dst_image->sy; iy++ )
+    {
+        for( ix = 0; ix < dst_image->sx; ix++ )
+        {
+            dst_image->tpixels[iy][ix] &= 0xfff0f0f0;
+        }
+    }
+    
+    return dst_image;
+}
 
 /*
  * This function is simlar to msImageTruetypePolyline. It renders pixmap symbols
@@ -1476,6 +1505,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *p, s
   int j, k;
   gdPoint oldpnt,newpnt;
   gdPoint mPoints[MS_MAXVECTORPOINTS];
+  gdImagePtr strat_img=NULL;
   char *error=NULL;
 
   int fc, bc, oc;
@@ -1569,15 +1599,23 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *p, s
       symbol = msRotateSymbol(symbol, style->angle);
     }
 
+    if( !img->img.gd->trueColor && symbol->img->trueColor )
+        strat_img = msColorStratefyImageGD( symbol->img );
+    else
+        strat_img = symbol->img;
+
     if(d == 1) { /* don't scale */
       offset_x = MS_NINT(p->x - .5*symbol->img->sx + ox);
       offset_y = MS_NINT(p->y - .5*symbol->img->sy + oy);
-      gdImageCopy(img->img.gd, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx, symbol->img->sy);
+      gdImageCopy(img->img.gd, strat_img, offset_x, offset_y, 0, 0, symbol->img->sx, symbol->img->sy);
     } else {
       offset_x = MS_NINT(p->x - .5*symbol->img->sx*d + ox);
       offset_y = MS_NINT(p->y - .5*symbol->img->sy*d + oy);
-      gdImageCopyResampled(img->img.gd, symbol->img, offset_x, offset_y, 0, 0, (int)(symbol->img->sx*d), (int)(symbol->img->sy*d), symbol->img->sx, symbol->img->sy);
+      gdImageCopyResampled(img->img.gd, strat_img, offset_x, offset_y, 0, 0, (int)(symbol->img->sx*d), (int)(symbol->img->sy*d), symbol->img->sx, symbol->img->sy);
     }
+
+    if( strat_img != symbol->img )
+        gdImageDestroy( strat_img );
 
     if(bRotated) {
       msFreeSymbol(symbol); /* clean up */
