@@ -501,7 +501,11 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   }
 
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
-    msEmbedLegend(map, image);
+  {
+      msEmbedLegend(map, image);
+      msFreeImage( image );
+      return NULL;
+  }
 
   if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 

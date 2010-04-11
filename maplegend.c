@@ -582,6 +582,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   
   /* render the legend. */
   image = msDrawLegend(map, MS_FALSE);
+  if( image == NULL ) return -1;
 
   /* steal the gdImage and free the rest of the imageObj */
   map->symbolset.symbol[s]->img = image->img.gd; 
