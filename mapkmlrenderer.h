@@ -59,6 +59,7 @@ protected:
 	xmlNodePtr	DescriptionNode;
 
 	shapeObj	*CurrentShape;
+        shapeObj        *CurrentShapeDrawn;
 	char		**Items;
 	int			NumItems;
 	int			DumpAttributes;
@@ -151,6 +152,8 @@ protected:
 	char* lookupPlacemarkStyle();
 	void flushPlacemark();
 	xmlNodePtr getGeomParentNode(char *geomName);
+        char* KmlRenderer::getLayerName(layerObj *layer);
+        void KmlRenderer::processLayer(layerObj *layer);
 
 public:
 
