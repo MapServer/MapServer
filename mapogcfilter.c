@@ -975,6 +975,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     int bConcatWhere = 0;
     int bHasAWhere =0;
     char *pszFilterItem=NULL;
+    char *pszTmp = NULL;
 
     lp = (GET_LAYER(map, iLayerIndex));
 
@@ -1044,7 +1045,17 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     bHasAWhere = 0;
     if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
         lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN)
-      szExpression = FLTGetSQLExpression(psNode, lp);
+    {
+        szExpression = FLTGetSQLExpression(psNode, lp);
+        if (szExpression)
+        {
+            pszTmp = strdup("(");
+            pszTmp = msStringConcatenate(pszTmp, szExpression);
+            pszTmp = msStringConcatenate(pszTmp, ")");
+            msFree(szExpression);
+            szExpression = pszTmp;
+        }
+    }
     /* concatenates the WHERE clause for OGR layers. This only applies if
        the expression was empty or not of an expression string. If there
        is an sql type expression, it is assumed to have the WHERE clause. 
