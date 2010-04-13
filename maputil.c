@@ -1468,7 +1468,36 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
             image->imagepath = strdup(imagepath);
         if (imageurl)
             image->imageurl = strdup(imageurl);
-            
+
+        /* initialize to requested nullvalue if there is one */
+        if( msGetOutputFormatOption(image->format,"NULLVALUE",NULL) != NULL )
+        {
+            int i = image->width * image->height * format->bands;
+            const char *nullvalue = msGetOutputFormatOption(image->format,
+                                                            "NULLVALUE",NULL);
+
+            if( atof(nullvalue) == 0.0 )
+                /* nothing to do */;
+            else if( format->imagemode == MS_IMAGEMODE_INT16 )
+            {
+                short nv = atoi(nullvalue);
+                for( ; i > 0; )
+                    image->img.raw_16bit[--i] = nv;
+            }
+            else if( format->imagemode == MS_IMAGEMODE_FLOAT32 )
+            {
+                float nv = atoi(nullvalue);
+                for( ; i > 0; )
+                    image->img.raw_float[--i] = nv;
+            }
+            else if( format->imagemode == MS_IMAGEMODE_BYTE )
+            {
+                unsigned char nv = (unsigned char) atoi(nullvalue);
+
+                memset( image->img.raw_byte, nv, i );
+            }
+        }
+
         return image;
     }
     else if( MS_RENDERER_IMAGEMAP(format) )

@@ -764,14 +764,21 @@ msWCSDescribeCoverage_CoverageDescription11(
             xmlNewChild(
                 xmlNewChild( psField, NULL, BAD_CAST "Definition", NULL ),
                 psOwsNs, BAD_CAST "AnyValue", NULL );
- 
+
+        /* NullValue */
+        value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", 
+                                        "rangeset_nullvalue", NULL);
+        if( value )
+            xmlNewChild( psField, NULL, BAD_CAST "NullValue", 
+                         BAD_CAST value );
+
+        /* InterpolationMethods */
         psInterpMethods = 
             xmlNewChild( psField, NULL, BAD_CAST "InterpolationMethods", NULL );
 
         xmlNewChild( psInterpMethods, NULL, BAD_CAST "InterpolationMethod", BAD_CAST "bilinear" );
         xmlNewChild( psInterpMethods, NULL, 
                      BAD_CAST "Default", BAD_CAST "nearest neighbor" );
-
 
 /* -------------------------------------------------------------------- */
 /*      Bands axis.                                                     */

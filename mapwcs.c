@@ -940,8 +940,6 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   
   msIO_printf("            </values>\n");
   
-  /* TODO: add NullValues (optional) */
-  
   msIO_printf("          </AxisDescription>\n");
   msIO_printf("        </axisDescription>\n");
   
@@ -1077,6 +1075,12 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
          msWCSDescribeCoverage_AxisDescription(layer, tokens[i]);
        msFreeCharArray(tokens, numtokens);
      }
+  }
+
+  if((value = msOWSLookupMetadata(&(layer->metadata), "COM", "rangeset_nullvalue")) != NULL) {
+     msIO_printf("        <nullValues>\n");
+     msIO_printf("          <singleValue>%s</singleValue>\n", value);
+     msIO_printf("        </nullValues>\n");
   }
   
   msIO_printf("      </RangeSet>\n");
@@ -1722,7 +1726,12 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     for(i = 1; i < cm.bandcount; i++)
       sprintf(bandlist+strlen(bandlist),",%d", i+1);
   }
- 
+
+  /* apply nullvalue to the output format object if we have it */
+  if((value = msOWSLookupMetadata(&(lp->metadata), "COM", "rangeset_nullvalue")) != NULL) {
+      msSetOutputFormatOption( map->outputformat, "NULLVALUE", value );
+  }
+  
   msLayerSetProcessingKey(lp, "BANDS", bandlist);
   sprintf(numbands, "%d", msCountChars(bandlist, ',')+1);
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);

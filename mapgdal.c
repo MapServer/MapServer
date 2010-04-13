@@ -398,6 +398,22 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Possibly assign a nodata value.                                 */
+/* -------------------------------------------------------------------- */
+    if( msGetOutputFormatOption(format,"NULLVALUE",NULL) != NULL )
+    {
+        int iBand;
+        const char *nullvalue = msGetOutputFormatOption(format,
+                                                        "NULLVALUE",NULL);
+
+        for( iBand = 0; iBand < nBands; iBand++ )
+        {
+            GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, iBand+1 );
+            GDALSetRasterNoDataValue( hBand, atof(nullvalue) );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*  Try to save resolution in the output file.                          */
 /* -------------------------------------------------------------------- */
     if( image->resolution > 0 )

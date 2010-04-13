@@ -14,6 +14,12 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Implement support for raw imagemodes to use NULLVALUE formatoption to set 
+  the background value of result images, and to try and mark nodata (#1709)
+
+- Implement support for wcs_rangeset_nullvalue to set NULLVALUE and
+  return null value definition in describe coverage result (#655)
+
 - Try to avoid exhausting the color table when rendering 24bit key
   images into 8bit results (#1594)
 
