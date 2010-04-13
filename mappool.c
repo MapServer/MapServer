@@ -186,14 +186,22 @@ void msConnPoolRegister( layerObj *layer,
 /* -------------------------------------------------------------------- */
     if( layer->connection == NULL )
     {
-        msDebug( "%s: Missing CONNECTION on layer %s.\n",
-                 "msConnPoolRegister()", 
-                 layer->name );
-
-        msSetError( MS_MISCERR, 
-                    "Missing CONNECTION on layer %s.",
-                    "msConnPoolRegister()", 
-                    layer->name );
+        if( layer->tileindex != NULL
+            && layer->connectiontype == MS_OGR )
+        {
+            /* this is ok, no need to make a fuss */
+        }
+        else
+        {
+            msDebug( "%s: Missing CONNECTION on layer %s.\n",
+                     "msConnPoolRegister()", 
+                     layer->name );
+            
+            msSetError( MS_MISCERR, 
+                        "Missing CONNECTION on layer %s.",
+                        "msConnPoolRegister()", 
+                        layer->name );
+        }
         return;
     }
 

@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Avoid errors and debug output for CONNECTION-less OGR layers in mappool.c
+  if they have a tileindex.
+
 - Implement support for raw imagemodes to use NULLVALUE formatoption to set 
   the background value of result images, and to try and mark nodata (#1709)
 
