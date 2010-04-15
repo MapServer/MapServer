@@ -373,6 +373,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
       }
             
       pInfo->ilabelstate = 0;
+      pInfo->dwhichlongitude      += pInfo->dincrementlongitude;
       break;
 
     default:
@@ -456,6 +457,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
       }
             
       pInfo->ilabelstate    = 0;
+      pInfo->dwhichlatitude += pInfo->dincrementlatitude;
       break;
 
     default:
@@ -467,20 +469,16 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
   /*
    * Increment and move to next arc
    */
-  pInfo->dwhichlatitude += pInfo->dincrementlatitude;
-
-  if(pInfo->dwhichlatitude > pInfo->dendlatitude) {
-    pInfo->dwhichlatitude   = pInfo->dstartlatitude;
-    pInfo->dwhichlongitude      += pInfo->dincrementlongitude;
-
-    if( pInfo->dwhichlongitude > pInfo->dendlongitude && pInfo->bvertical == 0 )
-      return MS_DONE;
-    else if( pInfo->dwhichlongitude > pInfo->dendlongitude ) {
+ 
+  if( pInfo->bvertical && pInfo->dwhichlongitude > pInfo->dendlongitude )   {
       pInfo->dwhichlatitude   = pInfo->dstartlatitude;
-      pInfo->dwhichlongitude   = pInfo->dstartlongitude;
       pInfo->bvertical   = 0;
-    }
   }
+
+  if (pInfo->dwhichlatitude >  pInfo->dendlatitude)
+    return MS_DONE;
+
+   
 
   return MS_SUCCESS;
 }
