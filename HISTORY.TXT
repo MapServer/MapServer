@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Grid layer: remove drawing of unnecessary gird lines (#3433) 
+
 - Avoid errors and debug output for CONNECTION-less OGR layers in mappool.c
   if they have a tileindex.
 
