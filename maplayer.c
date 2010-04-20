@@ -352,10 +352,10 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
   }
 }
 
-/*                                                                                                                                                                                                                                        
-** This function builds a list of items necessary to draw or query a particular layer by                                                                                                                                                  
-** examining the contents of the various xxxxitem parameters and expressions. That list is                                                                                                                                                
-** then used to set the iteminfo variable.                                                                                                                                                                                                
+/*
+** This function builds a list of items necessary to draw or query a particular layer by
+** examining the contents of the various xxxxitem parameters and expressions. That list is
+** then used to set the iteminfo variable.
 */
 int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 {
@@ -367,7 +367,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     if (rv != MS_SUCCESS) return rv;
   }
 
-  /* Cleanup any previous item selection */
+  /* cleanup any previous item selection */
   msLayerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
@@ -375,9 +375,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     layer->numitems = 0;
   }
 
-  /*                                                                                                                                                                                                                                      
-  ** layer level counts                                                                                                                                                                                                                   
-  */
+  /* layer level counts */
   if(layer->classitem) nt++;
   if(layer->filteritem) nt++;
 
@@ -402,9 +400,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 
   if(layer->labelitem) nt++;
 
-  /*                                                                                                                                                                                                                                        
-  ** class level counts                                                                                                                                                                                                                     
-  */
+  /* class level counts */
   for(i=0; i<layer->numclasses; i++) {
 
     for(j=0; j<layer->class[i]->numstyles; j++) {
@@ -453,7 +449,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     }
   }
 
-  /* Always retrieve all items in some cases */
+  /* always retrieve all items in some cases */
   if(layer->connectiontype == MS_INLINE || get_all == MS_TRUE) {
     msLayerGetItems(layer);
     if(nt > 0) /* need to realloc the array to accept the possible new items*/

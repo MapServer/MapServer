@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Version 5.6.4 (????-??-??):
 ---------------------------
+
+- Reverted msLayerWhichItems() to 5.4-like behavior although still supporting 
+  retrieving all items (#3356,#3342)
  
 - Grid layer: remove drawing of unnecessary gird lines (#3433) 
 
