@@ -433,12 +433,19 @@ int loadColorWithAlpha(colorObj *color) {
 }
 #endif
 
+/*
+** Helper functions for writing mapfiles.
+*/
+static void writeNumber(double *d, FILE *stream, char *name, char *tab) {
+  fprintf(stream, "%s%s %g\n", tab, name, *d);
+}
+
 static void writeColor(colorObj *color, FILE *stream, char *name, char *tab) {
   if(MS_VALID_COLOR(*color))
     fprintf(stream, "%s%s %d %d %d\n", tab, name, color->red, color->green, color->blue);
 }
 
-static void writeColorRange(colorObj *mincolor,colorObj *maxcolor, FILE *stream, char *name, char *tab) {
+static void writeColorRange(colorObj *mincolor, colorObj *maxcolor, FILE *stream, char *name, char *tab) {
   if(MS_VALID_COLOR(*mincolor) && MS_VALID_COLOR(*maxcolor))
     fprintf(stream, "%s%s %d %d %d  %d %d %d\n", tab, name, mincolor->red, mincolor->green, mincolor->blue,
 	    maxcolor->red, maxcolor->green, maxcolor->blue);
