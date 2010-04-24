@@ -566,6 +566,19 @@ static void writeJoin(joinObj *join, FILE *stream)
   if(join->name) fprintf(stream, "        NAME \"%s\"\n", join->name);
   if(join->table) fprintf(stream, "        TABLE \"%s\"\n", join->table);
   if(join->to) fprintf(stream, "        TO \"%s\"\n", join->to);
+  switch (join->connectiontype) {
+  case(MS_DB_CSV):
+    fprintf(stream, "        CONNECTIONTYPE CSV\n");
+    break;
+  case(MS_DB_POSTGRES):
+    fprintf(stream, "        CONNECTIONTYPE POSTGRES\n");
+    break;
+  case(MS_DB_MYSQL):
+    fprintf(stream, "        CONNECTIONTYPE MYSQL\n");
+    break;
+  default:
+    break;
+  };
   fprintf(stream, "        TYPE %s\n", msJoinType[join->type]);
   fprintf(stream, "      END\n");
 }

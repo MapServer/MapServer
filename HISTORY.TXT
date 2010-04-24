@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Write out join CONNECTIONTYPE when saving a mapfile. (#3435)
+
 - Fixed attribute queries to use an extent stored (and cached) as part of the queryObj
   rather than the map->extent. (#3424)
 
