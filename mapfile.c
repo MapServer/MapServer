@@ -436,8 +436,23 @@ int loadColorWithAlpha(colorObj *color) {
 /*
 ** Helper functions for writing mapfiles.
 */
-static void writeNumber(double *d, FILE *stream, char *name, char *tab) {
-  fprintf(stream, "%s%s %g\n", tab, name, *d);
+static void writeStartBlock(FILE *stream, char *tab, char *key) {
+  fprintf(stream, "%s%s\n", tab, key);
+}
+
+static void writeEndBlock(FILE *stream, char *tab, char *key) {
+  fprintf(stream, "%sEND\n", tab);
+}
+
+static void writeNumber(FILE *stream, char *tab, char *key, double value) {
+  fprintf(stream, "%s%s %g\n", tab, key, value);
+}
+
+static void writeString(FILE *stream, char *tab, char *key, char *value) {
+  if(strchr(value, '\"') != NULL)
+    fprintf(stream, "%s%s '%s'\n", tab, key, value);
+  else
+    fprintf(stream, "%s%s \"%s\"\n", tab, key, value);
 }
 
 static void writeColor(colorObj *color, FILE *stream, char *name, char *tab) {
