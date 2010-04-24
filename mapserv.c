@@ -1554,6 +1554,8 @@ int main(int argc, char *argv[]) {
           if(QueryItem) mapserv->map->query.item = strdup(QueryItem);
           if(QueryString) mapserv->map->query.str = strdup(QueryString);
 
+          mapserv->map->query.rect = mapserv->map->extent;
+
           mapserv->map->query.mode = MS_QUERY_MULTIPLE;
           if(mapserv->Mode == ITEMFEATUREQUERY || mapserv->Mode == ITEMFEATUREQUERYMAP)
             mapserv->map->query.mode = MS_QUERY_SINGLE;
@@ -1645,6 +1647,8 @@ int main(int argc, char *argv[]) {
 	  mapserv->map->query.layer = QueryLayerIndex;
           if(QueryItem) mapserv->map->query.item = strdup(QueryItem);
           if(QueryString) mapserv->map->query.str = strdup(QueryString);
+
+	  mapserv->map->query.rect = mapserv->map->extent;
 
 	  mapserv->map->query.mode = MS_QUERY_MULTIPLE;
           if(mapserv->Mode == ITEMQUERY || mapserv->Mode == ITEMQUERYMAP) mapserv->map->query.mode = MS_QUERY_SINGLE;

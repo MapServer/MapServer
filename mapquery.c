@@ -503,7 +503,7 @@ int msQueryByAttributes(mapObj *map)
   }
 
   /* identify candidate shapes */
-  searchrect = map->extent;
+  searchrect = map->query.rect;
 #ifdef USE_PROJ  
   if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))  
     msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
