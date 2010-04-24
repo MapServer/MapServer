@@ -517,7 +517,8 @@ int layerObj_queryByAttributes(layerObj *self, mapObj *map, char *qitem, char *q
     if(qitem) map->query.item = strdup(qitem);
     if(qstring) map->query.str = strdup(qstring);
     map->query.layer = self->index;
-        
+    map->query.rect = map->extent;
+
     status = self->status;
     self->status = MS_ON;
     retval = msQueryByAttributes(map);

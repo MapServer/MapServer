@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Version 5.6.4 (????-??-??):
 ---------------------------
 
+- Fixed attribute queries to use an extent stored (and cached) as part of the queryObj
+  rather than the map->extent. (#3424)
+
 - Reverted msLayerWhichItems() to 5.4-like behavior although still supporting 
   retrieving all items (#3356,#3342)
  
