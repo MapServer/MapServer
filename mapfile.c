@@ -611,16 +611,17 @@ int loadJoin(joinObj *join)
 
 static void writeJoin(joinObj *join, FILE *stream) 
 {
-  writeBlockBegin(stream, "      ", "JOIN");
-  writeString(stream, "        ", "FOOTER", join->footer);
-  writeString(stream, "        ", "FROM", join->from);
-  writeString(stream, "        ", "HEADER", join->header);
-  writeString(stream, "        ", "NAME", join->name);
-  writeString(stream, "        ", "TABLE", join->table);
-  writeString(stream, "        ", "TO", join->to);  
-  writeKeyword(stream, "        ", "CONNECTIONTYPE", MS_DB_XBASE, join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRES", MS_DB_MYSQL, "MYSQL");
-  writeKeyword(stream, "        ", "TYPE", MS_JOIN_ONE_TO_ONE, join->type, 1, MS_JOIN_ONE_TO_MANY, "ONE-TO-MANY");
-  writeBlockEnd(stream, "      ", "JOIN");
+  writeBlockBegin(stream, "    ", "JOIN");
+  writeString(stream, "      ", "FOOTER", join->footer);
+  writeString(stream, "      ", "FROM", join->from);
+  writeString(stream, "      ", "HEADER", join->header);
+  writeString(stream, "      ", "NAME", join->name);
+  writeString(stream, "      ", "TABLE", join->table);
+  writeString(stream, "      ", "TEMPLATE", join->template);
+  writeString(stream, "      ", "TO", join->to);
+  writeKeyword(stream, "      ", "CONNECTIONTYPE", MS_DB_XBASE, join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRESQL", MS_DB_MYSQL, "MYSQL");
+  writeKeyword(stream, "      ", "TYPE", MS_JOIN_ONE_TO_ONE, join->type, 1, MS_JOIN_ONE_TO_MANY, "ONE-TO-MANY");
+  writeBlockEnd(stream, "    ", "JOIN");
 }
 
 /* inserts a feature at the end of the list, can create a new list */
