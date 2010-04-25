@@ -78,7 +78,7 @@ static char *msStatus[4]={"OFF", "ON", "DEFAULT", "EMBED"};
 /* static char *msOnOff[2]={"OFF", "ON"}; */
 static char *msTrueFalse[2]={"FALSE", "TRUE"};
 /* static char *msYesNo[2]={"NO", "YES"}; */
-static char *msJoinType[2]={"ONE-TO-ONE", "ONE-TO-MANY"};
+/* static char *msJoinType[2]={"ONE-TO-ONE", "ONE-TO-MANY"}; */
 static char *msAlignValue[3]={"LEFT","CENTER","RIGHT"};
 
 /*
@@ -436,23 +436,53 @@ int loadColorWithAlpha(colorObj *color) {
 /*
 ** Helper functions for writing mapfiles.
 */
-static void writeStartBlock(FILE *stream, char *tab, char *key) {
-  fprintf(stream, "%s%s\n", tab, key);
+static void writeBlockBegin(FILE *stream, const char *tab, const char *name) {
+  fprintf(stream, "%s%s\n", tab, name);
 }
 
-static void writeEndBlock(FILE *stream, char *tab, char *key) {
+static void writeBlockEnd(FILE *stream, const char *tab, const char *name) {
   fprintf(stream, "%sEND\n", tab);
 }
 
-static void writeNumber(FILE *stream, char *tab, char *key, double value) {
-  fprintf(stream, "%s%s %g\n", tab, key, value);
+static void writeKeyword(FILE *stream, const char *tab, const char *name, int defaultValue, int value, int size, ...) {
+  va_list argp;
+  int i, j=0;
+  const char *s;
+
+  if(value == defaultValue) return; /* don't output the default */
+
+  va_start(argp, size);
+  while (j<size) { /* check each value/keyword mapping in the list */
+    i = va_arg(argp, int);
+    s = va_arg(argp, const char *);
+    if(value == i) {
+      fprintf(stream, "%s%s %s\n", tab, name, s);
+      va_end(argp);
+      return;
+    }
+    j++;
+  }
+  va_end(argp);
+
+  fprintf(stream, "# value %d for %s does not map to a keyword\n", value, name);
 }
 
-static void writeString(FILE *stream, char *tab, char *key, char *value) {
-  if(strchr(value, '\"') != NULL)
-    fprintf(stream, "%s%s '%s'\n", tab, key, value);
+static void writeExtent(FILE *stream, const char *tab, const char *name, rectObj extent) {
+  if(MS_VALID_EXTENT(extent))
+    fprintf(stream, "%s%s %.15g %.15g %.15g %.15g\n", tab, name, extent.minx, extent.miny, extent.maxx, extent.maxy);
+}
+
+static void writeNumber(FILE *stream, const char *tab, const char *name, double defaultNumber, double number) {
+  if(number == defaultNumber) return; /* don't output default */
+  fprintf(stream, "%s%s %g\n", tab, name, number);
+}
+
+static void writeString(FILE *stream, char *tab, char *name, char *string) {
+  if(!string) return; /* don't output default (e.g empty string) */ 
+  if(strchr(string, '\"') != NULL)
+    fprintf(stream, "%s%s '%s'\n", tab, name, string);
   else
-    fprintf(stream, "%s%s \"%s\"\n", tab, key, value);
+    fprintf(stream, "%s%s \"%s\"\n", tab, name, string);
 }
 
 static void writeColor(colorObj *color, FILE *stream, char *name, char *tab) {
@@ -581,28 +611,16 @@ int loadJoin(joinObj *join)
 
 static void writeJoin(joinObj *join, FILE *stream) 
 {
-  fprintf(stream, "      JOIN\n");
-  if(join->footer) fprintf(stream, "        FOOTER \"%s\"\n", join->footer);
-  if(join->from) fprintf(stream, "        FROM \"%s\"\n", join->from);
-  if(join->header) fprintf(stream, "        HEADER \"%s\"\n", join->header);
-  if(join->name) fprintf(stream, "        NAME \"%s\"\n", join->name);
-  if(join->table) fprintf(stream, "        TABLE \"%s\"\n", join->table);
-  if(join->to) fprintf(stream, "        TO \"%s\"\n", join->to);
-  switch (join->connectiontype) {
-  case(MS_DB_CSV):
-    fprintf(stream, "        CONNECTIONTYPE CSV\n");
-    break;
-  case(MS_DB_POSTGRES):
-    fprintf(stream, "        CONNECTIONTYPE POSTGRES\n");
-    break;
-  case(MS_DB_MYSQL):
-    fprintf(stream, "        CONNECTIONTYPE MYSQL\n");
-    break;
-  default:
-    break;
-  };
-  fprintf(stream, "        TYPE %s\n", msJoinType[join->type]);
-  fprintf(stream, "      END\n");
+  writeBlockBegin(stream, "      ", "JOIN");
+  writeString(stream, "        ", "FOOTER", join->footer);
+  writeString(stream, "        ", "FROM", join->from);
+  writeString(stream, "        ", "HEADER", join->header);
+  writeString(stream, "        ", "NAME", join->name);
+  writeString(stream, "        ", "TABLE", join->table);
+  writeString(stream, "        ", "TO", join->to);  
+  writeKeyword(stream, "        ", "CONNECTIONTYPE", MS_DB_XBASE, join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRES", MS_DB_MYSQL, "MYSQL");
+  writeKeyword(stream, "        ", "TYPE", MS_JOIN_ONE_TO_ONE, join->type, 1, MS_JOIN_ONE_TO_MANY, "ONE-TO-MANY");
+  writeBlockEnd(stream, "      ", "JOIN");
 }
 
 /* inserts a feature at the end of the list, can create a new list */
