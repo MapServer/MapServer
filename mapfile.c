@@ -73,7 +73,7 @@ static char *msUnits[9]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "NAU
 static char *msLayerTypes[9]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX","CHART"};
 char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY", "FOLLOW"}; /* msLabelPositions[] also used in mapsymbols.c (not static) */
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
-static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
+/* static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"}; */
 static char *msStatus[4]={"OFF", "ON", "DEFAULT", "EMBED"};
 /* static char *msOnOff[2]={"OFF", "ON"}; */
 static char *msTrueFalse[2]={"FALSE", "TRUE"};
@@ -444,6 +444,10 @@ static void writeBlockEnd(FILE *stream, const char *tab, const char *name) {
   fprintf(stream, "%sEND\n", tab);
 }
 
+static void writeLineFeed(FILE *stream) {
+  fprintf(stream, "\n");
+}
+
 static void writeKeyword(FILE *stream, const char *tab, const char *name, int defaultValue, int value, int size, ...) {
   va_list argp;
   int i, j=0;
@@ -465,6 +469,11 @@ static void writeKeyword(FILE *stream, const char *tab, const char *name, int de
   va_end(argp);
 
   fprintf(stream, "# value %d for %s does not map to a keyword\n", value, name);
+}
+
+static void writeDimension(FILE *stream, const char *tab, const char *name, int width, int height) {
+  if(width > 0 && height > 0)
+    fprintf(stream, "%s%s %d %d\n", tab, name, width, height);
 }
 
 static void writeExtent(FILE *stream, const char *tab, const char *name, rectObj extent) {
@@ -4427,17 +4436,18 @@ int msUpdateQueryMapFromString(queryMapObj *querymap, char *string, int url_stri
 
 static void writeQueryMap(queryMapObj *querymap, FILE *stream)
 {
-  fprintf(stream, "  QUERYMAP\n");
+  writeBlockBegin(stream, "  ", "QUERYMAP");
 #if ALPHACOLOR_ENABLED
   if( querymap->color.alpha )
   writeColorWithAlpha(&(querymap->color), stream, "ALPHACOLOR_ENABLED", "    ");
   else
 #endif
   writeColor(&(querymap->color), stream, "COLOR", "    ");
-  fprintf(stream, "    SIZE %d %d\n", querymap->width, querymap->height);
-  fprintf(stream, "    STATUS %s\n", msStatus[querymap->status]);
-  fprintf(stream, "    STYLE %s\n", msQueryMapStyles[querymap->style]);  
-  fprintf(stream, "  END\n\n");
+  writeDimension(stream, "    ", "SIZE", querymap->width, querymap->height);
+  writeKeyword(stream, "    ", "STATUS", -1, querymap->status, 2, MS_ON, "ON", MS_OFF, "OFF");
+  writeKeyword(stream, "    ", "STYLE", -1, querymap->style, 3, MS_NORMAL, "NORMAL", MS_HILITE, "HILITE", MS_SELECTED, "SELECTED");
+  writeBlockEnd(stream, "  ", "QUERYMAP");
+  writeLineFeed(stream);
 }
 
 /*
