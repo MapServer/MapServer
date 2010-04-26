@@ -467,8 +467,6 @@ static void writeKeyword(FILE *stream, const char *tab, const char *name, int de
     j++;
   }
   va_end(argp);
-
-  fprintf(stream, "# value %d for %s does not map to a keyword\n", value, name);
 }
 
 static void writeDimension(FILE *stream, const char *tab, const char *name, int width, int height) {
@@ -486,7 +484,7 @@ static void writeNumber(FILE *stream, const char *tab, const char *name, double 
   fprintf(stream, "%s%s %g\n", tab, name, number);
 }
 
-static void writeString(FILE *stream, char *tab, char *name, char *string) {
+static void writeString(FILE *stream, const char *tab, char *name, char *string) {
   if(!string) return; /* don't output default (e.g empty string) */ 
   if(strchr(string, '\"') != NULL)
     fprintf(stream, "%s%s '%s'\n", tab, name, string);
@@ -494,7 +492,7 @@ static void writeString(FILE *stream, char *tab, char *name, char *string) {
     fprintf(stream, "%s%s \"%s\"\n", tab, name, string);
 }
 
-static void writeColor(colorObj *color, FILE *stream, char *name, char *tab) {
+static void writeColor(colorObj *color, FILE *stream, char *name, const char *tab) {
   if(MS_VALID_COLOR(*color))
     fprintf(stream, "%s%s %d %d %d\n", tab, name, color->red, color->green, color->blue);
 }
@@ -506,7 +504,7 @@ static void writeColorRange(colorObj *mincolor, colorObj *maxcolor, FILE *stream
 }
 
 #if ALPHACOLOR_ENABLED
-static void writeColorWithAlpha(colorObj *color, FILE *stream, char *name, char *tab) {
+static void writeColorWithAlpha(colorObj *color, FILE *stream, char *name, const char *tab) {
   if(MS_VALID_COLOR(*color))
     fprintf(stream, "%s%s %d %d %d %d\n", tab, name, color->red, color->green, color->blue, color->alpha);
 }
@@ -1712,7 +1710,7 @@ int msUpdateLabelFromString(labelObj *label, char *string)
   return MS_SUCCESS;
 }
 
-static void writeLabel(labelObj *label, FILE *stream, char *tab)
+static void writeLabel(labelObj *label, FILE *stream, const char *tab)
 {
   if(label->size == -1) return; /* there is no default label anymore */
 
@@ -4186,21 +4184,22 @@ int msUpdateLegendFromString(legendObj *legend, char *string, int url_string)
 
 static void writeLegend(legendObj *legend, FILE *stream)
 {
-  fprintf(stream, "  LEGEND\n");
-  writeColor(&(legend->imagecolor), stream, "IMAGECOLOR", "    ");  
-  if( legend->interlace != MS_NOOVERRIDE )
-      fprintf(stream, "    INTERLACE %s\n", msTrueFalse[legend->interlace]);
-  fprintf(stream, "    KEYSIZE %d %d\n", legend->keysizex, legend->keysizey);
-  fprintf(stream, "    KEYSPACING %d %d\n", legend->keyspacingx, legend->keyspacingy);
-  writeLabel(&(legend->label), stream, "    ");
-  writeColor(&(legend->outlinecolor), stream, "OUTLINECOLOR", "    ");
-  fprintf(stream, "    POSITION %s\n", msPositionsText[legend->position - MS_UL]);
-  if(legend->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
-  fprintf(stream, "    STATUS %s\n", msStatus[legend->status]);
-  if( legend->transparent != MS_NOOVERRIDE )
-     fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[legend->transparent]);
-  if (legend->template) fprintf(stream, "    TEMPLATE \"%s\"\n", legend->template);
-  fprintf(stream, "  END\n\n");
+  const char *tab1 = "  ", *tab2 = "    ";
+
+  writeBlockBegin(stream, tab1, "LEGEND");
+  writeColor(&(legend->imagecolor), stream, "IMAGECOLOR", tab2);
+  writeKeyword(stream, tab2, "INTERLACE", -1, legend->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeDimension(stream, tab2, "KEYSIZE", legend->keysizex, legend->keysizey);
+  writeDimension(stream, tab2, "KEYSPACING", legend->keyspacingx, legend->keyspacingy);
+  writeLabel(&(legend->label), stream, tab2);
+  writeColor(&(legend->outlinecolor), stream, "OUTLINECOLOR", tab2);
+  if(legend->status == MS_EMBED) writeKeyword(stream, tab2, "POSITION", -1, legend->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
+  writeKeyword(stream, tab2, "POSTLABELCACHE", MS_FALSE, legend->postlabelcache, 1, MS_TRUE, "TRUE");
+  writeKeyword(stream, tab2, "STATUS", -1, legend->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_EMBED, "EMBED");
+  writeKeyword(stream, tab2, "TRANSPARENT", -1, legend->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeString(stream, tab2, "TEMPLATE", legend->template);
+  writeBlockEnd(stream, tab1, "LEGEND");
+  writeLineFeed(stream);
 }
 
 /*
