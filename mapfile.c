@@ -4333,26 +4333,26 @@ int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_stri
 
 static void writeScalebar(scalebarObj *scalebar, FILE *stream)
 {
-  fprintf(stream, "  SCALEBAR\n");
-  fprintf(stream, "    ALIGN %s\n", msAlignValue[scalebar->align]);
-  writeColor(&(scalebar->backgroundcolor), stream, "BACKGROUNDCOLOR", "    ");
-  writeColor(&(scalebar->color), stream, "COLOR", "    ");
-  writeColor(&(scalebar->imagecolor), stream, "IMAGECOLOR", "    ");
-  if( scalebar->interlace != MS_NOOVERRIDE )
-      fprintf(stream, "    INTERLACE %s\n", msTrueFalse[scalebar->interlace]);
-  fprintf(stream, "    INTERVALS %d\n", scalebar->intervals);
-  writeLabel(&(scalebar->label), stream, "    ");
-  writeColor(&(scalebar->outlinecolor), stream, "OUTLINECOLOR", "    ");
-  fprintf(stream, "    POSITION %s\n", msPositionsText[scalebar->position - MS_UL]);
-  if(scalebar->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
-  fprintf(stream, "    SIZE %d %d\n", scalebar->width, scalebar->height);
-  fprintf(stream, "    STATUS %s\n", msStatus[scalebar->status]);
-  fprintf(stream, "    STYLE %d\n", scalebar->style);
-  if( scalebar->transparent != MS_NOOVERRIDE )
-      fprintf(stream, "    TRANSPARENT %s\n", 
-              msTrueFalse[scalebar->transparent]);
-  fprintf(stream, "    UNITS %s\n", msUnits[scalebar->units]);
-  fprintf(stream, "  END\n\n");
+  const char *tab1 = "  ", *tab2 = "    ";
+
+  writeBlockBegin(stream, tab1, "SCALEBAR");
+  writeKeyword(stream, tab2, "ALIGN", MS_ALIGN_CENTER, scalebar->align, 2, MS_ALIGN_LEFT, "LEFT", MS_ALIGN_RIGHT, "RIGHT");
+  writeColor(&(scalebar->backgroundcolor), stream, "BACKGROUNDCOLOR", tab2);
+  writeColor(&(scalebar->color), stream, "COLOR", tab2);
+  writeColor(&(scalebar->imagecolor), stream, "IMAGECOLOR", tab2);
+  writeKeyword(stream, tab2, "INTERLACE", -1, scalebar->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeNumber(stream, tab2, "INTERVALS", -1, scalebar->intervals);
+  writeLabel(&(scalebar->label), stream, tab2);
+  writeColor(&(scalebar->outlinecolor), stream, "OUTLINECOLOR", tab2);
+  if(scalebar->status == MS_EMBED) writeKeyword(stream, tab2, "POSITION", -1, scalebar->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
+  writeKeyword(stream, tab2, "POSTLABELCACHE", MS_FALSE, scalebar->postlabelcache, 1, MS_TRUE, "TRUE");
+  writeDimension(stream, tab2, "SIZE", scalebar->width, scalebar->height);
+  writeKeyword(stream, tab2, "STATUS", -1, scalebar->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_EMBED, "EMBED");
+  writeNumber(stream, tab2, "STYLE", -1, scalebar->style);
+  writeKeyword(stream, tab2, "TRANSPARENT", -1, scalebar->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeKeyword(stream, tab2, "UNITS", -1, scalebar->units, 6, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES");
+  writeBlockEnd(stream, tab1, "SCALEBAR");
+  writeLineFeed(stream);
 }
 
 /*
