@@ -79,7 +79,7 @@ static char *msStatus[4]={"OFF", "ON", "DEFAULT", "EMBED"};
 static char *msTrueFalse[2]={"FALSE", "TRUE"};
 /* static char *msYesNo[2]={"NO", "YES"}; */
 /* static char *msJoinType[2]={"ONE-TO-ONE", "ONE-TO-MANY"}; */
-static char *msAlignValue[3]={"LEFT","CENTER","RIGHT"};
+/* static char *msAlignValue[3]={"LEFT","CENTER","RIGHT"}; */
 
 /*
 ** Validates a string (value) against a series of patterns. We support up to four to allow cascading from classObj to
@@ -484,8 +484,9 @@ static void writeNumber(FILE *stream, const char *tab, const char *name, double 
   fprintf(stream, "%s%s %g\n", tab, name, number);
 }
 
-static void writeString(FILE *stream, const char *tab, char *name, char *string) {
-  if(!string) return; /* don't output default (e.g empty string) */ 
+static void writeString(FILE *stream, const char *tab, const char *name, const char *defaultString, char *string) {
+  if(!string) return;
+  if(defaultString && strcmp(string, defaultString) == 0) return;
   if(strchr(string, '\"') != NULL)
     fprintf(stream, "%s%s '%s'\n", tab, name, string);
   else
@@ -619,13 +620,13 @@ int loadJoin(joinObj *join)
 static void writeJoin(joinObj *join, FILE *stream) 
 {
   writeBlockBegin(stream, "    ", "JOIN");
-  writeString(stream, "      ", "FOOTER", join->footer);
-  writeString(stream, "      ", "FROM", join->from);
-  writeString(stream, "      ", "HEADER", join->header);
-  writeString(stream, "      ", "NAME", join->name);
-  writeString(stream, "      ", "TABLE", join->table);
-  writeString(stream, "      ", "TEMPLATE", join->template);
-  writeString(stream, "      ", "TO", join->to);
+  writeString(stream, "      ", "FOOTER", NULL, join->footer);
+  writeString(stream, "      ", "FROM", NULL, join->from);
+  writeString(stream, "      ", "HEADER", NULL, join->header);
+  writeString(stream, "      ", "NAME", NULL, join->name);
+  writeString(stream, "      ", "TABLE", NULL, join->table);
+  writeString(stream, "      ", "TEMPLATE", NULL, join->template);
+  writeString(stream, "      ", "TO", NULL, join->to);
   writeKeyword(stream, "      ", "CONNECTIONTYPE", MS_DB_XBASE, join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRESQL", MS_DB_MYSQL, "MYSQL");
   writeKeyword(stream, "      ", "TYPE", MS_JOIN_ONE_TO_ONE, join->type, 1, MS_JOIN_ONE_TO_MANY, "ONE-TO-MANY");
   writeBlockEnd(stream, "    ", "JOIN");
@@ -1998,7 +1999,7 @@ int loadHashTable(hashTableObj *ptable)
   return(MS_SUCCESS);
 }
 
-static void writeHashTable(hashTableObj *table, FILE *stream, char *tab, char *title) {
+static void writeHashTable(hashTableObj *table, FILE *stream, const char *tab, char *title) {
   struct hashObj *tp;
   int i;
 
@@ -4197,7 +4198,7 @@ static void writeLegend(legendObj *legend, FILE *stream)
   writeKeyword(stream, tab2, "POSTLABELCACHE", MS_FALSE, legend->postlabelcache, 1, MS_TRUE, "TRUE");
   writeKeyword(stream, tab2, "STATUS", -1, legend->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_EMBED, "EMBED");
   writeKeyword(stream, tab2, "TRANSPARENT", -1, legend->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
-  writeString(stream, tab2, "TEMPLATE", legend->template);
+  writeString(stream, tab2, "TEMPLATE", NULL, legend->template);
   writeBlockEnd(stream, tab1, "LEGEND");
   writeLineFeed(stream);
 }
@@ -4494,29 +4495,29 @@ void freeWeb(webObj *web)
 
 static void writeWeb(webObj *web, FILE *stream)
 {
-  fprintf(stream, "  WEB\n");
-  if(web->empty) fprintf(stream, "    EMPTY \"%s\"\n", web->empty);
-  if(web->error) fprintf(stream, "    ERROR \"%s\"\n", web->error);
+  const char *tab1 = "  ", *tab2 = "    ";
 
-  if(MS_VALID_EXTENT(web->extent)) 
-    fprintf(stream, "  EXTENT %.15g %.15g %.15g %.15g\n", web->extent.minx, web->extent.miny, web->extent.maxx, web->extent.maxy);
-
-  if(web->footer) fprintf(stream, "    FOOTER \"%s\"\n", web->footer);
-  if(web->header) fprintf(stream, "    HEADER \"%s\"\n", web->header);
-  if(web->imagepath) fprintf(stream, "    IMAGEPATH \"%s\"\n", web->imagepath);
-  if(web->imageurl) fprintf(stream, "    IMAGEURL \"%s\"\n", web->imageurl);
-  if(web->log) fprintf(stream, "    LOG \"%s\"\n", web->log);
-  if(web->maxscaledenom > -1) fprintf(stream, "    MAXSCALEDENOM %g\n", web->maxscaledenom);
-  if(web->maxtemplate) fprintf(stream, "    MAXTEMPLATE \"%s\"\n", web->maxtemplate);
-  if(&(web->metadata)) writeHashTable(&(web->metadata), stream, "    ", "METADATA");
-  if(web->minscaledenom > -1) fprintf(stream, "    MINSCALEDENOM %g\n", web->minscaledenom);
-  if(web->mintemplate) fprintf(stream, "    MINTEMPLATE \"%s\"\n", web->mintemplate);
-  if(web->queryformat != NULL) fprintf(stream, "    QUERYFORMAT %s\n", web->queryformat);
-  if(web->legendformat != NULL) fprintf(stream, "    LEGENDFORMAT %s\n", web->legendformat);
-  if(web->browseformat != NULL) fprintf(stream, "    BROWSEFORMAT %s\n", web->browseformat);
-  if(web->template) fprintf(stream, "    TEMPLATE \"%s\"\n", web->template);
-  if(&(web->validation)) writeHashTable(&(web->validation), stream, "    ", "VALIDATION");
-  fprintf(stream, "  END\n\n");
+  writeBlockBegin(stream, tab1, "WEB");
+  writeString(stream, tab2, "BROWSEFORMAT", "text/html", web->browseformat);
+  writeString(stream, tab2, "EMPTY", NULL, web->empty);
+  writeString(stream, tab2, "ERROR", NULL, web->error);
+  writeExtent(stream, tab2, "EXTENT", web->extent);
+  writeString(stream, tab2, "FOOTER", NULL, web->footer);
+  writeString(stream, tab2, "HEADER", NULL, web->header);
+  writeString(stream, tab2, "IMAGEPATH", "", web->imagepath);
+  writeString(stream, tab2, "IMAGEURL", "", web->imageurl);
+  writeString(stream, tab2, "LEGENDFORMAT", "text/html", web->legendformat);
+  writeString(stream, tab2, "LOG", NULL, web->log);
+  writeNumber(stream, tab2, "MAXSCALEDENOM", -1, web->maxscaledenom);
+  writeString(stream, tab2, "MAXTEMPLATE", NULL, web->maxtemplate);
+  if(&(web->metadata)) writeHashTable(&(web->metadata), stream, tab2, "METADATA");
+  writeNumber(stream, tab2, "MINSCALEDENOM", -1, web->minscaledenom);
+  writeString(stream, tab2, "MINTEMPLATE", NULL, web->mintemplate);
+  writeString(stream, tab2, "QUERYFORMAT", "text/html", web->queryformat);
+  writeString(stream, tab2, "TEMPLATE", NULL, web->template);
+  if(&(web->validation)) writeHashTable(&(web->validation), stream, tab2, "VALIDATION");
+  writeBlockEnd(stream, tab1, "WEB");
+  writeLineFeed(stream);
 }
 
 int loadWeb(webObj *web, mapObj *map)
