@@ -152,8 +152,8 @@ protected:
 	char* lookupPlacemarkStyle();
 	void flushPlacemark();
 	xmlNodePtr getGeomParentNode(char *geomName);
-        char* KmlRenderer::getLayerName(layerObj *layer);
-        void KmlRenderer::processLayer(layerObj *layer);
+        char* getLayerName(layerObj *layer);
+        void processLayer(layerObj *layer);
 
 public:
 
