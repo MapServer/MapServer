@@ -1439,7 +1439,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 }
 
 
-static int processShplabelTag(layerObj *layer, char **line, shapeObj *shape) 
+static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape) 
 {
     char *tag, *tagStart, *tagEnd;
     char *tagValue=NULL;
@@ -1458,6 +1458,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *shape)
     int i,status;
     char number[64]; /* holds a single number in the extent */
     char numberFormat[16];
+    shapeObj *shape = NULL;
 
     if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processShplabelTag()");
@@ -1472,13 +1473,20 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *shape)
     if( !tagStart )
       return MS_SUCCESS;
 
-    if(!shape || shape->numlines <= 0) { /* I suppose we need to make sure the part has vertices (need shape checker?) */
+    if(!origshape || origshape->numlines <= 0) { /* I suppose we need to make sure the part has vertices (need shape checker?) */
       msSetError(MS_WEBERR, "Null or empty shape.", "processShplabelTag()");
       return(MS_FAILURE);
     }
 
+    
     while (tagStart) 
     {
+        if (shape)
+          msFreeShape(shape);
+        shape = (shapeObj *) malloc(sizeof(shapeObj));
+        msInitShape(shape);
+        msCopyShape(origshape, shape);
+
         projectionString = NULL;
         format = "$x,$y";
         tagOffset = tagStart - *line;
@@ -1504,6 +1512,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *shape)
               if(strcasecmp(argValue,"true") == 0) use_label_settings = MS_TRUE;
         }
 
+        labelPos.x = -1;
+        labelPos.y = -1;
         msInitShape(&tShape);
 
         tShape.type = MS_SHAPE_LINE;
@@ -1603,8 +1613,13 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *shape)
 
             if (shape->numlines > 0)
             {
-              if (msPolygonLabelPoint(shape, &labelPos, -1) == MS_SUCCESS)
-                labelposvalid = MS_TRUE;
+                if (msPolygonLabelPoint(shape, &labelPos, -1) == MS_SUCCESS)
+                {
+                    if (labelPos.x == -1 && labelPos.y == -1)
+                      labelposvalid = MS_FALSE;
+                    else
+                      labelposvalid = MS_TRUE;
+                }
             }
         }
         if (labelposvalid == MS_TRUE)
@@ -1767,6 +1782,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *shape)
          else
            tagStart = NULL; 
     }
+    if (shape)
+      msFreeShape(shape);
 
     return(MS_SUCCESS);
 }
