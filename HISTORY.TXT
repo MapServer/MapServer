@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- Fix security exception issue in C# with MSVC2010 (#3438)
+
 - Check error returns from mapstring functions (#2988)
 
 - Avoid memory error when building SQL bbox (#3324)
