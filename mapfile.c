@@ -64,19 +64,20 @@ extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
 extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
 static int loadGrid( layerObj *pLayer );
 static int loadStyle(styleObj *style);
+static void writeStyle(FILE* stream, int indent, styleObj *style);
 
 /*
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in mapserver.h.
 */
-static char *msUnits[9]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "NAUTICALMILES", "DD", "PIXELS", "PERCENTAGES"};
-static char *msLayerTypes[9]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX","CHART"};
+/* static char *msUnits[9]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "NAUTICALMILES", "DD", "PIXELS", "PERCENTAGES"}; */
+/* static char *msLayerTypes[9]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX","CHART"}; */
 char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY", "FOLLOW"}; /* msLabelPositions[] also used in mapsymbols.c (not static) */
-static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
+/* static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"}; */
 /* static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"}; */
-static char *msStatus[4]={"OFF", "ON", "DEFAULT", "EMBED"};
+/* static char *msStatus[4]={"OFF", "ON", "DEFAULT", "EMBED"}; */
 /* static char *msOnOff[2]={"OFF", "ON"}; */
-static char *msTrueFalse[2]={"FALSE", "TRUE"};
+/* static char *msTrueFalse[2]={"FALSE", "TRUE"}; */
 /* static char *msYesNo[2]={"NO", "YES"}; */
 /* static char *msJoinType[2]={"ONE-TO-ONE", "ONE-TO-MANY"}; */
 /* static char *msAlignValue[3]={"LEFT","CENTER","RIGHT"}; */
@@ -436,31 +437,38 @@ int loadColorWithAlpha(colorObj *color) {
 /*
 ** Helper functions for writing mapfiles.
 */
-static void writeBlockBegin(FILE *stream, const char *tab, const char *name) {
-  fprintf(stream, "%s%s\n", tab, name);
-}
-
-static void writeBlockEnd(FILE *stream, const char *tab, const char *name) {
-  fprintf(stream, "%sEND\n", tab);
-}
-
 static void writeLineFeed(FILE *stream) {
   fprintf(stream, "\n");
 }
 
-static void writeKeyword(FILE *stream, const char *tab, const char *name, int defaultValue, int value, int size, ...) {
+static void writeIndent(FILE *stream, int indent) {  
+  const char *str="  "; /* change this string to define the indent */
+  int i;
+  for(i=0; i<indent; i++) fprintf(stream, "%s", str);
+}
+
+static void writeBlockBegin(FILE *stream, int indent, const char *name) {
+  writeIndent(stream, indent);
+  fprintf(stream, "%s\n", name);
+}
+
+static void writeBlockEnd(FILE *stream, int indent, const char *name) {
+  writeIndent(stream, indent);
+  fprintf(stream, "END # %s\n", name);
+}
+
+static void writeKeyword(FILE *stream, int indent, const char *name, int value, int size, ...) {
   va_list argp;
   int i, j=0;
   const char *s;
 
-  if(value == defaultValue) return; /* don't output the default */
-
   va_start(argp, size);
-  while (j<size) { /* check each value/keyword mapping in the list */
+  while (j<size) { /* check each value/keyword mapping in the list, values with no match are ignored */
     i = va_arg(argp, int);
     s = va_arg(argp, const char *);
     if(value == i) {
-      fprintf(stream, "%s%s %s\n", tab, name, s);
+      writeIndent(stream, ++indent);
+      fprintf(stream, "%s %s\n", name, s);
       va_end(argp);
       return;
     }
@@ -469,47 +477,105 @@ static void writeKeyword(FILE *stream, const char *tab, const char *name, int de
   va_end(argp);
 }
 
-static void writeDimension(FILE *stream, const char *tab, const char *name, int width, int height) {
-  if(width > 0 && height > 0)
-    fprintf(stream, "%s%s %d %d\n", tab, name, width, height);
+static void writeDimension(FILE *stream, int indent, const char *name, int x, int y) {
+  if(!(x > 0 && y > 0)) return;
+  writeIndent(stream, ++indent);
+  fprintf(stream, "%s %d %d\n", name, x, y);
 }
 
-static void writeExtent(FILE *stream, const char *tab, const char *name, rectObj extent) {
-  if(MS_VALID_EXTENT(extent))
-    fprintf(stream, "%s%s %.15g %.15g %.15g %.15g\n", tab, name, extent.minx, extent.miny, extent.maxx, extent.maxy);
+static void writeExtent(FILE *stream, int indent, const char *name, rectObj extent) {
+  if(!MS_VALID_EXTENT(extent)) return;
+  writeIndent(stream, ++indent);
+  fprintf(stream, "%s %.15g %.15g %.15g %.15g\n", name, extent.minx, extent.miny, extent.maxx, extent.maxy);
 }
 
-static void writeNumber(FILE *stream, const char *tab, const char *name, double defaultNumber, double number) {
+static void writeNumber(FILE *stream, int indent, const char *name, double defaultNumber, double number) {
   if(number == defaultNumber) return; /* don't output default */
-  fprintf(stream, "%s%s %g\n", tab, name, number);
+  writeIndent(stream, ++indent);
+  fprintf(stream, "%s %g\n", name, number);
 }
 
-static void writeString(FILE *stream, const char *tab, const char *name, const char *defaultString, char *string) {
+static void writeCharacter(FILE *stream, int indent, const char *name, const char defaultCharacter, char character) {
+  if(defaultCharacter == character) return;
+  writeIndent(stream, ++indent);
+  fprintf(stream, "%s '%c'\n", name, character);
+}
+
+static void writeString(FILE *stream, int indent, const char *name, const char *defaultString, char *string) {
   if(!string) return;
   if(defaultString && strcmp(string, defaultString) == 0) return;
-  if(strchr(string, '\"') != NULL)
-    fprintf(stream, "%s%s '%s'\n", tab, name, string);
+  writeIndent(stream, ++indent);
+  if(name) fprintf(stream, "%s ", name);
+  if(strchr(string, '\"') != NULL)    
+    fprintf(stream, "'%s'\n", string);
   else
-    fprintf(stream, "%s%s \"%s\"\n", tab, name, string);
+    fprintf(stream, "\"%s\"\n", string);
 }
 
-static void writeColor(colorObj *color, FILE *stream, char *name, const char *tab) {
-  if(MS_VALID_COLOR(*color))
-    fprintf(stream, "%s%s %d %d %d\n", tab, name, color->red, color->green, color->blue);
+static void writeNumberOrString(FILE *stream, int indent, const char *name, double defaultNumber, double number, char *string) {
+  if(string)
+    writeString(stream, indent, name, NULL, string);
+  else
+    writeNumber(stream, indent, name, defaultNumber, number);
 }
 
-static void writeColorRange(colorObj *mincolor, colorObj *maxcolor, FILE *stream, char *name, char *tab) {
-  if(MS_VALID_COLOR(*mincolor) && MS_VALID_COLOR(*maxcolor))
-    fprintf(stream, "%s%s %d %d %d  %d %d %d\n", tab, name, mincolor->red, mincolor->green, mincolor->blue,
-	    maxcolor->red, maxcolor->green, maxcolor->blue);
+static void writeNumberOrKeyword(FILE *stream, int indent, const char *name, double defaultNumber, double number, int value, int size, ...) {
+  va_list argp;
+  int i, j=0;
+  const char *s;
+
+  va_start(argp, size);
+  while (j<size) { /* check each value/keyword mapping in the list */
+    i = va_arg(argp, int);
+    s = va_arg(argp, const char *);
+    if(value == i) {
+      writeIndent(stream, ++indent);
+      fprintf(stream, "%s %s\n", name, s);
+      va_end(argp);
+      return;
+    }
+    j++;
+  }
+  va_end(argp);
+
+  writeNumber(stream, indent, name, defaultNumber, number);
 }
 
+static void writeNameValuePair(FILE *stream, int indent, const char *name, const char *value) {
+  if(!name || !value) return;
+  writeIndent(stream, ++indent);  
+  if(strchr(name, '\"') != NULL)
+    fprintf(stream, "'%s'\t", name);
+  else
+    fprintf(stream, "\"%s\"\t", name);
+  if(strchr(value, '\"') != NULL)
+    fprintf(stream, "'%s'\n", value);
+  else
+    fprintf(stream, "\"%s\"\n", value);
+}
+
+static void writeAttributeBinding(FILE *stream, int indent, const char *name, attributeBindingObj *binding) {
+  if(!binding || !binding->item) return;
+  writeIndent(stream, ++indent);
+  fprintf(stream, "%s [%s]\n", name, binding->item);
+}
+
+static void writeColor(FILE *stream, int indent, const char *name, colorObj *color) {
+  if(!MS_VALID_COLOR(*color)) return;
+  writeIndent(stream, ++indent);
 #if ALPHACOLOR_ENABLED
-static void writeColorWithAlpha(colorObj *color, FILE *stream, char *name, const char *tab) {
-  if(MS_VALID_COLOR(*color))
-    fprintf(stream, "%s%s %d %d %d %d\n", tab, name, color->red, color->green, color->blue, color->alpha);
-}
+  fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue, color->alpha);
+#else
+  fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
 #endif
+}
+
+/* todo: deal with alpha's... */
+static void writeColorRange(FILE *stream, int indent, const char *name, colorObj *mincolor, colorObj *maxcolor) {
+  if(!MS_VALID_COLOR(*mincolor) || !MS_VALID_COLOR(*maxcolor)) return;
+  writeIndent(stream, ++indent);
+  fprintf(stream, "%s %d %d %d  %d %d %d\n", name, mincolor->red, mincolor->green, mincolor->blue, maxcolor->red, maxcolor->green, maxcolor->blue);
+}
 
 /*
 ** Initialize, load and free a single join
@@ -617,19 +683,20 @@ int loadJoin(joinObj *join)
   } /* next token */
 }
 
-static void writeJoin(joinObj *join, FILE *stream) 
+static void writeJoin(FILE *stream, int indent, joinObj *join)
 {
-  writeBlockBegin(stream, "    ", "JOIN");
-  writeString(stream, "      ", "FOOTER", NULL, join->footer);
-  writeString(stream, "      ", "FROM", NULL, join->from);
-  writeString(stream, "      ", "HEADER", NULL, join->header);
-  writeString(stream, "      ", "NAME", NULL, join->name);
-  writeString(stream, "      ", "TABLE", NULL, join->table);
-  writeString(stream, "      ", "TEMPLATE", NULL, join->template);
-  writeString(stream, "      ", "TO", NULL, join->to);
-  writeKeyword(stream, "      ", "CONNECTIONTYPE", MS_DB_XBASE, join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRESQL", MS_DB_MYSQL, "MYSQL");
-  writeKeyword(stream, "      ", "TYPE", MS_JOIN_ONE_TO_ONE, join->type, 1, MS_JOIN_ONE_TO_MANY, "ONE-TO-MANY");
-  writeBlockEnd(stream, "    ", "JOIN");
+  indent++;
+  writeBlockBegin(stream, indent, "JOIN");
+  writeString(stream, indent, "FOOTER", NULL, join->footer);
+  writeString(stream, indent, "FROM", NULL, join->from);
+  writeString(stream, indent, "HEADER", NULL, join->header);
+  writeString(stream, indent, "NAME", NULL, join->name);
+  writeString(stream, indent, "TABLE", NULL, join->table);
+  writeString(stream, indent, "TEMPLATE", NULL, join->template);
+  writeString(stream, indent, "TO", NULL, join->to);
+  writeKeyword(stream, indent, "CONNECTIONTYPE", join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRESQL", MS_DB_MYSQL, "MYSQL");
+  writeKeyword(stream, indent, "TYPE", join->type, 1, MS_JOIN_ONE_TO_MANY, "ONE-TO-MANY");
+  writeBlockEnd(stream, indent, "JOIN");
 }
 
 /* inserts a feature at the end of the list, can create a new list */
@@ -798,32 +865,38 @@ static int loadFeature(layerObj	*player, int type)
   } /* next token */  
 }
 
-static void writeFeature(shapeObj *shape, FILE *stream) 
+static void writeFeature(FILE *stream, int indent, shapeObj *feature) 
 {
   int i,j;
 
-  fprintf(stream, "    FEATURE\n");
+  indent++;
+  writeBlockBegin(stream, indent, "FEATURE");
 
-  for(i=0; i<shape->numlines; i++) {
-    fprintf(stream, "      POINTS\n");
-    for(j=0; j<shape->line[i].numpoints; j++)
-      fprintf(stream, "        %.15g %.15g\n", shape->line[i].point[j].x, shape->line[i].point[j].y);
-    fprintf(stream, "      END\n");
+  indent++;
+  for(i=0; i<feature->numlines; i++) {
+    writeBlockBegin(stream, indent, "POINTS");
+    for(j=0; j<feature->line[i].numpoints; j++) {
+      writeIndent(stream, indent);
+      fprintf(stream, "%.15g %.15g\n", feature->line[i].point[j].x, feature->line[i].point[j].y);
+    }
+    writeBlockEnd(stream, indent, "POINTS");
   }
+  indent--;
 
-  if (shape->numvalues) {
-    fprintf(stream, "      ITEMS \"");
-    for (i=0; i<shape->numvalues; i++) {
+  if (feature->numvalues) {
+    writeIndent(stream, indent);
+    fprintf(stream, "ITEMS \"");
+    for (i=0; i<feature->numvalues; i++) {
       if (i == 0)
-        fprintf(stream, "%s", shape->values[i]);
+        fprintf(stream, "%s", feature->values[i]);
       else
-        fprintf(stream, ";%s", shape->values[i]);
+        fprintf(stream, ";%s", feature->values[i]);
     }
     fprintf(stream, "\"\n");
   }
 
-  if(shape->text) fprintf(stream, "      TEXT \"%s\"\n", shape->text);
-  fprintf(stream, "    END\n");
+  writeString(stream, indent, "TEXT", NULL, feature->text);
+  writeBlockEnd(stream, indent, "FEATURE");
 }
 
 void initGrid( graticuleObj *pGraticule )
@@ -880,18 +953,21 @@ static int loadGrid( layerObj *pLayer )
     }
   }
 }
-
-static void writeGrid( graticuleObj *pGraticule, FILE *stream) 
+  
+static void writeGrid(FILE *stream, int indent, graticuleObj *pGraticule)
 {
-	fprintf( stream, "      GRID\n");
-	fprintf( stream, "        MINSUBDIVIDE %d\n", (int)	pGraticule->minsubdivides		);
-	fprintf( stream, "        MAXSUBDIVIDE %d\n", (int)	pGraticule->maxsubdivides		);
-	fprintf( stream, "        MININTERVAL %f\n",		pGraticule->minincrement		);
-	fprintf( stream, "        MAXINTERVAL %f\n",		pGraticule->maxincrement		);
-	fprintf( stream, "        MINARCS %g\n",			pGraticule->minarcs				);
-	fprintf( stream, "        MAXARCS %g\n",			pGraticule->maxarcs				);
-	fprintf( stream, "        LABELFORMAT \"%s\"\n",		pGraticule->labelformat			);
-	fprintf( stream, "      END\n");
+  if(!pGraticule) return;
+
+  indent++;
+  writeBlockBegin(stream, indent, "GRID");
+  writeString(stream, indent, "LABELFORMAT", NULL, pGraticule->labelformat);
+  writeNumber(stream, indent, "MAXARCS", 0, pGraticule->maxarcs);
+  writeNumber(stream, indent, "MAXSUBDIVIDE", 0, pGraticule->maxsubdivides);
+  writeNumber(stream, indent, "MAXINTERVAL", 0, pGraticule->maxincrement);
+  writeNumber(stream, indent, "MINARCS", 0, pGraticule->minarcs);
+  writeNumber(stream, indent, "MININTERVAL", 0, pGraticule->minincrement);
+  writeNumber(stream, indent, "MINSUBDIVIDE", 0, pGraticule->minsubdivides);
+  writeBlockEnd(stream, indent, "GRID");
 }
 
 /*
@@ -905,7 +981,7 @@ int msInitProjection(projectionObj *p)
 #ifdef USE_PROJ  
   p->proj = NULL;
   if((p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "initProjection()");
+    msSetError(MS_MEMERR, NULL, "msInitProjection()");
     return(-1);
   }
 #endif
@@ -1379,19 +1455,18 @@ int msLoadProjectionString(projectionObj *p, const char *value)
 #endif
 }
 
-static void writeProjection(projectionObj *p, FILE *stream, char *tab) {
+static void writeProjection(FILE *stream, int indent, projectionObj *p) {
 #ifdef USE_PROJ  
   int i;
 
-  if(p->numargs > 0) {
-    fprintf(stream, "%sPROJECTION\n", tab);
-    for(i=0; i<p->numargs; i++)
-      fprintf(stream, "  %s\"%s\"\n", tab, p->args[i]);
-    fprintf(stream, "%sEND\n", tab);
-  }
+  if(!p || p->numargs <= 0) return;
+  indent++;
+  writeBlockBegin(stream, indent, "PROJECTION");
+  for(i=0; i<p->numargs; i++)
+    writeString(stream, indent, NULL, NULL, p->args[i]);
+  writeBlockEnd(stream, indent, "PROJECTION");
 #endif
 }
-
 
 /*
 ** Initialize, load and free a labelObj structure
@@ -1711,93 +1786,79 @@ int msUpdateLabelFromString(labelObj *label, char *string)
   return MS_SUCCESS;
 }
 
-static void writeLabel(labelObj *label, FILE *stream, const char *tab)
+static void writeLabel(FILE *stream, int indent, labelObj *label)
 {
+  int i;
+
   if(label->size == -1) return; /* there is no default label anymore */
 
-  fprintf(stream, "%sLABEL\n", tab);
+  indent++;
+  writeBlockBegin(stream, indent, "LABEL");
 
+  /*
+  ** a few attributes are bitmap or truetype only
+  */
   if(label->type == MS_BITMAP) {
-    fprintf(stream, "  %sSIZE %s\n", tab, msBitmapFontSizes[MS_NINT(label->size)]);
-    fprintf(stream, "  %sTYPE BITMAP\n", tab);
+    writeKeyword(stream, indent, "SIZE", (int)label->size, 5, MS_TINY, "TINY", MS_SMALL, "SMALL", MS_MEDIUM, "MEDIUM", MS_LARGE, "LARGE", MS_GIANT, "GIANT");
   } else {
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
-      fprintf(stream, "  %sANGLE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_ANGLE].item);
-    else {
-      if (label->anglemode == MS_FOLLOW) 
-        fprintf(stream, "  %sANGLE FOLLOW\n", tab);
-      else if(label->anglemode == MS_AUTO2)
-        fprintf(stream, "  %sANGLE AUTO2\n", tab);
-      else if(label->anglemode == MS_AUTO)
-        fprintf(stream, "  %sANGLE AUTO\n", tab);
-      else
-        fprintf(stream, "  %sANGLE %f\n", tab, label->angle);
-    }
-    if(label->antialias) fprintf(stream, "  %sANTIALIAS TRUE\n", tab);
+      writeAttributeBinding(stream, indent, "ANGLE", &(label->bindings[MS_LABEL_BINDING_ANGLE]));
+    else writeNumberOrKeyword(stream, indent, "ANGLE", 0, label->angle, label->anglemode, 3, MS_FOLLOW, "FOLLOW", MS_AUTO, "AUTO", MS_AUTO2, "AUTO2");
+
+    writeKeyword(stream, indent, "ANTIALIAS", label->antialias, 1, MS_TRUE, "TRUE");
+
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_FONT].item)
-      fprintf(stream, "  %sFONT [%s]\n", tab, label->bindings[MS_LABEL_BINDING_FONT].item);
-    else fprintf(stream, "  %sFONT \"%s\"\n", tab, label->font);
-    fprintf(stream, "  %sMAXSIZE %g\n", tab, label->maxsize);
-    fprintf(stream, "  %sMINSIZE %g\n", tab, label->minsize);
+      writeAttributeBinding(stream, indent, "FONT", &(label->bindings[MS_LABEL_BINDING_FONT]));
+    else writeString(stream, indent, "FONT", NULL, label->font);
+
+    writeNumber(stream, indent, "MAXSIZE",  MS_MAXFONTSIZE, label->maxsize);
+    writeNumber(stream, indent, "MINSIZE",  MS_MINFONTSIZE, label->minsize);
 
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_SIZE].item)
-      fprintf(stream, "  %sSIZE [%s]\n", tab, label->bindings[MS_LABEL_BINDING_SIZE].item);
-    else fprintf(stream, "  %sSIZE %g\n", tab, label->size);
-    fprintf(stream, "  %sTYPE TRUETYPE\n", tab);
-  }  
+      writeAttributeBinding(stream, indent, "SIZE", &(label->bindings[MS_LABEL_BINDING_SIZE]));
+    else writeNumber(stream, indent, "SIZE", -1, label->size);
+  }
 
-  writeColor(&(label->backgroundcolor), stream, "  BACKGROUNDCOLOR", tab);
-  writeColor(&(label->backgroundshadowcolor), stream, "  BACKGROUNDSHADOWCOLOR", tab);
-  if(label->backgroundshadowsizex != 1 && label->backgroundshadowsizey != 1) fprintf(stream, "  %sBACKGROUNDSHADOWSIZE %d %d\n", tab, label->backgroundshadowsizex, label->backgroundshadowsizey);  
-  fprintf(stream, "  %sBUFFER %d\n", tab, label->buffer);
-#if ALPHACOLOR_ENABLED
-  if( label->color.alpha )
-    writeColorWithAlpha(&(label->color), stream, "  ALPHACOLOR", tab);
-  else
-#endif
-    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_COLOR].item)
-      fprintf(stream, "  %sCOLOR [%s]\n", tab, label->bindings[MS_LABEL_BINDING_COLOR].item);
-    else writeColor(&(label->color), stream, "  COLOR", tab);
+  writeKeyword(stream, indent, "ALIGN", label->align, MS_ALIGN_CENTER, "CENTER", MS_ALIGN_RIGHT, "RIGHT");
+  writeColor(stream, indent, "BACKGROUNDCOLOR", &(label->backgroundcolor));
+  writeColor(stream, indent, "BACKGROUNDSHADOWCOLOR", &(label->backgroundshadowcolor));
+  writeDimension(stream, indent, "BACKGROUNDSHADOWSIZE", label->backgroundshadowsizex, label->backgroundshadowsizey); 
+  writeNumber(stream, indent, "BUFFER", 0, label->buffer);
 
-  if(label->encoding) fprintf(stream, "  %sENCODING \"%s\"\n", tab, label->encoding);
-  fprintf(stream, "  %sFORCE %s\n", tab, msTrueFalse[label->force]);
-  fprintf(stream, "  %sMINDISTANCE %d\n", tab, label->mindistance);
-  if(label->autominfeaturesize)
-    fprintf(stream, "  %sMINFEATURESIZE AUTO\n", tab);
-  else
-    fprintf(stream, "  %sMINFEATURESIZE %d\n", tab, label->minfeaturesize);
-  
-  if (label->repeatdistance > 0)
-      fprintf(stream, "  %sREPEATDISTANCE %d\n", tab, label->repeatdistance);
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_COLOR].item)
+    writeAttributeBinding(stream, indent, "COLOR", &(label->bindings[MS_LABEL_BINDING_COLOR]));
+  else writeColor(stream, indent, "COLOR", &(label->color));
 
-  if(label->minscaledenom != -1.0)
-    fprintf(stream, "  %sMINSCALEDENOM %g\n", tab, label->minscaledenom);
-  if(label->maxscaledenom != -1.0)
-      fprintf(stream, "  %sMAXSCALEDENOM %g\n", tab, label->maxscaledenom);
+  writeString(stream, indent, "ENCODING", NULL, label->encoding);
+  writeKeyword(stream, indent, "FORCE", label->force, 1, MS_TRUE, "TRUE");
+  writeNumber(stream, indent, "MAXLENGTH", 0, label->maxlength);
+  writeNumber(stream, indent, "MAXSCALEDENOM", -1, label->maxscaledenom);
+  writeNumber(stream, indent, "MINDISTANCE", -1, label->mindistance);
+  writeNumberOrKeyword(stream, indent, "MINFEATURESIZE", -1, label->minfeaturesize, 1, label->autominfeaturesize, MS_TRUE, "AUTO");
+  writeNumber(stream, indent, "MINLENGTH", 0, label->minlength);
+  writeNumber(stream, indent, "MINSCALEDENOM", -1, label->minscaledenom);
+  writeDimension(stream, indent, "OFFSET",  label->offsetx, label->offsety);
     
-  fprintf(stream, "  %sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
-
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item)
-    fprintf(stream, "  %sOUTLINECOLOR [%s]\n", tab, label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item);
-  else writeColor(&(label->outlinecolor), stream, "  OUTLINECOLOR", tab);  
-  if (label->outlinewidth != 1)   /* MS_XY is an internal value used only for legend labels... never write it */
-      fprintf(stream, "  %sOUTLINEWIDTH %d\n", tab, label->outlinewidth);
-  fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
-  if (label->position != MS_XY)   /* MS_XY is an internal value used only for legend labels... never write it */
-    fprintf(stream, "  %sPOSITION %s\n", tab, msPositionsText[label->position - MS_UL]);
+    writeAttributeBinding(stream, indent, "OUTLINECOLOR", &(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR]));
+  else writeColor(stream, indent, "OUTLINECOLOR", &(label->outlinecolor));
+
+  writeNumber(stream, indent, "OUTLINEWIDTH", 1, label->outlinewidth);
+  writeKeyword(stream, indent, "PARTIALS", label->partials, 1, MS_FALSE, "FALSE");
+  writeKeyword(stream, indent, "POSITION", label->position, 10, MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR", MS_AUTO, "AUTO");
+
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_PRIORITY].item)
-    fprintf(stream, "  %sPRIORITY [%s]\n", tab, label->bindings[MS_LABEL_BINDING_PRIORITY].item);
-  else if (label->priority != MS_DEFAULT_LABEL_PRIORITY)
-    fprintf(stream, "  %sPRIORITY %d\n", tab, label->priority);
-  writeColor(&(label->shadowcolor), stream, "  SHADOWCOLOR", tab);
-  if(label->shadowsizex != 1 && label->shadowsizey != 1) fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
-  if(label->wrap) fprintf(stream, "  %sWRAP '%c'\n", tab, label->wrap);
-  if(label->maxlength>0) fprintf(stream, "  %sMAXLENGTH %d\n", tab, label->maxlength);
-  if (label->align == MS_ALIGN_CENTER)
-    fprintf(stream, "  %sALIGN CENTER\n", tab);
-  else if (label->align == MS_ALIGN_RIGHT)
-    fprintf(stream, "  %sALIGN RIGHT\n", tab);
-  fprintf(stream, "%sEND\n", tab);  
+    writeAttributeBinding(stream, indent, "PRIORITY", &(label->bindings[MS_LABEL_BINDING_PRIORITY]));
+  else writeNumber(stream, indent, "PRIORITY", MS_DEFAULT_LABEL_PRIORITY, label->priority);
+
+  writeNumber(stream, indent, "REPEATDISTANCE", 0, label->repeatdistance);
+  writeColor(stream, indent, "SHADOWCOLOR", &(label->shadowcolor));
+  writeDimension(stream, indent, "SHADOWSIZE", label->shadowsizex, label->shadowsizey);
+  for(i=0; i<label->numstyles; i++)
+    writeStyle(stream, indent, label->styles[i]);
+  writeKeyword(stream, indent, "TYPE", label->type, MS_BITMAP, "BITMAP", MS_TRUETYPE, "TRUETYPE");
+  writeCharacter(stream, indent, "WRAP", '\0', label->wrap);
+  writeBlockEnd(stream, indent, "LABEL");
 }
 
 void initExpression(expressionObj *exp)
@@ -1832,15 +1893,12 @@ int loadExpression(expressionObj *exp)
     msFree(exp->string);
   exp->string = strdup(msyytext);
 
-  if(exp->type == MS_ISTRING)
-  {
-      exp->flags = exp->flags | MS_EXP_INSENSITIVE;
-      exp->type = MS_STRING;
-  }
-  else if(exp->type == MS_IREGEX)
-  {
-      exp->flags = exp->flags | MS_EXP_INSENSITIVE;
-      exp->type = MS_REGEX;
+  if(exp->type == MS_ISTRING) {
+    exp->flags = exp->flags | MS_EXP_INSENSITIVE;
+    exp->type = MS_STRING;
+  } else if(exp->type == MS_IREGEX) {
+    exp->flags = exp->flags | MS_EXP_INSENSITIVE;
+    exp->type = MS_REGEX;
   }
   
   return(0);
@@ -1860,13 +1918,13 @@ int loadExpression(expressionObj *exp)
    
 int msLoadExpressionString(expressionObj *exp, char *value)
 {
-    int retval = MS_FAILURE;
-    
-    msAcquireLock( TLOCK_PARSER );
-    retval = loadExpressionString( exp, value );
-    msReleaseLock( TLOCK_PARSER );
+  int retval = MS_FAILURE;
 
-    return retval;
+  msAcquireLock( TLOCK_PARSER );
+  retval = loadExpressionString( exp, value );
+  msReleaseLock( TLOCK_PARSER );
+
+  return retval;
 }
 
 int loadExpressionString(expressionObj *exp, char *value)
@@ -1881,11 +1939,11 @@ int loadExpressionString(expressionObj *exp, char *value)
     exp->string = strdup(msyytext);
 
     if(exp->type == MS_ISTRING) {
-        exp->type = MS_STRING;
-        exp->flags = exp->flags | MS_EXP_INSENSITIVE;
+      exp->type = MS_STRING;
+      exp->flags = exp->flags | MS_EXP_INSENSITIVE;
     } else if(exp->type == MS_IREGEX) {
-        exp->type = MS_REGEX;
-        exp->flags = exp->flags | MS_EXP_INSENSITIVE;
+      exp->type = MS_REGEX;
+      exp->flags = exp->flags | MS_EXP_INSENSITIVE;
     }
   } else {
     msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
@@ -1896,14 +1954,6 @@ int loadExpressionString(expressionObj *exp, char *value)
       exp->string = strdup(value); /* use the whole value */
   }
 
-  /* if(exp->type == MS_REGEX) { */
-  /* if(ms_regcomp(&(exp->regex), exp->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { // compile the expression  */
-  /* sprintf(ms_error.message, "Parsing error near (%s):(line %d)", exp->string, msyylineno); */
-  /* msSetError(MS_REGEXERR, ms_error.message, "loadExpression()"); */
-  /* return(-1); */
-  /* } */
-  /* } */
-  
   return(0); 
 }
 
@@ -1916,57 +1966,57 @@ int loadExpressionString(expressionObj *exp, char *value)
  */
 char *msGetExpressionString(expressionObj *exp) 
 {
+  if(exp->string) {
+    char *exprstring;
+    const char *case_insensitive = "";
 
-  if (exp->string)
-  {
-      char *exprstring;
-      const char *case_insensitive = "";
+    if(exp->flags & MS_EXP_INSENSITIVE)
+      case_insensitive = "i";
 
-      if (exp->flags & MS_EXP_INSENSITIVE)
-          case_insensitive = "i";
+    /* Alloc buffer big enough for string + 2 delimiters + 'i' + \0 */
+    exprstring = (char*)malloc(strlen(exp->string)+4);
 
-      /* Alloc buffer big enough for string + 2 delimiters + 'i' + \0 */
-      exprstring = (char*)malloc(strlen(exp->string)+4);
-
-      switch(exp->type)
-      {
-          case(MS_REGEX):
-            sprintf(exprstring, "/%s/%s", exp->string, case_insensitive);
-            return exprstring;
-          case(MS_STRING):
-            sprintf(exprstring, "\"%s\"%s", exp->string, case_insensitive);
-            return exprstring;
-          case(MS_EXPRESSION):
-            sprintf(exprstring, "(%s)", exp->string);
-            return exprstring;
-          default:
-            /* We should never get to here really! */
-            free(exprstring);
-            return NULL;
-      }
+    switch(exp->type) {
+    case(MS_REGEX):
+      sprintf(exprstring, "/%s/%s", exp->string, case_insensitive);
+      return exprstring;
+    case(MS_STRING):
+      sprintf(exprstring, "\"%s\"%s", exp->string, case_insensitive);
+      return exprstring;
+    case(MS_EXPRESSION):
+      sprintf(exprstring, "(%s)", exp->string);
+      return exprstring;
+    default:
+      /* We should never get to here really! */
+      free(exprstring);
+      return NULL;
     }
-    return NULL;
+  }
+  return NULL;
 }
 
-static void writeExpression(expressionObj *exp, FILE *stream)
+static void writeExpression(FILE *stream, int indent, const char *name, expressionObj *exp)
 {
+  if(!exp || !exp->string) return;
+
+  writeIndent(stream, ++indent);
   switch(exp->type) {
   case(MS_REGEX):
-    fprintf(stream, "/%s/", exp->string);
+    fprintf(stream, "%s /%s/", name, exp->string);
     break;
   case(MS_STRING):
     if (strchr(exp->string, '\"') != NULL)
-      fprintf(stream, "'%s'", exp->string);
+      fprintf(stream, "%s '%s'", name, exp->string);
     else
-      fprintf(stream, "\"%s\"", exp->string);
+      fprintf(stream, "%s \"%s\"", name, exp->string);
     break;
   case(MS_EXPRESSION):
-    fprintf(stream, "(%s)", exp->string);
+    fprintf(stream, "%s (%s)", name, exp->string);
     break;
   }
-  if((exp->type == MS_STRING || exp->type == MS_REGEX) && 
-     (exp->flags & MS_EXP_INSENSITIVE))
-      fprintf(stream, "i");
+  if((exp->type == MS_STRING || exp->type == MS_REGEX) && (exp->flags & MS_EXP_INSENSITIVE))
+    fprintf(stream, "i");
+  writeLineFeed(stream);
 }
 
 int loadHashTable(hashTableObj *ptable)
@@ -1999,24 +2049,22 @@ int loadHashTable(hashTableObj *ptable)
   return(MS_SUCCESS);
 }
 
-static void writeHashTable(hashTableObj *table, FILE *stream, const char *tab, char *title) {
+static void writeHashTable(FILE *stream, int indent, const char *title, hashTableObj *table) {
   struct hashObj *tp;
   int i;
 
   if(!table) return;
   if(msHashIsEmpty(table)) return;
 
-  fprintf(stream, "%s%s\n", tab, title);  
-
+  indent++;
+  writeBlockBegin(stream, indent, title);
   for (i=0;i<MS_HASHSIZE; i++) {
     if (table->items[i] != NULL) {
-      for (tp=table->items[i]; tp!=NULL; tp=tp->next) {
-  	fprintf(stream, "%s  \"%s\"\t\"%s\"\n", tab, tp->key, tp->data);
-      }
+      for (tp=table->items[i]; tp!=NULL; tp=tp->next)
+        writeNameValuePair(stream, indent, tp->key, tp->data);
     }
   }
-
-  fprintf(stream, "%sEND\n", tab);
+  writeBlockEnd(stream, indent, title);
 }
 
 /*
@@ -2333,74 +2381,65 @@ int freeStyle(styleObj *style) {
   return MS_SUCCESS;
 }
 
-void writeStyle(styleObj *style, FILE *stream) {
-  fprintf(stream, "      STYLE\n");
+void writeStyle(FILE *stream, int indent, styleObj *style) {
+
+  indent++;
+  writeBlockBegin(stream, indent, "STYLE");
+
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_ANGLE].item)
-     fprintf(stream, "        ANGLE [%s]\n", style->bindings[MS_STYLE_BINDING_ANGLE].item);
-  else if(style->autoangle)
-     fprintf(stream, "        ANGLE AUTO\n");
-  else if(style->angle != 0) fprintf(stream, "        ANGLE %g\n", style->angle);
+    writeAttributeBinding(stream, indent, "ANGLE", &(style->bindings[MS_STYLE_BINDING_ANGLE]));
+  else writeNumberOrKeyword(stream, indent, "ANGLE", 360, style->angle, style->autoangle, 1, MS_TRUE, "AUTO");
 
-  if(style->antialias) fprintf(stream, "        ANTIALIAS TRUE\n");
-  writeColor(&(style->backgroundcolor), stream, "BACKGROUNDCOLOR", "        ");
+  writeKeyword(stream, indent, "ANTIALIAS", style->antialias, 1, MS_TRUE, "TRUE");
+  writeColor(stream, indent, "BACKGROUNDCOLOR", &(style->backgroundcolor));
 
-#if ALPHACOLOR_ENABLED
-  if(style->color.alpha)
-    writeColorWithAlpha(&(style->color), stream, "ALPHACOLOR", "        ");
-  else
-#endif
-    if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_COLOR].item)
-      fprintf(stream, "        COLOR [%s]\n", style->bindings[MS_STYLE_BINDING_COLOR].item);
-  else writeColor(&(style->color), stream, "COLOR", "        ");
-  
-  if(style->minscaledenom != -1.0)
-      fprintf(stream, "        MINSCALEDENOM %g\n", style->minscaledenom);
-  if(style->maxscaledenom != -1.0)
-        fprintf(stream, "        MAXSCALEDENOM %g\n", style->maxscaledenom);
-    
-  if(style->maxsize != MS_MAXSYMBOLSIZE) fprintf(stream, "        MAXSIZE %g\n", style->maxsize);
-  if(style->minsize != MS_MINSYMBOLSIZE) fprintf(stream, "        MINSIZE %g\n", style->minsize);
-  if(style->maxwidth != MS_MAXSYMBOLWIDTH) fprintf(stream, "        MAXWIDTH %g\n", style->maxwidth);
-  if(style->minwidth != MS_MINSYMBOLWIDTH) fprintf(stream, "        MINWIDTH %g\n", style->minwidth);  
+  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_COLOR].item)
+    writeAttributeBinding(stream, indent, "COLOR", &(style->bindings[MS_STYLE_BINDING_COLOR]));
+  else writeColor(stream, indent, "COLOR", &(style->color));
+
+  writeNumber(stream, indent, "MAXSCALEDENOM", -1, style->maxscaledenom);
+  writeNumber(stream, indent, "MAXSIZE", MS_MAXSYMBOLSIZE, style->maxsize);
+  writeNumber(stream, indent, "MAXWIDTH", MS_MAXSYMBOLWIDTH, style->maxwidth);
+  writeNumber(stream, indent, "MINSCALEDENOM", -1, style->minscaledenom);
+  writeNumber(stream, indent, "MINSIZE", MS_MINSYMBOLSIZE, style->minsize);
+  writeNumber(stream, indent, "MINWIDTH", MS_MINSYMBOLWIDTH, style->minwidth);
+  writeDimension(stream, indent, "OFFSET", style->offsetx, style->offsety);
+
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OPACITY].item)
-    fprintf(stream, "        OPACITY [%s]\n", style->bindings[MS_STYLE_BINDING_OPACITY].item);
-  else if(style->opacity != 100) fprintf(stream, "        OPACITY %d\n", style->opacity);
-  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item)
-    fprintf(stream, "        OUTLINEWIDTH [%s]\n", style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item);
-  else if(style->outlinewidth > 0) fprintf(stream, "        OUTLINEWIDTH %g\n", style->outlinewidth);
+    writeAttributeBinding(stream, indent, "OPACITY", &(style->bindings[MS_STYLE_BINDING_OPACITY]));
+  else writeNumber(stream, indent, "OPACITY", 100, style->opacity);
+
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item)
-      fprintf(stream, "        OUTLINECOLOR [%s]\n", style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item);
-  else writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
+    writeAttributeBinding(stream, indent, "OUTLINECOLOR", &(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR]));
+  else writeColor(stream, indent, "OUTLINECOLOR", &(style->outlinecolor)); 
+
+  if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item)
+    writeAttributeBinding(stream, indent, "OUTLINEWIDTH", &(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH]));
+  else writeNumber(stream, indent, "OUTLINEWIDTH", 0, style->outlinewidth);
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SIZE].item)
-      fprintf(stream, "        SIZE [%s]\n", style->bindings[MS_STYLE_BINDING_SIZE].item);
-  else if(style->size > 0) fprintf(stream, "        SIZE %g\n", style->size);
+    writeAttributeBinding(stream, indent, "SIZE", &(style->bindings[MS_STYLE_BINDING_SIZE]));
+  else writeNumber(stream, indent, "SIZE", -1, style->size);
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SYMBOL].item)
-     fprintf(stream, "        SYMBOL [%s]\n", style->bindings[MS_STYLE_BINDING_SYMBOL].item);
-  else {
-    if(style->symbolname)
-      fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
-    else
-      fprintf(stream, "        SYMBOL %d\n", style->symbol);
-  }
+    writeAttributeBinding(stream, indent, "SYMBOL", &(style->bindings[MS_STYLE_BINDING_SYMBOL]));
+  else writeNumberOrString(stream, indent, "SYMBOL", 0, style->symbol, style->symbolname);
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_WIDTH].item)
-    fprintf(stream, "        WIDTH [%s]\n", style->bindings[MS_STYLE_BINDING_WIDTH].item);
-  else if(style->width > 0) fprintf(stream, "        WIDTH %g\n", style->width);
-
-  if(style->offsetx != 0 || style->offsety != 0)  fprintf(stream, "        OFFSET %g %g\n", style->offsetx, style->offsety);
+    writeAttributeBinding(stream, indent, "WIDTH", &(style->bindings[MS_STYLE_BINDING_WIDTH]));
+  else writeNumber(stream, indent, "WIDTH", 1, style->width);
 
   if(style->rangeitem) {
-    fprintf(stream, "        RANGEITEM \"%s\"\n", style->rangeitem);
-    writeColorRange(&(style->mincolor),&(style->maxcolor), stream, "COLORRANGE", "        ");
-    fprintf(stream, "        DATARANGE %g %g\n", style->minvalue, style->maxvalue);
+    writeString(stream, indent, "RANGEITEM", NULL, style->rangeitem);
+    writeColorRange(stream, indent, "COLORRANGE", &(style->mincolor), &(style->maxcolor));
+    writeDimension(stream, indent, "DATARANGE", style->minvalue, style->maxvalue);
   }
 
   if(style->_geomtransformexpression) {
+    // TODO!!!
     fprintf(stream, "        GEOMTRANSFORM \"%s\"\n",style->_geomtransformexpression);
   }
-  fprintf(stream, "      END\n");
+  writeBlockEnd(stream, indent, "STYLE");
 }
 
 /*
@@ -2874,39 +2913,29 @@ int msUpdateClassFromString(classObj *class, char *string, int url_string)
   return MS_SUCCESS;
 }
 
-
-static void writeClass(classObj *class, FILE *stream)
+static void writeClass(FILE *stream, int indent, classObj *class)
 {
   int i;
 
   if(class->status == MS_DELETE) return;
 
-  fprintf(stream, "    CLASS\n");
-  if(class->name) fprintf(stream, "      NAME \"%s\"\n", class->name);
-  if(class->group) fprintf(stream, "      GROUP \"%s\"\n", class->group);
-  if(class->debug) fprintf(stream, "      DEBUG %d\n", class->debug);
-  if(class->expression.string) {
-    fprintf(stream, "      EXPRESSION ");
-    writeExpression(&(class->expression), stream);
-    fprintf(stream, "\n");
-  }
-  if(class->keyimage) fprintf(stream, "      KEYIMAGE \"%s\"\n", class->keyimage);
-  writeLabel(&(class->label), stream, "      ");
-  if(class->maxscaledenom > -1) fprintf(stream, "      MAXSCALEDENOM %g\n", class->maxscaledenom);
-  if(&(class->metadata)) writeHashTable(&(class->metadata), stream, "      ", "METADATA");
-  if(class->minscaledenom > -1) fprintf(stream, "      MINSCALEDENOM %g\n", class->minscaledenom);
-  if(class->status == MS_OFF) fprintf(stream, "      STATUS OFF\n");
-  for(i=0; i<class->numstyles; i++)
-    writeStyle(class->styles[i], stream);
-  if(class->template) fprintf(stream, "      TEMPLATE \"%s\"\n", class->template);
-  if(class->text.string) {
-    fprintf(stream, "      TEXT ");
-    writeExpression(&(class->text), stream);
-    fprintf(stream, "\n");
-  }  
-  if(class->title) 
-    fprintf(stream, "      TITLE \"%s\"\n", class->title);
-  fprintf(stream, "    END\n");
+  indent++;
+  writeBlockBegin(stream, indent, "CLASS");
+  writeString(stream, indent, "NAME", NULL, class->name);
+  writeString(stream, indent, "GROUP", NULL, class->group);
+  writeNumber(stream, indent, "DEBUG", 0, class->debug); 
+  writeExpression(stream, indent, "EXPRESSION", &(class->expression));
+  writeString(stream, indent, "KEYIMAGE", NULL, class->keyimage);
+  writeLabel(stream, indent, &(class->label));
+  writeNumber(stream, indent, "MAXSCALEDENOM", -1, class->maxscaledenom);
+  writeHashTable(stream, indent, "METADATA", &(class->metadata));
+  writeNumber(stream, indent, "MINSCALEDENOM", -1, class->minscaledenom);
+  writeKeyword(stream, indent, "STATUS", class->status, 1, MS_OFF, "OFF");
+  for(i=0; i<class->numstyles; i++) writeStyle(stream, indent, class->styles[i]);
+  writeString(stream, indent, "TEMPLATE", NULL, class->template);
+  writeExpression(stream, indent, "TEXT", &(class->text));
+  writeString(stream, indent, "TITLE", NULL, class->title);
+  writeBlockEnd(stream, indent, "CLASS");
 }
 
 /*
@@ -3549,146 +3578,82 @@ int msUpdateLayerFromString(layerObj *layer, char *string, int url_string)
   return MS_SUCCESS;
 }
 
-static void writeLayer(layerObj *layer, FILE *stream)
+static void writeLayer(FILE *stream, int indent, layerObj *layer)
 {
   int i;
   featureListNodeObjPtr current=NULL;
 
-  if (layer->status == MS_DELETE)
-      return;
+  if(layer->status == MS_DELETE)
+    return;
 
-  fprintf(stream, "  LAYER\n");  
-  if(layer->classitem) fprintf(stream, "    CLASSITEM \"%s\"\n", layer->classitem);
-  if(layer->connection) {
-    if (strchr(layer->connection, '\"') != NULL)
-      fprintf(stream, "    CONNECTION '%s'\n", layer->connection);
-    else
-      fprintf(stream, "    CONNECTION \"%s\"\n", layer->connection);
-    if(layer->connectiontype == MS_SDE)
-      fprintf(stream, "    CONNECTIONTYPE SDE\n");
-    else if(layer->connectiontype == MS_OGR)
-      fprintf(stream, "    CONNECTIONTYPE OGR\n");
-    else if(layer->connectiontype == MS_POSTGIS)
-      fprintf(stream, "    CONNECTIONTYPE POSTGIS\n");
-    else if(layer->connectiontype == MS_MYGIS)
-      fprintf(stream, "    CONNECTIONTYPE MYGIS\n");
-    else if(layer->connectiontype == MS_WMS)
-      fprintf(stream, "    CONNECTIONTYPE WMS\n");
-    else if(layer->connectiontype == MS_ORACLESPATIAL)
-      fprintf(stream, "    CONNECTIONTYPE ORACLESPATIAL\n");
-    else if(layer->connectiontype == MS_WFS)
-      fprintf(stream, "    CONNECTIONTYPE WFS\n");
-    else if(layer->connectiontype == MS_PLUGIN)
-      fprintf(stream, "    CONNECTIONTYPE PLUGIN\n");
-  }
-  if(layer->connectiontype == MS_PLUGIN) {
-      fprintf(stream, "    PLUGIN  \"%s\"\n", layer->plugin_library_original);
-  }
-
-  if(layer->data) {
-    if (strchr(layer->data, '\"') != NULL)
-      fprintf(stream, "    DATA '%s'\n", layer->data);
-    else
-      fprintf(stream, "    DATA \"%s\"\n", layer->data);
-  }
-  if(layer->debug) fprintf(stream, "    DEBUG %d\n", layer->debug);
-  if(layer->dump) fprintf(stream, "    DUMP TRUE\n");
-  
-  if(layer->extent.minx != -1 && layer->extent.maxx != -1 && layer->extent.miny != -1 && layer->extent.maxy != -1)
-    fprintf(stream, "    EXTENT %.15g %.15g %.15g %.15g\n", layer->extent.minx, layer->extent.miny, layer->extent.maxx, layer->extent.maxy);  
-
-  if(layer->filter.string) {
-    fprintf(stream, "      FILTER ");
-    writeExpression(&(layer->filter), stream);
-    fprintf(stream, "\n");
-  }
-  if(layer->filteritem) fprintf(stream, "    FILTERITEM \"%s\"\n", layer->filteritem);
-
-  if(layer->footer) fprintf(stream, "    FOOTER \"%s\"\n", layer->footer);
-  if(layer->group) fprintf(stream, "    GROUP \"%s\"\n", layer->group);
-  if(layer->header) fprintf(stream, "    HEADER \"%s\"\n", layer->header);
-  for(i=0; i<layer->numjoins; i++)
-    writeJoin(&(layer->joins[i]), stream);
-  if(!layer->labelcache) fprintf(stream, "    LABELCACHE OFF\n");
-  if(layer->labelitem) fprintf(stream, "    LABELITEM \"%s\"\n", layer->labelitem);
-  if(layer->labelmaxscaledenom > -1) fprintf(stream, "    LABELMAXSCALEDENOM %g\n", layer->labelmaxscaledenom);
-  if(layer->labelminscaledenom > -1) fprintf(stream, "    LABELMINSCALEDENOM %g\n", layer->labelminscaledenom);
-  if(layer->labelrequires) fprintf(stream, "    LABELREQUIRES \"%s\"\n", layer->labelrequires);
-  if(layer->maxfeatures > 0) fprintf(stream, "    MAXFEATURES %d\n", layer->maxfeatures);
-  if(layer->maxscaledenom > -1) fprintf(stream, "    MAXSCALEDENOM %g\n", layer->maxscaledenom); 
-  if(layer->maxgeowidth > -1) fprintf(stream, "    MAXGEOWIDTH %g\n", layer->maxgeowidth);
-  if(&(layer->metadata)) writeHashTable(&(layer->metadata), stream, "    ", "METADATA");
-  if(layer->minscaledenom > -1) fprintf(stream, "    MINSCALEDENOM %g\n", layer->minscaledenom);
-  if(layer->mingeowidth > -1) fprintf(stream, "    MINGEOWIDTH %g\n", layer->mingeowidth);
-  fprintf(stream, "    NAME \"%s\"\n", layer->name);
-  writeColor(&(layer->offsite), stream, "OFFSITE", "    ");
-  if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
-
+  indent++;
+  writeBlockBegin(stream, indent, "LAYER");
+  // bindvals
+  /* class - see below */
+  writeString(stream, indent, "CLASSGROUP", NULL, layer->classgroup);
+  writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
+  writeString(stream, indent, "CONNECTION", NULL, layer->connection);
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 9, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_MYGIS, "MYGIS", MS_PLUGIN, "PLUGIN");
+  writeString(stream, indent, "DATA", NULL, layer->data);
+  writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */ 
+  writeKeyword(stream, indent, "DUMP", layer->dump, 1, MS_TRUE, "TRUE");
+  writeExtent(stream, indent, "EXTENT", layer->extent);
+  writeExpression(stream, indent, "FILTER", &(layer->filter));
+  writeString(stream, indent, "FILTERITEM", NULL, layer->filteritem);
+  writeString(stream, indent, "FOOTER", NULL, layer->footer);
+  writeString(stream, indent, "GROUP", NULL, layer->group);
+  writeString(stream, indent, "HEADER", NULL, layer->header);
+  /* join - see below */
+  writeKeyword(stream, indent, "LABELCACHE", layer->labelcache, 1, MS_OFF, "OFF");
+  writeString(stream, indent, "LABELITEM", NULL, layer->labelitem);
+  writeNumber(stream, indent, "LABELMAXSCALEDENOM", -1, layer->labelmaxscaledenom);
+  writeNumber(stream, indent, "LABELMINSCALEDENOM", -1, layer->labelminscaledenom);
+  writeString(stream, indent, "LABELREQUIRES", NULL, layer->labelrequires);
+  writeNumber(stream, indent, "MAXFEATURES", -1, layer->maxfeatures);
+  writeNumber(stream, indent, "MAXGEOWIDTH", -1, layer->maxgeowidth);
+  writeNumber(stream, indent, "MAXSCALEDENOM", -1, layer->maxscaledenom);
+  writeHashTable(stream, indent, "METADATA", &(layer->metadata));
+  writeNumber(stream, indent, "MINGEOWIDTH", -1, layer->mingeowidth);
+  writeNumber(stream, indent, "MINSCALEDENOM", -1, layer->minscaledenom);
+  writeString(stream, indent, "NAME", NULL, layer->name);
+  writeColor(stream, indent, "OFFSITE", &(layer->offsite));
+  writeString(stream, indent, "PLUGIN", NULL, layer->plugin_library_original);
+  writeKeyword(stream, indent, "POSTLABELCACHE", layer->postlabelcache, 1, MS_TRUE, "TRUE");
   for(i=0; i<layer->numprocessing; i++)
-    if(layer->processing[i]) fprintf(stream, "    PROCESSING \"%s\"\n", layer->processing[i]);
+    writeString(stream, indent, "PROCESSING", NULL, layer->processing[i]);
+  writeProjection(stream, indent, &(layer->projection));
+  writeString(stream, indent, "REQUIRES", NULL, layer->requires);
+  writeKeyword(stream, indent, "SIZEUNITS", layer->sizeunits, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
+  writeKeyword(stream, indent, "STATUS", layer->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_DEFAULT, "DEFAULT");
+  writeString(stream, indent, "STYLEITEM", NULL, layer->styleitem);
+  writeNumber(stream, indent, "SYMBOLSCALEDENOM", -1, layer->symbolscaledenom);
+  writeString(stream, indent, "TEMPLATE", NULL, layer->template);
+  writeString(stream, indent, "TILEINDEX", NULL, layer->tileindex);
+  writeString(stream, indent, "TILEITEM", NULL, layer->tileitem);
+  writeNumber(stream, indent, "TOLERANCE", -1, layer->tolerance);
+  writeKeyword(stream, indent, "TOLERANCEUNITS", layer->toleranceunits, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
+  writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE, "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");
+  writeNumberOrKeyword(stream, indent, "OPACITY", 100, layer->opacity, (int)layer->opacity, 1, MS_GD_ALPHA, "ALPHA"); 
+  writeKeyword(stream, indent, "TYPE", layer->type, 9, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_ANNOTATION, "ANNOTATION", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
+  writeKeyword(stream, indent, "UNITS", layer->units, 9, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD", MS_PIXELS, "PIXELS", MS_PERCENTAGES, "PERCENTATGES");
+  writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 
-  writeProjection(&(layer->projection), stream, "    ");
-  if(layer->requires) fprintf(stream, "    REQUIRES \"%s\"\n", layer->requires);
-  if(layer->sizeunits != MS_PIXELS) fprintf(stream, "    SIZEUNITS %s\n", msUnits[layer->sizeunits]);
-  fprintf(stream, "    STATUS %s\n", msStatus[layer->status]);
-  if(layer->styleitem) fprintf(stream, "    STYLEITEM \"%s\"\n", layer->styleitem);
-  if(layer->symbolscaledenom > -1) fprintf(stream, "    SYMBOLSCALEDENOM %g\n", layer->symbolscaledenom);
-  if(layer->template) fprintf(stream, "    TEMPLATE \"%s\"\n", layer->template);
-  if(layer->tileindex) {
-    fprintf(stream, "    TILEINDEX \"%s\"\n", layer->tileindex);
-    if(layer->tileitem) fprintf(stream, "    TILEITEM \"%s\"\n", layer->tileitem);
-  } 
-
-  if(layer->tolerance != -1) fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
-  if(layer->toleranceunits != MS_PIXELS) fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
-  if(layer->transform == MS_FALSE) 
-      fprintf(stream, "    TRANSFORM FALSE\n");
-  else if (layer->transform == MS_UL)
-      fprintf(stream, "    TRANSFORM UL\n");
-  else if (layer->transform == MS_UC)
-      fprintf(stream, "    TRANSFORM UC\n");
-  else if (layer->transform == MS_UR)
-      fprintf(stream, "    TRANSFORM UR\n");
-  else if (layer->transform == MS_CL)
-      fprintf(stream, "    TRANSFORM CL\n");
-  else if (layer->transform == MS_CC)
-      fprintf(stream, "    TRANSFORM CC\n");
-  else if (layer->transform == MS_CR)
-      fprintf(stream, "    TRANSFORM CR\n");
-  else if (layer->transform == MS_LL)
-      fprintf(stream, "    TRANSFORM LL\n");
-  else if (layer->transform == MS_LC)
-      fprintf(stream, "    TRANSFORM LC\n");
-  else if (layer->transform == MS_LR)
-      fprintf(stream, "    TRANSFORM LR\n");
-
-
-  if(layer->opacity == MS_GD_ALPHA) 
-    fprintf(stream, "    OPACITY ALPHA\n");
-  else if(layer->opacity != 100) 
-    fprintf(stream, "    OPACITY %d\n", layer->opacity);
-
-  if (layer->type != -1)
-    fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);
-  fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);
-  if(&(layer->validation)) writeHashTable(&(layer->validation), stream, "    ", "VALIDATION");
-
-  if(layer->classgroup) fprintf(stream, "    CLASSGROUP \"%s\"\n", layer->classgroup);
-
-  /* write potentially multiply occuring features last */
-  for(i=0; i<layer->numclasses; i++) writeClass(layer->class[i], stream);
+  /* write potentially multiply occuring objects last */
+  for(i=0; i<layer->numjoins; i++)  writeJoin(stream, indent, &(layer->joins[i]));
+  for(i=0; i<layer->numclasses; i++) writeClass(stream, indent, layer->class[i]);
 
   if( layer->layerinfo &&  layer->connectiontype == MS_GRATICULE)
-    writeGrid( (graticuleObj *) layer->layerinfo, stream );
+    writeGrid(stream, indent, (graticuleObj *) layer->layerinfo);
   else {
     current = layer->features;
     while(current != NULL) {
-      writeFeature(&(current->shape), stream);
+      writeFeature(stream, indent, &(current->shape));
       current = current->next;
     }
   }
 
-  fprintf(stream, "  END\n\n");
+  writeBlockEnd(stream, indent, "LAYER");
+  writeLineFeed(stream);
 }
 
 /*
@@ -3829,25 +3794,24 @@ int msUpdateReferenceMapFromString(referenceMapObj *ref, char *string, int url_s
   return MS_SUCCESS;
 }
 
-static void writeReferenceMap(referenceMapObj *ref, FILE *stream)
+static void writeReferenceMap(FILE *stream, int indent, referenceMapObj *ref)
 {
   if(!ref->image) return;
 
-  fprintf(stream, "  REFERENCE\n");
-  fprintf(stream, "    COLOR %d %d %d\n", ref->color.red, ref->color.green, ref->color.blue);
-  fprintf(stream, "    EXTENT %.15g %.15g %.15g %.15g\n", ref->extent.minx, ref->extent.miny, ref->extent.maxx, ref->extent.maxy);
-  fprintf(stream, "    IMAGE \"%s\"\n", ref->image);
-  fprintf(stream, "    OUTLINECOLOR %d %d %d\n", ref->outlinecolor.red, ref->outlinecolor.green, ref->outlinecolor.blue);
-  fprintf(stream, "    SIZE %d %d\n", ref->width, ref->height);
-  fprintf(stream, "    STATUS %s\n", msStatus[ref->status]);
-  if(ref->markername)
-    fprintf(stream, "      MARKER \"%s\"\n", ref->markername);
-  else
-    fprintf(stream, "      MARKER %d\n", ref->marker);
-  fprintf(stream, "      MARKERSIZE %d\n", ref->markersize);
-  fprintf(stream, "      MINBOXSIZE %d\n", ref->minboxsize);
-  fprintf(stream, "      MAXBOXSIZE %d\n", ref->maxboxsize);
-  fprintf(stream, "  END\n\n");
+  indent++;
+  writeBlockBegin(stream, indent, "REFERENCE");
+  writeColor(stream, indent, "COLOR", &(ref->color));
+  writeExtent(stream, indent, "EXTENT", ref->extent);
+  writeString(stream, indent, "IMAGE", NULL, ref->image);
+  writeColor(stream, indent, "OUTLINECOLOR", &(ref->outlinecolor));
+  writeDimension(stream, indent, "SIZE", ref->width, ref->height);
+  writeKeyword(stream, indent, "STATUS", ref->status, 2, MS_ON, "ON", MS_OFF, "OFF");
+  writeNumberOrString(stream, indent, "MARKER", 0, ref->marker, ref->markername);
+  writeNumber(stream, indent, "MARKERSIZE", -1, ref->markersize);
+  writeNumber(stream, indent, "MAXBOXSIZE", -1, ref->maxboxsize);
+  writeNumber(stream, indent, "MINBOXSIZE", -1, ref->minboxsize);
+  writeBlockEnd(stream, indent, "REFERENCE");
+  writeLineFeed(stream);
 }
 
 #define MAX_FORMATOPTIONS 100
@@ -4010,60 +3974,39 @@ static int loadOutputFormat(mapObj *map)
 /*
 ** utility function to write an output format structure to file
 */
-static void writeOutputformatobject(outputFormatObj *outputformat,
-                                    FILE *stream)
+static void writeOutputformatobject(FILE *stream, int indent, outputFormatObj *outputformat)
 {
-    int i = 0;
-    if (outputformat)
-    {
-        fprintf(stream, "  OUTPUTFORMAT\n");
-        fprintf(stream, "    NAME \"%s\"\n", outputformat->name);
-        fprintf(stream, "    MIMETYPE \"%s\"\n", outputformat->mimetype);
-        fprintf(stream, "    DRIVER \"%s\"\n", outputformat->driver);
-        fprintf(stream, "    EXTENSION \"%s\"\n", outputformat->extension);
-        if (outputformat->imagemode == MS_IMAGEMODE_PC256)
-          fprintf(stream, "    IMAGEMODE \"%s\"\n", "PC256");
-        else if (outputformat->imagemode == MS_IMAGEMODE_RGB)
-           fprintf(stream, "    IMAGEMODE \"%s\"\n", "RGB");
-        else if (outputformat->imagemode == MS_IMAGEMODE_RGBA)
-           fprintf(stream, "    IMAGEMODE \"%s\"\n", "RGBA");
-        else if (outputformat->imagemode == MS_IMAGEMODE_INT16)
-           fprintf(stream, "    IMAGEMODE \"%s\"\n", "INT16");
-         else if (outputformat->imagemode == MS_IMAGEMODE_FLOAT32)
-           fprintf(stream, "    IMAGEMODE \"%s\"\n", "FLOAT32");
-         else if (outputformat->imagemode == MS_IMAGEMODE_BYTE)
-           fprintf(stream, "    IMAGEMODE \"%s\"\n", "BYTE");
+  int i = 0;
+  if(!outputformat) return;
 
-        fprintf(stream, "    TRANSPARENT %s\n", 
-                msTrueFalse[outputformat->transparent]);
-
-        for (i=0; i<outputformat->numformatoptions; i++)
-          fprintf(stream, "    FORMATOPTION \"%s\"\n", 
-                  outputformat->formatoptions[i]);
-
-        fprintf(stream, "  END\n\n");
-        
-    }
+  indent++;
+  writeBlockBegin(stream, indent, "OUTPUTFORMAT");
+  writeString(stream, indent, "NAME", NULL, outputformat->name);
+  writeString(stream, indent, "MIMETYPE", NULL, outputformat->mimetype);
+  writeString(stream, indent, "DRIVER", NULL, outputformat->driver);
+  writeString(stream, indent, "EXTENSION", NULL, outputformat->extension);
+  writeKeyword(stream, indent, "IMAGEMODE", outputformat->imagemode, 6, MS_IMAGEMODE_PC256, "PC256", MS_IMAGEMODE_RGB, "RGB", MS_IMAGEMODE_RGBA, "RGBA", MS_IMAGEMODE_INT16, "INT16", MS_IMAGEMODE_FLOAT32, "FLOAT32", MS_IMAGEMODE_BYTE, "BYTE");
+  writeKeyword(stream, indent, "TRANSPARENT", outputformat->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  for (i=0; i<outputformat->numformatoptions; i++) 
+    writeString(stream, indent, "FORMATOPTION", NULL, outputformat->formatoptions[i]);
+  writeBlockEnd(stream, indent, "OUTPUTFORMAT");
+  writeLineFeed(stream);
 }
 
 
 /*
 ** Write the output formats to file
 */
-static void writeOutputformat(mapObj *map, FILE *stream)
+static void writeOutputformat(FILE *stream, int indent, mapObj *map)
 {
-    int i = 0;
-    if (map->outputformat)
-    {
-        writeOutputformatobject(map->outputformat, stream);
-        for (i=0; i<map->numoutputformats; i++)
-        {
-            if (map->outputformatlist[i]->inmapfile == MS_TRUE &&
-                strcmp(map->outputformatlist[i]->driver,
-                       map->outputformat->driver) != 0)
-              writeOutputformatobject(map->outputformatlist[i], stream);
-        }
-    }
+  int i=0;
+  if(!map->outputformat) return;
+
+  writeOutputformatobject(stream, indent, map->outputformat);
+  for(i=0; i<map->numoutputformats; i++) {
+    if(map->outputformatlist[i]->inmapfile == MS_TRUE && strcmp(map->outputformatlist[i]->driver, map->outputformat->driver) != 0)
+      writeOutputformatobject(stream, indent, map->outputformatlist[i]);
+  }
 }
                               
 /*
@@ -4183,23 +4126,22 @@ int msUpdateLegendFromString(legendObj *legend, char *string, int url_string)
   return MS_SUCCESS;
 }
 
-static void writeLegend(legendObj *legend, FILE *stream)
+static void writeLegend(FILE *stream, int indent, legendObj *legend)
 {
-  const char *tab1 = "  ", *tab2 = "    ";
-
-  writeBlockBegin(stream, tab1, "LEGEND");
-  writeColor(&(legend->imagecolor), stream, "IMAGECOLOR", tab2);
-  writeKeyword(stream, tab2, "INTERLACE", -1, legend->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
-  writeDimension(stream, tab2, "KEYSIZE", legend->keysizex, legend->keysizey);
-  writeDimension(stream, tab2, "KEYSPACING", legend->keyspacingx, legend->keyspacingy);
-  writeLabel(&(legend->label), stream, tab2);
-  writeColor(&(legend->outlinecolor), stream, "OUTLINECOLOR", tab2);
-  if(legend->status == MS_EMBED) writeKeyword(stream, tab2, "POSITION", -1, legend->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
-  writeKeyword(stream, tab2, "POSTLABELCACHE", MS_FALSE, legend->postlabelcache, 1, MS_TRUE, "TRUE");
-  writeKeyword(stream, tab2, "STATUS", -1, legend->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_EMBED, "EMBED");
-  writeKeyword(stream, tab2, "TRANSPARENT", -1, legend->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
-  writeString(stream, tab2, "TEMPLATE", NULL, legend->template);
-  writeBlockEnd(stream, tab1, "LEGEND");
+  indent++;
+  writeBlockBegin(stream, indent, "LEGEND");
+  writeColor(stream, indent, "IMAGECOLOR", &(legend->imagecolor));
+  writeKeyword(stream, indent, "INTERLACE", legend->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeDimension(stream, indent, "KEYSIZE", legend->keysizex, legend->keysizey);
+  writeDimension(stream, indent, "KEYSPACING", legend->keyspacingx, legend->keyspacingy);
+  writeLabel(stream, indent, &(legend->label));
+  writeColor(stream, indent, "OUTLINECOLOR", &(legend->outlinecolor));
+  if(legend->status == MS_EMBED) writeKeyword(stream, indent, "POSITION", legend->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
+  writeKeyword(stream, indent, "POSTLABELCACHE", legend->postlabelcache, 1, MS_TRUE, "TRUE");
+  writeKeyword(stream, indent, "STATUS", legend->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_EMBED, "EMBED");
+  writeKeyword(stream, indent, "TRANSPARENT", legend->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeString(stream, indent, "TEMPLATE", NULL, legend->template);
+  writeBlockEnd(stream, indent, "LEGEND");
   writeLineFeed(stream);
 }
 
@@ -4332,27 +4274,26 @@ int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_stri
   return MS_SUCCESS;
 }
 
-static void writeScalebar(scalebarObj *scalebar, FILE *stream)
+static void writeScalebar(FILE *stream, int indent, scalebarObj *scalebar)
 {
-  const char *tab1 = "  ", *tab2 = "    ";
-
-  writeBlockBegin(stream, tab1, "SCALEBAR");
-  writeKeyword(stream, tab2, "ALIGN", MS_ALIGN_CENTER, scalebar->align, 2, MS_ALIGN_LEFT, "LEFT", MS_ALIGN_RIGHT, "RIGHT");
-  writeColor(&(scalebar->backgroundcolor), stream, "BACKGROUNDCOLOR", tab2);
-  writeColor(&(scalebar->color), stream, "COLOR", tab2);
-  writeColor(&(scalebar->imagecolor), stream, "IMAGECOLOR", tab2);
-  writeKeyword(stream, tab2, "INTERLACE", -1, scalebar->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
-  writeNumber(stream, tab2, "INTERVALS", -1, scalebar->intervals);
-  writeLabel(&(scalebar->label), stream, tab2);
-  writeColor(&(scalebar->outlinecolor), stream, "OUTLINECOLOR", tab2);
-  if(scalebar->status == MS_EMBED) writeKeyword(stream, tab2, "POSITION", -1, scalebar->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
-  writeKeyword(stream, tab2, "POSTLABELCACHE", MS_FALSE, scalebar->postlabelcache, 1, MS_TRUE, "TRUE");
-  writeDimension(stream, tab2, "SIZE", scalebar->width, scalebar->height);
-  writeKeyword(stream, tab2, "STATUS", -1, scalebar->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_EMBED, "EMBED");
-  writeNumber(stream, tab2, "STYLE", -1, scalebar->style);
-  writeKeyword(stream, tab2, "TRANSPARENT", -1, scalebar->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
-  writeKeyword(stream, tab2, "UNITS", -1, scalebar->units, 6, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES");
-  writeBlockEnd(stream, tab1, "SCALEBAR");
+  indent++;
+  writeBlockBegin(stream, indent, "SCALEBAR");
+  writeKeyword(stream, indent, "ALIGN", scalebar->align, 2, MS_ALIGN_LEFT, "LEFT", MS_ALIGN_RIGHT, "RIGHT");
+  writeColor(stream, indent, "BACKGROUNDCOLOR", &(scalebar->backgroundcolor));
+  writeColor(stream, indent, "COLOR", &(scalebar->color));
+  writeColor(stream, indent, "IMAGECOLOR", &(scalebar->imagecolor));
+  writeKeyword(stream, indent, "INTERLACE", scalebar->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeNumber(stream, indent, "INTERVALS", -1, scalebar->intervals);
+  writeLabel(stream, indent, &(scalebar->label));
+  writeColor(stream, indent, "OUTLINECOLOR", &(scalebar->outlinecolor));
+  if(scalebar->status == MS_EMBED) writeKeyword(stream, indent, "POSITION", scalebar->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
+  writeKeyword(stream, indent, "POSTLABELCACHE", scalebar->postlabelcache, 1, MS_TRUE, "TRUE");
+  writeDimension(stream, indent, "SIZE", scalebar->width, scalebar->height);
+  writeKeyword(stream, indent, "STATUS", scalebar->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_EMBED, "EMBED");
+  writeNumber(stream, indent, "STYLE", 0, scalebar->style);
+  writeKeyword(stream, indent, "TRANSPARENT", scalebar->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeKeyword(stream, indent, "UNITS", scalebar->units, 6, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES");
+  writeBlockEnd(stream, indent, "SCALEBAR");
   writeLineFeed(stream);
 }
 
@@ -4434,19 +4375,15 @@ int msUpdateQueryMapFromString(queryMapObj *querymap, char *string, int url_stri
   return MS_SUCCESS;
 }
 
-static void writeQueryMap(queryMapObj *querymap, FILE *stream)
+static void writeQueryMap(FILE *stream, int indent, queryMapObj *querymap)
 {
-  writeBlockBegin(stream, "  ", "QUERYMAP");
-#if ALPHACOLOR_ENABLED
-  if( querymap->color.alpha )
-  writeColorWithAlpha(&(querymap->color), stream, "ALPHACOLOR_ENABLED", "    ");
-  else
-#endif
-  writeColor(&(querymap->color), stream, "COLOR", "    ");
-  writeDimension(stream, "    ", "SIZE", querymap->width, querymap->height);
-  writeKeyword(stream, "    ", "STATUS", -1, querymap->status, 2, MS_ON, "ON", MS_OFF, "OFF");
-  writeKeyword(stream, "    ", "STYLE", -1, querymap->style, 3, MS_NORMAL, "NORMAL", MS_HILITE, "HILITE", MS_SELECTED, "SELECTED");
-  writeBlockEnd(stream, "  ", "QUERYMAP");
+  indent++;
+  writeBlockBegin(stream, indent, "QUERYMAP");
+  writeColor(stream, indent, "COLOR", &(querymap->color));
+  writeDimension(stream, indent, "SIZE", querymap->width, querymap->height);
+  writeKeyword(stream, indent, "STATUS", querymap->status, 2, MS_ON, "ON", MS_OFF, "OFF");
+  writeKeyword(stream, indent, "STYLE", querymap->style, 3, MS_NORMAL, "NORMAL", MS_HILITE, "HILITE", MS_SELECTED, "SELECTED");
+  writeBlockEnd(stream, indent, "QUERYMAP");
   writeLineFeed(stream);
 }
 
@@ -4493,30 +4430,29 @@ void freeWeb(webObj *web)
   if(&(web->validation)) msFreeHashItems(&(web->validation));
 }
 
-static void writeWeb(webObj *web, FILE *stream)
+static void writeWeb(FILE *stream, int indent, webObj *web)
 {
-  const char *tab1 = "  ", *tab2 = "    ";
-
-  writeBlockBegin(stream, tab1, "WEB");
-  writeString(stream, tab2, "BROWSEFORMAT", "text/html", web->browseformat);
-  writeString(stream, tab2, "EMPTY", NULL, web->empty);
-  writeString(stream, tab2, "ERROR", NULL, web->error);
-  writeExtent(stream, tab2, "EXTENT", web->extent);
-  writeString(stream, tab2, "FOOTER", NULL, web->footer);
-  writeString(stream, tab2, "HEADER", NULL, web->header);
-  writeString(stream, tab2, "IMAGEPATH", "", web->imagepath);
-  writeString(stream, tab2, "IMAGEURL", "", web->imageurl);
-  writeString(stream, tab2, "LEGENDFORMAT", "text/html", web->legendformat);
-  writeString(stream, tab2, "LOG", NULL, web->log);
-  writeNumber(stream, tab2, "MAXSCALEDENOM", -1, web->maxscaledenom);
-  writeString(stream, tab2, "MAXTEMPLATE", NULL, web->maxtemplate);
-  if(&(web->metadata)) writeHashTable(&(web->metadata), stream, tab2, "METADATA");
-  writeNumber(stream, tab2, "MINSCALEDENOM", -1, web->minscaledenom);
-  writeString(stream, tab2, "MINTEMPLATE", NULL, web->mintemplate);
-  writeString(stream, tab2, "QUERYFORMAT", "text/html", web->queryformat);
-  writeString(stream, tab2, "TEMPLATE", NULL, web->template);
-  if(&(web->validation)) writeHashTable(&(web->validation), stream, tab2, "VALIDATION");
-  writeBlockEnd(stream, tab1, "WEB");
+  indent++;
+  writeBlockBegin(stream, indent, "WEB");
+  writeString(stream, indent, "BROWSEFORMAT", "text/html", web->browseformat);
+  writeString(stream, indent, "EMPTY", NULL, web->empty);
+  writeString(stream, indent, "ERROR", NULL, web->error);
+  writeExtent(stream, indent, "EXTENT", web->extent);
+  writeString(stream, indent, "FOOTER", NULL, web->footer);
+  writeString(stream, indent, "HEADER", NULL, web->header);
+  writeString(stream, indent, "IMAGEPATH", "", web->imagepath);
+  writeString(stream, indent, "IMAGEURL", "", web->imageurl);
+  writeString(stream, indent, "LEGENDFORMAT", "text/html", web->legendformat);
+  writeString(stream, indent, "LOG", NULL, web->log);
+  writeNumber(stream, indent, "MAXSCALEDENOM", -1, web->maxscaledenom);
+  writeString(stream, indent, "MAXTEMPLATE", NULL, web->maxtemplate);
+  writeHashTable(stream, indent, "METADATA", &(web->metadata));
+  writeNumber(stream, indent, "MINSCALEDENOM", -1, web->minscaledenom);
+  writeString(stream, indent, "MINTEMPLATE", NULL, web->mintemplate);
+  writeString(stream, indent, "QUERYFORMAT", "text/html", web->queryformat);
+  writeString(stream, indent, "TEMPLATE", NULL, web->template);
+  writeHashTable(stream, indent, "VALIDATION", &(web->validation));
+  writeBlockEnd(stream, indent, "WEB");
   writeLineFeed(stream);
 }
 
@@ -4910,10 +4846,9 @@ int msInitLabelCache(labelCacheObj *cache) {
 
 int msSaveMap(mapObj *map, char *filename)
 {
-  int i;
+  int i, indent=0;
   FILE *stream;
   char szPath[MS_MAXPATHLEN];
-  const char *key;
 
   if(!map) {
     msSetError(MS_MISCERR, "Map is undefined.", "msSaveMap()");
@@ -4931,63 +4866,47 @@ int msSaveMap(mapObj *map, char *filename)
     return(-1);
   }
 
-  fprintf(stream, "MAP\n");
-  if(map->datapattern) fprintf(stream, "  DATAPATTERN \"%s\"\n", map->datapattern);
-  fprintf(stream, "  EXTENT %.15g %.15g %.15g %.15g\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
-  if(map->fontset.filename) fprintf(stream, "  FONTSET \"%s\"\n", map->fontset.filename);
-  if(map->templatepattern) fprintf(stream, "  TEMPLATEPATTERN \"%s\"\n", map->templatepattern);
+  writeBlockBegin(stream, indent, "MAP");
+  writeHashTable(stream, indent, "CONFIG", &(map->configoptions));
+  writeString(stream, indent, "DATAPATTERN", NULL, map->datapattern); /* depricated */
+  writeNumber(stream, indent, "DEBUG", 0, map->debug);
+  writeNumber(stream, indent, "DEFRESOLUTION", 72.0, map->defresolution);
+  writeExtent(stream, indent, "EXTENT", map->extent);
+  writeString(stream, indent, "FONTSET", NULL, map->fontset.filename);
+  writeColor(stream, indent, "IMAGECOLOR", &(map->imagecolor));
+  writeString(stream, indent, "IMAGETYPE", NULL, map->imagetype);
+  writeKeyword(stream, indent, "INTERLACE", map->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeNumber(stream, indent, "MAXSIZE", MS_MAXIMAGESIZE_DEFAULT, map->maxsize);
+  writeString(stream, indent, "NAME", NULL, map->name);
+  writeNumber(stream, indent, "RESOLUTION", 72.0, map->resolution);
+  writeString(stream, indent, "SHAPEPATH", NULL, map->shapepath);   
+  writeDimension(stream, indent, "SIZE", map->width, map->height);
+  writeKeyword(stream, indent, "STATUS", map->status, 2, MS_ON, "ON", MS_OFF, "OFF");
+  writeString(stream, indent, "SYMBOLSET", NULL, map->symbolset.filename);
+  writeString(stream, indent, "TEMPLATEPATTERN", NULL, map->templatepattern); /* depricated */
+  writeKeyword(stream, indent, "TRANSPARENT", map->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
+  writeKeyword(stream, indent, "UNITS", map->units, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD"); 
+  writeLineFeed(stream); 
 
-  writeColor(&(map->imagecolor), stream, "IMAGECOLOR", "  ");
-  if(map->imagetype != NULL) fprintf(stream, "  IMAGETYPE %s\n", map->imagetype);
-
-  if(map->resolution != 72.0) fprintf(stream, "  RESOLUTION %f\n", map->resolution);
-  if(map->defresolution != 72.0) fprintf(stream, "  DEFRESOLUTION %f\n", map->defresolution);
-
-  if(map->interlace != MS_NOOVERRIDE)
-      fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
-  if(map->symbolset.filename) fprintf(stream, "  SYMBOLSET \"%s\"\n", map->symbolset.filename);
-  if(map->shapepath) fprintf(stream, "  SHAPEPATH \"%s\"\n", map->shapepath);
-  fprintf(stream, "  SIZE %d %d\n", map->width, map->height);
-  if(map->maxsize != MS_MAXIMAGESIZE_DEFAULT) fprintf(stream, "  MAXSIZE %d\n", map->maxsize);
-  fprintf(stream, "  STATUS %s\n", msStatus[map->status]);
-  if( map->transparent != MS_NOOVERRIDE )
-      fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
-
-  fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
-  for( key = msFirstKeyFromHashTable( &(map->configoptions) );
-       key != NULL;
-       key = msNextKeyFromHashTable( &(map->configoptions), key ) )
-  {
-      fprintf( stream, "  CONFIG %s \"%s\"\n", 
-               key, msLookupHashTable( &(map->configoptions), key ) );
-  }
-  fprintf(stream, "  NAME \"%s\"\n\n", map->name);
-  if(map->debug) fprintf(stream, "  DEBUG %d\n", map->debug);
-
-  writeOutputformat(map, stream);
+  writeOutputformat(stream, indent, map);
 
   /* write symbol with INLINE tag in mapfile */
-  for(i=0; i<map->symbolset.numsymbols; i++)
-  {
-      writeSymbol(map->symbolset.symbol[i], stream);
+  for(i=0; i<map->symbolset.numsymbols; i++) {
+    writeSymbol(map->symbolset.symbol[i], stream);
   }
 
-  writeProjection(&(map->projection), stream, "  ");
+  writeProjection(stream, indent, &(map->projection));
   
-  writeLegend(&(map->legend), stream);
-  writeQueryMap(&(map->querymap), stream);
-  writeReferenceMap(&(map->reference), stream);
-  writeScalebar(&(map->scalebar), stream);
-  writeWeb(&(map->web), stream);
+  writeLegend(stream, indent, &(map->legend));
+  writeQueryMap(stream, indent, &(map->querymap));
+  writeReferenceMap(stream, indent, &(map->reference));
+  writeScalebar(stream, indent, &(map->scalebar));
+  writeWeb(stream, indent, &(map->web));
 
   for(i=0; i<map->numlayers; i++)
-  {
-      writeLayer((GET_LAYER(map, map->layerorder[i])), stream);
-      /* writeLayer(&(GET_LAYER(map, i)), stream); */
-  }
+    writeLayer(stream, indent, GET_LAYER(map, map->layerorder[i]));
 
-  fprintf(stream, "END\n");
-
+  writeBlockEnd(stream, indent, "MAP");
   fclose(stream);
 
   return(0);
