@@ -1412,6 +1412,11 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     /* set the classes to 0 so that It won't do client side */
     /* classification if an sld was set. */
     numclasses = lp->numclasses;
+
+    /* ensure the file connection is closed right away after the layer */ 
+    /* is rendered */ 
+    msLayerSetProcessingKey( lp, "CLOSE_CONNECTION", "NORMAL");
+
     if (msOWSLookupMetadata(&(lp->metadata), "MO", "sld_body") ||
         msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url"))        
       lp->numclasses = 0;
