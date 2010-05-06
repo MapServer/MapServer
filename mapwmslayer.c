@@ -1346,6 +1346,10 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
         msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url"))        
       lp->numclasses = 0;
 
+    /* ensure the file connection is closed right away after the layer */ 
+    /* is rendered */ 
+    msLayerSetProcessingKey( lp, "CLOSE_CONNECTION", "NORMAL");
+
     if (lp->data) free(lp->data);
     lp->data =  strdup(pasReqInfo[iReq].pszOutputFile);
 
