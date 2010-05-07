@@ -839,8 +839,8 @@ PHP_METHOD(layerObj, setProjection)
 
     if ((status = layerObj_setProjection(php_layer->layer, projection)) != MS_SUCCESS)
     {
-        mapscript_throw_mapserver_exception("" TSRMLS_CC);
-        return;
+        mapscript_report_php_error(E_WARNING, "setProjection failed" TSRMLS_CC);
+        return MS_FAILURE;
     }
 
     php_projection->projection = &(php_layer->layer->projection);

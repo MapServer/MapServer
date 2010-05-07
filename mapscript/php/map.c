@@ -3502,7 +3502,7 @@ static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
 
     if (status == -1)
     {
-        mapscript_throw_mapserver_exception("" TSRMLS_CC);
+        mapscript_report_php_error(E_WARNING, "setProjection failed" TSRMLS_CC);
         return MS_FAILURE;
     }
     else
@@ -3531,7 +3531,7 @@ static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
         }
     }
 
-    return status;
+    return MS_SUCCESS;
 #else
     mapscript_throw_exception("Available only with PROJ.4 support." TSRMLS_CC);
     return MS_FAILURE;
