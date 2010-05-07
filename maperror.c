@@ -511,6 +511,9 @@ char *msGetVersion() {
   strcat(version, " OUTPUT=SWF");
 #endif
   strcat(version, " OUTPUT=SVG");
+#ifdef USE_KML
+  strcat(version, " OUTPUT=KML");
+#endif
 #ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
 #endif

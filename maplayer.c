@@ -451,7 +451,8 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   }
 
   /* always retrieve all items in some cases */
-  if(layer->connectiontype == MS_INLINE || get_all == MS_TRUE) {
+  if(layer->connectiontype == MS_INLINE || get_all == MS_TRUE ||
+     (layer->map->outputformat && layer->map->outputformat->renderer == MS_RENDER_WITH_KML)) {
     msLayerGetItems(layer);
     if(nt > 0) /* need to realloc the array to accept the possible new items*/
       layer->items = (char **)realloc(layer->items, sizeof(char *)*(layer->numitems + nt));

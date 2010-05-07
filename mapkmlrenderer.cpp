@@ -39,10 +39,16 @@ KmlRenderer::KmlRenderer(int width, int height, colorObj* color/*=NULL*/)
 	:	XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL), Width(width), Height(height),
 		FirstLayer(MS_TRUE), RasterizerOutputFormat(NULL), InternalImg(NULL),
 		VectorMode(MS_TRUE), RasterMode(MS_FALSE), MapCellsize(1.0),
-		PlacemarkNode(NULL), GeomNode(NULL), MaxFeatureCount(100),
+		PlacemarkNode(NULL), GeomNode(NULL),
 		Items(NULL), NumItems(0), map(NULL), currentLayer(NULL)
 
 {
+    /*private variables*/        
+    pszLayerDescMetadata = NULL;  
+    papszLayerIncludeItems = NULL;
+    nIncludeItems=0;
+    
+
     xmlNodePtr styleNode;
     xmlNodePtr listStyleNode;
   /*	Create document.*/
@@ -96,7 +102,7 @@ imageObj* KmlRenderer::createInternalImage()
 {
 	rendererVTableObj *r = RasterizerOutputFormat->vtable;
 	imageObj *img = r->createImage(Width, Height, RasterizerOutputFormat, &BgColor);
-
+        img->format = RasterizerOutputFormat;
 	return img;
 }
 
@@ -105,54 +111,9 @@ imageObj* KmlRenderer::createImage(int, int, outputFormatObj*, colorObj*)
 	return NULL;
 }
 
-int KmlRenderer::saveImage(imageObj *img, FILE *fp, outputFormatObj*)
+int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj*)
 {
-	if (InternalImg)
-	{
-		char fileName[MS_MAXPATHLEN];
-		char fileUrl[MS_MAXPATHLEN];
-
-		rendererVTableObj *r = RasterizerOutputFormat->vtable;
-
-		if (img->imagepath)
-		{
-			char *tmpFileName = msTmpFile(MapPath, img->imagepath, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
-			sprintf(fileName, "%s", tmpFileName);
-			msFree(tmpFileName);
-		}
-		else
-                  sprintf(fileName, "kml_ground_overlay_%ld%d.%s", (long)time(NULL), (int)getpid(), MS_IMAGE_EXTENSION(RasterizerOutputFormat)); /* __TODO__ add WEB IMAGEURL path;*/
-
-		FILE *stream = fopen(fileName, "wb");
-
-		if(r->supports_pixel_buffer)
-		{
-			rasterBufferObj data;
-			r->getRasterBuffer(InternalImg,&data);
-			msSaveRasterBuffer(&data, stream, RasterizerOutputFormat );
-		}
-		else
-		{
-			r->saveImage(InternalImg, stream, RasterizerOutputFormat);
-		}
-		fclose(stream);
-
-		if (img->imageurl)
-			sprintf(fileUrl, "%s%s.%s", img->imageurl, msGetBasename(fileName), MS_IMAGE_EXTENSION(RasterizerOutputFormat));
-		else
-			sprintf(fileUrl, "%s", fileName);
-
-		createGroundOverlayNode(fileUrl);
-
-		r->freeImage(InternalImg);
-	}
-	else
-	{
-		xmlUnlinkNode(GroundOverlayNode);
-		xmlFreeNode(GroundOverlayNode);
-		GroundOverlayNode = NULL;
-	}
-
+    
 	/* -------------------------------------------------------------------- */
 	/*      Write out the document.                                         */
 	/* -------------------------------------------------------------------- */
@@ -205,6 +166,7 @@ void KmlRenderer::processLayer(layerObj *layer)
       be the center of the element.*/
     for(i=0; i<layer->numclasses; i++)
       layer->_class[i]->label.position = MS_XY;
+   
 }
 
 char* KmlRenderer::getLayerName(layerObj *layer)
@@ -227,10 +189,28 @@ char* KmlRenderer::getLayerName(layerObj *layer)
 
 }
 
-void KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
+void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
 {
     char *layerName=NULL;
-  
+    const char *value=NULL;
+
+    VectorMode = MS_FALSE;
+    RasterMode = MS_FALSE;
+
+    if (layer->type ==  MS_LAYER_RASTER)
+      RasterMode = MS_TRUE;
+    else
+      VectorMode = MS_TRUE;
+
+    /*check if a vector layer will be dumped as a raster*/
+    const char *outputAsRaster=msLookupHashTable(&(layer->metadata),"KML_OUTPUTASRASTER");
+    if (outputAsRaster && strlen(outputAsRaster) > 0 && 
+        (strcasecmp(outputAsRaster, "true") == 0 || strcasecmp(outputAsRaster, "yes") == 0))
+    {
+         RasterMode = MS_TRUE;
+         VectorMode = MS_FALSE;
+    }
+
     LayerNode = xmlNewNode(NULL, BAD_CAST "Folder");
 	
     layerName = getLayerName(layer);
@@ -244,7 +224,13 @@ void KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
     if (layerDsiplayFolder == NULL)
       layerDsiplayFolder = msLookupHashTable(&(layer->map->web.metadata), "kml_folder_display");
     if (!layerDsiplayFolder || strlen(layerDsiplayFolder)<=0)
-      xmlNewChild(LayerNode, NULL, BAD_CAST "styleUrl", BAD_CAST "#LayerFolder_check");
+    {
+        if (RasterMode)
+          xmlNewChild(LayerNode, NULL, BAD_CAST "styleUrl", BAD_CAST "#LayerFolder_checkHideChildren");
+        else
+          xmlNewChild(LayerNode, NULL, BAD_CAST "styleUrl", BAD_CAST "#LayerFolder_check"); 
+    }
+
     else
     {
         if (strcasecmp(layerDsiplayFolder, "checkHideChildren") == 0)
@@ -257,46 +243,13 @@ void KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
           xmlNewChild(LayerNode, NULL, BAD_CAST "styleUrl", BAD_CAST "#LayerFolder_check");
     }
 
-    VectorMode = MS_TRUE;
-    RasterMode = MS_TRUE;
+   
 
-    currentLayer = layer;
+    
 
-    if (!msLayerIsOpen(layer))
-      {
-        if (msLayerOpen(layer) != MS_SUCCESS)
-          {
-            msSetError(MS_MISCERR, "msLayerOpen failed", "KmlRenderer::startNewLayer" );
-          }
-      }
-
-    /*pre process the layer to set things that make sense for kml output*/
-    processLayer(layer);
-
-    DumpAttributes = MS_FALSE;
-    char *attribVal = msLookupHashTable(&layer->metadata, "kml_dumpattributes");
-    if (attribVal && strlen(attribVal) > 0)
-      {
-
-            DumpAttributes = MS_TRUE;
-            msLayerWhichItems(layer, MS_FALSE, attribVal);
-
-      }
-    else
-      {
-        msLayerWhichItems(layer, MS_TRUE, NULL);
-      }
-
-    NumItems = layer->numitems;
-    if (NumItems)
-      {
-        Items = (char **)calloc(NumItems, sizeof(char *));
-        for (int i=0; i<NumItems; i++)
-          Items[i] = strdup(layer->items[i]);
-      }
-
+    /*Init few things on the first layer*/
     if (FirstLayer)
-      {
+    {
         FirstLayer = MS_FALSE;
         map = layer->map;
 
@@ -318,8 +271,8 @@ void KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
          default rasterizer agg2png
          optional tag formatoption "kml_rasteroutputformat"*/
         char rasterizerFomatName[128];
-        /*sprintf(rasterizerFomatName, "cairopng");*/
-        sprintf(rasterizerFomatName, "agg2png");
+        sprintf(rasterizerFomatName, "cairopng");
+        /*sprintf(rasterizerFomatName, "agg2png");*/
 
         /*no real need to let the user pick a renderer. It seems more complex than useful.
          I am leaving the code here but will remove it form the docs. (AY)*/
@@ -339,61 +292,110 @@ void KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
             if(!strcasecmp(iFormat->name,rasterizerFomatName))
               {
                 RasterizerOutputFormat = iFormat;
+                /*always set RGBA*/
+                RasterizerOutputFormat->imagemode = MS_IMAGEMODE_RGBA;
                 break;
               }
-          }
+          }        
+    }
 
-        const char *formatOptionStr = msGetOutputFormatOption(img->format, "kml_maxfeaturecount", "");
-        if (strlen(formatOptionStr))
-          {
-            MaxFeatureCount = atoi(formatOptionStr);
-          }
-      }
+    currentLayer = layer;
 
-    /* reset feature counter*/
-    FeatureCount = 0;
+    if (VectorMode)
+    {
 
-    TempImg = RasterMode ? createInternalImage() : NULL;
+        if (!msLayerIsOpen(layer))
+        {
+            if (msLayerOpen(layer) != MS_SUCCESS)
+            {
+                msSetError(MS_MISCERR, "msLayerOpen failed", "KmlRenderer::startNewLayer" );
+            }
+        }
+
+        /*pre process the layer to set things that make sense for kml output*/
+        processLayer(layer);
+
+        if (msLookupHashTable(&layer->metadata, "kml_description"))
+          pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "kml_description");
+        
+        value=msLookupHashTable(&layer->metadata, "kml_include_items");
+        if (value)
+          papszLayerIncludeItems = msStringSplit(value, ',', &nIncludeItems);
+
+        
+        DumpAttributes = MS_FALSE;
+        char *attribVal = msLookupHashTable(&layer->metadata, "kml_dumpattributes");
+        if (attribVal && strlen(attribVal) > 0)
+        {
+
+            DumpAttributes = MS_TRUE;
+            msLayerWhichItems(layer, MS_FALSE, attribVal);
+
+        }
+        else
+        {
+            msLayerWhichItems(layer, MS_TRUE, NULL);
+        }
+
+        NumItems = layer->numitems;
+        if (NumItems)
+        {
+            Items = (char **)calloc(NumItems, sizeof(char *));
+            for (int i=0; i<NumItems; i++)
+              Items[i] = strdup(layer->items[i]);
+        }
+
+    }    
+
+    ImgLayer= NULL;
+    ImgLayer = RasterMode ? createInternalImage() : NULL;
 
     setupRenderingParams(&layer->metadata);
 }
 
-void KmlRenderer::closeNewLayer(imageObj*, layerObj *layer)
+void KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
 {
-	flushPlacemark();
+    if (VectorMode)
+      flushPlacemark();
 
-	if (!VectorMode)
-	{
-              /* layer was rasterized, merge temp layer image with main output image*/
-          if (!InternalImg)
-          {
-            InternalImg = TempImg;
-          }
-		else
-		{
-			rendererVTableObj *r = RasterizerOutputFormat->vtable;
+    /*if we rendering through a raster buffer, save the layer into a file and create
+      a GroundOverlay node*/
+    if (RasterMode && ImgLayer)
+    {       
+        char *tmpFileName = NULL;
+        char *tmpUrl = NULL;
+            
+        tmpFileName = msTmpFile(MapPath, img->imagepath, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
+        if (tmpFileName)
+        {
+            msSaveImage(layer->map, ImgLayer, tmpFileName);
+            tmpUrl = strdup( img->imageurl);
+            tmpUrl = msStringConcatenate(tmpUrl, (char *)(msGetBasename(tmpFileName)));
+            tmpUrl = msStringConcatenate(tmpUrl, ".");
+            tmpUrl = msStringConcatenate(tmpUrl, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
+                
+            createGroundOverlayNode(LayerNode, tmpUrl, layer);
+            msFree(tmpFileName);
+            msFree(tmpUrl);
+            msFreeImage(ImgLayer);
+                
+        }        
+    }
+        
+    xmlAddChild(DocNode, LayerNode);
 
-			rasterBufferObj data;
-			r->getRasterBuffer(TempImg,&data);
+    if(Items)
+    {
+        msFreeCharArray(Items, NumItems);
+        Items = NULL;
+        NumItems = 0;
+    }
 
-			r->mergeRasterBuffer(InternalImg, &data, layer->opacity * 0.01, 0, 0);
+    if (pszLayerDescMetadata)
+      pszLayerDescMetadata = NULL;
 
-			r->freeImage(TempImg);
-		}
-
-		xmlFreeNode(LayerNode);
-	}
-	else
-	{
-		xmlAddChild(DocNode, LayerNode);
-	}
-
-	if(Items)
-	{
-		msFreeCharArray(Items, NumItems);
-		Items = NULL;
-		NumItems = 0;
-	}
+    if (papszLayerIncludeItems && nIncludeItems>0)
+      msFreeCharArray(papszLayerIncludeItems, nIncludeItems);
 }
 
 
@@ -426,16 +428,6 @@ void KmlRenderer::setupRenderingParams(hashTableObj *layerMetadata)
 		Tessellate = atoi(tessellateVal);
 	}
 
-	char *maxFeatureVal = msLookupHashTable(layerMetadata, "kml_maxfeaturecount");
-	if (maxFeatureVal)
-	{
-		MaxFeatureCount = atoi(maxFeatureVal);
-		if (MaxFeatureCount >= 999999)
-			RasterMode = MS_FALSE;
-
-		if (MaxFeatureCount == 0)
-			VectorMode = MS_FALSE;
-	}
 }
 
 int KmlRenderer::checkProjection(projectionObj *projection)
@@ -463,28 +455,22 @@ int KmlRenderer::checkProjection(projectionObj *projection)
 
 xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUrl)
 {
-	FeatureCount++;
-	if (FeatureCount > MaxFeatureCount)
-	{
-		VectorMode = MS_FALSE;
-		return NULL;
-	}
 
-	xmlNodePtr placemarkNode = xmlNewChild(parentNode, NULL, BAD_CAST "Placemark", NULL);
-        /*always add a name. It will be replaced by a text value if available*/
-        char tmpid[100];
-        char *stmp=NULL, *layerName=NULL;
-        sprintf(tmpid, ".%d", CurrentShape->index);
-        layerName = getLayerName(currentLayer);
-        stmp = msStringConcatenate(stmp, layerName);
-        stmp = msStringConcatenate(stmp, tmpid);
-        xmlNewChild(placemarkNode, NULL, BAD_CAST "name", BAD_CAST stmp);
-        msFree(layerName);
-        msFree(stmp);
-	if (styleUrl)
-		xmlNewChild(placemarkNode, NULL, BAD_CAST "styleUrl", BAD_CAST styleUrl);
+    xmlNodePtr placemarkNode = xmlNewChild(parentNode, NULL, BAD_CAST "Placemark", NULL);
+    /*always add a name. It will be replaced by a text value if available*/
+    char tmpid[100];
+    char *stmp=NULL, *layerName=NULL;
+    sprintf(tmpid, ".%d", CurrentShape->index);
+    layerName = getLayerName(currentLayer);
+    stmp = msStringConcatenate(stmp, layerName);
+    stmp = msStringConcatenate(stmp, tmpid);
+    xmlNewChild(placemarkNode, NULL, BAD_CAST "name", BAD_CAST stmp);
+    msFree(layerName);
+    msFree(stmp);
+    if (styleUrl)
+      xmlNewChild(placemarkNode, NULL, BAD_CAST "styleUrl", BAD_CAST styleUrl);
 
-	return placemarkNode;
+    return placemarkNode;
 }
 
 void KmlRenderer::renderLineVector(imageObj*, shapeObj *p, strokeStyleObj *style)
@@ -543,7 +529,7 @@ void KmlRenderer::renderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
 
       r->transformShape(&rasShape, MapExtent, MapCellsize);
 
-      r->renderLine(TempImg, &rasShape, style);
+      r->renderLine(ImgLayer, &rasShape, style);
       msFreeShape(&rasShape);
     }
 }
@@ -602,7 +588,7 @@ void KmlRenderer::renderPolygon(imageObj *img, shapeObj *p, colorObj *color)
 
       r->transformShape(&rasShape, MapExtent, MapCellsize);
 
-      r->renderPolygon(TempImg, &rasShape, color);
+      r->renderPolygon(ImgLayer, &rasShape, color);
       msFreeShape(&rasShape);
     }
 }
@@ -677,7 +663,7 @@ void KmlRenderer::renderGlyphs(imageObj *img, double x, double y, labelStyleObj 
 	{
               /* internal renderer used for rasterizing*/
 		rendererVTableObj *r = RasterizerOutputFormat->vtable;
-		r->renderGlyphs(TempImg, x, y, style, text);
+		r->renderGlyphs(ImgLayer, x, y, style, text);
 	}
 }
 
@@ -696,7 +682,7 @@ int KmlRenderer::getTruetypeTextBBox(imageObj*,char *font, double size, char *st
     if (RasterMode)
     {
       rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->getTruetypeTextBBox(TempImg, font, size, string, rect, advances);
+      r->getTruetypeTextBBox(ImgLayer, font, size, string, rect, advances);
     }
 
     return true;
@@ -778,7 +764,7 @@ void KmlRenderer::renderPixmapSymbol(imageObj *img, double x, double y, symbolOb
     if (RasterMode)
     {
       rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->renderPixmapSymbol(TempImg, x, y, symbol, style);
+      r->renderPixmapSymbol(ImgLayer, x, y, symbol, style);
     }
 }
 
@@ -791,7 +777,7 @@ void KmlRenderer::renderVectorSymbol(imageObj *img, double x, double y, symbolOb
     if (RasterMode)
     {
       rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->renderVectorSymbol(TempImg, x, y, symbol, style);
+      r->renderVectorSymbol(ImgLayer, x, y, symbol, style);
     }
 }
 
@@ -804,7 +790,7 @@ void KmlRenderer::renderEllipseSymbol(imageObj *img, double x, double y, symbolO
     if (RasterMode)
     {
       rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->renderEllipseSymbol(TempImg, x, y, symbol, style);
+      r->renderEllipseSymbol(ImgLayer, x, y, symbol, style);
     }
 }
 
@@ -817,11 +803,11 @@ void KmlRenderer::renderTruetypeSymbol(imageObj *img, double x, double y, symbol
     if (RasterMode)
     {
       rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->renderTruetypeSymbol(TempImg, x, y, symbol, style);
+      r->renderTruetypeSymbol(ImgLayer, x, y, symbol, style);
     }
 }
 
-xmlNodePtr KmlRenderer::createGroundOverlayNode(char *imageHref)
+xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *imageHref, layerObj *layer)
 {
 	/*
           <?xml version="1.0" encoding="UTF-8"?>
@@ -847,9 +833,13 @@ xmlNodePtr KmlRenderer::createGroundOverlayNode(char *imageHref)
           </kml>
 	*/
 
-    xmlNodePtr groundOverlayNode = xmlNewChild(DocNode, NULL, BAD_CAST "GroundOverlay", NULL);
+    xmlNodePtr groundOverlayNode = xmlNewChild(parentNode, NULL, BAD_CAST "GroundOverlay", NULL);
+    char *layerName = getLayerName(layer);
+    xmlNewChild(groundOverlayNode, NULL, BAD_CAST "name", BAD_CAST layerName);
     xmlNewChild(groundOverlayNode, NULL, BAD_CAST "color", BAD_CAST "ffffffff");
-    xmlNewChild(groundOverlayNode, NULL, BAD_CAST "drawOrder", BAD_CAST "0");
+    char stmp[20];
+    sprintf(stmp, "%d",layer->index);
+    xmlNewChild(groundOverlayNode, NULL, BAD_CAST "drawOrder", BAD_CAST stmp);
 
     if (imageHref)
     {
@@ -887,7 +877,7 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
     PlacemarkNode = NULL;
     GeomNode = NULL;
 
-    if (VectorMode && DumpAttributes && NumItems)
+    if (VectorMode)/* && DumpAttributes && NumItems)*/
       DescriptionNode = createDescriptionNode(shape);
     else
       DescriptionNode = NULL;
@@ -1156,36 +1146,76 @@ void KmlRenderer::flushPlacemark()
     }       
 }
 
+
 xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
 {
-	/*
+      /*
 	<description>
 	<![CDATA[
 	  special characters here
 	]]> 
 	<description>
-	*/
+      */
 
-    char lineBuf[512];
-    xmlNodePtr descriptionNode = xmlNewNode(NULL, BAD_CAST "description");
 
-	/*xmlNodeAddContent(descriptionNode, BAD_CAST "\n\t<![CDATA[\n");*/
-    xmlNodeAddContent(descriptionNode, BAD_CAST "<table>");
+    /*description nodes for vector layers:
+      - if kml_description is set, use it
+      - if not, dump the attributes */
 
-    for (int i=0; i<shape->numvalues; i++)
+    if (pszLayerDescMetadata)
     {
-        if (shape->values[i] && strlen(shape->values[i]))
-          sprintf(lineBuf, "<tr><td><b>%s</b></td><td>%s</td></tr>\n", Items[i], shape->values[i]);
-        else
-          sprintf(lineBuf, "<tr><td><b>%s</b></td><td></td></tr>\n", Items[i]);
-
-        xmlNodeAddContent(descriptionNode, BAD_CAST lineBuf);
+        char *pszTmp=NULL;
+        char *pszTmpDesc = NULL;
+        pszTmpDesc = strdup(pszLayerDescMetadata);
+        
+        for (int i=0; i<currentLayer->numitems; i++)
+        {
+            pszTmp = (char *)malloc(sizeof(char)*strlen(currentLayer->items[i]) + 3);
+            sprintf(pszTmp, "%%%s%%",currentLayer->items[i]);
+            if (strcasestr(pszTmpDesc, pszTmp))
+              pszTmpDesc = msCaseReplaceSubstring(pszTmpDesc,  pszTmp, shape->values[i]);
+            msFree(pszTmp);
+        }   
+        xmlNodePtr descriptionNode = xmlNewNode(NULL, BAD_CAST "description");
+        xmlNodeAddContent(descriptionNode, BAD_CAST pszTmpDesc);       
+        msFree(pszTmpDesc);
+        return descriptionNode;
     }
+    else if (papszLayerIncludeItems && nIncludeItems > 0)
+    {
+        char lineBuf[512];
+        xmlNodePtr descriptionNode = xmlNewNode(NULL, BAD_CAST "description");
 
-    xmlNodeAddContent(descriptionNode, BAD_CAST "</table>");
+        /*xmlNodeAddContent(descriptionNode, BAD_CAST "\n\t<![CDATA[\n");*/
+        xmlNodeAddContent(descriptionNode, BAD_CAST "<table>");
+
+        for (int i=0; i<currentLayer->numitems; i++)
+        {
+            int j=0;
+            /*TODO optimize to calculate this only once per layer*/
+            for (j=0; j<nIncludeItems;j++)
+            {
+                if (strcasecmp(currentLayer->items[i], papszLayerIncludeItems[j]) == 0)
+                  break;
+            }
+            if (j<nIncludeItems)
+            {
+                if (shape->values[i] && strlen(shape->values[i]))
+                  sprintf(lineBuf, "<tr><td><b>%s</b></td><td>%s</td></tr>\n", currentLayer->items[i], shape->values[i]);
+                else
+                  sprintf(lineBuf, "<tr><td><b>%s</b></td><td></td></tr>\n", currentLayer->items[i]);
+                xmlNodeAddContent(descriptionNode, BAD_CAST lineBuf);
+            }
+           
+        }
+
+        xmlNodeAddContent(descriptionNode, BAD_CAST "</table>");
 	/*xmlNodeAddContent(descriptionNode, BAD_CAST "\t]]>\n");*/
 
-    return descriptionNode;
+        return descriptionNode;
+    }
+
+    return NULL;
 }
 
 #endif

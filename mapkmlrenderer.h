@@ -39,6 +39,11 @@
 
 class KmlRenderer
 {
+ private:
+  const char *pszLayerDescMetadata; /*if the kml_description is set*/
+  char **papszLayerIncludeItems;
+  int nIncludeItems;
+
 protected:
 
 	// map properties
@@ -83,33 +88,13 @@ protected:
 	outputFormatObj	*RasterizerOutputFormat;
 	imageObj		*InternalImg;
 
-	imageObj		*TempImg;
+	imageObj		*ImgLayer;
 
 	int				FirstLayer;
         
         mapObj                  *map;
         layerObj                *currentLayer;
-	// max number of features rendered in "vector KML" mode
-	// default value 100
-	// value can be specified in format option
-	// OUTPUTFORMAT
-	//  ...
-	//	FORMATOPTION "kml_maxfeaturecount=512"
-	// END	
-	//
-	// value can be specified also in layer metadata
-	// LAYER
-	// ...
-	// METADATA
-	//	kml_maxfeaturecount	"512"
-	// END	
-	// END
-	int				MaxFeatureCount;
-
-	// if FeatureCount is greater than MaxFeatureCount, layer is rasterized and
-	// rendered as ground overlay
-	// number of features in layer
-	int				FeatureCount;
+	
 
 	// if true - features are rasterized
 	int				VectorMode;
@@ -127,7 +112,7 @@ protected:
 
 	imageObj* createInternalImage();
 	xmlNodePtr createPlacemarkNode(xmlNodePtr parentNode, char *styleUrl);
-	xmlNodePtr createGroundOverlayNode(char *imageHref);
+	xmlNodePtr createGroundOverlayNode(xmlNodePtr parentNode, char *imageHref, layerObj *layer);
 	xmlNodePtr createDescriptionNode(shapeObj *shape);
 
 	char* lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *style);
