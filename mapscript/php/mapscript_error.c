@@ -43,7 +43,11 @@ zval* mapscript_throw_exception(char *format TSRMLS_DC, ...)
 {
     va_list args;
     char message[MAX_EXCEPTION_MSG];
+#ifdef ZTS
+    va_start(args, TSRMLS_C);
+#else
     va_start(args, format);
+#endif
     vsprintf(message, format, args);
     va_end(args);
     return zend_throw_exception(mapscript_ce_mapscriptexception, message, 0 TSRMLS_CC);
@@ -65,7 +69,11 @@ zval* mapscript_throw_mapserver_exception(char *format TSRMLS_DC, ...)
         ms_error = ms_error->next;
     }
 
+#ifdef ZTS
+    va_start(args, TSRMLS_C);
+#else
     va_start(args, format);
+#endif
     vsprintf(message, format, args);
     va_end(args);
     return mapscript_throw_exception(message TSRMLS_CC);
@@ -75,7 +83,11 @@ void mapscript_report_php_error(int error_type, char *format TSRMLS_DC, ...)
 {
     va_list args;
     char message[MAX_EXCEPTION_MSG];
+#ifdef ZTS
+    va_start(args, TSRMLS_C);
+#else
     va_start(args, format);
+#endif
     vsprintf(message, format, args);
     va_end(args);
     php_error_docref(NULL TSRMLS_CC, error_type, "%s,", message);
