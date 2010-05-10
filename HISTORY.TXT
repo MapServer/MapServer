@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Reworked mapfile writing to use helper functions so that core types (e.g. numbers, strings,
+  colors, keywords, etc...) are always written consistently.
+
 - Ensure mapwmslayer.c does not unlink file before closing connection on it (#3451)
 
 - Fix security exception issue in C# with MSVC2010 (#3438)
