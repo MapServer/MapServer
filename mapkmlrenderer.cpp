@@ -372,7 +372,7 @@ void KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
             tmpUrl = strdup( img->imageurl);
             tmpUrl = msStringConcatenate(tmpUrl, (char *)(msGetBasename(tmpFileName)));
             tmpUrl = msStringConcatenate(tmpUrl, ".");
-            tmpUrl = msStringConcatenate(tmpUrl, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
+            tmpUrl = msStringConcatenate(tmpUrl, (char *)MS_IMAGE_EXTENSION(RasterizerOutputFormat));
                 
             createGroundOverlayNode(LayerNode, tmpUrl, layer);
             msFree(tmpFileName);
@@ -460,7 +460,7 @@ xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUr
     /*always add a name. It will be replaced by a text value if available*/
     char tmpid[100];
     char *stmp=NULL, *layerName=NULL;
-    sprintf(tmpid, ".%d", CurrentShape->index);
+    sprintf(tmpid, ".%d", (int)CurrentShape->index);
     layerName = getLayerName(currentLayer);
     stmp = msStringConcatenate(stmp, layerName);
     stmp = msStringConcatenate(stmp, tmpid);
