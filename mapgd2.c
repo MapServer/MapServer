@@ -307,7 +307,7 @@ static void imagePolyline(gdImagePtr im, shapeObj *p, int c)
 void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke) 
 {
   gdImagePtr ip;
-  int c;
+  int c, bc=gdTransparent;
 
   if(!img || !p || !stroke) return;
   ip = MS_IMAGE_GET_GDIMAGEPTR(img);
@@ -315,7 +315,39 @@ void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
   if(stroke->color.pen == MS_PEN_UNSET) setPen(ip, &stroke->color);
   c = stroke->color.pen;
 
+  /* GD only has to worry about stroke width and pattern, no end cap or join */
+  if(stroke->width > 1) gdImageSetThickness(ip, stroke->width);
+
+  if(stroke->patternlength > 0) {
+    int *style;
+    int i, j, k=0;
+    int sc;
+
+    for(i=0; i<stroke->patternlength; i++)
+      k += MS_NINT(stroke->pattern[i]);
+    style = (int *) malloc (k * sizeof(int));
+
+    sc = c; /* start with the main color */    
+
+    k=0;
+    for(i=0; i<stroke->patternlength; i++) {
+      for(j=0; j<stroke->pattern[i]; j++, k++) {
+        style[k] = sc;
+      }
+      sc = ((sc==c)?bc:c);
+    }
+
+    gdImageSetStyle(ip, style, k);
+    free(style);
+
+    c = gdStyled;
+  }
+    
+  /* finally draw something */
   imagePolyline(ip, p, c);
+
+  /* clean up */
+  gdImageSetThickness(ip, 1);
 }
 
 void renderPolygonGD(imageObj *img, shapeObj *p, colorObj *color) 
