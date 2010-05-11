@@ -86,7 +86,6 @@ protected:
 
 	// internal output format containing cairo renderer used for rasterizing and rendering symbols
 	outputFormatObj	*RasterizerOutputFormat;
-	imageObj		*InternalImg;
 
 	imageObj		*ImgLayer;
 
@@ -122,7 +121,7 @@ protected:
 	void setupRenderingParams(hashTableObj *layerMetadata);
 	void addAddRenderingSpecifications(xmlNodePtr node);
 
-	int checkProjection(projectionObj *projection);
+	int checkProjection(mapObj *map);
 
 	int createIconImage(char *fileName, symbolObj *symbol, symbolStyleObj *style);
 
@@ -166,6 +165,8 @@ public:
 	void renderTruetypeSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
 
 	int getTruetypeTextBBox(imageObj *img,char *font, double size, char *string, rectObj *rect, double **advances);
+
+        int renderRasterLayer(imageObj *img);
 };
 
 #endif /* USE_KML */

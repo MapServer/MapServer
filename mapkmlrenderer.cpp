@@ -37,7 +37,7 @@
 
 KmlRenderer::KmlRenderer(int width, int height, colorObj* color/*=NULL*/) 
 	:	XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL), Width(width), Height(height),
-		FirstLayer(MS_TRUE), RasterizerOutputFormat(NULL), InternalImg(NULL),
+		FirstLayer(MS_TRUE), RasterizerOutputFormat(NULL), ImgLayer(NULL),
 		VectorMode(MS_TRUE), RasterMode(MS_FALSE), MapCellsize(1.0),
 		PlacemarkNode(NULL), GeomNode(NULL),
 		Items(NULL), NumItems(0), map(NULL), currentLayer(NULL)
@@ -100,10 +100,20 @@ KmlRenderer::~KmlRenderer()
 
 imageObj* KmlRenderer::createInternalImage()
 {
-	rendererVTableObj *r = RasterizerOutputFormat->vtable;
-	imageObj *img = r->createImage(Width, Height, RasterizerOutputFormat, &BgColor);
-        img->format = RasterizerOutputFormat;
-	return img;
+    rendererVTableObj *r = RasterizerOutputFormat->vtable;
+    imageObj *image = r->createImage(Width, Height, RasterizerOutputFormat, &BgColor);
+    image->format = RasterizerOutputFormat;
+    image->format->refcount++;
+    image->width = currentLayer->map->width;
+    image->height = currentLayer->map->height;
+
+    image->resolution = currentLayer->map->resolution;
+    image->resolutionfactor = currentLayer->map->resolution/currentLayer->map->defresolution;
+    if (currentLayer->map->web.imagepath)
+      image->imagepath = strdup(currentLayer->map->web.imagepath);
+    if (map->web.imageurl)
+      image->imageurl = strdup(currentLayer->map->web.imageurl);
+    return image;
 }
 
 imageObj* KmlRenderer::createImage(int, int, outputFormatObj*, colorObj*)
@@ -264,39 +274,9 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
          xmlNewChild(DocNode, NULL, BAD_CAST "name", BAD_CAST layer->map->name);
 
         /*First rendered layer - check mapfile projection*/
-        checkProjection(&layer->map->projection);
+        checkProjection(layer->map);
 
-        /*check if kml_folder_display is set*/
-        /* setup internal rasterizer format
-         default rasterizer agg2png
-         optional tag formatoption "kml_rasteroutputformat"*/
-        char rasterizerFomatName[128];
-        sprintf(rasterizerFomatName, "cairopng");
-        /*sprintf(rasterizerFomatName, "agg2png");*/
-
-        /*no real need to let the user pick a renderer. It seems more complex than useful.
-         I am leaving the code here but will remove it form the docs. (AY)*/
-        for (int i=0; i<layer->map->numoutputformats; i++)
-          {
-            const char *formatOptionStr = msGetOutputFormatOption(layer->map->outputformatlist[i], "kml_rasteroutputformat", "");
-            if (strlen(formatOptionStr))
-              {
-                sprintf(rasterizerFomatName, "%s", formatOptionStr);
-                break;
-              }
-          }
-
-        for (int i=0; i<layer->map->numoutputformats; i++)
-          {
-            outputFormatObj *iFormat = layer->map->outputformatlist[i];
-            if(!strcasecmp(iFormat->name,rasterizerFomatName))
-              {
-                RasterizerOutputFormat = iFormat;
-                /*always set RGBA*/
-                RasterizerOutputFormat->imagemode = MS_IMAGEMODE_RGBA;
-                break;
-              }
-          }        
+              
     }
 
     currentLayer = layer;
@@ -348,6 +328,45 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
     }    
 
     ImgLayer= NULL;
+    
+    
+    /*check if kml_folder_display is set*/
+    /* setup internal rasterizer format */
+    char rasterizerFomatName[128];
+        
+    /*no real need to let the user pick a renderer. It seems more complex than useful.
+      I am leaving the code here but will remove it form the docs. (AY)
+      The agg should be the only one used but at this point it is not completed; so
+      use cairo for vector layer that are rasterized and agg2 for raster layers*/
+    if (layer->type ==  MS_LAYER_RASTER)
+      sprintf(rasterizerFomatName, "agg2png"); 
+    else
+      sprintf(rasterizerFomatName, "cairopng");
+
+        
+    for (int i=0; i<layer->map->numoutputformats; i++)
+    {     
+        const char *formatOptionStr = msGetOutputFormatOption(layer->map->outputformatlist[i], "kml_rasteroutputformat", "");
+        if (strlen(formatOptionStr))
+        {
+            sprintf(rasterizerFomatName, "%s", formatOptionStr);
+            break;
+        }
+    }
+
+    for (int i=0; i<layer->map->numoutputformats; i++)
+    {
+        outputFormatObj *iFormat = layer->map->outputformatlist[i];
+        if(!strcasecmp(iFormat->name,rasterizerFomatName))
+        {
+            RasterizerOutputFormat = iFormat;
+            /*always set RGBA*/
+            RasterizerOutputFormat->imagemode = MS_IMAGEMODE_RGBA;
+            RasterizerOutputFormat->transparent = MS_TRUE;
+            break;
+        }
+    } 
+    
     ImgLayer = RasterMode ? createInternalImage() : NULL;
 
     setupRenderingParams(&layer->metadata);
@@ -430,26 +449,38 @@ void KmlRenderer::setupRenderingParams(hashTableObj *layerMetadata)
 
 }
 
-int KmlRenderer::checkProjection(projectionObj *projection)
+int KmlRenderer::checkProjection(mapObj *map)
 {
+    
+    projectionObj *projection= &map->projection;
 #ifdef USE_PROJ
-	if (projection && projection->numargs > 0 && pj_is_latlong(projection->proj))
-	{
-		char *projStr = msGetProjectionString(projection);
+    if (projection && projection->numargs > 0 && pj_is_latlong(projection->proj))
+    {
+        char *projStr = msGetProjectionString(projection);
 
-		/* is ellipsoid WGS84 or projection code epsg:4326 */
-		if (strcasestr(projStr, "WGS84") || strcasestr(projStr,"epsg:4326"))
-		{
-			return MS_SUCCESS;
-		}
-	}
+        /* is ellipsoid WGS84 or projection code epsg:4326 */
+        if (strcasestr(projStr, "WGS84") || strcasestr(projStr,"epsg:4326"))
+        {
+            return MS_SUCCESS;
+        }
+    }
+    else
+    {
+        //TODO: give a warning in debug mode 
+        char epsg_string[100];
+        //??The only projection valid
+        strcpy(epsg_string, "epsg:4326" );
+        msFreeProjection(projection);
+        msLoadProjectionString(projection, epsg_string);
+        return MS_SUCCESS;
+    }
 
-	msSetError(MS_PROJERR, "Mapfile projection not defined, KML output driver requires projection WGS84 (epsg:4326)", "KmlRenderer::checkProjection()" );
-	return MS_FAILURE;
+    msSetError(MS_PROJERR, "Mapfile projection not defined, KML output driver requires projection WGS84 (epsg:4326)", "KmlRenderer::checkProjection()" );
+    return MS_FAILURE;
 
 #else
-	msSetError(MS_MISCERR, "Projection support not enabled", "KmlRenderer::checkProjection" );
-	return MS_FAILURE;
+    msSetError(MS_MISCERR, "Projection support not enabled", "KmlRenderer::checkProjection" );
+    return MS_FAILURE;
 #endif
 }
 
@@ -1218,4 +1249,8 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
     return NULL;
 }
 
+int KmlRenderer::renderRasterLayer(imageObj *img)
+{
+    return msDrawRasterLayer(currentLayer->map, currentLayer, ImgLayer);
+}
 #endif
