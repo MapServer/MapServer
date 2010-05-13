@@ -307,7 +307,7 @@ static void imagePolyline(gdImagePtr im, shapeObj *p, int c)
 void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke) 
 {
   gdImagePtr ip;
-  int c, bc=gdTransparent;
+  int c;
 
   if(!img || !p || !stroke) return;
   ip = MS_IMAGE_GET_GDIMAGEPTR(img);
@@ -327,14 +327,14 @@ void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
       k += MS_NINT(stroke->pattern[i]);
     style = (int *) malloc (k * sizeof(int));
 
-    sc = c; /* start with the main color */    
+    sc = c; /* start with the color */    
 
     k=0;
     for(i=0; i<stroke->patternlength; i++) {
       for(j=0; j<stroke->pattern[i]; j++, k++) {
         style[k] = sc;
       }
-      sc = ((sc==c)?bc:c);
+      sc = ((sc==c)?gdTransparent:c);
     }
 
     gdImageSetStyle(ip, style, k);
@@ -363,7 +363,7 @@ void renderPolygonGD(imageObj *img, shapeObj *p, colorObj *color)
 void renderGlyphsLineGD(imageObj *img, labelPathObj *labelpath, labelStyleObj *style, char *text) {
 }
 
-void renderGlyphsGD(imageObj *img,double x, double y, labelStyleObj *style, char *text) {
+void renderGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char *text) {
 }
 
 void renderEllipseSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style) {
