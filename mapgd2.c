@@ -66,7 +66,7 @@ int saveImageGD(imageObj *img, FILE *fp, outputFormatObj *format)
   gdImagePtr ip;
 
   if(!img || !fp) return MS_FAILURE;
-  ip = MS_IMAGE_GET_GDIMAGEPTR(img);
+  if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return MS_FAILURE;
 
   if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
     gdImageInterlace(ip, 1);
@@ -141,7 +141,9 @@ static void imageScanline(gdImagePtr im, int x1, int x2, int y, int c)
 
 /*
 ** Polygon fill. Based on "Concave Polygon Scan Conversion" by Paul
-** Heckbert from "Graphics Gems", Academic Press, 1990 
+** Heckbert from "Graphics Gems", Academic Press, 1990.
+**
+** TODO: do we need the offsets?
 */
 static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, int offsety)
 {
@@ -310,7 +312,7 @@ void renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
   int c;
 
   if(!img || !p || !stroke) return;
-  ip = MS_IMAGE_GET_GDIMAGEPTR(img);
+  if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return;
 
   if(stroke->color.pen == MS_PEN_UNSET) setPen(ip, &stroke->color);
   c = stroke->color.pen;
@@ -355,7 +357,7 @@ void renderPolygonGD(imageObj *img, shapeObj *p, colorObj *color)
   gdImagePtr ip;
 
   if(!img || !p || !color) return;
-  ip = MS_IMAGE_GET_GDIMAGEPTR(img);
+  if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return;
   if(color->pen == MS_PEN_UNSET) setPen(ip, color);
   imageFilledPolygon(ip, p, color->pen, 0, 0);
 }
@@ -381,7 +383,15 @@ void renderPixmapSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, 
 void renderTileGD(imageObj *img, imageObj *tile, double x, double y) {
 }
 
-void renderPolygonTiledGD(imageObj *img, shapeObj *p,  imageObj *tile) {
+void renderPolygonTiledGD(imageObj *img, shapeObj *p,  imageObj *tile) 
+{
+  gdImagePtr ip, tp;
+
+  if(!img || !p || !tile) return;
+  if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return;
+  if(!(tp = MS_IMAGE_GET_GDIMAGEPTR(tile))) return;
+  gdImageSetTile(ip, tp);
+  imageFilledPolygon(ip, p, gdTiled, 0, 0);  
 }
 
 /*
