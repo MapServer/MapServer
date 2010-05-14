@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Handle null results with gml:Null/gml:null according to version (#3299)
+
 - Reworked mapfile writing to use helper functions so that core types (e.g. numbers, strings,
   colors, keywords, etc...) are always written consistently.
 

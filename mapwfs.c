@@ -2225,7 +2225,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     
     if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
       msIO_printf("   <gml:boundedBy>\n"); 
-      msIO_printf("      <gml:Null>missing</gml:Null>\n");
+      if(outputformat == OWS_GML3)
+        msIO_printf("      <gml:Null>missing</gml:Null>\n");
+      else
+        msIO_printf("      <gml:null>missing</gml:null>\n");
       msIO_printf("   </gml:boundedBy>\n"); 
     }
     
