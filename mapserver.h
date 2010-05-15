@@ -1759,6 +1759,8 @@ MS_DLL_EXPORT int msIntersectPolylines(shapeObj *line1, shapeObj *line2);
 
 MS_DLL_EXPORT int msInitQuery(queryObj *query); /* in mapquery.c */
 MS_DLL_EXPORT void msFreeQuery(queryObj *query);
+MS_DLL_EXPORT int msSaveQueryResults(mapObj *map, char *filename);
+MS_DLL_EXPORT int msLoadQueryResults(mapObj *map, char *filename);
 MS_DLL_EXPORT int msSaveQuery(mapObj *map, char *filename);
 MS_DLL_EXPORT int msLoadQuery(mapObj *map, char *filename);
 MS_DLL_EXPORT int msExecuteQuery(mapObj *map);

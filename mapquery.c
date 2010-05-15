@@ -161,6 +161,98 @@ static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int 
   return(MS_SUCCESS);
 }
 
+/*
+** Serialize a query result set to disk.
+*/
+int msSaveQueryResults(mapObj *map, char *filename) {
+  FILE *stream;
+  int i, j, n=0;
+
+  if(!filename) {
+    msSetError(MS_MISCERR, "No filename provided to save query results to.", "msSaveQueryResults()");
+    return(MS_FAILURE);
+  }
+
+  stream = fopen(filename, "wb");
+  if(!stream) {
+    msSetError(MS_IOERR, "(%s)", "msSaveQueryResults()", filename);
+    return(MS_FAILURE);
+  }
+
+  /* count the number of layers with results */
+  for(i=0; i<map->numlayers; i++)
+    if(GET_LAYER(map, i)->resultcache) n++;
+  fwrite(&n, sizeof(int), 1, stream);
+
+  /* now write the result set for each layer */
+  for(i=0; i<map->numlayers; i++) {
+    if(GET_LAYER(map, i)->resultcache) {
+      fwrite(&i, sizeof(int), 1, stream); /* layer index */
+      fwrite(&(GET_LAYER(map, i)->resultcache->numresults), sizeof(int), 1, stream); /* number of results */
+      fwrite(&(GET_LAYER(map, i)->resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
+      for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++)
+	fwrite(&(GET_LAYER(map, i)->resultcache->results[j]), sizeof(resultCacheMemberObj), 1, stream); /* each result */
+    }
+  }
+
+  fclose(stream);
+  return(MS_SUCCESS);
+}
+
+int msLoadQueryResults(mapObj *map, char *filename) {
+  FILE *stream;
+  int i, j, k, n=0;
+
+  if(!filename) {
+    msSetError(MS_MISCERR, "No filename provided to load query from.", "msLoadQueryResults()");
+    return(MS_FAILURE);
+  }
+
+  /*                                                                                                                                               
+  ** Make sure the file at least has the right extension.                                                         
+  */
+  if(msEvalRegex("\\.qy$", filename) != MS_TRUE) return MS_FAILURE;
+
+  stream = fopen(filename, "rb");
+  if(!stream) {
+    msSetError(MS_IOERR, "(%s)", "msLoadQueryResults()", filename);
+    return(MS_FAILURE);
+  }
+
+  fread(&n, sizeof(int), 1, stream);
+
+  /* now load the result set for each layer found in the query file */
+  for(i=0; i<n; i++) {
+    fread(&j, sizeof(int), 1, stream); /* layer index */
+
+    if(j<0 || j>map->numlayers) {
+      msSetError(MS_MISCERR, "Invalid layer index loaded from query file.", "msLoadQueryResults()");
+      return(MS_FAILURE);
+    }
+
+    /* inialize the results for this layer */
+    GET_LAYER(map, j)->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+
+    fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream); /* number of results    */
+    GET_LAYER(map, j)->resultcache->cachesize = GET_LAYER(map, j)->resultcache->numresults;
+
+    fread(&(GET_LAYER(map, j)->resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
+
+    GET_LAYER(map, j)->resultcache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*GET_LAYER(map, j)->resultcache->numresults);
+
+    for(k=0; k<GET_LAYER(map, j)->resultcache->numresults; k++) {
+      fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultCacheMemberObj), 1, stream); /* each result */
+      if(!GET_LAYER(map, j)->tileindex) GET_LAYER(map, j)->resultcache->results[k].tileindex = -1; /* reset the tile index for non-tiled layers */
+    }
+  }
+
+  fclose(stream);
+  return(MS_SUCCESS);
+}
+
+/*
+** Serialize the values necessary to duplicate a query to disk.
+*/
 int msSaveQuery(mapObj *map, char *filename) {
   FILE *stream;
 
