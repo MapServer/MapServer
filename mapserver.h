@@ -1961,6 +1961,7 @@ MS_DLL_EXPORT int msLayerOpen(layerObj *layer); /* in maplayer.c */
 MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msLayerClose(layerObj *layer);
 MS_DLL_EXPORT int msLayerWhichShapes(layerObj *layer, rectObj rect);
+MS_DLL_EXPORT int msLayerGetItemIndex(layerObj *layer, char *item);
 MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int get_all, char *metadata); 
 MS_DLL_EXPORT int msLayerNextShape(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msLayerGetItems(layerObj *layer);

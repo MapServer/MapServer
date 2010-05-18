@@ -352,11 +352,21 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
   }
 }
 
+int msLayerGetItemIndex(layerObj *layer, char *item)
+{
+  int i;
 
-/*                                                                                                                                                                                                                                        
-** This function builds a list of items necessary to draw or query a particular layer by                                                                                                                                                  
-** examining the contents of the various xxxxitem parameters and expressions. That list is                                                                                                                                                
-** then used to set the iteminfo variable.                                                                                                                                                                                                
+  for(i=0; i<layer->numitems; i++) {
+    if(strcasecmp(layer->items[i], item) == 0) return(i);
+  }
+    
+  return -1; /* item not found */
+}
+
+/*
+** This function builds a list of items necessary to draw or query a particular layer by
+** examining the contents of the various xxxxitem parameters and expressions. That list is
+** then used to set the iteminfo variable.
 */
 int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 {
