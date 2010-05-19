@@ -194,49 +194,49 @@ logical_exp:
 					   $$ = MS_TRUE;
 					 else
 					   $$ = MS_FALSE;
-					   free($1);
-					   free($3);
+					 free($1);
+					 free($3);
 				       }
        | string_exp NE string_exp      {
                                          if(strcmp($1, $3) != 0)
 					   $$ = MS_TRUE;
 					 else
 					   $$ = MS_FALSE;
-					   free($1);
-					   free($3);
+					 free($1);
+					 free($3);
 				       }
        | string_exp GT string_exp      {
                                          if(strcmp($1, $3) > 0)
 					   $$ = MS_TRUE;
 					 else
 					   $$ = MS_FALSE;
-					   /* printf("Not freeing: %s >= %s\n",$1, $3); */
-					   free($1);
-					   free($3);
+					 /* printf("Not freeing: %s >= %s\n",$1, $3); */
+					 free($1);
+					 free($3);
                                        }
        | string_exp LT string_exp      {
                                          if(strcmp($1, $3) < 0)
 					   $$ = MS_TRUE;
 					 else
 					   $$ = MS_FALSE;
-					   free($1);
-					   free($3);
+					 free($1);
+					 free($3);
                                        }
        | string_exp GE string_exp      {
                                          if(strcmp($1, $3) >= 0)
 					   $$ = MS_TRUE;
 					 else
 					   $$ = MS_FALSE;
-					   free($1);
-					   free($3);
+					 free($1);
+					 free($3);
                                        }
        | string_exp LE string_exp      {
                                          if(strcmp($1, $3) <= 0)
 					   $$ = MS_TRUE;
 					 else
 					   $$ = MS_FALSE;
-					   free($1);
-					   free($3);
+					 free($1);
+					 free($3);
                                        } 
        | time_exp EQ time_exp      {
                                      if(msTimeCompare(&($1), &($3)) == 0)
@@ -292,8 +292,8 @@ logical_exp:
 
 					 if(strcmp($1,bufferp) == 0) // is this test necessary?
 					   $$ = MS_TRUE;
-					   free($1);
-					   free($3);
+					 free($1);
+					 free($3);
 				       }
        | math_exp IN string_exp        {
 					 char *delim,*bufferp;
@@ -314,7 +314,7 @@ logical_exp:
 					 if($1 == atof(bufferp)) // is this test necessary?
 					   $$ = MS_TRUE;
 					   
-					   free($3);
+					 free($3);
 				       }
        | math_exp IEQ math_exp         {
 	                                 if($1 == $3)
@@ -327,8 +327,8 @@ logical_exp:
 					   $$ = MS_TRUE;
 					 else
 					   $$ = MS_FALSE;
-					   free($1);
-					   free($3);
+					 free($1);
+					 free($3);
 				       }
        | time_exp IEQ time_exp     {
                                      if(msTimeCompare(&($1), &($3)) == 0)
