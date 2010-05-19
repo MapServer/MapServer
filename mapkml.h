@@ -63,6 +63,8 @@ void msFreeImageKml(imageObj *image);
 void msFreeTileKml(imageObj *tile);
 void msFreeSymbolKml(symbolObj *symbol);
 
+int  msDrawRasterLayerKml(mapObj *map, layerObj *layer, imageObj *img);
+
 #ifdef __cplusplus
 }
 #endif

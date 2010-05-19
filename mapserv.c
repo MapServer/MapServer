@@ -1161,7 +1161,8 @@ int main(int argc, char *argv[]) {
       }
             
       exit(0);
-    } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0) {
+    } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ||
+               strncmp(argv[iArg], "XMLPOST_QUERY_STRING=", 13) == 0) {
       /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );
       putenv( argv[iArg] );
@@ -1420,7 +1421,11 @@ int main(int argc, char *argv[]) {
         msIO_printf("Cache-Control: max-age=%s%c", msLookupHashTable(&(mapserv->map->web.metadata), "http_max_age"), 10);
       }
 
-      if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
+      if(mapserv->sendheaders)  {
+        const char *attachment = msGetOutputFormatOption(mapserv->map->outputformat, "ATTACHMENT", NULL ); 
+        if(attachment) msIO_printf("Content-disposition: attachment; filename=%s\n", attachment);
+        msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
+      }
             
       if( mapserv->Mode == MAP || mapserv->Mode == TILE )
         status = msSaveImage(mapserv->map, img, NULL);
@@ -1804,7 +1809,11 @@ int main(int argc, char *argv[]) {
         img = msDrawMap(mapserv->map, MS_TRUE);
         if(!img) writeError();
 
-        if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
+        if(mapserv->sendheaders) {
+          const char *attachment = msGetOutputFormatOption(mapserv->map->outputformat, "ATTACHMENT", NULL ); 
+          if(attachment) msIO_printf("Content-disposition: attachment; filename=%s\n", attachment);
+          msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
+         }
         status = msSaveImage(mapserv->map, img, NULL);
         if(status != MS_SUCCESS) writeError();
         msFreeImage(img);

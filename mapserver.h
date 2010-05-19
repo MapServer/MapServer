@@ -360,6 +360,7 @@ extern "C" {
 #define MS_RENDERER_AGG(format) ((format)->renderer == MS_RENDER_WITH_AGG)
 #define MS_RENDERER_PLUGIN(format) ((format)->renderer >= MS_RENDER_WITH_CAIRO_RASTER)
 #define MS_RENDERER_TEMPLATE(format) ((format)->renderer == MS_RENDER_WITH_TEMPLATE)
+#define MS_RENDERER_KML(format) ((format)->renderer == MS_RENDER_WITH_KML)
 
 #define MS_CELLSIZE(min,max,d) ((max - min)/(d-1)) /* where min/max are from an MapServer pixel center-to-pixel center extent */
 #define MS_OWS_CELLSIZE(min,max,d) ((max - min)/d) /* where min/max are from an OGC pixel outside edge-to-pixel outside edge extent */

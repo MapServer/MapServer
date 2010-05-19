@@ -63,8 +63,8 @@ protected:
 	xmlNodePtr	GeomNode;
 	xmlNodePtr	DescriptionNode;
 
-	shapeObj	*CurrentShape;
-        shapeObj        *CurrentShapeDrawn;
+	int	        CurrentShapeIndex;
+	int	        CurrentDrawnShapeIndex;
 	char		**Items;
 	int			NumItems;
 	int			DumpAttributes;
@@ -72,8 +72,9 @@ protected:
 	// placemark symbology
 	hashTableObj	*StyleHashTable;
 
-	labelStyleObj	LabelStyle;
-	strokeStyleObj	LineStyle;
+	labelStyleObj	        LabelStyle;
+	strokeStyleObj	        *LineStyle;
+        int                     numLineStyle;
 	colorObj		PolygonColor;
 
 	char			SymbolName[128];
@@ -138,6 +139,7 @@ protected:
 	xmlNodePtr getGeomParentNode(char *geomName);
         char* getLayerName(layerObj *layer);
         void processLayer(layerObj *layer);
+        void addLineStyleToList(strokeStyleObj *style);
 
 public:
 

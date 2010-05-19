@@ -76,7 +76,7 @@ void msRenderPolygonKml(imageObj *img, shapeObj *p, colorObj *color)
 
 void msRenderPolygonTiledKml(imageObj *img, shapeObj *p,  imageObj *tile)
 {
-	KmlRenderer* renderer = getKmlRenderer(img);
+  /*KmlRenderer* renderer = getKmlRenderer(img);*/
 }
 
 void msRenderLineTiledKml(imageObj *img, shapeObj *p, imageObj *tile)
@@ -204,10 +204,16 @@ void msStartShapeKml(imageObj *img, shapeObj *shape)
 
 void msEndShapeKml(imageObj *img, shapeObj *shape)
 {
-	KmlRenderer* renderer = getKmlRenderer(img);
-	renderer->endShape(img, shape);
+    KmlRenderer* renderer = getKmlRenderer(img);
+    renderer->endShape(img, shape);
 }
 
+int  msDrawRasterLayerKml(mapObj *map, layerObj *layer, imageObj *img)
+{
+    KmlRenderer* renderer = getKmlRenderer(img);
+    return renderer->renderRasterLayer(img);
+    
+}
 #ifdef __cplusplus
 }
 #endif

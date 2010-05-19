@@ -48,6 +48,8 @@ KmlRenderer::KmlRenderer(int width, int height, colorObj* color/*=NULL*/)
     papszLayerIncludeItems = NULL;
     nIncludeItems=0;
     
+    LineStyle = NULL;
+    numLineStyle = 0;
 
     xmlNodePtr styleNode;
     xmlNodePtr listStyleNode;
@@ -101,18 +103,28 @@ KmlRenderer::~KmlRenderer()
 imageObj* KmlRenderer::createInternalImage()
 {
     rendererVTableObj *r = RasterizerOutputFormat->vtable;
-    imageObj *image = r->createImage(Width, Height, RasterizerOutputFormat, &BgColor);
-    image->format = RasterizerOutputFormat;
-    image->format->refcount++;
-    image->width = currentLayer->map->width;
-    image->height = currentLayer->map->height;
+    imageObj *image =NULL;
+    mapObj *map = currentLayer->map;
 
-    image->resolution = currentLayer->map->resolution;
-    image->resolutionfactor = currentLayer->map->resolution/currentLayer->map->defresolution;
-    if (currentLayer->map->web.imagepath)
-      image->imagepath = strdup(currentLayer->map->web.imagepath);
-    if (map->web.imageurl)
-      image->imageurl = strdup(currentLayer->map->web.imageurl);
+    if (r)
+    {
+        image = r->createImage(Width, Height, RasterizerOutputFormat, &BgColor);
+          image->format = RasterizerOutputFormat;
+          image->format->refcount++;
+          image->width = currentLayer->map->width;
+          image->height = currentLayer->map->height;
+
+          image->resolution = currentLayer->map->resolution;
+          image->resolutionfactor = currentLayer->map->resolution/currentLayer->map->defresolution;
+          if (currentLayer->map->web.imagepath)
+            image->imagepath = strdup(currentLayer->map->web.imagepath);
+          if (map->web.imageurl)
+            image->imageurl = strdup(currentLayer->map->web.imageurl);
+    }
+    else
+      image = msImageCreateAGG(map->width, map->height,  
+                               RasterizerOutputFormat,
+                               map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
     return image;
 }
 
@@ -124,37 +136,37 @@ imageObj* KmlRenderer::createImage(int, int, outputFormatObj*, colorObj*)
 int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj*)
 {
     
-	/* -------------------------------------------------------------------- */
-	/*      Write out the document.                                         */
-	/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Write out the document.                                         */
+    /* -------------------------------------------------------------------- */
 
-	int bufSize = 0;
-	xmlChar *buf = NULL;
-	msIOContext *context = NULL;
+    int bufSize = 0;
+    xmlChar *buf = NULL;
+    msIOContext *context = NULL;
 
-	if( msIO_needBinaryStdout() == MS_FAILURE )
-		return MS_FAILURE;
+    if( msIO_needBinaryStdout() == MS_FAILURE )
+      return MS_FAILURE;
 
-	xmlDocDumpFormatMemoryEnc(XmlDoc, &buf, &bufSize, "UTF-8", 1);
+    xmlDocDumpFormatMemoryEnc(XmlDoc, &buf, &bufSize, "UTF-8", 1);
 
-	context = msIO_getHandler(fp);
+    context = msIO_getHandler(fp);
 
-	int chunkSize = 4096;
-	for (int i=0; i<bufSize; i+=chunkSize)
-	{
-		int size = chunkSize;
-		if (i + size > bufSize)
-			size = bufSize - i;
+    int chunkSize = 4096;
+    for (int i=0; i<bufSize; i+=chunkSize)
+    {
+        int size = chunkSize;
+        if (i + size > bufSize)
+          size = bufSize - i;
 
-		if (context)
-			msIO_contextWrite(context, buf+i, size);
-		else
-			msIO_fwrite(buf+i, 1, size, fp);
-	}
+        if (context)
+          msIO_contextWrite(context, buf+i, size);
+        else
+          msIO_fwrite(buf+i, 1, size, fp);
+    }
 
-	xmlFree(buf);
+    xmlFree(buf);
 
-	return(MS_SUCCESS);
+    return(MS_SUCCESS);
 }
 
 
@@ -177,6 +189,17 @@ void KmlRenderer::processLayer(layerObj *layer)
     for(i=0; i<layer->numclasses; i++)
       layer->_class[i]->label.position = MS_XY;
    
+    /*we do not want to draw multiple styles.
+      the new rendering architecture does not allow
+      to know if we are dealing with a multi-style.
+      So here we remove all styles beside the first one*/
+    /*
+    for(i=0; i<layer->numclasses; i++)
+    {
+        while (layer->_class[i]->numstyles > 1)
+          msDeleteStyle(layer->_class[i], layer->_class[i]->numstyles-1);
+    }
+    */
 }
 
 char* KmlRenderer::getLayerName(layerObj *layer)
@@ -211,6 +234,7 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
       RasterMode = MS_TRUE;
     else
       VectorMode = MS_TRUE;
+
 
     /*check if a vector layer will be dumped as a raster*/
     const char *outputAsRaster=msLookupHashTable(&(layer->metadata),"KML_OUTPUTASRASTER");
@@ -266,6 +290,14 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
         if (layer->map->mappath)
           sprintf(MapPath, "%s", layer->map->mappath);
 
+        /*First rendered layer - check mapfile projection*/
+        checkProjection(layer->map);
+
+        /*check for image path and image url*/
+        if (layer->map->debug && (layer->map->web.imageurl == NULL ||   layer->map->web.imagepath == NULL))
+          msDebug("KmlRenderer::startNewLayer: imagepath and imageurl sould be set in the web object\n");
+
+
         /*map rect for ground overlay*/
         MapExtent = layer->map->extent;
         MapCellsize = layer->map->cellsize;
@@ -273,10 +305,7 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
 
          xmlNewChild(DocNode, NULL, BAD_CAST "name", BAD_CAST layer->map->name);
 
-        /*First rendered layer - check mapfile projection*/
-        checkProjection(layer->map);
-
-              
+        
     }
 
     currentLayer = layer;
@@ -339,10 +368,15 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
       The agg should be the only one used but at this point it is not completed; so
       use cairo for vector layer that are rasterized and agg2 for raster layers*/
     if (layer->type ==  MS_LAYER_RASTER)
-      sprintf(rasterizerFomatName, "agg2png"); 
+      sprintf(rasterizerFomatName, "agg2png"); //"aggpng24"); 
     else
-      sprintf(rasterizerFomatName, "cairopng");
-
+    {
+#ifdef USE_CAIRO
+        sprintf(rasterizerFomatName, "cairopng");
+#else
+        sprintf(rasterizerFomatName, "agg2png"); 
+#endif
+    }
         
     for (int i=0; i<layer->map->numoutputformats; i++)
     {     
@@ -415,6 +449,8 @@ void KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
 
     if (papszLayerIncludeItems && nIncludeItems>0)
       msFreeCharArray(papszLayerIncludeItems, nIncludeItems);
+
+    papszLayerIncludeItems=NULL;
 }
 
 
@@ -456,27 +492,32 @@ int KmlRenderer::checkProjection(mapObj *map)
 #ifdef USE_PROJ
     if (projection && projection->numargs > 0 && pj_is_latlong(projection->proj))
     {
-        char *projStr = msGetProjectionString(projection);
-
-        /* is ellipsoid WGS84 or projection code epsg:4326 */
-        if (strcasestr(projStr, "WGS84") || strcasestr(projStr,"epsg:4326"))
-        {
-            return MS_SUCCESS;
-        }
+        return MS_SUCCESS;
     }
     else
     {
-        //TODO: give a warning in debug mode 
         char epsg_string[100];
-        //??The only projection valid
+        rectObj sRect;
+        projectionObj out;
         strcpy(epsg_string, "epsg:4326" );
+        msInitProjection(&out);
+        msLoadProjectionString(&out, epsg_string);
+
+        sRect = map->extent;
+        msProjectRect(projection, &out, &sRect);
         msFreeProjection(projection);
         msLoadProjectionString(projection, epsg_string);
+
+        /*change also units and extents*/
+        map->extent = sRect;
+        map->units = MS_DD;
+
+
+        if (map->debug)
+          msDebug("KmlRenderer::checkProjection: Mapfile projection set to epsg:4326\n");
+
         return MS_SUCCESS;
     }
-
-    msSetError(MS_PROJERR, "Mapfile projection not defined, KML output driver requires projection WGS84 (epsg:4326)", "KmlRenderer::checkProjection()" );
-    return MS_FAILURE;
 
 #else
     msSetError(MS_MISCERR, "Projection support not enabled", "KmlRenderer::checkProjection" );
@@ -491,7 +532,7 @@ xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUr
     /*always add a name. It will be replaced by a text value if available*/
     char tmpid[100];
     char *stmp=NULL, *layerName=NULL;
-    sprintf(tmpid, ".%d", (int)CurrentShape->index);
+    sprintf(tmpid, ".%d", CurrentShapeIndex);
     layerName = getLayerName(currentLayer);
     stmp = msStringConcatenate(stmp, layerName);
     stmp = msStringConcatenate(stmp, tmpid);
@@ -515,11 +556,12 @@ void KmlRenderer::renderLineVector(imageObj*, shapeObj *p, strokeStyleObj *style
     if (!PlacemarkNode)
       return;
 
-    memcpy(&LineStyle, style, sizeof(strokeStyleObj));
+    addLineStyleToList(style);    
     SymbologyFlag[Line] = 1;
 
-    
-    if (p != CurrentShapeDrawn)
+    /*p->index > CurrentDrawnShapeIndexneed to be reviewd. Added since the hight
+      level code caches shapes when rendering lines*/
+    if (CurrentDrawnShapeIndex == -1 || p->index > CurrentDrawnShapeIndex)
     {
     
       xmlNodePtr geomNode = getGeomParentNode("LineString");
@@ -538,7 +580,7 @@ void KmlRenderer::renderLineVector(imageObj*, shapeObj *p, strokeStyleObj *style
         }
       }
       
-      CurrentShapeDrawn = p;
+      CurrentDrawnShapeIndex = p->index;
     }
       
 }
@@ -577,7 +619,7 @@ void KmlRenderer::renderPolygonVector(imageObj*, shapeObj *p, colorObj *color)
     SymbologyFlag[Polygon] = 1;
 
     
-    if (p != CurrentShapeDrawn)
+    if (p->index != CurrentDrawnShapeIndex)
     {
     
       xmlNodePtr geomParentNode = getGeomParentNode("Polygon");
@@ -596,8 +638,8 @@ void KmlRenderer::renderPolygonVector(imageObj*, shapeObj *p, colorObj *color)
         addCoordsNode(ringNode, p->line[i].point, p->line[i].numpoints);
       }
 
+      CurrentDrawnShapeIndex = p->index;
       
-      CurrentShapeDrawn = p;
     }
       
 }
@@ -880,16 +922,16 @@ xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *ima
 
     char crdStr[64];
     xmlNodePtr latLonBoxNode = xmlNewChild(groundOverlayNode, NULL, BAD_CAST "LatLonBox", NULL);
-    sprintf(crdStr, "%.8f", MapExtent.maxy);
+    sprintf(crdStr, "%.8f", currentLayer->map->extent.maxy);
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "north", BAD_CAST crdStr);
 
-    sprintf(crdStr, "%.8f", MapExtent.miny);
+    sprintf(crdStr, "%.8f", currentLayer->map->extent.miny);
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "south", BAD_CAST crdStr);
 
-    sprintf(crdStr, "%.8f", MapExtent.minx);
+    sprintf(crdStr, "%.8f", currentLayer->map->extent.minx);
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "west", BAD_CAST crdStr);
 
-    sprintf(crdStr, "%.8f", MapExtent.maxx);
+    sprintf(crdStr, "%.8f", currentLayer->map->extent.maxx);
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "east", BAD_CAST crdStr);
 
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "rotation", BAD_CAST "0.0");
@@ -902,9 +944,22 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
     if (PlacemarkNode)
       flushPlacemark();
 
-    CurrentShapeDrawn = NULL;
-    CurrentShape = shape;
+    CurrentShapeIndex=-1;
+    CurrentDrawnShapeIndex = -1;
 
+    /*should be done at endshape but the plugin architecture does not call endshape yet*/
+    if(LineStyle)
+    {
+        msFree(LineStyle);
+
+        LineStyle = NULL;
+        numLineStyle = 0;
+    }
+
+    if (shape)
+    {
+        CurrentShapeIndex = shape->index;
+    }
     PlacemarkNode = NULL;
     GeomNode = NULL;
 
@@ -918,7 +973,7 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
 
 void KmlRenderer::endShape(imageObj*, shapeObj*)
 {
-
+    CurrentShapeIndex = -1;
 }
 
 xmlNodePtr KmlRenderer::getGeomParentNode(char *geomName)
@@ -1020,17 +1075,20 @@ char* KmlRenderer::lookupPlacemarkStyle()
             <width>1</width>                   <!-- float -->
             </LineStyle>
           */
-          
-      if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
-          LineStyle.color.alpha == 255)
-        LineStyle.color.alpha = MS_NINT(currentLayer->opacity*2.55);
+    
+        for (int i=0; i<numLineStyle; i++)
+        {
+            if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
+                LineStyle[i].color.alpha == 255)
+              LineStyle[i].color.alpha = MS_NINT(currentLayer->opacity*2.55);
               
-      sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle.color.alpha, LineStyle.color.blue,
-              LineStyle.color.green, LineStyle.color.red);
+            sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color.alpha, LineStyle[0].color.blue,
+                    LineStyle[i].color.green, LineStyle[i].color.red);
 
-      char lineStyleName[32];
-      sprintf(lineStyleName, "_line_%s_w%.1f", lineHexColor, LineStyle.width);
-      styleName = msStringConcatenate(styleName, lineStyleName);
+            char lineStyleName[32];
+            sprintf(lineStyleName, "_line_%s_w%.1f", lineHexColor, LineStyle[i].width);
+            styleName = msStringConcatenate(styleName, lineStyleName);
+        }
     }
 
     if (SymbologyFlag[Polygon])
@@ -1125,12 +1183,17 @@ char* KmlRenderer::lookupPlacemarkStyle()
 
         if (SymbologyFlag[Line])
         {
-            xmlNodePtr lineStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "LineStyle", NULL);
-            xmlNewChild(lineStyleNode, NULL, BAD_CAST "color", BAD_CAST lineHexColor);
+            for (int i=0; i<numLineStyle; i++)
+            {
+                xmlNodePtr lineStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "LineStyle", NULL);
+                sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color.alpha, LineStyle[i].color.blue,
+                    LineStyle[i].color.green, LineStyle[i].color.red);
+                xmlNewChild(lineStyleNode, NULL, BAD_CAST "color", BAD_CAST lineHexColor);
 
-            char width[16];
-            sprintf(width, "%.1f", LineStyle.width);
-            xmlNewChild(lineStyleNode, NULL, BAD_CAST "width", BAD_CAST width);
+                char width[16];
+                sprintf(width, "%.1f", LineStyle[i].width);
+                xmlNewChild(lineStyleNode, NULL, BAD_CAST "width", BAD_CAST width);
+            }
         }
 
         if (SymbologyFlag[Symbol])
@@ -1143,6 +1206,17 @@ char* KmlRenderer::lookupPlacemarkStyle()
                 /*char scale[16];
                 sprintf(scale, "%.1f", style->scale);
                 xmlNewChild(iconStyleNode, NULL, BAD_CAST "scale", BAD_CAST scale);*/
+        }
+        else
+        {
+            const char *value=msLookupHashTable(&currentLayer->metadata, "kml_default_symbol_href");
+            if (value && strlen(value) > 0)
+            {
+                xmlNodePtr iconStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "IconStyle", NULL);
+
+                xmlNodePtr iconNode = xmlNewChild(iconStyleNode, NULL, BAD_CAST "Icon", NULL);
+                xmlNewChild(iconNode, NULL, BAD_CAST "href", BAD_CAST value);
+            }
         }
 
         if (SymbologyFlag[Label])
@@ -1249,8 +1323,36 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
     return NULL;
 }
 
-int KmlRenderer::renderRasterLayer(imageObj *img)
+int KmlRenderer::renderRasterLayer(imageObj*)
 {
     return msDrawRasterLayer(currentLayer->map, currentLayer, ImgLayer);
 }
+
+void KmlRenderer::addLineStyleToList(strokeStyleObj *style)
+{
+    /*actually this is not necessary. kml only uses the last LineStyle
+      so we should not bother keeping them all*/
+    int i =0;
+    for (i=0; i<numLineStyle; i++)
+    {
+        if (style->width == LineStyle[i].width &&
+            LineStyle[i].color.alpha == style->color.alpha &&
+            LineStyle[i].color.red == style->color.red &&
+            LineStyle[i].color.green == style->color.green &&
+            LineStyle[i].color.blue == style->color.blue)
+          break;
+    }
+    if (i == numLineStyle)
+    {
+        numLineStyle++;
+        if (LineStyle == NULL)
+          LineStyle = (strokeStyleObj *)malloc(sizeof(strokeStyleObj));
+        else
+          LineStyle = (strokeStyleObj *)realloc(LineStyle, sizeof(strokeStyleObj)*numLineStyle);
+
+        memcpy(&LineStyle[numLineStyle-1], style, sizeof(strokeStyleObj));
+    }
+
+}
+
 #endif

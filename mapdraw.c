@@ -1379,7 +1379,12 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
     {
         if( MS_RENDERER_PLUGIN(image->format) )
         {
-            return msDrawRasterLayerPlugin(map, layer, image);
+#ifdef USE_KML
+            if (MS_RENDERER_KML(image->format))
+              return  msDrawRasterLayerKml(map, layer, image);
+            else
+#endif
+              return msDrawRasterLayerPlugin(map, layer, image);
         }
         else if( MS_RENDERER_GD(image->format) )
             return msDrawRasterLayerLow(map, layer, image, NULL);
