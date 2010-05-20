@@ -941,72 +941,79 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "resultset");
-  if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
-
   if(!stream) {
     msSetError(MS_WEBERR, "Invalid file pointer.", "processResultSetTag()");
     return(MS_FAILURE);
   }
 
-  /* check for any tag arguments */
-  if(getTagArgs("resultset", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
-  if(tagArgs) {
-    layerName = msLookupHashTable(tagArgs, "layer");
-  }
+  tagStart = findTag(*line, "resultset");
+  if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
-  if(!layerName) {
-    msSetError(MS_WEBERR, "[resultset] tag missing required 'layer' argument.", "processResultSetTag()");
-    return(MS_FAILURE);
-  }
+  while (tagStart) {  
+    /* initialize the tag arguments */
+    layerName = NULL;
 
-  layerIndex = msGetLayerIndex(mapserv->map, layerName);
-  if(layerIndex>=mapserv->map->numlayers || layerIndex<0) {
-    msSetError(MS_MISCERR, "Layer named '%s' does not exist.", "processResultSetTag()", layerName);
-    return MS_FAILURE;
-  }
-  lp = GET_LAYER(mapserv->map, layerIndex);
-
-  if(strstr(*line, "[/resultset]") == NULL) { /* read ahead */
-    foundTagEnd = MS_FALSE;
-    while(!foundTagEnd) {
-      if(fgets(lineBuffer, MS_BUFFER_LENGTH, stream) != NULL) {
-        *line = msStringConcatenate(*line, lineBuffer);
-        if(strstr(*line, "[/resultset]") != NULL)
-          foundTagEnd = MS_TRUE;
-      } else 
-        break; /* ran out of file */
+    /* check for any tag arguments */
+    if(getTagArgs("resultset", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+    if(tagArgs) {
+      layerName = msLookupHashTable(tagArgs, "layer");
     }
-    if(foundTagEnd == MS_FALSE) {
-      msSetError(MS_WEBERR, "[resultset] tag found without closing [/resultset].", "processResultSetTag()");
+
+    if(!layerName) {
+      msSetError(MS_WEBERR, "[resultset] tag missing required 'layer' argument.", "processResultSetTag()");
       return(MS_FAILURE);
     }
+
+    layerIndex = msGetLayerIndex(mapserv->map, layerName);
+    if(layerIndex>=mapserv->map->numlayers || layerIndex<0) {
+      msSetError(MS_MISCERR, "Layer named '%s' does not exist.", "processResultSetTag()", layerName);
+      return MS_FAILURE;
+    }
+    lp = GET_LAYER(mapserv->map, layerIndex);
+
+    if(strstr(*line, "[/resultset]") == NULL) { /* read ahead */
+      foundTagEnd = MS_FALSE;
+      while(!foundTagEnd) {
+        if(fgets(lineBuffer, MS_BUFFER_LENGTH, stream) != NULL) {
+          *line = msStringConcatenate(*line, lineBuffer);
+          if(strstr(*line, "[/resultset]") != NULL)
+            foundTagEnd = MS_TRUE;
+        } else 
+          break; /* ran out of file */
+      }
+      if(foundTagEnd == MS_FALSE) {
+        msSetError(MS_WEBERR, "[resultset] tag found without closing [/resultset].", "processResultSetTag()");
+        return(MS_FAILURE);
+      }
+    }
+
+    if(getInlineTag("resultset", *line, &tag) != MS_SUCCESS) {
+      msSetError(MS_WEBERR, "Malformed resultset tag.", "processResultSetTag()");
+      return MS_FAILURE;
+    }
+
+    preTag = getPreTagText(*line, "[resultset"); /* TODO: need to handle tags in these */
+    postTag = getPostTagText(*line, "[/resultset]");
+
+    /* start rebuilding **line */
+    free(*line); *line = preTag;
+
+    if(lp->resultcache && lp->resultcache->numresults > 0) {    
+      /* probably will need a while-loop here to handle multiple instances of [feature ...] tags */
+      if(processFeatureTag(mapserv, &tag, lp) != MS_SUCCESS)
+        return(MS_FAILURE); /* TODO: how to handle */ 
+      *line = msStringConcatenate(*line, tag);
+    }
+
+    *line = msStringConcatenate(*line, postTag);
+
+    /* clean up */
+    msFreeHashTable(tagArgs); tagArgs=NULL;
+    free(postTag);
+    free(tag);
+
+    tagStart = findTag(*line, "resultset");
   }
-
-  if(getInlineTag("resultset", *line, &tag) != MS_SUCCESS) {
-    msSetError(MS_WEBERR, "Malformed resultset tag.", "processResultSetTag()");
-    return MS_FAILURE;
-  }
-
-  preTag = getPreTagText(*line, "[resultset"); /* TODO: need to handle tags in these */
-  postTag = getPostTagText(*line, "[/resultset]");
-
-  /* start rebuilding **line */
-  free(*line); *line = preTag;
-
-  if(lp->resultcache && lp->resultcache->numresults > 0) {    
-    /* probably will need a while-loop here to handle multiple instances of [feature ...] tags */
-    if(processFeatureTag(mapserv, &tag, lp) != MS_SUCCESS)
-      return(MS_FAILURE); /* TODO: how to handle */ 
-    *line = msStringConcatenate(*line, tag);
-  }
-
-  *line = msStringConcatenate(*line, postTag);
-
-  /* clean up */
-  msFreeHashTable(tagArgs); tagArgs=NULL;
-  free(postTag);
-  free(tag);
 
   return(MS_SUCCESS);
 }
@@ -3420,6 +3427,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
         for(j=0;j<mapserv->resultlayer->joins[i].numitems;j++) {
           /* by default let's encode attributes for HTML presentation */
           snprintf(substr, PROCESSLINE_BUFLEN, "[%s_%s]", mapserv->resultlayer->joins[i].name, mapserv->resultlayer->joins[i].items[j]);        
+
           if(strstr(outstr, substr) != NULL) {
             encodedstr = msEncodeHTMLEntities(mapserv->resultlayer->joins[i].values[j]);
             outstr = msReplaceSubstring(outstr, substr, encodedstr);
