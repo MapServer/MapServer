@@ -124,6 +124,9 @@ void* msCreatePixmapSymbolTileKml(int width, int height,
 void msRenderEllipseSymbolKml(imageObj *image, double x, double y, 
 		symbolObj *symbol, symbolStyleObj *style)
 {
+    KmlRenderer* renderer = getKmlRenderer(image);
+    renderer->renderEllipseSymbol(image, x, y, symbol,
+                                  style);
 }
 
 void* msCreateEllipseSymbolTileKml(int width, int height,
