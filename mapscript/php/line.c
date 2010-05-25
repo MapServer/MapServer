@@ -295,7 +295,8 @@ PHP_METHOD(lineObj, point)
         return;
     }
 
-    mapscript_create_point(&(php_line->line->point[index]), zobj, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_point(&(php_line->line->point[index]), parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -312,17 +313,18 @@ zend_function_entry line_functions[] = {
 };
 
 
-void mapscript_create_line(lineObj *line, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_line(lineObj *line, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_line_object * php_line;
     object_init_ex(return_value, mapscript_ce_line); 
     php_line = (php_line_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_line->line = line;
 
-    if (php_parent)
+    if (parent.val)
         php_line->is_ref = 1;
-    php_line->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
+
+    php_line->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_line_object_destroy(void *object TSRMLS_DC)
@@ -331,7 +333,7 @@ static void mapscript_line_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_line);
 
-    MAPSCRIPT_DELREF(php_line->parent);
+    MAPSCRIPT_FREE_PARENT(php_line->parent);
 
     if (php_line->line && !php_line->is_ref) {
         lineObj_destroy(php_line->line);
@@ -350,7 +352,7 @@ static zend_object_value mapscript_line_object_new(zend_class_entry *ce TSRMLS_D
     retval = mapscript_object_new(&php_line->std, ce,
                                   &mapscript_line_object_destroy TSRMLS_CC);
     php_line->is_ref = 0;
-    php_line->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_line->parent);
 
     return retval;
 }

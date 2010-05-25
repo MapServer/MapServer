@@ -144,16 +144,16 @@ zend_function_entry color_functions[] = {
 };
 
 
-void mapscript_create_color(colorObj *color, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_color(colorObj *color, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_color_object * php_color;
     object_init_ex(return_value, mapscript_ce_color); 
     php_color = (php_color_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_color->color = color;
 
-    php_color->parent = php_parent;
+    php_color->parent = parent;
     
-    MAPSCRIPT_ADDREF(php_parent);
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_color_object_destroy(void *object TSRMLS_DC)
@@ -162,7 +162,7 @@ static void mapscript_color_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_color);
 
-    MAPSCRIPT_DELREF(php_color->parent);
+    MAPSCRIPT_FREE_PARENT(php_color->parent);
     
     /* We don't need to free the colorObj, the mapObj will do it */ 
 
@@ -179,7 +179,7 @@ static zend_object_value mapscript_color_object_new(zend_class_entry *ce TSRMLS_
     retval = mapscript_object_new(&php_color->std, ce,
                                   &mapscript_color_object_destroy TSRMLS_CC);
 
-    php_color->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_color->parent);
 
     return retval;
 }

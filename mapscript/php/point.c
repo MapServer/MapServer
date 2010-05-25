@@ -440,18 +440,18 @@ zend_function_entry point_functions[] = {
 };
 
 
-void mapscript_create_point(pointObj *point, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_point(pointObj *point, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_point_object * php_point;
     object_init_ex(return_value, mapscript_ce_point); 
     php_point = (php_point_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_point->point = point;
     
-    if (php_parent)
+    if (parent.val)
         php_point->is_ref = 1;
     
-    php_point->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
+    php_point->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_point_object_destroy(void *object TSRMLS_DC)
@@ -460,7 +460,7 @@ static void mapscript_point_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_point);
 
-    MAPSCRIPT_DELREF(php_point->parent);
+    MAPSCRIPT_FREE_PARENT(php_point->parent);
 
     if (php_point->point && !php_point->is_ref) {
         pointObj_destroy(php_point->point);
@@ -480,7 +480,7 @@ static zend_object_value mapscript_point_object_new(zend_class_entry *ce TSRMLS_
                                   &mapscript_point_object_destroy TSRMLS_CC);
 
     php_point->is_ref = 0;
-    php_point->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_point->parent);
 
     return retval;
 }

@@ -86,11 +86,11 @@ PHP_METHOD(scalebarObj, __get)
     else IF_GET_LONG("position", php_scalebar->scalebar->position)
     else IF_GET_LONG("postlabelcache", php_scalebar->scalebar->postlabelcache)
     else IF_GET_LONG("align", php_scalebar->scalebar->align)
-    else IF_GET_OBJECT("color", php_scalebar->color)
-    else IF_GET_OBJECT("backgroundcolor", php_scalebar->backgroundcolor)
-    else IF_GET_OBJECT("outlinecolor", php_scalebar->outlinecolor)
-    else IF_GET_OBJECT("label", php_scalebar->label)
-    else IF_GET_OBJECT("imagecolor", php_scalebar->imagecolor)
+    else IF_GET_OBJECT("color", mapscript_ce_color, php_scalebar->color, &php_scalebar->scalebar->color)
+    else IF_GET_OBJECT("backgroundcolor", mapscript_ce_color, php_scalebar->backgroundcolor, &php_scalebar->scalebar->backgroundcolor)
+    else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_scalebar->outlinecolor, &php_scalebar->scalebar->outlinecolor)
+    else IF_GET_OBJECT("label", mapscript_ce_label, php_scalebar->label, &php_scalebar->scalebar->label)
+    else IF_GET_OBJECT("imagecolor", mapscript_ce_color, php_scalebar->imagecolor, &php_scalebar->scalebar->imagecolor)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -199,6 +199,30 @@ PHP_METHOD(scalebarObj, setImageColor)
 }
 /* }}} */
 
+/* {{{ proto int scalebar.free()
+   Free the object */
+PHP_METHOD(scalebarObj, free)
+{
+    zval *zobj = getThis();
+    php_scalebar_object *php_scalebar;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_scalebar = (php_scalebar_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    
+    MAPSCRIPT_DELREF(php_scalebar->color);
+    MAPSCRIPT_DELREF(php_scalebar->backgroundcolor);
+    MAPSCRIPT_DELREF(php_scalebar->outlinecolor);
+    MAPSCRIPT_DELREF(php_scalebar->imagecolor);
+    MAPSCRIPT_DELREF(php_scalebar->label);
+}
+/* }}} */
+
 zend_function_entry scalebar_functions[] = {
     PHP_ME(scalebarObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(scalebarObj, __get, scalebar___get_args, ZEND_ACC_PUBLIC)
@@ -206,34 +230,19 @@ zend_function_entry scalebar_functions[] = {
     PHP_MALIAS(scalebarObj, set, __set, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(scalebarObj, updateFromString, scalebar_updateFromString_args, ZEND_ACC_PUBLIC)
     PHP_ME(scalebarObj, setImageColor, scalebar_setImageColor_args, ZEND_ACC_PUBLIC)
+    PHP_ME(scalebarObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_scalebar(scalebarObj *scalebar, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_scalebar(scalebarObj *scalebar, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_scalebar_object * php_scalebar;
     object_init_ex(return_value, mapscript_ce_scalebar); 
     php_scalebar = (php_scalebar_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_scalebar->scalebar = scalebar;
 
-    MAKE_STD_ZVAL(php_scalebar->color);
-    mapscript_create_color(&(scalebar->color), return_value, php_scalebar->color TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_scalebar->backgroundcolor);
-    mapscript_create_color(&(scalebar->backgroundcolor), return_value, php_scalebar->backgroundcolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_scalebar->outlinecolor);
-    mapscript_create_color(&(scalebar->outlinecolor), return_value, php_scalebar->outlinecolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_scalebar->imagecolor);
-    mapscript_create_color(&(scalebar->imagecolor), return_value, php_scalebar->imagecolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_scalebar->label);
-    mapscript_create_label(&(scalebar->label), return_value, php_scalebar->label TSRMLS_CC);
-
-    php_scalebar->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
-
+    php_scalebar->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_scalebar_object_destroy(void *object TSRMLS_DC)
@@ -242,7 +251,7 @@ static void mapscript_scalebar_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_scalebar);
 
-    MAPSCRIPT_DELREF(php_scalebar->parent);
+    MAPSCRIPT_FREE_PARENT(php_scalebar->parent);
     MAPSCRIPT_DELREF(php_scalebar->color);
     MAPSCRIPT_DELREF(php_scalebar->backgroundcolor);
     MAPSCRIPT_DELREF(php_scalebar->outlinecolor);
@@ -264,7 +273,7 @@ static zend_object_value mapscript_scalebar_object_new(zend_class_entry *ce TSRM
     retval = mapscript_object_new(&php_scalebar->std, ce,
                                   &mapscript_scalebar_object_destroy TSRMLS_CC);
 
-    php_scalebar->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_scalebar->parent);
     php_scalebar->color = NULL;
     php_scalebar->backgroundcolor = NULL;
     php_scalebar->outlinecolor = NULL;

@@ -86,8 +86,8 @@ PHP_METHOD(webObj, __get)
     else IF_GET_STRING("queryformat", php_web->web->queryformat)
     else IF_GET_STRING("legendformat", php_web->web->legendformat)
     else IF_GET_STRING("browseformat", php_web->web->browseformat)
-    else IF_GET_OBJECT("extent", php_web->extent)
-    else IF_GET_OBJECT("metadata", php_web->metadata)
+    else IF_GET_OBJECT("extent", mapscript_ce_rect, php_web->extent, &php_web->web->extent)
+    else IF_GET_OBJECT("metadata", mapscript_ce_web, php_web->metadata, &php_web->web->metadata)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -173,31 +173,46 @@ PHP_METHOD(webObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto int web.free()
+   Free the object. */
+PHP_METHOD(webObj, free)
+{
+    zval *zobj = getThis();
+    php_web_object *php_web;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_web = (php_web_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    MAPSCRIPT_DELREF(php_web->extent);
+    MAPSCRIPT_DELREF(php_web->metadata);
+}
+/* }}} */
+
 zend_function_entry web_functions[] = {
     PHP_ME(webObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(webObj, __get, web___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(webObj, __set, web___set_args, ZEND_ACC_PUBLIC)
     PHP_MALIAS(webObj, set, __set, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(webObj, updateFromString, web_updateFromString_args, ZEND_ACC_PUBLIC)
+    PHP_ME(webObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_web(webObj *web, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_web(webObj *web, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_web_object * php_web;
     object_init_ex(return_value, mapscript_ce_web); 
     php_web = (php_web_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_web->web = web;
 
-    MAKE_STD_ZVAL(php_web->extent);
-    mapscript_create_rect(&(web->extent), return_value, php_web->extent TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_web->metadata);
-    mapscript_create_hashtable(&(web->metadata), return_value, php_web->metadata TSRMLS_CC);
-
-    php_web->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
-
+    php_web->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_web_object_destroy(void *object TSRMLS_DC)
@@ -206,7 +221,7 @@ static void mapscript_web_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_web);
 
-    MAPSCRIPT_DELREF(php_web->parent);
+    MAPSCRIPT_FREE_PARENT(php_web->parent);
     MAPSCRIPT_DELREF(php_web->extent);
     MAPSCRIPT_DELREF(php_web->metadata);
 
@@ -225,7 +240,7 @@ static zend_object_value mapscript_web_object_new(zend_class_entry *ce TSRMLS_DC
     retval = mapscript_object_new(&php_web->std, ce,
                                   &mapscript_web_object_destroy TSRMLS_CC);
 
-    php_web->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_web->parent);
     php_web->extent = NULL;
     php_web->metadata = NULL;
 

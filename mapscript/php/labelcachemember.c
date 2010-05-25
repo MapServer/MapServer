@@ -75,10 +75,10 @@ PHP_METHOD(labelCacheMemberObj, __get)
     else IF_GET_LONG("shapeindex", php_labelcachemember->labelcachemember->shapeindex) 
     else IF_GET_LONG("status", php_labelcachemember->labelcachemember->status) 
     else IF_GET_LONG("tileindex", php_labelcachemember->labelcachemember->tileindex) 
-    else IF_GET_OBJECT("point", php_labelcachemember->point) 
-    else IF_GET_OBJECT("label", php_labelcachemember->label) 
-    else IF_GET_OBJECT("styles", php_labelcachemember->styles) 
-    else IF_GET_OBJECT("poly", php_labelcachemember->poly) 
+    else IF_GET_OBJECT("point", mapscript_ce_point, php_labelcachemember->point, &php_labelcachemember->labelcachemember->point) 
+    else IF_GET_OBJECT("label", mapscript_ce_label, php_labelcachemember->label, &php_labelcachemember->labelcachemember->label) 
+    else IF_GET_OBJECT("styles", mapscript_ce_style, php_labelcachemember->styles, php_labelcachemember->labelcachemember->styles) 
+    else IF_GET_OBJECT("poly", mapscript_ce_shape, php_labelcachemember->poly, php_labelcachemember->labelcachemember->poly) 
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -121,48 +121,53 @@ PHP_METHOD(labelCacheMemberObj, __set)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
-    }
-         
+    }      
 }
+
+/* proto void free()
+   Free the object */
+PHP_METHOD(labelCacheMemberObj, free)
+{
+    zval *zobj = getThis();
+    php_labelcachemember_object *php_labelcachemember;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    MAPSCRIPT_DELREF(php_labelcachemember->point);
+    MAPSCRIPT_DELREF(php_labelcachemember->label);
+    MAPSCRIPT_DELREF(php_labelcachemember->styles);
+    MAPSCRIPT_DELREF(php_labelcachemember->poly);
+}
+/* }}} */
 
 zend_function_entry labelcachemember_functions[] = {
     PHP_ME(labelCacheMemberObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(labelCacheMemberObj, __get, labelcachemember___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelCacheMemberObj, __set, labelcachemember___set_args, ZEND_ACC_PUBLIC)
     PHP_MALIAS(labelCacheMemberObj, setProperty, __set, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(labelCacheMemberObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
 
 void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemember, 
-                                        zval *php_parent, zval *return_value TSRMLS_DC)
+                                        parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_labelcachemember_object * php_labelcachemember;
     object_init_ex(return_value, mapscript_ce_labelcachemember); 
     php_labelcachemember = (php_labelcachemember_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_labelcachemember->labelcachemember = labelcachemember;
 
-    MAKE_STD_ZVAL(php_labelcachemember->label);
-    mapscript_create_label(&(labelcachemember->label), return_value, php_labelcachemember->label TSRMLS_CC);
+    php_labelcachemember->parent = parent;
 
-    MAKE_STD_ZVAL(php_labelcachemember->point);
-    mapscript_create_point(&(labelcachemember->point), return_value, php_labelcachemember->point TSRMLS_CC);
-
-    if (labelcachemember->styles)
-    {
-        MAKE_STD_ZVAL(php_labelcachemember->styles);
-        mapscript_create_style(labelcachemember->styles, return_value, php_labelcachemember->styles TSRMLS_CC);
-    }
-
-    if (labelcachemember->poly)
-    {
-        MAKE_STD_ZVAL(php_labelcachemember->poly);
-        mapscript_create_shape(labelcachemember->poly, return_value, NULL, php_labelcachemember->poly TSRMLS_CC);
-    }
-
-    php_labelcachemember->parent = php_parent;
-
-    MAPSCRIPT_ADDREF(php_parent);
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_labelcachemember_object_destroy(void *object TSRMLS_DC)
@@ -171,7 +176,7 @@ static void mapscript_labelcachemember_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_labelcachemember);
 
-    MAPSCRIPT_DELREF(php_labelcachemember->parent);
+    MAPSCRIPT_FREE_PARENT(php_labelcachemember->parent);
     MAPSCRIPT_DELREF(php_labelcachemember->point);
     MAPSCRIPT_DELREF(php_labelcachemember->label);
     MAPSCRIPT_DELREF(php_labelcachemember->styles);
@@ -192,7 +197,7 @@ static zend_object_value mapscript_labelcachemember_object_new(zend_class_entry 
     retval = mapscript_object_new(&php_labelcachemember->std, ce,
                                   &mapscript_labelcachemember_object_destroy TSRMLS_CC);
 
-    php_labelcachemember->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_labelcachemember->parent);
     php_labelcachemember->point = NULL;
     php_labelcachemember->label = NULL;
     php_labelcachemember->styles = NULL;

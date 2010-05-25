@@ -216,15 +216,15 @@ zend_function_entry outputformat_functions[] = {
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_outputformat(outputFormatObj *outputformat, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_outputformat(outputFormatObj *outputformat, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_outputformat_object * php_outputformat;
     object_init_ex(return_value, mapscript_ce_outputformat); 
     php_outputformat = (php_outputformat_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_outputformat->outputformat = outputformat;
 
-    php_outputformat->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
+    php_outputformat->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_outputformat_object_destroy(void *object TSRMLS_DC)
@@ -233,10 +233,10 @@ static void mapscript_outputformat_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_outputformat);
 
-    MAPSCRIPT_DELREF(php_outputformat->parent);
-    
+    MAPSCRIPT_FREE_PARENT(php_outputformat->parent);
+
     /* We don't need to free the outputFormatObj */ 
-    
+
     efree(object);
 }
 
@@ -250,7 +250,7 @@ static zend_object_value mapscript_outputformat_object_new(zend_class_entry *ce 
     retval = mapscript_object_new(&php_outputformat->std, ce,
                                   &mapscript_outputformat_object_destroy TSRMLS_CC);
 
-    php_outputformat->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_outputformat->parent);
 
     return retval;
 }

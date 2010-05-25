@@ -114,11 +114,11 @@ PHP_METHOD(labelObj, __get)
     else IF_GET_LONG("maxlength", php_label->label->maxlength)
     else IF_GET_LONG("minlength", php_label->label->minlength)
     else IF_GET_LONG("priority", php_label->label->priority)
-    else IF_GET_OBJECT("color", php_label->color) 
-    else IF_GET_OBJECT("outlinecolor", php_label->outlinecolor) 
-    else IF_GET_OBJECT("shadowcolor", php_label->shadowcolor) 
-    else IF_GET_OBJECT("backgroundcolor", php_label->backgroundcolor) 
-    else IF_GET_OBJECT("backgroundshadowcolor", php_label->backgroundshadowcolor) 
+    else IF_GET_OBJECT("color", mapscript_ce_color, php_label->color, &php_label->label->color) 
+    else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_label->outlinecolor, &php_label->label->outlinecolor) 
+    else IF_GET_OBJECT("shadowcolor", mapscript_ce_color, php_label->shadowcolor, &php_label->label->shadowcolor) 
+    else IF_GET_OBJECT("backgroundcolor", mapscript_ce_color, php_label->backgroundcolor, &php_label->label->backgroundcolor) 
+    else IF_GET_OBJECT("backgroundshadowcolor", mapscript_ce_color, php_label->backgroundshadowcolor, &php_label->label->backgroundshadowcolor) 
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -337,6 +337,30 @@ PHP_METHOD(labelObj, removeBinding)
 }
 /* }}} */
 
+/* {{{ proto int label.free()
+   Free the object */
+PHP_METHOD(labelObj, free)
+{
+    zval *zobj = getThis();
+    php_label_object *php_label;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    MAPSCRIPT_DELREF(php_label->color);
+    MAPSCRIPT_DELREF(php_label->outlinecolor);
+    MAPSCRIPT_DELREF(php_label->shadowcolor);
+    MAPSCRIPT_DELREF(php_label->backgroundcolor);
+    MAPSCRIPT_DELREF(php_label->backgroundshadowcolor);
+}
+/* }}} */
+
 zend_function_entry label_functions[] = {
     PHP_ME(labelObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(labelObj, __get, label___get_args, ZEND_ACC_PUBLIC)
@@ -346,35 +370,21 @@ zend_function_entry label_functions[] = {
     PHP_ME(labelObj, setBinding, label_setBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelObj, getBinding, label_getBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelObj, removeBinding, label_removeBinding_args, ZEND_ACC_PUBLIC)
+    PHP_ME(labelObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
 
-void mapscript_create_label(labelObj *label, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_label(labelObj *label, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_label_object * php_label;
     object_init_ex(return_value, mapscript_ce_label); 
     php_label = (php_label_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_label->label = label;
 
-    MAKE_STD_ZVAL(php_label->color);
-    mapscript_create_color(&(label->color), return_value, php_label->color TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_label->outlinecolor);
-    mapscript_create_color(&(label->outlinecolor), return_value, php_label->outlinecolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_label->shadowcolor);
-    mapscript_create_color(&(label->shadowcolor), return_value, php_label->shadowcolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_label->backgroundcolor);
-    mapscript_create_color(&(label->backgroundcolor), return_value, php_label->backgroundcolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_label->backgroundshadowcolor);
-    mapscript_create_color(&(label->backgroundshadowcolor), return_value, php_label->backgroundshadowcolor TSRMLS_CC);
-
-    php_label->parent = php_parent;
+    php_label->parent = parent;
     
-    MAPSCRIPT_ADDREF(php_parent);
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_label_object_destroy(void *object TSRMLS_DC)
@@ -383,7 +393,7 @@ static void mapscript_label_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_label);
 
-    MAPSCRIPT_DELREF(php_label->parent);
+    MAPSCRIPT_FREE_PARENT(php_label->parent);
     MAPSCRIPT_DELREF(php_label->color);
     MAPSCRIPT_DELREF(php_label->outlinecolor);
     MAPSCRIPT_DELREF(php_label->shadowcolor);
@@ -405,7 +415,7 @@ static zend_object_value mapscript_label_object_new(zend_class_entry *ce TSRMLS_
     retval = mapscript_object_new(&php_label->std, ce,
                                   &mapscript_label_object_destroy TSRMLS_CC);
 
-    php_label->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_label->parent);
     php_label->color = NULL;
     php_label->outlinecolor = NULL;
     php_label->shadowcolor = NULL;

@@ -90,17 +90,15 @@ PHP_METHOD(shapeFileObj, __construct)
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-    php_shapefile = (php_shapefile_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    php_shapefile = (php_shapefile_object *)zend_object_store_get_object(zobj TSRMLS_CC);
     
     php_shapefile->shapefile = shapefileObj_new(filename, type);
+
     if (php_shapefile->shapefile == NULL)
     {
         mapscript_throw_mapserver_exception("Failed to open shapefile %s" TSRMLS_CC, filename);
         return;
     }
-
-    MAKE_STD_ZVAL(php_shapefile->bounds);
-    mapscript_create_rect(&(php_shapefile->shapefile->bounds), zobj, php_shapefile->bounds TSRMLS_CC);
 }
 /* }}} */
 
@@ -124,7 +122,7 @@ PHP_METHOD(shapeFileObj, __get)
     IF_GET_LONG("numshapes", php_shapefile->shapefile->numshapes) 
     else IF_GET_LONG("type", php_shapefile->shapefile->type) 
     else IF_GET_STRING("source", php_shapefile->shapefile->source) 
-    else IF_GET_OBJECT("bounds", php_shapefile->bounds) 
+    else IF_GET_OBJECT("bounds", mapscript_ce_rect, php_shapefile->bounds, &php_shapefile->shapefile->bounds) 
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -198,7 +196,8 @@ PHP_METHOD(shapeFileObj, getShape)
         return;
     }
 
-    mapscript_create_shape(shape, NULL, NULL, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_shape(shape, parent, NULL, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -240,7 +239,8 @@ PHP_METHOD(shapeFileObj, getPoint)
         return;
     }
 
-    mapscript_create_point(point, NULL, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_point(point, parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -253,6 +253,7 @@ PHP_METHOD(shapeFileObj, getExtent)
     long index;
     rectObj *rect;
     php_shapefile_object *php_shapefile;
+    parent_object p;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -277,7 +278,8 @@ PHP_METHOD(shapeFileObj, getExtent)
     shapefileObj_getExtent(php_shapefile->shapefile, index, rect);
 
     /* Return rectObj */
-    mapscript_create_rect(rect, NULL, return_value TSRMLS_CC);
+    MAPSCRIPT_INIT_PARENT(p);
+    mapscript_create_rect(rect, p, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -377,7 +379,28 @@ PHP_METHOD(shapeFileObj, getTransformed)
     }
 
     /* Return shape object */
-    mapscript_create_shape(shape, NULL, NULL, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_shape(shape, parent, NULL, return_value TSRMLS_CC);
+}
+/* }}} */
+
+/* {{{ proto void shapefile.free()
+   Free the object  */
+PHP_METHOD(shapeFileObj, free)
+{
+    zval *zobj =  getThis();
+    php_shapefile_object *php_shapefile;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_shapefile = (php_shapefile_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    
+    MAPSCRIPT_DELREF(php_shapefile->bounds);
 }
 /* }}} */
 
@@ -391,6 +414,7 @@ zend_function_entry shapefile_functions[] = {
     PHP_ME(shapeFileObj, addShape, shapefile_addShape_args, ZEND_ACC_PUBLIC)
     PHP_ME(shapeFileObj, addPoint, shapefile_addPoint_args, ZEND_ACC_PUBLIC)
     PHP_ME(shapeFileObj, getTransformed, shapefile_getTransformed_args, ZEND_ACC_PUBLIC)
+    PHP_ME(shapeFileObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
@@ -402,9 +426,6 @@ void mapscript_create_shapefile(shapefileObj *shapefile, zval *return_value TSRM
     object_init_ex(return_value, mapscript_ce_shapefile); 
     php_shapefile = (php_shapefile_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_shapefile->shapefile = shapefile;
-
-    MAKE_STD_ZVAL(php_shapefile->bounds);
-    mapscript_create_rect(&(shapefile->bounds), return_value, php_shapefile->bounds TSRMLS_CC);
 }
 
 static void mapscript_shapefile_object_destroy(void *object TSRMLS_DC)

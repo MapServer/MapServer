@@ -229,16 +229,16 @@ zend_function_entry hashtable_functions[] = {
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_hashtable(hashTableObj *hashtable, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_hashtable(hashTableObj *hashtable, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_hashtable_object * php_hashtable;
     object_init_ex(return_value, mapscript_ce_hashtable); 
     php_hashtable = (php_hashtable_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_hashtable->hashtable = hashtable;
 
-    php_hashtable->parent = php_parent;
+    php_hashtable->parent = parent;
 
-    MAPSCRIPT_ADDREF(php_parent);
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_hashtable_object_destroy(void *object TSRMLS_DC)
@@ -247,7 +247,7 @@ static void mapscript_hashtable_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_hashtable);
 
-    MAPSCRIPT_DELREF(php_hashtable->parent);
+    MAPSCRIPT_FREE_PARENT(php_hashtable->parent);
 
     /* We don't need to free the hashTableObj */ 
     
@@ -264,7 +264,7 @@ static zend_object_value mapscript_hashtable_object_new(zend_class_entry *ce TSR
     retval = mapscript_object_new(&php_hashtable->std, ce,
                                   &mapscript_hashtable_object_destroy TSRMLS_CC);
 
-    php_hashtable->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_hashtable->parent);
 
     return retval;
 }

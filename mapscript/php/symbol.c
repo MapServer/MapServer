@@ -91,7 +91,9 @@ PHP_METHOD(symbolObj, __construct)
     }
     
     php_symbol->symbol = php_map->map->symbolset.symbol[symbolId];
-    php_symbol->parent = zmap;
+
+    MAPSCRIPT_MAKE_PARENT(zmap, NULL);
+    php_symbol->parent = parent;
     MAPSCRIPT_ADDREF(zmap);    
 }
 /* }}} */
@@ -388,16 +390,16 @@ zend_function_entry symbol_functions[] = {
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_symbol(symbolObj *symbol, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_symbol(symbolObj *symbol, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_symbol_object * php_symbol;
     object_init_ex(return_value, mapscript_ce_symbol); 
     php_symbol = (php_symbol_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_symbol->symbol = symbol;
 
-    php_symbol->parent = php_parent;
+    php_symbol->parent = parent;
 
-    MAPSCRIPT_ADDREF(php_parent);
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_symbol_object_destroy(void *object TSRMLS_DC)
@@ -406,7 +408,7 @@ static void mapscript_symbol_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_symbol);
 
-    MAPSCRIPT_DELREF(php_symbol->parent);
+    MAPSCRIPT_FREE_PARENT(php_symbol->parent);
 
     /* We don't need to free the symbolObj */ 
     
@@ -423,7 +425,7 @@ static zend_object_value mapscript_symbol_object_new(zend_class_entry *ce TSRMLS
     retval = mapscript_object_new(&php_symbol->std, ce,
                                   &mapscript_symbol_object_destroy TSRMLS_CC);
 
-    php_symbol->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_symbol->parent);
 
     return retval;
 }

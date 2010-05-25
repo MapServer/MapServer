@@ -88,17 +88,18 @@ zend_function_entry projection_functions[] = {
 };
 
 
-void mapscript_create_projection(projectionObj *projection, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_projection(projectionObj *projection, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_projection_object * php_projection;
     object_init_ex(return_value, mapscript_ce_projection); 
     php_projection = (php_projection_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_projection->projection = projection;
 
-    if (php_parent)
+    if (parent.val)
         php_projection->is_ref = 1;
-    php_projection->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
+
+    php_projection->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_projection_object_destroy(void *object TSRMLS_DC)
@@ -106,8 +107,8 @@ static void mapscript_projection_object_destroy(void *object TSRMLS_DC)
     php_projection_object *php_projection = (php_projection_object *)object;
 
     MAPSCRIPT_FREE_OBJECT(php_projection);
-
-    MAPSCRIPT_DELREF(php_projection->parent);
+    
+    MAPSCRIPT_FREE_PARENT(php_projection->parent);
 
     if (php_projection->projection && !php_projection->is_ref) {
         projectionObj_destroy(php_projection->projection);
@@ -126,7 +127,7 @@ static zend_object_value mapscript_projection_object_new(zend_class_entry *ce TS
     retval = mapscript_object_new(&php_projection->std, ce,
                                   &mapscript_projection_object_destroy TSRMLS_CC);
     php_projection->is_ref = 0;
-    php_projection->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_projection->parent);
     
     return retval;
 }

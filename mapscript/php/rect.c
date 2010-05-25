@@ -285,19 +285,18 @@ zend_function_entry rect_functions[] = {
 };
 
 
-void mapscript_create_rect(rectObj *rect, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_rect(rectObj *rect, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_rect_object * php_rect;
     object_init_ex(return_value, mapscript_ce_rect); 
     php_rect = (php_rect_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_rect->rect = rect;
 
-    if (php_parent) 
+    if (parent.val) 
         php_rect->is_ref = 1;
 
-    php_rect->parent = php_parent;
-
-    MAPSCRIPT_ADDREF(php_parent);
+    php_rect->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_rect_object_destroy(void *object TSRMLS_DC)
@@ -306,7 +305,7 @@ static void mapscript_rect_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_rect);
 
-    MAPSCRIPT_DELREF(php_rect->parent);
+    MAPSCRIPT_FREE_PARENT(php_rect->parent);
 
     if (php_rect->rect && !php_rect->is_ref) {
         rectObj_destroy(php_rect->rect);  
@@ -326,7 +325,7 @@ static zend_object_value mapscript_rect_object_new(zend_class_entry *ce TSRMLS_D
                                   &mapscript_rect_object_destroy TSRMLS_CC);
 
     php_rect->is_ref = 0;
-    php_rect->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_rect->parent)
 
     return retval;
 }

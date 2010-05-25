@@ -113,7 +113,7 @@ zend_function_entry resultcachemember_functions[] = {
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_resultcachemember(resultCacheMemberObj *resultcachemember, zval *php_parent,
+void mapscript_create_resultcachemember(resultCacheMemberObj *resultcachemember, parent_object parent,
                                         zval *return_value TSRMLS_DC)
 {
     php_resultcachemember_object * php_resultcachemember;
@@ -121,9 +121,8 @@ void mapscript_create_resultcachemember(resultCacheMemberObj *resultcachemember,
     php_resultcachemember = (php_resultcachemember_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_resultcachemember->resultcachemember = resultcachemember;
 
-    php_resultcachemember->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
-
+    php_resultcachemember->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_resultcachemember_object_destroy(void *object TSRMLS_DC)
@@ -132,7 +131,7 @@ static void mapscript_resultcachemember_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_resultcachemember);
 
-    MAPSCRIPT_DELREF(php_resultcachemember->parent);
+    MAPSCRIPT_FREE_PARENT(php_resultcachemember->parent);
 
     /* We don't need to free the resultCacheMemberObj */ 
     
@@ -149,7 +148,7 @@ static zend_object_value mapscript_resultcachemember_object_new(zend_class_entry
     retval = mapscript_object_new(&php_resultcachemember->std, ce,
                                   &mapscript_resultcachemember_object_destroy TSRMLS_CC);
 
-    php_resultcachemember->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_resultcachemember->parent);
 
     return retval;
 }

@@ -81,9 +81,9 @@ PHP_METHOD(legendObj, __get)
     else IF_GET_LONG("position", php_legend->legend->position)
     else IF_GET_LONG("postlabelcache", php_legend->legend->postlabelcache)
     else IF_GET_STRING("template", php_legend->legend->template)
-    else IF_GET_OBJECT("outlinecolor", php_legend->outlinecolor)
-    else IF_GET_OBJECT("label", php_legend->label)
-    else IF_GET_OBJECT("imagecolor", php_legend->imagecolor)
+    else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_legend->outlinecolor, &php_legend->legend->outlinecolor)
+    else IF_GET_OBJECT("label", mapscript_ce_label, php_legend->label, &php_legend->legend->label)
+    else IF_GET_OBJECT("imagecolor", mapscript_ce_color, php_legend->imagecolor, &php_legend->legend->imagecolor)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -162,6 +162,28 @@ PHP_METHOD(legendObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto int legend.free()
+   Free the object */
+PHP_METHOD(legendObj, free)
+{
+    zval *zobj = getThis();
+    php_legend_object *php_legend;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_legend = (php_legend_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    MAPSCRIPT_DELREF(php_legend->outlinecolor);
+    MAPSCRIPT_DELREF(php_legend->imagecolor);
+    MAPSCRIPT_DELREF(php_legend->label);
+}
+/* }}} */
+
 zend_function_entry legend_functions[] = {
     PHP_ME(legendObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(legendObj, __get, legend___get_args, ZEND_ACC_PUBLIC)
@@ -171,25 +193,15 @@ zend_function_entry legend_functions[] = {
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_legend(legendObj *legend, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_legend(legendObj *legend, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_legend_object * php_legend;
     object_init_ex(return_value, mapscript_ce_legend); 
     php_legend = (php_legend_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_legend->legend = legend;
 
-    MAKE_STD_ZVAL(php_legend->outlinecolor);
-    mapscript_create_color(&(legend->outlinecolor), return_value, php_legend->outlinecolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_legend->imagecolor);
-    mapscript_create_color(&(legend->imagecolor), return_value, php_legend->imagecolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_legend->label);
-    mapscript_create_label(&(legend->label), return_value, php_legend->label TSRMLS_CC);
-
-    php_legend->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
-
+    php_legend->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_legend_object_destroy(void *object TSRMLS_DC)
@@ -198,7 +210,7 @@ static void mapscript_legend_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_legend);
 
-    MAPSCRIPT_DELREF(php_legend->parent);
+    MAPSCRIPT_FREE_PARENT(php_legend->parent);
     MAPSCRIPT_DELREF(php_legend->outlinecolor);
     MAPSCRIPT_DELREF(php_legend->imagecolor);
     MAPSCRIPT_DELREF(php_legend->label);
@@ -218,7 +230,7 @@ static zend_object_value mapscript_legend_object_new(zend_class_entry *ce TSRMLS
     retval = mapscript_object_new(&php_legend->std, ce,
                                   &mapscript_legend_object_destroy TSRMLS_CC);
 
-    php_legend->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_legend->parent);
     php_legend->outlinecolor = NULL;
     php_legend->imagecolor = NULL;
     php_legend->label = NULL;

@@ -80,9 +80,9 @@ PHP_METHOD(referenceMapObj, __get)
     else IF_GET_LONG("markersize", php_referencemap->referencemap->markersize)
     else IF_GET_LONG("maxboxsize", php_referencemap->referencemap->maxboxsize)
     else IF_GET_LONG("minboxsize", php_referencemap->referencemap->minboxsize)
-    else IF_GET_OBJECT("extent", php_referencemap->extent)
-    else IF_GET_OBJECT("color", php_referencemap->color)
-    else IF_GET_OBJECT("outlinecolor", php_referencemap->outlinecolor)
+    else IF_GET_OBJECT("extent", mapscript_ce_rect, php_referencemap->extent, &php_referencemap->referencemap->extent)
+    else IF_GET_OBJECT("color", mapscript_ce_color, php_referencemap->color, &php_referencemap->referencemap->color)
+    else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_referencemap->outlinecolor, &php_referencemap->referencemap->outlinecolor)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -160,34 +160,47 @@ PHP_METHOD(referenceMapObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto int referencemap.free()
+   Free the object. */
+PHP_METHOD(referenceMapObj, free)
+{
+    zval *zobj = getThis();
+    php_referencemap_object *php_referencemap;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_referencemap = (php_referencemap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    MAPSCRIPT_DELREF(php_referencemap->extent);
+    MAPSCRIPT_DELREF(php_referencemap->color);
+    MAPSCRIPT_DELREF(php_referencemap->outlinecolor);
+}
+/* }}} */
+
 zend_function_entry referencemap_functions[] = {
     PHP_ME(referenceMapObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(referenceMapObj, __get, referenceMap___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(referenceMapObj, __set, referenceMap___set_args, ZEND_ACC_PUBLIC)
     PHP_MALIAS(referenceMapObj, set, __set, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(referenceMapObj, updateFromString, referenceMap_updateFromString_args, ZEND_ACC_PUBLIC)
+    PHP_ME(referenceMapObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_referencemap(referenceMapObj *referencemap, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_referencemap(referenceMapObj *referencemap, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_referencemap_object * php_referencemap;
     object_init_ex(return_value, mapscript_ce_referencemap); 
     php_referencemap = (php_referencemap_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_referencemap->referencemap = referencemap;
 
-    MAKE_STD_ZVAL(php_referencemap->extent);
-    mapscript_create_rect(&(referencemap->extent), return_value, php_referencemap->extent TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_referencemap->color);
-    mapscript_create_color(&(referencemap->color), return_value, php_referencemap->color TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_referencemap->outlinecolor);
-    mapscript_create_color(&(referencemap->outlinecolor), return_value, php_referencemap->outlinecolor TSRMLS_CC);
-
-    php_referencemap->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
-
+    php_referencemap->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val); 
 }
 
 static void mapscript_referencemap_object_destroy(void *object TSRMLS_DC)
@@ -196,7 +209,7 @@ static void mapscript_referencemap_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_referencemap);
 
-    MAPSCRIPT_DELREF(php_referencemap->parent);
+    MAPSCRIPT_FREE_PARENT(php_referencemap->parent);
     MAPSCRIPT_DELREF(php_referencemap->extent);
     MAPSCRIPT_DELREF(php_referencemap->color);
     MAPSCRIPT_DELREF(php_referencemap->outlinecolor);
@@ -216,7 +229,7 @@ static zend_object_value mapscript_referencemap_object_new(zend_class_entry *ce 
     retval = mapscript_object_new(&php_referencemap->std, ce,
                                   &mapscript_referencemap_object_destroy TSRMLS_CC);
 
-    php_referencemap->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_referencemap->parent);
     php_referencemap->extent = NULL;
     php_referencemap->color = NULL;
     php_referencemap->outlinecolor = NULL;

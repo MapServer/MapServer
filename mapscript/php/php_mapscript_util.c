@@ -73,3 +73,70 @@ int mapscript_extract_associative_array(HashTable *php, char **array)
 
     return 1;
 }
+
+/* This method returns an object property of a php class. If the object exists, it returns a reference to it, 
+   otherwise it creates it */
+void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_object* layer, 
+                            void *internal_object, 
+                            zval **php_object_storage, zval ***return_value_ptr TSRMLS_DC)
+{
+    parent_object p;
+
+    // create the parent struct
+    p.val = zval_parent;
+    p.child_ptr = &*php_object_storage;
+    MAKE_STD_ZVAL(*php_object_storage);
+        
+    if (ce == mapscript_ce_outputformat)
+        mapscript_create_outputformat((outputFormatObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_color)
+        mapscript_create_color((colorObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_rect)
+        mapscript_create_rect((rectObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_class)
+        mapscript_create_class((classObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_hashtable)
+        mapscript_create_hashtable((hashTableObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_label)
+        mapscript_create_label((labelObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_style)
+        mapscript_create_style((styleObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_symbol)
+        mapscript_create_symbol((symbolObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_labelcachemember)
+        mapscript_create_labelcachemember((labelCacheMemberObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_labelcache)
+        mapscript_create_labelcache((labelCacheObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_resultcachemember)
+        mapscript_create_resultcachemember((resultCacheMemberObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_scalebar)
+        mapscript_create_scalebar((scalebarObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_web)
+        mapscript_create_web((webObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_legend)
+        mapscript_create_legend((legendObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_querymap)
+        mapscript_create_querymap((queryMapObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_grid)
+        mapscript_create_grid((graticuleObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_referencemap)
+        mapscript_create_referencemap((referenceMapObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_point)
+        mapscript_create_point((pointObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_projection)
+        mapscript_create_projection((projectionObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_line)
+        mapscript_create_line((lineObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_shape)
+        mapscript_create_shape((shapeObj*)internal_object, p, layer, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_layer)
+        mapscript_create_layer((layerObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+        
+    MAPSCRIPT_ADDREF(*php_object_storage);
+
+    // return a reference to the object
+    zval_ptr_dtor(*return_value_ptr);
+    zval_set_isref_p(*php_object_storage);
+    **return_value_ptr = *php_object_storage;
+}
+

@@ -325,39 +325,6 @@ PHP_METHOD(mapObj, __construct)
     }
 
     php_map->map = map;
-
-    MAKE_STD_ZVAL(php_map->outputformat);
-    mapscript_create_outputformat(map->outputformat, zobj, php_map->outputformat TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->extent);
-    mapscript_create_rect(&(map->extent), zobj, php_map->extent TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->web);
-    mapscript_create_web(&(map->web), zobj, php_map->web TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->reference);
-    mapscript_create_referencemap(&(map->reference), zobj, php_map->reference TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->imagecolor);
-    mapscript_create_color(&(map->imagecolor), zobj, php_map->imagecolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->scalebar);
-    mapscript_create_scalebar(&(map->scalebar), zobj, php_map->scalebar TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->legend);
-    mapscript_create_legend(&(map->legend), zobj, php_map->legend TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->querymap);
-    mapscript_create_querymap(&(map->querymap), zobj, php_map->querymap TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->labelcache);
-    mapscript_create_labelcache(&(map->labelcache), zobj, php_map->labelcache TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->metadata);
-    mapscript_create_hashtable(&(map->web.metadata), zobj, php_map->metadata TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->projection);
-    mapscript_create_projection(&(map->projection), zobj, php_map->projection TSRMLS_CC);
 }
 /* }}} */
 
@@ -398,17 +365,17 @@ PHP_METHOD(mapObj, __get)
     else IF_GET_LONG("keyspacingy", php_map->map->legend.keyspacingy)
     else IF_GET_STRING("symbolsetfilename", php_map->map->symbolset.filename)
     else IF_GET_STRING("fontsetfilename", php_map->map->fontset.filename)
-    else IF_GET_OBJECT("outputformat", php_map->outputformat) 
-    else IF_GET_OBJECT("extent", php_map->extent) 
-    else IF_GET_OBJECT("web", php_map->web) 
-    else IF_GET_OBJECT("reference", php_map->reference) 
-    else IF_GET_OBJECT("imagecolor", php_map->imagecolor) 
-    else IF_GET_OBJECT("scalebar", php_map->scalebar) 
-    else IF_GET_OBJECT("legend", php_map->legend) 
-    else IF_GET_OBJECT("querymap", php_map->querymap) 
-    else IF_GET_OBJECT("labelcache", php_map->labelcache) 
-    else IF_GET_OBJECT("projection", php_map->projection) 
-    else IF_GET_OBJECT("metadata", php_map->metadata) 
+    else IF_GET_OBJECT("outputformat", mapscript_ce_outputformat, php_map->outputformat, php_map->map->outputformat) 
+    else IF_GET_OBJECT("extent", mapscript_ce_rect, php_map->extent, &php_map->map->extent) 
+    else IF_GET_OBJECT("web", mapscript_ce_web, php_map->web, &php_map->map->web) 
+    else IF_GET_OBJECT("reference", mapscript_ce_referencemap, php_map->reference, &php_map->map->reference) 
+    else IF_GET_OBJECT("imagecolor", mapscript_ce_color, php_map->imagecolor, &php_map->map->imagecolor) 
+    else IF_GET_OBJECT("scalebar", mapscript_ce_scalebar, php_map->scalebar, &php_map->map->scalebar) 
+    else IF_GET_OBJECT("legend", mapscript_ce_legend, php_map->legend, &php_map->map->legend) 
+    else IF_GET_OBJECT("querymap", mapscript_ce_querymap, php_map->querymap, &php_map->map->querymap) 
+    else IF_GET_OBJECT("labelcache", mapscript_ce_labelcache, php_map->labelcache, &php_map->map->labelcache) 
+    else IF_GET_OBJECT("projection", mapscript_ce_projection, php_map->projection, &php_map->map->projection) 
+    else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_map->metadata, &php_map->map->web.metadata) 
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -560,7 +527,8 @@ PHP_METHOD(mapObj, getSymbolObjectById)
     symbol = php_map->map->symbolset.symbol[symbolId];
 
     /* Return style object */
-    mapscript_create_symbol(symbol, zobj, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_symbol(symbol, parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -884,7 +852,8 @@ PHP_METHOD(mapObj, getLayer)
 
 
     /* Return layer object */
-    mapscript_create_layer(layer, zobj, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_layer(layer, parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -916,7 +885,8 @@ PHP_METHOD(mapObj, getLayerByName)
     }
 
     /* Return layer object */
-    mapscript_create_layer(layer, zobj, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_layer(layer, parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -956,7 +926,8 @@ PHP_METHOD(mapObj, getColorByIndex)
     }
 
     /* Return color object */
-    mapscript_create_color(&color, zobj, return_value TSRMLS_CC);    
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_color(&color, parent, return_value TSRMLS_CC);    
 }
 /* }}} */
 
@@ -3305,7 +3276,8 @@ PHP_METHOD(mapObj, removeLayer)
     }
 
      /* return layer object */
-    mapscript_create_layer(layer, NULL, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_layer(layer, parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -3335,7 +3307,8 @@ PHP_METHOD(mapObj, getLabel)
         RETURN_NULL();
 
     /* Return labelCacheMember object */
-    mapscript_create_labelcachemember(labelCacheMember, zobj, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_labelcachemember(labelCacheMember, parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -3375,13 +3348,46 @@ PHP_METHOD(mapObj, getLatLongExtent)
     }
 
     /* Return rectObj */
-    mapscript_create_rect(&geoRefExt, zobj, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_rect(&geoRefExt, parent, return_value TSRMLS_CC);
 
 #else
     mapscript_throw_exception("Available only with PROJ.4 support." TSRMLS_CC);
     return;
 #endif
 }
+
+/* {{{ proto int map.free(). 
+   Free explicitly the map object.
+   Breaks the internal circular references between the map object and its children.
+*/
+PHP_METHOD(mapObj, free)
+{
+    zval *zobj = getThis();
+    php_map_object *php_map;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    MAPSCRIPT_DELREF(php_map->outputformat);
+    MAPSCRIPT_DELREF(php_map->extent);
+    MAPSCRIPT_DELREF(php_map->web);
+    MAPSCRIPT_DELREF(php_map->reference);
+    MAPSCRIPT_DELREF(php_map->imagecolor);
+    MAPSCRIPT_DELREF(php_map->scalebar);
+    MAPSCRIPT_DELREF(php_map->legend);
+    MAPSCRIPT_DELREF(php_map->querymap);
+    MAPSCRIPT_DELREF(php_map->labelcache);
+    MAPSCRIPT_DELREF(php_map->projection);
+    MAPSCRIPT_DELREF(php_map->metadata);
+}
+/* }}} */
 
 zend_function_entry map_functions[] = {
     PHP_ME(mapObj, __construct, map___construct_args, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
@@ -3457,6 +3463,7 @@ zend_function_entry map_functions[] = {
     PHP_ME(mapObj, removeLayer, map_removeLayer_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, getLabel, map_getLabel_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, getLatLongExtent, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(mapObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
@@ -3544,39 +3551,6 @@ void mapscript_create_map(mapObj *map, zval *return_value TSRMLS_DC)
     object_init_ex(return_value, mapscript_ce_map); 
     php_map = (php_map_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_map->map = map;
-
-    MAKE_STD_ZVAL(php_map->outputformat);
-    mapscript_create_outputformat(map->outputformat, return_value, php_map->outputformat TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->extent);
-    mapscript_create_rect(&(map->extent), return_value, php_map->extent TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->web);
-    mapscript_create_web(&(map->web), return_value, php_map->web TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->reference);
-    mapscript_create_referencemap(&(map->reference), return_value, php_map->reference TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->imagecolor);
-    mapscript_create_color(&(map->imagecolor), return_value, php_map->imagecolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->scalebar);
-    mapscript_create_scalebar(&(map->scalebar), return_value, php_map->scalebar TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->legend);
-    mapscript_create_legend(&(map->legend), return_value, php_map->legend TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->querymap);
-    mapscript_create_querymap(&(map->querymap), return_value, php_map->querymap TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->labelcache);
-    mapscript_create_labelcache(&(map->labelcache), return_value, php_map->labelcache TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->metadata);
-    mapscript_create_hashtable(&(map->web.metadata), return_value, php_map->metadata TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_map->projection);
-    mapscript_create_projection(&(map->projection), return_value, php_map->projection TSRMLS_CC);
 }
 
 static void mapscript_map_object_destroy(void *object TSRMLS_DC)
@@ -3584,7 +3558,7 @@ static void mapscript_map_object_destroy(void *object TSRMLS_DC)
     php_map_object *php_map = (php_map_object *)object;
 
     MAPSCRIPT_FREE_OBJECT(php_map);
-
+ 
     MAPSCRIPT_DELREF(php_map->outputformat);
     MAPSCRIPT_DELREF(php_map->extent);
     MAPSCRIPT_DELREF(php_map->web);
@@ -3598,7 +3572,6 @@ static void mapscript_map_object_destroy(void *object TSRMLS_DC)
     MAPSCRIPT_DELREF(php_map->metadata);
 
     mapObj_destroy(php_map->map);
-
     efree(object);
 }
 

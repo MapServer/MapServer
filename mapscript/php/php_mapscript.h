@@ -109,34 +109,40 @@ extern zend_module_entry mapscript_module_entry;
 #endif
 
 /* MapScript objects */
+typedef struct _parent_object {
+    zval *val; // the zval of the parent
+    zval **child_ptr; // a ptr to a parent property, which point to the child object.
+                           // should be set to NULL when the child is destroyed
+} parent_object;
+
 typedef struct _php_color_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     colorObj *color;
 } php_color_object;
 
 typedef struct _php_rect_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     int is_ref;
     rectObj *rect;
 } php_rect_object;
 
 typedef struct _php_hashtable_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     hashTableObj *hashtable;
 } php_hashtable_object;
 
 typedef struct _php_symbol_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     symbolObj *symbol;
 } php_symbol_object;
 
 typedef struct _php_class_object {
     zend_object std;
-    zval *layer;
+    parent_object parent; //old layer
     zval *metadata;
     zval *label;
     classObj *class;
@@ -149,7 +155,7 @@ typedef struct _php_image_object {
 
 typedef struct _php_web_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     zval *extent;
     zval *metadata;
     webObj *web;
@@ -157,7 +163,7 @@ typedef struct _php_web_object {
 
 typedef struct _php_legend_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     zval *outlinecolor;
     zval *label;
     zval *imagecolor;
@@ -166,20 +172,20 @@ typedef struct _php_legend_object {
 
 typedef struct _php_outputformat_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     outputFormatObj *outputformat;
 } php_outputformat_object;
 
 typedef struct _php_querymap_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     zval *color;
     queryMapObj *querymap;
 } php_querymap_object;
 
 typedef struct _php_grid_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     graticuleObj *grid;
 } php_grid_object;
 
@@ -190,7 +196,7 @@ typedef struct _php_error_object {
 
 typedef struct _php_referencemap_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     zval *extent;
     zval *color;
     zval *outlinecolor;
@@ -199,7 +205,7 @@ typedef struct _php_referencemap_object {
 
 typedef struct _php_label_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     zval *color;
     zval *outlinecolor;
     zval *shadowcolor;
@@ -210,7 +216,7 @@ typedef struct _php_label_object {
 
 typedef struct _php_style_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     zval *color;
     zval *outlinecolor;
     zval *backgroundcolor;
@@ -219,28 +225,28 @@ typedef struct _php_style_object {
 
 typedef struct _php_projection_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     int is_ref;
     projectionObj *projection;
 } php_projection_object;
 
 typedef struct _php_point_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     int is_ref;
     pointObj *point;
 } php_point_object;
 
 typedef struct _php_line_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     int is_ref;
     lineObj *line;
 } php_line_object;
 
 typedef struct _php_shape_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     zval *bounds;
     zval *values;
     int is_ref;
@@ -255,13 +261,13 @@ typedef struct _php_shapefile_object {
 
 typedef struct _php_labelcache_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     labelCacheObj *labelcache;
 } php_labelcache_object;
 
 typedef struct _php_labelcachemember_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     zval *label; /* should be immutable */
     zval *point; /* should be immutable */
     zval *styles; /* should be immutable */
@@ -271,13 +277,13 @@ typedef struct _php_labelcachemember_object {
 
 typedef struct _php_resultcachemember_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     resultCacheMemberObj *resultcachemember;
 } php_resultcachemember_object;
 
 typedef struct _php_scalebar_object {
     zend_object std;
-    zval *parent;
+    parent_object parent;
     zval *color;
     zval *backgroundcolor;
     zval *outlinecolor;
@@ -293,7 +299,7 @@ typedef struct _php_owsrequest_object {
 
 typedef struct _php_layer_object {
     zend_object std;
-    zval *map;
+    parent_object parent; //old map
     zval *offsite;
     zval *grid;
     zval *metadata;
@@ -421,36 +427,39 @@ extern zend_class_entry *mapscript_ce_map;
 /* PHP Object constructors */
 extern zend_object_value mapscript_object_new(zend_object *zobj, zend_class_entry *ce,
                                               void (*zend_objects_free_object) TSRMLS_DC);
-extern void mapscript_create_color(colorObj *color, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_rect(rectObj *rect, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_hashtable(hashTableObj *hashtable, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_label(labelObj *label, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_style(styleObj *style, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_symbol(symbolObj *symbol, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_class(classObj *class, zval *php_layer, zval *return_value TSRMLS_DC);
+extern void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_object* layer, 
+                                   void *internal_object, zval **php_object_storage, 
+                                   zval ***return_value_ptr TSRMLS_DC);
+extern void mapscript_create_color(colorObj *color, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_rect(rectObj *rect, parent_object php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_hashtable(hashTableObj *hashtable, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_label(labelObj *label, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_style(styleObj *style, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_symbol(symbolObj *symbol, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_class(classObj *class, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemember, 
-                                              zval *php_parent, zval *return_value TSRMLS_DC);
+                                              parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_labelcache(labelCacheObj *labelcache, 
-                                              zval *php_parent, zval *return_value TSRMLS_DC);
+                                              parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_resultcachemember(resultCacheMemberObj *resultcachemember, 
-                                               zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_scalebar(scalebarObj *scalebar, zval *php_parent, zval *return_value TSRMLS_DC);
+                                               parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_scalebar(scalebarObj *scalebar, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_owsrequest(cgiRequestObj *cgirequest, zval *return_value TSRMLS_DC);
 extern void mapscript_create_image(imageObj *image, zval *return_value TSRMLS_DC);
-extern void mapscript_create_web(webObj *web, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_legend(legendObj *legend, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_outputformat(outputFormatObj *outputformat, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_querymap(queryMapObj *querymap, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_grid(graticuleObj *grid, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_web(webObj *web, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_legend(legendObj *legend, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_outputformat(outputFormatObj *outputformat, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_querymap(queryMapObj *querymap, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_grid(graticuleObj *grid, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_error(errorObj *error, zval *return_value TSRMLS_DC);
-extern void mapscript_create_referencemap(referenceMapObj *referenceMap, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_point(pointObj *point, zval *php_parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_referencemap(referenceMapObj *referenceMap, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_point(pointObj *point, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_projection(projectionObj *projection, 
-                                        zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_line(lineObj *line, zval *php_parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_shape(shapeObj *shape, zval *php_parent, php_layer_object *php_layer, zval *return_value TSRMLS_DC);
+                                        parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_line(lineObj *line, parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_shape(shapeObj *shape, parent_object parent, php_layer_object *php_layer, zval *return_value TSRMLS_DC);
 extern void mapscript_create_shapefile(shapefileObj *shapefile, zval *return_value TSRMLS_DC);
-extern void mapscript_create_layer(layerObj *layer, zval *php_map, zval *return_value TSRMLS_DC);
+extern void mapscript_create_layer(layerObj *layer, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_map(mapObj *map, zval *return_value TSRMLS_DC);
 
 /* Exported functions for PHP Mapscript API */

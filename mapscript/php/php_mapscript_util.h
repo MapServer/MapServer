@@ -67,9 +67,29 @@
 #define MAPSCRIPT_DELREF(zobj) \
     if (zobj) \
     { \
-        Z_DELREF_P(zobj);  \
-        zobj = NULL;       \
+        if (READY_TO_DESTROY(zobj)) { \
+            zval_ptr_dtor(&zobj);       \
+        } \
+        else { \
+            Z_DELREF_P(zobj);  \
+        } \
+        zobj = NULL; \
     }
+
+
+#define MAPSCRIPT_INIT_PARENT(parent) \
+    parent.val = NULL; \
+    parent.child_ptr = NULL;
+
+#define MAPSCRIPT_FREE_PARENT(parent) \
+    if (parent.child_ptr) \
+        *parent.child_ptr = NULL; \
+    MAPSCRIPT_DELREF(parent.val);
+
+#define MAPSCRIPT_MAKE_PARENT(zobj, ptr)            \
+    parent_object parent; \
+    parent.val = zobj; \
+    parent.child_ptr = ptr;
 
 #define MAPSCRIPT_CALL_METHOD(zobj, function, retval, param_count, args)     \
     ZVAL_STRING(&function_name, function, 0);                           \
@@ -97,16 +117,20 @@
         RETVAL_DOUBLE(value); \
     } \
 
-#define IF_GET_OBJECT(property_name, value)  \
-    if (strcmp(property, property_name)==0) \
-    { \
-        if (!value) \
-           RETURN_NULL(); \
-        *return_value = *value; \
-        zval_copy_ctor(return_value);                   \
-        INIT_PZVAL(return_value); \
-        return; \
-    } \
+#define IF_GET_OBJECT(property_name, mapscript_ce, php_object_storage, internal_object) \
+    if (strcmp(property, property_name)==0)  \
+    {   \
+        if (php_object_storage) {                             \
+            MAPSCRIPT_ADDREF(php_object_storage); \
+            zval_ptr_dtor(return_value_ptr); \
+            zval_set_isref_p(php_object_storage); \
+            *return_value_ptr = php_object_storage; \
+            return; \
+        }                                               \
+       mapscript_fetch_object(mapscript_ce, zobj, NULL, (void*)internal_object, \
+                              &php_object_storage, &return_value_ptr TSRMLS_CC); \
+        return;                                                         \
+    } 
 
 /* helpers for setters */
 #define IF_SET_STRING(property_name, internal, value)        \
@@ -155,7 +179,6 @@
 zend_object_value mapscript_object_new(zend_object *zobj,
                                        zend_class_entry *ce,
                                        void (*zend_objects_free_object) TSRMLS_DC);
-
 
 int mapscript_extract_associative_array(HashTable *php, char **array);
 

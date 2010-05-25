@@ -74,7 +74,7 @@ PHP_METHOD(queryMapObj, __get)
     IF_GET_LONG("width", php_querymap->querymap->width)
     else IF_GET_LONG("height", php_querymap->querymap->height)
     else IF_GET_LONG("style", php_querymap->querymap->style)
-    else IF_GET_OBJECT("color", php_querymap->color)
+    else IF_GET_OBJECT("color", mapscript_ce_color, php_querymap->color, &php_querymap->querymap->color)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -144,27 +144,45 @@ PHP_METHOD(queryMapObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto int querymap.free()
+   Free the object */
+PHP_METHOD(queryMapObj, free)
+{
+    zval *zobj = getThis();
+    php_querymap_object *php_querymap;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_querymap = (php_querymap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    
+    MAPSCRIPT_DELREF(php_querymap->color);    
+}
+/* }}} */
+
 zend_function_entry querymap_functions[] = {
     PHP_ME(queryMapObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(queryMapObj, __get, querymap___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(queryMapObj, __set, querymap___set_args, ZEND_ACC_PUBLIC)
     PHP_MALIAS(queryMapObj, set, __set, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(queryMapObj, updateFromString, querymap_updateFromString_args, ZEND_ACC_PUBLIC)
+    PHP_ME(queryMapObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_querymap(queryMapObj *querymap, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_querymap(queryMapObj *querymap, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_querymap_object * php_querymap;
     object_init_ex(return_value, mapscript_ce_querymap); 
     php_querymap = (php_querymap_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_querymap->querymap = querymap;
 
-    MAKE_STD_ZVAL(php_querymap->color);
-    mapscript_create_color(&(querymap->color), return_value, php_querymap->color TSRMLS_CC);
-
-    php_querymap->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
+    php_querymap->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 
 }
 
@@ -174,7 +192,7 @@ static void mapscript_querymap_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_querymap);
 
-    MAPSCRIPT_DELREF(php_querymap->parent);
+    MAPSCRIPT_FREE_PARENT(php_querymap->parent);
     MAPSCRIPT_DELREF(php_querymap->color);
 
     /* We don't need to free the queryMapObj */ 
@@ -192,7 +210,7 @@ static zend_object_value mapscript_querymap_object_new(zend_class_entry *ce TSRM
     retval = mapscript_object_new(&php_querymap->std, ce,
                                   &mapscript_querymap_object_destroy TSRMLS_CC);
 
-    php_querymap->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_querymap->parent);
     php_querymap->color = NULL;
 
     return retval;

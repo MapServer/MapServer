@@ -60,10 +60,10 @@ PHP_METHOD(labelCacheObj, __set)
     mapscript_throw_exception("labelCacheObj has no property." TSRMLS_CC);
 }
 
-/* {{{ proto int labelcache->free(()
+/* {{{ proto int labelcache->freeCache(()
    Free the labelcache object in the map. Returns true on success or false if
    an error occurs. */
-PHP_METHOD(labelCacheObj, free)
+PHP_METHOD(labelCacheObj, freeCache)
 {
     zval *zobj = getThis();
     php_labelcache_object *php_labelcache;
@@ -87,19 +87,19 @@ zend_function_entry labelcache_functions[] = {
     PHP_ME(labelCacheObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(labelCacheObj, __get, labelcache___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelCacheObj, __set, labelcache___set_args, ZEND_ACC_PUBLIC)
-    PHP_ME(labelCacheObj, free, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(labelCacheObj, freeCache, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_labelcache(labelCacheObj *labelcache, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_labelcache(labelCacheObj *labelcache, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_labelcache_object * php_labelcache;
     object_init_ex(return_value, mapscript_ce_labelcache); 
     php_labelcache = (php_labelcache_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_labelcache->labelcache = labelcache;
 
-    php_labelcache->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
+    php_labelcache->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_labelcache_object_destroy(void *object TSRMLS_DC)
@@ -108,7 +108,7 @@ static void mapscript_labelcache_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_labelcache);
 
-    MAPSCRIPT_DELREF(php_labelcache->parent);
+    MAPSCRIPT_FREE_PARENT(php_labelcache->parent);
 
     /* We don't need to free the labelCacheObj */ 
     
@@ -125,7 +125,7 @@ static zend_object_value mapscript_labelcache_object_new(zend_class_entry *ce TS
     retval = mapscript_object_new(&php_labelcache->std, ce,
                                   &mapscript_labelcache_object_destroy TSRMLS_CC);
 
-    php_labelcache->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_labelcache->parent);
 
     return retval;
 }

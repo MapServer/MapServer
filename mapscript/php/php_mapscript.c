@@ -217,7 +217,8 @@ PHP_FUNCTION(ms_newLayerObj)
         layer->index = index;
     }
 
-    mapscript_create_layer(layer, zmap, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(zmap, NULL);
+    mapscript_create_layer(layer, parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -243,7 +244,8 @@ PHP_FUNCTION(ms_newProjectionObj)
         return;
     }
     
-    mapscript_create_projection(projection, NULL, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_projection(projection, parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -298,7 +300,8 @@ PHP_FUNCTION(ms_newPointObj)
 #endif
 
     /* Return point object */
-    mapscript_create_point(point, NULL, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_point(point, parent, return_value TSRMLS_CC);
 }
 
 /* {{{ proto lineObj ms_newLineObj()
@@ -354,7 +357,8 @@ PHP_FUNCTION(ms_newStyleObj)
     }
 
     /* Return point object */
-    mapscript_create_style(style, zclass, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(zclass, NULL);
+    mapscript_create_style(style, parent, return_value TSRMLS_CC);
 }
 
 /* {{{ proto classObj ms_newClassObj(layerObj layer [, classObj class])
@@ -386,7 +390,8 @@ PHP_FUNCTION(ms_newClassObj)
         return;
     }
 
-    mapscript_create_class(class, zlayer, return_value TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(zlayer, NULL);
+    mapscript_create_class(class, parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -441,9 +446,6 @@ PHP_FUNCTION(ms_newShapeObj)
         return;
     }
 
-    MAKE_STD_ZVAL(php_shape->bounds);
-    mapscript_create_rect(&(php_shape->shape->bounds), return_value, php_shape->bounds TSRMLS_CC);
-
     MAKE_STD_ZVAL(php_shape->values);
     array_init(php_shape->values);
 }
@@ -473,9 +475,6 @@ PHP_FUNCTION(ms_shapeObjFromWkt)
         mapscript_throw_exception("Unable to construct shapeObj." TSRMLS_CC);
         return;
     }
-
-    MAKE_STD_ZVAL(php_shape->bounds);
-    mapscript_create_rect(&(php_shape->shape->bounds), return_value, php_shape->bounds TSRMLS_CC);
 
     MAKE_STD_ZVAL(php_shape->values);
     array_init(php_shape->values);
@@ -537,6 +536,7 @@ PHP_FUNCTION(ms_newGridObj)
 {
     zval *zlayer;
     php_layer_object *php_layer;
+    php_grid_object *php_grid;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
@@ -557,11 +557,17 @@ PHP_FUNCTION(ms_newGridObj)
     php_layer->layer->layerinfo = (graticuleObj *)malloc( sizeof( graticuleObj ) );
     initGrid((graticuleObj *)php_layer->layer->layerinfo);
 
-    MAPSCRIPT_DELREF(php_layer->grid); 
-
+    if (Z_TYPE_P(php_layer->grid) == IS_OBJECT) {
+        php_grid = (php_grid_object *) zend_object_store_get_object(php_layer->grid TSRMLS_CC);
+        php_grid->parent.child_ptr = NULL;
+        zend_objects_store_del_ref(php_layer->grid TSRMLS_CC);
+    }
+    
     MAKE_STD_ZVAL(php_layer->grid);
 
-    mapscript_create_grid((graticuleObj *)(php_layer->layer->layerinfo), zlayer, php_layer->grid TSRMLS_CC);
+    MAPSCRIPT_MAKE_PARENT(zlayer, &php_layer->grid);
+    mapscript_create_grid((graticuleObj *)(php_layer->layer->layerinfo), parent, php_layer->grid TSRMLS_CC);
+    zend_objects_store_add_ref(php_layer->grid TSRMLS_CC);
 
     *return_value = *(php_layer->grid);
 }

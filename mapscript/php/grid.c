@@ -33,7 +33,7 @@
 
 zend_class_entry *mapscript_ce_grid;
 
-ZEND_BEGIN_ARG_INFO_EX(grid___construct_args, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(grid___construct_args, 0, 1, 1)
   ZEND_ARG_OBJ_INFO(0, layer, layerObj, 0)
 ZEND_END_ARG_INFO()
 
@@ -52,7 +52,7 @@ PHP_METHOD(gridObj, __construct)
 {
     zval *zlayer;
     php_layer_object *php_layer;
-    php_grid_object *php_grid;
+    php_grid_object *php_grid, *php_old_grid;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
@@ -77,10 +77,17 @@ PHP_METHOD(gridObj, __construct)
 
     php_grid->grid = (graticuleObj *)php_layer->layer->layerinfo;
 
-    MAPSCRIPT_DELREF(php_layer->grid); 
+    if (Z_TYPE_P(php_layer->grid) == IS_OBJECT) {
+        php_old_grid = (php_grid_object *) zend_object_store_get_object(php_layer->grid TSRMLS_CC); 
+        php_old_grid->parent.child_ptr = NULL;
+        zend_objects_store_del_ref(php_layer->grid TSRMLS_CC);
+    }
 
-    php_layer->grid = getThis();
-    MAPSCRIPT_ADDREF(php_layer->grid);
+    MAKE_STD_ZVAL(php_layer->grid);
+    MAPSCRIPT_MAKE_PARENT(zlayer, &php_layer->grid);
+    mapscript_create_grid((graticuleObj *)(php_layer->layer->layerinfo), parent, php_layer->grid TSRMLS_CC);
+    
+    return_value_ptr = &php_layer->grid;
 }
 /* }}} */
 
@@ -153,15 +160,15 @@ zend_function_entry grid_functions[] = {
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_grid(graticuleObj *grid, zval *php_parent, zval *return_value TSRMLS_DC)
+void mapscript_create_grid(graticuleObj *grid, parent_object parent, zval *return_value TSRMLS_DC)
 {
     php_grid_object * php_grid;
     object_init_ex(return_value, mapscript_ce_grid); 
     php_grid = (php_grid_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_grid->grid = grid;
 
-    php_grid->parent = php_parent;
-    MAPSCRIPT_ADDREF(php_parent);
+    php_grid->parent = parent;
+    MAPSCRIPT_ADDREF(parent.val);
 }
 
 static void mapscript_grid_object_destroy(void *object TSRMLS_DC)
@@ -170,10 +177,10 @@ static void mapscript_grid_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_OBJECT(php_grid);
 
-    MAPSCRIPT_DELREF(php_grid->parent);
+    MAPSCRIPT_FREE_PARENT(php_grid->parent);
 
     /* We don't need to free the gridObj */ 
-    
+
     efree(object);
 }
 
@@ -187,7 +194,7 @@ static zend_object_value mapscript_grid_object_new(zend_class_entry *ce TSRMLS_D
     retval = mapscript_object_new(&php_grid->std, ce,
                                   &mapscript_grid_object_destroy TSRMLS_CC);
 
-    php_grid->parent = NULL;
+    MAPSCRIPT_INIT_PARENT(php_grid->parent);
 
     return retval;
 }
