@@ -1875,7 +1875,7 @@ PHP_METHOD(layerObj, resultsGetShape)
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|l",
-                              &shapeindex, tileindex) == FAILURE) {
+                              &shapeindex, &tileindex) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
     }

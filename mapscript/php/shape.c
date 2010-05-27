@@ -1222,7 +1222,7 @@ void mapscript_create_shape(shapeObj *shape, parent_object parent, php_layer_obj
         {
             for(i=0; i<php_shape->shape->numvalues; i++)
             {
-                add_assoc_string(php_shape->values, php_layer->layer->items[i], php_shape->shape->values[i], 0);
+                add_assoc_string(php_shape->values, php_layer->layer->items[i], php_shape->shape->values[i], 1);
             }
         }
         else
