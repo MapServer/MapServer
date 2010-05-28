@@ -1488,6 +1488,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                   {
                       if (tokens[y] && strlen(tokens[y]) > 0)
                       {
+                          if (strcasecmp(tokens[y], "*") == 0 ||
+                              strcasecmp(tokens[y], "!") == 0)
+                            continue;
                           for(z=0; z<lp->numitems; z++) 
                           {
                               if (strcasecmp(tokens[y], lp->items[z]) == 0)
@@ -1512,16 +1515,30 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
               {
                   if (strlen(papszPropertyName[k]) > 0)
                   {
-                      msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", papszPropertyName[k]);
-
-                      /* exclude geometry if it was not asked for */
-                      if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL) 
-                        sprintf(szTmp, "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
+                      if (strcasecmp(papszPropertyName[k], "*") == 0)
+                      {
+                          msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", "all");
+                      }
+                      /*this character is only used internally and allows postrequest to 
+                        have a proper property name parsing. It means do not affect what was set
+                      in the map file, It is set necessary when a wfs post request is used with 
+                      several query elements, with some having property names and some not*/
+                      else if (strcasecmp(papszPropertyName[k], "!") == 0)
+                      {
+                      }
                       else
-                        sprintf(szTmp, OWS_GML_DEFAULT_GEOMETRY_NAME);
-                  
-                      if (strstr(papszPropertyName[k], szTmp) == NULL) 
-                        msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+                      {
+                          msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", papszPropertyName[k]);
+
+                          /* exclude geometry if it was not asked for */
+                          if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL) 
+                            sprintf(szTmp, "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
+                          else
+                            sprintf(szTmp, OWS_GML_DEFAULT_GEOMETRY_NAME);
+                          
+                          if (strstr(papszPropertyName[k], szTmp) == NULL) 
+                            msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+                      }
                   }
                   else /*empty string*/
                      msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
@@ -2839,7 +2856,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                     }
                     pszTmp = NULL;
                     if (pszLayerPropertyName == NULL)
-                      pszTmp = strdup("()");
+                      pszTmp = strdup("(!)");
                     else
                     {
                         pszTmp = msStringConcatenate(pszTmp, "(");
@@ -3024,9 +3041,9 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                         psPropertyName = CPLGetXMLNode(psQuery, "PropertyName");
                         pszTmp2= NULL;
 
-                        /*when there is no PropertyName, we outpout () so that it is parsed properly in GetFeature*/
+                        /*when there is no PropertyName, we outpout (!) so that it is parsed properly in GetFeature*/
                         if (psPropertyName == NULL)
-                          pszTmp2 = strdup("");
+                          pszTmp2 = strdup("!");
 
                         while (psPropertyName)
                         {
