@@ -2304,7 +2304,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
     return MS_SUCCESS;
 }
 
-int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int record, long pkey )
+int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int pkey, long record )
 {
     int success, i;
     long buffer_first_row_num, buffer_last_row_num;
