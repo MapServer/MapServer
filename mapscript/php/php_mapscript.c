@@ -730,8 +730,9 @@ PHP_FUNCTION(ms_ioGetStdoutBufferBytes)
     buf->data = NULL;
 
     php_write(gdBuf.data, gdBuf.size TSRMLS_CC);
-
-    RETURN_LONG(buf->data_len);
+   
+    /* return the gdBuf.size, which is the "really used length" of the msIOBuffer */
+    RETURN_LONG(gdBuf.size);
 }
 
 PHP_FUNCTION(ms_ioStripStdoutBufferContentType)
