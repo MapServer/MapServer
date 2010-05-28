@@ -256,7 +256,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    else
    {
        /* Map has no SRS.  Use layer SRS or produce a warning. */
-       pszWfsSrs = msOWSGetEPSGProj(&(map->projection),&(map->web.metadata), "FO", MS_TRUE);
+       pszWfsSrs = msOWSGetEPSGProj(&(lp->projection),&(lp->metadata), "FO", MS_TRUE);
    }
 
    msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
@@ -1196,16 +1196,30 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
               {
                   if (strlen(papszPropertyName[k]) > 0)
                   {
-                      msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", papszPropertyName[k]);
-
-                      /* exclude geometry if it was not asked for */
-                      if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL) 
-                        sprintf(szTmp, "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
+                      if (strcasecmp(papszPropertyName[k], "*") == 0)
+                      {
+                          msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", "all");
+                      }
+                      /*this character is only used internally and allows postrequest to 
+                        have a proper property name parsing. It means do not affect what was set
+                      in the map file, It is set necessary when a wfs post request is used with 
+                      several query elements, with some having property names and some not*/
+                      else if (strcasecmp(papszPropertyName[k], "!") == 0)
+                      {
+                      }
                       else
-                        sprintf(szTmp, OWS_GML_DEFAULT_GEOMETRY_NAME);
+                      {
+                          msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", papszPropertyName[k]);
+
+                          /* exclude geometry if it was not asked for */
+                          if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL) 
+                            sprintf(szTmp, "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
+                          else
+                            sprintf(szTmp, OWS_GML_DEFAULT_GEOMETRY_NAME);
                   
-                      if (strstr(papszPropertyName[k], szTmp) == NULL) 
-                        msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+                          if (strstr(papszPropertyName[k], szTmp) == NULL) 
+                            msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+                      }
                   }
                   else /*empty string*/
                      msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
@@ -2249,9 +2263,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
 
 /* -------------------------------------------------------------------- */
 /*      Parse typenames and filters. If there are multiple queries,     */
-/*      typenames will be build with comma between thme                 */
+/*      typenames will be build with comma between them                 */
 /*      (typename1,typename2,...) and filters will be build with        */
-/*      bracets enclosinf the filters :(filter1)(filter2)...            */
+/*      brackets enclosing the filters :(filter1)(filter2)...            */
 /*      propertynames are stored like (property1,property2)(property1)  */
 /* -------------------------------------------------------------------- */
                     while (psQuery &&  psQuery->pszValue && 
@@ -2289,9 +2303,9 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
                         psPropertyName = CPLGetXMLNode(psQuery, "PropertyName");
                         pszTmp2= NULL;
 
-                        /*when there is no PropertyName, we outpout () so that it is parsed properly in GetFeature*/
+                        /*when there is no PropertyName, we outpout (!) so that it is parsed properly in GetFeature*/
                         if (psPropertyName == NULL)
-                          pszTmp2 = strdup("");
+                          pszTmp2 = strdup("!");
 
                         while (psPropertyName)
                         {
