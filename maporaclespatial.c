@@ -231,6 +231,7 @@ static int TRY( msOracleSpatialHandler *hand, sword status )
 
     switch (status)
     {
+        case OCI_SUCCESS_WITH_INFO:
         case OCI_ERROR:
             OCIErrorGet((dvoid *)hand->errhp, (ub4)1, (text *)NULL, &errcode, hand->last_oci_error, (ub4)sizeof(hand->last_oci_error), OCI_HTYPE_ERROR );
             if (errcode == NULLERRCODE)
