@@ -946,13 +946,13 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     return(MS_FAILURE);
   }
 
+  tagStart = findTag(*line, "resultset");
+  if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
+
   if(!stream) {
     msSetError(MS_WEBERR, "Invalid file pointer.", "processResultSetTag()");
     return(MS_FAILURE);
   }
-
-  tagStart = findTag(*line, "resultset");
-  if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
   while (tagStart) {  
     /* initialize the tag arguments */
