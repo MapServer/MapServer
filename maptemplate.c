@@ -949,11 +949,6 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   tagStart = findTag(*line, "resultset");
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
-  if(!stream) {
-    msSetError(MS_WEBERR, "Invalid file pointer.", "processResultSetTag()");
-    return(MS_FAILURE);
-  }
-
   while (tagStart) {  
     /* initialize the tag arguments */
     layerName = NULL;
@@ -978,6 +973,11 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     lp = GET_LAYER(mapserv->map, layerIndex);
 
     if(strstr(*line, "[/resultset]") == NULL) { /* read ahead */
+      if(!stream) {
+        msSetError(MS_WEBERR, "Invalid file pointer.", "processResultSetTag()");
+        return(MS_FAILURE);
+      }
+
       foundTagEnd = MS_FALSE;
       while(!foundTagEnd) {
         if(fgets(lineBuffer, MS_BUFFER_LENGTH, stream) != NULL) {
