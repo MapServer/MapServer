@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed shapeObj->toWkt() returns single point for multipoint geometry (#2762)
+
 - Fixed Internal server error when Oracle returns ora-28002 code (#3457)
 
 - Fixed PHP/MapScript ms_iogetstdoutbufferbytes() always returning 0 bytes written (#3041)

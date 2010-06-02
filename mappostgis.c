@@ -135,7 +135,9 @@ void postresqlNoticeHandler(void *arg, const char *message) {
 */
 static int force_to_points(unsigned char *wkb, shapeObj *shape)
 {
-    /* we're going to make a 'line' for each entity (point, line or ring) in the geom collection */
+    /* Due to an issue, all the points are added in a same lineObj rather
+     * than creating a line for each entity in the geom collection (#2762)
+     * This change also makes the code more consistent with the other drivers. */
 
     int     offset = 0;
     int     pt_offset;
@@ -143,39 +145,38 @@ static int force_to_points(unsigned char *wkb, shapeObj *shape)
     int     t, u, v;
     int     type, nrings, npoints;
     lineObj line = {0, NULL};
+    pointObj point = {0,0};
 
     shape->type = MS_SHAPE_NULL;  /* nothing in it */
 
     memcpy(&ngeoms, &wkb[5], 4);
     offset = 9;  /* where the first geometry is */
  
+    if (ngeoms > 0)
+        msAddLine(shape, &line);
+
     for(t=0; t < ngeoms; t++) {
         memcpy(&type, &wkb[offset + 1], 4);  /* type of this geometry */
 
         if(type == 1) {
             /* Point */
             shape->type = MS_SHAPE_POINT;
-            line.numpoints = 1;
-            line.point = (pointObj *) malloc(sizeof(pointObj));
 
-            memcpy(&line.point[0].x, &wkb[offset + 5], 8);
-            memcpy(&line.point[0].y, &wkb[offset + 5 + 8], 8);
+            memcpy(&point.x, &wkb[offset + 5], 8);
+            memcpy(&point.y, &wkb[offset + 5 + 8], 8);
             offset += 5 + 16;
-            msAddLine(shape, &line);
-            free(line.point);
+            msAddPointToLine(&shape->line[0], &point);
         } else if(type == 2) {
             /* Linestring */
             shape->type = MS_SHAPE_POINT;
 
-            memcpy(&line.numpoints, &wkb[offset+5], 4); /* num points */
-            line.point = (pointObj *) malloc(sizeof(pointObj) * line.numpoints);
-            for(u = 0; u < line.numpoints; u++) {
-                memcpy( &line.point[u].x, &wkb[offset+9 + (16 * u)], 8);
-                memcpy( &line.point[u].y, &wkb[offset+9 + (16 * u)+8], 8);
+            memcpy(&npoints, &wkb[offset+5], 4); /* num points */
+            for(u = 0; u < npoints; u++) {
+                memcpy( &point.x, &wkb[offset+9 + (16 * u)], 8);
+                memcpy( &point.y, &wkb[offset+9 + (16 * u)+8], 8);
+                msAddPointToLine(&shape->line[0], &point);
             }
-            offset += 9 + 16 * line.numpoints;  /* length of object */
-            msAddLine(shape, &line);
-            free(line.point);
+            offset += 9 + 16 * npoints;  /* length of object */
         } else if(type == 3) {
             /* Polygon */
             shape->type = MS_SHAPE_POINT;
@@ -187,17 +188,14 @@ static int force_to_points(unsigned char *wkb, shapeObj *shape)
             for(u = 0; u < nrings; u++) {
                 /* for each ring, make a line */
                 memcpy(&npoints, &wkb[offset], 4); /* num points */
-                line.numpoints = npoints;
-                line.point = (pointObj *) malloc(sizeof(pointObj)* npoints); 
                 /* point struct */
                 for(v = 0; v < npoints; v++)
                 {
-                    memcpy(&line.point[v].x, &wkb[offset + 4 + (16 * v)], 8);
-                    memcpy(&line.point[v].y, &wkb[offset + 4 + (16 * v) + 8], 8);
+                    memcpy(&point.x, &wkb[offset + 4 + (16 * v)], 8);
+                    memcpy(&point.y, &wkb[offset + 4 + (16 * v) + 8], 8);
+                    msAddPointToLine(&shape->line[0], &point);
                 }
                 /* make offset point to next linear ring */
-                msAddLine(shape, &line);
-                free(line.point);
                 offset += 4 + 16 *npoints;
             }
         }

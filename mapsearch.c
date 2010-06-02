@@ -210,7 +210,10 @@ int msIntersectPointPolygon(pointObj *point, shapeObj *poly) {
 
 int msIntersectMultipointPolygon(shapeObj *multipoint, shapeObj *poly) {
   int i,j;
-  
+
+  /* The change to loop through all the lines has been made for ticket
+   * #2443 but is no more needed since ticket #2762. PostGIS now put all
+   * points into a single line.  */
   for(i=0; i<multipoint->numlines; i++ ) {
     lineObj points = multipoint->line[i];
     for(j=0; j<points.numpoints; j++) {
