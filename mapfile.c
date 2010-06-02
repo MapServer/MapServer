@@ -3121,6 +3121,7 @@ int freeLayer(layerObj *layer) {
 
   if(&(layer->metadata)) msFreeHashItems(&(layer->metadata));
   if(&(layer->validation)) msFreeHashItems(&(layer->validation));
+  if(&(layer->bindvals))  msFreeHashItems(&layer->bindvals);
 
   if(layer->numprocessing > 0)
       msFreeCharArray(layer->processing, layer->numprocessing);
@@ -5570,7 +5571,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 /* look in places authorized for url substitution and replace "from" by "to" */ 
 void msLayerSubstituteString(layerObj *layer, const char *from, const char *to) {
   int k;
-  char* bindvals_key = msFirstKeyFromHashTable(&layer->bindvals);
+  char* bindvals_key = (char*)msFirstKeyFromHashTable(&layer->bindvals);
   char* bindvals_val;
 
   if(layer->data && (strcasestr(layer->data, from) != NULL)) 
@@ -5590,7 +5591,7 @@ void msLayerSubstituteString(layerObj *layer, const char *from, const char *to) 
   while(bindvals_key != NULL) {
     bindvals_val = strdup((char*)msLookupHashTable(&layer->bindvals, bindvals_key));
     msInsertHashTable(&layer->bindvals, bindvals_key, msCaseReplaceSubstring(bindvals_val, from, to));
-    bindvals_key = msNextKeyFromHashTable(&layer->bindvals, bindvals_key);
+    bindvals_key = (char*)msNextKeyFromHashTable(&layer->bindvals, bindvals_key);
   }
 }
   

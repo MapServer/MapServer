@@ -1819,6 +1819,10 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect) {
         pgresult = PQexec(layerinfo->pgconn, strSQL);
     }
 
+    /* free bind values */
+    free(bind_key);
+    free(layer_bind_values);
+
     if ( layer->debug > 1 ) {
         msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult)); 
     }
