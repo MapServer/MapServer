@@ -36,6 +36,7 @@
 #include "SAPI.h"
 #include "ext/standard/info.h"
 #include "ext/standard/head.h"
+#include "main/php_output.h" 
 
 #include "maperror.h"
 
@@ -6448,7 +6449,11 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         retVal = 0;
 
 
-        php_header(TSRMLS_C);
+        /* if there is no output buffer active, set the header */ 
+        if (OG(ob_nesting_level)<=0) 
+        { 
+            php_header(TSRMLS_C); 
+        } 
 
         if( MS_DRIVER_GD(im->format) || MS_DRIVER_AGG(im->format))
           iptr = (void *)msSaveImageBuffer(im, &size, im->format);
