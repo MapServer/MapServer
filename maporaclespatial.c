@@ -2343,10 +2343,6 @@ int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int pk
          * return msOracleSpatialLayerGetShape(layer, shape, pkey);*/
     }
     
-    if (layer->debug >= 5)
-        msDebug("msOracleSpatialLayerResultGetShape was called. Using the record = %ld of %ld. (shape: %ld should equal pkey: %ld)\n", 
-                record, layer->resultcache->numresults, layer->resultcache->results[record].shapeindex, pkey);
-    
     //record = layer->resultcache->results[record].tileindex; // Do we need to do this? Is record our tile index or an index into the result cache?
         
     if (record >= sthand->rows_count || record < 0)
@@ -2359,6 +2355,10 @@ int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int pk
         return MS_FAILURE;
     }
     
+    if (layer->debug >= 5)
+        msDebug("msOracleSpatialLayerResultGetShape was called. Using the record = %ld of %ld. (shape: %ld should equal pkey: %ld)\n", 
+                record, layer->resultcache->numresults, layer->resultcache->results[record].shapeindex, pkey);
+
     /* NOTE: with the way the resultcache works, we should see items in increasing order, but some may have been filtered out. */
     /* Best case: item in buffer */
     /* Next best case: item is in next fetch block */
