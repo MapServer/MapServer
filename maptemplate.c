@@ -3863,6 +3863,11 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
   ms_regex_t re; /* compiled regular expression to be matched */ 
   char szPath[MS_MAXPATHLEN];
 
+  if(!html) {
+    msSetError(MS_WEBERR, "No template specified", "msReturnPage()");
+    return MS_FAILURE;
+  }
+
   if(ms_regcomp(&re, MS_TEMPLATE_EXPR, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
     msSetError(MS_REGEXERR, NULL, "msReturnPage()");
     return MS_FAILURE;
@@ -4405,8 +4410,8 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages, char **names, char **v
     ** TODO : use web minscaledenom/maxscaledenom depending on the scale.
     */
     if(msReturnPage(mapserv, mapserv->map->web.template, BROWSE, &pszBuffer) != MS_SUCCESS) {
-      msFree(pszBuffer);
-      pszBuffer = NULL;
+        msFree(pszBuffer);
+        pszBuffer = NULL;
     }
 
     /* Don't free the map and names and values arrays since they were passed by reference. */

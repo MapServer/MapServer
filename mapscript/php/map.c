@@ -2602,7 +2602,7 @@ PHP_METHOD(mapObj, processTemplate)
     {
         // Failed for some reason
         mapscript_report_php_error(E_WARNING, "processTemplate: failed reading array" TSRMLS_CC);
-        RETURN_STRING("", 0);
+        RETURN_STRING("", 1);
     }
     efree(papszNameValue);
 
@@ -2620,7 +2620,7 @@ PHP_METHOD(mapObj, processTemplate)
     else
     {
         mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        RETURN_STRING("", 0);
+        RETURN_STRING("", 1);
     }
 }
 /* }}} */
@@ -2682,7 +2682,7 @@ PHP_METHOD(mapObj, processQueryTemplate)
     {
         // Failed for some reason
         mapscript_report_php_error(E_WARNING, "processQueryTemplate: failed reading array" TSRMLS_CC);
-        RETURN_STRING("", 0);
+        RETURN_STRING("", 1);
     }
     efree(papszNameValue);
 
@@ -2701,7 +2701,7 @@ PHP_METHOD(mapObj, processQueryTemplate)
     else
     {
         mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        RETURN_STRING("", 0);
+        RETURN_STRING("", 1);
     }
 }
 /* }}} */
@@ -2762,7 +2762,7 @@ PHP_METHOD(mapObj, processLegendTemplate)
     {
         // Failed for some reason
         mapscript_report_php_error(E_WARNING, "processLegendTemplate: failed reading array" TSRMLS_CC);
-        RETURN_STRING("", 0);
+        RETURN_STRING("", 1);
     }
     efree(papszNameValue);
 
@@ -2781,7 +2781,7 @@ PHP_METHOD(mapObj, processLegendTemplate)
     else
     {
         mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        RETURN_STRING("", 0);
+        RETURN_STRING("", 1);
     }
 }
 /* }}} */
@@ -3062,7 +3062,7 @@ PHP_METHOD(mapObj, generateSLD)
     else
     {
         mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        RETURN_STRING("", 0);
+        RETURN_STRING("", 1);
     }
 }
 /* }}} */

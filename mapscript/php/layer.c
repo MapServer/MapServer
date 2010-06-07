@@ -1554,7 +1554,7 @@ PHP_METHOD(layerObj, generateSLD)
     else
     {
         mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        RETURN_STRING("", 0);
+        RETURN_STRING("", 1);
     }
 }
 /* }}} */
