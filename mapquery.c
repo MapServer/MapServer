@@ -687,6 +687,7 @@ int msQueryByRect(mapObj *map)
   char status;
   shapeObj shape, searchshape;
   rectObj searchrect;
+  double layer_tolerance = 0, tolerance = 0;
   
   int nclasses = 0;
   int *classgroup = NULL;
@@ -698,8 +699,6 @@ int msQueryByRect(mapObj *map)
 
   msInitShape(&shape);
   msInitShape(&searchshape);
-
-  msRectToPolygon(map->query.rect, &searchshape);
 
   if(map->query.layer < 0 || map->query.layer >= map->numlayers)
     start = map->numlayers-1;
@@ -733,9 +732,26 @@ int msQueryByRect(mapObj *map)
       if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
     }
 
+    searchrect = map->query.rect;
+    if(lp->tolerance > 0) {
+        layer_tolerance = lp->tolerance;
+        
+        if(lp->toleranceunits == MS_PIXELS)
+            tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
+        else
+            tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
+        
+        searchrect.minx -= tolerance;
+        searchrect.maxx += tolerance;
+        searchrect.miny -= tolerance;
+        searchrect.maxy += tolerance;
+    }
+    
+    msRectToPolygon(searchrect, &searchshape);
+
     /* Raster layers are handled specially. */
     if( lp->type == MS_LAYER_RASTER ) {
-      if( msRasterQueryByRect( map, lp, map->query.rect ) == MS_FAILURE)
+      if( msRasterQueryByRect( map, lp, searchrect ) == MS_FAILURE)
         return MS_FAILURE;
 
       continue;
@@ -749,8 +765,6 @@ int msQueryByRect(mapObj *map)
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-    /* identify candidate shapes */
-    searchrect = map->query.rect;
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
@@ -775,7 +789,6 @@ int msQueryByRect(mapObj *map)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
-
       shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
         msFreeShape(&shape);
@@ -794,7 +807,7 @@ int msQueryByRect(mapObj *map)
 	lp->project = MS_FALSE;
 #endif
 
-      if(msRectContained(&shape.bounds, &(map->query.rect)) == MS_TRUE) { /* if the whole shape is in, don't intersect */	
+      if(msRectContained(&shape.bounds, &searchrect) == MS_TRUE) { /* if the whole shape is in, don't intersect */	
         status = MS_TRUE;
       } else {
 	switch(shape.type) { /* make sure shape actually intersects the qrect (ADD FUNCTIONS SPECIFIC TO RECTOBJ) */

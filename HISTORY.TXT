@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed msQueryByRect does not use tolerance (#3453)
+
 - Fixed MapScript processTemplate and processQueryTemplate seg fault (#3468)
 
 - Fixed shapeObj->toWkt() returns single point for multipoint geometry (#2762)
