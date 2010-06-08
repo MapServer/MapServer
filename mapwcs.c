@@ -744,8 +744,10 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
 
   for(i=0; i<map->numlayers; i++)
   {
-      if( msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params) != MS_SUCCESS )
+      if( msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params) != MS_SUCCESS ) {
+          msIO_printf("</ContentMetadata>\n");
           return MS_FAILURE;
+      }
   }
 
   /* done */

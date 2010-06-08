@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- ensure well formed XML when msWCSGetCapabilities_CoverageOfferingBrief
+  returns MS_FAILURE (#3469)
+
 - Fixed msQueryByRect does not use tolerance (#3453)
 
 - Fixed MapScript processTemplate and processQueryTemplate seg fault (#3468)
