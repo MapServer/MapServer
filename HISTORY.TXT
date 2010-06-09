@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
+- fix blending of transparent layers with AGG on MSB archs (#3471)
 
 - Fix security exception issue in C# with MSVC2010 (#3438)
 

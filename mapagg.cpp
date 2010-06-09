@@ -94,8 +94,10 @@
 
 #ifdef CPL_MSB
 typedef agg::order_argb gd_color_order;
+typedef agg::blender_argb32_pre raw_pixel_blender;
 #else
 typedef agg::order_bgra gd_color_order;
+typedef agg::blender_bgra32_pre raw_pixel_blender;
 #endif
 
 typedef agg::blender_rgba_pre<agg::rgba8, gd_color_order> blender_pre; 
@@ -2599,7 +2601,7 @@ void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct)
             //blend the src pixel over it.
             //the color channels must also be scaled by the opacity
             //as the blender expects premultiplied colors
-            agg::blender_bgra32_pre::blend_pix(p,
+            raw_pixel_blender::blend_pix(p,
                     MS_NINT(src_p[gd_color_order::R]*factor),
                     MS_NINT(src_p[gd_color_order::G]*factor),
                     MS_NINT(src_p[gd_color_order::B]*factor),
