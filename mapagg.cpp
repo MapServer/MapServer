@@ -85,8 +85,10 @@
 
 #ifdef CPL_MSB
 typedef mapserver::order_argb gd_color_order;
+typedef mapserver::blender_argb32_pre raw_pixel_blender;
 #else
 typedef mapserver::order_bgra gd_color_order;
+typedef mapserver::blender_bgra32_pre raw_pixel_blender;
 #endif
 
 typedef mapserver::blender_rgba_pre<mapserver::rgba8, gd_color_order> blender_pre; 
@@ -2506,7 +2508,7 @@ void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct)
             //blend the src pixel over it.
             //the color channels must also be scaled by the opacity
             //as the blender expects premultiplied colors
-            mapserver::blender_bgra32_pre::blend_pix(p,
+            raw_pixel_blender::blend_pix(p,
                     MS_NINT(src_p[gd_color_order::R]*factor),
                     MS_NINT(src_p[gd_color_order::G]*factor),
                     MS_NINT(src_p[gd_color_order::B]*factor),
