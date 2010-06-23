@@ -44,7 +44,7 @@
 #include "mapproject.h"
 
 enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS,
-               MS_NAUTICALMILES, MS_DD, MS_PIXELS};
+               MS_DD, MS_PIXELS, MS_NAUTICALMILES};
 
 
 /************************************************************************/
