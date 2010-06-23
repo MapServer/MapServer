@@ -520,9 +520,9 @@ unset ac_cv_lib_c_gdImageWBMP
 unset ac_cv_lib_c_gdImageStringFT
 unset ac_cv_lib_c_gdImageGifPtr
 unset ac_cv_lib_c_gdFontGetTiny
-unset ac_cv_lib_gd_gdFontCacheSetup
+unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
 
-AC_CHECKING(for GD 2.0.16 or higher)
+AC_CHECKING(for GD 2.0.28 or higher)
 AC_ARG_WITH(gd,
 [  --with-gd[[=[static,]DIR]]
                           Specify which version of GD to use (DIR is GD's
@@ -552,14 +552,14 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl -o -f $GD_DIR/_libs/libgd.dylib && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl -o -f $GD_DIR/libgd.dylib && GD_LIBDIR="$GD_DIR"
 
-  dnl make sure it is GD 2.0.16+ with antialias and gdFontCacheSetup() support
-  AC_CHECK_LIB(gd, gdFontCacheSetup,IS_GD2="true",,$GD_XTRA_LIBS -L$GD_LIBDIR)
+  dnl make sure it is GD 2.0.28+ with antialias and gdFontCacheSetup() and gdImageCreatePaletteFromTrueColor support
+  AC_CHECK_LIB(gd, gdImageCreatePaletteFromTrueColor,IS_GD2="true",,$GD_XTRA_LIBS -L$GD_LIBDIR)
 
   if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
     dnl try again including libiconv this time
-    unset ac_cv_lib_gd_gdFontCacheSetup
+    unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
     AC_CHECKING(whether GD needs libiconv)
-    AC_CHECK_LIB(gd, gdFontCacheSetup,IS_GD2="true",,$GD_XTRA_LIBS -L$GD_LIBDIR $ICONV_LIB)
+    AC_CHECK_LIB(gd, gdImageCreatePaletteFromTrueColor,IS_GD2="true",,$GD_XTRA_LIBS -L$GD_LIBDIR $ICONV_LIB)
     GD_NEED_ICONV_LIB="$ICONV_LIB"
   fi
 
@@ -567,10 +567,10 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
       GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      AC_MSG_RESULT([        using libgd 2.0.16 (or higher) from $GD_LIB $GD_XTRA_LIBS])
+      AC_MSG_RESULT([        using libgd 2.0.28 (or higher) from $GD_LIB $GD_XTRA_LIBS])
       AC_ADD_RUNPATH("$GD_LIBDIR")
   else
-      AC_MSG_ERROR([Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv).])
+      AC_MSG_ERROR([Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv).])
   fi
 else
   dnl  --with-gd specified without a DIR, look for gd in system dirs /usr or /usr/local
@@ -583,14 +583,14 @@ else
     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
     test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
 
-    dnl make sure it is GD 2.0.16 or higher
-    AC_CHECK_LIB(gd, gdFontCacheSetup, IS_GD2="true",,$GD_XTRA_LIBS)
+    dnl make sure it is GD 2.0.28 or higher
+    AC_CHECK_LIB(gd, gdImageCreatePaletteFromTrueColor, IS_GD2="true",,$GD_XTRA_LIBS)
  
     if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
       dnl try again including libiconv this time
       AC_CHECKING(whether GD needs libiconv)
-      unset ac_cv_lib_gd_gdFontCacheSetup
-      AC_CHECK_LIB(gd, gdFontCacheSetup,IS_GD2="true",,$GD_XTRA_LIBS $ICONV_LIB)
+      unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
+      AC_CHECK_LIB(gd, gdImageCreatePaletteFromTrueColor,IS_GD2="true",,$GD_XTRA_LIBS $ICONV_LIB)
       GD_NEED_ICONV_LIB="$ICONV_LIB"
     fi
 
@@ -598,7 +598,7 @@ else
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
       GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      AC_MSG_RESULT([        using libgd 2.0.16 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS).])
+      AC_MSG_RESULT([        using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS).])
       AC_ADD_RUNPATH("$GD_LIBDIR")
       FOUND_GD="true"
       break;
@@ -606,7 +606,7 @@ else
   done
 
   if test "$FOUND_GD" = "false" ; then
-    AC_MSG_ERROR([Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv).])
+    AC_MSG_ERROR([Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv).])
   fi
 fi
 

@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION PKG_CONFIG FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB FTGL_ENABLED FTGL_INC FTGL_LIB OGL_ENABLED OGL_INC OGL_LIB AGG_ENABLED AGG_INC AGG_OBJ AGG_LIB RGBA_PNG_ENABLED PNG_INC PNG_LIB PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED KML_ENABLED XSLT_ENABLED XSLT_INC XSLT_LIB EXSLT_ENABLED EXSLT_INC EXSLT_LIB FRIBIDI_CONFIG FRIBIDI_ENABLED FRIBIDI_INC FRIBIDI_LIB CAIRO_ENABLED CAIRO_INC CAIRO_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION PKG_CONFIG FT_BIN ZLIB_ENABLED ZLIB_INC ZLIB_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB FTGL_ENABLED FTGL_INC FTGL_LIB OGL_ENABLED OGL_INC OGL_LIB AGG_ENABLED AGG_INC AGG_OBJ AGG_LIB RGBA_PNG_ENABLED PNG_INC PNG_LIB PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED XSLT_ENABLED XSLT_INC XSLT_LIB EXSLT_ENABLED EXSLT_INC EXSLT_LIB FRIBIDI_CONFIG FRIBIDI_ENABLED FRIBIDI_INC FRIBIDI_LIB CAIRO_ENABLED CAIRO_INC CAIRO_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -925,7 +925,6 @@ Optional Packages:
                           to xslt install dir).
   --with-exslt=DIR         Include exslt Support (ARG=yes/path to
                            to exslt install dir).
-  --with-kml               Include support for KML output
   --with-fribidi-config[=ARG]
                           Include FriBidi Support (ARG=yes/path to
                           fribidi-config or fribidi.pc)
@@ -6083,10 +6082,10 @@ unset ac_cv_lib_c_gdImageWBMP
 unset ac_cv_lib_c_gdImageStringFT
 unset ac_cv_lib_c_gdImageGifPtr
 unset ac_cv_lib_c_gdFontGetTiny
-unset ac_cv_lib_gd_gdFontCacheSetup
+unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
 
-{ echo "$as_me:$LINENO: checking for GD 2.0.16 or higher..." >&5
-echo "$as_me: checking for GD 2.0.16 or higher..." >&6;}
+{ echo "$as_me:$LINENO: checking for GD 2.0.28 or higher..." >&5
+echo "$as_me: checking for GD 2.0.28 or higher..." >&6;}
 
 # Check whether --with-gd or --without-gd was given.
 if test "${with_gd+set}" = set; then
@@ -6131,9 +6130,9 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl -o -f $GD_DIR/_libs/libgd.dylib && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl -o -f $GD_DIR/libgd.dylib && GD_LIBDIR="$GD_DIR"
 
-    echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
-echo $ECHO_N "checking for gdFontCacheSetup in -lgd... $ECHO_C" >&6
-if test "${ac_cv_lib_gd_gdFontCacheSetup+set}" = set; then
+    echo "$as_me:$LINENO: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
+echo $ECHO_N "checking for gdImageCreatePaletteFromTrueColor in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -6151,11 +6150,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gdFontCacheSetup ();
+char gdImageCreatePaletteFromTrueColor ();
 int
 main ()
 {
-gdFontCacheSetup ();
+gdImageCreatePaletteFromTrueColor ();
   ;
   return 0;
 }
@@ -6182,31 +6181,31 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gd_gdFontCacheSetup=yes
+  ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gd_gdFontCacheSetup=no
+ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdFontCacheSetup" >&5
-echo "${ECHO_T}$ac_cv_lib_gd_gdFontCacheSetup" >&6
-if test $ac_cv_lib_gd_gdFontCacheSetup = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" >&6
+if test $ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor = yes; then
   IS_GD2="true"
 fi
 
 
   if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
-        unset ac_cv_lib_gd_gdFontCacheSetup
+        unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
     { echo "$as_me:$LINENO: checking whether GD needs libiconv..." >&5
 echo "$as_me: checking whether GD needs libiconv..." >&6;}
-    echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
-echo $ECHO_N "checking for gdFontCacheSetup in -lgd... $ECHO_C" >&6
-if test "${ac_cv_lib_gd_gdFontCacheSetup+set}" = set; then
+    echo "$as_me:$LINENO: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
+echo $ECHO_N "checking for gdImageCreatePaletteFromTrueColor in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -6224,11 +6223,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gdFontCacheSetup ();
+char gdImageCreatePaletteFromTrueColor ();
 int
 main ()
 {
-gdFontCacheSetup ();
+gdImageCreatePaletteFromTrueColor ();
   ;
   return 0;
 }
@@ -6255,20 +6254,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gd_gdFontCacheSetup=yes
+  ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gd_gdFontCacheSetup=no
+ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdFontCacheSetup" >&5
-echo "${ECHO_T}$ac_cv_lib_gd_gdFontCacheSetup" >&6
-if test $ac_cv_lib_gd_gdFontCacheSetup = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" >&6
+if test $ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor = yes; then
   IS_GD2="true"
 fi
 
@@ -6279,8 +6278,8 @@ fi
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
       GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      echo "$as_me:$LINENO: result:         using libgd 2.0.16 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&5
-echo "${ECHO_T}        using libgd 2.0.16 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&6
+      echo "$as_me:$LINENO: result:         using libgd 2.0.28 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&5
+echo "${ECHO_T}        using libgd 2.0.28 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&6
 
   if test ""$GD_LIBDIR"" != "/usr/lib"; then
 
@@ -6304,8 +6303,8 @@ echo "${ECHO_T}        using libgd 2.0.16 (or higher) from $GD_LIB $GD_XTRA_LIBS
   fi
 
   else
-      { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
-echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
+      { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
+echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
    { (exit 1); exit 1; }; }
   fi
 else
@@ -6318,9 +6317,9 @@ else
     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
     test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
 
-        echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
-echo $ECHO_N "checking for gdFontCacheSetup in -lgd... $ECHO_C" >&6
-if test "${ac_cv_lib_gd_gdFontCacheSetup+set}" = set; then
+        echo "$as_me:$LINENO: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
+echo $ECHO_N "checking for gdImageCreatePaletteFromTrueColor in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -6338,11 +6337,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gdFontCacheSetup ();
+char gdImageCreatePaletteFromTrueColor ();
 int
 main ()
 {
-gdFontCacheSetup ();
+gdImageCreatePaletteFromTrueColor ();
   ;
   return 0;
 }
@@ -6369,20 +6368,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gd_gdFontCacheSetup=yes
+  ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gd_gdFontCacheSetup=no
+ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdFontCacheSetup" >&5
-echo "${ECHO_T}$ac_cv_lib_gd_gdFontCacheSetup" >&6
-if test $ac_cv_lib_gd_gdFontCacheSetup = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" >&6
+if test $ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor = yes; then
   IS_GD2="true"
 fi
 
@@ -6390,10 +6389,10 @@ fi
     if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
             { echo "$as_me:$LINENO: checking whether GD needs libiconv..." >&5
 echo "$as_me: checking whether GD needs libiconv..." >&6;}
-      unset ac_cv_lib_gd_gdFontCacheSetup
-      echo "$as_me:$LINENO: checking for gdFontCacheSetup in -lgd" >&5
-echo $ECHO_N "checking for gdFontCacheSetup in -lgd... $ECHO_C" >&6
-if test "${ac_cv_lib_gd_gdFontCacheSetup+set}" = set; then
+      unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
+      echo "$as_me:$LINENO: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
+echo $ECHO_N "checking for gdImageCreatePaletteFromTrueColor in -lgd... $ECHO_C" >&6
+if test "${ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -6411,11 +6410,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char gdFontCacheSetup ();
+char gdImageCreatePaletteFromTrueColor ();
 int
 main ()
 {
-gdFontCacheSetup ();
+gdImageCreatePaletteFromTrueColor ();
   ;
   return 0;
 }
@@ -6442,20 +6441,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gd_gdFontCacheSetup=yes
+  ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gd_gdFontCacheSetup=no
+ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdFontCacheSetup" >&5
-echo "${ECHO_T}$ac_cv_lib_gd_gdFontCacheSetup" >&6
-if test $ac_cv_lib_gd_gdFontCacheSetup = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" >&5
+echo "${ECHO_T}$ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" >&6
+if test $ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor = yes; then
   IS_GD2="true"
 fi
 
@@ -6466,8 +6465,8 @@ fi
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
       GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      echo "$as_me:$LINENO: result:         using libgd 2.0.16 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&5
-echo "${ECHO_T}        using libgd 2.0.16 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&6
+      echo "$as_me:$LINENO: result:         using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&5
+echo "${ECHO_T}        using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&6
 
   if test ""$GD_LIBDIR"" != "/usr/lib"; then
 
@@ -6496,8 +6495,8 @@ echo "${ECHO_T}        using libgd 2.0.16 (or higher) from system libs ($GD_LIB 
   done
 
   if test "$FOUND_GD" = "false" ; then
-    { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
-echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.16 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
+    { { echo "$as_me:$LINENO: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&5
+echo "$as_me: error: Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." >&2;}
    { (exit 1); exit 1; }; }
   fi
 fi
@@ -12252,31 +12251,6 @@ SOS_SVR_ENABLED=$SOS_SVR_ENABLED
 ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $SOS_SVR_ENABLED $XML2_ENABLED $CURL_ENABLED $ALL_ENABLED"
 
 
-echo "$as_me:$LINENO: checking if KML support requested" >&5
-echo $ECHO_N "checking if KML support requested... $ECHO_C" >&6
-
-# Check whether --with-kml or --without-kml was given.
-if test "${with_kml+set}" = set; then
-  withval="$with_kml"
-
-fi;
-
-if test -z "$with_kml" -o "$with_kml" = "no" ; then
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-else
-  if test -z "$XML2_ENABLED" ; then
-     { { echo "$as_me:$LINENO: error: libxml2 required - please reconfigure --with-xml2-config." >&5
-echo "$as_me: error: libxml2 required - please reconfigure --with-xml2-config." >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-  KML_ENABLED=-DUSE_KML
-fi
-
-KML_ENABLED=$KML_ENABLED
-
-
-ALL_ENABLED="$KML_ENABLED $ALL_ENABLED"
 
 # Check whether --with-xml-mapfile or --without-xml-mapfile was given.
 if test "${with_xml_mapfile+set}" = set; then
@@ -14468,7 +14442,6 @@ s,@XML2_LIB@,$XML2_LIB,;t t
 s,@WMS_LYR_ENABLED@,$WMS_LYR_ENABLED,;t t
 s,@WFS_LYR_ENABLED@,$WFS_LYR_ENABLED,;t t
 s,@SOS_SVR_ENABLED@,$SOS_SVR_ENABLED,;t t
-s,@KML_ENABLED@,$KML_ENABLED,;t t
 s,@XSLT_ENABLED@,$XSLT_ENABLED,;t t
 s,@XSLT_INC@,$XSLT_INC,;t t
 s,@XSLT_LIB@,$XSLT_LIB,;t t
@@ -14816,8 +14789,6 @@ echo "$as_me:$LINENO: result:   AGG support:               ${AGG_ENABLED} ${AGG_
 echo "${ECHO_T}  AGG support:               ${AGG_ENABLED} ${AGG_SVG_SYMBOLS_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}" >&5
 echo "${ECHO_T}  Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}" >&6
-echo "$as_me:$LINENO: result:   KML support:               ${KML_ENABLED}" >&5
-echo "${ECHO_T}  KML support:               ${KML_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   Ming(flash) support:       ${MING_ENABLED}" >&5
 echo "${ECHO_T}  Ming(flash) support:       ${MING_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   PDFLib support:            ${PDF_ENABLED}" >&5
