@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Modified mapserver units enum order to fix some problems with external softwares (#3173)
+
 - Fixed configure does not detect libGD version dependencies (#3478)
 
 - Fixed Drawing inline text not working (bitmap) (#3475)
