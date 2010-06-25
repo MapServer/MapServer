@@ -427,6 +427,9 @@ extern zend_class_entry *mapscript_ce_map;
 /* PHP Object constructors */
 extern zend_object_value mapscript_object_new(zend_object *zobj, zend_class_entry *ce,
                                               void (*zend_objects_free_object) TSRMLS_DC);
+extern zend_object_value mapscript_object_new_ex(zend_object *zobj, zend_class_entry *ce,
+                                                 void (*zend_objects_free_object),
+                                                 zend_object_handlers *object_handlers TSRMLS_DC);
 extern void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_object* layer, 
                                    void *internal_object, zval **php_object_storage, 
                                    zval ***return_value_ptr TSRMLS_DC);

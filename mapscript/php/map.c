@@ -32,6 +32,7 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_map;
+zend_object_handlers mapscript_map_object_handlers;
 
 static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
                                        char *projString, int setUnitsAndExtents TSRMLS_DC);
@@ -442,35 +443,6 @@ PHP_METHOD(mapObj, __set)
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }         
 }
-
-/* {{{ proto int map.__clone()
-   Make a copy of this mapObj and returne a refrence to it. Returns NULL on error. */
-PHP_METHOD(mapObj, __clone)
-{
-    zval *zobj = getThis();
-    mapObj *map = NULL;
-    php_map_object *php_map;
-
-    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters_none() == FAILURE) {
-        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-        return;
-    }
-    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
-    php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-
-    /* Make a copy of current map object */
-    if ((map = mapObj_clone(php_map->map)) == NULL)
-    {
-        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        RETURN_NULL();
-    }
-
-    /* Return new map object */
-    mapscript_create_map(map, return_value TSRMLS_CC);
-}
-/* }}} */
 
 /* {{{ proto int map.getSymbolByName(string symbolName)
    Returns the symbol index using the name. */
@@ -3394,8 +3366,6 @@ zend_function_entry map_functions[] = {
     PHP_ME(mapObj, __get, map___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, __set, map___set_args, ZEND_ACC_PUBLIC)
     PHP_MALIAS(mapObj, set, __set, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(mapObj, __clone, NULL, ZEND_ACC_PUBLIC)
-    PHP_MALIAS(mapObj, clone, __clone, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, getSymbolByName, map_getSymbolByName_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, getSymbolObjectById, map_getSymbolObjectById_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, prepareQuery, NULL, ZEND_ACC_PUBLIC)
@@ -3575,15 +3545,19 @@ static void mapscript_map_object_destroy(void *object TSRMLS_DC)
     efree(object);
 }
 
-static zend_object_value mapscript_map_object_new(zend_class_entry *ce TSRMLS_DC)
+static zend_object_value mapscript_map_object_new_ex(zend_class_entry *ce, php_map_object **ptr TSRMLS_DC)
 {
     zend_object_value retval;
     php_map_object *php_map;
 
     MAPSCRIPT_ALLOC_OBJECT(php_map, php_map_object);
 
-    retval = mapscript_object_new(&php_map->std, ce,
-                                  &mapscript_map_object_destroy TSRMLS_CC);
+    retval = mapscript_object_new_ex(&php_map->std, ce,
+                                     &mapscript_map_object_destroy,
+                                     &mapscript_map_object_handlers TSRMLS_CC);
+
+    if (ptr)
+        *ptr = php_map;
 
     php_map->outputformat = NULL;
     php_map->extent = NULL;
@@ -3600,9 +3574,32 @@ static zend_object_value mapscript_map_object_new(zend_class_entry *ce TSRMLS_DC
     return retval;
 }
 
+static zend_object_value mapscript_map_object_new(zend_class_entry *ce TSRMLS_DC)
+{
+    return mapscript_map_object_new_ex(ce, NULL TSRMLS_CC);
+}
+
+static zend_object_value mapscript_map_object_clone(zval *zobj TSRMLS_DC)
+{
+    php_map_object *php_map_old, *php_map_new;
+    zend_object_value new_ov;
+
+    php_map_old = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    new_ov = mapscript_map_object_new_ex(mapscript_ce_map, &php_map_new TSRMLS_CC); 
+    zend_objects_clone_members(&php_map_new->std, new_ov, &php_map_old->std, Z_OBJ_HANDLE_P(zobj) TSRMLS_CC);
+
+    php_map_new->map = mapObj_clone(php_map_old->map);
+
+    return new_ov;
+}
+
 PHP_MINIT_FUNCTION(map)
 {
     zend_class_entry ce;
+
+    memcpy(&mapscript_map_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    mapscript_map_object_handlers.clone_obj = mapscript_map_object_clone;
 
     MAPSCRIPT_REGISTER_CLASS("mapObj", 
                              map_functions,

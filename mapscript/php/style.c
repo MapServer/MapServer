@@ -32,6 +32,7 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_style;
+zend_object_handlers mapscript_style_object_handlers;
 
 ZEND_BEGIN_ARG_INFO_EX(style___construct_args, 0, 0, 1)
   ZEND_ARG_OBJ_INFO(0, class, classObj, 0)
@@ -142,17 +143,6 @@ PHP_METHOD(styleObj, __get)
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
-/*
-    MAKE_STD_ZVAL(php_style->color);
-    mapscript_create_color(&(style->color), return_value, php_style->color TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_style->outlinecolor);
-    mapscript_create_color(&(style->outlinecolor), return_value, php_style->outlinecolor TSRMLS_CC);
-
-    MAKE_STD_ZVAL(php_style->backgroundcolor);
-    mapscript_create_color(&(style->backgroundcolor), return_value, php_style->backgroundcolor TSRMLS_CC);
-
- */
 }
 
 PHP_METHOD(styleObj, __set)
@@ -235,31 +225,6 @@ PHP_METHOD(styleObj, __set)
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
          
-}
-
-PHP_METHOD(styleObj, __clone)
-{
-    zval *zobj = getThis();
-    styleObj *style;
-    php_style_object *php_style;
-
-    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters_none() == FAILURE) {
-        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-        return;
-    }
-    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-
-    php_style = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-    
-    if ((style = styleObj_clone(php_style->style)) == NULL)
-    {
-        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        RETURN_NULL();
-    }
-    
-    /* setting the class as parent .... but should not */
-    mapscript_create_style(style, php_style->parent, return_value TSRMLS_CC);
 }
 
 /* {{{ proto int style.updateFromString(string snippet)
@@ -439,8 +404,6 @@ zend_function_entry style_functions[] = {
     PHP_ME(styleObj, __get, style___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(styleObj, __set, style___set_args, ZEND_ACC_PUBLIC)
     PHP_MALIAS(styleObj, set, __set, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(styleObj, __clone, NULL, ZEND_ACC_PUBLIC)
-    PHP_MALIAS(styleObj, clone, __clone, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(styleObj, updateFromString, style_updateFromString_args, ZEND_ACC_PUBLIC)
     PHP_ME(styleObj, setBinding, style_setBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(styleObj, getBinding, style_getBinding_args, ZEND_ACC_PUBLIC)
@@ -477,15 +440,19 @@ static void mapscript_style_object_destroy(void *object TSRMLS_DC)
     efree(object);
 }
 
-static zend_object_value mapscript_style_object_new(zend_class_entry *ce TSRMLS_DC)
+static zend_object_value mapscript_style_object_new_ex(zend_class_entry *ce, php_style_object **ptr TSRMLS_DC)
 {
     zend_object_value retval;
     php_style_object *php_style;
 
     MAPSCRIPT_ALLOC_OBJECT(php_style, php_style_object);
 
-    retval = mapscript_object_new(&php_style->std, ce,
-                                  &mapscript_style_object_destroy TSRMLS_CC);
+    retval = mapscript_object_new_ex(&php_style->std, ce,
+                                     &mapscript_style_object_destroy,
+                                     &mapscript_style_object_handlers TSRMLS_CC);
+
+    if (ptr)
+        *ptr = php_style;
 
     MAPSCRIPT_INIT_PARENT(php_style->parent);
     php_style->color = NULL;
@@ -495,9 +462,32 @@ static zend_object_value mapscript_style_object_new(zend_class_entry *ce TSRMLS_
     return retval;
 }
 
+static zend_object_value mapscript_style_object_new(zend_class_entry *ce TSRMLS_DC)
+{
+    return mapscript_style_object_new_ex(ce, NULL TSRMLS_CC);
+}
+
+static zend_object_value mapscript_style_object_clone(zval *zobj TSRMLS_DC)
+{
+    php_style_object *php_style_old, *php_style_new;
+    zend_object_value new_ov;
+
+    php_style_old = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    new_ov = mapscript_style_object_new_ex(mapscript_ce_style, &php_style_new TSRMLS_CC); 
+    zend_objects_clone_members(&php_style_new->std, new_ov, &php_style_old->std, Z_OBJ_HANDLE_P(zobj) TSRMLS_CC);
+
+    php_style_new->style = styleObj_clone(php_style_old->style);
+
+    return new_ov;
+}
+
 PHP_MINIT_FUNCTION(style)
 {
     zend_class_entry ce;
+
+    memcpy(&mapscript_style_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    mapscript_style_object_handlers.clone_obj = mapscript_style_object_clone;
 
     MAPSCRIPT_REGISTER_CLASS("styleObj", 
                              style_functions,

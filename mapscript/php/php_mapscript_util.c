@@ -48,6 +48,23 @@ zend_object_value mapscript_object_new(zend_object *zobj,
     return retval;
 }
 
+zend_object_value mapscript_object_new_ex(zend_object *zobj,
+                                          zend_class_entry *ce,
+                                          void (*zend_objects_free_object),
+                                          zend_object_handlers *object_handlers TSRMLS_DC)
+{
+    zend_object_value retval;
+    zval *temp;
+    
+    zobj->ce = ce;
+    ALLOC_HASHTABLE(zobj->properties);
+    zend_hash_init(zobj->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
+    zend_hash_copy(zobj->properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref,(void *) &temp, sizeof(zval *));
+    retval.handle = zend_objects_store_put(zobj, NULL, (zend_objects_free_object_storage_t)zend_objects_free_object, NULL TSRMLS_CC);
+    retval.handlers = object_handlers;
+    return retval;
+}
+
 int mapscript_extract_associative_array(HashTable *php, char **array)
 {
     zval **value;

@@ -32,6 +32,7 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_class;
+zend_object_handlers mapscript_class_object_handlers;
 
 ZEND_BEGIN_ARG_INFO_EX(class___construct_args, 0, 0, 1)
   ZEND_ARG_OBJ_INFO(0, layer, layerObj, 0)
@@ -216,35 +217,6 @@ PHP_METHOD(classObj, __set)
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
-
-PHP_METHOD(classObj, __clone)
-{
-    zval *zobj = getThis();
-    php_class_object *php_class;
-    php_layer_object *php_layer;
-    classObj *class = NULL;
-
-    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters_none() == FAILURE) {
-        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-        return;
-    }
-    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-
-    php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-    php_layer = (php_layer_object *) zend_object_store_get_object(php_class->parent.val TSRMLS_CC);
-
-    class = classObj_clone(php_class->class, php_layer->layer);
-    
-    if (class == NULL)
-    {
-        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        RETURN_NULL();
-    }
-    
-    mapscript_create_class(class, php_class->parent, return_value TSRMLS_CC);
-}
-/* }}} */
 
 /* {{{ proto int updateFromString(string snippet)
    Update a class from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
@@ -727,8 +699,6 @@ zend_function_entry class_functions[] = {
     PHP_ME(classObj, __get, class___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, __set, class___set_args, ZEND_ACC_PUBLIC)
     PHP_MALIAS(classObj, set, __set, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(classObj, __clone, NULL, ZEND_ACC_PUBLIC)
-    PHP_MALIAS(classObj, clone, __clone, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, updateFromString, class_updateFromString_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, setExpression, class_setExpression_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, getExpressionString, NULL, ZEND_ACC_PUBLIC)
@@ -774,15 +744,19 @@ static void mapscript_class_object_destroy(void *object TSRMLS_DC)
     efree(object);
 }
 
-static zend_object_value mapscript_class_object_new(zend_class_entry *ce TSRMLS_DC)
+static zend_object_value mapscript_class_object_new_ex(zend_class_entry *ce, php_class_object **ptr TSRMLS_DC)
 {
     zend_object_value retval;
     php_class_object *php_class;
 
     MAPSCRIPT_ALLOC_OBJECT(php_class, php_class_object);
 
-    retval = mapscript_object_new(&php_class->std, ce,
-                                  &mapscript_class_object_destroy TSRMLS_CC);
+    retval = mapscript_object_new_ex(&php_class->std, ce,
+                                     &mapscript_class_object_destroy,
+                                     &mapscript_class_object_handlers TSRMLS_CC);
+
+    if (ptr)
+        *ptr = php_class;
 
     MAPSCRIPT_INIT_PARENT(php_class->parent);
 
@@ -792,9 +766,34 @@ static zend_object_value mapscript_class_object_new(zend_class_entry *ce TSRMLS_
     return retval;
 }
 
+static zend_object_value mapscript_class_object_new(zend_class_entry *ce TSRMLS_DC)
+{
+    return mapscript_class_object_new_ex(ce, NULL TSRMLS_CC);
+}
+
+static zend_object_value mapscript_class_object_clone(zval *zobj TSRMLS_DC)
+{
+    php_class_object *php_class_old, *php_class_new;
+    php_layer_object *php_layer;
+    zend_object_value new_ov;
+
+    php_class_old = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_layer = (php_layer_object *) zend_object_store_get_object(php_class_old->parent.val TSRMLS_CC);
+
+    new_ov = mapscript_class_object_new_ex(mapscript_ce_class, &php_class_new TSRMLS_CC); 
+    zend_objects_clone_members(&php_class_new->std, new_ov, &php_class_old->std, Z_OBJ_HANDLE_P(zobj) TSRMLS_CC);
+
+    php_class_new->class = classObj_clone(php_class_old->class, php_layer->layer);
+
+    return new_ov;
+}
+
 PHP_MINIT_FUNCTION(class)
 {
     zend_class_entry ce;
+
+    memcpy(&mapscript_class_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    mapscript_class_object_handlers.clone_obj = mapscript_class_object_clone;
 
     MAPSCRIPT_REGISTER_CLASS("classObj", 
                              class_functions,
