@@ -830,7 +830,8 @@ PHP_METHOD(layerObj, setProjection)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-    php_projection = (php_projection_object *) zend_object_store_get_object(php_layer->projection TSRMLS_CC);
+    if (php_layer->projection)
+        php_projection = (php_projection_object *) zend_object_store_get_object(php_layer->projection TSRMLS_CC);
 
     if ((status = layerObj_setProjection(php_layer->layer, projection)) != MS_SUCCESS)
     {
@@ -838,7 +839,8 @@ PHP_METHOD(layerObj, setProjection)
         RETURN_LONG(status);
     }
 
-    php_projection->projection = &(php_layer->layer->projection);
+    if (php_layer->projection)
+        php_projection->projection = &(php_layer->layer->projection);
 
     RETURN_LONG(status);
 }
@@ -892,7 +894,8 @@ PHP_METHOD(layerObj, setWKTProjection)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-    php_projection = (php_projection_object *) zend_object_store_get_object(php_layer->projection TSRMLS_CC);
+    if (php_layer->projection)
+        php_projection = (php_projection_object *) zend_object_store_get_object(php_layer->projection TSRMLS_CC);
 
     if ((status = layerObj_setWKTProjection(php_layer->layer, projection)) != MS_SUCCESS)
     {
@@ -900,7 +903,8 @@ PHP_METHOD(layerObj, setWKTProjection)
         return;
     }
 
-    php_projection->projection = &(php_layer->layer->projection);
+    if (php_layer->projection)
+        php_projection->projection = &(php_layer->layer->projection);
 
     RETURN_LONG(status);
 }

@@ -557,7 +557,7 @@ PHP_FUNCTION(ms_newGridObj)
     php_layer->layer->layerinfo = (graticuleObj *)malloc( sizeof( graticuleObj ) );
     initGrid((graticuleObj *)php_layer->layer->layerinfo);
 
-    if (Z_TYPE_P(php_layer->grid) == IS_OBJECT) {
+    if (php_layer->grid && (Z_TYPE_P(php_layer->grid) == IS_OBJECT)) {
         php_grid = (php_grid_object *) zend_object_store_get_object(php_layer->grid TSRMLS_CC);
         php_grid->parent.child_ptr = NULL;
         zend_objects_store_del_ref(php_layer->grid TSRMLS_CC);

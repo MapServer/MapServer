@@ -2106,7 +2106,6 @@ PHP_METHOD(mapObj, setProjection)
     int status = MS_FAILURE;
     long setUnitsAndExtents = MS_FALSE;
     php_map_object *php_map;
-    php_projection_object *php_projection;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l",
@@ -2117,7 +2116,6 @@ PHP_METHOD(mapObj, setProjection)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-    php_projection = (php_projection_object *) zend_object_store_get_object(php_map->projection TSRMLS_CC);
 
     status = mapscript_map_setProjection(MS_FALSE, php_map, 
                                          projection, setUnitsAndExtents TSRMLS_CC);
@@ -2865,10 +2863,11 @@ PHP_METHOD(mapObj, selectOutputFormat)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-    php_outputformat = (php_outputformat_object *) zend_object_store_get_object(php_map->outputformat TSRMLS_CC);
-    
+    if (php_map->outputformat)
+        php_outputformat = (php_outputformat_object *) zend_object_store_get_object(php_map->outputformat TSRMLS_CC);
+
     if ((status = mapObj_selectOutputFormat(php_map->map, 
                                             type)) != MS_SUCCESS)
 
@@ -2876,7 +2875,7 @@ PHP_METHOD(mapObj, selectOutputFormat)
         mapscript_report_php_error(E_WARNING, "Unable to set output format to '%s'" TSRMLS_CC, 
                                    type);
     }
-    else
+    else if (php_map->outputformat)
     {
         php_outputformat->outputformat = php_map->map->outputformat;
     }
@@ -3450,8 +3449,10 @@ static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
     php_projection_object *php_projection;
     php_rect_object *php_extent;
 
-    php_projection = (php_projection_object *) zend_object_store_get_object(php_map->projection TSRMLS_CC);
-    php_extent = (php_rect_object *) zend_object_store_get_object(php_map->extent TSRMLS_CC);
+    if (php_map->projection)
+        php_projection = (php_projection_object *) zend_object_store_get_object(php_map->projection TSRMLS_CC);
+    if (php_map->extent)
+        php_extent = (php_rect_object *) zend_object_store_get_object(php_map->extent TSRMLS_CC);
 
     in = php_map->map->projection;
     msInitProjection(&out);
@@ -3482,7 +3483,7 @@ static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
         mapscript_report_php_error(E_WARNING, "setProjection failed" TSRMLS_CC);
         return MS_FAILURE;
     }
-    else
+    else if (php_map->projection)
     { 
         php_projection->projection = &(php_map->map->projection);
     }
@@ -3504,7 +3505,8 @@ static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
             msCalculateScale(php_map->map->extent, php_map->map->units, php_map->map->width, php_map->map->height, 
                              php_map->map->resolution, &(php_map->map->scaledenom));
 
-            php_extent->rect = &(php_map->map->extent);
+            if (php_map->extent)
+                php_extent->rect = &(php_map->map->extent);
         }
     }
 
