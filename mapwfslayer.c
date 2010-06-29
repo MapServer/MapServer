@@ -520,7 +520,6 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     int nTimeout;
     int nStatus = MS_SUCCESS;
     msWFSLayerInfo *psInfo = NULL;
-    char *pszHashFileName = NULL;
     int bPostRequest = 0;
     wfsParamsObj *psParams = NULL;
     char *pszHTTPCookieData = NULL;
@@ -652,23 +651,12 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     }
 
     /* We'll store the remote server's response to a tmp file. */
-    if (bPostRequest)
-    {
-        char *pszPostTmpName = NULL;
-        pszPostTmpName = (char *)malloc(sizeof(char)*(strlen(pszURL)+128));
-        sprintf(pszPostTmpName,"%s%ld%d",
-                pszURL, (long)time(NULL), (int)getpid());
-        pszHashFileName = msHashString(pszPostTmpName);
-        free(pszPostTmpName);
-    }
-    else
-      pszHashFileName = msHashString(pszURL);
-    pszURL = NULL;
-    
-    pasReqInfo[(*numRequests)].pszOutputFile =  
-        msOWSBuildURLFilename(map->web.imagepath, 
-                              pszHashFileName,".tmp.gml");
-    free(pszHashFileName);
+    pasReqInfo[(*numRequests)].pszOutputFile = msTmpFile(map->mappath, 
+                                                 map->web.imagepath, ".tmp.gml"); 
+    /* TODO: Implement Caching of GML responses. There was an older caching 
+     * method, but it suffered from a race condition. See #3137.
+     */ 
+
     pasReqInfo[(*numRequests)].pszHTTPCookieData = pszHTTPCookieData;
     pszHTTPCookieData = NULL;
     pasReqInfo[(*numRequests)].nStatus = 0;
