@@ -737,6 +737,7 @@ int             styleObj_updateFromString(styleObj *self, char *snippet);
 int             styleObj_setSymbolByName(styleObj *self, mapObj *map, 
                                          char* pszSymbolName);
 styleObj       *styleObj_clone(styleObj *style);
+void           styleObj_setGeomTransform(styleObj *style, char *transform);
 
 hashTableObj   *hashTableObj_new();
 int             hashTableObj_set(hashTableObj *self, const char *key, 

@@ -65,6 +65,11 @@ ZEND_BEGIN_ARG_INFO_EX(style_removeBinding_args, 0, 0, 1)
   ZEND_ARG_INFO(0, styleBinding)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(style_setGeomTransform_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, transform)
+ZEND_END_ARG_INFO()
+
+
 /* {{{ proto void __construct(classObj class [, styleObj style]) 
    Create a new styleObj instance */
 PHP_METHOD(styleObj, __construct)
@@ -424,6 +429,53 @@ PHP_METHOD(styleObj, free)
 }
 /* }}} */
 
+/* {{{ proto int style.getGeomTransform()
+   return the geometry transform expression */
+PHP_METHOD(styleObj, getGeomTransform)
+{
+    zval *zobj = getThis();
+    php_style_object *php_style;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_style = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if (php_style->style->_geomtransform == MS_GEOMTRANSFORM_NONE ||
+        !php_style->style->_geomtransformexpression)
+        RETURN_STRING("", 1);
+
+    RETURN_STRING(php_style->style->_geomtransformexpression, 1);
+}
+/* }}} */
+
+/* {{{ proto int style.setGeomTransform()
+   set the geometry transform expression */
+PHP_METHOD(styleObj, setGeomTransform)
+{
+    zval *zobj = getThis();
+    char *transform;
+    long transform_len;
+    php_style_object *php_style;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                              &transform, &transform_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_style = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    styleObj_setGeomTransform(php_style->style, transform);
+}
+/* }}} */
+
 zend_function_entry style_functions[] = {
     PHP_ME(styleObj, __construct, style___construct_args, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(styleObj, __get, style___get_args, ZEND_ACC_PUBLIC)
@@ -433,6 +485,8 @@ zend_function_entry style_functions[] = {
     PHP_ME(styleObj, setBinding, style_setBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(styleObj, getBinding, style_getBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(styleObj, removeBinding, style_removeBinding_args, ZEND_ACC_PUBLIC)
+    PHP_ME(styleObj, getGeomTransform, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(styleObj, setGeomTransform, style_setGeomTransform_args, ZEND_ACC_PUBLIC)
     PHP_ME(styleObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };

@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- PHP/MapScript: Expose getGeomTransform/setGeomTransform instead of exposing the private vars for rfc48 (#2825) 
+
 - PHP/MapScript: Fixed updateFromString functions to resolve symbol names (#3273)
 
 - PHP/MapScript: ability to use the php clone keyword (#3472)

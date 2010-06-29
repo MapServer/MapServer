@@ -1416,6 +1416,13 @@ styleObj *styleObj_clone(styleObj *style){
   return newstyle;
 }
 
+void styleObj_setGeomTransform(styleObj *style, char *transform){
+  if (!style)
+    return;
+
+  msStyleSetGeomTransform(style, transform);
+}
+
 
 cgiRequestObj *cgirequestObj_new()
 {
