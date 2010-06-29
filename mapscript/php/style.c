@@ -164,11 +164,10 @@ PHP_METHOD(styleObj, __set)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_style = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     
     IF_SET_LONG("symbol", php_style->style->symbol, value)
-    else IF_SET_STRING("symbolname", php_style->style->symbolname, value)
     else IF_SET_DOUBLE("size", php_style->style->size, value)
     else IF_SET_DOUBLE("minsize", php_style->style->minsize, value)
     else IF_SET_DOUBLE("maxsize", php_style->style->maxsize, value)
@@ -185,6 +184,11 @@ PHP_METHOD(styleObj, __set)
     else IF_SET_LONG("opacity", php_style->style->opacity, value)
     else if (STRING_EQUAL("symbolname", property))
     {
+        convert_to_string(value);
+        if (php_style->style->symbolname) free(php_style->style->symbolname);    
+        if (Z_STRVAL_P(value))                        
+            php_style->style->symbolname = strdup(Z_STRVAL_P(value));     
+
         /* The parent can be a classObj or a labelCacheMemberObj */
         if (Z_OBJCE_P(php_style->parent.val) == mapscript_ce_class)
         {
@@ -210,9 +214,13 @@ PHP_METHOD(styleObj, __set)
             php_map = (php_map_object *) zend_object_store_get_object(php_labelcachemember->parent.val TSRMLS_CC);
         }
 
-        styleObj_setSymbolByName(php_style->style,
-                                 php_map->map,
-                                 php_style->style->symbolname);
+        if (styleObj_setSymbolByName(php_style->style,
+                                     php_map->map,
+                                     php_style->style->symbolname) == -1)
+        {
+            mapscript_throw_exception("Symbol not found." TSRMLS_CC);
+            return;
+        }
     }
     else if ( (STRING_EQUAL("color", property)) ||
               (STRING_EQUAL("outlinecolor", property)) ||
@@ -235,6 +243,9 @@ PHP_METHOD(styleObj, updateFromString)
     char *snippet;
     long snippet_len;
     int status = MS_FAILURE;
+    zval retval;
+    zval *args[2];
+    zval function_name;
     php_style_object *php_style;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -252,8 +263,22 @@ PHP_METHOD(styleObj, updateFromString)
         mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
+    
+    ZVAL_LONG(&retval, status);
 
-    RETURN_LONG(status);
+    /* verify the symbol if needed */
+    if (php_style->style->symbolname) 
+    {
+        MAKE_STD_ZVAL(args[0]);
+        MAKE_STD_ZVAL(args[1]);
+        ZVAL_STRING(args[0], "symbolname", 1);
+        ZVAL_STRING(args[1], php_style->style->symbolname, 1);
+        MAPSCRIPT_CALL_METHOD(zobj, "__set", retval, 2, args);
+        zval_ptr_dtor(&args[0]);
+        zval_ptr_dtor(&args[1]);
+    }
+
+    RETURN_LONG(Z_LVAL(retval));
 }
 /* }}} */
 

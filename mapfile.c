@@ -65,7 +65,7 @@ extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
 static int loadGrid( layerObj *pLayer );
 static int loadStyle(styleObj *style);
 static void writeStyle(FILE* stream, int indent, styleObj *style);
-
+static int msResolveSymbolNames(mapObj *map);
 /*
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in mapserver.h.
@@ -2304,8 +2304,13 @@ int loadStyle(styleObj *style) {
       break; /* for string loads */
     case(SYMBOL):
       if((symbol = getSymbol(3, MS_NUMBER,MS_STRING,MS_BINDING)) == -1) return(MS_FAILURE);
-      if(symbol == MS_NUMBER)
+      if(symbol == MS_NUMBER) {
+        if (style->symbolname != NULL) {
+          msFree(style->symbolname);
+          style->symbolname = NULL;
+        }
 	style->symbol = (int) msyynumber;
+      }
       else if(symbol == MS_STRING)
       {
         if (style->symbolname != NULL)
@@ -2890,6 +2895,7 @@ int loadClass(classObj *class, layerObj *layer)
 
 int msUpdateClassFromString(classObj *class, char *string, int url_string)
 {
+  int k;
   if(!class || !string) return MS_FAILURE;
 
   msAcquireLock( TLOCK_PARSER );
@@ -2910,6 +2916,29 @@ int msUpdateClassFromString(classObj *class, char *string, int url_string)
   msReleaseLock( TLOCK_PARSER );
 
   msyylex_destroy();
+
+  /* step through styles and labels to resolve symbol names */
+  /* class styles */
+  for(k=0; k<class->numstyles; k++) {
+      if(class->styles[k]->symbolname) {
+          if((class->styles[k]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->styles[k]->symbolname, MS_TRUE)) == -1) {
+              msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class, style %d of layer %s.", "msUpdateClassFromString()", class->styles[k]->symbolname, k, class->layer->name);
+              return MS_FAILURE;
+          }
+      }
+  }
+
+  /* label styles */
+  for(k=0; k<class->label.numstyles; k++) {
+      if(class->label.styles[k]->symbolname) {
+          if((class->label.styles[k]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->label.styles[k]->symbolname, MS_TRUE)) == -1) {
+              msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class, label style %d of layer %s.", 
+                         "msUpdateClassFromString()", class->label.styles[k]->symbolname, k, class->layer->name);
+              return MS_FAILURE;
+          }
+      }
+  }
+
   return MS_SUCCESS;
 }
 
@@ -3556,6 +3585,8 @@ int loadLayer(layerObj *layer, mapObj *map)
 
 int msUpdateLayerFromString(layerObj *layer, char *string, int url_string)
 {
+  int j, k;
+
   if(!layer || !string) return MS_FAILURE;
 
   msAcquireLock( TLOCK_PARSER );
@@ -3576,6 +3607,32 @@ int msUpdateLayerFromString(layerObj *layer, char *string, int url_string)
   msReleaseLock( TLOCK_PARSER );
 
   msyylex_destroy();
+
+  /* step through classes to resolve symbol names */
+  for(j=0; j<layer->numclasses; j++) {
+
+      /* class styles */
+      for(k=0; k<layer->class[j]->numstyles; k++) {
+          if(layer->class[j]->styles[k]->symbolname) {
+              if((layer->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(layer->map->symbolset), layer->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
+                  msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msUpdateLayerFromString()", layer->class[j]->styles[k]->symbolname, j, k, layer->name);
+                  return MS_FAILURE;
+              }
+          }
+      }
+
+      /* label styles */
+      for(k=0; k<layer->class[j]->label.numstyles; k++) {
+          if(layer->class[j]->label.styles[k]->symbolname) {
+              if((layer->class[j]->label.styles[k]->symbol =  msGetSymbolIndex(&(layer->map->symbolset), layer->class[j]->label.styles[k]->symbolname, MS_TRUE)) == -1) {
+                  msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, label style %d of layer %s.", 
+                             "msUpdateLayerFromString()", layer->class[j]->label.styles[k]->symbolname, j, k, layer->name);
+                  return MS_FAILURE;
+              }
+          }
+      }          
+  }
+
   return MS_SUCCESS;
 }
 
@@ -4973,32 +5030,7 @@ static int loadMapInternal(mapObj *map)
 
       if(loadSymbolSet(&(map->symbolset), map) == -1) return MS_FAILURE;
 
-      /* step through layers and classes to resolve symbol names */
-      for(i=0; i<map->numlayers; i++) {
-        for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
-
-          /* class styles */
-	  for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
-            if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
-              if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
-                msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
-                return MS_FAILURE;
-              }
-            }
-          }
-
-          /* label styles */
-          for(k=0; k<GET_LAYER(map, i)->class[j]->label.numstyles; k++) {
-            if(GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname) {
-              if((GET_LAYER(map, i)->class[j]->label.styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname, MS_TRUE)) == -1) {
-                msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, label style %d of layer %s.", 
-                                       "msLoadMap()", GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
-                return MS_FAILURE;
-              }
-            }
-          }          
-        }
-      }
+      if (msResolveSymbolNames(map) == MS_FAILURE) return MS_FAILURE;
       
       /*backwards compatibility symbol to style merging*/
       for(i=0; i<map->numlayers; i++) {
@@ -5245,6 +5277,9 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
 
   if (mappath != NULL) free(mappath);
   msyylex_destroy();
+
+  if (msResolveSymbolNames(map) == MS_FAILURE) return NULL;
+
   return map;
 }
 
@@ -5759,4 +5794,37 @@ void initResultCache(resultCacheObj *resultcache)
         resultcache->bounds.minx = resultcache->bounds.miny = resultcache->bounds.maxx = resultcache->bounds.maxy = -1;
         resultcache->usegetshape = MS_FALSE;
     }
+}
+
+static int msResolveSymbolNames(mapObj* map)
+{
+    int i, j, k;
+    /* step through layers and classes to resolve symbol names */
+    for(i=0; i<map->numlayers; i++) {
+        for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
+          
+            /* class styles */
+            for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
+                if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
+                    if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
+                        msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
+                        return MS_FAILURE;
+                    }
+                }
+            }
+
+            /* label styles */
+            for(k=0; k<GET_LAYER(map, i)->class[j]->label.numstyles; k++) {
+                if(GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname) {
+                    if((GET_LAYER(map, i)->class[j]->label.styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname, MS_TRUE)) == -1) {
+                        msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, label style %d of layer %s.", 
+                                   "msLoadMap()", GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
+                        return MS_FAILURE;
+                    }
+                }
+            }          
+        }
+    }
+
+    return MS_SUCCESS;
 }
