@@ -256,6 +256,9 @@ Current Version (SVN trunk):
 - Filter encoding: simple filters using propertyislike not applied properly
   #2720, #2840
 
+- Fix VBAR Chart production when using GD for rendering (#3482)
+
+
 Version 5.6.0 (2009-12-04):
 ---------------------------
 

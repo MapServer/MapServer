@@ -159,6 +159,12 @@ void drawRectangle(mapObj *map, imageObj *image, float mx, float my, float Mx, f
                     style->outlinecolor.green,
                     style->outlinecolor.blue);
         }
+        if( my > My )
+        {
+            float ty = my;
+            my = My;
+            My = ty;
+        }
         if(outlinecolor==-1) {
             gdImageFilledRectangle(image->img.gd,mx,my,Mx,My,color);
         } else {
