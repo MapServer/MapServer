@@ -2853,11 +2853,11 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
               // Enclose the text string inside quotes to make sure it is seen
               // as a string by the parser inside loadExpression(). (bug185)
-              /* See bug 3481 about the isalpha hack */
+              /* See bug 3481 about the isalnum hack */
               const char *labelTextString = OGR_ST_GetParamStr(hLabelStyle, 
                                                                OGRSTLabelTextString, 
                                                                &bIsNull);
-              if (labelTextString && isalpha(labelTextString[0]))
+              if (labelTextString && isalnum(labelTextString[0]))
                   msLoadExpressionString(&(c->text), (char*)labelTextString);
               else
                   msLoadExpressionString(&(c->text), 
@@ -2992,10 +2992,10 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
               // Enclose the text string inside quotes to make sure it is seen
               // as a string by the parser inside loadExpression(). (bug185)
-              /* See bug 3481 about the isalpha hack */
+              /* See bug 3481 about the isalnum hack */
               const char *labelTextString = poLabelStyle->TextString(bIsNull);
 
-              if (labelTextString && isalpha(labelTextString[0]))
+              if (labelTextString && isalnum(labelTextString[0]))
                   msLoadExpressionString(&(c->text), (char*)labelTextString);
               else
                   msLoadExpressionString(&(c->text), 
