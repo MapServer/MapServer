@@ -1121,22 +1121,24 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     char szPath[MS_MAXPATHLEN];
     const char *fullFname;
     char tmpId[128]; /* big enough for time + pid + ext */
+    const char *tmpBase = NULL;
 
     if( ForcedTmpBase != NULL )
     {
-        strncpy( tmpId, ForcedTmpBase, sizeof(tmpId) );
+        tmpBase = ForcedTmpBase;
     }
     else 
     {
         /* We'll use tmpId and tmpCount to generate unique filenames */
         sprintf(tmpId, "%lx_%x",(long)time(NULL),(int)getpid());
+        tmpBase = tmpId;
     }
 
     if (ext == NULL)  ext = "";
-    tmpFname = (char*)malloc(strlen(tmpId) + 10  + strlen(ext) + 1);
+    tmpFname = (char*)malloc(strlen(tmpBase) + 10  + strlen(ext) + 1);
 
     msAcquireLock( TLOCK_TMPFILE );
-    sprintf(tmpFname, "%s_%x.%s", tmpId, tmpCount++, ext);
+    sprintf(tmpFname, "%s_%x.%s", tmpBase, tmpCount++, ext);
     msReleaseLock( TLOCK_TMPFILE );
 
     fullFname = msBuildPath3(szPath, mappath, tmppath, tmpFname);
