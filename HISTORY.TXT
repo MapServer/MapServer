@@ -13,9 +13,18 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch, may never be released):
 ----------------------------------------------------
 
+- Disabled some insecure (and potentially exploitable) mapserv command-line
+  debug arguments (#3485). The --enable-cgi-cl-debug-args configure switch
+  can be used to re-enable them for devs who really cannot get away without
+  them and who understand the potential security risk (not recommended for 
+  production servers or those who don't understand the security implications).
+
+- Fixed possible buffer overflow in msTmpFile() (#3484)
+
 - Changing imagepath and imageurl no longer allowed via URL (#1836)
 
-- Fixed several security issues found in an audit of the CGI application (#2939, #2941, #2942, #2944)
+- Fixed several security issues found in an audit of the CGI application
+ (#2939, #2941, #2942, #2944)
 
 - Fix for CVE-2009-0840 security vulnerability (#2943)
 

@@ -54,6 +54,12 @@ Optional Features:
   --disable-fast-nint     Use safe MS_NINT with reliable rounding
   --enable-debug          Include "-g" in CFLAGS for debugging.
   --disable-debug         Do not include "-g" in CFLAGS (the default).
+  --enable-cgi-cl-debug-args
+                          Enable mapserv CGI command-line debug arguments
+                          (disabled by default). These command-line args may
+                          be insecure and should be enabled only on
+                          development servers and only if you understand the
+                          security implications.
   --enable-gcov           Enable source code coverage testing using gcov
   --enable-perlv-ld-detect (applies to --with-php only)
                           Use perl -V output to figure the command to use to
@@ -626,6 +632,15 @@ Miscellaneous flags:
 
   --enable-debug          Include "-g" in CFLAGS for debugging.
   --disable-debug         Do not include "-g" in CFLAGS (the default).
+
+::
+
+  --enable-cgi-cl-debug-args
+                          Enable mapserv CGI command-line debug arguments
+                          (disabled by default). These command-line args may
+                          be insecure and should be enabled only on
+                          development servers and only if you understand the
+                          security implications.
 
 ::
 

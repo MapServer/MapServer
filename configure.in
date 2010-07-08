@@ -2011,6 +2011,24 @@ else
   CFLAGS=`echo "$CFLAGS " | sed "s/-g //"`
 fi
 
+dnl ---------------------------------------------------------------------
+dnl Check --enable-cgi-cl-debug-args option (OFF by default)
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should enable mapserv CGI command-line debug arguments)
+AC_ARG_ENABLE(cgi-cl-debug-args,
+[  --enable-cgi-cl-debug-args 
+                          Enable mapserv CGI command-line debug arguments
+                          (disabled by default). These command-line args may
+                          be insecure and should be enabled only on 
+                          development servers and only if you understand the 
+                          security implications.],,)
+
+if test "$enable_cgi_cl_debug_args" = "yes" ; then
+  DEBUG_FLAGS="$DEBUG_FLAGS -DMS_ENABLE_CGI_CL_DEBUG_ARGS"
+  AC_MSG_RESULT([        Enabling (potentially insecure) mapserv CGI command-line debug arguments: -DMS_ENABLE_CGI_CL_DEBUG_ARGS.])
+fi
+
 AC_SUBST(DEBUG_FLAGS, $DEBUG_FLAGS)
 ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
 
