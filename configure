@@ -857,6 +857,12 @@ Optional Features:
   --disable-fast-nint     Use safe MS_NINT with reliable rounding
   --enable-debug          Include "-g" in CFLAGS for debugging.
   --disable-debug         Do not include "-g" in CFLAGS (the default).
+  --enable-cgi-cl-debug-args
+                          Enable mapserv CGI command-line debug arguments
+                          (disabled by default). These command-line args may
+                          be insecure and should be enabled only on
+                          development servers and only if you understand the
+                          security implications.
   --enable-gcov           Enable source code coverage testing using gcov
   --enable-perlv-ld-detect
                           (applies to --with-php only)
@@ -11416,6 +11422,79 @@ echo "$as_me: error: '$PG_CONFIG' is not an executable.  Make sure you use --wit
       POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
   fi
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
+
+  old_LDFLAGS="$LDFLAGS"
+  LDFLAGS="$LDFLAGS -L`$PG_CONFIG --libdir`"
+  echo "$as_me:$LINENO: checking for PQserverVersion in -lpq" >&5
+echo $ECHO_N "checking for PQserverVersion in -lpq... $ECHO_C" >&6
+if test "${ac_cv_lib_pq_PQserverVersion+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpq  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char PQserverVersion ();
+int
+main ()
+{
+PQserverVersion ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pq_PQserverVersion=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pq_PQserverVersion=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pq_PQserverVersion" >&5
+echo "${ECHO_T}$ac_cv_lib_pq_PQserverVersion" >&6
+if test $ac_cv_lib_pq_PQserverVersion = yes; then
+  POSTGIS_ENABLED="$POSTGIS_ENABLED -DPOSTGIS_HAS_SERVER_VERSION"
+fi
+
+  LDFLAGS="$old_LDFLAGS"
+
 fi
 
 POSTGIS_ENABLED=$POSTGIS_ENABLED
@@ -12634,6 +12713,21 @@ echo "${ECHO_T}        Enabling debug features: -g in CFLAGS." >&6
 else
   CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-g //"`
   CFLAGS=`echo "$CFLAGS " | sed "s/-g //"`
+fi
+
+
+{ echo "$as_me:$LINENO: checking whether we should enable mapserv CGI command-line debug arguments..." >&5
+echo "$as_me: checking whether we should enable mapserv CGI command-line debug arguments..." >&6;}
+# Check whether --enable-cgi-cl-debug-args or --disable-cgi-cl-debug-args was given.
+if test "${enable_cgi_cl_debug_args+set}" = set; then
+  enableval="$enable_cgi_cl_debug_args"
+
+fi;
+
+if test "$enable_cgi_cl_debug_args" = "yes" ; then
+  DEBUG_FLAGS="$DEBUG_FLAGS -DMS_ENABLE_CGI_CL_DEBUG_ARGS"
+  echo "$as_me:$LINENO: result:         Enabling (potentially insecure) mapserv CGI command-line debug arguments: -DMS_ENABLE_CGI_CL_DEBUG_ARGS." >&5
+echo "${ECHO_T}        Enabling (potentially insecure) mapserv CGI command-line debug arguments: -DMS_ENABLE_CGI_CL_DEBUG_ARGS." >&6
 fi
 
 DEBUG_FLAGS=$DEBUG_FLAGS
