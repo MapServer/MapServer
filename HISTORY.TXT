@@ -13,6 +13,15 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
+
+- Disabled some insecure (and potentially exploitable) mapserv command-line
+  debug arguments (#3485). The --enable-cgi-cl-debug-args configure switch
+  can be used to re-enable them for devs who really cannot get away without
+  them and who understand the potential security risk (not recommended for 
+  production servers or those who don't understand the security implications).
+
+- Fixed possible buffer overflow in msTmpFile() (#3484)
+
 - fix blending of transparent layers with AGG on MSB archs (#3471)
 
 - Fix security exception issue in C# with MSVC2010 (#3438)
