@@ -1642,7 +1642,7 @@ PHP_METHOD(layerObj, removeClass)
     }
 
     /* Return a copy of the class object just removed */
-    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
     mapscript_create_class(class, parent, return_value TSRMLS_CC);
 }
 /* }}} */
