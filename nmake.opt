@@ -623,6 +623,13 @@ REGEX_DIR=$(MS_BASE)\..\regex-0.12
 #FCGIDIR=$(MS_BASE)\..\fcgi-2.4.0
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#Enable mapserv CGI command-line debug arguments (disabled by default). 
+#These command-line args may be insecure and should be enabled only on 
+#development servers and only if you understand the security implications. 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#MS_ENABLE_CGI_CL_DEBUG_ARGS=-DMS_ENABLE_CGI_CL_DEBUG_ARGS
+
 ########################################################################
 # Section VII: Variable Setup
 ########################################################################
@@ -858,7 +865,8 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
           $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) \
-          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI)
+          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) \
+          $(MS_ENABLE_CGI_CL_DEBUG_ARGS)
 
 !IFDEF WIN64
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
