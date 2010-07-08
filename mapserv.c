@@ -1164,11 +1164,21 @@ int main(int argc, char *argv[]) {
 /* -------------------------------------------------------------------- */
     for( iArg = 1; iArg < argc; iArg++ )
     {
+        /* Keep only "-v" and "QUERY_STRING=..." enabled by default.
+         * The others will require an explicit -DMS_ENABLE_CGI_CL_DEBUG_ARGS
+         * at compile time.
+         */
         if( strcmp(argv[iArg],"-v") == 0 ) {
             printf("%s\n", msGetVersion());
             fflush(stdout);
             exit(0);
         }
+        else if ( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0) {
+            /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
+            putenv( "REQUEST_METHOD=GET" );
+            putenv( argv[1] );
+        }
+#ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
         else if( iArg < argc-1 && strcmp(argv[iArg], "-tmpbase") == 0) {
             msForceTmpFileBase( argv[++iArg] );
         }
@@ -1189,11 +1199,7 @@ int main(int argc, char *argv[]) {
             
             exit(0);
         }
-        else if ( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0) {
-            /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
-            putenv( "REQUEST_METHOD=GET" );
-            putenv( argv[1] );
-        }
+#endif /* MS_ENABLE_CGI_CL_DEBUG_ARGS */
         else
         {
             /* we don't produce a usage message as some web servers pass

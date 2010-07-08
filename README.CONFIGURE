@@ -89,6 +89,12 @@ Here is the list of available options as returned by "./configure --help":
                           msDebug() output to stderr (i.e. server log file).
   --disable-debug         Do not include -g in CFLAGS and disable msDebug()
                           output (the default).
+  --enable-cgi-cl-debug-args
+                          Enable mapserv CGI command-line debug arguments
+                          (disabled by default). These command-line args may
+                          be insecure and should be enabled only on
+                          development servers and only if you understand the
+                          security implications.
   --with-php=DIR          Specify directory where PHP4's include files are
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
@@ -533,6 +539,13 @@ Miscellaneous flags:
                           msDebug() output to stderr (i.e. server log file).
   --disable-debug         Do not include -g in CFLAGS and disable msDebug()
                           output (the default).
+
+  --enable-cgi-cl-debug-args
+                          Enable mapserv CGI command-line debug arguments
+                          (disabled by default). These command-line args may
+                          be insecure and should be enabled only on
+                          development servers and only if you understand the
+                          security implications.
 
   --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
                           Required on *BSD systems.
