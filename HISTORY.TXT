@@ -1,0 +1,1708 @@
+MapServer Revision History
+==========================
+
+This is a human-readable revision history which will attempt to document
+required changes for users to migrate from one version of MapServer to the
+next.  Developers are strongly encouraged to document their changes and
+their impacts on the users here.  (Please add the most recent changes to 
+the top of the list.)
+
+For a complete change history, please see the Subversion log comments.
+
+
+Version 4.10.6 (2009-07-09)
+---------------------------
+
+IMPORTANT SECURITY FIXES:
+
+- Disabled some insecure (and potentially exploitable) mapserv command-line
+  debug arguments (#3485). The --enable-cgi-cl-debug-args configure switch
+  can be used to re-enable them for devs who really cannot get away without
+  them and who understand the potential security risk (not recommended for 
+  production servers or those who don't understand the security implications).
+
+- Fixed possible buffer overflow in msTmpFile() (#3484)
+
+Version 4.10.5 (2009-07-23)
+---------------------------
+
+- Changing imagepath and imageurl no longer allowed via URL (#1836)
+
+- New fix for incomplete CVE-2009-0840 security fix made in 4.10.4 (#2943)
+
+Version 4.10.4 (2009-03-26)
+---------------------------
+
+- Improved security relative to untrusted directories and mapfiles (RFC 56)
+
+- Fixed several security issues found in an audit of the CGI application (#2939, #2941, #2942, #2943, #2944)
+
+- Fixed java and csharp Makefile.in to use -lmapserver instead of -lmap
+  (side-effect of #2150)
+
+- Fix extremely slow resampling problem in WCS (#1944)
+
+
+Version 4.10.3 (2007-08-22)
+---------------------------
+
+- Fixed XSS vulnerabilities (#2256)
+
+- Fixed possible buffer overflow in template processing (#2252)
+
+- Rename libmap.a to libmapserver.a for commonality with 
+  libmapserver.so (#2150)
+
+- Fixed size of output buffer in msGetEncodedString() (#2132)
+
+- SOS : backport fixes related to large xml outputs (#1938, #2146)
+
+- WCS : Fixed resampling/reprojecting for tileindex datasets (#2180)
+
+Version 4.10.2 (2007-05-07)
+---------------------------
+
+- SVG : Polygons should not be filled if color is not given (#2055)
+
+- WMS : fixed request with a BBOX and and SLD containing Filter 
+  encoding (#2079)
+
+- Argument sequence wrong in msProjectRect calls in ogc filter (#2082)
+
+- when reading an SLD, sequence of classes is reversed (#1925)
+
+- Support for embedding manifests as resources for the VS2005 builds.(bug 2048)
+
+- Changed OGRLayerGetAutoStyle not to pass NULL pointer to GetRGBFromString 
+  causing access violation (bug 1950).
+
+- do not double-grab the row_id column in msSDELayerGetItems (bug 2041)
+
+- Apply patch for bug 1990 for OS X Framework builds support for Python
+  MapScript.  Thanks William!
+
+- Added missing MS_FOLLOW constant to PHP MapScript (bug 2058)
+
+- maptemplate.c: Fixed handling of multiple rings/lines in processCoords()
+  so that imagemaps work properly for multipolygons (bug 2073).
+
+- Don't call pj_transform() if the projections are equal (bug #2084)
+
+- Note that starting with this release the source code is now managed 
+  in Subversion (SVN) instead of CVS.
+
+
+Version 4.10.1 (2007-02-15)
+---------------------------
+
+- Fixed text outline problem. (bug 2027)
+
+- Fix support for OFFSITE for simple greyscale rasters (bug 2024). 
+ 
+- Ignore MS_DELETE layers in msWriteMapContext() (bug 2011)
+
+- Fixed problem with WMS CONNECTION strings that contains a layer name 
+  with a "." in them (bug 1996)
+
+- Enabled setting of a layer tileindex (e.g. map_layername_tileindex) via the 
+  CGI program. (bug 1992)
+
+- Added feature to the CGI to check runtime substitutions against patterns
+  defined in layer metadata. (bug 1918)
+
+- Fixed INCLUDEs to accept paths relative to the location of the mapfile
+  (bug 1880)
+
+- maperror.c: fix long in-image error message wrapping (bug 1963)
+
+- maperror.c: fix closing of stderr/stdout after writing error msg (bug 1970)
+
+- Fixed setRotation() to check for MS_SUCCESS, not MS_TRUE (bug 1968)
+
+- sde->row_id_column needs to be initialized to NULL in msSDELayerOpen
+  (bug 1953)
+
+- Makefile.in: fix mapogr rule so that it works with regular make (not gnumake)
+
+- Fixed bug in loadExpressionString (bug 1948)
+
+- Fix possible gdal-related build problem by including gdal-config --dep-libs
+  in GDAL_LIBS (bug 2004)
+
+
+Version 4.10.0 (2006-10-04)
+---------------------------
+
+- No source code changes since 4.10.0-rc1
+
+Known issues in 4.10.0:
+
+- PHP5 not detected properly on Mandriva Linux (bug 1923)
+
+- Mapfile INCLUDE does not work with relative paths on Windows (bug 1880)
+
+- Curved labels don't work with multibyte character encodings (bug 1921)
+
+- Quotes in DATA or CONNECTION strings produce parsing errors (bug 1549)
+
+
+
+Version 4.10.0-RC1 (2006-09-27)
+-------------------------------
+
+- [SLD] quantity values for raster sld can be float values instead of just 
+   being integer
+
+- Hiding labelitemindex, labelsizeitemindex, labelangleitemindex
+  from the SWIG interface (bug 1906)
+
+- Fixed computation of geotransform to match BBOX (to edges of image) not
+  map.extent (to center of edge pixels).  (bug 1916)
+
+- mapraster.c: Use msResampleGDALToMap() for "upside down" images. (bug 1904)
+
+
+Version 4.10.0-beta3 (2006-09-06)
+---------------------------------
+
+- Web Map Context use format metadata when formatlist not available. (bug 1723)
+
+- Web Map Context boolean values true/false now interpreted. (bug 1692)
+
+- Added support for MULTIPOLYGON, MULTILINESTRING, and MULTIPOINT in 
+  msShapeFromWKT() when going through OGR (i.e. GEOS disabled) (bug 1891)
+
+- Fixed MapScript getExpressionString() that was failing on expressions
+  longer that 256 chars (SWIG) and 512 chars (PHP). (bug 1428)
+
+- [WMSSLD] use Title of Rule if Name not present (bug 1889)
+
+- Fixed syntax error (for visual c++) in mapimagemap.c. 
+
+- Fixed mapgeos.c problems with multipoint and multilinestring WKT (bug 1897).
+
+- Implemented translation via OGR to WKT for multipoint, multiline and
+  multipolygon (bug 1618)
+
+
+Version 4.10.0-beta2 (2006-08-28)
+---------------------------------
+
+- Applied patch supplied by Vilson Farias for extra commas with imagemap
+  output (bug 760).
+
+- Fixed possible heap overflow with oversized POST requests (bug 1885)
+
+- Set ./lib and ./include properly for MING support (bug 1866)
+
+- More robust library checking on OSX (bug 1867)
+
+- Removed mpatrol support (use valgrind instead for something 
+  similar and less intrusive).  (bug 1883)
+
+- Added mapserver compilation flags to the SWIG c# command line (bug 1881)
+
+- Fix OSX shared library options for PHP (bug 1877).
+
+- Added setSymbolByName to styleObj for the SWIG mapscript in order to 
+  set both the symbol and the symbolname members (bug 1835)
+
+- Generate ogc filters now outputs the ocg name space (bug 1863)
+
+- Don't return a WCS ref in WMS DescribeLayer responses when layer type is
+  CONNECTIONTYPE WMS (cascaded WMS layers not supported for WCS) (bug 1874)
+
+- Correct partly the problem of translating regex to ogc:Literal (bug 1644)
+
+- schemas.opengeospatial.net has been shutdown, use schemas.opengis.net 
+  instead as the default schema repository for OGC services (bug 1873)
+
+- MIGRATION_GUIDE.TXT has been created to document backwards incompatible
+  changes between 4.8 and 4.10
+
+- Modify mapgd.c to use MS_NINT_GENERIC to avoid rounding issues. (bug 1716)
+
+- added --disable-fast-nint configure directive (bug 1716)
+
+- Fixed php_mapscript Windows build that was broken in beta1 (bug 1872)
+
+- Supported <propertyname> tag in SLD label (Bug 1857)
+
+- Use the label element in the ColorMapEntry for the raster symbolizer
+  (Bug 1844)
+
+- Adding Geos functions to php mapscript (bug 1327)
+
+- Added a type cast to msio.i so as to eliminate the warning with the
+  SWIG unix/osx builds
+
+- Fixed csharp/Makefile.in for supporting the OSX builds and creating 
+  the platform dependent mapscript_csharp.dll.config file.
+
+- Fixed error in detection of libpdf.sl in configure.in (bug 1868).
+
+
+Version 4.10.0-beta1 (2006-08-17)
+---------------------------------
+
+- Marking the following SWIG object members immutable (bug 1803)
+  layerObj.metadata, classObj.label, classObj.metadata,
+  fontSetObj.fonts, legendObj.label, mapObj.symbolset,
+  mapObj.fontset, mapObj.labelcache, mapObj.reference,
+  mapObj.scalebar, mapObj.legend, mapObj.querymap
+  mapObj.web, mapObj.configoptions, webObj.metadata,
+  imageObj.format, classObj.layer, legendObj.map,
+  webObj.map, referenceMapObj.map
+  labelPathObj was made completely hidden (according to Steve's suggestion)
+
+- Fixed problem with PHP MapScript's saveWebImage() filename collisions
+  when mapscript was loaded in php.ini with PHP as an Apache DSO (bug 1322)
+
+- Produce warning in WFS GetFeature output if ???_featureid is specified
+  but corresponding item is not found in layer (bug 1781). Also produce
+  a warning in GetCapabilities if ???_featureid not set (bug 1782)
+
+- Removed the default preallocation of 4 values causing memory leaks.
+  (related to bug 1801) Added initValues to achieve the similar 
+  functionality if needed.
+
+- Fixed error in msAddImageSymbol() where a symbol's imagepath was not
+  set (bug 1832).
+
+- Added INCLUDE capability in mapfile parser (bug 279)
+
+- Revert changes to mapzoom.i that swapped miny and maxy (Bug 1817).
+
+- MapScript (swig) creation of an outputFormatObj will now set the inmapfile 
+  flag so that it gets written out to saved maps by default (Bug 1816).
+
+- Converted GEOS support to use the GEOS C-API (versiopn 2.2.2 and higher).
+  Wrapped remaining relevant GEOS functionality and exposed via SWIG-based
+  MapScript.
+
+- If a layer has wms_timedefault metadata, make sure it is applied even
+  if there is no TIME= item in the url.  (Bug 1810)
+
+- Support for GEOS/ICONV/XML2 use flags in Java Makefile.in (related to 
+  bug 1801)
+
+- Missing GEOS support caused heap corruption using shapeObj C# on linux 
+  (Bug 1801)
+
+- Fix time filter propogation for raster layers to their tileindex layers.
+  New code in maprasterquery.c (bug 1809)
+
+- Added logic to collect LD_SHARED even if PHP not requested in configure.
+
+- Fix problems with msio/rfc16 stuff on windows.  Don't depend on comparing
+  function pointers or "stdio" handles.  (mapio.c, mapio.h, msio.i)
+
+- Support WMC Min/Max scale in write mode (bug 1581)
+
+- Fixed leak of shapefile handles (shp/shx/dbf) on tiled layers (bug 1802)
+
+- Added webObj constructor and destructor to swig interface with 
+  calls to initWeb and freeWeb (bug 1798).
+
+- mapows.c: ensure msOWSDispatch() is always available even if there are
+  no services to dispatch.  This makes mapscript binding easier.
+
+- FLTAddToLayerResultCache wasn't properly closing the layer after it 
+  was done with it.
+
+- Added ability to encrypt tokens (passwords, etc.) in database connection
+  strings (MS-RFC-18, bug 1792)
+
+- Fixed zoomRectangle in mapscript: miny and maxy were swapped, making it
+  impossible to zoom by rect; also the error message was referring to the
+  wrong rect. There were no open issues on bugzilla. Reverted because of 1817.
+
+- Implementation of RFC 16 mapio services (bug 1788).
+
+- Use lp->layerinfo for OGR connections (instead of ogrlayerinfo) (bug 331)
+
+- Support treating POLYGONZ as MS_SHAPE_POLYGON.  (bug 1784)
+
+- Complete support for international languages in Java Mapscript
+  (bug 1753)
+
+- Output feature id as @fid instead of @gml:id in WFS 1.0.0 / GML 2.1.2
+  GetFeature requests (bug 1759)
+
+- Allow use of wms/ows_include_items and wms/ows_exclude_items to control
+  which items to output in text/plain GetFeatureInfo. Making the behavior
+  of this INFO_FORMAT consistent with the new behavior of GML GetFeatureInfo
+  output introduced in v4.8. (bug 1761)
+  IMPORTANT NOTE: With this change if the *_include_items metadata
+  is not specified for a given layer then no items are output for that layer
+  (previous behavior was to always all items by default in text/plain)
+
+- Make sure mappostgis.c closes MYCURSOR in layer close function so that
+  CLOSE_CONNECTION=DEFER works properly.  (bug 1757)
+
+- Support large (>2GB) raster files relative to SHAPEPATH. (bug 1748)
+
+- Set User-Agent in HTTP headers of client WMS/WFS connections (bug 1749)
+
+- Detection of os-dependent Java headers for Java mapscript (bug 1209)
+
+- Preventing to take ownership of the memory when constructing objects
+  with parent objects using C# mapscript (causing nullreference exception, Bug 1743)
+
+- [SWF] Adding format option to turn off loading  movies automatically (Bug 1696)
+
+- Fixed FP exception in mapgd.c when pixmap symbol 'sizey' not set (bug 1735)
+
+- Added config file for mapping the library file so the DllImport 
+  is looking for to its unix equivalent (Bug 1596) Thanks to Scott Ellington
+
+- Added /csharp/Makefile.in for supporting the creation of Makefile 
+  during configuration with MONO/Linux (fix for bug 1595 and 1597)
+
+- Added C# typemaps for char** and outputFormatObj**
+
+- Support for dispatching multiple error messages to the MapScript interface (bug 1704).
+
+- Fix inter-tile "cracking" problem (Bug 1715).
+
+- [OGC FILTER] Correct bug when generating an sql expression containing an escape 
+  character.
+
+- Allow a user to set a PROCESSING directive for an SDE layer to specify
+  using the attributes or spatial index first.  (bug 1708).
+
+- Cheap and easy way of fudging the boundary extents for msSDEWhichShapes 
+  in the case where the rectangle is really a point (bug 1699).
+
+- Implement QUANTIZE options for GD/PNG driver (Bug 1690, Bug 1701).
+
+- [WMS] Publish the GetStyles operation in the capabilities document.
+
+- [PHP_MAPSCRIPT] Add antialias parameter in the style object (Bug 1685)
+
+- [WFS] : Add the possiblity to set wfs_maxfeatures to 0 (Bug 1678)
+
+- [SLD] : set the default color on the style when using default settings
+  in PointSymbolizer. (bug 1681)
+
+- Incorporate range coloring support for rasters (bug 1673)
+
+- Fixed mapthread.c looking for the unix compiler symbol rather than just 
+  testing whether or not _WIN32 is defined for the usage of posix threads
+  because unix is not defined on compilers like GCC 4.0.1 for OS X.
+
+- Fixed the fuzzy brush support so that the transition between 1 pixel aa lines 
+  and brushes is less obvious. The old code would not allow for a 3x3 fuzzy 
+  brush to be built. (bug 1659)
+
+- Added missing mapscript function msConnPoolCloseUnreferenced() (bug 1661)
+  We need to make conn. pooling handling transparent to mapscript users
+  so that they do not have to call this function once in a while, for instance
+  by creating an evictor thread.
+
+- Added calls to msSetup/msCleanup() at MapScript load/unload time (bug 1665)
+
+- Reorganized nmake.opt to be more focused on functionality groups rather 
+  than the propensity of a section to be edited.  Default values are now 
+  all set to be pointed at the MapServer Build Kit, which can be obtained 
+  at http://hobu.stat.iastate.edu/mapserver/
+
+- configure.in/Makefile.in: Use PROJ_LIBS instead of PROJ_LIB.  PROJ_LIB
+  is sometimes defined in the environment, but points to $prefix/share/proj
+  not the proj link libraries.  
+
+- Update Web Map Context to 1.1.0, add the dimension support. (bug 1581)
+
+- Support SLD body in context document. (bug 887)
+
+- When generating an ogc filter for class regex expressions, use
+  the backslah as the default escape character (Bug 1637)
+
+- Add connectiontype initialization logic when the layer's virtual
+  table is initialized (Bug 1615) 
+
+- Added modulus operator to mapparser.y.
+
+- Added new support for [item...] tag in CGI-based templates (bug 1636)
+
+- Reverted behaviour to pre-1.61:
+  do not allow for use of the FILTERITEM attribute (bug 1629)
+
+- Treat classindex as an int instead of a char in resultCacheMemberObj to
+  prevent problems with more than 128 classes (bug 1633)
+
+- WMS : SLD / stretch images when using FE (Bug 1627)
+
+- Add gml:lineStringMember in GML2 MultiLineString geometry (bug 1569).
+
+- PHP : add shape->sontainsshape that uses geos lib (Bug 1623).
+
+- Move gBYTE_ORDER inside the pg layerinfo structure to allow for differently
+  byte ordered connections (bug 1587).
+
+- Fix the memory allocation bug in sdeShapeCopy (Bug 1606)
+
+- Fixed OGR WKT support (Bug 1614). 
+
+- Added shapeObj::toWkt() and ms_shapeObjFromWkt() to PHP MapScript (bug 1466)
+
+- Finished implementation of OGR Shape2WKT function (Bug 1614).
+
+- Detect/add -DHAVE_VSNPRINTF in configure script and prevent systematic
+  buffer overflow in imagemap code when vsnprintf() not available (bug 1613)
+
+- Default layer->project to MS_TRUE even if no projection is set, to allow
+  geotransforms (nonsquare pixels, etc) to be applied (bug 1645).
+
+- Force stdin into binary mode on win32 when reading post bodies. (bug 1768)
+
+
+Version 4.8.0-rc2 (2006-01-09)
+------------------------------
+
+- Commit fix for GD on win32 when different heaps are in use. (Bug 1513) 
+
+- Correct bound reprojection issue with ogc filer (Bug 1600)
+
+- Correct mapscript windows build problem when flag USE_WMS_SVR was
+  not set (Bug 1529)   
+
+- Fix up allocation of the SDE ROW_ID columns and how the functions that
+  call it were using it. (bug 1605)
+
+- Fixed crash with 3D polygons in Oracle Spatial (bug 1593)
+
+
+Version 4.8.0-rc1 (2005-12-22)
+------------------------------
+
+- Fixed shape projection to recompute shape bounds. (Bug 1586)
+
+- Fixed segfault when copying/removing styles via MapScript. (Bug 1565)
+
+- Fixed segfault when doing attribute queries on layers with a FILTER already
+  set but with no FILTERITEM.
+
+
+Version 4.8.0-beta3 (2005-12-16)
+--------------------------------
+
+- Initialize properly variable in php mapscript (Bug  1584)
+
+- New support for pseudo anti-aliased fat lines using brushes with variable
+  transparency. 
+
+- Arbitrary rotation support for vector symbols courtesy of Map Media.
+
+- Support for user-defined mime-types for CGI-based browse and legend 
+  templates (bug 1518).
+
+- mapraster.c: Allow mapresample.c code to be called even if projections
+  are not set on the map or layer object.  This is no longer a requirement.
+  (Bug 1562)
+
+- Fix problem with WMS 1.1.1 OGC test problem with get capabilites dtd 
+  (Bug 1576) 
+
+- PDF : adding dash line support (Bug 492)
+
+- Fixed configure/build problem (empty include dir) when iconv.h is not
+  found (bug 1419)
+
+- PDF :  segfault on annotation layer when no style is set (Bug 1559)
+
+- PostGIS layer test cases and fix for broken views and sub-selects (bug 1443).
+
+- SDE: Removed (commented out) support for SDE rasters at this time.  As far 
+  as I know, I'm the only one to ever get it to work, it hasn't kept up with 
+  the connection pooling stuff we did, and its utility is quite limited in 
+  comparison to regular gdal-based raster support (projections, 
+  resampling, etc) (HB - bug 1560).
+
+- SDE: Put msSDELayerGetRowIDColumn at the top of mapsde.c so things 
+  would compile correctly.  This function is not included (or necessary) 
+  in the rest of the MS RFC 3 layer virtualization at this time.
+  
+- WFS : TYPENAME is manadatory for GetFeature request (Bug 1554).
+
+- SLD : error parsing font parameters with the keyword "normal" (Bug 1552)
+
+- mapgraticule.c: Use MIN/MAXINTERVAL value when we define grid position and 
+  interval (bug 1530)
+
+- mapdrawgdal.c: Fix bug with nodata values not in the color table when 
+  rendering some raster layers (bug 1541). 
+
+- mapogcsld.c : If a RULE name is not given, set the class name to "Unknown" 
+  (Bug 1451)
+
+Version 4.8.0-beta2 (2005-11-23)
+--------------------------------
+
+- Use dynamic allocation for ellipse symbol's STYLE array, avoiding the
+  static limitation on the STYLE argument values. (bug 1539)
+
+- Fix bug in mapproject.c when splitting over the horizon lines.  
+
+- Fix Tcl mapscript's getBytes method (bug 1533).
+
+- Use mapscript.i in-place when building Ruby mapscript, copying not necessary
+  (bug 1528).
+
+- Expose maximum lengths of layer, class, and style arrays in mapscript (bug
+  1522).
+
+- correct msGetVersion to indicate if mapserver was build with MYGIS support.
+
+- Fixed hang in msProjectRect() for very small rectangles due to round off
+  problems (bug 1526).
+
+
+Version 4.8.0-beta1 (2005-11-04)
+--------------------------------
+
+- Bug 1509: Fixed bounding box calculation in mapresample.c. The bottom right
+  corner was being missed in the calculation.
+
+- MS RFC 2: added OGR based shape<->WKT implementation.
+
+- mapgdal.c: fixed some mutex lock release issues on error conditions.
+
+- MS RFC 8: External plugin layer providers (bug 1477)
+
+- SLD : syntax error when auto generating external symbols (Bug 1508).
+
+- MS RFC 3: Layer vtable architecture (bug 1477)
+
+- wms time : correct a problem when hadling wms times with tile index rasters
+  (bug 1506).
+
+- WMS TIME : Add suuport for multiple interval extents (Bug  1498)
+
+- Removed deprecated --with-php-regex-dir switch (bug 1468)
+
+- support wms_attribution element for LAYER's (Bug 1502)
+
+- Correct php/mapscript bug : initialization of scale happens when
+  preparequery is called (Bug 1334).
+
+- msProjectShape() will now project the lines it can, but completely
+  delete lines that cannot be projected properly and "NULL" the shape if
+  there are no lines left. (Bug 411)
+
+- Expose msLayerWhichShapes and msLayerNextShape in MapScript. (bug 1481) 
+
+- Added support to MapScript to change images in a previously defined
+  symbol. (bug 1471)
+
+- mapogcfiler.c : bug 1490. Crash when size of sld filters was huge.
+
+- Fixed --enable-point-z-m fix in configure.in (== -> =) (bug 1485).
+
+- Extra scalebar layer creation is prevented with a typo fix in mapscale.c. 
+  Good catch, Tamas (bug 1480).
+  
+- mapwmslayer.c : use transparency set at the layer level on wms client 
+                  layers  (Bug 1458) 
+
+- mapresample.c: added BILINEAR/AVERAGE resampling options. 
+
+- mapfile.c: avoid tail recursion in freeFeatureList().
+
+- maplegend.c: fixed leak of imageObj when embedding legends.
+
+- msGDALCleanup(): better error handler cleanup.
+
+- Modified msResetErrorList() to free the last error link too, to ensure
+  msCleanup() scrubs all error related memory. 
+
+- Fix in msGetGDALGetTransform() to use default geotransform even if
+  GDALGetGeoTransform() fails but alters the geotransform array.
+
+- Typemaps for C# to enable imageObj.getBytes() method (bug 1389).
+
+- Enable -DUSE_ZLIB via configure for compressed SVG output (bug 1307).
+
+- maputil.c/msAddLine(): rewrite msAddLine() to call 
+  msAddLineDirectly, and use realloc() in msAddLineDirectly() to optimize
+  growth of shapeObjs. (bug 1432)
+
+- msTmpFile: ensure counter is incremented to avoid duplicate
+  temporary filenames. (bug 1312)
+
+- SLD external graphic symbol format tests now for mime type
+  like image/gif instead of just GIF. (bug 1430)
+
+- Added support for OGR layers to use SQL type filers (bug 1292)
+
+- mapio/cgiutil - fixed POST support in fastcgi mode. (bug 1259)
+
+- mapresample.c - ensure that multi-band raw results can be
+  resampled. (bug 1372)
+
+- Add support in OGC FE for matchCase attribute on 
+  PropertyIsEqual and PropertyIsLike  (bug 1416)
+
+- Fixed sortshp.c to free shapes after processing to avoid major
+  memory leak. (bug 1418)
+
+- fixed msHTTPInit() not ever being called which prevented msHTTPCleanup()
+  from properly cleaning up cUrl with curl_global_cleanup(). (bug 1417)
+  
+- mapsde.c: add thread locking in msSDELCacheAdd
+
+- fixed mappool.c so that any thread can release a connection,
+  not just it's allocator. (bug 1402)
+
+- mapthread.c/h: Added TLOCK_SDE and TLOCK_ORACLE - not used yet.
+
+- Fixed copying of layer and join items. (bug 1403)
+
+- Fixed copying of processing directives within copy of a layer. (bug 1399)
+
+- Problems with string initialization. (bug 1312)
+
+- Fix svg output for multipolygons. (bug 1390)
+
+- Added querymapObj to PHP MapScript (bug 535)
+
+
+Version 4.6.0 (2005-06-14)
+--------------------------
+
+- Bug 1163 : Filter Encoding spatial operator is Intersects 
+  and not Intersect.
+ 
+- Fixed GEOS to shapeObj for multipolgon geometries.
+
+
+Version 4.6.0-rc1 (2005-06-09)
+------------------------------
+
+- Bug 1375: Fixed seg fault in mapscript caused by the USE_POINT_Z_M flag.
+  This flag was not carried to the mapscript Makefile(s).
+
+- Bug 1367: Fixed PHP MapScript's symbolObj->setPoints() to correctly 
+  set symbolObj->sizex/sizey
+
+- Bug 1373: Added $layerObj->removeClass() to PHP MapScript (was already
+  in SWIG MapScript)
+
+
+Version 4.6.0-beta3 (2005-05-27)
+--------------------------------
+
+- Bug 1298 : enable Attribution element in wms Capabilities XML
+
+- Bug 1354: Added a regex wrapper, allowing MapServer to build with PHP
+  compiled with its builtin regex
+
+- Bug 1364: HTML legend templates: support [if] tests on "group_name" in 
+  leg_group_html blocks, and for "class_name" in leg_class_html blocks.
+
+- Bug 1149: From WMS 1.1.1, SRS are given in individual tags in root Layer
+  element.
+
+- First pass at properly handling XML exceptions from CONNECTIONTYPE WMS
+  layers. Still needs some work. (bug 1246)
+
+- map.h/mapdraw.c: removed MAX/MIN macros in favour of MS_MAX/MS_MIN.
+
+- Bug 1341, 1342 : Parse the unit parameter for DWithin filter request.
+  Set the layer tolerance and toleranceunit with paramaters parsed.
+
+- Bug 1277 : Support of multiple logical operators in Filter Encoding.
+
+- mapwcs.c: If msDrawRasterLayerLow() fails, ensure that the error message
+  is posted as a WCS exception.
+
+- Added experimental support for "labelcache_map_edge_buffer" metadata to
+  define a buffer area with no labels around the edge of a map (bug 1353)
+
+
+Version 4.6.0-beta2 (2005-05-11)
+--------------------------------
+
+- Bug 179 :  add a small buffer around the cliping rectangle to
+  avoid lines around the edges.
+
+- Finished code to convert back and forth between GEOS geometries. Buffer and
+  convex hull operations are exposed in mapscript.
+
+- fontset.fonts hash now exposed in mapscript (bug 1345).
+
+- Bug 1336 : Retreive distance value for DWithin filter request 
+  done with line and polygon shapes/
+
+- Bug 985 / 1015: Don't render raster layers as classified if none of
+  the classes has an expression set (gdal renderer only). 
+
+- Bug 1344: Fixed several issues in writing of inline SYMBOLS when saving
+  mapfile (missing quotes around CHARACTER and other string members of SYMBOL
+  object, check for NULLs, and write correct identifiers for POSITION, 
+  LINECAP and LINEJOIN).
+
+
+Version 4.6.0-beta1 (2005-04-26)
+--------------------------------
+
+- Bug 1305: Added support for gradient coloring in class styles
+
+- Bug 1335 : missing call to msInitShape in function msQueryByShape
+
+- Bug 804 : SWF output : Make sure that the layer index is consistent 
+  when saving movies if some of the layers are not drawn (because the
+  status is off or out of scale ...)
+
+- Bug 1332 - shptreevis.c: fixed setting of this_rec, as the output dbf
+  file was not getting any records at all.
+
+- Fixed Makefile.vc to make .exe files depend on the DLL, so if the DLL
+  fails to build, things will stop.  Avoids the need for unnecessary
+  cleans on win32.  Also fixed the rule for MS_VERSION for mapscriptvars.
+
+- Bug 1262 : the SERVICE parameter is now required for wms and wfs 
+  GetCapbilities request. It is not required for other WMS requests.
+  It is required for all WFS requests.
+
+- Bug 1302 : the wfs/ows_service parameter is not used any more. The
+  service is always set to WFS for WFS layers.
+
+- Bug 791: initialize some fields in msDBFCreate() - avoids crashes in
+  some circumstances.
+
+- Bug 1329 : Apply sld named layer on all layers of the same group
+
+- Bug 1328 : support style's width parameter for line and polygon layers.
+
+- Bug 564: Fixed old problem with labels occasionally drawn upside down
+
+- Bug 1325: php mapscript function $class->settext needs only 1 argument.
+
+- Bug 1319: Fixed mutex creation (was creator-owned) in mapthread.c. win32
+  issue only.
+
+- Bug 1103: Set the default tolerance value based on the layer type.
+  The default is now 3 for point and line layers and 0 for all the others.
+
+- Bug 1244: Removing Z and M parameter from pointObj by default. A new 
+  compilation option is available to active those option --enable-point-z-m.
+  This gives an overall performance gain around 7 to 10%.
+
+- Bug 1225: MapServer now requires GD 2.0.16 or more recent
+
+- MapScript: shapeObj allocates memory for 4 value strings, shapeObj.setValue()
+  lets users set values of a shapeObj.
+  
+- MapScript: imageObj.getBytes() replaces imageObj.write() (bugs 1176, 1064).
+
+- Bug 1308: Correction of SQL expression generated on wfs filters for
+  postgis/oracle layers.
+
+- Bug 1304: Avoid extra white space in gml:coordinates for gml:Box.
+
+- mapogr.c: Insure that tile index reading is restarted in 
+  msOGRLayerInitItemInfo() or else fastcgi repeat requests for a layer may 
+  fail on subsequent renders.
+
+- mapogr.c: Set a real OGRPolygon spatial filter, not just an OGRLinearRing.
+            Otherwise GEOS enabled OGR builds will do expensive, and 
+            incorrect Intersects() tests.
+
+- mapogr.cpp / mapprimitive.c: Optimize msAddLine() and add msAddLineDirectly()
+
+- mapprimitive.c: Optimizations in msTransformShapeToPixel() (avoid division)
+
+- map.h: Made MS_NINT inline assembly for win32, linux/i86.  
+
+- mapprimitive.c: optimized msClipPolygonRect and msClipPolylineRect for
+  case where the shape is completely inside the clip rect.
+
+- Add support for SVG output. See Bug 1281 for details. 
+
+- Bug 1231: use mimetype "image/png; mode=24bits" for 24bit png format.
+  This makes it seperately selectable by WMS.
+
+- Bug 1206: Applied locking patch for expression parser for rasters.
+
+- Bug 1273: Fixed case in msProjectPoint() were in or out are NULL and
+  a failure occurs to return NULL.  Fixed problem of WMS capabilities with
+  'inf' in it. 
+
+- SLD generation bug 1150 : replacing <AND> tag to <ogc:And>  
+
+- Fixed bug 1118 in msOWSGetLayerExtent() (mapows.c). 
+
+- Fixed ogcfilter bug #1252  
+
+- Turned all C++ (//) comments into C comments (bug 1238)
+
+- mapproject.h/configure.in: Don't check for USE_PROJ_API_H anymore.  Assume 
+  we have a modern PROJ.4.
+
+- Bug 839: Fix memory leak of font name in label cache (in mapfile.c). 
+
+- Added msForceTmpFileBase() and mapserv -tmpbase switch to allow overriding
+  temporary file naming conventions.  Mainly intended to make writing 
+  testscripts using mapserv easier. FrankW. 
+
+- maporaclespatil.c: Bug fix for: #1109, #1110, #1111, #1112, #1136, #1210,
+  #1211, #1212, #1213.  Support for compound polygons, fixed internal sql to
+  stay more accurate for geodetic data, added the support for getextent
+  function.  Added VERSION token for layer data string.
+
+- mapimagemap.c: Preliminary implementation of support for emitting 
+  MS_SYMBOL_VECTOR symbols in msDrawMarkerSymbolIM(). 
+
+- Bug 1204: Added multi-threading support in mapthread.c.  List of connections 
+  is managed within a mutex lock, and connections are only allowed to be used
+  by one thread at a time. 
+
+- Bug 1185 : php/mapscript : add constant MS_GD_ALPHA 
+
+- Bug 1173: In HTML legend, added opt_flag support for layer groups.
+
+- Bug 1179: added --with-warnings configure switch, overhauled warning logic.
+
+- Bug 1168: Improve autoscaling through classification rounding issues. 
+
+- Fixed bug writing RGB/RGBA images via GDAL output on bigendian systems. 
+
+- Bug 1152 : Fix WMS style capabilities output for FastCGI enabled builds.
+
+- Bug 1135 : Added support for rotating labels with the map if they were 
+  rendered with some particular angle already. 
+
+- Bug 1143 : Missing call to msInitShape.
+
+- Fixed PHP5 support for windows : Bug 1100. 
+
+- Correct bug 1151 : generates twice a </Mark> tag when generating an SLD.
+  This was happening the style did not have a size set.
+
+- Oracle Spatial.  Fixed problem with LayerClose function.  Added token NONE
+  for DATA statement.  Thanks Valik with the hints about the LayerClose problem
+  and Francois with the hints about NONE token.  
+
+- numpoints and stylelength memebers of the symbol object needs to be in sync
+  with the low level values after calles to setpoints ans setstyle (Bug 1137).
+ 
+- Use doubles instead of integers in function php3_ms_symbol_setPoints 
+  (Bug 1137).
+
+- Change the output of the expression when using a wild card for
+  PropertyIsLike (Bug 1107).
+
+- Delete temporary sld file created on disk (Bug 1123)
+
+- Fixed msFreeFileCtx() to call free() instead of gdFree() as per bug 1125. 
+  Also renamed gdFreeFileCtx() to msFreeFileCtx(). 
+
+- Ensure error stack is cleared before accepting another call in FastCGI
+  mode in mapserv.c.  Bug 1122
+
+- Support translation of all geometry types to points in mapogr.cpp (now
+  also supports multipolygon, multilinestring and geometrycollection. 
+  bug 1124. 
+
+- Added support for passing OGR layer FILTER queries down to OGR via the
+  SetAttributeFilter() method if prefixed with WHERE keyword.  Bug 1126.
+
+- Fixed support for SIZEUNITS based scaling of text when map is rotated.
+  Bug 1127.
+
+
+Version 4.4.0 (2004-11-29)
+--------------------------
+
+- Fixed WMS GetCapabilities 1.1.0 crash when wms_style_<...>_legendurl_*
+  metadata were used (bug 1096)
+
+- WCS GetCapabilities : Added ResponsibleParty support.
+
+- WMS GetCapabilities : Service online resource was not url encoded (bug 1093)
+ 
+- Fixed php mapscript problem with wfs_filter selection : Bug 1092.
+
+- Fixed encoding problem with WFS server when wfs_service_onlineresource 
+  was not explicitly specified (bug 1082)
+
+- Add trailing "?" or "&" to connection string when required in WFS
+  client layers using GET method (bug 1082)
+
+- Fixed : SLD rasters was failing when there was Spatial Filter (Bug 1087) 
+
+- Fixed mapwfslayer.c build error when WFS was not enabled (bug 1083)
+
+- Check that we have vsnprintf in mapimagemap.c before using it. 
+
+
+Version 4.4.0-beta3 (2004-11-22)
+--------------------------------
+
+- Added tests to mimimize the threat of recursion problems when evaluating
+  LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it
+  is possible to circumvent that test by defining layers with problems 
+  after running prepareImage. Other things crop up in that case too (symbol 
+  scaling dies) so it should be considered bad programming practice
+  (bug 1059).
+
+- Added --with-sderaster configure option. 
+
+- Make sure that msDrawWMSLayerLow calls msDrawLayer instead of 
+  msDrawRasterLayerLow directly ensuring that some logic (transparency) that 
+  are in msDrawLayer are applied (bug 541).
+
+- Force GD/JPEG outputFormatObjects to IMAGEMODE RGB and TRANSPARENT OFF
+  if they are RGBA or ON.  Makes user error such as in bug 1703 less likely.
+
+- Advertize only gd and gdal formats for wms capabilities (bug 455).
+
+- Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all GML
+  attributes are returned as strings to MapServer. This is most efficient
+  and prevents problems with autodetection of some attribute types (bug 1043).
+  
+- msOGCWKT2ProjectionObj() now uses the OGRSpatialReference::SetFromUserInput()
+  method.  This allows various convenient setting options, including the 
+  ability to handle ESRI WKT by prefixing the WKT string with "ESRI::". 
+
+- Fixed GetLegendGraphic in WMS Capabilities that were missing the '?'
+  or '&' separator if it was not included in wms_onlineresource (bug 1065).
+
+- Updated WMS/WFS client and server code to lookup "ows_*" metadata names
+  in addition to the default "wms_*" (or "wfs_*") metadatas (WCS was already
+  implemented this way). This reduces the amount of duplication in mapfiles
+  that support multiple OGC interfaces since "ows_*" metadata can be used
+  almost everywhere for common metadata items shared by multiple OGC
+  interfaces (bug 568).
+
+- Added ows_service_onlineresource metadata for WMS/WFS to distinguish
+  between service and GetMap/Capabilities onlineresources (bug 375).
+
+- Added map->setSize() to PHP MapScript (bug 1066).
+
+- Re-enabled building PHP MapScript using PHP's bundled regex/*.o. This is
+  needed to build in an environment with PHP configured as an Apache DSO
+  (bugs 990, 520).
+
+- Fixed problem with raster dither support on windows (related to ascii 
+  encoding pointers) (bug 722).
+
+- Moved PHP/SWIG MapScript layer->getExtent() logic down to msLayerGetExtent()
+  to avoid code duplication (bug 1051).
+
+- Added SDE Raster drawing support (experimental).
+
+- HTML legends: Added [leg_header_html] and [leg_footer_html] (bug 1032).
+
+- Added "z" support in SWIG MapScript for pointObj (bug 871).
+
+- In PHP Mpascript when using  ms_newrectobj, the members minx, miny,
+  maxx, maxy are initialized to -1 (bug 788).
+
+- Write out proper world file with remote WMS result, it was off by half
+  a pixel (bug 1050).
+
+- Send a warning in the wms capabilities if the layer status is set 
+  to default (bug 638).
+
+- Fixed PHP MapScript compile warnings: dereferencing type-punned pointer
+  will break strict-aliasing rules (bug 1053).
+
+- Added $layer->isVisible() to PHP MapScript (bug 539).
+
+- Ported $layer->getExtent() to PHP MapScript (bug 826).
+
+- wms_group_abstract can now be used in the capabilities (bug 754).
+
+- If wms_stylelist is an empty string, do not output the <StyleList> tag
+  for MapContexts (bug 595).
+
+- Avoid passing FILE* to GD library by utilizing GD's gdIOCtx interface
+  (bug 1047).
+  
+- Output warning in wms/wfs capabilities document if layer,group,map names have
+  space in them (bug 486, bug 646).
+
+- maporaclespatial.c: fixed declarations problems (bug 1044).
+
+- Allow use of msOWSPrintURLType with no metadata. In this case the default 
+  parameters will be used (bug 1001).
+
+- Ensure the outputFormatObj attached to msImageLoadGDStream() results reflect
+  the interlacedness of the loaded image.  Also ensure that the RGB PNG
+  reference images work (make imagemode match gdImg) (bug 1039).
+
+- Fixed support for non-square pixels in WCS (bug 1014).
+
+- Expose only GD formats for GetLegendGraphic in the capabilities (bug 1001).
+
+- Check for supported formats when process a GetLegendGraphic request 
+  (bug 1030).
+
+- mapraster.c: fixed problem with leaks in tileindexed case where the
+  tile index is missing (bug 713).
+
+- Oracle Spatial: implemented connection pool support for Oracle Spatial. 
+  New layer data parameters to support query functions, added 
+  "using unique <column name>".  Added "FILTER", "RELATE" and "GEOMRELATE" 
+  parameters, now permit users to choose the Oracle Spatial Filter. Modified 
+  the internal SQL to always apply FILTER function. And improve the Oracle 
+  Spatial performance.
+
+- Centralize "stdout binary mode setting" for win32 in msIO_needBinaryStdout().
+  Use it when writing GDAL files to stdout in mapgdal.c.  Fixes problems with
+  output of binary files from GDAL outputformat drivers on win32 via WMS/WCS.
+
+- MapServer now provides one default style named (default), title and 
+  LegendURL when generating capabilities.  Added also the possibility to use
+  the keyword default for STYLES parameter when doing a GetMap 
+  (..&STYLES=default,defeault,...) (bug 1001).
+
+- Add xlink:type="simple" in WMS MetadataURL (bug 1027).
+
+
+Version 4.4.0-beta2 (2004-11-03)
+--------------------------------
+
+- free mapServObj properly in mapserv.c in OWS dispatch case to fix minor
+  memory leaks.
+
+- modified msCloseConnections() to also close raster layers so that 
+  held raster query results will be freed. 
+
+- modified raster queries to properly set the classindex in the resultcache.
+
+- modified msDrawQueryCache() to be very careful to not try and lookup 
+  information on out-of-range classindex values.  This seems to occur when
+  default shapes come back witha classindex of 0 even if there are no classes.
+  (ie. raster query results). 
+
+- the loadmapcontext function has changed it behaviour.  Before the 4.4 relase
+  when loading layers from a map context, the layer name was built using
+  a unique prefix + the name found in the context (eg for the 2nd layer in 
+  map context named park, the layer name generated would possibly be l:2:park).
+  Now the loadmapcontext takes a 2nd optional argument to force the creation
+  of the unique names. The default behaviour is now to have the layer name
+  equals to the name found in the context file (bug 1023).   
+
+- Fixed problem with WMS GetCapabilities aborting when wms_layer_group is
+  used for some layers but not for all (bug 1024).
+
+- Changed raster queries to return the list of all pixel values as an 
+  attribute named "value_list" rather than "values" to avoid conflict with
+  special [values] substitution rule in maptemplate.c.
+
+- Fixed raster queries to reproject results back to map projection, and to
+  do point queries distance checking against the correct projection (bug 1021).
+
+- Get rid of WMS 1.0.8 support. It's not an officially supported verison
+  of the spec anyway: it's synonymous for 1.1.0 (bug 1022).
+
+- Allow use of '=' inside HTML template tag parser (bug 978).
+
+- Use metadata ows_schema_location for WMS/WFS/WCS/SLD (bugs 999, 1013, 938).
+  The default value if metadata is not found is 
+  http://schemas.opengeospatial.net.
+ 
+- Generate a RULE <Name> tag when generating an SLD (bug 1010).
+
+- WMS GetLegendGraphic uses now the RULE value to return an icon for
+  a class that has the same name as the RULE value (bug 843).
+ 
+- Add msOWSPrintURLType: This funciton is a generic URL printing fuction for 
+  OGC specification metadata (WMS, WFS, WCS, WMC, etc.) (bug 944).
+
+- Support MetadataURL, DataURL and LegendURL tags in WMS capabilities 
+  document and MetadataURL in WFS capabilities.
+
+- SWIG mapscript: clone methods for layerObj, classObj, styleObj (bug 1012).
+
+- Implemented an intarray helper class for SWIG mapscript which allows for
+  multi-language manipulation of layer drawing order (bugs 853, 1005).
+
+- Fixed WMS GetLegendGraphic which was returning an exception (GD error)
+  when requested layer was out of scale (bug 1006).
+
+- Fixed maplexer.l to work with flex 2.5.31 (bug 975).
+
+- WMS GetMap requests now have MS_NONSQUARE enabled by default. This means
+  that if the width/height ratio doesn't match the extent's x/y ratio then
+  the map is stretched as stated in the WMS specification (bug 862).
+
+- In WMS, layers with no explicit projection defined will receive a copy
+  of the map's projectionObj if a new SRS is specified in the GetMap request
+  or if MS_NONSQUARE is enabled. This will prevent the problem with layers 
+  that don't show up in WMS request when the server administrator forgets
+  to explicitly set projections on all the layers in a WMS mapfile (bug 947).
+
+- Implemented FastCGI cleanup support for win32 and unix in mapserv.c.
+
+- Solved configure/compile issues with libiconv (bugs 909, 1017).
+
+
+Version 4.4.0-beta1 (2004-10-21)
+--------------------------------
+
+- "shared" compilation target now supports some kind of versioning,
+  should at least prevent libmap.so version collisions when upgrading
+  MapServer on a server (bug 982).
+
+- When no RULE parameter has been specified in the WMS request
+  a legend should be returned with all classes for the specified LAYER.
+  Changes has been made in mapwms.c (bug 653). Also if the SCALE parameter
+  is provided in the WMS request is will be used to determine whether
+  the legend of the specified layer should be drawn in the case that the
+  layer is scale dependant (big 809).
+
+- Nested layers in the capabilities are supported by using a new metadata
+  tag WMS_LAYER_GROUP (bug 776).
+  
+- Added greyscale+alpha render support if mapdrawgdal.c (bug 965). 
+
+- Added --with-fastcgi support to configure.
+
+- support OGC mapcontext through mapserver cgi (bug 946).
+
+- support for reading 3d shape file (z) (bug 869).
+
+- add php mapscript functions to expose the z element (bug 870).
+
+- imageObj::write() method for SWIG mapscript (bug 941).
+
+- Protect users from 3 potential sources of threading problems: parsing
+  expression strings outside of msLoadMap, evaluating mapserver logical
+  expressions, and loading symbol set files outside of msLoadMap (bug 339).
+
+- Various fixes allowing unit tests to run leak free under valgrind on 
+  i686.  Memory is now properly freed when exiting from common error
+  states (bug 927).
+
+- Restored ability to render transparent (indexed or alpha) pixmap symbols
+  on RGB map images, including annotation layers and embedded scalebars.
+  This feature remains OFF by default for map layers and is enabled by
+  specifying TRANSPARENCY ALPHA (bugs 926, 490).
+
+- mapserv_fcgi.c removed.  Committed new comprehensive FastCGI support. 
+
+- New mapserver exceptions for Java mapscript thanks to Umberto Nicoletti
+  (bug 895).
+
+- Removed mapindex.c, mapindex.h, shpindex.c components of old unused 
+  shapefile indexing method.  
+
+- Use the symbol size instead of 1 for the default style size value. This is
+  done by setting the default size to -1 and adding msSymbolGetDefaultSize() 
+  everywhere to get the default symbolsize (Bug 751).
+
+- Correct Bug with GML BBOX output when using a <Filter> with a 
+  GetFeature request (Bug 913).
+
+- Encode all metadatas and mapfile parameters outputed in a xml document
+  (Bug 802).
+
+- Implement the ENCODING label parameter to support internationalization.
+  Note this require the iconv library (Bug 858).
+
+- New and improved Java mapscript build provided by unicoletti@prometeo.it
+  and examples by Y.K. Choo (bug 876).
+
+- MapContext: Cleanup code to make future integration more easily and output 
+  SRS and DataURL in the order required by the spec.
+
+- Fixed issue with polygon outline colors and brush caching (bug 868).
+
+- New C# mapscript makefiles and examples provided by Y.K. Choo
+  <ykchoo@geozervice.com> committed under mapscript/csharp/ (bug 867).
+  
+- Renamed 'string' member of labelCacheMemberObj to 'text' to avoid
+  conflicts in SWIG mapscript with C# and Java types (bug 852).
+  
+- Fixed Bug 866 : problem when generating an sld on a pplygon layer
+
+- SWIG mapscript: map's output image width and height should be set 
+  simultaneously using new mapObj::setSize() method.  This performs
+  necessary map geotransform computation.  Direct setting of map width
+  and height is deprecated (bug 836).
+
+- Fixed bug 832 (validate srs value) : When the SRS parameter in a GetMap 
+  request contains a SRS that is valid for some, but not all of the layers 
+  being requested, then the server shall throw a Service Exception 
+  (code = "InvalidSRS"). Before this fix, mapserver use to reproject
+  the layers to the requested SRS. 
+
+- Fixed bug 834: SE_ROW_ID in SDE not initialized for unregistered SDE tables
+
+- Fixed bug 823 : adding a validation of the SRS parameter when doing
+  a GetMap request on a wms server. Here is the OGC statement :
+  'When the SRS parameter in a GetMap request contains a SRS 
+  that is valid for some, but not all of the layers being requested, 
+  then the server shall throw a Service Exception (code = "InvalidSRS").'
+
+- Set the background color of polygons or circles when using transparent
+  PIXMAP symbol.
+
+- SWIG mapscript class extensions are completely moved from mapscript.i
+  into separate interface files under mapscript/swiginc.
+
+- Overhaul of mapscript unit testing framework with a comprehensive test
+  runner mapscript/python/tests/runtests.py.
+
+- Modified the MS_VALID_EXTENT macro to take an extent as its argument 
+  instead of the quartet of members. MapServer now checks that extents input 
+  through the mapfile are valid in mapfile.c (web, map, reference, 
+  and layer).  Modified msMapSetExtent in mapobject.c to use the new 
+  macro instead of its home-grown version. Modified all cases that used 
+  MS_VALID_EXTENT to the new use case.
+  
+- Layers now accept an EXTENT through the mapfile (bug 786). Nothing 
+  is done with it at this point, and getExtent still queries the 
+  datasource rather than getting information from the mapfile-specified 
+  extent.
+
+- Fixed problem with WMS GetFeatureInfo when map was reprojected. Was a
+  problem with msProjectRect and zero-size search rectangles (bug 794)
+
+- MapServer version now output to mapscriptvars and read by Perl Makefile.PL
+  and Python setup.py (bug 795).
+
+- Map.web, layer, and class metadata are exposed in SWIG mapscript as
+  first-class objects (bug 737).
+
+- Add support for spatial filters in the SLD (Bug 782)
+
+- A few fixes to allow php_mapscript to work with both PHP4 and PHP5.
+  PHP5 support should still be considered experimental. (bug 718)
+
+- Fixed SDE only recognizing SE_ROW_ID as the unique column (bug 536). 
+  The code now autosenses the unique row id column.
+
+- Enhanced SDE support to include support for queries against 
+  user-specified versions.  The version name can be specified as the 
+  last parameter of the CONNECTION string.
+
+- Fixed automated generation of onlineresource in OWS GetCapabilities
+  when the xxx_onlineresource metadata is not specified: the map= parameter
+  used to be omitted and is now included in the default onlineresource if
+  it was explicitly set in QUERY_STRING (bug 643)
+
+- Fixed possible crash when producing WMS errors INIMAGE (bug 644)
+
+- Fixed automated generation of onlineresource in OWS GetCapabilities
+  when the xxx_onlineresource metadata is not specified: the map= parameter
+  used to be omitted and is now included in the default onlineresource if
+  it was explicitly set in QUERY_STRING (bug 643)
+
+- Fixed an issue with annotation label overlap. There was an issue with
+  the way msRectToPolygon was computing it's bounding box. (bug 618)
+
+- Removed "xbasewohoo" debug output when using JOINs and fixed a few 
+  error messages related to MySQL joins (bug 652)
+
+- Fixed "raster cracking" problem (bug 493)
+
+- Improvements to Makefile.vc, and nmake.opt so that a mapscriptvars file
+  can be produced on windows.  
+
+- Updated setup.py so Python MapScript builds on win32. 
+
+- Added preliminary raster query support.
+
+- No more Python-stopping but otherwise benign errors raised from
+  msDrawWMSLayer() (bug 650).
+
+- Finished prototyping all MapServer functions used by SWIG-Mapscript
+  and added 'void' to prototypes of no-arg functions, eliminating all
+  but two SWIG-Mapscript build warnings (bug 658).
+
+- Mapscript: resolved issue with pens and dynamic drawing of points (bug 663).
+
+- Mapscript: fixes to tests of shape copying and new image symbols.
+
+- Mapscript: new OWSRequest class based on cgiRequestObj structure in 
+  cgiutil.h is a first step to allow programming with MapServer's OWS
+  dispatching (bug 670).
+
+- Mapscript: styles member of classObj structure is no longer exposed to
+  SWIG (bug 611).
+
+- Implementation geotransform/rotation support in cgi core, and mapscript.i.
+
+- Testing: fixed syntax error, 'EPSG' -> 'epsg' in test.map (bug 687).
+  Added an embedded scalebar which demonstrates that bug 519 is fixed.
+  The test data package is also made more complete by including two fonts
+  from Bitstream's open Vera fonts (bug 694).
+
+- Mapscript (SWIG): remove promote and demote methods from layerObj.  Use
+  of container's moveLayerUp/moveLayerDown is better, and this brings
+  the module nearer to PHP-Mapscript (bug 692).
+
+- mapogr.cpp: Now echos CPLGetLastErrorMsg() results if OGR open fails. 
+
+- mapraster.c: fixed tile index corruption problem (bug 698)
+
+- Mladen Turk's map copying macros in mapcopy.h clean up map cloning and
+  allow for copying of fontset and symbolset.  Added cloning tests in
+  python/tests/testCloneMap.py and refactored testing suite (bugs 640 & 701).
+
+- Mapscript: removing obsolete python/setup_wnone.py file.
+
+- CONFIG MS_NONSQUARE YES now enables non-square pixel mode (mostly for WMS). 
+  Changes in mapdraw.c (msDrawMap()) to use the geotransform "hack" to allow
+  non-square pixels.
+
+- When using the text/html mime type in a GetFeature request, if the
+  layer's template is not set to a valid file, errors occur.
+  Correction is : the text/html is not advertized by default and 
+  will only be advertized if the user has defined 
+  "WMS_FEATURE_INFO_MIME_TYPE"  "text/html" (bug 736)
+
+- Make PHP MapScript's layer->open() produce a PHP Warning instead of a
+  Fatal error (bug 742)
+
+- MapServer hash tables are now a structure containing a items pointer
+  to hashObj. See maphash.h for new prototypes of hash table functions.
+  In SWIG mapscript, Map, Layer, and Class metadata are now instances of the
+  new hashTableObj class.  fontset.fonts and Map.configoptions are also
+  instances of hashTableObj.  The older getMetaData/setMetaData and
+  metadata iterator methods can be deprecated (bug 737).
+  
+- Mapscript-SWIG: made the arguments of mapObj and layerObj constructors
+  optional.  A layerObj can now exist outside of a map and can be added
+  to a mapObj using the insertLayer method.  mapObj.removeLayer now 
+  returns a copy of the removed Layer rather than an integer (bug 759).
+
+- Fixed $map->processTemplate() which was always returning NULL.
+  Bug introduced in version 4.0 in all flavours of MapScript (bug 410)
+
+
+Version 4.2-beta1 (2004-04-17)
+------------------------------
+
+- Added support for WMS 1.1.1 in the WMS interface. 
+
+- Added support for WMS-SLD in client and server mode.
+
+- Added support for attribute filters in the WFS interface.
+
+- WMS Interface: several fixes to address issues found in running tests
+  against the OGC testsuite. One of the side-effects is that incomplete
+  GetMap requests that used to work in previous versions will produce
+  errors now (see bug 622).
+
+- Modified configure scripts to be able to configure/build PHP MapScript
+  using an installed PHP instead of requiring the full source tree.
+
+- Added ability to combine multiple WMS connections to the same server 
+  into a single request when the layers are adjacent and compatible. (bug 116)
+
+- Support POSTed requests without Content-Length set. 
+
+- Added support for proper classification of non-8bit rasters.  
+
+- Added support for BYTE rawmode output type. 
+
+- Added support for multiple bands of output in rawmode. 
+
+- MySQL joins available
+
+- Fixed problems with detection of OGRRegisterAll() with GDAL 1.1.9 in 
+  configure due to GDAL's library name change. Fixed a few other minor
+  issues with GDAL/OGR in configure.
+
+- Modified configure to disable native TIFF/PNG/JPEG/GIF support by default
+  if GDAL is enabled.  You can still enable them explicitly if you like.
+
+- Replace wms_style_%s_legendurl, wms_logourl, wms_descriptionurl, wms_dataurl 
+  and wms_metadataurl metadata by four new metadata by metadata replaced. The 
+  new metadata are called legendurl_width, legendurl_height, legendurl_format, 
+  legendurl_href, logourl_width, etc...
+  Old dependancy to the metadata with four value in it , space separated, are 
+  not kept.
+
+- Implement DataURL, MetadataURL and DescriptionURL metadata in 
+  mapcontext.c (bug 523)
+
+- PHP MapScript's pasteImage() now takes a hex color value (e.g. 0xrrggbb)
+  for the transparent color instead of a color index. (bug 463)
+
+- OGR data sources with relative paths are now checked relative to 
+  SHAPEPATH first, and if not found then we try again relative to the
+  mapfile location.  (bug 295)
+
+- There is a new mapObj parameter called MAXSIZE to control maximum image
+  size to serve via the CGI and WMS interfaces. The default is 2048 as 
+  before but it can be changed in the map file now. (bug 435)
+
+- Added simple dataset for unit and regression tests (bug 453)
+
+- PostGIS: added postresql_NOTICE_HANDLER() sending output via msDebug() 
+  and only when layer->debug is set (bug 418)
+
+- Added Apache version detection in configure and added non-blocking flag
+  on stderr in msDebug() to work around Apache 2.x bug (bug 458)
+
+- MapScript rectObj: added optional bounding value args to constructor and
+  extended rectObj class with a toPolygon method (bug 508).
+  
+- MapScript pointObj: added optional x/y args to constructor (bug 508).
+
+- MapScript colorObj: added optional RGB color value args to colorObj
+  constructor, and extended colorObj class with setRGB, setHex, and toHex
+  methods.  The hex methods use hex color strings like '#ffffff' rather
+  than '0xffffff' for compatibility with HTML (bug 509).
+
+- MapScript outputFormatObj: extended with a getOption method (bug 510). 
+
+- MapScript imageObj: added optional mapObj argument to the save method
+  resolving bug 549 without breaking current API.  Also added optional
+  driver and filename arguments to constructor which allows imageObj
+  instances to be created with a specified driver or from files on disk
+  (bug 530).  Added new code to Python MapScript which extends the 
+  filename option to Python file-like objects (bug 550). This means
+  StringIO and urllib's network objects!
+
+- MapScript classObj and styleObj: added a new styleObj shadow class and
+  extended classObj with getStyle, insertStyle, and removeStyle methods.
+  MapScript now supports multiple styles for dynamically created classes
+  (bug 548).
+
+- MapScript layerObj: added getExtent, getNumFeatures extension methods,
+  allowing getShape to access inline features (bug 562).
+
+- Added fixes for AMD64/Linux in configure (bug 565)
+
+- Removed OGR_STATIC stuff in configure script that used to allow us to 
+  build with OGR statically by pointing to the OGR source tree.  That 
+  means you can only build with OGR when *installed* as part of GDAL,
+  but that's what everyone is doing these days anyway.
+
+- Mapscript outputFormatObj: extended constructor to allow format names,
+  and mapObj methods to append and remove output formats from the 
+  outputformatlist (bug 511).
+
+- New SWIG mapscript development documentation in the spirit of the
+  PHP-Mapscript readme file, but using reST (bug 576).
+
+- Paving way for future changes to SWIG mapscript API with new features
+  enabled by NEXT_GENERATION_API symbol (bug 586).
+
+- Added ability to set string member variables to NULL in PHP MapScript
+  (bug 591)
+
+- New key iterators for map, layer, and class metadata hash tables 
+  (bug 434) and fontset fonts hash table (bug 439).
+
+- Fixed potential crash when using nquery with a querymap enabled and
+  some layers have a template set at the layer level instead of inside
+  classes (bug 569).
+
+- New CONFIG keyword in the MAP object in a .map file to be used
+  to set external configuration parameters such as PROJ_LIB and control
+  of some GDAL and OGR driver behaviours (bug 619)
+
+Version 4.0 (2003-08-01)
+------------------------
+
+- Fixed problem with truncated expressions (bugs 242 and 340)
+
+- Attempt at fixing GD vs libiconv dependency problems (bug 348)
+
+- Fixed problem with invalid BoundingBox tag in WMS capabilities (bug 34)
+
+- Fixed problems with SIZEUNITS not working properly (bug 373)
+
+- Fixed MacOSX configure problems for linking php_mapscript (bug 208)
+
+- Fixed problem with reference map marker symbol not showing up (bug 378)
+
+- Use <Keywords> in WMS 1.0.0 capabilities instead of <KeywordList> (bug 129)
+
+- One-to-one and one-to-many joins now work for Xbase files and are available
+  to query templates. Low level one-to-one Xbase joins are available  via
+  OGR.
+
+Version 4.0-beta2 (2003-07-11)
+------------------------------
+
+- Added prototype of FastCGI support in mapserv_fcgi.c (not built by default).
+
+- Report full error stack in the mapserv CGI and PHP MapScript (bug 346)
+
+- Old index (.qix) format is deprecated (bug 273)
+
+- Fixed problem with embedded legend and scalebar that would result in
+  layers being added to the HTML legends (bug 171)
+
+- Changed joins (XBase only at this point) over to the open-prepare-next...
+  next-close way of doing things. Compiles fine, but needs more testing. 
+  One-to-many support should work now but it needs to be hooked into the 
+  template code yet.  Last thing before a candidate 4.0 release.
+
+- Added ability to generate images in MapScript processQueryTemplate (bug 341)
+
+- Added saving of output formats in msSaveMap()
+
+- Fixed problem in PHP MapScript with variables that were not dereferenced
+  before their values were changed by the MapScript wrappers (bug 323)
+
+- Added support for Web Map Context 1.0.0
+
+- Treat zero-length template values as NULL so that it's possible to
+  set("template", "") from MapScript to make layer non-queryable (bug 338)
+
+- Ditched the shapepath argument to the shapefileObj constructor
+
+- CARTOLINE join style default changed to MS_CJC_NONE
+
+- Tweaked code in legend builder to handle polygon layers slightly different.
+  Now if a polygon layer contains only outlines and no fills (i.e. a polyline)
+  then it is drawn using the zigzag legend shape rather than the box. I'll 
+  add legend outlines back in shortly.
+
+- Restored legend key outlines (triggered by setting OUTLINECOLOR). If an 
+  outline is requested then line symbols are clipped to the outline, 
+  otherwise lines are allowed to bleed a pixel or two beyond those 
+  boundaries- for most cases this looks	fine but for fat lines it is 
+  gonna look goofy regardless. In those cases use the KEYIMAGE.
+
+- Fixed a bug in the scanline writer so that x coordinates can be in any 
+  order when passed in to the function. (bug 336)
+
+- Updated loadExpressionString in mapfile.c to be a bit more tolerant of
+  input. Now if a string does not match the logical or regex pattern it is
+  automatically cast as a string expression. Removes the need for silly quotes.
+
+
+Version 4.0-beta1 (2003-06-06)
+------------------------------
+
+- Added imagemap outputformat, which makes possible use of client-side 
+  imagemaps in browsers.
+
+- Added MySQL support for non-spatial OpenGIS Simple Features SQL stored data
+
+- msQueryByShape and msQueryByFeature honor layer tolerances. In effect you
+  can to buffered queries now. At the momoment only polygon select features
+  are supported, but there's nothing inherent in the underlying computations
+  that says lines won't work as well.
+
+- Simple one-to-one joins are working again. Reworked the join code so that
+  table connections are persistant within a join (across joins is a todo).
+  Joins, like layers are wrapped with a connection neutral front end, that
+  sets us up to do MySQL or whatever in addition to XBase.
+
+- Removed shapepath argument to all layer access functions (affects MapScript).
+  It's still used but we leverage the layer pointer back to the parent mapObj
+  so the API is cleaner.
+
+- Changed default presentation of feature attributes to escape a few 
+  problematic characters for HTML display (eg. > becomes &gt;). 
+  Added [itemname_raw] substitution to allow access to unaltered data.
+
+- Added initial version of Jan Hartman's connection pooling code.
+
+- Replaced libwww with libcurl for WMS/WFS client HTTP requests.
+  (libcurl 7.10 required, see http://curl.haxx.se/libcurl/c/)
+
+- Added CONNECTION to the list of mapfile parameters that can accept 
+  %variable% substitutions when processed by the cgi version. This is useful
+  for passing in username and/or passwords to database data sources.
+
+- Added support for DATA and TEMPLATE (header/footer/etc...) filtering using
+  an regex declared in the mapfile (DATAPATTERN and TEMPLATEPATTERN). 
+  Certain parameters in a mapfile cannot be changed via a URL without first
+  being filtered.
+
+- Added support for enviroment variable MS_MAPFILE_PATTERN. This allows you to
+  override the default regex in favor of one more restrictive (I would hope) of
+  your own.
+
+- Disabled CGI SAVEMAP option.
+
+- Removed CGI TEMPLATE option since you can use the map_web_template syntax.
+  Simplifies security maintenance by only having to deal with this option 
+  in a single place.
+
+- Added offset support (styleObj) for raster based output (GD for sure, not
+  quite sure how OGR output is created although I believe is uses GD anyway).
+  This allows for feature drop shadows and support for cool linear symbols
+  like used to be supported in pre-3.4 versions. These offsets are not 
+  scalable at the moment.
+
+- Null shapes (attributes but no vertices) are skipped for shapefiles using
+  the msLayerNextShape interface. Otherwise applications should check the
+  shapeObj type member for MS_SHAPE_NULL.
+
+- Changed where label cache is allocated and cleared. Now it isn't allocated 
+  until drawing takes place. Any old cache is cleared before a new one is
+  allocated. The cache is still intact following rendering for post-processing
+  using MapScript.
+
+- Fixed screw up in pre-processing of logical expressions for item lists.
+  Under certain circumstances that list could get corrupted and expressions
+  would fail.
+
+- Added NOT operator to expression parser.
+
+- Added layer and map level DEBUG options to map file.
+
+- Major changes to support vector output (PDF, SWF, GML, ...):
+  imageObj is used by all rendering functions instead of gdImagePtr,
+  New msSaveImage() prototype
+
+- Support for GD-2.0, including 24 bits output.  Dropped support for GD 1.x
+
+- Support for output to any GDAL-supported format via the new OUTPUTFORMAT
+  object.
+
+- New styleObj to replace the OVERLAY* parameter in classes.
+
+- PostGIS: Added Sean Gillies <sgillies@i3.com>'s patch for "using unique 
+  <column name>". Added "using SRID=#" to specify a spatial reference 
+  for an arbitrary sql query.
+
+- ... and numerous fixes not listed here...
+
+
+Version 3.6.0-beta1 (2002-04-30)
+--------------------------------
+
+- MapScript: qitem and qstring params added to layer->queryByAttribute().
+  Instead of being driven by the layer's FILTER/FILTERITEM, the query by
+  attribute is now driven by the values passed via qitem,qstring, and the 
+  layer's FILTER/FILTERITEM are ignored.
+
+- Symbol and MapFile changes: ANTIALIAS and FILLED keywords now take a
+  boolean (TRUE/FALSE) argument i.e. ANTIALIAS becomes ANTIALIAS TRUE
+  and FILLED becomes FILLED TRUE
+
+- Reference Map:
+  Added options to show a different marker when the reference box becomes
+  too small.  See the mapfile reference docs for more details on the new 
+  reference object parameters (MARKER, MARKERSIZE, MAXBOXSIZE, MINBOXSIZE)
+
+- Added MINSCALE/MAXSCALE at the CLASS level.
+
+- Support for tiled OGR datasets.
+
+- PHP 4.1.2 and 4.2.0 support for PHP MapScript.
+
+- Added LAYER TRANSPARENCY, value between 1-100
+
+- Fixes to the SWIG interface for clean Java build.
+
+- New HTML legend templates for CGI and MapScript.  See HTML-Legend-HOWTO.
+
+- WMS server now supports query results using HTML query templates instead
+  of just plain/text.
+
+- Added support functions for thread safety (--with-thread).  Still not 
+  100% thread-safe.
+
+
+Version 3.5.0 (2002-12-18)
+--------------------------
+
+- No Revision history before version 3.5
+
