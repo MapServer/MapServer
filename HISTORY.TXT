@@ -10,8 +10,10 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current Version (SVN branch, may never be released):
-----------------------------------------------------
+Version 4.10.6 (2009-07-09)
+---------------------------
+
+IMPORTANT SECURITY FIXES:
 
 - Disabled some insecure (and potentially exploitable) mapserv command-line
   debug arguments (#3485). The --enable-cgi-cl-debug-args configure switch
