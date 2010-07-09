@@ -10,7 +10,7 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Version 4.10.6 (2009-07-09)
+Version 4.10.6 (2010-07-09)
 ---------------------------
 
 IMPORTANT SECURITY FIXES:
