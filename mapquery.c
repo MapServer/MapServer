@@ -1672,7 +1672,10 @@ int msQueryByOperator(mapObj *map)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     /* identify target shapes */
-    searchrect = qshape->bounds;
+    if (map->query.op == MS_GEOS_BEYOND)
+      searchrect = map->extent;
+    else
+      searchrect = qshape->bounds;
 
       
 #ifdef USE_PROJ
