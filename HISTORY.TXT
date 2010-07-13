@@ -15,7 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Current version (SVN branch-5-6)
 --------------------------------
 
-- ...
+- Fixed synchronized MS_UNITS and inchesPerUnits array (#3173)
 
 Version 5.6.4 (2010-07-08):
 ---------------------------

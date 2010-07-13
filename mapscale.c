@@ -39,8 +39,8 @@ MS_CVSID("$Id$")
 /*
 ** Match this with with unit enumerations is mapserver.h
 */
-static char *unitText[6]={"in", "ft", "mi", "m", "km", "NM"};
-double inchesPerUnit[7]={1, 12, 63360.0, 39.3701, 39370.1, 72913.3858, 4374754};
++static char *unitText[9]={"in", "ft", "mi", "m", "km", "dd", "??", "??", "NM"}; //MS_PIXEL and MS_PERCENTAGE not used
++double inchesPerUnit[9]={1, 12, 63360.0, 39.3701, 39370.1, 4374754, 1, 1, 72913.3858 };
 
 
 static double roundInterval(double d)
