@@ -2445,10 +2445,13 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
           if(msGetLabelSize(image,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
             return(-1);
           
-          size = labelPtr->size * layerPtr->scalefactor;
-          size = MS_MAX(size, labelPtr->minsize*image->resolutionfactor);
-          size = MS_MIN(size, labelPtr->maxsize*image->resolutionfactor);
-          scalefactor = size / labelPtr->size;
+          if(labelPtr->type == MS_TRUETYPE) {          
+              size = labelPtr->size * layerPtr->scalefactor;
+              size = MS_MAX(size, labelPtr->minsize*image->resolutionfactor);
+              size = MS_MIN(size, labelPtr->maxsize*image->resolutionfactor);
+              scalefactor = size / labelPtr->size;
+          } else
+              scalefactor = layerPtr->scalefactor;
 
           label_offset_x = labelPtr->offsetx*scalefactor;
           label_offset_y = labelPtr->offsety*scalefactor;
