@@ -20,6 +20,8 @@ Current Version (SVN trunk):
   them and who understand the potential security risk (not recommended for 
   production servers or those who don't understand the security implications).
 
+- Fixed segmentation fault in ogr driver when shape type is null 
+
 - Fixed synchronized MS_UNITS and inchesPerUnits array (#3173) 
 
 - Fixed possible buffer overflow in msTmpFile() (#3484)

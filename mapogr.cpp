@@ -1791,7 +1791,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
               if (layer->debug >= MS_DEBUGLEVEL_VVV)
                   msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %d, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
                           OGR_F_GetFID( hFeature ), psInfo->nTileId, 
-                          wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ), 
+                          OGR_F_GetGeometryRef( hFeature )==NULL ? wkbFlatten(wkbUnknown):wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ), 
                           layer->type);
 
           }
