@@ -15,7 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Version 5.6.5 (2010-07-14):
 ---------------------------
 
-- Fixed scale calculation problem caused by mapscala.c's inchesPerUnits 
+- Fixed scale calculation problem caused by mapscale.c's inchesPerUnits 
   array being out of synch with MS_UNITS enum (#3173)
 
 - Fixed bitmap text font rendering (tiny was not working) (#3475)
