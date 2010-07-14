@@ -12,10 +12,11 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 
-Current version (SVN branch-5-6)
---------------------------------
+Version 5.6.5 (2010-07-14):
+---------------------------
 
-- Fixed synchronized MS_UNITS and inchesPerUnits array (#3173)
+- Fixed scale calculation problem caused by mapscala.c's inchesPerUnits 
+  array being out of synch with MS_UNITS enum (#3173)
 
 - Fixed bitmap text font rendering (tiny was not working) (#3475)
 
