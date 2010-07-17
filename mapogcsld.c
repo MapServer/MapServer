@@ -148,6 +148,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     const char *pszTmp = NULL;
     int bFreeTemplate = 0;
     int nLayerStatus = 0;
+    int nStatus = MS_SUCCESS;
     /*const char *pszSLDNotSupported = NULL;*/
     char *tmpfilename = NULL;
     const char *pszFullName = NULL; 
@@ -359,11 +360,10 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                         nLayerStatus =  GET_LAYER(map, i)->status;
                         GET_LAYER(map, i)->status = MS_ON;
 
-                        
-
-                        FLTApplyFilterToLayer(psNode, map,  
-                                              GET_LAYER(map, i)->index,
-                                              !FLTIsSimpleFilter(psNode));
+                        nStatus = 
+                            FLTApplyFilterToLayer(psNode, map,  
+                                                  GET_LAYER(map, i)->index,
+                                                  !FLTIsSimpleFilter(psNode));
 
                         GET_LAYER(map, i)->status = nLayerStatus;
                         FLTFreeFilterEncodingNode(psNode);
@@ -373,6 +373,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                             free(GET_LAYER(map, i)->template);
                             GET_LAYER(map, i)->template = NULL;
                         }
+
+                        if( nStatus != MS_SUCCESS )
+                            return nStatus;
                     }
                     else
                     {

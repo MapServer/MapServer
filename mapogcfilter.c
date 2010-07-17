@@ -403,10 +403,15 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
              && psQueryShape->line[0].numpoints > 0)
     {
         /*reproject shape if epsg was set*/
-        if (psNode->pszSRS &&  map->projection.numargs > 0 &&
-            FTLParseEpsgString(psNode->pszSRS, &sProjTmp))
-           msProjectShape(&sProjTmp, &map->projection, psQueryShape);
+        if (psNode->pszSRS &&  map->projection.numargs > 0 )
+        {
+            if( !FTLParseEpsgString(psNode->pszSRS, &sProjTmp) )
+                return MS_FAILURE;
 
+            status = msProjectShape(&sProjTmp, &map->projection, psQueryShape);
+            if( status != MS_SUCCESS )
+                return status;
+        }
 
         if (bUseGeos)
         {
