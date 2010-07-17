@@ -153,7 +153,7 @@ int FLTIsGeosNode(char *pszValue)
     return MS_TRUE;
 }
 
-int FTLParseEpsgString(char *pszEpsg, projectionObj *psProj)
+int FLTParseEpsgString(char *pszEpsg, projectionObj *psProj)
 {
     int nStatus = MS_FALSE;
     int nTokens = 0;
@@ -329,8 +329,14 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 /* -------------------------------------------------------------------- */
     if(szEPSG && map->projection.numargs > 0)
     {
-        if (FTLParseEpsgString(szEPSG, &sProjTmp))
-          msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
+        if (FLTParseEpsgString(szEPSG, &sProjTmp))
+        {
+            if( msProjectRect(&sProjTmp, &map->projection, &sQueryRect)
+                != MS_SUCCESS )
+                return MS_FAILURE;
+        }
+        else
+            return MS_FAILURE;
     }
 
 
@@ -343,11 +349,17 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     } else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0) /* && dfDistance >=0) */
     {
-        if (psNode->pszSRS &&  map->projection.numargs > 0 &&
-            FTLParseEpsgString(psNode->pszSRS, &sProjTmp))
-           msProjectShape(&sProjTmp, &map->projection, psQueryShape);
+        if (psNode->pszSRS &&  map->projection.numargs > 0 )
+        {
+            if( !FLTParseEpsgString(psNode->pszSRS, &sProjTmp) )
+                return MS_FAILURE;
 
-      if (bUseGeos)
+            status = msProjectShape(&sProjTmp, &map->projection, psQueryShape);
+            if( status != MS_SUCCESS )
+                return status;
+        }
+
+        if (bUseGeos)
         {
             if ((strcasecmp(psNode->pszValue, "DWithin") == 0 ||
                  strcasecmp(psNode->pszValue, "Beyond") == 0 ) &&
@@ -405,7 +417,7 @@ int FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         /*reproject shape if epsg was set*/
         if (psNode->pszSRS &&  map->projection.numargs > 0 )
         {
-            if( !FTLParseEpsgString(psNode->pszSRS, &sProjTmp) )
+            if( !FLTParseEpsgString(psNode->pszSRS, &sProjTmp) )
                 return MS_FAILURE;
 
             status = msProjectShape(&sProjTmp, &map->projection, psQueryShape);
