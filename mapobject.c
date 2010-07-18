@@ -29,6 +29,8 @@
  ****************************************************************************/
 
 #include "mapserver.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #ifdef USE_GDAL
 #  include "gdal.h"
@@ -158,7 +160,31 @@ int msSetConfigOption( mapObj *map, const char *key, const char *value)
     /* We have special "early" handling of this so that it will be */
     /* in effect when the projection blocks are parsed and pj_init is called. */
     if( strcasecmp(key,"PROJ_LIB") == 0 )
-        msSetPROJ_LIB( value );
+    {
+        /* check if this is map relative */
+        if( !map->mappath 
+            || value[0] == '/'
+            || value[0] == '\\'
+            || (value[0] != '\0' && value[1] == ':') )
+        {
+            msSetPROJ_LIB( value );
+        }
+        else
+        {
+            struct stat stat_buf;
+            char *extended_path = (char*) malloc(strlen(map->mappath)
+                                                 + strlen(value) + 10);
+            sprintf( extended_path, "%s/%s", map->mappath, value );
+
+            if( stat( extended_path, &stat_buf ) == 0 
+                && S_ISDIR(stat_buf.st_mode) )
+                msSetPROJ_LIB( extended_path );
+            else
+                msSetPROJ_LIB( value );
+            
+            free( extended_path );
+        }
+    }
 
     /* Same for MS_ERRORFILE, we want it to kick in as early as possible
      * to catch parsing errors */
