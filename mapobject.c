@@ -176,6 +176,10 @@ int msSetConfigOption( mapObj *map, const char *key, const char *value)
                                                  + strlen(value) + 10);
             sprintf( extended_path, "%s/%s", map->mappath, value );
 
+#ifndef S_ISDIR
+#  define S_ISDIR(x) ((x) & S_IFDIR)
+#endif            
+            
             if( stat( extended_path, &stat_buf ) == 0 
                 && S_ISDIR(stat_buf.st_mode) )
                 msSetPROJ_LIB( extended_path );
