@@ -1,23 +1,24 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
-   
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-   
-   This program is free software: you can redistribute it and/or modify
+
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -28,7 +29,7 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
@@ -46,7 +47,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.4.1"
+#define YYBISON_VERSION "2.3"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -54,66 +55,17 @@
 /* Pure parsers.  */
 #define YYPURE 0
 
-/* Push parsers.  */
-#define YYPUSH 0
-
-/* Pull parsers.  */
-#define YYPULL 1
-
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
 /* Substitute the variable and function names.  */
-#define yyparse         msyyparse
-#define yylex           msyylex
-#define yyerror         msyyerror
-#define yylval          msyylval
-#define yychar          msyychar
-#define yydebug         msyydebug
-#define yynerrs         msyynerrs
-
-
-/* Copy the first part of user declarations.  */
-
-/* Line 189 of yacc.c  */
-#line 5 "mapparser.y"
-
-/* C declarations */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <time.h>
-
-#include "mapserver.h" /* for TRUE/FALSE and REGEX includes */
-#include "maptime.h" /* for time comparison routines */
-
-extern int msyylex(void); /* lexer globals */
-extern int msyyerror(const char *);
-
-int msyyresult;
-
-
-/* Line 189 of yacc.c  */
-#line 99 "mapparser.c"
-
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Enabling the token table.  */
-#ifndef YYTOKEN_TABLE
-# define YYTOKEN_TABLE 0
-#endif
+#define yyparse msyyparse
+#define yylex   msyylex
+#define yyerror msyyerror
+#define yylval  msyylval
+#define yychar  msyychar
+#define yydebug msyydebug
+#define yynerrs msyynerrs
 
 
 /* Tokens.  */
@@ -169,34 +121,67 @@ int msyyresult;
 
 
 
+/* Copy the first part of user declarations.  */
+#line 5 "mapparser.y"
+
+/* C declarations */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <time.h>
+
+#include "mapserver.h" /* for TRUE/FALSE and REGEX includes */
+#include "maptime.h" /* for time comparison routines */
+
+extern int msyylex(void); /* lexer globals */
+extern int msyyerror(const char *);
+
+int msyyresult;
+
+
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+
+/* Enabling verbose error messages.  */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
+#else
+# define YYERROR_VERBOSE 0
+#endif
+
+/* Enabling the token table.  */
+#ifndef YYTOKEN_TABLE
+# define YYTOKEN_TABLE 0
+#endif
+
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-{
-
-/* Line 214 of yacc.c  */
 #line 24 "mapparser.y"
-
+{
   double dblval;
   int intval;  
   char *strval;  
   struct tm tmval;
-
-
-
-/* Line 214 of yacc.c  */
-#line 188 "mapparser.c"
-} YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 187 of yacc.c.  */
+#line 172 "mapparser.c"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
+
 
 
 /* Copy the second part of user declarations.  */
 
 
-/* Line 264 of yacc.c  */
-#line 200 "mapparser.c"
+/* Line 216 of yacc.c.  */
+#line 185 "mapparser.c"
 
 #ifdef short
 # undef short
@@ -271,14 +256,14 @@ typedef short int yytype_int16;
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static int
-YYID (int yyi)
+YYID (int i)
 #else
 static int
-YYID (yyi)
-    int yyi;
+YYID (i)
+    int i;
 #endif
 {
-  return yyi;
+  return i;
 }
 #endif
 
@@ -359,9 +344,9 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss_alloc;
-  YYSTYPE yyvs_alloc;
-};
+  yytype_int16 yyss;
+  YYSTYPE yyvs;
+  };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -395,12 +380,12 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
+# define YYSTACK_RELOCATE(Stack)					\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
-	Stack = &yyptr->Stack_alloc;					\
+	YYCOPY (&yyptr->Stack, Stack, yysize);				\
+	Stack = &yyptr->Stack;						\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
@@ -864,20 +849,17 @@ yy_symbol_print (yyoutput, yytype, yyvaluep)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
+yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
 #else
 static void
-yy_stack_print (yybottom, yytop)
-    yytype_int16 *yybottom;
-    yytype_int16 *yytop;
+yy_stack_print (bottom, top)
+    yytype_int16 *bottom;
+    yytype_int16 *top;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; yybottom <= yytop; yybottom++)
-    {
-      int yybot = *yybottom;
-      YYFPRINTF (stderr, " %d", yybot);
-    }
+  for (; bottom <= top; ++bottom)
+    YYFPRINTF (stderr, " %d", *bottom);
   YYFPRINTF (stderr, "\n");
 }
 
@@ -911,11 +893,11 @@ yy_reduce_print (yyvsp, yyrule)
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
+      fprintf (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
 		       		       );
-      YYFPRINTF (stderr, "\n");
+      fprintf (stderr, "\n");
     }
 }
 
@@ -1195,8 +1177,10 @@ yydestruct (yymsg, yytype, yyvaluep)
 	break;
     }
 }
+
 
 /* Prevent warnings from -Wmissing-prototypes.  */
+
 #ifdef YYPARSE_PARAM
 #if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
@@ -1212,10 +1196,11 @@ int yyparse ();
 #endif /* ! YYPARSE_PARAM */
 
 
-/* The lookahead symbol.  */
+
+/* The look-ahead symbol.  */
 int yychar;
 
-/* The semantic value of the lookahead symbol.  */
+/* The semantic value of the look-ahead symbol.  */
 YYSTYPE yylval;
 
 /* Number of syntax errors so far.  */
@@ -1223,9 +1208,9 @@ int yynerrs;
 
 
 
-/*-------------------------.
-| yyparse or yypush_parse.  |
-`-------------------------*/
+/*----------.
+| yyparse.  |
+`----------*/
 
 #ifdef YYPARSE_PARAM
 #if (defined __STDC__ || defined __C99__FUNC__ \
@@ -1249,39 +1234,14 @@ yyparse ()
 #endif
 #endif
 {
-
-
-    int yystate;
-    /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
-
-    /* The stacks and their tools:
-       `yyss': related to states.
-       `yyvs': related to semantic values.
-
-       Refer to the stacks thru separate pointers, to allow yyoverflow
-       to reallocate them elsewhere.  */
-
-    /* The state stack.  */
-    yytype_int16 yyssa[YYINITDEPTH];
-    yytype_int16 *yyss;
-    yytype_int16 *yyssp;
-
-    /* The semantic value stack.  */
-    YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
-
-    YYSIZE_T yystacksize;
-
+  
+  int yystate;
   int yyn;
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken;
-  /* The variables used to return semantic value and location from the
-     action routines.  */
-  YYSTYPE yyval;
-
+  /* Number of tokens to shift before error messages enabled.  */
+  int yyerrstatus;
+  /* Look-ahead token as an internal (translated) token number.  */
+  int yytoken = 0;
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
@@ -1289,28 +1249,51 @@ yyparse ()
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
+  /* Three stacks and their tools:
+     `yyss': related to states,
+     `yyvs': related to semantic values,
+     `yyls': related to locations.
+
+     Refer to the stacks thru separate pointers, to allow yyoverflow
+     to reallocate them elsewhere.  */
+
+  /* The state stack.  */
+  yytype_int16 yyssa[YYINITDEPTH];
+  yytype_int16 *yyss = yyssa;
+  yytype_int16 *yyssp;
+
+  /* The semantic value stack.  */
+  YYSTYPE yyvsa[YYINITDEPTH];
+  YYSTYPE *yyvs = yyvsa;
+  YYSTYPE *yyvsp;
+
+
+
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
+
+  YYSIZE_T yystacksize = YYINITDEPTH;
+
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE yyval;
+
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
-
-  yytoken = 0;
-  yyss = yyssa;
-  yyvs = yyvsa;
-  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY; /* Cause a token to be read.  */
+  yychar = YYEMPTY;		/* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
+
   yyssp = yyss;
   yyvsp = yyvs;
 
@@ -1340,6 +1323,7 @@ yyparse ()
 	YYSTYPE *yyvs1 = yyvs;
 	yytype_int16 *yyss1 = yyss;
 
+
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
@@ -1347,6 +1331,7 @@ yyparse ()
 	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
+
 		    &yystacksize);
 
 	yyss = yyss1;
@@ -1369,8 +1354,9 @@ yyparse ()
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
 	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss_alloc, yyss);
-	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
+	YYSTACK_RELOCATE (yyss);
+	YYSTACK_RELOCATE (yyvs);
+
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -1381,6 +1367,7 @@ yyparse ()
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
+
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
 
@@ -1390,9 +1377,6 @@ yyparse ()
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
-  if (yystate == YYFINAL)
-    YYACCEPT;
-
   goto yybackup;
 
 /*-----------.
@@ -1401,16 +1385,16 @@ yyparse ()
 yybackup:
 
   /* Do appropriate processing given the current state.  Read a
-     lookahead token if we need one and don't already have one.  */
+     look-ahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to lookahead token.  */
+  /* First try to decide what to do without reference to look-ahead token.  */
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a lookahead token if don't already have one.  */
+  /* Not known => get a look-ahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -1442,16 +1426,20 @@ yybackup:
       goto yyreduce;
     }
 
+  if (yyn == YYFINAL)
+    YYACCEPT;
+
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the lookahead token.  */
+  /* Shift the look-ahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
 
-  /* Discard the shifted token.  */
-  yychar = YYEMPTY;
+  /* Discard the shifted token unless it is eof.  */
+  if (yychar != YYEOF)
+    yychar = YYEMPTY;
 
   yystate = yyn;
   *++yyvsp = yylval;
@@ -1491,8 +1479,6 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-
-/* Line 1455 of yacc.c  */
 #line 58 "mapparser.y"
     { 
 			    msyyresult = (yyvsp[(1) - (1)].intval); 
@@ -1500,8 +1486,6 @@ yyreduce:
     break;
 
   case 4:
-
-/* Line 1455 of yacc.c  */
 #line 61 "mapparser.y"
     {
 			    if((yyvsp[(1) - (1)].dblval) != 0)
@@ -1512,8 +1496,6 @@ yyreduce:
     break;
 
   case 6:
-
-/* Line 1455 of yacc.c  */
 #line 72 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].intval) == MS_TRUE)
@@ -1526,8 +1508,6 @@ yyreduce:
     break;
 
   case 7:
-
-/* Line 1455 of yacc.c  */
 #line 80 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].intval) == MS_TRUE) {
@@ -1541,8 +1521,6 @@ yyreduce:
     break;
 
   case 8:
-
-/* Line 1455 of yacc.c  */
 #line 89 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].intval) == MS_TRUE)
@@ -1555,8 +1533,6 @@ yyreduce:
     break;
 
   case 9:
-
-/* Line 1455 of yacc.c  */
 #line 97 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].intval) == MS_TRUE) {
@@ -1570,8 +1546,6 @@ yyreduce:
     break;
 
   case 10:
-
-/* Line 1455 of yacc.c  */
 #line 106 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].dblval) != 0)
@@ -1584,8 +1558,6 @@ yyreduce:
     break;
 
   case 11:
-
-/* Line 1455 of yacc.c  */
 #line 114 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].dblval) != 0) {
@@ -1599,8 +1571,6 @@ yyreduce:
     break;
 
   case 12:
-
-/* Line 1455 of yacc.c  */
 #line 123 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].dblval) != 0)
@@ -1613,8 +1583,6 @@ yyreduce:
     break;
 
   case 13:
-
-/* Line 1455 of yacc.c  */
 #line 131 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].dblval) != 0) {
@@ -1628,22 +1596,16 @@ yyreduce:
     break;
 
   case 14:
-
-/* Line 1455 of yacc.c  */
 #line 140 "mapparser.y"
     { (yyval.intval) = !(yyvsp[(2) - (2)].intval); }
     break;
 
   case 15:
-
-/* Line 1455 of yacc.c  */
 #line 141 "mapparser.y"
     { (yyval.intval) = !(yyvsp[(2) - (2)].dblval); }
     break;
 
   case 16:
-
-/* Line 1455 of yacc.c  */
 #line 142 "mapparser.y"
     {
                                          ms_regex_t re;
@@ -1661,8 +1623,6 @@ yyreduce:
     break;
 
   case 17:
-
-/* Line 1455 of yacc.c  */
 #line 155 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].dblval) == (yyvsp[(3) - (3)].dblval))
@@ -1673,8 +1633,6 @@ yyreduce:
     break;
 
   case 18:
-
-/* Line 1455 of yacc.c  */
 #line 161 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].dblval) != (yyvsp[(3) - (3)].dblval))
@@ -1685,8 +1643,6 @@ yyreduce:
     break;
 
   case 19:
-
-/* Line 1455 of yacc.c  */
 #line 167 "mapparser.y"
     {	                                 
 	                                 if((yyvsp[(1) - (3)].dblval) > (yyvsp[(3) - (3)].dblval))
@@ -1697,8 +1653,6 @@ yyreduce:
     break;
 
   case 20:
-
-/* Line 1455 of yacc.c  */
 #line 173 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].dblval) < (yyvsp[(3) - (3)].dblval))
@@ -1709,8 +1663,6 @@ yyreduce:
     break;
 
   case 21:
-
-/* Line 1455 of yacc.c  */
 #line 179 "mapparser.y"
     {	                                 
 	                                 if((yyvsp[(1) - (3)].dblval) >= (yyvsp[(3) - (3)].dblval))
@@ -1721,8 +1673,6 @@ yyreduce:
     break;
 
   case 22:
-
-/* Line 1455 of yacc.c  */
 #line 185 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].dblval) <= (yyvsp[(3) - (3)].dblval))
@@ -1733,100 +1683,84 @@ yyreduce:
     break;
 
   case 23:
-
-/* Line 1455 of yacc.c  */
 #line 191 "mapparser.y"
     { (yyval.intval) = (yyvsp[(2) - (3)].intval); }
     break;
 
   case 24:
-
-/* Line 1455 of yacc.c  */
 #line 192 "mapparser.y"
     {
                                          if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) == 0)
 					   (yyval.intval) = MS_TRUE;
 					 else
 					   (yyval.intval) = MS_FALSE;
-					 free((yyvsp[(1) - (3)].strval));
-					 free((yyvsp[(3) - (3)].strval));
+					   free((yyvsp[(1) - (3)].strval));
+					   free((yyvsp[(3) - (3)].strval));
 				       }
     break;
 
   case 25:
-
-/* Line 1455 of yacc.c  */
 #line 200 "mapparser.y"
     {
                                          if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) != 0)
 					   (yyval.intval) = MS_TRUE;
 					 else
 					   (yyval.intval) = MS_FALSE;
-					 free((yyvsp[(1) - (3)].strval));
-					 free((yyvsp[(3) - (3)].strval));
+					   free((yyvsp[(1) - (3)].strval));
+					   free((yyvsp[(3) - (3)].strval));
 				       }
     break;
 
   case 26:
-
-/* Line 1455 of yacc.c  */
 #line 208 "mapparser.y"
     {
                                          if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) > 0)
 					   (yyval.intval) = MS_TRUE;
 					 else
 					   (yyval.intval) = MS_FALSE;
-					 /* printf("Not freeing: %s >= %s\n",$1, $3); */
-					 free((yyvsp[(1) - (3)].strval));
-					 free((yyvsp[(3) - (3)].strval));
+					   /* printf("Not freeing: %s >= %s\n",$1, $3); */
+					   free((yyvsp[(1) - (3)].strval));
+					   free((yyvsp[(3) - (3)].strval));
                                        }
     break;
 
   case 27:
-
-/* Line 1455 of yacc.c  */
 #line 217 "mapparser.y"
     {
                                          if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) < 0)
 					   (yyval.intval) = MS_TRUE;
 					 else
 					   (yyval.intval) = MS_FALSE;
-					 free((yyvsp[(1) - (3)].strval));
-					 free((yyvsp[(3) - (3)].strval));
+					   free((yyvsp[(1) - (3)].strval));
+					   free((yyvsp[(3) - (3)].strval));
                                        }
     break;
 
   case 28:
-
-/* Line 1455 of yacc.c  */
 #line 225 "mapparser.y"
     {
                                          if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) >= 0)
 					   (yyval.intval) = MS_TRUE;
 					 else
 					   (yyval.intval) = MS_FALSE;
-					 free((yyvsp[(1) - (3)].strval));
-					 free((yyvsp[(3) - (3)].strval));
+					   free((yyvsp[(1) - (3)].strval));
+					   free((yyvsp[(3) - (3)].strval));
                                        }
     break;
 
   case 29:
-
-/* Line 1455 of yacc.c  */
 #line 233 "mapparser.y"
     {
                                          if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) <= 0)
 					   (yyval.intval) = MS_TRUE;
 					 else
 					   (yyval.intval) = MS_FALSE;
-					 free((yyvsp[(1) - (3)].strval));
-					 free((yyvsp[(3) - (3)].strval));
+					   free((yyvsp[(1) - (3)].strval));
+					   free((yyvsp[(3) - (3)].strval));
                                        }
     break;
 
   case 30:
-
-/* Line 1455 of yacc.c  */
 #line 241 "mapparser.y"
     {
                                      if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) == 0)
@@ -1837,8 +1771,6 @@ yyreduce:
     break;
 
   case 31:
-
-/* Line 1455 of yacc.c  */
 #line 247 "mapparser.y"
     {
                                      if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) != 0)
@@ -1849,8 +1781,6 @@ yyreduce:
     break;
 
   case 32:
-
-/* Line 1455 of yacc.c  */
 #line 253 "mapparser.y"
     {
                                      if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) > 0)
@@ -1861,8 +1791,6 @@ yyreduce:
     break;
 
   case 33:
-
-/* Line 1455 of yacc.c  */
 #line 259 "mapparser.y"
     {
                                      if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) < 0)
@@ -1873,8 +1801,6 @@ yyreduce:
     break;
 
   case 34:
-
-/* Line 1455 of yacc.c  */
 #line 265 "mapparser.y"
     {
                                      if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) >= 0)
@@ -1885,8 +1811,6 @@ yyreduce:
     break;
 
   case 35:
-
-/* Line 1455 of yacc.c  */
 #line 271 "mapparser.y"
     {
                                      if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) <= 0)
@@ -1897,8 +1821,6 @@ yyreduce:
     break;
 
   case 36:
-
-/* Line 1455 of yacc.c  */
 #line 277 "mapparser.y"
     {
 					 char *delim,*bufferp;
@@ -1918,14 +1840,12 @@ yyreduce:
 
 					 if(strcmp((yyvsp[(1) - (3)].strval),bufferp) == 0) // is this test necessary?
 					   (yyval.intval) = MS_TRUE;
-					 free((yyvsp[(1) - (3)].strval));
-					 free((yyvsp[(3) - (3)].strval));
+					   free((yyvsp[(1) - (3)].strval));
+					   free((yyvsp[(3) - (3)].strval));
 				       }
     break;
 
   case 37:
-
-/* Line 1455 of yacc.c  */
 #line 298 "mapparser.y"
     {
 					 char *delim,*bufferp;
@@ -1946,13 +1866,11 @@ yyreduce:
 					 if((yyvsp[(1) - (3)].dblval) == atof(bufferp)) // is this test necessary?
 					   (yyval.intval) = MS_TRUE;
 					   
-					 free((yyvsp[(3) - (3)].strval));
+					   free((yyvsp[(3) - (3)].strval));
 				       }
     break;
 
   case 38:
-
-/* Line 1455 of yacc.c  */
 #line 319 "mapparser.y"
     {
 	                                 if((yyvsp[(1) - (3)].dblval) == (yyvsp[(3) - (3)].dblval))
@@ -1963,22 +1881,18 @@ yyreduce:
     break;
 
   case 39:
-
-/* Line 1455 of yacc.c  */
 #line 325 "mapparser.y"
     {
                                          if(strcasecmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) == 0)
 					   (yyval.intval) = MS_TRUE;
 					 else
 					   (yyval.intval) = MS_FALSE;
-					 free((yyvsp[(1) - (3)].strval));
-					 free((yyvsp[(3) - (3)].strval));
+					   free((yyvsp[(1) - (3)].strval));
+					   free((yyvsp[(3) - (3)].strval));
 				       }
     break;
 
   case 40:
-
-/* Line 1455 of yacc.c  */
 #line 333 "mapparser.y"
     {
                                      if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) == 0)
@@ -1989,36 +1903,26 @@ yyreduce:
     break;
 
   case 42:
-
-/* Line 1455 of yacc.c  */
 #line 342 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(1) - (3)].dblval) + (yyvsp[(3) - (3)].dblval); }
     break;
 
   case 43:
-
-/* Line 1455 of yacc.c  */
 #line 343 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(1) - (3)].dblval) - (yyvsp[(3) - (3)].dblval); }
     break;
 
   case 44:
-
-/* Line 1455 of yacc.c  */
 #line 344 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(1) - (3)].dblval) * (yyvsp[(3) - (3)].dblval); }
     break;
 
   case 45:
-
-/* Line 1455 of yacc.c  */
 #line 345 "mapparser.y"
     { (yyval.dblval) = (int)(yyvsp[(1) - (3)].dblval) % (int)(yyvsp[(3) - (3)].dblval); }
     break;
 
   case 46:
-
-/* Line 1455 of yacc.c  */
 #line 346 "mapparser.y"
     {
 	         if((yyvsp[(3) - (3)].dblval) == 0.0) {
@@ -2030,58 +1934,43 @@ yyreduce:
     break;
 
   case 47:
-
-/* Line 1455 of yacc.c  */
 #line 353 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(2) - (2)].dblval); }
     break;
 
   case 48:
-
-/* Line 1455 of yacc.c  */
 #line 354 "mapparser.y"
     { (yyval.dblval) = pow((yyvsp[(1) - (3)].dblval), (yyvsp[(3) - (3)].dblval)); }
     break;
 
   case 49:
-
-/* Line 1455 of yacc.c  */
 #line 355 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(2) - (3)].dblval); }
     break;
 
   case 50:
-
-/* Line 1455 of yacc.c  */
 #line 356 "mapparser.y"
     { (yyval.dblval) = strlen((yyvsp[(3) - (4)].strval)); }
     break;
 
   case 52:
-
-/* Line 1455 of yacc.c  */
 #line 360 "mapparser.y"
     { (yyval.strval) = (yyvsp[(2) - (3)].strval); free((yyvsp[(2) - (3)].strval)); }
     break;
 
   case 53:
-
-/* Line 1455 of yacc.c  */
 #line 361 "mapparser.y"
     { sprintf((yyval.strval), "%s%s", (yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)); free((yyvsp[(1) - (3)].strval)); free((yyvsp[(3) - (3)].strval)); }
     break;
 
   case 55:
-
-/* Line 1455 of yacc.c  */
 #line 365 "mapparser.y"
     { (yyval.tmval) = (yyvsp[(2) - (3)].tmval); }
     break;
 
 
-
-/* Line 1455 of yacc.c  */
-#line 2085 "mapparser.c"
+/* Line 1267 of yacc.c.  */
+#line 1974 "mapparser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2091,6 +1980,7 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
+
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -2156,7 +2046,7 @@ yyerrlab:
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse lookahead token after an
+      /* If just tried and failed to reuse look-ahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
@@ -2173,7 +2063,7 @@ yyerrlab:
 	}
     }
 
-  /* Else will try to reuse lookahead token after shifting the error
+  /* Else will try to reuse look-ahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -2230,6 +2120,9 @@ yyerrlab1:
       YY_STACK_PRINT (yyss, yyssp);
     }
 
+  if (yyn == YYFINAL)
+    YYACCEPT;
+
   *++yyvsp = yylval;
 
 
@@ -2254,7 +2147,7 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#if !defined(yyoverflow) || YYERROR_VERBOSE
+#ifndef yyoverflow
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
@@ -2265,7 +2158,7 @@ yyexhaustedlab:
 #endif
 
 yyreturn:
-  if (yychar != YYEMPTY)
+  if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
 		 yytoken, &yylval);
   /* Do not reclaim the symbols of the rule which action triggered
@@ -2291,8 +2184,6 @@ yyreturn:
 }
 
 
-
-/* Line 1675 of yacc.c  */
 #line 368 "mapparser.y"
 
 
