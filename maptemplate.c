@@ -1832,6 +1832,8 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   int centroid;
   int precision;
 
+  double scale_x, scale_y;
+
   double buffer;
   int bufferUnits;
 
@@ -1866,6 +1868,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
     centroid = MS_FALSE;
     precision = 0;
+    scale_x = scale_y = 1.0;
 
     buffer = 0;
     bufferUnits = -1;
@@ -1910,6 +1913,18 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
       argValue = msLookupHashTable(tagArgs, "precision");
       if(argValue) precision = atoi(argValue);
+
+      argValue = msLookupHashTable(tagArgs, "scale");
+      if(argValue) { 
+        scale_x = atof(argValue);
+        scale_y = scale_x;
+      }
+
+      argValue = msLookupHashTable(tagArgs, "scale_x");
+      if(argValue) scale_x = atof(argValue);
+
+      argValue = msLookupHashTable(tagArgs, "scale_y");
+      if(argValue) scale_y = atof(argValue);
 
       argValue = msLookupHashTable(tagArgs, "centroid");
       if(argValue) 
@@ -2026,11 +2041,11 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
       if(strlen(ph) > 0) coords = msStringConcatenate(coords, ph);
       for(j=0; j<tShape.line[i].numpoints-1; j++) {
-        snprintf(point, 128, pointFormat1, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
-        coords = msStringConcatenate(coords, point);  
+        snprintf(point, 128, pointFormat1, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
+        coords = msStringConcatenate(coords, point);
       }
-      snprintf(point, 128, pointFormat2, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
-      coords = msStringConcatenate(coords, point);  
+      snprintf(point, 128, pointFormat2, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
+      coords = msStringConcatenate(coords, point);
       if(strlen(pf) > 0) coords = msStringConcatenate(coords, pf);
       if((i < tShape.numlines-1) && (strlen(ps) > 0)) coords = msStringConcatenate(coords, ps);
     }
