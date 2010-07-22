@@ -187,12 +187,16 @@ void msShapeDeleteLine( shapeObj *shape, int line )
 void msComputeBounds(shapeObj *shape)
 {
   int i, j;
-
   if(shape->numlines <= 0) return;
-  if(shape->line[0].numpoints <= 0) return;
-
-  shape->bounds.minx = shape->bounds.maxx = shape->line[0].point[0].x;
-  shape->bounds.miny = shape->bounds.maxy = shape->line[0].point[0].y;
+  for(i=0;i<shape->numlines;i++) {
+     if(shape->line[i].numpoints > 0) {
+        shape->bounds.minx = shape->bounds.maxx = shape->line[i].point[0].x;
+        shape->bounds.miny = shape->bounds.maxy = shape->line[i].point[0].y;
+        break;
+     }
+  }
+  if(i == shape->numlines)
+     return; //no lines inside the shape contain any points 
     
   for( i=0; i<shape->numlines; i++ ) {
     for( j=0; j<shape->line[i].numpoints; j++ ) {

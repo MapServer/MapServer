@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- Fix computation of shape bounds when the first line contains no points
+  (#3119)(fixes #3383)
 
 - Allow map relative specification in the PROJ_LIB config item (#3094)
 
