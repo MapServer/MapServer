@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
+- Fix computation of shape bounds when the first line contains no points
+  (#3119)(fixes #3383)
 
 - Disabled some insecure (and potentially exploitable) mapserv command-line
   debug arguments (#3485). The --enable-cgi-cl-debug-args configure switch
