@@ -1608,16 +1608,27 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
     return msMSSQL2008LayerInitItemInfo(layer);
 }
 
-/* Dont know if this function actually called */
-/* So just return some large area for now*/
+/* Get the layer extent as specified in the mapfile or a largest area */
+/* covering all features */
 int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
 {
     if(layer->debug) {
         msDebug("msMSSQL2008LayerGetExtent called\n");
     }
 
-    extent->minx = extent->miny = -1000000;
-    extent->maxx = extent->maxy = 1000000;
+    if (layer->extent.minx == -1.0 && layer->extent.miny == -1.0 &&
+        layer->extent.maxx == -1.0 && layer->extent.maxy == -1.0)
+    {
+        extent->minx = extent->miny = -1.0 * FLT_MAX;
+        extent->maxx = extent->maxy = FLT_MAX;
+    }
+    else
+    {
+        extent->minx = layer->extent.minx;
+        extent->miny = layer->extent.miny;
+        extent->maxx = layer->extent.maxx;
+        extent->maxy = layer->extent.maxy;
+    }
 
     return MS_SUCCESS;
 }

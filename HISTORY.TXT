@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
+- Fixed MSSQL2008 driver returning invalid extent (#3498)
 
 - Backport the recent fixes in the MSSQL2008 driver (#3058, #3244)
 
