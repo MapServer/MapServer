@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
+
+- Backport the recent fixes in the MSSQL2008 driver (#3058, #3244)
+
 - Fix computation of shape bounds when the first line contains no points
   (#3119)(fixes #3383)
 
