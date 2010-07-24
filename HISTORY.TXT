@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- Fixed MSSQL2008 driver returning invalid extent (#3498)
+
 - Added coordinate scaling to shpxy tag via parameters scale, scale_x or scale_y.
 
 - Fix computation of shape bounds when the first line contains no points
