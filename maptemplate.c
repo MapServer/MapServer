@@ -1271,10 +1271,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     msFree(tagValue); tagValue=NULL;
     msFree(encodedTagValue); encodedTagValue=NULL;
 
-    if((*line)[tagOffset] != '\0')
-      tagStart = findTag(*line+tagOffset+1, "item");
-    else
-      tagStart = NULL;
+    tagStart = findTag(*line, "item");
   }
 
   return(MS_SUCCESS);
