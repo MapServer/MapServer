@@ -374,22 +374,22 @@ shptreevis: $(LIBMAP_STATIC) shptreevis.o mapserver.h
 shptreetst: $(LIBMAP_STATIC) shptreetst.o mapserver.h
 	$(LD) $(CFLAGS) shptreetst.o $(EXE_LDFLAGS) -o shptreetst
 
-sortshp: sortshp.o
+sortshp: $(LIBMAP_STATIC) sortshp.o mapserver.h
 	$(LD) $(CFLAGS) sortshp.o $(EXE_LDFLAGS) -o sortshp
 
-tile4ms: tile4ms.o
+tile4ms: $(LIBMAP_STATIC) tile4ms.o mapserver.h
 	$(LD) $(CFLAGS) tile4ms.o $(EXE_LDFLAGS) -o tile4ms
 
 msencrypt: $(LIBMAP_STATIC) msencrypt.o mapserver.h
 	$(LD) $(CFLAGS) msencrypt.o $(EXE_LDFLAGS) -o msencrypt
 
-testexpr: testexpr.o mapparser.o maplexer.o
+testexpr: $(LIBMAP_STATIC) testexpr.o mapparser.o maplexer.o mapserver.h
 	$(LD) $(CFLAGS) testexpr.o $(EXE_LDFLAGS) -o testexpr
 
 testcopy: $(LIBMAP_STATIC) testcopy.o mapcopy.o mapserver.h
 	$(LD) $(CFLAGS) testcopy.o $(EXE_LDFLAGS) -o testcopy
 
-test_mapcrypto: $(LIBMAP_STATIC) mapcrypto.c
+test_mapcrypto: $(LIBMAP_STATIC) mapcrypto.c mapserver.h
 	$(CC) $(CFLAGS) mapcrypto.c -DTEST_MAPCRYPTO $(EXE_LDFLAGS) -o test_mapcrypto
 
 mapscriptvars:	Makefile
