@@ -1790,7 +1790,7 @@ int main(int argc, char *argv[]) {
           break;
         case INDEXQUERY:
         case INDEXQUERYMAP:
-          mapserv->map->query.type = MS_QUERY_BY_POINT;
+          mapserv->map->query.type = MS_QUERY_BY_INDEX;
           mapserv->map->query.mode = MS_QUERY_SINGLE;
           mapserv->map->query.layer = QueryLayerIndex;
           mapserv->map->query.shapeindex = ShapeIndex;
