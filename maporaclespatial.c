@@ -2029,7 +2029,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     /*we add the uniqueid if it was not part of the current item list*/
     if(existunique == MS_FALSE && rownumisuniquekey == MS_FALSE)
-      sprintf( query_str + strlen(query_str), "%s", unique);
+      sprintf( query_str + strlen(query_str), "%s,", unique);
 
     /*we always want to add rownum is the selection to allow paging to work*/
     sprintf( query_str + strlen(query_str), "%s, ", "rownum");
@@ -2305,7 +2305,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
     return MS_SUCCESS;
 }
 
-int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int pkey, long record )
+int msOracleSpatialLayerResultGetShape( layerObj *layer, shapeObj *shape, int record, long pkey)
 {
     int success, i;
     long buffer_first_row_num, buffer_last_row_num;
