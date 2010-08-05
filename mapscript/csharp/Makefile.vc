@@ -48,7 +48,7 @@ CSC = csc $(CSDEBUG)
 !ENDIF
 
 !IF $(MSVC_VER) >= 1600
-CSC = $(CSC) /define:CLR4 /debug:full
+CSC = $(CSC) /define:CLR4
 !ENDIF
 
 #SWIG = swig
