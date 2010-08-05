@@ -1496,7 +1496,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                               if (strcasecmp(tokens[y], lp->items[z]) == 0)
                                 break;
                           }
-                          if (z == lp->numitems)
+                          /*we need to check of the property name is the geometry name; In that case it
+                            is a valid property name*/
+                          if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL) 
+                            sprintf(szTmp, "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
+                          else
+                            sprintf(szTmp, OWS_GML_DEFAULT_GEOMETRY_NAME);
+                          if (z == lp->numitems && strcasecmp(tokens[y], szTmp) != 0)
                           {
                               msSetError(MS_WFSERR, 
                                          "Invalid PROPERTYNAME %s",  "msWFSGetFeature()", tokens[y]);
@@ -2682,7 +2688,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
           wfsparams->pszRequest = "GetFeature";
         else if (strcasecmp((char *)rootnode->name, "DescribeFeatureType") == 0)
           wfsparams->pszRequest = "DescribeFeatureType";
-        
+
         if (wfsparams->pszRequest == NULL)
         {
           /* Unsupported WFS request */
