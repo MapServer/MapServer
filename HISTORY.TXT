@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- Ensure the class is not marked BeforeFieldInit causing memory corruption with C#/CLR4 (#3438)
+
 - Fixed MSSQL2008 driver returning invalid extent (#3498)
 
 - Added coordinate scaling to shpxy tag via parameters scale, scale_x or scale_y.
