@@ -59,6 +59,13 @@ extra_compile_args = []
 #extra_compile_args = ['-g', '-arch', 'i386', '-isysroot','/']
 
 
+save_init_posix = sysconfig._init_posix
+def ms_init_posix():
+    save_init_posix()
+    if 'LDCXXSHARED' in sysconfig._config_vars:
+        sysconfig._config_vars['LDSHARED'] = sysconfig._config_vars['LDCXXSHARED']
+sysconfig._init_posix = ms_init_posix
+
 
 
 def read_mapscriptvars():
