@@ -1351,6 +1351,7 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     const char *fullFname;
     char tmpId[128]; /* big enough for time + pid + ext */
     const char *tmpBase = NULL;
+    int tmpFnameBufsize;
 
     if( ForcedTmpBase != NULL )
     {
@@ -1359,15 +1360,16 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     else 
     {
         /* We'll use tmpId and tmpCount to generate unique filenames */
-        sprintf(tmpId, "%lx_%x",(long)time(NULL),(int)getpid());
+        snprintf(tmpId, sizeof(tmpId), "%lx_%x",(long)time(NULL),(int)getpid());
         tmpBase = tmpId;
     }
 
     if (ext == NULL)  ext = "";
-    tmpFname = (char*)malloc(strlen(tmpBase) + 10  + strlen(ext) + 1);
+    tmpFnameBufsize = strlen(tmpBase) + 10  + strlen(ext) + 1;
+    tmpFname = (char*)malloc(tmpFnameBufsize);
 
     msAcquireLock( TLOCK_TMPFILE );
-    sprintf(tmpFname, "%s_%x.%s", tmpBase, tmpCount++, ext);
+    snprintf(tmpFname, tmpFnameBufsize, "%s_%x.%s", tmpBase, tmpCount++, ext);
     msReleaseLock( TLOCK_TMPFILE );
 
     fullFname = msBuildPath3(szPath, mappath, tmppath, tmpFname);
