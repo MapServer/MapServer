@@ -5198,9 +5198,16 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
         {
             int len = strlen(pszFinalAttributeValue);
             msStringTrimBlanks(pszFinalAttributeValue);
-            if (pszFinalAttributeValue[0] == '/' &&  pszFinalAttributeValue[len-1] == '/')
+            if (pszFinalAttributeValue[0] == '/' &&  
+                (pszFinalAttributeValue[len-1] == '/' ||
+                 (pszFinalAttributeValue[len-1] == 'i' && 
+                  pszFinalAttributeValue[len-2] == '/')))
             {
-                pszFinalAttributeValue[len-1] = '\0';
+                if (pszFinalAttributeValue[len-1] == '/')
+                  pszFinalAttributeValue[len-1] = '\0';
+                else
+                  pszFinalAttributeValue[len-2] = '\0';
+
                 memmove(pszFinalAttributeValue, pszFinalAttributeValue +
                         ((pszFinalAttributeValue[1] == '^') ? 2 : 1), len-1);
 

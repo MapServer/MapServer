@@ -3601,7 +3601,8 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
         }
     }   
     szTmp[iTmp] = '/';
-    if (bCaseInsensitive == 1)
+    /*disable it fot now since things like [NAME]" =~ /^Sydney/i do not work #3521 */
+    if (0)/*bCaseInsensitive == 1)*/
     {
       szTmp[++iTmp] = 'i';
     } 
