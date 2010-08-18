@@ -159,7 +159,17 @@ int msWFSLocateSRSInList(const char *pszList, const char *srs)
     if (strncasecmp(srs, "EPSG:",5) == 0)
       code = srs+5;
     else if (strncasecmp(srs, "urn:ogc:def:crs:EPSG:",21) == 0)
-      code = srs+21;
+    {
+        if (srs[21] == ':')
+          code = srs+21;
+        else
+          code = srs+20;
+
+         while( *code != ':' && *code != '\0')
+           code++;
+         if( *code == ':' )
+           code++;
+    }
     else if (strncasecmp(srs, "urn:EPSG:geographicCRS:",23) == 0)
       code = srs + 23;
     else

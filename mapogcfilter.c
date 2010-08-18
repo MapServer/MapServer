@@ -3983,6 +3983,16 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
             }
         }
     }
+    if (bValid && ppszSRS)
+    {
+        projectionObj sProjTmp;
+        msInitProjection(&sProjTmp);
+        if (msLoadProjectionStringEPSG(&sProjTmp, *ppszSRS) == 0)
+        {
+            msAxisNormalizePoints( &sProjTmp, 1, &psBbox->minx, &psBbox->miny);
+            msAxisNormalizePoints( &sProjTmp, 1, &psBbox->maxx, &psBbox->maxy);
+        }
+    }
     return bValid;
 }
 
