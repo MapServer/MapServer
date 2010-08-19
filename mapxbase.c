@@ -37,7 +37,7 @@
 MS_CVSID("$Id$")
 
 /* try to use a large file version of fseek for files up to 4GB (#3514) */
-#ifdef _MSC_VER
+#if _MSC_VER > 1310
 #  define safe_fseek _fseeki64
 #elif defined(fseeko)
 #  define safe_fseek fseeko
