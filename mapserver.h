@@ -62,8 +62,12 @@
 #endif
 
 #ifndef DISABLE_CVSID
+#if defined(__GNUC__) && __GNUC__ >= 4
+#  define MS_CVSID(string)     static char ms_cvsid[] __attribute__((used)) = string;
+#else
 #  define MS_CVSID(string)     static char ms_cvsid[] = string; \
-static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid ); }
+static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid ); }
+#endif
 #else
 #  define MS_CVSID(string)
 #endif
