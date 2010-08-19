@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- Support reading .dbf files between 2GB and 4GB (#3514)
+
 - Avoid warnings about ms_cvsid being unused with gcc. 
 
 - Ensure the class is not marked BeforeFieldInit causing memory corruption with C#/CLR4 (#3438)

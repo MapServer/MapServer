@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  .dbf access API.  Derived from shapelib, and relicensed with 
@@ -28,11 +28,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define _FILE_OFFSET_BITS 64
+
 #include "mapserver.h"
 #include <stdlib.h> /* for atof() and atoi() */
 #include <math.h>
 
 MS_CVSID("$Id$")
+
+/* try to use a large file version of fseek for files up to 4GB (#3514) */
+#ifdef _MSC_VER
+#  define safe_fseek _fseeki64
+#elif defined(fseeko)
+#  define safe_fseek fseeko
+#else
+#  define safe_fseek fseek
+#endif
 
 /************************************************************************/
 /*                             SfRealloc()                              */
@@ -112,7 +123,7 @@ static void writeHeader(DBFHandle psDBF)
 static void flushRecord( DBFHandle psDBF )
 
 {
-    int		nRecordOffset;
+    unsigned int nRecordOffset;
 
     if( psDBF->bCurrentRecordModified && psDBF->nCurrentRecord > -1 )
     {
@@ -121,7 +132,7 @@ static void flushRecord( DBFHandle psDBF )
 	nRecordOffset = psDBF->nRecordLength * psDBF->nCurrentRecord 
 	                                             + psDBF->nHeaderLength;
 
-	fseek( psDBF->fp, nRecordOffset, 0 );
+	safe_fseek( psDBF->fp, nRecordOffset, 0 );
 	fwrite( psDBF->pszCurrentRecord, psDBF->nRecordLength, 1, psDBF->fp );
     }
 }
@@ -487,10 +498,11 @@ int DBFIsValueNULL( const char* pszValue, char type )
 static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
 
 {
-    int	       	nRecordOffset, i;
+    int	       	i;
+    unsigned int nRecordOffset;
     uchar	*pabyRec;
     char	*pReturnField = NULL;
-
+    
     /* -------------------------------------------------------------------- */
     /*	Is the request valid?                  				    */
     /* -------------------------------------------------------------------- */
@@ -515,7 +527,7 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
 
 	nRecordOffset = psDBF->nRecordLength * hEntity + psDBF->nHeaderLength;
 
-	fseek( psDBF->fp, nRecordOffset, 0 );
+	safe_fseek( psDBF->fp, nRecordOffset, 0 );
 	fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 1, psDBF->fp );
 
 	psDBF->nCurrentRecord = hEntity;
@@ -672,7 +684,8 @@ DBFFieldType msDBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName
 /************************************************************************/
 static int msDBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * pValue )
 {
-  int	       	nRecordOffset, i, j;
+  unsigned int	       	nRecordOffset;
+  int  i, j;
   uchar	*pabyRec;
   char	szSField[40], szFormat[12];
   
@@ -709,7 +722,7 @@ static int msDBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * 
       
       nRecordOffset = psDBF->nRecordLength * hEntity + psDBF->nHeaderLength;
       
-      fseek( psDBF->fp, nRecordOffset, 0 );
+      safe_fseek( psDBF->fp, nRecordOffset, 0 );
       fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 1, psDBF->fp );
 
       psDBF->nCurrentRecord = hEntity;
