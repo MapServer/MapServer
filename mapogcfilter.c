@@ -3984,7 +3984,7 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
             }
         }
     }
-    if (bValid && ppszSRS)
+    if (bValid && ppszSRS && *ppszSRS)
     {
         projectionObj sProjTmp;
         msInitProjection(&sProjTmp);
