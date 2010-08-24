@@ -141,6 +141,10 @@ char path[MS_MAXPATHLEN];
                                                  BEGIN(EXPRESSION_STRING_REGEX);
                                                  return(RE); 
                                                }
+<EXPRESSION_STRING>~*                          {
+                                                 BEGIN(EXPRESSION_STRING_REGEX);
+                                                 return(IRE);
+                                               }
 <EXPRESSION_STRING>in                          { return(IN); }
 <EXPRESSION_STRING>not|!                       { return(NOT); }
 
@@ -455,7 +459,7 @@ char path[MS_MAXPATHLEN];
                                                  msyytext[strlen(msyytext)-2] = '\0';
                                                  msyylval.strval = strdup(msyytext);
                                                  BEGIN(EXPRESSION_STRING);
-                                                 return(IREGEX);
+                                                 return(REGEX);
                                                }
 
 <INITIAL,URL_STRING>\/[^\/]*\/                 {

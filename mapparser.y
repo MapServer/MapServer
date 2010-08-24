@@ -33,11 +33,10 @@ int msyyresult;
 %token <strval> ISTRING
 %token <tmval> TIME
 %token <strval> REGEX
-%token <strval> IREGEX
 %left OR
 %left AND
 %left NOT
-%left RE EQ NE LT GT LE GE IN IEQ
+%left RE EQ NE LT GT LE GE IN IEQ IRE
 %left LENGTH
 %left '+' '-'
 %left '*' '/' '%'
@@ -149,6 +148,19 @@ logical_exp:
                                   	   $$ = MS_TRUE;
 			                 else
 			                   $$ = MS_FALSE;
+
+                                         ms_regfree(&re);
+                                       }
+       | string_exp IRE regular_exp    {
+                                         ms_regex_t re;
+
+                                         if(ms_regcomp(&re, $3, MS_REG_EXTENDED|MS_REG_NOSUB|MS_REG_ICASE) != 0)
+                                           $$ = MS_FALSE;
+
+                                         if(ms_regexec(&re, $1, 0, NULL, 0) == 0)
+                                           $$ = MS_TRUE;
+                                         else
+                                           $$ = MS_FALSE;
 
                                          ms_regfree(&re);
                                        }
