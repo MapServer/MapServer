@@ -396,7 +396,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   char *pFormatBuffer;
   char cGDFormat[128];
   if (map) {
-      if( map->width != -1 && map->height != -1 )
+      if( map->width > 0 && map->height > 0 )
       {
           width = map->width;
           height = map->height;

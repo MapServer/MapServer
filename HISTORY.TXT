@@ -20,6 +20,8 @@ Current Version
 - Fix computation of shape bounds when the first line contains no points
   (#3119)(fixes #3383)
 
+- Fixed error message tiles on zero-sized map cause memory allocation errors in maperror.c. (#3524)
+
 Version 5.6.5 (2010-07-14):
 ---------------------------
 
