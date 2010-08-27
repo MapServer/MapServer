@@ -750,7 +750,7 @@ void loadForm(void)
 
       msFreeCharArray(tokens, 2);
       
-      if(mapserv->ImgCols > mapserv->map->maxsize || mapserv->ImgRows > mapserv->map->maxsize || mapserv->ImgCols < 0 || mapserv->ImgRows < 0) {
+      if(mapserv->ImgCols > mapserv->map->maxsize || mapserv->ImgRows > mapserv->map->maxsize || mapserv->ImgCols <= 0 || mapserv->ImgRows <= 0) {
         msSetError(MS_WEBERR, "Image size out of range.", "loadForm()");
         writeError();
       }
@@ -776,7 +776,7 @@ void loadForm(void)
 
       msFreeCharArray(tokens, 2);
       
-      if(mapserv->map->width > mapserv->map->maxsize || mapserv->map->height > mapserv->map->maxsize || mapserv->map->width < 0 || mapserv->map->height < 0) {
+      if(mapserv->map->width > mapserv->map->maxsize || mapserv->map->height > mapserv->map->maxsize || mapserv->map->width <= 0 || mapserv->map->height <= 0) {
         msSetError(MS_WEBERR, "Image size out of range.", "loadForm()");
         writeError();
       }
