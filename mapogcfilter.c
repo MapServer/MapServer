@@ -3551,7 +3551,11 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
     strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
     szBuffer[strlen(szBuffer)] = '\0';
 
-    sprintf(szTmp, "%s", "]\" =~ /");
+    /*#3521 */
+    if(bCaseInsensitive == 1)
+      sprintf(szTmp, "%s", "]\" ~* /");
+    else
+      sprintf(szTmp, "%s", "]\" =~ /");
     szTmp[7] = '\0';
     strcat(szBuffer, szTmp);
     szBuffer[strlen(szBuffer)] = '\0';
@@ -3601,11 +3605,6 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
         }
     }   
     szTmp[iTmp] = '/';
-    /*disable it fot now since things like [NAME]" =~ /^Sydney/i do not work #3521 */
-    if (0)/*bCaseInsensitive == 1)*/
-    {
-      szTmp[++iTmp] = 'i';
-    } 
     szTmp[++iTmp] = '\0';
     
     strcat(szBuffer, szTmp);

@@ -438,6 +438,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                                             sprintf(szTmp, "%s", "))");
                                             pszBuffer =msStringConcatenate(pszBuffer, szTmp);
                                             msLoadExpressionString(&lp->filter, pszBuffer);
+                                            for (k=0;k<lp->numclasses;k++)
+                                              freeExpression(&lp->class[k]->expression);
+                                              
                                         }
                                         msFree(pszBuffer);
                                     }
@@ -4715,7 +4718,9 @@ char *msSLDGetComparisonValue(char *pszExpression)
 
     if (strstr(pszExpression, "<=") || strstr(pszExpression, " le "))
       pszValue = strdup("PropertyIsLessThanOrEqualTo");
-     else if (strstr(pszExpression, "=~"))
+    else if (strstr(pszExpression, "=~"))
+      pszValue = strdup("PropertyIsLike");
+    else if (strstr(pszExpression, "~*"))
       pszValue = strdup("PropertyIsLike");
     else if (strstr(pszExpression, ">=") || strstr(pszExpression, " ge "))
       pszValue = strdup("PropertyIsGreaterThanOrEqualTo");
@@ -4995,8 +5000,8 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
         szCompare[1] = '~';
         szCompare[2] = '\0';
 
-        szCompare2[0] = '=';
-        szCompare2[1] = '~';
+        szCompare2[0] = '~';
+        szCompare2[1] = '*';
         szCompare2[2] = '\0';
 
         bOneCharCompare =0;
