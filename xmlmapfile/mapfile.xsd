@@ -742,7 +742,7 @@
 				<xs:element name="fontSet" type="xs:string" minOccurs="0"/>
 				<xs:element name="imageColor" type="ms:rgbColorType" minOccurs="0"/>
 				<xs:element name="imageType" type="xs:string" minOccurs="0"/>
-				<xs:element name="include" type="xs:string" minOccurs="0"/>
+				<xs:element name="include" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
 				<xs:element name="Layer" type="ms:Layer" minOccurs="0" maxOccurs="unbounded"/>
 				<xs:element name="Legend" type="ms:Legend" minOccurs="0"/>
 				<xs:element name="maxSize" type="xs:positiveInteger" minOccurs="0"/>

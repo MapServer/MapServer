@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- Fixed multiple include tags not supported in xml mapfiles (#3530)
+
 - Support reading .dbf files between 2GB and 4GB (#3514)
 
 - Avoid warnings about ms_cvsid being unused with gcc. 
