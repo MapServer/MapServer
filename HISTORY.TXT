@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version
 ---------------
+
+- Fixed multiple include tags not supported in xml mapfiles (#3530)
+
 - Ensure the class is not marked BeforeFieldInit causing memory corruption with C#/CLR4 (#3438)
 
 - Fixed MSSQL2008 driver returning invalid extent (#3498)

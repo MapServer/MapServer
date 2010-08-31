@@ -1422,11 +1422,14 @@
       <xsl:with-param name="node" select="'ms:imageType'"/>
       <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>
-    <xsl:call-template name="print">
-      <xsl:with-param name="indent" select="$indent"/>
-      <xsl:with-param name="node" select="'ms:include'"/>
-      <xsl:with-param name="quote" select="1"/>
-    </xsl:call-template>
+    <xsl:for-each select="ms:include">
+      <xsl:call-template name="print">
+        <xsl:with-param name="indent" select="$indent"/>
+        <xsl:with-param name="text">
+          <xsl:value-of select="concat('INCLUDE ','&#34;',.,'&#34;')"/>
+        </xsl:with-param>
+      </xsl:call-template>
+      </xsl:for-each>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:maxSize'"/>
