@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- shptreevis: bug truncates visualization shapefile if there are more
+  nodes in the tree than there are shapes being indexed! 
+
 - Fixed multiple include tags not supported in xml mapfiles (#3530)
 
 - Support reading .dbf files between 2GB and 4GB (#3514)

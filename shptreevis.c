@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Utility program to visualize a quadtree
@@ -167,13 +167,8 @@ int main( int argc, char ** argv )
 /*	Skim over the list of shapes, printing all the vertices.	*/
 /* -------------------------------------------------------------------- */
 
-    pos = ftell (qix->fp);
-    j = 0;
-
-    while( pos && (j < qix->nShapes) )
+    while( TRUE )
     {
-      j ++;
-
       node = readTreeNode (qix);
       if (node )
       {
@@ -230,7 +225,7 @@ int main( int argc, char ** argv )
 #endif
         }
         else 
-        { pos = 0; }
+            break;
     }
 
 #ifdef MAPSERVER   
