@@ -117,7 +117,7 @@ typedef	struct
 
     int		nRecords;
 
-    int		nRecordLength;
+    unsigned int nRecordLength;
     int		nHeaderLength;
     int		nFields;
     int		*panFieldOffset;
