@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version
 ---------------
 
+- Fixed issue with multiple styles and binding (#3538)
+
 - Fixed multiple include tags not supported in xml mapfiles (#3530)
 
 - Ensure the class is not marked BeforeFieldInit causing memory corruption with C#/CLR4 (#3438)
