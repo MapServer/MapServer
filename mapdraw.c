@@ -1026,7 +1026,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
                 pStyle->outlinecolor = tmp;
             }
             if (i == 0 || pStyle->outlinewidth > 0) {
-                status = msDrawShape(map, layer, &shape, image, i, MS_TRUE); /* draw a single style */
+                status = msDrawShape(map, layer, &shape, image, i, MS_FALSE); /* draw a single style */
             }
             if (pStyle->outlinewidth > 0) {
                 /*
