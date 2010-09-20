@@ -167,7 +167,7 @@ int main( int argc, char ** argv )
 /*	Skim over the list of shapes, printing all the vertices.	*/
 /* -------------------------------------------------------------------- */
 
-    while( TRUE )
+    while( 1 )
     {
       node = readTreeNode (qix);
       if (node )
