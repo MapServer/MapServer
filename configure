@@ -12156,6 +12156,14 @@ echo "${ECHO_T}libxml2 requested for WCS Server." >&6
 echo "${ECHO_T}      If unavailable disable using --without-xml2-config," >&6
     echo "$as_me:$LINENO: result:       but WCS 1.1 support will be disabled." >&5
 echo "${ECHO_T}      but WCS 1.1 support will be disabled." >&6
+   elif test "x$WFS_SVR_ENABLED" != "x" ; then
+    with_xml2_config=yes
+    echo "$as_me:$LINENO: result: libxml2 requested for WCS Server." >&5
+echo "${ECHO_T}libxml2 requested for WFS Server." >&6
+    echo "$as_me:$LINENO: result:       If unavailable disable using --without-xml2-config," >&5
+echo "${ECHO_T}      If unavailable disable using --without-xml2-config," >&6
+    echo "$as_me:$LINENO: result:       but WFS 1.1 support will be disabled." >&5
+echo "${ECHO_T}      but WFS 1.1 support will be disabled." >&6
   else
     with_xml2_config=no
     echo "$as_me:$LINENO: result: libxml2 not required." >&5

@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Set dependency on libxml2 when building --with-wfs (#3512)
+
 - Fixed TRUE is undefined in shptreevis (#3545)
 
 - shptreevis: bug truncates visualization shapefile if there are more

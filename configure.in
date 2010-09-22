@@ -1934,6 +1934,11 @@ if test -z "$with_xml2_config" ; then
     AC_MSG_RESULT([libxml2 requested for WCS Server.])
     AC_MSG_RESULT([      If unavailable disable using --without-xml2-config,])
     AC_MSG_RESULT([      but WCS 1.1 support will be disabled.])
+  elif test "x$WFS_SVR_ENABLED" != "x" ; then 
+    with_xml2_config=yes
+    AC_MSG_RESULT([libxml2 requested for WFS Server.])
+    AC_MSG_RESULT([      If unavailable disable using --without-xml2-config,])
+    AC_MSG_RESULT([      but WFS 1.1 support will be disabled.])
   else
     with_xml2_config=no
     AC_MSG_RESULT([libxml2 not required.])
