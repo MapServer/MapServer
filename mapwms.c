@@ -3061,7 +3061,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       feature_count = 1;
 
   map->query.type = MS_QUERY_BY_POINT;
-  map->query.mode = (feature_count==1?MS_SINGLE:MS_MULTIPLE);
+  map->query.mode = (feature_count==1?MS_QUERY_SINGLE:MS_QUERY_MULTIPLE);
   map->query.layer = -1;
   map->query.point = point;
   map->query.buffer = 0;

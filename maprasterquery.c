@@ -72,7 +72,7 @@ typedef struct {
     shapeObj *searchshape;
 
     /* Only nearest result to this point. */
-    int      range_mode; /* MS_SINGLE, MS_MULTI or -1 (skip test) */
+    int      range_mode; /* MS_QUERY_SINGLE, MS_QUERY_MULTIPLE or -1 (skip test) */
     double   range_dist;
     pointObj target_point;
 
@@ -650,7 +650,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 
                 /* If we can only have one feature, trim range and clear */
                 /* previous result.  */
-                if( rlinfo->range_mode == MS_SINGLE )
+                if( rlinfo->range_mode == MS_QUERY_SINGLE )
                 {
                     rlinfo->range_dist = dist;
                     rlinfo->query_results = 0;
@@ -1127,13 +1127,13 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
     rlinfo->target_point = p;
 
 /* -------------------------------------------------------------------- */
-/*      if we are in the MS_SINGLE mode, first try a query with zero    */
-/*      tolerance.  If this gets a raster pixel then we can be          */
+/*      if we are in the MS_QUERY_SINGLE mode, first try a query with   */
+/*      zero tolerance.  If this gets a raster pixel then we can be     */
 /*      reasonably assured that it is the closest to the query          */
 /*      point.  This will potentially be must more efficient than       */
 /*      processing all pixels within the tolerance.                     */
 /* -------------------------------------------------------------------- */
-    if( mode == MS_SINGLE )
+    if( mode == MS_QUERY_SINGLE )
     {
         rectObj pointRect;
 
@@ -1142,7 +1142,7 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
         pointRect.miny = p.y;
         pointRect.maxy = p.y;
 
-        rlinfo->range_mode = MS_SINGLE;
+        rlinfo->range_mode = MS_QUERY_SINGLE;
         result = msRasterQueryByRect( map, layer, pointRect );
         if( rlinfo->query_results > 0 )
             return result;
