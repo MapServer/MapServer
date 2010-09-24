@@ -500,6 +500,7 @@ SWFShape bitmap2shape(unsigned char *data,unsigned long size,int width,
     
     oFill = SWFShape_addBitmapFill(oShape, oBitmap, flags);
     /* oFill = SWFShape_addBitmapFill(oShape, oBitmap, 0); */
+    if ( ! oFill ) return NULL;
     
     SWFShape_setRightFill(oShape, oFill);
     destroySWFFill(oFill);
@@ -627,7 +628,7 @@ SWFShape gdImage2Shape(gdImagePtr img, imageObj *image)
     data = gd2bitmap(img, &size, &bytesPerColor);
     dbldata = bitmap2dbl(data,&size,&bytesPerColor);
     free(data); /* memory leak cf ticket #2555 */
-    oShape = bitmap2shape(dbldata, size, img->sx, img->sy, SWFFILL_SOLID, image);
+    oShape = bitmap2shape(dbldata, size, img->sx, img->sy, SWFFILL_TILED_BITMAP image);
     StoreDblData(dbldata, image); /* memory leak cf ticket #2555 */
     return oShape;
 }
@@ -2225,7 +2226,7 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
         data = gd2bitmap(tile, &size, &bytesPerColor);
         dbldata = bitmap2dbl(data,&size,&bytesPerColor);
         oShape = bitmap2shape(dbldata, size, tile->sx, tile->sy, 
-                              SWFFILL_SOLID, image);/* SWFFILL_TILED_BITMAP); */
+                              SWFFILL_TILED_BITMAP, image);
         StoreShape(oShape, image);
     }
     else
