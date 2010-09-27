@@ -628,7 +628,7 @@ SWFShape gdImage2Shape(gdImagePtr img, imageObj *image)
     data = gd2bitmap(img, &size, &bytesPerColor);
     dbldata = bitmap2dbl(data,&size,&bytesPerColor);
     free(data); /* memory leak cf ticket #2555 */
-    oShape = bitmap2shape(dbldata, size, img->sx, img->sy, SWFFILL_TILED_BITMAP image);
+    oShape = bitmap2shape(dbldata, size, img->sx, img->sy, SWFFILL_TILED_BITMAP, image);
     StoreDblData(dbldata, image); /* memory leak cf ticket #2555 */
     return oShape;
 }
