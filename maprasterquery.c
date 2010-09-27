@@ -922,8 +922,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
                 msSetError( MS_IMGERR, 
                             "Unable to open file %s for layer %s ... fatal error.\n%s", 
                             "msRasterQueryByRect()",
-                            szPath, layer->name, cpl_error_msg,
-                             );
+                            szPath, layer->name, cpl_error_msg);
               return(MS_FAILURE);
             }
             if( ignore_missing == MS_MISSING_DATA_LOG ) {
