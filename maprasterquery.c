@@ -550,8 +550,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     if( eErr != CE_None )
     {
         msSetError( MS_IOERR, "GDALDatasetRasterIO() failed: %s", 
-                    CPLGetLastErrorMsg(), 
-                    "msRasterQueryByRectLow()" );
+                    "msRasterQueryByRectLow()", CPLGetLastErrorMsg() );
 
         free( pafRaster );
         return -1;
@@ -922,8 +921,9 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
               if( layer->debug || map->debug )
                 msSetError( MS_IMGERR, 
                             "Unable to open file %s for layer %s ... fatal error.\n%s", 
+                            "msRasterQueryByRect()",
                             szPath, layer->name, cpl_error_msg,
-                            "msRasterQueryByRect()" );
+                             );
               return(MS_FAILURE);
             }
             if( ignore_missing == MS_MISSING_DATA_LOG ) {

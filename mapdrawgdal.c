@@ -886,7 +886,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             if( eErr != CE_None ) 
             { 
                 msSetError( MS_IOERR, "GDALRasterIO() failed: %s",  
-                            CPLGetLastErrorMsg(), "drawGDAL()" ); 
+                            "drawGDAL()", CPLGetLastErrorMsg() ); 
                 free( pabyRaw1 ); 
                 return -1; 
             } 
@@ -1488,8 +1488,7 @@ static int ApplyLUT( int iColorIndex, layerObj *layer,
         {
             msSetError(MS_IOERR, 
                        "Failed to open LUT file '%s'.",
-                       path,
-                       "drawGDAL()");
+                       "drawGDAL()", path );
             return -1;
         }
         
@@ -1500,8 +1499,8 @@ static int ApplyLUT( int iColorIndex, layerObj *layer,
         {
             msSetError(MS_IOERR, 
                        "LUT definition from file %s longer than maximum buffer size (%d bytes).",
-                       path, sizeof(lut_def_fromfile),
-                       "drawGDAL()");
+                       "drawGDAL()", 
+                       path, sizeof(lut_def_fromfile) );
             return -1;
         }
         
@@ -1600,8 +1599,10 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
 
         if( eErr != CE_None )
 	{
-            msSetError( MS_IOERR, "GDALDatasetRasterIO() failed: %s", 
-                        CPLGetLastErrorMsg(), "drawGDAL()" );
+            msSetError( MS_IOERR, 
+                        "GDALDatasetRasterIO() failed: %s", 
+                        "drawGDAL()",
+                        CPLGetLastErrorMsg() );
 	    return -1;
 	}
 
@@ -1657,7 +1658,8 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
     if( eErr != CE_None )
     {
         msSetError( MS_IOERR, "GDALDatasetRasterIO() failed: %s", 
-                    CPLGetLastErrorMsg(), "drawGDAL()" );
+                    "drawGDAL()",
+                    CPLGetLastErrorMsg() );
         
         free( pafWholeRawData );
         return -1;
@@ -1700,8 +1702,8 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
                 free( pafWholeRawData );
 		msSetError( MS_MISCERR, 
 			    "SCALE PROCESSING option unparsable for layer %s.",
-			    layer->name, 
-			    "msDrawGDAL()" );
+                            "msDrawGDAL()",
+			    layer->name );
 		return -1;
             }
 	    else
@@ -2235,8 +2237,7 @@ msDrawRasterLayerGDAL_RawMode(
     if( eErr != CE_None )
     {
         msSetError( MS_IOERR, "GDALRasterIO() failed: %s", 
-                    CPLGetLastErrorMsg(), 
-                    "msDrawRasterLayerGDAL_RawMode()" );
+                    "msDrawRasterLayerGDAL_RawMode()", CPLGetLastErrorMsg() );
         free( pBuffer );
         free( f_nodatas );
         return -1;
@@ -2422,8 +2423,8 @@ msDrawRasterLayerGDAL_16BitClassification(
             free( pafRawData );
             msSetError( MS_MISCERR, 
                         "SCALE PROCESSING option unparsable for layer %s.",
-                        layer->name, 
-                        "msDrawGDAL()" );
+                        "msDrawGDAL()",
+                        layer->name );
             return -1;
         }
         else
@@ -2482,8 +2483,8 @@ msDrawRasterLayerGDAL_16BitClassification(
             free( pafRawData );
             msSetError( MS_MISCERR, 
                         "SCALE_BUCKETS PROCESSING option is not a value of 2 or more: %s.",
-                        pszBuckets, 
-                        "msDrawRasterLayerGDAL_16BitClassification()" );
+                        "msDrawRasterLayerGDAL_16BitClassification()",
+                        pszBuckets );
             return -1;
         }
     }
