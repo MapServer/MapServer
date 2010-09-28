@@ -1895,6 +1895,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     int success, i;
     int function = 0;
     int version = 0;
+    int existunique = MS_FALSE;
     char query_str[6000];
     char *table_name;
     char geom_column_name[100], unique[100], srid[100];
@@ -1953,7 +1954,28 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     if (strcmp(srid,"NULL") == 0)
         strcpy(srid,"-1");
 
-    sprintf( query_str, "SELECT %s", unique );
+    /* Check if the unique field is already in the items list */
+    for( i=0; i < layer->numitems; ++i ) {
+        if (strcmp(unique, layer->items[i])==0) {
+            existunique = MS_TRUE;
+            break;
+        }
+    }
+        
+    if (existunique)
+    { 
+        if (strcasecmp(unique, "rownum") == 0) 
+            sprintf( query_str, "SELECT "); 
+        else 
+            sprintf( query_str, "SELECT %s, ", "rownum"); 
+    } 
+    else
+    { 
+        if (strcasecmp(unique, "rownum") == 0) 
+            sprintf( query_str, "SELECT %s,", unique ); 
+        else 
+            sprintf( query_str, "SELECT %s, %s,", "rownum", unique ); 
+    } 
 
     /* allocate enough space for items */
     if (layer->numitems >= 0)
@@ -1978,9 +2000,9 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     /* define SQL query */
     for( i=0; i < layer->numitems; ++i )
-        sprintf( query_str + strlen(query_str), ", %s", layer->items[i] );
+        sprintf( query_str + strlen(query_str), "%s, ", layer->items[i] );
 
-    sprintf( query_str + strlen(query_str), ", %s FROM %s", geom_column_name, table_name );
+    sprintf( query_str + strlen(query_str), "%s FROM %s", geom_column_name, table_name );
 
     osFilteritem(layer, function, query_str, 1);
 
