@@ -288,6 +288,9 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 /* label repeat enhancement */
 #define REPEATDISTANCE 1222
 
+/* rfc60 label collision detection */
+#define MAXOVERLAPANGLE 1223
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 #endif /* MAPFILE_H */

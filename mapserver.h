@@ -830,6 +830,7 @@ typedef struct {
   
   int mindistance;
   int repeatdistance;
+  double maxoverlapangle;
   int partials; /* can labels run of an image */
 
   int force; /* labels *must* be drawn */

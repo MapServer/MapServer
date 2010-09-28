@@ -1514,7 +1514,7 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
 }
 
 /* Calculate the labelpath for each line if repeatdistance is enabled, else the labelpath of the longest line segment */
-labelPathObj** msPolylineLabelPath(imageObj *img,shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *numpaths,
+labelPathObj** msPolylineLabelPath(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *numpaths,
                                    int** regular_lines, int* num_regular_lines)
 {
   double max_line_length, total_length;
@@ -1594,6 +1594,7 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
   int kernel_size = 5;
   
   double letterspacing = 1.25;
+  double maxoverlapangle = 0;;
 
   offsets = NULL;
 
@@ -1667,6 +1668,8 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
     label_repeat = 1;
     center_label_position = (line_length - text_length) / 2.0;
   }
+
+  maxoverlapangle = label->maxoverlapangle/(180/MS_PI); // radian
 
   for (l=0; l < label_repeat; l++)
   {
@@ -1838,7 +1841,7 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
 
         labelpath->path.point[0].x /= kernel_normal;
         labelpath->path.point[0].y /= kernel_normal;
-  
+
         /* Average the points and calculate each angle */
         for (k = 1; k <= labelpath->path.numpoints; k++) {
 
@@ -1863,14 +1866,22 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
             }
       
             /* msDebug("s: %c (x,y): (%0.2f,%0.2f) t: %0.2f\n", string[k-1], labelpath->path.point[k-1].x, labelpath->path.point[k-1].y, theta); */
-
+            
             labelpath->angles[k-1] = theta;
+
+            /* If the difference between the last char angle and the current one 
+               is greater than the MAXOVERLAPANGLE value, bail the label */
+            if ( (maxoverlapangle != 0) && (k>1) && 
+                 (fabs(labelpath->angles[k-1]-labelpath->angles[k-2]) > fabs(maxoverlapangle)) )
+            {
+                goto LABEL_FAILURE;
+            }
   
             /* Move the previous point so that when the character is rotated and
                placed it is centred on the line */
             cos_t = cos(theta);
             sin_t = sin(theta);
-  
+
             w = letterspacing*offsets[k-1];
 
             cx = 0; /* Center the character vertically only */
@@ -1886,13 +1897,13 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
             bbox.maxx = w;
             bbox.maxy = 0;
             bbox.miny = -size;
-
+  
             /* Add the label buffer to the bounds */
             bbox.maxx += label->buffer;
             bbox.maxy += label->buffer;
             bbox.minx -= label->buffer;
             bbox.miny -= label->buffer;
-  
+
             if ( k < labelpath->path.numpoints ) {
                 /* Transform the bbox too.  We take the UL and LL corners and rotate
                    then translate them. */

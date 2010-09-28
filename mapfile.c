@@ -1504,6 +1504,7 @@ void initLabel(labelObj *label)
   label->autominfeaturesize = MS_FALSE;
   label->mindistance = -1; /* no limit */
   label->repeatdistance = 0; /* no repeat */
+  label->maxoverlapangle = 22.5; /* default max overlap angle */
   label->partials = MS_TRUE;
   label->wrap = '\0';
   label->maxlength = 0;
@@ -1659,6 +1660,9 @@ static int loadLabel(labelObj *label)
       break;
     case(REPEATDISTANCE):      
       if(getInteger(&(label->repeatdistance)) == -1) return(-1);
+      break;
+    case(MAXOVERLAPANGLE):      
+      if(getDouble(&(label->maxoverlapangle)) == -1) return(-1);
       break;
     case(MINFEATURESIZE):
       if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1)  return(-1);
@@ -1852,6 +1856,7 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   else writeNumber(stream, indent, "PRIORITY", MS_DEFAULT_LABEL_PRIORITY, label->priority);
 
   writeNumber(stream, indent, "REPEATDISTANCE", 0, label->repeatdistance);
+  writeNumber(stream, indent, "MAXOVERLAPANGLE", 22.5, label->maxoverlapangle);
   writeColor(stream, indent, "SHADOWCOLOR", &(label->shadowcolor));
   writeDimension(stream, indent, "SHADOWSIZE", label->shadowsizex, label->shadowsizey);
   for(i=0; i<label->numstyles; i++)
