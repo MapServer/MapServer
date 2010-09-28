@@ -626,17 +626,28 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     if ((pszTmp = msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE)) == NULL ||
         strcasecmp(pszEPSG, pszTmp) != 0)
     {
-        if (strncasecmp(pszEPSG, "EPSG:", 5) == 0)
+        const char *ows_srs;
+
+        /* no need to set lp->proj if it is already set and there is only 
+           one item in the _srs metadata for this layer - we will assume
+           the projection block matches the _srs metadata (the search for ' '
+           in ows_srs is a test to see if there are multiple EPSG: codes) */
+        if( lp->projection.numargs == 0 
+            || (ows_srs = msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE)) == NULL
+            || (strchr(ows_srs,' ') != NULL) )
         {
-            char szProj[20];
-            sprintf(szProj, "init=epsg:%s", pszEPSG+5);
-            if (msLoadProjectionString(&(lp->projection), szProj) != 0)
-                return MS_FAILURE;
-        }
-        else
-        {
-            if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
-                return MS_FAILURE;
+            if (strncasecmp(pszEPSG, "EPSG:", 5) == 0)
+            {
+                char szProj[20];
+                sprintf(szProj, "init=epsg:%s", pszEPSG+5);
+                if (msLoadProjectionString(&(lp->projection), szProj) != 0)
+                    return MS_FAILURE;
+            }
+            else
+            {
+                if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
+                    return MS_FAILURE;
+            }
         }
     }
 
@@ -660,10 +671,9 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
 /* -------------------------------------------------------------------- */
 /*      Sometimes our remote WMS only accepts square pixel              */
-/*      requests.  If this is the case adjust grow the bbox so that     */
-/*      the pixels will be square given our map width/height.  It       */
-/*      seems it is difficult to adjust width/height the way things     */
-/*      are structured now.                                             */
+/*      requests.  If this is the case adjust adjust the number of      */
+/*      pixels or lines in the request so that the pixels are           */
+/*      square.                                                         */
 /* -------------------------------------------------------------------- */
         {
             const char *nonsquare_ok = 
