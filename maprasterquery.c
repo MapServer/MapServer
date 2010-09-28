@@ -1488,15 +1488,6 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   CPLErr eErr = CE_Failure;
   char *decrypted_path;
 
-  /*
-  ** For the time being we only automatically derive extents from
-  ** single raster files.  Opening many raster files from a tile index
-  ** in order to get the extent would be potentially very expensive.  We
-  ** could - in theory - scan the tile index and build up an extent from
-  ** the polygons but that is quite complicated code wise, so I am leaving
-  ** that till someone cares more about the issue.  (#79)
-  */
-
   if( (!layer->data || strlen(layer->data) == 0) 
       && layer->tileindex == NULL)
   {
