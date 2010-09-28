@@ -78,8 +78,6 @@ typedef struct {
 
     GDALColorTableH hCT;
 
-    int      current_tile;
-
     double   shape_tolerance;
 
 } rasterLayerInfo;
@@ -687,7 +685,6 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     int status = MS_SUCCESS;
     char *filename=NULL;
 
-    int t;
     layerObj *tlp=NULL; /* pointer to the tile layer either real or temporary */
     int tileitemindex=-1, tilelayerindex=-1;
     shapeObj tshp;
@@ -848,8 +845,6 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 
         GDALDatasetH  hDS;
         char *decrypted_path = NULL;
-
-        rlinfo->current_tile = t;
 
 /* -------------------------------------------------------------------- */
 /*      Get filename.                                                   */
