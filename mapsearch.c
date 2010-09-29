@@ -8,7 +8,7 @@
  * Notes: For information on point in polygon function please see:
  *
  *   http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
- *                                                                                                                  
+ * 
  * The appropriate copyright notice accompanies the funtion definition.
  *
  ******************************************************************************
@@ -51,6 +51,28 @@ int msRectOverlap(rectObj *a, rectObj *b)
   if(a->maxy < b->miny) return(MS_FALSE);
   return(MS_TRUE);
 }
+
+/*
+** Computes the intersection of two rectangles, updating the first
+** to be only the intersection of the two.  Returns MS_FALSE if
+** the intersection is empty. 
+*/
+int msRectIntersect( rectObj *a, const rectObj *b )
+{
+    if( a->maxx > b->maxx )
+        a->maxx = b->maxx;
+    if( a->minx < b->minx )
+        a->minx = b->minx;
+    if( a->maxy > b->maxy )
+        a->maxy = b->maxy;
+    if( a->miny < b->miny )
+        a->miny = b->miny;
+
+    if( a->maxx < a->minx || b->maxx < b->minx )
+        return MS_FALSE;
+    else 
+        return MS_TRUE;
+}        
 
 /*
 ** Returns MS_TRUE if rectangle a is contained in rectangle b

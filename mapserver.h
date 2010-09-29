@@ -1739,6 +1739,7 @@ MS_DLL_EXPORT int msEmbedScalebar(mapObj *map, imageObj *img);
 MS_DLL_EXPORT int msPointInRect(pointObj *p, rectObj *rect); /* in mapsearch.c */
 MS_DLL_EXPORT int msRectOverlap(rectObj *a, rectObj *b);
 MS_DLL_EXPORT int msRectContained(rectObj *a, rectObj *b);
+MS_DLL_EXPORT int msRectIntersect(rectObj *a, const rectObj *b);
 
 MS_DLL_EXPORT void msRectToFormattedString(rectObj *rect, char *format,
                                            char *buffer, int buffer_length);
