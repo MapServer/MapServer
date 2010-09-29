@@ -367,6 +367,11 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     if (rv != MS_SUCCESS) return rv;
   }
 
+   /* force get_all=MS_TRUE in some cases */
+  if(layer->connectiontype == MS_INLINE || layer->connectiontype == MS_SDE ||
+     (layer->connectiontype == MS_ORACLESPATIAL && layer->data && msCaseFindSubstring(layer->data, "UNIQUE")))
+      get_all=MS_TRUE;
+
   /* cleanup any previous item selection */
   msLayerFreeItemInfo(layer);
   if(layer->items) {

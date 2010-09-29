@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version
 ---------------
 
+- Fixed crash when drawing a map using UNIQUE fid in the layer data (#3271)
+
 - Fixed Oracle Spatial Data gets corrupt (#3541)
 
 - Fixed issue with multiple styles and binding (#3538)
