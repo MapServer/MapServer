@@ -95,7 +95,7 @@ void msGDALCleanup( void )
 /*      things are clean before we start, and after we are done.        */
 /************************************************************************/
 
-static void CleanVSIDir( const char *pszDir )
+void CleanVSIDir( const char *pszDir )
 
 {
     char **papszFiles = CPLReadDir( pszDir );

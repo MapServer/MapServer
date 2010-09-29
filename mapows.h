@@ -94,6 +94,11 @@ typedef struct http_request_info
     /* Private members */
     void      * curl_handle;   /* CURLM * handle */
     FILE      * fp;            /* FILE * used during download */
+    
+    char      * result_data;   /* output if pszOutputFile is NULL */
+    int       result_size;
+    int       result_buf_size;
+
 } httpRequestObj;
 
 typedef struct

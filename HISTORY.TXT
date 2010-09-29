@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Support holding WMS client requests in RAM instead of writing to disk (#3555)
+
 - RFC-61: Enhance MapServer Feature Style Support (#3544)
 
 - Restrict cascaded WMS requests based on EXTENT (#3543)

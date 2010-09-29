@@ -145,7 +145,9 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
 
         pasReqInfo[i].curl_handle = NULL;
         pasReqInfo[i].fp = NULL;
-
+        pasReqInfo[i].result_data = NULL;
+        pasReqInfo[i].result_size = 0;
+        pasReqInfo[i].result_buf_size = 0;
     }
 }
 
@@ -192,6 +194,11 @@ void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         pasReqInfo[i].pszHTTPCookieData = NULL;
 
         pasReqInfo[i].curl_handle = NULL;
+
+        free( pasReqInfo[i].result_data );
+        pasReqInfo[i].result_data = NULL;
+        pasReqInfo[i].result_size = 0;
+        pasReqInfo[i].result_buf_size = 0;
     }
 }
 
@@ -219,7 +226,44 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
                 psReq->nLayerId, size*nmemb);
     }
 
-    return fwrite(buffer, size, nmemb, psReq->fp);
+    /* Case where we are writing to a disk file. */
+    if( psReq->fp != NULL )
+    {
+        return fwrite(buffer, size, nmemb, psReq->fp);
+    }
+    
+    /* Case where we build up the result in memory */
+    else
+    {
+        if( psReq->result_data == NULL )
+        {
+            psReq->result_buf_size = size*nmemb + 10000;
+            psReq->result_data = (char *) malloc( psReq->result_buf_size );
+        }
+        else if( psReq->result_size + nmemb * size > psReq->result_buf_size )
+        {
+            psReq->result_buf_size = psReq->result_size + nmemb*size + 10000;
+            psReq->result_data = (char *) realloc( psReq->result_data,
+                                                   psReq->result_buf_size );
+        }
+
+        if( psReq->result_data == NULL )
+        {
+            msSetError(MS_HTTPERR, 
+                       "Unable to grow HTTP result buffer to size %d.",
+                       "msHTTPWriteFct()",
+                       psReq->result_buf_size );
+            psReq->result_buf_size = 0;
+            psReq->result_size = 0;
+            return -1;
+        }
+        
+        memcpy( psReq->result_data + psReq->result_size,
+                buffer, size*nmemb );
+        psReq->result_size += size*nmemb;
+
+        return size*nmemb;
+    }
 }
 
 /**********************************************************************
@@ -321,8 +365,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         CURL *http_handle;
         FILE *fp;
 
-        if (pasReqInfo[i].pszGetUrl == NULL || 
-            pasReqInfo[i].pszOutputFile == NULL)
+        if (pasReqInfo[i].pszGetUrl == NULL )
         {
             msSetError(MS_HTTPERR, "URL or output file parameter missing.", 
                        "msHTTPExecuteRequests()");
@@ -342,7 +385,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         pasReqInfo[i].pszContentType = NULL;
 
         /* Check local cache if requested */
-        if (bCheckLocalCache)
+        if (bCheckLocalCache && pasReqInfo[i].pszOutputFile != NULL )
         {
             fp = fopen(pasReqInfo[i].pszOutputFile, "r");
             if (fp)
@@ -488,15 +531,19 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
 #endif
 
-        /* Open output file and set write handler */
-        if ( (fp = fopen(pasReqInfo[i].pszOutputFile, "wb")) == NULL)
+        /* If we are writing file to disk, open the file now. */
+        if( pasReqInfo[i].pszOutputFile != NULL )
         {
-            msSetError(MS_HTTPERR, "Can't open output file %s.", 
-                       "msHTTPExecuteRequests()", pasReqInfo[i].pszOutputFile);
-            return(MS_FAILURE);
+            if ( (fp = fopen(pasReqInfo[i].pszOutputFile, "wb")) == NULL)
+            {
+                msSetError(MS_HTTPERR, "Can't open output file %s.", 
+                           "msHTTPExecuteRequests()", pasReqInfo[i].pszOutputFile);
+                return(MS_FAILURE);
+            }
+
+            pasReqInfo[i].fp = fp;
         }
 
-        pasReqInfo[i].fp = fp;
         curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &(pasReqInfo[i]));
         curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, msHTTPWriteFct);
 

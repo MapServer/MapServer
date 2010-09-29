@@ -39,6 +39,11 @@
 #include <stdio.h>
 #endif
 
+#ifdef USE_GDAL
+#  include "cpl_vsi.h"
+#endif
+
+void CleanVSIDir( const char *pszDir );
 
 /**********************************************************************
  *                          msInitWmsParamsObj()
@@ -934,7 +939,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     const char *pszTmp;
     rectObj bbox;
     int bbox_width, bbox_height;
-    int nTimeout, bOkToMerge, bForceSeparateRequest;
+    int nTimeout, bOkToMerge, bForceSeparateRequest, bCacheToDisk;
     wmsParamsObj sThisWMSParams;
     
     char    *pszProxyHost=NULL;
@@ -1132,7 +1137,22 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
             return(MS_FAILURE);  /* An error should already have been produced */
         }
     }
-    
+
+/* ------------------------------------------------------------------
+ * Check if we want to use in memory images instead of writing to disk.
+ * ------------------------------------------------------------------ */
+    if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
+                                      "MO", "cache_to_disk")) != NULL)
+    {
+        if( strcasecmp(pszTmp,"true") == 0
+            || strcasecmp(pszTmp,"on") == 0
+            || strcasecmp(pszTmp,"yes") == 0 )
+            bCacheToDisk = MS_TRUE;
+        else
+            bCacheToDisk = atoi(pszTmp);
+    }
+    else
+        bCacheToDisk = MS_FALSE;
 
 /* ------------------------------------------------------------------
  * Check if layer can be merged with previous WMS layer requests
@@ -1300,9 +1320,11 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         }
         pasReqInfo[(*numRequests)].pszHTTPCookieData = pszHTTPCookieData;
         pszHTTPCookieData = NULL;
-        pasReqInfo[(*numRequests)].pszOutputFile =msTmpFile(map->mappath,
-                                                            map->web.imagepath,
-                                                            "img.tmp");
+        if( bCacheToDisk )
+            pasReqInfo[(*numRequests)].pszOutputFile =
+                msTmpFile(map->mappath, map->web.imagepath, "img.tmp");
+        else
+            pasReqInfo[(*numRequests)].pszOutputFile = NULL;
         pasReqInfo[(*numRequests)].nStatus = 0;
         pasReqInfo[(*numRequests)].nTimeout = nTimeout;
         pasReqInfo[(*numRequests)].bbox   = bbox;
@@ -1371,6 +1393,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     int currenttype;
     int currentconnectiontype;
     int numclasses;
+    char *mem_filename = NULL;
 
 /* ------------------------------------------------------------------
  * Find the request info for this layer in the array, based on nLayerId
@@ -1455,7 +1478,22 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
         return MS_SUCCESS;
     }
+
+/* ------------------------------------------------------------------
+ * If the output was written to a memory buffer, then we will need
+ * to attach a "VSI" name to this buffer.
+ * ------------------------------------------------------------------ */
+    if( pasReqInfo[iReq].pszOutputFile == NULL )
+    {
+        CleanVSIDir( "/vsimem/msout" );
+        mem_filename = msTmpFile( NULL, "/vsimem/msout/", "img.tmp" );
         
+        VSIFCloseL( 
+            VSIFileFromMemBuffer( mem_filename, 
+                                  (GByte*) pasReqInfo[iReq].result_data,
+                                  (vsi_l_offset) pasReqInfo[iReq].result_size,
+                                  FALSE ) );
+    }
 
 /* ------------------------------------------------------------------
  * Prepare layer for drawing, reprojecting the image received from the
@@ -1481,7 +1519,10 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
       lp->numclasses = 0;
 
     if (lp->data) free(lp->data);
-    lp->data =  strdup(pasReqInfo[iReq].pszOutputFile);
+    if( mem_filename != NULL )
+        lp->data = mem_filename;
+    else
+        lp->data =  strdup(pasReqInfo[iReq].pszOutputFile);
 
     /* #3138 If PROCESSING "RESAMPLE=..." is set we cannot use the simple case */
     if (!msProjectionsDiffer(&(map->projection), &(lp->projection)) && 
@@ -1507,7 +1548,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
         wldfile = msBuildPath(szPath, lp->map->mappath, lp->data);
         if (wldfile)    
             strcpy(wldfile+strlen(wldfile)-3, "wld");
-        if (wldfile && (fp = fopen(wldfile, "wt")) != NULL)
+        if (wldfile && (fp = VSIFOpenL(wldfile, "wt")) != NULL)
         {
             double dfCellSizeX = MS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
                                              pasReqInfo[iReq].bbox.maxx, 
@@ -1515,23 +1556,23 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
             double dfCellSizeY = MS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
                                              pasReqInfo[iReq].bbox.miny, 
                                              pasReqInfo[iReq].height);
-                
-            fprintf(fp, "%.12f\n", dfCellSizeX );
-            fprintf(fp, "0\n");
-            fprintf(fp, "0\n");
-            fprintf(fp, "%.12f\n", dfCellSizeY );
-            fprintf(fp, "%.12f\n", 
-                    pasReqInfo[iReq].bbox.minx + dfCellSizeX * 0.5 );
-            fprintf(fp, "%.12f\n", 
-                    pasReqInfo[iReq].bbox.maxy + dfCellSizeY * 0.5 );
-            fclose(fp);
+            char world_text[5000];
+
+            sprintf( world_text, "%.12f\n0\n0\n%.12f\n%.12f\n%.12f\n",
+                     dfCellSizeX, 
+                     dfCellSizeY,
+                     pasReqInfo[iReq].bbox.minx + dfCellSizeX * 0.5,
+                     pasReqInfo[iReq].bbox.maxy + dfCellSizeY * 0.5 );
+
+            VSIFWriteL( world_text, 1, strlen(world_text), fp );
+            VSIFCloseL( fp );
 
             /* GDAL should be called to reproject automatically. */
             if (msDrawLayer(map, lp, img) != 0)
                 status = MS_FAILURE;
 
             if (!lp->debug)
-                unlink(wldfile);
+                VSIUnlink( wldfile );
         }
         else
         {
@@ -1545,7 +1586,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
     /* We're done with the remote server's response... delete it. */
     if (!lp->debug)
-      unlink(lp->data);
+        VSIUnlink(lp->data);
 
     /* restore prveious type */
     lp->type = currenttype;
