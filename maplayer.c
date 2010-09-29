@@ -389,6 +389,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   /* layer level counts */
   if(layer->classitem) nt++;
   if(layer->filteritem) nt++;
+  if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") != 0) nt++;
 
   ne = 0;
   if(layer->filter.type == MS_EXPRESSION) {
@@ -475,6 +476,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   if(nt > 0) {
     if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
     if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
+    if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") != 0) layer->styleitemindex = string2list(layer->items, &(layer->numitems), layer->styleitem);
 
     for(i=0; i<layer->numclasses; i++) {
       if(layer->class[i]->expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i]->expression));
@@ -578,6 +580,41 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
           return rv;
   }
   return layer->vtable->LayerGetAutoStyle(map, layer, c, tile, record);
+}
+
+/*
+** Fills a classObj with style info from the specified attribute.  This is used
+** with STYLEITEM "attribute" when rendering shapes.
+** 
+*/
+int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape)
+{
+    char* stylestring;
+    if (layer->styleitem && layer->styleitemindex >=0)
+    {
+        stylestring = shape->values[layer->styleitemindex];
+        /* try to find out the current style format */
+        if (strncasecmp(stylestring,"style",5) == 0)
+        {
+            resetClassStyle(c);
+            if (msMaybeAllocateClassStyle(c, 0))
+                return(MS_FAILURE);
+
+            msUpdateStyleFromString(c->styles[0], stylestring, MS_FALSE);
+        }
+        else if (strncasecmp(stylestring,"class",5) == 0)
+        {
+            msUpdateClassFromString(c, stylestring, MS_FALSE);
+        }
+        else if (strncasecmp(stylestring,"pen",3) == 0 || strncasecmp(stylestring,"brush",5) == 0 ||
+            strncasecmp(stylestring,"symbol",6) == 0 || strncasecmp(stylestring,"label",5) == 0)
+        {
+            msOGRUpdateStyleFromString(map, layer, c, stylestring);
+        }
+
+        return MS_SUCCESS;
+    }
+    return MS_FAILURE;
 }
 
 

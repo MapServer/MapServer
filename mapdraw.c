@@ -986,12 +986,21 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
          
     /* With 'STYLEITEM AUTO', we will have the datasource fill the class' */
     /* style parameters for this shape. */
-    if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") == 0) {
-      if(msLayerGetAutoStyle(map, layer, layer->class[shape.classindex], shape.tileindex, shape.index) != MS_SUCCESS) {
-        retcode = MS_FAILURE;
-        break;
-      }
-                  
+    if(layer->styleitem) {
+        if(strcasecmp(layer->styleitem, "AUTO") == 0) {
+            if (msLayerGetAutoStyle(map, layer, layer->class[shape.classindex], shape.tileindex, shape.index) != MS_SUCCESS) {
+                retcode = MS_FAILURE;
+                break;
+            }
+        }
+        else {
+            /* Generic feature style handling as per RFC-61 */
+            if (msLayerGetFeatureStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
+                retcode = MS_FAILURE;
+                break;
+            }
+        }
+
       /* __TODO__ For now, we can't cache features with 'AUTO' style */
       cache = MS_FALSE;
     }

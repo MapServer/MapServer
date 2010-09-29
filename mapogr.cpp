@@ -2738,6 +2738,698 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
 #endif
 
 /**********************************************************************
+ *                     msOGRUpdateStyle()
+ *
+ * Update the mapserver style according to the ogr style.
+ * The function is called by msOGRGetAutoStyle and 
+ * msOGRUpdateStyleFromString
+ **********************************************************************/
+
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer, classObj *c)
+#else
+static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *layer, classObj *c)
+#endif
+{
+    GBool bIsNull, bIsBrush=MS_FALSE, bIsPen=MS_FALSE;
+    int r=0,g=0,b=0,t=0;
+
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+    int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
+#else /* OGRStyle C++ */
+    int numParts = poStyleMgr->GetPartCount();
+#endif /* OGRStyle C API */
+
+/* ------------------------------------------------------------------
+ * Handle each part
+ * ------------------------------------------------------------------ */
+
+    for(int i=0; i<numParts; i++)
+    {
+      OGRSTClassId eStylePartType;
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+      OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
+      if (!hStylePart)
+          continue;
+      eStylePartType = OGR_ST_GetType(hStylePart);
+#else /* OGRStyle C++ */
+      OGRStyleTool *poStylePart = poStyleMgr->GetPart(i);
+      if (!poStylePart)
+          continue;
+      eStylePartType = poStylePart->GetType();
+#endif /* OGRStyle C API */
+
+      // We want all size values returned in pixels.
+      //
+      // The scale factor that OGR expect is the ground/paper scale
+      // e.g. if 1 ground unit = 0.01 paper unit then scale=1/0.01=100
+      // cellsize if number of ground units/pixel, and OGR assumes that
+      // there is 72*39.37 pixels/ground units (since meter is assumed 
+      // for ground... but what ground units we have does not matter
+      // as long as use the same assumptions everywhere)
+      // That gives scale = cellsize*72*39.37
+
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+      OGR_ST_SetUnit(hStylePart, OGRSTUPixel, map->cellsize*72.0*39.37);
+#else
+      poStylePart->SetUnit(OGRSTUPixel, map->cellsize*72.0*39.37);
+#endif
+
+      if (eStylePartType == OGRSTCLabel)
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+      {
+          OGRStyleToolH hLabelStyle = hStylePart;
+
+          // Enclose the text string inside quotes to make sure it is seen
+          // as a string by the parser inside loadExpression(). (bug185)
+          /* See bug 3481 about the isalnum hack */
+          const char *labelTextString = OGR_ST_GetParamStr(hLabelStyle, 
+                                                           OGRSTLabelTextString, 
+                                                           &bIsNull);
+          if (labelTextString && isalnum(labelTextString[0]))
+              msLoadExpressionString(&(c->text), (char*)labelTextString);
+          else
+              msLoadExpressionString(&(c->text), 
+                              (char*)CPLSPrintf("\"%s\"", (char*)labelTextString));
+
+          c->label.angle = OGR_ST_GetParamDbl(hLabelStyle, 
+                                              OGRSTLabelAngle, &bIsNull);
+
+          c->label.size = OGR_ST_GetParamDbl(hLabelStyle, 
+                                             OGRSTLabelSize, &bIsNull);
+          if( c->label.size < 1 ) /* no point dropping to zero size */
+              c->label.size = 1;
+
+          // OGR default is anchor point = LL, so label is at UR of anchor
+          c->label.position = MS_UR;
+
+          int nPosition = OGR_ST_GetParamNum(hLabelStyle, 
+                                             OGRSTLabelAnchor,
+                                             &bIsNull);
+          if( !bIsNull )
+          {
+              switch( nPosition ) {
+                case 1: c->label.position = MS_UR; break;
+                case 2: c->label.position = MS_UC; break;
+                case 3: c->label.position = MS_UL; break;
+                case 4: c->label.position = MS_CR; break;
+                case 5: c->label.position = MS_CC; break;
+                case 6: c->label.position = MS_CL; break;
+                case 7: c->label.position = MS_LR; break;
+                case 8: c->label.position = MS_LC; break;
+                case 9: c->label.position = MS_LL; break;
+                case 10: c->label.position = MS_LR; break; /*approximate*/
+                case 11: c->label.position = MS_LC; break;
+                case 12: c->label.position = MS_LL; break;
+                default: break;
+              }
+          }
+
+          const char *pszColor = OGR_ST_GetParamStr(hLabelStyle, 
+                                                    OGRSTLabelFColor,
+                                                    &bIsNull);
+          if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
+                                                  &r, &g, &b, &t))
+          {
+              MS_INIT_COLOR(c->label.color, r, g, b);
+          }
+
+          pszColor = OGR_ST_GetParamStr(hLabelStyle, 
+                                        OGRSTLabelBColor,
+                                        &bIsNull);
+          if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
+                                                  &r, &g, &b, &t))
+          {
+              MS_INIT_COLOR(c->label.backgroundcolor, r, g, b);
+          }
+
+          pszColor = OGR_ST_GetParamStr(hLabelStyle, 
+                                        OGRSTLabelHColor,
+                                        &bIsNull);
+          if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
+                                                  &r, &g, &b, &t))
+          {
+              MS_INIT_COLOR(c->label.shadowcolor, r, g, b);
+          }
+
+#if GDAL_VERSION_NUM >= 1600
+          pszColor = OGR_ST_GetParamStr(hLabelStyle, 
+                                        OGRSTLabelOColor,
+                                        &bIsNull);
+          if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
+                                                  &r, &g, &b, &t))
+          {
+              MS_INIT_COLOR(c->label.outlinecolor, r, g, b);
+          }
+#endif /* GDAL_VERSION_NUM >= 1600 */
+
+          // Label font... do our best to use TrueType fonts, otherwise
+          // fallback on bitmap fonts.
+#if defined(USE_GD_TTF) || defined (USE_GD_FT)
+          const char *pszBold = OGR_ST_GetParamNum(hLabelStyle, 
+                                                       OGRSTLabelBold, 
+                                                       &bIsNull) ? "-bold" : "";
+          const char *pszItalic = OGR_ST_GetParamNum(hLabelStyle, 
+                                                       OGRSTLabelItalic, 
+                                                       &bIsNull) ? "-italic" : "";
+          const char *pszFontName = OGR_ST_GetParamStr(hLabelStyle, 
+                                                       OGRSTLabelFontName,
+                                                       &bIsNull);
+          const char *pszName = CPLSPrintf("%s%s%s", pszFontName, pszBold, pszItalic);
+          bool bFont = true;
+
+          if (pszFontName != NULL && !bIsNull && pszFontName[0] != '\0')
+          {
+              if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup(pszName);
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** Using '%s' TTF font **\n", pszName);
+              }
+              else if ( (strcmp(pszFontName,pszName) != 0) &&
+                        msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup(pszFontName);
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** Using '%s' TTF font **\n", pszFontName);
+              }
+              else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup("default");
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** Using 'default' TTF font **\n");
+              }
+              else
+                  bFont = false;
+          }
+
+          if (!bFont)
+#endif /* USE_GD_FT || USE_GD_FT */
+          {
+              c->label.type = MS_BITMAP;
+              c->label.size = MS_MEDIUM;
+              if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                  msDebug("** Using 'medium' BITMAP font **\n");
+          }
+      }
+#else /* OGR Style C++ */
+      {
+          OGRStyleLabel *poLabelStyle = (OGRStyleLabel*)poStylePart;
+
+          // Enclose the text string inside quotes to make sure it is seen
+          // as a string by the parser inside loadExpression(). (bug185)
+          /* See bug 3481 about the isalnum hack */
+          const char *labelTextString = poLabelStyle->TextString(bIsNull);
+
+          if (labelTextString && isalnum(labelTextString[0]))
+              msLoadExpressionString(&(c->text), (char*)labelTextString);
+          else
+              msLoadExpressionString(&(c->text), 
+                              (char*)CPLSPrintf("\"%s\"", (char*)labelTextString));
+
+          c->label.angle = poLabelStyle->Angle(bIsNull);
+
+          c->label.size = (int)poLabelStyle->Size(bIsNull);
+          if( c->label.size < 1 ) /* no point dropping to zero size */
+              c->label.size = 1;
+
+          // OGR default is anchor point = LL, so label is at UR of anchor
+          c->label.position = MS_UR;
+
+          const char *pszColor = poLabelStyle->ForeColor(bIsNull);
+          if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
+          {
+              MS_INIT_COLOR(c->label.color, r, g, b);
+          }
+
+          pszColor = poLabelStyle->BackColor(bIsNull);
+          if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
+          {
+              MS_INIT_COLOR(c->label.backgroundcolor, r, g, b);
+          }
+#if GDAL_VERSION_NUM >= 1400
+          pszColor = poLabelStyle->ShadowColor(bIsNull);
+          if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
+          {
+              MS_INIT_COLOR(c->label.shadowcolor, r, g, b);
+          }
+#endif
+          // Label font... do our best to use TrueType fonts, otherwise
+          // fallback on bitmap fonts.
+#if defined(USE_GD_TTF) || defined (USE_GD_FT)
+          const char *pszBold = poLabelStyle->Bold(bIsNull)  ? "-bold" : "";
+          const char *pszItalic = poLabelStyle->Italic(bIsNull) ? "-italic" : "";
+          const char *pszFontName = poLabelStyle->FontName(bIsNull);
+          const char *pszName = CPLSPrintf("%s%s%s", pszFontName, pszBold, pszItalic);
+          bool bFont = true;
+
+          if (pszFontName != NULL && !bIsNull && pszFontName[0] != '\0')
+          {
+              if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup(pszName);
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** Using '%s' TTF font **\n", pszName);
+              }
+              else if ( (strcmp(pszFontName,pszName) != 0) &&
+                        msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup(pszFontName);
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** Using '%s' TTF font **\n", pszFontName);
+              }
+              else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup("default");
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** Using 'default' TTF font **\n");
+              }
+              else
+                  bFont = false;
+          }
+
+          if (!bFont)
+#endif /* USE_GD_FT || USE_GD_FT */
+          {
+              c->label.type = MS_BITMAP;
+              c->label.size = MS_MEDIUM;
+              if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                  msDebug("** Using 'medium' BITMAP font **\n");
+          }
+      }
+#endif /* OGRStyle C API */
+      else if (eStylePartType == OGRSTCPen)
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+      {
+          OGRStyleToolH hPenStyle = hStylePart;
+          bIsPen = TRUE;
+
+          const char *pszPenName = OGR_ST_GetParamStr(hPenStyle, 
+                                                      OGRSTPenId, 
+                                                      &bIsNull);
+          if (bIsNull) pszPenName = NULL;
+          colorObj oPenColor;
+          int nPenSymbol = 0;
+          int nPenSize = 1;
+
+          // Make sure pen is always initialized
+          MS_INIT_COLOR(oPenColor, -1, -1, -1);
+
+          // Check for Pen Pattern "ogr-pen-1": the invisible pen
+          // If that's what we have then set pen color to -1
+          if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL)
+          {
+              MS_INIT_COLOR(oPenColor, -1, -1, -1);
+          }
+          else
+          {
+              const char *pszColor = OGR_ST_GetParamStr(hPenStyle, 
+                                                        OGRSTPenColor,
+                                                        &bIsNull);
+              if (!bIsNull && OGR_ST_GetRGBFromString(hPenStyle, pszColor,
+                                                      &r, &g, &b, &t))
+              {
+                  MS_INIT_COLOR(oPenColor, r, g, b);
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** PEN COLOR = %d %d %d **\n", r,g,b);
+              }
+
+              nPenSize = OGR_ST_GetParamNum(hPenStyle, 
+                                            OGRSTPenWidth, &bIsNull);
+              if (bIsNull)
+                  nPenSize = 1;
+              if (pszPenName!=NULL)
+              {
+                  // Try to match pen name in symbol file
+                  nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
+                                                pszPenName, NULL);
+              }
+          }
+          if (layer->debug >= MS_DEBUGLEVEL_VVV)
+              msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
+          if (bIsBrush || layer->type == MS_LAYER_POLYGON)
+          {
+              // This is a multipart symbology, so pen defn goes in the
+              // overlaysymbol params 
+              if (msMaybeAllocateClassStyle(c, 1))
+              {
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+                  OGR_ST_Destroy(hStylePart);
+#else
+                  delete poStylePart;
+#endif
+                  return(MS_FAILURE);
+              }
+
+              c->styles[1]->outlinecolor = oPenColor;
+              c->styles[1]->size = nPenSize;
+              c->styles[1]->symbol = nPenSymbol;
+              c->styles[1]->width = nPenSize;
+          }
+          else
+          {
+              // Single part symbology
+              if (msMaybeAllocateClassStyle(c, 0))
+              {
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+                  OGR_ST_Destroy(hStylePart);
+#else
+                  delete poStylePart;
+#endif
+                  return(MS_FAILURE);
+              }
+
+              if(layer->type == MS_LAYER_POLYGON)
+                  c->styles[0]->outlinecolor = c->styles[0]->color = 
+                      oPenColor;
+              else
+                  c->styles[0]->color = oPenColor;
+              c->styles[0]->symbol = nPenSymbol;
+              c->styles[0]->size = nPenSize;
+              c->styles[0]->width = nPenSize;
+          }
+
+      }
+#else /* OGR Style C++ */
+      {
+          OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
+          bIsPen = TRUE;
+
+          const char *pszPenName = poPenStyle->Id(bIsNull);
+          if (bIsNull) pszPenName = NULL;
+          colorObj oPenColor;
+          int nPenSymbol = 0;
+          int nPenSize = 1;
+
+          // Make sure pen is always initialized
+          MS_INIT_COLOR(oPenColor, -1, -1, -1);
+
+          // Check for Pen Pattern "ogr-pen-1": the invisible pen
+          // If that's what we have then set pen color to -1
+          if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL)
+          {
+              MS_INIT_COLOR(oPenColor, -1, -1, -1);
+          }
+          else
+          {
+              const char *pszColor = poPenStyle->Color(bIsNull);
+              if (!bIsNull && poPenStyle->GetRGBFromString(pszColor,r,g,b,t))
+              {
+                  MS_INIT_COLOR(oPenColor, r, g, b);
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** PEN COLOR = %d %d %d **\n", r,g,b);
+              }
+
+              nPenSize = (int)poPenStyle->Width(bIsNull);
+              if (bIsNull)
+                  nPenSize = 1;
+              if (pszPenName!=NULL)
+              {
+                  // Try to match pen name in symbol file
+                  nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
+                                                pszPenName, NULL);
+              }
+          }
+          if (layer->debug >= MS_DEBUGLEVEL_VVV)
+              msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
+          if (bIsBrush || layer->type == MS_LAYER_POLYGON)
+          {
+              // This is a multipart symbology, so pen defn goes in the
+              // overlaysymbol params 
+              if (msMaybeAllocateClassStyle(c, 1))
+              {
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+                  OGR_ST_Destroy(hStylePart);
+#else
+                  delete poStylePart;
+#endif
+                  return(MS_FAILURE);
+              }
+
+              c->styles[1]->outlinecolor = oPenColor;
+              c->styles[1]->size = nPenSize;
+              c->styles[1]->symbol = nPenSymbol;
+              c->styles[1]->width = nPenSize;
+          }
+          else
+          {
+              // Single part symbology
+              if (msMaybeAllocateClassStyle(c, 0))
+              {
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+                  OGR_ST_Destroy(hStylePart);
+#else
+                  delete poStylePart;
+#endif
+                  return(MS_FAILURE);
+              }
+
+              if(layer->type == MS_LAYER_POLYGON)
+                  c->styles[0]->outlinecolor = c->styles[0]->color = 
+                      oPenColor;
+              else
+                  c->styles[0]->color = oPenColor;
+              c->styles[0]->symbol = nPenSymbol;
+              c->styles[0]->size = nPenSize;
+              c->styles[0]->width = nPenSize;
+          }
+
+      }
+#endif /* OGRStyle C API */
+      else if (eStylePartType == OGRSTCBrush)
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+      {
+          OGRStyleToolH hBrushStyle = hStylePart;
+
+          const char *pszBrushName = OGR_ST_GetParamStr(hBrushStyle, 
+                                                        OGRSTBrushId, 
+                                                        &bIsNull);
+          if (bIsNull) pszBrushName = NULL;
+
+          /* We need 1 style */
+          if (msMaybeAllocateClassStyle(c, 0))
+          {
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+              OGR_ST_Destroy(hStylePart);
+#else
+              delete poStylePart;
+#endif
+              return(MS_FAILURE);
+          }
+
+          // Check for Brush Pattern "ogr-brush-1": the invisible fill
+          // If that's what we have then set fill color to -1
+          if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL)
+          {
+              MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1);
+          }
+          else
+          {
+              bIsBrush = TRUE;
+              const char *pszColor = OGR_ST_GetParamStr(hBrushStyle, 
+                                                        OGRSTBrushFColor,
+                                                        &bIsNull);
+              if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle, 
+                                                      pszColor,
+                                                      &r, &g, &b, &t))
+              {
+                  MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
+              }
+
+              pszColor = OGR_ST_GetParamStr(hBrushStyle, 
+                                            OGRSTBrushBColor, &bIsNull);
+              if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle, 
+                                                      pszColor,
+                                                      &r, &g, &b, &t))
+              {
+                  MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b);
+              }
+
+              // Symbol name mapping:
+              // First look for the native symbol name, then the ogr-...
+              // generic name.  
+              // If none provided or found then use 0: solid fill
+          
+              const char *pszName = OGR_ST_GetParamStr(hBrushStyle, 
+                                                        OGRSTBrushId, 
+                                                        &bIsNull);
+              c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset), 
+                                                     pszName, NULL);
+          }
+      }
+#else /* OGR Style C++ */
+      {
+          OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
+
+          const char *pszBrushName = poBrushStyle->Id(bIsNull);
+          if (bIsNull) pszBrushName = NULL;
+
+          /* We need 1 style */
+          if (msMaybeAllocateClassStyle(c, 0))
+          {
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+              OGR_ST_Destroy(hStylePart);
+#else
+              delete poStylePart;
+#endif              
+              return(MS_FAILURE);
+          }
+
+          // Check for Brush Pattern "ogr-brush-1": the invisible fill
+          // If that's what we have then set fill color to -1
+          if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL)
+          {
+              MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1);
+          }
+          else
+          {
+              bIsBrush = TRUE;
+              const char *pszColor = poBrushStyle->ForeColor(bIsNull);
+              if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
+              {
+                  MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                      msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
+              }
+
+              pszColor = poBrushStyle->BackColor(bIsNull);
+              if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
+              {
+                  MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b);
+              }
+
+              // Symbol name mapping:
+              // First look for the native symbol name, then the ogr-...
+              // generic name.  
+              // If none provided or found then use 0: solid fill
+          
+              const char *pszName = poBrushStyle->Id(bIsNull);
+              if (bIsNull)
+                  pszName = NULL;
+              c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset), 
+                                                     pszName, NULL);
+          }
+      }
+#endif /* OGRStyle C API */
+      else if (eStylePartType == OGRSTCSymbol)
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+      {
+          OGRStyleToolH hSymbolStyle = hStylePart;
+
+          /* We need 1 style */
+          if (msMaybeAllocateClassStyle(c, 0))
+          {
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+              OGR_ST_Destroy(hStylePart);
+#else
+              delete poStylePart;
+#endif
+              return(MS_FAILURE);
+          }
+
+          const char *pszColor = OGR_ST_GetParamStr(hSymbolStyle, 
+                                                    OGRSTSymbolColor,
+                                                    &bIsNull);
+          if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle, 
+                                                  pszColor,
+                                                  &r, &g, &b, &t))
+          {
+              MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+          }
+
+#if GDAL_VERSION_NUM >= 1600              
+          pszColor = OGR_ST_GetParamStr(hSymbolStyle,
+                                        OGRSTSymbolOColor,
+                                        &bIsNull);
+          if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle,
+                                                  pszColor,
+                                                  &r, &g, &b, &t))
+          {
+              MS_INIT_COLOR(c->styles[0]->outlinecolor, r, g, b);
+          }
+#endif /* GDAL_VERSION_NUM >= 1600 */
+          c->styles[0]->angle = OGR_ST_GetParamNum(hSymbolStyle,
+                                                   OGRSTSymbolAngle,
+                                                   &bIsNull);
+          
+          c->styles[0]->size = OGR_ST_GetParamNum(hSymbolStyle, 
+                                                  OGRSTSymbolSize, 
+                                                  &bIsNull);
+
+          // Symbol name mapping:
+          // First look for the native symbol name, then the ogr-...
+          // generic name, and in last resort try "default-marker" if
+          // provided by user.
+          const char *pszName = OGR_ST_GetParamStr(hSymbolStyle, 
+                                                   OGRSTSymbolId, 
+                                                   &bIsNull);
+          if (bIsNull)
+              pszName = NULL;
+
+          c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
+                                                pszName, 
+                                                "default-marker");
+      }
+#else /* OGR Style C++ */
+      {
+          OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
+
+          /* We need 1 style */
+          if (msMaybeAllocateClassStyle(c, 0))
+          {
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+              OGR_ST_Destroy(hStylePart);
+#else
+              delete poStylePart;
+#endif
+              return(MS_FAILURE);
+          }
+
+          const char *pszColor = poSymbolStyle->Color(bIsNull);
+          if (!bIsNull && poSymbolStyle->GetRGBFromString(pszColor,r,g,b,t))
+          {
+              MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+          }
+
+          c->styles[0]->angle = poSymbolStyle->Angle(bIsNull);
+              
+          c->styles[0]->size = (int)poSymbolStyle->Size(bIsNull);
+
+          // Symbol name mapping:
+          // First look for the native symbol name, then the ogr-...
+          // generic name, and in last resort try "default-marker" if
+          // provided by user.
+          const char *pszName = poSymbolStyle->Id(bIsNull);
+          if (bIsNull)
+              pszName = NULL;
+
+          c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
+                                                pszName, 
+                                                "default-marker");
+      }
+#endif /* OGRStyle C API */
+
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+      OGR_ST_Destroy(hStylePart);
+#else
+      delete poStylePart;
+#endif
+      
+    }
+    return MS_SUCCESS;
+}
+
+
+
+/**********************************************************************
  *                     msOGRLayerGetAutoStyle()
  *
  * Fills a classObj with style info from the specified shape.
@@ -2797,663 +3489,82 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
   // __TODO__ label cache incompatible with styleitem feature.
   layer->labelcache = MS_OFF;
 
-/* ------------------------------------------------------------------
- * Handle each part
- * ------------------------------------------------------------------ */
+  int nRetVal = MS_SUCCESS;
   if (psInfo->hLastFeature)
   {
-      GBool bIsNull, bIsBrush=MS_FALSE, bIsPen=MS_FALSE;
-      int r=0,g=0,b=0,t=0;
-
 #if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
       OGRStyleMgrH hStyleMgr = OGR_SM_Create(NULL);
       OGR_SM_InitFromFeature(hStyleMgr, psInfo->hLastFeature);
-      int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
+      nRetVal = msOGRUpdateStyle(hStyleMgr, map, layer, c);
+      OGR_SM_Destroy(hStyleMgr);
 #else /* OGRStyle C++ */
       OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
       poStyleMgr->InitFromFeature((OGRFeature *)psInfo->hLastFeature);
-      int numParts = poStyleMgr->GetPartCount();
-#endif /* OGRStyle C API */
-
-      for(int i=0; i<numParts; i++)
-      {
-          OGRSTClassId eStylePartType;
-#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
-          OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
-          if (!hStylePart)
-              continue;
-          eStylePartType = OGR_ST_GetType(hStylePart);
-#else /* OGRStyle C++ */
-          OGRStyleTool *poStylePart = poStyleMgr->GetPart(i);
-          if (!poStylePart)
-              continue;
-          eStylePartType = poStylePart->GetType();
-#endif /* OGRStyle C API */
-
-          // We want all size values returned in pixels.
-          //
-          // The scale factor that OGR expect is the ground/paper scale
-          // e.g. if 1 ground unit = 0.01 paper unit then scale=1/0.01=100
-          // cellsize if number of ground units/pixel, and OGR assumes that
-          // there is 72*39.37 pixels/ground units (since meter is assumed 
-          // for ground... but what ground units we have does not matter
-          // as long as use the same assumptions everywhere)
-          // That gives scale = cellsize*72*39.37
-
-#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
-          OGR_ST_SetUnit(hStylePart, OGRSTUPixel, map->cellsize*72.0*39.37);
-#else
-          poStylePart->SetUnit(OGRSTUPixel, map->cellsize*72.0*39.37);
-#endif
-
-          if (eStylePartType == OGRSTCLabel)
-#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
-          {
-              OGRStyleToolH hLabelStyle = hStylePart;
-
-              // Enclose the text string inside quotes to make sure it is seen
-              // as a string by the parser inside loadExpression(). (bug185)
-              /* See bug 3481 about the isalnum hack */
-              const char *labelTextString = OGR_ST_GetParamStr(hLabelStyle, 
-                                                               OGRSTLabelTextString, 
-                                                               &bIsNull);
-              if (labelTextString && isalnum(labelTextString[0]))
-                  msLoadExpressionString(&(c->text), (char*)labelTextString);
-              else
-                  msLoadExpressionString(&(c->text), 
-                                  (char*)CPLSPrintf("\"%s\"", (char*)labelTextString));
-
-              c->label.angle = OGR_ST_GetParamDbl(hLabelStyle, 
-                                                  OGRSTLabelAngle, &bIsNull);
-
-              c->label.size = OGR_ST_GetParamDbl(hLabelStyle, 
-                                                 OGRSTLabelSize, &bIsNull);
-              if( c->label.size < 1 ) /* no point dropping to zero size */
-                  c->label.size = 1;
-
-              // OGR default is anchor point = LL, so label is at UR of anchor
-              c->label.position = MS_UR;
-
-              int nPosition = OGR_ST_GetParamNum(hLabelStyle, 
-                                                 OGRSTLabelAnchor,
-                                                 &bIsNull);
-              if( !bIsNull )
-              {
-                  switch( nPosition ) {
-                    case 1: c->label.position = MS_UR; break;
-                    case 2: c->label.position = MS_UC; break;
-                    case 3: c->label.position = MS_UL; break;
-                    case 4: c->label.position = MS_CR; break;
-                    case 5: c->label.position = MS_CC; break;
-                    case 6: c->label.position = MS_CL; break;
-                    case 7: c->label.position = MS_LR; break;
-                    case 8: c->label.position = MS_LC; break;
-                    case 9: c->label.position = MS_LL; break;
-                    case 10: c->label.position = MS_LR; break; /*approximate*/
-                    case 11: c->label.position = MS_LC; break;
-                    case 12: c->label.position = MS_LL; break;
-                    default: break;
-                  }
-              }
-
-              const char *pszColor = OGR_ST_GetParamStr(hLabelStyle, 
-                                                        OGRSTLabelFColor,
-                                                        &bIsNull);
-              if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
-                                                      &r, &g, &b, &t))
-              {
-                  MS_INIT_COLOR(c->label.color, r, g, b);
-              }
-
-              pszColor = OGR_ST_GetParamStr(hLabelStyle, 
-                                            OGRSTLabelBColor,
-                                            &bIsNull);
-              if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
-                                                      &r, &g, &b, &t))
-              {
-                  MS_INIT_COLOR(c->label.backgroundcolor, r, g, b);
-              }
-
-              pszColor = OGR_ST_GetParamStr(hLabelStyle, 
-                                            OGRSTLabelHColor,
-                                            &bIsNull);
-              if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
-                                                      &r, &g, &b, &t))
-              {
-                  MS_INIT_COLOR(c->label.shadowcolor, r, g, b);
-              }
-
-#if GDAL_VERSION_NUM >= 1600
-              pszColor = OGR_ST_GetParamStr(hLabelStyle, 
-                                            OGRSTLabelOColor,
-                                            &bIsNull);
-              if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
-                                                      &r, &g, &b, &t))
-              {
-                  MS_INIT_COLOR(c->label.outlinecolor, r, g, b);
-              }
-#endif /* GDAL_VERSION_NUM >= 1600 */
-
-              // Label font... do our best to use TrueType fonts, otherwise
-              // fallback on bitmap fonts.
-#if defined(USE_GD_TTF) || defined (USE_GD_FT)
-              const char *pszBold = OGR_ST_GetParamNum(hLabelStyle, 
-                                                           OGRSTLabelBold, 
-                                                           &bIsNull) ? "-bold" : "";
-              const char *pszItalic = OGR_ST_GetParamNum(hLabelStyle, 
-                                                           OGRSTLabelItalic, 
-                                                           &bIsNull) ? "-italic" : "";
-              const char *pszFontName = OGR_ST_GetParamStr(hLabelStyle, 
-                                                           OGRSTLabelFontName,
-                                                           &bIsNull);
-              const char *pszName = CPLSPrintf("%s%s%s", pszFontName, pszBold, pszItalic);
-              bool bFont = true;
-
-              if (pszFontName != NULL && !bIsNull && pszFontName[0] != '\0')
-              {
-                  if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
-                  {
-                      c->label.type = MS_TRUETYPE;
-                      c->label.font = strdup(pszName);
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** Using '%s' TTF font **\n", pszName);
-                  }
-                  else if ( (strcmp(pszFontName,pszName) != 0) &&
-                            msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
-                  {
-                      c->label.type = MS_TRUETYPE;
-                      c->label.font = strdup(pszFontName);
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** Using '%s' TTF font **\n", pszFontName);
-                  }
-                  else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
-                  {
-                      c->label.type = MS_TRUETYPE;
-                      c->label.font = strdup("default");
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** Using 'default' TTF font **\n");
-                  }
-                  else
-                      bFont = false;
-              }
-
-              if (!bFont)
-#endif /* USE_GD_FT || USE_GD_FT */
-              {
-                  c->label.type = MS_BITMAP;
-                  c->label.size = MS_MEDIUM;
-                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                      msDebug("** Using 'medium' BITMAP font **\n");
-              }
-          }
-#else /* OGR Style C++ */
-          {
-              OGRStyleLabel *poLabelStyle = (OGRStyleLabel*)poStylePart;
-
-              // Enclose the text string inside quotes to make sure it is seen
-              // as a string by the parser inside loadExpression(). (bug185)
-              /* See bug 3481 about the isalnum hack */
-              const char *labelTextString = poLabelStyle->TextString(bIsNull);
-
-              if (labelTextString && isalnum(labelTextString[0]))
-                  msLoadExpressionString(&(c->text), (char*)labelTextString);
-              else
-                  msLoadExpressionString(&(c->text), 
-                                  (char*)CPLSPrintf("\"%s\"", (char*)labelTextString));
-
-              c->label.angle = poLabelStyle->Angle(bIsNull);
-
-              c->label.size = (int)poLabelStyle->Size(bIsNull);
-              if( c->label.size < 1 ) /* no point dropping to zero size */
-                  c->label.size = 1;
-
-              // OGR default is anchor point = LL, so label is at UR of anchor
-              c->label.position = MS_UR;
-
-              const char *pszColor = poLabelStyle->ForeColor(bIsNull);
-              if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
-              {
-                  MS_INIT_COLOR(c->label.color, r, g, b);
-              }
-
-              pszColor = poLabelStyle->BackColor(bIsNull);
-              if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
-              {
-                  MS_INIT_COLOR(c->label.backgroundcolor, r, g, b);
-              }
-#if GDAL_VERSION_NUM >= 1400
-              pszColor = poLabelStyle->ShadowColor(bIsNull);
-              if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
-              {
-                  MS_INIT_COLOR(c->label.shadowcolor, r, g, b);
-              }
-#endif
-              // Label font... do our best to use TrueType fonts, otherwise
-              // fallback on bitmap fonts.
-#if defined(USE_GD_TTF) || defined (USE_GD_FT)
-              const char *pszBold = poLabelStyle->Bold(bIsNull)  ? "-bold" : "";
-              const char *pszItalic = poLabelStyle->Italic(bIsNull) ? "-italic" : "";
-              const char *pszFontName = poLabelStyle->FontName(bIsNull);
-              const char *pszName = CPLSPrintf("%s%s%s", pszFontName, pszBold, pszItalic);
-              bool bFont = true;
-
-              if (pszFontName != NULL && !bIsNull && pszFontName[0] != '\0')
-              {
-                  if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
-                  {
-                      c->label.type = MS_TRUETYPE;
-                      c->label.font = strdup(pszName);
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** Using '%s' TTF font **\n", pszName);
-                  }
-                  else if ( (strcmp(pszFontName,pszName) != 0) &&
-                            msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
-                  {
-                      c->label.type = MS_TRUETYPE;
-                      c->label.font = strdup(pszFontName);
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** Using '%s' TTF font **\n", pszFontName);
-                  }
-                  else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
-                  {
-                      c->label.type = MS_TRUETYPE;
-                      c->label.font = strdup("default");
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** Using 'default' TTF font **\n");
-                  }
-                  else
-                      bFont = false;
-              }
-
-              if (!bFont)
-#endif /* USE_GD_FT || USE_GD_FT */
-              {
-                  c->label.type = MS_BITMAP;
-                  c->label.size = MS_MEDIUM;
-                  if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                      msDebug("** Using 'medium' BITMAP font **\n");
-              }
-          }
-#endif /* OGRStyle C API */
-          else if (eStylePartType == OGRSTCPen)
-#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
-          {
-              OGRStyleToolH hPenStyle = hStylePart;
-              bIsPen = TRUE;
-
-              const char *pszPenName = OGR_ST_GetParamStr(hPenStyle, 
-                                                          OGRSTPenId, 
-                                                          &bIsNull);
-              if (bIsNull) pszPenName = NULL;
-              colorObj oPenColor;
-              int nPenSymbol = 0;
-              int nPenSize = 1;
-
-              // Make sure pen is always initialized
-              MS_INIT_COLOR(oPenColor, -1, -1, -1);
-
-              // Check for Pen Pattern "ogr-pen-1": the invisible pen
-              // If that's what we have then set pen color to -1
-              if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL)
-              {
-                  MS_INIT_COLOR(oPenColor, -1, -1, -1);
-              }
-              else
-              {
-                  const char *pszColor = OGR_ST_GetParamStr(hPenStyle, 
-                                                            OGRSTPenColor,
-                                                            &bIsNull);
-                  if (!bIsNull && OGR_ST_GetRGBFromString(hPenStyle, pszColor,
-                                                          &r, &g, &b, &t))
-                  {
-                      MS_INIT_COLOR(oPenColor, r, g, b);
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** PEN COLOR = %d %d %d **\n", r,g,b);
-                  }
-
-                  nPenSize = OGR_ST_GetParamNum(hPenStyle, 
-                                                OGRSTPenWidth, &bIsNull);
-                  if (bIsNull)
-                      nPenSize = 1;
-                  if (pszPenName!=NULL)
-                  {
-                      // Try to match pen name in symbol file
-                      nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
-                                                    pszPenName, NULL);
-                  }
-              }
-              if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                  msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
-              if (bIsBrush || layer->type == MS_LAYER_POLYGON)
-              {
-                  // This is a multipart symbology, so pen defn goes in the
-                  // overlaysymbol params 
-                  if (msMaybeAllocateClassStyle(c, 1))
-                  {
-                      RELEASE_OGR_LOCK;
-                      return(MS_FAILURE);
-                  }
-
-                  c->styles[1]->outlinecolor = oPenColor;
-                  c->styles[1]->size = nPenSize;
-                  c->styles[1]->symbol = nPenSymbol;
-                  c->styles[1]->width = nPenSize;
-              }
-              else
-              {
-                  // Single part symbology
-                  if (msMaybeAllocateClassStyle(c, 0))
-                  {
-                      RELEASE_OGR_LOCK;
-                      return(MS_FAILURE);
-                  }
-
-                  if(layer->type == MS_LAYER_POLYGON)
-                      c->styles[0]->outlinecolor = c->styles[0]->color = 
-                          oPenColor;
-                  else
-                      c->styles[0]->color = oPenColor;
-                  c->styles[0]->symbol = nPenSymbol;
-                  c->styles[0]->size = nPenSize;
-                  c->styles[0]->width = nPenSize;
-              }
-
-          }
-#else /* OGR Style C++ */
-          {
-              OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
-              bIsPen = TRUE;
-
-              const char *pszPenName = poPenStyle->Id(bIsNull);
-              if (bIsNull) pszPenName = NULL;
-              colorObj oPenColor;
-              int nPenSymbol = 0;
-              int nPenSize = 1;
-
-              // Make sure pen is always initialized
-              MS_INIT_COLOR(oPenColor, -1, -1, -1);
-
-              // Check for Pen Pattern "ogr-pen-1": the invisible pen
-              // If that's what we have then set pen color to -1
-              if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL)
-              {
-                  MS_INIT_COLOR(oPenColor, -1, -1, -1);
-              }
-              else
-              {
-                  const char *pszColor = poPenStyle->Color(bIsNull);
-                  if (!bIsNull && poPenStyle->GetRGBFromString(pszColor,r,g,b,t))
-                  {
-                      MS_INIT_COLOR(oPenColor, r, g, b);
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** PEN COLOR = %d %d %d **\n", r,g,b);
-                  }
-
-                  nPenSize = (int)poPenStyle->Width(bIsNull);
-                  if (bIsNull)
-                      nPenSize = 1;
-                  if (pszPenName!=NULL)
-                  {
-                      // Try to match pen name in symbol file
-                      nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
-                                                    pszPenName, NULL);
-                  }
-              }
-              if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                  msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
-              if (bIsBrush || layer->type == MS_LAYER_POLYGON)
-              {
-                  // This is a multipart symbology, so pen defn goes in the
-                  // overlaysymbol params 
-                  if (msMaybeAllocateClassStyle(c, 1))
-                  {
-                      RELEASE_OGR_LOCK;
-                      return(MS_FAILURE);
-                  }
-
-                  c->styles[1]->outlinecolor = oPenColor;
-                  c->styles[1]->size = nPenSize;
-                  c->styles[1]->symbol = nPenSymbol;
-                  c->styles[1]->width = nPenSize;
-              }
-              else
-              {
-                  // Single part symbology
-                  if (msMaybeAllocateClassStyle(c, 0))
-                  {
-                      RELEASE_OGR_LOCK;
-                      return(MS_FAILURE);
-                  }
-
-                  if(layer->type == MS_LAYER_POLYGON)
-                      c->styles[0]->outlinecolor = c->styles[0]->color = 
-                          oPenColor;
-                  else
-                      c->styles[0]->color = oPenColor;
-                  c->styles[0]->symbol = nPenSymbol;
-                  c->styles[0]->size = nPenSize;
-                  c->styles[0]->width = nPenSize;
-              }
-
-          }
-#endif /* OGRStyle C API */
-          else if (eStylePartType == OGRSTCBrush)
-#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
-          {
-              OGRStyleToolH hBrushStyle = hStylePart;
-
-              const char *pszBrushName = OGR_ST_GetParamStr(hBrushStyle, 
-                                                            OGRSTBrushId, 
-                                                            &bIsNull);
-              if (bIsNull) pszBrushName = NULL;
-
-              /* We need 1 style */
-              if (msMaybeAllocateClassStyle(c, 0))
-              {
-                  RELEASE_OGR_LOCK;
-                  return(MS_FAILURE);
-              }
-
-              // Check for Brush Pattern "ogr-brush-1": the invisible fill
-              // If that's what we have then set fill color to -1
-              if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL)
-              {
-                  MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1);
-              }
-              else
-              {
-                  bIsBrush = TRUE;
-                  const char *pszColor = OGR_ST_GetParamStr(hBrushStyle, 
-                                                            OGRSTBrushFColor,
-                                                            &bIsNull);
-                  if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle, 
-                                                          pszColor,
-                                                          &r, &g, &b, &t))
-                  {
-                      MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
-                  }
-
-                  pszColor = OGR_ST_GetParamStr(hBrushStyle, 
-                                                OGRSTBrushBColor, &bIsNull);
-                  if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle, 
-                                                          pszColor,
-                                                          &r, &g, &b, &t))
-                  {
-                      MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b);
-                  }
-
-                  // Symbol name mapping:
-                  // First look for the native symbol name, then the ogr-...
-                  // generic name.  
-                  // If none provided or found then use 0: solid fill
-              
-                  const char *pszName = OGR_ST_GetParamStr(hBrushStyle, 
-                                                            OGRSTBrushId, 
-                                                            &bIsNull);
-                  c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset), 
-                                                         pszName, NULL);
-              }
-          }
-#else /* OGR Style C++ */
-          {
-              OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
-
-              const char *pszBrushName = poBrushStyle->Id(bIsNull);
-              if (bIsNull) pszBrushName = NULL;
-
-              /* We need 1 style */
-              if (msMaybeAllocateClassStyle(c, 0))
-              {
-                  RELEASE_OGR_LOCK;
-                  return(MS_FAILURE);
-              }
-
-              // Check for Brush Pattern "ogr-brush-1": the invisible fill
-              // If that's what we have then set fill color to -1
-              if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL)
-              {
-                  MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1);
-              }
-              else
-              {
-                  bIsBrush = TRUE;
-                  const char *pszColor = poBrushStyle->ForeColor(bIsNull);
-                  if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
-                  {
-                      MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-                      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-                          msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
-                  }
-
-                  pszColor = poBrushStyle->BackColor(bIsNull);
-                  if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
-                  {
-                      MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b);
-                  }
-
-                  // Symbol name mapping:
-                  // First look for the native symbol name, then the ogr-...
-                  // generic name.  
-                  // If none provided or found then use 0: solid fill
-              
-                  const char *pszName = poBrushStyle->Id(bIsNull);
-                  if (bIsNull)
-                      pszName = NULL;
-                  c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset), 
-                                                         pszName, NULL);
-              }
-          }
-#endif /* OGRStyle C API */
-          else if (eStylePartType == OGRSTCSymbol)
-#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
-          {
-              OGRStyleToolH hSymbolStyle = hStylePart;
-
-              /* We need 1 style */
-              if (msMaybeAllocateClassStyle(c, 0))
-              {
-                  RELEASE_OGR_LOCK;
-                  return(MS_FAILURE);
-              }
-
-              const char *pszColor = OGR_ST_GetParamStr(hSymbolStyle, 
-                                                        OGRSTSymbolColor,
-                                                        &bIsNull);
-              if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle, 
-                                                      pszColor,
-                                                      &r, &g, &b, &t))
-              {
-                  MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-              }
-
-#if GDAL_VERSION_NUM >= 1600              
-              pszColor = OGR_ST_GetParamStr(hSymbolStyle,
-                                            OGRSTSymbolOColor,
-                                            &bIsNull);
-              if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle,
-                                                      pszColor,
-                                                      &r, &g, &b, &t))
-              {
-                  MS_INIT_COLOR(c->styles[0]->outlinecolor, r, g, b);
-              }
-#endif /* GDAL_VERSION_NUM >= 1600 */
-              c->styles[0]->angle = OGR_ST_GetParamNum(hSymbolStyle,
-                                                       OGRSTSymbolAngle,
-                                                       &bIsNull);
-              
-              c->styles[0]->size = OGR_ST_GetParamNum(hSymbolStyle, 
-                                                      OGRSTSymbolSize, 
-                                                      &bIsNull);
-
-              // Symbol name mapping:
-              // First look for the native symbol name, then the ogr-...
-              // generic name, and in last resort try "default-marker" if
-              // provided by user.
-              const char *pszName = OGR_ST_GetParamStr(hSymbolStyle, 
-                                                       OGRSTSymbolId, 
-                                                       &bIsNull);
-              if (bIsNull)
-                  pszName = NULL;
-
-              c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
-                                                    pszName, 
-                                                    "default-marker");
-          }
-#else /* OGR Style C++ */
-          {
-              OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
-
-              /* We need 1 style */
-              if (msMaybeAllocateClassStyle(c, 0))
-              {
-                  RELEASE_OGR_LOCK;
-                  return(MS_FAILURE);
-              }
-
-              const char *pszColor = poSymbolStyle->Color(bIsNull);
-              if (!bIsNull && poSymbolStyle->GetRGBFromString(pszColor,r,g,b,t))
-              {
-                  MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-              }
-
-              c->styles[0]->angle = poSymbolStyle->Angle(bIsNull);
-                  
-              c->styles[0]->size = (int)poSymbolStyle->Size(bIsNull);
-
-              // Symbol name mapping:
-              // First look for the native symbol name, then the ogr-...
-              // generic name, and in last resort try "default-marker" if
-              // provided by user.
-              const char *pszName = poSymbolStyle->Id(bIsNull);
-              if (bIsNull)
-                  pszName = NULL;
-
-              c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
-                                                    pszName, 
-                                                    "default-marker");
-          }
-#endif /* OGRStyle C API */
-
-#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
-          OGR_ST_Destroy(hStylePart);
-#else
-          delete poStylePart;
-#endif
-
-      }
-
-#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
-      OGR_SM_Destroy(hStyleMgr);
-#else
+      nRetVal = msOGRUpdateStyle(poStyleMgr, map, layer, c);
       delete poStyleMgr;
-#endif
-
+#endif /* OGRStyle C API */
   }
 
   RELEASE_OGR_LOCK;
-  return MS_SUCCESS;
+  return nRetVal;
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGRLayerGetAutoStyle()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
+
+
+/**********************************************************************
+ *                     msOGRUpdateStyleFromString()
+ *
+ * Fills a classObj with style info from the specified style string.
+ * For optimal results, this should be called immediately after 
+ * GetNextShape() or GetShape() so that the shape doesn't have to be read
+ * twice.
+ *
+ * The returned classObj is a ref. to a static structure valid only until
+ * the next call and that shouldn't be freed by the caller.
+ **********************************************************************/
+int msOGRUpdateStyleFromString(mapObj *map, layerObj *layer, classObj *c,
+                                  const char *stylestring)
+{
+#ifdef USE_OGR 
+/* ------------------------------------------------------------------
+ * Reset style info in the class to defaults
+ * the only members we don't touch are name, expression, and join/query stuff
+ * ------------------------------------------------------------------ */
+    resetClassStyle(c);
+    if (msMaybeAllocateClassStyle(c, 0)) {
+      return(MS_FAILURE);
+    }
+
+    // __TODO__ label cache incompatible with styleitem feature.
+    layer->labelcache = MS_OFF;
+
+    int nRetVal = MS_SUCCESS;
+
+    ACQUIRE_OGR_LOCK;
+
+#if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
+    OGRStyleMgrH hStyleMgr = OGR_SM_Create(NULL);
+    OGR_SM_InitStyleString(hStyleMgr, stylestring);
+    nRetVal = msOGRUpdateStyle(hStyleMgr, map, layer, c);
+    OGR_SM_Destroy(hStyleMgr);
+#else /* OGRStyle C++ */
+    OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
+    poStyleMgr->InitStyleString(stylestring);
+    nRetVal = msOGRUpdateStyle(poStyleMgr, map, layer, c);
+    delete poStyleMgr;
+#endif /* OGRStyle C API */
+    
+    RELEASE_OGR_LOCK;
+    return nRetVal;
 #else
 /* ------------------------------------------------------------------
  * OGR Support not included...

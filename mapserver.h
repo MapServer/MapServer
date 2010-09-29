@@ -1978,6 +1978,7 @@ MS_DLL_EXPORT int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, lo
 MS_DLL_EXPORT int msLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msLayerSetExtent( layerObj *layer, double minx, double miny, double maxx, double maxy);
 MS_DLL_EXPORT int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
+MS_DLL_EXPORT int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape);
 MS_DLL_EXPORT void msLayerAddProcessing( layerObj *layer, const char *directive );
 MS_DLL_EXPORT void msLayerSetProcessingKey( layerObj *layer, const char *key, 
                                             const char *value);
@@ -2362,6 +2363,8 @@ int MS_DLL_EXPORT msOGRLayerClose(layerObj *layer);
 
 char MS_DLL_EXPORT *msOGRShapeToWKT(shapeObj *shape);
 shapeObj MS_DLL_EXPORT *msOGRShapeFromWKT(const char *string);
+int msOGRUpdateStyleFromString(mapObj *map, layerObj *layer, classObj *c,
+                                  const char *stylestring);
 
 /* ==================================================================== */
 /*      prototypes for functions in mapcopy                             */
