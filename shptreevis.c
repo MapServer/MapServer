@@ -80,7 +80,7 @@ int main( int argc, char ** argv )
     DBFHandle   hDBF;
     SHPTreeHandle	qix;
     
-    int		i, j;
+    int		i;
     char	*myfile = NULL;
 
     treeNodeObj *node;    
@@ -93,7 +93,7 @@ int main( int argc, char ** argv )
     SHPObject	*shape;
     double	X[6], Y[6];
 #endif   
-    int		pos, result;
+    int		result;
     char	mBigEndian;
 
     int		this_rec, factor;
