@@ -656,7 +656,7 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
 /************************************************************************/
 /*                    msProjectRectTraditionalEdge()                    */
 /************************************************************************/
-
+#ifdef notdef
 static int 
 msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out, 
                              rectObj *rect) 
@@ -743,6 +743,7 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
   return(MS_FAILURE);
 #endif
 }
+#endif /* def notdef */
 
 /************************************************************************/
 /*                       msProjectRectAsPolygon()                       */

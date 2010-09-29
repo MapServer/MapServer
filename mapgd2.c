@@ -37,10 +37,10 @@
 
 #define MS_IMAGE_GET_GDIMAGEPTR(image) ((gdImagePtr) image->img.plugin)
 
-void startNewLayerGD(imageObj *img, double opacity) {
+void startNewLayerGD(imageObj *img, layerObj *layer, double opacity) {
 }
 
-void closeNewLayerGD(imageObj *img, double opacity) { 
+void closeNewLayerGD(imageObj *img, layerObj *layer, double opacity) { 
 }
 
 /*
