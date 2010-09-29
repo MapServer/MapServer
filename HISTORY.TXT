@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Restrict cascaded WMS requests based on EXTENT (#3543)
+
 - Avoid EPSG lookups for WMS client layers if possible (#3533)
 
 - RFC-60: Add ability to skip ANGLE FOLLOW labels with too much character overlap (#3523)

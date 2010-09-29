@@ -471,7 +471,6 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         return MS_FAILURE;
     }
 
-
 /* ------------------------------------------------------------------
  * Find out request version
  * ------------------------------------------------------------------ */
@@ -620,7 +619,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
 
 /* ------------------------------------------------------------------
- * Set layer SRS and reproject map extents to the layer's SRS
+ * Set layer SRS.
  * ------------------------------------------------------------------ */
     /* No need to set lp->proj if it's already set to the right EPSG code */
     if ((pszTmp = msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE)) == NULL ||
@@ -685,10 +684,8 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                 && (strcasecmp(nonsquare_ok,"no") == 0 
                     || strcasecmp(nonsquare_ok,"false") == 0) )
             {
-
                 double cellsize_x = (bbox.maxx-bbox.minx) / bbox_width;
                 double cellsize_y = (bbox.maxy-bbox.miny) / bbox_height;
-                
 
                 if( cellsize_x < cellsize_y * 0.999999 )
                 {
@@ -718,6 +715,48 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                         msDebug("NONSQUARE_OK=%s, but cellsize was already square - no change.\n",
                                 nonsquare_ok );
                 }
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the layer has predefined extents, and a predefined           */
+/*      projection that matches the request projection, then            */
+/*      consider restricting the BBOX to match the limits.              */
+/* -------------------------------------------------------------------- */
+    if( bbox_width != 0 )
+    {
+        const char *ows_srs;
+        rectObj  layer_rect;
+
+        ows_srs = msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE);
+
+        if( strchr(ows_srs,' ') == NULL 
+            && msOWSGetLayerExtent( map, lp, "MO", &layer_rect) == MS_SUCCESS )
+        {
+            /* fulloverlap */
+            if( msRectContained( &bbox, &layer_rect ) )
+            {
+                /* no changes */
+            }
+           
+            /* no overlap */
+            else if( !msRectOverlap( &layer_rect, &bbox ) )
+            {
+                bbox_width = 0;
+                bbox_height = 0;
+            }
+
+            else
+            {
+                double cellsize_x = (bbox.maxx-bbox.minx) / bbox_width;
+                double cellsize_y = (bbox.maxy-bbox.miny) / bbox_height;
+                double cellsize = MIN(cellsize_x,cellsize_y);
+                
+                msRectIntersect( &bbox, &layer_rect );
+                
+                bbox_width = ceil((bbox.maxx - bbox.minx) / cellsize);
+                bbox_height = ceil((bbox.maxy - bbox.miny) / cellsize);
             }
         }
     }
@@ -922,6 +961,16 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         /* an error was already reported. */
         msFreeWmsParamsObj(&sThisWMSParams);
         return MS_FAILURE;
+    }
+
+/* ------------------------------------------------------------------
+ * Check if the request is empty, perhaps due to reprojection problems
+ * or wms_extents restrictions.
+ * ------------------------------------------------------------------ */
+    if( bbox_width == 0 || bbox_height == 0 )
+    {
+        msFreeWmsParamsObj(&sThisWMSParams);
+        return MS_SUCCESS;  /* No overlap. */
     }
 
 /* ------------------------------------------------------------------
