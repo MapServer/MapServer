@@ -1440,31 +1440,38 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     {
         FILE *fp;
         char szBuf[MS_BUFFER_LENGTH];
-
-        fp = fopen(pasReqInfo[iReq].pszOutputFile, "r");
-        if (fp)
+        
+        if( pasReqInfo[iReq].pszOutputFile )
         {
-            /* TODO: For now we'll only read the first chunk and return it
-             * via msSetError()... we should really try to parse the XML
-             * and extract the exception code/message though
-             */
-             size_t nSize;
-
-            nSize = fread(szBuf, sizeof(char), MS_BUFFER_LENGTH-1, fp);
-            if (nSize >= 0 && nSize < MS_BUFFER_LENGTH)
-                szBuf[nSize] = '\0';
+            fp = fopen(pasReqInfo[iReq].pszOutputFile, "r");
+            if (fp)
+            {
+                /* TODO: For now we'll only read the first chunk and return it
+                 * via msSetError()... we should really try to parse the XML
+                 * and extract the exception code/message though
+                 */
+                size_t nSize;
+                
+                nSize = fread(szBuf, sizeof(char), MS_BUFFER_LENGTH-1, fp);
+                if (nSize >= 0 && nSize < MS_BUFFER_LENGTH)
+                    szBuf[nSize] = '\0';
+                else
+                    strcpy(szBuf, "(!!!)"); /* This should never happen */
+                
+                fclose(fp);
+                
+                /* We're done with the remote server's response... delete it. */
+                if (!lp->debug)
+                    unlink(pasReqInfo[iReq].pszOutputFile);
+            }
             else
-                strcpy(szBuf, "(!!!)"); /* This should never happen */
-
-            fclose(fp);
-
-            /* We're done with the remote server's response... delete it. */
-            if (!lp->debug)
-                unlink(pasReqInfo[iReq].pszOutputFile);
+            {
+                strcpy(szBuf, "(Failed to open exception response)");
+            }
         }
         else
         {
-            strcpy(szBuf, "(Failed to open exception response)");
+            strncpy( szBuf, pasReqInfo[iReq].result_data, MS_BUFFER_LENGTH );
         }
 
         if (lp->debug)
