@@ -2717,14 +2717,21 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
     int   numparams;
     int   nSymbol = -1;
 
-    if (pszSymbolId && pszSymbolId[0] != '\0' &&
-        (params = msStringSplit(pszSymbolId, '.', &numparams))!=NULL)
+    if (pszSymbolId && pszSymbolId[0] != '\0')
     {
-        for(int j=0; j<numparams && nSymbol == -1; j++)
+#if GDAL_VERSION_NUM >= 1800 /* Use comma as the separator */
+        params = msStringSplit(pszSymbolId, ',', &numparams);
+#else
+        params = msStringSplit(pszSymbolId, '.', &numparams);
+#endif
+        if (params != NULL)
         {
-            nSymbol = msGetSymbolIndex(symbolset, params[j], MS_FALSE);
+            for(int j=0; j<numparams && nSymbol == -1; j++)
+            {
+                nSymbol = msGetSymbolIndex(symbolset, params[j], MS_FALSE);
+            }
+            msFreeCharArray(params, numparams);
         }
-        msFreeCharArray(params, numparams);
     }
     if (nSymbol == -1 && pszDefaultSymbol)
     {
