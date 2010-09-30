@@ -1154,6 +1154,18 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     else
         bCacheToDisk = MS_FALSE;
 
+    if( bCacheToDisk )
+    {
+        /* We'll store the remote server's response to a tmp file. */
+        if (map->web.imagepath == NULL || strlen(map->web.imagepath) == 0)
+        {
+            msSetError(MS_WMSERR, 
+                       "WEB.IMAGEPATH must be set to use WMS client connections.",
+                       "msPrepareWMSLayerRequest()");
+            return MS_FAILURE;
+        }
+    }
+
 /* ------------------------------------------------------------------
  * Check if layer can be merged with previous WMS layer requests
  * Metadata wms_force_separate_request can be set to 1 to prevent this
@@ -1310,14 +1322,6 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         pasReqInfo[(*numRequests)].nLayerId = nLayerId;
         pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
         pszURL = NULL;
-        /* We'll store the remote server's response to a tmp file. */
-        if (map->web.imagepath == NULL || strlen(map->web.imagepath) == 0)
-        {
-            msSetError(MS_WMSERR, 
-                  "WEB.IMAGEPATH must be set to use WMS client connections.",
-                       "msPrepareWMSLayerRequest()");
-            return MS_FAILURE;
-        }
         pasReqInfo[(*numRequests)].pszHTTPCookieData = pszHTTPCookieData;
         pszHTTPCookieData = NULL;
         if( bCacheToDisk )
