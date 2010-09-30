@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version
 ---------------
 
+- Fixed msOGRGetSymbolId according to the changes in gdal 1.8 (#3556)
+
 - Fixed crash when drawing a map using UNIQUE fid in the layer data (#3271)
 
 - Fixed Oracle Spatial Data gets corrupt (#3541)
