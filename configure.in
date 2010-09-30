@@ -1770,16 +1770,16 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include WMS Client Connections support)
 AC_ARG_WITH(wmsclient,
-[  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
-                          required).],,)
+[  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4, libcurl and
+                          GDAL required).],,)
 
 if test "$with_wmsclient" = "no" ; then
 
   AC_MSG_RESULT([        OGC WMS Client Layers disabled by --without-wmsclient.])
 
-elif test -z "$PROJ_ENABLED" ; then
+elif test -z "$PROJ_ENABLED" -o -z "$GDAL_ENABLED"; then
 
-  AC_MSG_RESULT([        OGC WMS Client Connections not enabled (PROJ.4 and libcurl required).])
+  AC_MSG_RESULT([        OGC WMS Client Connections not enabled (PROJ.4, libcurl and GDAL required).])
 
 elif test "$with_wmsclient" = "yes" ; then
 

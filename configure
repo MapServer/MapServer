@@ -918,8 +918,8 @@ Optional Packages:
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
   --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).
   --with-wcs              Enable OGC WCS Server Support (GDAL+PROJ4 required).
-  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
-                          required).
+  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4, libcurl and
+                          GDAL required).
   --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).
   --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and
@@ -11934,10 +11934,10 @@ if test "$with_wmsclient" = "no" ; then
   echo "$as_me:$LINENO: result:         OGC WMS Client Layers disabled by --without-wmsclient." >&5
 echo "${ECHO_T}        OGC WMS Client Layers disabled by --without-wmsclient." >&6
 
-elif test -z "$PROJ_ENABLED" ; then
+elif test -z "$PROJ_ENABLED" -o -z "$GDAL_ENABLED"; then
 
-  echo "$as_me:$LINENO: result:         OGC WMS Client Connections not enabled (PROJ.4 and libcurl required)." >&5
-echo "${ECHO_T}        OGC WMS Client Connections not enabled (PROJ.4 and libcurl required)." >&6
+  echo "$as_me:$LINENO: result:         OGC WMS Client Connections not enabled (PROJ.4, libcurl and GDAL required)." >&5
+echo "${ECHO_T}        OGC WMS Client Connections not enabled (PROJ.4, libcurl and GDAL required)." >&6
 
 elif test "$with_wmsclient" = "yes" ; then
 
@@ -12156,9 +12156,9 @@ echo "${ECHO_T}libxml2 requested for WCS Server." >&6
 echo "${ECHO_T}      If unavailable disable using --without-xml2-config," >&6
     echo "$as_me:$LINENO: result:       but WCS 1.1 support will be disabled." >&5
 echo "${ECHO_T}      but WCS 1.1 support will be disabled." >&6
-   elif test "x$WFS_SVR_ENABLED" != "x" ; then
+  elif test "x$WFS_SVR_ENABLED" != "x" ; then
     with_xml2_config=yes
-    echo "$as_me:$LINENO: result: libxml2 requested for WCS Server." >&5
+    echo "$as_me:$LINENO: result: libxml2 requested for WFS Server." >&5
 echo "${ECHO_T}libxml2 requested for WFS Server." >&6
     echo "$as_me:$LINENO: result:       If unavailable disable using --without-xml2-config," >&5
 echo "${ECHO_T}      If unavailable disable using --without-xml2-config," >&6

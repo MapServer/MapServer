@@ -114,8 +114,8 @@ Optional Packages:
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
   --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).
   --with-wcs              Enable OGC WCS Server Support (GDAL+PROJ4 required).
-  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
-                          required).
+  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4, libcurl and
+                          GDAL required).
   --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).
   --with-sos              Enable OGC SOS Server Support (libxml2 and PROJ4 and
@@ -520,14 +520,14 @@ OGC WMS Client Support:
 
 ::
 
-  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
-                          required).
+  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4, libcurl and
+                          GDAL required).
 
 - This option enables MapServer's 'CONNECTIONTYPE WMS' to include layers
   from remote WMS servers in MapServer applications.
-  It requires PROJ4, libcurl (see  --with-curl-config option below) and OGR.
-  GDAL is optional but highly recommended in order to support 
-  reprojection of layers obtained from remote WMS servers.
+  It requires PROJ4, libcurl (see  --with-curl-config option below) and GDAL.
+  GDAL is required in order to support reprojection of layers obtained from 
+  remote WMS servers.
 
 - See the MapServer WMS Client HOWTO for more details at 
   http://mapserver.gis.umn.edu/docs/howto/wms_client
