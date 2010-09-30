@@ -584,8 +584,8 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             {
                 if(pasReqInfo[i].pszHTTPCookieData[nPos] == '\n')
                 {
-                    msSetError(MS_HTTPERR, "Can't open output file %s.", 
-                       "msHTTPExecuteRequests()", pasReqInfo[i].pszOutputFile);
+                    msSetError(MS_HTTPERR, "Can't use cookie containing a newline character.", 
+                       "msHTTPExecuteRequests()");
                     return(MS_FAILURE);
                 }
             }
