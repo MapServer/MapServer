@@ -86,9 +86,6 @@ int msWFSException(mapObj *map, const char *locator, const char *code,
     msIO_printf("  </ServiceException>\n");
     msIO_printf("</ServiceExceptionReport>\n");
 
-    /* clear error since we have already reported it */
-    msResetErrorList();
-
     return MS_FAILURE; /* so we can call 'return msWFSException();' anywhere */
 }
 

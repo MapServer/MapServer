@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed ability to get the error message and code of an OWS exception (#3554)
+
 - Fixed msOGRGetSymbolId according to the changes in gdal 1.8 (#3556)
 
 - Support holding WMS client requests in RAM instead of writing to disk (#3555)

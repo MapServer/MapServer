@@ -164,9 +164,6 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
   msIO_printf("  </ServiceException>\n");
   msIO_printf("</ServiceExceptionReport>\n");
 
-  /* clear error since we have already reported it */
-  msResetErrorList();
-
   return MS_FAILURE;
 }
 

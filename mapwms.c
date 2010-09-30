@@ -208,9 +208,6 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 
   }
 
-  /* clear error since we have already reported it */
-  msResetErrorList();
-
   return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }
 

@@ -117,9 +117,6 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
 
-  /* clear error since we have already reported it */
-  msResetErrorList();
-
   return MS_FAILURE;
 }
 
