@@ -2368,11 +2368,11 @@ int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
     if (nCount > 1)
       return 0;
 
-    /*make sure that if there is properyisequal, it is the only one*/
-    if (psFilterNode->psLeftNode == NULL && psFilterNode->psRightNode == NULL)
+    /*make sure that it is the main and only node*/
+    if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
       return 1;
-
-    return 0;
+    
+    return  0;
 }
 
 int FLTIsPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
