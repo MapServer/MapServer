@@ -2752,6 +2752,7 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
  * msOGRUpdateStyleFromString
  **********************************************************************/
 
+#ifdef USE_OGR
 #if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
 static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer, classObj *c)
 #else
@@ -3433,6 +3434,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
     }
     return MS_SUCCESS;
 }
+#endif /* USE_OGR */
 
 
 
