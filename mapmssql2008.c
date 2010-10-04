@@ -65,6 +65,7 @@ typedef struct ms_MSSQL2008_layer_info_t
     char        *sql;           /* sql query to send to DB */
     long        row_num;        /* what row is the NEXT to be read (for random access) */
 	char		*geom_column;	/* name of the actual geometry column parsed from the LAYER's DATA field */
+    char		*geom_column_type;	/* the type of the geometry column */
 	char		*geom_table;	/* the table name or sub-select decalred in the LAYER's DATA field */
     char        *urid_name;     /* name of user-specified unique identifier or OID */
     char        *user_srid;     /* zero length = calculate, non-zero means using this value! */
@@ -186,7 +187,7 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
     return (char *) (match < 0 ? NULL : haystack + match);
 }
 
-static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, char **index_name, int debug);
+static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **geom_column_type, char **table_name, char **urid_name, char **user_srid, char **index_name, int debug);
 
 /* Close connection and handles */
 static void msMSSQL2008CloseConnection(void *conn_handle)
@@ -366,6 +367,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
     layerinfo->sql = NULL; /* calc later */
     layerinfo->row_num = 0;
 	layerinfo->geom_column = NULL;
+    layerinfo->geom_column_type = NULL;
 	layerinfo->geom_table = NULL;
     layerinfo->urid_name = NULL;
     layerinfo->user_srid = NULL;
@@ -435,7 +437,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
 
     setMSSQL2008LayerInfo(layer, layerinfo);
 
-    if (msMSSQL2008LayerParseData(layer, &layerinfo->geom_column, &layerinfo->geom_table, &layerinfo->urid_name, &layerinfo->user_srid, &layerinfo->index_name, layer->debug) != MS_SUCCESS)
+    if (msMSSQL2008LayerParseData(layer, &layerinfo->geom_column, &layerinfo->geom_column_type, &layerinfo->geom_table, &layerinfo->urid_name, &layerinfo->user_srid, &layerinfo->index_name, layer->debug) != MS_SUCCESS)
 	{
 		msSetError( MS_QUERYERR, "Could not parse the layer data", "msMSSQL2008LayerOpen()");
         return MS_FAILURE;
@@ -593,13 +595,14 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 	if (rect.minx == rect.maxx || rect.miny == rect.maxy)
     {
         /* create point shape for rectangles with zero area */
-        sprintf(box3d, "Geometry::STGeomFromText('POINT(%.15g %.15g)',%s)", /* %s.STSrid)", */
-		    rect.minx, rect.miny, layerinfo->user_srid);
+        sprintf(box3d, "%s::STGeomFromText('POINT(%.15g %.15g)',%s)", /* %s.STSrid)", */
+		    layerinfo->geom_column_type, rect.minx, rect.miny, layerinfo->user_srid);
     }
     else
     {
-	    sprintf(box3d, "Geometry::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
-		    rect.minx, rect.miny, 
+	    sprintf(box3d, "%s::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
+		    layerinfo->geom_column_type,
+            rect.minx, rect.miny, 
 		    rect.maxx, rect.miny, 
 		    rect.maxx, rect.maxy, 
 		    rect.minx, rect.maxy,
@@ -779,6 +782,21 @@ int msMSSQL2008LayerClose(layerObj *layer)
         if(layerinfo->sql) {
             free(layerinfo->sql);
             layerinfo->sql = NULL;
+        }
+
+        if(layerinfo->geom_column) {
+            free(layerinfo->geom_column);
+            layerinfo->geom_column = NULL;
+        }
+
+        if(layerinfo->geom_column_type) {
+            free(layerinfo->geom_column_type);
+            layerinfo->geom_column_type = NULL;
+        }
+
+        if(layerinfo->geom_table) {
+            free(layerinfo->geom_table);
+            layerinfo->geom_table = NULL;
         }
 
         setMSSQL2008LayerInfo(layer, NULL);
@@ -1723,9 +1741,9 @@ int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_na
  * column name, table name and name of a column to serve as a
  * unique record id
  */
-static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, char **index_name, int debug)
+static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **geom_column_type, char **table_name, char **urid_name, char **user_srid, char **index_name, int debug)
 {
-    char    *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_urid, *pos_indexHint, *data;
+    char    *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_urid, *pos_geomtype, *pos_geomtype2, *pos_indexHint, *data;
     int     slength;
 
     data = layer->data;
@@ -1790,15 +1808,41 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
     /* Scan for the table or sub-select clause */
     pos_scn = strstrIgnoreCase(data, " from ");
     if(!pos_scn) {
-        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').  More help: <br><br>\n\n", data);
+        msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldn't find ' from ').  More help: <br><br>\n\n", data);
 
         return MS_FAILURE;
     }
 
+    /* Scanning the geometry column type */
+    pos_geomtype = data;
+    while (pos_geomtype < pos_scn && *pos_geomtype != '(' && *pos_geomtype != 0)
+        ++pos_geomtype;
+
+    if(*pos_geomtype == '(')
+    {
+        pos_geomtype2 = pos_geomtype;
+        while (pos_geomtype2 < pos_scn && *pos_geomtype2 != ')' && *pos_geomtype2 != 0)
+            ++pos_geomtype2;
+        if (*pos_geomtype2 != ')' || pos_geomtype2 == pos_geomtype) {
+            msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable.  Invalid syntax near geometry column type.", data);
+            return MS_FAILURE;
+        }
+
+        *geom_column_name = (char *) malloc((pos_geomtype - data) + 1);
+        strncpy(*geom_column_name, data, pos_geomtype - data);
+        (*geom_column_name)[pos_geomtype - data] = 0;
+
+        *geom_column_type = (char *) malloc(pos_geomtype2 - pos_geomtype);
+        strncpy(*geom_column_type, pos_geomtype + 1, pos_geomtype2 - pos_geomtype - 1);
+        (*geom_column_type)[pos_geomtype2 - pos_geomtype -1] = 0;
+    }
+    else {
     /* Copy the geometry column name */
-    *geom_column_name = (char *) malloc((pos_scn - data) + 1);
-    strncpy(*geom_column_name, data, pos_scn - data);
-    (*geom_column_name)[pos_scn - data] = 0;
+        *geom_column_name = (char *) malloc((pos_scn - data) + 1);
+        strncpy(*geom_column_name, data, pos_scn - data);
+        (*geom_column_name)[pos_scn - data] = 0;
+        *geom_column_type = strdup("geometry");
+    }
 
     /* Copy out the table name or sub-select clause */
     *table_name = (char *) malloc((pos_opt - (pos_scn + 6)) + 1);
