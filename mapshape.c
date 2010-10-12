@@ -434,6 +434,23 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   ms_int32 i32;
   double dValue;
 
+#ifndef USE_POINT_Z_M
+  if( nShapeType == SHP_POLYGONZ 
+      || nShapeType == SHP_POLYGONM
+      || nShapeType == SHP_ARCZ
+      || nShapeType == SHP_ARCM
+      || nShapeType == SHP_POINTZ
+      || nShapeType == SHP_POINTM
+      || nShapeType == SHP_MULTIPOINTZ
+      || nShapeType == SHP_MULTIPOINTM )
+  {
+      msSetError( MS_SHPERR, 
+                  "Attempt to create M/Z shapefile but without having enabled Z/M support.", 
+                  "msSHPCreate()" );
+      return NULL;
+  }
+#endif
+      
   /* -------------------------------------------------------------------- */
   /*      Establish the byte order on this system.                        */
   /* -------------------------------------------------------------------- */
@@ -748,34 +765,8 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
       }
     }
 
+    nRecordSize = 44 + 4*t_nParts + 16 * t_nPoints;
 #ifdef USE_POINT_Z_M
-    /* -------------------------------------------------------------------- */
-    /*      Polygon. Arc with Z                                             */
-    /* -------------------------------------------------------------------- */
-    if (psSHP->nShapeType == SHP_POLYGONZ || psSHP->nShapeType == SHP_ARCZ) {
-      dfMMin = shape->line[0].point[0].z;
-      dfMMax = shape->line[shape->numlines-1].point[shape->line[shape->numlines-1].numpoints-1].z;
-            
-      nRecordSize = 44 + 4*t_nParts + 8 + (t_nPoints* 16);
-
-      ByteCopy( &(dfMMin), pabyRec + nRecordSize, 8 );
-      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
-      nRecordSize += 8;
-
-      ByteCopy( &(dfMMax), pabyRec + nRecordSize, 8 );
-      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
-      nRecordSize += 8;
-            
-      for( i = 0; i < shape->numlines; i++ ) {
-        for( j = 0; j < shape->line[i].numpoints; j++ ) {
-          ByteCopy( &(shape->line[i].point[j].z), pabyRec + nRecordSize, 8 );
-          if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
-          nRecordSize += 8;
-        }
-      }
-    } else
-      nRecordSize = 44 + 4*t_nParts + 16 * t_nPoints;
-  
     /* -------------------------------------------------------------------- */
     /*      measured shape : polygon and arc.                               */
     /* -------------------------------------------------------------------- */
@@ -801,9 +792,34 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
         }
       }
     }
-    else
-#endif /* USE_POINT_Z_M */
-      nRecordSize = 44 + 4*t_nParts + 16 * t_nPoints;
+
+    /* -------------------------------------------------------------------- */
+    /*      Polygon. Arc with Z                                             */
+    /* -------------------------------------------------------------------- */
+    if (psSHP->nShapeType == SHP_POLYGONZ || psSHP->nShapeType == SHP_ARCZ
+        || psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM) {
+      dfMMin = shape->line[0].point[0].z;
+      dfMMax = shape->line[shape->numlines-1].point[shape->line[shape->numlines-1].numpoints-1].z;
+            
+      nRecordSize = 44 + 4*t_nParts + 8 + (t_nPoints* 16);
+
+      ByteCopy( &(dfMMin), pabyRec + nRecordSize, 8 );
+      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+      nRecordSize += 8;
+
+      ByteCopy( &(dfMMax), pabyRec + nRecordSize, 8 );
+      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+      nRecordSize += 8;
+            
+      for( i = 0; i < shape->numlines; i++ ) {
+        for( j = 0; j < shape->line[i].numpoints; j++ ) {
+          ByteCopy( &(shape->line[i].point[j].z), pabyRec + nRecordSize, 8 );
+          if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+          nRecordSize += 8;
+        }
+      }
+    }
+#endif /* def USE_POINT_Z_M */
   }
   
   /* -------------------------------------------------------------------- */
@@ -831,32 +847,10 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
       }
     }
 
+    nRecordSize = 40 + 16 * t_nPoints;
+
 #ifdef USE_POINT_Z_M
-    if (psSHP->nShapeType == SHP_MULTIPOINTZ) {
-      nRecordSize = 48 + 16 * t_nPoints;
-
-      dfMMin = shape->line[0].point[0].z;
-      dfMMax = shape->line[0].point[shape->line[0].numpoints-1].z;
-
-      ByteCopy( &(dfMMin), pabyRec + nRecordSize, 8 );
-      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
-      nRecordSize += 8;
-
-      ByteCopy( &(dfMMax), pabyRec + nRecordSize, 8 );
-      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
-      nRecordSize += 8;
-        
-      for( i = 0; i < shape->line[0].numpoints; i++ ) {
-        ByteCopy( &(shape->line[0].point[i].z), pabyRec + nRecordSize, 8 );
-        if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
-        nRecordSize += 8;
-      }
-    } else
-      nRecordSize = 40 + 16 * t_nPoints;
-
     if (psSHP->nShapeType == SHP_MULTIPOINTM) {
-      nRecordSize = 48 + 16 * t_nPoints;
-
       dfMMin = shape->line[0].point[0].m;
       dfMMax = shape->line[0].point[shape->line[0].numpoints-1].m;
 
@@ -873,9 +867,27 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
         if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
         nRecordSize += 8;
       }
-    } else
+    }
+
+    if (psSHP->nShapeType == SHP_MULTIPOINTZ) {
+      dfMMin = shape->line[0].point[0].z;
+      dfMMax = shape->line[0].point[shape->line[0].numpoints-1].z;
+
+      ByteCopy( &(dfMMin), pabyRec + nRecordSize, 8 );
+      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+      nRecordSize += 8;
+
+      ByteCopy( &(dfMMax), pabyRec + nRecordSize, 8 );
+      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+      nRecordSize += 8;
+        
+      for( i = 0; i < shape->line[0].numpoints; i++ ) {
+        ByteCopy( &(shape->line[0].point[i].z), pabyRec + nRecordSize, 8 );
+        if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+        nRecordSize += 8;
+      }
+    }
 #endif /* USE_POINT_Z_M */
-      nRecordSize = 40 + 16 * t_nPoints;
   }
   
   /* -------------------------------------------------------------------- */
@@ -891,26 +903,20 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
       SwapWord( 8, pabyRec + 20 );
     }
     
+    nRecordSize = 20;
+
 #ifdef USE_POINT_Z_M
-    if (psSHP->nShapeType == SHP_POINTZ) {
-      nRecordSize = 28;
-
-      ByteCopy( &(shape->line[0].point[0].z), pabyRec + nRecordSize, 8 );
-      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
-      nRecordSize += 8;
-    } else
-      nRecordSize = 20;
-
     if (psSHP->nShapeType == SHP_POINTM) {
-      nRecordSize = 28;
-
       ByteCopy( &(shape->line[0].point[0].m), pabyRec + nRecordSize, 8 );
       if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
       nRecordSize += 8;
-    } else
-      nRecordSize = 20;
-#else
-    nRecordSize = 20;
+    }
+
+    if (psSHP->nShapeType == SHP_POINTZ) {
+      ByteCopy( &(shape->line[0].point[0].z), pabyRec + nRecordSize, 8 );
+      if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+      nRecordSize += 8;
+    }
 #endif /* USE_POINT_Z_M */
   }
   
