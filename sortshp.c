@@ -104,6 +104,8 @@ int main(int argc, char *argv[])
       exit(0);
   }
 
+  msSetErrorFile("stderr");
+
   /* ------------------------------------------------------------------------------- */
   /*       Open the shapefile                                                        */
   /* ------------------------------------------------------------------------------- */
@@ -184,8 +186,19 @@ int main(int argc, char *argv[])
   /*       Setup the output .shp/.shx and .dbf files                                 */
   /* ------------------------------------------------------------------------------- */
   outSHP = msSHPCreate(argv[2],shpType);
+  if( outSHP == NULL )
+  {
+      fprintf( stderr, "Failed to create file '%s'.\n", argv[2] );
+      exit( 1 );
+  }
+
   sprintf(buffer,"%s.dbf",argv[2]);
   outDBF = msDBFCreate(buffer);
+  if( outDBF == NULL )
+  {
+      fprintf( stderr, "Failed to create dbf file '%s'.\n", buffer );
+      exit( 1 );
+  }
 
   for(i=0;i<num_fields;i++) {
     dbfField = msDBFGetFieldInfo(inDBF,i,fName,&fWidth,&fnDecimals); /* ---- Get field info from in file ---- */

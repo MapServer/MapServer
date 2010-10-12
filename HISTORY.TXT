@@ -14,6 +14,11 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapshape.c: Fix writing of geometries with z/m and fail gracefully attempting
+  to create such files if USE_POINT_Z_M is not enabled (#3564)
+
+- sortshp.c: improve error handling (#3564)
+
 - MSSQL2008: Add support for geography data type by extending the DATA syntax 
   to 'geometry_column(geometry_type) from table_name'
 
