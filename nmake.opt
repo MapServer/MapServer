@@ -777,9 +777,7 @@ renderers\agg\src\agg_vcgen_dash.obj renderers\agg\src\agg_vcgen_stroke.obj rend
 renderers\agg\src\agg_line_aa_basics.obj renderers\agg\src\agg_line_profile_aa.obj \
 renderers\agg\src\agg_sqrt_tables.obj renderers\agg\src\agg_embedded_raster_fonts.obj \
 renderers\agg\src\agg_trans_affine.obj renderers\agg\src\agg_vpgen_clip_polygon.obj \
-renderers\agg\src\agg_vpgen_clip_polyline.obj renderers\agg\src\agg_font_freetype.obj \
-renderers\agg\src\agg_svg_parser.obj renderers\agg\src\agg_svg_path_renderer.obj \
-renderers\agg\src\agg_svg_path_tokenizer.obj
+renderers\agg\src\agg_vpgen_clip_polyline.obj renderers\agg\src\agg_font_freetype.obj
 !ENDIF
 
 !IFDEF AGG_SVG_SYMBOL
