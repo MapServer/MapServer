@@ -794,7 +794,7 @@ static char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer,
         if( format_list == NULL )
             continue;
 
-        split, add each as appropriate.
+//        split, add each as appropriate.
        
     }
 
