@@ -658,6 +658,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     {
         char buffer[1024];
         int  bytes_read;
+        FILE *fp;
 
         if( sendheaders && format->mimetype )
             msIO_fprintf( stdout, 
@@ -666,7 +667,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         else
             msIO_fprintf( stdout, "%c", 10 );
 
-        FILE *fp = VSIFOpenL( file_list[0], "r" );
+        fp = VSIFOpenL( file_list[0], "r" );
         if( fp == NULL )
         {
             msSetError( MS_MISCERR, 
