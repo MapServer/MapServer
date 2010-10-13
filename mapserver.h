@@ -105,6 +105,11 @@ typedef int32_t         ms_int32;
 typedef uint32_t        ms_uint32;
 #endif
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+/* Need to use _vsnprintf() with VS2003 */
+#define vsnprintf _vsnprintf
+#endif 
+
 /*forward declaration of rendering object*/
 struct rendererVTable;
 struct tilecache;

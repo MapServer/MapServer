@@ -48,11 +48,6 @@
 #include <windows.h> /* OutputDebugStringA() */
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-/* Need to use _vsnprintf() with VS2003 */
-#define vsnprintf _vsnprintf
-#endif 
-
 MS_CVSID("$Id$")
 
 
