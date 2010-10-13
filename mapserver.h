@@ -354,6 +354,7 @@ extern "C" {
 #define MS_RENDER_WITH_AGG2 13
 #define MS_RENDER_WITH_GD2 14
 #define MS_RENDER_WITH_KML 15
+#define MS_RENDER_WITH_OGR 16
 
 #define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
@@ -365,6 +366,7 @@ extern "C" {
 #define MS_RENDERER_PLUGIN(format) ((format)->renderer >= MS_RENDER_WITH_CAIRO_RASTER)
 #define MS_RENDERER_TEMPLATE(format) ((format)->renderer == MS_RENDER_WITH_TEMPLATE)
 #define MS_RENDERER_KML(format) ((format)->renderer == MS_RENDER_WITH_KML)
+#define MS_RENDERER_OGR(format) ((format)->renderer == MS_RENDER_WITH_OGR)
 
 #define MS_CELLSIZE(min,max,d) ((max - min)/(d-1)) /* where min/max are from an MapServer pixel center-to-pixel center extent */
 #define MS_OWS_CELLSIZE(min,max,d) ((max - min)/d) /* where min/max are from an OGC pixel outside edge-to-pixel outside edge extent */
@@ -423,7 +425,7 @@ enum MS_ALIGN_VALUE {MS_ALIGN_LEFT, MS_ALIGN_CENTER, MS_ALIGN_RIGHT};
 
 enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
-enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, MS_IMAGEMODE_NULL };
+enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, MS_IMAGEMODE_FEATURE, MS_IMAGEMODE_NULL };
 
 enum MS_GEOS_OPERATOR {MS_GEOS_EQUALS, MS_GEOS_DISJOINT, MS_GEOS_TOUCHES, MS_GEOS_OVERLAPS, MS_GEOS_CROSSES, MS_GEOS_INTERSECTS, MS_GEOS_WITHIN, MS_GEOS_CONTAINS, MS_GEOS_BEYOND, MS_GEOS_DWITHIN};
 #define MS_FILE_DEFAULT MS_FILE_MAP   
@@ -1724,6 +1726,7 @@ MS_DLL_EXPORT void msCloseConnections(mapObj *map);
 MS_DLL_EXPORT PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); /* mappdf.c */
 #endif /* USE_PDF */
 
+MS_DLL_EXPORT void msOGRInitialize(void);
 MS_DLL_EXPORT void msOGRCleanup(void);
 MS_DLL_EXPORT void msGDALCleanup(void);
 MS_DLL_EXPORT void msGDALInitialize(void);
@@ -2345,14 +2348,21 @@ MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format,
 #endif /* not gdImageTrueColor */
 
 /* ==================================================================== */
+/*      End of prototypes for functions in mapoutput.c                  */
+/* ==================================================================== */
+
+/* ==================================================================== */
 /*      prototypes for functions in mapgdal.c                           */
 /* ==================================================================== */
 MS_DLL_EXPORT int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename );
 MS_DLL_EXPORT int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 
 /* ==================================================================== */
-/*      End of prototypes for functions in mapoutput.c                  */
+/*      prototypes for functions in mapogroutput.c                      */
 /* ==================================================================== */
+MS_DLL_EXPORT int msInitDefaultOGROutputFormat( outputFormatObj *format );
+MS_DLL_EXPORT int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format,
+                                       int sendheaders );
 
 /* ==================================================================== */
 /*      Public prototype for mapogr.cpp functions.                      */
@@ -2661,7 +2671,8 @@ MS_DLL_EXPORT int msPopulateRendererVTableCairoPDF( rendererVTableObj *renderer 
 MS_DLL_EXPORT int msPopulateRendererVTableOGL( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableAGG( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableGD( rendererVTableObj *renderer );
-MS_DLL_EXPORT  int msPopulateRendererVTableKML( rendererVTableObj *renderer );
+MS_DLL_EXPORT int msPopulateRendererVTableKML( rendererVTableObj *renderer );
+MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
 
 //allocate 50k for starters
 #define MS_DEFAULT_BUFFER_ALLOC 50000

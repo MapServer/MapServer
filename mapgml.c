@@ -835,6 +835,8 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
     item->template = NULL;
     item->encode = MS_TRUE;
     item->visible = MS_FALSE;
+    item->width = 0;
+    item->precision = 0;
 
     /* check visibility, included items first... */
     if(numincitems == 1 && strcasecmp("all", incitems[0]) == 0) {
@@ -858,17 +860,25 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
         item->encode = MS_FALSE;
     }
 
-    snprintf(tag, 64, "%s_alias", layer->items[i]);
+    snprintf(tag, sizeof(tag), "%s_alias", layer->items[i]);
     if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
       item->alias = strdup(value);
 
-    snprintf(tag, 64, "%s_type", layer->items[i]);
+    snprintf(tag, sizeof(tag), "%s_type", layer->items[i]);
     if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
       item->type = strdup(value);
 
-    snprintf(tag, 64, "%s_template", layer->items[i]);
+    snprintf(tag, sizeof(tag), "%s_template", layer->items[i]);
     if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
       item->template = strdup(value);
+
+    snprintf(tag, sizeof(tag), "%s_width", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
+        item->width = atoi(value);
+    
+    snprintf(tag, sizeof(tag), "%s_precision", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
+        item->precision = atoi(value);
   }
 
   msFreeCharArray(incitems, numincitems);

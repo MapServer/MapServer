@@ -199,28 +199,41 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
   int i, status;
   
   outputFormatObj *outputFormat=NULL;
+  mapObj *map = mapserv->map;
 
   if(!queryFormat) {
     msSetError(MS_WEBERR, "Return format/mime-type not specified.", "msReturnTemplateQuery()");
     return MS_FAILURE;
   }
 
-  i = msGetOutputFormatIndex(mapserv->map, queryFormat); /* queryFormat can be a mime-type or name */
-  if(i >= 0) outputFormat = mapserv->map->outputformatlist[i];
+  i = msGetOutputFormatIndex(map, queryFormat); /* queryFormat can be a mime-type or name */
+  if(i >= 0) outputFormat = map->outputformatlist[i];
 
   if(outputFormat) {
+     if( MS_RENDERER_OGR(outputFormat) )
+     {
+         if( mapserv != NULL )
+             checkWebScale(mapserv);
+         
+         status = msOGRWriteFromQuery(map, outputFormat, mapserv->sendheaders);
+       
+         return status;
+     }
+
      if( !MS_RENDERER_TEMPLATE(outputFormat) ) { /* got an image format, return the query results that way */
-       outputFormatObj *tempOutputFormat = mapserv->map->outputformat; /* save format */
+       outputFormatObj *tempOutputFormat = map->outputformat; /* save format */
 
-       checkWebScale(mapserv);
+       if( mapserv != NULL )
+           checkWebScale(mapserv);
 
-       mapserv->map->outputformat = outputFormat; /* override what was given for IMAGETYPE */
-       img = msDrawMap(mapserv->map, MS_TRUE);
+       map->outputformat = outputFormat; /* override what was given for IMAGETYPE */
+       img = msDrawMap(map, MS_TRUE);
        if(!img) return MS_FAILURE;
-       mapserv->map->outputformat = tempOutputFormat; /* restore format */
+       map->outputformat = tempOutputFormat; /* restore format */
 
-       if(mapserv->sendheaders) msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(outputFormat), 10,10);
-       status = msSaveImage(mapserv->map, img, NULL);
+       if(mapserv == NULL || mapserv->sendheaders) 
+           msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(outputFormat), 10,10);
+       status = msSaveImage(map, img, NULL);
        msFreeImage(img);
 
        return status;
@@ -232,7 +245,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
   ** style made up of external files slammed together. Either way we may have to compute a query map and other
   ** images. We only create support images IF the querymap has status=MS_ON.
   */ 
-  if(mapserv->map->querymap.status) {
+  if(map->querymap.status && mapserv != NULL ) {
     checkWebScale(mapserv);
     if(msGenerateImages(mapserv, MS_TRUE, MS_TRUE) != MS_SUCCESS)
       return MS_FAILURE;
@@ -245,7 +258,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       return MS_FAILURE;
     }
 
-    if(mapserv->sendheaders) { 
+    if(mapserv == NULL || mapserv->sendheaders) { 
       const char *attachment = msGetOutputFormatOption( outputFormat, "ATTACHMENT", NULL ); 
       if(attachment) msIO_printf("Content-disposition: attachment; filename=%s\n", attachment);
       msIO_printf("Content-type: %s%c%c", outputFormat->mimetype, 10, 10);
@@ -4247,10 +4260,17 @@ void msFreeMapServObj(mapservObj* mapserv)
   int i;
 
   if(mapserv) {
-    msFreeMap(mapserv->map);
+    if( mapserv->map )
+    {
+        msFreeMap(mapserv->map);
+        mapserv->map = NULL;
+    }
 
-    msFreeCgiObj(mapserv->request);
-    mapserv->request = NULL;
+    if( mapserv->request )
+    {
+        msFreeCgiObj(mapserv->request);
+        mapserv->request = NULL;
+    }
 
     for(i=0;i<mapserv->NumLayers;i++) 
       msFree(mapserv->Layers[i]);

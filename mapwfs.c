@@ -37,6 +37,7 @@ MS_CVSID("$Id$")
 
 #include "mapogcfilter.h"
 #include "mapowscommon.h"
+#include "maptemplate.h"
 
 #ifdef WFS_USE_LIBXML2
 #include "maplibxml2.h"
@@ -757,6 +758,49 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
 }
 
 /*
+** Helper function to build a list of output formats.
+** 
+** Given a layer it will return all formats valid for that layer, otherwise
+** all formats permitted on layers in the map are returned.  The string 
+** returned should be freed by the caller.
+*/
+
+static char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer, 
+                                      const char *pszVersion )
+{
+    int i, got_map_list = 0;
+    char *format_list = NULL;
+    int  format_list_len = 0;
+
+    for( i = 0; i < map->numlayers; i++ )
+    {
+        const char *format_list;
+        layerObj *lp;
+        
+        lp = GET_LAYER(map, i);
+        if( layer != NULL && layer != lp )
+            continue;
+        
+        format_list = msOWSLookupMetadata(&(lp->metadata), 
+                                          "F","getfeature_formatlist");
+
+        if( format_list == NULL && !got_map_list )
+        {
+            format_list = msOWSLookupMetadata(&(map->web.metadata), 
+                                              "F","getfeature_formatlist");
+            got_map_list = 1;
+        }
+
+        if( format_list == NULL )
+            continue;
+
+        split, add each as appropriate.
+       
+    }
+
+}
+                                      
+/*
 ** Helper functions for producing XML schema.
 */
 
@@ -1249,6 +1293,232 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   return MS_SUCCESS;
 }
 
+/*
+** msWFSGetFeature_GMLPreamble()
+**
+** Generate the GML preamble up to the first feature for the builtin
+** WFS GML support.
+*/
+
+typedef struct {
+    const char *user_namespace_prefix;
+    const char *user_namespace_uri;
+    char       *user_namespace_uri_encoded;
+    const char *collection_name;
+    const char *typename;
+    char       *script_url, *script_url_encoded;
+    const char *output_schema_format;
+} WFSGMLInfo;
+
+static int msWFSGetFeature_GMLPreamble( mapObj *map,
+                                        cgiRequestObj *req,
+                                        WFSGMLInfo *gmlinfo,
+                                        wfsParamsObj *paramsObj,
+                                        int outputformat,
+                                        int iResultTypeHits,
+                                        int iNumberOfFeatures )
+
+{
+    const char *value;
+    int i;
+    char       *encoded, *encoded_typename, *encoded_schema;
+    gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
+
+    namespaceList = msGMLGetNamespaces(&(map->web), "G");
+
+    /*
+    ** Establish script_url.
+    */
+    
+    if ((gmlinfo->script_url=msOWSGetOnlineResource(map,"FO","onlineresource",req)) ==NULL ||
+        (gmlinfo->script_url_encoded = msEncodeHTMLEntities(gmlinfo->script_url)) == NULL) {
+      msSetError(MS_WFSERR, "Server URL not found", "msWFSGetFeature()");
+      return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
+    }
+
+    /*
+    ** Write encoding.
+    */
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", 
+                             "encoding", OWS_NOERR,
+                             "<?xml version='1.0' encoding=\"%s\" ?>\n",
+                             "ISO-8859-1");
+
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
+    if(value) gmlinfo->user_namespace_uri = value;
+    gmlinfo->user_namespace_uri_encoded = 
+        msEncodeHTMLEntities(gmlinfo->user_namespace_uri);
+        
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
+    if(value) gmlinfo->user_namespace_prefix = value;
+        
+    if(gmlinfo->user_namespace_prefix != NULL && msIsXMLTagValid(gmlinfo->user_namespace_prefix) == MS_FALSE)
+        msIO_printf("<!-- WARNING: The value '%s' is not valid XML namespace. -->\n", gmlinfo->user_namespace_prefix);
+        
+    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "feature_collection");
+    if(value) gmlinfo->collection_name = value;
+        
+    encoded = msEncodeHTMLEntities( paramsObj->pszVersion );
+    encoded_typename = msEncodeHTMLEntities( gmlinfo->typename );
+    encoded_schema = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
+        
+    /*
+    ** GML 2.x
+    */
+    if(outputformat == OWS_GML2) { /* use a wfs:FeatureCollection */
+        msIO_printf("<wfs:FeatureCollection\n"
+                    "   xmlns:%s=\"%s\"\n"  
+                    "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
+                    "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+                    "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
+                    "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n",
+                    gmlinfo->user_namespace_prefix, 
+                    gmlinfo->user_namespace_uri_encoded);
+            
+        /* any additional namespaces */
+        for(i=0; i<namespaceList->numnamespaces; i++) {
+            if(namespaceList->namespaces[i].uri) {
+                char *uri_encoded=NULL;
+                    
+                uri_encoded = msEncodeHTMLEntities(namespaceList->namespaces[i].uri);
+                msIO_printf("   xmlns:%s=\"%s\" \n", namespaceList->namespaces[i].prefix, uri_encoded);
+                msFree(uri_encoded);
+            }
+        }
+        msIO_printf("   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
+                    "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
+                    encoded_schema, encoded, 
+                    gmlinfo->user_namespace_uri_encoded, 
+                    gmlinfo->script_url_encoded, encoded, 
+                    encoded_typename, gmlinfo->output_schema_format);
+    } 
+
+    /*
+    ** GML 3
+    */
+    else 
+    {
+        if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
+        {
+            msIO_printf("<wfs:FeatureCollection\n"
+                        "   xmlns:%s=\"%s\"\n"  
+                        "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+                        "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
+                        "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
+                        "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n",
+                        gmlinfo->user_namespace_prefix, 
+                        gmlinfo->user_namespace_uri_encoded);
+        }
+        else
+        {
+            msIO_printf("<%s:%s\n"
+                        "   version=\"1.0.0\"\n"
+                        "   xmlns:%s=\"%s\"\n"  
+                        "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+                        "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
+                        "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n",
+                        gmlinfo->user_namespace_prefix, 
+                        gmlinfo->collection_name, 
+                        gmlinfo->user_namespace_prefix, 
+                        gmlinfo->user_namespace_uri_encoded);
+        }
+        /* any additional namespaces */
+        for(i=0; i<namespaceList->numnamespaces; i++) {
+            if(namespaceList->namespaces[i].uri) {
+                char *uri_encoded=NULL;
+                    
+                uri_encoded = msEncodeHTMLEntities(namespaceList->namespaces[i].uri);
+                msIO_printf("   xmlns:%s=\"%s\" \n", namespaceList->namespaces[i].prefix, uri_encoded);
+                msFree(uri_encoded);
+            }
+        }
+
+        if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0)
+        {
+            if (iResultTypeHits == 1)
+            {
+                char timestring[100];
+                struct tm *now;
+                time_t tim=time(NULL);
+                
+                now=localtime(&tim);
+                
+                sprintf(timestring, "%d-%02d-%02dT%02d:%02d:%02d",
+                        now->tm_year+1900, now->tm_mon+1, now->tm_mday,
+                        now->tm_hour, now->tm_min, now->tm_sec);
+                
+                msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\" timeStamp=\"%s\" numberOfFeatures=\"%d\">\n",
+                            gmlinfo->user_namespace_uri_encoded, 
+                            gmlinfo->script_url_encoded, encoded, 
+                            encoded_typename, 
+                            gmlinfo->output_schema_format, 
+                            timestring, iNumberOfFeatures);
+            }
+            else
+                msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\">\n",
+                            gmlinfo->user_namespace_uri_encoded, 
+                            gmlinfo->script_url_encoded, encoded, 
+                            encoded_typename, 
+                            gmlinfo->output_schema_format);
+        }
+        else
+            msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
+                        gmlinfo->user_namespace_uri_encoded, 
+                        gmlinfo->script_url_encoded, encoded, 
+                        encoded_typename, gmlinfo->output_schema_format);
+    }
+    
+    msFree(encoded);
+    msFree(encoded_schema);
+    msFree(encoded_typename);
+    
+    msGMLFreeNamespaces(namespaceList);
+
+    return MS_SUCCESS;
+}
+
+/*
+** msWFSGetFeature_GMLPostfix()
+**
+** Generate the GML file tail closing the collection and cleanup a bit.
+*/
+
+static int msWFSGetFeature_GMLPostfix( mapObj *map,
+                                       cgiRequestObj *req,
+                                       WFSGMLInfo *gmlinfo,
+                                       wfsParamsObj *paramsObj,
+                                       int outputformat,
+                                       int maxfeatures,
+                                       int iResultTypeHits,
+                                       int iNumberOfFeatures )
+    
+{
+    if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
+      msIO_printf("   <gml:boundedBy>\n"); 
+      if(outputformat == OWS_GML3)
+        msIO_printf("      <gml:Null>missing</gml:Null>\n");
+      else
+        msIO_printf("      <gml:null>missing</gml:null>\n");
+      msIO_printf("   </gml:boundedBy>\n"); 
+    }
+    
+
+    if(outputformat == OWS_GML2)
+      msIO_printf("</wfs:FeatureCollection>\n\n");
+    else
+    {
+      if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0)
+        msIO_printf("</wfs:FeatureCollection>\n\n", gmlinfo->user_namespace_prefix, gmlinfo->collection_name);
+      else
+        msIO_printf("</%s:%s>\n\n", gmlinfo->user_namespace_prefix, gmlinfo->collection_name);
+    }
+
+    free(gmlinfo->script_url);
+    free(gmlinfo->script_url_encoded);
+    msFree(gmlinfo->user_namespace_uri_encoded);
+
+    return MS_SUCCESS;
+}
 
 /*
 ** msWFSGetFeature()
@@ -1256,10 +1526,8 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   /* const char *wmtver, char **names, char **values, int numentries) */
 {
-  int   i, j; 
+  int   i, j, status; 
   int   maxfeatures=-1,startindex=-1;
-  const char *typename="";
-  char       *script_url=NULL, *script_url_encoded;
   rectObj     bbox;
   
   char **layers = NULL;
@@ -1271,18 +1539,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   char *sBBoxSrs = NULL;
   int bFeatureIdSet = 0;
 
-  char *pszNameSpace = NULL;
   const char *value;
-  const char *user_namespace_prefix = "ms";
-  const char *user_namespace_uri = "http://mapserver.gis.umn.edu/mapserver";
-  char *user_namespace_uri_encoded = NULL;
-  const char *collection_name = OWS_WFS_FEATURE_COLLECTION_NAME;
-  char *encoded, *encoded_typename, *encoded_schema;
   const char *tmpmaxfeatures = NULL;
+  WFSGMLInfo gmlinfo;
 
-  const char *output_schema_format = "XMLSCHEMA";  
   const char *output_mime_type = "text/xml; subtype=gml/3.1.1";  
   int outputformat = OWS_GML2; /* default output is GML 2.1 */
+  outputFormatObj *psFormat = NULL;
    
   char **aFIDLayers = NULL;
   char **aFIDValues = NULL;
@@ -1290,7 +1553,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
   int iNumberOfFeatures = 0;
   int iResultTypeHits = 0;
   
-  gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
   char **papszPropertyName = NULL;
   int nPropertyNames = 0;
   int nQueriedLayers=0;
@@ -1298,6 +1560,14 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
   /*use msLayerGetShape instead of msLayerResultsGetShape of complex filter #3305*/
   int bComplexFilter = MS_FALSE;
+
+  /* Initialize gml options */
+  memset( &gmlinfo, 0, sizeof(gmlinfo) );
+  gmlinfo.user_namespace_prefix = "ms";
+  gmlinfo.user_namespace_uri = "http://mapserver.gis.umn.edu/mapserver";
+  gmlinfo.collection_name = OWS_WFS_FEATURE_COLLECTION_NAME;
+  gmlinfo.typename = "";
+  gmlinfo.output_schema_format = "XMLSCHEMA";  
 
   /* Default filter is map extents */
   bbox = map->extent;
@@ -1332,13 +1602,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     const char *pszFullName = NULL;
 
     /* keep a ref for layer use. */
-    typename = paramsObj->pszTypeName;
+    gmlinfo.typename = paramsObj->pszTypeName;
         
     /* Parse comma-delimited list of type names (layers) */
     /*  */
     /* __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4" */
     /*  */
-    layers = msStringSplit(typename, ',', &numlayers);
+    layers = msStringSplit(gmlinfo.typename, ',', &numlayers);
     
     /* ==================================================================== */
     /*      TODO: check if the typename contains namespaces (ex cdf:Other), */
@@ -1352,7 +1622,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     
     tokens = msStringSplit(layers[0], ':', &n);
     if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0) {
-      /* pszNameSpace = strdup(tokens[0]); */
       msFreeCharArray(tokens, n);
       for (i=0; i<numlayers; i++) {
 	tokens = msStringSplit(layers[i], ':', &n);
@@ -1582,31 +1851,59 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     msFree(papszPropertyName);
   }
 
-
   /* Validate outputformat */
   if (paramsObj->pszOutputFormat) {
     /* We support only GML2 and GML3 for now. */
     if(strcasecmp(paramsObj->pszOutputFormat, "GML2") == 0 || strcasecmp(paramsObj->pszOutputFormat, "text/xml; subtype=gml/2.1.2") == 0) {
       outputformat = OWS_GML2;
-      output_schema_format = "XMLSCHEMA";
+      gmlinfo.output_schema_format = "XMLSCHEMA";
       output_mime_type = "text/xml; subtype=gml/2.1.2";
     } else if(strcasecmp(paramsObj->pszOutputFormat, "GML3") == 0 || strcasecmp(paramsObj->pszOutputFormat, "text/xml; subtype=gml/3.1.1") == 0) {
       outputformat = OWS_GML3;
-      output_schema_format = "SFE_XMLSCHEMA";
+      gmlinfo.output_schema_format = "SFE_XMLSCHEMA";
       output_mime_type = "text/xml; subtype=gml/3.1.1";
     } else {
-      outputformat = OWS_GML2;
-      output_schema_format = "XMLSCHEMA";
-      output_mime_type = "text/xml; subtype=gml/2.1.2";
-    }
-  }
-  else
-  {
+        const char *format_list;
+        hashTableObj *md;
+
+        /* validate selected format against all selected layers. */
+        for(j=0; j < map->numlayers; j++) {
+            layerObj *lp;
+      
+            lp = GET_LAYER(map, j);
+
+            if( lp->status != MS_ON )
+                continue;
+
+            md = &(lp->metadata);
+            format_list = msOWSLookupMetadata(md, "F","getfeature_formatlist");
+            if( format_list == NULL )
+            {
+                md = &(map->web.metadata);
+                format_list = msOWSLookupMetadata(md, "F","getfeature_formatlist");
+            }
+            if (format_list)
+            {
+                psFormat = msOwsIsOutputFormatValid(
+                    map, paramsObj->pszOutputFormat, md,
+                    "F", "getfeature_formatlist");
+            }
+            if (psFormat == NULL)
+            {
+                return msWFSException(map, "outputformat", 
+                                      "InvalidParameterValue",
+                                      paramsObj->pszOutputFormat );
+            }
+        }
+    } 
+
+  /* If OUTPUTFORMAT not set, default to gml */
+  } else {
       /*set the output format using the version if available*/
       if(paramsObj->pszVersion == NULL || strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
       {
           outputformat = OWS_GML3;
-          output_schema_format = "text/xml; subtype=gml/3.1.1";
+          gmlinfo.output_schema_format = "text/xml; subtype=gml/3.1.1";
           output_mime_type = "text/xml; subtype=gml/3.1.1";
       }
   }
@@ -1736,7 +2033,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       /*                                                                      */
       /* -------------------------------------------------------------------- */
 
-      if (typename == NULL || strlen(typename) <= 0 || layers == NULL || numlayers <= 0) {
+      if (gmlinfo.typename == NULL || strlen(gmlinfo.typename) <= 0 || layers == NULL || numlayers <= 0) {
 	msSetError(MS_WFSERR, 
                    "Required TYPENAME parameter missing for GetFeature with a FILTER parameter.", 
                    "msWFSGetFeature()");
@@ -1970,7 +2267,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
              msFree(aFIDValues);
          }
     }
-#endif
+#endif /* USE_OGR */
 
     
     if(layers)
@@ -2109,182 +2406,64 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       iNumberOfFeatures = maxfeatures;
 
     /*
-    ** GetFeature response
+    ** GML Header generation.
     */
 
-    if ((script_url=msOWSGetOnlineResource(map,"FO","onlineresource",req)) ==NULL ||
-        (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
-      msSetError(MS_WFSERR, "Server URL not found", "msWFSGetFeature()");
-      return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
-    }
+    status = MS_SUCCESS;
 
-    /*
-    ** retrieve any necessary external namespace/schema configuration information
-    */
-    namespaceList = msGMLGetNamespaces(&(map->web), "G");
-
-    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
-    if (value)
-        msIO_printf("Content-type: %s; charset=%s%c%c", output_mime_type, value,10,10);
-    else
-        msIO_printf("Content-type: %s%c%c", output_mime_type,10,10);
-
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", 
-                             "encoding", OWS_NOERR,
-                             "<?xml version='1.0' encoding=\"%s\" ?>\n",
-                             "ISO-8859-1");
-
-    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
-    if(value) user_namespace_uri = value;
-    user_namespace_uri_encoded = msEncodeHTMLEntities(user_namespace_uri);
-
-    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
-    if(value) user_namespace_prefix = value;
-
-    if(user_namespace_prefix != NULL && msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
-      msIO_printf("<!-- WARNING: The value '%s' is not valid XML namespace. -->\n", user_namespace_prefix);
-
-    pszNameSpace = strdup(user_namespace_prefix);
-
-    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "feature_collection");
-    if(value) collection_name = value;
-
-    encoded = msEncodeHTMLEntities( paramsObj->pszVersion );
-    encoded_typename = msEncodeHTMLEntities( typename );
-    encoded_schema = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    if(outputformat == OWS_GML2) { /* use a wfs:FeatureCollection */
-      msIO_printf("<wfs:FeatureCollection\n"
-		  "   xmlns:%s=\"%s\"\n"  
-		  "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
-		  "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-		  "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
-      "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n",
-      user_namespace_prefix, user_namespace_uri_encoded);
-
-      /* any additional namespaces */
-      for(i=0; i<namespaceList->numnamespaces; i++) {
-        if(namespaceList->namespaces[i].uri) {
-          char *uri_encoded=NULL;
-
-          uri_encoded = msEncodeHTMLEntities(namespaceList->namespaces[i].uri);
-          msIO_printf("   xmlns:%s=\"%s\" \n", namespaceList->namespaces[i].prefix, uri_encoded);
-          msFree(uri_encoded);
-        }
-      }
-
-
-		  msIO_printf("   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
-		  "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
-		  encoded_schema, encoded, user_namespace_uri_encoded, 
-		  script_url_encoded, encoded, encoded_typename, output_schema_format);
-    } 
-    else 
+    if( psFormat == NULL )
     {
-      if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
-      {
-      msIO_printf("<wfs:FeatureCollection\n"
-		  "   xmlns:%s=\"%s\"\n"  
-		  "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-		  "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
-		  "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
-      "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n",
-                  user_namespace_prefix, user_namespace_uri_encoded);
-      }
-      else
-      {
-         msIO_printf("<%s:%s\n"
-      "   version=\"1.0.0\"\n"
-		  "   xmlns:%s=\"%s\"\n"  
-		  "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-		  "   xmlns:ogc=\"http://www.opengis.net/ogc\"\n"
-      "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n",
-      user_namespace_prefix, collection_name, user_namespace_prefix, user_namespace_uri_encoded);
-      }
-      /* any additional namespaces */
-      for(i=0; i<namespaceList->numnamespaces; i++) {
-        if(namespaceList->namespaces[i].uri) {
-          char *uri_encoded=NULL;
+        value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
+        if (value)
+            msIO_printf("Content-type: %s; charset=%s%c%c", 
+                        output_mime_type, value,10,10);
+        else
+            msIO_printf("Content-type: %s%c%c", output_mime_type,10,10);
 
-          uri_encoded = msEncodeHTMLEntities(namespaceList->namespaces[i].uri);
-          msIO_printf("   xmlns:%s=\"%s\" \n", namespaceList->namespaces[i].prefix, uri_encoded);
-          msFree(uri_encoded);
-        }
-      }
-
-
-
-      if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
-      {
-	  if (iResultTypeHits == 1)
-	  {
-	      char timestring[100];
-	      struct tm *now;
-	      time_t tim=time(NULL);
-	  
-	      now=localtime(&tim);
-
-	      sprintf(timestring, "%d-%02d-%02dT%02d:%02d:%02d",
-		      now->tm_year+1900, now->tm_mon+1, now->tm_mday,
-		      now->tm_hour, now->tm_min, now->tm_sec);
-
-	      msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\" timeStamp=\"%s\" numberOfFeatures=\"%d\">\n",
-			  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format, timestring, iNumberOfFeatures);
-	  }
-	  else
-	    msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\">\n",
-			user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format);
-      }
-      else
-        msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s\">\n",
-		  user_namespace_uri_encoded, script_url_encoded, encoded, encoded_typename, output_schema_format);
+        msWFSGetFeature_GMLPreamble( map, req, &gmlinfo, paramsObj, 
+                                     outputformat,
+                                     iResultTypeHits, 
+                                     iNumberOfFeatures );
     }
-
-    msFree(encoded);
-    msFree(encoded_schema);
-    msFree(encoded_typename);
-
-     
-    
-
-    
     
     /* handle case of maxfeatures = 0 */
     /*internally use a start index that start with with 0 as the first index*/
-    if(maxfeatures != 0 && iResultTypeHits == 0)
-      msGMLWriteWFSQuery(map, stdout, startindex-1, maxfeatures, pszNameSpace, outputformat);
-    
-    if (((iNumberOfFeatures==0) || (maxfeatures == 0)) && iResultTypeHits == 0) {
-      msIO_printf("   <gml:boundedBy>\n"); 
-      if(outputformat == OWS_GML3)
-        msIO_printf("      <gml:Null>missing</gml:Null>\n");
-      else
-        msIO_printf("      <gml:null>missing</gml:null>\n");
-      msIO_printf("   </gml:boundedBy>\n"); 
-    }
-    
-
-    if(outputformat == OWS_GML2)
-      msIO_printf("</wfs:FeatureCollection>\n\n");
-    else
+    if( psFormat == NULL )
     {
-      if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0)
-        msIO_printf("</wfs:FeatureCollection>\n\n", user_namespace_prefix, collection_name);
-      else
-        msIO_printf("</%s:%s>\n\n", user_namespace_prefix, collection_name);
+        if(maxfeatures != 0 && iResultTypeHits == 0)
+            status = msGMLWriteWFSQuery(map, stdout, startindex-1, maxfeatures, 
+                                        (char *) gmlinfo.user_namespace_prefix,
+                                        outputformat);
+    }
+    else 
+    {
+        mapservObj *mapserv = msAllocMapServObj();
+
+        mapserv->sendheaders = MS_TRUE;
+        mapserv->map = map;
+        mapserv->request = req;
+        map->querymap.status = MS_FALSE;
+
+        status = msReturnTemplateQuery( mapserv, psFormat->name, NULL );
+
+        mapserv->request = NULL;
+        mapserv->map = NULL;
+
+        msFreeMapServObj( mapserv );
+    }
+
+    if( psFormat == NULL && status == MS_SUCCESS )
+    {
+        msWFSGetFeature_GMLPostfix( map, req, &gmlinfo, paramsObj, 
+                                    outputformat, 
+                                    maxfeatures, iResultTypeHits, iNumberOfFeatures );
     }
 
     /*
     ** Done! Now a bit of clean-up.
     */    
 
-    free(script_url);
-    free(script_url_encoded);
-    if (pszNameSpace)
-      free(pszNameSpace);
-    msFree(user_namespace_uri_encoded);
-    msGMLFreeNamespaces(namespaceList);
-
-    return MS_SUCCESS;
+    return status;
 }
 
 

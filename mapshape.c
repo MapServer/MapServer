@@ -2334,9 +2334,66 @@ int msTiledSHPLayerInitItemInfo(layerObj *layer)
   return MS_SUCCESS;
 }
 
+static void msSHPPassThroughFieldDefinitions( layerObj *layer, DBFHandle hDBF )
+{
+    int numitems, i;
+  
+    numitems = msDBFGetFieldCount( hDBF );
+
+    for(i=0;i<numitems;i++)
+    {
+        char item[16];
+        int  nWidth=0, nPrecision=0;
+        char md_item_name[64];
+        char gml_width[32], gml_precision[32];
+        DBFFieldType eType;
+        const char *gml_type = NULL;
+
+        eType = msDBFGetFieldInfo( hDBF, i, item, &nWidth, &nPrecision );
+        
+        gml_width[0] = '\0';
+        gml_precision[0] = '\0';
+
+        switch( eType )
+        {
+          case FTInteger:
+            gml_type = "Integer";
+            sprintf( gml_width, "%d", nWidth ); 
+            break;
+
+          case FTDouble:
+            gml_type = "Real";
+            sprintf( gml_width, "%d", nWidth ); 
+            sprintf( gml_precision, "%d", nPrecision ); 
+            break;
+
+          case FTString:
+          default:
+            gml_type = "Character";
+            sprintf( gml_width, "%d", nWidth ); 
+            break;
+        }
+
+        snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
+        if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
+            msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
+        
+        snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
+        if( strlen(gml_width) > 0 
+            && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
+            msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
+
+        snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
+        if( strlen(gml_precision) > 0 
+            && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
+            msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
+    }
+}
+
 int msTiledSHPLayerGetItems(layerObj *layer) 
 {
   msTiledSHPLayerInfo *tSHP=NULL;
+  const char *value;
 
   tSHP = layer->layerinfo;
   if(!tSHP) {
@@ -2347,6 +2404,13 @@ int msTiledSHPLayerGetItems(layerObj *layer)
   layer->numitems = msDBFGetFieldCount(tSHP->shpfile->hDBF);
   layer->items = msDBFGetItems(tSHP->shpfile->hDBF);    
   if(!layer->items) return MS_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      consider populating the field definitions in metadata.          */
+/* -------------------------------------------------------------------- */
+  if((value = msOWSLookupMetadata(&(layer->metadata), "G", "types")) != NULL
+     && strcasecmp(value,"auto") == 0 )
+      msSHPPassThroughFieldDefinitions( layer, tSHP->shpfile->hDBF );
 
   return msTiledSHPLayerInitItemInfo(layer);
 }
@@ -2584,6 +2648,8 @@ int msShapeFileLayerClose(layerObj *layer)
 int msShapeFileLayerGetItems(layerObj *layer) 
 {
   shapefileObj *shpfile;
+  const char *value;
+
   shpfile = layer->layerinfo;
 
   if(!shpfile) {
@@ -2595,6 +2661,13 @@ int msShapeFileLayerGetItems(layerObj *layer)
   layer->items = msDBFGetItems(shpfile->hDBF);
   if(layer->numitems == 0) return MS_SUCCESS; /* No items is a valid case (#3147) */
   if(!layer->items) return MS_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      consider populating the field definitions in metadata.          */
+/* -------------------------------------------------------------------- */
+  if((value = msOWSLookupMetadata(&(layer->metadata), "G", "types")) != NULL
+     && strcasecmp(value,"auto") == 0 )
+      msSHPPassThroughFieldDefinitions( layer, shpfile->hDBF );
 
   return msLayerInitItemInfo(layer);
 }

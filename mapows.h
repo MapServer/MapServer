@@ -340,6 +340,8 @@ typedef struct {
 #endif
   int encode;     /* should the value be HTML encoded? Default is MS_TRUE */
   int visible;    /* should this item be output, default is MS_FALSE */  
+  int width;      /* field width, zero if unknown */
+  int precision;  /* field precision (decimal places), zero if unknown or N/A */
 } gmlItemObj;
 
 typedef struct {

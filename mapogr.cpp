@@ -1251,6 +1251,42 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
 #endif
 }
 
+/**********************************************************************
+ *                     msOGRFileOpen()
+ *
+ * Open an OGR connection, and initialize a msOGRFileInfo.
+ **********************************************************************/
+
+static int bOGRDriversRegistered = MS_FALSE;
+
+void msOGRInitialize(void)
+
+{
+#ifdef USE_OGR
+/* ------------------------------------------------------------------
+ * Register OGR Drivers, only once per execution
+ * ------------------------------------------------------------------ */
+    if (!bOGRDriversRegistered)
+    {
+        ACQUIRE_OGR_LOCK;
+
+        OGRRegisterAll();
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+
+/* ------------------------------------------------------------------
+ * Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all
+ * GML attributes are returned as strings to MapServer. This is most efficient
+ * and prevents problems with autodetection of some attribute types.
+ * ------------------------------------------------------------------ */
+        CPLSetConfigOption("GML_FIELDTYPES","ALWAYS_STRING");
+
+        bOGRDriversRegistered = MS_TRUE;
+      
+        RELEASE_OGR_LOCK;
+    }
+#endif /* USE_OGR */
+}
+
 /* ==================================================================
  * The following functions closely relate to the API called from
  * maplayer.c, but are intended to be used for the tileindex or direct
@@ -1265,35 +1301,13 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
  * Open an OGR connection, and initialize a msOGRFileInfo.
  **********************************************************************/
 
-static int bOGRDriversRegistered = MS_FALSE;
-
 static msOGRFileInfo *
 msOGRFileOpen(layerObj *layer, const char *connection ) 
 
 {
   char *conn_decrypted = NULL;
 
-/* ------------------------------------------------------------------
- * Register OGR Drivers, only once per execution
- * ------------------------------------------------------------------ */
-  if (!bOGRDriversRegistered)
-  {
-      ACQUIRE_OGR_LOCK;
-
-      OGRRegisterAll();
-      CPLPushErrorHandler( CPLQuietErrorHandler );
-
-/* ------------------------------------------------------------------
- * Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all
- * GML attributes are returned as strings to MapServer. This is most efficient
- * and prevents problems with autodetection of some attribute types.
- * ------------------------------------------------------------------ */
-      CPLSetConfigOption("GML_FIELDTYPES","ALWAYS_STRING");
-
-      bOGRDriversRegistered = MS_TRUE;
-      
-      RELEASE_OGR_LOCK;
-  }
+  msOGRInitialize();
 
 /* ------------------------------------------------------------------
  * Make sure any encrypted token in the connection string are decrypted
@@ -1638,6 +1652,85 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
 }
 
 /**********************************************************************
+ *                     msOGRPassThroughFieldDefinitions()
+ *
+ * Pass the field definitions through to the layer metadata in the
+ * "gml_[item]_{type,width,precision}" set of metadata items for 
+ * defining fields.
+ **********************************************************************/
+
+static void 
+msOGRPassThroughFieldDefinitions( layerObj *layer, msOGRFileInfo *psInfo )
+
+{
+    OGRFeatureDefnH hDefn = OGR_L_GetLayerDefn( psInfo->hLayer );
+    int numitems, i;
+  
+    numitems = OGR_FD_GetFieldCount( hDefn );
+
+    for(i=0;i<numitems;i++)
+    {
+        OGRFieldDefnH hField = OGR_FD_GetFieldDefn( hDefn, i );
+        char md_item_name[256];
+        char gml_width[32], gml_precision[32];
+        const char *gml_type = NULL;
+        const char *item = OGR_Fld_GetNameRef( hField );
+
+        gml_width[0] = '\0';
+        gml_precision[0] = '\0';
+
+        switch( OGR_Fld_GetType( hField ) )
+        {
+          case OFTInteger:
+            gml_type = "Integer";
+            if( OGR_Fld_GetWidth( hField) > 0 )
+                sprintf( gml_width, "%d", OGR_Fld_GetWidth( hField) ); 
+            break;
+
+          case OFTReal:
+            gml_type = "Real";
+            if( OGR_Fld_GetWidth( hField) > 0 )
+                sprintf( gml_width, "%d", OGR_Fld_GetWidth( hField) ); 
+            if( OGR_Fld_GetPrecision( hField ) > 0 )
+                sprintf( gml_precision, "%d", OGR_Fld_GetPrecision( hField) ); 
+            break;
+
+          case OFTString:
+            gml_type = "Character";
+            if( OGR_Fld_GetWidth( hField) > 0 )
+                sprintf( gml_width, "%d", OGR_Fld_GetWidth( hField) ); 
+            break;
+
+          case OFTDate:
+          case OFTTime:
+          case OFTDateTime:
+            gml_type = "Date";
+            break;
+
+          default:
+            gml_type = "Character";
+            break;
+        }
+
+        snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
+        if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
+            msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
+        
+        snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
+        if( strlen(gml_width) > 0 
+            && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
+            msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
+
+        snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
+        if( strlen(gml_precision) > 0 
+            && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
+            msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
+    }
+
+    /* Should we try to address style items, or other special items? */
+}
+
+/**********************************************************************
  *                     msOGRFileGetItems()
  *
  * Returns a list of field names in a NULL terminated list of strings.
@@ -1648,7 +1741,7 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
   int i, numitems,totalnumitems;
   int numStyleItems = MSOGR_LABELNUMITEMS;
   char **items;
-  const char *getShapeStyleItems;
+  const char *getShapeStyleItems, *value;
 
   if((hDefn = OGR_L_GetLayerDefn( psInfo->hLayer )) == NULL) 
   {
@@ -1703,6 +1796,13 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
       items[i++] = strdup( MSOGR_LABELOCOLORNAME );
   }
   items[i++] = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      consider populating the field definitions in metadata.          */
+/* -------------------------------------------------------------------- */
+  if((value = msOWSLookupMetadata(&(layer->metadata), "G", "types")) != NULL
+     && strcasecmp(value,"auto") == 0 )
+      msOGRPassThroughFieldDefinitions( layer, psInfo );
 
   return items;
 }

@@ -353,6 +353,23 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         }
     }
 #endif
+#ifdef USE_GDAL
+    if( strncasecmp(driver,"ogr/",4) == 0 )
+    {
+        format = msAllocOutputFormat( map, driver+4, driver );
+        if( msInitDefaultOGROutputFormat( format ) == MS_FAILURE )
+        {
+            if( map != NULL )
+            {
+                map->numoutputformats--;
+                map->outputformatlist[map->numoutputformats] = NULL;
+            }
+
+            msFreeOutputFormat( format );
+            format = NULL;
+        }
+    }
+#endif
     if( strcasecmp(driver,"imagemap") == 0 )
     {
         format = msAllocOutputFormat( map, "imagemap", driver );
@@ -1140,7 +1157,7 @@ int msInitializeRendererVTable(outputFormatObj *format) {
         msFreeRendererVTable(format->vtable); */
         msFree(format->vtable);
     }
-    format->vtable = (rendererVTableObj*)malloc(sizeof(rendererVTableObj));
+    format->vtable = (rendererVTableObj*)calloc(1,sizeof(rendererVTableObj));
     
     switch(format->renderer) {
         case MS_RENDER_WITH_AGG2:
@@ -1157,6 +1174,8 @@ int msInitializeRendererVTable(outputFormatObj *format) {
             return msPopulateRendererVTableOGL(format->vtable);
         case MS_RENDER_WITH_KML:
             return msPopulateRendererVTableKML(format->vtable);    
+        case MS_RENDER_WITH_OGR:
+            return msPopulateRendererVTableOGR(format->vtable);    
         default:
             msSetError(MS_MISCERR, "unsupported RendererVtable renderer %d",
                     "msInitializeRendererVTable()",format->renderer);
