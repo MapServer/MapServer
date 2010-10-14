@@ -33,7 +33,7 @@
 
 MS_CVSID("$Id$")
 
-/* Use only mapgml.c if WMS or WFS is available */
+/* Use only mapgml.c if WMS or WFS is available (with minor exceptions at end)*/
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
@@ -781,130 +781,6 @@ void msGMLFreeGeometries(gmlGeometryListObj *geometryList)
   }
 
   free(geometryList);
-}
-
-gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces) 
-{
-  int i,j;
-
-  char **xmlitems=NULL; 
-  int numxmlitems=0;
-
-  char **incitems=NULL;
-  int numincitems=0;
-
-  char **excitems=NULL;
-  int numexcitems=0;
-
-  const char *value=NULL;
-  char tag[64];
-
-  gmlItemListObj *itemList=NULL; 
-  gmlItemObj *item=NULL;
-
-  /* get a list of items that should be included in output */
-  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "include_items")) != NULL)  
-    incitems = msStringSplit(value, ',', &numincitems);
-
-  /* get a list of items that should be excluded in output */
-  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "exclude_items")) != NULL)  
-    excitems = msStringSplit(value, ',', &numexcitems);
-
-  /* get a list of items that need don't get encoded */
-  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "xml_items")) != NULL)  
-    xmlitems = msStringSplit(value, ',', &numxmlitems);
-
-  /* allocate memory and iinitialize the item collection */
-  itemList = (gmlItemListObj *) malloc(sizeof(gmlItemListObj));
-  itemList->items = NULL;
-  itemList->numitems = 0;
-
-  itemList->numitems = layer->numitems;
-  itemList->items = (gmlItemObj *) malloc(sizeof(gmlItemObj)*itemList->numitems);
-  if(!itemList->items) {
-    msSetError(MS_MEMERR, "Error allocating a collection GML item structures.", "msGMLGetItems()");
-    return NULL;
-  } 
-
-  for(i=0; i<layer->numitems; i++) {
-    item = &(itemList->items[i]);
-
-    item->name = strdup(layer->items[i]);  /* initialize the item */
-    item->alias = NULL;
-    item->type = NULL;
-    item->template = NULL;
-    item->encode = MS_TRUE;
-    item->visible = MS_FALSE;
-    item->width = 0;
-    item->precision = 0;
-
-    /* check visibility, included items first... */
-    if(numincitems == 1 && strcasecmp("all", incitems[0]) == 0) {
-      item->visible = MS_TRUE;
-    } else {
-      for(j=0; j<numincitems; j++) {
-        if(strcasecmp(layer->items[i], incitems[j]) == 0)
-          item->visible = MS_TRUE;
-      }
-    }
-
-    /* ...and now excluded items */
-    for(j=0; j<numexcitems; j++) {
-      if(strcasecmp(layer->items[i], excitems[j]) == 0)
-        item->visible = MS_FALSE;
-    }
-
-    /* check encoding */
-    for(j=0; j<numxmlitems; j++) {
-      if(strcasecmp(layer->items[i], xmlitems[j]) == 0)
-        item->encode = MS_FALSE;
-    }
-
-    snprintf(tag, sizeof(tag), "%s_alias", layer->items[i]);
-    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
-      item->alias = strdup(value);
-
-    snprintf(tag, sizeof(tag), "%s_type", layer->items[i]);
-    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
-      item->type = strdup(value);
-
-    snprintf(tag, sizeof(tag), "%s_template", layer->items[i]);
-    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
-      item->template = strdup(value);
-
-    snprintf(tag, sizeof(tag), "%s_width", layer->items[i]);
-    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
-        item->width = atoi(value);
-    
-    snprintf(tag, sizeof(tag), "%s_precision", layer->items[i]);
-    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
-        item->precision = atoi(value);
-  }
-
-  msFreeCharArray(incitems, numincitems);
-  msFreeCharArray(excitems, numexcitems);
-  msFreeCharArray(xmlitems, numxmlitems);
-
-  return itemList;
-}
-
-void msGMLFreeItems(gmlItemListObj *itemList)
-{
-  int i;
-
-  if(!itemList) return;
-
-  for(i=0; i<itemList->numitems; i++) {
-    msFree(itemList->items[i].name);
-    msFree(itemList->items[i].alias);
-    msFree(itemList->items[i].type);
-    msFree(itemList->items[i].template);
-  }
-
-  if( itemList->items != NULL )
-      free(itemList->items);
-
-  free(itemList);
 }
 
 static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const char *namespace, const char *tab)
@@ -1793,3 +1669,134 @@ xmlNodePtr msGML3TimeInstant(xmlNsPtr psNs, char *pszTime) {
 }
 
 #endif /* USE_LIBXML2 */
+
+
+/************************************************************************/
+/*      The following functions are enabled in all cases, even if       */
+/*      WMS and WFS are not available.                                  */
+/************************************************************************/
+
+gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces) 
+{
+  int i,j;
+
+  char **xmlitems=NULL; 
+  int numxmlitems=0;
+
+  char **incitems=NULL;
+  int numincitems=0;
+
+  char **excitems=NULL;
+  int numexcitems=0;
+
+  const char *value=NULL;
+  char tag[64];
+
+  gmlItemListObj *itemList=NULL; 
+  gmlItemObj *item=NULL;
+
+  /* get a list of items that should be included in output */
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "include_items")) != NULL)  
+    incitems = msStringSplit(value, ',', &numincitems);
+
+  /* get a list of items that should be excluded in output */
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "exclude_items")) != NULL)  
+    excitems = msStringSplit(value, ',', &numexcitems);
+
+  /* get a list of items that need don't get encoded */
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "xml_items")) != NULL)  
+    xmlitems = msStringSplit(value, ',', &numxmlitems);
+
+  /* allocate memory and iinitialize the item collection */
+  itemList = (gmlItemListObj *) malloc(sizeof(gmlItemListObj));
+  itemList->items = NULL;
+  itemList->numitems = 0;
+
+  itemList->numitems = layer->numitems;
+  itemList->items = (gmlItemObj *) malloc(sizeof(gmlItemObj)*itemList->numitems);
+  if(!itemList->items) {
+    msSetError(MS_MEMERR, "Error allocating a collection GML item structures.", "msGMLGetItems()");
+    return NULL;
+  } 
+
+  for(i=0; i<layer->numitems; i++) {
+    item = &(itemList->items[i]);
+
+    item->name = strdup(layer->items[i]);  /* initialize the item */
+    item->alias = NULL;
+    item->type = NULL;
+    item->template = NULL;
+    item->encode = MS_TRUE;
+    item->visible = MS_FALSE;
+    item->width = 0;
+    item->precision = 0;
+
+    /* check visibility, included items first... */
+    if(numincitems == 1 && strcasecmp("all", incitems[0]) == 0) {
+      item->visible = MS_TRUE;
+    } else {
+      for(j=0; j<numincitems; j++) {
+        if(strcasecmp(layer->items[i], incitems[j]) == 0)
+          item->visible = MS_TRUE;
+      }
+    }
+
+    /* ...and now excluded items */
+    for(j=0; j<numexcitems; j++) {
+      if(strcasecmp(layer->items[i], excitems[j]) == 0)
+        item->visible = MS_FALSE;
+    }
+
+    /* check encoding */
+    for(j=0; j<numxmlitems; j++) {
+      if(strcasecmp(layer->items[i], xmlitems[j]) == 0)
+        item->encode = MS_FALSE;
+    }
+
+    snprintf(tag, sizeof(tag), "%s_alias", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
+      item->alias = strdup(value);
+
+    snprintf(tag, sizeof(tag), "%s_type", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
+      item->type = strdup(value);
+
+    snprintf(tag, sizeof(tag), "%s_template", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
+      item->template = strdup(value);
+
+    snprintf(tag, sizeof(tag), "%s_width", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
+        item->width = atoi(value);
+    
+    snprintf(tag, sizeof(tag), "%s_precision", layer->items[i]);
+    if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, tag)) != NULL) 
+        item->precision = atoi(value);
+  }
+
+  msFreeCharArray(incitems, numincitems);
+  msFreeCharArray(excitems, numexcitems);
+  msFreeCharArray(xmlitems, numxmlitems);
+
+  return itemList;
+}
+
+void msGMLFreeItems(gmlItemListObj *itemList)
+{
+  int i;
+
+  if(!itemList) return;
+
+  for(i=0; i<itemList->numitems; i++) {
+    msFree(itemList->items[i].name);
+    msFree(itemList->items[i].alias);
+    msFree(itemList->items[i].type);
+    msFree(itemList->items[i].template);
+  }
+
+  if( itemList->items != NULL )
+      free(itemList->items);
+
+  free(itemList);
+}
+

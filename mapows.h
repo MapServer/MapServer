@@ -313,7 +313,7 @@ int msOWSNegotiateUpdateSequence(const char *requested_updateSequence, const cha
 
 outputFormatObj *msOwsIsOutputFormatValid(mapObj *map, const char *format, hashTableObj *metadata, 
                                           const char *namespaces, const char *name);
-#endif
+#endif /* #if any wxs service enabled */
 
 /*====================================================================
  *   mapgml.c
@@ -324,8 +324,6 @@ outputFormatObj *msOwsIsOutputFormatValid(mapObj *map, const char *format, hashT
 #define OWS_WFS_FEATURE_COLLECTION_NAME "msFeatureCollection"
 #define OWS_GML_DEFAULT_GEOMETRY_NAME "msGeometry"
 #define OWS_GML_OCCUR_UNBOUNDED -1
-
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
 /* TODO, there must be a better way to generalize these lists of objects... */
 
@@ -393,6 +391,8 @@ typedef struct {
   gmlNamespaceObj *namespaces;
   int numnamespaces;
 } gmlNamespaceListObj;
+
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
 MS_DLL_EXPORT int msItemInGroups(char *name, gmlGroupListObj *groupList);
 MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces);
