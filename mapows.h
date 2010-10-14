@@ -184,15 +184,6 @@ MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
                                                 const char *namespaces,
                                                 const char *name);
 
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-
-MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
-MS_DLL_EXPORT int msOWSNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
-MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
-MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
-MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
-MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
-
 /* Constants for OWS Service version numbers */
 #define OWS_0_1_2   0x000102
 #define OWS_0_1_4   0x000104
@@ -212,6 +203,15 @@ MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 
 MS_DLL_EXPORT int msOWSParseVersionString(const char *pszVersion);
 MS_DLL_EXPORT const char *msOWSGetVersionString(int nVersion, char *pszBuffer);
+
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+
+MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
+MS_DLL_EXPORT int msOWSNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
+MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
+MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
+MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
+MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 
 
 /* OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata() */

@@ -249,6 +249,66 @@ const char *msOWSLookupMetadata2(hashTableObj *pri,
 }
 
 
+/* msOWSParseVersionString()
+**
+** Parse a version string in the format "a.b.c" or "a.b" and return an
+** integer in the format 0x0a0b0c suitable for regular integer comparisons.
+**
+** Returns one of OWS_VERSION_NOTSET or OWS_VERSION_BADFORMAT if version 
+** could not be parsed.
+*/
+int msOWSParseVersionString(const char *pszVersion)
+{
+    char **digits = NULL;
+    int numDigits = 0;
+
+    if (pszVersion)
+    {
+        int nVersion = 0;
+        digits = msStringSplit(pszVersion, '.', &numDigits);
+        if (digits == NULL || numDigits < 2 || numDigits > 3)
+        {
+            msSetError(MS_OWSERR, 
+                       "Invalid version (%s). Version must be in the "
+                       "format 'x.y' or 'x.y.z'",
+                       "msOWSParseVersionString()", pszVersion);
+            if (digits)
+                msFreeCharArray(digits, numDigits);
+            return OWS_VERSION_BADFORMAT;
+        }
+
+        nVersion = atoi(digits[0])*0x010000;
+        nVersion += atoi(digits[1])*0x0100;
+        if (numDigits > 2)
+            nVersion += atoi(digits[2]);
+
+        msFreeCharArray(digits, numDigits);
+
+        return nVersion;
+    }
+
+    return OWS_VERSION_NOTSET;
+}
+
+/* msOWSGetVersionString()
+**
+** Returns a OWS version string in the format a.b.c from the integer
+** version value passed as argument (0x0a0b0c)
+**
+** Fills in the pszBuffer and returns a reference to it. Recommended buffer
+** size is OWS_VERSION_MAXLEN chars.
+*/
+const char *msOWSGetVersionString(int nVersion, char *pszBuffer)
+{
+
+    if (pszBuffer)
+        snprintf(pszBuffer, OWS_VERSION_MAXLEN-1, "%d.%d.%d", 
+            (nVersion/0x10000)%0x100, (nVersion/0x100)%0x100, nVersion%0x100);
+
+    return pszBuffer;
+}
+
+
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
 #if !defined(USE_PROJ)
@@ -520,66 +580,6 @@ const char *msOWSGetLanguage(mapObj *map, const char *context)
     }
     return language;
 }
-
-/* msOWSParseVersionString()
-**
-** Parse a version string in the format "a.b.c" or "a.b" and return an
-** integer in the format 0x0a0b0c suitable for regular integer comparisons.
-**
-** Returns one of OWS_VERSION_NOTSET or OWS_VERSION_BADFORMAT if version 
-** could not be parsed.
-*/
-int msOWSParseVersionString(const char *pszVersion)
-{
-    char **digits = NULL;
-    int numDigits = 0;
-
-    if (pszVersion)
-    {
-        int nVersion = 0;
-        digits = msStringSplit(pszVersion, '.', &numDigits);
-        if (digits == NULL || numDigits < 2 || numDigits > 3)
-        {
-            msSetError(MS_OWSERR, 
-                       "Invalid version (%s). Version must be in the "
-                       "format 'x.y' or 'x.y.z'",
-                       "msOWSParseVersionString()", pszVersion);
-            if (digits)
-                msFreeCharArray(digits, numDigits);
-            return OWS_VERSION_BADFORMAT;
-        }
-
-        nVersion = atoi(digits[0])*0x010000;
-        nVersion += atoi(digits[1])*0x0100;
-        if (numDigits > 2)
-            nVersion += atoi(digits[2]);
-
-        msFreeCharArray(digits, numDigits);
-
-        return nVersion;
-    }
-
-    return OWS_VERSION_NOTSET;
-}
-
-/* msOWSGetVersionString()
-**
-** Returns a OWS version string in the format a.b.c from the integer
-** version value passed as argument (0x0a0b0c)
-**
-** Fills in the pszBuffer and returns a reference to it. Recommended buffer
-** size is OWS_VERSION_MAXLEN chars.
-*/
-const char *msOWSGetVersionString(int nVersion, char *pszBuffer)
-{
-
-    if (pszBuffer)
-        snprintf(pszBuffer, OWS_VERSION_MAXLEN-1, "%d.%d.%d", 
-            (nVersion/0x10000)%0x100, (nVersion/0x100)%0x100, nVersion%0x100);
-
-    return pszBuffer;
-}
-
 
 /*
 ** msOWSPrintMetadata()
