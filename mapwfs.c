@@ -1938,9 +1938,25 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
             }
             if (psFormat == NULL)
             {
+                msSetError(MS_WFSERR, 
+                           "'%s' is not a permitted output format for layer '%s', review wfs_formats setting.",
+                           "msWFSGetFeature()",
+                           paramsObj->pszOutputFormat,
+                           lp->name );
                 return msWFSException(map, "outputformat", 
                                       "InvalidParameterValue",
-                                      paramsObj->pszOutputFormat );
+                                      paramsObj->pszVersion );
+            }
+
+            if( psFormat->imagemode != MS_IMAGEMODE_FEATURE )
+            {
+                msSetError(MS_WFSERR, 
+                           "OUTPUTFORMAT '%s' does not have IMAGEMODE FEATURE, and is not permitted for WFS output.",
+                           "msWFSGetFeature()",
+                           paramsObj->pszOutputFormat );
+                return msWFSException( map, "outputformat",
+                                       "InvalidParameterValue",
+                                       paramsObj->pszVersion );
             }
         }
     } 
@@ -2493,7 +2509,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
         map->querymap.status = MS_FALSE;
 
         status = msReturnTemplateQuery( mapserv, psFormat->name, NULL );
-
+        if( status != MS_SUCCESS )
+            return msWFSException(map, "mapserv", "NoApplicableCode", 
+                                  paramsObj->pszVersion );
+            
         mapserv->request = NULL;
         mapserv->map = NULL;
 
