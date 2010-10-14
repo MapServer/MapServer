@@ -469,7 +469,7 @@ int msWFSException11(mapObj *map, const char *locator,
                      const char *exceptionCode, const char *version);
 int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *wfsparams, 
                            cgiRequestObj *req); 
-
+char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer,const char*version);
 #endif
 
 /*====================================================================

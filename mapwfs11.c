@@ -37,6 +37,9 @@ MS_CVSID("$Id$")
 #include "mapowscommon.h"
 #include "mapogcfilter.h"
 
+/************************************************************************/
+/*                          msWFSException11()                          */
+/************************************************************************/
 
 int msWFSException11(mapObj *map, const char *locator, 
                      const char *exceptionCode, const char *version)
@@ -175,7 +178,21 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
     /*TODO: adevertize only gml3?*/
     psNode = xmlNewNode(NULL, BAD_CAST "OutputFormats");
     xmlAddChild(psRootNode, psNode);
-    xmlNewChild(psNode, NULL, BAD_CAST "Format", BAD_CAST "text/xml; subtype=gml/3.1.1");
+
+    {
+        char *formats_list = msWFSGetOutputFormatList( map, lp, "1.1.0" );
+        int iformat, n;
+        char **tokens;
+
+        n = 0;
+        tokens = msStringSplit(formats_list, ',', &n);
+
+        for( iformat = 0; iformat < n; iformat++ )
+            xmlNewChild(psNode, NULL, BAD_CAST "Format", 
+                        BAD_CAST tokens[iformat] );
+        msFree( formats_list );
+        msFreeCharArray( tokens, n );
+    }
   
     /*bbox*/
     if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS)
@@ -241,7 +258,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     char *schemalocation = NULL;
     char *xsi_schemaLocation = NULL;
 
-    char *script_url=NULL, *script_url_encoded=NULL;
+    char *script_url=NULL, *script_url_encoded=NULL, *formats_list;
     const char *value = NULL;
     const char *encoding;
 
@@ -384,9 +401,11 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
                                                                  "Parameter", "resultType", 
                                                                  "results, hits"));
      */
+     formats_list = msWFSGetOutputFormatList( map, NULL, "1.1.0" );
      xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                   "Parameter", "outputFormat", 
-                                                                  "text/xml; subtype=gml/3.1.1"));
+                                                                  formats_list));
+     msFree( formats_list );
 
      value = msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures");
 

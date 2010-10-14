@@ -90,48 +90,135 @@ int msWFSException(mapObj *map, const char *locator, const char *code,
     return MS_FAILURE; /* so we can call 'return msWFSException();' anywhere */
 }
 
+/*
+** Helper function to build a list of output formats.
+** 
+** Given a layer it will return all formats valid for that layer, otherwise
+** all formats permitted on layers in the map are returned.  The string 
+** returned should be freed by the caller.
+*/
 
+char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer, 
+                               const char *version )
+{
+    int i, got_map_list = 0;
+    static const int out_list_size = 20000;
+    char *out_list = (char*) calloc(1,out_list_size);
+
+    if( strncasecmp(version,"1.0",3) != 0 )
+        strcpy(out_list,"text/xml; subtype=gml/3.1.1");
+    else
+        strcpy(out_list,"GML2");
+
+    for( i = 0; i < map->numlayers; i++ )
+    {
+        const char *format_list;
+        layerObj *lp;
+        int j, n;
+        char **tokens;
+        
+        lp = GET_LAYER(map, i);
+        if( layer != NULL && layer != lp )
+            continue;
+        
+        format_list = msOWSLookupMetadata(&(lp->metadata), 
+                                          "F","getfeature_formatlist");
+
+        if( format_list == NULL && !got_map_list )
+        {
+            format_list = msOWSLookupMetadata(&(map->web.metadata), 
+                                              "F","getfeature_formatlist");
+            got_map_list = 1;
+        }
+
+        if( format_list == NULL )
+            continue;
+
+        n = 0;
+        tokens = msStringSplit(format_list, ',', &n);
+        
+        for( j = 0; j < n; j++ )
+        {
+            int iformat;
+            const char *fname, *hit;
+            outputFormatObj *format_obj;
+            
+            msStringTrim( tokens[j] );
+            iformat = msGetOutputFormatIndex(map,tokens[j]);
+            if( iformat < 0 )
+                continue;
+
+            format_obj = map->outputformatlist[iformat];
+            
+            fname = format_obj->name;
+            if( strncasecmp(version,"1.0",3) != 0 
+                && format_obj->mimetype != NULL )
+                fname = format_obj->mimetype;
+
+            hit = strstr(out_list,fname);
+            if( hit != NULL 
+                && (hit[strlen(fname)] == '\0' || hit[strlen(fname)] == ','))
+                continue;
+
+            if( strlen(out_list) + strlen(fname)+3 < out_list_size )
+            {
+                strcat( out_list, "," );
+                strcat( out_list, fname );
+            }
+            else
+                break;
+        }
+
+        msFreeCharArray( tokens, n );
+    }
+
+    return out_list;
+}
 
 /*
 **
 */
 static void msWFSPrintRequestCap(const char *wmtver, const char *request,
                                  const char *script_url, 
-                                 const char *format_tag, const char *formats, ...)
+                                 const char *format_tag, 
+                                 const char *formats_list)
 {
-  va_list argp;
-  const char *fmt;
+    msIO_printf("    <%s>\n", request);
 
-  msIO_printf("    <%s>\n", request);
-
-  /* We expect to receive a NULL-terminated args list of formats */
-  if (format_tag != NULL)
-  {
-    msIO_printf("      <%s>\n", format_tag);
-    va_start(argp, formats);
-    fmt = formats;
-    while(fmt != NULL)
+    /* We expect to receive a NULL-terminated args list of formats */
+    if (format_tag != NULL)
     {
-      msIO_printf("        <%s/>\n", fmt);
-      fmt = va_arg(argp, const char *);
+        int i, n;
+        char **tokens;
+
+        n = 0;
+        tokens = msStringSplit(formats_list, ',', &n);
+
+        msIO_printf("      <%s>\n", format_tag);
+
+        for( i = 0; i < n; i++ )
+        {
+            msIO_printf("        <%s/>\n", tokens[i] );
+        }
+
+        msFreeCharArray( tokens, n );
+
+        msIO_printf("      </%s>\n", format_tag);
     }
-    va_end(argp);
-    msIO_printf("      </%s>\n", format_tag);
-  }
 
-  msIO_printf("      <DCPType>\n");
-  msIO_printf("        <HTTP>\n");
-  msIO_printf("          <Get onlineResource=\"%s\" />\n", script_url);
-  msIO_printf("        </HTTP>\n");
-  msIO_printf("      </DCPType>\n");
-  msIO_printf("      <DCPType>\n");
-  msIO_printf("        <HTTP>\n");
-  msIO_printf("          <Post onlineResource=\"%s\" />\n", script_url);
-  msIO_printf("        </HTTP>\n");
-  msIO_printf("      </DCPType>\n");
+    msIO_printf("      <DCPType>\n");
+    msIO_printf("        <HTTP>\n");
+    msIO_printf("          <Get onlineResource=\"%s\" />\n", script_url);
+    msIO_printf("        </HTTP>\n");
+    msIO_printf("      </DCPType>\n");
+    msIO_printf("      <DCPType>\n");
+    msIO_printf("        <HTTP>\n");
+    msIO_printf("          <Post onlineResource=\"%s\" />\n", script_url);
+    msIO_printf("        </HTTP>\n");
+    msIO_printf("      </DCPType>\n");
 
 
-  msIO_printf("    </%s>\n", request);
+    msIO_printf("    </%s>\n", request);
 }
 
 
@@ -527,6 +614,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   const char *updatesequence=NULL;
   const char *wmtver=NULL;
   const char *encoding;
+  char *formats_list;
   char tmpString[OWS_VERSION_MAXLEN];
   int wfsSupportedVersions[] = {OWS_1_1_0, OWS_1_0_0};
   int wfsNumSupportedVersions = 2;
@@ -677,8 +765,11 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   /* msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", "GML2", "GML3", NULL); */
 
   /* don't advertise the GML3 or GML for SFE support */
-  msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA", NULL);
-  msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", "GML2", NULL);
+  msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA" );
+
+  formats_list = msWFSGetOutputFormatList( map, NULL, wfsparams->pszVersion );
+  msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", formats_list );
+  msFree( formats_list );
 
   msIO_printf("  </Request>\n");
   msIO_printf("</Capability>\n\n");
@@ -757,49 +848,6 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   return MS_SUCCESS;
 }
 
-/*
-** Helper function to build a list of output formats.
-** 
-** Given a layer it will return all formats valid for that layer, otherwise
-** all formats permitted on layers in the map are returned.  The string 
-** returned should be freed by the caller.
-*/
-
-static char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer, 
-                                      const char *pszVersion )
-{
-    int i, got_map_list = 0;
-    char *format_list = NULL;
-    int  format_list_len = 0;
-
-    for( i = 0; i < map->numlayers; i++ )
-    {
-        const char *format_list;
-        layerObj *lp;
-        
-        lp = GET_LAYER(map, i);
-        if( layer != NULL && layer != lp )
-            continue;
-        
-        format_list = msOWSLookupMetadata(&(lp->metadata), 
-                                          "F","getfeature_formatlist");
-
-        if( format_list == NULL && !got_map_list )
-        {
-            format_list = msOWSLookupMetadata(&(map->web.metadata), 
-                                              "F","getfeature_formatlist");
-            got_map_list = 1;
-        }
-
-        if( format_list == NULL )
-            continue;
-
-//        split, add each as appropriate.
-       
-    }
-
-}
-                                      
 /*
 ** Helper functions for producing XML schema.
 */
