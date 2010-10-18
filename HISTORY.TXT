@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- apply patch (thanks rouault) to advertise resultType=hits in WFS 1.1 Capabilities (#3575)
+
 - mapshape.c: Fix writing of geometries with z/m and fail gracefully attempting
   to create such files if USE_POINT_Z_M is not enabled (#3564)
 

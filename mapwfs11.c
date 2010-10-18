@@ -392,15 +392,10 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
                                                                  OWS_METHOD_GETPOST, script_url_encoded));
      xmlAddChild(psMainNode, psNode);
 
-     /*resultType: TODO support hits*/
-     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
-                                                                "Parameter", "resultType", 
-                                                                "results"));
-     /*
-     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
+     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
                                                                  "Parameter", "resultType", 
-                                                                 "results, hits"));
-     */
+                                                                 "results,hits"));
+
      formats_list = msWFSGetOutputFormatList( map, NULL, "1.1.0" );
      xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                   "Parameter", "outputFormat", 
