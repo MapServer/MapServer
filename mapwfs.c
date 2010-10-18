@@ -2505,18 +2505,22 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
         mapserv->sendheaders = MS_TRUE;
         mapserv->map = map;
+        msFreeCgiObj(mapserv->request);
         mapserv->request = req;
         map->querymap.status = MS_FALSE;
 
         status = msReturnTemplateQuery( mapserv, psFormat->name, NULL );
-        if( status != MS_SUCCESS )
-            return msWFSException(map, "mapserv", "NoApplicableCode", 
-                                  paramsObj->pszVersion );
-            
+
         mapserv->request = NULL;
         mapserv->map = NULL;
 
         msFreeMapServObj( mapserv );
+
+        if( status != MS_SUCCESS )
+        {
+            return msWFSException(map, "mapserv", "NoApplicableCode",
+                                  paramsObj->pszVersion );
+        }
     }
 
     if( psFormat == NULL && status == MS_SUCCESS )

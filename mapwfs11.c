@@ -72,7 +72,7 @@ int msWFSException11(mapObj *map, const char *locator,
 
     xmlDocSetRootElement(psDoc, psRootNode);
 
-    psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
+    xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
     if (encoding)
         msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
@@ -89,6 +89,7 @@ int msWFSException11(mapObj *map, const char *locator,
     free(schemasLocation);
     xmlFree(buffer);
     xmlFreeDoc(psDoc);
+    xmlFreeNs(psNsOws);
 
     /* clear error since we have already reported it */
     msResetErrorList();
