@@ -193,6 +193,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     OGRFeatureH hFeat;
     OGRErr eErr;
     int i, out_field;
+    OGRwkbGeometryType eLayerGType, eFeatureGType = wkbUnknown;
 
 /* -------------------------------------------------------------------- */
 /*      Transform point geometry.                                       */
@@ -270,6 +271,40 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
             OGR_G_AddGeometryDirectly( hGeom, hRing );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Consider trying to force the geometry to a new type if it       */
+/*      doesn't match the layer.                                        */
+/* -------------------------------------------------------------------- */
+    eLayerGType = 
+        wkbFlatten(OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hOGRLayer)));
+
+    if( hGeom != NULL )
+        eFeatureGType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
+    
+#if defined(GDAL_VERSION_NUM) && (GDAL_VERSION_NUM >= 1800)
+
+    if( hGeom != NULL 
+        && eLayerGType == wkbPolygon
+        && eFeatureGType != eLayerGType )
+        hGeom = OGR_G_ForceToPolygon( hGeom );
+
+    else if( hGeom != NULL 
+             && eLayerGType == wkbMultiPolygon
+             && eFeatureGType != eLayerGType )
+        hGeom = OGR_G_ForceToMultiPolygon( hGeom );
+        
+    else if( hGeom != NULL 
+             && eLayerGType == wkbMultiPoint
+             && eFeatureGType != eLayerGType )
+        hGeom = OGR_G_ForceToMultiPoint( hGeom );
+        
+    else if( hGeom != NULL 
+             && eLayerGType == wkbMultiLineString
+             && eFeatureGType != eLayerGType )
+        hGeom = OGR_G_ForceToMultiLineString( hGeom );
+        
+#endif /* GDAL/OGR 1.8 or later */
 
 /* -------------------------------------------------------------------- */
 /*      Create the feature, and attach the geometry.                    */
@@ -436,6 +471,19 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     
     msFree( request_dir );
 
+/* -------------------------------------------------------------------- */
+/*      Emit content type headers for stream output now.                */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(storage,"stream") )
+    {
+        if( sendheaders && format->mimetype )
+            msIO_fprintf( stdout, 
+                          "Content-Type: %s%c%c",
+                          format->mimetype, 10, 10 );
+        else
+            msIO_fprintf( stdout, "%c", 10 );
+    }
+
 /* ==================================================================== */
 /*      Create the datasource.                                          */
 /* ==================================================================== */
@@ -464,22 +512,54 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         OGRwkbGeometryType eGeomType;
         OGRSpatialReferenceH srs = NULL;
         gmlItemListObj *item_list = NULL;
+        const char *value;
 
         if( !layer->resultcache || layer->resultcache->numresults == 0 )
             continue;
 
 /* -------------------------------------------------------------------- */
-/*      Create the corresponding OGR Layer.                             */
+/*      Establish the geometry type to use for the created layer.       */
+/*      First we consult the wfs_geomtype field and fallback to         */
+/*      deriving something from the type of the mapserver layer.        */
 /* -------------------------------------------------------------------- */
-        if( layer->type == MS_LAYER_POINT )
+        value = msOWSLookupMetadata(&(layer->metadata), "FO", "geomtype");
+        if( value == NULL )
+        {
+            if( layer->type == MS_LAYER_POINT )
+                value = "Point";
+            else if( layer->type == MS_LAYER_LINE )
+                value = "LineString";
+            else if( layer->type == MS_LAYER_POLYGON )
+                value = "Polygon";
+            else
+                value = "Geometry";
+        }
+
+        if( strcasecmp(value,"Point") == 0 )
             eGeomType = wkbPoint;
-        else if( layer->type == MS_LAYER_LINE )
+        else if( strcasecmp(value,"LineString") == 0 )
             eGeomType = wkbLineString;
-        else if( layer->type == MS_LAYER_POLYGON )
+        else if( strcasecmp(value,"Polygon") == 0 )
             eGeomType = wkbPolygon;
+        else if( strcasecmp(value,"MultiPoint") == 0 )
+            eGeomType = wkbMultiPoint;
+        else if( strcasecmp(value,"MultiLineString") == 0 )
+            eGeomType = wkbMultiLineString;
+        else if( strcasecmp(value,"MultiPolygon") == 0 )
+            eGeomType = wkbMultiPolygon;
+        else if( strcasecmp(value,"GeometryCollection") == 0 )
+            eGeomType = wkbMultiPolygon;
+        else if( strcasecmp(value,"Unknown") == 0 
+                 || strcasecmp(value,"Geometry") == 0 )
+            eGeomType = wkbUnknown;
+        else if( strcasecmp(value,"None") == 0 )
+            eGeomType = wkbNone;
         else
             eGeomType = wkbUnknown;
-
+        
+/* -------------------------------------------------------------------- */
+/*      Create the corresponding OGR Layer.                             */
+/* -------------------------------------------------------------------- */
         hOGRLayer = OGR_DS_CreateLayer( hDS, layer->name, srs, eGeomType, 
                                         layer_options );
         if( hOGRLayer == NULL )
@@ -637,7 +717,11 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 /* -------------------------------------------------------------------- */
 /*      Get list of resulting files.                                    */
 /* -------------------------------------------------------------------- */
+#if !defined(CPL_ZIP_API_OFFERED)
+    form = msGetOutputFormatOption( format, "FORM", "multipart" );
+#else
     form = msGetOutputFormatOption( format, "FORM", "zip" );
+#endif
 
     if( EQUAL(form,"simple") )
     {
@@ -652,13 +736,27 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     }
 
 /* -------------------------------------------------------------------- */
+/*      If our "storage" is stream then the output has already been     */
+/*      sent back to the client and we don't need to copy it now.       */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(storage,"stream") )
+    {
+        /* already done */
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Handle case of simple file written to stdout.                   */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(form,"simple") )
+    else if( EQUAL(form,"simple") )
     {
         char buffer[1024];
         int  bytes_read;
         FILE *fp;
+
+        if( sendheaders )
+            msIO_fprintf( stdout, 
+                          "Content-Disposition: attachment; filename=%s\n",
+                          CPLGetFilename( file_list[0] ) );
 
         if( sendheaders && format->mimetype )
             msIO_fprintf( stdout, 
@@ -724,7 +822,10 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                 msIO_fwrite( buffer, 1, bytes_read, stdout );
             VSIFCloseL( fp );
 
-            msIO_fprintf( stdout, "\n--%s\n", boundary );
+            if (file_list[i+1] == NULL)
+                msIO_fprintf( stdout, "\n--%s--\n", boundary );
+            else
+                msIO_fprintf( stdout, "\n--%s\n", boundary );
         }
     }
 

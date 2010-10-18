@@ -375,14 +375,14 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format = msAllocOutputFormat( map, "imagemap", driver );
         format->mimetype = strdup("text/html; driver=imagemap");
         format->extension = strdup("html");
-        format->imagemode = 0;
+        format->imagemode = MS_IMAGEMODE_NULL;
         format->renderer = MS_RENDER_WITH_IMAGEMAP;
     }
     if( strcasecmp(driver,"svg") == 0 )
     {
         format = msAllocOutputFormat( map, "svg", driver );
         format->mimetype = strdup("image/svg+xml");
-        format->imagemode = 0;
+        format->imagemode = MS_IMAGEMODE_NULL;
         format->extension = strdup("svg");
         format->renderer = MS_RENDER_WITH_SVG;
     }
@@ -391,7 +391,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format = msAllocOutputFormat( map, "template", driver );
         format->mimetype = strdup("text/html");
         format->extension = strdup("html");
-        format->imagemode = 0;
+        format->imagemode = MS_IMAGEMODE_FEATURE;
         format->renderer = MS_RENDER_WITH_TEMPLATE;
     }
 
