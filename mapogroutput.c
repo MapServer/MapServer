@@ -402,7 +402,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                                           format->formatoptions[i] + 4 );
         if( strncasecmp(format->formatoptions[i],"DSCO:",5) == 0 )
             ds_options = CSLAddString( ds_options, 
-                                       format->formatoptions[i] + 4 );
+                                       format->formatoptions[i] + 5 );
     }
     
 /* ==================================================================== */
