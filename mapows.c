@@ -1896,8 +1896,17 @@ outputFormatObj* msOwsIsOutputFormatValid(mapObj *map, const char *format,
         {
             for (i=0; i<n; i++)
             {
+                int iFormat = msGetOutputFormatIndex( map, tokens[i]);
+                const char *mimetype;
+                if( iFormat == -1 )
+                    continue;
+
+                mimetype =  map->outputformatlist[iFormat]->mimetype;
+
                 msStringTrim(tokens[i]);
                 if (strcasecmp(tokens[i], format) == 0)
+                  break;
+                if (strcasecmp(mimetype, format) == 0)
                   break;
             }
             msFreeCharArray(tokens, n);
