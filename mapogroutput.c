@@ -243,9 +243,11 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
 /* -------------------------------------------------------------------- */
 /*      Transform polygon geometry.                                     */
 /* -------------------------------------------------------------------- */
-    else if(  shape->type == MS_SHAPE_POLYGON )
+    else if( shape->type == MS_SHAPE_POLYGON )
     {
-        int iRing;
+        int iRing, iOuter;
+        int *outer_flags;
+        OGRGeometryH hMP;
 
         if( shape->numlines < 1 )
         {
@@ -255,21 +257,65 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
             return MS_FAILURE;
         }
 
-        hGeom = OGR_G_CreateGeometry( wkbPolygon );
-        
-        for( iRing = 0; iRing < shape->numlines; iRing++ )
-        {
-            OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
+        outer_flags = msGetOuterList( shape );
+        hMP = OGR_G_CreateGeometry( wkbMultiPolygon );
 
-            for( i = 0; i < shape->line[iRing].numpoints; i++ )
+        for( iOuter = 0; iOuter < shape->numlines; iOuter++ )
+        {
+            int *inner_flags;
+            OGRGeometryH hRing;
+
+            if( !outer_flags[iOuter] )
+                continue;
+
+            hGeom = OGR_G_CreateGeometry( wkbPolygon );
+
+            /* handle outer ring */
+
+            hRing = OGR_G_CreateGeometry( wkbLinearRing );
+
+            for( i = 0; i < shape->line[iOuter].numpoints; i++ )
             {
                 OGR_G_SetPoint( hRing, i, 
-                                shape->line[iRing].point[i].x,
-                                shape->line[iRing].point[i].y,
+                                shape->line[iOuter].point[i].x,
+                                shape->line[iOuter].point[i].y,
                                 0.0 );
             }
-
+            
             OGR_G_AddGeometryDirectly( hGeom, hRing );
+
+
+            /* handle inner rings (holes) */
+            inner_flags = msGetInnerList( shape, iOuter, outer_flags );
+
+            for( iRing = 0; iRing < shape->numlines; iRing++ )
+            {
+                if( !inner_flags[iRing] )
+                    continue;
+                
+                hRing = OGR_G_CreateGeometry( wkbLinearRing );
+
+                for( i = 0; i < shape->line[iRing].numpoints; i++ )
+                {
+                    OGR_G_SetPoint( hRing, i, 
+                                    shape->line[iRing].point[i].x,
+                                    shape->line[iRing].point[i].y,
+                                    0.0 );
+                }
+                
+                OGR_G_AddGeometryDirectly( hGeom, hRing );
+            }
+            OGR_G_AddGeometryDirectly( hMP, hGeom );
+        }
+
+        if( OGR_G_GetGeometryCount( hMP ) == 1 )
+        {
+            hGeom = OGR_G_Clone( OGR_G_GetGeometryRef( hMP, 0 ) );
+            OGR_G_DestroyGeometry( hMP );
+        }
+        else
+        {
+            hGeom = hMP;
         }
     }
 
@@ -536,7 +582,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 /*      First we consult the wfs_geomtype field and fallback to         */
 /*      deriving something from the type of the mapserver layer.        */
 /* -------------------------------------------------------------------- */
-        value = msOWSLookupMetadata(&(layer->metadata), "FO", "geomtype");
+        value = msOWSLookupMetadata(&(layer->metadata), "FOG", "geomtype");
         if( value == NULL )
         {
             if( layer->type == MS_LAYER_POINT )
