@@ -365,7 +365,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     /*accept version*/
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                 "Parameter", "AcceptVersions", 
-                                                                "1.0.0, 1.1.0"));
+                                                                "1.0.0,1.1.0"));
     /*format*/
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
                                                                 "Parameter", "AcceptFormats", 
