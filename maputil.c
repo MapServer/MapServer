@@ -1827,6 +1827,9 @@ void msCleanup()
   msGDALCleanup();
 #endif    
 #ifdef USE_PROJ
+#  if PJ_VERSION >= 480
+  pj_clear_initcache();
+#  endif
   pj_deallocate_grids();
   msSetPROJ_LIB( NULL );
 #endif

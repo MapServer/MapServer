@@ -221,8 +221,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
 /* -------------------------------------------------------------------- */
     else if(  shape->type == MS_SHAPE_LINE )
     {
-        hGeom = OGR_G_CreateGeometry( wkbLineString );
-        
         if( shape->numlines != 1 || shape->line[0].numpoints < 2 )
         {
             msSetError(MS_MISCERR, 
@@ -231,6 +229,8 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
             return MS_FAILURE;
         }
 
+        hGeom = OGR_G_CreateGeometry( wkbLineString );
+        
         for( i = 0; i < shape->line[0].numpoints; i++ )
         {
             OGR_G_SetPoint( hGeom, i, 
@@ -247,8 +247,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     {
         int iRing;
 
-        hGeom = OGR_G_CreateGeometry( wkbPolygon );
-        
         if( shape->numlines < 1 )
         {
             msSetError(MS_MISCERR, 
@@ -257,6 +255,8 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
             return MS_FAILURE;
         }
 
+        hGeom = OGR_G_CreateGeometry( wkbPolygon );
+        
         for( iRing = 0; iRing < shape->numlines; iRing++ )
         {
             OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
@@ -471,6 +471,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         strcpy( datasource_name, "/vsistdout/" );
     
     msFree( request_dir );
+    request_dir = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Emit content type headers for stream output now.                */
@@ -489,6 +490,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 /*      Create the datasource.                                          */
 /* ==================================================================== */
     hDS = OGR_Dr_CreateDataSource( hDriver,  datasource_name, ds_options );
+    CSLDestroy( ds_options );
     
     if( hDS == NULL )
     {
@@ -586,6 +588,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                                         layer_options );
         if( hOGRLayer == NULL )
         {
+            OGR_DS_Destroy( hDS );
             msOGRCleanupDS( datasource_name );
             msSetError( MS_MISCERR, 
                         "OGR CreateDataSource failed for '%s' with driver '%s'.",
@@ -594,6 +597,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                         format->driver+4 );
             return MS_FAILURE;
         }
+
+        if( srs != NULL )
+            OSRDestroySpatialReference( srs );
 
 /* -------------------------------------------------------------------- */
 /*      Create appropriate attributes on this layer.                    */
@@ -650,6 +656,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                             layer->items[i], 
                             CPLGetLastErrorMsg() );
                 
+                OGR_DS_Destroy( hDS );
                 msOGRCleanupDS( datasource_name );
                 return MS_FAILURE;
             }
@@ -663,6 +670,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
             for(j=0; j<layer->numjoins; j++) {
                 status = msJoinConnect(layer, &(layer->joins[j]));
                 if(status != MS_SUCCESS) {
+                    OGR_DS_Destroy( hDS );
                     msOGRCleanupDS( datasource_name );
                     return status;
                 }
@@ -683,6 +691,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                 layer, &resultshape,  layer->resultcache->results[i].tileindex,
                 layer->resultcache->results[i].shapeindex );
             if(status != MS_SUCCESS) {
+                OGR_DS_Destroy( hDS );
                 msOGRCleanupDS( datasource_name );
                 return status;
             } 
@@ -732,6 +741,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                                           item_list );
 
             if(status != MS_SUCCESS) {
+                OGR_DS_Destroy( hDS );
                 msOGRCleanupDS( datasource_name );
                 return status;
             } 
@@ -888,6 +898,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
             fp = VSIFOpenL( file_list[i], "r" );
             if( fp == NULL )
             {
+                CPLCloseZip( hZip );
                 msSetError( MS_MISCERR, 
                             "Failed to open result file '%s'.",
                             "msOGRWriteFromQuery()",
@@ -944,6 +955,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
     msOGRCleanupDS( datasource_name );
 
+    CSLDestroy( layer_options );
     CSLDestroy( file_list );
 
     return MS_SUCCESS;
