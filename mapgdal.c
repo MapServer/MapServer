@@ -40,7 +40,6 @@ MS_CVSID("$Id$")
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-static char *msProjectionObjToWKT( projectionObj *proj );
 static int    bGDALInitialized = 0;
 
 /************************************************************************/
@@ -389,11 +388,11 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 
         GDALSetGeoTransform( hMemDS, map->gt.geotransform );
 
-        pszWKT = msProjectionObjToWKT( &(map->projection) );
+        pszWKT = msProjectionObj2OGCWKT( &(map->projection) );
         if( pszWKT != NULL )
         {
             GDALSetProjection( hMemDS, pszWKT );
-            CPLFree( pszWKT );
+            msFree( pszWKT );
         }
     }
 
@@ -574,20 +573,38 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
     return MS_SUCCESS;
 }
 
+#else
+
+void msGDALInitialize( void ) {}
+void msGDALCleanup(void) {}
+
+
+#endif /* def USE_GDAL */
+
+
 /************************************************************************/
-/*                        msProjectionObjToWKT()                        */
+/*                      msProjectionObj2OGCWKT()                        */
 /*                                                                      */
 /*      We stick to the C API for OGRSpatialReference object access     */
 /*      to allow MapServer+GDAL to be built without C++                 */
 /*      complications.                                                  */
 /*                                                                      */
 /*      Note that this function will return NULL on failure, and the    */
-/*      returned string must be freed with CPLFree(), not msFree().     */
+/*      returned string should be freed with msFree().                  */
 /************************************************************************/
 
-char *msProjectionObjToWKT( projectionObj *projection )
+char *msProjectionObj2OGCWKT( projectionObj *projection )
 
 {
+
+#if !defined(USE_GDAL) && !defined(USE_OGR)
+    msSetError(MS_OGRERR, 
+               "Not implemented since neither OGR nor GDAL is enabled.",
+               "msProjectionObj2OGCWKT()");
+    return NULL;
+
+#else /* defined USE_GDAL or USE_OGR */
+
     OGRSpatialReferenceH hSRS;
     char *pszWKT=NULL, *pszProj4;
     int  nLength = 0, i;
@@ -626,14 +643,17 @@ char *msProjectionObjToWKT( projectionObj *projection )
         eErr = OSRExportToWkt( hSRS, &pszWKT );
 
     OSRDestroySpatialReference( hSRS );
-    
-    return pszWKT;
+
+    if( pszWKT )
+    {
+        char *pszWKT2 = strdup(pszWKT);
+        CPLFree( pszWKT );
+
+        return pszWKT2;
+    }
+    else
+        return NULL;
+#endif /* defined USE_GDAL or USE_OGR */
 }
 
-#else
 
-void msGDALInitialize( void ) {}
-void msGDALCleanup(void) {}
-
-
-#endif /* def USE_GDAL */

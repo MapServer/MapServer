@@ -35,6 +35,7 @@
 #if defined(USE_OGR)
 #  define __USE_LARGEFILE64 1
 #  include "ogr_api.h"
+#  include "ogr_srs_api.h"
 #  include "cpl_conv.h"
 #  include "cpl_vsi.h"
 #  include "cpl_string.h"
@@ -513,9 +514,20 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         OGRSpatialReferenceH srs = NULL;
         gmlItemListObj *item_list = NULL;
         const char *value;
+        char *pszWKT;
+        int  reproject = MS_FALSE;
 
         if( !layer->resultcache || layer->resultcache->numresults == 0 )
             continue;
+
+/* -------------------------------------------------------------------- */
+/*      Will we need to reproject?                                      */
+/* -------------------------------------------------------------------- */
+        if(layer->transform == MS_TRUE
+           && layer->project 
+           && msProjectionsDiffer(&(layer->projection), 
+                                  &(layer->map->projection)) )
+            reproject = MS_TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Establish the geometry type to use for the created layer.       */
@@ -556,6 +568,16 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
             eGeomType = wkbNone;
         else
             eGeomType = wkbUnknown;
+
+/* -------------------------------------------------------------------- */
+/*      Create a spatial reference.                                     */
+/* -------------------------------------------------------------------- */
+        pszWKT = msProjectionObj2OGCWKT( &(map->projection) );
+        if( pszWKT != NULL )
+        {
+            srs = OSRNewSpatialReference( pszWKT );
+            msFree( pszWKT );
+        }
         
 /* -------------------------------------------------------------------- */
 /*      Create the corresponding OGR Layer.                             */
@@ -693,12 +715,22 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                     }
                 }
             }
+            
+            if( reproject )
+            {
+                status = 
+                    msProjectShape(&layer->projection, &layer->map->projection, 
+                                   &resultshape);
+            }
 
             /*
             ** Write out the feature to OGR.
             */
-            status = msOGRWriteShape( layer, hOGRLayer, &resultshape,
-                                      item_list );
+
+            if( status == MS_SUCCESS )
+                status = msOGRWriteShape( layer, hOGRLayer, &resultshape,
+                                          item_list );
+
             if(status != MS_SUCCESS) {
                 msOGRCleanupDS( datasource_name );
                 return status;

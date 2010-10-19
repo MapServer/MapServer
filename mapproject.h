@@ -70,6 +70,7 @@ MS_DLL_EXPORT int msProjectRect(projectionObj *in, projectionObj *out, rectObj *
 MS_DLL_EXPORT int msProjectionsDiffer(projectionObj *, projectionObj *);
 MS_DLL_EXPORT int msOGCWKT2ProjectionObj( const char *pszWKT, projectionObj *proj, int
                             debug_flag );
+MS_DLL_EXPORT char *msProjectionObj2OGCWKT( projectionObj *proj );
 
 MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
 MS_DLL_EXPORT int msInitProjection(projectionObj *p);
