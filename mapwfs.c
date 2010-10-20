@@ -2501,13 +2501,53 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     }
     else 
     {
+        int to_allow = maxfeatures, to_skip = startindex-1;
         mapservObj *mapserv = msAllocMapServObj();
 
+        /* Setup dummy mapserv object */
         mapserv->sendheaders = MS_TRUE;
         mapserv->map = map;
         msFreeCgiObj(mapserv->request);
         mapserv->request = req;
         map->querymap.status = MS_FALSE;
+
+        /* trim the query result(s) if maxfeatures or startindex set. */
+        for( j=0; j < map->numlayers; j++ ) {
+            layerObj *lp = GET_LAYER(map, j);
+            if (lp->resultcache && lp->resultcache->numresults > 0)
+            {
+                if( to_skip > 0 && lp->resultcache->numresults < to_skip )
+                {
+                    to_skip -= lp->resultcache->numresults;
+                    lp->resultcache->numresults = 0;
+                }
+                else if( to_skip > 0 )
+                {
+                    memmove( lp->resultcache->results + 0,
+                             lp->resultcache->results + to_skip, 
+                             sizeof(resultCacheMemberObj) * (lp->resultcache->numresults - to_skip) );
+                    lp->resultcache->numresults -= to_skip;
+                    to_skip = 0;
+                }
+
+                if( maxfeatures > 0 )
+                {
+                    if( lp->resultcache->numresults > to_allow )
+                    {
+                        lp->resultcache->numresults = to_allow;
+                        to_allow = 0;
+                    }
+                    else 
+                    {
+                        to_allow -= lp->resultcache->numresults;
+                        if( to_allow < 0 )
+                            to_allow = 0;
+
+                        lp->resultcache->numresults = 0;
+                    }
+                }
+            }
+        }
 
         status = msReturnTemplateQuery( mapserv, psFormat->name, NULL );
 
