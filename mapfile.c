@@ -1248,6 +1248,9 @@ static int loadProjection(projectionObj *p)
 /************************************************************************/
 int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 {
+#ifdef USE_PROJ
+   if(p) msFreeProjection(p);
+
     p->gt.need_geotransform = MS_FALSE;
     
     if (strncasecmp(value, "EPSG:", 5) == 0)
@@ -1271,6 +1274,12 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
     }
 
     return msLoadProjectionString(p, value);
+
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", 
+             "msLoadProjectionStringEPSG()");
+  return(-1);
+#endif
 }
 
 

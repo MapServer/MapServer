@@ -302,6 +302,9 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
         queries layers
     */
     pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
+    if(pszMapSRS && nVersion >  OWS_1_0_0)
+      msLoadProjectionStringEPSG(&(map->projection), pszMapSRS);
+
     if (srs == NULL || nVersion == OWS_1_0_0)
     {
         for (i=0; i<map->numlayers; i++)
@@ -2362,19 +2365,23 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
           {
               layerObj *lp;
               rectObj ext;
+              int status;
               lp = GET_LAYER(map, j);
               if (lp->status == MS_ON)
               {
                    if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) 
                    {
-                       char szBuf[32];
 
                        if (pszMapSRS != NULL && strncmp(pszMapSRS, "EPSG:", 5) == 0) {
-                           sprintf(szBuf, "init=epsg:%.10s", pszMapSRS+5);
                 
-                           if (msLoadProjectionString(&(map->projection), szBuf) != 0) {
+                           if( msOWSParseVersionString(paramsObj->pszVersion) >= OWS_1_1_0 )
+                             status = msLoadProjectionStringEPSG(&(map->projection), pszMapSRS);
+                           else
+                             status = msLoadProjectionString(&(map->projection), pszMapSRS);
+
+                           if (status != 0) {
                                msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s", 
-                                          "msWFSGetFeature()", szBuf);        
+                                          "msWFSGetFeature()", pszMapSRS);        
                                return msWFSException(map, "mapserv", "NoApplicableCode", 
                                                      paramsObj->pszVersion);
                            }
@@ -2390,8 +2397,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                            {
                                if (strncmp(pszLayerSRS, "EPSG:", 5) == 0) 
                                {
-                                   sprintf(szBuf, "init=epsg:%.10s", pszLayerSRS+5);
-                                   msLoadProjectionString(&(lp->projection), szBuf);
+                                   if( msOWSParseVersionString(paramsObj->pszVersion) >= OWS_1_1_0 )
+                                     msLoadProjectionStringEPSG(&(lp->projection), pszLayerSRS);
+                                   else
+                                     msLoadProjectionString(&(lp->projection), pszLayerSRS);
                                }
                            }
                        }
