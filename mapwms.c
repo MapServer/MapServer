@@ -3401,6 +3401,9 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
     char *sld_version = NULL;
     const char *sldenabled = NULL;
     const char *format_list = NULL;
+    layerObj *lp;
+    int nLayers =0;
+
     sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
     if (sldenabled == NULL)
@@ -3464,19 +3467,22 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          msSetError(MS_WMSERR, "SLD_VERSION must be 1.1.0", "GetLegendGraphic()");
          return msWMSException(map, nVersion, "InvalidParameterValue");
      }
-     /* check if layer name is valid. We only test the layer name and not */
-     /* the group name. */
+     /* check if layer name is valid. we cjeck for layer's and group's name*/
      for (i=0; i<map->numlayers; i++)
      {
-         if (GET_LAYER(map, i)->name &&
-             strcasecmp(GET_LAYER(map, i)->name, pszLayer) == 0)
-         {
-             iLayerIndex = i;
-             break;
-         }
-     }
+         lp = GET_LAYER(map, i);
+         if ((lp->name && strcasecmp(lp->name, pszLayer) == 0) ||
+             (lp->group && strcasecmp(lp->group, pszLayer) == 0))
+           {
+               nLayers++;
+               lp->status = MS_ON;
+               iLayerIndex = i;
+           }
+         else
+           lp->status = MS_OFF;
+     }  
 
-     if (iLayerIndex == -1)
+     if (nLayers == 0)
      {
          msSetError(MS_WMSERR, "Invalid layer given in the LAYER parameter.",
                  "msWMSGetLegendGraphic()");
@@ -3523,7 +3529,8 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
 
      /*if STYLE is set, check if it is a valid style (valid = at least one
        of the classes have a the group value equals to the style */
-     if (pszStyle && strlen(pszStyle) > 0 && strcasecmp(pszStyle, "default") != 0)
+     /*style is only validated when there is only one layer #3411*/
+     if (nLayers == 1 &&  pszStyle && strlen(pszStyle) > 0 && strcasecmp(pszStyle, "default") != 0)
      {
          for (i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++)
          {
@@ -3547,17 +3554,8 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          }
      }
 
-     if ( psRule == NULL )
+     if ( psRule == NULL || nLayers > 1)
      {
-         /* turn this layer on and all other layers off, required for msDrawLegend() */
-         for (i=0; i<map->numlayers; i++)
-         {
-             if (i == iLayerIndex)
-                 GET_LAYER(map, i)->status = MS_ON;
-             else
-                 GET_LAYER(map, i)->status = MS_OFF;
-         }
-
          /* if SCALE was provided in request, calculate an extent and use a default width and height */
          if ( psScale != NULL )
          {
@@ -3682,8 +3680,10 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
             {
                 for (j=0; j<map->numlayers; j++)
                 {
-                    if (GET_LAYER(map, j)->name &&
-                        strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0)
+                    if ((GET_LAYER(map, j)->name &&
+                         strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
+                        (GET_LAYER(map, j)->group &&
+                         strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0))
                     {
                         GET_LAYER(map, j)->status = MS_ON;
                         validlayer =1;
