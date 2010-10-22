@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version
 ---------------
 
+- Correct wms 1.3.0 latlong bbox error (#2578)
+
 - Fix ProperyIsLike not used efficiently with Oracle (#3557) 
 
 - Fixed msOGRGetSymbolId according to the changes in gdal 1.8 (#3556)
