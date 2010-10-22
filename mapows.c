@@ -1186,7 +1186,11 @@ void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
 
   /* always project to lat long */
   if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
-      msProjectRect(srcproj, NULL, &ext);
+    projectionObj wgs84;
+    msInitProjection(&wgs84);
+    msLoadProjectionString(&wgs84, "+proj=longlat +datum=WGS84");
+    msProjectRect(srcproj, &wgs84, &ext);
+    msFreeProjection(&wgs84);
   }
   
 
