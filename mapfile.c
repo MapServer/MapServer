@@ -4010,7 +4010,7 @@ static int loadOutputFormat(mapObj *map)
       free(value); value=NULL;
       break;
     case(IMAGEMODE):
-      if(getString(&value) == MS_FAILURE) return(-1);
+      value = getToken();
       if( strcasecmp(value,"PC256") == 0 )
           imagemode = MS_IMAGEMODE_PC256;
       else if( strcasecmp(value,"RGB") == 0 )
@@ -4023,10 +4023,12 @@ static int loadOutputFormat(mapObj *map)
           imagemode = MS_IMAGEMODE_FLOAT32;
       else if( strcasecmp(value,"BYTE") == 0)
           imagemode = MS_IMAGEMODE_BYTE;
+      else if( strcasecmp(value,"FEATURE") == 0)
+          imagemode = MS_IMAGEMODE_FEATURE;
       else
       {
           msSetError(MS_IDENTERR, 
-                     "Parsing error near (%s):(line %d), expected PC256, RGB, RGBA, BYTE, INT16, or FLOAT32 for IMAGEMODE.", "loadOutputFormat()", 
+                     "Parsing error near (%s):(line %d), expected PC256, RGB, RGBA, FEATURE, BYTE, INT16, or FLOAT32 for IMAGEMODE.", "loadOutputFormat()", 
                      msyytext, msyylineno);      
           return -1;
       }
@@ -4057,7 +4059,7 @@ static void writeOutputformatobject(FILE *stream, int indent, outputFormatObj *o
   writeString(stream, indent, "MIMETYPE", NULL, outputformat->mimetype);
   writeString(stream, indent, "DRIVER", NULL, outputformat->driver);
   writeString(stream, indent, "EXTENSION", NULL, outputformat->extension);
-  writeKeyword(stream, indent, "IMAGEMODE", outputformat->imagemode, 6, MS_IMAGEMODE_PC256, "PC256", MS_IMAGEMODE_RGB, "RGB", MS_IMAGEMODE_RGBA, "RGBA", MS_IMAGEMODE_INT16, "INT16", MS_IMAGEMODE_FLOAT32, "FLOAT32", MS_IMAGEMODE_BYTE, "BYTE");
+  writeKeyword(stream, indent, "IMAGEMODE", outputformat->imagemode, 6, MS_IMAGEMODE_PC256, "PC256", MS_IMAGEMODE_RGB, "RGB", MS_IMAGEMODE_RGBA, "RGBA", MS_IMAGEMODE_INT16, "INT16", MS_IMAGEMODE_FLOAT32, "FLOAT32", MS_IMAGEMODE_BYTE, "BYTE", MS_IMAGEMODE_FEATURE, "FEATURE");
   writeKeyword(stream, indent, "TRANSPARENT", outputformat->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   for (i=0; i<outputformat->numformatoptions; i++) 
     writeString(stream, indent, "FORMATOPTION", NULL, outputformat->formatoptions[i]);
