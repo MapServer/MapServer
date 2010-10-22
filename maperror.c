@@ -205,7 +205,7 @@ static errorObj *msInsertErrorObj(void)
 
           ms_error->next = new_error;
           ms_error->code = MS_NOERR;
-          ms_error->code = MS_FALSE;
+          ms_error->isreported = MS_FALSE;
           ms_error->routine[0] = '\0';
           ms_error->message[0] = '\0';
       }
