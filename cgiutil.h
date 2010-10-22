@@ -42,7 +42,7 @@
 /*
 ** Misc. defines
 */
-#define MS_MAX_CGI_PARAMS 100
+#define MS_DEFAULT_CGI_PARAMS 100
 
 enum MS_REQUEST_TYPE {MS_GET_REQUEST, MS_POST_REQUEST};
 

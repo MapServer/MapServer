@@ -1208,8 +1208,8 @@ int main(int argc, char *argv[]) {
     mapserv = msAllocMapServObj();
     mapserv->sendheaders = sendheaders; /* override the default if necessary (via command line -nh switch) */
 
-    mapserv->request->ParamNames = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
-    mapserv->request->ParamValues = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
+    mapserv->request->ParamNames = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
+    mapserv->request->ParamValues = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
     if(mapserv->request->ParamNames==NULL || mapserv->request->ParamValues==NULL) {
       msSetError(MS_MEMERR, NULL, "mapserv()");
       writeError();

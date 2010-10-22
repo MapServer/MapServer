@@ -124,6 +124,7 @@ int loadParams(cgiRequestObj *request,
   register int x,m=0;
   char *s, *queryString = NULL, *httpCookie = NULL;
   int debuglevel;
+  int maxParams = MS_DEFAULT_CGI_PARAMS;
   
   if (getenv2==NULL)
       getenv2 = &msGetEnv;
@@ -166,9 +167,10 @@ int loadParams(cgiRequestObj *request,
         post_data[--data_len] = '\0';
 
       while( post_data[0] ) {
-        if(m >= MS_MAX_CGI_PARAMS) {
-          msIO_printf("Too many name/value pairs, aborting.\n");
-          exit(0);
+        if(m >= maxParams) {
+          maxParams *= 2;
+          request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
+          request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
         }
         request->ParamValues[m] = makeword(post_data,'&');
         plustospace(request->ParamValues[m]);
@@ -190,10 +192,10 @@ int loadParams(cgiRequestObj *request,
 
       queryString = strdup(s);
       for(x=0;queryString[0] != '\0';x++) {       
-        if(m >= MS_MAX_CGI_PARAMS) {
-          msIO_printf("Too many name/value pairs, aborting.\n");
-          free(queryString);
-          exit(0);
+        if(m >= maxParams) {
+          maxParams *= 2;
+          request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
+          request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
         } 
         request->ParamValues[m] = makeword(queryString,'&'); 
         plustospace(request->ParamValues[m]);
@@ -225,10 +227,10 @@ int loadParams(cgiRequestObj *request,
       /* don't modify the string returned by getenv2 */
       queryString = strdup(s);
       for(x=0;queryString[0] != '\0';x++) {
-          if(m >= MS_MAX_CGI_PARAMS) {
-          msIO_printf("Too many name/value pairs, aborting.\n");
-          free(queryString);
-          exit(0);
+          if(m >= maxParams) {
+            maxParams *= 2;
+            request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
+            request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
           } 
           request->ParamValues[m] = makeword(queryString,'&');
           plustospace(request->ParamValues[m]);
@@ -249,10 +251,10 @@ int loadParams(cgiRequestObj *request,
     httpCookie = strdup(s);
     request->httpcookiedata = strdup(s);
     for(x=0;httpCookie[0] != '\0';x++) {
-        if(m >= MS_MAX_CGI_PARAMS) {
-        msIO_printf("Too many name/value pairs, aborting.\n");
-        free(httpCookie);
-        exit(0);
+        if(m >= maxParams) {
+          maxParams *= 2;
+          request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
+          request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
       }
       request->ParamValues[m] = makeword(httpCookie,';');
       plustospace(request->ParamValues[m]);
