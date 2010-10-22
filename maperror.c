@@ -199,11 +199,13 @@ static errorObj *msInsertErrorObj(void)
       {
           new_error->next = ms_error->next;
           new_error->code = ms_error->code;
+          new_error->isreported = ms_error->isreported;
           strcpy(new_error->routine, ms_error->routine);
           strcpy(new_error->message, ms_error->message);
 
           ms_error->next = new_error;
           ms_error->code = MS_NOERR;
+          ms_error->code = MS_FALSE;
           ms_error->routine[0] = '\0';
           ms_error->message[0] = '\0';
       }
@@ -351,6 +353,7 @@ void msWriteError(FILE *stream)
   while (ms_error && ms_error->code != MS_NOERR)
   {
       msIO_fprintf(stream, "%s: %s %s <br>\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+      ms_error->isreported = MS_TRUE;
       ms_error = ms_error->next;
   }
 }
@@ -366,6 +369,7 @@ void msWriteErrorXML(FILE *stream)
 
       msIO_fprintf(stream, "%s: %s %s\n", ms_error->routine, 
                    ms_errorCodes[ms_error->code], message);
+      ms_error->isreported = MS_TRUE;
       ms_error = ms_error->next;
 
       msFree(message);

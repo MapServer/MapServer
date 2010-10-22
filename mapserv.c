@@ -1280,8 +1280,8 @@ int main(int argc, char *argv[]) {
       */
       if( status == MS_FAILURE ) {
         errorObj *ms_error = msGetErrorObj();
-
-        if( ms_error->code != MS_NOERR )
+        
+        if( (ms_error->code != MS_NOERR) && (ms_error->isreported == MS_FALSE) )
           writeError();
       }
         

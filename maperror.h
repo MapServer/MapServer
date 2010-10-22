@@ -97,6 +97,7 @@ typedef struct error_obj {
   int code;
   char routine[ROUTINELENGTH];
   char message[MESSAGELENGTH];
+  int isreported;
 #ifndef SWIG
   struct error_obj *next;
 #endif
