@@ -43,7 +43,6 @@ int main(int argc, char *argv[])
   int num_layers=0;
 
   int layer_found=0;
-  char *invalid_layer=NULL;
 
   char *outfile=NULL; /* no -o sends image to STDOUT */
 
@@ -256,25 +255,18 @@ int main(int argc, char *argv[])
       layers = msStringSplit(argv[i+1], ' ', &(num_layers));
 
       for(j=0; j<num_layers; j++) { /* loop over -l */
-        layer_found=0;
-        for(k=0; k<map->numlayers; k++) {
-          if(GET_LAYER(map, k)->name && strcmp(GET_LAYER(map, k)->name, layers[j]) == 0) {
-            layer_found=1;
-            break;
+          layer_found=0;
+          for(k=0; k<map->numlayers; k++) {
+              if(GET_LAYER(map, k)->name && strcmp(GET_LAYER(map, k)->name, layers[j]) == 0) {
+                  layer_found = 1;
+                  break;
+              }
           }
-          else {
-            if (invalid_layer)
-              free(invalid_layer);
-            invalid_layer = strdup(layers[j]);
+          if (layer_found==0) {
+              fprintf(stderr, "Layer (-l) \"%s\" not found\n", layers[j]);
+              msCleanup();
+              exit(0);
           }
-        }
-        if (layer_found==0) {
-          fprintf(stderr, "Layer (-l) %s not found\n", invalid_layer);
-          msCleanup();
-          exit(0);
-        }
-        if (invalid_layer)
-          free(invalid_layer);
       }
 
       for(j=0; j<map->numlayers; j++) {
