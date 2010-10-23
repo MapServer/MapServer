@@ -54,8 +54,8 @@
             return NULL;
         }
         
-        request->ParamNames = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
-        request->ParamValues = (char **) malloc(MS_MAX_CGI_PARAMS*sizeof(char*));
+        request->ParamNames = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
+        request->ParamValues = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
         if (request->ParamNames==NULL || request->ParamValues==NULL) {
 	        msSetError(MS_MEMERR, NULL, "OWSRequest()");
             return NULL;
@@ -84,8 +84,8 @@
     {
         int i;
         
-        if (self->NumParams == MS_MAX_CGI_PARAMS) {
-            msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "setItem()", MS_MAX_CGI_PARAMS);
+        if (self->NumParams == MS_DEFAULT_CGI_PARAMS) {
+            msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "setItem()", MS_DEFAULT_CGI_PARAMS);
         }
         
         for (i=0; i<self->NumParams; i++) {
