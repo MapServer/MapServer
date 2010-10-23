@@ -2132,27 +2132,32 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       /*      20,20</gml:coordinates></gml:Box></Within></Filter>)            */
       /* -------------------------------------------------------------------- */
       nFilters = 0;
-      if (strlen(pszFilter) > 0 && pszFilter[0] == '(') {
-	tokens = msStringSplit(pszFilter+1, '(', &nFilters);
+      if (strlen(pszFilter) > 0 && pszFilter[0] == '(') 
+      {
+          tokens = msStringSplit(pszFilter+1, '(', &nFilters);
 	
-	if (tokens == NULL || nFilters <=0 || nFilters != numlayers) {
-	  msSetError(MS_WFSERR, "Wrong number of FILTER attributes",
-		     "msWFSGetFeature()");
-	  return msWFSException(map, "filter", "InvalidParameterValue", paramsObj->pszVersion);
-	}
-         
-	paszFilter = (char **)malloc(sizeof(char *)*nFilters);
-	for (i=0; i<nFilters; i++)
-	  paszFilter[i] = strdup(tokens[i]);
+          if (tokens &&  nFilters > 0 && numlayers == nFilters)
+          {
+              paszFilter = (char **)malloc(sizeof(char *)*nFilters);
+              for (i=0; i<nFilters; i++)
+                paszFilter[i] = strdup(tokens[i]);
 	
-	if (tokens)
-	  msFreeCharArray(tokens, nFilters);
-      } else {
-	nFilters=1;
-	paszFilter = (char **)malloc(sizeof(char *)*nFilters);
-	paszFilter[0] = pszFilter;
+              msFreeCharArray(tokens, nFilters);
+          }
+      } 
+      else if (numlayers == 1)
+      {
+          nFilters=1;
+          paszFilter = (char **)malloc(sizeof(char *)*nFilters);
+          paszFilter[0] = pszFilter;
       }
-        
+      
+      if (numlayers != nFilters)
+      {
+          msSetError(MS_WFSERR, "Wrong number of filter elements, one filter must be specified for each feature type listed in the TYPENAME parameter.",
+                     "msWFSGetFeature()");
+          return msWFSException(map, "filter", "InvalidParameterValue", paramsObj->pszVersion);
+      }
       /* -------------------------------------------------------------------- */
       /*      run through the filters and build the class expressions.        */
       /*      TODO: items may have namespace prefixes, or reference aliases,  */
