@@ -2515,13 +2515,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     }
     else 
     {
-        int to_allow = maxfeatures, to_skip;
+        int to_allow = maxfeatures, to_skip = startindex-1;
         mapservObj *mapserv = msAllocMapServObj();
-
-        if( startindex < 1 )
-            to_skip = 0;
-        else
-            to_skip = startindex;
 
         /* Setup dummy mapserv object */
         mapserv->sendheaders = MS_TRUE;
