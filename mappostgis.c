@@ -2072,6 +2072,124 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long reco
 #endif
 }
 
+/**********************************************************************
+ *                     msPostGISPassThroughFieldDefinitions()
+ *
+ * Pass the field definitions through to the layer metadata in the
+ * "gml_[item]_{type,width,precision}" set of metadata items for 
+ * defining fields.
+ **********************************************************************/
+
+/* These are the OIDs for some builtin types, as returned by PQftype(). */
+/* They were copied from pg_type.h in src/include/catalog/pg_type.h */
+
+#ifndef BOOLOID 
+#define BOOLOID                 16
+#define BYTEAOID                17
+#define CHAROID                 18
+#define NAMEOID                 19
+#define INT8OID                 20
+#define INT2OID                 21
+#define INT2VECTOROID           22
+#define INT4OID                 23
+#define REGPROCOID              24
+#define TEXTOID                 25
+#define OIDOID                  26
+#define TIDOID                  27
+#define XIDOID                  28
+#define CIDOID                  29
+#define OIDVECTOROID            30
+#define FLOAT4OID               700
+#define FLOAT8OID               701
+#define INT4ARRAYOID            1007
+#define TEXTARRAYOID            1009
+#define BPCHARARRAYOID          1014
+#define VARCHARARRAYOID         1015
+#define FLOAT4ARRAYOID          1021
+#define FLOAT8ARRAYOID          1022
+#define BPCHAROID		1042
+#define VARCHAROID		1043
+#define DATEOID			1082
+#define TIMEOID			1083
+#define TIMESTAMPOID	        1114
+#define TIMESTAMPTZOID	        1184
+#define NUMERICOID              1700
+#endif
+
+static void 
+msPostGISPassThroughFieldDefinitions( layerObj *layer, 
+                                      PGresult *pgresult )
+
+{
+    int i, numitems = PQnfields(pgresult);
+    msPostGISLayerInfo *layerinfo = layer->layerinfo;
+
+    for(i=0;i<numitems;i++)
+    {
+        int oid, fmod;
+        const char *gml_type = "Character";
+        const char *item = PQfname(pgresult,i);
+        char md_item_name[256];
+        char gml_width[32], gml_precision[32];
+        
+        gml_width[0] = '\0';
+        gml_precision[0] = '\0';
+
+        /* skip geometry column */
+        if( strcmp(item, layerinfo->geomcolumn) == 0 )
+            continue;
+
+        oid = PQftype(pgresult,i);
+        fmod = PQfmod(pgresult,i);
+
+        if( (oid == BPCHAROID || oid == VARCHAROID) && fmod >= 4 ) {
+            sprintf( gml_width, "%d", fmod-4 ); 
+
+        } else if( oid == BOOLOID ) {
+            gml_type = "Integer";
+            sprintf( gml_width, "%d", 1 ); 
+
+        } else if( oid == INT2OID ) {
+            gml_type = "Integer";
+            sprintf( gml_width, "%d", 5 ); 
+
+        } else if( oid == INT4OID || oid == INT8OID ) {
+            gml_type = "Integer";
+
+        } else if( oid == FLOAT4OID || oid == FLOAT8OID ) {
+            gml_type = "Real";
+            
+        } else if( oid == NUMERICOID ) {
+            gml_type = "Real";
+
+            if( fmod >= 4 && ((fmod - 4) & 0xFFFF) == 0 ) {
+                gml_type = "Integer";
+                sprintf( gml_width, "%d", (fmod - 4) >> 16 );
+            } else if( fmod >= 4 ) {
+                sprintf( gml_width, "%d", (fmod - 4) >> 16 );
+                sprintf( gml_precision, "%d", ((fmod-4) & 0xFFFF) );
+            }
+        } else if( oid == DATEOID 
+                   || oid == TIMESTAMPOID || oid == TIMESTAMPTZOID ) {
+            gml_type = "Date";
+        }
+            
+        snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
+        if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
+            msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
+        
+        snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
+        if( strlen(gml_width) > 0 
+            && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
+            msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
+
+        snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
+        if( strlen(gml_precision) > 0 
+            && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
+            msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
+    }
+}
+
 /*
 ** msPostGISLayerGetItems()
 **
@@ -2089,6 +2207,7 @@ int msPostGISLayerGetItems(layerObj *layer) {
     char *sql = NULL;
     char *strFrom = NULL;
     char found_geom = 0;
+    const char *value;
     int t, item_num;
     rectObj rect;
 
@@ -2158,6 +2277,16 @@ int msPostGISLayerGetItems(layerObj *layer) {
         }
     }
 
+    /*
+    ** consider populating the field definitions in metadata. 
+    */
+    if((value = msOWSLookupMetadata(&(layer->metadata), "G", "types")) != NULL
+       && strcasecmp(value,"auto") == 0 )
+        msPostGISPassThroughFieldDefinitions( layer, pgresult );
+
+    /*
+    ** Cleanup 
+    */
     PQclear(pgresult);
 
     if (!found_geom) {
