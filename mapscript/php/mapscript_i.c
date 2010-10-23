@@ -1451,7 +1451,7 @@ void cgirequestObj_setParameter(cgiRequestObj *self, char *name, char *value)
     int i;
         
     if (self->NumParams == MS_DEFAULT_CGI_PARAMS) {
-      msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "setItem()", MS_MAX_CGI_PARAMS);
+      msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "setItem()", MS_DEFAULT_CGI_PARAMS);
     }
         
     for (i=0; i<self->NumParams; i++) {
