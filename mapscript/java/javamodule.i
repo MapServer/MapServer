@@ -127,6 +127,15 @@ jstring JNU_NewStringNative(JNIEnv *env, const char *str) {
 	$1 = JNU_GetStringNativeChars(jenv, $input);
 }
 
+/* The default mapping would use ReleaseStringUTFChars to release the
+memory allocated with JNU_GetStringNativeChars which causes a
+memory corruption. (#3491) */
+%typemap(freearg, noblock=1) char * { if ($1) free($1); }
+
+%typemap(out) char * {
+	$result = JNU_NewStringNative(jenv, $1);
+}
+
 %typemap(out) char * {
 	$result = JNU_NewStringNative(jenv, $1);
 }
