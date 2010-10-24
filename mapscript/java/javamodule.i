@@ -136,10 +136,6 @@ memory corruption. (#3491) */
 	$result = JNU_NewStringNative(jenv, $1);
 }
 
-%typemap(out) char * {
-	$result = JNU_NewStringNative(jenv, $1);
-}
-
 /*
 ===============================================================================
 RFC-24 implementation follows
