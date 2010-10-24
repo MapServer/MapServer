@@ -171,6 +171,10 @@ int loadParams(cgiRequestObj *request,
           maxParams *= 2;
           request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
           request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
+          if( (request->ParamNames == NULL) || (request->ParamValues ==  NULL) ) {
+              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
+              exit(1);
+          }
         }
         request->ParamValues[m] = makeword(post_data,'&');
         plustospace(request->ParamValues[m]);
@@ -196,6 +200,10 @@ int loadParams(cgiRequestObj *request,
           maxParams *= 2;
           request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
           request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
+          if( (request->ParamNames == NULL) || (request->ParamValues ==  NULL) ) {
+              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
+              exit(1);
+          }
         } 
         request->ParamValues[m] = makeword(queryString,'&'); 
         plustospace(request->ParamValues[m]);
@@ -231,6 +239,10 @@ int loadParams(cgiRequestObj *request,
             maxParams *= 2;
             request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
             request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
+            if( (request->ParamNames == NULL) || (request->ParamValues ==  NULL) ) {
+                msIO_printf("Out of memory trying to allocate name/value pairs.\n");
+                exit(1);
+            }
           } 
           request->ParamValues[m] = makeword(queryString,'&');
           plustospace(request->ParamValues[m]);
@@ -255,6 +267,10 @@ int loadParams(cgiRequestObj *request,
           maxParams *= 2;
           request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
           request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
+          if( (request->ParamNames == NULL) || (request->ParamValues ==  NULL) ) {
+              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
+              exit(1);
+          }
       }
       request->ParamValues[m] = makeword(httpCookie,';');
       plustospace(request->ParamValues[m]);
