@@ -170,8 +170,12 @@ int loadParams(cgiRequestObj *request,
         if(m >= maxParams) {
           maxParams *= 2;
           request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
+          if (request->ParamNames == NULL) {
+              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
+              exit(1);
+          }
           request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
-          if( (request->ParamNames == NULL) || (request->ParamValues ==  NULL) ) {
+          if (request->ParamValues ==  NULL) {
               msIO_printf("Out of memory trying to allocate name/value pairs.\n");
               exit(1);
           }
@@ -199,8 +203,12 @@ int loadParams(cgiRequestObj *request,
         if(m >= maxParams) {
           maxParams *= 2;
           request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
+          if (request->ParamNames == NULL) {
+              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
+              exit(1);
+          }
           request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
-          if( (request->ParamNames == NULL) || (request->ParamValues ==  NULL) ) {
+          if (request->ParamValues ==  NULL) {
               msIO_printf("Out of memory trying to allocate name/value pairs.\n");
               exit(1);
           }
@@ -238,8 +246,12 @@ int loadParams(cgiRequestObj *request,
           if(m >= maxParams) {
             maxParams *= 2;
             request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
+            if (request->ParamNames == NULL) {
+                msIO_printf("Out of memory trying to allocate name/value pairs.\n");
+                exit(1);
+            }
             request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
-            if( (request->ParamNames == NULL) || (request->ParamValues ==  NULL) ) {
+            if (request->ParamValues ==  NULL) {
                 msIO_printf("Out of memory trying to allocate name/value pairs.\n");
                 exit(1);
             }
@@ -266,8 +278,12 @@ int loadParams(cgiRequestObj *request,
         if(m >= maxParams) {
           maxParams *= 2;
           request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
+          if (request->ParamNames == NULL) {
+              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
+              exit(1);
+          }
           request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
-          if( (request->ParamNames == NULL) || (request->ParamValues ==  NULL) ) {
+          if (request->ParamValues ==  NULL) {
               msIO_printf("Out of memory trying to allocate name/value pairs.\n");
               exit(1);
           }
