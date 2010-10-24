@@ -2122,7 +2122,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   /* do the actual binding */      
 
  if (success && function != FUNCTION_NONE) {
-   char* bind_key;
+   const char* bind_key;
    char* bind_value;
    char* bind_tag;
      success = TRY( hand,
@@ -2559,6 +2559,119 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
     return MS_SUCCESS;    
 }
 
+/**********************************************************************
+ *             msOracleSpatialGetFieldDefn()
+ *
+ * Pass the field definitions through to the layer metadata in the
+ * "gml_[item]_{type,width,precision}" set of metadata items for 
+ * defining fields.
+ **********************************************************************/
+static void
+msOracleSpatialGetFieldDefn( layerObj *layer, 
+                             msOracleSpatialHandler *hand,
+                             const char *item,
+                             OCIParam *pard )
+
+{
+    const char *gml_type = "Character";
+    char md_item_name[256];
+    char gml_width[32], gml_precision[32];
+    int success;
+    ub2 rzttype, nOCILen;
+        
+    gml_width[0] = '\0';
+    gml_precision[0] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      Get basic parameter details.                                    */
+/* -------------------------------------------------------------------- */
+    success = 
+        TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,
+                               (dvoid*)&rzttype,(ub4 *)0, 
+                               (ub4) OCI_ATTR_DATA_TYPE, hand->errhp ))
+        && TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,
+                                  (dvoid*)&nOCILen ,(ub4 *)0, 
+                                  (ub4) OCI_ATTR_DATA_SIZE, hand->errhp ));
+
+    if( !success )
+        return;
+
+    switch( rzttype )
+    {
+      case SQLT_CHR:
+      case SQLT_AFC:
+        gml_type = "Character";
+        if( nOCILen <= 4000 )
+            sprintf( gml_width, "%d", nOCILen );
+        break;
+
+      case SQLT_NUM:
+      {
+          // NOTE: OCI docs say this should be ub1 type, but we have
+            // determined that oracle is actually returning a short so we
+            // use that type and try to compensate for possible problems by
+            // initializing, and dividing by 256 if it is large. 
+            unsigned short byPrecision = 0;
+            sb1 nScale = 0;
+
+            if( !TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,
+                                       (dvoid*)&byPrecision ,(ub4 *)0, 
+                                       (ub4) OCI_ATTR_PRECISION, 
+                                        hand->errhp ))
+                || !TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,
+                                           (dvoid*)&nScale,(ub4 *)0, 
+                                           (ub4) OCI_ATTR_SCALE, 
+                                           hand->errhp )) )
+                return;
+            if( byPrecision > 255 )
+                byPrecision = byPrecision / 256;
+            
+            if( nScale > 0 )
+            {
+                gml_type = "Real";
+                sprintf( gml_width, "%d", byPrecision );
+                sprintf( gml_precision, "%d", nScale );
+            }
+            else if( nScale < 0 )
+                gml_type = "Real";
+            else
+            {
+                gml_type = "Integer";
+                if( byPrecision < 38 )
+                    sprintf( gml_width, "%d", byPrecision );
+            }
+      }
+      break;
+      
+      case SQLT_DAT:
+      case SQLT_DATE:
+      case SQLT_TIMESTAMP:
+      case SQLT_TIMESTAMP_TZ:
+      case SQLT_TIMESTAMP_LTZ:
+      case SQLT_TIME:
+      case SQLT_TIME_TZ:
+        gml_type = "Date";
+        break;
+
+      default:
+        gml_type = "Character";
+    }
+
+    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
+    if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
+        msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
+    
+    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
+    if( strlen(gml_width) > 0 
+        && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
+        msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
+    
+    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
+    if( strlen(gml_precision) > 0 
+        && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
+        msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
+}
+
 int msOracleSpatialLayerGetItems( layerObj *layer )
 {
     char *rzt = "";
@@ -2576,6 +2689,8 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
     msOracleSpatialDataHandler *dthand = NULL;
     msOracleSpatialHandler *hand = NULL;
     msOracleSpatialStatement *sthand = NULL;
+    int get_field_details = 0;
+    const char *value;
 
     if (layer->debug)
         msDebug("msOracleSpatialLayerGetItems was called.\n");
@@ -2591,6 +2706,11 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
         hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
         sthand = (msOracleSpatialStatement *) layerinfo->orastmt;
     }
+
+    /* Will we want to capture the field details? */
+    if((value = msOWSLookupMetadata(&(layer->metadata), "G", "types")) != NULL
+       && strcasecmp(value,"auto") == 0 )
+        get_field_details = 1;
 
     table_name = (char *) malloc(sizeof(char) * TABLE_NAME_SIZE);
     if (!msSplitData(layer->data, geom_column_name, &table_name, unique, srid, &function, &version))
@@ -2692,6 +2812,11 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
                 
                 strcpy(layer->items[count_item], flk); 
                 count_item++;
+
+                if( get_field_details )
+                    msOracleSpatialGetFieldDefn( layer, hand, 
+                                                 layer->items[count_item-1], 
+                                                 pard );
             }
             else
                 layer->numitems--;

@@ -2116,6 +2116,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long reco
 #define NUMERICOID              1700
 #endif
 
+#ifdef USE_POSTGIS
 static void 
 msPostGISPassThroughFieldDefinitions( layerObj *layer, 
                                       PGresult *pgresult )
@@ -2189,6 +2190,7 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
             msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
     }
 }
+#endif /* defined(USE_POSTGIS) */
 
 /*
 ** msPostGISLayerGetItems()
