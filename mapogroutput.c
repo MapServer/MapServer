@@ -221,7 +221,10 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
 /* -------------------------------------------------------------------- */
     else if(  shape->type == MS_SHAPE_LINE )
     {
-        if( shape->numlines != 1 || shape->line[0].numpoints < 2 )
+        OGRGeometryH hML = NULL;
+        int j;
+
+        if( shape->numlines < 1 || shape->line[0].numpoints < 2 )
         {
             msSetError(MS_MISCERR, 
                        "Failed on odd line geometry.", 
@@ -229,14 +232,26 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
             return MS_FAILURE;
         }
 
-        hGeom = OGR_G_CreateGeometry( wkbLineString );
-        
-        for( i = 0; i < shape->line[0].numpoints; i++ )
+        if( shape->numlines > 1 )
+            hML = OGR_G_CreateGeometry( wkbMultiLineString );
+
+        for( j = 0; j < shape->numlines; j++ )
         {
-            OGR_G_SetPoint( hGeom, i, 
-                            shape->line[0].point[i].x,
-                            shape->line[0].point[i].y,
-                            0.0 );
+            hGeom = OGR_G_CreateGeometry( wkbLineString );
+        
+            for( i = 0; i < shape->line[j].numpoints; i++ )
+            {
+                OGR_G_SetPoint( hGeom, i, 
+                                shape->line[j].point[i].x,
+                                shape->line[j].point[i].y,
+                                0.0 );
+            }
+
+            if( hML != NULL )
+            {
+                OGR_G_AddGeometryDirectly( hML, hGeom );
+                hGeom = hML;
+            }
         }
     }
 
@@ -729,6 +744,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 /*      Loop over all the shapes in the resultcache.                    */
 /* -------------------------------------------------------------------- */
         for(i=0; i < layer->resultcache->numresults; i++) {
+
+            msFreeShape(&resultshape); /* init too */
 
             /*
             ** Read the shape.
