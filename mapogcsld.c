@@ -1576,8 +1576,10 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     char *psColor=NULL, *psColorName = NULL;
     int nLength = 0;
     char *pszSymbolName = NULL;
-    int bFilled = 0, bStroked=0; 
-    
+    int bFilled = 0, bStroked=0;
+    CPLXMLNode *psPropertyName=NULL;
+    char szTmp[256];
+
     bPointLayer=0;
 
     if (!psRoot || !psStyle || !map)
@@ -1608,9 +1610,21 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               psStyle->opacity = (int)(atof(psOpacity->psChild->pszValue) * 100);
 
             psRotation = CPLGetXMLNode(psGraphic, "Rotation");
-            if (psRotation && psRotation->psChild && psRotation->psChild->pszValue)
-              psStyle->angle = atof(psRotation->psChild->pszValue);
-
+            if (psRotation)
+            {
+                psPropertyName = CPLGetXMLNode(psRotation, "PropertyName");
+                if (psPropertyName)
+                {   
+                    snprintf(szTmp, sizeof(szTmp), "%s", CPLGetXMLValue(psPropertyName, NULL, NULL));
+                    psStyle->bindings[MS_STYLE_BINDING_ANGLE].item = strdup(szTmp);
+                    psStyle->numbindings++;
+                }
+                else
+                {
+                    if (psRotation->psChild && psRotation->psChild->pszValue)
+                      psStyle->angle = atof(psRotation->psChild->pszValue);
+                }
+            }
             psDisplacement = CPLGetXMLNode(psGraphic, "Displacement");
             if (psDisplacement)
             {
