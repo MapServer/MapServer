@@ -1155,7 +1155,7 @@ char *msSOSParseTimeGML(char *pszGmlTime)
             }
         }
     }
-    free(psRoot);
+    CPLDestroyXMLNode(psRoot);
     return pszReturn;
 }
 
