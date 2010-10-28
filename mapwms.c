@@ -562,8 +562,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         //snprintf(srsbuffer, 100, "init=epsg:%.20s", values[i]+5);
 
         
-        snprintf(srsbuffer, 100, "EPSG:%.20s",values[i]+5);
-        snprintf(epsgbuf, 100, "EPSG:%.20s",values[i]+5);
+        snprintf(srsbuffer, sizeof(srsbuffer), "EPSG:%.20s",values[i]+5);
+        snprintf(epsgbuf, sizeof(epsgbuf), "EPSG:%.20s",values[i]+5);
        
         /* This test was to correct a request by the OCG cite 1.3.0 test
          sending CRS=ESPG:4326,  Bug:*/
@@ -590,7 +590,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       }
       else if (strncasecmp(values[i], "AUTO:", 5) == 0 && nVersion < OWS_1_3_0)
       {
-        snprintf(srsbuffer, 100, "%s",  values[i]);
+        snprintf(srsbuffer, sizeof(srsbuffer), "%s",  values[i]);
         /* SRS=AUTO:proj_id,unit_id,lon0,lat0 */
         /*
         if (msLoadProjectionString(&(map->projection), values[i]) != 0)
@@ -604,7 +604,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       else if (nVersion >= OWS_1_3_0 && (strncasecmp(values[i], "AUTO2:", 6) == 0 ||
                                          strncasecmp(values[i], "CRS:", 4) == 0))
       {
-          snprintf(srsbuffer, 100, "%s",  values[i]);
+          snprintf(srsbuffer, sizeof(srsbuffer), "%s",  values[i]);
       }
       else
       {
@@ -1391,6 +1391,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    char **classgroups = NULL;
    int iclassgroups=0 ,j=0;
    char szVersionBuf[OWS_VERSION_MAXLEN];
+   size_t bufferSize = 0;
 
    /* if the layer status is set to MS_DEFAULT, output a warning */
    if (lp->status == MS_DEFAULT)
@@ -1650,8 +1651,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    pszStyle = msOWSLookupMetadata(&(lp->metadata), "MO", "style");
    if (pszStyle)
    {
-       pszMetadataName = (char*)malloc(strlen(pszStyle)+205);
-       sprintf(pszMetadataName, "style_%s_legendurl_href", pszStyle);
+       bufferSize = strlen(pszStyle)+205;
+       pszMetadataName = (char*)malloc(bufferSize);
+       snprintf(pszMetadataName, bufferSize, "style_%s_legendurl_href", pszStyle);
        pszLegendURL = msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName);
    }
    else
@@ -1688,7 +1690,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
            
            /* Inside, print the legend url block */
-           sprintf(pszMetadataName, "style_%s_legendurl", pszStyle);
+           snprintf(pszMetadataName, bufferSize, "style_%s_legendurl", pszStyle);
            msOWSPrintURLType(stdout, &(lp->metadata), "MO",pszMetadataName,
                              OWS_NOERR, NULL, "LegendURL", NULL, 
                              " width=\"%s\"", " height=\"%s\"", 
@@ -1713,6 +1715,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                {
                    char width[10], height[10];
                    char *legendurl = NULL;
+                   size_t bufferSize = 0;
                    int classnameset = 0, i=0;
                    for (i=0; i<lp->numclasses; i++)
                    {
@@ -1728,10 +1731,11 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                        int size_x=0, size_y=0;
                        if (msLegendCalcSize(map, 1, &size_x, &size_y, lp) == MS_SUCCESS)
                        {
-                           sprintf(width,  "%d", size_x);
-                           sprintf(height, "%d", size_y);
+                           snprintf(width, sizeof(width), "%d", size_x);
+                           snprintf(height, sizeof(height), "%d", size_y);
 
-                           legendurl = (char*)malloc(strlen(script_url_encoded)+200);
+                           bufferSize = strlen(script_url_encoded)+200;
+                           legendurl = (char*)malloc(bufferSize);
 
 #ifdef USE_GD_PNG
                            mimetype = msEncodeHTMLEntities("image/png");
@@ -1793,11 +1797,11 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                            {
                                char *name_encoded = msEncodeHTMLEntities(lp->name);
                                if (nVersion >= OWS_1_3_0)
-                                   sprintf(legendurl, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=%s&amp;format=%s&amp;STYLE=%s",  
+                                   snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=%s&amp;format=%s&amp;STYLE=%s",  
                                            script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
                                            mimetype,  classgroups[i]);
                                else 
-                                   sprintf(legendurl, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=%s",  
+                                   snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=%s",  
                                            script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
                                            mimetype,  classgroups[i]);
 

@@ -919,7 +919,7 @@ char *msIO_stripStdoutBufferContentType()
 /*      Copy out content type.                                          */
 /* -------------------------------------------------------------------- */
     content_type = (char *) malloc(end_of_ct-14+2);
-    strncpy( content_type, (const char *) buf->data + 14, end_of_ct - 14 + 1);
+    strlcpy( content_type, (const char *) buf->data + 14, end_of_ct - 14 + 2);
     content_type[end_of_ct-14+1] = '\0';
 
 /* -------------------------------------------------------------------- */

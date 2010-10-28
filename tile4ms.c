@@ -94,7 +94,7 @@ int     tilesProcessed = 0;
 
   /* create new tileindex shapefiles and create a header */
   /* -------------------------------------------------- */
-  sprintf(tileshapeName, "%s.shp", tileFileNameP);
+  snprintf(tileshapeName, sizeof(tileshapeName), "%s.shp", tileFileNameP);
 
   if(NULL==(tileSHP=msSHPCreate(tileFileNameP, SHP_POLYGON))) {
     fclose(metaFP);
@@ -105,7 +105,7 @@ int     tilesProcessed = 0;
   
   /* create new tileindex dbf-file */
   /* ----------------------------- */
-  sprintf(tiledbfName, "%s.dbf", tileFileNameP);
+  snprintf(tiledbfName, sizeof(tiledbfName), "%s.dbf", tileFileNameP);
   if (NULL==(tileDBF=msDBFCreate(tiledbfName))) {
     fclose(metaFP);
     msSHPClose(tileSHP);

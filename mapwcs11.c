@@ -799,7 +799,7 @@ msWCSDescribeCoverage_CoverageDescription11(
             {
                 char szBandName[32];
 
-                sprintf( szBandName, "%d", iBand+1 );
+                snprintf( szBandName, sizeof(szBandName), "%d", iBand+1 );
                 xmlNewChild( psKeys, NULL, BAD_CAST "Key", 
                              BAD_CAST szBandName );
             }

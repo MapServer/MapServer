@@ -483,8 +483,7 @@ char *msDecryptStringTokens(mapObj *map, const char *in)
                     return NULL;
 
                 pszTmp = (char*)malloc( (pszEnd-pszStart+1)*sizeof(char));
-                strncpy(pszTmp, pszStart, pszEnd-pszStart);
-                pszTmp[pszEnd-pszStart] = '\0';
+                strlcpy(pszTmp, pszStart, (pszEnd-pszStart)+1);
 
                 msDecryptStringWithKey(map->encryption_key, pszTmp, out);
                 

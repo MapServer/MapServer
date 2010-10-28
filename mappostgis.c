@@ -475,15 +475,13 @@ int msPostGISRetrievePK(layerObj *layer) {
     /* Attempt to separate fromsource into schema.table */
     pos_sep = strstr(layerinfo->fromsource, ".");
     if (pos_sep) {
-        length = strlen(layerinfo->fromsource) - strlen(pos_sep);
-        schema = (char*)malloc(length + 1);
-        strncpy(schema, layerinfo->fromsource, length);
-        schema[length] = '\0';
+        length = strlen(layerinfo->fromsource) - strlen(pos_sep) + 1;
+        schema = (char*)malloc(length);
+        strlcpy(schema, layerinfo->fromsource, length);
 
         length = strlen(pos_sep);
         table = (char*)malloc(length);
-        strncpy(table, pos_sep + 1, length - 1);
-        table[length - 1] = '\0';
+        strlcpy(table, pos_sep + 1, length);
 
         if (layer->debug) {
             msDebug("msPostGISRetrievePK(): Found schema %s, table %s.\n", schema, table);
@@ -657,8 +655,7 @@ int msPostGISParseData(layerObj *layer) {
             tmp = pos_uid + strlen(pos_uid);
         }
         layerinfo->uid = (char*) malloc((tmp - (pos_uid + 14)) + 1);
-        strncpy(layerinfo->uid, pos_uid + 14, tmp - (pos_uid + 14));
-        (layerinfo->uid)[tmp - (pos_uid + 14)] = '\0'; /* null terminate it */
+        strlcpy(layerinfo->uid, pos_uid + 14, tmp - (pos_uid + 14)+1);
         msStringTrim(layerinfo->uid);
     }
 
@@ -676,8 +673,7 @@ int msPostGISParseData(layerObj *layer) {
             return MS_FAILURE;
         } else {
             layerinfo->srid = (char*) malloc(slength + 1);
-            strncpy(layerinfo->srid, pos_srid + 12, slength);
-            (layerinfo->srid)[slength] = '\0'; /* null terminate it */
+            strlcpy(layerinfo->srid, pos_srid + 12, slength+1);
             msStringTrim(layerinfo->srid);
         }
     }
@@ -711,14 +707,12 @@ int msPostGISParseData(layerObj *layer) {
 
     /* Copy the geometry column name */
     layerinfo->geomcolumn = (char*) malloc((pos_scn - data) + 1);
-    strncpy(layerinfo->geomcolumn, data, pos_scn - data);
-    (layerinfo->geomcolumn)[pos_scn - data] = '\0';
+    strlcpy(layerinfo->geomcolumn, data, pos_scn - data+1);
     msStringTrim(layerinfo->geomcolumn);
 
     /* Copy the table name or sub-select clause */
     layerinfo->fromsource = (char*) malloc((pos_opt - (pos_scn + 6)) + 1);
-    strncpy(layerinfo->fromsource, pos_scn + 6, pos_opt - (pos_scn + 6));
-    (layerinfo->fromsource)[pos_opt - (pos_scn + 6)] = '\0';
+    strlcpy(layerinfo->fromsource, pos_scn + 6, pos_opt - (pos_scn + 6)+1);
     msStringTrim(layerinfo->fromsource);
 
     /* Something is wrong, our goemetry column and table references are not there. */
@@ -1030,11 +1024,11 @@ char *msPostGISBuildSQLItems(layerObj *layer) {
         strItems = (char*)malloc(length);
         strItems[0] = '\0';
         for ( t = 0; t < layer->numitems; t++ ) {
-            strcat(strItems, "\"");
-            strcat(strItems, layer->items[t]);
-            strcat(strItems, "\",");
+            strlcat(strItems, "\"", length); 
+            strlcat(strItems, layer->items[t], length); 
+            strlcat(strItems, "\",", length); 
         }
-        strcat(strItems, strGeom);
+        strlcat(strItems, strGeom, length);
     }
 
     free(strGeom);
@@ -1097,13 +1091,11 @@ char *msPostGISBuildSQLSRID(layerObj *layer) {
                 if ( pos_space < pos_paren ) {
                     /* found space first */
                     f_table_name = (char*)malloc(pos_space - pos + 1);
-                    strncpy(f_table_name, pos, pos_space - pos);
-                    f_table_name[pos_space - pos] = '\0';
+                    strlcpy(f_table_name, pos, pos_space - pos+1);
                 } else {
                     /* found ) first */
                     f_table_name = (char*)malloc(pos_paren - pos + 1);
-                    strncpy(f_table_name, pos, pos_paren - pos);
-                    f_table_name[pos_paren - pos] = '\0';
+                    strlcpy(f_table_name, pos, pos_paren - pos+1);
                 }
             } else {
                 /* should not happen */
@@ -1151,14 +1143,16 @@ static char *msPostGISReplaceBoxToken(layerObj *layer, rectObj *rect, const char
         while ( strstr(fromsource, BOXTOKEN) ) {
             char    *start, *end;
             char    *oldresult = result;
+            size_t buffer_size = 0;
             start = strstr(fromsource, BOXTOKEN);
             end = start + BOXTOKENLENGTH;
 
-            result = (char*)malloc((start - fromsource) + strlen(strBox) + strlen(end) +1);
+            buffer_size = (start - fromsource) + strlen(strBox) + strlen(end) +1;
+            result = (char*)malloc(buffer_size);
 
-            strncpy(result, fromsource, start - fromsource);
-            strcpy(result + (start - fromsource), strBox);
-            strcat(result, end);
+            strlcpy(result, fromsource, start - fromsource +1);
+            strlcpy(result + (start - fromsource), strBox, buffer_size-(start - fromsource));
+            strlcat(result, end, buffer_size);
 
             fromsource = result;
             if (oldresult != NULL)
@@ -1222,6 +1216,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
     size_t strFilterLength = 0;
     size_t strUidLength = 0;
     size_t strLimitLength = 0;
+    size_t bufferSize = 0;
     int insert_and = 0;
     msPostGISLayerInfo *layerinfo;
 
@@ -1291,31 +1286,32 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
         strUidLength = strlen(strUid);
     }
 
-    strWhere = (char*)malloc(strRectLength + 5 + strFilterLength + 5 + strUidLength + strLimitLength);
+    bufferSize = strRectLength + 5 + strFilterLength + 5 + strUidLength + strLimitLength;
+    strWhere = (char*)malloc(bufferSize);
     *strWhere = '\0';
     if ( strRect ) {
-        strcat(strWhere, strRect);
+        strlcat(strWhere, strRect, bufferSize);
         insert_and++;
         free(strRect);
     }
     if ( strFilter ) {
         if ( insert_and ) {
-            strcat(strWhere, " and ");
+            strlcat(strWhere, " and ", bufferSize);
         }
-        strcat(strWhere, strFilter);
+        strlcat(strWhere, strFilter, bufferSize);
         free(strFilter);
         insert_and++;
     }
     if ( strUid ) {
         if ( insert_and ) {
-            strcat(strWhere, " and ");
+            strlcat(strWhere, " and ", bufferSize);
         }
-        strcat(strWhere, strUid);
+        strlcat(strWhere, strUid, bufferSize);
         free(strUid);
         insert_and++;
     }
     if ( strLimit ) {
-        strcat(strWhere, strLimit);
+        strlcat(strWhere, strLimit, bufferSize);
         free(strLimit);
     }
 
@@ -2332,9 +2328,11 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
     int timesresol = -1;
     char **atimes, **tokens = NULL;
     int numtimes=0,i=0,ntmp=0,nlength=0;
-    char buffer[512];
+    size_t buffer_size = 512;
+    char buffer[512], bufferTmp[512];
 
     buffer[0] = '\0';
+    bufferTmp[0] = '\0';
 
     if (!lp || !timestring || !timefield)
       return MS_FALSE;
@@ -2417,27 +2415,18 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
                the time. If not just free it */
             if (lp->filter.type == MS_EXPRESSION)
             {
-                strcat(buffer, "(");
-                strcat(buffer, lp->filter.string);
-                strcat(buffer, ") and ");
+                snprintf(bufferTmp, buffer_size, "(%s) and ", lp->filter.string);
+                strlcat(buffer, bufferTmp, buffer_size);
             }
             else
               freeExpression(&lp->filter);
         }
         
 
-        strcat(buffer, "(");
-
-        strcat(buffer, "date_trunc('");
-        strcat(buffer, timeresolution);
-        strcat(buffer, "', ");        
-        strcat(buffer, timefield);
-        strcat(buffer, ")");        
-        
+        snprintf(bufferTmp, buffer_size, "(date_trunc('%s', %s) = '%s", 
+                 timeresolution, timefield, timestring);
+        strlcat(buffer, bufferTmp, buffer_size);
          
-        strcat(buffer, " = ");
-        strcat(buffer,  "'");
-        strcat(buffer, timestring);
         /* make sure that the timestring is complete and acceptable */
         /* to the date_trunc function : */
         /* - if the resolution is year (2004) or month (2004-01),  */
@@ -2448,39 +2437,37 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
         {
             nlength = strlen(timestring);
             if (timestring[nlength-1] != '-')
-              strcat(buffer,"-01-01");
+              strlcat(buffer,"-01-01", buffer_size);
             else
-              strcat(buffer,"01-01");
+              strlcat(buffer,"01-01", buffer_size);
         }            
         else if (strcasecmp(timeresolution, "month")==0)
         {
             nlength = strlen(timestring);
             if (timestring[nlength-1] != '-')
-              strcat(buffer,"-01");
+              strlcat(buffer,"-01", buffer_size);
             else
-              strcat(buffer,"01");
+              strlcat(buffer,"01", buffer_size);
         }            
         else if (strcasecmp(timeresolution, "hour")==0)
         {
             nlength = strlen(timestring);
             if (timestring[nlength-1] != ':')
-              strcat(buffer,":00:00");
+              strlcat(buffer,":00:00", buffer_size);
             else
-              strcat(buffer,"00:00");
+              strlcat(buffer,"00:00", buffer_size);
         }            
         else if (strcasecmp(timeresolution, "minute")==0)
         {
             nlength = strlen(timestring);
             if (timestring[nlength-1] != ':')
-              strcat(buffer,":00");
+              strlcat(buffer,":00", buffer_size);
             else
-              strcat(buffer,"00");
+              strlcat(buffer,"00", buffer_size);
         }            
         
 
-        strcat(buffer,  "'");
-
-        strcat(buffer, ")");
+        strlcat(buffer, "')", buffer_size);
         
         /* loadExpressionString(&lp->filter, (char *)timestring); */
         loadExpressionString(&lp->filter, buffer);
@@ -2506,23 +2493,14 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
                 if (ntmp == 2)
                 {
                     if (strlen(buffer) > 0)
-                      strcat(buffer, " OR ");
+                      strlcat(buffer, " OR ", buffer_size);
                     else
-                      strcat(buffer, "(");
+                      strlcat(buffer, "(", buffer_size);
 
-                    strcat(buffer, "(");
+                    snprintf(bufferTmp, buffer_size, "(date_trunc('%s, %s) >= '%s", 
+                             timeresolution, timefield, tokens[0]);
+                    strlcat(buffer, bufferTmp, buffer_size);
                     
-                    strcat(buffer, "date_trunc('");
-                    strcat(buffer, timeresolution);
-                    strcat(buffer, "', ");        
-                    strcat(buffer, timefield);
-                    strcat(buffer, ")");        
- 
-                    strcat(buffer, " >= ");
-                    
-                    strcat(buffer,  "'");
-
-                    strcat(buffer, tokens[0]);
                     /* - if the resolution is year (2004) or month (2004-01),  */
                     /* a complete string for time would be 2004-01-01 */
                     /* - if the resolluion is hour or minute (2004-01-01 15), a  */
@@ -2531,49 +2509,38 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
                     {
                         nlength = strlen(tokens[0]);
                         if (tokens[0][nlength-1] != '-')
-                          strcat(buffer,"-01-01");
+                          strlcat(buffer,"-01-01", buffer_size);
                         else
-                          strcat(buffer,"01-01");
+                          strlcat(buffer,"01-01", buffer_size);
                     }            
                     else if (strcasecmp(timeresolution, "month")==0)
                     {
                         nlength = strlen(tokens[0]);
                         if (tokens[0][nlength-1] != '-')
-                          strcat(buffer,"-01");
+                          strlcat(buffer,"-01", buffer_size);
                         else
-                          strcat(buffer,"01");
+                          strlcat(buffer,"01", buffer_size);
                     }            
                     else if (strcasecmp(timeresolution, "hour")==0)
                     {
                         nlength = strlen(tokens[0]);
                         if (tokens[0][nlength-1] != ':')
-                          strcat(buffer,":00:00");
+                          strlcat(buffer,":00:00", buffer_size);
                         else
-                          strcat(buffer,"00:00");
+                          strlcat(buffer,"00:00", buffer_size);
                     }            
                     else if (strcasecmp(timeresolution, "minute")==0)
                     {
                         nlength = strlen(tokens[0]);
                         if (tokens[0][nlength-1] != ':')
-                          strcat(buffer,":00");
+                          strlcat(buffer,":00", buffer_size);
                         else
-                          strcat(buffer,"00");
+                          strlcat(buffer,"00", buffer_size);
                     }            
 
-                    strcat(buffer,  "'");
-                    strcat(buffer, " AND ");
-
-                    
-                    strcat(buffer, "date_trunc('");
-                    strcat(buffer, timeresolution);
-                    strcat(buffer, "', ");        
-                    strcat(buffer, timefield);
-                    strcat(buffer, ")");  
-
-                    strcat(buffer, " <= ");
-                    
-                    strcat(buffer,  "'");
-                    strcat(buffer, tokens[1]);
+                    snprintf(bufferTmp, buffer_size, "' AND date_trunc('%s', %s) <= '%s", 
+                             timeresolution, timefield, tokens[1]);
+                    strlcat(buffer, bufferTmp, buffer_size);
 
                     /* - if the resolution is year (2004) or month (2004-01),  */
                     /* a complete string for time would be 2004-01-01 */
@@ -2583,66 +2550,55 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
                     {
                         nlength = strlen(tokens[1]);
                         if (tokens[1][nlength-1] != '-')
-                          strcat(buffer,"-01-01");
+                          strlcat(buffer,"-01-01", buffer_size);
                         else
-                          strcat(buffer,"01-01");
+                          strlcat(buffer,"01-01", buffer_size);
                     }            
                     else if (strcasecmp(timeresolution, "month")==0)
                     {
                         nlength = strlen(tokens[1]);
                         if (tokens[1][nlength-1] != '-')
-                          strcat(buffer,"-01");
+                          strlcat(buffer,"-01", buffer_size);
                         else
-                          strcat(buffer,"01");
+                          strlcat(buffer,"01", buffer_size);
                     }            
                     else if (strcasecmp(timeresolution, "hour")==0)
                     {
                         nlength = strlen(tokens[1]);
                         if (tokens[1][nlength-1] != ':')
-                          strcat(buffer,":00:00");
+                          strlcat(buffer,":00:00", buffer_size);
                         else
-                          strcat(buffer,"00:00");
+                          strlcat(buffer,"00:00", buffer_size);
                     }            
                     else if (strcasecmp(timeresolution, "minute")==0)
                     {
                         nlength = strlen(tokens[1]);
                         if (tokens[1][nlength-1] != ':')
-                          strcat(buffer,":00");
+                          strlcat(buffer,":00", buffer_size);
                         else
-                          strcat(buffer,"00");
+                          strlcat(buffer,"00", buffer_size);
                     }            
 
-                    strcat(buffer,  "'");
-                    strcat(buffer, ")");
+                    strlcat(buffer,  "')", buffer_size);
                 }
                  
                 msFreeCharArray(tokens, ntmp);
             }
             if (strlen(buffer) > 0)
-              strcat(buffer, ")");
+              strlcat(buffer, ")", buffer_size);
         }
         else if (ntmp == 1) /* multiple times */
         {
             msFreeCharArray(tokens, ntmp);
-            strcat(buffer, "(");
+            strlcat(buffer, "(", buffer_size);
             for (i=0; i<numtimes; i++)
             {
                 if (i > 0)
-                  strcat(buffer, " OR ");
+                  strlcat(buffer, " OR ", buffer_size);
 
-                strcat(buffer, "(");
-                  
-                strcat(buffer, "date_trunc('");
-                strcat(buffer, timeresolution);
-                strcat(buffer, "', ");        
-                strcat(buffer, timefield);
-                strcat(buffer, ")");   
-
-                strcat(buffer, " = ");
-                  
-                strcat(buffer,  "'");
-
-                strcat(buffer, atimes[i]);
+                snprintf(bufferTmp, buffer_size, "(date_trunc('%s', %s) = '%s",
+                         timeresolution, timefield, atimes[i]);
+                strlcat(buffer, bufferTmp, buffer_size);
                 
                 /* make sure that the timestring is complete and acceptable */
                 /* to the date_trunc function : */
@@ -2654,39 +2610,38 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
                 {
                     nlength = strlen(atimes[i]);
                     if (atimes[i][nlength-1] != '-')
-                      strcat(buffer,"-01-01");
+                      strlcat(buffer,"-01-01", buffer_size);
                     else
-                      strcat(buffer,"01-01");
+                      strlcat(buffer,"01-01", buffer_size);
                 }            
                 else if (strcasecmp(timeresolution, "month")==0)
                 {
                     nlength = strlen(atimes[i]);
                     if (atimes[i][nlength-1] != '-')
-                      strcat(buffer,"-01");
+                      strlcat(buffer,"-01", buffer_size);
                     else
-                      strcat(buffer,"01");
+                      strlcat(buffer,"01", buffer_size);
                 }            
                 else if (strcasecmp(timeresolution, "hour")==0)
                 {
                     nlength = strlen(atimes[i]);
                     if (atimes[i][nlength-1] != ':')
-                      strcat(buffer,":00:00");
+                      strlcat(buffer,":00:00", buffer_size);
                     else
-                      strcat(buffer,"00:00");
+                      strlcat(buffer,"00:00", buffer_size);
                 }            
                 else if (strcasecmp(timeresolution, "minute")==0)
                 {
                     nlength = strlen(atimes[i]);
                     if (atimes[i][nlength-1] != ':')
-                      strcat(buffer,":00");
+                      strlcat(buffer,":00", buffer_size);
                     else
-                      strcat(buffer,"00");
+                      strlcat(buffer,"00", buffer_size);
                 }            
 
-                strcat(buffer,  "'");
-                strcat(buffer, ")");
+                strlcat(buffer, "')", buffer_size);
             } 
-            strcat(buffer, ")");
+            strlcat(buffer, ")", buffer_size);
         }
         else
         {
@@ -2706,9 +2661,8 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
             {
                 if (lp->filter.type == MS_EXPRESSION)
                 {
-                    strcat(buffer, "(");
-                    strcat(buffer, lp->filter.string);
-                    strcat(buffer, ") and ");
+                    snprintf(bufferTmp, buffer_size, "(%s) and ", lp->filter.string);
+                    strlcat(buffer, bufferTmp, buffer_size);
                 }
                 else
                   freeExpression(&lp->filter);

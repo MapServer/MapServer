@@ -271,8 +271,8 @@ int getIntegerOrSymbol(int *i, int n, ...)
 */
 int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
 {
-    char szLibPath[MS_MAXPATHLEN + 1] = { '\0' };
-    char szLibPathExt[MS_MAXPATHLEN + 1] = { '\0' };
+    char szLibPath[MS_MAXPATHLEN] = { '\0' };
+    char szLibPathExt[MS_MAXPATHLEN] = { '\0' };
     const char *plugin_dir = msLookupHashTable( &(map->configoptions), "MS_PLUGIN_DIR");
 
     /* do nothing on windows, filename without .dll will be loaded by default*/
@@ -280,7 +280,7 @@ int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
     if (lib_str) {
         size_t len = strlen(lib_str);
         if (3 < len && strcmp(lib_str + len-3, ".so")) {
-            strncpy(szLibPathExt, lib_str, MS_MAXPATHLEN);
+            strlcpy(szLibPathExt, lib_str, MS_MAXPATHLEN);
             strlcat(szLibPathExt, ".so", MS_MAXPATHLEN);
             lib_str = szLibPathExt;
         }
@@ -1255,13 +1255,14 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
     
     if (strncasecmp(value, "EPSG:", 5) == 0)
     {
-        char init_string[100];
+        size_t buffer_size = 10 + strlen(value+5) + 1;
+        char *init_string = (char*)malloc(buffer_size);
 
         /* translate into PROJ.4 format. */
-        sprintf( init_string, "init=epsg:%s", value+5 );
+        snprintf(init_string, buffer_size, "init=epsg:%s", value+5 );
 
         p->args = (char**)malloc(sizeof(char*) * 2);
-        p->args[0] = strdup(init_string);
+        p->args[0] = init_string;
         p->numargs = 1;
 
         if( atoi(value+5) >= 4000 && atoi(value+5) < 5000 )
@@ -1326,18 +1327,20 @@ int msLoadProjectionString(projectionObj *p, const char *value)
   }
   else if (strncasecmp(value, "EPSG:", 5) == 0)
   {
-      char init_string[100];
+      size_t buffer_size = 10 + strlen(value+5) + 1;
+      char *init_string = (char*)malloc(buffer_size);
 
       /* translate into PROJ.4 format. */
-      sprintf( init_string, "init=epsg:%s", value+5 );
+      snprintf( init_string, buffer_size, "init=epsg:%s", value+5);
 
       p->args = (char**)malloc(sizeof(char*) * 2);
-      p->args[0] = strdup(init_string);
+      p->args[0] = init_string;
       p->numargs = 1;
   }
   else if (strncasecmp(value, "urn:ogc:def:crs:EPSG:",21) == 0)
   { /* this is very preliminary urn support ... expand later */ 
-      char init_string[100];
+      size_t buffer_size = 0;
+      char *init_string =  NULL;
       const char *code;
 
       code = value + 21;
@@ -1347,11 +1350,14 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       if( *code == ':' )
           code++;
 
+      buffer_size = 10 + strlen(code) + 1;
+      init_string = (char*)malloc(buffer_size);
+
       /* translate into PROJ.4 format. */
-      sprintf( init_string, "init=epsg:%s", code );
+      snprintf( init_string, buffer_size, "init=epsg:%s", code );
 
       p->args = (char**)malloc(sizeof(char*) * 2);
-      p->args[0] = strdup(init_string);
+      p->args[0] = init_string;
       p->numargs = 1;
 
       if( atoi(code) >= 4000 && atoi(code) < 5000 )
@@ -1366,7 +1372,8 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       for the fact that a space for the version of the espg is not used with CITE tests. 
       (Syntax used could be urn:ogc:def:objectType:authority:code)*/ 
     
-      char init_string[100];
+      size_t buffer_size = 0;
+      char *init_string =  NULL;
       const char *code;
 
       if (value[23] == ':')
@@ -1379,11 +1386,14 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       if( *code == ':' )
           code++;
 
+      buffer_size = 10 + strlen(code) + 1;
+      init_string = (char*)malloc(buffer_size);
+
       /* translate into PROJ.4 format. */
-      sprintf( init_string, "init=epsg:%s", code );
+      snprintf( init_string, buffer_size, "init=epsg:%s", code );
 
       p->args = (char**)malloc(sizeof(char*) * 2);
-      p->args[0] = strdup(init_string);
+      p->args[0] = init_string;
       p->numargs = 1;
 
       if( atoi(code) >= 4000 && atoi(code) < 5000 )
@@ -1988,17 +1998,18 @@ char *msGetExpressionString(expressionObj *exp)
       case_insensitive = "i";
 
     /* Alloc buffer big enough for string + 2 delimiters + 'i' + \0 */
-    exprstring = (char*)malloc(strlen(exp->string)+4);
+    size_t buffer_size = strlen(exp->string)+4;
+    exprstring = (char*)malloc(buffer_size);
 
     switch(exp->type) {
     case(MS_REGEX):
-      sprintf(exprstring, "/%s/%s", exp->string, case_insensitive);
+      snprintf(exprstring, buffer_size, "/%s/%s", exp->string, case_insensitive);
       return exprstring;
     case(MS_STRING):
-      sprintf(exprstring, "\"%s\"%s", exp->string, case_insensitive);
+      snprintf(exprstring, buffer_size, "\"%s\"%s", exp->string, case_insensitive);
       return exprstring;
     case(MS_EXPRESSION):
-      sprintf(exprstring, "(%s)", exp->string);
+      snprintf(exprstring, buffer_size, "(%s)", exp->string);
       return exprstring;
     default:
       /* We should never get to here really! */
@@ -5656,8 +5667,9 @@ void msApplyDefaultSubstitutions(mapObj *map) {
     const char *defaultkey = msFirstKeyFromHashTable(&(layer->metadata));
     while(defaultkey) {
       if(!strncmp(defaultkey,"default_",8)){
-        char *tmpstr = (char *)malloc(sizeof(char)*(strlen(defaultkey)-8));
-        sprintf(tmpstr,"%%%s%%", &(defaultkey[8]));
+          size_t buffer_size = (strlen(defaultkey)-8)+1;
+        char *tmpstr = (char *)malloc(buffer_size);
+        snprintf(tmpstr, buffer_size, "%%%s%%", &(defaultkey[8]));
 
         msLayerSubstituteString(layer,tmpstr,msLookupHashTable(&(layer->metadata),defaultkey));
         free(tmpstr);
@@ -5677,6 +5689,7 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
 {
   char **tokens = NULL;
   int  numtokens=0, numtokens_allocated=0;
+  size_t buffer_size = 0;
 
   *ret_numtokens = 0;
 
@@ -5740,19 +5753,22 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
         return(tokens);
         break;
       case(MS_STRING):
-        tokens[numtokens] = (char*) malloc((strlen(msyytext)+3)*sizeof(char));
+        buffer_size = strlen(msyytext)+2+1;
+        tokens[numtokens] = (char*) malloc(buffer_size);
         if(tokens[numtokens])
-          sprintf(tokens[numtokens], "\"%s\"", msyytext);
+          snprintf(tokens[numtokens], buffer_size, "\"%s\"", msyytext);
         break;
       case(MS_EXPRESSION):
-        tokens[numtokens] = (char*)malloc ((strlen(msyytext)+3)*sizeof(char));
+        buffer_size = strlen(msyytext)+2+1;
+        tokens[numtokens] = (char*) malloc(buffer_size);
         if(tokens[numtokens])
-          sprintf(tokens[numtokens], "(%s)", msyytext);
+          snprintf(tokens[numtokens], buffer_size, "(%s)", msyytext);
         break;
       case(MS_REGEX):
-        tokens[numtokens] = (char*)malloc ((strlen(msyytext)+3)*sizeof(char));
+        buffer_size = strlen(msyytext)+2+1;
+        tokens[numtokens] = (char*) malloc(buffer_size);
         if(tokens[numtokens])
-          sprintf(tokens[numtokens], "/%s/", msyytext);
+          snprintf(tokens[numtokens], buffer_size, "/%s/", msyytext);
         break;
       default:
         tokens[numtokens] = strdup(msyytext);

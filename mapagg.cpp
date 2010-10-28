@@ -2347,18 +2347,20 @@ void msFilledRectangleAGG ( imageObj *image, styleObj *style, double c1_x, doubl
 int msSaveImageAGG(imageObj* image, char *filename, outputFormatObj *format)
 {
     char *pFormatBuffer;
-    char cGDFormat[128];
     int   iReturn = 0;
+    size_t n = 0;
+
     msAlphaAGG2GD(image);
     pFormatBuffer = format->driver;
 
-    strcpy(cGDFormat, "gd/");
-    strcat(cGDFormat, &(format->driver[4]));
-
-    format->driver = &cGDFormat[0];
+    n = strlen(&(pFormatBuffer[4]));
+    format->driver = (char*)malloc(n+3+1);
+    strcpy(format->driver, "gd/");
+    strlcat(format->driver, &(pFormatBuffer[4]), n+3+1);
 
     iReturn = msSaveImageGD(image, filename, format);
 
+    free(format->driver);
     format->driver = pFormatBuffer;
 
     return iReturn;
@@ -2373,18 +2375,20 @@ int msSaveImageAGG(imageObj* image, char *filename, outputFormatObj *format)
 int msSaveImageAGGCtx(imageObj* image, gdIOCtx *ctx, outputFormatObj *format)
 {
     char *pFormatBuffer;
-    char cGDFormat[128];
     int   iReturn = 0;
+    size_t n = 0;
+
     msAlphaAGG2GD(image);
     pFormatBuffer = format->driver;
 
-    strcpy(cGDFormat, "gd/");
-    strcat(cGDFormat, &(format->driver[4]));
-
-    format->driver = &cGDFormat[0];
+    n = strlen(&(pFormatBuffer[4]));
+    format->driver = (char*)malloc(n+3+1);
+    strcpy(format->driver, "gd/");
+    strlcat(format->driver, &(pFormatBuffer[4]), n+3+1);
 
     iReturn = msSaveImageGDCtx(image, ctx, format);
 
+    free(format->driver);
     format->driver = pFormatBuffer;
 
     return iReturn;

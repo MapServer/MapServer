@@ -413,7 +413,7 @@ void loadForm(void)
 	msSetError(MS_WEBERR, "Parameter 'id' value fails to validate.", "loadForm()"); 
 	writeError(); 
       }
-      strncpy(mapserv->Id, mapserv->request->ParamValues[i], IDSIZE);
+      strlcpy(mapserv->Id, mapserv->request->ParamValues[i], IDSIZE);
       continue;
     }
 

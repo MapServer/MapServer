@@ -534,11 +534,11 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensi
   /* add attributes to the root element */
   xmlNewProp(psRootNode, BAD_CAST "crs", BAD_CAST crs);
 
-  sprintf( dim_string, "%d", dimensions );
+  snprintf( dim_string, sizeof(dim_string), "%d", dimensions );
   xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dim_string);
 
-  sprintf(LowerCorner, "%.15g %.15g", minx, miny);
-  sprintf(UpperCorner, "%.15g %.15g", maxx, maxy);
+  snprintf(LowerCorner, sizeof(LowerCorner), "%.15g %.15g", minx, miny);
+  snprintf(UpperCorner, sizeof(UpperCorner), "%.15g %.15g", maxx, maxy);
 
   /* add child elements */
   xmlNewChild(psRootNode, psNsOws,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
@@ -575,11 +575,11 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double 
   /* create element name */
   psRootNode = xmlNewNode(psNsOws, BAD_CAST "WGS84BoundingBox");
 
-  sprintf( dim_string, "%d", dimensions );
+  snprintf( dim_string, sizeof(dim_string), "%d", dimensions );
   xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dim_string);
 
-  sprintf(LowerCorner, "%.15g %.15g", minx, miny);
-  sprintf(UpperCorner, "%.15g %.15g", maxx, maxy);
+  snprintf(LowerCorner, sizeof(LowerCorner), "%.15g %.15g", minx, miny);
+  snprintf(UpperCorner, sizeof(UpperCorner), "%.15g %.15g", maxx, maxy);
 
   /* add child elements */
   xmlNewChild(psRootNode, psNsOws,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);
@@ -601,7 +601,7 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double 
 
 int _validateNamespace(xmlNsPtr psNsOws) {
   char namespace_prefix[10];
-  sprintf(namespace_prefix, "%s", psNsOws->prefix);
+  snprintf(namespace_prefix, sizeof(namespace_prefix), "%s", psNsOws->prefix);
   if (strcmp(namespace_prefix, MS_OWSCOMMON_OWS_NAMESPACE_PREFIX) == 0)
     return MS_SUCCESS;
   else 

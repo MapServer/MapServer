@@ -359,26 +359,30 @@ int strcasecmp(const char *s1, const char *s2)
 #endif
 
 char *msLongToString(long value) {
-  char buffer[256]; /* plenty of space */
+  size_t bufferSize = 256;
+  char *buffer = (char*)malloc(bufferSize);
 
-  sprintf(buffer, "%ld", value);
-  return(strdup(buffer));
+  snprintf(buffer, bufferSize, "%ld", value);
+  return(buffer);
 }
 
 char *msDoubleToString(double value, int force_f) {
-  char buffer[256]; /* plenty of space */
+  size_t bufferSize = 256;
+  char *buffer = (char*)malloc(bufferSize);
 
   if (force_f == MS_TRUE)
-    sprintf(buffer, "%f", value);
+    snprintf(buffer, bufferSize, "%f", value);
   else
-    sprintf(buffer, "%g", value);
-  return(strdup(buffer));
+    snprintf(buffer, bufferSize, "%g", value);
+  return(buffer);
 }
 
 char *msIntToString(int value) {
-  char buffer[256]; /* plenty of space */
-  sprintf(buffer, "%i", value);
-  return(strdup(buffer));
+  size_t bufferSize = 256;
+  char *buffer = (char*)malloc(bufferSize);
+
+  snprintf(buffer, bufferSize, "%i", value);
+  return(buffer);
 }
 
 void msStringToUpper(char *string) {
@@ -676,18 +680,18 @@ char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
        (path[0] == '\\') || (path[0] == '/') || 
          (pathlen > 1 && (path[1] == ':')))
   {
-      strcpy(pszReturnPath, path);
+      strlcpy(pszReturnPath, path, MS_MAXPATHLEN);
       return(pszReturnPath);
   }
 
   /* else return abs_path/path */
   if((abs_path[abslen-1] == '/') || (abs_path[abslen-1] == '\\'))
   {
-      sprintf(pszReturnPath, "%s%s", abs_path, path);
+    snprintf(pszReturnPath, MS_MAXPATHLEN, "%s%s", abs_path, path);
   }
   else
   {
-      sprintf(pszReturnPath, "%s/%s", abs_path, path);
+    snprintf(pszReturnPath, MS_MAXPATHLEN, "%s/%s", abs_path, path);
   }
 
   return(pszReturnPath);
@@ -725,7 +729,7 @@ char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path)
     fp = fopen( szReturnPath, "r" );
     if( fp == NULL )
     {
-        strcpy( szReturnPath, path );
+        strlcpy( szReturnPath, path, MS_MAXPATHLEN);
         return NULL;
     }
     else
@@ -752,8 +756,8 @@ char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path
     fp = fopen( szReturnPath, "r" );
     if( fp == NULL )
     {
-        strcpy( szReturnPath, path2 );
-        return NULL;
+      strlcpy( szReturnPath, path2, MS_MAXPATHLEN);
+      return NULL;
     }
     else
         fclose( fp );
@@ -1163,7 +1167,7 @@ char *msEncodeHTMLEntities(const char *string)
     /* Start with 100 extra chars for replacements...  */
     /* should be good enough for most cases */
     buflen = strlen(string) + 100;
-    newstring = (char*)malloc(buflen+1*sizeof(char*));
+    newstring = (char*)malloc(buflen+1);
     if (newstring == NULL)
     {
         msSetError(MS_MEMERR, NULL, "msEncodeHTMLEntities()");
@@ -1178,7 +1182,7 @@ char *msEncodeHTMLEntities(const char *string)
             /* If we had to realloc then this string must contain several */
             /* entities... so let's go with twice the previous buffer size */
             buflen *= 2;
-            newstring = (char*)realloc(newstring, buflen+1*sizeof(char*));
+            newstring = (char*)realloc(newstring, buflen+1);
             if (newstring == NULL)
             {
                 msSetError(MS_MEMERR, NULL, "msEncodeHTMLEntities()");
@@ -1230,19 +1234,21 @@ void msDecodeHTMLEntities(const char *string)
 {
     char *pszAmp=NULL, *pszSemiColon=NULL, *pszReplace=NULL, *pszEnd=NULL;
     char *pszBuffer=NULL;
+    size_t bufferSize = 0;
 
     if(string == NULL)
         return;
     else
         pszBuffer = (char*)string;
 
-    pszReplace = (char*) malloc(sizeof(char) * strlen(pszBuffer));
-    pszEnd = (char*) malloc(sizeof(char) * strlen(pszBuffer));
+    bufferSize = strlen(pszBuffer);
+    pszReplace = (char*) malloc(bufferSize);
+    pszEnd = (char*) malloc(bufferSize);
 
     while((pszAmp = strchr(pszBuffer, '&')) != NULL)
     {
         /* Get the &...; */
-        strcpy(pszReplace, pszAmp);
+        strlcpy(pszReplace, pszAmp, bufferSize);
         pszSemiColon = strchr(pszReplace, ';');
         if(pszSemiColon == NULL)
             break;
@@ -1250,7 +1256,7 @@ void msDecodeHTMLEntities(const char *string)
             pszSemiColon++;
 
         /* Get everything after the &...; */
-        strcpy(pszEnd, pszSemiColon);
+        strlcpy(pszEnd, pszSemiColon, bufferSize);
 
         pszReplace[pszSemiColon-pszReplace] = '\0';
 
@@ -1372,12 +1378,13 @@ char *msJoinStrings(char **array, int arrayLength, const char *delimeter)
 
   string = (char *)calloc(stringLength+1, sizeof(char));
   if(!string) return NULL;
+  string[0] = '\0';
 
   for(i=0; i<arrayLength-1; i++) {
-    strcat(string, array[i]);
-    strcat(string, delimeter);
+    strlcat(string, array[i], stringLength);
+    strlcat(string, delimeter, stringLength);
   }
-  strcat(string, array[i]); /* add last element, no delimiter */
+  strlcat(string, array[i], stringLength); /* add last element, no delimiter */
 
   return string;
 }
@@ -1391,9 +1398,11 @@ char *msHashString(const char *pszStr)
 {
     unsigned char sums[HASH_SIZE] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     char *pszOutBuf = NULL;
+    size_t bufferSize = 0;
     int i=0;
 
-    pszOutBuf = (char*)malloc( (HASH_SIZE*2+1)*sizeof(char) );
+    bufferSize = HASH_SIZE*2+1;
+    pszOutBuf = (char*)malloc(bufferSize);
     if (pszOutBuf == NULL)
     {
         /* msSetError(MS_MEMERR, ...); */
@@ -1406,7 +1415,7 @@ char *msHashString(const char *pszStr)
 
     for(i=0; i<HASH_SIZE; i++)
     {
-        sprintf(pszOutBuf + i*2, "%02x", sums[i]);
+      snprintf(pszOutBuf + i*2, bufferSize-(i*2), "%02x", sums[i]);
     }
 
     return pszOutBuf;
@@ -1705,7 +1714,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
     iconv_close(cd);
     return NULL;
   }
-  strcpy(out, string);
+  strlcpy(out, string, bufsize);
   outp = out;
 
   bufleft = bufsize;

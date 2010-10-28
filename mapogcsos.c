@@ -328,7 +328,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
 
             pszFullName = msStringConcatenate(pszFullName, ":");
 
-            sprintf(szTmp, "%s_alias", lp->items[i]);
+            snprintf(szTmp, sizeof(szTmp), "%s_alias", lp->items[i]);
             pszValue = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
 
             if (pszValue)
@@ -578,14 +578,14 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
         /*assuming that the layer is open */       
         for(i=0; i<lp->numitems; i++) 
         {
-            sprintf(szTmp, "%s_alias", lp->items[i]);
+            snprintf(szTmp, sizeof(szTmp), "%s_alias", lp->items[i]);
             pszValue = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
             if (pszValue)
             {
                 psNode = xmlNewChild(psRecordNode, NULL, BAD_CAST "field", NULL);
 
                 /* check if there is an alias/full name used */
-                sprintf(szTmp, "%s_alias", lp->items[i]);
+                snprintf(szTmp, sizeof(szTmp), "%s_alias", lp->items[i]);
                 pszName = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
                 if (!pszName)
                   pszName = lp->items[i];
@@ -595,7 +595,7 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
                 psNode = xmlNewChild(psNode, NULL, BAD_CAST "Quantity", NULL);
 
                 /* get definition and uom */
-                sprintf(szTmp, "%s_definition", lp->items[i]);
+                snprintf(szTmp, sizeof(szTmp), "%s_definition", lp->items[i]);
                 pszDefinition =  msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
                     
                 if (pszDefinition == NULL)
@@ -603,7 +603,7 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
 
                 xmlNewNsProp(psNode, NULL, BAD_CAST "definition", BAD_CAST pszDefinition);
 
-                sprintf(szTmp, "%s_uom", lp->items[i]);
+                snprintf(szTmp, sizeof(szTmp), "%s_uom", lp->items[i]);
                 pszUom =  msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
 
                 if (pszUom == NULL)
@@ -750,7 +750,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                 }
                 if (i < lpfirst->numitems)
                 {
-                    sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+                    snprintf(szTmp, sizeof(szTmp), "%s", "urn:ogc:def:procedure:");
                     pszTmp = msStringConcatenate(pszTmp, szTmp);
                     pszValueShape = msEncodeHTMLEntities(sShape.values[i]);
                     pszTmp = msStringConcatenate(pszTmp, pszValueShape);
@@ -772,7 +772,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
             if (! msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item"))
                 xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_procedure_item\" missing for sos:procedure.  If you have more than 1 procedures, sos:procedure will output them incorrectly."));
 
-            sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+            snprintf(szTmp, sizeof(szTmp), "%s", "urn:ogc:def:procedure:");
             pszTmp = msStringConcatenate(pszTmp, szTmp);
             pszTmp = msStringConcatenate(pszTmp, (char *)pszValue);
             
@@ -853,7 +853,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         {
             for(i=0; i<lpfirst->numitems; i++) 
             {
-                sprintf(szTmp, "%s_alias", lpfirst->items[i]);
+                snprintf(szTmp, sizeof(szTmp), "%s_alias", lpfirst->items[i]);
                 pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
                 if (pszValue)
                 {
@@ -863,7 +863,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                         {
                             /*if there is an alias used, use it to output the
                               parameter name : eg "sos_AMMON_DIS_alias" "Amonia"  */
-                            sprintf(szTmp, "%s_alias", lpfirst->items[i]);
+                            snprintf(szTmp, sizeof(szTmp), "%s_alias", lpfirst->items[i]);
                             pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
                             pszValueShape = msEncodeHTMLEntities(sShape.values[j]);
                             
@@ -961,7 +961,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
                                      "encoding_tokenSeparator");
         for(i=0; i<lpfirst->numitems; i++) 
         {
-            sprintf(szTmp, "%s_alias", lpfirst->items[i]);
+            snprintf(szTmp, sizeof(szTmp), "%s_alias", lpfirst->items[i]);
             pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
             if (pszValue)
             {
@@ -1510,7 +1510,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                              for (k=0; k<n; k++)
                              {
                                  /*TODO review the urn output */
-                                 sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+                                 snprintf(szTmp, sizeof(szTmp), "%s", "urn:ogc:def:procedure:");
                                  pszTmp = msStringConcatenate(pszTmp, szTmp);
                                  pszTmp = msStringConcatenate(pszTmp, tokens[k]);
 
@@ -1589,7 +1589,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                                          {
                                                papsProcedures[nDistinctProcedures] = strdup(pszProcedure);
                                                nDistinctProcedures++;
-                                               sprintf(szTmp, "%s", "urn:ogc:def:procedure:");
+                                               snprintf(szTmp, sizeof(szTmp), "%s", "urn:ogc:def:procedure:");
                                                pszTmp = msStringConcatenate(pszTmp, szTmp);
                                                pszTmp = msStringConcatenate(pszTmp, pszProcedure);
 
@@ -2215,7 +2215,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
             /* project MAP.EXTENT to this SRS */
             msInitProjection(&po);
 
-            sprintf(srsbuffer, "+init=epsg:%.20s", sosparams->pszSrsName+5);
+            snprintf(srsbuffer, sizeof(srsbuffer), "+init=epsg:%.20s", sosparams->pszSrsName+5);
 
             if (msLoadProjectionString(&po, srsbuffer) != 0) {
               msSetError(MS_SOSERR, "Could not set output projection to \"%s\"", "msSOSGetObservation()", sosparams->pszSrsName);

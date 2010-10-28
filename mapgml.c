@@ -1537,17 +1537,21 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
   xmlNodePtr psNode = NULL, psSubNode = NULL, psSubSubNode = NULL;
   char *pszTmp = NULL;
   char *pszTmp2 = NULL;
-  char pszEpsg[11];
+  char *pszEpsg = NULL;
+  size_t bufferSize = 0;
 
   psNode = xmlNewNode(psNs, BAD_CAST "boundedBy");
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
 
   if (psEpsg) {
-    sprintf(pszEpsg, "%s", psEpsg);
+    bufferSize = strlen(psEpsg)+1;
+    pszEpsg = (char*) malloc(bufferSize);
+    snprintf(pszEpsg, bufferSize, "%s", psEpsg);
     msStringToLower(pszEpsg);
     pszTmp = msStringConcatenate(pszTmp, "urn:ogc:crs:");
     pszTmp = msStringConcatenate(pszTmp, pszEpsg);
     xmlNewProp(psSubNode, BAD_CAST "srsName", BAD_CAST pszTmp);
+    free(pszEpsg);
     free(pszTmp);
     pszTmp = msIntToString(2);
     xmlNewProp(psSubNode, BAD_CAST "srsDimension", BAD_CAST pszTmp);
@@ -1592,7 +1596,8 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
   xmlNodePtr psNode = NULL, psSubNode = NULL;
   char *pszTmp = NULL;
   int dimension = 2;
-  char pszSrsName[11];
+  char *pszSrsName = NULL;
+  size_t bufferSize = 0;
 
   psNode = xmlNewNode(psNs, BAD_CAST "Point");
 
@@ -1601,11 +1606,14 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
   }
 
   if (psSrsName) {
-    sprintf(pszSrsName, "%s", psSrsName);
+    bufferSize = strlen(psSrsName)+1;
+    pszSrsName = (char *) malloc(bufferSize);
+    snprintf(pszSrsName, bufferSize, "%s", psSrsName);
     msStringToLower(pszSrsName);
     pszTmp = msStringConcatenate(pszTmp, "urn:ogc:crs:");
     pszTmp = msStringConcatenate(pszTmp, pszSrsName);
     xmlNewProp(psNode, BAD_CAST "srsName", BAD_CAST pszTmp);
+    free(pszSrsName);
     free(pszTmp);
     pszTmp = msIntToString(dimension);
     xmlNewProp(psNode, BAD_CAST "srsDimension", BAD_CAST pszTmp);

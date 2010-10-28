@@ -288,7 +288,7 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
         map = layer->map;
 
         if (layer->map->mappath)
-          sprintf(MapPath, "%s", layer->map->mappath);
+            snprintf(MapPath, sizeof(MapPath), "%s", layer->map->mappath);
 
         /*First rendered layer - check mapfile projection*/
         checkProjection(layer->map);
@@ -361,20 +361,20 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
     
     /*check if kml_folder_display is set*/
     /* setup internal rasterizer format */
-    char rasterizerFomatName[128];
+    char rasterizerFormatName[128];
         
     /*no real need to let the user pick a renderer. It seems more complex than useful.
       I am leaving the code here but will remove it form the docs. (AY)
       The agg should be the only one used but at this point it is not completed; so
       use cairo for vector layer that are rasterized and agg2 for raster layers*/
     if (layer->type ==  MS_LAYER_RASTER)
-      sprintf(rasterizerFomatName, "agg2png"); //"aggpng24"); 
+      sprintf(rasterizerFormatName, "agg2png"); //"aggpng24"); 
     else
     {
 #ifdef USE_CAIRO
-        sprintf(rasterizerFomatName, "cairopng");
+        sprintf(rasterizerFormatName, "cairopng");
 #else
-        sprintf(rasterizerFomatName, "agg2png"); 
+        sprintf(rasterizerFormatName, "agg2png"); 
 #endif
     }
         
@@ -383,7 +383,7 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
         const char *formatOptionStr = msGetOutputFormatOption(layer->map->outputformatlist[i], "kml_rasteroutputformat", "");
         if (strlen(formatOptionStr))
         {
-            sprintf(rasterizerFomatName, "%s", formatOptionStr);
+            snprintf(rasterizerFormatName, sizeof(rasterizerFormatName), "%s", formatOptionStr);
             break;
         }
     }
@@ -391,7 +391,7 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
     for (int i=0; i<layer->map->numoutputformats; i++)
     {
         outputFormatObj *iFormat = layer->map->outputformatlist[i];
-        if(!strcasecmp(iFormat->name,rasterizerFomatName))
+        if(!strcasecmp(iFormat->name,rasterizerFormatName))
         {
             RasterizerOutputFormat = iFormat;
             /*always set RGBA*/
@@ -817,7 +817,7 @@ void KmlRenderer::renderSymbol(imageObj *img, double x, double y, symbolObj *sym
     if (!PlacemarkNode)
       return;
 
-    sprintf(SymbolUrl, "%s", lookupSymbolUrl(img, symbol, style));
+    snprintf(SymbolUrl, sizeof(SymbolUrl), "%s", lookupSymbolUrl(img, symbol, style));
     SymbologyFlag[Symbol] = 1;
 
     xmlNodePtr geomNode = getGeomParentNode("Point");
@@ -1015,7 +1015,7 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
 
     sprintf(symbolHexColor,"%02x%02x%02x%02x", style->color.alpha, style->color.blue,
             style->color.green, style->color.red);
-    sprintf(SymbolName, "symbol_%s_%.1f_%s", symbol->name, style->scale, symbolHexColor);
+    snprintf(SymbolName, sizeof(SymbolName), "symbol_%s_%.1f_%s", symbol->name, style->scale, symbolHexColor);
 
     char *symbolUrl = msLookupHashTable(StyleHashTable, SymbolName);
     if (!symbolUrl)
@@ -1026,12 +1026,12 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
       if (img->imagepath)
       {
         char *tmpFileName = msTmpFile(MapPath, img->imagepath, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
-        sprintf(iconFileName, "%s", tmpFileName);
+        snprintf(iconFileName, sizeof(iconFileName), "%s", tmpFileName);
         msFree(tmpFileName);
       }
       else
       {
-        sprintf(iconFileName, "symbol_%s_%.1f.%s", symbol->name, style->scale, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
+          snprintf(iconFileName, sizeof(iconFileName), "symbol_%s_%.1f.%s", symbol->name, style->scale, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
       }
 
       if (createIconImage(iconFileName, symbol, style) != MS_SUCCESS)
@@ -1043,9 +1043,9 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
       }
 
       if (img->imageurl)
-        sprintf(iconUrl, "%s%s.%s", img->imageurl, msGetBasename(iconFileName), MS_IMAGE_EXTENSION(RasterizerOutputFormat));
+          snprintf(iconUrl, sizeof(iconUrl), "%s%s.%s", img->imageurl, msGetBasename(iconFileName), MS_IMAGE_EXTENSION(RasterizerOutputFormat));
       else
-        sprintf(iconUrl, "%s", iconFileName);
+        snprintf(iconUrl, sizeof(iconUrl), "%s", iconFileName);
 
       hashObj *hash = msInsertHashTable(StyleHashTable, SymbolName, iconUrl);
       symbolUrl = hash->data;
@@ -1271,12 +1271,14 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
     {
         char *pszTmp=NULL;
         char *pszTmpDesc = NULL;
+        size_t bufferSize = 0;
         pszTmpDesc = strdup(pszLayerDescMetadata);
         
         for (int i=0; i<currentLayer->numitems; i++)
         {
-            pszTmp = (char *)malloc(sizeof(char)*strlen(currentLayer->items[i]) + 3);
-            sprintf(pszTmp, "%%%s%%",currentLayer->items[i]);
+            bufferSize = strlen(currentLayer->items[i]) + 3;
+            pszTmp = (char *)malloc(bufferSize);
+            snprintf(pszTmp, bufferSize, "%%%s%%",currentLayer->items[i]);
             if (strcasestr(pszTmpDesc, pszTmp))
               pszTmpDesc = msCaseReplaceSubstring(pszTmpDesc,  pszTmp, shape->values[i]);
             msFree(pszTmp);
@@ -1306,9 +1308,9 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
             if (j<nIncludeItems)
             {
                 if (shape->values[i] && strlen(shape->values[i]))
-                  sprintf(lineBuf, "<tr><td><b>%s</b></td><td>%s</td></tr>\n", currentLayer->items[i], shape->values[i]);
+                  snprintf(lineBuf, sizeof(lineBuf), "<tr><td><b>%s</b></td><td>%s</td></tr>\n", currentLayer->items[i], shape->values[i]);
                 else
-                  sprintf(lineBuf, "<tr><td><b>%s</b></td><td></td></tr>\n", currentLayer->items[i]);
+                  snprintf(lineBuf, sizeof(lineBuf), "<tr><td><b>%s</b></td><td></td></tr>\n", currentLayer->items[i]);
                 xmlNodeAddContent(descriptionNode, BAD_CAST lineBuf);
             }
            

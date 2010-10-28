@@ -767,7 +767,7 @@ void msApplyOutputFormat( outputFormatObj **target,
 
         if( imagequality != MS_NOOVERRIDE && imagequality != old_imagequality )
         {
-            sprintf( new_value, "%d", imagequality );
+            snprintf( new_value, sizeof(new_value), "%d", imagequality );
             msSetOutputFormatOption( format, "QUALITY", new_value );
         }
 

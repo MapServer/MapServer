@@ -1643,6 +1643,7 @@ int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename, int log_f
 {
   int i;
   char *dbfFilename;
+  size_t bufferSize = 0;
 
   if(!filename) {
     if( log_failures )
@@ -1667,13 +1668,15 @@ int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename, int log_f
     return(-1);
   }
 
-  strcpy(shpfile->source, filename);
+  strlcpy(shpfile->source, filename, sizeof(shpfile->source));
   
   /* load some information about this shapefile */
   msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
   msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
   
-  dbfFilename = (char *)malloc(strlen(filename)+5);
+  bufferSize = strlen(filename)+5;
+  dbfFilename = (char *)malloc(bufferSize);
+  dbfFilename[0] = '\0';
   strcpy(dbfFilename, filename);
   
   /* clean off any extention the filename might have */
@@ -1684,7 +1687,7 @@ int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename, int log_f
   if( dbfFilename[i] == '.' )
     dbfFilename[i] = '\0';
   
-  strcat(dbfFilename, ".dbf");
+  strlcat(dbfFilename, ".dbf", bufferSize);
 
   shpfile->hDBF = msDBFOpen(dbfFilename, "rb");
 
@@ -1820,7 +1823,7 @@ void msTileIndexAbsoluteDir(char *tiFileAbsDir, layerObj *layer)
  
   msBuildPath(tiFileAbsPath, layer->map->mappath, layer->tileindex); /* absolute path to tileindex file */
   tiFileAbsDirTmp = msGetPath(tiFileAbsPath); /* tileindex file's directory */
-  strncpy(tiFileAbsDir, tiFileAbsDirTmp, MS_MAXPATHLEN);
+  strlcpy(tiFileAbsDir, tiFileAbsDirTmp, MS_MAXPATHLEN);
   free(tiFileAbsDirTmp);
 }
 
@@ -1933,7 +1936,7 @@ int msTiledSHPOpenFile(layerObj *layer)
     if(!layer->data) /* assume whole filename is in attribute field */
       filename = (char*) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex);
     else {  
-      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
+      snprintf(tilename, sizeof(tilename), "%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
       filename = tilename;
     }
       
@@ -1990,7 +1993,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
       if(!layer->data) /* assume whole filename is in attribute field */
 	    filename = (char *) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex);
       else {
-	    sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex) , layer->data);
+            snprintf(tilename, sizeof(tilename), "%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex) , layer->data);
 	    filename = tilename;
       }
 
@@ -2033,7 +2036,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
         if(!layer->data) /* assume whole filename is in attribute field */
 	      filename = (char *) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex);
         else {  
-	      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
+              snprintf(tilename, sizeof(tilename), "%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
 	      filename = tilename;
         }
 
@@ -2113,7 +2116,7 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
           if(!layer->data) /* assume whole filename is in attribute field */
             filename = (char *) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex);
           else {
-	        sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex) , layer->data);
+                snprintf(tilename, sizeof(tilename),"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex) , layer->data);
 	        filename = tilename;
           }
 
@@ -2156,7 +2159,7 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
             if(!layer->data) /* assume whole filename is in attribute field */
               filename = (char*)msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex);
             else {  
-              sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
+              snprintf(tilename, sizeof(tilename),"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
               filename = tilename;
 	          }
 
@@ -2243,7 +2246,7 @@ int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     if(!layer->data) /* assume whole filename is in attribute field */
       filename = (char*) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tile, layer->tileitemindex);
     else {  
-      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tile, layer->tileitemindex) , layer->data);
+      snprintf(tilename, sizeof(tilename), "%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tile, layer->tileitemindex) , layer->data);
       filename = tilename;
     }
       

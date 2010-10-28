@@ -141,7 +141,7 @@ static int msSetWMSParamInt(wmsParamsObj *wmsparams,
 {
     char szBuf[100];
 
-    snprintf(szBuf, 100, "%d", value);
+    snprintf(szBuf, sizeof(szBuf), "%d", value);
     msInsertHashTable(wmsparams->params, name, szBuf);
     wmsparams->numparams++;
 
@@ -156,6 +156,7 @@ static int msSetWMSParamInt(wmsParamsObj *wmsparams,
 static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams) 
 {
     const char *key, *value;
+    size_t bufferSize = 0;
     int nLen;
     char *pszURL;
 
@@ -172,7 +173,8 @@ static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams)
         key = msNextKeyFromHashTable(wmsparams->params, key);
     }
 
-    pszURL = (char*)malloc((nLen+1)*sizeof(char*));
+    bufferSize = nLen+1;
+    pszURL = (char*)malloc(bufferSize);
 
     /* Start with the onlineresource value and append trailing '?' or '&' 
      * if missing.
@@ -195,7 +197,7 @@ static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams)
     while (key != NULL)
     {
         value = msLookupHashTable(wmsparams->params, key);
-        sprintf(pszURL+nLen, "%s=%s&", key, value);
+        snprintf(pszURL+nLen, bufferSize-nLen, "%s=%s&", key, value);
         nLen += strlen(key) + strlen(value) + 2;
         key = msNextKeyFromHashTable(wmsparams->params, key);
     }
@@ -350,9 +352,9 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     {
         /* Was a wms_style_..._sld URL provided? */
         char szBuf[100];
-        sprintf(szBuf, "style_%.80s_sld", pszStyle);
+        snprintf(szBuf, sizeof(szBuf), "style_%.80s_sld", pszStyle);
         pszSLD = msOWSLookupMetadata(&(lp->metadata), "MO", szBuf);
-        sprintf(szBuf, "style_%.80s_sld_body", pszStyle);
+        snprintf(szBuf, sizeof(szBuf), "style_%.80s_sld_body", pszStyle);
         pszStyleSLDBody = msOWSLookupMetadata(&(lp->metadata), "MO", szBuf);
 
         if (pszSLD || pszStyleSLDBody)
@@ -643,7 +645,8 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             if (strncasecmp(pszEPSG, "EPSG:", 5) == 0)
             {
                 char szProj[20];
-                sprintf(szProj, "init=epsg:%s", pszEPSG+5);
+                snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
+
                 if (msLoadProjectionString(&(lp->projection), szProj) != 0)
                     return MS_FAILURE;
             }
@@ -822,7 +825,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msSetWMSParamInt(   psWMSParams, "HEIGHT",  bbox_height);
         msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
 
-        snprintf(szBuf, 100, "%.15g,%.15g,%.15g,%.15g", 
+        snprintf(szBuf, sizeof(szBuf), "%.15g,%.15g,%.15g,%.15g", 
                  bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
         msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
  
@@ -869,7 +872,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msSetWMSParamInt(   psWMSParams, "HEIGHT",  bbox_height);
         msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
 
-        snprintf(szBuf, 100, "%.15g,%.15g,%.15g,%.15g", 
+        snprintf(szBuf, sizeof(szBuf), "%.15g,%.15g,%.15g,%.15g", 
                  bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
         msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
         msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE);
@@ -1278,14 +1281,14 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                 int nLen;
 
                 nLen = strlen(value1) + strlen(value2) +2;
-                pszBuf = malloc(nLen * sizeof(char));
+                pszBuf = malloc(nLen);
                 if (pszBuf == NULL)
                 {
                     msSetError(MS_MEMERR, NULL, "msPrepareWMSLayerRequest()");
                     return MS_FAILURE;
                 }
 
-                sprintf(pszBuf, "%s,%s", value1, value2);
+                snprintf(pszBuf, nLen, "%s,%s", value1, value2);
                 msSetWMSParamString(&sThisWMSParams, keys[i], pszBuf,MS_FALSE);
 
                 /* This key existed already, we don't want it counted twice */
@@ -1460,7 +1463,9 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
                 if (nSize >= 0 && nSize < MS_BUFFER_LENGTH)
                     szBuf[nSize] = '\0';
                 else
-                    strcpy(szBuf, "(!!!)"); /* This should never happen */
+                {
+                    strlcpy(szBuf, "(!!!)", sizeof(szBuf)); /* This should never happen */
+                }
                 
                 fclose(fp);
                 
@@ -1470,12 +1475,12 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
             }
             else
             {
-                strcpy(szBuf, "(Failed to open exception response)");
+                strlcpy(szBuf, "(Failed to open exception response)", sizeof(szBuf));
             }
         }
         else
         {
-            strncpy( szBuf, pasReqInfo[iReq].result_data, MS_BUFFER_LENGTH );
+            strlcpy( szBuf, pasReqInfo[iReq].result_data, MS_BUFFER_LENGTH );
         }
 
         if (lp->debug)
@@ -1557,7 +1562,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
         /* Create a world file with raster extents */
         /* One line per value, in this order: cx, 0, 0, cy, ulx, uly */
         wldfile = msBuildPath(szPath, lp->map->mappath, lp->data);
-        if (wldfile)    
+        if (wldfile && (strlen(wldfile)>=3))    
             strcpy(wldfile+strlen(wldfile)-3, "wld");
         if (wldfile && (fp = VSIFOpenL(wldfile, "wt")) != NULL)
         {

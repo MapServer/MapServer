@@ -200,8 +200,8 @@ static errorObj *msInsertErrorObj(void)
           new_error->next = ms_error->next;
           new_error->code = ms_error->code;
           new_error->isreported = ms_error->isreported;
-          strcpy(new_error->routine, ms_error->routine);
-          strcpy(new_error->message, ms_error->message);
+          strlcpy(new_error->routine, ms_error->routine, sizeof(new_error->routine));
+          strlcpy(new_error->message, ms_error->message, sizeof(new_error->message));
 
           ms_error->next = new_error;
           ms_error->code = MS_NOERR;
@@ -328,8 +328,7 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
   if(!routine)
     strcpy(ms_error->routine, "");
   else {
-    strncpy(ms_error->routine, routine, ROUTINELENGTH);
-    ms_error->routine[ROUTINELENGTH-1] = '\0';
+    strlcpy(ms_error->routine, routine, sizeof(ms_error->routine));
   }
 
   if(!message_fmt)
@@ -398,7 +397,8 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   outputFormatObj *format = NULL;
   char *errormsg = msGetErrorString("; ");
   char *pFormatBuffer;
-  char cGDFormat[128];
+  size_t n = 0;
+
   if (map) {
       if( map->width > 0 && map->height > 0 )
       {
@@ -446,8 +446,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
             nEnd = nTextLength;
           nLength = nEnd-nStart;
 
-          strncpy(papszLines[i], errormsg+nStart, nLength);
-          papszLines[i][nLength] = '\0';
+          strlcpy(papszLines[i], errormsg+nStart, nLength+1);
         }
       }
     } else {
@@ -477,10 +476,12 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   else
   {
       pFormatBuffer = format->driver;
-      strcpy(cGDFormat, "gd/");
-      strcat(cGDFormat, &(format->driver[4]));
-      format->driver = &cGDFormat[0];
+      n = strlen(&(pFormatBuffer[4]));
+      format->driver = (char*) malloc(sizeof(char)*(n+4));
+      strcpy(format->driver, "gd/");
+      strlcat(format->driver, &(pFormatBuffer[4]), n);
       msSaveImageGD(&img, filename, format);
+      free(format);
       format->driver = pFormatBuffer;
   }
 

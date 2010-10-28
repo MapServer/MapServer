@@ -752,22 +752,22 @@ SWFButton BuildEllipseButton(int nX, int nY, int nWidth, int nHeight,
     
     if (nLayerIndex >=0 && nShapeIndex >= 0)
     {
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEUP);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEUP);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEUP);
 
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEDOWN);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEDOWN);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEDOWN);
 
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEOVER);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEOVER);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOVER);
         
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
                 nShapeIndex, MOUSEOUT);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOUT);
@@ -959,23 +959,23 @@ SWFButton   BuildButtonPolygon(gdPoint adfPoints[], int nPoints,
     
     if (nLayerIndex >=0 && nShapeIndex >= 0)
     {
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
                 nShapeIndex, MOUSEUP);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEUP);
 
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEDOWN);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEDOWN);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEDOWN);
 
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEOVER);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEOVER);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOVER);
         
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEOUT);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEOUT);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOUT);
     }
@@ -1016,23 +1016,23 @@ SWFButton   BuildButtonLine(gdPoint adfPoints[], int nPoints,
     
     if (nLayerIndex >=0 && nShapeIndex >= 0)
     {
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEUP);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEUP);
         SWFButton_addAction(b, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEUP);
 
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEDOWN);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEDOWN);
         SWFButton_addAction(b, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEDOWN);
 
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEOVER);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEOVER);
         SWFButton_addAction(b, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOVER);
         
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEOUT);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEOUT);
         SWFButton_addAction(b, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOUT);
     }
@@ -1224,22 +1224,22 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
             tokens = msStringSplit(metadata, ',', &n);
             if (tokens && n > 0)
             {
-                sprintf(gszAction, "nAttributes=%d;", n);
+                snprintf(gszAction, sizeof(gszAction), "nAttributes=%d;", n);
                 oAction = compileSWFActionCode(gszAction);
                 SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], oAction);
 
-                sprintf(gszAction, "%s", "Attributes=new Array();");
+                snprintf(gszAction, sizeof(gszAction), "%s", "Attributes=new Array();");
                 oAction = compileSWFActionCode(gszAction);
                 SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], oAction);
                 
                 for (i=0; i<n; i++)
                 {
-                    sprintf(gszAction, "Attributes[%d]=\"%s\";", i, tokens[i]);
+                    snprintf(gszAction, sizeof(gszAction), "Attributes[%d]=\"%s\";", i, tokens[i]);
                     oAction = compileSWFActionCode(gszAction);
                     SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], oAction);
                 }
                 
-                sprintf(szAction, "%s", "Element=new Array();");
+                snprintf(szAction, sizeof(gszAction), "%s", "Element=new Array();");
                 oAction = compileSWFActionCode(szAction);
                 SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp -1], oAction);
                 msFreeCharArray(tokens, n);
@@ -1310,15 +1310,15 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
         if (panIndex)
         {
-            sprintf(gszAction, "Element[%d]=new Array();", (int)shape->index);
+            snprintf(gszAction, sizeof(gszAction), "Element[%d]=new Array();", (int)shape->index);
             oAction = compileSWFActionCode(gszAction);
             /* SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp], oAction); */
             SWFMovie_add(GetCurrentMovie(map, image), oAction);
 
             for (i=0; i<iIndex; i++)
             {
-                sprintf(gszAction, "Element[%d][%d]=\"%s\";", (int)shape->index,
-                        i, shape->values[panIndex[i]]);
+                snprintf(gszAction, sizeof(gszAction), "Element[%d][%d]=\"%s\";", (int)shape->index,
+                         i, shape->values[panIndex[i]]);
                 oAction = compileSWFActionCode(gszAction);
                 /* SWFMovie_add(((SWFObj *)image->img.swf)->pasMovies[nTmp], oAction); */
                 SWFMovie_add(GetCurrentMovie(map, image), oAction);
@@ -1363,23 +1363,23 @@ void AddMouseActions(SWFButton oButton, int nLayerIndex, int nShapeIndex)
 {
     if (nLayerIndex >=0 && nShapeIndex >= 0)
     {
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEUP);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEUP);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEUP);
 
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEDOWN);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEDOWN);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEDOWN);
 
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEOVER);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEOVER);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOVER);
         
-        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
-                nShapeIndex, MOUSEOUT);
+        snprintf(gszAction, sizeof(gszAction), "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                 nShapeIndex, MOUSEOUT);
         SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
                             SWFBUTTON_MOUSEOUT);
     }
@@ -1410,7 +1410,7 @@ static SWFDisplayItem _msSWFAddButtonWithId(imageObj *image,
 
     if (oDisplay)
     {
-        sprintf(gszTmp, "button_%d_%d",nLayerIndex, nShapeIndex);
+        snprintf(gszTmp, sizeof(gszTmp), "button_%d_%d",nLayerIndex, nShapeIndex);
         ((SWFObj *)image->img.swf)->nTmpCount++;
         SWFDisplayItem_setName(oDisplay, gszTmp);
     }
@@ -3080,45 +3080,45 @@ int msSaveImageSWF(imageObj *image, char *filename)
 /* -------------------------------------------------------------------- */
 /*      write some AS related to the map file.                          */
 /* -------------------------------------------------------------------- */
-        sprintf(szAction, "%s", "mapObj=new Object();");
+        snprintf(szAction, sizeof(szAction), "%s", "mapObj=new Object();");
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 
-        sprintf(szAction, "mapObj.name=\"%s\";", ((SWFObj *)image->img.swf)->map->name);
+        snprintf(szAction, sizeof(szAction), "mapObj.name=\"%s\";", ((SWFObj *)image->img.swf)->map->name);
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
         
-        sprintf(szAction, "mapObj.width=%d;", ((SWFObj *)image->img.swf)->map->width);
+        snprintf(szAction, sizeof(szAction), "mapObj.width=%d;", ((SWFObj *)image->img.swf)->map->width);
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
         
-        sprintf(szAction, "mapObj.height=%d;", 
-                ((SWFObj *)image->img.swf)->map->height);
+        snprintf(szAction, sizeof(szAction), "mapObj.height=%d;", 
+                 ((SWFObj *)image->img.swf)->map->height);
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
         
-        sprintf(szAction, "mapObj.extent=\"%f,%f,%f,%f\";", 
-                ((SWFObj *)image->img.swf)->map->extent.minx,
-                ((SWFObj *)image->img.swf)->map->extent.miny,
-                ((SWFObj *)image->img.swf)->map->extent.maxx,
-                ((SWFObj *)image->img.swf)->map->extent.maxy);
+        snprintf(szAction, sizeof(szAction), "mapObj.extent=\"%f,%f,%f,%f\";", 
+                 ((SWFObj *)image->img.swf)->map->extent.minx,
+                 ((SWFObj *)image->img.swf)->map->extent.miny,
+                 ((SWFObj *)image->img.swf)->map->extent.maxx,
+                 ((SWFObj *)image->img.swf)->map->extent.maxy);
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 
-        sprintf(szAction, "mapObj.numlayers=%d;", 
-                ((SWFObj *)image->img.swf)->map->numlayers);
+        snprintf(szAction,  sizeof(szAction), "mapObj.numlayers=%d;", 
+                 ((SWFObj *)image->img.swf)->map->numlayers);
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
         
         
-        sprintf(szAction, "%s", "mapObj.layers=new Array();"); 
+        snprintf(szAction, sizeof(szAction), "%s", "mapObj.layers=new Array();"); 
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 
 /* -------------------------------------------------------------------- */
 /*      Write class for layer object.                                   */
 /* -------------------------------------------------------------------- */
-        sprintf(szAction, "%s", "function LayerObj(name, type, fullname, relativename){ this.name=name; this.type=type; this.fullname=fullname; this.relativename=relativename;}"); 
+        snprintf(szAction, sizeof(szAction), "%s", "function LayerObj(name, type, fullname, relativename){ this.name=name; this.type=type; this.fullname=fullname; this.relativename=relativename;}"); 
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 
@@ -3143,9 +3143,9 @@ int msSaveImageSWF(imageObj *image, char *filename)
         szExt[0] = '\0';
         if (iPointPos >= 0)
         {
-            strncpy(szBase, filename, iPointPos);
+            strlcpy(szBase, filename, iPointPos+1);
             szBase[iPointPos] = '\0';
-            strcpy(szExt, filename+iPointPos+1);
+            strlcpy(szExt, filename+iPointPos+1, sizeof(szExt));
         } 
         
 
@@ -3170,12 +3170,12 @@ int msSaveImageSWF(imageObj *image, char *filename)
                 /* -------------------------------------------------------------------- */
                 /*      build full filename.                                            */
                 /* -------------------------------------------------------------------- */
-                sprintf(szTmp, "%s%d", "_layer_", i);
+                snprintf(szTmp, sizeof(szTmp), "%s%d", "_layer_", i);
                 gszFilename[0] = '\0';
-                sprintf(gszFilename, szBase);
-                strcat(gszFilename, szTmp);
-                strcat(gszFilename, ".");
-                strcat(gszFilename, szExt);
+                snprintf(gszFilename, sizeof(gszFilename), szBase);
+                strlcat(gszFilename, szTmp, sizeof(gszFilename));
+                strlcat(gszFilename, ".", sizeof(gszFilename));
+                strlcat(gszFilename, szExt, sizeof(gszFilename));
                 /* -------------------------------------------------------------------- */
                 /*      build relative name.                                            */
                 /* -------------------------------------------------------------------- */
@@ -3220,9 +3220,9 @@ int msSaveImageSWF(imageObj *image, char *filename)
                 /* sprintf(gszFilename, "%s%d.swf", "layer_", i); */
             
                 /* sprintf(szAction, "mapObj.layers[%d]=\"%s\";", i, gszFilename); */
-                sprintf(szAction, "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"%s\",\"%s\");", i, 
-                        GET_LAYER(map, i)->name, GET_LAYER(map, i)->type, gszFilename,
-                        pszRelativeName);
+                snprintf(szAction, sizeof(szAction), "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"%s\",\"%s\");", i, 
+                         GET_LAYER(map, i)->name, GET_LAYER(map, i)->type, gszFilename,
+                         pszRelativeName);
             
                 oAction = compileSWFActionCode(szAction);
                 SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
@@ -3238,10 +3238,10 @@ int msSaveImageSWF(imageObj *image, char *filename)
                 if ( bLoadAutomatically )
                 {
                     if( bFileIsTemporary )
-                      sprintf(szAction, "loadMovieNum(\"%s%s\",%d);", map->web.imageurl, 
-	                          pszRelativeName, i+1);
+                      snprintf(szAction, sizeof(szAction), "loadMovieNum(\"%s%s\",%d);", map->web.imageurl, 
+                               pszRelativeName, i+1);
                     else
-                      sprintf(szAction, "loadMovieNum(\"%s\",%d);", pszRelativeName, i+1);
+                      snprintf(szAction, sizeof(szAction), "loadMovieNum(\"%s\",%d);", pszRelativeName, i+1);
 
                     oAction = compileSWFActionCode(szAction);
                     SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
@@ -3249,16 +3249,16 @@ int msSaveImageSWF(imageObj *image, char *filename)
             } 
             else /*layer which was not drawn */
             {
-                sprintf(szAction, 
-                        "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"undefined\",\"undefined\");", i, 
-                        GET_LAYER(map, i)->name, GET_LAYER(map, i)->type);
+                snprintf(szAction, sizeof(szAction),
+                         "mapObj.layers[%d]= new LayerObj(\"%s\",\"%d\",\"undefined\",\"undefined\");", i, 
+                         GET_LAYER(map, i)->name, GET_LAYER(map, i)->type);
             
                 oAction = compileSWFActionCode(szAction);
                 SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
             }
 
         }
-        sprintf(szAction, "stop();");
+        snprintf(szAction, sizeof(szAction), "stop();");
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(((SWFObj *)image->img.swf)->sMainMovie, oAction);
 

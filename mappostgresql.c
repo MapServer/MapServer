@@ -131,7 +131,7 @@ int msPOSTGRESQLJoinConnect(layerObj *layer, joinObj *join) {
             temp = (char *)(temp + 9);
             count = (int)(strstr(temp, " ") - temp);
             for(i = 0; i < count; i++) {
-                strncpy(temp, "*", (int)1);
+                strlcpy(temp, "*", (int)1);
                 temp++;
             }
         }

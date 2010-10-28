@@ -260,7 +260,7 @@ int msWFSLocateSRSInList(const char *pszList, const char *srs)
     else
       return MS_FALSE;
     
-    sprintf( epsg_string, "EPSG:%s", code );
+    snprintf( epsg_string, sizeof(epsg_string), "EPSG:%s", code );
 
     tokens = msStringSplit(pszList, ' ', &nTokens );
     if (tokens && nTokens > 0)
@@ -404,7 +404,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
 
             code = pszOutputSRS + 23;
             
-            sprintf( epsg_string, "EPSG:%s", code );
+            snprintf( epsg_string, sizeof(epsg_string), "EPSG:%s", code );
             
             /*we load the projection sting in the map and possibly 
               set the axis order*/
@@ -996,7 +996,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group, gmlItem
   gmlConstantObj *constant=NULL;
 
   /* setup the element tab */
-  element_tab = (char *) malloc(sizeof(char)*strlen(tab)+3);
+  element_tab = (char *) malloc(sizeof(char)*strlen(tab)+5);
   if(!element_tab) return;
   sprintf(element_tab, "%s    ", tab);
 
@@ -1494,9 +1494,9 @@ static int msWFSGetFeature_GMLPreamble( mapObj *map,
                 
                 now=localtime(&tim);
                 
-                sprintf(timestring, "%d-%02d-%02dT%02d:%02d:%02d",
-                        now->tm_year+1900, now->tm_mon+1, now->tm_mday,
-                        now->tm_hour, now->tm_min, now->tm_sec);
+                snprintf(timestring, sizeof(timestring), "%d-%02d-%02dT%02d:%02d:%02d",
+                         now->tm_year+1900, now->tm_mon+1, now->tm_mday,
+                         now->tm_hour, now->tm_min, now->tm_sec);
                 
                 msIO_printf("   xsi:schemaLocation=\"%s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s&amp;OUTPUTFORMAT=%s  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\" timeStamp=\"%s\" numberOfFeatures=\"%d\">\n",
                             gmlinfo->user_namespace_uri_encoded, 
@@ -1802,7 +1802,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                   {
                       if (!lp->items[z] || strlen(lp->items[z]) <= 0)
                         continue;
-                      sprintf(szTmp, "%s_alias", lp->items[z]);
+                      snprintf(szTmp, sizeof(szTmp), "%s_alias", lp->items[z]);
                       pszFullName = msOWSLookupMetadata(&(lp->metadata), "G", szTmp);
                       if (pszFullName)
                         papszPropertyName[k] = msReplaceSubstring(papszPropertyName[k], pszFullName, lp->items[z]);
@@ -1826,9 +1826,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                           /*we need to check of the property name is the geometry name; In that case it
                             is a valid property name*/
                           if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL) 
-                            sprintf(szTmp, "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
+                              snprintf(szTmp, sizeof(szTmp), "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
                           else
-                            sprintf(szTmp, OWS_GML_DEFAULT_GEOMETRY_NAME);
+                              snprintf(szTmp, sizeof(szTmp), OWS_GML_DEFAULT_GEOMETRY_NAME);
                           if (z == lp->numitems && strcasecmp(tokens[y], szTmp) != 0)
                           {
                               msSetError(MS_WFSERR, 
@@ -1865,9 +1865,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
                           /* exclude geometry if it was not asked for */
                           if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL) 
-                            sprintf(szTmp, "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
+                            snprintf(szTmp, sizeof(szTmp), "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
                           else
-                            sprintf(szTmp, OWS_GML_DEFAULT_GEOMETRY_NAME);
+                            snprintf(szTmp, sizeof(szTmp), OWS_GML_DEFAULT_GEOMETRY_NAME);
                           
                           if (strstr(papszPropertyName[k], szTmp) == NULL) 
                             msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");

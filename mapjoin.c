@@ -607,7 +607,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
 #endif
     {
         char tmp[4000];
-        sprintf( tmp, "Failed to connect to SQL server: Error: %s\nHost: %s\nUsername:%s\nPassword:%s\n", mysql_error(joininfo->conn), DB_HOST, DB_USER, DB_PASSWD);
+        snprintf( tmp, sizeof(tmp), "Failed to connect to SQL server: Error: %s\nHost: %s\nUsername:%s\nPassword:%s\n", mysql_error(joininfo->conn), DB_HOST, DB_USER, DB_PASSWD);
         msSetError(MS_QUERYERR, tmp,
            "msMYGISLayerOpen()");
         free(joininfo);
@@ -626,7 +626,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
 			mysql_free_result(joininfo->qresult);
 		}
     MYDEBUG printf("msMYGISLayerOpen5 called<br>\n");
-		sprintf(qbuf, "SELECT count(%s) FROM %s", join->to, join->table);
+               snprintf(qbuf, sizeof(qbuf), "SELECT count(%s) FROM %s", join->to, join->table);
 		MYDEBUG printf("%s<br>\n", qbuf);
    	if ((joininfo->qresult = msMySQLQuery(qbuf, joininfo->conn))) /* There were some rows found, write 'em out for debug */
 		{
@@ -642,7 +642,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
     	msSetError(MS_DBFERR, "Item %s not found in table %s.", "msMySQLJoinConnect()", join->to, join->table); 
 	    return(MS_FAILURE);
 		}
-		sprintf(qbuf, "EXPLAIN %s", join->table);
+		snprintf(qbuf, sizeof(qbuf), "EXPLAIN %s", join->table);
    	if ((joininfo->qresult = msMySQLQuery(qbuf, joininfo->conn))) /* There were some rows found, write 'em out for debug */
 		{
 	  		join->numitems = mysql_affected_rows(joininfo->conn);
@@ -748,7 +748,7 @@ int msMySQLJoinNext(joinObj *join)
 /* for(i=joininfo->nextrecord; i<n; i++) { // find a match */
 /* if(strcmp(joininfo->target, msMySQLReadStringAttribute(joininfo->conn, i, joininfo->toindex)) == 0) break; */
 /* }   */
-   	sprintf(qbuf, "SELECT * FROM %s WHERE %s = %s", join->table, joininfo->tocolumn, joininfo->target); 
+   	snprintf(qbuf, sizeof(qbuf), "SELECT * FROM %s WHERE %s = %s", join->table, joininfo->tocolumn, joininfo->target); 
 		MYDEBUG printf("%s<BR>\n", qbuf);
    	if ((joininfo->qresult = msMySQLQuery(qbuf, joininfo->conn))) /* There were some rows found, write 'em out for debug */
 		{

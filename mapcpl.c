@@ -107,8 +107,7 @@ const char *msGetBasename( const char *pszFullFilename )
 
     assert( nLength < MS_PATH_BUF_SIZE );
 
-    strncpy( szStaticResult, pszFullFilename + iFileStart, nLength );
-    szStaticResult[nLength] = '\0';
+    strlcpy( szStaticResult, pszFullFilename + iFileStart, nLength+1 );
 
     return szStaticResult;
 }

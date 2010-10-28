@@ -1387,10 +1387,10 @@ static int LutFromGimpLine( char *lut_line, GByte *lut )
         if( atoi(tokens[i*2]) >= 0 )
         {
             if( count++ > 0 )
-                strcat( wrkLUTDef, "," );
+                strlcat( wrkLUTDef, ",", sizeof(wrkLUTDef));
 
-            sprintf( wrkLUTDef + strlen(wrkLUTDef), "%s:%s",
-                     tokens[i*2], tokens[i*2+1] );
+            snprintf( wrkLUTDef + strlen(wrkLUTDef), sizeof(wrkLUTDef)-strlen(wrkLUTDef), 
+                      "%s:%s", tokens[i*2], tokens[i*2+1] );
         }
     }
 

@@ -1365,7 +1365,7 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
             int length = wrappedString - headPtr;
             piece = malloc(length+1);
             memset(piece, 0, length+1);
-            strncpy(piece, headPtr, length);
+            strlcpy(piece, headPtr, length+1);
 
             if (headPtr == string){
                 PDF_show_xy(pdf,piece,x,-y);

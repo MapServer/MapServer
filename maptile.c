@@ -462,7 +462,7 @@ int msTileSetExtent(mapservObj* msObj) {
     char tilebufferstr[64];
 
     /* Write the tile buffer to a string */
-    snprintf(tilebufferstr, 64, "-%d", params.map_edge_buffer);
+    snprintf(tilebufferstr, sizeof(tilebufferstr), "-%d", params.map_edge_buffer);
 
     /* Hm, the labelcache buffer is set... */
     if((value = msLookupHashTable(meta, "labelcache_map_edge_buffer")) != NULL) {

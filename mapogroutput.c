@@ -111,7 +111,7 @@ char **msOGRRecursiveFileList( const char *path )
         if( EQUAL(file_list[i],".") || EQUAL(file_list[i],"..") )
             continue;
 
-        strncpy( full_filename, 
+        strlcpy( full_filename, 
                  CPLFormFilename( path, file_list[i], NULL ),
                  sizeof(full_filename) );
 
@@ -146,7 +146,7 @@ static void msOGRCleanupDS( const char *datasource_name )
     char path[MS_MAXPATHLEN];
     int i;
     
-    strncpy( path, CPLGetPath( datasource_name ), sizeof(path) );
+    strlcpy( path, CPLGetPath( datasource_name ), sizeof(path) );
     file_list = CPLReadDir( path );
 
     for( i = 0; file_list != NULL && file_list[i] != NULL; i++ )
@@ -157,7 +157,7 @@ static void msOGRCleanupDS( const char *datasource_name )
         if( EQUAL(file_list[i],".") || EQUAL(file_list[i],"..") )
             continue;
 
-        strncpy( full_filename, 
+        strlcpy( full_filename, 
                  CPLFormFilename( path, file_list[i], NULL ),
                  sizeof(full_filename) );
 
@@ -170,7 +170,7 @@ static void msOGRCleanupDS( const char *datasource_name )
         else if( VSI_ISDIR( sStatBuf.st_mode ) )
         {
             char fake_ds_name[MS_MAXPATHLEN];
-            strncpy( fake_ds_name, 
+            strlcpy( fake_ds_name, 
                      CPLFormFilename( full_filename, "abc.dat", NULL ),
                      sizeof(fake_ds_name) );
             msOGRCleanupDS( fake_ds_name );

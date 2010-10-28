@@ -166,18 +166,20 @@ int msSaveImageOgl(imageObj *img, char *filename, outputFormatObj *format)
 	OglRenderer* ogl = getOglRenderer(img);
 	ogl->attach(gdImg);
 	char *pFormatBuffer;
-	char cGDFormat[128];
+	size_t n = 0;
 	int iReturn = 0;
 
 	pFormatBuffer = format->driver;
 
-	strcpy(cGDFormat, "gd/");
-	strcat(cGDFormat, &(format->driver[4]));
+        n = strlen(&(pFormatBuffer[4]));
+        format->driver = (char*)malloc(n+3+1);
+        strcpy(format->driver, "gd/");
+        strlcat(format->driver, &(pFormatBuffer[4]), n+3+1);
 
-	format->driver = &cGDFormat[0];
 
 	iReturn = msSaveImageGD(gdImg, filename, format);
 
+        free(format->driver);
 	format->driver = pFormatBuffer;
 
 	return 1;

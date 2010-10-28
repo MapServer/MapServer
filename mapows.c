@@ -164,8 +164,7 @@ const char *msOWSLookupMetadata(hashTableObj *metadata,
     {
         char buf[100] = "ows_";
 
-        strncpy(buf+4, name, 95);
-        buf[99] = '\0';
+        strlcpy(buf+4, name, 96);
 
         while (value == NULL && *namespaces != '\0')
         {
@@ -412,11 +411,13 @@ int msOWSNegotiateVersion(int requested_version, int supported_versions[], int n
 char * msOWSTerminateOnlineResource(const char *src_url)
 {
     char *online_resource = NULL;
+    size_t buffer_size = 0;
 
     if (src_url == NULL) 
         return NULL;
-
-    online_resource = (char*) malloc(strlen(src_url)+2);
+    
+    buffer_size = strlen(src_url)+2;
+    online_resource = (char*) malloc(buffer_size);
 
     if (online_resource == NULL)
     {
@@ -424,17 +425,17 @@ char * msOWSTerminateOnlineResource(const char *src_url)
         return NULL;
     }
 
-    strcpy(online_resource, src_url);
+    strlcpy(online_resource, src_url, buffer_size);
 
     /* Append trailing '?' or '&' if missing. */
     if (strchr(online_resource, '?') == NULL)
-        strcat(online_resource, "?");
+        strlcat(online_resource, "?", buffer_size);
     else
     {
         char *c;
         c = online_resource+strlen(online_resource)-1;
-        if (*c != '?' && *c != '&')
-            strcpy(c+1, "&");
+        if (*c != '?' && *c != '&') 
+            strlcpy(c+1, "&", buffer_size-strlen(online_resource));
     }
 
     return online_resource;
@@ -453,6 +454,7 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
                               cgiRequestObj *req)
 {
     const char *value;
+    size_t buffer_size = 0;
     char *online_resource = NULL;
 
     /* We need this script's URL, including hostname. */
@@ -498,20 +500,21 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
         }
 
         if (hostname && port && script) {
-            online_resource = (char*)malloc(sizeof(char)*(strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+10));
+            buffer_size = strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+10;
+            online_resource = (char*)malloc(buffer_size);
             if (online_resource) 
             {
                 if ((atoi(port) == 80 && strcmp(protocol, "http") == 0) ||
                     (atoi(port) == 443 && strcmp(protocol, "https") == 0) )
-                    sprintf(online_resource, "%s://%s%s?", protocol, hostname, script);
+                    snprintf(online_resource, buffer_size, "%s://%s%s?", protocol, hostname, script);
                 else
-                    sprintf(online_resource, "%s://%s:%s%s?", protocol, hostname, port, script);
+                    snprintf(online_resource, buffer_size, "%s://%s:%s%s?", protocol, hostname, port, script);
 
                 if (mapparam)
                 {
                     int baselen;
                     baselen = strlen(online_resource);
-                    sprintf(online_resource+baselen, "map=%s&", mapparam);
+                    snprintf(online_resource+baselen, buffer_size-baselen, "map=%s&", mapparam);
                 }
             }
         }
@@ -827,22 +830,25 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
 {
     const char *value;
     char *metadata_name;
+    size_t buffer_size = 0, buffer_size_tmp = 0;
     char *encoded;
     int status = MS_NOERR;
     char *type=NULL, *width=NULL, *height=NULL, *urlfrmt=NULL, *href=NULL;
 
-    metadata_name = (char*)malloc(strlen(name)*sizeof(char)+10);
+    buffer_size = strlen(name)+10;
+    metadata_name = (char*)malloc(buffer_size);
 
     /* Get type */
     if(type_format != NULL)
     {
-        sprintf(metadata_name, "%s_type", name);
+        snprintf(metadata_name, buffer_size, "%s_type", name);
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
             encoded = msEncodeHTMLEntities(value);
-            type = (char*)malloc(strlen(type_format)+strlen(encoded));
-            sprintf(type, type_format, encoded);
+            buffer_size_tmp = strlen(type_format)+strlen(encoded);
+            type = (char*)malloc(buffer_size_tmp);
+            snprintf(type, buffer_size_tmp, type_format, encoded);
             msFree(encoded);
         }
     }
@@ -850,13 +856,14 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     /* Get width */
     if(width_format != NULL)
     {
-        sprintf(metadata_name, "%s_width", name);
+        snprintf(metadata_name, buffer_size, "%s_width", name);
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
             encoded = msEncodeHTMLEntities(value);
-            width = (char*)malloc(strlen(width_format)+strlen(encoded));
-            sprintf(width, width_format, encoded);
+            buffer_size_tmp = strlen(width_format)+strlen(encoded);
+            width = (char*)malloc(buffer_size_tmp);
+            snprintf(width, buffer_size_tmp, width_format, encoded);
             msFree(encoded);
         }
     }
@@ -864,13 +871,14 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     /* Get height */
     if(height_format != NULL)
     {
-        sprintf(metadata_name, "%s_height", name);
+        snprintf(metadata_name, buffer_size, "%s_height", name);
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
             encoded = msEncodeHTMLEntities(value);
-            height = (char*)malloc(strlen(height_format)+strlen(encoded));
-            sprintf(height, height_format, encoded);
+            buffer_size_tmp = strlen(height_format)+strlen(encoded);
+            height = (char*)malloc(buffer_size_tmp);
+            snprintf(height, buffer_size_tmp, height_format, encoded);
             msFree(encoded);
         }
     }
@@ -878,13 +886,14 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     /* Get format */
     if(urlfrmt_format != NULL)
     {
-        sprintf(metadata_name, "%s_format", name);
+        snprintf(metadata_name, buffer_size, "%s_format", name);
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
             encoded = msEncodeHTMLEntities(value);
-            urlfrmt = (char*)malloc(strlen(urlfrmt_format)+strlen(encoded));
-            sprintf(urlfrmt, urlfrmt_format, encoded);
+            buffer_size_tmp = strlen(urlfrmt_format)+strlen(encoded);
+            urlfrmt = (char*)malloc(buffer_size_tmp);
+            snprintf(urlfrmt, buffer_size_tmp, urlfrmt_format, encoded);
             msFree(encoded);
         }
     }
@@ -892,13 +901,14 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     /* Get href */
     if(href_format != NULL)
     {
-        sprintf(metadata_name, "%s_href", name);
+        snprintf(metadata_name, buffer_size, "%s_href", name);
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
             encoded = msEncodeHTMLEntities(value);
-            href = (char*)malloc(strlen(href_format)+strlen(encoded));
-            sprintf(href, href_format, encoded);
+            buffer_size_tmp = strlen(href_format)+strlen(encoded);
+            href = (char*)malloc(buffer_size_tmp);
+            snprintf(href, buffer_size_tmp, href_format, encoded);
             msFree(encoded);
         }
     }
@@ -924,41 +934,41 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         {
             if(!type && type_format && default_type)
             {
-                type = (char*) malloc(strlen(type_format) + 
-                                      strlen(default_type) + 2);
-                sprintf(type, type_format, default_type);
+                buffer_size_tmp = strlen(type_format) + strlen(default_type) + 2;
+                type = (char*) malloc(buffer_size_tmp);
+                snprintf(type, buffer_size_tmp, type_format, default_type);
             }
             else if(!type)
                 type = strdup("");
             if(!width && width_format && default_width)
             {
-                width = (char*) malloc(strlen(width_format) + 
-                                      strlen(default_width) + 2);
-                sprintf(width, width_format, default_width);
+                buffer_size_tmp = strlen(width_format) + strlen(default_width) + 2;
+                width = (char*) malloc(buffer_size_tmp);
+                snprintf(width, buffer_size_tmp, width_format, default_width);
             }
             else if(!width)
                 width = strdup("");
             if(!height && height_format && default_height)
             {
-                height = (char*) malloc(strlen(height_format) + 
-                                      strlen(default_height) + 2);
-                sprintf(height, height_format, default_height);
+                buffer_size_tmp =  strlen(height_format) + strlen(default_height) + 2;
+                height = (char*) malloc(buffer_size_tmp);
+                snprintf(height, buffer_size_tmp, height_format, default_height);
             }
             else if(!height)
                 height = strdup("");
             if(!urlfrmt && urlfrmt_format && default_urlfrmt)
             {
-                urlfrmt = (char*) malloc(strlen(urlfrmt_format) + 
-                                      strlen(default_urlfrmt) + 2);
-                sprintf(urlfrmt, urlfrmt_format, default_urlfrmt);
+                buffer_size_tmp = strlen(urlfrmt_format) + strlen(default_urlfrmt) + 2;
+                urlfrmt = (char*) malloc(buffer_size_tmp);
+                snprintf(urlfrmt, buffer_size_tmp, urlfrmt_format, default_urlfrmt);
             }
             else if(!urlfrmt)
                 urlfrmt = strdup("");
             if(!href && href_format && default_href)
             {
-                href = (char*) malloc(strlen(href_format) + 
-                                      strlen(default_href) + 2);
-                sprintf(href, href_format, default_href);
+                buffer_size_tmp = strlen(href_format) + strlen(default_href) + 2;
+                href = (char*) malloc(buffer_size_tmp);
+                snprintf(href, buffer_size_tmp, href_format, default_href);
             }
             else if(!href)
                 href = strdup("");
@@ -1554,14 +1564,15 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
                             const char *pszExt)
 {
     char *pszBuf, *pszPtr;
-    int  i, nBufLen;
+    int  i;
+    size_t nBufLen = 0;
 
 
-    nBufLen = strlen(pszURL) + strlen(pszExt) +1;
+    nBufLen = strlen(pszURL) + strlen(pszExt) +2;
     if (pszPath)
         nBufLen += (strlen(pszPath)+1);
-
-    pszBuf = (char*)malloc((nBufLen+1)*sizeof(char));
+    
+    pszBuf = (char*)malloc(nBufLen);
     if (pszBuf == NULL)
     {
         msSetError(MS_MEMERR, NULL, "msOWSBuildURLFilename()");
@@ -1574,14 +1585,14 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
 #ifdef _WIN32
         if (pszPath[strlen(pszPath) -1] != '/' &&
             pszPath[strlen(pszPath) -1] != '\\')
-          sprintf(pszBuf, "%s\\", pszPath);
+          snprintf(pszBuf, nBufLen, "%s\\", pszPath);
         else
-          sprintf(pszBuf, "%s", pszPath);
+          snprintf(pszBuf, nBufLen, "%s", pszPath);
 #else
         if (pszPath[strlen(pszPath) -1] != '/')
-          sprintf(pszBuf, "%s/", pszPath);
+          snprintf(pszBuf, nBufLen, "%s/", pszPath);
         else
-          sprintf(pszBuf, "%s", pszPath);
+          snprintf(pszBuf, nBufLen, "%s", pszPath);
 #endif
     }
 
@@ -1596,7 +1607,7 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
         pszPtr++;
     }
     
-    strcpy(pszPtr, pszExt);
+    strlcpy(pszPtr, pszExt, nBufLen);
 
     return pszBuf;
 }
@@ -1624,16 +1635,16 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
     if (!bReturnOnlyFirstOne) return value;
 
     /* caller requested only first projection code */
-    strncpy(epsgCode, value, 19);
-    epsgCode[19] = '\0';
+    strlcpy(epsgCode, value, 20);
+
     if ((value=strchr(epsgCode, ' ')) != NULL) *value = '\0';
     
     return epsgCode;
   } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=epsg:")) != NULL && strlen(value) < 20) {
-    sprintf(epsgCode, "EPSG:%s", value+10);
+    snprintf(epsgCode, sizeof(epsgCode), "EPSG:%s", value+10);
     return epsgCode;
   } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=crs:")) != NULL && strlen(value) < 20) {
-    sprintf(epsgCode, "CRS:%s", value+9);
+    snprintf(epsgCode, sizeof(epsgCode), "CRS:%s", value+9);
     return epsgCode;
   } else if (proj && proj->numargs > 0 && (strncasecmp(proj->args[0], "AUTO:", 5) == 0 ||
                                            strncasecmp(proj->args[0], "AUTO2:", 6) == 0)) {
@@ -1656,7 +1667,8 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
     char *result;
     char **tokens;
     int numtokens, i;
-
+    size_t bufferSize = 0;
+    
     const char *oldStyle = msOWSGetEPSGProj( proj, metadata, namespaces, 
                                              bReturnOnlyFirstOne );
 
@@ -1671,21 +1683,24 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
         char urn[100];
 
         if( strncmp(tokens[i],"EPSG:",5) == 0 )
-            sprintf( urn, "urn:ogc:def:crs:EPSG::%s", tokens[i]+5 );
+            snprintf( urn, sizeof(urn), "urn:ogc:def:crs:EPSG::%s", tokens[i]+5 );
         else if( strcasecmp(tokens[i],"imageCRS") == 0 )
-            sprintf( urn, "urn:ogc:def:crs:OGC::imageCRS" );
-        else if( strncmp(tokens[i],"urn:ogc:def:crs:",16) == 0 )
-            strncpy( urn, tokens[i], 100 );
-        else
-            strncpy( urn, "", 100 );
+            snprintf( urn, sizeof(urn), "urn:ogc:def:crs:OGC::imageCRS" );
+        else if( strncmp(tokens[i],"urn:ogc:def:crs:",16) == 0 ) {
+            strlcpy( urn, tokens[i], sizeof(urn));
+        }
+        else {
+            strlcpy( urn, "", sizeof(urn));
+        }
 
         if( strlen(urn) > 0 )
         {
-            result = (char *) realloc(result,strlen(result)+strlen(urn)+2);
+            bufferSize = strlen(result)+strlen(urn)+2;
+            result = (char *) realloc(result, bufferSize);
             
             if( strlen(result) > 0 )
-                strcat( result, " " );
-            strcat( result, urn );
+                strlcat( result, " ", bufferSize);
+            strlcat( result, urn , bufferSize);
         }
         else
         {
@@ -1726,51 +1741,53 @@ void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension,
                            const char **papszDimMultiValue)
 {
     char *pszDimensionItem;
+    size_t bufferSize = 0;
 
     if(pszDimension == NULL || layer == NULL)
         return;
 
-    pszDimensionItem = (char*)malloc(strlen(pszDimension)+50);
+    bufferSize = strlen(pszDimension)+50;
+    pszDimensionItem = (char*)malloc(bufferSize);
 
     /* units (mandatory in map context) */
     if(papszDimUnits != NULL)
     {
-        sprintf(pszDimensionItem, "dimension_%s_units",          pszDimension);
+        snprintf(pszDimensionItem, bufferSize, "dimension_%s_units",          pszDimension);
         *papszDimUnits = msOWSLookupMetadata(&(layer->metadata), "MO",
                                            pszDimensionItem);
     }
     /* unitSymbol (mandatory in map context) */
     if(papszDimUnitSymbol != NULL)
     {
-        sprintf(pszDimensionItem, "dimension_%s_unitsymbol",     pszDimension);
+        snprintf(pszDimensionItem, bufferSize, "dimension_%s_unitsymbol",     pszDimension);
         *papszDimUnitSymbol = msOWSLookupMetadata(&(layer->metadata), "MO", 
                                                   pszDimensionItem);
     }
     /* userValue (mandatory in map context) */
     if(papszDimUserValue != NULL)
     {
-        sprintf(pszDimensionItem, "dimension_%s_uservalue",      pszDimension);
+        snprintf(pszDimensionItem, bufferSize, "dimension_%s_uservalue",      pszDimension);
         *papszDimUserValue = msOWSLookupMetadata(&(layer->metadata), "MO", 
                                                  pszDimensionItem);
     }
     /* default */
     if(papszDimDefault != NULL)
     {
-        sprintf(pszDimensionItem, "dimension_%s_default",        pszDimension);
+        snprintf(pszDimensionItem, bufferSize, "dimension_%s_default",        pszDimension);
         *papszDimDefault = msOWSLookupMetadata(&(layer->metadata), "MO",
                                                pszDimensionItem);
     }
     /* multipleValues */
     if(papszDimMultiValue != NULL)
     {
-        sprintf(pszDimensionItem, "dimension_%s_multiplevalues", pszDimension);
+        snprintf(pszDimensionItem, bufferSize, "dimension_%s_multiplevalues", pszDimension);
         *papszDimMultiValue = msOWSLookupMetadata(&(layer->metadata), "MO", 
                                                   pszDimensionItem);
     }
     /* nearestValue */
     if(papszDimNearValue != NULL)
     {
-        sprintf(pszDimensionItem, "dimension_%s_nearestvalue",   pszDimension);
+        snprintf(pszDimensionItem, bufferSize, "dimension_%s_nearestvalue",   pszDimension);
         *papszDimNearValue = msOWSLookupMetadata(&(layer->metadata), "MO", 
                                                  pszDimensionItem);
     }

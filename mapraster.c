@@ -80,9 +80,9 @@ int msGetClass(layerObj *layer, colorObj *color)
       return(i);
     switch(layer->class[i]->expression.type) {
     case(MS_STRING):
-      sprintf(tmpstr2, "%d %d %d", color->red, color->green, color->blue);
+      snprintf(tmpstr2, sizeof(tmpstr2), "%d %d %d", color->red, color->green, color->blue);
       if(strcmp(layer->class[i]->expression.string, tmpstr2) == 0) return(i); /* matched */
-      sprintf(tmpstr2, "%d", color->pen);
+      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->pen);
       if(strcmp(layer->class[i]->expression.string, tmpstr2) == 0) return(i); /* matched */
       break;
     case(MS_REGEX):
@@ -94,22 +94,22 @@ int msGetClass(layerObj *layer, colorObj *color)
 	layer->class[i]->expression.compiled = MS_TRUE;
       }
 
-      sprintf(tmpstr2, "%d %d %d", color->red, color->green, color->blue);
+      snprintf(tmpstr2, sizeof(tmpstr2), "%d %d %d", color->red, color->green, color->blue);
       if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
-      sprintf(tmpstr2, "%d", color->pen);
+      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->pen);
       if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
       break;
     case(MS_EXPRESSION):
       tmpstr1 = strdup(layer->class[i]->expression.string);
 
-      sprintf(tmpstr2, "%d", color->red);
+      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->red);
       tmpstr1 = msReplaceSubstring(tmpstr1, "[red]", tmpstr2);
-      sprintf(tmpstr2, "%d", color->green);
+      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->green);
       tmpstr1 = msReplaceSubstring(tmpstr1, "[green]", tmpstr2);
-      sprintf(tmpstr2, "%d", color->blue);
+      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->blue);
       tmpstr1 = msReplaceSubstring(tmpstr1, "[blue]", tmpstr2);
 
-      sprintf(tmpstr2, "%d", color->pen);
+      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->pen);
       tmpstr1 = msReplaceSubstring(tmpstr1, "[pixel]", tmpstr2);
 
       msAcquireLock( TLOCK_PARSER );
@@ -152,7 +152,7 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue,
 
         switch(layer->class[i]->expression.type) {
           case(MS_STRING):
-            sprintf(tmpstr2, "%18g", fValue );
+            snprintf(tmpstr2, sizeof(tmpstr2), "%18g", fValue );
             /* trim junk white space */
             tmpstr1= tmpstr2;
             while( *tmpstr1 == ' ' )
@@ -170,7 +170,7 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue,
                 layer->class[i]->expression.compiled = MS_TRUE;
             }
 
-            sprintf(tmpstr2, "%18g", fValue );
+            snprintf(tmpstr2, sizeof(tmpstr2), "%18g", fValue );
             if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
             break;
 
@@ -179,15 +179,15 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue,
 
             if( red != -1 && green != -1 && blue != -1 )
             {
-                sprintf(tmpstr2, "%d", red);
+                snprintf(tmpstr2, sizeof(tmpstr2), "%d", red);
                 tmpstr1 = msReplaceSubstring(tmpstr1, "[red]", tmpstr2);
-                sprintf(tmpstr2, "%d", green);
+                snprintf(tmpstr2, sizeof(tmpstr2), "%d", green);
                 tmpstr1 = msReplaceSubstring(tmpstr1, "[green]", tmpstr2);
-                sprintf(tmpstr2, "%d", blue);
+                snprintf(tmpstr2, sizeof(tmpstr2), "%d", blue);
                 tmpstr1 = msReplaceSubstring(tmpstr1, "[blue]", tmpstr2);
             }
 
-            sprintf(tmpstr2, "%18g", fValue);
+            snprintf(tmpstr2, sizeof(tmpstr2), "%18g", fValue);
             tmpstr1 = msReplaceSubstring(tmpstr1, "[pixel]", tmpstr2);
 
             msAcquireLock( TLOCK_PARSER );
@@ -526,9 +526,11 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
       if(status == MS_DONE) break; /* no more tiles/images */
        
       if(layer->data == NULL || strlen(layer->data) == 0 ) /* assume whole filename is in attribute field */
-          strcpy( tilename, tshp.values[tileitemindex] );
+      {
+          strlcpy( tilename, tshp.values[tileitemindex], sizeof(tilename));
+      }
       else
-          sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
+          snprintf(tilename, sizeof(tilename), "%s/%s", tshp.values[tileitemindex], layer->data);
       filename = tilename;
       
       msFreeShape(&tshp); /* done with the shape */
@@ -634,7 +636,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
                 char	szLongMsg[MESSAGELENGTH*2];
                 errorObj *ms_error = msGetErrorObj();
                 
-                sprintf( szLongMsg, 
+                snprintf( szLongMsg, sizeof(szLongMsg),
                          "%s\n"
                          "PROJECTION AUTO cannot be used for this "
                          "GDAL raster (`%s').",

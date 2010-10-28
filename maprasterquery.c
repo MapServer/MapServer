@@ -857,9 +857,11 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
             if(status == MS_DONE) break; /* no more tiles/images */
             
             if(layer->data == NULL || strlen(layer->data) == 0 ) /* assume whole filename is in attribute field */
-                strcpy( tilename, tshp.values[tileitemindex] );
+            {
+                strlcpy( tilename, tshp.values[tileitemindex], sizeof(tilename));
+            }
             else
-                sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
+                snprintf(tilename, sizeof(tilename), "%s/%s", tshp.values[tileitemindex], layer->data);
             filename = tilename;
             
             msFreeShape(&tshp); /* done with the shape */
@@ -949,7 +951,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
                     char	szLongMsg[MESSAGELENGTH*2];
                     errorObj *ms_error = msGetErrorObj();
 
-                    sprintf( szLongMsg, 
+                    snprintf( szLongMsg, sizeof(szLongMsg),
                              "%s\n"
                              "PROJECTION AUTO cannot be used for this "
                              "GDAL raster (`%s').",
@@ -1363,13 +1365,14 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
         
         for( i = 0; i < layer->numitems; i++ )
         {
+            const size_t bufferSize = 1000;
             char szWork[1000];
 
             szWork[0] = '\0';
             if( EQUAL(layer->items[i],"x") && rlinfo->qc_x )
-                sprintf( szWork, "%.8g", rlinfo->qc_x[record] );
+                snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_x[record] );
             else if( EQUAL(layer->items[i],"y") && rlinfo->qc_y )
-                sprintf( szWork, "%.8g", rlinfo->qc_y[record] );
+                snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_y[record] );
 
             else if( EQUAL(layer->items[i],"value_list") && rlinfo->qc_values )
             {
@@ -1378,35 +1381,35 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
                 for( iValue = 0; iValue < rlinfo->band_count; iValue++ )
                 {
                     if( iValue != 0 )
-                        strcat( szWork, "," );
+                        strlcat( szWork, ",", bufferSize);
 
-                    sprintf( szWork+strlen(szWork), "%.8g", 
-                             rlinfo->qc_values[record * rlinfo->band_count
-                                               + iValue] );
+                    snprintf( szWork+strlen(szWork), bufferSize-strlen(szWork), "%.8g", 
+                              rlinfo->qc_values[record * rlinfo->band_count
+                                                + iValue] );
                 }
             }
             else if( EQUALN(layer->items[i],"value_",6) && rlinfo->qc_values )
             {
                 int iValue = atoi(layer->items[i]+6);
-                sprintf( szWork, "%.8g", 
-                         rlinfo->qc_values[record*rlinfo->band_count+iValue] );
+                snprintf( szWork, bufferSize, "%.8g", 
+                          rlinfo->qc_values[record*rlinfo->band_count+iValue] );
             }
             else if( EQUAL(layer->items[i],"class") && rlinfo->qc_class ) 
             {
                 int p_class = rlinfo->qc_class[record];
                 if( layer->class[p_class]->name != NULL )
-                    sprintf( szWork, "%.999s", layer->class[p_class]->name );
+                    snprintf( szWork, bufferSize, "%.999s", layer->class[p_class]->name );
                 else
-                    sprintf( szWork, "%d", p_class );
+                    snprintf( szWork, bufferSize, "%d", p_class );
             }
             else if( EQUAL(layer->items[i],"red") && rlinfo->qc_red )
-                sprintf( szWork, "%d", rlinfo->qc_red[record] );
+                snprintf( szWork, bufferSize, "%d", rlinfo->qc_red[record] );
             else if( EQUAL(layer->items[i],"green") && rlinfo->qc_green )
-                sprintf( szWork, "%d", rlinfo->qc_green[record] );
+                snprintf( szWork, bufferSize, "%d", rlinfo->qc_green[record] );
             else if( EQUAL(layer->items[i],"blue") && rlinfo->qc_blue )
-                sprintf( szWork, "%d", rlinfo->qc_blue[record] );
+                snprintf( szWork, bufferSize, "%d", rlinfo->qc_blue[record] );
             else if( EQUAL(layer->items[i],"count") && rlinfo->qc_count )
-                sprintf( szWork, "%d", rlinfo->qc_count[record] );
+                snprintf( szWork, bufferSize, "%d", rlinfo->qc_count[record] );
 
             shape->values[i] = strdup(szWork);
         }
@@ -1448,7 +1451,7 @@ int msRASTERLayerGetItems(layerObj *layer)
         for( i = 0; i < rlinfo->band_count; i++ )
         {
             char szName[100];
-            sprintf( szName, "value_%d", i );
+            snprintf( szName, sizeof(szName), "value_%d", i );
             layer->items[layer->numitems++] = strdup(szName);
         }
         layer->items[layer->numitems++] = strdup("value_list");

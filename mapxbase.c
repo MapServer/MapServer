@@ -738,14 +738,14 @@ static int msDBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * 
   case 'N':
   case 'F':
     if( psDBF->panFieldDecimals[iField] == 0 ) {
-      sprintf( szFormat, "%%%dd", psDBF->panFieldSize[iField] );
-      sprintf(szSField, szFormat, (int) *((double *) pValue) );
+      snprintf( szFormat, sizeof(szFormat), "%%%dd", psDBF->panFieldSize[iField] );
+      snprintf(szSField, sizeof(szSField), szFormat, (int) *((double *) pValue) );
       if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
 	szSField[psDBF->panFieldSize[iField]] = '\0';
       strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]), szSField, strlen(szSField) );
     } else {
-      sprintf( szFormat, "%%%d.%df", psDBF->panFieldSize[iField], psDBF->panFieldDecimals[iField] );
-      sprintf(szSField, szFormat, *((double *) pValue) );
+      snprintf( szFormat, sizeof(szFormat), "%%%d.%df", psDBF->panFieldSize[iField], psDBF->panFieldDecimals[iField] );
+      snprintf(szSField, sizeof(szSField), szFormat, *((double *) pValue) );
       if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
 	szSField[psDBF->panFieldSize[iField]] = '\0';
       strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),  szSField, strlen(szSField) );

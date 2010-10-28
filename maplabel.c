@@ -643,7 +643,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
     if(bFullPath) { /* already full path */
       msInsertHashTable(&(fontset->fonts), alias, file1);
     } else {
-      sprintf(file2, "%s%s", path, file1);
+      snprintf(file2, sizeof(file2), "%s%s", path, file1);
       /* msInsertHashTable(fontset->fonts, alias, file2); */
 
       /*

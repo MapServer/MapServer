@@ -246,7 +246,7 @@ imageObj *msDrawScalebar(mapObj *map)
   do {
     msx = (map->cellsize * dsx)/(msInchesPerUnit(map->scalebar.units,0)/msInchesPerUnit(map->units,0));
     i = roundInterval(msx/map->scalebar.intervals);
-    sprintf(label, "%g", map->scalebar.intervals*i); /* last label */
+    snprintf(label, sizeof(label), "%g", map->scalebar.intervals*i); /* last label */
     isx = MS_NINT((i/(msInchesPerUnit(map->units,0)/msInchesPerUnit(map->scalebar.units,0)))/map->cellsize);  
     sx = (map->scalebar.intervals*isx) + MS_NINT((1.5 + strlen(label)/2.0 + strlen(unitText[map->scalebar.units]))*fontPtr->w);
 
@@ -317,7 +317,7 @@ imageObj *msDrawScalebar(mapObj *map)
       if(map->scalebar.outlinecolor.pen >= 0)
 	gdImageRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.outlinecolor.pen);
 
-      sprintf(label, "%g", j*i);
+      snprintf(label, sizeof(label), "%g", j*i);
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
@@ -328,9 +328,9 @@ imageObj *msDrawScalebar(mapObj *map)
 
       state = -state;
     }
-    sprintf(label, "%g", j*i);
+    snprintf(label, sizeof(label), "%g", j*i);
     ox = ox + j*isx - MS_NINT((strlen(label)*fontPtr->w)/2.0);
-    sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
+    snprintf(label, sizeof(label), "%g %s", j*i, unitText[map->scalebar.units]);
     map->scalebar.label.position = MS_CR;
     p.x = ox; /* + MS_NINT(fontPtr->w/2); */
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
@@ -350,7 +350,7 @@ imageObj *msDrawScalebar(mapObj *map)
 
       gdImageLine(img, ox + j*isx, oy, ox + j*isx, oy + map->scalebar.height, map->scalebar.color.pen); /* tick */
       
-      sprintf(label, "%g", j*i);
+      snprintf(label, sizeof(label), "%g", j*i);
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
@@ -364,9 +364,9 @@ imageObj *msDrawScalebar(mapObj *map)
     
     gdImageLine(img, ox + j*isx, oy, ox + j*isx, oy + map->scalebar.height, map->scalebar.color.pen); /* last tick */
 
-    sprintf(label, "%g", j*i);
+    snprintf(label, sizeof(label), "%g", j*i);
     ox = ox + j*isx - MS_NINT((strlen(label)*fontPtr->w)/2.0);
-    sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
+    snprintf(label, sizeof(label), "%g %s", j*i, unitText[map->scalebar.units]);
     map->scalebar.label.position = MS_CR;
     p.x = ox; /* + MS_NINT(fontPtr->w/2); */
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);

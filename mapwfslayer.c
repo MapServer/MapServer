@@ -161,7 +161,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
         else
         {
             psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter>");
-            psParams->pszFilter = msStringConcatenate(psParams->pszFilter, pszTmp);
+            psParams->pszFilter = msStringConcatenate(psParams->pszFilter, (char*)pszTmp);
             psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "</ogc:Filter>");
         }
     }
@@ -195,7 +195,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
         strcasecmp(pszEPSG, pszTmp) != 0)
     {
         char szProj[20];
-        sprintf(szProj, "init=epsg:%s", pszEPSG+5);
+        snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
         if (msLoadProjectionString(&(lp->projection), szProj) != 0)
             return NULL;
     }
@@ -227,6 +227,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 {
     char *pszPostReq = NULL;
     char *pszFilter = NULL;
+    size_t bufferSize = 0;
 
     if (psParams->pszVersion == NULL || 
         (strncmp(psParams->pszVersion, "0.0.14", 6) != 0 &&
@@ -250,8 +251,9 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
       pszFilter = psParams->pszFilter;
     else
     {
-        pszFilter = (char *)malloc(sizeof(char)*500);
-        sprintf(pszFilter, "<ogc:Filter>\n"
+        bufferSize = 500;
+        pszFilter = (char *)malloc(bufferSize);
+        snprintf(pszFilter, bufferSize, "<ogc:Filter>\n"
 "<ogc:BBOX>\n"
 "<ogc:PropertyName>Geometry</ogc:PropertyName>\n"
 "<gml:Box>\n"
@@ -260,10 +262,11 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 "</ogc:BBOX>\n"
 "</ogc:Filter>",bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
     }
-
-    pszPostReq = (char *)malloc(sizeof(char)*(strlen(pszFilter)+500));
+    
+    bufferSize = strlen(pszFilter)+500;
+    pszPostReq = (char *)malloc(bufferSize);
     if (psParams->nMaxFeatures > 0)
-      sprintf(pszPostReq, "<?xml version=\"1.0\" ?>\n"
+      snprintf(pszPostReq, bufferSize, "<?xml version=\"1.0\" ?>\n"
 "<wfs:GetFeature\n"
 "service=\"WFS\"\n"
 "version=\"1.0.0\"\n"
@@ -274,7 +277,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 "</wfs:Query>\n"
 "</wfs:GetFeature>\n", psParams->nMaxFeatures, psParams->pszTypeName, pszFilter);
     else
-      sprintf(pszPostReq, "<?xml version=\"1.0\" ?>\n"
+      snprintf(pszPostReq, bufferSize, "<?xml version=\"1.0\" ?>\n"
 "<wfs:GetFeature\n"
 "service=\"WFS\"\n"
 "version=\"1.0.0\"\n"
@@ -306,7 +309,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
     char *pszVersion, *pszService, *pszTypename = NULL;
     int bVersionInConnection = 0, bServiceInConnection = 0;
     int bTypenameInConnection = 0;
-    
+    size_t bufferSize = 0;
 
     if (lp->connectiontype != MS_WFS || lp->connection == NULL)
     {
@@ -387,7 +390,8 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
  *   TYPENAME
  * -------------------------------------------------------------------- */
     /* Make sure we have a big enough buffer for the URL */
-    if(!(pszURL = (char *)malloc((strlen(lp->connection)+1024)*sizeof(char)))) 
+    bufferSize = strlen(lp->connection)+1024;
+    if(!(pszURL = (char *)malloc(bufferSize)))
     {
         msSetError(MS_MEMERR, NULL, "msBuildWFSLayerGetURL()");
         return NULL;
@@ -402,23 +406,23 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
 /* -------------------------------------------------------------------- */
     /* make sure connection ends with "&" or "?" */
     pszOnlineResource = msOWSTerminateOnlineResource(lp->connection);
-    sprintf(pszURL, "%s", pszOnlineResource);
+    snprintf(pszURL, bufferSize, "%s", pszOnlineResource);
     msFree(pszOnlineResource);
 
     /* REQUEST */
-    sprintf(pszURL + strlen(pszURL),  "&REQUEST=GetFeature");
+    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&REQUEST=GetFeature");
 
     /* VERSION */
     if (!bVersionInConnection)
-      sprintf(pszURL + strlen(pszURL),  "&VERSION=%s", pszVersion);
+      snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&VERSION=%s", pszVersion);
     
     /* SERVICE */
     if (!bServiceInConnection)
-        sprintf(pszURL + strlen(pszURL),  "&SERVICE=%s", pszService);
+        snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&SERVICE=%s", pszService);
 
     /* TYPENAME */
     if (!bTypenameInConnection)
-      sprintf(pszURL + strlen(pszURL),  "&TYPENAME=%s", pszTypename);
+      snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&TYPENAME=%s", pszTypename);
 
 /* -------------------------------------------------------------------- */
 /*      If the filter parameter is given in the wfs_filter metadata,    */
@@ -427,16 +431,17 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
 /* -------------------------------------------------------------------- */
     if (psParams->pszFilter)
     {   
-        sprintf(pszURL + strlen(pszURL), "&FILTER=%s",
-                msEncodeUrl(psParams->pszFilter));
+        snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL), "&FILTER=%s",
+                 msEncodeUrl(psParams->pszFilter));
     }
     else
-      sprintf(pszURL + strlen(pszURL), 
-              "&BBOX=%.15g,%.15g,%.15g,%.15g",
-              bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
+      snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL), 
+               "&BBOX=%.15g,%.15g,%.15g,%.15g",
+               bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
     
     if (psParams->nMaxFeatures > 0)
-      sprintf(pszURL + strlen(pszURL),  "&MAXFEATURES=%d", psParams->nMaxFeatures);
+      snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),
+               "&MAXFEATURES=%d", psParams->nMaxFeatures);
 
     return pszURL;
 

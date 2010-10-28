@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
   /* ------------------------------------------------------------------------------- */
   /*       Open the dbf file                                                         */
   /* ------------------------------------------------------------------------------- */
-  sprintf(buffer,"%s.dbf",argv[1]);
+  snprintf(buffer, sizeof(buffer), "%s.dbf",argv[1]);
   inDBF = msDBFOpen(buffer,"rb");
   if( inDBF == NULL ) {
     fprintf(stderr,"Unable to open %s XBASE file.\n",buffer);
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
   switch (dbfField) {
   case FTString:
     for(i=0;i<num_records;i++) {
-      strcpy(array[i].string, msDBFReadStringAttribute( inDBF, i, fieldNumber));
+      strlcpy(array[i].string, msDBFReadStringAttribute( inDBF, i, fieldNumber), sizeof(array[i].string));
       array[i].index = i;
     }
 

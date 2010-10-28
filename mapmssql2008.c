@@ -323,9 +323,9 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
     if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
     {
         if (bufferLength < SQL_COLUMN_NAME_MAX_LENGTH + 1)
-            strncpy(buffer, columnName, bufferLength);
+            strlcpy(buffer, columnName, bufferLength);
         else
-            strncpy(buffer, columnName, SQL_COLUMN_NAME_MAX_LENGTH + 1);
+            strlcpy(buffer, columnName, SQL_COLUMN_NAME_MAX_LENGTH + 1);
         return 1;
     }
     else
@@ -405,7 +405,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
               index = (char *)(index + 9);
               count = (int)(strstr(index, " ") - index);
               for(i = 0; i < count; i++) {
-                  strncpy(index, "*", (int)1);
+                  strlcpy(index, "*", (int)1);
                   index++;
               }
             }
@@ -562,12 +562,10 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
         if (pos_paren < pos_space) { /* closing parenthesis preceeds any space */
             f_table_name = (char *) malloc(pos_paren - pos_ftab + 1);
-            strncpy(f_table_name, pos_ftab, pos_paren - pos_ftab);
-            f_table_name[pos_paren - pos_ftab] = '\0';
+            strlcpy(f_table_name, pos_ftab, pos_paren - pos_ftab + 1);
         } else {
             f_table_name = (char *) malloc(pos_space - pos_ftab + 1);
-            strncpy(f_table_name, pos_ftab, pos_space - pos_ftab);
-            f_table_name[pos_space - pos_ftab] = '\0';
+            strlcpy(f_table_name, pos_ftab, pos_space - pos_ftab + 1);
         }
     }
 
@@ -633,7 +631,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
             result = (char *)malloc((start - geom_table) + strlen(box3d) + strlen(end) +1);
 
-            strncpy(result, geom_table, start - geom_table);
+            strlcpy(result, geom_table, start - geom_table + 1);
             strcpy(result + (start - geom_table), box3d);
             strcat(result, end);
 
@@ -660,12 +658,12 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
     if(!layer->filter.string) 
     {
-        sprintf(query_string_temp, "SELECT %s from %s WHERE %s.STIntersects(%s) = 1 ", 
+        snprintf(query_string_temp, sizeof(query_string_temp),  "SELECT %s from %s WHERE %s.STIntersects(%s) = 1 ", 
             columns_wanted, data_source, layerinfo->geom_column, box3d );
     } 
     else 
     {
-        sprintf(query_string_temp, "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ",
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ",
             columns_wanted, data_source, layer->filter.string, layerinfo->geom_column, box3d );
     }
 
@@ -1581,7 +1579,7 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
         return MS_FAILURE;
     }
 
-    sprintf(sql, "SELECT top 0 * FROM %s", layerinfo->geom_table); 
+    snprintf(sql, sizeof(sql), "SELECT top 0 * FROM %s", layerinfo->geom_table); 
 
     if (!executeSQL(layerinfo->conn, sql))
     {
@@ -1763,8 +1761,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
             tmp = pos_urid + strlen(pos_urid);
         }
         *urid_name = (char *) malloc((tmp - (pos_urid + 14)) + 1);
-        strncpy(*urid_name, pos_urid + 14, tmp - (pos_urid + 14));
-        (*urid_name)[tmp - (pos_urid + 14)] = 0;
+        strlcpy(*urid_name, pos_urid + 14, tmp - (pos_urid + 14 + 1));
     }
 
     /* Find the srid */
@@ -1781,8 +1778,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
             return MS_FAILURE;
         } else {
             *user_srid = (char *) malloc(slength + 1);
-            strncpy(*user_srid, pos_srid + 12, slength);
-            (*user_srid)[slength] = 0; /* null terminate it */
+            strlcpy(*user_srid, pos_srid + 12, slength+1);
         }
     }
 
@@ -1794,8 +1790,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
             tmp = pos_indexHint + strlen(pos_indexHint);
         }
         *index_name = (char *) malloc((tmp - (pos_indexHint + 13)) + 1);
-        strncpy(*index_name, pos_indexHint + 13, tmp - (pos_indexHint + 13));
-        (*index_name)[tmp - (pos_indexHint + 13)] = 0;
+        strlcpy(*index_name, pos_indexHint + 13, tmp - (pos_indexHint + 13)+1);
     }
 
     /* this is a little hack so the rest of the code works.  If the ' using SRID=' comes before */
@@ -1829,25 +1824,21 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
         }
 
         *geom_column_name = (char *) malloc((pos_geomtype - data) + 1);
-        strncpy(*geom_column_name, data, pos_geomtype - data);
-        (*geom_column_name)[pos_geomtype - data] = 0;
+        strlcpy(*geom_column_name, data, pos_geomtype - data + 1);
 
         *geom_column_type = (char *) malloc(pos_geomtype2 - pos_geomtype);
-        strncpy(*geom_column_type, pos_geomtype + 1, pos_geomtype2 - pos_geomtype - 1);
-        (*geom_column_type)[pos_geomtype2 - pos_geomtype -1] = 0;
+        strlcpy(*geom_column_type, pos_geomtype + 1, pos_geomtype2 - pos_geomtype);
     }
     else {
     /* Copy the geometry column name */
         *geom_column_name = (char *) malloc((pos_scn - data) + 1);
-        strncpy(*geom_column_name, data, pos_scn - data);
-        (*geom_column_name)[pos_scn - data] = 0;
+        strlcpy(*geom_column_name, data, pos_scn - data + 1);
         *geom_column_type = strdup("geometry");
     }
 
     /* Copy out the table name or sub-select clause */
     *table_name = (char *) malloc((pos_opt - (pos_scn + 6)) + 1);
-    strncpy(*table_name, pos_scn + 6, pos_opt - (pos_scn + 6));
-    (*table_name)[pos_opt - (pos_scn + 6)] = 0;
+    strlcpy(*table_name, pos_scn + 6, pos_opt - (pos_scn + 6) + 1);
 
     if(strlen(*table_name) < 1 || strlen(*geom_column_name) < 1) {
         msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find a geometry_column or table/subselect).  More help: <br><br>\n\n", data);

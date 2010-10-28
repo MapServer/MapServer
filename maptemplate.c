@@ -511,8 +511,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
    
          if(nLength > 0) { /* is there arguments ? */
             pszArgs = (char*)malloc(nLength + 1);
-            strncpy(pszArgs, pszStart, nLength);
-            pszArgs[nLength] = '\0';
+            strlcpy(pszArgs, pszStart, nLength+1);
             
             if(!(*ppoHashTable))
               *ppoHashTable = msCreateHashTable();
@@ -616,7 +615,7 @@ int getInlineTag(char *pszTag, char *pszInstr, char **pszResult)
             *pszResult = (char*)malloc(nLength + 1);
 
             /* copy string beetween start and end tag */
-            strncpy(*pszResult, pszStart, nLength);
+            strlcpy(*pszResult, pszStart, nLength+1);
 
             (*pszResult)[nLength] = '\0';
          }
@@ -712,7 +711,7 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
        /* or by a white space if not. */
        nLength = pszEnd - pszStart;
        pszIfTag = (char*)malloc(nLength + 6);
-       strncpy(pszIfTag, pszStart, nLength);
+       strlcpy(pszIfTag, pszStart, nLength+1);
        pszIfTag[nLength] = '\0';
        strcat(pszIfTag, "[/if]");
          
@@ -789,8 +788,7 @@ static char *getPreTagText(const char *string1, const char *string2)
 
   n = strlen(string1) - strlen(tmpstr);
   result = (char *) malloc(n + 1);
-  result[n] = '\0';
-  strncpy(result, string1, n);
+  strlcpy(result, string1, n+1);
 
   return result;
 }
@@ -1098,8 +1096,7 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
     /* build the complete tag so we can do substitution */
     tagLength = tagEnd - tagStart;
     tag = (char *) malloc(tagLength + 1);
-    strncpy(tag, tagStart, tagLength);
-    tag[tagLength] = '\0';
+    strlcpy(tag, tagStart, tagLength+1);
 
     /* process any other tags in the content */
     processedContent = processLine(mapserv, content, stream, mode);
@@ -1224,7 +1221,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
           char numberFormat[16];
         
           itemValue = (char *) malloc(64); /* plenty big */
-          snprintf(numberFormat, 16, "%%.%dlf", precision);
+          snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
           snprintf(itemValue, 64, numberFormat, atof(shape->values[i]));
         } else
           itemValue = strdup(shape->values[i]);
@@ -1258,8 +1255,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     /* build the complete tag so we can do substitution */
     tagLength = tagEnd - tagStart;
     tag = (char *) malloc(tagLength + 1);
-    strncpy(tag, tagStart, tagLength);
-    tag[tagLength] = '\0';
+    strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
     switch(escape) {
@@ -1421,8 +1417,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     /* build the complete tag so we can do substitution */
     tagLength = tagEnd - tagStart;
     tag = (char *) malloc(tagLength + 1);
-    strncpy(tag, tagStart, tagLength);
-    tag[tagLength] = '\0';
+    strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
     switch(escape) {
@@ -1732,8 +1727,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
           /* build the complete tag so we can do substitution */
           tagLength = tagEnd - tagStart;
           tag = (char *) malloc(tagLength + 1);
-          strncpy(tag, tagStart, tagLength);
-          tag[tagLength] = '\0';
+          strlcpy(tag, tagStart, tagLength+1);
 
           /* do the replacement */
           tagValue = strdup(format);
@@ -1783,8 +1777,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
           /* build the complete tag so we can do substitution */
           tagLength = tagEnd - tagStart;
           tag = (char *) malloc(tagLength + 1);
-          strncpy(tag, tagStart, tagLength);
-          tag[tagLength] = '\0';
+          strlcpy(tag, tagStart, tagLength+1);
 
           *line = msReplaceSubstring(*line, tag, tagValue);
 
@@ -2051,10 +2044,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
       if(strlen(ph) > 0) coords = msStringConcatenate(coords, ph);
       for(j=0; j<tShape.line[i].numpoints-1; j++) {
-        snprintf(point, 128, pointFormat1, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
+        snprintf(point, sizeof(point), pointFormat1, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
         coords = msStringConcatenate(coords, point);
       }
-      snprintf(point, 128, pointFormat2, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
+      snprintf(point, sizeof(point), pointFormat2, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
       coords = msStringConcatenate(coords, point);
       if(strlen(pf) > 0) coords = msStringConcatenate(coords, pf);
       if((i < tShape.numlines-1) && (strlen(ps) > 0)) coords = msStringConcatenate(coords, ps);
@@ -2070,8 +2063,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     /* build the complete tag so we can do substitution */
     tagLength = tagEnd - tagStart;
     tag = (char *) malloc(tagLength + 1);
-    strncpy(tag, tagStart, tagLength);
-    tag[tagLength] = '\0';
+    strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
     *line = msReplaceSubstring(*line, tag, coords);
@@ -2137,8 +2129,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
            /* to replace it by the corresponding value from ht */
            nLength = pszEnd - pszStart;
            pszMetadataTag = (char*)malloc(nLength + 1);
-           strncpy(pszMetadataTag, pszStart, nLength);
-           pszMetadataTag[nLength] = '\0';
+           strlcpy(pszMetadataTag, pszStart, nLength+1);
 
            *pszInstr = msReplaceSubstring(*pszInstr, pszMetadataTag, pszHashValue);
 
@@ -2224,7 +2215,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
           msFree(pszSymbolNameHash);
       }
 
-      snprintf(szImgFname, 1024, "%s_%d_%d_%d_%d_%s.%s%c", 
+      snprintf(szImgFname, sizeof(szImgFname), "%s_%d_%d_%d_%d_%s.%s%c", 
                pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, 
                szStyleCode, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
@@ -2287,9 +2278,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          /* rebuid image tag ([leg_class_img all_args]) */
          /* to replace it by the image url */
          pszTag = (char*)malloc(nLen + 1);
-         strncpy(pszTag, pszImgTag, nLen);
-            
-         pszTag[nLen] = '\0';
+         strlcpy(pszTag, pszImgTag, nLen+1);
 
          pszFullImgFname = (char*)malloc(strlen(map->web.imageurl) + strlen(szImgFname) + 1);
          strcpy(pszFullImgFname, map->web.imageurl);
@@ -2432,7 +2421,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
    {
       if(GET_LAYER(map, map->layerorder[j])->group && strcmp(GET_LAYER(map, map->layerorder[j])->group, pszGroupName) == 0)
       {
-         sprintf(pszStatus, "%d", GET_LAYER(map, map->layerorder[j])->status);
+         snprintf(pszStatus, sizeof(pszStatus), "%d", GET_LAYER(map, map->layerorder[j])->status);
          msInsertHashTable(myHashTable, "layer_status", pszStatus);
          msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, GET_LAYER(map, map->layerorder[j]))?"1":"0" );
          msInsertHashTable(myHashTable, "layer_queryable", msIsLayerQueryable(GET_LAYER(map, map->layerorder[j]))?"1":"0" );
@@ -2559,13 +2548,13 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_name]", GET_LAYER(map, nIdxLayer)->name);
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_group]", GET_LAYER(map, nIdxLayer)->group);
 
-   snprintf(szTmpstr, 128, "%d", nIdxLayer); 
+   snprintf(szTmpstr, sizeof(szTmpstr), "%d", nIdxLayer); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_index]", szTmpstr);
 
-   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->minscaledenom); 
+   snprintf(szTmpstr, sizeof(szTmpstr), "%g", GET_LAYER(map, nIdxLayer)->minscaledenom); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_minscale]", szTmpstr);
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_minscaledenom]", szTmpstr);
-   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->maxscaledenom); 
+   snprintf(szTmpstr, sizeof(szTmpstr), "%g", GET_LAYER(map, nIdxLayer)->maxscaledenom); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_maxscale]", szTmpstr);
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_maxscaledenom]", szTmpstr);
 
@@ -2578,10 +2567,10 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    /*
     * for now, only status and type is required by template
     */
-   sprintf(szStatus, "%d", GET_LAYER(map, nIdxLayer)->status);
+   snprintf(szStatus, sizeof(szStatus), "%d", GET_LAYER(map, nIdxLayer)->status);
    msInsertHashTable(myHashTable, "layer_status", szStatus);
 
-   sprintf(szType, "%d", GET_LAYER(map, nIdxLayer)->type);
+   snprintf(szType, sizeof(szType), "%d", GET_LAYER(map, nIdxLayer)->type);
    msInsertHashTable(myHashTable, "layer_type", szType);
 
    msInsertHashTable(myHashTable, "layer_name", (GET_LAYER(map, nIdxLayer)->name)? GET_LAYER(map, nIdxLayer)->name : "");
@@ -2705,13 +2694,13 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_title]", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->title);
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_layer_name]", GET_LAYER(map, nIdxLayer)->name);
 
-   snprintf(szTmpstr, 128, "%d", nIdxClass); 
+   snprintf(szTmpstr, sizeof(szTmpstr), "%d", nIdxClass); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_index]", szTmpstr);
 
-   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->minscaledenom); 
+   snprintf(szTmpstr, sizeof(szTmpstr), "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->minscaledenom); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_minscale]", szTmpstr);
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_minscaledenom]", szTmpstr);
-   snprintf(szTmpstr, 128, "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->maxscaledenom); 
+   snprintf(szTmpstr, sizeof(szTmpstr), "%g", GET_LAYER(map, nIdxLayer)->class[nIdxClass]->maxscaledenom); 
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_maxscale]", szTmpstr);
    *pszTemp = msReplaceSubstring(*pszTemp, "[leg_class_maxscaledenom]", szTmpstr);
 
@@ -2724,10 +2713,10 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    /*
     * for now, only status, type, name and group are  required by template
     */
-   sprintf(szStatus, "%d", GET_LAYER(map, nIdxLayer)->status);
+   snprintf(szStatus, sizeof(szStatus), "%d", GET_LAYER(map, nIdxLayer)->status);
    msInsertHashTable(myHashTable, "layer_status", szStatus);
 
-   sprintf(szType, "%d", GET_LAYER(map, nIdxLayer)->type);
+   snprintf(szType, sizeof(szType), "%d", GET_LAYER(map, nIdxLayer)->type);
    msInsertHashTable(myHashTable, "layer_type", szType);   
    
    msInsertHashTable(myHashTable, "layer_name", 
@@ -2890,7 +2879,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
 /* -------------------------------------------------------------------- */
        char pszTime[20];
        
-       snprintf(pszTime, 20, "%ld", (long)time(NULL));      
+       snprintf(pszTime, sizeof(pszTime), "%ld", (long)time(NULL));      
        pszPrefix = msStringConcatenate(pszPrefix, pszTime);
    }
 
@@ -3512,28 +3501,28 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   for(i=-1;i<=1;i++) { /* make zoom direction persistant */
     if(mapserv->ZoomDirection == i) {
-      sprintf(substr, "[zoomdir_%d_select]", i);
+      snprintf(substr, sizeof(substr), "[zoomdir_%d_select]", i);
       outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
-      sprintf(substr, "[zoomdir_%d_check]", i);
+      snprintf(substr, sizeof(substr), "[zoomdir_%d_check]", i);
       outstr = msReplaceSubstring(outstr, substr, "checked=\"checked\"");
     } else {
-      sprintf(substr, "[zoomdir_%d_select]", i);
+      snprintf(substr, sizeof(substr), "[zoomdir_%d_select]", i);
       outstr = msReplaceSubstring(outstr, substr, "");
-      sprintf(substr, "[zoomdir_%d_check]", i);
+      snprintf(substr, sizeof(substr), "[zoomdir_%d_check]", i);
       outstr = msReplaceSubstring(outstr, substr, "");
     }
   }
   
   for(i=MINZOOM;i<=MAXZOOM;i++) { /* make zoom persistant */
     if(mapserv->Zoom == i) {
-      sprintf(substr, "[zoom_%d_select]", i);
+      snprintf(substr, sizeof(substr), "[zoom_%d_select]", i);
       outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
-      sprintf(substr, "[zoom_%d_check]", i);
+      snprintf(substr, sizeof(substr), "[zoom_%d_check]", i);
       outstr = msReplaceSubstring(outstr, substr, "checked=\"checked\"");
     } else {
-      sprintf(substr, "[zoom_%d_select]", i);
+      snprintf(substr, sizeof(substr), "[zoom_%d_select]", i);
       outstr = msReplaceSubstring(outstr, substr, "");
-      sprintf(substr, "[zoom_%d_check]", i);
+      snprintf(substr, sizeof(substr), "[zoom_%d_check]", i);
       outstr = msReplaceSubstring(outstr, substr, "");
     }
   }
@@ -3584,18 +3573,18 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     }
   }
 
-  sprintf(repstr, "%f", mapserv->mappnt.x);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->mappnt.x);
   outstr = msReplaceSubstring(outstr, "[mapx]", repstr);
-  sprintf(repstr, "%f", mapserv->mappnt.y);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->mappnt.y);
   outstr = msReplaceSubstring(outstr, "[mapy]", repstr);
   
-  sprintf(repstr, "%f", mapserv->map->extent.minx); /* Individual mapextent elements for spatial query building, deprecated. */
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->map->extent.minx); /* Individual mapextent elements for spatial query building, deprecated. */
   outstr = msReplaceSubstring(outstr, "[minx]", repstr);
-  sprintf(repstr, "%f", mapserv->map->extent.maxx);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->map->extent.maxx);
   outstr = msReplaceSubstring(outstr, "[maxx]", repstr);
-  sprintf(repstr, "%f", mapserv->map->extent.miny);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->map->extent.miny);
   outstr = msReplaceSubstring(outstr, "[miny]", repstr);
-  sprintf(repstr, "%f", mapserv->map->extent.maxy);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->map->extent.maxy);
   outstr = msReplaceSubstring(outstr, "[maxy]", repstr);
 
   if(processExtentTag(mapserv, &outstr, "mapext", &(mapserv->map->extent), &(mapserv->map->projection)) != MS_SUCCESS)
@@ -3603,18 +3592,18 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   if(processExtentTag(mapserv, &outstr, "mapext_esc", &(mapserv->map->extent), &(mapserv->map->projection)) != MS_SUCCESS) /* depricated */
     return(NULL);
    
-  sprintf(repstr, "%f", (mapserv->map->extent.maxx-mapserv->map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
+  snprintf(repstr, sizeof(repstr), "%f", (mapserv->map->extent.maxx-mapserv->map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
   outstr = msReplaceSubstring(outstr, "[dx]", repstr);
-  sprintf(repstr, "%f", (mapserv->map->extent.maxy-mapserv->map->extent.miny));
+  snprintf(repstr, sizeof(repstr), "%f", (mapserv->map->extent.maxy-mapserv->map->extent.miny));
   outstr = msReplaceSubstring(outstr, "[dy]", repstr);
 
-  sprintf(repstr, "%f", mapserv->RawExt.minx); /* Individual raw extent elements for spatial query building, deprecated. */
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->RawExt.minx); /* Individual raw extent elements for spatial query building, deprecated. */
   outstr = msReplaceSubstring(outstr, "[rawminx]", repstr);
-  sprintf(repstr, "%f", mapserv->RawExt.maxx);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->RawExt.maxx);
   outstr = msReplaceSubstring(outstr, "[rawmaxx]", repstr);
-  sprintf(repstr, "%f", mapserv->RawExt.miny);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->RawExt.miny);
   outstr = msReplaceSubstring(outstr, "[rawminy]", repstr);
-  sprintf(repstr, "%f", mapserv->RawExt.maxy);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->RawExt.maxy);
   outstr = msReplaceSubstring(outstr, "[rawmaxy]", repstr);
 
   if(processExtentTag(mapserv, &outstr, "rawext", &(mapserv->RawExt), &(mapserv->map->projection)) != MS_SUCCESS)
@@ -3631,18 +3620,18 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     msProjectRect(&(mapserv->map->projection), &(mapserv->map->latlon), &llextent);
     msProjectPoint(&(mapserv->map->projection), &(mapserv->map->latlon), &llpoint);
 
-    sprintf(repstr, "%f", llpoint.x);
+    snprintf(repstr, sizeof(repstr), "%f", llpoint.x);
     outstr = msReplaceSubstring(outstr, "[maplon]", repstr);
-    sprintf(repstr, "%f", llpoint.y);
+    snprintf(repstr, sizeof(repstr), "%f", llpoint.y);
     outstr = msReplaceSubstring(outstr, "[maplat]", repstr);
     
-    sprintf(repstr, "%f", llextent.minx); /* map extent as lat/lon */
+    snprintf(repstr, sizeof(repstr), "%f", llextent.minx); /* map extent as lat/lon */
     outstr = msReplaceSubstring(outstr, "[minlon]", repstr);
-    sprintf(repstr, "%f", llextent.maxx);
+    snprintf(repstr, sizeof(repstr), "%f", llextent.maxx);
     outstr = msReplaceSubstring(outstr, "[maxlon]", repstr);
-    sprintf(repstr, "%f", llextent.miny);
+    snprintf(repstr, sizeof(repstr), "%f", llextent.miny);
     outstr = msReplaceSubstring(outstr, "[minlat]", repstr);
-    sprintf(repstr, "%f", llextent.maxy);
+    snprintf(repstr, sizeof(repstr), "%f", llextent.maxy);
     outstr = msReplaceSubstring(outstr, "[maxlat]", repstr);    
 
     if(processExtentTag(mapserv, &outstr, "mapext_latlon", &(llextent), NULL) != MS_SUCCESS) 
@@ -3654,13 +3643,13 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   /* submitted by J.F (bug 1102) */
   if(mapserv->map->reference.status == MS_ON) {
-    sprintf(repstr, "%f", mapserv->map->reference.extent.minx); /* Individual reference map extent elements for spatial query building, depricated. */
+    snprintf(repstr, sizeof(repstr), "%f", mapserv->map->reference.extent.minx); /* Individual reference map extent elements for spatial query building, depricated. */
     outstr = msReplaceSubstring(outstr, "[refminx]", repstr);
-    sprintf(repstr, "%f", mapserv->map->reference.extent.maxx);
+    snprintf(repstr, sizeof(repstr), "%f", mapserv->map->reference.extent.maxx);
     outstr = msReplaceSubstring(outstr, "[refmaxx]", repstr);
-    sprintf(repstr, "%f", mapserv->map->reference.extent.miny);
+    snprintf(repstr, sizeof(repstr), "%f", mapserv->map->reference.extent.miny);
     outstr = msReplaceSubstring(outstr, "[refminy]", repstr);
-    sprintf(repstr, "%f", mapserv->map->reference.extent.maxy);
+    snprintf(repstr, sizeof(repstr), "%f", mapserv->map->reference.extent.maxy);
     outstr = msReplaceSubstring(outstr, "[refmaxy]", repstr);
 
     if(processExtentTag(mapserv, &outstr, "refext", &(mapserv->map->reference.extent), &(mapserv->map->projection)) != MS_SUCCESS)
@@ -3669,35 +3658,35 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       return(NULL);
   }
 
-  sprintf(repstr, "%d %d", mapserv->map->width, mapserv->map->height);
+  snprintf(repstr, sizeof(repstr), "%d %d", mapserv->map->width, mapserv->map->height);
   outstr = msReplaceSubstring(outstr, "[mapsize]", repstr);
    
   encodedstr = msEncodeUrl(repstr);
   outstr = msReplaceSubstring(outstr, "[mapsize_esc]", encodedstr);
   free(encodedstr);
 
-  sprintf(repstr, "%d", mapserv->map->width);
+  snprintf(repstr, sizeof(repstr), "%d", mapserv->map->width);
   outstr = msReplaceSubstring(outstr, "[mapwidth]", repstr);
-  sprintf(repstr, "%d", mapserv->map->height);
+  snprintf(repstr, sizeof(repstr), "%d", mapserv->map->height);
   outstr = msReplaceSubstring(outstr, "[mapheight]", repstr);
   
-  sprintf(repstr, "%f", mapserv->map->scaledenom);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->map->scaledenom);
   outstr = msReplaceSubstring(outstr, "[scale]", repstr);
   outstr = msReplaceSubstring(outstr, "[scaledenom]", repstr);
-  sprintf(repstr, "%f", mapserv->map->cellsize);
+  snprintf(repstr, sizeof(repstr), "%f", mapserv->map->cellsize);
   outstr = msReplaceSubstring(outstr, "[cellsize]", repstr);
   
-  sprintf(repstr, "%.1f %.1f", (mapserv->map->width)/2.0, (mapserv->map->height)/2.0); /* not subtracting 1 from image dimensions (see bug 633) */
+  snprintf(repstr, sizeof(repstr), "%.1f %.1f", (mapserv->map->width)/2.0, (mapserv->map->height)/2.0); /* not subtracting 1 from image dimensions (see bug 633) */
   outstr = msReplaceSubstring(outstr, "[center]", repstr);
-  sprintf(repstr, "%.1f", (mapserv->map->width)/2.0);
+  snprintf(repstr, sizeof(repstr), "%.1f", (mapserv->map->width)/2.0);
   outstr = msReplaceSubstring(outstr, "[center_x]", repstr);
-  sprintf(repstr, "%.1f", (mapserv->map->height)/2.0);
+  snprintf(repstr, sizeof(repstr), "%.1f", (mapserv->map->height)/2.0);
   outstr = msReplaceSubstring(outstr, "[center_y]", repstr);      
 
   /* These are really for situations with multiple result sets only, but often used in header/footer   */
-  sprintf(repstr, "%d", mapserv->NR); /* total number of results */
+  snprintf(repstr, sizeof(repstr), "%d", mapserv->NR); /* total number of results */
   outstr = msReplaceSubstring(outstr, "[nr]", repstr);  
-  sprintf(repstr, "%d", mapserv->NL); /* total number of layers with results */
+  snprintf(repstr, sizeof(repstr), "%d", mapserv->NL); /* total number of layers with results */
   outstr = msReplaceSubstring(outstr, "[nl]", repstr);
 
   if(mapserv->resultlayer) {    
@@ -3709,11 +3698,11 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       free(itemstr);
     }
 
-    sprintf(repstr, "%d", mapserv->NLR); /* total number of results within this layer */
+    snprintf(repstr, sizeof(repstr), "%d", mapserv->NLR); /* total number of results within this layer */
     outstr = msReplaceSubstring(outstr, "[nlr]", repstr);
-    sprintf(repstr, "%d", mapserv->RN); /* sequential (eg. 1..n) result number within all layers */
+    snprintf(repstr, sizeof(repstr), "%d", mapserv->RN); /* sequential (eg. 1..n) result number within all layers */
     outstr = msReplaceSubstring(outstr, "[rn]", repstr);
-    sprintf(repstr, "%d", mapserv->LRN); /* sequential (eg. 1..n) result number within this layer */
+    snprintf(repstr, sizeof(repstr), "%d", mapserv->LRN); /* sequential (eg. 1..n) result number within this layer */
     outstr = msReplaceSubstring(outstr, "[lrn]", repstr);
     outstr = msReplaceSubstring(outstr, "[cl]", mapserv->resultlayer->name); /* current layer name     */
     /* if(resultlayer->description) outstr = msReplaceSubstring(outstr, "[cd]", resultlayer->description); // current layer description     */
@@ -3742,11 +3731,11 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       }
     }
     
-    sprintf(repstr, "%f %f", (mapserv->resultshape.bounds.maxx + mapserv->resultshape.bounds.minx)/2, (mapserv->resultshape.bounds.maxy + mapserv->resultshape.bounds.miny)/2); 
+    snprintf(repstr, sizeof(repstr), "%f %f", (mapserv->resultshape.bounds.maxx + mapserv->resultshape.bounds.minx)/2, (mapserv->resultshape.bounds.maxy + mapserv->resultshape.bounds.miny)/2); 
     outstr = msReplaceSubstring(outstr, "[shpmid]", repstr);
-    sprintf(repstr, "%f", (mapserv->resultshape.bounds.maxx + mapserv->resultshape.bounds.minx)/2);
+    snprintf(repstr, sizeof(repstr), "%f", (mapserv->resultshape.bounds.maxx + mapserv->resultshape.bounds.minx)/2);
     outstr = msReplaceSubstring(outstr, "[shpmidx]", repstr);
-    sprintf(repstr, "%f", (mapserv->resultshape.bounds.maxy + mapserv->resultshape.bounds.miny)/2);
+    snprintf(repstr, sizeof(repstr), "%f", (mapserv->resultshape.bounds.maxy + mapserv->resultshape.bounds.miny)/2);
     outstr = msReplaceSubstring(outstr, "[shpmidy]", repstr);
     
     if(processExtentTag(mapserv, &outstr, "shpext", &(mapserv->resultshape.bounds), &(mapserv->resultlayer->projection)) != MS_SUCCESS)
@@ -3754,7 +3743,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     if(processExtentTag(mapserv, &outstr, "shpext_esc", &(mapserv->resultshape.bounds), &(mapserv->resultlayer->projection)) != MS_SUCCESS) /* depricated */
       return(NULL);
 
-    sprintf(repstr, "%d", mapserv->resultshape.classindex);
+    snprintf(repstr, sizeof(repstr), "%d", mapserv->resultshape.classindex);
     outstr = msReplaceSubstring(outstr, "[shpclass]", repstr);
 
     if(processShpxyTag(mapserv->resultlayer, &outstr, &mapserv->resultshape) != MS_SUCCESS)
@@ -3763,18 +3752,18 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
      if(processShplabelTag(mapserv->resultlayer, &outstr, &mapserv->resultshape) != MS_SUCCESS)
       return(NULL);
 
-    sprintf(repstr, "%f", mapserv->resultshape.bounds.minx);
+    snprintf(repstr, sizeof(repstr), "%f", mapserv->resultshape.bounds.minx);
     outstr = msReplaceSubstring(outstr, "[shpminx]", repstr);
-    sprintf(repstr, "%f", mapserv->resultshape.bounds.miny);
+    snprintf(repstr, sizeof(repstr), "%f", mapserv->resultshape.bounds.miny);
     outstr = msReplaceSubstring(outstr, "[shpminy]", repstr);
-    sprintf(repstr, "%f", mapserv->resultshape.bounds.maxx);
+    snprintf(repstr, sizeof(repstr), "%f", mapserv->resultshape.bounds.maxx);
     outstr = msReplaceSubstring(outstr, "[shpmaxx]", repstr);
-    sprintf(repstr, "%f", mapserv->resultshape.bounds.maxy);
+    snprintf(repstr, sizeof(repstr), "%f", mapserv->resultshape.bounds.maxy);
     outstr = msReplaceSubstring(outstr, "[shpmaxy]", repstr);
     
-    sprintf(repstr, "%ld", mapserv->resultshape.index);
+    snprintf(repstr, sizeof(repstr), "%ld", mapserv->resultshape.index);
     outstr = msReplaceSubstring(outstr, "[shpidx]", repstr);
-    sprintf(repstr, "%d", mapserv->resultshape.tileindex);
+    snprintf(repstr, sizeof(repstr), "%d", mapserv->resultshape.tileindex);
     outstr = msReplaceSubstring(outstr, "[tileidx]", repstr);  
 
     /* return ALL attributes in one delimeted list */
@@ -4091,7 +4080,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
   ** so why should this. Note that new-style templates don't buffer the mime-type either.
   */
   if(papszBuffer && mapserv->sendheaders) {
-    sprintf(buffer, "Content-type: %s%c%c", pszMimeType, 10, 10);
+    snprintf(buffer, sizeof(buffer), "Content-type: %s%c%c", pszMimeType, 10, 10);
     if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
       nExpandBuffer++;
       (*papszBuffer) = (char *)realloc((*papszBuffer), MS_TEMPLATE_BUFFER*nExpandBuffer);

@@ -94,60 +94,56 @@ static char *DATAERRORMESSAGE(char *dataString, char *preamble)
 {
 	char	*message;
 	char	tmp[5000];
+        size_t buffer_size = 7000;
 
-	message = malloc(7000);
+	message = malloc(buffer_size);
 
-	sprintf(message,"%s",preamble);
+	snprintf(message, buffer_size, "%s",preamble);
 
-		sprintf(tmp,"Error parsing MYGIS data variable. You specified '%s'.<br>\nStandard ways of specifiying are : <br>\n(1) 'geometry_column from geometry_table' <br>\n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' <br><br>\n<br>\n",
-																		  dataString);
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp), "Error parsing MYGIS data variable. You specified '%s'.<br>\nStandard ways of specifiying are : <br>\n(1) 'geometry_column from geometry_table' <br>\n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' <br><br>\n<br>\n",
+                 dataString);
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"NOTE: for (2) 'using unique' and 'SRID=' are optional, but its highly recommended that you use them!!! <br><br>\n<br>\n");
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp), "NOTE: for (2) 'using unique' and 'SRID=' are optional, but its highly recommended that you use them!!! <br><br>\n<br>\n");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"The most common problem with (1) is incorrectly uploading your data.  There must be an entry in the geometry_columns table.  This will be automatically done if you used the shp2mysql program or created your geometry column with the AddGeometryColumn() MYGIS function. <br><br>\n<br>\n");
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp), "The most common problem with (1) is incorrectly uploading your data.  There must be an entry in the geometry_columns table.  This will be automatically done if you used the shp2mysql program or created your geometry column with the AddGeometryColumn() MYGIS function. <br><br>\n<br>\n");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"Another important thing to check is that the MYGIS user specified in the CONNECTION string does have SELECT permissions on the table(s) specified in your DATA string. <br><br>\n<br>\n");
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp), "Another important thing to check is that the MYGIS user specified in the CONNECTION string does have SELECT permissions on the table(s) specified in your DATA string. <br><br>\n<br>\n");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"If you are using the (2) method, you've probably made a typo.<br>\nExample:  'the_geom from (select the_geom,oid from mytable) as foo using unique oid using SRID=76'<br>\nThis is very much like the (1) example.  The subquery ('select the_geom,oid from mytable') will be executed, and mapserver will use 'oid' (a postgresql system column) for uniquely specifying a geometry (for mapserver queries).  The geometry (the_geom) must have a SRID of 76. <br><br>\n<br>\n");
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp),"If you are using the (2) method, you've probably made a typo.<br>\nExample:  'the_geom from (select the_geom,oid from mytable) as foo using unique oid using SRID=76'<br>\nThis is very much like the (1) example.  The subquery ('select the_geom,oid from mytable') will be executed, and mapserver will use 'oid' (a postgresql system column) for uniquely specifying a geometry (for mapserver queries).  The geometry (the_geom) must have a SRID of 76. <br><br>\n<br>\n");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"Example:  'roads from (select table1.roads,table1.rd_segment_id,table2.rd_name,table2.rd_type from table1,table2 where table1.rd_segment_id=table2.rd_segment_id) as foo using unique rd_segment_id using SRID=89' <br><Br>\n<br>\n");
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp), "Example:  'roads from (select table1.roads,table1.rd_segment_id,table2.rd_name,table2.rd_type from table1,table2 where table1.rd_segment_id=table2.rd_segment_id) as foo using unique rd_segment_id using SRID=89' <br><Br>\n<br>\n");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"This is a more complex sub-query involving joining two tables.  The resulting geometry (column 'roads') has SRID=89, and mapserver will use rd_segment_id to uniquely identify a geometry.  The attributes rd_type and rd_name are useable by other parts of mapserver.<br><br>\n<br>\n");
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp), "This is a more complex sub-query involving joining two tables.  The resulting geometry (column 'roads') has SRID=89, and mapserver will use rd_segment_id to uniquely identify a geometry.  The attributes rd_type and rd_name are useable by other parts of mapserver.<br><br>\n<br>\n");
+        strlcat(message,tmp, buffer_size);
 
+        snprintf(tmp, sizeof(tmp), "To use a view, do something like:<BR>\n'<geometry_column> from (SELECT * FROM <view>) as foo using unique <column name> using SRID=<srid#>'<br>\nFor example: 'the_geom from (SELECT * FROM myview) as foo using unique gid using SRID=-1' <br><br>\n<br>\n");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"To use a view, do something like:<BR>\n'<geometry_column> from (SELECT * FROM <view>) as foo using unique <column name> using SRID=<srid#>'<br>\nFor example: 'the_geom from (SELECT * FROM myview) as foo using unique gid using SRID=-1' <br><br>\n<br>\n");
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp),"NOTE: for the (2) case, the ' as foo ' is requred.  The 'using unique &lt;column&gt;' and 'using SRID=' are case sensitive.<br>\n ");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"NOTE: for the (2) case, the ' as foo ' is requred.  The 'using unique &lt;column&gt;' and 'using SRID=' are case sensitive.<br>\n ");
-		strcat(message,tmp);
+	snprintf(tmp, sizeof(tmp),"NOTE: 'using unique &lt;column&gt;' would normally be the system column 'oid', but for views and joins you'll almost certainly want to use a real column in one of your tables. <Br><br>\n");
+        strlcat(message,tmp, buffer_size);
 
+        snprintf(tmp, sizeof(tmp),"NOTE: you'll want to build a spatial index on your geometric data:<br><br>\n");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"NOTE: 'using unique &lt;column&gt;' would normally be the system column 'oid', but for views and joins you'll almost certainly want to use a real column in one of your tables. <Br><br>\n");
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp),"CREATE INDEX &lt;indexname&gt; ON &lt;table&gt; USING GIST (&lt;geometrycolumn&gt; GIST_GEOMETRY_OPS ) <br><br>\n");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"NOTE: you'll want to build a spatial index on your geometric data:<br><br>\n");
-		strcat(message,tmp);
+        snprintf(tmp, sizeof(tmp), "You'll also want to put an index on either oid or whatever you used for your unique column:<br><br>\n");
+        strlcat(message,tmp, buffer_size);
 
-		sprintf(tmp,"CREATE INDEX &lt;indexname&gt; ON &lt;table&gt; USING GIST (&lt;geometrycolumn&gt; GIST_GEOMETRY_OPS ) <br><br>\n");
-		strcat(message,tmp);
-
-		sprintf(tmp,"You'll also want to put an index on either oid or whatever you used for your unique column:<br><br>\n");
-		strcat(message,tmp);
-
-		sprintf(tmp,"CREATE INDEX &lt;indexname&gt; ON &lt;table&gt; (&lt;uniquecolumn&gt;)");
-		strcat(message,tmp);
-
+        snprintf(tmp, sizeof(tmp), "CREATE INDEX &lt;indexname&gt; ON &lt;table&gt; (&lt;uniquecolumn&gt;)");
+        strlcat(message,tmp, buffer_size);
 
 	return message;
-
-
 }
 
 typedef struct ms_MYGIS_layer_info_t
@@ -170,13 +166,15 @@ typedef struct ms_MYGIS_layer_info_t
 
 int wkbdata = 1;
 
-int msMYGISLayerParseData(char *data, char *geom_column_name,
-					char *table_name, char *urid_name,char *user_srid);
+int msMYGISLayerParseData(char *data, char *geom_column_name, size_t column_size,
+                          char *table_name, size_t table_size, char *urid_name, size_t name_size,
+                          char *user_srid, size_t srid_size);
 
 void mysql_NOTICE_HANDLER(void *arg, const char *message)
 {
 	char	*str,*str2;
 	char  *result;
+        size_t buffer_size = 6000;
 
 	if (strstr(message,"QUERY DUMP"))
 	{
@@ -185,7 +183,7 @@ void mysql_NOTICE_HANDLER(void *arg, const char *message)
 			free(((msMYGISLayerInfo *) arg)->fields); 	/* free up space */
 
 		}
-			result = malloc ( 6000) ;
+			result = malloc (buffer_size) ;
 			((msMYGISLayerInfo *) arg)->fields = result;
 			result[0] = 0; /* null terminate it */
 
@@ -204,10 +202,10 @@ void mysql_NOTICE_HANDLER(void *arg, const char *message)
 				if (strncmp(str, "<>", (str2-str))) { /* Not a bogus resname */
 				if (strlen(result) > 0)
 				{
-					strcat(result,",");
+                                    strlcat(result,",", buffer_size);
 				}
 
-					strncat(result,str, (str2-str) );
+                                strlcat(result, str, MS_MIN((str2-str), buffer_size));
 				}
 			}
 		}
@@ -402,7 +400,8 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 			free(layerinfo);
 			return MS_FAILURE;
 		}
-		if (strcmp(DB_PASSWD, "none") == 0) strcpy(DB_PASSWD, "");
+		if (strcmp(DB_PASSWD, "none") == 0) 
+                    strcpy(DB_PASSWD, "");
 
 #if MYSQL_VERSION_ID >= 40000
     mysql_init(&(layerinfo->mysql));
@@ -412,7 +411,7 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 #endif
     {
 				char tmp[4000];
-				sprintf( tmp, "Failed to connect to SQL server: Error: %s\nHost: %s\nUsername:%s\nPassword:%s\n", mysql_error(&(layerinfo->mysql)), DB_HOST, DB_USER, DB_PASSWD);
+				snprintf( tmp, sizeof(tmp), "Failed to connect to SQL server: Error: %s\nHost: %s\nUsername:%s\nPassword:%s\n", mysql_error(&(layerinfo->mysql)), DB_HOST, DB_USER, DB_PASSWD);
 				msSetError(MS_QUERYERR, tmp,
            "msMYGISLayerOpen()");
 				free(layerinfo);
@@ -508,7 +507,7 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 	msMYGISLayerInfo *layerinfo;
 	char *pos_from, *pos_ftab, *pos_space, *pos_paren;
 	char f_table_name[5000];
-	char ftable[5000];
+	char *ftable = NULL;
 	char attribselect[5000] = "" ;
 	int 	t;
 
@@ -528,15 +527,15 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 	 */
 
 	pos_space = strstr(geom_table, " "); /* First space */
-	strncpy(ftable, geom_table, pos_space - geom_table);
-	ftable[pos_space - geom_table] = NULL;
+        ftable = (char*)malloc((pos_space - geom_table) + 1);
+	strlcpy(ftable, geom_table, pos_space - geom_table + 1);
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
-	layerinfo->feature = strdup(ftable);
+	layerinfo->feature = ftable;
 /* printf("FEATURE %s/%s/%s/%s<BR>", ftable, pos_ftab, pos_space, pos_paren); */
 	
 	pos_from = strstr(geom_table, " from ");
 	if (pos_from == NULL) {
-		strcpy(f_table_name, geom_table);
+            strlcpy(f_table_name, geom_table, sizeof(f_table_name));
 	}
 	else { /* geom_table is a sub-select clause */
 		pos_ftab = pos_from + 6; /* This should be the start of the ftab name */
@@ -550,12 +549,10 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 
 			return(MS_FAILURE);
 		}
-		if (pos_paren < pos_space) { /* closing parenthesis preceeds any space */
-			strncpy(f_table_name, pos_ftab, pos_paren - pos_ftab);
-		}
-		else {
-			strncpy(f_table_name, pos_ftab, pos_space - pos_ftab);
-		}
+		if (pos_paren < pos_space) /* closing parenthesis preceeds any space */
+			strlcpy(f_table_name, pos_ftab, pos_paren - pos_ftab + 1);
+		else
+			strlcpy(f_table_name, pos_ftab, pos_space - pos_ftab + 1);
 	}
 /* columns_wanted[0] = 0; //len=0	 */
 /* printf(":%d:", layer->numitems); */
@@ -563,14 +560,14 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 	{
 /* printf("(%s, %d/%d)", layer->items[t],t,layer->numitems); */
 	  if (strchr(layer->items[t], '.') != NULL)
-			sprintf(temp,", %s ",layer->items[t]);
-		 else 
-			sprintf(temp,", feature.%s ",layer->items[t]);
-		strcat(columns_wanted,temp);
+              snprintf(temp, sizeof(temp), ", %s ",layer->items[t]);
+          else 
+              snprintf(temp, sizeof(temp), ", feature.%s ",layer->items[t]);
+          strlcat(columns_wanted,temp, sizeof(columns_wanted));
 	}
 
-/* sprintf(box3d,"'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D",rect.minx, rect.miny, rect.maxx, rect.maxy); */
-	sprintf(box3d,"(feature.x2 > %.15g AND feature.y2 > %.15g AND feature.x1 < %.15g AND feature.y1 < %.15g)",rect.minx, rect.miny, rect.maxx, rect.maxy);
+/* snprintf(box3d,sizeof(box3d),"'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D",rect.minx, rect.miny, rect.maxx, rect.maxy); */
+	snprintf(box3d, sizeof(box3d), "(feature.x2 > %.15g AND feature.y2 > %.15g AND feature.x1 < %.15g AND feature.y1 < %.15g)",rect.minx, rect.miny, rect.maxx, rect.maxy);
 
 
 	/* substitute token '!BOX!' in geom_table with the box3d - do at most 1 substitution */
@@ -580,17 +577,17 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 				/* need to do a substition */
 				char	*start, *end;
 				char	*result;
-
-				result = malloc(7000);
+                                size_t buffer_size = 7000;
+				result = malloc(buffer_size);
 
 				start = strstr(geom_table,"!BOX!");
 				end = start+5;
 
 				start[0] =0;
 				result[0]=0;
-				strcat(result,geom_table);
-				strcat(result,box3d);
-				strcat(result,end);
+				strlcat(result,geom_table, buffer_size);
+				strlcat(result,box3d, buffer_size);
+				strlcat(result,end, buffer_size);
 				geom_table= result;
 		}
 	if (layer->type == MS_LAYER_ANNOTATION){
@@ -600,21 +597,21 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 /* strcat(attribselect, layer->labelitem); */
 /* } */
 /* if (layer->labelitem) */
-/* sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelitem); */
-	sprintf(attribselect,", %s%s", layer->labelitem ? "feature." : "", layer->labelitem ? layer->labelitem: "''");
+/* snprintf(attribselect,"%s, feature.%s", attribselect, layer->labelitem); */
+            snprintf(attribselect, sizeof(attribselect), ", %s%s", layer->labelitem ? "feature." : "", layer->labelitem ? layer->labelitem: "''");
 	}
 	if (wkbdata){
 		layerinfo->attriboffset = 3;
 		if (layer->filter.string == NULL){
-			sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE %s",
-							columns_wanted,geom_table,box3d);
-			sprintf(query_string_0_5_real,"SELECT feature.id, feature.vertices, geometry.WKB_GEOMETRY %s from %s WHERE %s AND feature.GID = geometry.GID ORDER BY feature.id",
-						columns_wanted, geom_table,box3d);
+                    snprintf(query_string_0_5, sizeof(query_string_0_5), "SELECT count(%s) from %s WHERE %s",
+                             columns_wanted,geom_table,box3d);
+                    snprintf(query_string_0_5_real, sizeof(query_string_0_5_real), "SELECT feature.id, feature.vertices, geometry.WKB_GEOMETRY %s from %s WHERE %s AND feature.GID = geometry.GID ORDER BY feature.id",
+                             columns_wanted, geom_table,box3d);
 		}else {
-			sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE (%s) and (%s)",
-						columns_wanted,geom_table,layer->filter.string,box3d);
-			sprintf(query_string_0_5_real,"SELECT feature.id, feature.vertices, geometry.WKB_GEOMETRY %s from %s WHERE (%s) AND feature.GID = geometry.GID AND (%s) ORDER BY feature.id",
-						columns_wanted, geom_table,layer->filter.string,box3d);
+                    snprintf(query_string_0_5, sizeof(query_string_0_5), "SELECT count(%s) from %s WHERE (%s) and (%s)",
+                             columns_wanted,geom_table,layer->filter.string,box3d);
+                    snprintf(query_string_0_5_real, sizeof(query_string_0_5_real), "SELECT feature.id, feature.vertices, geometry.WKB_GEOMETRY %s from %s WHERE (%s) AND feature.GID = geometry.GID AND (%s) ORDER BY feature.id",
+                             columns_wanted, geom_table,layer->filter.string,box3d);
 		}
 	}
 /* query(layerinfo, "SELECT "); // attrib ? */
@@ -622,39 +619,39 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 		layerinfo->attriboffset = 7;
 	       	if (layer->filter.string == NULL)
 		{
-	/* sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE %s && %s", */
+	/* snprintf(query_string_0_5,"SELECT count(%s) from %s WHERE %s && %s", */
 	/* columns_wanted,geom_table,geom_column,box3d); */
-			sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE %s",
-							columns_wanted,geom_table,box3d);
-			sprintf(query_string_0_5_real,"SELECT feature.id, feature.vertices, geometry.ETYPE, geometry.X1, geometry.Y1, geometry.X2, geometry.Y2 %s from %s WHERE %s AND feature.GID = geometry.GID ORDER BY feature.id, geometry.ESEQ, geometry.SEQ",
-							attribselect, geom_table,box3d);
+                    snprintf(query_string_0_5, sizeof(query_string_0_5), "SELECT count(%s) from %s WHERE %s",
+                            columns_wanted,geom_table,box3d);
+                    snprintf(query_string_0_5_real, sizeof(query_string_0_5_real), "SELECT feature.id, feature.vertices, geometry.ETYPE, geometry.X1, geometry.Y1, geometry.X2, geometry.Y2 %s from %s WHERE %s AND feature.GID = geometry.GID ORDER BY feature.id, geometry.ESEQ, geometry.SEQ",
+                             attribselect, geom_table,box3d);
 	/*		if (strlen(user_srid) == 0)
 			{
-				sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )",
+				snprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )",
 							columns_wanted,geom_table,geom_column,box3d,f_table_name,geom_column);
 			}
 			else	// use the user specified version
 			{
-				sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )",
+				snprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )",
 							columns_wanted,geom_table,geom_column,box3d,user_srid);
 			}
 	*/	}
 		else
 		{
-	/* sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE (%s) and (%s && %s)", */
+	/* snprintf(query_string_0_5,"SELECT count(%s) from %s WHERE (%s) and (%s && %s)", */
 	/* columns_wanted,geom_table,layer->filter.string,geom_column,box3d); */
-			sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE (%s) and (%s)",
+			snprintf(query_string_0_5, sizeof(query_string_0_5), "SELECT count(%s) from %s WHERE (%s) and (%s)",
 							columns_wanted,geom_table,layer->filter.string,box3d);
-			sprintf(query_string_0_5_real,"SELECT feature.id, feature.vertices, geometry.ETYPE, geometry.X1, geometry.Y1, geometry.X2, geometry.Y2 %s from %s WHERE (%s) AND feature.GID = geometry.GID AND (%s) ORDER BY feature.id, geometry.ESEQ, geometry.SEQ",
+			snprintf(query_string_0_5_real, sizeof(query_string_0_5_real), "SELECT feature.id, feature.vertices, geometry.ETYPE, geometry.X1, geometry.Y1, geometry.X2, geometry.Y2 %s from %s WHERE (%s) AND feature.GID = geometry.GID AND (%s) ORDER BY feature.id, geometry.ESEQ, geometry.SEQ",
 							attribselect, geom_table,layer->filter.string,box3d);
 	/*		if (strlen(user_srid) == 0)
 			{
-				sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))",
+				snprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))",
 							columns_wanted,geom_table,layer->filter.string,geom_column,box3d,f_table_name,geom_column);
 			}
 			else
 			{
-				sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )",
+				snprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )",
 							columns_wanted,geom_table,layer->filter.string,geom_column,box3d,user_srid);
 
 			}
@@ -709,13 +706,17 @@ if (MYDEBUG) printf("msMYGISLayerWhichShapes called<br>\n");
 	query_str = (char *) malloc(6000); /* should be big enough */
 	memset(query_str,0,6000);		/* zero it out */
 
-if(MYDEBUG)	printf("%s/%s/%s/%s/%s<br>\n", layer->data, geom_column_name, table_name, urid_name,user_srid);
-	msMYGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid);
-if(MYDEBUG)	printf("%s<br>\n", layer->data);
+        if(MYDEBUG)
+            printf("%s/%s/%s/%s/%s<br>\n", layer->data, geom_column_name, table_name, urid_name,user_srid);
+        msMYGISLayerParseData(layer->data, geom_column_name, sizeof(geom_column_name), table_name, sizeof(table_name), urid_name, sizeof(urid_name), user_srid, sizeof(user_srid));
+        if(MYDEBUG)
+            printf("%s<br>\n", layer->data);
 	layerinfo->table = strdup(table_name);
-if(MYDEBUG)	printf("%s/%s/%s/%s/%s<br>\n", layer->data, geom_column_name, table_name, urid_name,user_srid);
+        if(MYDEBUG)
+            printf("%s/%s/%s/%s/%s<br>\n", layer->data, geom_column_name, table_name, urid_name,user_srid);
 	set_up_result= prep_DB(table_name,geom_column_name, layer, &(layerinfo->query_result), rect,query_str, urid_name,user_srid);
-if (MYDEBUG) printf("...<br>");
+        if (MYDEBUG)
+            printf("...<br>");
 	if (set_up_result != MS_SUCCESS)
 		return set_up_result; /* relay error */
 	layerinfo->sql = query_str;
@@ -1397,9 +1398,9 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 				if (layer->numitems > 0){
 /* if (MYDEBUG)printf("RETR attrib<BR>\n"); */
 					for (t=0;t<layer->numitems;t++){
-						sprintf(tmpstr, "%d", t);
+                                            snprintf(tmpstr, sizeof(tmpstr), "%d", t);
 /* shape->values[t]=strdup(""); */
-						shape->values[t]=strdup(row[layerinfo->attriboffset+t]);
+                                            shape->values[t]=strdup(row[layerinfo->attriboffset+t]);
 /* printf("%d/%s<BR>"); */
 					}
 					if (1){
@@ -1409,11 +1410,8 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 						    }
 					} else {
 
-
-
-
-/* sprintf(tmpstr,"select attribute, value from shape_attr where shape_attr.shape='%d'", shape->index); */
-					sprintf(tmpstr,"SELECT %s FROM %s feature WHERE feature.id='%li'", layer->labelitem ? layer->labelitem: "''", layerinfo->feature ? layerinfo->feature : "feature", shape->index);
+/* snprintf(tmpstr,"select attribute, value from shape_attr where shape_attr.shape='%d'", shape->index); */
+                                            snprintf(tmpstr, sizeof(tmpstr), "SELECT %s FROM %s feature WHERE feature.id='%li'", layer->labelitem ? layer->labelitem: "''", layerinfo->feature ? layerinfo->feature : "feature", shape->index);
 
 					   if (layerinfo->query2_result != NULL) /* query leftover  */
 					   {
@@ -1481,6 +1479,7 @@ int msMYGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 {
 
 	char	*query_str;
+        size_t  buffer_size = 6000;
 	char	table_name[5000];
 	char	geom_column_name[5000];
 	char	urid_name[5000];
@@ -1504,41 +1503,41 @@ if (MYDEBUG) printf("msMYGISLayerGetShape called for record = %li<br>\n",record)
 		return(MS_FAILURE);
 	}
 
-	query_str = (char *) malloc(6000); /* should be big enough */
-	memset(query_str,0,6000);		/* zero it out */
+	query_str = (char *) malloc(buffer_size); /* should be big enough */
+	memset(query_str,0,buffer_size);		/* zero it out */
 
-	msMYGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid);
+	msMYGISLayerParseData(layer->data, geom_column_name, sizeof(geom_column_name), table_name, sizeof(table_name), urid_name, sizeof(urid_name), user_srid, sizeof(user_srid));
 
 	if (layer->numitems ==0) /* dont need the oid since its really record */
 	{
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
-			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
-/* sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name); */
+                    snprintf(columns_wanted, sizeof(columns_wanted), "asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
+/* snprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name); */
 		else
-			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
-/* sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name); */
-		 strcpy(columns_wanted, geom_column_name);
+                    snprintf(columns_wanted, sizeof(columns_wanted), "asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
+/* snprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name); */
+                strlcpy(columns_wanted, geom_column_name, sizeof(columns_wanted));
 	}
 	else
 	{
 		columns_wanted[0] = 0; /* len=0 */
 		for (t=0;t<layer->numitems; t++)
 		{
-			sprintf(temp,", feature.%s",layer->items[t]);
-			strcat(columns_wanted,temp);
+                    snprintf(temp, sizeof(temp),", feature.%s",layer->items[t]);
+                    strlcat(columns_wanted,temp, sizeof(columns_wanted));
 		}
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
-			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
+                    snprintf(temp, sizeof(temp),"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
 		else
-			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
+                    snprintf(temp, sizeof(temp), "asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
 
-		strcpy(temp, geom_column_name);
-		strcat(columns_wanted,temp);
+		strlcpy(temp, geom_column_name, sizeof(temp));
+		strlcat(columns_wanted,temp, sizeof(columns_wanted));
 	}
 
 
 
-		sprintf(query_str,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s = %li", columns_wanted,table_name,urid_name,record);
+        snprintf(query_str, buffer_size, "DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s = %li", columns_wanted,table_name,urid_name,record);
 
 
 if (MYDEBUG) printf("msMYGISLayerGetShape: %s <br>\n",query_str);
@@ -1574,7 +1573,7 @@ if (MYDEBUG) printf("msMYGISLayerGetShape: %s <br>\n",query_str);
     {
 		char tmp[4000];
 
-		sprintf(tmp, "Error executing MYGIS  SQL   statement: %s", query_str);
+		snprintf(tmp, "Error executing MYGIS  SQL   statement: %s", query_str);
         	msSetError(MS_QUERYERR, tmp,
                  "msMYGISLayerGetShape()");
 
@@ -1590,7 +1589,7 @@ if (MYDEBUG) printf("msMYGISLayerGetShape: %s <br>\n",query_str);
     {
 		char tmp[4000];
 
-		sprintf(tmp, "Error executing MYGIS  SQL   statement (in FETCH ALL): %s <br><br>\n\nMore Help:", query_str);
+		snprintf(tmp, "Error executing MYGIS  SQL   statement (in FETCH ALL): %s <br><br>\n\nMore Help:", query_str);
         	msSetError(MS_QUERYERR, tmp,
                  "msMYGISLayerWhichShapes()");
 
@@ -1716,12 +1715,12 @@ if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 	}
 	/* get the table name and geometry column name */
 
-	msMYGISLayerParseData(layer->data, geom_column_name, table_name, urid_name, user_srid);
+	msMYGISLayerParseData(layer->data, geom_column_name, sizeof(geom_column_name), table_name, sizeof(table_name), urid_name, sizeof(urid_name), user_srid, sizeof(user_srid));
 
 	/* two cases here.  One, its a table (use select * from table) otherwise, just use the select clause */
 	if ((sp = strstr(table_name, " ")) != NULL)
 		*sp = '\0';
-	sprintf(sql,"describe %s",table_name);
+	snprintf(sql, sizeof(sql), "describe %s",table_name);
 	t = 0;
 	if (query(layerinfo, sql) == MS_FAILURE)
         	return MS_FAILURE;
@@ -1735,7 +1734,7 @@ if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 		}
 	}
 /* memset(layer->items[t],0, str2-str +1); */
-/* strncpy(layer->items[t], str, str2-str); */
+/* strlcpy(layer->items[t], str, str2-str+1); */
 	layer->numitems =  t; /* one less because dont want to do anything with geometry column */
 	/* layerinfo->fields is a string with a list of all the columns */
 
@@ -1772,11 +1771,13 @@ if (MYDEBUG) printf("msMYGISLayerGetExtent called<br>\n");
  * unique record id
  */
 
-int msMYGISLayerParseData(char *data, char *geom_column_name,
-	char *table_name, char *urid_name,char *user_srid)
+int msMYGISLayerParseData(char *data, char *geom_column_name, size_t column_size,
+                          char *table_name, size_t table_size, char *urid_name, size_t name_size, 
+                          char *user_srid, size_t srid_size)
 {
 	char *pos_opt, *pos_scn, *tmp, *pos_srid;
 	int 	slength;
+        size_t len = 0;
 
 
 if (MYDEBUG)printf("msMYGISLayerParseData called<BR>\n");
@@ -1790,19 +1791,21 @@ if (MYDEBUG)printf("msMYGISLayerParseData called<BR>\n");
 	pos_opt = strstr(data, " using unique ");
 	if (pos_opt == NULL) {
 		/* No user specified unique id so we will use the Postgesql OID */
-		strcpy(urid_name, "OID");
+            strlcpy(urid_name, "OID", name_size);
 	}
 	else {
 		/* CHANGE - protect the trailing edge for thing like 'using unique ftab_id using srid=33' */
 		tmp = strstr(pos_opt + 14," ");
 		if (tmp == NULL) /* it lookes like 'using unique ftab_id' */
 		{
-			strcpy(urid_name, pos_opt + 14);
+                    len = MS_MIN((size_t)(pos_opt + 14), (name_size-1));
+                    strlcpy(urid_name, pos_opt + 14, len+1);
 		}
 		else
 		{
-			/* looks like ' using unique ftab_id ' (space at end) */
-			strncpy(urid_name, pos_opt + 14, tmp-(pos_opt + 14  ) );
+                    len = MS_MIN(tmp-(pos_opt + 14), (name_size-1));
+                    /* looks like ' using unique ftab_id ' (space at end) */
+                    strlcpy(urid_name, pos_opt + 14,  len+1);
 		}
 	}
 
@@ -1825,8 +1828,8 @@ if (MYDEBUG)printf("msMYGISLayerParseData called<BR>\n");
 		}
 		else
 		{
-			strncpy(user_srid,pos_srid+12,slength);
-			user_srid[slength] = 0; /* null terminate it */
+                    len = MS_MIN(slength, (srid_size-1));
+                    strlcpy(user_srid,pos_srid+12, len+1);
 		}
 	}
 
@@ -1860,16 +1863,17 @@ if (MYDEBUG)printf("msMYGISLayerParseData called<BR>\n");
 	}
 
 	/* Copy the geometry column name */
-	memcpy(geom_column_name, data, (pos_scn)-(data));
-	geom_column_name[(pos_scn)-(data)] = 0; /* null terminate it */
+        len = MS_MIN((pos_scn)-(data), (column_size-1));
+	memcpy(geom_column_name, data, len);
+	geom_column_name[len] = 0; /* null terminate it */
 
 	/* Copy out the table name or sub-select clause */
 	if (pos_opt == NULL) {
-		strcpy(table_name, pos_scn + 6);	/* table name or sub-select clause */
+            strlcpy(table_name, pos_scn + 6, table_size);	/* table name or sub-select clause */
 	}
 	else {
-		strncpy(table_name, pos_scn + 6, (pos_opt) - (pos_scn + 6));
-		table_name[(pos_opt) - (pos_scn + 6)] = 0; /* null terminate it */
+            len = MS_MIN((pos_opt) - (pos_scn + 6), (table_size-1));
+            strlcpy(table_name, pos_scn + 6, len+1);
 	}
 
 	if ( (strlen(table_name) < 1 ) ||  (strlen(geom_column_name) < 1 ) ) {

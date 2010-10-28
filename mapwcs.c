@@ -109,9 +109,9 @@ static char *msWCSConvertRangeSetToString(const char *value) {
     
     for(val=min; val<=max; val+=res) {
       if(val == min)
-        snprintf(buf1, 128, "%g", val);     
+        snprintf(buf1, sizeof(buf1), "%g", val);     
       else
-        snprintf(buf1, 128, ",%g", val);
+        snprintf(buf1, sizeof(buf1), ",%g", val);
       buf2 = msStringConcatenate(buf2, buf1);
     }
    
@@ -270,6 +270,7 @@ void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
 
     const char *value;
     char *bandlist;
+    size_t bufferSize = 0;
     int  i;
 
     /* Does this item exist in the axes list?  */
@@ -302,10 +303,11 @@ void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
     msInsertHashTable( &(lp->metadata), "wcs_bands_label", "Bands/Channels/Samples" );
     msInsertHashTable( &(lp->metadata), "wcs_bands_rangeitem", "_bands" ); /* ? */
 
-    bandlist = (char *) malloc(cm->bandcount*30+30 );
+    bufferSize = cm->bandcount*30+30;
+    bandlist = (char *) malloc(bufferSize);
     strcpy( bandlist, "1" );
     for( i = 1; i < cm->bandcount; i++ )
-        sprintf( bandlist+strlen(bandlist),",%d", i+1 );
+      snprintf( bandlist+strlen(bandlist), bufferSize-strlen(bandlist), ",%d", i+1 );
     
     msInsertHashTable( &(lp->metadata), "wcs_bands_values", bandlist );
     free( bandlist );
@@ -887,40 +889,40 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   
   msIO_printf("        <axisDescription>\n");
   msIO_printf("          <AxisDescription");
-  snprintf(tag, 100, "%s_semantic",  name); /* optional attributes follow (should escape?) */
+  snprintf(tag, sizeof(tag), "%s_semantic",  name); /* optional attributes follow (should escape?) */
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
-  snprintf(tag, 100, "%s_refsys", name);
+  snprintf(tag, sizeof(tag), "%s_refsys", name);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, " refSys=\"%s\"", NULL);
-  snprintf(tag, 100, "%s_refsyslabel", name);
+  snprintf(tag, sizeof(tag), "%s_refsyslabel", name);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, " refSysLabel=\"%s\"", NULL);
   msIO_printf(">\n");
   
   /* TODO: add metadataLink (optional) */
   
-  snprintf(tag, 100, "%s_description", name);
+  snprintf(tag, sizeof(tag), "%s_description", name);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, "            <description>%s</description>\n", NULL);
-  /* snprintf(tag, 100, "%s_name", name); */
+  /* snprintf(tag, sizeof(tag), "%s_name", name); */
   /* msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", tag, OWS_WARN, "            <name>%s</name>\n", NULL); */
   msIO_printf("            <name>%s</name>\n", name);
  
-  snprintf(tag, 100, "%s_label", name);
+  snprintf(tag, sizeof(tag), "%s_label", name);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", tag, OWS_WARN, "            <label>%s</label>\n", NULL);
   
   /* Values */
   msIO_printf("            <values");
-  snprintf(tag, 100, "%s_values_semantic", name); /* optional attributes follow (should escape?) */
+  snprintf(tag, sizeof(tag), "%s_values_semantic", name); /* optional attributes follow (should escape?) */
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
-  snprintf(tag, 100, "%s_values_type", name);
+  snprintf(tag, sizeof(tag), "%s_values_type", name);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, " type=\"%s\"", NULL);
   msIO_printf(">\n");
   
   /* single values, we do not support optional type and semantic attributes */
-  snprintf(tag, 100, "%s_values", name);
+  snprintf(tag, sizeof(tag), "%s_values", name);
   if(msOWSLookupMetadata(&(layer->metadata), "COM", tag))
     msOWSPrintEncodeMetadataList(stdout, &(layer->metadata), "COM", tag, NULL, NULL, "              <singleValue>%s</singleValue>\n", NULL);
   
   /* intervals, only one per axis for now, we do not support optional type, atomic and semantic attributes */
-  snprintf(tag, 100, "%s_interval", name);
+  snprintf(tag, sizeof(tag), "%s_interval", name);
   if((value = msOWSLookupMetadata(&(layer->metadata), "COM", tag)) != NULL) {
     char **tokens;
     int numtokens;
@@ -1269,7 +1271,7 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
       }
        
       /* xxxxx_rangeitem tells us how to subset */
-      snprintf(tag, 100, "%s_rangeitem", tokens[i]);
+      snprintf(tag, sizeof(tag), "%s_rangeitem", tokens[i]);
       if((rangeitem = msOWSLookupMetadata(&(lp->metadata), "COM", tag)) == NULL) {
         msSetError( MS_WCSERR, "Missing required metadata element \"%s\", unable to process %s=%s.", "msWCSGetCoverage()", tag, tokens[i], value);
         return msWCSException(map, NULL, NULL, params->version);
@@ -1382,6 +1384,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   const char *value;
   outputFormatObj *format;
   char *bandlist=NULL;
+  size_t bufferSize = 0;
   char numbands[8]; /* should be large enough to hold the number of bands in the bandlist */
   coverageMetadataObj cm;
   rectObj reqextent;
@@ -1720,10 +1723,11 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE); 
            
   if(!bandlist) { /* build a bandlist (default is ALL bands) */
-    bandlist = (char *) malloc(cm.bandcount*30+30 );
+    bufferSize = cm.bandcount*30+30;
+    bandlist = (char *) malloc(bufferSize);
     strcpy(bandlist, "1");
     for(i = 1; i < cm.bandcount; i++)
-      sprintf(bandlist+strlen(bandlist),",%d", i+1);
+      snprintf(bandlist+strlen(bandlist), bufferSize-strlen(bandlist), ",%d", i+1);
   }
 
   /* apply nullvalue to the output format object if we have it */
@@ -1732,7 +1736,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   }
   
   msLayerSetProcessingKey(lp, "BANDS", bandlist);
-  sprintf(numbands, "%d", msCountChars(bandlist, ',')+1);
+  snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
                
   /* create the image object  */
@@ -2150,7 +2154,7 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 
     msInitProjection(&proj); /* or bad things happen */
 
-    sprintf(projstring, "init=epsg:%.20s", cm->srs+5);
+    snprintf(projstring, sizeof(projstring), "init=epsg:%.20s", cm->srs+5);
     if (msLoadProjectionString(&proj, projstring) != 0) return MS_FAILURE;
     msProjectRect(&proj, NULL, &(cm->llextent));    
   }
