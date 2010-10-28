@@ -1597,6 +1597,7 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
   char *pszTmp = NULL;
   int dimension = 2;
   char *pszSrsName = NULL;
+  char *pszTmp2 = NULL;
   size_t bufferSize = 0;
 
   psNode = xmlNewNode(psNs, BAD_CAST "Point");
@@ -1622,10 +1623,12 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
 
   pszTmp = msDoubleToString(x, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, " ");
-  pszTmp = msStringConcatenate(pszTmp, msDoubleToString(y, MS_TRUE));
+  pszTmp2 = msDoubleToString(y, MS_TRUE);
+  pszTmp = msStringConcatenate(pszTmp, pszTmp2);
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "pos", BAD_CAST pszTmp);
 
   free(pszTmp);
+  free(pszTmp2);
   return psNode;
 }
 
