@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Date/Time utility functions.
@@ -391,6 +391,7 @@ int _msValidateTime(char *timestring,  const char *timeextent)
                 msTimeCompare(&tmend, &tmtimeend) >= 0)
             {
                 msFreeCharArray(atimerange, numranges);
+                msFreeCharArray(atimeextents, numextents);
                 return MS_TRUE;
             }
         }
@@ -402,7 +403,8 @@ int _msValidateTime(char *timestring,  const char *timeextent)
                 msTimeCompare(&tmstart, &tmtimestart) <= 0 &&
                 msTimeCompare(&tmend, &tmtimeend) >= 0)
             {
-                 msFreeCharArray(atimerange, numranges);
+                msFreeCharArray(atimerange, numranges);
+                msFreeCharArray(atimeextents, numextents);
                 return MS_TRUE;
             }
         }
