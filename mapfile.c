@@ -1992,13 +1992,14 @@ char *msGetExpressionString(expressionObj *exp)
 {
   if(exp->string) {
     char *exprstring;
+    size_t buffer_size;
     const char *case_insensitive = "";
 
     if(exp->flags & MS_EXP_INSENSITIVE)
       case_insensitive = "i";
 
     /* Alloc buffer big enough for string + 2 delimiters + 'i' + \0 */
-    size_t buffer_size = strlen(exp->string)+4;
+    buffer_size = strlen(exp->string)+4;
     exprstring = (char*)malloc(buffer_size);
 
     switch(exp->type) {

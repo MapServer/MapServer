@@ -168,8 +168,9 @@ int FLTParseEpsgString(char *pszEpsg, projectionObj *psProj)
         tokens = msStringSplit(pszEpsg,'#', &nTokens);
         if (tokens && nTokens == 2)
         {
+            char *szTmp;
             bufferSize = 10+strlen(tokens[1])+1;
-            char *szTmp = (char *)malloc(bufferSize);
+            szTmp = (char *)malloc(bufferSize);
             snprintf(szTmp, bufferSize, "init=epsg:%s", tokens[1]);
             msInitProjection(psProj);
             if (msLoadProjectionString(psProj, szTmp) == 0)
@@ -987,8 +988,9 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
         tokens = msStringSplit(szEPSG,'#', &nTokens);
         if (tokens && nTokens == 2)
         {
+            char *szTmp;
             bufferSize = 10+strlen(tokens[1])+1;
-            char *szTmp = (char *)malloc(bufferSize);
+            szTmp = (char *)malloc(bufferSize);
             snprintf(szTmp, bufferSize, "init=epsg:%s",tokens[1]);
             msInitProjection(&sProjTmp);
             if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
