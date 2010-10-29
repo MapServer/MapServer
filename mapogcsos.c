@@ -787,6 +787,8 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                                        "observedproperty_id");
         if (pszValue)
             msSOSAddPropertyNode(psNsSwe, psNsXLink, psObsNode, lp, psNsGml, pszOid);
+        msFree(pszOid);
+        pszOid = NULL;
 
         /*TODO add featureofinterest*/
 
@@ -797,6 +799,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         psNode =  xmlNewChild(psObsNode, psNsOm, BAD_CAST "featureOfInterest", NULL);
         xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszTmp);
 
+        msFree(pszTmp);
         pszTmp=NULL;
 
         /* add result : gml:featureMember of all selected elements */
@@ -894,6 +897,8 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
               msLayerClose(lpfirst);
         }
     }
+
+    msFreeShape(&sShape);
 }
 
 /************************************************************************/
@@ -1151,6 +1156,8 @@ char *msSOSParseTimeGML(char *pszGmlTime)
                             pszReturn = msStringConcatenate(pszReturn, pszEnd);
                         }
                     }
+                    msFree(pszBegin);
+                    msFree(pszEnd);
                 }
             }
         }
@@ -1173,7 +1180,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
 
     char *schemalocation = NULL;
     char *xsi_schemaLocation = NULL;
-    const char *script_url=NULL;
+    char *script_url=NULL;
     const char *updatesequence=NULL;
     const char *encoding;
 
@@ -1730,6 +1737,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
 
      free(xsi_schemaLocation);
      free(schemalocation);
+     msFree(script_url);
 
     /*
      *Free the global variables that may
@@ -1781,7 +1789,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   const char *pszTmp = NULL, *pszTmp2 = NULL;
   const char *user_namespace_uri = "http://mapserver.gis.umn.edu/mapserver";
   const char *user_namespace_prefix = "ms";
-  const char *script_url=NULL;
+  char *script_url=NULL;
   int i, j, k, bLayerFound = 0;
   layerObj *lp = NULL, *lpfirst = NULL; 
   const char *pszTimeExtent=NULL, *pszTimeField=NULL, *pszValue=NULL;
@@ -1797,8 +1805,6 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   xmlNsPtr psNsSwe = NULL;
   xmlNsPtr psNsXLink = NULL;
   xmlNsPtr psNsSos = NULL;
-  xmlNsPtr psNsOws = NULL;
-  xmlNsPtr psNsXsi = NULL;
   xmlNsPtr psNsMs = NULL;
   const char *opLayerName = NULL;
   char *pszBuffer = NULL;
@@ -2183,13 +2189,16 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
 
     /* TODO we should reproject the bbox to the map projection if there is an srs defined */
     if (!bValid) {
-            msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest %s.", "msSOSGetObservation()", sosparams->pszEventTime);
-            return msSOSException(map, "featureofinterest", "InvalidParameterValue");
-        }
-        map->extent.minx = sBbox.minx;
-        map->extent.miny = sBbox.miny;
-        map->extent.maxx = sBbox.maxx;
-        map->extent.maxy = sBbox.maxy;
+        msSetError(MS_SOSERR, "Invalid gml:Envelope value given for featureOfInterest %s.", "msSOSGetObservation()", sosparams->pszEventTime);
+        return msSOSException(map, "featureofinterest", "InvalidParameterValue");
+    }
+    map->extent.minx = sBbox.minx;
+    map->extent.miny = sBbox.miny;
+    map->extent.maxx = sBbox.maxx;
+    map->extent.maxy = sBbox.maxy;
+
+    CPLDestroyXMLNode(psRoot);
+    msFree(pszSRS);
   }
 
   if (sosparams->pszSrsName) { /* validate against MAP.WEB.METADATA.sos_srs */
@@ -2278,10 +2287,10 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
           msLayerClose(lp);
         }
         FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
-        msFree(psFilterNode);
-        
       }
     }
+
+    FLTFreeFilterEncodingNode(psFilterNode);
   }
 
   
@@ -2329,10 +2338,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
     psNsSos = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/sos/1.0", BAD_CAST "sos");
     psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
     psNsOm = xmlNewNs(NULL, BAD_CAST pszOMNamespaceUri, BAD_CAST pszOMNamespacePrefix);
-    psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
     psNsSwe = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/swe/1.0.1", BAD_CAST "swe");
     psNsXLink = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
-    psNsXsi  = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
     psNsMs = xmlNewNs(NULL, BAD_CAST user_namespace_uri, BAD_CAST user_namespace_prefix);
 
     psDoc = xmlNewDoc(BAD_CAST "1.0");
@@ -2567,7 +2574,6 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
     else
         msIO_printf("Content-type: text/xml%c%c",10,10);
 
-     
      context = msIO_getHandler(stdout);
      xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
      msIO_contextWrite(context, buffer, size);
@@ -2580,6 +2586,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
      xmlFreeNs(psNsXLink);
      xmlFreeNs(psNsMs);
      xmlFree(buffer);
+     msFree(script_url);
 
     /*free  document */
      xmlFreeDoc(psDoc);
@@ -2748,7 +2755,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
 int msSOSDescribeObservationType(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req) {
   int i, j, n = 0, bLayerFound = 0;
   char **tokens = NULL;
-  const char *script_url=NULL;
+  char *script_url=NULL;
   const char *pszTmp = NULL;
   char *pszTmp2=NULL;
   const char *opLayerName = NULL;
@@ -2793,6 +2800,7 @@ int msSOSDescribeObservationType(mapObj *map, sosParamsObj *sosparams, cgiReques
 
   msIO_printf("Location: %s\n\n", pszTmp2);
   msFree(pszTmp2);
+  msFree(script_url);
   return(MS_SUCCESS);
 }
 
