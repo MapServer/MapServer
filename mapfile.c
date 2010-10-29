@@ -2093,6 +2093,24 @@ static void writeHashTable(FILE *stream, int indent, const char *title, hashTabl
   writeBlockEnd(stream, indent, title);
 }
 
+static void writeHashTableInline(FILE *stream, int indent, char *name, hashTableObj* table) {
+    struct hashObj *tp = NULL;
+    int i;
+
+    if(!table) return;
+    if(msHashIsEmpty(table)) return;
+
+    ++indent;
+    for (i=0;i<MS_HASHSIZE;++i) {
+        if (table->items[i] != NULL) {
+            for (tp=table->items[i]; tp!=NULL; tp=tp->next) {
+                writeIndent(stream, indent);
+                fprintf(stream, "%s \"%s\" \"%s\"\n", name, tp->key, tp->data);
+            }
+        }
+    }
+}
+
 /*
 ** Initialize, load and free a single style
 */
@@ -4953,7 +4971,7 @@ int msSaveMap(mapObj *map, char *filename)
   }
 
   writeBlockBegin(stream, indent, "MAP");
-  writeHashTable(stream, indent, "CONFIG", &(map->configoptions));
+  writeHashTableInline(stream, indent, "CONFIG", &(map->configoptions));
   writeString(stream, indent, "DATAPATTERN", NULL, map->datapattern); /* depricated */
   writeNumber(stream, indent, "DEBUG", 0, map->debug);
   writeNumber(stream, indent, "DEFRESOLUTION", 72.0, map->defresolution);
