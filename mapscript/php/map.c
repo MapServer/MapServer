@@ -2084,7 +2084,7 @@ PHP_METHOD(mapObj, save)
     
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    status = mapObj_loadQuery(php_map->map, filename); 
+    status = mapObj_save(php_map->map, filename); 
     if (status != MS_SUCCESS)
     {
         mapscript_throw_mapserver_exception("" TSRMLS_CC);
