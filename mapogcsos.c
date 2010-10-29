@@ -392,7 +392,7 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParen
               /*add all points */
               for(i=0; i<psShape->line[0].numpoints; i++)
               {
-                  psNode = xmlAddChild(psPointNode, msGML3Point(psNsGml, pszEpsg, NULL, psShape->line[0].point[0].x, psShape->line[0].point[0].y));
+                  psNode = xmlAddChild(psPointNode, msGML3Point(psNsGml, pszEpsg, NULL, psShape->line[0].point[i].x, psShape->line[0].point[i].y));
               }
               break;
               
