@@ -779,6 +779,7 @@ void msGMLFreeGeometries(gmlGeometryListObj *geometryList)
     msFree(geometryList->geometries[i].name);
     msFree(geometryList->geometries[i].type);
   }
+  free(geometryList->geometries);
 
   free(geometryList);
 }

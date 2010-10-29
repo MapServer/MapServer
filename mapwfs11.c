@@ -109,6 +109,7 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
     const char *value    = NULL;
     const char *encoding = NULL;
     char *encoded=NULL;
+    char *valueToFree;
     char **tokens;
     int n=0,i=0;      
 
@@ -156,13 +157,13 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
 	msFree(encoded);
     }
       /*support DefaultSRS and OtherSRS*/
-    value = msOWSGetProjURN(&(map->projection),&(map->web.metadata),"FO",MS_FALSE);
-    if (!value)
-      value = msOWSGetProjURN(&(lp->projection), &(lp->metadata), "FO", MS_FALSE);
+    valueToFree = msOWSGetProjURN(&(map->projection),&(map->web.metadata),"FO",MS_FALSE);
+    if (!valueToFree)
+      valueToFree = msOWSGetProjURN(&(lp->projection), &(lp->metadata), "FO", MS_FALSE);
 
-    if (value)
+    if (valueToFree)
     {
-        tokens = msStringSplit(value, ' ', &n);
+        tokens = msStringSplit(valueToFree, ' ', &n);
         if (tokens && n > 0)
         {
             psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]);
@@ -175,6 +176,9 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
     else
       xmlAddSibling(psNode,
                     xmlNewComment(BAD_CAST "WARNING: Mandatory mapfile parameter: (at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs/ows_srs metadata was missing in this context."));
+
+    free(valueToFree);
+    valueToFree = NULL;
 
     /*TODO: adevertize only gml3?*/
     psNode = xmlNewNode(NULL, BAD_CAST "OutputFormats");

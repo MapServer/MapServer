@@ -669,7 +669,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
     return msWFSGetCapabilities11( map, wfsparams, req );
 
   /* Decide which version we're going to return... only 1.0.0 for now */
-  wmtver = strdup("1.0.0");
+  wmtver = "1.0.0";
 
   /* We need this server's onlineresource. */
   if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL ||
@@ -678,6 +678,8 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       msSetError(MS_WFSERR, "Server URL not found", "msWFSGetCapabilities()");
       return msWFSException(map, "mapserv", "NoApplicableCode", wmtver);
   }
+  free(script_url);
+  script_url = NULL;
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
 
@@ -688,10 +690,12 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       i = msOWSNegotiateUpdateSequence(wfsparams->pszUpdateSequence, updatesequence);
       if (i == 0) { /* current */
           msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWFSGetCapabilities()", wfsparams->pszUpdateSequence, updatesequence);
+          free(script_url_encoded);
           return msWFSException(map, "updatesequence", "CurrentUpdateSequence", wmtver);
       }
       if (i > 0) { /* invalid */
           msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWFSGetCapabilities()", wfsparams->pszUpdateSequence, updatesequence);
+          free(script_url_encoded);
           return msWFSException(map, "updatesequence", "InvalidUpdateSequence", wmtver);
       }
   }
@@ -845,7 +849,6 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   */
   msIO_printf("</WFS_Capabilities>\n");
 
-  free(script_url);
   free(script_url_encoded);
 
   return MS_SUCCESS;
@@ -2869,28 +2872,19 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
 {
     if (wfsparams)
     {
-        if (wfsparams->pszVersion)
-          free(wfsparams->pszVersion);
-        if (wfsparams->pszUpdateSequence)
-          free(wfsparams->pszUpdateSequence);
-        if (wfsparams->pszRequest)
-          free(wfsparams->pszRequest);
-        if (wfsparams->pszService)
-          free(wfsparams->pszService);
-        if (wfsparams->pszTypeName)
-          free(wfsparams->pszTypeName);
-        if (wfsparams->pszFilter)
-          free(wfsparams->pszFilter);
-        if (wfsparams->pszFeatureId)
-          free(wfsparams->pszFeatureId);
-        if (wfsparams->pszOutputFormat)
-          free(wfsparams->pszOutputFormat);
-        if (wfsparams->pszSrs)
-          free(wfsparams->pszSrs);
-        if (wfsparams->pszResultType)
-          free(wfsparams->pszResultType);
-        if (wfsparams->pszAcceptVersions)
-          free(wfsparams->pszAcceptVersions);
+        free(wfsparams->pszVersion);
+        free(wfsparams->pszUpdateSequence);
+        free(wfsparams->pszRequest);
+        free(wfsparams->pszService);
+        free(wfsparams->pszTypeName);
+        free(wfsparams->pszFilter);
+        free(wfsparams->pszBbox);
+        free(wfsparams->pszOutputFormat);
+        free(wfsparams->pszFeatureId);
+        free(wfsparams->pszSrs);
+        free(wfsparams->pszResultType);
+        free(wfsparams->pszPropertyName);
+        free(wfsparams->pszAcceptVersions);
     }
 }
 
