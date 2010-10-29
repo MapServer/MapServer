@@ -103,6 +103,7 @@ int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape , char **ppszSRS)
         {
             FLTogrConvertGeometry(hGeometry, psShape, 
                                   OGR_G_GetGeometryType(hGeometry));
+            OGR_G_DestroyGeometry(hGeometry);
         }
 
         pszSRS = (char *)CPLGetXMLValue(psTree, "srsName", NULL);
@@ -663,6 +664,8 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
           psLayer->resultcache->bounds = shape.bounds;
         else
           msMergeRect(&(psLayer->resultcache->bounds), &shape.bounds);
+
+        msFreeShape(&shape);
     }
 
     /*
@@ -1021,6 +1024,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
                 msInitProjection(&sProjTmp);
                 if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
                   msProjectRect(&sProjTmp, &map->projection,  &sQueryRect);
+                msFreeProjection(&sProjTmp);
             }
         }
         if (tokens)
@@ -1497,25 +1501,36 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode)
             psFilterNode->psRightNode = NULL;
         }
 
-        if( psFilterNode->pszValue )
-            free( psFilterNode->pszValue );
-
         if (psFilterNode->pszSRS)
           free( psFilterNode->pszSRS);
 
         if( psFilterNode->pOther )
         {
-#ifdef notdef
+            if (psFilterNode->pszValue != NULL &&
+                strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
+            {
+                if( ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard )
+                    free( ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard );
+                if( ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar )
+                    free( ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar );
+                if( ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar )
+                    free( ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar );
+            }
+            else if (psFilterNode->eType == FILTER_NODE_TYPE_GEOMETRY_POINT ||
+                     psFilterNode->eType == FILTER_NODE_TYPE_GEOMETRY_LINE ||
+                     psFilterNode->eType == FILTER_NODE_TYPE_GEOMETRY_POLYGON)
+            {
+                msFreeShape((shapeObj *)(psFilterNode->pOther));
+            }
+            /* else */
             /* TODO free pOther special fields */
-            if( psFilterNode->pszWildCard )
-                free( psFilterNode->pszWildCard );
-            if( psFilterNode->pszSingleChar )
-                free( psFilterNode->pszSingleChar );
-            if( psFilterNode->pszEscapeChar )
-                free( psFilterNode->pszEscapeChar );
-#endif
             free( psFilterNode->pOther );
         }
+
+        /* Cannot free pszValue before, 'cause we are testing it above */
+        if( psFilterNode->pszValue )
+            free( psFilterNode->pszValue );
+
         free(psFilterNode);
     }
 }
@@ -3044,7 +3059,8 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
         else
         */
         sprintf(pszBuffer, "(%s)", pszTmp);
-        
+
+        free(pszTmp);
         
         return pszBuffer;
     }
@@ -3055,7 +3071,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
 /* -------------------------------------------------------------------- */
     if (psFilterNode->psLeftNode && psFilterNode->psRightNode)
     {
-      pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode, lp);
+        pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode, lp);
         if (!pszTmp)
           return NULL;
 
@@ -3068,6 +3084,8 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
         strcat(pszBuffer, " ");
         strcat(pszBuffer, psFilterNode->pszValue);
         strcat(pszBuffer, " ");
+        free(pszTmp);
+
         pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode, lp);
         if (!pszTmp)
           return NULL;
@@ -3078,6 +3096,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
 
         strcat(pszBuffer, pszTmp);
         strcat(pszBuffer, ") ");
+        free(pszTmp);
     }
 /* -------------------------------------------------------------------- */
 /*      NOT                                                             */
@@ -3085,16 +3104,18 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
     else if (psFilterNode->psLeftNode && 
              strcasecmp(psFilterNode->pszValue, "NOT") == 0)
     {
-      pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode, lp);
+        pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode, lp);
         if (!pszTmp)
           return NULL;
 
-         pszBuffer = (char *)malloc(sizeof(char) * 
+        pszBuffer = (char *)malloc(sizeof(char) *
                                    (strlen(pszTmp) +  9));
-         pszBuffer[0] = '\0';
-         strcat(pszBuffer, " (NOT ");
-         strcat(pszBuffer, pszTmp);
-         strcat(pszBuffer, ") ");
+        pszBuffer[0] = '\0';
+        strcat(pszBuffer, " (NOT ");
+        strcat(pszBuffer, pszTmp);
+        strcat(pszBuffer, ") ");
+
+        free(pszTmp);
     }
     else
       return NULL;
@@ -3438,7 +3459,10 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode,
 /* -------------------------------------------------------------------- */
     aszBounds = msStringSplit(psFilterNode->psRightNode->pszValue, ';', &nBounds);
     if (nBounds != 2)
+    {
+      msFreeCharArray(aszBounds, nBounds);
       return NULL;
+    }
 /* -------------------------------------------------------------------- */
 /*      check if the value is a numeric value or alphanumeric. If it    */
 /*      is alphanumeric, add quotes around attribute and values.        */
@@ -3509,8 +3533,9 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode,
     if (bString)
       strlcat(szBuffer,"\"", bufferSize);
     strlcat(szBuffer, ")", bufferSize);
-     
-    
+
+    msFreeCharArray(aszBounds, nBounds);
+
     return strdup(szBuffer);
 }
     
@@ -3812,25 +3837,25 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
     CPLXMLNode *psCoordinates = NULL, *psCoordChild=NULL;
     CPLXMLNode *psCoord1 = NULL, *psCoord2 = NULL;
     CPLXMLNode *psX = NULL, *psY = NULL;
-    char **szCoords=NULL, **szMin=NULL, **szMax = NULL;
-    char  *szCoords1=NULL, *szCoords2 = NULL;
-    int nCoords = 0;
+    char **papszCoords=NULL, **papszMin=NULL, **papszMax = NULL;
+    int nCoords = 0, nCoordsMin = 0, nCoordsMax = 0;
     char *pszTmpCoord = NULL;
-    char *pszSRS = NULL;
-    char *pszTS = NULL;
-    char *pszCS = NULL;
+    const char *pszSRS = NULL;
+    const char *pszTS = NULL;
+    const char *pszCS = NULL;
+    double minx = 0.0, miny = 0.0, maxx = 0.0, maxy = 0.0;
 
     if (psBox)
     {
-        pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
+        pszSRS = CPLGetXMLValue(psBox, "srsName", NULL);
         if (ppszSRS && pszSRS)
           *ppszSRS = strdup(pszSRS);
 
         psCoordinates = CPLGetXMLNode(psBox, "coordinates");
         if (!psCoordinates)
           return 0;
-        pszTS = (char *)CPLGetXMLValue(psCoordinates, "ts", NULL);
-        pszCS = (char *)CPLGetXMLValue(psCoordinates, "cs", NULL);
+        pszTS = CPLGetXMLValue(psCoordinates, "ts", NULL);
+        pszCS = CPLGetXMLValue(psCoordinates, "cs", NULL);
 
         psCoordChild =  psCoordinates->psChild;
         while (psCoordinates && psCoordChild && psCoordChild->eType != CXT_Text)
@@ -3841,30 +3866,36 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
         {
             pszTmpCoord = psCoordChild->pszValue;
             if (pszTS)
-              szCoords = msStringSplit(pszTmpCoord, pszTS[0], &nCoords);
+              papszCoords = msStringSplit(pszTmpCoord, pszTS[0], &nCoords);
             else
-              szCoords = msStringSplit(pszTmpCoord, ' ', &nCoords);
-            if (szCoords && nCoords == 2)
+              papszCoords = msStringSplit(pszTmpCoord, ' ', &nCoords);
+            if (papszCoords && nCoords == 2)
             {
-                szCoords1 = strdup(szCoords[0]);
-                szCoords2 = strdup(szCoords[1]);
                 if (pszCS)
-                  szMin = msStringSplit(szCoords1, pszCS[0], &nCoords);
+                  papszMin = msStringSplit(papszCoords[0], pszCS[0], &nCoordsMin);
                 else
-                  szMin = msStringSplit(szCoords1, ',', &nCoords);
-                if (szMin && nCoords == 2)
+                  papszMin = msStringSplit(papszCoords[0], ',', &nCoordsMin);
+                if (papszMin && nCoordsMin == 2)
                 {
                     if (pszCS)
-                      szMax = msStringSplit(szCoords2, pszCS[0], &nCoords);
+                      papszMax = msStringSplit(papszCoords[1], pszCS[0], &nCoordsMax);
                     else
-                      szMax = msStringSplit(szCoords2, ',', &nCoords);
+                      papszMax = msStringSplit(papszCoords[1], ',', &nCoordsMax);
                 }
-                if (szMax && nCoords == 2)
-                  bCoordinatesValid =1;
+                if (papszMax && nCoordsMax == 2)
+                {
+                    bCoordinatesValid =1;
+                    minx =  atof(papszMin[0]);
+                    miny =  atof(papszMin[1]);
+                    maxx =  atof(papszMax[0]);
+                    maxy =  atof(papszMax[1]);
+                }
 
-                free(szCoords1);        
-                free(szCoords2);
+                msFreeCharArray(papszMin, nCoordsMin);
+                msFreeCharArray(papszMax, nCoordsMax);
             }
+
+            msFreeCharArray(papszCoords, nCoords);
         }
         else
         {
@@ -3873,24 +3904,22 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
                 psCoord1->psNext->pszValue && 
                 strcmp(psCoord1->psNext->pszValue, "coord") ==0)
             {
-                szMin = (char **)malloc(sizeof(char *)*2);
-                szMax = (char **)malloc(sizeof(char *)*2);
                 psCoord2 = psCoord1->psNext;
                 psX =  CPLGetXMLNode(psCoord1, "X");
                 psY =  CPLGetXMLNode(psCoord1, "Y");
                 if (psX && psY && psX->psChild && psY->psChild &&
                     psX->psChild->pszValue && psY->psChild->pszValue)
                 {
-                    szMin[0] = psX->psChild->pszValue;
-                    szMin[1] = psY->psChild->pszValue;
+                    minx = atof(psX->psChild->pszValue);
+                    miny = atof(psY->psChild->pszValue);
 
                     psX =  CPLGetXMLNode(psCoord2, "X");
                     psY =  CPLGetXMLNode(psCoord2, "Y");
                     if (psX && psY && psX->psChild && psY->psChild &&
                         psX->psChild->pszValue && psY->psChild->pszValue)
                     {
-                        szMax[0] = psX->psChild->pszValue;
-                        szMax[1] = psY->psChild->pszValue;
+                        maxx = atof(psX->psChild->pszValue);
+                        maxy = atof(psY->psChild->pszValue);
                         bCoordinatesValid = 1;
                     }
                 }
@@ -3901,16 +3930,11 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
 
     if (bCoordinatesValid)
     {
-        psBbox->minx =  atof(szMin[0]);
-        psBbox->miny =  atof(szMin[1]);
+        psBbox->minx =  minx;
+        psBbox->miny =  miny;
 
-        psBbox->maxx =  atof(szMax[0]);
-        psBbox->maxy =  atof(szMax[1]);
-
-        if (szMin)
-          msFree(szMin);
-        if (szMax)
-          msFree(szMax);
+        psBbox->maxx =  maxx;
+        psBbox->maxy =  maxy;
     }
 
     return bCoordinatesValid;
