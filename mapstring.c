@@ -1331,7 +1331,7 @@ int msIsXMLTagValid(const char *string)
 /*
  * Concatenate pszSrc to pszDest and reallocate memory if necessary.
 */
-char *msStringConcatenate(char *pszDest, char *pszSrc)
+char *msStringConcatenate(char *pszDest, const char *pszSrc)
 {
    int nLen;
    

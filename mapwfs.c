@@ -573,7 +573,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    {
        msInitProjection(&poWfs);
        if (pszWfsSrs != NULL)
-           result = msLoadProjectionString(&(poWfs), (char *)pszWfsSrs);
+           result = msLoadProjectionString(&(poWfs), pszWfsSrs);
        
        if(lp->projection.numargs > 0) 
        {
@@ -2974,7 +2974,8 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         xmlNodePtr rootnode, node, node1;
         char *schema_file =NULL;
         const char *schema_location=NULL, *validate=NULL;
-        char *pszValue=NULL, *pszTmp=NULL;
+        const char *pszValue=NULL;
+        char *pszTmp=NULL;
         char *pszLayerPropertyName=NULL, *pszLayerFilter=NULL;
 
         //xmlXPathAxisFunc
@@ -2987,11 +2988,11 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         }
         
         /*get the request*/
-        if (strcasecmp((char *)rootnode->name, "GetCapabilities") == 0)
+        if (strcasecmp(rootnode->name, "GetCapabilities") == 0)
           wfsparams->pszRequest = "GetCapabilities";
-        else if (strcasecmp((char *)rootnode->name, "GetFeature") == 0)
+        else if (strcasecmp(rootnode->name, "GetFeature") == 0)
           wfsparams->pszRequest = "GetFeature";
-        else if (strcasecmp((char *)rootnode->name, "DescribeFeatureType") == 0)
+        else if (strcasecmp(rootnode->name, "DescribeFeatureType") == 0)
           wfsparams->pszRequest = "DescribeFeatureType";
 
         if (wfsparams->pszRequest == NULL)
@@ -3002,10 +3003,10 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         }
 
         /*get version and service if available*/
-        pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"version");
+        pszValue = xmlGetProp(rootnode, (xmlChar *)"version");
         if (pszValue)
           wfsparams->pszVersion = strdup(pszValue);
-        pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"service");
+        pszValue = xmlGetProp(rootnode, (xmlChar *)"service");
         if (pszValue)
           wfsparams->pszService = strdup(pszValue);     
 
@@ -3024,7 +3025,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
             if ((wfsparams->pszService  && strcmp(wfsparams->pszService, "WFS") == 0) ||
                 force_wfs_mode)
             {
-                schema_file = msStringConcatenate(schema_file, (char *)schema_location);
+                schema_file = msStringConcatenate(schema_file, schema_location);
                 if (wfsparams->pszVersion == NULL || 
                     strncasecmp(wfsparams->pszVersion, "1.1", 3) ==0)
                 {
@@ -3047,9 +3048,9 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                 if (node->type != XML_ELEMENT_NODE)
                   continue;
 
-                if (strcmp((char *)node->name, "TypeName") == 0) 
+                if (strcmp(node->name, "TypeName") == 0)
                 {
-                    pszValue = (char *)xmlNodeGetContent(node);
+                    pszValue = xmlNodeGetContent(node);
                     if (wfsparams->pszTypeName == NULL)
                       wfsparams->pszTypeName = strdup(pszValue);
                     else
@@ -3061,7 +3062,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                     }
                 }
             }
-            pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"outputFormat");
+            pszValue = xmlGetProp(rootnode, (xmlChar *)"outputFormat");
             if (pszValue)
               wfsparams->pszOutputFormat = strdup(pszValue);            
         }  
@@ -3069,15 +3070,15 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         /*parse GetFeature*/
         if (strcmp(wfsparams->pszRequest,"GetFeature") == 0)
         {
-            pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"resultType");
+            pszValue = xmlGetProp(rootnode, (xmlChar *)"resultType");
             if (pszValue)
               wfsparams->pszResultType = strdup(pszValue);
 
-            pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"maxFeatures");
+            pszValue = xmlGetProp(rootnode, (xmlChar *)"maxFeatures");
             if (pszValue)
               wfsparams->nMaxFeatures = atoi(pszValue);
 
-            pszValue = (char *)xmlGetProp(rootnode, (xmlChar *)"startIndex");
+            pszValue = xmlGetProp(rootnode, (xmlChar *)"startIndex");
             if (pszValue)
               wfsparams->nStartIndex = atoi(pszValue);
             
@@ -3096,11 +3097,11 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                 if (node->type != XML_ELEMENT_NODE)
                   continue;
 
-                if (strcmp((char *)node->name, "Query") == 0) 
+                if (strcmp(node->name, "Query") == 0)
                 {
                     /* get SRS: TODO support srs per layer. Now we only have one srs 
                      that applies to al layers*/
-                    pszValue = (char *)xmlGetProp(node, (xmlChar *)"srsName");
+                    pszValue = xmlGetProp(node, (xmlChar *)"srsName");
                     if (pszValue)
                     {
                         if (wfsparams->pszSrs )
@@ -3108,7 +3109,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                         wfsparams->pszSrs = strdup(pszValue);
                     }
                     /*type name*/
-                    pszValue = (char *)xmlGetProp(node, (xmlChar *)"typeName");
+                    pszValue = xmlGetProp(node, (xmlChar *)"typeName");
                     if (pszValue)
                     {   
                         if (wfsparams->pszTypeName == NULL)
@@ -3129,9 +3130,9 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                         if (node1->type != XML_ELEMENT_NODE)
                           continue;
 
-                        if (strcmp((char *)node1->name, "PropertyName") == 0) 
+                        if (strcmp(node1->name, "PropertyName") == 0)
                         {
-                            pszValue = (char *)xmlNodeGetContent(node1);
+                            pszValue = xmlNodeGetContent(node1);
                             if (pszLayerPropertyName == NULL)
                               pszLayerPropertyName = strdup(pszValue);
                             else
@@ -3142,10 +3143,10 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                                   msStringConcatenate(pszLayerPropertyName, pszValue);
                             }
                         }
-                        if (strcmp((char *)node1->name, "Filter") == 0) 
+                        if (strcmp(node1->name, "Filter") == 0)
                         {
                             
-                            pszValue = (char *)xmlNodeGetContent(node1);
+                            pszValue = xmlNodeGetContent(node1);
                             if (pszValue)
                             {   
                                 xmlBufferPtr buffer;
@@ -3155,7 +3156,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                                 xmlNodeDump(buffer, node1->doc, node1, 0, 0);
 
                                 pszTmp = msStringConcatenate(pszTmp, "(");
-                                pszTmp = msStringConcatenate(pszTmp, (char *)buffer->content);
+                                pszTmp = msStringConcatenate(pszTmp, buffer->content);
                                 pszTmp = msStringConcatenate(pszTmp, ")");
                                 
                                 xmlBufferFree(buffer);
@@ -3198,7 +3199,8 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         CPLXMLNode  *psGetCapabilities = NULL;
         CPLXMLNode *psDescribeFeature = NULL;
         CPLXMLNode *psOperation = NULL;
-        char *pszValue, *pszSerializedFilter, *pszTmp, *pszTmp2 = NULL;
+        const char *pszValue;
+        char *pszSerializedFilter, *pszTmp, *pszTmp2 = NULL;
         int bMultiLayer = 0;
 
         psRoot = CPLParseXMLString(request->postrequest);
@@ -3224,7 +3226,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                     else if(strcasecmp(psOperation->pszValue,"GetCapabilities")==0)
                     {
                         psGetCapabilities = psOperation;
-                        pszValue = (char*)CPLGetXMLValue(psGetFeature,  "updateSequence", NULL);
+                        pszValue = CPLGetXMLValue(psGetFeature,  "updateSequence", NULL);
 
                         if (pszValue)
                             wfsparams->pszUpdateSequence = strdup(pszValue);
@@ -3267,27 +3269,27 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
             {
                 wfsparams->pszRequest = strdup("GetFeature");
             
-                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "version", 
+                pszValue = CPLGetXMLValue(psGetFeature,  "version",
                                                  NULL);
                 if (pszValue)
                   wfsparams->pszVersion = strdup(pszValue);
                 
-                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "service", 
+                pszValue = CPLGetXMLValue(psGetFeature,  "service",
                                                  NULL);
                 if (pszValue)
                   wfsparams->pszService = strdup(pszValue);
 
-                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "resultType",
+                pszValue = CPLGetXMLValue(psGetFeature,  "resultType",
                                                  NULL);
                 if (pszValue)
                   wfsparams->pszResultType = strdup(pszValue);
 
-                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "maxFeatures", 
+                pszValue = CPLGetXMLValue(psGetFeature,  "maxFeatures",
                                                  NULL);
                 if (pszValue)
                   wfsparams->nMaxFeatures = atoi(pszValue);
 
-                 pszValue = (char*)CPLGetXMLValue(psGetFeature,  "startIndex", 
+                 pszValue = CPLGetXMLValue(psGetFeature,  "startIndex",
                                                  NULL);
                 if (pszValue)
                   wfsparams->nStartIndex = atoi(pszValue);
@@ -3321,13 +3323,13 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                            strcasecmp(psQuery->pszValue, "Query") == 0)
                     {
                         /* get SRS */
-                        pszValue = (char*)CPLGetXMLValue(psGetFeature,  "srsName",
+                        pszValue = CPLGetXMLValue(psGetFeature,  "srsName",
                                                  NULL);
                         if (pszValue)
                           wfsparams->pszSrs = strdup(pszValue);
 
                         /* parse typenames */
-                        pszValue = (char*)CPLGetXMLValue(psQuery,  
+                        pszValue = CPLGetXMLValue(psQuery,
                                                          "typename", NULL);
                         if (pszValue)
                         {
@@ -3364,7 +3366,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                                 psPropertyName = psPropertyName->psNext;
                                 continue;
                             }
-                            pszValue = (char *) CPLGetXMLValue(psPropertyName, NULL, NULL);
+                            pszValue = CPLGetXMLValue(psPropertyName, NULL, NULL);
                             if (pszTmp2 == NULL) {
                                 pszTmp2 = strdup(pszValue);
                             } 
@@ -3445,7 +3447,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
             if (psGetCapabilities)
             {
                 wfsparams->pszRequest = strdup("GetCapabilities");
-                pszValue = (char*)CPLGetXMLValue(psGetCapabilities,  "version", 
+                pszValue = CPLGetXMLValue(psGetCapabilities,  "version",
                                                  NULL);
                 /* version is optional for the GetCapabilities. If not */
                 /* provided, set it. */
@@ -3455,7 +3457,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                   wfsparams->pszVersion = strdup("1.1.0");
 
                  pszValue = 
-                   (char*)CPLGetXMLValue(psGetCapabilities, "service", 
+                   CPLGetXMLValue(psGetCapabilities, "service",
                                          NULL);
                 if (pszValue)
                   wfsparams->pszService = strdup(pszValue);
@@ -3467,17 +3469,17 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
             {
                 wfsparams->pszRequest = strdup("DescribeFeatureType");
 
-                pszValue = (char*)CPLGetXMLValue(psDescribeFeature, "version", 
+                pszValue = CPLGetXMLValue(psDescribeFeature, "version",
                                                  NULL);
                 if (pszValue)
                   wfsparams->pszVersion = strdup(pszValue);
 
-                pszValue = (char*)CPLGetXMLValue(psDescribeFeature, "service", 
+                pszValue = CPLGetXMLValue(psDescribeFeature, "service",
                                                  NULL);
                 if (pszValue)
                   wfsparams->pszService = strdup(pszValue);
 
-                pszValue = (char*)CPLGetXMLValue(psDescribeFeature, 
+                pszValue = CPLGetXMLValue(psDescribeFeature,
                                                  "outputFormat", 
                                                  NULL);
                 if (pszValue)

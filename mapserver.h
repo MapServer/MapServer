@@ -1825,7 +1825,7 @@ MS_DLL_EXPORT char *msEncodeUrl(const char*);
 MS_DLL_EXPORT char *msEncodeHTMLEntities(const char *string);
 MS_DLL_EXPORT void msDecodeHTMLEntities(const char *string);
 MS_DLL_EXPORT int msIsXMLTagValid(const char *string);
-MS_DLL_EXPORT char *msStringConcatenate(char *pszDest, char *pszSrc);
+MS_DLL_EXPORT char *msStringConcatenate(char *pszDest, const char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 MS_DLL_EXPORT char *msCommifyString(char *str);
