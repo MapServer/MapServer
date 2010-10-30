@@ -99,11 +99,34 @@ char **msOGRRecursiveFileList( const char *path )
 {
     char **file_list;
     char **result_list = NULL;
-    int i;
+    int i, count, change;
 
     file_list = CPLReadDir( path );
+    count = CSLCount(file_list);
 
-    for( i = 0; file_list != NULL && file_list[i] != NULL; i++ )
+/* -------------------------------------------------------------------- */
+/*      Sort the file list so we always get them back in the same       */
+/*      order - it makes autotests more stable.                         */
+/* -------------------------------------------------------------------- */
+    do
+    {
+        change = 0;
+        for( i = 0; i < count-1; i++ )
+        {
+            if( strcasecmp(file_list[i],file_list[i+1]) > 0 )
+            {
+                char *temp = file_list[i];
+                file_list[i] = file_list[i+1];
+                file_list[i+1] = temp;
+                change = 1;
+            }
+        }
+    } while( change );
+
+/* -------------------------------------------------------------------- */
+/*      collect names we want and process subdirectories.               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < count; i++ )
     {
         char full_filename[MS_MAXPATHLEN];
         VSIStatBufL  sStatBuf;
