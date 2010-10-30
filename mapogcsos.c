@@ -117,6 +117,17 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
 
+  /* 
+  ** The typical pattern is to call msSOSException() right after 
+  ** msSetError().  In order to prevent mapserv.c from re-reporting this
+  ** error at a higher level, we mark it as reported here. #3571
+  */
+  {
+      errorObj *err = msGetErrorObj();
+      if( err != NULL && err->code != MS_NOERR )
+          err->isreported = MS_TRUE;
+  }
+
   return MS_FAILURE;
 }
 
