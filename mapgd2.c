@@ -61,6 +61,65 @@ imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj
   return img;
 }
 
+unsigned char* saveImageBufferGD(imageObj *img, int *size_ptr, outputFormatObj *format) 
+{
+  gdImagePtr ip;
+  unsigned char *imgbytes;
+  gdIOCtx *ctx;
+
+  if(!img || !size_ptr) return NULL;
+  if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return NULL;
+
+  ctx = gdNewDynamicCtx (2048, NULL);
+
+  if( format->imagemode == MS_IMAGEMODE_RGBA )
+    gdImageSaveAlpha( ip, 1 );
+  else if( format->imagemode == MS_IMAGEMODE_RGB )
+    gdImageSaveAlpha( ip, 0 );
+
+  if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
+    gdImageInterlace(ip, 1);
+  
+  if(format->transparent)
+    gdImageColorTransparent(ip, 0);
+
+  if(strcasecmp(format->driver, "gd2/gif") == 0) {
+#ifdef USE_GD_GIF
+    gdImageGifCtx( ip, ctx );
+#else
+    msSetError(MS_MISCERR, "GIF output is not available.", "saveImageBufferGD()");
+    ctx->gd_free(ctx);
+    return NULL;
+#endif
+  } else if(strcasecmp(format->driver, "gd2/png") == 0) {
+#ifdef USE_GD_PNG
+    gdImagePngCtx(ip, ctx);
+#else
+    msSetError(MS_MISCERR, "PNG output is not available.", "saveImageBufferGD()");
+    ctx->gd_free(ctx);
+    return NULL;
+#endif
+  } else if(strcasecmp(format->driver, "gd2/jpeg") == 0) {
+#ifdef USE_GD_JPEG
+    gdImageJpegCtx(ip, ctx, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
+#else
+    msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageBufferGD()");
+    ctx->gd_free(ctx);
+    return NULL;
+#endif
+  } else {
+    msSetError(MS_MISCERR, "Unknown or unsupported format.", "saveImageBufferGD()");
+    ctx->gd_free(ctx);
+    return NULL;
+  }
+
+  imgbytes = gdDPExtractData (ctx, size_ptr);
+
+  ctx->gd_free(ctx);
+
+  return imgbytes;
+}
+
 int saveImageGD(imageObj *img, FILE *fp, outputFormatObj *format) 
 {
   gdImagePtr ip;
@@ -426,6 +485,7 @@ int msPopulateRendererVTableGD( rendererVTableObj *renderer ) {
   renderer->renderLine = &renderLineGD;
   renderer->createImage = &createImageGD;
   renderer->saveImage = &saveImageGD;
+  renderer->saveImageBuffer = &saveImageBufferGD;
   renderer->getRasterBuffer = &getRasterBufferGD;
   renderer->transformShape = &msTransformShapeToPixel;
   renderer->renderPolygon = &renderPolygonGD;

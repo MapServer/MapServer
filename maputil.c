@@ -795,6 +795,10 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
             return buffer.data;
             //don't free the bufferObj as we don't own the bytes anymore
         } else {
+            /* check if the renderer supports native buffer output */
+            if (renderer->saveImageBuffer)
+                return renderer->saveImageBuffer(image, size_ptr, format);
+
 	        msSetError(MS_MISCERR, "Unsupported image type", "msSaveImageBuffer()");
             return NULL;
         }
