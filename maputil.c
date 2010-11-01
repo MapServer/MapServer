@@ -791,6 +791,7 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
             msBufferInit(&buffer);
             renderer->getRasterBuffer(image,&data);
             msSaveRasterBufferToBuffer(&data,&buffer,format);
+            *size_ptr = buffer.size;
             return buffer.data;
             //don't free the bufferObj as we don't own the bytes anymore
         } else {
