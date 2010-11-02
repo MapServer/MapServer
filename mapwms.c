@@ -2993,32 +2993,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   /*make sure to initialize the map scale so that layers that are scale dependent are resepected for 
     the query*/ 
   msCalculateScale(map->extent,map->units,map->width,map->height, map->resolution, &map->scaledenom);
-
-  /*adjust geotransformation parameters. This has no impact on regular GetFeatureInfo results
-   but is necessary if we need to return the results through templating mechanism and
-  need to transform (reproject) the data #3241*/
-  if( msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE ) )
-  {
-      double cellsize_x = (map->extent.maxx - map->extent.minx)/map->width;
-      double cellsize_y = (map->extent.maxy - map->extent.miny)/map->height;
-
-      if( cellsize_y != 0.0 
-          && (fabs(cellsize_x/cellsize_y) > 1.00001
-              || fabs(cellsize_x/cellsize_y) < 0.99999) )
-      {
-          map->gt.need_geotransform = MS_TRUE;
-          if (map->debug)
-            msDebug( "msDrawMap(): kicking into non-square pixel preserving mode.\n" );
-      }
-      map->cellsize = (cellsize_x*0.5 + cellsize_y*0.5);
-
-      /* update geotransform based on adjusted extent. */
-      msMapComputeGeotransform( map );
-
-      /* Do we need to fake out stuff for rotated support? */
-      if( map->gt.need_geotransform )
-        msMapSetFakedExtent( map );
-  }
+  
 /* -------------------------------------------------------------------- */
 /*      check if all layers selected are queryable. If not send an      */
 /*      exception.                                                      */
