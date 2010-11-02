@@ -1728,9 +1728,19 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
               /*we parse the propertyname parameter only once*/
               if (papszPropertyName == NULL)
               {
-                  if (strlen(pszPropertyName) > 0 && pszPropertyName[0] == '(') 
+                  if (strlen(pszPropertyName) > 0 && (pszPropertyName[0] == '(' || numlayers == 1))
                   {
-                      tokens = msStringSplit(pszPropertyName+1, '(', &nPropertyNames);
+                      if (numlayers == 1 && pszPropertyName[0] != '(')
+                      {
+                        /* Accept PROPERTYNAME without () when there is a single TYPENAME */
+                          char* pszTmpPropertyName = malloc(1+strlen(pszPropertyName)+1+1);
+                          sprintf(pszTmpPropertyName, "(%s)", pszPropertyName);
+                          tokens = msStringSplit(pszTmpPropertyName+1, '(', &nPropertyNames);
+                          free(pszTmpPropertyName);
+                      }
+                      else
+                          tokens = msStringSplit(pszPropertyName+1, '(', &nPropertyNames);
+
                       /*expecting to always have a list of property names equal to
                         the number of layers(typename)*/
                       if (nPropertyNames != numlayers)
