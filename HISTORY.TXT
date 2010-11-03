@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Added a built-in OpenLayers map viewer (#3549)
+
 - Fixed issues with static buffers and sprintf (#3537)
 
 - Fix for the memory corruption when mapping the string data type in the Java bindings (3491)

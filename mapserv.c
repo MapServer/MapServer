@@ -1120,6 +1120,7 @@ int main(int argc, char *argv[]) {
   int sendheaders = MS_TRUE;
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
+  char *service = NULL;
 
   msSetup();
 
@@ -1284,7 +1285,7 @@ int main(int argc, char *argv[]) {
         if( (ms_error->code != MS_NOERR) && (ms_error->isreported == MS_FALSE) )
           writeError();
       }
-        
+       
       /* 
       ** This was a WMS/WFS request... cleanup and exit 
       ** At this point any error has already been handled
@@ -1296,8 +1297,26 @@ int main(int argc, char *argv[]) {
                 (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
                 (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
       }
-      msFreeMapServObj(mapserv);
       
+      if (strcasecmp(mapserv->map->imagetype, "application/openlayers")==0)
+      {
+        for( i=0; i<mapserv->request->NumParams; i++)
+        {
+          if(strcasecmp(mapserv->request->ParamNames[i], "SERVICE") == 0) {
+            service = mapserv->request->ParamValues[i];
+            break;
+          }
+        }
+        if (service && strcasecmp(service,"WMS")==0)
+        {
+          msIO_printf("Content-type: text/html%c%c",10,10);
+          
+          if (msReturnOpenLayersPage(mapserv) != MS_SUCCESS)
+            writeError();
+        }
+      }
+
+      msFreeMapServObj(mapserv);      
 #ifdef USE_FASTCGI
       /* FCGI_ --- return to top of loop */
       continue;
@@ -1357,7 +1376,12 @@ int main(int argc, char *argv[]) {
 
     if(mapserv->Mode == BROWSE) {
 
-      if(!mapserv->map->web.template) {
+      char *template =  NULL;
+      for(i=0;i<mapserv->request->NumParams;i++) /* find the template param value */
+          if (strcasecmp(mapserv->request->ParamNames[i], "template") == 0)
+              template = mapserv->request->ParamValues[i];
+
+      if ( (!mapserv->map->web.template) && (template==NULL || (strcasecmp(template, "openlayers")!=0)) ) {
         msSetError(MS_WEBERR, "Traditional BROWSE mode requires a TEMPLATE in the WEB section, but none was provided.", "mapserv()");
         writeError();
       }
@@ -1375,8 +1399,13 @@ int main(int argc, char *argv[]) {
       /* -------------------------------------------------------------------- */
       if(msGenerateImages(mapserv, MS_FALSE, MS_TRUE) != MS_SUCCESS)
         writeError();
-      
-      if(QueryFile) {
+
+      if ( (template != NULL) && (strcasecmp(template, "openlayers")==0) ) {
+        msIO_printf("Content-type: text/html%c%c",10,10);
+        if (msReturnOpenLayersPage(mapserv) != MS_SUCCESS)
+          writeError();
+      }
+      else if(QueryFile) {
         if(msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, NULL) != MS_SUCCESS)
           writeError();
       } else {

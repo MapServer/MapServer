@@ -139,6 +139,7 @@ MS_DLL_EXPORT int msReturnPage(mapservObj* msObj, char* , int, char **);
 MS_DLL_EXPORT int msReturnURL(mapservObj* msObj, char*, int);
 MS_DLL_EXPORT int msReturnNestedTemplateQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer);
 MS_DLL_EXPORT int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType,  char **papszBuffer);
+MS_DLL_EXPORT int msReturnOpenLayersPage(mapservObj *mapserv);
 
 MS_DLL_EXPORT int msRedirect(char* url);
 

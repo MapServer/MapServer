@@ -39,6 +39,40 @@
 
 MS_CVSID("$Id$")
 
+static char *olUrl = "http://www.mapserver.org/lib/OpenLayers-ms60.js";
+static char *olTemplate = \
+"<html>\n"
+"<head>\n"
+"  <title>MapServer Simple Viewer</title>\n"
+"    <script type=\"text/javascript\" src=\"[openlayers_js_url]\"></script>\n"
+"    </head>\n"
+"    <body>\n"
+"      <div style=\"width:[mapwidth]; height:[mapheight]\" id=\"map\"></div>\n"
+"      <script defer=\"defer\" type=\"text/javascript\">\n"
+"        var map = new OpenLayers.Map('map',\n"
+"                                     {maxExtent: new OpenLayers.Bounds([minx],[miny],[maxx],[maxy]),\n"
+"                                      maxResolution: [cellsize]});\n"
+"        [openlayers_layer];\n"
+"        map.addLayer(mslayer);\n"
+"        map.zoomToMaxExtent();\n"
+"      </script>\n"
+"</body>\n"
+"</html>";
+
+static char *olLayerMapServerTag = \
+"var mslayer = new OpenLayers.Layer.MapServer( \"MapServer Layer\",\n"
+"                                              \"[mapserv_onlineresource]\",\n"
+"                                              {layers: '[layers]'},\n"
+"                                              {singleTile: \"true\", ratio:1} )";
+
+static char *olLayerWMSTag = \
+"var mslayer = new OpenLayers.Layer.WMS('MapServer Simple Viewer\',\n"
+"                                   '[mapserv_onlineresource]',\n"
+"                                   {layers: '[LAYERS]',\n"
+"                                   bbox: '[minx],[miny],[maxx],[maxy]',\n"
+"                                   width: [mapwidth], height: [mapheight] },"
+"                                   {singleTile: \"true\", ratio:1, projection: '[SRS]'});\n";
+
 static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mode);
 
 static int isValidTemplate(FILE *stream, const char *filename)
@@ -3429,6 +3463,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.map", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id);
     outstr = msReplaceSubstring(outstr, "[map]", repstr);
   }
+  
+  outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",
+                              msOWSGetOnlineResource(mapserv->map, "O", "onlineresource", mapserv->request));
 
   if(getenv("HTTP_HOST")) {
     snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("HTTP_HOST")); 
@@ -4168,6 +4205,51 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
   return MS_SUCCESS;
 }
 
+int msReturnOpenLayersPage(mapservObj *mapserv)
+{
+    int i;
+    char *buffer = NULL, *layer = NULL;
+    const char *tmpUrl = NULL;
+    char *openlayersUrl = olUrl;
+
+    /* 2 CGI parameters are used in the template. we need to transform them
+     * to be sure the case match during the template processing */
+    for( i=0; i<mapserv->request->NumParams; i++)
+    {
+        if(strcasecmp(mapserv->request->ParamNames[i], "SRS") == 0) {
+            free(mapserv->request->ParamNames[i]);
+            mapserv->request->ParamNames[i] = strdup("SRS");
+        }
+        else if(strcasecmp(mapserv->request->ParamNames[i], "LAYERS") == 0) {
+            free(mapserv->request->ParamNames[i]);
+            mapserv->request->ParamNames[i] = strdup("LAYERS");
+        }
+    }
+
+    /* check if the environment variable or config MS_OPENLAYERS_JS_URL is set */
+    tmpUrl = msGetConfigOption(mapserv->map, "MS_OPENLAYERS_JS_URL");
+    if (tmpUrl)
+        openlayersUrl = (char*)tmpUrl;
+    else if (getenv("MS_OPENLAYERS_JS_URL")) 
+        openlayersUrl = getenv("MS_OPENLAYERS_JS_URL");
+
+    if (mapserv->Mode == BROWSE) {
+        msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
+                   "msWMSLoadGetMapParams()");
+        layer = processLine(mapserv, olLayerMapServerTag, NULL, BROWSE);
+    }
+    else
+        layer = processLine(mapserv, olLayerWMSTag, NULL, BROWSE);
+
+    buffer = processLine(mapserv, olTemplate, NULL, BROWSE);
+    buffer = msReplaceSubstring(buffer, "[openlayers_js_url]", openlayersUrl);
+    buffer = msReplaceSubstring(buffer, "[openlayers_layer]", layer);
+    msIO_fwrite(buffer, strlen(buffer), 1, stdout);
+    free(layer);
+    free(buffer);
+
+    return MS_SUCCESS;
+}
 
 mapservObj *msAllocMapServObj()
 {

@@ -672,39 +672,42 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       outputFormatObj *psFormat=NULL;
       formatfound = 1;
 
-      /*check to see if a predefined list is given*/
-      format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getmap_formatlist");
-      if (format_list)
+      if (strcasecmp(values[i], "application/openlayers")!=0)
       {
-          psFormat = msOwsIsOutputFormatValid(map, values[i], &(map->web.metadata),
-                                             "M", "getmap_formatlist");
-          if (psFormat == NULL)
+          /*check to see if a predefined list is given*/
+          format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getmap_formatlist");
+          if (format_list)
           {
-              msSetError(MS_IMGERR,
-                       "Unsupported output format (%s).",
-                       "msWMSLoadGetMapParams()",
-                       values[i] );
-              return msWMSException(map, nVersion, "InvalidFormat");
+              psFormat = msOwsIsOutputFormatValid(map, values[i], &(map->web.metadata),
+                                                  "M", "getmap_formatlist");
+              if (psFormat == NULL &&
+                  strcasecmp(values[i], "application/openlayers")!=0)
+              {
+                  msSetError(MS_IMGERR,
+                             "Unsupported output format (%s).",
+                             "msWMSLoadGetMapParams()",
+                             values[i] );
+                  return msWMSException(map, nVersion, "InvalidFormat");
+              }
           }
-      }
-      else
-      {
-          format = msSelectOutputFormat( map, values[i] );
-          if( format == NULL || 
-              (strncasecmp(format->driver, "GD/", 3) != 0 &&
-               strncasecmp(format->driver, "GDAL/", 5) != 0 && 
-               strncasecmp(format->driver, "AGG/", 4) != 0 &&
-               strncasecmp(format->driver, "AGG2/", 5) != 0 &&
-               strncasecmp(format->driver, "CAIRO/", 6) != 0 &&
-               strncasecmp(format->driver, "SVG", 3) != 0 &&
-               strncasecmp(format->driver, "KML", 3) != 0))
-               
+          else
           {
-              msSetError(MS_IMGERR,
-                         "Unsupported output format (%s).",
-                         "msWMSLoadGetMapParams()",
-                         values[i] );
-              return msWMSException(map, nVersion, "InvalidFormat");
+              format = msSelectOutputFormat( map, values[i] );
+              if( format == NULL ||
+                  (strncasecmp(format->driver, "GD/", 3) != 0 &&
+                   strncasecmp(format->driver, "GDAL/", 5) != 0 && 
+                   strncasecmp(format->driver, "AGG/", 4) != 0 &&
+                   strncasecmp(format->driver, "AGG2/", 5) != 0 &&
+                   strncasecmp(format->driver, "CAIRO/", 6) != 0 &&
+                   strncasecmp(format->driver, "SVG", 3) != 0 &&
+                   strncasecmp(format->driver, "KML", 3) != 0))
+                  {
+                      msSetError(MS_IMGERR,
+                                 "Unsupported output format (%s).",
+                                 "msWMSLoadGetMapParams()",
+                                 values[i] );
+                      return msWMSException(map, nVersion, "InvalidFormat");
+                  }
           }
       }
       msFree( map->imagetype );
@@ -2789,13 +2792,15 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
     msIO_printf("Cache-Control: max-age=%s\n", http_max_age , 10, 10);
   }
   
-  msIO_printf("Content-type: %s%c%c",
-              MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
-  if (msSaveImage(map, img, NULL) != MS_SUCCESS)
-      return msWMSException(map, nVersion, NULL);
+  if (strcasecmp(map->imagetype, "application/openlayers")!=0)
+  {
+      msIO_printf("Content-type: %s%c%c",
+                  MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
+      if (msSaveImage(map, img, NULL) != MS_SUCCESS)
+          return msWMSException(map, nVersion, NULL);
 
-
-  msFreeImage(img);
+      msFreeImage(img);
+  }
 
   return(MS_SUCCESS);
 }
