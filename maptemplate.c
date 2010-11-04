@@ -70,8 +70,8 @@ static char *olLayerWMSTag = \
 "                                   '[mapserv_onlineresource]',\n"
 "                                   {layers: '[LAYERS]',\n"
 "                                   bbox: '[minx],[miny],[maxx],[maxy]',\n"
-"                                   width: [mapwidth], height: [mapheight] },"
-"                                   {singleTile: \"true\", ratio:1, projection: '[SRS]'});\n";
+"                                   width: [mapwidth], height: [mapheight], version: '[VERSION]'},"
+"                                   {singleTile: \"true\", ratio:1, projection: '[openlayers_projection]'});\n";
 
 static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mode);
 
@@ -4211,18 +4211,25 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
     char *buffer = NULL, *layer = NULL;
     const char *tmpUrl = NULL;
     char *openlayersUrl = olUrl;
+    char *projection = NULL;
 
     /* 2 CGI parameters are used in the template. we need to transform them
-     * to be sure the case match during the template processing */
+     * to be sure the case match during the template processing. We also
+     * need to search the SRS/CRS parameter to get the projection info. OGC
+     * services version >= 1.3.0 uses CRS rather than SRS */
     for( i=0; i<mapserv->request->NumParams; i++)
     {
-        if(strcasecmp(mapserv->request->ParamNames[i], "SRS") == 0) {
-            free(mapserv->request->ParamNames[i]);
-            mapserv->request->ParamNames[i] = strdup("SRS");
+        if( (strcasecmp(mapserv->request->ParamNames[i], "SRS") == 0) ||
+            (strcasecmp(mapserv->request->ParamNames[i], "CRS") == 0) ) {
+            projection = mapserv->request->ParamValues[i];
         }
         else if(strcasecmp(mapserv->request->ParamNames[i], "LAYERS") == 0) {
             free(mapserv->request->ParamNames[i]);
             mapserv->request->ParamNames[i] = strdup("LAYERS");
+        }
+        else if(strcasecmp(mapserv->request->ParamNames[i], "VERSION") == 0) {
+            free(mapserv->request->ParamNames[i]);
+            mapserv->request->ParamNames[i] = strdup("VERSION");
         }
     }
 
@@ -4244,6 +4251,8 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
     buffer = processLine(mapserv, olTemplate, NULL, BROWSE);
     buffer = msReplaceSubstring(buffer, "[openlayers_js_url]", openlayersUrl);
     buffer = msReplaceSubstring(buffer, "[openlayers_layer]", layer);
+    if (projection)
+        buffer = msReplaceSubstring(buffer, "[openlayers_projection]", projection);
     msIO_fwrite(buffer, strlen(buffer), 1, stdout);
     free(layer);
     free(buffer);

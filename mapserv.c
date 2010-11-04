@@ -1298,7 +1298,8 @@ int main(int argc, char *argv[]) {
                 (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
       }
       
-      if (strcasecmp(mapserv->map->imagetype, "application/openlayers")==0)
+      if (status == MS_SUCCESS &&
+          strcasecmp(mapserv->map->imagetype, "application/openlayers")==0)
       {
         for( i=0; i<mapserv->request->NumParams; i++)
         {
