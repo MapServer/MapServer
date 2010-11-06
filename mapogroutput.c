@@ -963,7 +963,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     else if( EQUAL(form,"zip") )
     {
 #if !defined(CPL_ZIP_API_OFFERED)
-        msSetError( MS_MISCERR, "FORM=zip selected, bug CPL ZIP support unavailable, perhaps you need to upgrade to GDAL/OGR 1.8?", 
+        msSetError( MS_MISCERR, "FORM=zip selected, but CPL ZIP support unavailable, perhaps you need to upgrade to GDAL/OGR 1.8?",
                     "msOGRWriteFromQuery()");
         msOGRCleanupDS( datasource_name );
         return MS_FAILURE;
