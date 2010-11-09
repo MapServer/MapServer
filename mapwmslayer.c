@@ -737,9 +737,10 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         const char *ows_srs;
         rectObj  layer_rect;
 
-        ows_srs = msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE);
+        ows_srs = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), 
+                                   "MO", MS_FALSE);
 
-        if( strchr(ows_srs,' ') == NULL 
+        if( ows_srs && strchr(ows_srs,' ') == NULL 
             && msOWSGetLayerExtent( map, lp, "MO", &layer_rect) == MS_SUCCESS )
         {
             /* fulloverlap */
