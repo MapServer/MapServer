@@ -247,6 +247,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
      */
     else if( layer->transform )
     {
+        if( layer->debug )
+            msDebug( "msDrawRasterLayerGDAL(): Entering transform.\n" );
         int dst_lrx, dst_lry;
 
         msGetGDALGeoTransform( hDS, map, layer, adfGeoTransform );
@@ -272,7 +274,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             copyRect.maxy = GEO_TRANS(adfGeoTransform+3,src_xsize,0);
       
         if( copyRect.minx >= copyRect.maxx || copyRect.miny >= copyRect.maxy )
+        {
+            if( layer->debug )
+                msDebug( "msDrawRasterLayerGDAL(): Error in overlap calculation.\n" );
             return 0;
+		}
 
         /*
          * Copy the source and destination raster coordinates.
@@ -292,10 +298,16 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         if( src_xsize == 0 || src_ysize == 0 )
         {
             if( layer->debug )
-                msDebug( "msDrawGDAL(): no apparent overlap between map view and this window(1).\n" );
+                msDebug( "msDrawRasterLayerGDAL(): no apparent overlap between map view and this window(1).\n" );
             return 0;
         }
 
+      if (map->cellsize == 0)
+      {
+          if( layer->debug )
+              msDebug( "msDrawRasterLayerGDAL(): Cellsize can't be 0.\n" );
+          return 0;
+      }
         dst_xoff = (int) ((copyRect.minx - mapRect.minx) / map->cellsize);
         dst_yoff = (int) ((mapRect.maxy - copyRect.maxy) / map->cellsize);
 
@@ -310,12 +322,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         if( dst_xsize == 0 || dst_ysize == 0 )
         {
             if( layer->debug )
-                msDebug( "msDrawGDAL(): no apparent overlap between map view and this window(2).\n" );
+                msDebug( "msDrawRasterLayerGDAL(): no apparent overlap between map view and this window(2).\n" );
             return 0;
         }
 
         if( layer->debug )
-            msDebug( "msDrawGDAL(): src=%d,%d,%d,%d, dst=%d,%d,%d,%d\n", 
+            msDebug( "msDrawRasterLayerGDAL(): src=%d,%d,%d,%d, dst=%d,%d,%d,%d\n", 
                      src_xoff, src_yoff, src_xsize, src_ysize, 
                      dst_xoff, dst_yoff, dst_xsize, dst_ysize );
 #ifndef notdef
@@ -329,7 +341,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             d_src_xoff = (geo_x - adfGeoTransform[0]) / adfGeoTransform[1];
             d_src_yoff = (geo_y - adfGeoTransform[3]) / adfGeoTransform[5];
           
-            msDebug( "source raster PL (%.3f,%.3f) for dst PL (%d,%d).\n",
+            msDebug( "msDrawRasterLayerGDAL(): source raster PL (%.3f,%.3f) for dst PL (%d,%d).\n",
                      d_src_xoff, d_src_yoff,
                      dst_xoff, dst_yoff );
         }
@@ -477,7 +489,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   
     if( layer->debug > 1 || (layer->debug > 0 && green_band != 0) )
     {
-        msDebug( "msDrawGDAL(): red,green,blue,alpha bands = %d,%d,%d,%d\n", 
+        msDebug( "msDrawRasterLayerGDAL(): red,green,blue,alpha bands = %d,%d,%d,%d\n", 
                  red_band, green_band, blue_band, alpha_band );
     }
 

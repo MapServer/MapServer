@@ -132,6 +132,9 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
   if( version == NULL )
       version = "1.0.0";
 
+  if( msOWSParseVersionString(version) >= OWS_2_0_0 )
+      return msWCSException20( map, code, locator, version );
+
   if( msOWSParseVersionString(version) >= OWS_1_1_0 )
       return msWCSException11( map, code, locator, version );
 
@@ -420,7 +423,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
        /* WCS 1.1 DescribeCoverage and GetCoverage ... */
        else if(strcasecmp(request->ParamNames[i], "IDENTIFIER") == 0
                || strcasecmp(request->ParamNames[i], "IDENTIFIERS") == 0 )
+       {
+           msDebug("msWCSParseRequest(): Whole String: %s\n", request->ParamValues[i]);
            params->coverages = CSLAddString(params->coverages, request->ParamValues[i]);
+       }
        /* WCS 1.1 style BOUNDINGBOX */
        else if(strcasecmp(request->ParamNames[i], "BOUNDINGBOX") == 0) {
          tokens = msStringSplit(request->ParamValues[i], ',', &n);
@@ -763,19 +769,12 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 {
   char tmpString[OWS_VERSION_MAXLEN];
   int i, tmpInt = 0;
-  int wcsSupportedVersions[] = {OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
-  int wcsNumSupportedVersions = 3;
+  int wcsSupportedVersions[] = {OWS_2_0_0, OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
+  int wcsNumSupportedVersions = 5;
   const char *updatesequence=NULL;
   const char *encoding;
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
-
-/* if version is not passed/set, set it to 1.1.1, this will trigger
-    msOWSNegotiateVersion to handle accordingly
- 
-  if (!params->version || params->version == NULL || strcasecmp(params->version, "") == 0)
-    params->version= strdup("1.1.1");
-*/
 
   /* negotiate version */
   tmpInt = msOWSNegotiateVersion(msOWSParseVersionString(params->version), wcsSupportedVersions, wcsNumSupportedVersions);
@@ -1662,6 +1661,15 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
                             "width/height", params->version);
   }
 
+  /* Are we exceeding the MAXSIZE limit on result size? */
+  if(map->width > map->maxsize || map->height > map->maxsize )
+  {
+      msSetError(MS_WCSERR, "Raster size out of range, width and height must be no more than MAXSIZE=%d.", "msWCSGetCoverage()", map->maxsize);
+
+      return msWCSException(map, "InvalidParameterValue", 
+                            "width/height", params->version);
+  }
+
   /* adjust OWS BBOX to MapServer's pixel model */
   if( strncasecmp(params->version,"1.0",3) == 0 ) {
     params->bbox.minx += params->resx*0.5;
@@ -1808,6 +1816,14 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 {
 #ifdef USE_WCS_SVR
   wcsParamsObj *params;  
+  int retVal = MS_DONE;
+
+  /* first try to dispatch WCS 20 */
+  if ((retVal = msWCSDispatch20(map, request)) != MS_DONE )
+  {
+    msDebug("msWCSDispatch(): msWCSDispatch20() finished --> exiting\n");
+    return retVal;
+  }
 
   /* populate the service parameters */
   params = msWCSCreateParams();
@@ -1823,6 +1839,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   {
       msWCSFreeParams(params); /* clean up */
       free(params);
+      msDebug("msWCSDispatch(): SERVICE is not WCS\n");
       return MS_DONE;
   }
 
@@ -1831,6 +1848,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   {
       msWCSFreeParams(params); /* clean up */
       free(params);
+      msDebug("msWCSDispatch(): SERVICE and REQUEST not included\n");
       return MS_DONE;
   }
 
@@ -1866,13 +1884,14 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   /* For GetCapabilities, if version is not set, then set to the highest
      version supported.  This should be cleaned up once #996 gets implemented */
   if (!params->version || strcasecmp(params->version, "") == 0 || params->version == NULL) { /* this is a GetCapabilities request, set version */
-    params->version = strdup("1.1.1");
+    params->version = strdup("1.1.2");
   }
 
-  /* version is optional, but we do set a default value of 1.1.1, make sure request isn't for something different */
+  /* version is optional, but we do set a default value of 1.1.2, make sure request isn't for something different */
   if((strcmp(params->version, "1.0.0") != 0
      && strcmp(params->version, "1.1.0") != 0
-     && strcmp(params->version, "1.1.1") != 0)
+     && strcmp(params->version, "1.1.1") != 0
+     && strcmp(params->version, "1.1.2") != 0)
      && strcmp(params->request, "GetCapabilities") != 0) {
     msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.", "msWCSDispatch()", params->version);
     msWCSException(map, "InvalidParameterValue", "version", params->version);
@@ -1917,6 +1936,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 {
   char  *srs_urn = NULL;
+  int i = 0;
   if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
 	return MS_FAILURE;
 
@@ -2055,6 +2075,11 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
         return MS_FAILURE;
       }
     }
+    /* set color interpretation to undefined */
+    /* TODO: find better solution */
+    for(i = 0; i < 10; ++i) {
+      cm->bandinterpretation[i] = GDALGetColorInterpretationName(GCI_Undefined);
+    }
   } else if( layer->data == NULL ) { /* no virtual metadata, not ok unless we're talking 1 image, hopefully we can fix that */
     msSetError( MS_WCSERR, "RASTER Layer with no DATA statement and no WCS virtual dataset metadata.  Tileindexed raster layers not supported for WCS without virtual dataset metadata (cm->extent, wcs_res, wcs_size).", "msWCSGetCoverageDomain()" );
     return MS_FAILURE;
@@ -2106,6 +2131,9 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     cm->extent.miny = cm->geotransform[3] + cm->geotransform[4] * cm->xsize + cm->geotransform[5] * cm->ysize;
     cm->extent.maxy = cm->geotransform[3];
     
+    cm->xresolution = cm->geotransform[1];
+    cm->yresolution = cm->geotransform[5];
+
     /* TODO: need to set resolution */
     
     cm->bandcount = GDALGetRasterCount( hDS );
@@ -2127,6 +2155,14 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     default:
       cm->imagemode = MS_IMAGEMODE_FLOAT32;
       break;
+    }
+
+    /* color interpretation */
+    for(i = 1; i <= 10 && i <= cm->bandcount; ++i) {
+      GDALColorInterp colorInterp;
+      hBand = GDALGetRasterBand( hDS, i );
+      colorInterp = GDALGetRasterColorInterpretation(hBand);
+      cm->bandinterpretation[i-1] = GDALGetColorInterpretationName(colorInterp);
     }
 
     GDALClose( hDS );

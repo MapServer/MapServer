@@ -196,7 +196,9 @@ MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
 #define OWS_1_0_8   0x010008
 #define OWS_1_1_0   0x010100
 #define OWS_1_1_1   0x010101
+#define OWS_1_1_2   0x010102
 #define OWS_1_3_0   0x010300
+#define OWS_2_0_0   0x020000
 #define OWS_VERSION_MAXLEN   20  /* Buffer size for msOWSGetVersionString() */
 #define OWS_VERSION_NOTSET    -1
 #define OWS_VERSION_BADFORMAT -2
@@ -300,6 +302,7 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
                             const char *pszExt);
 const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
+char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 
 void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension, 
                            const char **pszDimUserValue, 

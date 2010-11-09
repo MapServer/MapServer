@@ -32,6 +32,17 @@
 
 #include "mapserver.h"
 #include "mapowscommon.h"
+#include <limits.h>
+#include <time.h>
+#include <float.h>
+#include <sys/time.h>
+
+/*
+ * Definitions
+ */
+
+#define MS_WCS_GML_COVERAGETYPE_RECTIFIED_GRID_COVERAGE "RectifiedGridCoverage"
+
 
 /*
 ** Structure to hold metadata taken from the image or image tile index
@@ -45,6 +56,7 @@ typedef struct {
   double xresolution, yresolution;
   int bandcount; 
   int imagemode;
+  const char *bandinterpretation[10];
 } coverageMetadataObj;
 
 typedef struct {
@@ -95,4 +107,89 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
 int msWCSException11(mapObj *map, const char *locator, 
                      const char *exceptionCode, const char *version);
 
+
+/* -------------------------------------------------------------------- */
+/*      Some WCS 2.0 specific functions and structs from mapwcs20.c     */
+/* -------------------------------------------------------------------- */
+
+enum
+{
+    MS_WCS20_TRIM = 0,
+    MS_WCS20_SLICE = 1
+};
+
+enum
+{
+    MS_WCS20_ERROR_VALUE = -1,
+    MS_WCS20_SCALAR_VALUE = 0,
+    MS_WCS20_TIME_VALUE = 1,
+    MS_WCS20_UNDEFINED_VALUE = 2
+};
+
+#define MS_WCS20_UNBOUNDED DBL_MAX
+#define MS_WCS20_UNBOUNDED_TIME 0xFFFFFFFF
+
+typedef struct
+{
+    union
+    {
+        double scalar;
+        time_t time;
+    };
+    int unbounded; /* 0 if bounded, 1 if unbounded */
+} timeScalarUnion;
+
+typedef struct
+{
+    char *axis; /* the name of the subsetted axis */
+    int operation; /* Either TRIM or SLICE */
+    char *crs; /* optional CRS to use */
+    int timeOrScalar; /* 0 if scalar value, 1 if time value */
+    timeScalarUnion min; /* Minimum and Maximum of the subsetted axis;*/
+    timeScalarUnion max;
+} wcs20SubsetObj;
+
+typedef struct
+{
+    char *version; /* 2.0.0 */
+    char *request; /* GetCapabilities|DescribeCoverage|GetCoverage */
+    char *service; /* MUST be WCS */
+    char **ids; /* NULL terminated list of coverages (in the case of a GetCoverage there will only be 1) */
+    long width, height, depth; /* image dimensions */
+    char *format;
+    int numsubsets; /* number of subsets */
+    wcs20SubsetObj **subsets; /* list of subsets, NULL if none*/
+    char *crs;
+    int multipart;
+} wcs20ParamsObj;
+
+#define MS_WCS_20_PROFILE_CORE      "http://www.opengis.net/spec/WCS/2.0/conf/core"
+#define MS_WCS_20_PROFILE_KVP       "http://www.opengis.net/spec/WCS_protocol-binding_get-kvp/1.0"
+#define MS_WCS_20_PROFILE_POST      "http://www.opengis.net/spec/WCS_protocol-binding_post-xml/1.0"
+#define MS_WCS_20_PROFILE_GEOTIFF   "http://www.opengis.net/spec/WCS_coverage-encoding_geotiff/1.0/"
+#define MS_WCS_20_PROFILE_GML_GEOTIFF "http://www.placeholder.com/GML_and_GeoTIFF"
+#define MS_WCS_20_PROFILE_EPSG      "http://www.placeholder.com/EPSG"
+#define MS_WCS_20_PROFILE_IMAGECRS  "http://www.placeholder.com/IMAGECRS"
+
+int msWCSDispatch20(mapObj *map, cgiRequestObj *request);
+
+int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
+                           wcs20ParamsObj *params);
+int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObj *params);
+
+int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
+                       wcs20ParamsObj *params);
+
+int msWCSException20(mapObj *map, const char *locator,
+                     const char *exceptionCode, const char *version);
+
+wcs20ParamsObj *msWCSCreateParamsObj20();
+
+int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params);
+
+void msWCSFreeParamsObj20(wcs20ParamsObj *pParams);
+
+int msWCSCreateBoundingBox20(wcs20ParamsObj *params, mapObj *map, layerObj *layer);
+//int msWCSCreateBoungingBoxAndProjection20(wcs20ParamsObj *params, rectObj *outBBOX, projectionObj *outProj, int *hasCRS);
+int msWCSCreateBoungingBoxAndGetProjection20(wcs20ParamsObj *params, rectObj *outBBOX, char *crs, size_t maxCRSStringLength);
 #endif /* nef MAPWCS_H */

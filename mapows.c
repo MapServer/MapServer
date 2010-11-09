@@ -1653,7 +1653,6 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 
   return NULL;
 }
-
 /*
 ** msOWSGetProjURN()
 **
@@ -1705,6 +1704,68 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
         else
         {
             msDebug( "msOWSGetProjURN(): Failed to process SRS '%s', ignored.", 
+                     tokens[i] );
+        }
+    }
+
+    msFreeCharArray(tokens, numtokens);
+
+    if( strlen(result) == 0 )
+    {
+        msFree( result );
+        return NULL;
+    }
+    else
+        return result;
+}
+
+/*
+** msOWSGetProjURI()
+**
+** Fetch an OGC URI for this layer or map.  Similar to msOWSGetEPSGProj()
+** but returns the result in the form "http://www.opengis.net/def/crs/EPSG/0/27700".
+** The returned buffer is dynamically allocated, and must be freed by the
+** caller.
+*/
+char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne)
+{
+    char *result;
+    char **tokens;
+    int numtokens, i;
+
+    const char *oldStyle = msOWSGetEPSGProj( proj, metadata, namespaces,
+                                             bReturnOnlyFirstOne );
+
+    if( strncmp(oldStyle,"EPSG:",5) != 0 )
+        return NULL;
+
+    result = strdup("");
+
+    tokens = msStringSplit(oldStyle, ' ', &numtokens);
+    for(i=0; tokens != NULL && i<numtokens; i++)
+    {
+        char urn[100];
+
+        if( strncmp(tokens[i],"EPSG:",5) == 0 )
+            sprintf( urn, "http://www.opengis.net/def/crs/EPSG/0/%s", tokens[i]+5 );
+        else if( strcasecmp(tokens[i],"imageCRS") == 0 )
+            sprintf( urn, "http://www.opengis.net/def/crs/OGC/0/imageCRS" );
+        else if( strncmp(tokens[i],"http://www.opengis.net/def/crs/",16) == 0 )
+            sprintf( urn, tokens[i] );
+        else
+            strcpy( urn, "" );
+
+        if( strlen(urn) > 0 )
+        {
+            result = (char *) realloc(result,strlen(result)+strlen(urn)+2);
+
+            if( strlen(result) > 0 )
+                strcat( result, " " );
+            strcat( result, urn );
+        }
+        else
+        {
+            msDebug( "msOWSGetProjURI(): Failed to process SRS '%s', ignored.",
                      tokens[i] );
         }
     }

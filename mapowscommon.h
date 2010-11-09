@@ -56,6 +56,9 @@
 
 #define MS_OWSCOMMON_OWS_110_NAMESPACE_URI      "http://www.opengis.net/ows/1.1"
 
+#define MS_OWSCOMMON_OWS_20_NAMESPACE_URI   "http://www.opengis.net/ows/2.0"
+#define MS_OWSCOMMON_OWS_20_SCHEMAS_LOCATION    "/ows/2.0/owsAll.xsd"
+
 /* OGC URNs */
 
 #define MS_OWSCOMMON_URN_OGC_CRS_4326 "urn:opengis:def:crs:OGC:2:84"
@@ -67,6 +70,26 @@
 /* OGC codespace */
 
 #define MS_OWSCOMMON_OGC_CODESPACE "OGC"
+
+/* WCS namespaces */
+
+#define MS_OWSCOMMON_WCS_20_NAMESPACE_URI		"http://www.opengis.net/wcs/2.0"
+#define MS_OWSCOMMON_WCS_20_SCHEMAS_LOCATION    "/wcs/2.0/wcsAll.xsd"
+#define MS_OWSCOMMON_WCS_NAMESPACE_PREFIX		"wcs"
+
+/* GML namespaces */
+
+#define MS_OWSCOMMON_GML_32_NAMESPACE_URI		"http://www.opengis.net/gml/3.2"
+#define MS_OWSCOMMON_GML_NAMESPACE_PREFIX		"gml"
+
+/* GMLCov namespaces */
+
+#define MS_OWSCOMMON_GMLCOV_10_NAMESPACE_URI		"http://www.opengis.net/gmlcov/1.0"
+#define MS_OWSCOMMON_GMLCOV_NAMESPACE_PREFIX		"gmlcov"
+
+/* SWE namespaces */
+#define MS_OWSCOMMON_SWE_20_NAMESPACE_URI		"http://www.opengis.net/swe/2.0"
+#define MS_OWSCOMMON_SWE_NAMESPACE_PREFIX		"swe"
 
 /* function prototypes */
 
