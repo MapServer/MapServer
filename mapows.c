@@ -1751,7 +1751,7 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
         else if( strcasecmp(tokens[i],"imageCRS") == 0 )
             sprintf( urn, "http://www.opengis.net/def/crs/OGC/0/imageCRS" );
         else if( strncmp(tokens[i],"http://www.opengis.net/def/crs/",16) == 0 )
-            sprintf( urn, tokens[i] );
+            sprintf( urn, "%s", tokens[i] );
         else
             strcpy( urn, "" );
 

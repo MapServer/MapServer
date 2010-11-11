@@ -163,6 +163,42 @@ typedef struct
     int multipart;
 } wcs20ParamsObj;
 
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            char *name;
+            char *interpretation;
+            char *uom;
+            char *definition;
+            char *description;
+        };
+        char *values[5];
+    };
+} wcs20rasterbandMetadataObj;
+
+
+typedef struct
+{
+    const char *srs;
+    char srs_uri[200];
+    rectObj extent;
+    double geotransform[6];
+    double xresolution;
+    double yresolution;
+    int xsize;
+    int ysize;
+    int imagemode;
+    size_t numnilvalues;
+    char **nilvalues;
+    char **nilvalues_reasons;
+
+    size_t numbands;
+    wcs20rasterbandMetadataObj *bands;
+
+} wcs20coverageMetadataObj;
 #define MS_WCS_20_PROFILE_CORE      "http://www.opengis.net/spec/WCS/2.0/conf/core"
 #define MS_WCS_20_PROFILE_KVP       "http://www.opengis.net/spec/WCS_protocol-binding_get-kvp/1.0"
 #define MS_WCS_20_PROFILE_POST      "http://www.opengis.net/spec/WCS_protocol-binding_post-xml/1.0"
