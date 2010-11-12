@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#if defined(USE_WCS_SVR) && defined(USE_LIBXML2)
+
 #include <assert.h>
 #include "mapserver.h"
 #include "maperror.h"
@@ -2982,3 +2984,5 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
     msWCSFreeParamsObj20(params);
     return returnValue;
 }
+
+#endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
