@@ -247,9 +247,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
      */
     else if( layer->transform )
     {
+        int dst_lrx, dst_lry;
+        
         if( layer->debug )
             msDebug( "msDrawRasterLayerGDAL(): Entering transform.\n" );
-        int dst_lrx, dst_lry;
 
         msGetGDALGeoTransform( hDS, map, layer, adfGeoTransform );
         InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
