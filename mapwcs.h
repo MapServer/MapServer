@@ -35,7 +35,10 @@
 #include <limits.h>
 #include <time.h>
 #include <float.h>
+
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
 
 /*
  * Definitions
