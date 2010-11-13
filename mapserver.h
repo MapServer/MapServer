@@ -344,6 +344,8 @@ extern "C" {
 #define MS_DRIVER_OGL(format) (strncasecmp((format)->driver,"ogl/",4)==0)
 #define MS_DRIVER_TEMPLATE(format) (strncasecmp((format)->driver,"template",8)==0)
 
+#endif /*SWIG*/
+
 #define MS_RENDER_WITH_GD       1
 #define MS_RENDER_WITH_SWF      2
 #define MS_RENDER_WITH_RAWDATA  3
@@ -361,6 +363,7 @@ extern "C" {
 #define MS_RENDER_WITH_KML 15
 #define MS_RENDER_WITH_OGR 16
 
+#ifndef SWIG
 #define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
 #define MS_RENDERER_RAWDATA(format) ((format)->renderer == MS_RENDER_WITH_RAWDATA)
