@@ -768,7 +768,9 @@ int msWCSCreateBoungingBoxAndGetProjection20(wcs20ParamsObj *params, rectObj *ou
     char *validYAxisNames[] = {"y", "yaxis", "y-axis", "y_axis", "lat", "lat_axis", "lat-axis", NULL};
     char ***validAxisNames;
     char *crs = NULL;
-    wcs20SubsetObj* subsets[numAxis];
+    wcs20SubsetObj** subsets;
+    
+    subsets = (wcs20SubsetObj**)malloc(sizeof(wcs20SubsetObj*) * numAxis);
 
     validAxisNames = calloc(sizeof(char**), numAxis);
     validAxisNames[0] = validXAxisNames;
@@ -778,11 +780,13 @@ int msWCSCreateBoungingBoxAndGetProjection20(wcs20ParamsObj *params, rectObj *ou
     free(validAxisNames);
     if(returnValue != MS_SUCCESS)
     {
+        msFree(subsets);
         return MS_FAILURE;
     }
 
     if(outBBOX == NULL)
     {
+        msFree(subsets);
         return MS_FAILURE;
     }
 
@@ -812,6 +816,7 @@ int msWCSCreateBoungingBoxAndGetProjection20(wcs20ParamsObj *params, rectObj *ou
             {
                 msSetError(MS_WCSERR, "CRS for X and Y axis are not the same.",
                         "msWCSCreateBoundingBox20()");
+                msFree(subsets);
                 return MS_FAILURE;
             }
         }
@@ -820,6 +825,8 @@ int msWCSCreateBoungingBoxAndGetProjection20(wcs20ParamsObj *params, rectObj *ou
             crs = subsets[1]->crs;
         }
     }
+
+    msFree(subsets);
 
     /* check if projections are equal */
     if(crs != NULL)
@@ -1157,9 +1164,9 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
 
         /* add constraint */
         psConstraint = xmlNewChild(psQuantity, psSweNs, BAD_CAST "constraint", NULL);
-        char interval[100];
-
+        
         {
+            char interval[100];
             char id[100];
             psAllowedValues = xmlNewChild(psConstraint, psSweNs, BAD_CAST "AllowedValues", NULL);
             sprintf(id, "VALUE_SPACE_%d", i);
@@ -2006,12 +2013,13 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
     return MS_FAILURE;
 }
 
+#define MAX_MIMES 20
+
 static int msWCSGetCapabilities20_CreateProfiles(
         mapObj *map, xmlNodePtr psServiceIdentification, xmlNsPtr psOwsNs)
 {
     xmlNodePtr psProfile, psTmpNode;
-    static const int max_mimes = 20;
-    char *available_mime_types[max_mimes];
+    char *available_mime_types[MAX_MIMES];
     int i = 0;
 
     /* even indices are urls, uneven are mime-types, or null*/
@@ -2036,7 +2044,7 @@ static int msWCSGetCapabilities20_CreateProfiles(
     }
 
     /* get list of all available mime types */
-    msGetOutputFormatMimeList(map, available_mime_types, max_mimes);
+    msGetOutputFormatMimeList(map, available_mime_types, MAX_MIMES);
 
     while(urls_and_mime_types[i] != NULL)
     {
@@ -2682,13 +2690,13 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         {
             double total = ABS(map->extent.maxx - map->extent.minx),
                     part = ABS(tmpBBOX.maxx - tmpBBOX.minx);
-            map->width = lround((part * map->width) / total);
+            map->width = MS_NINT((part * map->width) / total);
         }
         if(ABS(tmpBBOX.maxy - tmpBBOX.miny) != ABS(map->extent.maxy - map->extent.miny))
         {
             double total = ABS(map->extent.maxy - map->extent.miny),
                     part = ABS(tmpBBOX.maxy - tmpBBOX.miny);
-            map->height = lround((part * map->height) / total);
+            map->height = MS_NINT((part * map->height) / total);
         }
 
         msDebug("msGetCoverage20(): width: %d height: %d\n", map->width, map->height);
@@ -2878,7 +2886,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
 {
     wcs20ParamsObj *params = NULL;
-    int returnValue = MS_FAILURE, status;
+    int returnValue = MS_FAILURE, status, x;
 
     params = msWCSCreateParamsObj20();
     status = msWCSParseRequest20(request, params);
@@ -2919,7 +2927,6 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
     }
 
     /*debug output the parsed parameters*/
-    int x = 0;
     msDebug("ParamsObj:\n");
     msDebug("\tVersion: %s\n\tRequest: %s\n\tService: %s\n", params->version, params->request, params->service);
     msDebug("\tIDs:\n");
