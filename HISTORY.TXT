@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed free(): invalid next size in mapfile.c (#3604)
+
 - Added a built-in OpenLayers map viewer (#3549)
 
 - Fixed issues with static buffers and sprintf (#3537)

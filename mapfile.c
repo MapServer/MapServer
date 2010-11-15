@@ -5686,7 +5686,7 @@ void msApplyDefaultSubstitutions(mapObj *map) {
     const char *defaultkey = msFirstKeyFromHashTable(&(layer->metadata));
     while(defaultkey) {
       if(!strncmp(defaultkey,"default_",8)){
-          size_t buffer_size = (strlen(defaultkey)-8)+1;
+          size_t buffer_size = (strlen(defaultkey)-5);
         char *tmpstr = (char *)malloc(buffer_size);
         snprintf(tmpstr, buffer_size, "%%%s%%", &(defaultkey[8]));
 
