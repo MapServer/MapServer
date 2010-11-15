@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version
 ---------------
 
+- Fixed free(): invalid next size in mapfile.c (#3604)
+
 - Fix for the memory corruption when mapping the string data type in the Java bindings (3491)
 
 - Correct wms 1.3.0 latlong bbox error (#2578)

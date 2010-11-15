@@ -5485,7 +5485,7 @@ void msApplyDefaultSubstitutions(mapObj *map) {
     const char *defaultkey = msFirstKeyFromHashTable(&(layer->metadata));
     while(defaultkey) {
       if(!strncmp(defaultkey,"default_",8)){
-        char *tmpstr = (char *)malloc(sizeof(char)*(strlen(defaultkey)-8));
+        char *tmpstr = (char *)malloc(sizeof(char)*(strlen(defaultkey)-5));
         sprintf(tmpstr,"%%%s%%", &(defaultkey[8]));
 
         msLayerSubstituteString(layer,tmpstr,msLookupHashTable(&(layer->metadata),defaultkey));
