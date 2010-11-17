@@ -1856,15 +1856,15 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
   /*
   ** Pointers to static strings, naming convention is:
-  **   char 1 - x=x, y=y, c=coordinate, p=part, s=shape
-  **   char 2 - h=header, f=footer, s=seperator
+  **   char 1/2 - x=x, y=y, c=coordinate, p=part, s=shape, ir=inner ring, or=outer ring
+  **   last char - h=header, f=footer, s=seperator
   */
   char *xh, *xf, *yh, *yf;
   char *cs;
   char *ph, *pf, *ps;
   char *sh, *sf;
-  /* char *irh="", *irf="", *irs=""; // inner ring: necessary for complex polygons */
-  /* char *orh="", *orf="", *ors=""; // outer ring */
+  char *irh, *irf, *irs; /* inner ring: necessary for complex polygons */
+  char *orh, *orf, *ors; /* outer ring */
 
   int centroid;
   int precision;
@@ -1901,7 +1901,8 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   while (tagStart) {
     xh = yh = yf = ph = pf = sh = sf = ""; /* initialize the tag arguments */
     xf= ",";
-    ps = cs = " ";
+    irh = irf = orh = orf = "";    
+    ps = cs = irs = ors = " ";
 
     centroid = MS_FALSE;
     precision = 0;
@@ -1929,6 +1930,21 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
       argValue = msLookupHashTable(tagArgs, "cs");
       if(argValue) cs = argValue;
+
+      argValue = msLookupHashTable(tagArgs, "irh");
+      if(argValue) irh = argValue;
+      argValue = msLookupHashTable(tagArgs, "irf");
+      if(argValue) irf = argValue;
+
+      argValue = msLookupHashTable(tagArgs, "orh");
+      if(argValue) orh = argValue;
+      argValue = msLookupHashTable(tagArgs, "orf");
+      if(argValue) orf = argValue;
+
+      argValue = msLookupHashTable(tagArgs, "irs");
+      if(argValue) irs = argValue;
+      argValue = msLookupHashTable(tagArgs, "ors");
+      if(argValue) ors = argValue;
 
       argValue = msLookupHashTable(tagArgs, "ph");
       if(argValue) ph = argValue;
