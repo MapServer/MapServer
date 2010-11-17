@@ -1863,8 +1863,8 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   char *cs;
   char *ph, *pf, *ps;
   char *sh, *sf;
-  char *irh, *irf, *irs; /* inner ring: necessary for complex polygons */
-  char *orh, *orf, *ors; /* outer ring */
+  char *irh, *irf; /* inner ring: necessary for complex polygons */
+  char *orh, *orf; /* outer ring */
 
   int centroid;
   int precision;
@@ -1902,7 +1902,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     xh = yh = yf = ph = pf = sh = sf = ""; /* initialize the tag arguments */
     xf= ",";
     irh = irf = orh = orf = "";    
-    ps = cs = irs = ors = " ";
+    ps = cs = " ";
 
     centroid = MS_FALSE;
     precision = 0;
@@ -1940,11 +1940,6 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       if(argValue) orh = argValue;
       argValue = msLookupHashTable(tagArgs, "orf");
       if(argValue) orf = argValue;
-
-      argValue = msLookupHashTable(tagArgs, "irs");
-      if(argValue) irs = argValue;
-      argValue = msLookupHashTable(tagArgs, "ors");
-      if(argValue) ors = argValue;
 
       argValue = msLookupHashTable(tagArgs, "ph");
       if(argValue) ph = argValue;
