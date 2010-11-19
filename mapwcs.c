@@ -1388,6 +1388,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   coverageMetadataObj cm;
   rectObj reqextent;
   rectObj covextent;
+  rasterBufferObj rb;
 
   char *coverageName;
 
@@ -1751,16 +1752,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   if(!map->outputformat) {
     msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
     return msWCSException(map, NULL, NULL, params->version );
-  } else if( MS_RENDERER_GD(map->outputformat) ) {
-    image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
-    if( image != NULL ) msImageInitGD( image, &map->imagecolor );
-#ifdef USE_AGG
-  } else if( MS_RENDERER_AGG(map->outputformat) ) {
-     image = msImageCreateAGG(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
-    if( image != NULL ) msImageInitAGG( image, &map->imagecolor );
-#endif
-  } else if( MS_RENDERER_RAWDATA(map->outputformat) ) {
-    image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map);
+  } else if( MS_RENDERER_RAWDATA(map->outputformat) || MS_RENDERER_PLUGIN(map->outputformat) ) {
+    image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, NULL);
   } else {
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
     return msWCSException(map, NULL, NULL, params->version );
@@ -1768,9 +1761,14 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
 
   if( image == NULL )
       return msWCSException(map, NULL, NULL, params->version );
+  if( MS_RENDERER_RAWDATA(map->outputformat) ) {
+     status = msDrawRasterLayerLow( map, lp, image, NULL );
+  } else {
+     MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
 
-  /* Actually produce the "grid". */
-  status = msDrawRasterLayerLow( map, lp, image, NULL );
+     /* Actually produce the "grid". */
+     status = msDrawRasterLayerLow( map, lp, image, &rb );
+  }
   if( status != MS_SUCCESS ) {
       return msWCSException(map, NULL, NULL, params->version );
   }

@@ -8,8 +8,8 @@
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+
+` * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
@@ -111,10 +111,8 @@ typedef uint32_t        ms_uint32;
 #endif 
 
 /*forward declaration of rendering object*/
-struct rendererVTable;
-struct tilecache;
-typedef struct rendererVTable rendererVTableObj;
-typedef struct tilecache tileCacheObj;
+typedef struct rendererVTableObj rendererVTableObj;
+typedef struct tileCacheObj tileCacheObj;
 
 
 
@@ -128,7 +126,7 @@ typedef ms_uint32 *     ms_bitarray;
 #include "maptree.h" /* quadtree spatial index */
 #include "maphash.h"
 #include "mapio.h"
-
+#include <assert.h>
 #include "mapproject.h"
 #include "cgiutil.h"
 
@@ -207,6 +205,8 @@ extern "C" {
 
 #define MS_DEG_TO_RAD .0174532925199432958
 #define MS_RAD_TO_DEG   57.29577951
+
+#define MS_DEFAULT_RESOLUTION 72
 
 #define MS_RED 0
 #define MS_GREEN 1
@@ -322,9 +322,9 @@ extern "C" {
 /* #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE) */
 #define MS_VALID_EXTENT(rect)  (((rect.minx < rect.maxx && rect.miny < rect.maxy))?MS_TRUE:MS_FALSE)
 
-#define MS_INIT_COLOR(color,r,g,b) { (color).red = r; (color).green = g; (color).blue = b; (color).pen = MS_PEN_UNSET; }
+#define MS_INIT_COLOR(color,r,g,b) { (color).red = r; (color).green = g; (color).blue = b; (color).pen = MS_PEN_UNSET; (color).alpha=255; }
 #define MS_VALID_COLOR(color) (((color).red==-1 || (color).green==-1 || (color).blue==-1)?MS_FALSE:MS_TRUE)
-#define MS_TRANSPARENT_COLOR(color) (((color).red==-255 || (color).green==-255 || (color).blue==-255)?MS_TRUE:MS_FALSE)
+#define MS_TRANSPARENT_COLOR(color) (((color).alpha==0 || (color).red==-255 || (color).green==-255 || (color).blue==-255)?MS_TRUE:MS_FALSE)
 #define MS_COMPARE_COLORS(a,b) (((a).red!=(b).red || (a).green!=(b).green || (a).blue!=(b).blue)?MS_FALSE:MS_TRUE)
 #define MS_COLOR_GETRGB(color) (MS_VALID_COLOR(color)?((color).red *0x10000 + (color).green *0x100 + (color).blue):-1)
 
@@ -332,49 +332,41 @@ extern "C" {
 #define MS_IMAGE_EXTENSION(format)  (format->extension ? format->extension : "unknown")
 
 #define MS_DRIVER_GD(format)  (strncasecmp((format)->driver,"gd/",3)==0)
-#define MS_DRIVER_GD2(format)  (strncasecmp((format)->driver,"gd2/",4)==0)
 #define MS_DRIVER_SWF(format) (strncasecmp((format)->driver,"swf",3)==0)
 #define MS_DRIVER_GDAL(format)  (strncasecmp((format)->driver,"gdal/",5)==0)
-#define MS_DRIVER_PDF(format) (strncasecmp((format)->driver,"pdf",3)==0)
 #define MS_DRIVER_IMAGEMAP(format)  (strncasecmp((format)->driver,"imagemap",8)==0)
-#define MS_DRIVER_SVG(format) (strncasecmp((format)->driver,"svg",3)==0)
 #define MS_DRIVER_AGG(format) (strncasecmp((format)->driver,"agg/",4)==0)
-#define MS_DRIVER_AGG2(format) (strncasecmp((format)->driver,"agg2/",5)==0)
 #define MS_DRIVER_CAIRO(format) (strncasecmp((format)->driver,"cairo/",6)==0)
 #define MS_DRIVER_OGL(format) (strncasecmp((format)->driver,"ogl/",4)==0)
 #define MS_DRIVER_TEMPLATE(format) (strncasecmp((format)->driver,"template",8)==0)
 
 #endif /*SWIG*/
 
-#define MS_RENDER_WITH_GD       1
 #define MS_RENDER_WITH_SWF      2
 #define MS_RENDER_WITH_RAWDATA  3
-#define MS_RENDER_WITH_PDF      4
 #define MS_RENDER_WITH_IMAGEMAP 5
-#define MS_RENDER_WITH_SVG      6
-#define MS_RENDER_WITH_AGG      7
 #define MS_RENDER_WITH_TEMPLATE 8 /* query results only */
-#define MS_RENDER_WITH_CAIRO_RASTER   9
-#define MS_RENDER_WITH_CAIRO_PDF 10
-#define MS_RENDER_WITH_CAIRO_SVG 11
-#define MS_RENDER_WITH_OGL      12
-#define MS_RENDER_WITH_AGG2 13
-#define MS_RENDER_WITH_GD2 14
-#define MS_RENDER_WITH_KML 15
 #define MS_RENDER_WITH_OGR 16
 
+#define MS_RENDER_WITH_PLUGIN 100 
+#define MS_RENDER_WITH_CAIRO_RASTER   101
+#define MS_RENDER_WITH_CAIRO_PDF 102
+#define MS_RENDER_WITH_CAIRO_SVG 103
+#define MS_RENDER_WITH_OGL      104
+#define MS_RENDER_WITH_AGG 105
+#define MS_RENDER_WITH_GD 106
+#define MS_RENDER_WITH_KML 107
+
 #ifndef SWIG
-#define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
+
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
 #define MS_RENDERER_RAWDATA(format) ((format)->renderer == MS_RENDER_WITH_RAWDATA)
-#define MS_RENDERER_PDF(format) ((format)->renderer == MS_RENDER_WITH_PDF)
 #define MS_RENDERER_IMAGEMAP(format) ((format)->renderer == MS_RENDER_WITH_IMAGEMAP)
-#define MS_RENDERER_SVG(format) ((format)->renderer == MS_RENDER_WITH_SVG)
-#define MS_RENDERER_AGG(format) ((format)->renderer == MS_RENDER_WITH_AGG)
-#define MS_RENDERER_PLUGIN(format) ((format)->renderer >= MS_RENDER_WITH_CAIRO_RASTER)
 #define MS_RENDERER_TEMPLATE(format) ((format)->renderer == MS_RENDER_WITH_TEMPLATE)
 #define MS_RENDERER_KML(format) ((format)->renderer == MS_RENDER_WITH_KML)
 #define MS_RENDERER_OGR(format) ((format)->renderer == MS_RENDER_WITH_OGR)
+
+#define MS_RENDERER_PLUGIN(format) ((format)->renderer > MS_RENDER_WITH_PLUGIN)
 
 #define MS_CELLSIZE(min,max,d) ((max - min)/(d-1)) /* where min/max are from an MapServer pixel center-to-pixel center extent */
 #define MS_OWS_CELLSIZE(min,max,d) ((max - min)/d) /* where min/max are from an OGC pixel outside edge-to-pixel outside edge extent */
@@ -437,6 +429,14 @@ enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_
 
 enum MS_GEOS_OPERATOR {MS_GEOS_EQUALS, MS_GEOS_DISJOINT, MS_GEOS_TOUCHES, MS_GEOS_OVERLAPS, MS_GEOS_CROSSES, MS_GEOS_INTERSECTS, MS_GEOS_WITHIN, MS_GEOS_CONTAINS, MS_GEOS_BEYOND, MS_GEOS_DWITHIN};
 #define MS_FILE_DEFAULT MS_FILE_MAP   
+
+/* coordinate to pixel simplification modes, used in msTransformShape */
+enum MS_SIMPLIFY_MODE {
+	MS_SIMPLIFY_DEFAULT, /* use renderer default */ 
+	MS_SIMPLIFY_NONE, /* precise conversion */
+	MS_SIMPLIFY_ROUND, /* round to closest pixel, removing identical points */
+	MS_SIMPLIFY_NAIVE /* find better name */
+};
 
 #ifndef SWIG
 /* Filter object */    
@@ -608,7 +608,10 @@ typedef struct {
     char **formatoptions;
     int  refcount;
     int inmapfile; /* boolean value for writing */
+#ifndef SWIG
     rendererVTableObj *vtable;
+    void *device; /* for supporting direct rendering onto a device context */
+#endif
 } outputFormatObj;
 
 /* The following is used for "don't care" values in transparent, interlace and
@@ -1479,32 +1482,6 @@ typedef struct map_obj{ /* structure for a map */
 #endif
 } mapObj;
 
-
-/************************************************************************/
-/*                                pdfObj                                */
-/************************************************************************/
-
-#ifdef USE_PDF
-typedef struct {
-  mapObj *map;
-  PDF *pdf;
-  void    *imagetmp;  /* used when the FORMATOPTION "OUTPUT_TYPE=RASTER" */
-} PDFObj; 
-#endif
-
-/************************************************************************/
-/*                                SVGObj                                */
-/************************************************************************/
-#ifndef SWIG
-typedef struct  {
-  mapObj *map;
-  FILE *stream;
-  char *filename;
-  int streamclosed; /* track if a save image is done */
-  int compressed; /*track if output is set to be svgz */
-} SVGObj;
-#endif /*SWIG*/
-
 /************************************************************************/
 /*                               imageObj                               */
 /*                                                                      */
@@ -1522,15 +1499,12 @@ typedef struct {
 
   outputFormatObj *format;
 #ifndef SWIG
-  void *imageextra; /* AGG specific */
   tileCacheObj *tilecache;
   int ntiles;
 #endif
-  int buffer_format; /* tells if the alpha channel is GD or AGG style  */
 #ifdef SWIG
 %mutable;
 #endif
-  int renderer;
 #ifndef SWIG
   int size;
 #endif
@@ -1538,15 +1512,9 @@ typedef struct {
 #ifndef SWIG
   union {
     void *plugin;
-    gdImagePtr gd;
 #ifdef USE_MING_FLASH
     void *swf;
 #endif
-#ifdef USE_PDF
-    PDFObj *pdf;
-#endif
-
-    SVGObj *svg;
 
     char *imagemap;
     short *raw_16bit;
@@ -1663,7 +1631,7 @@ MS_DLL_EXPORT void msApplyDefaultSubstitutions(mapObj *map);
 
 MS_DLL_EXPORT int getClassIndex(layerObj *layer, char *str);
 
-/* For maplabel and mappdf */
+/* For maplabel */
 int labelInImage(int width, int height, shapeObj *lpoly, int buffer);
 int intersectLabelPolygons(shapeObj *p1, shapeObj *p2);
 pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, lineObj *poly);
@@ -1729,10 +1697,6 @@ MS_DLL_EXPORT int msInitLabelCache(labelCacheObj *cache);
 MS_DLL_EXPORT int msFreeLabelCache(labelCacheObj *cache);
 MS_DLL_EXPORT int msCheckConnection(layerObj * layer); /* connection pooling functions (mapfile.c) */
 MS_DLL_EXPORT void msCloseConnections(mapObj *map); 
-
-#if defined USE_PDF
-MS_DLL_EXPORT PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); /* mappdf.c */
-#endif /* USE_PDF */
 
 MS_DLL_EXPORT void msOGRInitialize(void);
 MS_DLL_EXPORT void msOGRCleanup(void);
@@ -1888,13 +1852,14 @@ MS_DLL_EXPORT int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol);
 MS_DLL_EXPORT symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int index);
 MS_DLL_EXPORT int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename);
 MS_DLL_EXPORT int msLoadImageSymbol(symbolObj *symbol, const char *filename);
+MS_DLL_EXPORT int msPreloadImageSymbol(rendererVTableObj *renderer, symbolObj *symbol);
 MS_DLL_EXPORT symbolObj *msRotateSymbol(symbolObj *symbol, double angle);
 
 MS_DLL_EXPORT imageObj *msSymbolGetImageGD(symbolObj *symbol, outputFormatObj *format);
 MS_DLL_EXPORT int msSymbolSetImageGD(symbolObj *symbol, imageObj *image);
 
 MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
-MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);
+//MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);
 MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
 MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);
 
@@ -1907,8 +1872,12 @@ MS_DLL_EXPORT imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* 
 MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabel.c */
 MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
+MS_DLL_EXPORT char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey);
+
 MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, imageObj* image, labelObj *label, char *text);
-MS_DLL_EXPORT int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor, int adjustBaseline,double **advances);
+MS_DLL_EXPORT int msGetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size, char *string, rectObj *rect, double **advances);
+
+MS_DLL_EXPORT int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rectObj *rect, double **advances);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
 MS_DLL_EXPORT void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr, int mapwidth, int mapheight, int buffer, labelCacheMemberObj *cachePtr, int current_priority, int current_label, int mindistance, double label_size);
 MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
@@ -1930,12 +1899,17 @@ MS_DLL_EXPORT void msComputeBounds(shapeObj *shape);
 MS_DLL_EXPORT void msRectToPolygon(rectObj rect, shapeObj *poly);
 MS_DLL_EXPORT void msClipPolylineRect(shapeObj *shape, rectObj rect);
 MS_DLL_EXPORT void msClipPolygonRect(shapeObj *shape, rectObj rect);
-MS_DLL_EXPORT void msTransformShape(shapeObj *shape, rectObj extent, double cellsize, imageObj *image);
+MS_DLL_EXPORT void msTransformShape(shapeObj *shape, rectObj extent, double cellsize, imageObj *image, enum MS_SIMPLIFY_MODE simplifyMode);
+
+
 MS_DLL_EXPORT void msTransformPoint(pointObj *point, rectObj *extent, double cellsize, imageObj *image);
 
 MS_DLL_EXPORT void msOffsetPointRelativeTo(pointObj *point, layerObj *layer);
 MS_DLL_EXPORT void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer);
-MS_DLL_EXPORT void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize);
+MS_DLL_EXPORT int msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize, enum MS_SIMPLIFY_MODE simplify_mode);
+MS_DLL_EXPORT int msTransformShapeToPixelIntegerPrecision(shapeObj *shape, rectObj extent, double cellsize);
+MS_DLL_EXPORT int msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, double cellsize);
+
 MS_DLL_EXPORT void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize);
 MS_DLL_EXPORT void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, styleObj *style, symbolObj *symbol, int c, double size, double scalefactor);
 MS_DLL_EXPORT void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, double **line_lengths, int *max_line_index, double *max_line_length, int *segment_index, double *total_length);
@@ -1944,8 +1918,8 @@ MS_DLL_EXPORT pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_lengt
 MS_DLL_EXPORT void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, double** segment_lengths, 
                                                   int line_index, double line_length, double total_length, int segment_index, 
                                                   int* labelpoints_index, int* labelpoints_size, pointObj ***labelpoints, int center_on_longest_segment);
-MS_DLL_EXPORT labelPathObj** msPolylineLabelPath(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *numpaths, int** regular_lines, int* num_regular_Lines);
-MS_DLL_EXPORT void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor,
+MS_DLL_EXPORT labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *numpaths, int** regular_lines, int* num_regular_Lines);
+MS_DLL_EXPORT void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor,
                                                  int line_index, double** segment_lengths, double line_length, double total_length, 
                                                  int* labelpaths_index, int* labelpaths_size, labelPathObj ***labelpaths, int** regular_lines, int *regular_lines_index, int* regular_lines_size);
 MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension);
@@ -2080,11 +2054,14 @@ MS_DLL_EXPORT int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, ima
 MS_DLL_EXPORT int msShapeToRange(styleObj *style, shapeObj *shape);
 MS_DLL_EXPORT int msValueToRange(styleObj *style, double fieldVal);
 
-MS_DLL_EXPORT void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT int msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
+MS_DLL_EXPORT int msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
+MS_DLL_EXPORT int msDrawPieSlice(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double radius, double start, double end);
+
+
 
 MS_DLL_EXPORT int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, labelObj *label, double scalefactor);
 MS_DLL_EXPORT int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
@@ -2099,6 +2076,14 @@ MS_DLL_EXPORT void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
 /* ==================================================================== */
 /*      End of Prototypes for functions in mapdraw.c                    */
 /* ==================================================================== */
+
+/* ==================================================================== */
+/*      Prototypes for functions in mapgeomutil.cpp                       */
+/* ==================================================================== */
+MS_DLL_EXPORT shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle, double endAngle, int isSlice);
+MS_DLL_EXPORT int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, double angle, colorObj *color);
+
+
 
 /* ==================================================================== */
 /*      Prototypes for functions in mapimagemap.c                       */
@@ -2124,73 +2109,8 @@ MS_DLL_EXPORT int msDrawLabelCacheIM(imageObj* img, mapObj *map);
 /*      End of Prototypes for functions in mapimagemap.c                */
 /* ==================================================================== */
 
-/* ==================================================================== */
-/*      Prototypes for functions in mapgd.c                             */
-/* ==================================================================== */
-MS_DLL_EXPORT imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver);
-MS_DLL_EXPORT int msCompareColors(colorObj *c1, colorObj *c2);
-MS_DLL_EXPORT void msPreAllocateColorsGD(imageObj *image, mapObj *map);
-MS_DLL_EXPORT imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
-MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
-MS_DLL_EXPORT void msImageInitGD( imageObj *image, colorObj *background );
-MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
-
 #define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
-
-MS_DLL_EXPORT gdIOCtx *msNewGDFileCtx(FILE *file);
-MS_DLL_EXPORT int msSaveImageGD(imageObj *img, char *filename, outputFormatObj *format);
-MS_DLL_EXPORT unsigned char *msSaveImageBufferGD(imageObj *img, int *bufsize, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageGDCtx(imageObj *img, gdIOCtx* ctx, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageGD_LL(imageObj *img, char *filename, int type, int transparent, int interlace, int quality);
-MS_DLL_EXPORT void msFreeImageGD(imageObj *img);
-
-MS_DLL_EXPORT void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawMarkerSymbolGD(symbolSetObj *symbolset, imageObj *img, pointObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawLineSymbolGD(symbolSetObj *symbolset, imageObj *img, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawShadeSymbolGD(symbolSetObj *symbolset, imageObj *img, shapeObj *p, styleObj *style, double scalefactor);
-
-MS_DLL_EXPORT int msDrawTextGD(imageObj *img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawTextLineGD(imageObj *img, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
-
-MS_DLL_EXPORT void msImageCopyMerge (imageObj *dst, imageObj *src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
-MS_DLL_EXPORT void msImageCopyMergeNoAlpha (imageObj *dst, imageObj *src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct, colorObj *transparent);
-
-#ifdef USE_AGG
-/* ==================================================================== */
-/*      Prototypes for functions in mapagg.cpp                          */
-/* ==================================================================== */
-
-MS_DLL_EXPORT imageObj *msImageCreateAGG(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
-MS_DLL_EXPORT void msImageInitAGG( imageObj *image, colorObj *background );
-
-MS_DLL_EXPORT int msSaveImageAGG(imageObj *img, char *filename, outputFormatObj *format);
-MS_DLL_EXPORT unsigned char *msSaveImageBufferAGG(imageObj *img, int *bufsize, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageAGGCtx(imageObj *img, gdIOCtx* ctx, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageAGG_LL(imageObj *img, char *filename, int type, int transparent, int interlace, int quality);
-MS_DLL_EXPORT void msFreeImageAGG(imageObj *img);
-
-MS_DLL_EXPORT void msPieSliceAGG(imageObj *image, styleObj *style, double center_x, double center_y, double diameter, double start, double end);
-MS_DLL_EXPORT void msFilledRectangleAGG (imageObj *image, styleObj *style, double c1_x, double c1_y, double c2_x, double c2_y );
-MS_DLL_EXPORT void msCircleDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msCircleDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawMarkerSymbolAGG(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawShadeSymbolAGG(symbolSetObj *symbolset, imageObj *image,shapeObj *p, styleObj *style, double scalefactor);
-int msGetTruetypeTextBBoxAGG(imageObj *img, char *font, double size, char *string, rectObj *rect, double **advances);
-int msGetRasterTextBBoxAGG(imageObj *img, int size, char *string, rectObj *rect);
-MS_DLL_EXPORT int msDrawTextAGG(imageObj *imgage, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-
-MS_DLL_EXPORT int msDrawTextLineAGG(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor);
-
-MS_DLL_EXPORT void msTransformShapeAGG(shapeObj *shape, rectObj extent, double cellsize);
-
-MS_DLL_EXPORT void msFreeSymbolCacheAGG(void *buffer);
-
-MS_DLL_EXPORT void msAlphaGD2AGG(imageObj *im);
-MS_DLL_EXPORT void msAlphaAGG2GD(imageObj *im);
-MS_DLL_EXPORT void msImageCopyMergeAGG (imageObj *dst, imageObj *src, int pct);
-#endif  /* USE_AGG  */
+MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 
 /* various JOIN functions (in mapjoin.c) */
 MS_DLL_EXPORT int msJoinConnect(layerObj *layer, joinObj *join);
@@ -2201,9 +2121,6 @@ MS_DLL_EXPORT int msJoinClose(joinObj *join);
 /*in mapraster.c */
 MS_DLL_EXPORT int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image, rasterBufferObj *rb );
 MS_DLL_EXPORT int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
-#ifdef USE_AGG
-MS_DLL_EXPORT int msAddColorAGG(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
-#endif
 MS_DLL_EXPORT int msGetClass(layerObj *layer, colorObj *color);
 MS_DLL_EXPORT int msGetClass_FloatRGB(layerObj *layer, float fValue,
                                       int red, int green, int blue );
@@ -2227,8 +2144,9 @@ MS_DLL_EXPORT int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image
 
 MS_DLL_EXPORT int msExtentsOverlap(mapObj *map, layerObj *layer);
 
-/* For mappdf */
+/* For mapswf */
 MS_DLL_EXPORT int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); /* maputil.c */
+
 MS_DLL_EXPORT int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode);
 MS_DLL_EXPORT int msValidateContexts(mapObj *map);
 MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
@@ -2272,65 +2190,22 @@ MS_DLL_EXPORT char *msTmpFile(const char *mappath, const char *tmppath, const ch
 MS_DLL_EXPORT void msForceTmpFileBase( const char *new_base );
 
 
-MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
+MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution, colorObj *bg);
 
-MS_DLL_EXPORT int msAlphaBlend (int dst, int src);
-MS_DLL_EXPORT void msAlphaBlend2( 
-    int red_src, int green_src,
-    int blue_src, int alpha_src, 
+MS_DLL_EXPORT void msAlphaBlend( 
+    unsigned char red_src, unsigned char green_src,
+    unsigned char blue_src, unsigned char alpha_src, 
     unsigned char *red_dst, unsigned char *green_dst,
     unsigned char *blue_dst, unsigned char *alpha_dst );
 
 MS_DLL_EXPORT int msCheckParentPointer(void* p, char* objname);
 
 MS_DLL_EXPORT int *msAllocateValidClassGroups(layerObj *lp, int *nclasses);
+
+MS_DLL_EXPORT void msFreeRasterBuffer(rasterBufferObj *b);
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */
 /* ==================================================================== */
-
-
-/* ==================================================================== */
-/*      End of prototypes for functions in mapswf.c                     */
-/* ==================================================================== */
-
-/* ==================================================================== */
-
-
-/* ==================================================================== */
-/*      prototypes for functions in mapsvg.c                            */
-/* ==================================================================== */
-
-MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height, 
-                                         outputFormatObj *format, char *imagepath, 
-                                         char *imageurl, mapObj *map);
-
-MS_DLL_EXPORT void msImageStartLayerSVG(mapObj *map, layerObj *layer, 
-                                          imageObj *image);
-
-MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset, imageObj *image, 
-                                       shapeObj *p, styleObj *style, 
-                                       double scalefactor);
-MS_DLL_EXPORT void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
-                                       imageObj *image);
-MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename);
-MS_DLL_EXPORT int msSaveImagetoFpSVG(imageObj *image, FILE *fp);
-MS_DLL_EXPORT void msFreeImageSVG(imageObj *image);
-
-MS_DLL_EXPORT void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, 
-                                         imageObj *image, 
-                                         pointObj *p, styleObj *style, 
-                                         double scalefactor);
-
-MS_DLL_EXPORT int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string, 
-                                labelObj *label, fontSetObj *fontset, 
-                                double scalefactor);
-MS_DLL_EXPORT int msDrawLabelCacheSVG(imageObj *image, mapObj *map);
-
-MS_DLL_EXPORT int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, 
-                                       imageObj *image);
-MS_DLL_EXPORT void msDrawShadeSymbolSVG(symbolSetObj *symbolset, 
-                                        imageObj *image, shapeObj *p, 
-                                        styleObj *style, double scalefactor);
 
 
 /* ==================================================================== */
@@ -2478,7 +2353,7 @@ MS_DLL_EXPORT int msHexDecode(const char *in, unsigned char *out, int numchars);
 /*      prototypes for functions in mapswf.c                            */
 /* ==================================================================== */
 #ifdef USE_MING_FLASH
-MS_DLL_EXPORT imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
+MS_DLL_EXPORT imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
 MS_DLL_EXPORT void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawLabelCacheSWF(imageObj *image, mapObj *map);
@@ -2499,45 +2374,7 @@ MS_DLL_EXPORT void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *i
 #endif /* USE_MING_FLASH */
 
 /* ==================================================================== */
-/*      prototypes for functions in mappdf.c                            */
-/* ==================================================================== */
-#ifdef USE_PDF
-MS_DLL_EXPORT PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash);
-MS_DLL_EXPORT imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
-MS_DLL_EXPORT void msImageStartLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
-MS_DLL_EXPORT int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawLabelCachePDF(imageObj *image, mapObj *map);
-MS_DLL_EXPORT void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
-MS_DLL_EXPORT int msDrawVectorLayerAsRasterPDF(mapObj *map, layerObj *layer, imageObj*image);
-MS_DLL_EXPORT void msTransformShapePDF(shapeObj *shape, rectObj extent, double cellsize);
-MS_DLL_EXPORT int msSaveImagePDF(imageObj *image, char *filename);
-MS_DLL_EXPORT void msFreeImagePDF(imageObj *image);
-MS_DLL_EXPORT int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
-#ifdef USE_WMS_LYR 
-MS_DLL_EXPORT int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo, 
-                      int numRequests, mapObj *map, layerObj *layer, imageObj *image);
-#endif
-
-#endif /* USE_PDF */
-
-/* ==================================================================== */
-/*      End of prototypes for functions in mappdf.c                     */
-/* ==================================================================== */
-
-
-/* ==================================================================== */
-/*      prototypes for functions in maprgbapng.c                        */
-/* ==================================================================== */
-#ifdef USE_RGBA_PNG
-int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format);
-int msSaveImageRGBAPalette(gdImagePtr img, gdIOCtx *ctx ,outputFormatObj *format);
-#endif /*USE_RGBA_PNG*/
-/* ==================================================================== */
-/*      end of prototypes for functions in maprgbapng.c                 */
+/*      End of prototypes for functions in mapswf.c                     */
 /* ==================================================================== */
 
 /* ==================================================================== */
@@ -2588,44 +2425,29 @@ typedef struct {
     int patternlength;
     double pattern[MS_MAXPATTERNLENGTH];
     
-    /* must not be NULL, must be a valid color */
+    /* must be a valid color if not NULL */
     /* color.alpha must be used if supported by the renderer */
-    colorObj color;
+    colorObj *color;
 
     int linecap; /* MS_CJC_TRIANGLE, MS_CJC_SQUARE, MS_CJC_ROUND, MS_CJC_BUTT */
     int linejoin; /* MS_CJC_BEVEL MS_CJC_ROUND MS_CJC_MITER */
     double linejoinmaxsize;
 } strokeStyleObj;
 
-
-
-/*
- * fillStyleObj
- */
-typedef struct {
-    /* must not be NULL, must be a valid color *
-     * color.alpha must be used if supported by the renderer */
-    colorObj color;
-    
-
-    /* if not null, use the passed tile (which is a pointer to a
-     * renderer specific structure) for tiling the polygon */
-    void *tile;
-
-} fillStyleObj;
+#define INIT_STROKE_STYLE(s) { (s).width=0; (s).patternlength=0; (s).color=NULL; (s).linecap=MS_CJC_ROUND; (s).linejoin=MS_CJC_ROUND; (s).linejoinmaxsize=0;}
 
 
 /*
  * symbolStyleObj
  */
 typedef struct {
-    /* must not be NULL, must be a valid color */
+    /* must be valid colors if not NULL */
     /* color.alpha must be used if supported by the renderer */
-    colorObj color;
-    colorObj backgroundcolor;
+    colorObj *color;
+    colorObj *backgroundcolor;
     
     double outlinewidth;
-    colorObj outlinecolor;
+    colorObj *outlinecolor;
 
     /* scalefactor to be applied on the tile or symbol*/
     double scale;
@@ -2634,48 +2456,41 @@ typedef struct {
      * in radians */
     double rotation;
 
-   /* style object, necessary for vector type renderes to be able
-   to render symbols through other renders such as cairo/agg*/
-      styleObj *style;
+    /* style object, necessary for vector type renderers to be able
+     * to render symbols through other renders such as cairo/agg */
+    styleObj *style;
 } symbolStyleObj;
 
-struct tilecache {
+#define INIT_SYMBOL_STYLE(s) {(s).color=NULL; (s).backgroundcolor=NULL; (s).outlinewidth=0; (s).outlinecolor=NULL; (s).scale=1.0; (s).rotation=0; (s).style=NULL;}
+
+struct tileCacheObj {
     symbolObj *symbol;
-    symbolStyleObj style;
     int width;
     int height;
-
-    void *data;
+    colorObj color, outlinecolor, backgroundcolor;
+    double outlinewidth, rotation,scale;
+    imageObj *image;
     tileCacheObj *next;
 };
+
+
 /*
  * labelStyleObj
  */
 typedef struct {
     /* full path to truetype font file */
     char *font;
-
     double size;
     double rotation;
-
-    colorObj color;
-    
-    /* if outlinewidth is > 0, use the outlinecolor */
+    colorObj *color;
     double outlinewidth;
-    colorObj outlinecolor;
-    
-    /* if shadowsizex or shadowsizey are != 0,
-     * use the shadowcolor */
-    double shadowsizex, shadowsizey;
-    colorObj shadowcolor;
-
+    colorObj *outlinecolor;
 } labelStyleObj;
 
-#ifndef SWIG
-void msFreeRasterBuffer(rasterBufferObj *b);
-#endif /* SWIG */
+#define INIT_LABEL_STYLE(s) {(s).font=NULL; (s).size=0; (s).rotation=0; (s).color=NULL; (s).outlinewidth=0; (s).outlinecolor=NULL;}
 
 #ifndef SWIG
+MS_DLL_EXPORT int msInitializeDummyRenderer(rendererVTableObj *vtable);
 MS_DLL_EXPORT int msInitializeRendererVTable(outputFormatObj *outputformat);
 MS_DLL_EXPORT int msPopulateRendererVTableCairoRaster( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableCairoSVG( rendererVTableObj *renderer );
@@ -2697,85 +2512,112 @@ typedef struct _autobuffer {
 } bufferObj;
 
 
-int msSaveRasterBuffer(rasterBufferObj *data, FILE *stream,
-        outputFormatObj *format);
-int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer,
-        outputFormatObj *format);
+/* in mapimageio.c */
+int msQuantizeRasterBuffer(rasterBufferObj *rb, unsigned int *reqcolors, rgbaPixel *palette, rgbaPixel *forced_palette, int num_forced_palette_entries);
+int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb);
+int msSaveRasterBuffer(rasterBufferObj *data, FILE *stream, outputFormatObj *format);
+int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer, outputFormatObj *format);
+int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb);
+int msLoadGDRasterBufferFromFile(char *path, rasterBufferObj *rb);
+int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format);
+int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format);
 
 void msBufferInit(bufferObj *buffer);
 void msBufferResize(bufferObj *buffer, size_t target_size);
 MS_DLL_EXPORT void msBufferFree(bufferObj *buffer);
 MS_DLL_EXPORT void msBufferAppend(bufferObj *buffer, void *data, size_t length);
 
-struct rendererVTable {
+typedef struct {
+    int charWidth, charHeight;
+} fontMetrics;
+
+struct rendererVTableObj {
 	int supports_transparent_layers;
-    int supports_pixel_buffer;
-	int supports_imagecache;
-    
-    void (*renderLine)(imageObj *img, shapeObj *p, strokeStyleObj *style);
-    void (*renderPolygon)(imageObj *img, shapeObj *p, colorObj *color);
-    void (*renderPolygonTiled)(imageObj *img, shapeObj *p, imageObj *tile);
-    void (*renderLineTiled)(imageObj *img, shapeObj *p, imageObj *tile);
+	int supports_pixel_buffer;
+	int supports_clipping;
+	int supports_bitmap_fonts;
+	int use_imagecache;
+	
+	void *renderer_data;
 
-    void (*renderGlyphs)(imageObj *img, double x, double y,
-            labelStyleObj *style, char *text);
- 
-    void (*renderGlyphsLine)(imageObj *img,labelPathObj *labelpath,
-            labelStyleObj *style, char *text);
+	fontMetrics* bitmapFontMetrics[5];
 
-    void (*renderVectorSymbol)(imageObj *img, double x, double y,
-    		symbolObj *symbol, symbolStyleObj *style);
-    
-    void* (*createVectorSymbolTile)(int width, int height,
-            symbolObj *symbol, symbolStyleObj *style);
+	int (*renderLine)(imageObj *img, shapeObj *p, strokeStyleObj *style);
+	int (*renderPolygon)(imageObj *img, shapeObj *p, colorObj *color);
+	int (*renderPolygonTiled)(imageObj *img, shapeObj *p, imageObj *tile);
+	int (*renderLineTiled)(imageObj *img, shapeObj *p, imageObj *tile);
 
-    void (*renderPixmapSymbol)(imageObj *img, double x, double y,
-        	symbolObj *symbol, symbolStyleObj *style);
-    
-    void* (*createPixmapSymbolTile)(int width, int height,
-            symbolObj *symbol, symbolStyleObj *style);
+	int (*renderBitmapGlyphs)(imageObj *img, double x, double y,
+			labelStyleObj *style, char *text);
 
-    void (*renderEllipseSymbol)(imageObj *image, double x, double y, 
-    		symbolObj *symbol, symbolStyleObj *style);
-    
-    void* (*createEllipseSymbolTile)(int width, int height,
-            symbolObj *symbol, symbolStyleObj *style);
-    
-    void (*renderTruetypeSymbol)(imageObj *img, double x, double y,
-            symbolObj *symbol, symbolStyleObj *style);
+	int (*renderGlyphs)(imageObj *img, double x, double y,
+			labelStyleObj *style, char *text);
 
-    void* (*createTruetypeSymbolTile)(int width, int height,
-            symbolObj *symbol, symbolStyleObj *style);
+	int (*renderVectorSymbol)(imageObj *img, double x, double y,
+			symbolObj *symbol, symbolStyleObj *style);
 
-    void (*renderTile)(imageObj *img, imageObj *tile, double x, double y);
-    
-    
-    void (*getRasterBuffer)(imageObj *img,rasterBufferObj *rb);
+	void* (*createVectorSymbolTile)(int width, int height,
+			symbolObj *symbol, symbolStyleObj *style);
 
-    void (*mergeRasterBuffer)(imageObj *dest, rasterBufferObj *overlay, double opacity, int dstX, int dstY);
-    /* image i/o */
-    imageObj* (*createImage)(int width, int height, outputFormatObj *format, colorObj* bg);
-    int (*saveImage)(imageObj *img, FILE *fp, outputFormatObj *format);
-    unsigned char* (*saveImageBuffer)(imageObj *img, int *size_ptr, outputFormatObj *format);
-    /*...*/
+	int (*renderPixmapSymbol)(imageObj *img, double x, double y,
+			symbolObj *symbol, symbolStyleObj *style);
 
-    /* helper functions */
-    int (*getTruetypeTextBBox)(imageObj *img,char *font, double size, char *string,
-    		rectObj *rect, double **advances);
-    
-  void (*startNewLayer)(imageObj *img, layerObj *layer, double opacity);
-  void (*closeNewLayer)(imageObj *img, layerObj *layer, double opacity);
+	void* (*createPixmapSymbolTile)(int width, int height,
+			symbolObj *symbol, symbolStyleObj *style);
 
-  void (*startShape)(imageObj *img, shapeObj *shape);
-  void (*endShape)(imageObj *img, shapeObj *shape);
- 	
-    void (*transformShape)(shapeObj *shape, rectObj extend, double cellsize);
-    void (*freeImage)(imageObj *image);
-    void (*freeTile)(imageObj *tile);
-    void (*freeSymbol)(symbolObj *symbol);
+	int (*renderEllipseSymbol)(imageObj *image, double x, double y, 
+			symbolObj *symbol, symbolStyleObj *style);
+
+	void* (*createEllipseSymbolTile)(int width, int height,
+			symbolObj *symbol, symbolStyleObj *style);
+
+	int (*renderTruetypeSymbol)(imageObj *img, double x, double y,
+			symbolObj *symbol, symbolStyleObj *style);
+
+	void* (*createTruetypeSymbolTile)(int width, int height,
+			symbolObj *symbol, symbolStyleObj *style);
+
+	int (*renderTile)(imageObj *img, imageObj *tile, double x, double y);
+
+	int (*loadImageFromFile)(char *path, rasterBufferObj *rb);
+
+
+	int (*getRasterBufferHandle)(imageObj *img, rasterBufferObj *rb);
+	int (*getRasterBufferCopy)(imageObj *img, rasterBufferObj *rb);
+	int (*initializeRasterBuffer)(rasterBufferObj *rb, int width, int height, int mode);
+
+	int (*mergeRasterBuffer)(imageObj *dest, rasterBufferObj *overlay, double opacity, int srcX, int srcY, int dstX, int dstY, int width, int height);
+
+
+	/* image i/o */
+	imageObj* (*createImage)(int width, int height, outputFormatObj *format, colorObj* bg);
+	int (*saveImage)(imageObj *img, FILE *fp, outputFormatObj *format);
+	unsigned char* (*saveImageBuffer)(imageObj *img, int *size_ptr, outputFormatObj *format);
+	/*...*/
+
+	/* helper functions */
+	int (*getTruetypeTextBBox)(rendererVTableObj *renderer, char *font, double size, char *string, rectObj *rect, double **advances);
+
+	int (*startLayer)(imageObj *img, mapObj *map, layerObj *layer);
+	int (*endLayer)(imageObj *img, mapObj *map, layerObj *layer);
+
+	int (*startShape)(imageObj *img, shapeObj *shape);
+	int (*endShape)(imageObj *img, shapeObj *shape);
+	int (*setClip)(imageObj *img, rectObj clipRect);
+	int (*resetClip)(imageObj *img);
+
+	int (*transformShape)(shapeObj *shape, rectObj extend, double cellsize, enum MS_SIMPLIFY_MODE simplify);
+	int (*freeImage)(imageObj *image);
+	int (*freeSymbol)(symbolObj *symbol);
+	int (*cleanup)(void *renderer_data);
 } ;
 
 #endif /* SWIG */
+
+#define MS_IMAGE_RENDERER(im) ((im)->format->vtable)
+#define MS_RENDERER_CACHE(renderer) ((renderer)->renderer_data)
+#define MS_IMAGE_RENDERER_CACHE(im) MS_RENDERER_CACHE(MS_IMAGE_RENDERER((im)))
+#define MS_MAP_RENDERER(map) ((map)->outputformat->vtable)
 
 #ifdef __cplusplus
 }

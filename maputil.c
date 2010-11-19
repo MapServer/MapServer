@@ -664,12 +664,27 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 
     if (img)
     {
-        if (MS_RENDERER_PLUGIN(img->format)) {
+#ifdef USE_GDAL
+        if( MS_DRIVER_GDAL(img->format) )
+        {
+           if (map != NULL && filename != NULL )
+             nReturnVal = msSaveImageGDAL(map, img,
+                                          msBuildPath(szPath, map->mappath, 
+                                                      filename));
+           else
+             nReturnVal = msSaveImageGDAL(map, img, filename);
+        } else
+#endif
+       if (MS_RENDERER_PLUGIN(img->format)) {
             rendererVTableObj *renderer = img->format->vtable;
             FILE *stream;
-            if(filename) 
-                stream = fopen(msBuildPath(szPath, map->mappath, filename),"wb");
-            else {
+            int ret;
+            if(filename) {
+               if(map)
+                  stream = fopen(msBuildPath(szPath, map->mappath, filename),"wb");
+               else
+                  stream = fopen(filename,"wb");
+            } else {
                 if ( msIO_needBinaryStdout() == MS_FAILURE )
                     return MS_FAILURE;
                 stream = stdout;
@@ -678,50 +693,19 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
                 return MS_FAILURE;
             if(renderer->supports_pixel_buffer) {
                 rasterBufferObj data;
-                renderer->getRasterBuffer(img,&data);
+                if(renderer->getRasterBufferHandle(img,&data) != MS_SUCCESS)
+                   return MS_FAILURE;
 
-                msSaveRasterBuffer(&data,stream,img->format );
+                ret = msSaveRasterBuffer(&data,stream,img->format );
             } else {
-                renderer->saveImage(img, stream, img->format);
+                ret = renderer->saveImage(img, stream, img->format);
             }
             fclose(stream);
-            return MS_SUCCESS;
+            return ret;
         }
-    	else if( MS_DRIVER_GD(img->format) )
-        {
-            if(map != NULL && filename != NULL )
-                nReturnVal = msSaveImageGD(img, 
-                                           msBuildPath(szPath, map->mappath, 
-                                                       filename), 
-                                           img->format );
-            else
-                nReturnVal = msSaveImageGD(img, filename, img->format);
-        }
-#ifdef USE_AGG
-        else if( MS_DRIVER_AGG(img->format) )
-        {
-            if(map != NULL && filename != NULL )
-                nReturnVal = msSaveImageAGG(img, 
-                                           msBuildPath(szPath, map->mappath, 
-                                                       filename), 
-                                           img->format );
-            else
-                nReturnVal = msSaveImageAGG(img, filename, img->format);
-        }
-#endif
         else if( MS_DRIVER_IMAGEMAP(img->format) )
             nReturnVal = msSaveImageIM(img, filename, img->format);
-#ifdef USE_GDAL
-        else if( MS_DRIVER_GDAL(img->format) )
-        {
-           if (map != NULL && filename != NULL )
-             nReturnVal = msSaveImageGDAL(map, img,
-                                          msBuildPath(szPath, map->mappath, 
-                                                      filename));
-           else
-             nReturnVal = msSaveImageGDAL(map, img, filename);
-        }
-#endif
+
 #ifdef USE_MING_FLASH
         else if(MS_DRIVER_SWF(img->format) )
         {
@@ -734,26 +718,6 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         }
 
 #endif
-#ifdef USE_PDF
-        else if( MS_RENDERER_PDF(img->format) )
-        {
-            if (map != NULL && filename != NULL )
-              nReturnVal = msSaveImagePDF(img, 
-                                          msBuildPath(szPath, map->mappath, 
-                                                      filename));
-            else
-              nReturnVal = msSaveImagePDF(img, filename);
-        }
-#endif
-        else if(MS_DRIVER_SVG(img->format) )
-        {
-            if (map != NULL && filename != NULL )
-              nReturnVal = msSaveImageSVG(img, 
-                                          msBuildPath(szPath, map->mappath, 
-                                                      filename));
-            else
-              nReturnVal = msSaveImageSVG(img, filename);
-        }
 
         else
             msSetError(MS_MISCERR, "Unknown image type", 
@@ -789,7 +753,7 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
         if(renderer->supports_pixel_buffer) {
             bufferObj buffer;
             msBufferInit(&buffer);
-            renderer->getRasterBuffer(image,&data);
+            renderer->getRasterBufferHandle(image,&data);
             msSaveRasterBufferToBuffer(&data,&buffer,format);
             *size_ptr = buffer.size;
             return buffer.data;
@@ -803,17 +767,6 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
             return NULL;
         }
     }
-    else if( MS_DRIVER_GD(image->format) )
-    {
-        return msSaveImageBufferGD(image, size_ptr, format);
-    }
-#ifdef USE_AGG
-    else if( MS_DRIVER_AGG(image->format) )
-    {
-        return msSaveImageBufferAGG(image, size_ptr, format);
-    }
-#endif   
-	
 	msSetError(MS_MISCERR, "Unsupported image type", "msSaveImage()");
     return NULL;
 }
@@ -825,27 +778,17 @@ void msFreeImage(imageObj *image)
 {
     if (image)
     {
-        if(MS_RENDERER_PLUGIN(image->format)) {
-            rendererVTableObj *renderer = image->format->vtable;
-            if(renderer->supports_imagecache) {
-                tileCacheObj *next,*cur = image->tilecache;
-                while(cur) {
-                    renderer->freeTile(cur->data);
-                    next = cur->next;
-                    free(cur);
-                    cur = next;
-                }
-                image->ntiles = 0;
-            }
-        	renderer->freeImage(image);
-        }
-        else if( MS_RENDERER_GD(image->format) ) {
-            if( image->img.gd != NULL )
-                msFreeImageGD(image);
-#ifdef USE_AGG
-        } else if( MS_RENDERER_AGG(image->format) ) {
-            msFreeImageAGG(image);
-#endif
+       if(MS_RENDERER_PLUGIN(image->format)) {
+          rendererVTableObj *renderer = image->format->vtable;
+          tileCacheObj *next,*cur = image->tilecache;
+          while(cur) {
+             msFreeImage(cur->image);
+             next = cur->next;
+             free(cur);
+             cur = next;
+          }
+          image->ntiles = 0;
+          renderer->freeImage(image);
         } else if( MS_RENDERER_IMAGEMAP(image->format) )
             msFreeImageIM(image);
         else if( MS_RENDERER_RAWDATA(image->format) )
@@ -854,12 +797,6 @@ void msFreeImage(imageObj *image)
         else if( MS_RENDERER_SWF(image->format) )
             msFreeImageSWF(image);
 #endif
-#ifdef USE_PDF
-        else if( MS_RENDERER_PDF(image->format) )
-            msFreeImagePDF(image);
-#endif
-        else if( MS_RENDERER_SVG(image->format) )
-            msFreeImageSVG(image);
         else
             msSetError(MS_MISCERR, "Unknown image type", 
                        "msFreeImage()"); 
@@ -1390,17 +1327,13 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
  *  Generic function to Initalize an image object.
  */
 imageObj *msImageCreate(int width, int height, outputFormatObj *format, 
-                        char *imagepath, char *imageurl, mapObj *map)
+                        char *imagepath, char *imageurl, double resolution,
+                        double defresolution, colorObj *bg)
 {
     imageObj *image = NULL;
-    if( MS_RENDERER_GD(format) )
-    {
-        image = msImageCreateGD(width, height, format,
-                                imagepath, imageurl, map->resolution, map->defresolution);
-        if( image != NULL && map) msImageInitGD( image, &map->imagecolor );
-    }
-    else if(MS_RENDERER_PLUGIN(format)) {
-    	image = format->vtable->createImage(width,height,format,&map->imagecolor);
+    if(MS_RENDERER_PLUGIN(format)) {
+        
+    	image = format->vtable->createImage(width,height,format,bg);
     	image->format = format;
         format->refcount++;
 
@@ -1410,8 +1343,8 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         image->imageurl = NULL;
         image->tilecache = NULL;
         image->ntiles = 0;
-        image->resolution = map->resolution;
-        image->resolutionfactor = map->resolution/map->defresolution;
+        image->resolution = resolution;
+        image->resolutionfactor = resolution/defresolution;
 
         if (imagepath)
             image->imagepath = strdup(imagepath);
@@ -1420,14 +1353,6 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 
         return image;
     }
-#ifdef USE_AGG
-    else if( MS_RENDERER_AGG(format) )
-    {
-        image = msImageCreateAGG(width, height, format,
-                                 imagepath, imageurl, map->resolution, map->defresolution);
-        if( image != NULL && map) msImageInitAGG( image, &map->imagecolor );
-    }
-#endif
     else if( MS_RENDERER_RAWDATA(format) )
     {
         if( format->imagemode != MS_IMAGEMODE_INT16
@@ -1470,8 +1395,8 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         image->height = height;
         image->imagepath = NULL;
         image->imageurl = NULL;
-        image->resolution = map->resolution;
-        image->resolutionfactor = map->resolution/map->defresolution;
+        image->resolution = resolution;
+        image->resolutionfactor = resolution/defresolution;
 
         if (imagepath)
             image->imagepath = strdup(imagepath);
@@ -1512,21 +1437,14 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     else if( MS_RENDERER_IMAGEMAP(format) )
     {
         image = msImageCreateIM(width, height, format,
-                                imagepath, imageurl, map->resolution, map->defresolution);
+                                imagepath, imageurl, resolution, defresolution);
         if( image != NULL ) msImageInitIM( image );
     }
 #ifdef USE_MING_FLASH
-    else if( MS_RENDERER_SWF(format) && map )
+    else if( MS_RENDERER_SWF(format))
     {
         image = msImageCreateSWF(width, height, format,
-                                 imagepath, imageurl, map);
-    }
-#endif
-#ifdef USE_PDF
-    else if( MS_RENDERER_PDF(format) && map)
-    {
-        image = msImageCreatePDF(width, height, format,
-                                 imagepath, imageurl, map);
+                                 imagepath, imageurl, resolution, defresolution);
     }
 #endif
     
@@ -1562,60 +1480,7 @@ void  msTransformPoint(pointObj *point, rectObj *extent, double cellsize,
 }
 
 
-/**
- * Generic function to transorm the shape coordinates to output coordinates
- */
-void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize, 
-                       imageObj *image)   
-{
-	if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
-		image->format->vtable->transformShape(shape, extent, cellsize);
 
-		return;
-	}
-#ifdef USE_MING_FLASH
-    if (image != NULL && MS_RENDERER_SWF(image->format) )
-    {
-        if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
-                       "FALSE") == 0)
-          msTransformShapeToPixel(shape, extent, cellsize);
-        else
-          msTransformShapeSWF(shape, extent, cellsize);
-          
-
-        return;
-    }
-#endif
-#ifdef USE_PDF
-    if (image != NULL && MS_RENDERER_PDF(image->format) )
-    {
-        if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
-                       "FALSE") == 0)
-          msTransformShapeToPixel(shape, extent, cellsize);
-        else
-          msTransformShapePDF(shape, extent, cellsize);
-
-        return;
-    }
-#endif
-    if (image != NULL && MS_RENDERER_SVG(image->format) )
-    {
-        
-        msTransformShapeSVG(shape, extent, cellsize, image);
-
-        return;
-    }
-#ifdef USE_AGG
-    if (image != NULL && MS_RENDERER_AGG(image->format) )
-    {
-        msTransformShapeAGG(shape, extent, cellsize);
-
-        return;
-    }
-#endif
-
-    msTransformShapeToPixel(shape, extent, cellsize);
-}
 
 /*
 ** Helper functions supplied as part of bug #2868 solution. Consider moving these to
@@ -1849,6 +1714,7 @@ void msCleanup()
 #ifdef USE_GEOS
   msGEOSCleanup();
 #endif
+  
   msIO_Cleanup();
 
   msResetErrorList();
@@ -1857,121 +1723,65 @@ void msCleanup()
   msDebugCleanup();
 }
 
-/************************************************************************/
-/*                            msAlphaBlend()                            */
-/*                                                                      */
-/*      MapServer variation on gdAlphaBlend() that, I think, does a     */
-/*      better job of merging a non-opaque color into an opaque         */
-/*      color.  In particular from gd 2.0.12 on the GD                  */
-/*      gdAlphaBlend() will give a transparent "dst" color influence    */
-/*      in the result if the overlay is non-opaque.                     */
-/*                                                                      */
-/*      Note that "src" is layered over "dst".                          */
-/************************************************************************/
 
-int msAlphaBlend (int dst, int src)
-{
-    int src_alpha = gdTrueColorGetAlpha(src);
-    int dst_alpha, alpha, red, green, blue;
-    int src_weight, dst_weight, tot_weight;
-
-/* -------------------------------------------------------------------- */
-/*      Simple cases we want to handle fast.                            */
-/* -------------------------------------------------------------------- */
-    if( src_alpha == gdAlphaOpaque )
-        return src;
-
-    dst_alpha = gdTrueColorGetAlpha(dst);
-    if( src_alpha == gdAlphaTransparent )
-        return dst;
-    if( dst_alpha == gdAlphaTransparent )
-        return src;
-
-/* -------------------------------------------------------------------- */
-/*      What will the source and destination alphas be?  Note that      */
-/*      the destination weighting is substantially reduced as the       */
-/*      overlay becomes quite opaque.                                   */
-/* -------------------------------------------------------------------- */
-    src_weight = gdAlphaTransparent - src_alpha;
-    dst_weight = (gdAlphaTransparent - dst_alpha) * src_alpha / gdAlphaMax;
-    tot_weight = src_weight + dst_weight;
-    
-/* -------------------------------------------------------------------- */
-/*      What red, green and blue result values will we use?             */
-/* -------------------------------------------------------------------- */
-    alpha = src_alpha * dst_alpha / gdAlphaMax;
-
-    red = (gdTrueColorGetRed(src) * src_weight
-           + gdTrueColorGetRed(dst) * dst_weight) / tot_weight;
-    green = (gdTrueColorGetGreen(src) * src_weight
-           + gdTrueColorGetGreen(dst) * dst_weight) / tot_weight;
-    blue = (gdTrueColorGetBlue(src) * src_weight
-           + gdTrueColorGetBlue(dst) * dst_weight) / tot_weight;
-
-/* -------------------------------------------------------------------- */
-/*      Return merged result.                                           */
-/* -------------------------------------------------------------------- */
-    return ((alpha << 24) + (red << 16) + (green << 8) + blue);
-}
 
 /************************************************************************/
-/*                           msAlphaBlend2()                            */
+/*                           msAlphaBlend()                             */
 /*                                                                      */
 /*      Function to overlay/blend an RGBA value into an existing        */
-/*      RGBA value.  Primarily intended for use with rasterBufferObj    */
+/*      RGBA value using the Porter-Duff "over" operator.               */
+/*      Primarily intended for use with rasterBufferObj                 */
 /*      raster rendering.  The "src" is the overlay value, and "dst"    */
-/*      is the existing value being overlaid.                           */
+/*      is the existing value being overlaid. dst is expected to be     */
+/*      premultiplied.                                                  */
 /*                                                                      */
 /*      NOTE: alpha_dst may be NULL.                                    */
 /************************************************************************/
 
-void msAlphaBlend2( int red_src, int green_src,
-                    int blue_src, int alpha_src, 
+void msAlphaBlend( unsigned char red_src, unsigned char green_src,
+                    unsigned char blue_src, unsigned char alpha_src, 
                     unsigned char *red_dst, unsigned char *green_dst,
                     unsigned char *blue_dst, unsigned char *alpha_dst )
 {
-    int src_weight, dst_weight, tot_weight;
-
+    double alpha , onealpha, dstalpha;
 /* -------------------------------------------------------------------- */
 /*      Simple cases we want to handle fast.                            */
 /* -------------------------------------------------------------------- */
-    if( alpha_src < 2 )
+    if( alpha_src == 0 )
         return;
     
-    if( alpha_src > 253 || (alpha_dst && *alpha_dst < 2) )
+    if( alpha_src == 255 )
     {
         *red_dst = red_src;
         *green_dst = green_src;
         *blue_dst = blue_src;
         if( alpha_dst )
-            *alpha_dst = alpha_src;
+            *alpha_dst = 255;
         return;
     }
-
-/* -------------------------------------------------------------------- */
-/*      What will the source and destination alphas be?  Note that      */
-/*      the destination weighting is substantially reduced as the       */
-/*      overlay becomes quite opaque.                                   */
-/* -------------------------------------------------------------------- */
-    src_weight = alpha_src;
-    if( alpha_dst )
-        dst_weight = *alpha_dst * (255-alpha_src) / 255;
-    else
-        dst_weight = 255 - alpha_src;
-    tot_weight = src_weight + dst_weight;
+    alpha = alpha_src/255.0;
+    if( alpha_dst && *alpha_dst == 0) {
+       *red_dst = red_src * alpha;
+       *green_dst = green_src *alpha;
+       *blue_dst = blue_src *alpha;
+       *alpha_dst = alpha_src;
+       return;
+    }
+    onealpha = 1.0-alpha;
+    if(!alpha_dst || *alpha_dst == 255) {
+       *red_dst = red_src * alpha + onealpha * *red_dst;
+       *green_dst = green_src * alpha + onealpha * *green_dst;
+       *blue_dst = blue_src * alpha + onealpha * *blue_dst;
+    } else {
+       dstalpha = alpha + *alpha_dst*(onealpha/255.0);
+       *red_dst = (red_src * alpha + onealpha * *red_dst)*dstalpha;
+       *green_dst = (green_src * alpha + onealpha * *green_dst)*dstalpha;
+       *blue_dst = (blue_src * alpha + onealpha * *blue_dst)*dstalpha;
+       *alpha_dst = dstalpha * 255;
+    }
     
-/* -------------------------------------------------------------------- */
-/*      What red, green and blue result values will we use?             */
-/* -------------------------------------------------------------------- */
-    if( alpha_dst != NULL )
-        *alpha_dst = tot_weight;
-
-    *red_dst   = ((dst_weight * *red_dst  ) + (src_weight * red_src  )) 
-        / tot_weight;
-    *green_dst = ((dst_weight * *green_dst) + (src_weight * green_src)) 
-        / tot_weight;
-    *blue_dst  = ((dst_weight * *blue_dst ) + (src_weight * blue_src )) 
-        / tot_weight;
+    
+    return;
 }
 
 /*
@@ -2027,7 +1837,22 @@ void msBufferFree(bufferObj *buffer) {
 
 
 void msFreeRasterBuffer(rasterBufferObj *b) {
-    msFree(b->pixelbuffer);
+    switch(b->type) {
+    case MS_BUFFER_BYTE_RGBA:
+		msFree(b->data.rgba.pixels);
+		b->data.rgba.pixels = NULL;
+		break;
+    case MS_BUFFER_BYTE_PALETTE:
+    	msFree(b->data.palette.pixels);
+    	msFree(b->data.palette.palette);
+    	b->data.palette.pixels = NULL;
+    	b->data.palette.palette = NULL;
+    	break;
+    case MS_BUFFER_GD:
+    	gdImageDestroy(b->data.gd_img);
+        b->data.gd_img = NULL;
+        break;
+    }
 }
 
 /*
@@ -2088,3 +1913,4 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
 #endif
 
 }
+

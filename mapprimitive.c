@@ -820,10 +820,53 @@ void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer)
   return;
 }
 
+/**
+ * Generic function to transorm the shape coordinates to output coordinates
+ */
+void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize, 
+                       imageObj *image, enum MS_SIMPLIFY_MODE simplify_mode)   
+{
+	if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
+		image->format->vtable->transformShape(shape, extent, cellsize, simplify_mode);
+
+		return;
+	}
+#ifdef USE_MING_FLASH
+    if (image != NULL && MS_RENDERER_SWF(image->format) )
+    {
+        if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
+                       "FALSE") == 0)
+          msTransformShapeToPixel(shape, extent, cellsize, simplify_mode);
+        else
+          msTransformShapeSWF(shape, extent, cellsize);
+          
+
+        return;
+    }
+#endif
+    msTransformShapeToPixel(shape, extent, cellsize, simplify_mode);
+}
+
+int msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize, enum MS_SIMPLIFY_MODE simplifyMode)
+{
+	if(shape->numlines == 0) return;
+	switch(simplifyMode) {
+	case MS_SIMPLIFY_ROUND:
+		return msTransformShapeToPixelIntegerPrecision(shape,extent,cellsize);
+		break;
+	case MS_SIMPLIFY_NAIVE:
+	case MS_SIMPLIFY_NONE:
+	case MS_SIMPLIFY_DEFAULT:
+	default:
+		return msTransformShapeToPixelDoublePrecision(shape,extent,cellsize);
+	}
+
+}
+
 /*
 ** converts from map coordinates to image coordinates
 */
-void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
+int msTransformShapeToPixelIntegerPrecision(shapeObj *shape, rectObj extent, double cellsize)
 {
   int i,j,k; /* loop counters */
   double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
@@ -851,6 +894,103 @@ void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
     }
   }
 }
+
+int msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, double cellsize)
+{
+    int i,j,k,beforelast; /* loop counters */
+    double dx,dy;
+    double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
+    pointObj *point;
+    if(shape->numlines == 0) return; /* nothing to transform */
+
+    if(shape->type == MS_SHAPE_LINE) {
+        /*
+         * loop through the shape's lines, and do naive simplification
+         * to discard the points that are too close to one another.
+         * currently the threshold is to discard points if they fall
+         * less than a pixel away from their predecessor.
+         * the simplified line is guaranteed to contain at 
+         * least its first and last point
+         */
+        for(i=0; i<shape->numlines; i++) { /* for each part */
+            if(shape->line[i].numpoints<2) {
+                shape->line[i].numpoints=0;
+                continue; /*skip degenerate lines*/
+            }
+            point=shape->line[i].point;
+            /*always keep first point*/
+            point[0].x = MS_MAP2IMAGE_X_IC_DBL(point[0].x, extent.minx, inv_cs);
+            point[0].y = MS_MAP2IMAGE_Y_IC_DBL(point[0].y, extent.maxy, inv_cs);
+            beforelast=shape->line[i].numpoints-1;
+            for(j=1,k=1; j < beforelast; j++ ) { /*loop from second point to first-before-last point*/
+                point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+                point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
+                dx=(point[k].x-point[k-1].x);
+                dy=(point[k].y-point[k-1].y);
+                if(dx*dx+dy*dy>1)
+                    k++;
+            }
+            /*try to keep last point*/
+            point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+            point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
+            /*discard last point if equal to the one before it*/
+            if(point[k].x!=point[k-1].x || point[k].y!=point[k-1].y) {
+                shape->line[i].numpoints=k+1;
+            } else {
+                shape->line[i].numpoints=k;
+            }
+            //skip degenerate line once more
+            if(shape->line[i].numpoints<2)
+            	shape->line[i].numpoints=0;
+        }
+    }
+    else if(shape->type == MS_SHAPE_POLYGON) {
+        /*
+         * loop through the shape's lines, and do naive simplification
+         * to discard the points that are too close to one another.
+         * currently the threshold is to discard points if they fall
+         * less than a pixel away from their predecessor.
+         * the simplified polygon is guaranteed to contain at 
+         * least its first, second and last point
+         */
+        for(i=0; i<shape->numlines; i++) { /* for each part */
+            if(shape->line[i].numpoints<3) {
+                shape->line[i].numpoints=0;
+                continue; /*skip degenerate lines*/
+            }
+            point=shape->line[i].point;
+            /*always keep first and second point*/
+            point[0].x = MS_MAP2IMAGE_X_IC_DBL(point[0].x, extent.minx, inv_cs);
+            point[0].y = MS_MAP2IMAGE_Y_IC_DBL(point[0].y, extent.maxy, inv_cs);
+            point[1].x = MS_MAP2IMAGE_X_IC_DBL(point[1].x, extent.minx, inv_cs);
+            point[1].y = MS_MAP2IMAGE_Y_IC_DBL(point[1].y, extent.maxy, inv_cs);         
+            beforelast=shape->line[i].numpoints-1;
+            for(j=2,k=2; j < beforelast; j++ ) { /*loop from second point to first-before-last point*/
+                point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+                point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
+                dx=(point[k].x-point[k-1].x);
+                dy=(point[k].y-point[k-1].y);
+                if(dx*dx+dy*dy>1)
+                    k++;
+            }
+            /*always keep last point*/
+            point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+            point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
+            shape->line[i].numpoints=k+1;
+        }
+    }
+    else { /* only for untyped shapes, as point layers don't go through this function */
+        for(i=0; i<shape->numlines; i++) {
+            point=shape->line[i].point;
+            for(j=0;j<shape->line[i].numpoints;j++) {
+                point[j].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
+                point[j].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
+            }
+        }
+    }
+}
+
+
 
 /*
 ** Converts from map coordinates to image coordinates
@@ -1514,7 +1654,7 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
 }
 
 /* Calculate the labelpath for each line if repeatdistance is enabled, else the labelpath of the longest line segment */
-labelPathObj** msPolylineLabelPath(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *numpaths,
+labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *numpaths,
                                    int** regular_lines, int* num_regular_lines)
 {
   double max_line_length, total_length;
@@ -1537,11 +1677,11 @@ labelPathObj** msPolylineLabelPath(imageObj *img, shapeObj *p, int min_length, f
  
   if (label->repeatdistance > 0)
     for(i=0; i<p->numlines; i++) {
-      msPolylineLabelPathLineString(img, p,min_length, fontset, string, label, scalefactor, i, segment_lengths, line_lengths[i], total_length, 
+      msPolylineLabelPathLineString(map,img, p,min_length, fontset, string, label, scalefactor, i, segment_lengths, line_lengths[i], total_length, 
                                     &labelpaths_index, &labelpaths_size, &labelpaths, regular_lines, &regular_lines_index, &regular_lines_size);
     }
   else
-    msPolylineLabelPathLineString(img, p,min_length, fontset, string, label, scalefactor, max_line_index, segment_lengths, line_lengths[max_line_index], total_length, 
+    msPolylineLabelPathLineString(map, img, p,min_length, fontset, string, label, scalefactor, max_line_index, segment_lengths, line_lengths[max_line_index], total_length, 
                                   &labelpaths_index, &labelpaths_size, &labelpaths, regular_lines, &regular_lines_index, &regular_lines_size);
 
   /* freeing memory: allocated by msPolylineComputeLineSegments */
@@ -1566,7 +1706,7 @@ labelPathObj** msPolylineLabelPath(imageObj *img, shapeObj *p, int min_length, f
  * are allocated in this function.  The polyline must be converted to image 
  * coordinates before calling this function.
  */
-void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int line_index, 
+void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int line_index, 
                                    double** segment_lengths, double line_length, double total_length, int* labelpaths_index, int* labelpaths_size, labelPathObj*** labelpaths, 
                                    int** regular_lines, int *regular_lines_index, int* regular_lines_size)
 {
@@ -1594,7 +1734,7 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
   int kernel_size = 5;
   
   double letterspacing = 1.25;
-  double maxoverlapangle = 0;;
+  double maxoverlapangle = 0.4 * MS_PI;
 
   offsets = NULL;
 
@@ -1625,14 +1765,16 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
   if(p->line[i].numpoints == 2) /* use the regular angled text algorithm */
     goto ANGLEFOLLOW_FAILURE;
   
-  /* determine the total length of the text */
-  if (msGetLabelSize(img,string, label, &bbox, fontset, scalefactor, MS_FALSE, &offsets) == -1) {
-    goto FAILURE;
-  }
-
   size = label->size*scalefactor;
   size = MS_MAX(size, label->minsize*img->resolutionfactor);
   size = MS_MIN(size, label->maxsize*img->resolutionfactor);
+  
+  /* determine the total length of the text */
+  if (msGetLabelSize(map,label,string,size,&bbox,&offsets) != MS_SUCCESS) {
+    goto FAILURE;
+  }
+
+  
   scalefactor = size / label->size;
 
   text_length = letterspacing * (bbox.maxx - bbox.minx);
@@ -1668,8 +1810,9 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
     label_repeat = 1;
     center_label_position = (line_length - text_length) / 2.0;
   }
-
-  maxoverlapangle = label->maxoverlapangle/(180/MS_PI); // radian
+  
+  if(label->maxoverlapangle)
+     maxoverlapangle = label->maxoverlapangle/(180/MS_PI); // radian
 
   for (l=0; l < label_repeat; l++)
   {
@@ -1858,10 +2001,10 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
 
             theta = -atan2(dy,dx);
 
-            /* If the difference between subsequent angles is > 80% of 180deg
-               bail because the line likely overlaps itself. */
-   
-            if ( k > 2 && fabs(theta - labelpath->angles[k-2]) > 0.4 * MS_PI ) {
+            /* If the difference between the last char angle and the current one 
+              is greater than the MAXOVERLAPANGLE value (set at 80% of 180deg by default)
+              , bail the label */
+            if ( k > 2 && fabs(theta - labelpath->angles[k-2]) > maxoverlapangle ) {
                 goto LABEL_FAILURE;
             }
       
@@ -1869,13 +2012,6 @@ void msPolylineLabelPathLineString(imageObj *img, shapeObj *p, int min_length, f
             
             labelpath->angles[k-1] = theta;
 
-            /* If the difference between the last char angle and the current one 
-               is greater than the MAXOVERLAPANGLE value, bail the label */
-            if ( (maxoverlapangle != 0) && (k>1) && 
-                 (fabs(labelpath->angles[k-1]-labelpath->angles[k-2]) > fabs(maxoverlapangle)) )
-            {
-                goto LABEL_FAILURE;
-            }
   
             /* Move the previous point so that when the character is rotated and
                placed it is centred on the line */

@@ -166,23 +166,24 @@ def fromstring(data, mappath=None):
      * omit width and height.  Work done as part of Bugzilla issue 550. */
 
     imageObj(PyObject *arg1=Py_None, PyObject *arg2=Py_None, 
-             PyObject *input_format=Py_None)
+             PyObject *input_format=Py_None, PyObject *input_resolution=Py_None, PyObject *input_defresolution=Py_None)
     {
         imageObj *image=NULL;
         outputFormatObj *format=NULL;
         int width;
         int height;
+        double resolution, defresolution;
         PyObject *pybytes;
+        rendererVTableObj *renderer = NULL;
+        rasterBufferObj *rb = NULL;
       
         unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
         unsigned char JPEGsig[3] = {255, 216, 255};
 
-        if (PyInt_Check(arg1) && PyInt_Check(arg2)) 
+        resolution = defresolution = MS_DEFAULT_RESOLUTION;
+
+        if ((PyInt_Check(arg1) && PyInt_Check(arg2)) || PyString_Check(arg1))
         {
-            /* Create from width, height, format/driver */
-            width = (int) PyInt_AsLong(arg1);
-            height = (int) PyInt_AsLong(arg2);
-            
             if (input_format == Py_None) {
                 format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
                 if (format == NULL)
@@ -191,18 +192,21 @@ def fromstring(data, mappath=None):
                     format = msCreateDefaultOutputFormat(NULL, "GD/JPEG");
                 if (format == NULL)
                     format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
+
+            if (format)
+                msInitializeRendererVTable(format);
             }
             else if (PyString_Check(input_format)) {
                 format = msCreateDefaultOutputFormat(NULL, 
-                                PyString_AsString(input_format));
+                                                     PyString_AsString(input_format));
             }
             else {
                 if ((SWIG_ConvertPtr(input_format, (void **) &format,
-                     SWIGTYPE_p_outputFormatObj,
-                     SWIG_POINTER_EXCEPTION | 0 )) == -1) 
+                                     SWIGTYPE_p_outputFormatObj,
+                                     SWIG_POINTER_EXCEPTION | 0 )) == -1) 
                 {
                     msSetError(MS_IMGERR, "Can't convert format pointer",
-                                          "imageObj()");
+                               "imageObj()");
                     return NULL;
                 }
             }
@@ -212,15 +216,45 @@ def fromstring(data, mappath=None):
                            "imageObj()");
                 return NULL;
             }
+        }
 
-            image = msImageCreate(width, height, format, NULL, NULL, NULL);
+        if (PyFloat_Check(input_resolution))
+            resolution = PyFloat_AsDouble(input_resolution);
+        if (PyFloat_Check(input_defresolution))
+            defresolution = PyFloat_AsDouble(input_defresolution);
+
+        if (PyInt_Check(arg1) && PyInt_Check(arg2)) 
+        {
+            /* Create from width, height, format/driver */
+            width = (int) PyInt_AsLong(arg1);
+            height = (int) PyInt_AsLong(arg2);
+
+            image = msImageCreate(width, height, format, NULL, NULL, resolution, defresolution, NULL);
             return image;
         }
         
         /* Is arg1 a filename? */
         else if (PyString_Check(arg1)) 
         {
-            return (imageObj *) msImageLoadGD((char *) PyString_AsString(arg1));
+            renderer = format->vtable;
+            rb = (rasterBufferObj*)calloc(1,sizeof(rasterBufferObj));
+
+            if (!rb) {
+                msSetError(MS_MEMERR, NULL, "imageObj()");
+                return NULL;
+            }
+
+            if ( (renderer->loadImageFromFile(PyString_AsString(arg1), rb)) == MS_FAILURE)
+                return NULL;
+
+            image = msImageCreate(rb->width, rb->height, format, NULL, NULL, 
+                                  resolution, defresolution, NULL);
+            renderer->mergeRasterBuffer(image, rb, 1.0, 0, 0, 0, 0, rb->width, rb->height);
+
+            msFreeRasterBuffer(rb);
+            free(rb);
+
+            return image;
         }
         
         /* Is a file-like object */
@@ -298,47 +332,32 @@ def fromstring(data, mappath=None):
     ====================================================================== */
     int write( PyObject *file=Py_None )
     {
-        FILE *stream;
-        gdIOCtx *ctx;
         unsigned char *imgbuffer=NULL;
         int imgsize;
         PyObject *noerr;
         int retval=MS_FAILURE;
-       
+        rendererVTableObj *renderer = NULL;
+
         /* Return immediately if image driver is not GD */
-        if ( !(MS_DRIVER_GD(self->format) || MS_DRIVER_AGG(self->format)) )
+        if ( !MS_RENDERER_PLUGIN(self->format) )
         {
             msSetError(MS_IMGERR, "Writing of %s format not implemented",
                        "imageObj::write", self->format->driver);
             return MS_FAILURE;
         }
- 
+
         if (file == Py_None) /* write to stdout */
-        {
-            ctx = msNewGDFileCtx(stdout);
-            retval = msSaveImageGDCtx(self, ctx, self->format);
-            ctx->gd_free(ctx);
-        }
+            retval = msSaveImage(NULL, self, NULL);
+
         else if (PyFile_Check(file)) /* a Python (C) file */
         {
-            stream = PyFile_AsFile(file);
-            ctx = msNewGDFileCtx(stream);
-            retval = msSaveImageGDCtx(self, ctx, self->format);
-            ctx->gd_free(ctx);
+            renderer = self->format->vtable;
+            retval = renderer->saveImage(self, PyFile_AsFile(file), self->format);
         }
         else /* presume a Python file-like object */
         {
-            if( MS_DRIVER_GD(self->format) )
-                imgbuffer = msSaveImageBufferGD(self, &imgsize,
-                                                self->format);
-#ifdef USE_AGG
-            else if( MS_DRIVER_AGG(self->format) )
-            {
-                imgbuffer = msSaveImageBuffer(   self, &imgsize,
-                                                    self->format);
-            }
-#endif  
-
+            imgbuffer = msSaveImageBuffer(self, &imgsize,
+                                          self->format);
             if (imgsize == 0)
             {
                 msSetError(MS_IMGERR, "failed to get image buffer", "write()");
@@ -347,7 +366,7 @@ def fromstring(data, mappath=None):
                 
             noerr = PyObject_CallMethod(file, "write", "s#", imgbuffer,
                                         imgsize);
-            gdFree(imgbuffer);
+            free(imgbuffer);
             if (noerr == NULL)
                 return MS_FAILURE;
             else
@@ -364,14 +383,14 @@ def fromstring(data, mappath=None):
         unsigned char *imgbytes;
         PyObject *imgstring; 
 
-        imgbytes = msSaveImageBufferGD(self, &size, self->format);
+        imgbytes = msSaveImageBuffer(self, &size, self->format);
         if (size == 0)
         {
             msSetError(MS_IMGERR, "failed to get image buffer", "saveToString()");
             return NULL;
         }
         imgstring = PyString_FromStringAndSize((const char*) imgbytes, size); 
-        gdFree(imgbytes);
+        free(imgbytes);
         return imgstring;
     }
 

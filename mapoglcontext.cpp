@@ -20,6 +20,7 @@ ms_uint32 OglContext::MIN_TEXTURE_SIZE = 0;
 OglContext* OglContext::current = NULL;
 
 OglContext::OglContext(ms_uint32 width, ms_uint32 height)
+	: width(width), height(height)
 {
 	if (!window) initWindow();
 	if (!sharingContext) initSharingContext();
@@ -208,11 +209,11 @@ bool OglContext::createPBuffer(ms_uint32 width, ms_uint32 height)
 
 	int pixelFormat;
 	int valid = false;
-	UINT numFormats;
+	UINT numFormats = 0;
 	float fAttributes[] = {0,0};
 	int samples = MAX_MULTISAMPLE_SAMPLES;
 
-	while (!valid && samples >= 0)
+	while ((!valid || numFormats == 0) && samples >= 0)
 	{
 		int iAttributes[] =
 		{
@@ -225,12 +226,14 @@ bool OglContext::createPBuffer(ms_uint32 width, ms_uint32 height)
 			WGL_DEPTH_BITS_ARB,16,
 			WGL_STENCIL_BITS_ARB,0,
 			WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
-			WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+			WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,			
 			0,0
 		};
 
 		valid = wglChoosePixelFormatARB(window,iAttributes,fAttributes,1,&pixelFormat,&numFormats);
-	}
+		if (!valid || numFormats == 0) samples -= 2;
+	}	
+
 	if(numFormats == 0)
 	{
 		msSetError(MS_OGLERR, "P-buffer Error: Unable to find an acceptable pixel format.", "OglContext::createPBuffer()");
@@ -414,7 +417,7 @@ bool OglContext::initWindow()
 	return true;
 }
 
-#endif /* WIN32 */
+#endif /* UNIX */
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 

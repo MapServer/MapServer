@@ -127,9 +127,11 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     GByte       *pabyAlphaLine = NULL;
     char        **papszOptions = NULL;
     outputFormatObj *format = image->format;
+    rasterBufferObj rb;
     GDALDataType eDataType = GDT_Byte;
 
     msGDALInitialize();
+    memset(&rb,0,sizeof(rasterBufferObj));
 
 /* -------------------------------------------------------------------- */
 /*      Identify the proposed output driver.                            */
@@ -183,16 +185,19 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 /*      Establish the characteristics of our memory, and final          */
 /*      dataset.                                                        */
 /* -------------------------------------------------------------------- */
+
     if( format->imagemode == MS_IMAGEMODE_RGB )
     {
         nBands = 3;
-        assert( gdImageTrueColor( image->img.gd ) );
+        assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
+        format->vtable->getRasterBufferHandle(image,&rb);
     }
     else if( format->imagemode == MS_IMAGEMODE_RGBA )
     {
         pabyAlphaLine = (GByte *) calloc(image->width,1);
         nBands = 4;
-        assert( gdImageTrueColor( image->img.gd ) );
+        assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
+        format->vtable->getRasterBufferHandle(image,&rb);
     }
     else if( format->imagemode == MS_IMAGEMODE_INT16 )
     {
@@ -212,7 +217,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     else
     {
         assert( format->imagemode == MS_IMAGEMODE_PC256
-                && !gdImageTrueColor( image->img.gd ) );
+                && format->renderer == MS_RENDER_WITH_GD );
     }
 
 /* -------------------------------------------------------------------- */
@@ -272,47 +277,34 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
                               + iBand * image->width * image->height,
                               image->width, 1, GDT_Byte, 1, 0 );
             }
-#if GD2_VERS > 1
-            else if( nBands > 1 && iBand < 3 )
-            {
-                GByte *pabyData;
-#ifdef CPL_MSB
-
-                pabyData = ((GByte *) image->img.gd->tpixels[iLine])+iBand+1;
-#else
-                pabyData = ((GByte *) image->img.gd->tpixels[iLine])+(2-iBand);
-#endif
-                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
-                              pabyData, image->width, 1, GDT_Byte, 4, 0 );
-            }
-            else if( nBands > 1 && iBand == 3 ) /* Alpha band */
-            {
-                int x;
-#ifdef CPL_MSB
-                GByte *pabySrc = ((GByte *) image->img.gd->tpixels[iLine]);
-#else
-                GByte *pabySrc = ((GByte *) image->img.gd->tpixels[iLine])+3;
-#endif
-
-                for( x = 0; x < image->width; x++ )
-                {
-                    if( *pabySrc == 127 )
-                        pabyAlphaLine[x] = 0;
-                    else
-                        pabyAlphaLine[x] = 255 - 2 * *pabySrc;
-
-                    pabySrc += 4;
-                }
-
-                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
-                              pabyAlphaLine, image->width, 1, GDT_Byte, 1, 0 );
-            }
-#endif
-            else
-            {
-                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
-                              image->img.gd->pixels[iLine], 
+            else if(format->renderer == MS_RENDER_WITH_GD) {
+               gdImagePtr img = (gdImagePtr)image->img.plugin;
+               GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                              img->pixels[iLine], 
                               image->width, 1, GDT_Byte, 0, 0 );
+            }
+            else {
+               GByte *pabyData;
+               unsigned char *pixptr = NULL;
+               assert( rb.type == MS_BUFFER_BYTE_RGBA );
+               switch(iBand) {
+               case 0:
+                  pixptr = rb.data.rgba.r;
+                  break;
+               case 1:
+                  pixptr = rb.data.rgba.g;
+                  break;
+               case 2:
+                  pixptr = rb.data.rgba.b;
+                  break;
+               case 3:
+                  pixptr = rb.data.rgba.a;
+                  break;
+               }
+               assert(pixptr);
+               pabyData = (GByte *)(pixptr + iLine*rb.data.rgba.row_step);
+               GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                             pabyData, image->width, 1, GDT_Byte, rb.data.rgba.pixel_step, 0 );
             }
         }
     }
@@ -323,24 +315,24 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 /* -------------------------------------------------------------------- */
 /*      Attach the palette if appropriate.                              */
 /* -------------------------------------------------------------------- */
-    if( format->imagemode == MS_IMAGEMODE_PC256 )
+    if( format->renderer == MS_RENDER_WITH_GD )
     {
         GDALColorEntry sEntry;
         int  iColor;
         GDALColorTableH hCT;
-
+        gdImagePtr img = (gdImagePtr)image->img.plugin;
         hCT = GDALCreateColorTable( GPI_RGB );
 
-        for( iColor = 0; iColor < image->img.gd->colorsTotal; iColor++ )
+        for( iColor = 0; iColor < img->colorsTotal; iColor++ )
         {
-            sEntry.c1 = image->img.gd->red[iColor];
-            sEntry.c2 = image->img.gd->green[iColor];
-            sEntry.c3 = image->img.gd->blue[iColor];
+            sEntry.c1 = img->red[iColor];
+            sEntry.c2 = img->green[iColor];
+            sEntry.c3 = img->blue[iColor];
 
-            if( iColor == gdImageGetTransparent( image->img.gd ) )
+            if( iColor == gdImageGetTransparent( img ) )
                 sEntry.c4 = 0;
             else if( iColor == 0 
-                     && gdImageGetTransparent( image->img.gd ) == -1 
+                     && gdImageGetTransparent( img ) == -1 
                      && format->transparent )
                 sEntry.c4 = 0;
             else
@@ -549,7 +541,7 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
 /*      Initialize the object.                                          */
 /* -------------------------------------------------------------------- */
     format->imagemode = MS_IMAGEMODE_RGB;
-    format->renderer = MS_RENDER_WITH_GD;
+    format->renderer = MS_RENDER_WITH_AGG;
 
     /* Eventually we should have a way of deriving the mime type and extension */
     /* from the driver. */

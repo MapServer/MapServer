@@ -1845,7 +1845,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
    cacheslot = &(map->labelcache.slots[priority]);
 
    for(l=cacheslot->numlabels-1; l>=0; l--) {
-
+	double size = cachePtr->label.size*layerPtr->scalefactor;
     cachePtr = &(cacheslot->labels[l]); /* point to right spot in the label cache */
 
     layerPtr = (GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
@@ -1854,11 +1854,14 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
     if(!cachePtr->text || strlen(cachePtr->text) == 0)
       continue; /* not an error, just don't want to do anything */
 
-    if(cachePtr->label.type == MS_TRUETYPE)
-      cachePtr->label.size = (cachePtr->label.size*layerPtr->scalefactor);
+    if(labelPtr->type == MS_TRUETYPE) {
+    	size = MS_MAX(size, labelPtr->minsize*img->resolutionfactor);
+    	size = MS_MIN(size, labelPtr->maxsize*img->resolutionfactor);  
+    }
 
-    if(msGetLabelSize(img,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
-      return(-1);
+    if(msGetLabelSize(map,labelPtr,cachePtr->text, size,&r, NULL) != MS_SUCCESS) {
+      return MS_FAILURE;
+    }
 
     label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
     label_offset_y = labelPtr->offsety*layerPtr->scalefactor;

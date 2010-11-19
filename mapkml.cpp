@@ -32,8 +32,6 @@
 
 #include "mapkmlrenderer.h"
 
-#include "mapkml.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,7 +48,7 @@ imageObj* msCreateImageKml(int width, int height, outputFormatObj *format, color
 	image = (imageObj*)malloc(sizeof(imageObj));
 	memset(image, 0, sizeof(imageObj));
 
-	KmlRenderer *ren = new KmlRenderer(width, height, bg);
+	KmlRenderer *ren = new KmlRenderer(width, height, format, bg);
 	image->img.plugin = (void *) ren;
 
 	return image;
@@ -62,126 +60,116 @@ int msSaveImageKml(imageObj *img, FILE *fp, outputFormatObj *format)
 	return renderer->saveImage(img, fp, format);
 }
 
-void msRenderLineKml(imageObj *img, shapeObj *p, strokeStyleObj *style)
+int msRenderLineKml(imageObj *img, shapeObj *p, strokeStyleObj *style)
 {
 	KmlRenderer* renderer = getKmlRenderer(img);
 	renderer->renderLine(img, p, style);
+	return MS_SUCCESS;
 }
 
-void msRenderPolygonKml(imageObj *img, shapeObj *p, colorObj *color)
+int msRenderPolygonKml(imageObj *img, shapeObj *p, colorObj *color)
 {
 	KmlRenderer* renderer = getKmlRenderer(img);
 	renderer->renderPolygon(img, p, color);
+	return MS_SUCCESS;
 }
 
-void msRenderPolygonTiledKml(imageObj *img, shapeObj *p,  imageObj *tile)
+int msRenderPolygonTiledKml(imageObj *img, shapeObj *p,  imageObj *tile)
 {
   /*KmlRenderer* renderer = getKmlRenderer(img);*/
+   return MS_SUCCESS;
 }
 
-void msRenderLineTiledKml(imageObj *img, shapeObj *p, imageObj *tile)
+int msRenderLineTiledKml(imageObj *img, shapeObj *p, imageObj *tile)
 {
+   return MS_SUCCESS;
 }
 
-void msRenderGlyphsKml(imageObj *img, double x, double y,
+int msRenderGlyphsKml(imageObj *img, double x, double y,
             labelStyleObj *style, char *text)
 {
 	KmlRenderer* renderer = getKmlRenderer(img);
 	renderer->renderGlyphs(img, x, y, style, text);
+	return MS_SUCCESS;
 }
 
-void msRenderGlyphsLineKml(imageObj *img,labelPathObj *labelpath,
-      labelStyleObj *style, char *text)
-{
-}
-
-void msRenderVectorSymbolKml(imageObj *img, double x, double y,
+int msRenderVectorSymbolKml(imageObj *img, double x, double y,
 		symbolObj *symbol, symbolStyleObj *style)
 {
-    	KmlRenderer* renderer = getKmlRenderer(img);
+   KmlRenderer* renderer = getKmlRenderer(img);
 	renderer->renderVectorSymbol(img, x, y, symbol, style);
+	return MS_SUCCESS;
 }
 
-void* msCreateVectorSymbolTileKml(int width, int height,
-        symbolObj *symbol, symbolStyleObj *style)
-{
-	return NULL;
-}
-
-void msRenderPixmapSymbolKml(imageObj *img, double x, double y,
+int msRenderPixmapSymbolKml(imageObj *img, double x, double y,
     	symbolObj *symbol, symbolStyleObj *style)
 {
 	KmlRenderer* renderer = getKmlRenderer(img);
 	renderer->renderPixmapSymbol(img, x, y, symbol, style);
+	return MS_SUCCESS;
 }
 
-void* msCreatePixmapSymbolTileKml(int width, int height,
-        symbolObj *symbol, symbolStyleObj *style)
-{
-	return NULL;
-}
-
-void msRenderEllipseSymbolKml(imageObj *image, double x, double y, 
+int msRenderEllipseSymbolKml(imageObj *image, double x, double y, 
 		symbolObj *symbol, symbolStyleObj *style)
 {
     KmlRenderer* renderer = getKmlRenderer(image);
-    renderer->renderEllipseSymbol(image, x, y, symbol,
-                                  style);
+    renderer->renderEllipseSymbol(image, x, y, symbol, style);
+    return MS_SUCCESS;
 }
 
-void* msCreateEllipseSymbolTileKml(int width, int height,
+int msRenderTruetypeSymbolKml(imageObj *img, double x, double y,
         symbolObj *symbol, symbolStyleObj *style)
 {
-	return NULL;
+   return MS_SUCCESS;
 }
 
-void msRenderTruetypeSymbolKml(imageObj *img, double x, double y,
-        symbolObj *symbol, symbolStyleObj *style)
+
+int msRenderTileKml(imageObj *img, imageObj *tile, double x, double y)
 {
+   return MS_SUCCESS;
 }
 
-void* msCreateTruetypeSymbolTileKml(int width, int height,
-        symbolObj *symbol, symbolStyleObj *style)
+int msGetRasterBufferKml(imageObj *img,rasterBufferObj *rb)
 {
-	return NULL;
+   return MS_FAILURE; //not supported for kml
 }
 
-void msRenderTileKml(imageObj *img, imageObj *tile, double x, double y)
-{
-}
 
-void msGetRasterBufferKml(imageObj *img,rasterBufferObj *rb)
-{
-}
-
-void msMergeRasterBufferKml(imageObj *dest, rasterBufferObj *overlay, double opacity, int dstX, int dstY)
-{
-}
-
-int msGetTruetypeTextBBoxKml(imageObj *img,char *font, double size, char *string,
+int msGetTruetypeTextBBoxKml(rendererVTableObj *r,char *font, double size, char *string,
 		rectObj *rect, double **advances)
 {
-	KmlRenderer* renderer = getKmlRenderer(img);
-	return renderer->getTruetypeTextBBox(img, font, size, string, rect, advances);
+   rect->minx=0.0;
+   rect->maxx=0.0;
+   rect->miny=0.0;
+   rect->maxy=0.0;
+   if (advances) {
+         int numglyphs = msGetNumGlyphs(string);
+         *advances = (double*) malloc(numglyphs * sizeof (double));
+         for(int i=0;i<numglyphs;i++) {
+            (*advances)[i] = size;
+         }
+   }
+   return MS_SUCCESS;
 }
 
-void msStartNewLayerKml(imageObj *img, layerObj *layer, double opacity)
+int msStartNewLayerKml(imageObj *img, mapObj *map, layerObj *layer)
 {
 	KmlRenderer* renderer = getKmlRenderer(img);
-	renderer->startNewLayer(img, layer);
+	return renderer->startNewLayer(img, layer);
 }
 
-void msCloseNewLayerKml(imageObj *img, layerObj *layer, double opacity)
+int msCloseNewLayerKml(imageObj *img, mapObj *map, layerObj *layer)
 {
 	KmlRenderer* renderer = getKmlRenderer(img);
-	renderer->closeNewLayer(img, layer);
+	return renderer->closeNewLayer(img, layer);
 }
 
-void msTransformShapeKml(shapeObj *shape, rectObj extend, double cellsize)
+int msTransformShapeKml(shapeObj *shape, rectObj extend, double cellsize, enum MS_SIMPLIFY_MODE simplifyMode)
 {
+   return MS_SUCCESS;
 }
 
-void msFreeImageKml(imageObj *image)
+int msFreeImageKml(imageObj *image)
 {
 	KmlRenderer* renderer = getKmlRenderer(image);
 	if (renderer)
@@ -189,34 +177,33 @@ void msFreeImageKml(imageObj *image)
 		delete renderer;
 	}
 	image->img.plugin=NULL;
+	return MS_SUCCESS;
 }
 
-void msFreeTileKml(imageObj *tile)
+int msFreeSymbolKml(symbolObj *symbol)
 {
+   return MS_SUCCESS;
 }
 
-void msFreeSymbolKml(symbolObj *symbol)
-{
-}
-
-void msStartShapeKml(imageObj *img, shapeObj *shape)
+int msStartShapeKml(imageObj *img, shapeObj *shape)
 {
 	KmlRenderer* renderer = getKmlRenderer(img);
 	renderer->startShape(img, shape);
+	return MS_SUCCESS;
 }
 
-void msEndShapeKml(imageObj *img, shapeObj *shape)
+int msEndShapeKml(imageObj *img, shapeObj *shape)
 {
     KmlRenderer* renderer = getKmlRenderer(img);
     renderer->endShape(img, shape);
+    return MS_SUCCESS;
 }
 
-int  msDrawRasterLayerKml(mapObj *map, layerObj *layer, imageObj *img)
-{
-    KmlRenderer* renderer = getKmlRenderer(img);
-    return renderer->renderRasterLayer(img);
-    
+int msMergeRasterBufferKml(imageObj *dest, rasterBufferObj *overlay, double opacity, int srcX, int srcY, int dstX, int dstY, int width, int height) {
+   KmlRenderer* renderer = getKmlRenderer(dest);
+   return renderer->mergeRasterBuffer(dest,overlay);
 }
+
 #ifdef __cplusplus
 }
 #endif
@@ -224,43 +211,44 @@ int  msDrawRasterLayerKml(mapObj *map, layerObj *layer, imageObj *img)
 
 #endif /*USE_KML*/
 
+int aggInitializeRasterBuffer(rasterBufferObj *rb, int width, int height, int mode);
+
 int msPopulateRendererVTableKML( rendererVTableObj *renderer )
 {
 #ifdef USE_KML
 
-	renderer->supports_transparent_layers = 1;
-	renderer->supports_pixel_buffer = 0;
-	renderer->supports_imagecache = 0;
+   renderer->supports_transparent_layers = 1;
+   renderer->supports_pixel_buffer = 0;
+   renderer->supports_bitmap_fonts = 0;
+   renderer->supports_clipping = 0;
+   renderer->use_imagecache = 0;
+   
 
-	renderer->startNewLayer = msStartNewLayerKml;
-	renderer->closeNewLayer = msCloseNewLayerKml;
-    renderer->renderLine=&msRenderLineKml;
-    renderer->createImage=&msCreateImageKml;
-    renderer->saveImage=&msSaveImageKml;
-    renderer->transformShape=&msTransformShapeKml;
-    renderer->renderPolygon=&msRenderPolygonKml;
-    renderer->renderGlyphs=&msRenderGlyphsKml;
-	renderer->renderGlyphsLine = &msRenderGlyphsLineKml;
-    renderer->renderEllipseSymbol = &msRenderEllipseSymbolKml;
-    renderer->renderVectorSymbol = &msRenderVectorSymbolKml;
-    renderer->renderPixmapSymbol = &msRenderPixmapSymbolKml;
-	renderer->renderTruetypeSymbol = &msRenderTruetypeSymbolKml;
-	renderer->getRasterBuffer = &msGetRasterBufferKml;
-    renderer->mergeRasterBuffer = &msMergeRasterBufferKml;
-    renderer->getTruetypeTextBBox = &msGetTruetypeTextBBoxKml;
-    renderer->createPixmapSymbolTile = &msCreatePixmapSymbolTileKml;
-    renderer->createVectorSymbolTile = &msCreateVectorSymbolTileKml;
-    renderer->createEllipseSymbolTile = &msCreateEllipseSymbolTileKml;
-    renderer->createTruetypeSymbolTile = &msCreateTruetypeSymbolTileKml;
-    renderer->renderTile = &msRenderTileKml;
-    renderer->renderPolygonTiled = &msRenderPolygonTiledKml;
-    renderer->renderLineTiled = &msRenderLineTiledKml;
-    renderer->freeTile = &msFreeTileKml;
-    renderer->freeSymbol = &msFreeSymbolKml;
-    renderer->freeImage=&msFreeImageKml;
+   renderer->startLayer = msStartNewLayerKml;
+   renderer->endLayer = msCloseNewLayerKml;
+   renderer->renderLine=&msRenderLineKml;
+   renderer->createImage=&msCreateImageKml;
+   renderer->saveImage=&msSaveImageKml;
+   renderer->transformShape=&msTransformShapeKml;
+   renderer->renderPolygon=&msRenderPolygonKml;
+   renderer->renderGlyphs=&msRenderGlyphsKml;
+   renderer->renderEllipseSymbol = &msRenderEllipseSymbolKml;
+   renderer->renderVectorSymbol = &msRenderVectorSymbolKml;
+   renderer->renderPixmapSymbol = &msRenderPixmapSymbolKml;
+   renderer->renderTruetypeSymbol = &msRenderTruetypeSymbolKml;
+   renderer->mergeRasterBuffer = &msMergeRasterBufferKml;
+   renderer->loadImageFromFile = msLoadMSRasterBufferFromFile;
+   renderer->initializeRasterBuffer = aggInitializeRasterBuffer;
+   renderer->getTruetypeTextBBox = &msGetTruetypeTextBBoxKml;
+   renderer->renderTile = &msRenderTileKml;
+   renderer->renderPolygonTiled = &msRenderPolygonTiledKml;
+   renderer->renderLineTiled = &msRenderLineTiledKml;
+   renderer->freeSymbol = &msFreeSymbolKml;
+   renderer->freeImage=&msFreeImageKml;
+   renderer->mergeRasterBuffer = msMergeRasterBufferKml;
 
-	renderer->startShape=&msStartShapeKml;
-	renderer->endShape=&msEndShapeKml;
+   renderer->startShape=&msStartShapeKml;
+   renderer->endShape=&msEndShapeKml;
 
     return MS_SUCCESS;
 #else

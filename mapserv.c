@@ -1533,20 +1533,13 @@ int main(int argc, char *argv[]) {
       msApplyOutputFormat(&format, mapserv->map->outputformat, mapserv->map->legend.transparent, mapserv->map->legend.interlace, MS_NOOVERRIDE);
 
       /* initialize the legend image */
-#ifdef USE_AGG
-      if(MS_RENDERER_AGG(mapserv->map->outputformat))
-         img = msImageCreateAGG(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format, mapserv->map->web.imagepath, mapserv->map->web.imageurl, mapserv->map->resolution, mapserv->map->defresolution);        
-      else
-#endif
-        img = msImageCreateGD(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format, mapserv->map->web.imagepath, mapserv->map->web.imageurl, mapserv->map->resolution, mapserv->map->defresolution);
-
-  /* allocate the background color */
-#ifdef USE_AGG
-      if(MS_RENDERER_AGG(mapserv->map->outputformat))
-        msImageInitAGG(img, &(mapserv->map->legend.imagecolor));
-      else
-#endif
-        msImageInitGD(img, &(mapserv->map->legend.imagecolor));
+      if( ! MS_RENDERER_PLUGIN(format) ) {
+    	  msSetError(MS_RENDERERERR, "unsupported renderer for legend icon", "mapserv main()");
+    	  writeError();
+      }
+      img = msImageCreate(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format,
+    		  mapserv->map->web.imagepath, mapserv->map->web.imageurl, mapserv->map->resolution, mapserv->map->defresolution,
+    		  &(mapserv->map->legend.imagecolor));
 
       /* drop this reference to output format */
       msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);

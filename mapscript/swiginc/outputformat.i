@@ -47,6 +47,8 @@
             return NULL;
         }
         
+        msInitializeRendererVTable(format);
+
         /* Else, continue */
         format->refcount++;
 	format->inmapfile = MS_TRUE;
@@ -95,6 +97,11 @@
         const char *retval;
         retval = msGetOutputFormatOption(self, key, value);
         return strdup(retval);
+    }
+    
+    void attachDevice( void *device ) 
+    {
+        self->device = device;
     }
     
 }

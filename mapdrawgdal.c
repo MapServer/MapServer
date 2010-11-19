@@ -69,7 +69,7 @@ msDrawRasterLayerGDAL_RawMode(
 
 static int 
 msDrawRasterLayerGDAL_16BitClassification(
-    mapObj *map, layerObj *layer, imageObj *image, 
+    mapObj *map, layerObj *layer, rasterBufferObj *rb,
     GDALDatasetH hDS, GDALRasterBandH hBand,
     int src_xoff, int src_yoff, int src_xsize, int src_ysize,
     int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize );
@@ -105,27 +105,7 @@ static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube);
  * rasterBufferObj setting macros. 
  */
 
-#define RB_SET_PIXEL(rb,x,y,red,green,blue,alpha) \
-    {  \
-        int _rb_off = (x) * (rb)->pixel_step + (y) * (rb)->row_step;   \
-        \
-        (rb)->r[_rb_off] = red; \
-        (rb)->g[_rb_off] = green; \
-        (rb)->b[_rb_off] = blue; \
-        if( (rb)->a ) \
-            (rb)->a[_rb_off] = alpha; \
-    }
 
-#define RB_MIX_PIXEL(rb,x,y,red,green,blue,alpha) \
-    {  \
-        int _rb_off = (x) * (rb)->pixel_step + (y) * (rb)->row_step;   \
-        \
-        msAlphaBlend2( red, green, blue, alpha, \
-                       (rb)->r + _rb_off, \
-                       (rb)->g + _rb_off, \
-                       (rb)->b + _rb_off, \
-                       ((rb)->a == NULL ) ? NULL : (rb)->a + _rb_off );  \
-    }
 
 /************************************************************************/
 /*                       msDrawRasterLayerGDAL()                        */
@@ -137,7 +117,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 {
     int i,j, k; /* loop counters */
     int cmap[MAXCOLORS], cmap_set = FALSE;
-    unsigned char rb_cmap[4][MAXCOLORS], rb_cmap_set = FALSE;
+    unsigned char rb_cmap[4][MAXCOLORS];
     double adfGeoTransform[6], adfInvGeoTransform[6];
     int	dst_xoff, dst_yoff, dst_xsize, dst_ysize;
     int	src_xoff, src_yoff, src_xsize, src_ysize;
@@ -146,16 +126,21 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     rectObj copyRect, mapRect;
     unsigned char *pabyRaw1=NULL, *pabyRaw2=NULL, *pabyRaw3=NULL, 
         *pabyRawAlpha = NULL;
-    int truecolor = FALSE, classified = FALSE;
+    int classified = FALSE;
     int red_band=0, green_band=0, blue_band=0, alpha_band=0, cmt=0;
     int band_count, band_numbers[4];
-    gdImagePtr gdImg = NULL;
     GDALDatasetH hDS = hDSVoid;
     GDALColorTableH hColorMap;
     GDALRasterBandH hBand1=NULL, hBand2=NULL, hBand3=NULL, hBandAlpha=NULL;
     int bHaveRGBNoData = FALSE;
     int nNoData1=-1,nNoData2=-1,nNoData3=-1;
-  
+    
+    /*only support rawdata and pluggable renderers*/
+    assert(MS_RENDERER_RAWDATA(image->format) || (MS_RENDERER_PLUGIN(image->format) && rb));
+    
+    /*make sure we don't have a truecolor gd image*/
+    assert(!rb || rb->type != MS_BUFFER_GD || !gdImageTrueColor(rb->data.gd_img));
+
     memset( cmap, 0xff, MAXCOLORS * sizeof(int) );
     memset( rb_cmap, 0, sizeof(rb_cmap) );
 
@@ -167,38 +152,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /*      and then dumped into the SWF or the PDF file.                   */
 /* -------------------------------------------------------------------- */
   
-    /* if( MS_RENDERER_GD(map->outputformat) ) */
-    if( MS_RENDERER_GD(image->format) )
-    {
-        gdImg = image->img.gd;
 
-        truecolor = gdImageTrueColor( gdImg );
-        if( CSLFetchNameValue( layer->processing, 
-                               "COLOR_MATCH_THRESHOLD" ) != NULL )
-        {
-            cmt = MAX(0,atoi(CSLFetchNameValue( layer->processing, 
-                                                "COLOR_MATCH_THRESHOLD" )));
-        }
-    }
-    else if( MS_RENDERER_PLUGIN(image->format) )
-    {
-        assert( rb != NULL );
-        truecolor = TRUE;
-    }
-#ifdef USE_AGG
-    else if( MS_RENDERER_AGG(image->format) )
-    {
-        gdImg = image->img.gd;
-
-        truecolor = gdImageTrueColor( gdImg );
-        if( CSLFetchNameValue( layer->processing, 
-                               "COLOR_MATCH_THRESHOLD" ) != NULL )
-        {
-            cmt = MAX(0,atoi(CSLFetchNameValue( layer->processing, 
-                                                "COLOR_MATCH_THRESHOLD" )));
-        }
-    }
-#endif
     src_xsize = GDALGetRasterXSize( hDS );
     src_ysize = GDALGetRasterYSize( hDS );
 
@@ -371,8 +325,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             src_xoff, src_yoff, src_xsize, src_ysize, 
             dst_xoff, dst_yoff, dst_xsize, dst_ysize );
     }
-
-    assert( gdImg != NULL || rb != NULL );
   
     /*
      * Is this image classified?  We consider it classified if there are
@@ -520,7 +472,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
      * Sometimes temporary gdImg'es are used in which case previously allocated
      * pens won't generally apply.  See Bug 504.
      */
-    if( gdImg && !truecolor )
+    if( rb->type == MS_BUFFER_GD )
     {
         int iClass;
         int iStyle;
@@ -536,11 +488,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
      * is sufficiently different than the normal mechanism of loading
      * into an 8bit buffer, that we isolate it into it's own subfunction.
      */
-    if( classified && gdImg 
+    if( classified 
         && hBand1 != NULL && GDALGetRasterDataType( hBand1 ) != GDT_Byte ) 
     {
         return msDrawRasterLayerGDAL_16BitClassification( 
-            map, layer, image, hDS, hBand1,
+            map, layer, rb, hDS, hBand1,
             src_xoff, src_yoff, src_xsize, src_ysize, 
             dst_xoff, dst_yoff, dst_xsize, dst_ysize );
     }
@@ -577,7 +529,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                     sEntry.c3 = 0;
                     sEntry.c4 = 0; /* alpha set to zero */
                 }
-                else if( truecolor )
+                else if( rb->type != MS_BUFFER_GD )
                 {
                     sEntry.c1 = i;
                     sEntry.c2 = i;
@@ -625,7 +577,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     }
 
     /*
-     * Setup the mapping between source eightbit pixel values, and the
+     * Setup the mapping between source eight bit pixel values, and the
      * output images color table.  There are two general cases, where the
      * class colors are provided by the MAP file, or where we use the native
      * color table.
@@ -633,10 +585,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     if( classified ) {
         int c, color_count;
 
-        if( gdImg )
-            cmap_set = TRUE;
-        else if( rb )
-            rb_cmap_set = TRUE;
+        cmap_set = TRUE;
 
         if( hColorMap == NULL )
         {
@@ -664,7 +613,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             
                 if(c == -1)/* doesn't belong to any class, so handle like offsite*/
                 {
-                    if( gdImg )
+                    if( rb->type == MS_BUFFER_GD )
                         cmap[i] = -1;
                 }
                 else
@@ -682,9 +631,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                                            sEntry.c1 );
                     }
 
-                    if( gdImg )
+                    if( rb->type == MS_BUFFER_GD )
                     {
-                        RESOLVE_PEN_GD(gdImg, layer->class[c]->styles[0]->color);
+                        RESOLVE_PEN_GD(rb->data.gd_img, layer->class[c]->styles[0]->color);
                         if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) )
                             cmap[i] = -1;
                         else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color))
@@ -693,10 +642,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                             cmap[i] = layer->class[c]->styles[0]->color.pen;
                         }
                         else /* Use raster color */
-                            cmap[i] = msAddColorGD(map, gdImg, cmt,
+                            cmap[i] = msAddColorGD(map, rb->data.gd_img, cmt,
                                                    pixel.red, pixel.green, pixel.blue);
                     }
-                    else if( rb )
+                    else if( rb->type == MS_BUFFER_BYTE_RGBA )
                     {
                         if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color))
                             /* leave it transparent */;
@@ -719,11 +668,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                     }
                 }
             } else {
-                if( gdImg )
+                if( rb->type == MS_BUFFER_GD )
                     cmap[i] = -1;
             }
         }
-    } else if( hColorMap != NULL && !truecolor && gdImg ) {
+    } else if( hColorMap != NULL && rb->type == MS_BUFFER_GD ) {
         int color_count;
         cmap_set = TRUE;
 
@@ -739,39 +688,16 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                     || layer->offsite.red != sEntry.c1
                     || layer->offsite.green != sEntry.c2
                     || layer->offsite.blue != sEntry.c3 ) )
-                cmap[i] = msAddColorGD(map, gdImg, cmt, 
+                cmap[i] = msAddColorGD(map, rb->data.gd_img, cmt, 
                                        sEntry.c1, sEntry.c2, sEntry.c3);
             else
                 cmap[i] = -1;
         }
     }
-    else if( hBand2 == NULL && hColorMap != NULL && gdImg )
+    else if( hBand2 == NULL && hColorMap != NULL && rb->type == MS_BUFFER_BYTE_RGBA )
     {
         int color_count;
         cmap_set = TRUE;
-
-        color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
-
-        for(i=0; i < color_count; i++) {
-            GDALColorEntry sEntry;
-          
-            GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
-
-            if( sEntry.c4 != 0 
-                && (!MS_VALID_COLOR( layer->offsite )
-                    || layer->offsite.red != sEntry.c1
-                    || layer->offsite.green != sEntry.c2
-                    || layer->offsite.blue != sEntry.c3 ) )
-                cmap[i] = gdTrueColorAlpha(sEntry.c1, sEntry.c2, sEntry.c3, 
-                                           127 - (sEntry.c4 >> 1) );
-            else
-                cmap[i] = -1;
-        }
-    }
-    else if( hBand2 == NULL && hColorMap != NULL && rb )
-    {
-        int color_count;
-        rb_cmap_set = TRUE;
 
         color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
 
@@ -793,16 +719,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             }
         }
     }
-    else if( !truecolor && gdImg )
+    else if( rb->type == MS_BUFFER_GD )
     {
-        allocColorCube( map, gdImg, anColorCube );
-    }
-    else if( !truecolor )
-    {
-        msSetError(MS_IOERR, 
-                   "Unsupported configuration for raster layer read via GDAL.",
-                   "drawGDAL()");
-        return -1;
+        allocColorCube( map, rb->data.gd_img, anColorCube );
     }
 
     /*
@@ -919,7 +838,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      Single band plus colormap with alpha blending to 8bit.          */
 /* -------------------------------------------------------------------- */
-    if( hBand2 == NULL && !truecolor && gdImg && hBandAlpha != NULL )
+    if( hBand2 == NULL && rb->type == MS_BUFFER_GD && hBandAlpha != NULL )
     {
         assert( cmap_set );
         k = 0;
@@ -940,7 +859,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                 */
 
                 if( result != -1 && alpha >= 128 )
-                    gdImg->pixels[i][j] = result;
+                	rb->data.gd_img->pixels[i][j] = result;
             }
         }
 
@@ -950,7 +869,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      Single band plus colormap (no alpha) to 8bit.                   */
 /* -------------------------------------------------------------------- */
-    else if( hBand2 == NULL && !truecolor && gdImg )
+    else if( hBand2 == NULL  && rb->type == MS_BUFFER_GD )
     {
         assert( cmap_set );
         k = 0;
@@ -964,7 +883,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                 result = cmap[pabyRaw1[k++]];
                 if( result != -1 )
                 {
-                    gdImg->pixels[i][j] = result;
+                	rb->data.gd_img->pixels[i][j] = result;
                 }
             }
         }
@@ -973,43 +892,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Single band plus colormap and alpha to truecolor. (GD)          */
-/* -------------------------------------------------------------------- */
-    else if( hBand2 == NULL && truecolor && gdImg && hBandAlpha != NULL )
-    {
-        assert( cmap_set );
-
-        k = 0;
-        for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
-        {
-            int	result, alpha;
-          
-            for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
-            {
-                alpha = pabyRawAlpha[k];
-                result = cmap[pabyRaw1[k++]];
-
-                if( result == -1 || alpha < 2 )
-                    /* do nothing - transparent */;
-                else if( alpha > 253 )
-                    gdImg->tpixels[i][j] = result;
-                else
-                {
-                    /* mix alpha into "result" */
-                    result += (127 - (alpha >> 1)) << 24;
-                    gdImg->tpixels[i][j] = 
-                        msAlphaBlend( gdImg->tpixels[i][j], result );
-                }
-            }
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Single band plus colormap and alpha to truecolor. (RB)          */
 /* -------------------------------------------------------------------- */
-    else if( hBand2 == NULL && truecolor && rb && hBandAlpha != NULL )
+    else if( hBand2 == NULL && rb->type == MS_BUFFER_BYTE_RGBA && hBandAlpha != NULL )
     {
-        assert( rb_cmap_set );
+        assert( cmap_set );
 
         k = 0;
         for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
@@ -1048,32 +935,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Single band plus colormap (no alpha) to truecolor (GD)          */
-/* -------------------------------------------------------------------- */
-    else if( hBand2 == NULL && truecolor && gdImg )
-    {
-        assert( cmap_set );
-
-        k = 0;
-        for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
-        {
-            int	result;
-          
-            for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
-            {
-                result = cmap[pabyRaw1[k++]];
-                if( result != -1 )
-                    gdImg->tpixels[i][j] = result;
-            }
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Single band plus colormap (no alpha) to truecolor (RB)          */
 /* -------------------------------------------------------------------- */
-    else if( hBand2 == NULL && truecolor && rb )
+    else if( hBand2 == NULL && rb->type == MS_BUFFER_BYTE_RGBA )
     {
-        assert( rb_cmap_set );
+        assert( cmap_set );
 
         k = 0;
         for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
@@ -1107,7 +973,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /*      since this case is less commonly used and has lots of other     */
 /*      overhead. (RB)                                                  */
 /* -------------------------------------------------------------------- */
-    else if( hBand3 != NULL && rb )
+    else if( hBand3 != NULL && rb->type == MS_BUFFER_BYTE_RGBA )
     {
         k = 0;
         for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
@@ -1151,10 +1017,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /*      since this case is less commonly used and has lots of other     */
 /*      overhead. (GD)                                                  */
 /* -------------------------------------------------------------------- */
-    else if( hBand3 != NULL && gdImg )
+    else if( hBand3 != NULL && rb->type == MS_BUFFER_GD )
     {
         /* Dithered 24bit to 8bit conversion */
-        if( !truecolor && CSLFetchBoolean( layer->processing, "DITHER", FALSE ) )
+        if( CSLFetchBoolean( layer->processing, "DITHER", FALSE ) )
         {
 #ifdef ENABLE_DITHER
             unsigned char *pabyDithered;
@@ -1169,7 +1035,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           
             Dither24to8( pabyRaw1, pabyRaw2, pabyRaw3, pabyDithered,
                          dst_xsize, dst_ysize, image->format->transparent, 
-                         map->imagecolor, gdImg );
+                         map->imagecolor, rb->data.gd_img );
 
             k = 0;
             for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
@@ -1191,7 +1057,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                     if( pabyRawAlpha != NULL && pabyRawAlpha[k] == 0 )
                         continue;
 
-                    gdImg->pixels[i][j] = pabyDithered[k];
+                    rb->data.gd_img->pixels[i][j] = pabyDithered[k];
                 }
             }
           
@@ -1204,7 +1070,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         }
 
         /* Color cubed 24bit to 8bit conversion. */
-        else if( !truecolor )
+        else if( rb->type == MS_BUFFER_GD )
         {
             k = 0;
             for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
@@ -1229,50 +1095,13 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                         continue;
 
                     cc_index= RGB_INDEX(pabyRaw1[k],pabyRaw2[k],pabyRaw3[k]);
-                    gdImg->pixels[i][j] = anColorCube[cc_index];
+                    rb->data.gd_img->pixels[i][j] = anColorCube[cc_index];
                 }
             }
         }
-        else if( truecolor )
-        {
-            k = 0;
-            for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
-            {
-                for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ )
-                {
-                    if( MS_VALID_COLOR( layer->offsite )
-                        && pabyRaw1[k] == layer->offsite.red
-                        && pabyRaw2[k] == layer->offsite.green
-                        && pabyRaw3[k] == layer->offsite.blue )
-                        continue;
-                  
-                    if( bHaveRGBNoData 
-                        && pabyRaw1[k] == nNoData1 
-                        && pabyRaw2[k] == nNoData2 
-                        && pabyRaw3[k] == nNoData3 )
-                        continue;
-
-                    if( pabyRawAlpha == NULL || pabyRawAlpha[k] == 255 )
-                    {
-                        gdImg->tpixels[i][j] = 
-                            gdTrueColor(pabyRaw1[k], pabyRaw2[k], pabyRaw3[k]);
-                    }
-                    else if( pabyRawAlpha[k] != 0 )
-                    {
-                        int gd_color;
-                        int gd_alpha = 127 - (pabyRawAlpha[k] >> 1);
-
-                        gd_color = gdTrueColorAlpha(
-                            pabyRaw1[k], pabyRaw2[k], pabyRaw3[k], gd_alpha );
-
-                        /* NOTE: GD versions prior to 2.0.12 didn't take
-                           the source alpha into account at all */
-
-                        gdImg->tpixels[i][j] = 
-                            msAlphaBlend( gdImg->tpixels[i][j], gd_color );
-                    }
-                }
-            }
+        else {
+        	msSetError(MS_MISCERR,"Unsupported raster configuration","msDrawRasterLayerGDAL()");
+        	return MS_FAILURE;
         }
     }
 
@@ -2340,7 +2169,7 @@ msDrawRasterLayerGDAL_RawMode(
 
 static int 
 msDrawRasterLayerGDAL_16BitClassification(
-    mapObj *map, layerObj *layer, imageObj *image, 
+    mapObj *map, layerObj *layer, rasterBufferObj *rb,
     GDALDatasetH hDS, GDALRasterBandH hBand,
     int src_xoff, int src_yoff, int src_xsize, int src_ysize,
     int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize )
@@ -2355,10 +2184,9 @@ msDrawRasterLayerGDAL_16BitClassification(
     const char *pszBuckets;
     int  bUseIntegers = FALSE;
     int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
-    gdImagePtr gdImg = image->img.gd;
     CPLErr eErr;
 
-    assert( gdImg != NULL );
+    assert( rb->type == MS_BUFFER_GD );
 
 /* ==================================================================== */
 /*      Read the requested data in one gulp into a floating point       */
@@ -2541,8 +2369,9 @@ msDrawRasterLayerGDAL_16BitClassification(
                     && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor) )
                     msValueToRange(layer->class[c]->styles[s],dfOriginalValue);
             }
-
-            RESOLVE_PEN_GD(gdImg, layer->class[c]->styles[0]->color);
+            if(rb->type == MS_BUFFER_GD) {
+            	RESOLVE_PEN_GD(rb->data.gd_img, layer->class[c]->styles[0]->color);
+            }
             if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) )
                 cmap[i] = -1;
             else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color))
@@ -2590,10 +2419,7 @@ msDrawRasterLayerGDAL_16BitClassification(
             if( result == -1 )
                 continue;
 
-            if( gdImageTrueColor( gdImg ) )
-                gdImg->tpixels[i][j] = result;
-            else
-                gdImg->pixels[i][j] = result;
+            rb->data.gd_img->pixels[i][j] = result;
         }
     }
 

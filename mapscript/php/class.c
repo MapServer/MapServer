@@ -652,10 +652,10 @@ PHP_METHOD(classObj, drawLegendIcon)
 
     php_map = (php_map_object *) zend_object_store_get_object(php_layer->parent.val TSRMLS_CC);
 
-    if (!(MS_DRIVER_GD(php_image->image->format)|| MS_DRIVER_AGG(php_image->image->format)))
+    if (!MS_RENDERER_PLUGIN(php_image->image->format))
     {
         mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
-        mapscript_report_php_error(E_WARNING, "DrawLegendicon function is only available for GD and AGG drivers" TSRMLS_CC);
+        mapscript_report_php_error(E_WARNING, "DrawLegendicon function is only available for renderer plugin drivers" TSRMLS_CC);
         RETURN_LONG(MS_FAILURE);
     }
 

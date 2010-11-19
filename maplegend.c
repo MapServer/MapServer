@@ -49,11 +49,24 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   pointObj marker;
   char szPath[MS_MAXPATHLEN];
   styleObj outline_style;
+  rendererVTableObj *renderer;
+
+  if(!MS_RENDERER_PLUGIN(image->format)) {
+      msSetError(MS_MISCERR,"unsupported image format","msDrawLegendIcon()");
+      return MS_FAILURE;
+  }
   
-  if(MS_RENDERER_GD(map->outputformat))
+  renderer = MS_IMAGE_RENDERER(image);
+  
+  if(renderer->supports_clipping && MS_VALID_COLOR(map->legend.outlinecolor)) {
     /* keep GD specific code here for now as it supports clipping */
-	if(MS_VALID_COLOR(map->legend.outlinecolor))
-	  gdImageSetClip(image->img.gd, dstX, dstY, dstX + width - 1, dstY + height - 1);
+    rectObj clip;
+    clip.maxx = dstX + width - 1;
+    clip.maxy = dstY + height -1;
+    clip.minx = dstX;
+    clip.miny = dstY;
+    renderer->setClip(image,clip);
+  }
   
   /* initialize the box used for polygons and for outlines */
   box.line = (lineObj *)malloc(sizeof(lineObj));
@@ -61,14 +74,14 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
   box.line[0].numpoints = 5;
 
-  box.line[0].point[0].x = dstX;
-  box.line[0].point[0].y = dstY;
-  box.line[0].point[1].x = dstX + width - 1;
-  box.line[0].point[1].y = dstY;
-  box.line[0].point[2].x = dstX + width - 1;
-  box.line[0].point[2].y = dstY + height - 1;
-  box.line[0].point[3].x = dstX;
-  box.line[0].point[3].y = dstY + height - 1;
+  box.line[0].point[0].x = dstX + 0.5;
+  box.line[0].point[0].y = dstY + 0.5;
+  box.line[0].point[1].x = dstX + width - 0.5;
+  box.line[0].point[1].y = dstY + 0.5;
+  box.line[0].point[2].x = dstX + width - 0.5;
+  box.line[0].point[2].y = dstY + height - 0.5;
+  box.line[0].point[3].x = dstX + 0.5;
+  box.line[0].point[3].y = dstY + height - 0.5;
   box.line[0].point[4].x = box.line[0].point[0].x;
   box.line[0].point[4].y = box.line[0].point[0].y;
   box.line[0].numpoints = 5;
@@ -192,8 +205,8 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     outline_style.color = map->legend.outlinecolor;
     msDrawLineSymbol(&map->symbolset, image, &box, &outline_style, 1.0);
     /* reset clipping rectangle */
-    if(MS_RENDERER_GD(map->outputformat))
-    	gdImageSetClip(image->img.gd, 0, 0, image->width - 1, image->height - 1);
+    if(renderer->supports_clipping)
+    	renderer->resetClip(image);
   }
 
   free(box.line[0].point);
@@ -208,23 +221,20 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   imageObj *image;
   outputFormatObj *format = NULL;
   int i = 0;
-
-  if(!map->outputformat || (!MS_RENDERER_GD(map->outputformat) && !MS_RENDERER_AGG(map->outputformat) )) {
-    msSetError(MS_GDERR, "Map outputformat must be set to a GD or AGG format!", "msCreateLegendIcon()");
+  
+  rendererVTableObj *renderer = MS_MAP_RENDERER(map);
+  
+  if( !renderer ) {
+    msSetError(MS_MISCERR, "invalid map outputformat", "msCreateLegendIcon()");
     return(NULL);
   }
 
   /* ensure we have an image format representing the options for the legend */
   msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
-
-  /* create image */
-#ifdef USE_AGG
-  if(MS_RENDERER_AGG(map->outputformat))
-     image = msImageCreateAGG(width, height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
-  else
-#endif
-    image = msImageCreateGD(width, height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
-
+  
+  image = msImageCreate(width,height,format,map->web.imagepath, map->web.imageurl,
+		  map->resolution, map->defresolution, &(map->legend.imagecolor));
+  
   /* drop this reference to output format */
   msApplyOutputFormat( &format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
 
@@ -232,14 +242,6 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
     msSetError(MS_GDERR, "Unable to initialize image.","msCreateLegendIcon()");
     return(NULL);
   }
-
-  /* allocate the background color */
-#ifdef USE_AGG
-  if(MS_RENDERER_AGG(map->outputformat))
-    msImageInitAGG( image, &(map->legend.imagecolor));
-  else
-#endif
-    msImageInitGD( image, &(map->legend.imagecolor));
 
   /* Call drawLegendIcon with destination (0, 0) */
   /* Return an empty image if lp==NULL || class=NULL  */
@@ -255,10 +257,6 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
       }
     }
   }
-#ifdef USE_AGG
-  if(MS_RENDERER_AGG(map->outputformat))
-    msAlphaAGG2GD(image);
-#endif
   return image;
 }
 
@@ -342,7 +340,8 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
        else
          transformedText = strdup(lp->class[j]->name);
 
-       if(transformedText == NULL || msGetLabelSize(NULL,transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE,NULL) != 0) { /* something bad happened */
+       if(transformedText == NULL || 
+    		   msGetLabelSize(map, &map->legend.label, transformedText, map->legend.label.size, &rect, NULL) != MS_SUCCESS) { /* something bad happened */
          if(transformedText) msFree(transformedText);
          return MS_FAILURE;
        }
@@ -378,7 +377,8 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
 */
 imageObj *msDrawLegend(mapObj *map, int scale_independent)
 {
-  gdImagePtr img; /* image data structure */
+
+  
   int i,j; /* loop counters */
   pointObj pnt;
   int size_x, size_y=0;
@@ -396,11 +396,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   typedef struct legend_struct legendlabel;
   legendlabel *head=NULL,*cur=NULL;
   
-  if(MS_RENDERER_PLUGIN(map->outputformat)) {
-    msSetError(MS_MISCERR, "Scalebar not supported yet", "msDrawScalebar()");
-    return(NULL);
+  if(!MS_RENDERER_PLUGIN(map->outputformat)) {
+      msSetError(MS_MISCERR,"unsupported output format","msDrawLegend()");
+      return NULL;
   }
-  
   if(msValidateContexts(map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
   if(msLegendCalcSize(map, scale_independent, &size_x, &size_y, NULL) != MS_SUCCESS) return NULL;
 
@@ -454,7 +453,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       cur->pred = head;
       head = cur;
 
-      if(cur->transformedText==NULL || msGetLabelSize(NULL,cur->transformedText, &map->legend.label, &rect, &(map->fontset), 1.0, MS_FALSE,NULL) != 0) { /* something bad happened, free allocated mem */
+      if(cur->transformedText==NULL || 
+    		  msGetLabelSize(map, &map->legend.label, cur->transformedText, map->legend.label.size, &rect, NULL) != MS_SUCCESS) { /* something bad happened, free allocated mem */
         while(cur) {
           if(cur->transformedText!=cur->theclass->name)
             free(cur->transformedText);
@@ -473,31 +473,15 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
 
   /* initialize the legend image */
-#ifdef USE_AGG
-  if(MS_RENDERER_AGG(map->outputformat))
-    image = msImageCreateAGG(size_x, size_y, format, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
-  else
-#endif
-    image = msImageCreateGD(size_x, size_y, format, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
+  image = msImageCreate(size_x, size_y, format, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->legend.imagecolor);
+  if(!image) {
+      msSetError(MS_MISCERR, "Unable to initialize image.", "msDrawScalebar()");
+      return NULL;
+    }
+  //image = renderer->createImage(size_x,size_y,format,&(map->legend.imagecolor));
 
   /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
-
-  if(image)
-    img = image->img.gd;
-  else {
-    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLegend()");
-    return(NULL);
-  }
-
-  /* Set background */
-#ifdef USE_AGG
-  if(MS_RENDERER_AGG(map->outputformat))
-    msImageInitAGG( image, &(map->legend.imagecolor));
-  else
-#endif
-    msImageInitGD(image, &(map->legend.imagecolor));
-
 
   msClearPenValues(map); /* just in case the mapfile has already been processed */
   pnt.y = VMARGIN;
@@ -544,11 +528,6 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     cur = cur->pred;
     free(head);
   } /* next legend */
-
-#ifdef USE_AGG
-  if(MS_RENDERER_AGG(map->outputformat))
-    msAlphaAGG2GD(image);
-#endif
     
   return(image);
 }
@@ -559,11 +538,15 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   int s,l;
   pointObj point;
   imageObj *image = NULL;
+  symbolObj *legendSymbol;
 
-  if(MS_RENDERER_PLUGIN(map->outputformat)) {
-    msSetError(MS_MISCERR, "Scalebar not supported yet", "msDrawScalebar()");
+  rendererVTableObj *renderer;
+
+  if(!MS_RENDERER_PLUGIN(map->outputformat) || !MS_MAP_RENDERER(map)->supports_pixel_buffer) {
+    msSetError(MS_MISCERR, "unsupported output format", "msEmbedLegend()");
     return MS_FAILURE;
   }
+  renderer = MS_MAP_RENDERER(map);
 
   s = msGetSymbolIndex(&(map->symbolset), "legend", MS_FALSE);
   if(s != -1) 
@@ -572,58 +555,61 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   if(msGrowSymbolSet(&map->symbolset) == NULL)
     return -1;
   s = map->symbolset.numsymbols;
+  legendSymbol = map->symbolset.symbol[s];
   map->symbolset.numsymbols++;
-  initSymbol(map->symbolset.symbol[s]);
+  initSymbol(legendSymbol);
 
-#ifdef USE_AGG
-  if(MS_RENDERER_AGG(map->outputformat))
-    msAlphaGD2AGG(img);
-#endif
-  
   /* render the legend. */
   image = msDrawLegend(map, MS_FALSE);
   if( image == NULL ) return -1;
 
-  /* steal the gdImage and free the rest of the imageObj */
-  map->symbolset.symbol[s]->img = image->img.gd; 
-  image->img.gd = NULL;
+  /* copy renderered legend image into symbol */
+  legendSymbol->pixmap_buffer = calloc(1,sizeof(rasterBufferObj));
+  if(!legendSymbol->pixmap_buffer) {
+	  msSetError(MS_MEMERR,"allocation failure","msEmbedLegend()");
+	  return MS_FAILURE;
+  }
+  if(MS_SUCCESS != renderer->getRasterBufferCopy(image,legendSymbol->pixmap_buffer))
+	  return MS_FAILURE;
+  legendSymbol->renderer = renderer;
+
   msFreeImage( image );
 
-  if(!map->symbolset.symbol[s]->img) return(-1); /* something went wrong creating scalebar */
+  if(!legendSymbol->pixmap_buffer) return(-1); /* something went wrong creating scalebar */
 
-  map->symbolset.symbol[s]->type = MS_SYMBOL_PIXMAP; /* intialize a few things */
-  map->symbolset.symbol[s]->name = strdup("legend");  
-  map->symbolset.symbol[s]->sizex = map->symbolset.symbol[s]->img->sx;
-  map->symbolset.symbol[s]->sizey = map->symbolset.symbol[s]->img->sy;
+  legendSymbol->type = MS_SYMBOL_PIXMAP; /* intialize a few things */
+  legendSymbol->name = strdup("legend");  
+  legendSymbol->sizex = legendSymbol->pixmap_buffer->width;
+  legendSymbol->sizey = legendSymbol->pixmap_buffer->height;
 
   /* I'm not too sure this test is sufficient ... NFW. */
-  if(map->legend.transparent == MS_ON)
-    gdImageColorTransparent(map->symbolset.symbol[s]->img, 0);
+  //if(map->legend.transparent == MS_ON)
+  //  gdImageColorTransparent(legendSymbol->img_deprecated, 0);
 
   switch(map->legend.position) {
   case(MS_LL):
-    point.x = MS_NINT(map->symbolset.symbol[s]->img->sx/2.0);
-    point.y = map->height - MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
+    point.x = MS_NINT(legendSymbol->sizex/2.0);
+    point.y = map->height - MS_NINT(legendSymbol->sizey/2.0);
     break;
   case(MS_LR):
-    point.x = map->width - MS_NINT(map->symbolset.symbol[s]->img->sx/2.0);
-    point.y = map->height - MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
+    point.x = map->width - MS_NINT(legendSymbol->sizex/2.0);
+    point.y = map->height - MS_NINT(legendSymbol->sizey/2.0);
     break;
   case(MS_LC):
     point.x = MS_NINT(map->width/2.0);
-    point.y = map->height - MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
+    point.y = map->height - MS_NINT(legendSymbol->sizey/2.0);
     break;
   case(MS_UR):
-    point.x = map->width - MS_NINT(map->symbolset.symbol[s]->img->sx/2.0);
-    point.y = MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
+    point.x = map->width - MS_NINT(legendSymbol->sizex/2.0);
+    point.y = MS_NINT(legendSymbol->sizey/2.0);
     break;
   case(MS_UL):
-    point.x = MS_NINT(map->symbolset.symbol[s]->img->sx/2.0);
-    point.y = MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
+    point.x = MS_NINT(legendSymbol->sizex/2.0);
+    point.y = MS_NINT(legendSymbol->sizey/2.0);
     break;
   case(MS_UC):
     point.x = MS_NINT(map->width/2.0);
-    point.y = MS_NINT(map->symbolset.symbol[s]->img->sy/2.0);
+    point.y = MS_NINT(legendSymbol->sizey/2.0);
     break;
   }
 
@@ -658,7 +644,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   if(map->legend.postlabelcache) /* add it directly to the image */
     msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
   else
-    msAddLabel(map, l, 0, NULL, &point, NULL, " ", 1.0, NULL);
+    msAddLabel(map, l, 0, NULL, &point, NULL, "", 1.0, NULL);
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or with saving maps */
   GET_LAYER(map, l)->status = MS_DELETE;

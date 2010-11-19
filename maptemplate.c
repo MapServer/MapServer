@@ -1610,7 +1610,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
                   msClipPolylineRect(shape, layer->map->extent);
          
 
-                msTransformShapeToPixel(shape, layer->map->extent, cellsize);
+                msTransformShapeToPixel(shape, layer->map->extent, cellsize, MS_SIMPLIFY_DEFAULT);
             }
             else
               msOffsetShapeRelativeTo(shape, layer);
@@ -1653,7 +1653,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
                 if (clip_to_map)
                   msClipPolygonRect(shape, layer->map->extent);
 
-                msTransformShapeToPixel(shape, layer->map->extent, cellsize);
+                msTransformShapeToPixel(shape, layer->map->extent, cellsize, MS_SIMPLIFY_DEFAULT);
             }
             else
               msOffsetShapeRelativeTo(shape, layer);
@@ -1691,8 +1691,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
                 if (shape->text && shape->classindex >=0)
                 {
                     label = &layer->class[shape->classindex]->label;
-                    if(msGetLabelSize(NULL, shape->text, label, 
-                                      &r, &(layer->map->fontset), layer->scalefactor, MS_FALSE,NULL) != -1)
+                    if(msGetLabelSize(layer->map,label,shape->text,label->size,&r,NULL) == MS_SUCCESS)
                     {
                         label_offset_x = (int)(label->offsetx*layer->scalefactor);
                         label_offset_y = (int)(label->offsety*layer->scalefactor);
@@ -1739,7 +1738,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       
               msClipPolylineRect(&tShape, layer->map->extent);
 
-              msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize);
+              msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize, MS_SIMPLIFY_DEFAULT);
 
          } else if(projectionString) {
              projectionObj projection;
@@ -2047,7 +2046,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
         return(MS_FAILURE);
         break;
       }
-      msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize);
+      msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize, MS_SIMPLIFY_DEFAULT);
 
 #ifdef USE_GEOS
       if(buffer != 0 && bufferUnits == MS_PIXELS) {

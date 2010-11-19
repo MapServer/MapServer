@@ -26,7 +26,7 @@ LINK=   link
 #
 MS_DLL = libmap.dll
 
-MS_OBJS = maprgbapng.obj mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
+MS_OBJS = mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapparser.obj maplexer.obj maptree.obj \
 		mapsearch.obj mapstring.obj mapsymbol.obj mapfile.obj \
 		maplegend.obj maputil.obj mapscale.obj mapquery.obj \
@@ -34,26 +34,27 @@ MS_OBJS = maprgbapng.obj mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj maptime.obj \
 		maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
 		mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
-		mapprojhack.obj mapdraw.obj mapgd.obj mapgd2.obj mapoutput.obj mapswf.obj \
+		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj \
 		mapgdal.obj mapwfs.obj mapwfs11.obj mapwfslayer.obj mapows.obj maphttp.obj \
-		mappdf.obj mapcontext.obj mapdrawgdal.obj mapjoin.obj mapgraticule.obj \
+		mapcontext.obj mapdrawgdal.obj mapjoin.obj mapgraticule.obj \
 		mapmygis.obj mapimagemap.obj mapcopy.obj maprasterquery.obj \
 		mapogcfilter.obj mapogcsld.obj mapthread.obj mapobject.obj \
 		classobject.obj layerobject.obj mapwcs.obj mapwcs11.obj mapwcs20.obj \
 		mapgeos.obj strptime.obj mapogroutput.obj \
-		mapcpl.obj mapio.obj mappool.obj mapsvg.obj mapregex.obj mappluginlayer.obj \
+		mapcpl.obj mapio.obj mappool.obj mapregex.obj mappluginlayer.obj \
 		mapogcsos.obj mappostgresql.obj mapcrypto.obj mapowscommon.obj \
-		maplibxml2.obj mapdebug.obj mapchart.obj mapagg.obj mapagg2.obj maptclutf.obj \
+		maplibxml2.obj mapdebug.obj mapchart.obj mapagg.obj maptclutf.obj \
 		maprendering.obj mapimageio.obj mapcairo.obj \
 		mapoglrenderer.obj mapoglcontext.obj mapogl.obj \
-		maptile.obj $(EPPL_OBJ) $(REGEX_OBJ) mapgeomtransform.obj mapkmlrenderer.obj mapkml.obj $(AGG_OBJ)
+		maptile.obj $(EPPL_OBJ) $(REGEX_OBJ) mapgeomtransform.obj \
+                mapkmlrenderer.obj mapkml.obj mapdummyrenderer.obj mapgeomutil.obj mapquantization.obj $(AGG_OBJ)
 
 MS_HDRS = 	mapserver.h mapfile.h
 
-MS_EXE = 	mapserv.exe \
-                shp2img.exe legend.exe \
-		shptree.exe scalebar.exe sortshp.exe tile4ms.exe \
-		shptreevis.exe msencrypt.exe
+MS_EXE = 	mapserv.exe
+#                shp2img.exe legend.exe \
+#		shptree.exe scalebar.exe sortshp.exe tile4ms.exe \
+#		shptreevis.exe msencrypt.exe
 
 #
 #
@@ -148,7 +149,8 @@ mapscriptvars: makefile.vc nmake.opt
 	echo $(LIBS) >> mapscriptvars
 	findstr MS_VERSION mapserver.h | findstr define >> mapscriptvars
 
-install: $(MS_DLL) $(MS_EXE) python csharp java php
+#install: $(MS_DLL) $(MS_EXE) python csharp java php
+install: $(MS_DLL) $(MS_EXE)
 	-mkdir $(BINDIR)
 	xcopy /y /r /d /f $(MS_DLL) $(BINDIR)
 	copy *.exe $(BINDIR)

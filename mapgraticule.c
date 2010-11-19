@@ -695,12 +695,14 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
       msClipPolylineRect(&shapegrid, cliprect);
      
-#ifdef USE_AGG
-      if(MS_RENDERER_AGG(map->outputformat))
-        msTransformShapeAGG(&shapegrid, map->extent, map->cellsize);
-#else
-      msTransformShapeToPixel(&shapegrid, map->extent, map->cellsize);
-#endif
+
+      if(MS_RENDERER_PLUGIN(map->outputformat)) {
+    	  rendererVTableObj *renderer = MS_MAP_RENDERER(map);
+    	  renderer->transformShape(&shapegrid, map->extent, map->cellsize, MS_SIMPLIFY_DEFAULT);
+      } else {
+    	  msTransformShapeToPixel(&shapegrid, map->extent, map->cellsize, MS_SIMPLIFY_DEFAULT);
+      }
+
      
  
       if(shapegrid.numlines <= 0 || shapegrid.line[0].numpoints < 2) { /* once clipped the shape didn't need to be drawn */
@@ -1078,6 +1080,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
   graticuleObj *pInfo = (graticuleObj  *) pLayer->layerinfo;
   rectObj rectLabel;
   pointObj ptPoint;
+  double size = pLayer->class[0]->label.size; //TODO TBT: adjust minsize/maxsize/resolution
 
   if( pInfo == NULL || pShape == NULL ) {
     msSetError(MS_MISCERR, "Assertion failed: Null shape or layerinfo!, ", "_AdjustLabelPosition()");
@@ -1094,11 +1097,16 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
     msProjectShape( &pLayer->projection, &pLayer->map->projection, pShape );
 #endif
 
-  if(pLayer->transform) 
-    msTransformShapeToPixel(pShape, pLayer->map->extent, pLayer->map->cellsize);
+  if(pLayer->transform) {
+	if(MS_RENDERER_PLUGIN(pLayer->map->outputformat)) {
+		MS_MAP_RENDERER(pLayer->map)->transformShape(pShape, pLayer->map->extent, pLayer->map->cellsize, MS_SIMPLIFY_DEFAULT);
+	} else {
+		msTransformShapeToPixel(pShape, pLayer->map->extent, pLayer->map->cellsize, MS_SIMPLIFY_DEFAULT);
+	}
+  }
 
-  if(msGetLabelSize(NULL, pShape->text, &pLayer->class[0]->label, &rectLabel, &pLayer->map->fontset, 1.0, MS_FALSE,NULL) != 0)
-    return MS_FAILURE;  /* msSetError already called */
+  if(msGetLabelSize(pLayer->map, &pLayer->class[0]->label,pShape->text, size,&rectLabel,NULL) != MS_SUCCESS)
+	  return MS_FAILURE;  /* msSetError already called */
 
   switch( ePosition ) {
   case posBottom:

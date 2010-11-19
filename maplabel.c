@@ -182,17 +182,12 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
      * space character shouldn't vary too much between different fonts*/
     if(label->space_size_10 == 0.0) {
         /*if the cache hasn't been initialized yet, or with pixmap fonts*/
-        double size=0; /*initialize this here to avoid compiler warning*/
-        if(label->type == MS_TRUETYPE) {
-            size = label->size; /*keep a copy of the original size*/
-            label->size=10;
-        }
+        
         /* compute the size of 16 adjacent spaces. we can't do this for just one space,
          * as the labelSize computing functions return integer bounding boxes. we assume
          * that the integer rounding for such a number of spaces will be negligeable
          * compared to the actual size of thoses spaces */ 
-        if(msGetLabelSize(image, ".              .", label,&label_rect, 
-                    &map->fontset, 1.0, MS_FALSE,NULL)==-1) { 
+        if(msGetLabelSize(map,label,".              .",10.0,&label_rect,NULL) != MS_SUCCESS) {
             /*error computing label size, we can't continue*/
 
             /*free the previously allocated split text*/
@@ -207,7 +202,6 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
          * for the current label */
         spacewidth = (label_rect.maxx-label_rect.minx)/16.0;
         if(label->type == MS_TRUETYPE) {
-            label->size = size; /*restore original label size*/
             label->space_size_10=spacewidth; /*cache the computed size*/
 
             /*size of a space for current label size*/
@@ -230,7 +224,7 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
     /*length in pixels of the longest line*/
     maxlinelength=0;
     for(i=0;i<numlines;i++) {
-        msGetLabelSize(image, textlines[i], label, &label_rect, &map->fontset, 1.0, MS_FALSE, NULL);
+        msGetLabelSize(map,label,textlines[i],label->size, &label_rect,NULL);
         textlinelengths[i] = label_rect.maxx-label_rect.minx;
         if(maxlinelength<textlinelengths[i])
             maxlinelength=textlinelengths[i];
@@ -518,7 +512,7 @@ void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr,
             if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
                 /* We add the label_size to the mindistance value when comparing because we do want the mindistance 
                    value between the labels and not only from point to point. */
-                if((mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= (mindistance + label_size))) { /* label is a duplicate */
+                if(label_size > 0 && (mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= (mindistance + label_size))) { /* label is a duplicate */
                     cachePtr->status = MS_FALSE;
                     return;
                 }
@@ -670,21 +664,12 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 #endif
 }
 
-int msGetTruetypeTextBBox(imageObj *img, char *font, double size, char *string, rectObj *rect, double **advances) {
+int msGetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size, char *string, rectObj *rect, double **advances) {
+	if(renderer) {
+		return renderer->getTruetypeTextBBox(renderer,font,size,string,rect,advances);
+	} 
 #ifdef USE_GD_FT
-	if(img!=NULL && MS_RENDERER_PLUGIN(img->format)) {
-		img->format->vtable->getTruetypeTextBBox(img,font,size,string,rect,advances);
-		//printf("%s: %f %f %f %f\n",string,rect->minx,rect->miny,rect->maxx,rect->maxy);
-		return MS_SUCCESS;
-	} else 
-#ifdef USE_AGG
-	if(img!=NULL && MS_RENDERER_AGG(img->format)) {
-        	return msGetTruetypeTextBBoxAGG(img,font,size,string,rect,advances);
-        //printf("%s: %f %f %f %f\n",string,rect->minx,rect->miny,rect->maxx,rect->maxy);
-        //return MS_SUCCESS;
-    } else
-#endif
-    {
+	else {
         int bbox[8];
         char *error;
         if(advances) {
@@ -719,7 +704,7 @@ int msGetTruetypeTextBBox(imageObj *img, char *font, double size, char *string, 
             return MS_SUCCESS;
 #else
             msSetError(MS_TTFERR, "gdImageStringFTEx support is not available or is not current enough (requires 2.0.29 or higher).", "msGetTruetypeTextBBox()");
-            return(-1);
+            return MS_FAILURE;
 #endif
         } else {
             error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
@@ -737,39 +722,56 @@ int msGetTruetypeTextBBox(imageObj *img, char *font, double size, char *string, 
     }
 #else
     /*shouldn't happen*/
-    return(MS_FAILURE);
+    return MS_FAILURE;
 #endif
 }
 
-int msGetRasterTextBBox(imageObj *img, int size, char *string, rectObj *rect) {
-#ifdef USE_AGG
-    if(img!=NULL && MS_RENDERER_AGG(img->format)) {
-        return msGetRasterTextBBoxAGG(img,size,string,rect); 
-    } else
-#endif
-    {
-        gdFontPtr fontPtr;
-        char **token=NULL;
-        int t, num_tokens, max_token_length=0;
-        if((fontPtr = msGetBitmapFont(size)) == NULL)
-            return(-1);
-
-        if((token = msStringSplit(string, '\n', &(num_tokens))) == NULL)
-            return(0);
-
-        for(t=0; t<num_tokens; t++) /* what's the longest token */
-            max_token_length = MS_MAX(max_token_length, (int) strlen(token[t]));
-
-        rect->minx = 0;
-        rect->miny = -(fontPtr->h * num_tokens);
-        rect->maxx = fontPtr->w * max_token_length;
-        rect->maxy = 0;
-
-        msFreeCharArray(token, num_tokens);
-        return MS_SUCCESS;
-    }
+int msGetRasterTextBBox(rendererVTableObj *renderer, int size, char *string, rectObj *rect) {
+    if(renderer && renderer->supports_bitmap_fonts) {
+    	int num_lines=1, cur_line_length=0, max_line_length=0;
+    	char *stringPtr = string;
+    	fontMetrics *fontPtr;
+    	if((fontPtr=renderer->bitmapFontMetrics[size]) == NULL) {
+    		msSetError(MS_MISCERR, "selected renderer does not support bitmap font size %d", "msGetRasterTextBBox()",size);
+    		return MS_FAILURE;
+    	}
+    	while(*stringPtr) {
+    		if(*stringPtr=='\n') {
+    			max_line_length = MS_MAX(cur_line_length,max_line_length);
+    			num_lines++;
+    			cur_line_length=0;
+    		} else {
+    			if(*stringPtr!='\r')
+    				cur_line_length++;
+    		}
+    		stringPtr++;
+    	}
+    	max_line_length = MS_MAX(cur_line_length,max_line_length);
+    	rect->minx = 0;
+		rect->miny = -(fontPtr->charHeight * num_lines);
+		rect->maxx = fontPtr->charWidth * max_line_length;
+		rect->maxy = 0;
+    	return MS_SUCCESS;
+    } else {
+		msSetError(MS_MISCERR, "selected renderer does not support raster fonts", "msGetRasterTextBBox()");
+		return MS_FAILURE;
+	}
 }
 
+
+char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey) {
+  char *font;
+	if(!fontKey) {
+		msSetError(MS_TTFERR, "Requested font (NULL) not found.", "msFontsetLookupFont()");
+		return NULL;
+	}
+	font = msLookupHashTable(&(fontset->fonts), fontKey);
+	if(!font) {
+	  msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSize()", fontKey);
+	  return NULL;
+	}
+	return font;
+}
 /*
 ** Note: All these routines assume a reference point at the LL corner of the text. GD's
 ** bitmapped fonts use UL and this is compensated for. Note the rect is relative to the
@@ -777,60 +779,28 @@ int msGetRasterTextBBox(imageObj *img, int size, char *string, rectObj *rect) {
 */
 
 /* assumes an angle of 0 regardless of what's in the label object */
-int msGetLabelSize(imageObj *img, char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor, int adjustBaseline, double **advances)
+int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rectObj *rect, double **advances)
 {
-  double size;
   if(label->type == MS_TRUETYPE) {
-#ifdef USE_GD_FT
-    char *font=NULL;
-
-    size = label->size*scalefactor;
-    if (img != NULL) {
-      size = MS_MAX(size, label->minsize*img->resolutionfactor);
-      size = MS_MIN(size, label->maxsize*img->resolutionfactor);
-    }
-    else {
-      size = MS_MAX(size, label->minsize);
-      size = MS_MIN(size, label->maxsize);
-    }
-    scalefactor = size / label->size;
-    font = msLookupHashTable(&(fontset->fonts), label->font);
+	rendererVTableObj *renderer = MS_MAP_RENDERER(map);
+    char *font=msFontsetLookupFont(&(map->fontset), label->font);
     if(!font) {
-      if(label->font) 
-        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSize()", label->font);
-      else
-        msSetError(MS_TTFERR, "Requested font (NULL) not found.", "msGetLabelSize()");
-      return(-1);
+    	//error message already set in fontset lookup
+    	return MS_FAILURE;
     }
-
-    if(msGetTruetypeTextBBox(img,font,size,string,rect,advances)!=MS_SUCCESS)
-        return -1;
-
-    /* bug 1449 fix (adjust baseline) */
-    if(adjustBaseline) {
-      int nNewlines = msCountChars(string,'\n');
-      if(!nNewlines) {
-        label->offsety += (MS_NINT(((rect->miny + rect->maxy) + size) / 2))/scalefactor;
-        label->offsetx += (MS_NINT(rect->minx / 2))/scalefactor;
-      }
-      else {
-        rectObj rect2; /*bbox of first line only*/
-        char* firstLine = msGetFirstLine(string);
-        msGetTruetypeTextBBox(img,font,size,firstLine,&rect2,NULL);
-        label->offsety += (MS_NINT(((rect2.miny+rect2.maxy) + size) / 2))/scalefactor;
-        label->offsetx += (MS_NINT(rect2.minx / 2))/scalefactor;
-        free(firstLine);
-      }
-    }
-    return 0;
-#else
-    msSetError(MS_TTFERR, "TrueType font support is not available.", "msGetLabelSize()");
-    return(-1);
-#endif
-  } else { /* MS_BITMAP font */
-    msGetRasterTextBBox(img,MS_NINT(label->size),string,rect);
- }
-  return(0);
+    return msGetTruetypeTextBBox(renderer,font,size,string,rect,advances);
+  } else if(label->type == MS_BITMAP){
+	  rendererVTableObj *renderer = MS_MAP_RENDERER(map);
+	  if(renderer->supports_bitmap_fonts)
+		  return msGetRasterTextBBox(renderer,MS_NINT(label->size),string,rect);
+	  else {
+		  msSetError(MS_MISCERR, "renderer does not support bitmap fonts", "msGetLabelSize()");
+		  return MS_FAILURE;
+	  }
+  } else {
+	  msSetError(MS_MISCERR, "unknown label type", "msGetLabelSize()");
+	  return MS_FAILURE;
+  }
 }
 
 gdFontPtr msGetBitmapFont(int size)
@@ -937,8 +907,8 @@ pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int o
 
   x = x1 - rect.minx;
   y = rect.maxy - y1;
-  q.x = p->x + MS_NINT(x * cos_a - (y) * sin_a);
-  q.y = p->y - MS_NINT(x * sin_a + (y) * cos_a);
+  q.x = p->x + (x * cos_a - (y) * sin_a);
+  q.y = p->y - (x * sin_a + (y) * cos_a);
 
   if(poly) {
       /*
@@ -1050,109 +1020,4 @@ int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
   }
 
   return(MS_FALSE);
-}
-
-int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
-{
-#ifdef USE_GD_FT
-  return(0);
-#else
-  msSetError(MS_TTFERR, "TrueType font support is not available.", "msImageTruetypeArrow()");
-  return(-1);
-#endif
-}
-
-int msImageTruetypePolyline(symbolSetObj *symbolset, imageObj *img, shapeObj *p, styleObj *style, double scalefactor)
-{
-#ifdef USE_GD_FT
-  int i,j;
-  double theta, length, current_length;
-  labelObj label;
-  pointObj point, label_point;
-  rectObj label_rect;
-  int label_width;
-  int position, rot, gap, in;
-  double rx, ry, size;
-  symbolObj *symbol;
-
-
-  symbol = symbolset->symbol[style->symbol];
-
-  initLabel(&label);
-  rot = (symbol->gap <= 0);
-  label.type = MS_TRUETYPE;
-  label.font = symbol->font;
-  /* -- rescaling symbol and gap */
-  if(style->size == -1) {
-      size = msSymbolGetDefaultSize( symbol );
-  }
-  else
-      size = style->size;
-  if(size*scalefactor > style->maxsize*img->resolutionfactor) scalefactor = (float)style->maxsize*img->resolutionfactor/(float)size;
-  if(size*scalefactor < style->minsize*img->resolutionfactor) scalefactor = (float)style->minsize*img->resolutionfactor/(float)size;
-  gap = MS_ABS(symbol->gap)* (int) scalefactor;
-  label.size = size ;/* "* scalefactor" removed: this is already scaled in msDrawTextGD()*/
-  /* label.minsize = style->minsize; */
-  /* label.maxsize = style->maxsize; */
-
-  label.color = style->color; /* TODO: now assuming these colors should have previously allocated pen values */
-  label.outlinecolor = style->outlinecolor;
-  label.antialias = symbol->antialias;
-  
-  if(msGetLabelSize(NULL,symbol->character, &label, &label_rect, symbolset->fontset, scalefactor, MS_FALSE,NULL) == -1)
-    return(-1);
-
-  label_width = (int) label_rect.maxx - (int) label_rect.minx;
-
-  for(i=0; i<p->numlines; i++) {
-    current_length = gap+label_width/2.0; /* initial padding for each line */
-    
-    for(j=1;j<p->line[i].numpoints;j++) {
-      length = sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2)));
-      if(length==0)continue;
-      rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;
-      ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;  
-      position = symbol->position;
-      theta = asin(ry);
-      if(rx < 0) {
-        if(rot){
-          theta += MS_PI;
-                if((position == MS_UR)||(position == MS_UL)) position = MS_LC;
-          if((position == MS_LR)||(position == MS_LL)) position = MS_UC;
-        }else{
-          if(position == MS_UC) position = MS_LC;
-          else if(position == MS_LC) position = MS_UC;
-        }
-      }
-      else theta = -theta;        
-      if((position == MS_UR)||(position == MS_UL)) position = MS_UC;
-      if((position == MS_LR)||(position == MS_LL)) position = MS_LC;
-      
-      label.angle = style->angle;
-      if(rot)
-          label.angle+=MS_RAD_TO_DEG * theta;
-      
-      in = 0;
-      while(current_length <= length) {
-        point.x = MS_NINT(p->line[i].point[j-1].x + current_length*rx);
-        point.y = MS_NINT(p->line[i].point[j-1].y + current_length*ry);
-
-        label_point = get_metrics(&point, (rot)?MS_CC:position, label_rect, 0, 0, label.angle, 0, NULL);
-        msDrawTextGD(img, label_point, symbol->character, &label, symbolset->fontset, scalefactor);
-
-        current_length += label_width + gap;
-        in = 1;
-      }
-
-      if(in){
-        current_length -= length + label_width/2.0;
-      } else current_length -= length;
-    }
-  }
-
-  return(0);
-#else
-  msSetError(MS_TTFERR, "TrueType font support is not available.", "msImageTruetypePolyline()");
-  return(-1);
-#endif
 }

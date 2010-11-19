@@ -2759,28 +2759,17 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
                 "msWCSGetCoverage20()");
         return msWCSException(map, NULL, NULL, params->version);
     }
-    else if (MS_RENDERER_GD(map->outputformat))
+    else if (MS_RENDERER_PLUGIN(map->outputformat))
     {
-        image = msImageCreateGD(map->width, map->height, map->outputformat,
+        image = msImageCreate(map->width, map->height, map->outputformat,
                 map->web.imagepath, map->web.imageurl, map->resolution,
-                map->defresolution);
-        if (image != NULL)
-            msImageInitGD(image, &map->imagecolor);
-#ifdef USE_AGG
-    }
-    else if (MS_RENDERER_AGG(map->outputformat))
-    {
-        image = msImageCreateAGG(map->width, map->height, map->outputformat,
-                map->web.imagepath, map->web.imageurl, map->resolution,
-                map->defresolution);
-        if (image != NULL)
-            msImageInitAGG(image, &map->imagecolor);
-#endif
+                map->defresolution, &map->imagecolor);
     }
     else if (MS_RENDERER_RAWDATA(map->outputformat))
     {
         image = msImageCreate(map->width, map->height, map->outputformat,
-                map->web.imagepath, map->web.imageurl, map);
+                map->web.imagepath, map->web.imageurl, map->resolution,
+                map->defresolution, &map->imagecolor);
     }
     else
     {

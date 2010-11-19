@@ -122,6 +122,21 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
   int zoom = 2;
   imageObj* imgOut = NULL;
   tileParams params;
+  rendererVTableObj *renderer;
+  rasterBufferObj imgBuffer;
+  
+  if( !MS_RENDERER_PLUGIN(msObj->map->outputformat) 
+		  || msObj->map->outputformat->renderer != img->format->renderer ||
+		  ! MS_MAP_RENDERER(msObj->map)->supports_pixel_buffer ) {
+	  msSetError(MS_MISCERR,"unsupported or mixed renderers","msTileExtractSubTile()");
+	  return NULL;
+  }
+  renderer = MS_MAP_RENDERER(msObj->map);
+  
+  if (renderer->getRasterBufferHandle((imageObj*)img,&imgBuffer) != MS_SUCCESS) {
+	  return NULL;
+  }
+  
 
   /*
   ** Load the metatiling information from the map file.
@@ -194,18 +209,19 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
   else {
     return(NULL); /* Huh? Should have a mode. */
   }
-
-  imgOut = msImageCreate(params.tile_size, params.tile_size, msObj->map->outputformat, NULL, NULL, msObj->map);
-
-  /* We're going to do the image copy using gd */
-  if( imgOut->img.gd == NULL ) {
+  
+  imgOut = msImageCreate(params.tile_size, params.tile_size, msObj->map->outputformat, NULL, NULL, msObj->map->resolution, msObj->map->defresolution, NULL);
+  
+  if( imgOut == NULL ) {
     return NULL;
   }
   
   if(msObj->map->debug)
     msDebug("msTileExtractSubTile(): extracting (%d x %d) tile, top corner (%d, %d)\n",params.tile_size,params.tile_size,mini,minj);
-
-  gdImageCopy(imgOut->img.gd, img->img.gd, 0, 0, mini, minj, params.tile_size, params.tile_size);
+  
+  
+  
+  renderer->mergeRasterBuffer(imgOut,&imgBuffer,1.0,mini, minj,0, 0,params.tile_size, params.tile_size);
 
   return imgOut;
 }

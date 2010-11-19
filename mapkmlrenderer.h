@@ -85,28 +85,18 @@ protected:
 
 	enum			symbFlagsEnum { Label, Line, Polygon, Symbol };
 
-	// internal output format containing cairo renderer used for rasterizing and rendering symbols
-	outputFormatObj	*RasterizerOutputFormat;
-
-	imageObj		*ImgLayer;
-
 	int				FirstLayer;
         
         mapObj                  *map;
         layerObj                *currentLayer;
-	
-
-	// if true - features are rasterized
-	int				VectorMode;
-
-	// if true - features are written directly in kml
-	int				RasterMode;
 
 	int				AltitudeMode;
 	int				Tessellate;
 	int				Extrude;
 
 	enum altitudeModeEnum { undefined, clampToGround, relativeToGround, absolute };
+	
+	outputFormatObj *aggFormat;
 
 protected:
 
@@ -143,14 +133,14 @@ protected:
 
 public:
 
-	KmlRenderer(int width, int height, colorObj* color = NULL);
+	KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color = NULL);
 	virtual ~KmlRenderer();
 
     imageObj* createImage(int width, int height, outputFormatObj *format, colorObj* bg);
     int saveImage(imageObj *img, FILE *fp, outputFormatObj *format);
     
-	void startNewLayer(imageObj *img, layerObj *layer);
-	void closeNewLayer(imageObj *img, layerObj *layer);
+	int startNewLayer(imageObj *img, layerObj *layer);
+	int closeNewLayer(imageObj *img, layerObj *layer);
 
 	void startShape(imageObj *img, shapeObj *shape);
 	void endShape(imageObj *img, shapeObj *shape);
@@ -167,8 +157,7 @@ public:
 	void renderTruetypeSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
 
 	int getTruetypeTextBBox(imageObj *img,char *font, double size, char *string, rectObj *rect, double **advances);
-
-        int renderRasterLayer(imageObj *img);
+	int mergeRasterBuffer(imageObj *image, rasterBufferObj *rb);
 };
 
 #endif /* USE_KML */

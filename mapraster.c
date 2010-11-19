@@ -322,13 +322,6 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
   return op; /* Return newly allocated color */  
 }
 
-#ifdef USE_AGG
-int msAddColorAGG(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
-{
-	 return msAddColorGD( map, img, cmt, r, g, b );
-}
-#endif
-
 /************************************************************************/
 /*                        msDrawRasterLayerLow()                        */
 /*                                                                      */
@@ -738,62 +731,78 @@ cleanup:
 /*                         msDrawReferenceMap()                         */
 /************************************************************************/
 
-/* TODO : this will msDrawReferenceMapGD */
 imageObj *msDrawReferenceMap(mapObj *map) {
   double cellsize;
-  int c=-1, oc=-1;
   int x1,y1,x2,y2;
   char szPath[MS_MAXPATHLEN];
 
   imageObj   *image = NULL;
-  gdImagePtr img=NULL;
+  styleObj style;
 
-  image = msImageLoadGD( msBuildPath(szPath, map->mappath, 
-                                     map->reference.image) );
-  if( image == NULL )
-      return NULL;
 
-  if (map->web.imagepath)
-      image->imagepath = strdup(map->web.imagepath);
-  if (map->web.imageurl)
-      image->imageurl = strdup(map->web.imageurl);
+  rendererVTableObj *renderer = MS_MAP_RENDERER(map);
+  rasterBufferObj *refImage = (rasterBufferObj*)calloc(1,sizeof(rasterBufferObj));
+  if(MS_SUCCESS != renderer->loadImageFromFile(msBuildPath(szPath, map->mappath, map->reference.image),refImage)) {
+	  msSetError(MS_MISCERR,"error loading reference image %s","msDrawREferenceMap()",szPath);
+	  return NULL;
+  }
 
-  img = image->img.gd;
+  image = msImageCreate(refImage->width, refImage->height, map->outputformat,
+          map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &(map->reference.color));
+
+  renderer->mergeRasterBuffer(image,refImage,1.0,0,0,0,0,refImage->width, refImage->height);
   
+  msFreeRasterBuffer(refImage);
+  free(refImage);
+
   /* make sure the extent given in mapfile fits the image */
   cellsize = msAdjustExtent(&(map->reference.extent), 
                             image->width, image->height);
-
-  /* Allocate a fake bg color because when using gd-1.8.4 with a PNG reference */
-  /* image, the box color could end up being set to color index 0 which is  */
-  /* transparent (yes, that's odd!). */
-  gdImageColorAllocate(img, 255,255,255);
-
-  /* allocate some colors */
-  if( MS_VALID_COLOR(map->reference.outlinecolor) )
-    oc = gdImageColorAllocate(img, map->reference.outlinecolor.red, map->reference.outlinecolor.green, map->reference.outlinecolor.blue);
-  if( MS_VALID_COLOR(map->reference.color) )
-    c = gdImageColorAllocate(img, map->reference.color.red, map->reference.color.green, map->reference.color.blue); 
 
   /* convert map extent to reference image coordinates */
   x1 = MS_MAP2IMAGE_X(map->extent.minx,  map->reference.extent.minx, cellsize);
   x2 = MS_MAP2IMAGE_X(map->extent.maxx,  map->reference.extent.minx, cellsize);  
   y1 = MS_MAP2IMAGE_Y(map->extent.maxy,  map->reference.extent.maxy, cellsize);
   y2 = MS_MAP2IMAGE_Y(map->extent.miny,  map->reference.extent.maxy, cellsize);
-
+  
+  initStyle(&style);
+  style.color = map->reference.color;
+  style.outlinecolor = map->reference.outlinecolor;
+  
   /* if extent are smaller than minbox size */
   /* draw that extent on the reference image */
   if( (abs(x2 - x1) > map->reference.minboxsize) || 
           (abs(y2 - y1) > map->reference.minboxsize) )
   {
+      shapeObj rect;
+      lineObj line;
+      pointObj points[5];
+      msInitShape(&rect);
+
+      line.point = points;
+      line.numpoints = 5;
+      rect.line = &line;
+      rect.numlines = 1;
+      rect.type = MS_SHAPE_POLYGON;
+  
+      line.point[0].x = x1;
+      line.point[0].y = y1;
+      line.point[1].x = x1;
+      line.point[1].y = y2;
+      line.point[2].x = x2;
+      line.point[2].y = y2;
+      line.point[3].x = x2;
+      line.point[3].y = y1;
+      line.point[4].x = line.point[0].x;
+      line.point[4].y = line.point[0].y;
+  
+      line.numpoints = 5;
+
       if( map->reference.maxboxsize == 0 || 
               ((abs(x2 - x1) < map->reference.maxboxsize) && 
                   (abs(y2 - y1) < map->reference.maxboxsize)) )
       {
-          if(c != -1)
-              gdImageFilledRectangle(img,x1,y1,x2,y2,c);
-          if(oc != -1)
-              gdImageRectangle(img,x1,y1,x2,y2,oc);
+          msDrawShadeSymbol(&(map->symbolset), image, &rect, &style, 1.0); 
       }
   
   }
@@ -803,11 +812,6 @@ imageObj *msDrawReferenceMap(mapObj *map) {
               ((abs(x2 - x1) < map->reference.maxboxsize) && 
                   (abs(y2 - y1) < map->reference.maxboxsize)) )
       {
-	  styleObj style;
-
-          initStyle(&style);
-          style.color = map->reference.color;
-          style.outlinecolor = map->reference.outlinecolor;
           style.size = map->reference.markersize;
 
           /* if the marker symbol is specify draw this symbol else draw a cross */
@@ -818,8 +822,8 @@ imageObj *msDrawReferenceMap(mapObj *map) {
               point = malloc(sizeof(pointObj));
               point->x = (double)(x1 + x2)/2;
               point->y = (double)(y1 + y2)/2;
-
-	      style.symbol = map->reference.marker;
+              
+              style.symbol = map->reference.marker;
 
               msDrawMarkerSymbol(&map->symbolset, image, point, &style, 1.0);
               free(point);
@@ -831,8 +835,8 @@ imageObj *msDrawReferenceMap(mapObj *map) {
               point = malloc(sizeof(pointObj));
               point->x = (double)(x1 + x2)/2;
               point->y = (double)(y1 + y2)/2;
-
-	      style.symbol = msGetSymbolIndex(&map->symbolset,  map->reference.markername, MS_TRUE);
+              
+              style.symbol = msGetSymbolIndex(&map->symbolset,  map->reference.markername, MS_TRUE);
 
               msDrawMarkerSymbol(&map->symbolset, image, point, &style, 1.0);
               free(point);
@@ -840,22 +844,40 @@ imageObj *msDrawReferenceMap(mapObj *map) {
           else
           {
               int x21, y21;
+              shapeObj cross;
+              lineObj lines[4];
+              pointObj point[8];
+              int i;
               /* determine the center point */
               x21 = MS_NINT((x1 + x2)/2);
               y21 = MS_NINT((y1 + y2)/2);
 
-              /* get the color */
-              if(c == -1)
-                  c = oc;
-
-              /* draw a cross */
-              if(c != -1)
-              {
-                  gdImageLine(img, x21-8, y21, x21-3, y21, c);
-                  gdImageLine(img, x21, y21-8, x21, y21-3, c);
-                  gdImageLine(img, x21, y21+3, x21, y21+8, c);
-                  gdImageLine(img, x21+3, y21, x21+8, y21, c);
+              msInitShape(&cross);
+              cross.numlines = 4;
+              cross.line = lines;
+              for(i=0;i<4;i++) {
+                cross.line[i].numpoints = 2;
+                cross.line[i].point = &(point[2*i]);
               }
+              /* draw a cross */
+              cross.line[0].point[0].x = x21-8;
+              cross.line[0].point[0].y = y21;
+              cross.line[0].point[1].x = x21-3;
+              cross.line[0].point[1].y = y21;
+              cross.line[1].point[0].x = x21;
+              cross.line[1].point[0].y = y21-8;
+              cross.line[1].point[1].x = x21;
+              cross.line[1].point[1].y = y21-3;
+              cross.line[2].point[0].x = x21;
+              cross.line[2].point[0].y = y21+3;
+              cross.line[2].point[1].x = x21;
+              cross.line[2].point[1].y = y21+8;
+              cross.line[3].point[0].x = x21+3;
+              cross.line[3].point[0].y = y21;
+              cross.line[3].point[1].x = x21+8;
+              cross.line[3].point[1].y = y21;
+              
+              msDrawLineSymbol(&(map->symbolset),image,&cross,&style,1.0);
           }
       }
   }

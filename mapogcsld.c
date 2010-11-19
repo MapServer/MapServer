@@ -1235,19 +1235,8 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                     if(psCssParam->psChild &&  psCssParam->psChild->psNext && 
                        psCssParam->psChild->psNext->pszValue)
                     {
-                        psStyle->size = 
+                        psStyle->width = 
                           atof(psCssParam->psChild->psNext->pszValue);
-                                
-                        /* use an ellipse symbol for the width */
-                        if (psStyle->symbol <=0)
-                        {
-                            psStyle->symbol = 
-                              msSLDGetLineSymbol(map);
-                            if (psStyle->symbol > 0 &&
-                                psStyle->symbol < map->symbolset.numsymbols)
-                              psStyle->symbolname = 
-                                strdup(map->symbolset.symbol[psStyle->symbol]->name);
-                        }
                     }
                 }
                 else if (strcasecmp(psStrkName, "stroke-dasharray") == 0)
@@ -1255,16 +1244,20 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                     if(psCssParam->psChild && psCssParam->psChild->psNext &&
                        psCssParam->psChild->psNext->pszValue)
                     {
-                        pszDashValue = 
+                       int nDash = 0, i;
+                       char **aszValues = NULL;
+                       pszDashValue = 
                           strdup(psCssParam->psChild->psNext->pszValue);
-                        /* use an ellipse symbol with dash arrays */
-                        psStyle->symbol = 
-                          msSLDGetDashLineSymbol(map, 
-                                                 psCssParam->psChild->psNext->pszValue);
-                        if ( psStyle->symbol > 0 && 
-                             psStyle->symbol < map->symbolset.numsymbols)
-                          psStyle->symbolname = 
-                            strdup(map->symbolset.symbol[psStyle->symbol]->name);
+                       aszValues = msStringSplit(pszDashValue, ' ', &nDash);
+                       if (nDash > 0)
+                       {
+                           psStyle->patternlength = nDash;
+                           for (i=0; i<nDash; i++)
+                              psStyle->pattern[i] = atoi(aszValues[i]);
+
+                           msFreeCharArray(aszValues, nDash);
+                       }
+                        
                     }
                 }
                 else if (strcasecmp(psStrkName, "stroke-opacity") == 0)
@@ -2202,61 +2195,21 @@ static const unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 
 int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
                           int nGap)
 {
-    FILE *fp;
-    char bytes[8];
-    gdImagePtr img = NULL;
     int nSymbolId = 0;
     symbolObj *psSymbol = NULL;
 
 
     if (map && pszFileName)
     {
-        if (nSymbolId <= 0)
-        {
-            if( (psSymbol = msGrowSymbolSet(&(map->symbolset))) == NULL)
-                return 0; /* returns 0 for no symbol */
-
-            /* check if a symbol of a  */
-            fp = fopen(pszFileName, "rb");
-            if (fp)
-            {
-                fread(bytes,8,1,fp);
-                rewind(fp);
-                if (memcmp(bytes,"GIF8",4)==0)
-                {
-#ifdef USE_GD_GIF
-                    img = gdImageCreateFromGif(fp);
-#endif
-                }
-                else if (memcmp(bytes,PNGsig,8)==0) 
-                {
-#ifdef USE_GD_PNG
-                    img = gdImageCreateFromPng(fp);
-#endif        
-                }
-                fclose(fp);
-
-                if (img)
-                {
-                    nSymbolId = map->symbolset.numsymbols;
-                    map->symbolset.numsymbols++;
-                    initSymbol(psSymbol);
-                    psSymbol->inmapfile = MS_TRUE;
-                    psSymbol->sizex = 1;
-                    psSymbol->sizey = 1; 
-                    psSymbol->type = MS_SYMBOL_PIXMAP;
-                    psSymbol->name = strdup(extGraphicName);
-                    psSymbol->imagepath = strdup(pszFileName);
-                    psSymbol->sizex = img->sx;
-                    psSymbol->sizey = img->sy;
-                    
-                    /* gap is set to 2 times the size*/
-                    psSymbol->gap = nGap;
-                    
-                    psSymbol->img = img;
-                }
-            }
-        }
+		if( (psSymbol = msGrowSymbolSet(&(map->symbolset))) == NULL)
+			return 0; /* returns 0 for no symbol */
+		nSymbolId = map->symbolset.numsymbols;
+		map->symbolset.numsymbols++;
+		initSymbol(psSymbol);
+		psSymbol->inmapfile = MS_TRUE;
+		psSymbol->type = MS_SYMBOL_PIXMAP;
+		psSymbol->name = strdup(extGraphicName);
+		psSymbol->imagepath = strdup(pszFileName);
     }
     return nSymbolId;
 }

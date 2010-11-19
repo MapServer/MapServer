@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  PNG related functions for use with RGBA imagetypes
+ * Purpose:  RGB(A) to Palette Support Functions
  * Author:   Thomas Bonfort
  *
  ******************************************************************************
@@ -44,230 +44,8 @@
  ** implied warranty.
  */
 
-#ifdef USE_RGBA_PNG
 #include "mapserver.h"
-#include <assert.h>
 #include <stdlib.h>
-
-#define PNG_SETJMP_NOT_SUPPORTED 1
-#include "png.h"
-#include <setjmp.h>
-
-
-
-
-typedef struct {
-    unsigned char b,g,r,a;
-} apixel;
-
-typedef struct {
-    unsigned char r,g,b;
-} apalettepixel;
-
-
-static void
-ctxWriteFunc (png_structp png_ptr, png_bytep data, png_size_t length)
-{
-    gdIOCtx *ctx=(gdIOCtx *) png_get_io_ptr (png_ptr);
-    ctx->putBuf(ctx,data,length);
-}
-
-static void
-ctxFlushFunc (png_structp png_ptr)
-{
-}
-
-typedef struct _ms_png_info {
-    int width;
-    int height;
-    void *png_ptr;
-    void *info_ptr;
-    apalettepixel palette[256];
-    unsigned char trans[256];
-    unsigned char *indexed_data;
-    unsigned char **row_pointers;
-    jmp_buf jmpbuf;
-    int interlaced;
-    int sample_depth;
-    int num_palette;
-    int num_trans;
-} ms_png_info;
-
-static void ms_png_error_handler(png_structp png_ptr, png_const_charp msg)
-{
-    ms_png_info  *ms_ptr = png_get_error_ptr(png_ptr);
-    msSetError(MS_IOERR, "libpng error (%s)", msg);
-    if (ms_ptr == NULL) {/* we are completely hosed now */
-        fprintf(stderr, "png severe error:  jmpbuf not recoverable; terminating.\n");
-        fflush(stderr);
-        exit(99);
-    }
-    longjmp(ms_ptr->jmpbuf, 1);
-}
-
-int ms_png_write_image_init(gdIOCtx *ctx, ms_png_info *ms_ptr)
-{
-    png_structp png_ptr;       /* note:  temporary variables! */
-    png_infop info_ptr;
-    png_text text[1];
-
-
-    /* TODO: warning function to replace last NULL */
-    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,ms_ptr,ms_png_error_handler, NULL);
-
-    if (!png_ptr) {
-        msSetError(MS_MEMERR,"could not create png write struct","ms_png_write_image_init()");
-        return MS_FAILURE;
-    }
-    ms_ptr->png_ptr = png_ptr;
-
-    info_ptr = png_create_info_struct(png_ptr);
-    if (!info_ptr) {
-        png_destroy_write_struct(&png_ptr, NULL);
-        msSetError(MS_MEMERR,"could not create png info struct","ms_png_write_image_init()");
-        return MS_FAILURE;
-    }
-
-    /*
-     * first call of this function intializes jmpbuf.
-     * any subsequent error will call our custom error handler (ms_png_error_handler)
-     * wich will longjmp back here as if setjmp had returned a non-zero value
-     */
-    if (setjmp(ms_ptr->jmpbuf)) {
-        png_destroy_write_struct(&png_ptr, &info_ptr);
-        msSetError(MS_MISCERR,"error writing png header (via longjmp)","ms_png_write_image_init()");
-        return MS_FAILURE;
-    }
-
-    /*use the gdIOCtx writing functions*/
-    png_set_write_fn (png_ptr, (void*)ctx, ctxWriteFunc, ctxFlushFunc);
-
-    /* set max compression (writing a palette image is to gain size anyways */
-    png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
-
-    /* set the image parameters appropriately */
-    png_set_IHDR(png_ptr, info_ptr, ms_ptr->width, ms_ptr->height,
-            ms_ptr->sample_depth, PNG_COLOR_TYPE_PALETTE,
-            ms_ptr->interlaced, PNG_COMPRESSION_TYPE_DEFAULT,
-            PNG_FILTER_TYPE_DEFAULT);
-
-    /* GRR WARNING:  cast of rwpng_colorp to png_colorp could fail in future
-     * major revisions of libpng (but png_ptr/info_ptr will fail, regardless) */
-    png_set_PLTE(png_ptr, info_ptr, (png_colorp)ms_ptr->palette,ms_ptr->num_palette);
-
-    if (ms_ptr->num_trans > 0)
-        png_set_tRNS(png_ptr, info_ptr, ms_ptr->trans,ms_ptr->num_trans, NULL);
-
-    
-    text[0].key="Software";
-    text[0].compression=PNG_TEXT_COMPRESSION_NONE;
-    text[0].text="UMN Mapserver";
-    png_set_text(png_ptr, info_ptr, text, 1);
-
-
-    /* write all chunks up to (but not including) first IDAT */
-    png_write_info(png_ptr, info_ptr);
-
-    /* set up the transformations:  for now, just pack low-bit-depth pixels
-     * into bytes (one, two or four pixels per byte) */
-
-    png_set_packing(png_ptr);
-
-
-    /* make sure we save our pointers for use in other writing functions */
-    ms_ptr->png_ptr = png_ptr;
-    ms_ptr->info_ptr = info_ptr;
-    return MS_SUCCESS;
-}
-
-
-/* this routine is called only for interlaced images */
-
-int ms_png_write_image_whole(ms_png_info *ms_ptr)
-{
-    png_structp png_ptr = (png_structp)ms_ptr->png_ptr;
-    png_infop info_ptr = (png_infop)ms_ptr->info_ptr;
-
-
-    /* as always, setjmp() must be called in every function that calls a
-     * PNG-writing libpng function */
-    if (setjmp(ms_ptr->jmpbuf)) {
-        png_destroy_write_struct(&png_ptr, &info_ptr);
-        ms_ptr->png_ptr = NULL;
-        ms_ptr->info_ptr = NULL;
-        msSetError(MS_MISCERR,"error writing png data (via longjmp)","ms_png_write_image_whole()");
-        return MS_FAILURE;
-    }
-
-
-    /* and now we just write the whole image; libpng takes care of interlacing
-     * for us */
-    png_write_image(png_ptr, ms_ptr->row_pointers);
-
-    return MS_SUCCESS;
-}
-
-
-
-
-
-/* this routine is called only for non-interlaced images */
-int ms_png_write_image_row(ms_png_info *ms_ptr)
-{
-    png_structp png_ptr = (png_structp)ms_ptr->png_ptr;
-    png_infop info_ptr = (png_infop)ms_ptr->info_ptr;
-
-    /* as always, setjmp() must be called in every function that calls a
-     * PNG-writing libpng function */
-
-    if (setjmp(ms_ptr->jmpbuf)) {
-        png_destroy_write_struct(&png_ptr, &info_ptr);
-        ms_ptr->png_ptr = NULL;
-        ms_ptr->info_ptr = NULL;
-        msSetError(MS_MISCERR,"error writing png row (via longjmp)","ms_png_write_image_row()");
-        return MS_FAILURE;
-    }
-
-    /* indexed_data points at our one row of indexed data */
-    png_write_row(png_ptr, ms_ptr->indexed_data);
-    return MS_SUCCESS;
-}
-
-
-
-
-
-/* this routine is called only for non-interlaced images */
-int ms_png_write_image_finish(ms_png_info *ms_ptr)
-{
-    png_structp png_ptr = (png_structp)ms_ptr->png_ptr;
-    png_infop info_ptr = (png_infop)ms_ptr->info_ptr;
-
-
-    /* as always, setjmp() must be called in every function that calls a
-     * PNG-writing libpng function */
-
-    if (setjmp(ms_ptr->jmpbuf)) {
-        png_destroy_write_struct(&png_ptr, &info_ptr);
-        ms_ptr->png_ptr = NULL;
-        ms_ptr->info_ptr = NULL;
-        msSetError(MS_MISCERR,"error writing png footer (via longjmp)","ms_png_write_image_finish()");
-        return MS_FAILURE;
-    }
-
-
-    /* close out PNG file; if we had any text or time info to write after
-     * the IDATs, second argument would be info_ptr */
-
-    png_write_end(png_ptr, NULL);
-
-    png_destroy_write_struct(&png_ptr, &info_ptr);
-    ms_ptr->png_ptr = NULL;
-    ms_ptr->info_ptr = NULL;
-
-    return MS_SUCCESS;
-}
-
 
 #define PAM_GETR(p) ((p).r)
 #define PAM_GETG(p) ((p).g)
@@ -289,7 +67,7 @@ int ms_png_write_image_finish(ms_png_info *ms_ptr)
 
 typedef struct acolorhist_item *acolorhist_vector;
 struct acolorhist_item {
-    apixel acolor;
+    rgbaPixel acolor;
     int value;
 };
 
@@ -324,74 +102,53 @@ static int sumcompare (const void *b1, const void *b2);
 static acolorhist_vector pam_acolorhashtoacolorhist
 (acolorhash_table acht, int maxacolors);
 static acolorhist_vector pam_computeacolorhist
-(apixel **apixels, int cols, int rows, int maxacolors, int* acolorsP);
+(rgbaPixel **apixels, int cols, int rows, int maxacolors, int* acolorsP);
 static acolorhash_table pam_computeacolorhash
-(apixel** apixels, int cols, int rows, int maxacolors, int* acolorsP);
+(rgbaPixel** apixels, int cols, int rows, int maxacolors, int* acolorsP);
 static acolorhash_table pam_allocacolorhash (void);
 static int pam_addtoacolorhash
-(acolorhash_table acht, apixel *acolorP, int value);
-static int pam_lookupacolor (acolorhash_table acht, apixel* acolorP);
+(acolorhash_table acht, rgbaPixel *acolorP, int value);
+static int pam_lookupacolor (acolorhash_table acht, rgbaPixel* acolorP);
 static void pam_freeacolorhist (acolorhist_vector achv);
 static void pam_freeacolorhash (acolorhash_table acht);
 
 
-
-
-int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
-{
-    apixel **apixels=NULL,*datapixels=NULL; /* pointer to the gd truecolor pixels */
-    register apixel *pP;
+/**
+ * Compute a palette for the given RGBA rasterBuffer using a median cut quantization.
+ * - rb: the rasterBuffer to quantize
+ * - reqcolors: the desired number of colors the palette should contain. will be set
+ *   with the actual number of entries in the computed palette
+ * - forced_palette: entries that should appear in the computed palette
+ * - num_forced_palette_entries: number of entries contained in "force_palette". if 0,
+ *   "force_palette" can be NULL
+ */
+int msQuantizeRasterBuffer(rasterBufferObj *rb,
+      unsigned int *reqcolors, rgbaPixel *palette,
+      rgbaPixel *forced_palette, int num_forced_palette_entries) {
+          rgbaPixel **apixels=NULL; /* pointer to the start rows of truecolor pixels */
+	
+    register rgbaPixel *pP;
     register int col;
-    register int ind;
-    int retval=MS_SUCCESS;
-    unsigned char *outrow,*pQ;
+    
     unsigned char maxval, newmaxval;
     acolorhist_vector achv, acolormap=NULL;
-    acolorhash_table acht;
+    
     int row;
     int colors;
     int newcolors = 0;
-    int usehash;
+    
     int x;
     /*  int channels;  */
-    int bot_idx, top_idx;
-    int remap[256];
-    int reqcolors = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
-    const char *interlace;
-    ms_png_info info;
-    info.width = gdImageSX(img);
-    info.height = gdImageSY(img);
-    interlace = msGetOutputFormatOption( format, "INTERLACE", "OFF" );
-    if( strcasecmp("ON", interlace) == 0 || strcasecmp("YES", interlace) == 0
-            || strcasecmp("1", interlace) == 0)
-        info.interlaced=1;
-    else
-        info.interlaced=0;
-    info.row_pointers=NULL;
-    info.indexed_data=NULL;
+    
+	 assert(rb->type == MS_BUFFER_BYTE_RGBA);
+
     maxval = 255;
 
-    /*switch our gd alpha to something coherent*/
-    apixels=(apixel**)malloc(info.height*sizeof(apixel**));
-    datapixels=(apixel*)malloc(info.height*info.width*sizeof(apixel));
-    for(row=0;row<info.height;row++) {
-        apixels[row]=&(datapixels[row*info.width]);
-        for(col=0;col<info.width;col++) {
-            int c=gdImageTrueColorPixel(img,col,row);
-            apixels[row][col].r=gdTrueColorGetRed(c);
-            apixels[row][col].g=gdTrueColorGetGreen(c);
-            apixels[row][col].b=gdTrueColorGetBlue(c);
-            switch gdTrueColorGetAlpha(c) {
-            case 0:
-                apixels[row][col].a=255;
-                break;
-            case 127:
-                apixels[row][col].a=0;
-                break;
-            default:
-                apixels[row][col].a=(127-gdTrueColorGetAlpha(c))*2;
-            }
-        }
+    apixels=(rgbaPixel**)malloc(rb->height*sizeof(rgbaPixel**));
+    if(!apixels) return MS_FAILURE;
+    
+    for(row=0;row<rb->height;row++) {
+        apixels[row]=(rgbaPixel*)(&(rb->data.rgba.pixels[row * rb->data.rgba.row_step]));
     }
 
     /*
@@ -403,67 +160,25 @@ int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *form
      */
     for ( ; ; ) {
         achv = pam_computeacolorhist(
-                apixels, info.width, info.height, MAXCOLORS, &colors );
+                apixels, rb->width, rb->height, MAXCOLORS, &colors );
         if ( achv != (acolorhist_vector) 0 )
             break;
         newmaxval = maxval / 2;
-        for ( row = 0; row < info.height; ++row )
-            for ( col = 0, pP = apixels[row]; col < info.width; ++col, ++pP )
+        for ( row = 0; row < rb->height; ++row )
+            for ( col = 0, pP = apixels[row]; col < rb->width; ++col, ++pP )
                 PAM_DEPTH( *pP, *pP, maxval, newmaxval );
         maxval = newmaxval;
     }
-    newcolors = MS_MIN(colors, reqcolors);
-    acolormap = mediancut(achv, colors, info.width*info.height, maxval, newcolors);
+    newcolors = MS_MIN(colors, *reqcolors);
+    acolormap = mediancut(achv, colors, rb->width*rb->height, maxval, newcolors);
     pam_freeacolorhist(achv);
-
-    /*
-     ** Step 3.4 [GRR]: set the bit-depth appropriately, given the actual
-     ** number of colors that will be used in the output image.
-     */
-
-    if (newcolors <= 2)
-        info.sample_depth = 1;
-    else if (newcolors <= 4)
-        info.sample_depth = 2;
-    else if (newcolors <= 16)
-        info.sample_depth = 4;
-    else
-        info.sample_depth = 8;
-
-    /*
-     ** Step 3.5 [GRR]: remap the palette colors so that all entries with
-     ** the maximal alpha value (i.e., fully opaque) are at the end and can
-     ** therefore be omitted from the tRNS chunk.  Note that the ordering of
-     ** opaque entries is reversed from how Step 3 arranged them--not that
-     ** this should matter to anyone.
-     */
-
-    for (top_idx = newcolors-1, bot_idx = x = 0;  x < newcolors;  ++x) {
-        if (PAM_GETA(acolormap[x].acolor) == maxval)
-            remap[x] = top_idx--;
-        else
-            remap[x] = bot_idx++;
-    }
-
-
-    /* sanity check:  top and bottom indices should have just crossed paths */
-    if (bot_idx != top_idx + 1) {
-        msSetError(MS_MISCERR,"quantization sanity check failed","msSaveImageRGBAQuantized()");
-        retval = MS_FAILURE;
-        goto failure;
-    }
-
-    info.num_palette = newcolors;
-    info.num_trans = bot_idx;
-    /* GRR TO DO:  if bot_idx == 0, check whether all RGB samples are gray
-                   and if so, whether grayscale sample_depth would be same
-                   => skip following palette section and go grayscale */
+    
+    
+    *reqcolors = newcolors;
 
 
     /*
-     ** Step 3.6 [GRR]: rescale the palette colors to a maxval of 255, as
-     ** required by the PNG spec.  (Technically, the actual remapping happens
-     ** in here, too.)
+     ** rescale the palette colors to a maxval of 255
      */
 
     if (maxval < 255) {
@@ -471,48 +186,32 @@ int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *form
             /* the rescaling part of this is really just PAM_DEPTH() broken out
              *  for the PNG palette; the trans-remapping just puts the values
              *  in different slots in the PNG palette */
-            info.palette[remap[x]].r = (acolormap[x].acolor.r * 255 + (maxval >> 1)) / maxval;
-            info.palette[remap[x]].g = (acolormap[x].acolor.g * 255 + (maxval >> 1)) / maxval;
-            info.palette[remap[x]].b = (acolormap[x].acolor.b * 255 + (maxval >> 1)) / maxval;
-            info.trans[remap[x]]     = (acolormap[x].acolor.a * 255 + (maxval >> 1)) / maxval;
+        	palette[x].r = (acolormap[x].acolor.r * 255 + (maxval >> 1)) / maxval;
+        	palette[x].g = (acolormap[x].acolor.g * 255 + (maxval >> 1)) / maxval;
+        	palette[x].b = (acolormap[x].acolor.b * 255 + (maxval >> 1)) / maxval;
+        	palette[x].a = (acolormap[x].acolor.a * 255 + (maxval >> 1)) / maxval;
         }
     } else {
         for (x = 0; x < newcolors; ++x) {
-            info.palette[remap[x]].r = acolormap[x].acolor.r;
-            info.palette[remap[x]].g = acolormap[x].acolor.g;
-            info.palette[remap[x]].b = acolormap[x].acolor.b;
-            info.trans[remap[x]]     = acolormap[x].acolor.a;
+         palette[x].r = acolormap[x].acolor.r;
+         palette[x].g = acolormap[x].acolor.g;
+         palette[x].b = acolormap[x].acolor.b;
+         palette[x].a = acolormap[x].acolor.a;
         }
     }
+    
+   free(acolormap);
+   free(apixels);
+   return MS_SUCCESS;
+}
 
 
-    /*
-     ** Step 3.7 [GRR]: allocate memory for either a single row (non-
-     ** interlaced -> progressive write) or the entire indexed image
-     ** (interlaced -> all at once); note that rwpng_info.row_pointers
-     ** is still in use via apixels (INPUT data).
-     */
-
-    if (info.interlaced) {
-        if ((info.indexed_data = (unsigned char *)malloc(info.width * info.height)) != NULL) {
-            if ((info.row_pointers = (unsigned char **)malloc(info.height * sizeof(unsigned char *))) != NULL) {
-                for (row = 0;  row < info.height;  ++row)
-                    info.row_pointers[row] = info.indexed_data + row*info.width;
-            }
-        }
-    } else
-        info.indexed_data = (unsigned char *)malloc(info.width);
-
-    if (info.indexed_data == NULL ||
-            (info.interlaced && info.row_pointers == NULL))
-    {
-        msSetError(MS_MEMERR,"error allocating png structs","msSaveImageRGBAQuantized()");
-        retval = MS_FAILURE;
-        goto failure;
-    }
-
-
-
+int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb) {
+   register int ind;
+   unsigned char *outrow,*pQ;
+   register rgbaPixel *pP;
+   acolorhash_table acht;
+   int usehash, row, col;
     /*
      ** Step 4: map the colors in the image to their closest match in the
      ** new colormap, and write 'em out.
@@ -520,16 +219,10 @@ int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *form
     acht = pam_allocacolorhash( );
     usehash = 1;
 
-    if(ms_png_write_image_init(ctx,&info)==MS_FAILURE) {
-        msSetError(MS_MISCERR,"error writing png header","msSaveImageRGBAQuantized()");
-        retval = MS_FAILURE;
-        goto failure;
-    }
-
-    for ( row = 0; row < info.height; ++row ) {
-        outrow = info.interlaced? info.row_pointers[row] : info.indexed_data;
+    for ( row = 0; row < qrb->height; ++row ) {
+        outrow = &(qrb->data.palette.pixels[row*qrb->width]);
         col = 0;
-        pP = apixels[row];
+        pP = (rgbaPixel*)(&(rb->data.rgba.pixels[row * rb->data.rgba.row_step]));;
         pQ = outrow;
         do {
             /* Check hash table to see if we have already matched this color. */
@@ -544,11 +237,11 @@ int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *form
                 b1 = PAM_GETB( *pP );
                 a1 = PAM_GETA( *pP );
                 dist = 2000000000;
-                for ( i = 0; i < newcolors; ++i ) {
-                    r2 = PAM_GETR( acolormap[i].acolor );
-                    g2 = PAM_GETG( acolormap[i].acolor );
-                    b2 = PAM_GETB( acolormap[i].acolor );
-                    a2 = PAM_GETA( acolormap[i].acolor );
+                for ( i = 0; i < qrb->data.palette.num_entries; ++i ) {
+                    r2 = PAM_GETR( qrb->data.palette.palette[i] );
+                    g2 = PAM_GETG( qrb->data.palette.palette[i] );
+                    b2 = PAM_GETB( qrb->data.palette.palette[i] );
+                    a2 = PAM_GETA( qrb->data.palette.palette[i] );
                     /* GRR POSSIBLE BUG */
                     newdist = ( r1 - r2 ) * ( r1 - r2 ) +  /* may overflow? */
                     ( g1 - g2 ) * ( g1 - g2 ) +
@@ -567,44 +260,18 @@ int msSaveImageRGBAQuantized(gdImagePtr img, gdIOCtx *ctx, outputFormatObj *form
             }
 
             /*          *pP = acolormap[ind].acolor;  */
-            *pQ = (unsigned char)remap[ind];
+            *pQ = (unsigned char)ind;
 
             ++col;
             ++pP;
             ++pQ;
 
         }
-        while ( col != info.width );
-
-        /* if non-interlaced PNG, write row now */
-        if (!info.interlaced) {
-            if(ms_png_write_image_row(&info)==MS_FAILURE) {
-                msSetError(MS_MISCERR,"Error writing png row","msSaveImageRGBAQuantized()");
-                retval = MS_FAILURE;
-                goto failure;
-            }
-        }
-    }
-
-    /* write entire interlaced palette PNG, or finish/flush noninterlaced one */
-    if (info.interlaced) {
-        if(ms_png_write_image_whole(&info)==MS_FAILURE) {
-            msSetError(MS_MISCERR,"Error writing interlaced png data","msSaveImageRGBAQuantized()");
-            retval = MS_FAILURE;
-            goto failure;
-        }
+        while ( col != rb->width );
     }
     pam_freeacolorhash(acht);
-    ms_png_write_image_finish(&info);
 
-
-    failure:
-    free(info.indexed_data);
-    free(info.row_pointers);
-    free(acolormap);
-    free(apixels);
-    free(datapixels);
-    return retval;
+    return MS_SUCCESS;
 }
 
 
@@ -939,7 +606,7 @@ sumcompare( const void *b1, const void *b2 )
 
 static acolorhist_vector
 pam_computeacolorhist( apixels, cols, rows, maxacolors, acolorsP )
-apixel** apixels;
+rgbaPixel** apixels;
 int cols, rows, maxacolors;
 int* acolorsP;
 {
@@ -958,12 +625,12 @@ int* acolorsP;
 
 static acolorhash_table
 pam_computeacolorhash( apixels, cols, rows, maxacolors, acolorsP )
-apixel** apixels;
+rgbaPixel** apixels;
 int cols, rows, maxacolors;
 int* acolorsP;
 {
     acolorhash_table acht;
-    register apixel* pP;
+    register rgbaPixel* pP;
     acolorhist_list achl;
     int col, row, hash;
 
@@ -1027,7 +694,7 @@ pam_allocacolorhash( )
 static int
 pam_addtoacolorhash( acht, acolorP, value )
 acolorhash_table acht;
-apixel* acolorP;
+rgbaPixel* acolorP;
 int value;
 {
     register int hash;
@@ -1082,7 +749,7 @@ int maxacolors;
 static int
 pam_lookupacolor( acht, acolorP )
 acolorhash_table acht;
-apixel* acolorP;
+rgbaPixel* acolorP;
 {
     int hash;
     acolorhist_list achl;
@@ -1121,133 +788,6 @@ acolorhash_table acht;
         }
     free( (char*) acht );
 }
-
-int find_closest_color(ms_png_info *mpi, int r, int g, int b, int a) {
-    int i,dr,dg,db,da;
-    int idx=-1,dst,mindst=0xFFFFF;
-    for(i=0;i<mpi->num_palette;i++) {
-        dr=r-mpi->palette[i].r;
-        dg=g-mpi->palette[i].g;
-        db=b-mpi->palette[i].b;
-        da=(i<mpi->num_trans)?a-mpi->trans[i]:a-255;
-        dst=dr*dr+dg*dg+db*db+da*da;
-        if(dst<mindst) {
-            mindst=dst;
-            idx=i;
-        }
-    }
-    return idx;
-}
-
-
-int msSaveImageRGBAPalette(gdImagePtr img, gdIOCtx *ctx ,outputFormatObj *format) {
-    const char *pfile = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
-    FILE *stream=NULL;
-    char buffer[MS_BUFFER_LENGTH];
-    int ncolors = 0;
-    int r,g,b,a,c,x,y;
-    ms_png_info info;
-    unsigned short ****cache;
-    info.width=gdImageSX(img);
-    info.height=gdImageSY(img);
-    info.sample_depth=8;
-    info.interlaced=0;
-    if(info.width < 1 || info.height < 1) return MS_FAILURE;
-
-    stream = fopen(pfile, "r");
-    if(!stream) {
-        msSetError(MS_IOERR, "Error opening palette file %s.", "msSaveImageRGBAPalette()", pfile);
-        return MS_FAILURE;
-    }
-
-    while(fgets(buffer, MS_BUFFER_LENGTH, stream) && ncolors<256) 
-    { 
-        if(sscanf(buffer,"%d,%d,%d,%d\n",&r,&g,&b,&a)==4) {
-            info.palette[ncolors].r=r;
-            info.palette[ncolors].g=g;
-            info.palette[ncolors].b=b;
-            info.trans[ncolors]=a;
-            ncolors++;
-        }
-    }
-    fclose(stream);
-    info.num_palette=info.num_trans=ncolors;
-
-    cache=(unsigned short****)calloc(256,sizeof(unsigned short***));
-    if(!cache) {
-        msSetError(MS_MEMERR,"error allocating color index lookup cache","msSaveImageRGBAPalette()");
-        return MS_FAILURE;
-    }
-    info.indexed_data=(unsigned char*)malloc(info.width);
-    if(!info.indexed_data) {
-        msSetError(MS_MEMERR,"error allocating png row cache","msSaveImageRGBAPalette()");
-        free(cache);
-        return MS_FAILURE;
-    }
-
-    if(ms_png_write_image_init(ctx,&info)==MS_FAILURE) {
-        msSetError(MS_MISCERR,"error in png header writing","msSaveImageRGBAPalette()");
-        free(cache);
-        free(info.indexed_data);
-        return MS_FAILURE;
-    }
-
-    for(y=0;y<info.height;y++) {
-        for(x=0;x<info.width;x++) {
-            int index;
-            c = gdImageTrueColorPixel(img,x,y);
-            r=gdTrueColorGetRed(c);
-            b=gdTrueColorGetBlue(c);
-            g=gdTrueColorGetGreen(c);
-            a=(127-gdTrueColorGetAlpha(c))*2;
-            if(!cache[r])
-                cache[r]=(unsigned short***)calloc(256,sizeof(unsigned short**));
-            if(!cache[r][g])
-                cache[r][g]=(unsigned short**)calloc(256,sizeof(unsigned short*));
-            if(!cache[r][g][b]){
-                cache[r][g][b]=(unsigned short*)calloc(256,sizeof(unsigned short));
-            }
-            if(!cache[r][g][b][a]) {
-                index=find_closest_color(&info,r,g,b,a);
-                cache[r][g][b][a]=index+1;
-                info.indexed_data[x]=index;
-            } else {
-                info.indexed_data[x]=cache[r][g][b][a]-1;
-            }
-        }
-        if(ms_png_write_image_row(&info)==MS_FAILURE) {
-            msSetError(MS_MISCERR,"error in png row writing","msSaveImageRGBAPalette()");
-            free(cache);
-            free(info.indexed_data);
-            return MS_FAILURE;
-        }
-    }
-    if(ms_png_write_image_finish(&info)==MS_FAILURE) {
-        msSetError(MS_MISCERR,"error in png row writing","msSaveImageRGBAPalette()");
-        free(cache);
-        free(info.indexed_data);
-        return MS_FAILURE;
-    }
-    for(r=0;r<256;r++) {
-        if(cache[r]) {
-            for (g=0;g<256;g++){
-                if(cache[r][g]) {
-                    for(b=0;b<256;b++) {
-                        if(cache[r][g][b]) {
-                            free(cache[r][g][b]);
-                        }
-                    }
-                    free(cache[r][g]);
-                }
-            }
-            free(cache[r]);
-        }
-    }
-    free(cache);
-    free(info.indexed_data);
-    return MS_SUCCESS;
-}
-#endif /*USE_RGBA_PNG*/
 
 
 

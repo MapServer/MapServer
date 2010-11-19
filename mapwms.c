@@ -697,9 +697,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                   (strncasecmp(format->driver, "GD/", 3) != 0 &&
                    strncasecmp(format->driver, "GDAL/", 5) != 0 && 
                    strncasecmp(format->driver, "AGG/", 4) != 0 &&
-                   strncasecmp(format->driver, "AGG2/", 5) != 0 &&
                    strncasecmp(format->driver, "CAIRO/", 6) != 0 &&
-                   strncasecmp(format->driver, "SVG", 3) != 0 &&
+                   strncasecmp(format->driver, "OGL/", 4) != 0 &&
                    strncasecmp(format->driver, "KML", 3) != 0))
                   {
                       msSetError(MS_IMGERR,
@@ -3493,10 +3492,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      else
      {
          psFormat = msSelectOutputFormat( map, pszFormat);
-         if( psFormat == NULL || 
-             (psFormat->renderer != MS_RENDER_WITH_GD
-              &&
-              psFormat->renderer != MS_RENDER_WITH_AGG)) 
+         if( psFormat == NULL || ! MS_RENDERER_PLUGIN(psFormat) ) 
            /* msDrawLegend and msCreateLegendIcon both switch the alpha channel to gd
            ** after creation, so they can be called here without going through
            ** the msAlphaGD2AGG functions */

@@ -59,7 +59,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !IFNDEF MSVC_VER
 #assume msvc 7.1
-MSVC_VER=1310
+MSVC_VER=1500
 !ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,7 +71,7 @@ MSVC_VER=1310
 
 # Set the following to point to the directory adjacent to the dependent libs.
 !IFNDEF MS_BASE
-MS_BASE =   c:\projects\mapserver
+MS_BASE =   f:\projects\mapserver-buildkit-2008\mapserver
 !ENDIF
 
 # Set the following to point to the current (mapserver) directory.
@@ -86,7 +86,7 @@ BINDIR = $(MS_BASE)\..\bin
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Optmization, debug, and related compile flags.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+MS_DEBUG=1
 !IF $(MSVC_VER) >= 1400
 !IFNDEF MS_DEBUG
 # Optimized, with using MSVCRT.
@@ -112,7 +112,7 @@ OPTFLAGS = /nologo /Zi /MDd $(WARNING_LEVEL) $(DEBUG) /EHsc
 DLLBUILD = 1
 
 # Set the Warning level for the compiler (defaults to W1)
-WARNING_LEVEL=/W3
+WARNING_LEVEL=/W4
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Debugging Options
@@ -174,8 +174,8 @@ USE_POINT_Z_M=
 # GD is a required support library for MapServer 4.x.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !IFNDEF GD_DIR
-GD_DIR=$(MS_BASE)\..\gd-2.0.33
-GD_LIB=$(GD_DIR)/bgd_i.lib
+GD_DIR=$(MS_BASE)\..\gd-2.0.35
+GD_LIB=$(GD_DIR)/gd.lib
 !ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -187,7 +187,7 @@ GD_LIB=$(GD_DIR)/bgd_i.lib
 # this is normally not necessary.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OUTPUT_JPEG=-DUSE_GD_JPEG
-#JPEG_DIR=$(MS_BASE)\..\jpeg-6b
+JPEG_DIR=$(MS_BASE)\..\jpeg-6b
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,7 +202,7 @@ OUTPUT_JPEG=-DUSE_GD_JPEG
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OUTPUT_PNG=-DUSE_GD_PNG
 !IFNDEF PNG_DIR
-PNG_DIR=$(MS_BASE)\..\libpng-1.2.8
+PNG_DIR=$(MS_BASE)\..\libpng-1.2.35
 !ENDIF
 ZLIB_DIR=$(MS_BASE)\..\zlib-1.2.3
 ZLIB_INC=-I$(ZLIB_DIR)
@@ -259,7 +259,7 @@ USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ANNOTATION_FT=-DUSE_GD_FT
 !IFNDEF FT_DIR
-FT_DIR=$(MS_BASE)\..\freetype-2.1.10
+FT_DIR=$(MS_BASE)\..\freetype-2.3.9
 !ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -268,7 +268,7 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 # Enable support for quantization of rgba pngs
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !IFDEF PNG_DIR
-#RGBA_PNG_ENABLED=-DUSE_RGBA_PNG
+RGBA_PNG_ENABLED=-DUSE_RGBA_PNG
 !ENDIF
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -289,7 +289,7 @@ FT_DIR=$(MS_BASE)\..\freetype-2.1.10
 #is used in Mapserver to putput high class rendering
 #
 AGG=-DUSE_AGG
-EXPAT_DIR = $(MS_BASE)\Expat 2.0.1
+EXPAT_DIR = $(MS_BASE)\..\expat-2.0.1
 
 # If you wish to use OpenGl
 #
@@ -298,9 +298,9 @@ EXPAT_DIR = $(MS_BASE)\Expat 2.0.1
 
 # Cairo renderer support 
 #
-#CAIRO=-DUSE_CAIRO
+CAIRO=-DUSE_CAIRO
 #CAIRO_DIR=$(MS_BASE)\..\cairo-1.8.6
-
+CAIRO_DIR=$(MS_BASE)\..\cairo-thamas
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PDF (Acrobat PDF support)
@@ -310,8 +310,8 @@ EXPAT_DIR = $(MS_BASE)\Expat 2.0.1
 # See http://www.pdflib.com/products/pdflib/download-source.html to
 # download the support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#PDF=-DUSE_PDF
-#PDF_DIR=$(MS_BASE)\..\PDFlib-Lite-6.0.2
+PDF=-DUSE_PDF
+PDF_DIR=$(MS_BASE)\..\PDFlib-Lite-7.0.4p1
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -321,8 +321,8 @@ EXPAT_DIR = $(MS_BASE)\Expat 2.0.1
 # operations.  It can only be compiled on Windows with MSVC 7.0 or
 # greater (or the cygwin/mingw stack).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#GEOS=-DUSE_GEOS
-#GEOS_DIR=$(MS_BASE)\..\geos-2.2.3
+GEOS=-DUSE_GEOS
+GEOS_DIR=$(MS_BASE)\..\geos-06232009
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -343,8 +343,12 @@ ZLIB_INC=-I$(ZLIB_DIR)
 #libiconv support is used for to support double bytes (see bug 911).
 #uncomment the following to build with libiconv support.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ICONV=-DUSE_ICONV
-#ICONV_DIR=$(MS_BASE)\..\libiconv-1.9.1
+ICONV=-DUSE_ICONV
+ICONV_DIR=$(MS_BASE)\..\libiconv-1.9.1
+
+
+GIFLIB_DIR=$(MS_BASE)\..\giflib-4.1.4
+GIFLIB_INC=-I$(GIFLIB_DIR)\include
 
 
 ########################################################################
@@ -359,8 +363,10 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # http://www.gdal.org/.  Once built, enable the GDAL flag, and point
 # GDAL_DIR to the directory where GDAL was built.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#GDAL=-DUSE_GDAL
-#GDAL_DIR=$(MS_BASE)\..\gdal
+GDAL=-DUSE_GDAL
+#GDAL_DIR=$(MS_BASE)\..\gdal-svn-06232009
+#GDAL_DIR=$(MS_BASE)\..\gdal-svn
+GDAL_DIR=$(MS_BASE)\..\gdal_1_7_0
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -377,8 +383,8 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # want to use GDAL/OGR for both raster and vector support, but GDAL_DIR
 # needs only be defined once.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#OGR=-DUSE_OGR
-#GDAL_DIR=$(MS_BASE)\..\gdal
+OGR=-DUSE_OGR
+
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -402,16 +408,16 @@ JPEG_INC = -I$(JPEG_DIR)
 # Postgresql native Win32 client library.
 # See http://www.postgresql.org for support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#POSTGIS =-DUSE_POSTGIS
-#POSTGIS_DIR =$(MS_BASE)\..\postgresql-8.1.2
+POSTGIS =-DUSE_POSTGIS
+POSTGIS_DIR =$(MS_BASE)\..\postgresql-8.3.7
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Direct connectivity to Oracle Spatial.
 # ----------------------------------------------------------------------
 # Point this to where your ORACLE_HOME directory lives.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ORACLE_DIR = c:\Oracle\Ora81
-#ORACLE=-DUSE_ORACLESPATIAL
+ORACLE_DIR = $(MS_BASE)\..\oracle-11.1.0.7.0
+ORACLE=-DUSE_ORACLESPATIAL
 #ORACLE=-DUSE_ORACLE_PLUGIN
 
 
@@ -425,12 +431,12 @@ JPEG_INC = -I$(JPEG_DIR)
 # available for download.
 # Either set USE_SDE or USE_SDE_PLUGIN, not both.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#SDE_OPT=-DUSE_SDE
+SDE_OPT=-DUSE_SDE
 #SDE_OPT= -DUSE_SDE_PLUGIN
 
-#SDE_VERSION = 91
-#SDE_DIR = C:\arcgis\arcsde
-#SDE_INC = -I$(SDE_SDK)\include
+SDE_VERSION = 91
+SDE_DIR = f:\projects\sde9.1
+SDE_INC = -I$(SDE_SDK)\include
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -445,8 +451,10 @@ JPEG_INC = -I$(JPEG_DIR)
 
 #MSSQL2008 = YES
 #ODBC_DIR="C:\progra~1\micros~1.net\vc7\platformsdk"
+#ODBC_DIR="C:\Program Files\Microsoft SDKs\Windows\v6.0A"
 #ODBC_LIBS=$(ODBC_DIR)\lib\odbc32.lib $(ODBC_DIR)\lib\odbccp32.lib $(ODBC_DIR)\lib\user32.lib
-#ODBC_INC=-I"C:\progra~1\micros~1.net\vc7\platformsdk\include"
+#ODBC_INC=-I$(ODBC_DIR)\include
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # EPPL7 Support
@@ -467,14 +475,13 @@ JPEG_INC = -I$(JPEG_DIR)
 # http://fribidi.freedesktop.org/wiki/
 # Unncomment out the following flags to build with fribidi
 #---------------------------------------------------------------------
-#FRIBIDI=-DUSE_FRIBIDI
-#FRIBIDI_DIR=$(MS_BASE)\..\fribidi-0.19.1
-
+FRIBIDI=-DUSE_FRIBIDI
+FRIBIDI_DIR=$(MS_BASE)\..\fribidi-0.19.1
 
 # ----------------------------------------------------------------------
 # Enable KML support
 #----------------------------------------------------------------------
-#KML=-DUSE_KML
+KML=-DUSE_KML
 
 ########################################################################
 # Section IV: Mapserver OGC Configuration
@@ -484,7 +491,7 @@ JPEG_INC = -I$(JPEG_DIR)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WMS Server
 # ----------------------------------------------------------------------
-#WMS=-DUSE_WMS_SVR
+WMS=-DUSE_WMS_SVR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WMS Client
@@ -498,30 +505,29 @@ JPEG_INC = -I$(JPEG_DIR)
 # Set the full path to the curl project directory.
 # You may also need to the full path to the windows socket library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#WMSCLIENT= -DUSE_WMS_LYR
-#CURL_DIR=$(MS_BASE)\..\curl-7.15.0
-#WINSOCK_LIB = "WSOCK32.LIB"
-#WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
-#WINSOCK_LIB ="C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib\WS2_32.Lib"
+WMSCLIENT= -DUSE_WMS_LYR
+CURL_DIR=$(MS_BASE)\..\curl-7.19.4
+#WINSOCK_LIB ="C:\Program Files\Microsoft SDKs\Windows\v6.1\Lib\WS2_32.Lib"
+WINSOCK_LIB ="C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\WS2_32.Lib"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Client
 # ----------------------------------------------------------------------
 # Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
-#WFSCLIENT= -DUSE_WFS_LYR
+WFSCLIENT= -DUSE_WFS_LYR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WFS_SVR to compile with WFS server
 # support, requires OGR and PROJ4
-#WFS=-DUSE_WFS_SVR
+WFS=-DUSE_WFS_SVR -DWFS_USE_LIBXML2
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WCS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WCS_SVR to compile with WCS server support, requires GDAL.
-#WCS=-DUSE_WCS_SVR
+WCS=-DUSE_WCS_SVR
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -532,9 +538,9 @@ JPEG_INC = -I$(JPEG_DIR)
 #It also needs ICONV support since the libxml windows binaries
 #are built with it
 #http://xmlsoft.org/index.html
-#SOS=-DUSE_SOS_SVR
-#XML2_ENABLED=-DUSE_LIBXML2
-#LIBXML_DIR=$(MS_BASE)\..\libxml2-2.6.13.win32
+SOS=-DUSE_SOS_SVR
+XML2_ENABLED=-DUSE_LIBXML2
+LIBXML_DIR=$(MS_BASE)\..\libxml2-2.7.3.win32
 
 
 ########################################################################
@@ -551,7 +557,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # make any MapScript bindings, eg. "nmake /f makefile.vc python", you
 # will need to have SWIG installed.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#SWIG = $(MS_BASE)\..\SWIG-1.3.27\swig
+SWIG = $(MS_BASE)\..\SWIG-1.3.39\swig
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Java MapScript
@@ -567,7 +573,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # Python MapScript very likely requires USE_THREAD to be defined.
 # Python 2.2 and above are supported.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#PYTHON_HOME = "$(MS_BASE)\..\Python-2.4.2"
+PYTHON_HOME = "$(MS_BASE)\..\Python-2.6.2"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PHP MapScript
@@ -575,8 +581,8 @@ JPEG_INC = -I$(JPEG_DIR)
 # The PHP_REGEX hack allows you to use PHP's regex system rather than
 # the normal GNU regex library.  This should normally not be needed.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#PHP_HOME = $(MS_BASE)\..\php-4.4.2
-#PHP_REGEX=1
+PHP_HOME = $(MS_BASE)\..\php-5.3.1
+PHP_REGEX=1
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # .NET/C# MapScript
@@ -584,7 +590,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # .NET will of course only work with MSVC 7.0 and 7.1.  Also note that
 # you will definitely want USE_THREAD defined.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#DOT_NET = YES
+DOT_NET = YES
 
 
 
@@ -600,8 +606,8 @@ JPEG_INC = -I$(JPEG_DIR)
 # Proj.4 distribution (cartographic projection routines).  PROJ.4 is
 # also required for all OGC services (WMS, WFS, and WCS).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
-#PROJ_DIR=$(MS_BASE)\..\proj-4.4.9
+PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
+PROJ_DIR=$(MS_BASE)\..\proj-svn-04222009
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -648,7 +654,7 @@ PROJ_LIB=$(PROJ_DIR)/src/proj_i.lib
 # CURL include and library
 !IFDEF WMSCLIENT
 CURL_INC = -I$(CURL_DIR)/include
-CURL_LIB = $(CURL_DIR)/libcurl.lib
+CURL_LIB = $(CURL_DIR)/lib/libcurl_imp.lib
 !ENDIF
 
 # LIBXML include and library
@@ -665,7 +671,7 @@ JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
 # Set the png support libaries
 !IFDEF PNG_DIR
 !IFNDEF PNG_LIB
-PNG_LIB=$(PNG_DIR)\projects\visualc71\Win32_LIB_Release\libpng.lib $(ZLIB_DIR)/zdll.lib
+PNG_LIB=$(PNG_DIR)\projects\visualc71\Win32_LIB_Release\libpng.lib $(ZLIB_DIR)/zlib1.lib
 !ENDIF
 PNG_INC=-I$(PNG_DIR)
 !ENDIF
@@ -678,7 +684,7 @@ GEOS_INC=-I$(GEOS_DIR)/source/headers -I$(GEOS_DIR)/capi -I$(GEOS_DIR)/source/ca
 # Set the FreeType library
 !IFDEF FT_DIR
 !IFNDEF FT_LIB
-FT_LIB=$(FT_DIR)/objs/freetype2110.lib
+FT_LIB=$(FT_DIR)/objs/win32/vc2008/freetype239.lib
 !ENDIF
 !ENDIF
 
@@ -727,9 +733,9 @@ SDE_LIB =
 REGEX_OBJ=$(REGEX_DIR)\regex.obj
 REGEX_INC=-I$(REGEX_DIR)
 !ELSE
-REGEX_OBJ=$(PHP_HOME)\regex\regcomp.obj $(PHP_HOME)\regex\regerror.obj \
-          $(PHP_HOME)\regex\regexec.obj $(PHP_HOME)\regex\regfree.obj
-REGEX_INC=-I$(PHP_HOME)/regex -DPHP_NO_ALIASES
+REGEX_OBJ=$(PHP_HOME)\ext\ereg\regex\regcomp.obj $(PHP_HOME)\ext\ereg\regex\regerror.obj \
+          $(PHP_HOME)\ext\ereg\regex\regexec.obj $(PHP_HOME)\ext\ereg\regex\regfree.obj
+REGEX_INC=-I$(PHP_HOME)/ext/ereg/regex -DPHP_NO_ALIASES
 !ENDIF
 
 # REGEX needs some special flags... here they are for VC++ 6.0
@@ -769,6 +775,12 @@ EXPAT_INC = -I$(EXPAT_DIR)\source\lib
 EXPAT_LIB = $(EXPAT_DIR)\bin\libexpat.lib
 !ENDIF
 
+
+# Set the GIFLIB library
+!IFDEF GIFLIB_DIR
+GIFLIB_LIB=$(GIFLIB_DIR)/lib/giflib.lib
+!ENDIF
+
 # Setup AGG
 !IFDEF AGG
 AGG_INC=-I$(FT_DIR)\include -Irenderers\agg\include
@@ -777,7 +789,9 @@ renderers\agg\src\agg_vcgen_dash.obj renderers\agg\src\agg_vcgen_stroke.obj rend
 renderers\agg\src\agg_line_aa_basics.obj renderers\agg\src\agg_line_profile_aa.obj \
 renderers\agg\src\agg_sqrt_tables.obj renderers\agg\src\agg_embedded_raster_fonts.obj \
 renderers\agg\src\agg_trans_affine.obj renderers\agg\src\agg_vpgen_clip_polygon.obj \
-renderers\agg\src\agg_vpgen_clip_polyline.obj renderers\agg\src\agg_font_freetype.obj
+renderers\agg\src\agg_vpgen_clip_polyline.obj renderers\agg\src\agg_font_freetype.obj \
+renderers\agg\src\agg_svg_parser.obj renderers\agg\src\agg_svg_path_renderer.obj \
+renderers\agg\src\agg_svg_path_tokenizer.obj renderers\agg\src\clipper.obj
 !ENDIF
 
 !IFDEF AGG_SVG_SYMBOL
@@ -795,7 +809,7 @@ PDF_INC=-I$(PDF_DIR)/libs/pdflib
 !IFDEF ORACLE
 ORACLE_INC=-I$(ORACLE_DIR)/include
 !IF "$(ORACLE)" != "-DUSE_ORACLE_PLUGIN"
-ORACLE_LIB=$(ORACLE_DIR)/lib/msvc/oci.lib
+ORACLE_LIB=$(ORACLE_DIR)\lib\msvc\ociw32.lib  $(ORACLE_DIR)/lib/msvc/oci.lib
 !ELSE
 ORACLE_LIB =
 !ENDIF
@@ -818,6 +832,8 @@ FCGIINC=-I$(FCGIDIR)\include
 FRIBIDI_INC=-I$(FRIBIDI_DIR)\lib -I$(FRIBIDI_DIR)\charset
 FRIBIDI_LIB=$(FRIBIDI_DIR)\fribidi.lib
 !ENDIF
+
+
 
 ########################################################################
 # Section VIII: UMN GIS System Support
@@ -853,7 +869,7 @@ EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
      $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
-     $(LIBXML_LIB) $(EXPAT_LIB) $(OGL_LIB) $(CAIRO_LIB) $(FRIBIDI_LIB)
+     $(LIBXML_LIB) $(EXPAT_LIB) $(OGL_LIB) $(CAIRO_LIB) $(FRIBIDI_LIB) $(GIFLIB_LIB)
 !ENDIF
 
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
@@ -865,7 +881,7 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
-         $(AGG_INC) $(EXPAT_INC) $(OGL_INC) $(CAIRO_INC) $(PNG_INC) $(FRIBIDI_INC)
+         $(AGG_INC) $(EXPAT_INC) $(OGL_INC) $(CAIRO_INC) $(PNG_INC) $(FRIBIDI_INC) $(GIFLIB_INC)
 !ENDIF
 
 

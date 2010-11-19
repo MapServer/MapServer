@@ -149,8 +149,13 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     }
     else if (MS_RENDERER_PLUGIN(map->outputformat)) {
         rendererVTableObj *renderer = map->outputformat->vtable;
+        colorObj *bg = &map->imagecolor;
         map->imagecolor.alpha=255;
-        image = renderer->createImage(map->width, map->height, map->outputformat,&map->imagecolor);
+        if(map->transparent == MS_TRUE) {
+           //don't set the image color
+           bg = NULL;
+        }
+        image = renderer->createImage(map->width, map->height, map->outputformat,bg);
         if (image == NULL)
             return(NULL);
         image->format = map->outputformat;
@@ -166,21 +171,6 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
             image->imageurl = strdup(map->web.imageurl);
 
 	}
-    else if( MS_RENDERER_GD(map->outputformat) )
-    {
-        image = msImageCreateGD(map->width, map->height, map->outputformat, 
-				map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
-        if( image != NULL ) msImageInitGD( image, &map->imagecolor );
-        msPreAllocateColorsGD(image, map);
-    }
-#ifdef USE_AGG
-    else if( MS_RENDERER_AGG(map->outputformat) )
-    {
-        image = msImageCreateAGG(map->width, map->height, map->outputformat, 
-                                 map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
-        if( image != NULL ) msImageInitAGG( image, &map->imagecolor );
-    }
-#endif
     else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
     {
         image = msImageCreateIM(map->width, map->height, map->outputformat, 
@@ -190,30 +180,16 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     else if( MS_RENDERER_RAWDATA(map->outputformat) )
     {
         image = msImageCreate(map->width, map->height, map->outputformat,
-                              map->web.imagepath, map->web.imageurl, map);
+                              map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->imagecolor);
     }
 #ifdef USE_MING_FLASH
     else if( MS_RENDERER_SWF(map->outputformat) )
     {
         image = msImageCreateSWF(map->width, map->height, map->outputformat,
                                  map->web.imagepath, map->web.imageurl,
-                                 map);
+                                 map->resolution, map->defresolution);
     }
 #endif
-#ifdef USE_PDF
-    else if( MS_RENDERER_PDF(map->outputformat) )
-    {
-        image = msImageCreatePDF(map->width, map->height, map->outputformat,
-                                 map->web.imagepath, map->web.imageurl,
-                                 map);
-	}
-#endif
-    else if( MS_RENDERER_SVG(map->outputformat) )
-    {
-        image = msImageCreateSVG(map->width, map->height, map->outputformat,
-                                 map->web.imagepath, map->web.imageurl,
-                                 map);
-    }
     else
     {
         image = NULL;
@@ -306,7 +282,6 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   imageObj *image = NULL;
   struct mstimeval mapstarttime, mapendtime;
   struct mstimeval starttime, endtime;
-  int oldAlphaBlending;  /* allows toggling of gd alpha blending (bug 490) */
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   enum MS_CONNECTION_TYPE lastconnectiontype;
@@ -414,19 +389,11 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
       if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR 
-        if(MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
+        if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
           status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests,  map, lp, image);
-#ifdef USE_AGG
-        else if(MS_RENDERER_AGG(image->format))
-          status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
-#endif
 #ifdef USE_MING_FLASH                
         else if(MS_RENDERER_SWF(image->format))
           status = msDrawWMSLayerSWF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
-#endif
-#ifdef USE_PDF
-        else if(MS_RENDERER_PDF(image->format))
-          status = msDrawWMSLayerPDF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
         else {
           msSetError(MS_WMSCONNERR, "Output format '%s' doesn't support WMS layers.", "msDrawMap()", image->format->name);
@@ -487,14 +454,12 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     if(map->gt.need_geotransform)
       msMapRestoreRealExtent(map);
 
-    /* fix for bug 490 - turn on alpha blending for embedded scalebar */
-    oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
-    gdImageAlphaBlending(image->img.gd, 1);
 
-    msEmbedScalebar(map, image); /* TODO   */
+    if(MS_SUCCESS != msEmbedScalebar(map, image)) {
+    	msFreeImage( image );
+    	return NULL;
+    }
 
-    /* restore original alpha blending */
-    gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
 
     if(map->gt.need_geotransform)
       msMapSetFakedExtent(map);
@@ -502,7 +467,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
   {
-      if( msEmbedLegend(map, image) == -1 )
+      if( msEmbedLegend(map, image) != MS_SUCCESS )
       {
           msFreeImage( image );
           return NULL;
@@ -540,19 +505,11 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
     if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR 
-      if(MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
+      if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
         status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
-#ifdef USE_AGG               
-      else if(MS_RENDERER_AGG(image->format))
-        status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
-#endif
 #ifdef USE_MING_FLASH
       else if(MS_RENDERER_SWF(image->format) )
         status = msDrawWMSLayerSWF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
-#endif
-#ifdef USE_PDF
-      else if(MS_RENDERER_PDF(image->format) )
-        status = msDrawWMSLayerPDF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
 #endif
 
 #else
@@ -591,20 +548,26 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   if(map->gt.need_geotransform)
     msMapRestoreRealExtent(map);
 
-  if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache) {
-
-    /* fix for bug 490 - turn on alpha blending for embedded scalebar */
-    oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
-    gdImageAlphaBlending(image->img.gd, 1);
-
-    msEmbedScalebar(map, image); /* TODO   */
-
-    /* restore original alpha blending */
-    gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
-  }
-
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
     msEmbedLegend(map, image); /* TODO */
+  
+  if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache) {
+	
+	  /* We need to temporarily restore the original extent for drawing */
+	  /* the scalebar as it uses the extent to recompute cellsize. */
+	  if(map->gt.need_geotransform)
+		msMapRestoreRealExtent(map);
+	
+	
+	  if(MS_SUCCESS != msEmbedScalebar(map, image)) {
+		msFreeImage( image );
+		return NULL;
+	  }
+	
+	
+	  if(map->gt.need_geotransform)
+		msMapSetFakedExtent(map);
+	}
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   /* Cleanup WMS/WFS Request stuff */
@@ -711,8 +674,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   imageObj *image_draw = image;
   outputFormatObj *transFormat = NULL;
   int retcode=MS_SUCCESS;
-  int oldAlphaBlending=0;  /* allow toggling of gd alpha blending (bug 490) */
-
+  int originalopacity = layer->opacity;
   if(!msLayerIsVisible(map, layer))
     return MS_SUCCESS;  
 
@@ -725,146 +687,60 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* inform the rendering device that layer draw is starting. */
   msImageStartLayer(map, layer, image);
 
-  if(MS_RENDERER_GD(image_draw->format)) {
-
-    /* 
-    ** for layer-level opacity we render to a temp image
-    */
-    if(layer->opacity > 0 && layer->opacity < 100) {
-      msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
-      
-      image_draw = msImageCreateGD( image->width, image->height, transFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution );
-      if(!image_draw) {
-        msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
-        return(MS_FAILURE);
-      }
-      msImageInitGD(image_draw, &map->imagecolor);
-      
-      if(image_draw->format->imagemode == MS_IMAGEMODE_PC256) /* gdImageCopyMerge() needs this later */
-        gdImageColorTransparent(image_draw->img.gd, 0);
-    }
-
-    /* Bug 490 - switch alpha blending on for a layer that requires it */
-    else if (layer->opacity == MS_GD_ALPHA) {
-        oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
-        gdImageAlphaBlending(image->img.gd, 1);
-    }
-  }
-  else if (MS_RENDERER_PLUGIN(image_draw->format)) {
+  if (MS_RENDERER_PLUGIN(image_draw->format)) {
+	    rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
 		if (layer->opacity > 0 && layer->opacity < 100) {
-			if (!image_draw->format->vtable->supports_transparent_layers) {
+			if (!renderer->supports_transparent_layers) {
 				msApplyOutputFormat(&transFormat, image->format, MS_TRUE,
 						MS_NOOVERRIDE,MS_NOOVERRIDE);
 				image_draw = msImageCreate(image->width, image->height,
-						transFormat, image->imagepath, image->imageurl, map);
+						transFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
 				if (!image_draw) {
-					msSetError(MS_GDERR, "Unable to initialize image.",
+					msSetError(MS_MISCERR, "Unable to initialize temporary transparent image.",
 							"msDrawLayer()");
 					return (MS_FAILURE);
 				}
+				/* set opacity to full, as the renderer should be rendering a fully opaque image */
+				layer->opacity=100;
+				renderer->startLayer(image_draw,map,layer);
 			} 
-		} 
-                image_draw->format->vtable->startNewLayer(image_draw,layer, layer->opacity);
+		}
   }
-#ifdef USE_AGG
-  else if(MS_RENDERER_AGG(image_draw->format)) {
-    
-    /* 
-    ** for layer-level opacity we render to a temp image
-    */
-    if(layer->opacity > 0 && layer->opacity < 100) {
-      msApplyOutputFormat(&transFormat, image->format, MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE);
-
-      image_draw = msImageCreateAGG(image->width, image->height, transFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution);
-      if(!image_draw) {
-        msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
-        return(MS_FAILURE);
-      }
-      msImageInitAGG(image_draw, &map->imagecolor);
-    }
-  }
-#endif
-
   /* 
   ** redirect procesing of some layer types. 
   */
   if(layer->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
-#ifdef USE_AGG
-      if( MS_RENDERER_AGG(image_draw->format))
-          msAlphaAGG2GD(image_draw);
-#endif
     retcode = msDrawWMSLayer(map, layer, image_draw);
 #else  
     retcode = MS_FAILURE;
 #endif
   } else if(layer->type == MS_LAYER_RASTER) {
-#ifdef USE_AGG
-      if( MS_RENDERER_AGG(image_draw->format))
-          msAlphaAGG2GD(image_draw);
-#endif
     retcode = msDrawRasterLayer(map, layer, image_draw);
   } else if(layer->type == MS_LAYER_CHART) {
-#ifdef USE_AGG
-      if( MS_RENDERER_AGG(image_draw->format))
-          msAlphaGD2AGG(image_draw);
-#endif
     retcode = msDrawChartLayer(map, layer, image_draw);
   } else {   /* must be a Vector layer */
-#ifdef USE_AGG
-      if( MS_RENDERER_AGG(image_draw->format))
-          msAlphaGD2AGG(image_draw);
-#endif
     retcode = msDrawVectorLayer(map, layer, image_draw);
   }
 
-  /* Destroy the temp image for this layer tranparency */
-  if( MS_RENDERER_GD(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
+  if( image != image_draw) {
+	  rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
+	  rasterBufferObj rb;
+	  memset(&rb,0,sizeof(rasterBufferObj));
 
-      if(layer->type == MS_LAYER_RASTER)
-          msImageCopyMerge(image, image_draw, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity);
-      else {
-          msImageCopyMergeNoAlpha(image, image_draw, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->opacity, &map->imagecolor);
-      }
-      msFreeImage(image_draw);
+	  renderer->endLayer(image_draw,map,layer);
+	  layer->opacity = originalopacity;
 
-    /* deref and possibly free temporary transparent output format.  */
-    msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+	  renderer->getRasterBufferHandle(image_draw,&rb);
+	  renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);  
+	  renderer->freeImage( image_draw );
+
+	  /* deref and possibly free temporary transparent output format.  */
+	  msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+
   }
-  else if( MS_RENDERER_PLUGIN(image_draw->format)) {
-    if (layer->opacity > 0 && layer->opacity < 100 ) {
-	  rendererVTableObj *renderer = image_draw->format->vtable;
-      if (!renderer->supports_transparent_layers) {
-          rasterBufferObj rb;
-          renderer->getRasterBuffer(image_draw,&rb);
-		  renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0);  
-		  renderer->freeImage( image_draw );
-	
-		  /* deref and possibly free temporary transparent output format.  */
-		  msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-	  }
-    }
-    image_draw->format->vtable->closeNewLayer(image_draw,layer, layer->opacity*0.01);
-  }
-#ifdef USE_AGG
-  else if( MS_RENDERER_AGG(image_draw->format) && layer->opacity > 0 && layer->opacity < 100 ) {
-      msAlphaGD2AGG(image_draw);
-      msAlphaGD2AGG(image);
-    msImageCopyMergeAGG(image, image_draw, layer->opacity);
-    msFreeImage( image_draw );
-
-    /* deref and possibly free temporary transparent output format.  */
-    msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-  }
-#endif
-
-  /* restore original alpha blending */
-  else if (layer->opacity == MS_GD_ALPHA && MS_RENDERER_GD(image_draw->format)) {
-    gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
-  } else {
-    assert( image == image_draw );
-  }
-
+  
+  msImageEndLayer(map,layer,image);
   return(retcode);
 }
 
@@ -897,19 +773,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 #endif
   
-
-/* ==================================================================== */
-/*      For PDF if the output_type is set to raster, draw the vector    */
-/*      into a gd image.                                                */
-/* ==================================================================== */
-#ifdef USE_PDF
-  if(image &&  MS_RENDERER_PDF(image->format))
-  {
-    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_TYPE", ""),  
-                   "RASTER") == 0)
-    return msDrawVectorLayerAsRasterPDF(map, layer, image);
-  }
-#endif
+  //TODO TBT: draw as raster layer in vector renderers
 
   annotate = msEvalContext(map, layer, layer->labelrequires);
   if(map->scaledenom > 0) {
@@ -1218,11 +1082,6 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   ** Layer was opened as part of the query process, msLayerWhichItems() has also been run, shapes have been classified - start processing!
   */
 
-#ifdef USE_AGG
-  if(MS_RENDERER_AGG(map->outputformat))
-      msAlphaGD2AGG(image);
-#endif
-
   msInitShape(&shape);
 
   for(i=0; i<layer->resultcache->numresults; i++) {
@@ -1339,44 +1198,42 @@ static int
 msDrawRasterLayerPlugin( mapObj *map, layerObj *layer, imageObj *image) 
 
 {
-    rendererVTableObj *vtable = image->format->vtable;
-
-    if( vtable->supports_pixel_buffer )
+    rendererVTableObj *renderer = MS_IMAGE_RENDERER(image);
+    rasterBufferObj  rb;
+    int ret;
+    memset(&rb,0,sizeof(rasterBufferObj));
+    if( renderer->supports_pixel_buffer )
     {
-        rasterBufferObj  rb;
-
-        /* perhaps later there will be more formal initialization? */
-        memset( &rb, 0, sizeof(rb) ); 
-        
-        vtable->getRasterBuffer( image, &rb );
-
-        return msDrawRasterLayerLow( map, layer, image, &rb );
+    	if (MS_SUCCESS != renderer->getRasterBufferHandle( image, &rb )) {
+    		msSetError(MS_MISCERR,"renderer failed to extract raster buffer","msDrawRasterLayer()");
+    		return MS_FAILURE;
+    	}
+        ret = msDrawRasterLayerLow( map, layer, image, &rb );
     }
     else
     {
-        return 0; /* not yet implemented */
-
-#ifdef notdef /* implement something like this */
-        rasterBufferObj rb;
-        int ret;
-
-        /* perhaps later there will be more formal initialization? */
-        memset( &rb, 0, sizeof(rb) ); 
-
-        vtable->initializeRasterBuffer( &rb, image->width, image->height );
-
+        if (MS_SUCCESS != renderer->initializeRasterBuffer( &rb, image->width, image->height, MS_IMAGEMODE_RGBA )) {
+        	msSetError(MS_MISCERR,"renderer failed to create raster buffer","msDrawRasterLayer()");
+        	return MS_FAILURE;
+        }
+        
         ret = msDrawRasterLayerLow( map, layer, image, &rb );
         
         if( ret == 0 )
         {
-            vtable->mergeRasterBuffer( image, &rb, 100.0, 0, 0 );
+        	renderer->mergeRasterBuffer( image, &rb, 1.0, 0, 0, 0, 0, rb.width, rb.height );
         }
 
-        msFreeRasterBuffer( &rb );
+        msFreeRasterBuffer(&rb);
         
-        return ret;
-#endif
+        
     }
+#define RB_GET_R(rb,x,y) *((rb)->data.rgba.r + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
+#define RB_GET_G(rb,x,y) *((rb)->data.rgba.g + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
+#define RB_GET_B(rb,x,y) *((rb)->data.rgba.b + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
+#define RB_GET_A(rb,x,y) *((rb)->data.rgba.a + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
+
+    return ret;
 }
 
 /**
@@ -1388,31 +1245,14 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
     {
         if( MS_RENDERER_PLUGIN(image->format) )
         {
-#ifdef USE_KML
-            if (MS_RENDERER_KML(image->format))
-              return  msDrawRasterLayerKml(map, layer, image);
-            else
-#endif
-              return msDrawRasterLayerPlugin(map, layer, image);
+           return msDrawRasterLayerPlugin(map, layer, image);
         }
-        else if( MS_RENDERER_GD(image->format) )
-            return msDrawRasterLayerLow(map, layer, image, NULL);
-#ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            return msDrawRasterLayerLow(map, layer, image, NULL);
-#endif
         else if( MS_RENDERER_RAWDATA(image->format) )
             return msDrawRasterLayerLow(map, layer, image, NULL);
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
             return  msDrawRasterLayerSWF(map, layer, image);
 #endif
-#ifdef USE_PDF
-        else if( MS_RENDERER_PDF(image->format) )
-            return  msDrawRasterLayerPDF(map, layer, image);
-#endif
-        else if( MS_RENDERER_SVG(image->format) )
-            return  msDrawRasterLayerSVG(map, layer, image);
     }
 
     return MS_FAILURE;
@@ -1453,14 +1293,9 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 /* ------------------------------------------------------------------
  * Then draw layer based on output format
  * ------------------------------------------------------------------ */
-        if( MS_RENDERER_GD(image->format) )
+        if( MS_RENDERER_PLUGIN(image->format) )
             nStatus = msDrawWMSLayerLow(1, asReqInfo, numReq,
                                         map, layer, image) ;
-#ifdef USE_AGG
-        else if( MS_RENDERER_AGG(image->format) )
-            nStatus = msDrawWMSLayerLow(1, asReqInfo, numReq,
-                                        map, layer, image) ;
-#endif
         else if( MS_RENDERER_RAWDATA(image->format) )
             nStatus = msDrawWMSLayerLow(1, asReqInfo, numReq,
                                         map, layer, image) ;
@@ -1469,16 +1304,6 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
         else if( MS_RENDERER_SWF(image->format) )
             nStatus = msDrawWMSLayerSWF(1, asReqInfo, numReq,
                                         map, layer, image);
-#endif
-#ifdef USE_PDF
-/* PDF doesn't support WMS yet so return failure
-        else if( MS_RENDERER_PDF(image->format) )
-        {
-            nReturnVal = msDrawWMSLayerPDF(image, labelPnt, string, label, 
-                                      fontset, scalefactor);
-			nStatus = MS_FAILURE;
-		}
-*/
 #endif
         else
         {
@@ -1541,8 +1366,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
      If its there, we need to change the style's color to map
      the range to the shape */
   for(s=0; s<layer->class[c]->numstyles; s++) {
-    if(layer->class[c]->styles[s]->rangeitem !=  NULL)
+	styleObj *style = layer->class[c]->styles[s];
+    if(style->rangeitem !=  NULL)
       msShapeToRange((layer->class[c]->styles[s]), shape);
+    
+    
   }
   
   /* changed when Tomas added CARTOLINE symbols
@@ -1550,12 +1378,17 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
    * do not enter the image */
   if(layer->class[c]->numstyles > 0 && layer->class[c]->styles[0] != NULL) {
       double maxsize,maxunscaledsize;
+      styleObj *style = layer->class[c]->styles[0];
+      symbolObj *symbol = map->symbolset.symbol[style->symbol];
+      if(symbol->type == MS_SYMBOL_PIXMAP) {
+    	  if(MS_SUCCESS != msPreloadImageSymbol(MS_MAP_RENDERER(map),symbol))
+    		  return MS_FAILURE;
+      }
       maxsize = MS_MAX(
-          msSymbolGetDefaultSize(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]),
-          MS_MAX(layer->class[c]->styles[0]->size,layer->class[c]->styles[0]->width)
+          msSymbolGetDefaultSize(symbol),MS_MAX(style->size,style->width)
       );
-      maxunscaledsize = MS_MAX( layer->class[c]->styles[0]->minsize,
-                                layer->class[c]->styles[0]->minwidth);
+      maxunscaledsize = MS_MAX( style->minsize,
+                                style->minwidth);
       csz = MS_NINT(MS_MAX(maxsize*layer->scalefactor,maxunscaledsize)+1);
   } else {
       csz = 0;
@@ -1637,10 +1470,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
         msInitShape(&annoshape);
         msCopyShape(shape, &annoshape);
-        msTransformShape(&annoshape, map->extent, map->cellsize, image);
+        msTransformShape(&annoshape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
 
         if(layer->class[c]->label.anglemode == MS_FOLLOW ) {
-          annopaths = msPolylineLabelPath(image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
+          annopaths = msPolylineLabelPath(map,image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
         } else {
             annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.anglemode);
         }
@@ -1651,7 +1484,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       if(layer->transform == MS_TRUE) {
         msClipPolylineRect(shape, cliprect);
         if(shape->numlines == 0) return(MS_SUCCESS);
-        msTransformShape(shape, map->extent, map->cellsize, image);
+        msTransformShape(shape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
       } else
         msOffsetShapeRelativeTo(shape, layer);
 
@@ -1671,7 +1504,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             free(regularLines);
             regularLines =  NULL;
           }
-          annopaths = msPolylineLabelPath(image,shape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
+          annopaths = msPolylineLabelPath(map,image,shape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
         }
 
         for (i = 0; i < numpaths; i++)
@@ -1820,7 +1653,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       if(layer->transform == MS_TRUE) {
         msClipPolygonRect(shape, cliprect);
         if(shape->numlines == 0) return(MS_SUCCESS);
-        msTransformShape(shape, map->extent, map->cellsize, image);
+        msTransformShape(shape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
       } else
 	msOffsetShapeRelativeTo(shape, layer);
 
@@ -1962,10 +1795,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
       msInitShape(&annoshape);
       msCopyShape(shape, &annoshape);
-      msTransformShape(&annoshape, map->extent, map->cellsize, image);
+      msTransformShape(&annoshape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
 
       if(layer->class[c]->label.anglemode == MS_FOLLOW) {
-        annopaths = msPolylineLabelPath(image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
+        annopaths = msPolylineLabelPath(map,image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
       } else {
         annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.anglemode);
       }
@@ -1994,9 +1827,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           msFreeShape(&nonClippedShape);   
         return(MS_SUCCESS);
       }
-      msTransformShape(shape, map->extent, map->cellsize, image);
+      msTransformShape(shape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
       if(hasGeomTransform)
-        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
+        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
     } else {
       msOffsetShapeRelativeTo(shape, layer);
     }
@@ -2041,7 +1874,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
             free(regularLines);
             regularLines =  NULL;
           }
-          annopaths = msPolylineLabelPath(image,shape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
+          annopaths = msPolylineLabelPath(map,image,shape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
         }
 
         for (i = 0; i < numpaths; i++)
@@ -2212,13 +2045,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           msFreeShape(&nonClippedShape);   
         return(MS_SUCCESS);
       }
-      msTransformShape(shape, map->extent, map->cellsize, image);
+      msTransformShape(shape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
       if(hasGeomTransform)
-        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
+        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
     } else {
       msOffsetShapeRelativeTo(shape, layer);
       if(hasGeomTransform)
-        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
+        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
     }
  
     for(s=0; s<layer->class[c]->numstyles; s++) {
@@ -2362,7 +2195,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   lineObj billboard_line;
   pointObj billboard_points[5];
   int label_offset_x, label_offset_y;
-
+  double size;
   rectObj r;
 
   styleObj style;
@@ -2385,15 +2218,22 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
 #endif
 
   /* initialize a few things for handling a background */
-  if(MS_VALID_COLOR(label->backgroundcolor)) {
+  if(MS_VALID_COLOR(label->backgroundcolor) && image->format->renderer != MS_RENDER_WITH_KML) {
     billboard.numlines = 1;
     billboard.line = &billboard_line;
     billboard.line->numpoints = 5;
     billboard.line->point = billboard_points;
     initStyle(&style);
   }
-
-  if(msGetLabelSize(image, string, label, &r, &(map->fontset), scalefactor, MS_FALSE,NULL) == -1) return(-1);
+  if(label->type == MS_TRUETYPE){
+     size = label->size * scalefactor;
+     size = MS_MAX(size, label->minsize*image->resolutionfactor);
+     size = MS_MIN(size, label->maxsize*image->resolutionfactor);
+  } else {
+     size = label->size;
+  }
+  if(msGetLabelSize(map, label, string, size, &r, NULL)!= MS_SUCCESS)
+	  return MS_FAILURE;
 
   label_offset_x = label->offsetx*scalefactor;
   label_offset_y = label->offsety*scalefactor;
@@ -2401,7 +2241,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   if(label->position != MS_XY) {
     pointObj p;
 
-    if(MS_VALID_COLOR(label->backgroundcolor)) {
+    if(MS_VALID_COLOR(label->backgroundcolor) && image->format->renderer != MS_RENDER_WITH_KML) {
       p = get_metrics_line(&labelPnt, label->position, r, label_offset_x, label_offset_y, label->angle, 1, billboard.line);
 
       /* draw the background and background shadow (if necessary) */
@@ -2424,7 +2264,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
     labelPnt.x += label_offset_x;
     labelPnt.y += label_offset_y;
 
-    if(MS_VALID_COLOR(label->backgroundcolor)) {
+    if(MS_VALID_COLOR(label->backgroundcolor) && image->format->renderer != MS_RENDER_WITH_KML) {
       get_metrics_line(&labelPnt, label->position, r, label_offset_x, label_offset_y, label->angle, 1, billboard.line);
 
       /* draw the background and background shadow (if necessary) */
@@ -2451,10 +2291,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 {
   int nReturnVal = MS_SUCCESS;
   if(image) {
-    if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_GD(image->format) || MS_RENDERER_AGG(image->format)) {          
+    if(MS_RENDERER_PLUGIN(image->format)) {          
       pointObj p;
       int i, l, priority;
-      int oldAlphaBlending=0;
       rectObj r;
 
       shapeObj billboard;
@@ -2475,17 +2314,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
       int needBillboard = MS_FALSE;
 
       const char *value;
-
-#ifdef USE_AGG
-      if(MS_RENDERER_AGG(image->format)) 
-        msAlphaGD2AGG(image);
-      else
-#endif
-      if(!MS_RENDERER_PLUGIN(image->format))
-      { /* bug 490 - switch on alpha blending for label cache */
-        oldAlphaBlending = image->img.gd->alphaBlendingFlag;
-        gdImageAlphaBlending( image->img.gd, 1);
-      }
 
       billboard.numlines = 1;
       billboard.line = &billboard_line;
@@ -2515,199 +2343,251 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
           layerPtr = (GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
           labelPtr = &(cachePtr->label);
 
-          if(!cachePtr->text || strlen(cachePtr->text) == 0)
-            continue; /* not an error, just don't want to do anything */
+          if(!cachePtr->text || strlen(cachePtr->text) == 0) {
+             if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { /* there might be a marker added to the image */
+                 /* TODO: at the moment only checks the bottom style, perhaps should check all of them */
+                 cachePtr->status = MS_TRUE;
+                 if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
+                    return(MS_FAILURE);
 
-          if(msGetLabelSize(image,cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor, MS_TRUE,NULL) == -1)
-            return(-1);
+                 marker_rect.minx = MS_NINT(cachePtr->point.x - .5 * marker_width);
+                 marker_rect.miny = MS_NINT(cachePtr->point.y - .5 * marker_height);
+                 marker_rect.maxx = marker_rect.minx + (marker_width-1);
+                 marker_rect.maxy = marker_rect.miny + (marker_height-1); 
+                 msRectToPolygon(marker_rect, cachePtr->poly);
+                 
+                 if(!labelPtr->force)
+                    msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, 0);
+                 
+                 if(cachePtr->status == MS_FALSE)
+                    continue;
+                 /* here's where we draw the label styles */
+                 if(cachePtr->label.numstyles > 0) {
+                    for(i=0; i<cachePtr->label.numstyles; i++) {
+                       if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOINT)
+                          msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), cachePtr->label.styles[i], layerPtr->scalefactor);
+                       else if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOLY) {
+                          msDrawShadeSymbol(&map->symbolset, image, &billboard, cachePtr->label.styles[i], layerPtr->scalefactor);
+                       } else {
+                          /* need error msg about unsupported geomtransform */
+                          return -1;
+                       }
+                    }
+                 }
 
-          needBillboard = MS_FALSE;
-          if(MS_VALID_COLOR(labelPtr->backgroundcolor)) needBillboard = MS_TRUE;
-          for(i=0; i<labelPtr->numstyles; i++) {
-            if(labelPtr->styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOLY) {
-              needBillboard = MS_TRUE;
-              break;
-            }
-          }
-          
-          if(labelPtr->type == MS_TRUETYPE) {          
-              size = labelPtr->size * layerPtr->scalefactor;
-              size = MS_MAX(size, labelPtr->minsize*image->resolutionfactor);
-              size = MS_MIN(size, labelPtr->maxsize*image->resolutionfactor);
-              scalefactor = size / labelPtr->size;
-          } else
-              scalefactor = layerPtr->scalefactor;
+                 if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { /* need to draw a marker */
+                    for(i=0; i<cachePtr->numstyles; i++)
+                       msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
+                 }
 
-          label_offset_x = labelPtr->offsetx*scalefactor;
-          label_offset_y = labelPtr->offsety*scalefactor;
-          label_buffer = MS_NINT(labelPtr->buffer*image->resolutionfactor);
-          label_mindistance = MS_NINT(labelPtr->mindistance*image->resolutionfactor);
-          
-          /* if cachePtr->featuresize is set to -1, this check has been done in msPolylineLabelPath() */
-          if(labelPtr->autominfeaturesize && (cachePtr->featuresize != -1) && ((r.maxx-r.minx) > cachePtr->featuresize))
-            continue; /* label too large relative to the feature */
-
-          marker_offset_x = marker_offset_y = 0; /* assume no marker */
-          if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { /* there might be a marker added to the image */
-
-            /* TODO: at the moment only checks the bottom style, perhaps should check all of them */
-            if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
-              return(-1);
-
-            marker_offset_x = MS_NINT(marker_width/2.0);
-            marker_offset_y = MS_NINT(marker_height/2.0);
-
-            marker_rect.minx = MS_NINT(cachePtr->point.x - .5 * marker_width);
-            marker_rect.miny = MS_NINT(cachePtr->point.y - .5 * marker_height);
-            marker_rect.maxx = marker_rect.minx + (marker_width-1);
-            marker_rect.maxy = marker_rect.miny + (marker_height-1); 
-          } else if (layerPtr->type == MS_LAYER_POINT) { /* there is a marker already in the image */
-            marker_rect = markerPtr->poly->bounds;
-            marker_width = marker_rect.maxx - marker_rect.minx;
-            marker_height = marker_rect.maxy - marker_rect.miny;
-            marker_offset_x = MS_NINT(marker_width/2.0);
-            marker_offset_y = MS_NINT(marker_height/2.0);
-          }
-
-          /* handle path following labels first (position does not matter) */
-	  if(cachePtr->labelpath) {
-	    cachePtr->status = MS_TRUE;
-
-	    /* Copy the bounds into the cache's polygon */
-	    msCopyShape(&(cachePtr->labelpath->bounds), cachePtr->poly);
-	    msFreeShape(&(cachePtr->labelpath->bounds));
-
-	    /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip it */
-            if(!labelPtr->force)
-              msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
-	  } else {
-
-            if(labelPtr->position == MS_AUTO) {
-              int positions[MS_POSITIONS_LENGTH], npositions=0;
-
-              /*
-	      ** If the ANNOTATION has an associated marker then the position is handled like a point regardless of underlying shape type. (#2993)
-              **   (Note: might be able to re-order this for more speed.)
-              */
-              if(layerPtr->type == MS_LAYER_POLYGON || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_POLYGON && cachePtr->numstyles == 0)) {
-		positions[0]=MS_CC; positions[1]=MS_UC; positions[2]=MS_LC; positions[3]=MS_CL; positions[4]=MS_CR;
-                npositions = 5;
-              } else if(layerPtr->type == MS_LAYER_LINE || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_LINE && cachePtr->numstyles == 0)) {
-                positions[0]=MS_UC; positions[1]=MS_LC; positions[2]=MS_CC;
-                npositions = 3;
-              } else {
-                positions[0]=MS_UL; positions[1]=MS_LR; positions[2]=MS_UR; positions[3]=MS_LL; positions[4]=MS_CR; positions[5]=MS_CL; positions[6]=MS_UC; positions[7]=MS_LC;
-                npositions = 8;
               }
-
-              for(i=0; i<npositions; i++) {
-                msFreeShape(cachePtr->poly);
-                cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-
-                p = get_metrics(&(cachePtr->point), positions[i], r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
-                if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-                  msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
-
-                /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
-                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
-
-                if(cachePtr->status) /* found a suitable place for this label */ {
-                  if(needBillboard)
-                    get_metrics_line(&(cachePtr->point), positions[i], r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, 1, billboard.line);
-                  break; /* ...out of position loop */
-                }
-
-              } /* next position */
-
-              if(labelPtr->force) {
-
-                  /*billboard wasn't initialized if no non-coliding position was found*/
-                  if(!cachePtr->status && needBillboard)
-                      get_metrics_line(&(cachePtr->point), positions[npositions-1], r,
-                              (marker_offset_x + label_offset_x),
-                              (marker_offset_y + label_offset_y),
-                              labelPtr->angle, 1, billboard.line);
-
-                  cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
-              }
-
-            } else { /* explicit position */
-
-              cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-
-              if(labelPtr->position == MS_CC) { /* don't need the marker_offset */
-                p = get_metrics(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, label_buffer, cachePtr->poly);
-                if(needBillboard)
-                  get_metrics_line(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, 1, billboard.line);
-              } else {
-                p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
-                if(needBillboard)
-                  get_metrics_line(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, 1, billboard.line);
-              }
-  
-              if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-                msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
-
-              /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip the test */
-              if(!labelPtr->force)
-                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
-
-            }
-          }
-
-          /* imagePolyline(img, cachePtr->poly, 1, 0, 0); */
-
-          if(!cachePtr->status)
-            continue; /* next label */
-
-          /* here's where we draw the label styles */
-          if(cachePtr->label.numstyles > 0) {
-            for(i=0; i<cachePtr->label.numstyles; i++) {
-              if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOINT)
-                msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), cachePtr->label.styles[i], layerPtr->scalefactor);
-              else if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOLY) {
-                msDrawShadeSymbol(&map->symbolset, image, &billboard, cachePtr->label.styles[i], layerPtr->scalefactor);
-              } else {
-                /* need error msg about unsupported geomtransform */
-                return -1;
-              }
-            }
-          }
-
-          if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { /* need to draw a marker */
-            for(i=0; i<cachePtr->numstyles; i++)
-              msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
-          }
-
-          /*draw the background, only if we're not using FOLLOW labels -- THIS GOES AWAY*/
-          if(!cachePtr->labelpath && MS_VALID_COLOR(labelPtr->backgroundcolor)) {
-            styleObj style;
-
-            initStyle(&style);                    
-            if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
-              MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundshadowcolor));
-              style.offsetx = labelPtr->backgroundshadowsizex*image->resolutionfactor;
-              style.offsety = labelPtr->backgroundshadowsizey*image->resolutionfactor;
-              msDrawShadeSymbol(&map->symbolset,image,&billboard,&style,1);
-              style.offsetx = 0;
-              style.offsety = 0;
-            }
-            MS_COPYCOLOR(&(style.color), &(labelPtr->backgroundcolor));
-            msDrawShadeSymbol(&map->symbolset, image, &billboard, &style, 1);
-          }
-
-          if(cachePtr->labelpath) {
-            msDrawTextLine(image, cachePtr->text, labelPtr, cachePtr->labelpath, &(map->fontset), layerPtr->scalefactor); /* Draw the curved label */
           } else {
-            msDrawText(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
+             if(labelPtr->type == MS_TRUETYPE) {
+                size = labelPtr->size * layerPtr->scalefactor;
+                size = MS_MAX(size, labelPtr->minsize*image->resolutionfactor);
+                size = MS_MIN(size, labelPtr->maxsize*image->resolutionfactor);
+                scalefactor = size / labelPtr->size;
+             } else {
+                size = labelPtr->size;
+             }
+             if(msGetLabelSize(map,labelPtr,cachePtr->text,size,&r,NULL) != MS_SUCCESS)
+               return(MS_FAILURE);
+             
+             //adjust the baseline (see #1449)
+            if(labelPtr->type == MS_TRUETYPE) {
+               int nNewlines = msCountChars(cachePtr->text,'\n');
+               if(!nNewlines) {
+                 labelPtr->offsety += MS_NINT((((r.miny + r.maxy) + size) / 2.0)/scalefactor);
+                 labelPtr->offsetx += MS_NINT((r.minx / 2)/scalefactor);
+               }
+               else {
+                 rectObj rect2; /*bbox of first line only*/
+                 char* firstLine = msGetFirstLine(cachePtr->text);
+                 msGetLabelSize(map,labelPtr,firstLine,size,&rect2,NULL);
+                 labelPtr->offsety += (MS_NINT(((rect2.miny+rect2.maxy) + size) / 2))/scalefactor;
+                 labelPtr->offsetx += (MS_NINT(rect2.minx / 2))/scalefactor;
+                 free(firstLine);
+               }
+            }
+   
+             needBillboard = MS_FALSE;
+             if(MS_VALID_COLOR(labelPtr->backgroundcolor)) needBillboard = MS_TRUE;
+             for(i=0; i<labelPtr->numstyles; i++) {
+               if(labelPtr->styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOLY) {
+                 needBillboard = MS_TRUE;
+                 break;
+               }
+             }
+             
+             
+   
+             label_offset_x = labelPtr->offsetx*scalefactor;
+             label_offset_y = labelPtr->offsety*scalefactor;
+             label_buffer = MS_NINT(labelPtr->buffer*image->resolutionfactor);
+             label_mindistance = MS_NINT(labelPtr->mindistance*image->resolutionfactor);
+             
+             /* if cachePtr->featuresize is set to -1, this check has been done in msPolylineLabelPath() */
+             if(labelPtr->autominfeaturesize && (cachePtr->featuresize != -1) && ((r.maxx-r.minx) > cachePtr->featuresize))
+               continue; /* label too large relative to the feature */
+   
+             marker_offset_x = marker_offset_y = 0; /* assume no marker */
+             if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { /* there might be a marker added to the image */
+   
+               /* TODO: at the moment only checks the bottom style, perhaps should check all of them */
+               if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
+                 return(-1);
+   
+               marker_offset_x = MS_NINT(marker_width/2.0);
+               marker_offset_y = MS_NINT(marker_height/2.0);
+   
+               marker_rect.minx = MS_NINT(cachePtr->point.x - .5 * marker_width);
+               marker_rect.miny = MS_NINT(cachePtr->point.y - .5 * marker_height);
+               marker_rect.maxx = marker_rect.minx + (marker_width-1);
+               marker_rect.maxy = marker_rect.miny + (marker_height-1); 
+             } else if (layerPtr->type == MS_LAYER_POINT) { /* there is a marker already in the image */
+               marker_rect = markerPtr->poly->bounds;
+               marker_width = marker_rect.maxx - marker_rect.minx;
+               marker_height = marker_rect.maxy - marker_rect.miny;
+               marker_offset_x = MS_NINT(marker_width/2.0);
+               marker_offset_y = MS_NINT(marker_height/2.0);
+             }
+   
+             /* handle path following labels first (position does not matter) */
+        if(cachePtr->labelpath) {
+          cachePtr->status = MS_TRUE;
+   
+          /* Copy the bounds into the cache's polygon */
+          msCopyShape(&(cachePtr->labelpath->bounds), cachePtr->poly);
+          msFreeShape(&(cachePtr->labelpath->bounds));
+   
+          /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip it */
+               if(!labelPtr->force)
+                 msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
+        } else {
+   
+               if(labelPtr->position == MS_AUTO) {
+                 int positions[MS_POSITIONS_LENGTH], npositions=0;
+   
+                 /*
+            ** If the ANNOTATION has an associated marker then the position is handled like a point regardless of underlying shape type. (#2993)
+                 **   (Note: might be able to re-order this for more speed.)
+                 */
+                 if(layerPtr->type == MS_LAYER_POLYGON || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_POLYGON && cachePtr->numstyles == 0)) {
+         positions[0]=MS_CC; positions[1]=MS_UC; positions[2]=MS_LC; positions[3]=MS_CL; positions[4]=MS_CR;
+                   npositions = 5;
+                 } else if(layerPtr->type == MS_LAYER_LINE || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_LINE && cachePtr->numstyles == 0)) {
+                   positions[0]=MS_UC; positions[1]=MS_LC; positions[2]=MS_CC;
+                   npositions = 3;
+                 } else {
+                   positions[0]=MS_UL; positions[1]=MS_LR; positions[2]=MS_UR; positions[3]=MS_LL; positions[4]=MS_CR; positions[5]=MS_CL; positions[6]=MS_UC; positions[7]=MS_LC;
+                   npositions = 8;
+                 }
+   
+                 for(i=0; i<npositions; i++) {
+                   msFreeShape(cachePtr->poly);
+                   cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+   
+                   p = get_metrics(&(cachePtr->point), positions[i], r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
+                   if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
+                     msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
+   
+                   /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
+                   msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
+   
+                   if(cachePtr->status) /* found a suitable place for this label */ {
+                     if(needBillboard)
+                       get_metrics_line(&(cachePtr->point), positions[i], r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, 1, billboard.line);
+                     break; /* ...out of position loop */
+                   }
+   
+                 } /* next position */
+   
+                 if(labelPtr->force) {
+   
+                     /*billboard wasn't initialized if no non-coliding position was found*/
+                     if(!cachePtr->status && needBillboard)
+                         get_metrics_line(&(cachePtr->point), positions[npositions-1], r,
+                                 (marker_offset_x + label_offset_x),
+                                 (marker_offset_y + label_offset_y),
+                                 labelPtr->angle, 1, billboard.line);
+   
+                     cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
+                 }
+   
+               } else { /* explicit position */
+   
+                 cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+   
+                 if(labelPtr->position == MS_CC) { /* don't need the marker_offset */
+                   p = get_metrics(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, label_buffer, cachePtr->poly);
+                   if(needBillboard)
+                     get_metrics_line(&(cachePtr->point), labelPtr->position, r, label_offset_x, label_offset_y, labelPtr->angle, 1, billboard.line);
+                 } else {
+                   p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
+                   if(needBillboard)
+                     get_metrics_line(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, 1, billboard.line);
+                 }
+     
+                 if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
+                   msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
+   
+                 /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip the test */
+                 if(!labelPtr->force)
+                   msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
+   
+               }
+             }
+   
+             /* imagePolyline(img, cachePtr->poly, 1, 0, 0); */
+   
+             if(!cachePtr->status)
+               continue; /* next label */
+   
+             /* here's where we draw the label styles */
+             if(cachePtr->label.numstyles > 0) {
+               for(i=0; i<cachePtr->label.numstyles; i++) {
+                 if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOINT)
+                   msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), cachePtr->label.styles[i], layerPtr->scalefactor);
+                 else if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOLY) {
+                   msDrawShadeSymbol(&map->symbolset, image, &billboard, cachePtr->label.styles[i], layerPtr->scalefactor);
+                 } else {
+                   /* need error msg about unsupported geomtransform */
+                   return -1;
+                 }
+               }
+             }
+   
+             if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { /* need to draw a marker */
+               for(i=0; i<cachePtr->numstyles; i++)
+                 msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
+             }
+   
+             /*draw the background, only if we're not using FOLLOW labels -- THIS GOES AWAY*/
+             if(!cachePtr->labelpath && MS_VALID_COLOR(labelPtr->backgroundcolor)) {
+               styleObj style;
+   
+               initStyle(&style);                    
+               if(MS_VALID_COLOR(labelPtr->backgroundshadowcolor)) {
+                 MS_COPYCOLOR(&(style.color),&(labelPtr->backgroundshadowcolor));
+                 style.offsetx = labelPtr->backgroundshadowsizex*image->resolutionfactor;
+                 style.offsety = labelPtr->backgroundshadowsizey*image->resolutionfactor;
+                 msDrawShadeSymbol(&map->symbolset,image,&billboard,&style,1);
+                 style.offsetx = 0;
+                 style.offsety = 0;
+               }
+               MS_COPYCOLOR(&(style.color), &(labelPtr->backgroundcolor));
+               msDrawShadeSymbol(&map->symbolset, image, &billboard, &style, 1);
+             }
+   
+             if(cachePtr->labelpath) {
+               msDrawTextLine(image, cachePtr->text, labelPtr, cachePtr->labelpath, &(map->fontset), layerPtr->scalefactor); /* Draw the curved label */
+             } else {
+               msDrawText(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
+             }
           }
 
 	} /* next label */
       } /* next priority */
-
-      /* bug 490 - alpha blending back */
-      if(MS_RENDERER_GD(image->format))
-        gdImageAlphaBlending( image->img.gd, oldAlphaBlending);
 
       return(0);
     } else if( MS_RENDERER_IMAGEMAP(image->format) )
@@ -2717,12 +2597,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
     else if( MS_RENDERER_SWF(image->format) )
       nReturnVal = msDrawLabelCacheSWF(image, map);
 #endif
-#ifdef USE_PDF
-    else if( MS_RENDERER_PDF(image->format) )
-      nReturnVal = msDrawLabelCachePDF(image, map);
-#endif
-    else if( MS_RENDERER_SVG(image->format) )
-      nReturnVal = msDrawLabelCacheSVG(image, map);
+
   }
 
   return nReturnVal;
@@ -2737,18 +2612,15 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
     if (image)
     {
-        if( MS_RENDERER_IMAGEMAP(image->format) )
+        if( MS_RENDERER_PLUGIN(image->format) ) {
+            MS_IMAGE_RENDERER(image)->startLayer(image, map, layer);
+        }
+        else if( MS_RENDERER_IMAGEMAP(image->format) )
             msImageStartLayerIM(map, layer, image);
 #ifdef USE_MING_FLASH
-        if( MS_RENDERER_SWF(image->format) )
+        else if( MS_RENDERER_SWF(image->format) )
             msImageStartLayerSWF(map, layer, image);
 #endif
-#ifdef USE_PDF
-        if( MS_RENDERER_PDF(image->format) )
-            msImageStartLayerPDF(map, layer, image); 
-#endif
-        if( MS_RENDERER_SVG(image->format) )
-            msImageStartLayerSVG(map, layer, image);
     }
 }
 
@@ -2760,6 +2632,11 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
 
 void msImageEndLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
+    if(image) {
+        if( MS_RENDERER_PLUGIN(image->format) ) {
+            MS_IMAGE_RENDERER(image)->endLayer(image,map,layer);
+        }
+    }
 }
 
 /**
@@ -2772,20 +2649,16 @@ void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
 {
     if (image)
     {
-
+    	if(MS_RENDERER_PLUGIN(image->format))
+		{
+		  if (image->format->vtable->startShape)
+			image->format->vtable->startShape(image, shape);
+		}
 #ifdef USE_MING_FLASH
-        if( MS_RENDERER_SWF(map->outputformat) )
+    	else if( MS_RENDERER_SWF(map->outputformat) )
             msDrawStartShapeSWF(map, layer, image, shape);
 #endif
-#ifdef USE_PDF
-        if( MS_RENDERER_PDF(map->outputformat) )
-            msDrawStartShapePDF(map, layer, image, shape);
-#endif
-        if(MS_RENDERER_PLUGIN(image->format))
-        {
-          if (image->format->vtable->startShape)
-            image->format->vtable->startShape(image, shape);
-        }
+        
     }
 }
 

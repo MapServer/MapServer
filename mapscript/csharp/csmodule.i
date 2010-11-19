@@ -352,6 +352,12 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
 #endif
 %}
 
+/* Typemaps for device handle */
+%typemap(imtype) (void* device)  %{IntPtr%}
+%typemap(cstype) (void* device) %{IntPtr%}
+%typemap(in) (void* device) %{ $1 = ($1_ltype)$input; %}
+%typemap(csin) (void* device)  "$csinput"
+
 /******************************************************************************
  * Preventing to take ownership of the memory when constructing objects 
  * with parent objects (causing nullreference exception, Bug 1743)

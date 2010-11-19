@@ -136,7 +136,7 @@ void free_PyFileIfaceObj_IOCtx(struct PyFileIfaceObj_gdIOCtx *pctx)
  * ======================================================================== */
 
 imageObj *createImageObjFromPyFile(PyObject *file, const char *driver)
-    {
+{
     imageObj *image=NULL;
     struct PyFileIfaceObj_gdIOCtx *pctx;
 
@@ -155,7 +155,7 @@ imageObj *createImageObjFromPyFile(PyObject *file, const char *driver)
     else
     {
         pctx = alloc_PyFileIfaceObj_IOCtx(file);
-        image = msImageLoadGDCtx((gdIOCtx *) pctx, driver);
+        //image = msImageLoadGDCtx((gdIOCtx *) pctx, driver);
         free_PyFileIfaceObj_IOCtx(pctx);
         return image;
     }

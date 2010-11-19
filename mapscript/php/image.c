@@ -180,7 +180,9 @@ PHP_METHOD(imageObj, pasteImage)
     zval *zimage;
     zval *zobj = getThis();
     php_image_object *php_image, *php_imageSrc;
-    int oldTransparentColor, newTransparentColor=-1, r, g, b;
+    /*int oldTransparentColor, newTransparentColor=-1, r, g, b;*/
+    rendererVTableObj *renderer = NULL;
+    rasterBufferObj rb;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ol|lll",
@@ -199,11 +201,11 @@ PHP_METHOD(imageObj, pasteImage)
 
     php_image = (php_image_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     php_imageSrc = (php_image_object *) zend_object_store_get_object(zimage TSRMLS_CC);
-
-    if( (!MS_DRIVER_GD(php_imageSrc->image->format) && !MS_DRIVER_AGG(php_imageSrc->image->format)) ||  
- 	(!MS_DRIVER_GD(php_image->image->format) && !MS_DRIVER_AGG(php_image->image->format))) 
+        
+    if (!MS_RENDERER_PLUGIN(php_imageSrc->image->format) ||
+ 	!MS_RENDERER_PLUGIN(php_image->image->format))
         {
-            mapscript_throw_exception("PasteImage function should only be used with GD or AGG images." TSRMLS_CC);
+            mapscript_throw_exception("PasteImage function should only be used with renderer plugin drivers." TSRMLS_CC);
             return;
         }
 
@@ -214,11 +216,18 @@ PHP_METHOD(imageObj, pasteImage)
       msAlphaAGG2GD(php_image->image); 
 #endif
 
+
+    renderer = MS_IMAGE_RENDERER(php_image->image);
+    memset(&rb,0,sizeof(rasterBufferObj));
+    
+    renderer->getRasterBufferHandle(php_imageSrc->image, &rb);
+    renderer->mergeRasterBuffer(php_image->image, &rb, 1.0, 0, 0, dstx, dsty, rb.width, rb.height);
+
     /* Look for r,g,b in color table and make it transparent.
      * will return -1 if there is no exact match which will result in
      * no transparent color in the call to gdImageColorTransparent().
      */
-    if (transparent != -1)
+/*    if (transparent != -1)
     {
         r = (transparent / 0x010000) & 0xff;
         g = (transparent / 0x0100) & 0xff;
@@ -237,7 +246,7 @@ PHP_METHOD(imageObj, pasteImage)
                            0, 0, php_imageSrc->image->img.gd->sx, php_imageSrc->image->img.gd->sy,
                            angle);
 
-    gdImageColorTransparent(php_imageSrc->image->img.gd, oldTransparentColor);
+                           gdImageColorTransparent(php_imageSrc->image->img.gd, oldTransparentColor);*/
 
     RETURN_LONG(MS_SUCCESS);
 
@@ -260,12 +269,7 @@ PHP_METHOD(imageObj, saveImage)
     php_map_object *php_map;
     int status = MS_SUCCESS;
     /* stdout specific vars */
-    char *imagePath = NULL;
-    char *pBuf = NULL;
     int size=0;
-    int   b;
-    FILE *tmp = NULL;
-    char  buf[4096];
     void *iptr=NULL;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -301,7 +305,7 @@ PHP_METHOD(imageObj, saveImage)
     }
    
 
-    if( MS_DRIVER_GD(php_image->image->format) || MS_DRIVER_AGG(php_image->image->format))
+    if (MS_RENDERER_PLUGIN(php_image->image->format))
     {
         iptr = (void *)msSaveImageBuffer(php_image->image, &size, php_image->image->format);
     }
@@ -310,43 +314,6 @@ PHP_METHOD(imageObj, saveImage)
         iptr = php_image->image->img.imagemap;
         size = strlen(php_image->image->img.imagemap);
     }
-    else if (MS_DRIVER_SVG(php_image->image->format))
-    {
-        status = MS_FAILURE;
-            
-        if (imagePath)
-        {
-            pBuf = msTmpFile(NULL, imagePath, "svg");
-                
-            tmp = fopen(pBuf, "w");
-        }
-
-        if (tmp == NULL) 
-        {
-            mapscript_throw_mapserver_exception("Unable to open temporary file for SVG output." TSRMLS_CC);
-            return;
-        }
-
-        if (msSaveImagetoFpSVG(php_image->image, tmp) == MS_SUCCESS)
-        {
-            fclose(tmp);
-            tmp = fopen(pBuf, "r");
-
-            while ((b = fread(buf, 1, sizeof(buf), tmp)) > 0) 
-            {
-                php_write(buf, b TSRMLS_CC);
-            }
-            fclose(tmp);
-            status = MS_SUCCESS;
-        }
-        else
-        {
-            mapscript_throw_mapserver_exception("Unable to open temporary file for SVG output." TSRMLS_CC);
-            return;
-        } 
-
-        RETURN_LONG(status);
-    }   
 
     if (size == 0) {
         mapscript_throw_mapserver_exception("Failed writing image to stdout" TSRMLS_CC);

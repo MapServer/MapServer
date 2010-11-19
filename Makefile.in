@@ -81,6 +81,10 @@ FTGL=     @FTGL_ENABLED@
 FTGL_LIB=  @FTGL_LIB@
 FTGL_INC=  @FTGL_INC@
 
+#Freetype support
+FT_ENABLE=     @FT_ENABLED@
+FT_LIB=  @FT_LIB@
+FT_INC=  @FT_INC@
 
 #
 # Optional Opengl Support.
@@ -99,13 +103,6 @@ PNG_LIB= @PNG_LIB@
 ZLIB_INC=  @ZLIB_INC@
 ZLIB_LIB=  @ZLIB_LIB@
 ZLIB=      @ZLIB_ENABLED@
-
-#
-# PDFlib distribution (PDF library w/ PDF support). (EXPERIMENTAL)
-#
-PDF_INC=  @PDF_INC@
-PDF_LIB=  @PDF_LIB@
-PDF=      @PDF_ENABLED@
 
 # JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
 JPEG_INC= @JPEG_INC@
@@ -242,9 +239,9 @@ LD_SONAME_LIBMAP = -W1,@SO_COMMAND_NAME@,$(LIBMAP_SH_VER)
 XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
-DEFINES = $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ $(FRIBIDI)
+DEFINES = $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ $(FRIBIDI) -DDISABLE_CVSID
 
-INCLUDES = $(REGEX_INC) $(PNG_INC) $(GD_INC) $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PDF_INC) $(PROJ_INC) $(JPEG_INC) $(EGIS_INC) \
+INCLUDES = $(FT_INC) $(REGEX_INC) $(PNG_INC) $(GD_INC) $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PROJ_INC) $(JPEG_INC) $(EGIS_INC) \
         $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
         $(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
         $(FASTCGI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC)
@@ -255,7 +252,7 @@ CFLAGS   = @CFLAGS@ $(FLAGS)
 CXXFLAGS = @CXXFLAGS@ $(FLAGS)
 
 # Link flags and shared libs only
-SUP_LIBS =  $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PDF_LIB) $(PROJ_LIBS) \
+SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(PNG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
 	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
 	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
@@ -268,7 +265,20 @@ EXE_LDFLAGS =	$(RUNPATHS) -L. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
-OBJS= $(AGG_OBJ) mapogl.o mapoglrenderer.o mapoglcontext.o mapimageio.o mapcairo.o maprendering.o mapgeomtransform.o maprgbapng.o maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapgd2.o mapagg.o mapagg2.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o  mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapwcs20.o mapcpl.o cgiutil.o maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o mapsvg.o mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o maplibxml2.o mapdebug.o mapchart.o maptclutf.o mapxml.o mapkml.o mapkmlrenderer.o mapogroutput.o
+OBJS= $(AGG_OBJ) mapgeomutil.o mapdummyrenderer.o mapogl.o mapoglrenderer.o mapoglcontext.o \
+				mapimageio.o mapcairo.o maprendering.o mapgeomtransform.o mapquantization.o \
+				maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o \
+				maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o \
+				mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o \
+				mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o \
+				mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o \
+				mapgd.o mapagg.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o \
+				mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mapjoin.o mapgraticule.o \
+				mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o \
+				maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o \
+				mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o \
+				maplibxml2.o mapdebug.o mapchart.o maptclutf.o mapxml.o mapkml.o mapkmlrenderer.o \
+				mapogroutput.o mapwcs20.o
 
 EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms \
@@ -309,13 +319,6 @@ mapoglcontext.o: mapoglcontext.cpp mapoglcontext.h
    
 mapogr.o:	mapogr.cpp
 	$(CXX) -c $(CXXFLAGS) mapogr.cpp -o mapogr.o
-
-# use -Wno-uninitialized as the compiler produces incorrect warning messages
-mapagg.o: mapagg.cpp mapagg.h
-	$(CXX) -c $(CXXFLAGS) -Wno-uninitialized mapagg.cpp -o mapagg.o
-
-mapagg2.o: mapagg2.cpp mapagg.h 
-	$(CXX) -c $(CXXFLAGS) -Wno-uninitialized mapagg2.cpp -o mapagg2.o
 
 php_mapscript:: $(LIBMAP_STATIC)
 	cd mapscript/php; $(MAKE); cd ../..

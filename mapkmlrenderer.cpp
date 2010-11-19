@@ -35,10 +35,9 @@
 #include "mapio.h"
 
 
-KmlRenderer::KmlRenderer(int width, int height, colorObj* color/*=NULL*/) 
+KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color/*=NULL*/) 
 	:	XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL), Width(width), Height(height),
-		FirstLayer(MS_TRUE), RasterizerOutputFormat(NULL), ImgLayer(NULL),
-		VectorMode(MS_TRUE), RasterMode(MS_FALSE), MapCellsize(1.0),
+		FirstLayer(MS_TRUE), MapCellsize(1.0),
 		PlacemarkNode(NULL), GeomNode(NULL),
 		Items(NULL), NumItems(0), map(NULL), currentLayer(NULL)
 
@@ -87,6 +86,7 @@ KmlRenderer::KmlRenderer(int width, int height, colorObj* color/*=NULL*/)
 
 
 	StyleHashTable = msCreateHashTable();
+	
 }
 
 KmlRenderer::~KmlRenderer()
@@ -98,34 +98,6 @@ KmlRenderer::~KmlRenderer()
 		msFreeHashTable(StyleHashTable);
 
 	xmlCleanupParser();
-}
-
-imageObj* KmlRenderer::createInternalImage()
-{
-    rendererVTableObj *r = RasterizerOutputFormat->vtable;
-    imageObj *image =NULL;
-    mapObj *map = currentLayer->map;
-
-    if (r)
-    {
-        image = r->createImage(Width, Height, RasterizerOutputFormat, &BgColor);
-          image->format = RasterizerOutputFormat;
-          image->format->refcount++;
-          image->width = currentLayer->map->width;
-          image->height = currentLayer->map->height;
-
-          image->resolution = currentLayer->map->resolution;
-          image->resolutionfactor = currentLayer->map->resolution/currentLayer->map->defresolution;
-          if (currentLayer->map->web.imagepath)
-            image->imagepath = strdup(currentLayer->map->web.imagepath);
-          if (map->web.imageurl)
-            image->imageurl = strdup(currentLayer->map->web.imageurl);
-    }
-    else
-      image = msImageCreateAGG(map->width, map->height,  
-                               RasterizerOutputFormat,
-                               map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);
-    return image;
 }
 
 imageObj* KmlRenderer::createImage(int, int, outputFormatObj*, colorObj*)
@@ -222,28 +194,10 @@ char* KmlRenderer::getLayerName(layerObj *layer)
 
 }
 
-void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
+int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
 {
     char *layerName=NULL;
     const char *value=NULL;
-
-    VectorMode = MS_FALSE;
-    RasterMode = MS_FALSE;
-
-    if (layer->type ==  MS_LAYER_RASTER)
-      RasterMode = MS_TRUE;
-    else
-      VectorMode = MS_TRUE;
-
-
-    /*check if a vector layer will be dumped as a raster*/
-    const char *outputAsRaster=msLookupHashTable(&(layer->metadata),"KML_OUTPUTASRASTER");
-    if (outputAsRaster && strlen(outputAsRaster) > 0 && 
-        (strcasecmp(outputAsRaster, "true") == 0 || strcasecmp(outputAsRaster, "yes") == 0))
-    {
-         RasterMode = MS_TRUE;
-         VectorMode = MS_FALSE;
-    }
 
     LayerNode = xmlNewNode(NULL, BAD_CAST "Folder");
 	
@@ -259,10 +213,7 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
       layerDsiplayFolder = msLookupHashTable(&(layer->map->web.metadata), "kml_folder_display");
     if (!layerDsiplayFolder || strlen(layerDsiplayFolder)<=0)
     {
-        if (RasterMode)
-          xmlNewChild(LayerNode, NULL, BAD_CAST "styleUrl", BAD_CAST "#LayerFolder_checkHideChildren");
-        else
-          xmlNewChild(LayerNode, NULL, BAD_CAST "styleUrl", BAD_CAST "#LayerFolder_check"); 
+        xmlNewChild(LayerNode, NULL, BAD_CAST "styleUrl", BAD_CAST "#LayerFolder_check"); 
     }
 
     else
@@ -304,136 +255,74 @@ void KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
         BgColor = layer->map->imagecolor;
 
          xmlNewChild(DocNode, NULL, BAD_CAST "name", BAD_CAST layer->map->name);
+         
+         for (int i=0; i<map->numoutputformats; i++)
+         {
+             outputFormatObj *iFormat = layer->map->outputformatlist[i];
+             if(!strcasecmp(iFormat->name,"png24"))
+             {
+                 aggFormat = iFormat;
+                 break;
+             }
+         } 
 
         
     }
 
     currentLayer = layer;
 
-    if (VectorMode)
-    {
+   
 
-        if (!msLayerIsOpen(layer))
-        {
-            if (msLayerOpen(layer) != MS_SUCCESS)
-            {
-                msSetError(MS_MISCERR, "msLayerOpen failed", "KmlRenderer::startNewLayer" );
-            }
-        }
+     if (!msLayerIsOpen(layer))
+     {
+         if (msLayerOpen(layer) != MS_SUCCESS)
+         {
+             msSetError(MS_MISCERR, "msLayerOpen failed", "KmlRenderer::startNewLayer" );
+         }
+     }
 
-        /*pre process the layer to set things that make sense for kml output*/
-        processLayer(layer);
+     /*pre process the layer to set things that make sense for kml output*/
+     processLayer(layer);
 
-        if (msLookupHashTable(&layer->metadata, "kml_description"))
-          pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "kml_description");
-        
-        value=msLookupHashTable(&layer->metadata, "kml_include_items");
-        if (value)
-          papszLayerIncludeItems = msStringSplit(value, ',', &nIncludeItems);
+     if (msLookupHashTable(&layer->metadata, "kml_description"))
+       pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "kml_description");
+     
+     value=msLookupHashTable(&layer->metadata, "kml_include_items");
+     if (value)
+       papszLayerIncludeItems = msStringSplit(value, ',', &nIncludeItems);
 
-        
-        DumpAttributes = MS_FALSE;
-        char *attribVal = msLookupHashTable(&layer->metadata, "kml_dumpattributes");
-        if (attribVal && strlen(attribVal) > 0)
-        {
+     
+     DumpAttributes = MS_FALSE;
+     char *attribVal = msLookupHashTable(&layer->metadata, "kml_dumpattributes");
+     if (attribVal && strlen(attribVal) > 0)
+     {
 
-            DumpAttributes = MS_TRUE;
-            msLayerWhichItems(layer, MS_FALSE, attribVal);
+         DumpAttributes = MS_TRUE;
+         msLayerWhichItems(layer, MS_FALSE, attribVal);
 
-        }
-        else
-        {
-            msLayerWhichItems(layer, MS_TRUE, NULL);
-        }
+     }
+     else
+     {
+         msLayerWhichItems(layer, MS_TRUE, NULL);
+     }
 
-        NumItems = layer->numitems;
-        if (NumItems)
-        {
-            Items = (char **)calloc(NumItems, sizeof(char *));
-            for (int i=0; i<NumItems; i++)
-              Items[i] = strdup(layer->items[i]);
-        }
+     NumItems = layer->numitems;
+     if (NumItems)
+     {
+         Items = (char **)calloc(NumItems, sizeof(char *));
+         for (int i=0; i<NumItems; i++)
+           Items[i] = strdup(layer->items[i]);
+     }
 
-    }    
-
-    ImgLayer= NULL;
     
-    
-    /*check if kml_folder_display is set*/
-    /* setup internal rasterizer format */
-    char rasterizerFormatName[128];
-        
-    /*no real need to let the user pick a renderer. It seems more complex than useful.
-      I am leaving the code here but will remove it form the docs. (AY)
-      The agg should be the only one used but at this point it is not completed; so
-      use cairo for vector layer that are rasterized and agg2 for raster layers*/
-    if (layer->type ==  MS_LAYER_RASTER)
-      sprintf(rasterizerFormatName, "agg2png"); //"aggpng24"); 
-    else
-    {
-#ifdef USE_CAIRO
-        sprintf(rasterizerFormatName, "cairopng");
-#else
-        sprintf(rasterizerFormatName, "agg2png"); 
-#endif
-    }
-        
-    for (int i=0; i<layer->map->numoutputformats; i++)
-    {     
-        const char *formatOptionStr = msGetOutputFormatOption(layer->map->outputformatlist[i], "kml_rasteroutputformat", "");
-        if (strlen(formatOptionStr))
-        {
-            snprintf(rasterizerFormatName, sizeof(rasterizerFormatName), "%s", formatOptionStr);
-            break;
-        }
-    }
-
-    for (int i=0; i<layer->map->numoutputformats; i++)
-    {
-        outputFormatObj *iFormat = layer->map->outputformatlist[i];
-        if(!strcasecmp(iFormat->name,rasterizerFormatName))
-        {
-            RasterizerOutputFormat = iFormat;
-            /*always set RGBA*/
-            RasterizerOutputFormat->imagemode = MS_IMAGEMODE_RGBA;
-            RasterizerOutputFormat->transparent = MS_TRUE;
-            break;
-        }
-    } 
-    
-    ImgLayer = RasterMode ? createInternalImage() : NULL;
 
     setupRenderingParams(&layer->metadata);
+    return MS_SUCCESS;
 }
 
-void KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
+int KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
 {
-    if (VectorMode)
-      flushPlacemark();
-
-    /*if we rendering through a raster buffer, save the layer into a file and create
-      a GroundOverlay node*/
-    if (RasterMode && ImgLayer)
-    {       
-        char *tmpFileName = NULL;
-        char *tmpUrl = NULL;
-            
-        tmpFileName = msTmpFile(MapPath, img->imagepath, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
-        if (tmpFileName)
-        {
-            msSaveImage(layer->map, ImgLayer, tmpFileName);
-            tmpUrl = strdup( img->imageurl);
-            tmpUrl = msStringConcatenate(tmpUrl, (char *)(msGetBasename(tmpFileName)));
-            tmpUrl = msStringConcatenate(tmpUrl, ".");
-            tmpUrl = msStringConcatenate(tmpUrl, (char *)MS_IMAGE_EXTENSION(RasterizerOutputFormat));
-                
-            createGroundOverlayNode(LayerNode, tmpUrl, layer);
-            msFree(tmpFileName);
-            msFree(tmpUrl);
-            msFreeImage(ImgLayer);
-                
-        }        
-    }
+    flushPlacemark();
         
     xmlAddChild(DocNode, LayerNode);
 
@@ -451,8 +340,38 @@ void KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
       msFreeCharArray(papszLayerIncludeItems, nIncludeItems);
 
     papszLayerIncludeItems=NULL;
+    return MS_SUCCESS;
 }
 
+int KmlRenderer::mergeRasterBuffer(imageObj *image, rasterBufferObj *rb) {
+   assert(rb && rb->type == MS_BUFFER_BYTE_RGBA);
+   char *tmpFileName = NULL;
+   char *tmpUrl = NULL;
+   FILE *tmpFile = NULL;
+    
+   tmpFileName = msTmpFile(MapPath, image->imagepath, "png");
+   tmpFile = fopen(tmpFileName,"w");
+   if (tmpFile)
+   {
+     
+     if (!aggFormat->vtable)
+      msInitializeRendererVTable(aggFormat);
+
+     msSaveRasterBuffer(rb,tmpFile,aggFormat);
+     tmpUrl = strdup( image->imageurl);
+     tmpUrl = msStringConcatenate(tmpUrl, (char *)(msGetBasename(tmpFileName)));
+     tmpUrl = msStringConcatenate(tmpUrl, ".png");
+        
+     createGroundOverlayNode(LayerNode, tmpUrl, currentLayer);
+     msFree(tmpFileName);
+     msFree(tmpUrl);
+     fclose(tmpFile);
+     return MS_SUCCESS;
+   } else {
+      msSetError(MS_IOERR,"Failed to create file for kml overlay","KmlRenderer::mergeRasterBuffer()");
+      return MS_FAILURE;
+   }
+}
 
 void KmlRenderer::setupRenderingParams(hashTableObj *layerMetadata)
 {
@@ -532,7 +451,7 @@ xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUr
     /*always add a name. It will be replaced by a text value if available*/
     char tmpid[100];
     char *stmp=NULL, *layerName=NULL;
-    sprintf(tmpid, ".%d", CurrentShapeIndex);
+    sprintf(tmpid, ".%d_%d", CurrentShapeIndex);
     layerName = getLayerName(currentLayer);
     stmp = msStringConcatenate(stmp, layerName);
     stmp = msStringConcatenate(stmp, tmpid);
@@ -545,7 +464,7 @@ xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUr
     return placemarkNode;
 }
 
-void KmlRenderer::renderLineVector(imageObj*, shapeObj *p, strokeStyleObj *style)
+void KmlRenderer::renderLine(imageObj*, shapeObj *p, strokeStyleObj *style)
 {
     if (p->numlines == 0)
       return;
@@ -585,29 +504,7 @@ void KmlRenderer::renderLineVector(imageObj*, shapeObj *p, strokeStyleObj *style
       
 }
 
-void KmlRenderer::renderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
-{
-    if (VectorMode)
-      renderLineVector(img, p, style);
-
-    if (RasterMode)
-    {
-      shapeObj rasShape;
-
-          /* internal renderer used for rasterizing*/
-      rendererVTableObj *r = RasterizerOutputFormat->vtable;
-
-      msInitShape(&rasShape);
-      msCopyShape(p,&rasShape);
-
-      r->transformShape(&rasShape, MapExtent, MapCellsize);
-
-      r->renderLine(ImgLayer, &rasShape, style);
-      msFreeShape(&rasShape);
-    }
-}
-
-void KmlRenderer::renderPolygonVector(imageObj*, shapeObj *p, colorObj *color)
+void KmlRenderer::renderPolygon(imageObj*, shapeObj *p, colorObj *color)
 {
     if (PlacemarkNode == NULL)
       PlacemarkNode = createPlacemarkNode(LayerNode, NULL);
@@ -644,28 +541,6 @@ void KmlRenderer::renderPolygonVector(imageObj*, shapeObj *p, colorObj *color)
       
 }
 
-void KmlRenderer::renderPolygon(imageObj *img, shapeObj *p, colorObj *color)
-{
-    if (VectorMode)
-      renderPolygonVector(img, p, color);
-
-    if (RasterMode)
-    {
-      shapeObj rasShape;
-
-          /* internal renderer used for rasterizing*/           
-      rendererVTableObj *r = RasterizerOutputFormat->vtable;
-
-      msInitShape(&rasShape);
-      msCopyShape(p,&rasShape);
-
-      r->transformShape(&rasShape, MapExtent, MapCellsize);
-
-      r->renderPolygon(ImgLayer, &rasShape, color);
-      msFreeShape(&rasShape);
-    }
-}
-
 void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts)
 {
     char lineBuf[128];
@@ -691,7 +566,7 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts
     xmlNodeAddContent(coordsNode, BAD_CAST "\t");
 }
 
-void KmlRenderer::renderGlyphsVector(imageObj*, double x, double y, labelStyleObj *style, char *text)
+void KmlRenderer::renderGlyphs(imageObj*, double x, double y, labelStyleObj *style, char *text)
 {
     xmlNodePtr node; 
 
@@ -727,40 +602,6 @@ void KmlRenderer::renderGlyphsVector(imageObj*, double x, double y, labelStyleOb
     addCoordsNode(geomNode, &pt, 1);
 }
 
-void KmlRenderer::renderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, char *text)
-{
-	if (VectorMode)
-		renderGlyphsVector(img, x, y, style, text);
-
-	if (RasterMode)
-	{
-              /* internal renderer used for rasterizing*/
-		rendererVTableObj *r = RasterizerOutputFormat->vtable;
-		r->renderGlyphs(ImgLayer, x, y, style, text);
-	}
-}
-
-int KmlRenderer::getTruetypeTextBBox(imageObj*,char *font, double size, char *string,
-		rectObj *rect, double **advances)
-{
-    if (VectorMode)
-    {
-          /* TODO*/     
-      rect->minx=0.0;
-      rect->maxx=0.0;
-      rect->miny=0.0;
-      rect->maxy=0.0;
-    }
-
-    if (RasterMode)
-    {
-      rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->getTruetypeTextBBox(ImgLayer, font, size, string, rect, advances);
-    }
-
-    return true;
-}
-
 void KmlRenderer::addAddRenderingSpecifications(xmlNodePtr node)
 {
 	/*
@@ -784,19 +625,20 @@ void KmlRenderer::addAddRenderingSpecifications(xmlNodePtr node)
 }
 
 
+imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorObj * bg);
+
 int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleObj *symstyle)
 {
     pointObj p;
+    
     imageObj *tmpImg = NULL;
-
-        /* internal renderer used for rasterizing*/
-    rendererVTableObj *r = RasterizerOutputFormat->vtable;
-
-        /*RasterizerOutputFormat->imagemode = MS_IMAGEMODE_RGBA;*/
-    tmpImg = r->createImage((int)(symbol->sizex*symstyle->scale), 
+    
+    tmpImg = agg2CreateImage((int)(symbol->sizex*symstyle->scale), 
                             (int)(symbol->sizey*symstyle->scale), 
-                            RasterizerOutputFormat, NULL);
-    tmpImg->format = RasterizerOutputFormat;
+                            aggFormat, NULL);
+    tmpImg->format = aggFormat;
+    if (!aggFormat->vtable)
+      msInitializeRendererVTable(aggFormat);
 
     p.x = symbol->sizex * symstyle->scale / 2;
     p.y = symbol->sizey *symstyle->scale / 2;
@@ -831,53 +673,25 @@ void KmlRenderer::renderSymbol(imageObj *img, double x, double y, symbolObj *sym
 void KmlRenderer::renderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol, 
                                      symbolStyleObj *style)
 {
-    if (VectorMode)
-      renderSymbol(img, x, y, symbol, style);
-
-    if (RasterMode)
-    {
-      rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->renderPixmapSymbol(ImgLayer, x, y, symbol, style);
-    }
+    renderSymbol(img, x, y, symbol, style);
 }
 
 void KmlRenderer::renderVectorSymbol(imageObj *img, double x, double y, symbolObj *symbol, 
                                      symbolStyleObj *style)
 {
-    if (VectorMode)
-      renderSymbol(img, x, y, symbol, style);
-
-    if (RasterMode)
-    {
-      rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->renderVectorSymbol(ImgLayer, x, y, symbol, style);
-    }
+    renderSymbol(img, x, y, symbol, style);
 }
 
 void KmlRenderer::renderEllipseSymbol(imageObj *img, double x, double y, symbolObj *symbol, 
                                       symbolStyleObj *style)
 {
-    if (VectorMode)
-      renderSymbol(img, x, y, symbol, style);
-
-    if (RasterMode)
-    {
-      rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->renderEllipseSymbol(ImgLayer, x, y, symbol, style);
-    }
+    renderSymbol(img, x, y, symbol, style);
 }
 
 void KmlRenderer::renderTruetypeSymbol(imageObj *img, double x, double y, symbolObj *symbol, 
                                        symbolStyleObj *style)
 {
-    if (VectorMode)
-      renderSymbol(img, x, y, symbol, style);
-
-    if (RasterMode)
-    {
-      rendererVTableObj *r = RasterizerOutputFormat->vtable;
-      r->renderTruetypeSymbol(ImgLayer, x, y, symbol, style);
-    }
+    renderSymbol(img, x, y, symbol, style);
 }
 
 xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *imageHref, layerObj *layer)
@@ -963,10 +777,7 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
     PlacemarkNode = NULL;
     GeomNode = NULL;
 
-    if (VectorMode)/* && DumpAttributes && NumItems)*/
-      DescriptionNode = createDescriptionNode(shape);
-    else
-      DescriptionNode = NULL;
+    DescriptionNode = createDescriptionNode(shape);
 
     memset(SymbologyFlag, 0, NumSymbologyFlag);
 }
@@ -1013,8 +824,8 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
                 </Style>
 	*/
 
-    sprintf(symbolHexColor,"%02x%02x%02x%02x", style->color.alpha, style->color.blue,
-            style->color.green, style->color.red);
+    sprintf(symbolHexColor,"%02x%02x%02x%02x", style->color->alpha, style->color->blue,
+            style->color->green, style->color->red);
     snprintf(SymbolName, sizeof(SymbolName), "symbol_%s_%.1f_%s", symbol->name, style->scale, symbolHexColor);
 
     char *symbolUrl = msLookupHashTable(StyleHashTable, SymbolName);
@@ -1025,13 +836,13 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
 
       if (img->imagepath)
       {
-        char *tmpFileName = msTmpFile(MapPath, img->imagepath, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
+        char *tmpFileName = msTmpFile(MapPath, img->imagepath, "png");
         snprintf(iconFileName, sizeof(iconFileName), "%s", tmpFileName);
         msFree(tmpFileName);
       }
       else
       {
-          snprintf(iconFileName, sizeof(iconFileName), "symbol_%s_%.1f.%s", symbol->name, style->scale, MS_IMAGE_EXTENSION(RasterizerOutputFormat));
+        sprintf(iconFileName, "symbol_%s_%.1f.%s", symbol->name, style->scale, "png");
       }
 
       if (createIconImage(iconFileName, symbol, style) != MS_SUCCESS)
@@ -1043,7 +854,7 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
       }
 
       if (img->imageurl)
-          snprintf(iconUrl, sizeof(iconUrl), "%s%s.%s", img->imageurl, msGetBasename(iconFileName), MS_IMAGE_EXTENSION(RasterizerOutputFormat));
+        sprintf(iconUrl, "%s%s.%s", img->imageurl, msGetBasename(iconFileName), "png");
       else
         snprintf(iconUrl, sizeof(iconUrl), "%s", iconFileName);
 
@@ -1079,11 +890,11 @@ char* KmlRenderer::lookupPlacemarkStyle()
         for (int i=0; i<numLineStyle; i++)
         {
             if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
-                LineStyle[i].color.alpha == 255)
-              LineStyle[i].color.alpha = MS_NINT(currentLayer->opacity*2.55);
+                LineStyle[i].color->alpha == 255)
+              LineStyle[i].color->alpha = MS_NINT(currentLayer->opacity*2.55);
               
-            sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color.alpha, LineStyle[0].color.blue,
-                    LineStyle[i].color.green, LineStyle[i].color.red);
+            sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color->alpha, LineStyle[0].color->blue,
+                    LineStyle[i].color->green, LineStyle[i].color->red);
 
             char lineStyleName[32];
             sprintf(lineStyleName, "_line_%s_w%.1f", lineHexColor, LineStyle[i].width);
@@ -1129,9 +940,9 @@ char* KmlRenderer::lookupPlacemarkStyle()
           */
 
       if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
-          LabelStyle.color.alpha == 255)
-        LabelStyle.color.alpha = MS_NINT(currentLayer->opacity*2.55);
-      sprintf(labelHexColor,"%02x%02x%02x%02x", LabelStyle.color.alpha, LabelStyle.color.blue, LabelStyle.color.green, LabelStyle.color.red);
+          LabelStyle.color->alpha == 255)
+        LabelStyle.color->alpha = MS_NINT(currentLayer->opacity*2.55);
+      sprintf(labelHexColor,"%02x%02x%02x%02x", LabelStyle.color->alpha, LabelStyle.color->blue, LabelStyle.color->green, LabelStyle.color->red);
 
           // __TODO__ add label scale
 
@@ -1186,8 +997,8 @@ char* KmlRenderer::lookupPlacemarkStyle()
             for (int i=0; i<numLineStyle; i++)
             {
                 xmlNodePtr lineStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "LineStyle", NULL);
-                sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color.alpha, LineStyle[i].color.blue,
-                    LineStyle[i].color.green, LineStyle[i].color.red);
+                sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color->alpha, LineStyle[i].color->blue,
+                    LineStyle[i].color->green, LineStyle[i].color->red);
                 xmlNewChild(lineStyleNode, NULL, BAD_CAST "color", BAD_CAST lineHexColor);
 
                 char width[16];
@@ -1325,11 +1136,6 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
     return NULL;
 }
 
-int KmlRenderer::renderRasterLayer(imageObj*)
-{
-    return msDrawRasterLayer(currentLayer->map, currentLayer, ImgLayer);
-}
-
 void KmlRenderer::addLineStyleToList(strokeStyleObj *style)
 {
     /*actually this is not necessary. kml only uses the last LineStyle
@@ -1338,10 +1144,10 @@ void KmlRenderer::addLineStyleToList(strokeStyleObj *style)
     for (i=0; i<numLineStyle; i++)
     {
         if (style->width == LineStyle[i].width &&
-            LineStyle[i].color.alpha == style->color.alpha &&
-            LineStyle[i].color.red == style->color.red &&
-            LineStyle[i].color.green == style->color.green &&
-            LineStyle[i].color.blue == style->color.blue)
+            LineStyle[i].color->alpha == style->color->alpha &&
+            LineStyle[i].color->red == style->color->red &&
+            LineStyle[i].color->green == style->color->green &&
+            LineStyle[i].color->blue == style->color->blue)
           break;
     }
     if (i == numLineStyle)

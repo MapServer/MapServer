@@ -360,6 +360,7 @@ int loadColor(colorObj *color, attributeBindingObj *binding) {
   } else {
     if((symbol = getSymbol(2, MS_NUMBER, MS_STRING)) == -1) return MS_FAILURE;
   }
+  color->alpha=255;
 
   if(symbol == MS_NUMBER) {
     color->red = (int) msyynumber;
@@ -376,12 +377,11 @@ int loadColor(colorObj *color, attributeBindingObj *binding) {
       hex[0] = msyytext[5];
       hex[1] = msyytext[6];
       color->blue = msHexToInt(hex);
-      return MS_SUCCESS;
+    } else {
+       /* TODO: consider named colors here */
+       msSetError(MS_SYMERR, "Invalid hex color (%s):(line %d)", "loadColor()", msyytext, msyylineno); 
+       return MS_FAILURE;
     }
-
-    /* TODO: consider named colors here */
-    msSetError(MS_SYMERR, "Invalid hex color (%s):(line %d)", "loadColor()", msyytext, msyylineno); 
-    return MS_FAILURE;
   } else {
     binding->item = strdup(msyytext);
     binding->index = -1;
@@ -2139,7 +2139,7 @@ int initStyle(styleObj *style) {
   style->minscaledenom=style->maxscaledenom = -1.0;
   style->offsetx = style->offsety = 0; /* no offset */
   style->antialias = MS_FALSE;
-  style->angle = 360;
+  style->angle = 0;
   style->autoangle= MS_FALSE;
   style->opacity = 100; /* fully opaque */
   style->_geomtransformexpression = NULL;
@@ -4723,8 +4723,8 @@ int initMap(mapObj *map)
   map->extent.minx = map->extent.miny = map->extent.maxx = map->extent.maxy = -1.0;
 
   map->scaledenom = -1.0;
-  map->resolution = 72.0; /* pixels per inch */
-  map->defresolution = 72.0; /* pixels per inch */
+  map->resolution = MS_DEFAULT_RESOLUTION; /* pixels per inch */
+  map->defresolution = MS_DEFAULT_RESOLUTION; /* pixels per inch */
 
   map->height = map->width = -1;
   map->maxsize = MS_MAXIMAGESIZE_DEFAULT;

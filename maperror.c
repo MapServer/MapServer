@@ -80,10 +80,12 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"Invalid rectangle.",
 						"Date/time error.",
 						"GML encoding error.",
-            "SOS server error.",
+						"SOS server error.",
 						"NULL parent pointer error.",
-            "AGG library error.",
-            "OWS error."
+						"AGG library error.",
+						"OWS error.",
+						"OpenGL renderer error.",
+						"Renderer error."
 };
 
 #ifndef USE_THREAD
@@ -376,9 +378,10 @@ void msWriteErrorXML(FILE *stream)
 }
 
 void msWriteErrorImage(mapObj *map, char *filename, int blank) {
-  gdFontPtr font = gdFontSmall;
-  imageObj img;
-  int width=400, height=300, color;
+  imageObj *img;
+  rendererVTableObj *renderer;
+  int font_index = 0;
+  int width=400, height=300;
   int nMargin =5;
   int nTextLength = 0;
   int nUsableWidth = 0;
@@ -392,13 +395,12 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   int nXPos = 0;
   int nYPos = 0;
   int nWidthTxt = 0;
-  int nSpaceBewteenLines = font->h;
-  int nBlack = 0;   
   outputFormatObj *format = NULL;
   char *errormsg = msGetErrorString("; ");
-  char *pFormatBuffer;
-  size_t n = 0;
-
+  fontMetrics *font = NULL;
+  char *imagepath = NULL, *imageurl = NULL;
+  labelStyleObj ls;
+  
   if (map) {
       if( map->width > 0 && map->height > 0 )
       {
@@ -406,86 +408,82 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
           height = map->height;
       }
       format = map->outputformat;
+      imagepath = map->web.imagepath;
+      imageurl = map->web.imageurl;
   }
 
   /* Default to GIF if no suitable GD output format set */
-  if (format == NULL || (!MS_DRIVER_GD(format) && !MS_DRIVER_AGG(format))) 
+  if (format == NULL || !MS_RENDERER_PLUGIN(format) || !format->vtable->supports_bitmap_fonts) 
     format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
 
-  img.img.gd = gdImageCreate(width, height);
-  color = gdImageColorAllocate(img.img.gd, map->imagecolor.red, 
-                               map->imagecolor.green,
-                               map->imagecolor.blue); /* BG color */
-  nBlack = gdImageColorAllocate(img.img.gd, 0,0,0); /* Text color */
 
-  if (map->outputformat && map->outputformat->transparent)
-    gdImageColorTransparent(img.img.gd, 0);
+  img = msImageCreate(width,height,format,imagepath,imageurl,MS_DEFAULT_RESOLUTION,MS_DEFAULT_RESOLUTION,NULL);
+  renderer = MS_IMAGE_RENDERER(img);
 
-
-  nTextLength = strlen(errormsg); 
-  nWidthTxt  =  nTextLength * font->w;
-  nUsableWidth = width - (nMargin*2);
-
-  /* Check to see if it all fits on one line. If not, split the text on several lines. */
-  if(!blank) {
-    if (nWidthTxt > nUsableWidth) {
-      nMaxCharsPerLine =  nUsableWidth/font->w;
-      nLines = (int) ceil ((double)nTextLength / (double)nMaxCharsPerLine);
-      if (nLines > 0) {
-        papszLines = (char **)malloc(nLines*sizeof(char *));
-        for (i=0; i<nLines; i++) {
-          papszLines[i] = (char *)malloc((nMaxCharsPerLine+1)*sizeof(char));
-          papszLines[i][0] = '\0';
-        }
-      }
-      for (i=0; i<nLines; i++) {
-        nStart = i*nMaxCharsPerLine;
-        nEnd = nStart + nMaxCharsPerLine;
-        if (nStart < nTextLength) {
-          if (nEnd > nTextLength)
-            nEnd = nTextLength;
-          nLength = nEnd-nStart;
-
-          strlcpy(papszLines[i], errormsg+nStart, nLength+1);
-        }
-      }
-    } else {
-      nLines = 1;
-      papszLines = (char **)malloc(nLines*sizeof(char *));
-      papszLines[0] = strdup(errormsg);
-    }   
-    for (i=0; i<nLines; i++) {
-      nYPos = (nSpaceBewteenLines) * ((i*2) +1); 
-      nXPos = nSpaceBewteenLines;
-
-      gdImageString(img.img.gd, font, nXPos, nYPos, (unsigned char *)papszLines[i], nBlack);
-    }
-    if (papszLines) {
-      for (i=0; i<nLines; i++) {
-	free(papszLines[i]);
-      }
-      free(papszLines);
-    }
+  for(i=0;i<5;i++) {
+	  /* use the first font we find */
+	  if((font = renderer->bitmapFontMetrics[font_index]) != NULL) {
+	     ls.size = i;
+		  MS_INIT_COLOR(*ls.color,0,0,0);
+		  break;
+	  }
+  }
+  /* if no font found we can't do much. this shouldn't happen */
+  if(font) {
+	  
+	  nTextLength = strlen(errormsg); 
+	  nWidthTxt  =  nTextLength * font->charWidth;
+	  nUsableWidth = width - (nMargin*2);
+	
+	  /* Check to see if it all fits on one line. If not, split the text on several lines. */
+	  if(!blank) {
+		if (nWidthTxt > nUsableWidth) {
+		  nMaxCharsPerLine =  nUsableWidth/font->charWidth;
+		  nLines = (int) ceil ((double)nTextLength / (double)nMaxCharsPerLine);
+		  if (nLines > 0) {
+			papszLines = (char **)malloc(nLines*sizeof(char *));
+			for (i=0; i<nLines; i++) {
+			  papszLines[i] = (char *)malloc((nMaxCharsPerLine+1)*sizeof(char));
+			  papszLines[i][0] = '\0';
+			}
+		  }
+		  for (i=0; i<nLines; i++) {
+			nStart = i*nMaxCharsPerLine;
+			nEnd = nStart + nMaxCharsPerLine;
+			if (nStart < nTextLength) {
+			  if (nEnd > nTextLength)
+				nEnd = nTextLength;
+			  nLength = nEnd-nStart;
+	
+			  strncpy(papszLines[i], errormsg+nStart, nLength);
+			  papszLines[i][nLength] = '\0';
+			}
+		  }
+		} else {
+		  nLines = 1;
+		  papszLines = (char **)malloc(nLines*sizeof(char *));
+		  papszLines[0] = strdup(errormsg);
+		}   
+		for (i=0; i<nLines; i++) {
+		  nYPos = (font->charHeight) * ((i*2) +1); 
+		  nXPos = font->charWidth;;
+		  renderer->renderBitmapGlyphs(img, nXPos, nYPos, &ls, papszLines[i]); 
+		}
+		if (papszLines) {
+		  for (i=0; i<nLines; i++) {
+		free(papszLines[i]);
+		  }
+		  free(papszLines);
+		}
+	  }
   }
 
   /* actually write the image */
-  if(!filename) 
+  if(!filename) {
       msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(format), 10,10);
-  if (MS_DRIVER_GD(format))
-    msSaveImageGD(&img, filename, format);
-  else
-  {
-      pFormatBuffer = format->driver;
-      n = strlen(&(pFormatBuffer[4]));
-      format->driver = (char*) malloc(sizeof(char)*(n+4));
-      strcpy(format->driver, "gd/");
-      strlcat(format->driver, &(pFormatBuffer[4]), n);
-      msSaveImageGD(&img, filename, format);
-      free(format);
-      format->driver = pFormatBuffer;
   }
-
-  gdImageDestroy(img.img.gd);
+  msSaveImage(NULL,img,filename);
+  msFreeImage(img);
 
   if (format->refcount == 0)
     msFreeOutputFormat(format);
@@ -522,9 +520,7 @@ char *msGetVersion() {
 #ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
 #endif
-#ifdef USE_AGG
   strcat(version, " SUPPORTS=AGG");
-#endif
 #ifdef USE_CAIRO
   strcat(version, " SUPPORTS=CAIRO");
 #endif
@@ -569,9 +565,6 @@ char *msGetVersion() {
 #endif
 #ifdef USE_POINT_Z_M
   strcat(version, " SUPPORTS=POINT_Z_M");
-#endif
-#ifdef USE_RGBA_PNG
-  strcat(version, " SUPPORTS=RGBA_PNG");
 #endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");
