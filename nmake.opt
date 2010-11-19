@@ -354,6 +354,7 @@ ZLIB_INC=-I$(ZLIB_DIR)
 # ----------------------------------------------------------------------
 # Uncomment the following to build with giflib support
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#GIF=-DUSE_GIF
 #GIFLIB_DIR=$(MS_BASE)\..\giflib-4.1.4
 #GIFLIB_INC=-I$(GIFLIB_DIR)\include
 
@@ -898,7 +899,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
           $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) \
-          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(AGG_SVG_SYMBOLS) $(KML)
+          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(AGG_SVG_SYMBOLS) $(KML) $(GIF)
 
 !IFDEF WIN64
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
