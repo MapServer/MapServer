@@ -58,7 +58,7 @@
 # 1310 = 7.1 (2003)   1400 = 8.0 (2005) 1500 = 9.0 (2008)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !IFNDEF MSVC_VER
-#assume msvc 7.1
+#assume msvc 9.0
 MSVC_VER=1500
 !ENDIF
 
@@ -86,7 +86,7 @@ BINDIR = $(MS_BASE)\..\bin
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Optmization, debug, and related compile flags.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-MS_DEBUG=1
+
 !IF $(MSVC_VER) >= 1400
 !IFNDEF MS_DEBUG
 # Optimized, with using MSVCRT.
@@ -296,11 +296,13 @@ EXPAT_DIR = $(MS_BASE)\..\expat-2.0.1
 #OGL=-DUSE_OGL
 #FTGL_DIR=$(MS_BASE)\..\ftgl-2.1.3~rc5
 
-# Cairo renderer support 
-#
-CAIRO=-DUSE_CAIRO
-#CAIRO_DIR=$(MS_BASE)\..\cairo-1.8.6
-CAIRO_DIR=$(MS_BASE)\..\cairo-thamas
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Cairo renderer support
+# ----------------------------------------------------------------------
+# Uncomment the following to build with cairo renderer support
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#CAIRO=-DUSE_CAIRO
+#CAIRO_DIR=$(MS_BASE)\..\cairo-thamas
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PDF (Acrobat PDF support)
@@ -310,8 +312,8 @@ CAIRO_DIR=$(MS_BASE)\..\cairo-thamas
 # See http://www.pdflib.com/products/pdflib/download-source.html to
 # download the support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-PDF=-DUSE_PDF
-PDF_DIR=$(MS_BASE)\..\PDFlib-Lite-7.0.4p1
+#PDF=-DUSE_PDF
+#PDF_DIR=$(MS_BASE)\..\PDFlib-Lite-7.0.4p1
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -321,8 +323,8 @@ PDF_DIR=$(MS_BASE)\..\PDFlib-Lite-7.0.4p1
 # operations.  It can only be compiled on Windows with MSVC 7.0 or
 # greater (or the cygwin/mingw stack).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GEOS=-DUSE_GEOS
-GEOS_DIR=$(MS_BASE)\..\geos-06232009
+#GEOS=-DUSE_GEOS
+#GEOS_DIR=$(MS_BASE)\..\geos-06232009
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -343,12 +345,17 @@ ZLIB_INC=-I$(ZLIB_DIR)
 #libiconv support is used for to support double bytes (see bug 911).
 #uncomment the following to build with libiconv support.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ICONV=-DUSE_ICONV
-ICONV_DIR=$(MS_BASE)\..\libiconv-1.9.1
+#ICONV=-DUSE_ICONV
+#ICONV_DIR=$(MS_BASE)\..\libiconv-1.9.1
 
 
-GIFLIB_DIR=$(MS_BASE)\..\giflib-4.1.4
-GIFLIB_INC=-I$(GIFLIB_DIR)\include
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# GIFLIB
+# ----------------------------------------------------------------------
+# Uncomment the following to build with giflib support
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#GIFLIB_DIR=$(MS_BASE)\..\giflib-4.1.4
+#GIFLIB_INC=-I$(GIFLIB_DIR)\include
 
 
 ########################################################################
@@ -363,10 +370,8 @@ GIFLIB_INC=-I$(GIFLIB_DIR)\include
 # http://www.gdal.org/.  Once built, enable the GDAL flag, and point
 # GDAL_DIR to the directory where GDAL was built.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GDAL=-DUSE_GDAL
-#GDAL_DIR=$(MS_BASE)\..\gdal-svn-06232009
-#GDAL_DIR=$(MS_BASE)\..\gdal-svn
-GDAL_DIR=$(MS_BASE)\..\gdal_1_7_0
+#GDAL=-DUSE_GDAL
+#GDAL_DIR=$(MS_BASE)\..\gdal_1_7_0
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -383,8 +388,8 @@ GDAL_DIR=$(MS_BASE)\..\gdal_1_7_0
 # want to use GDAL/OGR for both raster and vector support, but GDAL_DIR
 # needs only be defined once.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-OGR=-DUSE_OGR
-
+#OGR=-DUSE_OGR
+#GDAL_DIR=$(MS_BASE)\..\gdal_1_7_0
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -408,16 +413,16 @@ JPEG_INC = -I$(JPEG_DIR)
 # Postgresql native Win32 client library.
 # See http://www.postgresql.org for support library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-POSTGIS =-DUSE_POSTGIS
-POSTGIS_DIR =$(MS_BASE)\..\postgresql-8.3.7
+#POSTGIS =-DUSE_POSTGIS
+#POSTGIS_DIR =$(MS_BASE)\..\postgresql-8.3.7
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Direct connectivity to Oracle Spatial.
 # ----------------------------------------------------------------------
 # Point this to where your ORACLE_HOME directory lives.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ORACLE_DIR = $(MS_BASE)\..\oracle-11.1.0.7.0
-ORACLE=-DUSE_ORACLESPATIAL
+#ORACLE_DIR = $(MS_BASE)\..\oracle-11.1.0.7.0
+#ORACLE=-DUSE_ORACLESPATIAL
 #ORACLE=-DUSE_ORACLE_PLUGIN
 
 
@@ -431,12 +436,12 @@ ORACLE=-DUSE_ORACLESPATIAL
 # available for download.
 # Either set USE_SDE or USE_SDE_PLUGIN, not both.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SDE_OPT=-DUSE_SDE
+#SDE_OPT=-DUSE_SDE
 #SDE_OPT= -DUSE_SDE_PLUGIN
 
-SDE_VERSION = 91
-SDE_DIR = f:\projects\sde9.1
-SDE_INC = -I$(SDE_SDK)\include
+#SDE_VERSION = 91
+#SDE_DIR = f:\projects\sde9.1
+#SDE_INC = -I$(SDE_SDK)\include
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -475,13 +480,13 @@ SDE_INC = -I$(SDE_SDK)\include
 # http://fribidi.freedesktop.org/wiki/
 # Unncomment out the following flags to build with fribidi
 #---------------------------------------------------------------------
-FRIBIDI=-DUSE_FRIBIDI
-FRIBIDI_DIR=$(MS_BASE)\..\fribidi-0.19.1
+#FRIBIDI=-DUSE_FRIBIDI
+#FRIBIDI_DIR=$(MS_BASE)\..\fribidi-0.19.1
 
 # ----------------------------------------------------------------------
 # Enable KML support
 #----------------------------------------------------------------------
-KML=-DUSE_KML
+#KML=-DUSE_KML
 
 ########################################################################
 # Section IV: Mapserver OGC Configuration
@@ -491,7 +496,7 @@ KML=-DUSE_KML
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WMS Server
 # ----------------------------------------------------------------------
-WMS=-DUSE_WMS_SVR
+#WMS=-DUSE_WMS_SVR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WMS Client
@@ -505,29 +510,29 @@ WMS=-DUSE_WMS_SVR
 # Set the full path to the curl project directory.
 # You may also need to the full path to the windows socket library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-WMSCLIENT= -DUSE_WMS_LYR
-CURL_DIR=$(MS_BASE)\..\curl-7.19.4
+#WMSCLIENT= -DUSE_WMS_LYR
+#CURL_DIR=$(MS_BASE)\..\curl-7.19.4
 #WINSOCK_LIB ="C:\Program Files\Microsoft SDKs\Windows\v6.1\Lib\WS2_32.Lib"
-WINSOCK_LIB ="C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\WS2_32.Lib"
+#WINSOCK_LIB ="C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\WS2_32.Lib"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Client
 # ----------------------------------------------------------------------
 # Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
-WFSCLIENT= -DUSE_WFS_LYR
+#WFSCLIENT= -DUSE_WFS_LYR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WFS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WFS_SVR to compile with WFS server
 # support, requires OGR and PROJ4
-WFS=-DUSE_WFS_SVR -DWFS_USE_LIBXML2
+#WFS=-DUSE_WFS_SVR -DWFS_USE_LIBXML2
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # WCS Server
 # ----------------------------------------------------------------------
 # Use -DUSE_WCS_SVR to compile with WCS server support, requires GDAL.
-WCS=-DUSE_WCS_SVR
+#WCS=-DUSE_WCS_SVR
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -538,9 +543,9 @@ WCS=-DUSE_WCS_SVR
 #It also needs ICONV support since the libxml windows binaries
 #are built with it
 #http://xmlsoft.org/index.html
-SOS=-DUSE_SOS_SVR
-XML2_ENABLED=-DUSE_LIBXML2
-LIBXML_DIR=$(MS_BASE)\..\libxml2-2.7.3.win32
+#SOS=-DUSE_SOS_SVR
+#XML2_ENABLED=-DUSE_LIBXML2
+#LIBXML_DIR=$(MS_BASE)\..\libxml2-2.7.3.win32
 
 
 ########################################################################
@@ -557,7 +562,7 @@ LIBXML_DIR=$(MS_BASE)\..\libxml2-2.7.3.win32
 # make any MapScript bindings, eg. "nmake /f makefile.vc python", you
 # will need to have SWIG installed.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SWIG = $(MS_BASE)\..\SWIG-1.3.39\swig
+#SWIG = $(MS_BASE)\..\SWIG-1.3.39\swig
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Java MapScript
@@ -573,7 +578,7 @@ SWIG = $(MS_BASE)\..\SWIG-1.3.39\swig
 # Python MapScript very likely requires USE_THREAD to be defined.
 # Python 2.2 and above are supported.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-PYTHON_HOME = "$(MS_BASE)\..\Python-2.6.2"
+#PYTHON_HOME = "$(MS_BASE)\..\Python-2.6.2"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PHP MapScript
@@ -581,8 +586,8 @@ PYTHON_HOME = "$(MS_BASE)\..\Python-2.6.2"
 # The PHP_REGEX hack allows you to use PHP's regex system rather than
 # the normal GNU regex library.  This should normally not be needed.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-PHP_HOME = $(MS_BASE)\..\php-5.3.1
-PHP_REGEX=1
+#PHP_HOME = $(MS_BASE)\..\php-5.3.1
+#PHP_REGEX=1
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # .NET/C# MapScript
@@ -590,7 +595,7 @@ PHP_REGEX=1
 # .NET will of course only work with MSVC 7.0 and 7.1.  Also note that
 # you will definitely want USE_THREAD defined.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-DOT_NET = YES
+#DOT_NET = YES
 
 
 
@@ -606,8 +611,8 @@ DOT_NET = YES
 # Proj.4 distribution (cartographic projection routines).  PROJ.4 is
 # also required for all OGC services (WMS, WFS, and WCS).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
-PROJ_DIR=$(MS_BASE)\..\proj-svn-04222009
+#PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
+#PROJ_DIR=$(MS_BASE)\..\proj-svn-04222009
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -778,7 +783,7 @@ EXPAT_LIB = $(EXPAT_DIR)\bin\libexpat.lib
 
 # Set the GIFLIB library
 !IFDEF GIFLIB_DIR
-GIFLIB_LIB=$(GIFLIB_DIR)/lib/giflib.lib
+GIFLIB_LIB=$(GIFLIB_DIR)\lib\giflib.lib
 !ENDIF
 
 # Setup AGG
