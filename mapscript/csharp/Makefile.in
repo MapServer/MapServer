@@ -242,10 +242,10 @@ clean:
 test:
 	LC_ALL=C mono ./shpdump.exe ../../tests/point.shp
 	LC_ALL=C mono ./shapeinfo.exe ../../tests/point.shp
-	LC_ALL=C mono ./inline.exe aggpng24 inline_test.png
+	LC_ALL=C mono ./inline.exe png24 inline_test.png
 	LC_ALL=C mono ./drawmap.exe ../../tests/test.map test_csharp.png
 ifeq ($(strip $(AGG)),-DUSE_AGG)
-	LC_ALL=C mono ./drawmap.exe ../../tests/test.map test_csharp_agg.png aggpng24
+	LC_ALL=C mono ./drawmap.exe ../../tests/test.map test_csharp_agg.png png24
 endif
 	LC_ALL=C mono ./getbytes.exe ../../tests/test.map test_csharp2.png
 	LC_ALL=C mono ./RFC24.exe ../../tests/test.map
