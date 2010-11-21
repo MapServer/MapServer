@@ -508,7 +508,7 @@ typedef struct {
 } fontSetObj;
 
 /************************************************************************/
-/*                         featttureListNodeObj                         */
+/*                         featureListNodeObj                           */
 /*                                                                      */
 /*      for inline features, shape caches and queries                   */
 /************************************************************************/
