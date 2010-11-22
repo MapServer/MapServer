@@ -558,8 +558,8 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             
 
 
-            pw = MS_NINT(symbol->sizex * s.scale)+2;
-            ph = MS_NINT(symbol->sizey * s.scale)+2;
+            pw = MS_NINT(symbol->sizex * s.scale);
+            ph = MS_NINT(symbol->sizey * s.scale);
             pw += style->gap;
             ph += style->gap;
             tile = getTile(image,symbol,&s,pw,ph);
