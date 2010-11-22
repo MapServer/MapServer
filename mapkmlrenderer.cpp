@@ -808,7 +808,7 @@ xmlNodePtr KmlRenderer::getGeomParentNode(char *geomName)
     }
 }
 
-char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *style)
+char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *symstyle)
 {
     char	symbolHexColor[32];
 	/*	
@@ -824,9 +824,9 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
                 </Style>
 	*/
 
-    sprintf(symbolHexColor,"%02x%02x%02x%02x", style->color->alpha, style->color->blue,
-            style->color->green, style->color->red);
-    snprintf(SymbolName, sizeof(SymbolName), "symbol_%s_%.1f_%s", symbol->name, style->scale, symbolHexColor);
+    sprintf(symbolHexColor,"%02x%02x%02x%02x", symstyle->style->color.alpha, symstyle->style->color.blue,
+            symstyle->style->color.green, symstyle->style->color.red);
+    snprintf(SymbolName, sizeof(SymbolName), "symbol_%s_%.1f_%s", symbol->name, symstyle->scale, symbolHexColor);
 
     char *symbolUrl = msLookupHashTable(StyleHashTable, SymbolName);
     if (!symbolUrl)
@@ -842,10 +842,10 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
       }
       else
       {
-        sprintf(iconFileName, "symbol_%s_%.1f.%s", symbol->name, style->scale, "png");
+        sprintf(iconFileName, "symbol_%s_%.1f.%s", symbol->name, symstyle->scale, "png");
       }
 
-      if (createIconImage(iconFileName, symbol, style) != MS_SUCCESS)
+      if (createIconImage(iconFileName, symbol, symstyle) != MS_SUCCESS)
       {
         char errMsg[512];
         sprintf(errMsg, "Error creating icon file '%s'", iconFileName);
