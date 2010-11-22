@@ -135,9 +135,8 @@ static void imageScanline(gdImagePtr im, int x1, int x2, int y, int c)
 ** Polygon fill. Based on "Concave Polygon Scan Conversion" by Paul
 ** Heckbert from "Graphics Gems", Academic Press, 1990.
 **
-** TODO: do we need the offsets?
 */
-static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, int offsety)
+static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
 {
   typedef struct {     /* a polygon edge */
     double x;          /* x coordinate of edge's intersection with current scanline */
@@ -277,7 +276,7 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
       xr = (int) (active[j+1]->x - 0.5) ;
 
       if(active[j]->x != active[j+1]->x) 
-        imageScanline(im, xl+offsetx, xr+offsetx, y+offsety, c);
+        imageScanline(im, xl, xr, y, c);
                
       active[j]->x += active[j]->dx;	/* increment edge coords */
       active[j+1]->x += active[j+1]->dx;
@@ -358,7 +357,7 @@ int renderPolygonGD(imageObj *img, shapeObj *p, colorObj *color)
   if(!img || !p || !color) return MS_FAILURE;
   if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return MS_FAILURE;
   SETPEN(ip, color);
-  imageFilledPolygon(ip, p, color->pen, 0, 0);
+  imageFilledPolygon(ip, p, color->pen);
   return MS_SUCCESS;
 }
 
@@ -739,7 +738,7 @@ int renderPolygonTiledGD(imageObj *img, shapeObj *p,  imageObj *tile)
   if(!(tp = MS_IMAGE_GET_GDIMAGEPTR(tile))) return MS_FAILURE;
   gdImageColorTransparent(tp,0);
   gdImageSetTile(ip, tp);
-  imageFilledPolygon(ip, p, gdTiled, 0, 0);
+  imageFilledPolygon(ip, p, gdTiled);
   return MS_SUCCESS;
 }
 
