@@ -1822,9 +1822,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     if (psGMLElement)
                       bPolygon = 1;
                     else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPolygon")))
-                    {
-                          bPolygon = 1;
-                    }
+                      bPolygon = 1;
+                    else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiSurface")))
+                      bPolygon = 1;                    
                     else
                     {
                         psGMLElement= CPLGetXMLNode(psXMLNode, "LineString");
@@ -1897,9 +1897,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 if (psGMLElement)
                   bPolygon = 1;
                 else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPolygon")))
-                {
-                      bPolygon = 1;
-                }
+                  bPolygon = 1;
+                else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiSurface")))
+                  bPolygon = 1;
                 else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
                 {
                     if (psGMLElement)
