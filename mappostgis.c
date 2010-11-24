@@ -1383,7 +1383,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
     wkbstrlen = PQgetlength(layerinfo->pgresult, layerinfo->rownum, layer->numitems);
     
     if ( ! wkbstr ) {
-        msSetError(MS_QUERYERR, "Base64 WKB returned is null!", "msPostGISReadShape()");
+        msSetError(MS_QUERYERR, "String encoded WKB returned is null!", "msPostGISReadShape()");
         return MS_FAILURE;
     }
 
