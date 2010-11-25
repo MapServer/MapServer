@@ -4827,6 +4827,7 @@ fi
 
 _cppflags="$CPPFLAGS"
 _ldflags="$LDFLAGS"
+_libs="$LIBS"
 CPPFLAGS="$FT_CFLAGS $CPPFLAGS"
 LDFLAGS="$FT_LDFLAGS $LDFLAGS"
 
@@ -5138,6 +5139,7 @@ done
 
 CPPFLAGS=$_cppflags
 LDFLAGS=$_ldflags
+LIBS=$_libs
 FT_ENABLED="-DUSE_FREETYPE"
 FT_ENABLED=$FT_ENABLED
 
@@ -6006,10 +6008,10 @@ echo "$as_me: error: cannot find gif lib in $GIF_DIR" >&2;}
     fi
 
     if test -n "$GIF_INCLUDE" ; then
-      as_ac_Header=`echo "ac_cv_header_$GIF_INCLUDE/png.h" | $as_tr_sh`
+      as_ac_Header=`echo "ac_cv_header_$GIF_INCLUDE/gif_lib.h" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo "$as_me:$LINENO: checking for $GIF_INCLUDE/png.h" >&5
-echo $ECHO_N "checking for $GIF_INCLUDE/png.h... $ECHO_C" >&6
+  echo "$as_me:$LINENO: checking for $GIF_INCLUDE/gif_lib.h" >&5
+echo $ECHO_N "checking for $GIF_INCLUDE/gif_lib.h... $ECHO_C" >&6
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 fi
@@ -6017,8 +6019,8 @@ echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 else
   # Is the header compilable?
-echo "$as_me:$LINENO: checking $GIF_INCLUDE/png.h usability" >&5
-echo $ECHO_N "checking $GIF_INCLUDE/png.h usability... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $GIF_INCLUDE/gif_lib.h usability" >&5
+echo $ECHO_N "checking $GIF_INCLUDE/gif_lib.h usability... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -6026,7 +6028,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
-#include <$GIF_INCLUDE/png.h>
+#include <$GIF_INCLUDE/gif_lib.h>
 _ACEOF
 rm -f conftest.$ac_objext
 if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
@@ -6062,15 +6064,15 @@ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
 echo "${ECHO_T}$ac_header_compiler" >&6
 
 # Is the header present?
-echo "$as_me:$LINENO: checking $GIF_INCLUDE/png.h presence" >&5
-echo $ECHO_N "checking $GIF_INCLUDE/png.h presence... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $GIF_INCLUDE/gif_lib.h presence" >&5
+echo $ECHO_N "checking $GIF_INCLUDE/gif_lib.h presence... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <$GIF_INCLUDE/png.h>
+#include <$GIF_INCLUDE/gif_lib.h>
 _ACEOF
 if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
@@ -6104,25 +6106,25 @@ echo "${ECHO_T}$ac_header_preproc" >&6
 # So?  What about this header?
 case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
   yes:no: )
-    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/png.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: $GIF_INCLUDE/png.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/png.h: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: $GIF_INCLUDE/png.h: proceeding with the compiler's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/gif_lib.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $GIF_INCLUDE/gif_lib.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/gif_lib.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $GIF_INCLUDE/gif_lib.h: proceeding with the compiler's result" >&2;}
     ac_header_preproc=yes
     ;;
   no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/png.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: $GIF_INCLUDE/png.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/png.h:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: $GIF_INCLUDE/png.h:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/png.h: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: $GIF_INCLUDE/png.h: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/png.h:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: $GIF_INCLUDE/png.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/png.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: $GIF_INCLUDE/png.h: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/png.h: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: $GIF_INCLUDE/png.h: in the future, the compiler will take precedence" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/gif_lib.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $GIF_INCLUDE/gif_lib.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/gif_lib.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $GIF_INCLUDE/gif_lib.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/gif_lib.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $GIF_INCLUDE/gif_lib.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/gif_lib.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $GIF_INCLUDE/gif_lib.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/gif_lib.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $GIF_INCLUDE/gif_lib.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $GIF_INCLUDE/gif_lib.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $GIF_INCLUDE/gif_lib.h: in the future, the compiler will take precedence" >&2;}
     (
       cat <<\_ASBOX
 ## ------------------------------------------ ##
@@ -6133,8 +6135,8 @@ _ASBOX
       sed "s/^/$as_me: WARNING:     /" >&2
     ;;
 esac
-echo "$as_me:$LINENO: checking for $GIF_INCLUDE/png.h" >&5
-echo $ECHO_N "checking for $GIF_INCLUDE/png.h... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking for $GIF_INCLUDE/gif_lib.h" >&5
+echo $ECHO_N "checking for $GIF_INCLUDE/gif_lib.h... $ECHO_C" >&6
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -6147,8 +6149,8 @@ fi
 if test `eval echo '${'$as_ac_Header'}'` = yes; then
   GIF_INC=-I$GIF_INCLUDE
 else
-  { { echo "$as_me:$LINENO: error: cannot find png headers" >&5
-echo "$as_me: error: cannot find png headers" >&2;}
+  { { echo "$as_me:$LINENO: error: cannot find gif headers" >&5
+echo "$as_me: error: cannot find gif headers" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -6465,6 +6467,7 @@ echo "$as_me: error: \"Could not find jpeglib.h or libjpeg.a/libjpeg.so/libjpeg.
 
     _cppflags="$CPPFLAGS"
     _ldflags="$LDFLAGS"
+    _libs="$LIBS"
     CPPFLAGS="$JPEG_INC $CPPFLAGS"
     LDFLAGS="$JPEG_LIB $LDFLAGS"
 
@@ -6694,10 +6697,12 @@ fi
     JPEG_ENABLED="-DUSE_JPEG"
     CPPFLAGS=$_cppflags
     LDFLAGS=$_ldflags
+    LIBS=$_libs
     echo "$as_me:$LINENO: result:         using libjpeg from system $JPEG_LIB" >&5
 echo "${ECHO_T}        using libjpeg from system $JPEG_LIB" >&6
 
 else
+
 
 echo "$as_me:$LINENO: checking for jpeg_read_header in -ljpeg" >&5
 echo $ECHO_N "checking for jpeg_read_header in -ljpeg... $ECHO_C" >&6

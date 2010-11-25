@@ -175,6 +175,7 @@ fi
 
 _cppflags="$CPPFLAGS"
 _ldflags="$LDFLAGS"
+_libs="$LIBS"
 CPPFLAGS="$FT_CFLAGS $CPPFLAGS"
 LDFLAGS="$FT_LDFLAGS $LDFLAGS"
 
@@ -186,6 +187,7 @@ AC_CHECK_HEADERS(ft2build.h,,
 
 CPPFLAGS=$_cppflags
 LDFLAGS=$_ldflags
+LIBS=$_libs
 FT_ENABLED="-DUSE_FREETYPE"
 AC_SUBST(FT_ENABLED,$FT_ENABLED)
 AC_SUBST(FT_INC,$FT_CFLAGS)
@@ -367,8 +369,8 @@ if test -n "$GIF_DIR" -a "GIF_DIR" != "yes" ; then
     fi
     
     if test -n "$GIF_INCLUDE" ; then
-      AC_CHECK_HEADER([$GIF_INCLUDE/png.h],GIF_INC=-I$GIF_INCLUDE,
-        [AC_MSG_ERROR([cannot find png headers])])
+      AC_CHECK_HEADER([$GIF_INCLUDE/gif_lib.h],GIF_INC=-I$GIF_INCLUDE,
+        [AC_MSG_ERROR([cannot find gif headers])])
       ALL_INC="$GIF_INC $ALL_INC"
     else
         AC_MSG_ERROR([cannot find gif headers in $GIF_DIR])
@@ -432,6 +434,7 @@ if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
 
     _cppflags="$CPPFLAGS"
     _ldflags="$LDFLAGS"
+    _libs="$LIBS"
     CPPFLAGS="$JPEG_INC $CPPFLAGS"
     LDFLAGS="$JPEG_LIB $LDFLAGS"
     AC_CHECK_LIB(jpeg, jpeg_read_header,,AC_MSG_ERROR(["cannot link with libjpeg"]),,)
@@ -439,9 +442,12 @@ if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
     JPEG_ENABLED="-DUSE_JPEG"
     CPPFLAGS=$_cppflags
     LDFLAGS=$_ldflags
+    LIBS=$_libs
     AC_MSG_RESULT([        using libjpeg from system $JPEG_LIB])
 
 else
+    dnl Look for libjpeg in system dirs
+
     AC_CHECK_LIB(jpeg, jpeg_read_header,,AC_MSG_ERROR(["cannot link with libjpeg"]),,)
     AC_CHECK_HEADER(jpeglib.h,,AC_MSG_ERROR(["cannot find jpeg headers"]))
     JPEG_ENABLED="-DUSE_JPEG"
