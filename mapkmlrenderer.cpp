@@ -350,7 +350,7 @@ int KmlRenderer::mergeRasterBuffer(imageObj *image, rasterBufferObj *rb) {
    FILE *tmpFile = NULL;
     
    tmpFileName = msTmpFile(MapPath, image->imagepath, "png");
-   tmpFile = fopen(tmpFileName,"w");
+   tmpFile = fopen(tmpFileName,"wb");
    if (tmpFile)
    {
      
@@ -719,11 +719,17 @@ xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *ima
           </GroundOverlay>
           </kml>
 	*/
-
+    char	layerHexColor[32];
     xmlNodePtr groundOverlayNode = xmlNewChild(parentNode, NULL, BAD_CAST "GroundOverlay", NULL);
     char *layerName = getLayerName(layer);
     xmlNewChild(groundOverlayNode, NULL, BAD_CAST "name", BAD_CAST layerName);
-    xmlNewChild(groundOverlayNode, NULL, BAD_CAST "color", BAD_CAST "ffffffff");
+    if (layer->opacity > 0 && layer->opacity < 100)
+    {
+        sprintf(layerHexColor, "%02xffffff", MS_NINT(layer->opacity*2.55));
+        xmlNewChild(groundOverlayNode, NULL, BAD_CAST "color", BAD_CAST layerHexColor);
+    }
+    else
+      xmlNewChild(groundOverlayNode, NULL, BAD_CAST "color", BAD_CAST "ffffffff");
     char stmp[20];
     sprintf(stmp, "%d",layer->index);
     xmlNewChild(groundOverlayNode, NULL, BAD_CAST "drawOrder", BAD_CAST stmp);
