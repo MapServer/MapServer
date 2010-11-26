@@ -255,6 +255,16 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->imagemode = MS_IMAGEMODE_RGB; 
         format->extension = strdup("kml"); 
         format->renderer = MS_RENDER_WITH_KML; 
+        msSetOutputFormatOption( format, "ATTACHMENT", "mapserver.kml");
+    } 
+    if( strcasecmp(driver,"KMZ") == 0 ) 
+    { 
+        format = msAllocOutputFormat( map, "kmz", driver ); 
+        format->mimetype = strdup("application/vnd.google-earth.kmz"); 
+        format->imagemode = MS_IMAGEMODE_RGB; 
+        format->extension = strdup("kmz"); 
+        format->renderer = MS_RENDER_WITH_KML; 
+        msSetOutputFormatOption( format, "ATTACHMENT", "mapserver.kmz");
     } 
 #endif
 
@@ -385,6 +395,8 @@ void msApplyDefaultOutputFormats( mapObj *map )
 #if defined(USE_KML)
     if( msSelectOutputFormat( map, "kml" ) == NULL )
         msCreateDefaultOutputFormat( map, "kml" );
+    if( msSelectOutputFormat( map, "kmz" ) == NULL )
+        msCreateDefaultOutputFormat( map, "kmz" );
 #endif
 
     if( map->imagetype != NULL )
@@ -943,7 +955,8 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
                 strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0 ||
                 strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0 ||
                 strcasecmp(map->outputformatlist[i]->driver, "svg")==0 ||
-                strcasecmp(map->outputformatlist[i]->driver, "kml")==0))
+                strcasecmp(map->outputformatlist[i]->driver, "kml")==0 ||
+                strcasecmp(map->outputformatlist[i]->driver, "kmz")==0))
               mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
         }
     }

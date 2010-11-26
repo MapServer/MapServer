@@ -35,6 +35,12 @@
 #include "mapio.h"
 
 
+#if defined(USE_OGR)
+#  include "cpl_conv.h"
+#  include "cpl_vsi.h"
+#endif
+
+
 KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color/*=NULL*/) 
 	:	XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL), Width(width), Height(height),
 		FirstLayer(MS_TRUE), MapCellsize(1.0),
@@ -105,7 +111,7 @@ imageObj* KmlRenderer::createImage(int, int, outputFormatObj*, colorObj*)
 	return NULL;
 }
 
-int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj*)
+int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
 {
     
     /* -------------------------------------------------------------------- */
@@ -115,15 +121,72 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj*)
     int bufSize = 0;
     xmlChar *buf = NULL;
     msIOContext *context = NULL;
-
+    int chunkSize = 4096;
+    
+    int bZip = MS_FALSE;
+ 
     if( msIO_needBinaryStdout() == MS_FAILURE )
       return MS_FAILURE;
 
-    xmlDocDumpFormatMemoryEnc(XmlDoc, &buf, &bufSize, "UTF-8", 1);
+   xmlDocDumpFormatMemoryEnc(XmlDoc, &buf, &bufSize, "UTF-8", 1);
 
+#if defined(USE_OGR)
+    if (format && format->driver && strcasecmp(format->driver, "kmz") == 0)
+    {
+#if defined(CPL_ZIP_API_OFFERED)
+        bZip = MS_TRUE;
+#else
+        msSetError( MS_MISCERR, "kmz format support unavailable, perhaps you need to upgrade to GDAL/OGR 1.8?",
+                    "KmlRenderer::saveImage()");
+        xmlFree(buf);
+        return MS_FAILURE;
+#endif
+    }
+
+#if defined(CPL_ZIP_API_OFFERED) 
+    if (bZip)
+    {
+        VSILFILE *fpZip;
+        int bytes_read;
+        char buffer[1024];
+        char *zip_filename =NULL;
+        void *hZip=NULL;
+
+        zip_filename = msTmpFile( NULL, "/vsimem/kmlzip/", "kmz" );
+        hZip = CPLCreateZip( zip_filename, NULL );
+        CPLCreateFileInZip( hZip, "mapserver.kml", NULL );
+        for (int i=0; i<bufSize; i+=chunkSize)
+        {
+             int size = chunkSize;
+             if (i + size > bufSize)
+               size = bufSize - i;
+             CPLWriteFileInZip( hZip,  buf+i, size);
+        }
+        CPLCloseFileInZip( hZip );
+        CPLCloseZip( hZip );
+
+        context = msIO_getHandler(fp);
+        fpZip = VSIFOpenL( zip_filename, "r" );
+        
+         while( (bytes_read = VSIFReadL( buffer, 1, sizeof(buffer), fpZip )) > 0 )
+         {
+             if (context)
+               msIO_contextWrite(context, buffer, bytes_read);
+             else
+               msIO_fwrite( buffer, 1, bytes_read, fp );
+         }
+         VSIFCloseL( fpZip );
+         msFree( zip_filename);
+         xmlFree(buf);
+         return(MS_SUCCESS);
+    }
+#endif
+
+#endif
+    
     context = msIO_getHandler(fp);
 
-    int chunkSize = 4096;
+    
     for (int i=0; i<bufSize; i+=chunkSize)
     {
         int size = chunkSize;
