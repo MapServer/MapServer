@@ -213,13 +213,14 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
 void KmlRenderer::processLayer(layerObj *layer)
 {
     int i;
+    const char *asRaster = NULL;
     if (!layer)
       return;
 
     /*turn of labelcache*/
     layer->labelcache = MS_OFF;
     
-    /*if there are labels we want to coordinates to 
+    /*if there are labels we want the coordinates to 
       be the center of the element.*/
     for(i=0; i<layer->numclasses; i++)
       layer->_class[i]->label.position = MS_XY;
@@ -228,13 +229,21 @@ void KmlRenderer::processLayer(layerObj *layer)
       the new rendering architecture does not allow
       to know if we are dealing with a multi-style.
       So here we remove all styles beside the first one*/
-    /*
+    
     for(i=0; i<layer->numclasses; i++)
     {
         while (layer->_class[i]->numstyles > 1)
           msDeleteStyle(layer->_class[i], layer->_class[i]->numstyles-1);
     }
-    */
+
+    /*if layer has a metadata KML_OUTPUTASRASTER set to true, add a processing directive
+      to use an agg driver*/
+    asRaster = msLookupHashTable(&layer->metadata, "kml_outputasraster");
+    if (asRaster && (strcasecmp(asRaster, "true") == 0 ||
+                     strcasecmp(asRaster, "yes") == 0))
+      msLayerAddProcessing(layer, "RENDERER=png24");
+      
+    
 }
 
 char* KmlRenderer::getLayerName(layerObj *layer)
@@ -349,8 +358,12 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
 
      if (msLookupHashTable(&layer->metadata, "kml_description"))
        pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "kml_description");
-     
+     else if (msLookupHashTable(&layer->metadata, "ows_description"))
+        pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "ows_description");
+
      value=msLookupHashTable(&layer->metadata, "kml_include_items");
+     if (!value)
+       value=msLookupHashTable(&layer->metadata, "ows_include_items");
      if (value)
        papszLayerIncludeItems = msStringSplit(value, ',', &nIncludeItems);
 
