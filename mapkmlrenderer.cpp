@@ -254,12 +254,13 @@ char* KmlRenderer::getLayerName(layerObj *layer)
     if (!layer)
       return NULL;
 
-    if (layer->name && strlen(layer->name) > 0)
-      return strdup(layer->name);
 
      name = msLookupHashTable(&layer->metadata, "ows_name");
      if (name && strlen(name) > 0)
        return strdup(name);
+
+    if (layer->name && strlen(layer->name) > 0)
+      return strdup(layer->name);
 
      sprintf(stmp, "Layer%d",layer->index);
      return strdup(stmp); 
