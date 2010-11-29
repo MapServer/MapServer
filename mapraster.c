@@ -100,7 +100,7 @@ int msGetClass(layerObj *layer, colorObj *color)
       if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
       break;
     case(MS_EXPRESSION):
-      tmpstr1 = strdup(layer->class[i]->expression.string);
+      tmpstr1 = msStrdup(layer->class[i]->expression.string);
 
       snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->red);
       tmpstr1 = msReplaceSubstring(tmpstr1, "[red]", tmpstr2);
@@ -175,7 +175,7 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue,
             break;
 
           case(MS_EXPRESSION):
-            tmpstr1 = strdup(layer->class[i]->expression.string);
+            tmpstr1 = msStrdup(layer->class[i]->expression.string);
 
             if( red != -1 && green != -1 && blue != -1 )
             {
@@ -419,24 +419,22 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
 
       /* so we create a temporary layer */
       tlp = (layerObj *) malloc(sizeof(layerObj));
-      if(!tlp) {
-        msSetError(MS_MEMERR, "Error allocating temporary layerObj.", "msDrawRasterLayerLow()");
-        return(MS_FAILURE);
-      }
+      MS_CHECK_ALLOC(tlp, sizeof(layerObj), MS_FAILURE);
+
       initLayer(tlp, map);
 
       /* set a few parameters for a very basic shapefile-based layer */
-      tlp->name = strdup("TILE");
+      tlp->name = msStrdup("TILE");
       tlp->type = MS_LAYER_TILEINDEX;
-      tlp->data = strdup(layer->tileindex);
+      tlp->data = msStrdup(layer->tileindex);
       if (layer->filteritem)
-        tlp->filteritem = strdup(layer->filteritem);
+        tlp->filteritem = msStrdup(layer->filteritem);
       if (layer->filter.string)
       {
           if (layer->filter.type == MS_EXPRESSION)
           {
               pszTmp = 
-                (char *)malloc(sizeof(char)*(strlen(layer->filter.string)+3));
+                (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
               sprintf(pszTmp,"(%s)",layer->filter.string);
               msLoadExpressionString(&tlp->filter, pszTmp);
               free(pszTmp);
@@ -445,7 +443,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
                    layer->filter.type == MS_IREGEX)
           {
               pszTmp = 
-                (char *)malloc(sizeof(char)*(strlen(layer->filter.string)+3));
+                (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
               sprintf(pszTmp,"/%s/",layer->filter.string);
               msLoadExpressionString(&tlp->filter, pszTmp);
               free(pszTmp);
@@ -742,6 +740,8 @@ imageObj *msDrawReferenceMap(mapObj *map) {
 
   rendererVTableObj *renderer = MS_MAP_RENDERER(map);
   rasterBufferObj *refImage = (rasterBufferObj*)calloc(1,sizeof(rasterBufferObj));
+  MS_CHECK_ALLOC(refImage, sizeof(rasterBufferObj), NULL);
+
   if(MS_SUCCESS != renderer->loadImageFromFile(msBuildPath(szPath, map->mappath, map->reference.image),refImage)) {
 	  msSetError(MS_MISCERR,"error loading reference image %s","msDrawREferenceMap()",szPath);
 	  return NULL;
@@ -819,7 +819,7 @@ imageObj *msDrawReferenceMap(mapObj *map) {
           {
               pointObj *point = NULL;
 
-              point = malloc(sizeof(pointObj));
+              point = msSmallMalloc(sizeof(pointObj));
               point->x = (double)(x1 + x2)/2;
               point->y = (double)(y1 + y2)/2;
               
@@ -832,7 +832,7 @@ imageObj *msDrawReferenceMap(mapObj *map) {
           {              
               pointObj *point = NULL;
 
-              point = malloc(sizeof(pointObj));
+              point = msSmallMalloc(sizeof(pointObj));
               point->x = (double)(x1 + x2)/2;
               point->y = (double)(y1 + y2)/2;
               

@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
     }
 
     if(strncmp(argv[i],"-o",2) == 0) {
-      outfile = strdup(argv[i+1]);
+      outfile = msStrdup(argv[i+1]);
       i+=1;
     }
 
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
       for(j=0; j<map->numlayers; j++) {
      if(strcmp(GET_LAYER(map, j)->name, argv[i+1]) == 0) {
        free(GET_LAYER(map, j)->data);
-       GET_LAYER(map, j)->data = strdup(argv[i+2]);
+       GET_LAYER(map, j)->data = msStrdup(argv[i+2]);
        break;
      }
       }
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
             break;
           }
           else {
-            invalid_layer = strdup(layers[j]);
+            invalid_layer = msStrdup(layers[j]);
           }
         }
         if (layer_found==0) {

@@ -71,12 +71,12 @@ void StoreDblData(unsigned char *oDblData, imageObj *image)
 	if (!((SWFObj *)image->img.swf)->DblDatas)
 	{
 		((SWFObj *)image->img.swf)->DblDatas =
-			(unsigned char **)malloc(sizeof(oDblData)*1);
+			(unsigned char **)msSmallMalloc(sizeof(oDblData)*1);
 	}
     else
     {
         ((SWFObj *)image->img.swf)->DblDatas =
-        	(unsigned char **)realloc(((SWFObj *)image->img.swf)->DblDatas,
+        	(unsigned char **)msSmallRealloc(((SWFObj *)image->img.swf)->DblDatas,
         			sizeof(oDblData)*nDblData);
 	}
 	((SWFObj *)image->img.swf)->DblDatas[nDblData-1] = oDblData;
@@ -97,12 +97,12 @@ void StoreShape(SWFShape oShape, imageObj *image)
 	if (!((SWFObj *)image->img.swf)->Shapes)
 	{
 		((SWFObj *)image->img.swf)->Shapes =
-	        	(SWFShape *)malloc(sizeof(SWFShape));
+	        	(SWFShape *)msSmallMalloc(sizeof(SWFShape));
 	}
 	else
     {
         ((SWFObj *)image->img.swf)->Shapes =
-        	(SWFShape *)realloc(((SWFObj *)image->img.swf)->Shapes,
+        	(SWFShape *)msSmallRealloc(((SWFObj *)image->img.swf)->Shapes,
         			sizeof(SWFShape)*nShape);
 	}
 	((SWFObj *)image->img.swf)->Shapes[nShape-1] = oShape;
@@ -123,12 +123,12 @@ void StoreInput(SWFInput oInput, imageObj *image)
 	if (!((SWFObj *)image->img.swf)->Inputs)
 	{
 		((SWFObj *)image->img.swf)->Inputs =
-	        	(SWFInput *)malloc(sizeof(SWFInput));
+	        	(SWFInput *)msSmallMalloc(sizeof(SWFInput));
 	}
 	else
     {
         ((SWFObj *)image->img.swf)->Inputs =
-        	(SWFInput *)realloc(((SWFObj *)image->img.swf)->Inputs,
+        	(SWFInput *)msSmallRealloc(((SWFObj *)image->img.swf)->Inputs,
         			sizeof(SWFInput)*nInput);
 	}
 	((SWFObj *)image->img.swf)->Inputs[nInput-1] = oInput;
@@ -149,12 +149,12 @@ void StoreBitmap(SWFBitmap oBitmap, imageObj *image)
 	if (!((SWFObj *)image->img.swf)->Bitmaps)
 	{
 		((SWFObj *)image->img.swf)->Bitmaps =
-	        	(SWFBitmap *)malloc(sizeof(SWFBitmap));
+	        	(SWFBitmap *)msSmallMalloc(sizeof(SWFBitmap));
 	}
 	else
     {
         ((SWFObj *)image->img.swf)->Bitmaps =
-        	(SWFBitmap *)realloc(((SWFObj *)image->img.swf)->Bitmaps,
+        	(SWFBitmap *)msSmallRealloc(((SWFObj *)image->img.swf)->Bitmaps,
         			sizeof(SWFBitmap)*nBitmap);
 	}
 	((SWFObj *)image->img.swf)->Bitmaps[nBitmap-1] = oBitmap;
@@ -175,12 +175,12 @@ void StoreButton(SWFButton oButton, imageObj *image)
 	if (!((SWFObj *)image->img.swf)->Buttons)
 	{
 		((SWFObj *)image->img.swf)->Buttons =
-			(SWFButton *)malloc(sizeof(oButton));
+			(SWFButton *)msSmallMalloc(sizeof(oButton));
 	}
 	else
 	{
 		((SWFObj *)image->img.swf)->Buttons =
-			(SWFButton *)realloc(((SWFObj *)image->img.swf)->Buttons,
+			(SWFButton *)msSmallRealloc(((SWFObj *)image->img.swf)->Buttons,
 					sizeof(oButton)*nButton);
 	}
 	((SWFObj *)image->img.swf)->Buttons[nButton-1] = oButton;
@@ -201,12 +201,12 @@ void StoreFont(SWFFont oFont, imageObj *image)
 	if (!((SWFObj *)image->img.swf)->Fonts)
 	{
 		((SWFObj *)image->img.swf)->Fonts =
-			(SWFFont *)malloc(sizeof(oFont));
+			(SWFFont *)msSmallMalloc(sizeof(oFont));
 	}
 	else
 	{
 		((SWFObj *)image->img.swf)->Fonts =
-			(SWFFont *)realloc(((SWFObj *)image->img.swf)->Fonts,
+			(SWFFont *)msSmallRealloc(((SWFObj *)image->img.swf)->Fonts,
 					sizeof(oFont)*nFont);
 	}
 	((SWFObj *)image->img.swf)->Fonts[nFont-1] = oFont;
@@ -227,12 +227,12 @@ void StoreText(SWFText oText, imageObj *image)
 	if (!((SWFObj *)image->img.swf)->Texts)
 	{
 		((SWFObj *)image->img.swf)->Texts =
-			(SWFText *)malloc(sizeof(oText));
+			(SWFText *)msSmallMalloc(sizeof(oText));
 	}
 	else
 	{
 		((SWFObj *)image->img.swf)->Texts =
-			(SWFText *)realloc(((SWFObj *)image->img.swf)->Texts,
+			(SWFText *)msSmallRealloc(((SWFObj *)image->img.swf)->Texts,
 					sizeof(oText)*nText);
 	}
 	((SWFObj *)image->img.swf)->Texts[nText-1] = oText;
@@ -526,7 +526,7 @@ unsigned char *bitmap2dbl(unsigned char *data,int *size, int *bytesPerColor)
     int i,j;
 
     outsize = (int) floor(*size*1.01+12);
-    dbldata =  (unsigned char *) malloc(outsize + 14);
+    dbldata =  (unsigned char *) msSmallMalloc(outsize + 14);
     outdata=&dbldata[14];
     compress2(outdata,&outsize,data+6,*size-6,6);
     dbldata[0] = 'D';
@@ -566,7 +566,7 @@ unsigned char *gd2bitmap(gdImagePtr img,int *size, int *bytesPerColor)
     if (img->transparent >= 0 ) *bytesPerColor += 1;
 
     *size = 6 + (img->colorsTotal * *bytesPerColor) + (alignedWidth * height);
-    data= (unsigned char *)malloc(*size);
+    data= (unsigned char *)msSmallMalloc(*size);
 
     p=data;
     *p++ = 3;
@@ -1050,7 +1050,7 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
 {
 
     imageObj    *image = NULL;
-    char        *driver = strdup("GD/GIF");
+    char        *driver = msStrdup("GD/GIF");
 
     assert( strcasecmp(format->driver,"SWF") == 0 );
     image = (imageObj *)calloc(1,sizeof(imageObj));
@@ -1067,14 +1067,14 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
 
     if (imagepath)
     {
-        image->imagepath = strdup(imagepath);
+        image->imagepath = msStrdup(imagepath);
     }
     if (imageurl)
     {
-        image->imageurl = strdup(imageurl);
+        image->imageurl = msStrdup(imageurl);
     }
 
-    image->img.swf = (SWFObj *)malloc(sizeof(SWFObj));    
+    image->img.swf = (SWFObj *)msSmallMalloc(sizeof(SWFObj));    
     ((SWFObj *)image->img.swf)->map = map;
 
     ((SWFObj *)image->img.swf)->nCurrentLayerIdx = -1;
@@ -1126,19 +1126,19 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     else
     {
 #ifdef USE_GD_GIF
-        driver = strdup("GD/GIF");
+        driver = msStrdup("GD/GIF");
 #else  
 
 #ifdef USE_GD_PNG
-        driver = strdup("GD/PNG");
+        driver = msStrdup("GD/PNG");
 #else
 
 #ifdef USE_GD_JPEG
-        driver = strdup("GD/JPEG");
+        driver = msStrdup("GD/JPEG");
 #else
 
 #ifdef USE_GD_WBMP
-        driver = strdup("GD/WBMP");
+        driver = msStrdup("GD/WBMP");
 #endif 
 
 #endif
@@ -1185,18 +1185,18 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
         if (!((SWFObj *)image->img.swf)->pasMovies)
         {
             ((SWFObj *)image->img.swf)->pasMovies = 
-                (SWFMovie *)malloc(sizeof(SWFMovie)*nTmp);
+                (SWFMovie *)msSmallMalloc(sizeof(SWFMovie)*nTmp);
             ((SWFObj *)image->img.swf)->panLayerIndex = 
-                (int *)malloc(sizeof(int)*nTmp);
+                (int *)msSmallMalloc(sizeof(int)*nTmp);
             
         }
         else
         {
             ((SWFObj *)image->img.swf)->pasMovies = 
-                (SWFMovie *)realloc(((SWFObj *)image->img.swf)->pasMovies,
+                (SWFMovie *)msSmallRealloc(((SWFObj *)image->img.swf)->pasMovies,
                                     sizeof(SWFMovie)*nTmp);
             ((SWFObj *)image->img.swf)->panLayerIndex = 
-                (int *)realloc(((SWFObj *)image->img.swf)->panLayerIndex,
+                (int *)msSmallRealloc(((SWFObj *)image->img.swf)->panLayerIndex,
                                     sizeof(int)*nTmp);
         }
 
@@ -1284,7 +1284,7 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
             tokens = msStringSplit(metadata, ',', &n);
             if (tokens && n > 0)
             {
-                panIndex = (int *)malloc(sizeof(int)*n);
+                panIndex = (int *)msSmallMalloc(sizeof(int)*n);
                 iIndex = 0;
                 for (i=0; i<n; i++)
                 {
@@ -3412,23 +3412,23 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
     imageObj    *imagetmp;
     /* int         nTmp = -1; */
     SWFShape    oShape;
-    char        *driver = strdup("GD/GIF");
+    char        *driver = msStrdup("GD/GIF");
     int         bFreeImage = 0;
 
 #ifdef USE_GD_GIF
-    driver = strdup("GD/GIF");
+    driver = msStrdup("GD/GIF");
 #else  
 
 #ifdef USE_GD_PNG
-     driver = strdup("GD/PNG");
+     driver = msStrdup("GD/PNG");
 #else
 
 #ifdef USE_GD_JPEG
-     driver = strdup("GD/JPEG");
+     driver = msStrdup("GD/JPEG");
 #else
 
 #ifdef USE_GD_WBMP
-     driver = strdup("GD/WBMP");
+     driver = msStrdup("GD/WBMP");
 #endif 
 
 #endif

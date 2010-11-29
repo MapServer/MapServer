@@ -179,7 +179,7 @@ static void msRasterLayerInfoInitialize( layerObj *layer )
     if( rlinfo != NULL )
         return;
 
-    rlinfo = (rasterLayerInfo *) calloc(1,sizeof(rasterLayerInfo));
+    rlinfo = (rasterLayerInfo *) msSmallCalloc(1,sizeof(rasterLayerInfo));
     layer->layerinfo = rlinfo;
     
     rlinfo->band_count = -1;
@@ -231,21 +231,21 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
         {
           case RQM_ENTRY_PER_PIXEL:
             rlinfo->qc_x = (double *) 
-                calloc(sizeof(double),rlinfo->query_alloc_max);
+                msSmallCalloc(sizeof(double),rlinfo->query_alloc_max);
             rlinfo->qc_y = (double *) 
-                calloc(sizeof(double),rlinfo->query_alloc_max);
+                msSmallCalloc(sizeof(double),rlinfo->query_alloc_max);
             rlinfo->qc_values = (float *) 
-                calloc(sizeof(float),
+                msSmallCalloc(sizeof(float),
                        rlinfo->query_alloc_max*rlinfo->band_count);
             rlinfo->qc_red = (int *) 
-                calloc(sizeof(int),rlinfo->query_alloc_max);
+                msSmallCalloc(sizeof(int),rlinfo->query_alloc_max);
             rlinfo->qc_green = (int *) 
-                calloc(sizeof(int),rlinfo->query_alloc_max);
+                msSmallCalloc(sizeof(int),rlinfo->query_alloc_max);
             rlinfo->qc_blue = (int *) 
-                calloc(sizeof(int),rlinfo->query_alloc_max);
+                msSmallCalloc(sizeof(int),rlinfo->query_alloc_max);
             if( layer->numclasses > 0 )
                 rlinfo->qc_class = (int *) 
-                    calloc(sizeof(int),rlinfo->query_alloc_max);
+                    msSmallCalloc(sizeof(int),rlinfo->query_alloc_max);
             break;
            
           case RQM_HIST_ON_CLASS:
@@ -268,33 +268,33 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
         rlinfo->query_alloc_max = rlinfo->query_alloc_max * 2 + 100;
 
         if( rlinfo->qc_x != NULL )
-            rlinfo->qc_x = realloc(rlinfo->qc_x,
+            rlinfo->qc_x = msSmallRealloc(rlinfo->qc_x,
                                    sizeof(double) * rlinfo->query_alloc_max);
         if( rlinfo->qc_y != NULL )
-            rlinfo->qc_y = realloc(rlinfo->qc_y,
+            rlinfo->qc_y = msSmallRealloc(rlinfo->qc_y,
                                    sizeof(double) * rlinfo->query_alloc_max);
         if( rlinfo->qc_values != NULL )
             rlinfo->qc_values = 
-                realloc(rlinfo->qc_values,
+                msSmallRealloc(rlinfo->qc_values,
                         sizeof(float) * rlinfo->query_alloc_max 
                         * rlinfo->band_count );
         if( rlinfo->qc_class != NULL )
-            rlinfo->qc_class = realloc(rlinfo->qc_class,
+            rlinfo->qc_class = msSmallRealloc(rlinfo->qc_class,
                                        sizeof(int) * rlinfo->query_alloc_max);
         if( rlinfo->qc_red != NULL )
-            rlinfo->qc_red = realloc(rlinfo->qc_red,
+            rlinfo->qc_red = msSmallRealloc(rlinfo->qc_red,
                                        sizeof(int) * rlinfo->query_alloc_max);
         if( rlinfo->qc_green != NULL )
-            rlinfo->qc_green = realloc(rlinfo->qc_green,
+            rlinfo->qc_green = msSmallRealloc(rlinfo->qc_green,
                                        sizeof(int) * rlinfo->query_alloc_max);
         if( rlinfo->qc_blue != NULL )
-            rlinfo->qc_blue = realloc(rlinfo->qc_blue,
+            rlinfo->qc_blue = msSmallRealloc(rlinfo->qc_blue,
                                        sizeof(int) * rlinfo->query_alloc_max);
         if( rlinfo->qc_count != NULL )
-            rlinfo->qc_count = realloc(rlinfo->qc_count,
+            rlinfo->qc_count = msSmallRealloc(rlinfo->qc_count,
                                        sizeof(int) * rlinfo->query_alloc_max);
         if( rlinfo->qc_tileindex != NULL )
-            rlinfo->qc_tileindex = realloc(rlinfo->qc_tileindex,
+            rlinfo->qc_tileindex = msSmallRealloc(rlinfo->qc_tileindex,
                                        sizeof(int) * rlinfo->query_alloc_max);
     }
 
@@ -522,6 +522,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 /* -------------------------------------------------------------------- */
     pafRaster = (float *) 
         calloc(sizeof(float),nWinXSize*nWinYSize*nBandCount);
+    MS_CHECK_ALLOC(pafRaster, sizeof(float)*nWinXSize*nWinYSize*nBandCount, -1);
 
 #if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1199
     eErr = GDALDatasetRasterIO( hDS, GF_Read, 
@@ -715,7 +716,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 /* -------------------------------------------------------------------- */
 /*      Initialize the results cache.                                   */
 /* -------------------------------------------------------------------- */
-    layer->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); 
+    layer->resultcache = (resultCacheObj *)msSmallMalloc(sizeof(resultCacheObj));
     layer->resultcache->results = NULL;
     layer->resultcache->numresults = layer->resultcache->cachesize = 0;
     layer->resultcache->bounds.minx =
@@ -755,25 +756,23 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
             
             /* so we create a temporary layer */
             tlp = (layerObj *) malloc(sizeof(layerObj));
-            if(!tlp) {
-                msSetError(MS_MEMERR, "Error allocating temporary layerObj.", "msDrawRasterLayerLow()");
-                return(MS_FAILURE);
-            }
+            MS_CHECK_ALLOC(tlp, sizeof(layerObj), MS_FAILURE);
+
             initLayer(tlp, map);
             
             /* set a few parameters for a very basic shapefile-based layer */
-            tlp->name = strdup("TILE");
+            tlp->name = msStrdup("TILE");
             tlp->type = MS_LAYER_TILEINDEX;
-            tlp->data = strdup(layer->tileindex);
+            tlp->data = msStrdup(layer->tileindex);
             if (layer->filteritem)
-                tlp->filteritem = strdup(layer->filteritem);
+                tlp->filteritem = msStrdup(layer->filteritem);
             if (layer->filter.string)
             {
                 char *pszTmp;
                 if (layer->filter.type == MS_EXPRESSION)
                 {
                     pszTmp = 
-                        (char *)malloc(sizeof(char)*(strlen(layer->filter.string)+3));
+                        (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
                     sprintf(pszTmp,"(%s)",layer->filter.string);
                     msLoadExpressionString(&tlp->filter, pszTmp);
                     free(pszTmp);
@@ -782,7 +781,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
                          layer->filter.type == MS_IREGEX)
                 {
                     pszTmp = 
-                        (char *)malloc(sizeof(char)*(strlen(layer->filter.string)+3));
+                        (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
                     sprintf(pszTmp,"/%s/",layer->filter.string);
                     msLoadExpressionString(&tlp->filter, pszTmp);
                     free(pszTmp);
@@ -1360,7 +1359,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
 /* -------------------------------------------------------------------- */
     if( layer->numitems > 0 )
     {
-        shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
+        shape->values = (char **) msSmallMalloc(sizeof(char *) * layer->numitems);
         shape->numvalues = layer->numitems;
         
         for( i = 0; i < layer->numitems; i++ )
@@ -1411,7 +1410,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
             else if( EQUAL(layer->items[i],"count") && rlinfo->qc_count )
                 snprintf( szWork, bufferSize, "%d", rlinfo->qc_count[record] );
 
-            shape->values[i] = strdup(szWork);
+            shape->values[i] = msStrdup(szWork);
         }
     }
 
@@ -1438,13 +1437,13 @@ int msRASTERLayerGetItems(layerObj *layer)
     if( rlinfo == NULL )
         return MS_FAILURE;
 
-    layer->items = (char **) calloc(sizeof(char *),10);
+    layer->items = (char **) msSmallCalloc(sizeof(char *),10);
 
     layer->numitems = 0;
     if( rlinfo->qc_x )
-        layer->items[layer->numitems++] = strdup("x");
+        layer->items[layer->numitems++] = msStrdup("x");
     if( rlinfo->qc_y )
-        layer->items[layer->numitems++] = strdup("y");
+        layer->items[layer->numitems++] = msStrdup("y");
     if( rlinfo->qc_values )
     {
         int i;
@@ -1452,20 +1451,20 @@ int msRASTERLayerGetItems(layerObj *layer)
         {
             char szName[100];
             snprintf( szName, sizeof(szName), "value_%d", i );
-            layer->items[layer->numitems++] = strdup(szName);
+            layer->items[layer->numitems++] = msStrdup(szName);
         }
-        layer->items[layer->numitems++] = strdup("value_list");
+        layer->items[layer->numitems++] = msStrdup("value_list");
     }
     if( rlinfo->qc_class )
-        layer->items[layer->numitems++] = strdup("class");
+        layer->items[layer->numitems++] = msStrdup("class");
     if( rlinfo->qc_red )
-        layer->items[layer->numitems++] = strdup("red");
+        layer->items[layer->numitems++] = msStrdup("red");
     if( rlinfo->qc_green )
-        layer->items[layer->numitems++] = strdup("green");
+        layer->items[layer->numitems++] = msStrdup("green");
     if( rlinfo->qc_blue )
-        layer->items[layer->numitems++] = strdup("blue");
+        layer->items[layer->numitems++] = msStrdup("blue");
     if( rlinfo->qc_count )
-        layer->items[layer->numitems++] = strdup("count");
+        layer->items[layer->numitems++] = msStrdup("count");
 
     return msRASTERLayerInitItemInfo(layer);
 #endif /* def USE_GDAL */
@@ -1511,6 +1510,8 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
     else 
     {
       tileshpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
+      MS_CHECK_ALLOC(tileshpfile, sizeof(shapefileObj), MS_FAILURE);
+
       if(msShapefileOpen(tileshpfile, "rb", msBuildPath3(szPath, map->mappath, map->shapepath, layer->tileindex), MS_TRUE) == -1)
         if(msShapefileOpen(tileshpfile, "rb", msBuildPath(szPath, map->mappath, layer->tileindex), MS_TRUE) == -1)
           return MS_FAILURE;

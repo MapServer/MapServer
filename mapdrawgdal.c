@@ -2013,7 +2013,14 @@ msDrawRasterLayerGDAL_RawMode(
 /*      Do we have nodata values?                                       */
 /* -------------------------------------------------------------------- */
     f_nodatas = (float *) calloc(sizeof(float),band_count);
-    
+    if (f_nodatas == NULL) 
+    {
+        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawRasterLayerGDAL_RawMode()",
+                   __FILE__, __LINE__, sizeof(float)*band_count); 
+        free( band_list );
+        return -1;
+    }
+
     if( band_count <= 3
         && (layer->offsite.red != -1
             || layer->offsite.green != -1
@@ -2347,7 +2354,7 @@ msDrawRasterLayerGDAL_16BitClassification(
 /*      Compute classification lookup table.                            */
 /* ==================================================================== */
 
-    cmap = (int *) calloc(sizeof(int),nBucketCount);
+    cmap = (int *) msSmallCalloc(sizeof(int),nBucketCount);
 
     for(i=0; i < nBucketCount; i++) 
     {
@@ -2505,6 +2512,8 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
             *band_count = file_bands;
 
         band_list = (int *) malloc(sizeof(int) * *band_count );
+        MS_CHECK_ALLOC(band_list, sizeof(int) * *band_count, NULL);
+
         for( i = 0; i < *band_count; i++ )
             band_list[i] = i+1;
         return band_list;
@@ -2536,6 +2545,7 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
 
         *band_count = CSLCount(papszItems);
         band_list = (int *) malloc(sizeof(int) * *band_count);
+        MS_CHECK_ALLOC(band_list, sizeof(int) * *band_count, NULL);
 
         for( i = 0; i < *band_count; i++ )
         {

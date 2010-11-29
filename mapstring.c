@@ -360,7 +360,7 @@ int strcasecmp(const char *s1, const char *s2)
 
 char *msLongToString(long value) {
   size_t bufferSize = 256;
-  char *buffer = (char*)malloc(bufferSize);
+  char *buffer = (char*)msSmallMalloc(bufferSize);
 
   snprintf(buffer, bufferSize, "%ld", value);
   return(buffer);
@@ -368,7 +368,7 @@ char *msLongToString(long value) {
 
 char *msDoubleToString(double value, int force_f) {
   size_t bufferSize = 256;
-  char *buffer = (char*)malloc(bufferSize);
+  char *buffer = (char*)msSmallMalloc(bufferSize);
 
   if (force_f == MS_TRUE)
     snprintf(buffer, bufferSize, "%f", value);
@@ -379,7 +379,7 @@ char *msDoubleToString(double value, int force_f) {
 
 char *msIntToString(int value) {
   size_t bufferSize = 256;
-  char *buffer = (char*)malloc(bufferSize);
+  char *buffer = (char*)msSmallMalloc(bufferSize);
 
   snprintf(buffer, bufferSize, "%i", value);
   return(buffer);
@@ -551,7 +551,7 @@ char *msReplaceSubstring(char *str, const char *old, const char *new)
         if (old_len < new_len) {
           tmp_offset = tmp_ptr - str;
           str_len = str_len - old_len + new_len;
-          str = (char *)realloc(str, (str_len + 1)); /* make new space for a copy */
+          str = (char *)msSmallRealloc(str, (str_len + 1)); /* make new space for a copy */
           tmp_ptr = str + tmp_offset;
         }
 
@@ -624,7 +624,7 @@ char *msGetPath(char *fn)
   int i, length;
   
   length = strlen(fn);
-  if((str = strdup(fn)) == NULL)
+  if((str = msStrdup(fn)) == NULL)
     return(NULL);
   
   for(i=length-1; i>=0; i--) { /* step backwards through the string */
@@ -638,9 +638,9 @@ char *msGetPath(char *fn)
   {
     msFree(str);
 #if defined(_WIN32) && !defined(__CYGWIN__)  
-    str = strdup(".\\");
+    str = msStrdup(".\\");
 #else
-    str= strdup("./");
+    str= msStrdup("./");
 #endif  
   }
 
@@ -783,11 +783,11 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
     last_ch = string[i];
   }
 
-  token = (char **) malloc(sizeof(char *)*n);
+  token = (char **) msSmallMalloc(sizeof(char *)*n);
   if(!token) return(NULL);
   
   k = 0;
-  token[k] = (char *)malloc(sizeof(char)*(length+1));
+  token[k] = (char *)msSmallMalloc(sizeof(char)*(length+1));
   if(!token[k]) return(NULL);
 
   j = 0;
@@ -801,7 +801,7 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
       token[k][j] = '\0'; /* terminate current token */      
       
       k++;
-      token[k] = (char *)malloc(sizeof(char)*(length+1));
+      token[k] = (char *)msSmallMalloc(sizeof(char)*(length+1));
       if(!token[k]) return(NULL);
       
       j = 0;      
@@ -854,7 +854,7 @@ char ** msStringSplitComplex( const char * pszString,
     int         bStripLeadSpaces = (nFlags & MS_STRIPLEADSPACES);
     int         bStripEndSpaces = (nFlags & MS_STRIPENDSPACES);
 
-    pszToken = (char *) malloc(sizeof(char*)*10);;
+    pszToken = (char *) msSmallMalloc(sizeof(char*)*10);;
     nTokenMax = 10;
     
     while( pszString != NULL && *pszString != '\0' )
@@ -932,7 +932,7 @@ char ** msStringSplitComplex( const char * pszString,
             if( nTokenLen >= nTokenMax-3 )
             {
                 nTokenMax = nTokenMax * 2 + 10;
-                pszToken = (char *) realloc(pszToken, sizeof(char*)*nTokenMax);
+                pszToken = (char *) msSmallRealloc(pszToken, sizeof(char*)*nTokenMax);
             }
 
             pszToken[nTokenLen] = *pszString;
@@ -958,10 +958,10 @@ char ** msStringSplitComplex( const char * pszString,
             if( nRetLen >= nRetMax - 1 )
             {
                 nRetMax = nRetMax * 2 + 10;
-                papszRetList = (char **) realloc(papszRetList, sizeof(char*)*nRetMax);
+                papszRetList = (char **) msSmallRealloc(papszRetList, sizeof(char*)*nRetMax);
             }
 
-            papszRetList[nRetLen++] = strdup( pszToken );
+            papszRetList[nRetLen++] = msStrdup( pszToken );
             papszRetList[nRetLen] = NULL;
         }
     }
@@ -976,15 +976,15 @@ char ** msStringSplitComplex( const char * pszString,
         if( nRetLen >= nRetMax - 1 )
         {
             nRetMax = nRetMax * 2 + 10;
-            papszRetList = (char **) realloc(papszRetList, sizeof(char*)*nRetMax);
+            papszRetList = (char **) msSmallRealloc(papszRetList, sizeof(char*)*nRetMax);
         }
 
-        papszRetList[nRetLen++] = strdup("");
+        papszRetList[nRetLen++] = msStrdup("");
         papszRetList[nRetLen] = NULL;
     }
 
     if( papszRetList == NULL )
-        papszRetList = (char **) malloc(sizeof(char *)*1);
+        papszRetList = (char **) msSmallMalloc(sizeof(char *)*1);
 
     *num_tokens = nRetLen;
     free(pszToken);
@@ -999,7 +999,7 @@ char **msStringTokenize( const char *pszLine, const char *pszDelim,
 {
     char **papszResult = NULL;
     int n = 1, iChar, nLength = strlen(pszLine), iTokenChar = 0, bInQuotes = MS_FALSE;
-    char *pszToken = (char *) malloc(sizeof(char*)*(nLength+1));
+    char *pszToken = (char *) msSmallMalloc(sizeof(char*)*(nLength+1));
     int nDelimLen = strlen(pszDelim);
 
     /* Compute the number of tokens */
@@ -1020,7 +1020,7 @@ char **msStringTokenize( const char *pszLine, const char *pszDelim,
         }
     }
 
-    papszResult = (char **) malloc(sizeof(char *)*n);
+    papszResult = (char **) msSmallMalloc(sizeof(char *)*n);
     n = iTokenChar = bInQuotes = 0;
     for( iChar = 0; pszLine[iChar] != '\0'; iChar++ )
     {
@@ -1041,7 +1041,7 @@ char **msStringTokenize( const char *pszLine, const char *pszDelim,
         {
             pszToken[iTokenChar++] = '\0';
             papszResult[n] = pszToken;
-            pszToken = (char *) malloc(sizeof(char*)*(nLength+1));
+            pszToken = (char *) msSmallMalloc(sizeof(char*)*(nLength+1));
             iChar += nDelimLen - 1;
             iTokenChar = 0;
             n++;
@@ -1119,8 +1119,7 @@ char *msEncodeUrlExcept(const char *data, const char except)
     if (msEncodeChar(*i))
       inc += 2;
   
-  if (!(code = (char*)malloc(strlen(data)+inc+1)))
-    return NULL;
+  code = (char*)msSmallMalloc(strlen(data)+inc+1);
   
   for (j=code, i=data; *i!='\0'; i++, j++)
     {
@@ -1168,11 +1167,7 @@ char *msEncodeHTMLEntities(const char *string)
     /* should be good enough for most cases */
     buflen = strlen(string) + 100;
     newstring = (char*)malloc(buflen+1);
-    if (newstring == NULL)
-    {
-        msSetError(MS_MEMERR, NULL, "msEncodeHTMLEntities()");
-        return NULL;
-    }
+    MS_CHECK_ALLOC(newstring, buflen+1, NULL);
 
     for(i=0, c=string; *c != '\0'; c++)
     {
@@ -1183,11 +1178,7 @@ char *msEncodeHTMLEntities(const char *string)
             /* entities... so let's go with twice the previous buffer size */
             buflen *= 2;
             newstring = (char*)realloc(newstring, buflen+1);
-            if (newstring == NULL)
-            {
-                msSetError(MS_MEMERR, NULL, "msEncodeHTMLEntities()");
-                return NULL;
-            }
+            MS_CHECK_ALLOC(newstring, buflen+1, NULL);
         }
 
         switch(*c)
@@ -1242,8 +1233,8 @@ void msDecodeHTMLEntities(const char *string)
         pszBuffer = (char*)string;
 
     bufferSize = strlen(pszBuffer);
-    pszReplace = (char*) malloc(bufferSize);
-    pszEnd = (char*) malloc(bufferSize);
+    pszReplace = (char*) msSmallMalloc(bufferSize);
+    pszEnd = (char*) msSmallMalloc(bufferSize);
 
     while((pszAmp = strchr(pszBuffer, '&')) != NULL)
     {
@@ -1340,7 +1331,7 @@ char *msStringConcatenate(char *pszDest, const char *pszSrc)
 
    /* if destination is null, allocate memory */
    if (pszDest == NULL) {
-      pszDest = strdup(pszSrc);
+      pszDest = msStrdup(pszSrc);
    }
    else { /* if dest is not null, reallocate memory */
       char *pszTemp;
@@ -1377,7 +1368,7 @@ char *msJoinStrings(char **array, int arrayLength, const char *delimeter)
     stringLength += strlen(array[i]) + delimeterLength;
 
   string = (char *)calloc(stringLength+1, sizeof(char));
-  if(!string) return NULL;
+  MS_CHECK_ALLOC(string, (stringLength+1)* sizeof(char), NULL);
   string[0] = '\0';
 
   for(i=0; i<arrayLength-1; i++) {
@@ -1402,11 +1393,7 @@ char *msHashString(const char *pszStr)
     int i=0;
 
     bufferSize = HASH_SIZE*2+1;
-    pszOutBuf = (char*)malloc(bufferSize);
-    if (pszOutBuf == NULL)
-    {
-        /* msSetError(MS_MEMERR, ...); */
-    }
+    pszOutBuf = (char*)msSmallMalloc(bufferSize);
 
     for(i=0; pszStr && pszStr[i]; i++)
     {
@@ -1446,7 +1433,7 @@ char *msCommifyString(char *str)
   if(num_commas < 1) return str; /* nothing to add */
 
   new_length = old_length + num_commas;
-  str = (char *) realloc(str, new_length+1);
+  str = (char *) msSmallRealloc(str, new_length+1);
   str[new_length] = '\0';
 
   j = 0;
@@ -1542,7 +1529,7 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
         if (old_len < new_len) {
           tmp_offset = tmp_ptr - str;
           str_len = str_len - old_len + new_len;
-          str = (char *)realloc(str, (str_len + 1)); /* make new space for a copy */
+          str = (char *)msSmallRealloc(str, (str_len + 1)); /* make new space for a copy */
           tmp_ptr = str + tmp_offset;
         }
 
@@ -1640,7 +1627,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     FriBidiStrIndex new_len;
     fribidi_boolean log2vis;
 
-    visual = (FriBidiChar *) malloc (sizeof (FriBidiChar) * (len + 1));
+    visual = (FriBidiChar *) msSmallMalloc (sizeof (FriBidiChar) * (len + 1));
     ltov = NULL;
     vtol = NULL;
     levels = NULL;
@@ -1673,7 +1660,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
        fribidi_unicode_to_charset (from_char_set_num,
            visual, len, outstring);
 #endif
-     return strdup(outstring);
+     return msStrdup(outstring);
   }
 }
 #endif
@@ -1697,7 +1684,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
   len = strlen(string);
 
   if (len == 0 || (encoding && strcasecmp(encoding, "UTF-8")==0))
-      return strdup(string);    /* Nothing to do: string already in UTF-8 */
+      return msStrdup(string);    /* Nothing to do: string already in UTF-8 */
 
   cd = iconv_open("UTF-8", encoding);
   if(cd == (iconv_t)-1) {
@@ -1725,7 +1712,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
     if(iconv_status == -1){
       msFree(out);
       iconv_close(cd);
-      return strdup(string);
+      return msStrdup(string);
     }
   }
   out[bufsize - bufleft] = '\0';
@@ -1735,7 +1722,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
   return out;
 #else
   if (*string == '\0' || (encoding && strcasecmp(encoding, "UTF-8")==0))
-      return strdup(string);    /* Nothing to do: string already in UTF-8 */
+      return msStrdup(string);    /* Nothing to do: string already in UTF-8 */
 
   msSetError(MS_MISCERR, "Not implemeted since Iconv is not enabled.", "msGetEncodedString()");
   return NULL;
@@ -1762,11 +1749,8 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
     {   
         nStr = wcslen (string);
         nBufferSize = ((nStr * 6) + 1);
-        output = (char*) malloc (nBufferSize);
-        if (output == NULL) {
-            msSetError(MS_MEMERR, NULL, "msConvertWideStringToUTF8()");
-            return NULL;
-        }
+        output = (char*) msSmallMalloc (nBufferSize);
+
         if (nStr == 0) {
             /* return an empty 8 byte string */
             output[0] = '\0';
@@ -2117,7 +2101,7 @@ char* msGetFirstLine(char* text) {
     /*loop through glyphs in text*/
     while((glyphLength=msGetNextGlyph(&textptr,glyph))) {
         if(glyphLength==1 && *glyph=='\n') { /*we've hit the first \n char*/
-            firstLineCur = firstLine = malloc(firstLineLength+1);
+            firstLineCur = firstLine = msSmallMalloc(firstLineLength+1);
             
             /*copy the first line into the return array*/
             while(firstLineLength--) {
@@ -2130,5 +2114,30 @@ char* msGetFirstLine(char* text) {
         firstLineLength+=glyphLength;
     }
     /*no newline found in text*/
-    return strdup(text);
+    return msStrdup(text);
+}
+
+/************************************************************************/
+/*                             msStrdup()                               */
+/************************************************************************/
+
+/* Safe version of msStrdup(). This function is taken from gdal/cpl. */
+
+char *msStrdup( const char * pszString )
+{
+    char        *pszReturn;
+
+    if( pszString == NULL )
+        pszString = "";
+
+    pszReturn = strdup( pszString );
+
+    if( pszReturn == NULL )
+    {
+        fprintf(stderr, "msSmallMsStrdup(): Out of memory allocating %ld bytes.\n",
+                (long) strlen(pszString) );
+        exit(1);
+    }
+
+    return( pszReturn );
 }

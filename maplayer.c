@@ -300,7 +300,7 @@ static int string2list(char **list, int *listsize, char *string)
       return(i);
     }
 
-  list[i] = strdup(string);
+  list[i] = msStrdup(string);
   (*listsize)++;
 
   /* printf("string2list: %s %d\n", string, i); */
@@ -396,15 +396,9 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     ne = msCountChars(layer->filter.string, '[');
     if(ne > 0) {
       layer->filter.items = (char **) calloc(ne, sizeof(char *)); /* should be more than enough space */
-      if(!(layer->filter.items)) {
-        msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-        return(MS_FAILURE);
-      }
+      MS_CHECK_ALLOC(layer->filter.items, ne* sizeof(char *), MS_FAILURE);
       layer->filter.indexes = (int *) malloc(ne*sizeof(int));
-      if(!(layer->filter.indexes)) {
-        msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-        return(MS_FAILURE);
-      }
+      MS_CHECK_ALLOC(layer->filter.indexes, ne*sizeof(int), MS_FAILURE);
       layer->filter.numitems = 0;
       nt += ne;
     }
@@ -425,15 +419,9 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
       ne = msCountChars(layer->class[i]->expression.string, '[');
       if(ne > 0) {
         layer->class[i]->expression.items = (char **) calloc(ne, sizeof(char *)); /* should be more than enough space */
-        if(!(layer->class[i]->expression.items)) {
-          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-          return(MS_FAILURE);
-        }
+        MS_CHECK_ALLOC(layer->class[i]->expression.items, ne*sizeof(char *), MS_FAILURE);
         layer->class[i]->expression.indexes = (int *) malloc(ne*sizeof(int));
-        if(!(layer->class[i]->expression.indexes)) {
-          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-          return(MS_FAILURE);
-        }
+        MS_CHECK_ALLOC(layer->class[i]->expression.indexes, ne*sizeof(int), MS_FAILURE);
         layer->class[i]->expression.numitems = 0;
         nt += ne;
       }
@@ -446,15 +434,9 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
       ne = msCountChars(layer->class[i]->text.string, '[');
       if(ne > 0) {
         layer->class[i]->text.items = (char **) calloc(ne, sizeof(char *)); /* should be more than enough space */
-        if(!(layer->class[i]->text.items)) {
-          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-          return(MS_FAILURE);
-        }
+        MS_CHECK_ALLOC(layer->class[i]->text.items, sizeof(char *), MS_FAILURE);
         layer->class[i]->text.indexes = (int *) malloc(ne*sizeof(int));
-        if(!(layer->class[i]->text.indexes)) {
-          msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-          return(MS_FAILURE);
-        }
+        MS_CHECK_ALLOC(layer->class[i]->text.indexes, ne*sizeof(int), MS_FAILURE);
         layer->class[i]->text.numitems = 0;
         nt += ne;
       }
@@ -466,7 +448,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
      (layer->map->outputformat && layer->map->outputformat->renderer == MS_RENDER_WITH_KML)) {
     msLayerGetItems(layer);
     if(nt > 0) /* need to realloc the array to accept the possible new items*/
-      layer->items = (char **)realloc(layer->items, sizeof(char *)*(layer->numitems + nt));
+      layer->items = (char **)msSmallRealloc(layer->items, sizeof(char *)*(layer->numitems + nt));
   } else {
     rv = layer->vtable->LayerCreateItems(layer, nt);
     if(rv != MS_SUCCESS)
@@ -516,8 +498,8 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 
         if(!bFound) {
           layer->numitems++;
-          layer->items =  (char **)realloc(layer->items, sizeof(char *)*(layer->numitems));
-          layer->items[layer->numitems-1] = strdup(tokens[i]);
+          layer->items =  (char **)msSmallRealloc(layer->items, sizeof(char *)*(layer->numitems));
+          layer->items[layer->numitems-1] = msStrdup(tokens[i]);
         }
       }
       msFreeCharArray(tokens, n);
@@ -548,13 +530,10 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
 
   /* now allocate and set the layer item parameters  */
   layer->items = (char **)malloc(sizeof(char *)*numitems);
-  if(!layer->items) {
-    msSetError(MS_MEMERR, NULL, "msLayerSetItems()");
-    return(MS_FAILURE);
-  }
+  MS_CHECK_ALLOC(layer->items, sizeof(char *)*numitems, MS_FAILURE);
 
   for(i=0; i<numitems; i++)
-    layer->items[i] = strdup(items[i]);
+    layer->items[i] = msStrdup(items[i]);
   layer->numitems = numitems;
 
   /* populate the iteminfo array */
@@ -639,7 +618,7 @@ msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value)
     int i;
     char *directive;
 
-    directive = (char *) malloc(strlen(key)+strlen(value)+2);
+    directive = (char *) msSmallMalloc(strlen(key)+strlen(value)+2);
     sprintf( directive, "%s=%s", key, value );
 
     for( i = 0; i < layer->numprocessing; i++ )
@@ -665,10 +644,10 @@ void msLayerAddProcessing( layerObj *layer, const char *directive )
 {
     layer->numprocessing++;
     if( layer->numprocessing == 1 )
-        layer->processing = (char **) malloc(2*sizeof(char *));
+        layer->processing = (char **) msSmallMalloc(2*sizeof(char *));
     else
-        layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->numprocessing+1) );
-    layer->processing[layer->numprocessing-1] = strdup(directive);
+        layer->processing = (char **) msSmallRealloc(layer->processing, sizeof(char*) * (layer->numprocessing+1) );
+    layer->processing[layer->numprocessing-1] = msStrdup(directive);
     layer->processing[layer->numprocessing] = NULL;
 }
 
@@ -730,7 +709,7 @@ makeTimeFilter(layerObj *lp,
     {   
         /*
         if(lp->filteritem) free(lp->filteritem);
-        lp->filteritem = strdup(timefield);
+        lp->filteritem = msStrdup(timefield);
         if (&lp->filter)
           freeExpression(&lp->filter);
         */
@@ -937,7 +916,7 @@ makeTimeFilter(layerObj *lp,
             /*
             if(lp->filteritem) 
               free(lp->filteritem);
-            lp->filteritem = strdup(timefield);
+            lp->filteritem = msStrdup(timefield);
             */     
 
             loadExpressionString(&lp->filter, pszBuffer);
@@ -1088,10 +1067,8 @@ int LayerDefaultCreateItems(layerObj *layer, const int nt)
 {
   if (nt > 0) {
     layer->items = (char **)calloc(nt, sizeof(char *)); /* should be more than enough space */
-    if(!layer->items) {
-      msSetError(MS_MEMERR, NULL, "LayerDefaultCreateItems()");
-      return(MS_FAILURE);
-    }
+    MS_CHECK_ALLOC(layer->items, sizeof(char *), MS_FAILURE);
+
     layer->numitems = 0;
   }
   return MS_SUCCESS;
@@ -1129,7 +1106,7 @@ int msConnectLayer(layerObj *layer,
         msFree(layer->plugin_library);
         msFree(layer->plugin_library_original);
 
-        layer->plugin_library_original = strdup(library_str);
+        layer->plugin_library_original = msStrdup(library_str);
         rv = msBuildPluginLibraryPath(&layer->plugin_library, 
                                       layer->plugin_library_original, 
                                       layer->map);
@@ -1175,9 +1152,8 @@ static int populateVirtualTable(layerVTableObj *vtable)
 static int createVirtualTable(layerVTableObj **vtable)
 {
   *vtable = malloc(sizeof(**vtable));
-  if ( ! *vtable) {
-    return MS_FAILURE;
-  }
+  MS_CHECK_ALLOC(*vtable, sizeof(**vtable), MS_FAILURE);
+
   return populateVirtualTable(*vtable);
 }
 
@@ -1299,9 +1275,9 @@ int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int tile, long shape
     }
     /* check for the expected size of the values array */
     if (layer->numitems > shape->numvalues) {
-        shape->values = (char **)realloc(shape->values, sizeof(char *)*(layer->numitems));
+        shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
         for (i = shape->numvalues; i < layer->numitems; i++)
-            shape->values[i] = strdup("");
+            shape->values[i] = msStrdup("");
     }
     return MS_SUCCESS;
 }
@@ -1320,9 +1296,9 @@ int msINLINELayerNextShape(layerObj *layer, shapeObj *shape)
     /* check for the expected size of the values array */
     if (layer->numitems > shape->numvalues) {
         int i;
-        shape->values = (char **)realloc(shape->values, sizeof(char *)*(layer->numitems));
+        shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
         for (i = shape->numvalues; i < layer->numitems; i++)
-            shape->values[i] = strdup("");
+            shape->values[i] = msStrdup("");
     }
 
     return(MS_SUCCESS);

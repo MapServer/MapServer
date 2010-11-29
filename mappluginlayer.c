@@ -52,10 +52,9 @@ createVTFItem(const char *name)
     VTFactoryItemObj *pVTFI;
 
     pVTFI = (VTFactoryItemObj *)malloc(sizeof(VTFactoryItemObj));
-    if ( ! pVTFI) {
-        return NULL;
-    }
-    pVTFI->name = strdup(name);
+    MS_CHECK_ALLOC(pVTFI, sizeof(VTFactoryItemObj), NULL);
+
+    pVTFI->name = msStrdup(name);
     memset(&pVTFI->vtable, 0, sizeof(layerVTableObj));
 
     return pVTFI;
@@ -97,11 +96,8 @@ insertNewVTFItem(VTFactoryObj *pVTFactory,
         VTFactoryItemObj **vtItemPtr;
         vtItemPtr = (VTFactoryItemObj**)realloc(pVTFactory->vtItems,
                                                 (pVTFactory->size+MS_LAYER_ALLOCSIZE)*sizeof(VTFactoryItemObj*));
+        MS_CHECK_ALLOC(vtItemPtr, (pVTFactory->size+MS_LAYER_ALLOCSIZE)*sizeof(VTFactoryItemObj*), MS_FAILURE);
 
-        if (vtItemPtr == NULL) {
-            msSetError(MS_MEMERR, "Failed to allocate memory for array of VTFactoryItemObj", "insertNewVTFItem()");
-            return MS_FAILURE;
-        }
 
         pVTFactory->size += MS_LAYER_ALLOCSIZE;
         pVTFactory->vtItems = vtItemPtr;

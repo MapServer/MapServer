@@ -99,9 +99,9 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     int		nFailedPoints = 0, nSetPoints = 0;
     
 
-    x = (double *) malloc( sizeof(double) * nDstXSize );
-    y = (double *) malloc( sizeof(double) * nDstXSize );
-    panSuccess = (int *) malloc( sizeof(int) * nDstXSize );
+    x = (double *) msSmallMalloc( sizeof(double) * nDstXSize );
+    y = (double *) msSmallMalloc( sizeof(double) * nDstXSize );
+    panSuccess = (int *) msSmallMalloc( sizeof(int) * nDstXSize );
 
     for( nDstY = 0; nDstY < nDstYSize; nDstY++ )
     {        
@@ -363,13 +363,13 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     double     *padfPixelSum;
     int         bandCount = MAX(4,psSrcImage->format->bands);
 
-    padfPixelSum = (double *) malloc(sizeof(double) * bandCount);
+    padfPixelSum = (double *) msSmallMalloc(sizeof(double) * bandCount);
     
     
 
-    x = (double *) malloc( sizeof(double) * nDstXSize );
-    y = (double *) malloc( sizeof(double) * nDstXSize );
-    panSuccess = (int *) malloc( sizeof(int) * nDstXSize );
+    x = (double *) msSmallMalloc( sizeof(double) * nDstXSize );
+    y = (double *) msSmallMalloc( sizeof(double) * nDstXSize );
+    panSuccess = (int *) msSmallMalloc( sizeof(int) * nDstXSize );
 
     for( nDstY = 0; nDstY < nDstYSize; nDstY++ )
     {        
@@ -605,16 +605,16 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     
     int         bandCount = MAX(4,psSrcImage->format->bands);
 
-    padfPixelSum = (double *) malloc(sizeof(double) * bandCount);
+    padfPixelSum = (double *) msSmallMalloc(sizeof(double) * bandCount);
     
     
 
-    x1 = (double *) malloc( sizeof(double) * (nDstXSize+1) );
-    y1 = (double *) malloc( sizeof(double) * (nDstXSize+1) );
-    x2 = (double *) malloc( sizeof(double) * (nDstXSize+1) );
-    y2 = (double *) malloc( sizeof(double) * (nDstXSize+1) );
-    panSuccess1 = (int *) malloc( sizeof(int) * (nDstXSize+1) );
-    panSuccess2 = (int *) malloc( sizeof(int) * (nDstXSize+1) );
+    x1 = (double *) msSmallMalloc( sizeof(double) * (nDstXSize+1) );
+    y1 = (double *) msSmallMalloc( sizeof(double) * (nDstXSize+1) );
+    x2 = (double *) msSmallMalloc( sizeof(double) * (nDstXSize+1) );
+    y2 = (double *) msSmallMalloc( sizeof(double) * (nDstXSize+1) );
+    panSuccess1 = (int *) msSmallMalloc( sizeof(int) * (nDstXSize+1) );
+    panSuccess2 = (int *) msSmallMalloc( sizeof(int) * (nDstXSize+1) );
 
     for( nDstY = 0; nDstY < nDstYSize; nDstY++ )
     {        
@@ -781,7 +781,7 @@ void *msInitProjTransformer( projectionObj *psSrc,
 {
     msProjTransformInfo	*psPTInfo;
 
-    psPTInfo = (msProjTransformInfo *) calloc(1,sizeof(msProjTransformInfo));
+    psPTInfo = (msProjTransformInfo *) msSmallCalloc(1,sizeof(msProjTransformInfo));
 
 /* -------------------------------------------------------------------- */
 /*      We won't even use PROJ.4 if either coordinate system is         */
@@ -878,7 +878,7 @@ int msProjTransformer( void *pCBData, int nPoints,
         double *z;
         int tr_result;
         
-        z = (double *) calloc(sizeof(double),nPoints);
+        z = (double *) msSmallCalloc(sizeof(double),nPoints);
 
         msAcquireLock( TLOCK_PROJ );
         tr_result = pj_transform( psPTInfo->psDstProj, psPTInfo->psSrcProj, 
@@ -967,7 +967,7 @@ static void *msInitApproxTransformer( SimpleTransformer pfnBaseTransformer,
 {
     msApproxTransformInfo	*psATInfo;
 
-    psATInfo = (msApproxTransformInfo *) malloc(sizeof(msApproxTransformInfo));
+    psATInfo = (msApproxTransformInfo *) msSmallMalloc(sizeof(msApproxTransformInfo));
     psATInfo->pfnBaseTransformer = pfnBaseTransformer;
     psATInfo->pBaseCBData = pBaseCBData;
     psATInfo->dfMaxError = dfMaxError;

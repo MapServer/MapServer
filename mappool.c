@@ -232,7 +232,7 @@ void msConnPoolRegister( layerObj *layer,
     connectionCount++;
 
     conn->connectiontype = layer->connectiontype;
-    conn->connection = strdup( layer->connection );
+    conn->connection = msStrdup( layer->connection );
     conn->close = close_func;
     conn->ref_count = 1;
     conn->thread_id = msGetThreadId();

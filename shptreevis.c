@@ -52,7 +52,7 @@ char* AddFileSuffix ( const char * Filename, const char * Suffix ) {
   /*	Compute the base (layer) name.  If there is any extension	    */
   /*	on the passed in filename we will strip it off.			    */
   /* -------------------------------------------------------------------- */
-    pszBasename = (char *) malloc(strlen(Filename)+5);
+    pszBasename = (char *) msSmallMalloc(strlen(Filename)+5);
     strcpy( pszBasename, Filename );
     for( i = strlen(pszBasename)-1; 
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
@@ -66,7 +66,7 @@ char* AddFileSuffix ( const char * Filename, const char * Suffix ) {
   /*	Open the .shp and .shx files.  Note that files pulled from	    */
   /*	a PC to Unix with upper case filenames won't work!		    */
   /* -------------------------------------------------------------------- */
-    pszFullname = (char *) malloc(strlen(pszBasename) + 5);
+    pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
     sprintf( pszFullname, "%s%s", pszBasename, Suffix); 
       
     return (pszFullname);

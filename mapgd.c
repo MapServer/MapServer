@@ -71,6 +71,7 @@ imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj
   gdImagePtr ip;
 
   img = (imageObj *) calloc(1, sizeof (imageObj));
+  MS_CHECK_ALLOC(img, sizeof (imageObj), NULL); 
 
   /* we're only doing PC256 for the moment */
   ip = gdImageCreate(width, height);
@@ -164,9 +165,9 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
      
   if(n == 0)   return;
 
-  edge = (pEdge *) calloc(n,sizeof(pEdge));           /* All edges in the polygon */
-  edgeindex =  (int *) calloc(n,sizeof(int));         /* Index to edges sorted by scanline */
-  active = (pEdge **) calloc(n,sizeof(pEdge*));       /* Pointers to active edges for current scanline */
+  edge = (pEdge *) msSmallCalloc(n,sizeof(pEdge));           /* All edges in the polygon */
+  edgeindex =  (int *) msSmallCalloc(n,sizeof(int));         /* Index to edges sorted by scanline */
+  active = (pEdge **) msSmallCalloc(n,sizeof(pEdge*));       /* Pointers to active edges for current scanline */
     
   nvert=0;
      
@@ -199,7 +200,8 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
   }
    
   /* Use histogram sort to create a bucket-sorted edgeindex by scanline */
-  yhist = (int*) calloc(ymax - ymin + 2, sizeof(int));
+  yhist = (int*) msSmallCalloc(ymax - ymin + 2, sizeof(int));
+
   for(i=0;i<nvert;i++) {
     yhist[ edge[i].s - ymin + 1 ]++;
   }
@@ -325,6 +327,7 @@ int renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
     for(i=0; i<stroke->patternlength; i++)
       k += MS_NINT(stroke->pattern[i]);
     style = (int *) malloc (k * sizeof(int));
+    MS_CHECK_ALLOC(style, k * sizeof(int), MS_FAILURE);
 
     sc = c; /* start with the color */    
 
@@ -472,7 +475,7 @@ symbolObj* rotateVectorSymbolPoints(symbolObj *symbol, double angle_rad) {
    
    angle_rad = -angle_rad;
    
-   newSymbol = (symbolObj *) malloc(sizeof(symbolObj));
+   newSymbol = (symbolObj *) msSmallMalloc(sizeof(symbolObj));
    msCopySymbol(newSymbol, symbol, NULL);
    
    sin_a = sin(angle_rad);
@@ -804,6 +807,7 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char *font, double size, 
       }
 
       *advances = (double*)malloc( strlen(string) * sizeof(double) );
+      MS_CHECK_ALLOC(*advances, strlen(string) * sizeof(double), MS_FAILURE);
       s = strex.xshow;
       k = 0;
       while ( *s && k < strlen(string) ) {

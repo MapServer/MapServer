@@ -168,7 +168,7 @@ static void writeHeader( SHPHandle psSHP )
   /* -------------------------------------------------------------------- */
   /*      Write out the .shx contents.                                    */
   /* -------------------------------------------------------------------- */
-  panSHX = (ms_int32 *) malloc(sizeof(ms_int32) * 2 * psSHP->nRecords);
+  panSHX = (ms_int32 *) msSmallMalloc(sizeof(ms_int32) * 2 * psSHP->nRecords);
   
   for( i = 0; i < psSHP->nRecords; i++ ) {
     panSHX[i*2  ] = psSHP->panRecOffset[i]/2;
@@ -221,7 +221,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   /* -------------------------------------------------------------------- */
   /*	Initialize the info structure.					    */
   /* -------------------------------------------------------------------- */
-  psSHP = (SHPHandle) malloc(sizeof(SHPInfo));
+  psSHP = (SHPHandle) msSmallMalloc(sizeof(SHPInfo));
   
   psSHP->bUpdated = MS_FALSE;
 
@@ -233,7 +233,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   /*	Compute the base (layer) name.  If there is any extension	    */
   /*	on the passed in filename we will strip it off.			    */
   /* -------------------------------------------------------------------- */
-  pszBasename = (char *) malloc(strlen(pszLayer)+5);
+  pszBasename = (char *) msSmallMalloc(strlen(pszLayer)+5);
   strcpy( pszBasename, pszLayer );
   for( i = strlen(pszBasename)-1; 
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/' && pszBasename[i] != '\\';
@@ -246,7 +246,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   /*	Open the .shp and .shx files.  Note that files pulled from	    */
   /*	a PC to Unix with upper case filenames won't work!		    */
   /* -------------------------------------------------------------------- */
-  pszFullname = (char *) malloc(strlen(pszBasename) + 5);
+  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s.shp", pszBasename );
   psSHP->fpSHP = fopen(pszFullname, pszAccess );
   if( psSHP->fpSHP == NULL ) {
@@ -271,7 +271,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   /* -------------------------------------------------------------------- */
   /*   Read the file size from the SHP file.				    */
   /* -------------------------------------------------------------------- */
-  pabyBuf = (uchar *) malloc(100);
+  pabyBuf = (uchar *) msSmallMalloc(100);
   fread( pabyBuf, 100, 1, psSHP->fpSHP );
   
   psSHP->nFileSize = (pabyBuf[24] * 256 * 256 * 256
@@ -464,7 +464,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   /*	Compute the base (layer) name.  If there is any extension  	    */
   /*	on the passed in filename we will strip it off.			    */
   /* -------------------------------------------------------------------- */
-  pszBasename = (char *) malloc(strlen(pszLayer)+5);
+  pszBasename = (char *) msSmallMalloc(strlen(pszLayer)+5);
   strcpy( pszBasename, pszLayer );
   for( i = strlen(pszBasename)-1; 
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/' && pszBasename[i] != '\\';
@@ -476,7 +476,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   /* -------------------------------------------------------------------- */
   /*      Open the two files so we can write their headers.               */
   /* -------------------------------------------------------------------- */
-  pszFullname = (char *) malloc(strlen(pszBasename) + 5);
+  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s.shp", pszBasename );
   fpSHP = fopen(pszFullname, "wb" );
   if( fpSHP == NULL )
@@ -614,7 +614,7 @@ int msSHPWritePoint(SHPHandle psSHP, pointObj *point )
   /* -------------------------------------------------------------------- */
   psSHP->panRecOffset[psSHP->nRecords-1] = nRecordOffset = psSHP->nFileSize;
   
-  pabyRec = (uchar *) malloc(nPoints * 2 * sizeof(double) + nParts * 4 + 128);
+  pabyRec = (uchar *) msSmallMalloc(nPoints * 2 * sizeof(double) + nParts * 4 + 128);
   
   /* -------------------------------------------------------------------- */
   /*      Write vertices for a point.                                     */
@@ -711,7 +711,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   psSHP->panRecOffset[psSHP->nRecords-1] = nRecordOffset = psSHP->nFileSize;
   
-  pabyRec = (uchar *) malloc(nPoints * 4 * sizeof(double) + nParts * 8 + 128);
+  pabyRec = (uchar *) msSmallMalloc(nPoints * 4 * sizeof(double) + nParts * 8 + 128);
   nShapeType = psSHP->nShapeType;
   
   if (shape->type == MS_SHAPE_NULL) {
@@ -992,7 +992,7 @@ static int msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char* ps
     if (psSHP->pabyRec == NULL)
     {
         /* Reallocate previous successfull size for following features */
-        psSHP->pabyRec = malloc(psSHP->nBufSize);
+        psSHP->pabyRec = msSmallMalloc(psSHP->nBufSize);
 
         msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
                    pszCallingFunction, nEntitySize, hEntity);
@@ -1126,7 +1126,7 @@ int msSHXLoadAll( SHPHandle psSHP ) {
   int i;
   uchar	*pabyBuf;
 
-  pabyBuf = (uchar *) malloc(8 * psSHP->nRecords );
+  pabyBuf = (uchar *) msSmallMalloc(8 * psSHP->nRecords );
   fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX );
   for( i = 0; i < psSHP->nRecords; i++ ) {
     ms_int32 nOffset, nLength;
@@ -1275,7 +1275,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       if (psSHP->panParts == NULL)
       {
         /* Reallocate previous successfull size for following features */ 
-        psSHP->panParts = (int *) malloc(psSHP->nPartMax * sizeof(int) );
+        psSHP->panParts = (int *) msSmallMalloc(psSHP->nPartMax * sizeof(int) );
 
         shape->type = MS_SHAPE_NULL;
         msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
@@ -1312,11 +1312,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     /* -------------------------------------------------------------------- */
     /*      Fill the shape structure.                                       */
     /* -------------------------------------------------------------------- */
-    if( (shape->line = (lineObj *)malloc(sizeof(lineObj)*nParts)) == NULL ) {
-      shape->type = MS_SHAPE_NULL;
-      msSetError(MS_MEMERR, NULL, "msSHPReadShape()");
-      return;
-    }
+    shape->line = (lineObj *)malloc(sizeof(lineObj)*nParts);
+    MS_CHECK_ALLOC_NO_RET(shape->line, sizeof(lineObj)*nParts);
 
     shape->numlines = nParts;
       
@@ -1522,14 +1519,12 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     /* -------------------------------------------------------------------- */
     /*      Fill the shape structure.                                       */
     /* -------------------------------------------------------------------- */
-    if( (shape->line = (lineObj *)malloc(sizeof(lineObj))) == NULL ) {
-      msSetError(MS_MEMERR, NULL, "msSHPReadShape()");
-      return;
-    }
+    shape->line = (lineObj *)malloc(sizeof(lineObj));
+    MS_CHECK_ALLOC_NO_RET(shape->line, sizeof(lineObj));
 
     shape->numlines = 1;
     shape->line[0].numpoints = 1;
-    shape->line[0].point = (pointObj *) malloc(sizeof(pointObj));
+    shape->line[0].point = (pointObj *) msSmallMalloc(sizeof(pointObj));
       
     memcpy( &(shape->line[0].point[0].x), psSHP->pabyRec + 12, 8 );
     memcpy( &(shape->line[0].point[0].y), psSHP->pabyRec + 20, 8 );
@@ -1675,7 +1670,7 @@ int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename, int log_f
   msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
   
   bufferSize = strlen(filename)+5;
-  dbfFilename = (char *)malloc(bufferSize);
+  dbfFilename = (char *)msSmallMalloc(bufferSize);
   dbfFilename[0] = '\0';
   strcpy(dbfFilename, filename);
   
@@ -1777,15 +1772,13 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
   else {
 
     /* deal with case where sourcename is of the form 'file.shp' */
-    sourcename = strdup(shpfile->source);
+    sourcename = msStrdup(shpfile->source);
     /* TODO: need to add case-insensitive handling! */
     s = strstr(sourcename, ".shp");
     if( s ) *s = '\0';
 
-    if((filename = (char *)malloc(strlen(sourcename)+strlen(MS_INDEX_EXTENSION)+1)) == NULL) {
-      msSetError(MS_MEMERR, NULL, "msShapefileWhichShapes()");    
-      return(MS_FAILURE);
-    }
+    filename = (char *)malloc(strlen(sourcename)+strlen(MS_INDEX_EXTENSION)+1);
+    MS_CHECK_ALLOC(filename, strlen(sourcename)+strlen(MS_INDEX_EXTENSION)+1, MS_FAILURE);
   
     sprintf(filename, "%s%s", sourcename, MS_INDEX_EXTENSION);
     
@@ -1886,11 +1879,17 @@ int msTiledSHPOpenFile(layerObj *layer)
 
   /* allocate space for a shapefileObj using layer->layerinfo	 */
   tSHP = (msTiledSHPLayerInfo *) malloc(sizeof(msTiledSHPLayerInfo));
-  if(!tSHP) {
-    msSetError(MS_MEMERR, "Error allocating tiled shapefile structures.", "msTiledSHPOpenFile()");
-    return(MS_FAILURE);
-  }
+  MS_CHECK_ALLOC(tSHP, sizeof(msTiledSHPLayerInfo), MS_FAILURE);
+
   tSHP->shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
+  if (tSHP->shpfile == NULL)
+  {
+      msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msTiledSHPOpenFile()",
+                 __FILE__, __LINE__, sizeof(shapefileObj));
+      free(tSHP);
+      return MS_FAILURE;
+  }
+
   tSHP->tileshpfile = NULL; /* may need this if not using a tile layer, look for malloc later */
   layer->layerinfo = tSHP;
 
@@ -1919,6 +1918,15 @@ int msTiledSHPOpenFile(layerObj *layer)
 
     /* we need tSHP->tileshpfile if we're not working with a layer */
     tSHP->tileshpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
+    if (tSHP->tileshpfile == NULL)
+    {
+        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msTiledSHPOpenFile()",
+                   __FILE__, __LINE__, sizeof(shapefileObj));
+        free(tSHP->shpfile);
+        free(tSHP);
+        return MS_FAILURE;
+    }
+
 
     if(msShapefileOpen(tSHP->tileshpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->tileindex), MS_TRUE) == -1) 
       if(msShapefileOpen(tSHP->tileshpfile, "rb", msBuildPath(szPath, layer->map->mappath, layer->tileindex), MS_TRUE) == -1)
@@ -2504,10 +2512,8 @@ int msShapeFileLayerOpen(layerObj *layer)
     
   /* allocate space for a shapefileObj using layer->layerinfo  */
   shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
-  if( ! shpfile) {
-    msSetError(MS_MEMERR, "Error allocating shapefileObj structure.", "msLayerOpen()");
-    return MS_FAILURE;
-  }
+  MS_CHECK_ALLOC(shpfile, sizeof(shapefileObj), MS_FAILURE);
+
     if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
 		return MS_FAILURE;
     

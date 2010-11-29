@@ -246,7 +246,7 @@ int msDBFJoinPrepare(joinObj *join, shapeObj *shape)
   joininfo->nextrecord = 0; /* starting with the first record */
 
   if(joininfo->target) free(joininfo->target); /* clear last target */
-  joininfo->target = strdup(shape->values[joininfo->fromindex]);
+  joininfo->target = msStrdup(shape->values[joininfo->fromindex]);
 
   return(MS_SUCCESS);
 }
@@ -284,7 +284,7 @@ int msDBFJoinNext(joinObj *join)
       return(MS_FAILURE);
     }
     for(i=0; i<join->numitems; i++)
-      join->values[i] = strdup("\0"); /* intialize to zero length strings */
+      join->values[i] = msStrdup("\0"); /* intialize to zero length strings */
 
     joininfo->nextrecord = n;
     return(MS_DONE);
@@ -430,7 +430,7 @@ int msCSVJoinPrepare(joinObj *join, shapeObj *shape)
   joininfo->nextrow = 0; /* starting with the first record */
 
   if(joininfo->target) free(joininfo->target); /* clear last target */
-  joininfo->target = strdup(shape->values[joininfo->fromindex]);
+  joininfo->target = msStrdup(shape->values[joininfo->fromindex]);
 
   return(MS_SUCCESS);
 }
@@ -462,14 +462,14 @@ int msCSVJoinNext(joinObj *join)
   
   if(i == joininfo->numrows) { /* unable to do the join     */
     for(j=0; j<join->numitems; j++)
-      join->values[j] = strdup("\0"); /* intialize to zero length strings */
+      join->values[j] = msStrdup("\0"); /* intialize to zero length strings */
 
     joininfo->nextrow = joininfo->numrows;
     return(MS_DONE);
   } 
 
   for(j=0; j<join->numitems; j++)
-    join->values[j] = strdup(joininfo->rows[i][j]);
+    join->values[j] = msStrdup(joininfo->rows[i][j]);
 
   joininfo->nextrow = i+1; /* so we know where to start looking next time through */
 
@@ -585,11 +585,11 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
       return(MS_FAILURE);
     }
   
-    delim = strdup(":");
-    DB_HOST = strdup(strtok(conn_decrypted, delim));
-    DB_USER = strdup(strtok(NULL, delim));
-    DB_PASSWD = strdup(strtok(NULL, delim));
-    DB_DATABASE = strdup(strtok(NULL, delim));
+    delim = msStrdup(":");
+    DB_HOST = msStrdup(strtok(conn_decrypted, delim));
+    DB_USER = msStrdup(strtok(NULL, delim));
+    DB_PASSWD = msStrdup(strtok(NULL, delim));
+    DB_DATABASE = msStrdup(strtok(NULL, delim));
     free(conn_decrypted);
 
     if (DB_HOST == NULL || DB_USER == NULL || DB_PASSWD == NULL || DB_DATABASE == NULL)
@@ -655,13 +655,13 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
         {
             MYSQL_ROW row = mysql_fetch_row(joininfo->qresult);
             MYDEBUG printf("(%s)<BR>\n",row[0]);
-						join->items[i] = strdup(row[0]);
+						join->items[i] = msStrdup(row[0]);
         }
 		} else {
     	msSetError(MS_DBFERR, "Item %s not found in table %s.", "msMySQLJoinConnect()", join->to, join->table); 
 	    return(MS_FAILURE);
 		}
-		joininfo->tocolumn = strdup(join->to);
+		joininfo->tocolumn = msStrdup(join->to);
 
 	
 
@@ -711,7 +711,7 @@ int msMySQLJoinPrepare(joinObj *join, shapeObj *shape)
   joininfo->nextrecord = 0; /* starting with the first record */
 
   if(joininfo->target) free(joininfo->target); /* clear last target */
-  joininfo->target = strdup(shape->values[joininfo->fromindex]);
+  joininfo->target = msStrdup(shape->values[joininfo->fromindex]);
 
   return(MS_SUCCESS);
 #endif
@@ -768,8 +768,8 @@ int msMySQLJoinNext(joinObj *join)
 							return(MS_FAILURE);
 						}
 						for(i=0; i<join->numitems; i++){
-/* join->values[i] = strdup("\0"); */ /* intialize to zero length strings */
-							join->values[i] = strdup(row[i]); /* intialize to zero length strings */
+/* join->values[i] = msStrdup("\0"); */ /* intialize to zero length strings */
+							join->values[i] = msStrdup(row[i]); /* intialize to zero length strings */
 				/* rows = atoi(row[0]); */
 						}
 				}	else {
@@ -778,7 +778,7 @@ int msMySQLJoinNext(joinObj *join)
 							return(MS_FAILURE);
 						}
 						for(i=0; i<join->numitems; i++)
-							join->values[i] = strdup("\0"); /* intialize to zero length strings  */
+							join->values[i] = msStrdup("\0"); /* intialize to zero length strings  */
 
 						return(MS_DONE);
 				} 
@@ -794,7 +794,7 @@ int msMySQLJoinNext(joinObj *join)
       return(MS_FAILURE);
     }
     for(i=0; i<join->numitems; i++)
-      join->values[i] = strdup("\0"); /* intialize to zero length strings  */
+      join->values[i] = msStrdup("\0"); /* intialize to zero length strings  */
 
     joininfo->nextrecord = n;
     return(MS_DONE);

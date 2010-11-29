@@ -585,7 +585,7 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     if (itemindexes[i] >= 0)
     {
         // Extract regular attributes
-        values[i] = strdup(OGR_F_GetFieldAsString( hFeature, itemindexes[i]));
+        values[i] = msStrdup(OGR_F_GetFieldAsString( hFeature, itemindexes[i]));
     }
     else
 #if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
@@ -612,9 +612,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelTextString,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("");
+                values[i] = msStrdup("");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
@@ -625,9 +625,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelAngle,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
@@ -638,9 +638,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelSize,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
@@ -651,9 +651,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelFColor,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("#000000");
+                values[i] = msStrdup("#000000");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELFCOLORNAME " = \"%s\"\n", values[i]);
@@ -664,9 +664,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelFontName,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("Arial");
+                values[i] = msStrdup("Arial");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELFONTNAMENAME " =       \"%s\"\n", values[i]);
@@ -677,9 +677,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelBColor,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("#000000");
+                values[i] = msStrdup("#000000");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELBCOLORNAME " = \"%s\"\n", values[i]);
@@ -690,9 +690,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelPlacement,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("");
+                values[i] = msStrdup("");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELPLACEMENTNAME " = \"%s\"\n", values[i]);
@@ -703,9 +703,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelAnchor,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELANCHORNAME " = \"%s\"\n", values[i]);
@@ -716,9 +716,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelDx,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELDXNAME " = \"%s\"\n", values[i]);
@@ -729,9 +729,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelDy,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELDYNAME " = \"%s\"\n", values[i]);
@@ -742,9 +742,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelPerp,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELPERPNAME " = \"%s\"\n", values[i]);
@@ -755,9 +755,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelBold,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELBOLDNAME " = \"%s\"\n", values[i]);
@@ -768,9 +768,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelItalic,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELITALICNAME " = \"%s\"\n", values[i]);
@@ -781,9 +781,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelUnderline,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELUNDERLINENAME " = \"%s\"\n", values[i]);
@@ -794,9 +794,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelPriority,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELPRIORITYNAME " = \"%s\"\n", values[i]);
@@ -807,9 +807,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelStrikeout,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELSTRIKEOUTNAME " = \"%s\"\n", values[i]);
@@ -820,9 +820,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelStretch,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("0");
+                values[i] = msStrdup("0");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELSTRETCHNAME " = \"%s\"\n", values[i]);
@@ -833,9 +833,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelAdjHor,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("");
+                values[i] = msStrdup("");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELADJHORNAME " = \"%s\"\n", values[i]);
@@ -846,9 +846,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelAdjVert,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("");
+                values[i] = msStrdup("");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELADJVERTNAME " = \"%s\"\n", values[i]);
@@ -859,9 +859,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelHColor,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("");
+                values[i] = msStrdup("");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELHCOLORNAME " = \"%s\"\n", values[i]);
@@ -873,9 +873,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
                 || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
                                                           OGRSTLabelOColor,
                                                           &bDefault)) == NULL))
-                values[i] = strdup("");
+                values[i] = msStrdup("");
             else
-                values[i] = strdup(pszValue);
+                values[i] = msStrdup(pszValue);
 
             if (layer->debug >= MS_DEBUGLEVEL_VVV)
                 msDebug(MSOGR_LABELOCOLORNAME " = \"%s\"\n", values[i]);
@@ -907,9 +907,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL 
             || ((pszValue = poLabelStyle->TextString(bDefault)) == NULL))
-           values[i] = strdup("");
+           values[i] = msStrdup("");
         else
-            values[i] = strdup(pszValue);
+            values[i] = msStrdup(pszValue);
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
     }
@@ -917,9 +917,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelAngle,bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
     }
@@ -927,9 +927,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelSize,bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
     }
@@ -937,9 +937,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelFColor, bDefault)) == NULL))
-           values[i] = strdup("#000000");
+           values[i] = msStrdup("#000000");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
@@ -948,9 +948,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelFontName, bDefault)) == NULL))
-           values[i] = strdup("Arial");
+           values[i] = msStrdup("Arial");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELFONTNAMENAME " = \"%s\"\n", values[i]);
@@ -959,9 +959,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelBColor, bDefault)) == NULL))
-           values[i] = strdup("#000000");
+           values[i] = msStrdup("#000000");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELBCOLORNAME " = \"%s\"\n", values[i]);
@@ -970,9 +970,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelPlacement, bDefault)) == NULL))
-           values[i] = strdup("");
+           values[i] = msStrdup("");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELPLACEMENTNAME " = \"%s\"\n", values[i]);
@@ -981,9 +981,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelAnchor, bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELANCHORNAME " = \"%s\"\n", values[i]);
@@ -992,9 +992,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelDx, bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELDXNAME " = \"%s\"\n", values[i]);
@@ -1003,9 +1003,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelDy, bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELDYNAME " = \"%s\"\n", values[i]);
@@ -1014,9 +1014,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelPerp, bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELPERPNAME " = \"%s\"\n", values[i]);
@@ -1025,9 +1025,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelBold, bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELBOLDNAME " = \"%s\"\n", values[i]);
@@ -1036,9 +1036,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelItalic, bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELITALICNAME " = \"%s\"\n", values[i]);
@@ -1047,9 +1047,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelUnderline, bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELUNDERLINENAME " = \"%s\"\n", values[i]);
     }
@@ -1057,9 +1057,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelPriority, bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELPRIORITYNAME " = \"%s\"\n", values[i]);
@@ -1069,9 +1069,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelStrikeout, bDefault)) == NULL))
-            values[i] = strdup("0");
+            values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELSTRIKEOUTNAME " = \"%s\"\n", values[i]);
@@ -1080,9 +1080,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelStretch, bDefault)) == NULL))
-           values[i] = strdup("0");
+           values[i] = msStrdup("0");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELSTRETCHNAME " = \"%s\"\n", values[i]);
@@ -1091,9 +1091,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelAdjHor, bDefault)) == NULL))
-           values[i] = strdup("");
+           values[i] = msStrdup("");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELADJHORNAME " = \"%s\"\n", values[i]);
@@ -1102,9 +1102,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelAdjVert, bDefault)) == NULL))
-           values[i] = strdup("");
+           values[i] = msStrdup("");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELADJVERTNAME " = \"%s\"\n", values[i]);
@@ -1113,9 +1113,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     {
         if (poLabelStyle == NULL
             || ((pszValue = poLabelStyle->GetParamStr(OGRSTLabelHColor, bDefault)) == NULL))
-            values[i] = strdup("");
+            values[i] = msStrdup("");
         else
-           values[i] = strdup(pszValue);
+           values[i] = msStrdup(pszValue);
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug(MSOGR_LABELHCOLORNAME " = \"%s\"\n", values[i]);
@@ -1767,33 +1767,33 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo )
   for(i=0;i<numitems;i++)
   {
       OGRFieldDefnH hField = OGR_FD_GetFieldDefn( hDefn, i );
-      items[i] = strdup( OGR_Fld_GetNameRef( hField ));
+      items[i] = msStrdup( OGR_Fld_GetNameRef( hField ));
   }
 
   if (getShapeStyleItems && EQUAL(getShapeStyleItems, "all"))
   {
       assert(numStyleItems == 21);
-      items[i++] = strdup( MSOGR_LABELFONTNAMENAME );
-      items[i++] = strdup( MSOGR_LABELSIZENAME );
-      items[i++] = strdup( MSOGR_LABELTEXTNAME );
-      items[i++] = strdup( MSOGR_LABELANGLENAME );
-      items[i++] = strdup( MSOGR_LABELFCOLORNAME );
-      items[i++] = strdup( MSOGR_LABELBCOLORNAME );
-      items[i++] = strdup( MSOGR_LABELPLACEMENTNAME );
-      items[i++] = strdup( MSOGR_LABELANCHORNAME );
-      items[i++] = strdup( MSOGR_LABELDXNAME );
-      items[i++] = strdup( MSOGR_LABELDYNAME );
-      items[i++] = strdup( MSOGR_LABELPERPNAME );
-      items[i++] = strdup( MSOGR_LABELBOLDNAME );
-      items[i++] = strdup( MSOGR_LABELITALICNAME );
-      items[i++] = strdup( MSOGR_LABELUNDERLINENAME );
-      items[i++] = strdup( MSOGR_LABELPRIORITYNAME );
-      items[i++] = strdup( MSOGR_LABELSTRIKEOUTNAME );
-      items[i++] = strdup( MSOGR_LABELSTRETCHNAME );
-      items[i++] = strdup( MSOGR_LABELADJHORNAME );
-      items[i++] = strdup( MSOGR_LABELADJVERTNAME );
-      items[i++] = strdup( MSOGR_LABELHCOLORNAME );
-      items[i++] = strdup( MSOGR_LABELOCOLORNAME );
+      items[i++] = msStrdup( MSOGR_LABELFONTNAMENAME );
+      items[i++] = msStrdup( MSOGR_LABELSIZENAME );
+      items[i++] = msStrdup( MSOGR_LABELTEXTNAME );
+      items[i++] = msStrdup( MSOGR_LABELANGLENAME );
+      items[i++] = msStrdup( MSOGR_LABELFCOLORNAME );
+      items[i++] = msStrdup( MSOGR_LABELBCOLORNAME );
+      items[i++] = msStrdup( MSOGR_LABELPLACEMENTNAME );
+      items[i++] = msStrdup( MSOGR_LABELANCHORNAME );
+      items[i++] = msStrdup( MSOGR_LABELDXNAME );
+      items[i++] = msStrdup( MSOGR_LABELDYNAME );
+      items[i++] = msStrdup( MSOGR_LABELPERPNAME );
+      items[i++] = msStrdup( MSOGR_LABELBOLDNAME );
+      items[i++] = msStrdup( MSOGR_LABELITALICNAME );
+      items[i++] = msStrdup( MSOGR_LABELUNDERLINENAME );
+      items[i++] = msStrdup( MSOGR_LABELPRIORITYNAME );
+      items[i++] = msStrdup( MSOGR_LABELSTRIKEOUTNAME );
+      items[i++] = msStrdup( MSOGR_LABELSTRETCHNAME );
+      items[i++] = msStrdup( MSOGR_LABELADJHORNAME );
+      items[i++] = msStrdup( MSOGR_LABELADJVERTNAME );
+      items[i++] = msStrdup( MSOGR_LABELHCOLORNAME );
+      items[i++] = msStrdup( MSOGR_LABELOCOLORNAME );
   }
   items[i++] = NULL;
 
@@ -2110,7 +2110,7 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
         
     }
 
-    connection = strdup( OGR_F_GetFieldAsString( hFeature, 
+    connection = msStrdup( OGR_F_GetFieldAsString( hFeature, 
                                                  layer->tileitemindex ));
     
     nFeatureId = OGR_F_GetFID( hFeature );
@@ -3011,7 +3011,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
               {
                   c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup(pszName);
+                  c->label.font = msStrdup(pszName);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using '%s' TTF font **\n", pszName);
               }
@@ -3019,14 +3019,14 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                         msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
               {
                   c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup(pszFontName);
+                  c->label.font = msStrdup(pszFontName);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using '%s' TTF font **\n", pszFontName);
               }
               else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
               {
                   c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup("default");
+                  c->label.font = msStrdup("default");
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using 'default' TTF font **\n");
               }
@@ -3099,7 +3099,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
               {
                   c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup(pszName);
+                  c->label.font = msStrdup(pszName);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using '%s' TTF font **\n", pszName);
               }
@@ -3107,14 +3107,14 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                         msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
               {
                   c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup(pszFontName);
+                  c->label.font = msStrdup(pszFontName);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using '%s' TTF font **\n", pszFontName);
               }
               else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
               {
                   c->label.type = MS_TRUETYPE;
-                  c->label.font = strdup("default");
+                  c->label.font = msStrdup("default");
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using 'default' TTF font **\n");
               }
@@ -3916,7 +3916,7 @@ char *msOGRShapeToWKT(shapeObj *shape)
         char *pszOGRWkt;
 
         OGR_G_ExportToWkt( hGeom, &pszOGRWkt );
-        wkt = strdup( pszOGRWkt );
+        wkt = msStrdup( pszOGRWkt );
         CPLFree( pszOGRWkt );
     }
 

@@ -411,7 +411,7 @@ int agg2RenderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol,
 	rasterBufferObj *pixmap = symbol->pixmap_buffer;
 	assert(pixmap->type == MS_BUFFER_BYTE_RGBA);
     if(!symbol->renderer_cache) {
-        band_type *data = (band_type*)malloc(pixmap->width*pixmap->height*4*sizeof(band_type));
+        band_type *data = (band_type*)msSmallMalloc(pixmap->width*pixmap->height*4*sizeof(band_type));
         for(unsigned int row=0; row<pixmap->height;row++) {
            unsigned char *a = pixmap->data.rgba.a + row * pixmap->data.rgba.row_step;
            unsigned char *r = pixmap->data.rgba.r + row * pixmap->data.rgba.row_step;
@@ -582,11 +582,7 @@ int aggInitializeRasterBuffer(rasterBufferObj *rb, int width, int height, int mo
 	rb->width = width;
 	rb->height = height;
 	int nBytes = rb->data.rgba.row_step * height;
-	rb->data.rgba.pixels = (band_type*)calloc(nBytes,sizeof(band_type));
-	if(!rb->data.rgba.pixels) {
-	   msSetError(MS_RENDERERERR,"failed to allocate memory", "aggGetRasterBufferCopy()");
-	   return MS_FAILURE;
-	}
+	rb->data.rgba.pixels = (band_type*)msSmallCalloc(nBytes,sizeof(band_type));
 	rb->data.rgba.r = &(rb->data.rgba.pixels[band_order::R]);
 	rb->data.rgba.g = &(rb->data.rgba.pixels[band_order::G]);
 	rb->data.rgba.b = &(rb->data.rgba.pixels[band_order::B]);
@@ -644,9 +640,17 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
       return image;
    }
    image = (imageObj *) calloc(1, sizeof (imageObj));
+   MS_CHECK_ALLOC(image, sizeof (imageObj), NULL);
    AGG2Renderer *r = new AGG2Renderer();
 
    r->buffer = (band_type*)malloc(width * height * 4 * sizeof(band_type));
+   if (r->buffer == NULL)
+   {
+       msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "agg2CreateImage()",
+                  __FILE__, __LINE__, width * height * 4 * sizeof(band_type));
+       free(image);
+       return NULL; 
+   }
    r->m_rendering_buffer.attach(r->buffer, width, height, width * 4);
    r->m_pixel_format.attach(r->m_rendering_buffer);
    r->m_renderer_base.attach(r->m_pixel_format);
@@ -699,6 +703,7 @@ int agg2GetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size
       return MS_FAILURE;
    if (advances) {
       *advances = (double*) malloc(numglyphs * sizeof (double));
+      MS_CHECK_ALLOC(*advances, numglyphs * sizeof (double), MS_FAILURE);
       (*advances)[0] = glyph->advance_x;
    }
    double fx = glyph->advance_x, fy = glyph->advance_y;

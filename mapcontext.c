@@ -175,7 +175,7 @@ int msGetMapContextXMLStringValue( CPLXMLNode *psRoot, char *pszXMLPath,
   {
       if( pszField != NULL )
       {
-           *pszField = strdup(pszValue);
+           *pszField = msStrdup(pszValue);
       }
       else
       {
@@ -208,7 +208,7 @@ int msGetMapContextXMLStringValueDecode( CPLXMLNode *psRoot, char *pszXMLPath,
       if( pszField != NULL )
       {
           msDecodeHTMLEntities(pszValue);
-          *pszField = strdup(pszValue);
+          *pszField = msStrdup(pszValue);
       }
       else
       {
@@ -501,7 +501,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
        sprintf(pszStyleName, "Style{%d}", nStyle);
   }
   else
-      pszStyleName = strdup(pszStyleName);
+      pszStyleName = msStrdup(pszStyleName);
 
   /* wms_style */
   pszValue = (char*)CPLGetXMLValue(psStyle,"current",NULL);
@@ -592,9 +592,9 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
                        "wms_stylelist") == NULL)
   {
       if(layer->connection)
-          pszValue = strdup(layer->connection);
+          pszValue = msStrdup(layer->connection);
       else
-          pszValue = strdup( "" ); 
+          pszValue = msStrdup( "" ); 
       pszValue1 = strstr(pszValue, "STYLELIST=");
       if(pszValue1 != NULL)
       {                          
@@ -614,9 +614,9 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
   if(msLookupHashTable(&(layer->metadata), "wms_style") == NULL)
   {
       if(layer->connection)
-          pszValue = strdup(layer->connection);
+          pszValue = msStrdup(layer->connection);
       else
-          pszValue = strdup( "" ); 
+          pszValue = msStrdup( "" ); 
       pszValue1 = strstr(pszValue, "STYLE=");
       if(pszValue1 != NULL)
       {                          
@@ -644,7 +644,7 @@ int msLoadMapContextLayerDimension(CPLXMLNode *psDimension, layerObj *layer)
       return MS_FALSE;
   }
   else
-      pszDimensionName = strdup(pszDimensionName);
+      pszDimensionName = msStrdup(pszDimensionName);
 
   pszDimension = (char*)malloc(strlen(pszDimensionName)+50);
 
@@ -732,7 +732,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
   {
       if(strncasecmp(pszValue, "AUTO:", 5) == 0)
       {
-          pszProj = strdup(pszValue);
+          pszProj = msStrdup(pszValue);
       }
       else
       {
@@ -741,7 +741,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
       }
 
       msInitProjection(&map->projection);
-      map->projection.args[map->projection.numargs] = strdup(pszProj);
+      map->projection.args[map->projection.numargs] = msStrdup(pszProj);
       map->projection.numargs++;
       msProcessProjection(&map->projection);
 
@@ -813,7 +813,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
       pszValue = (char*)CPLGetXMLValue(psMapContext, 
                                        "id", NULL);
       if (pszValue)
-        map->name = strdup(pszValue);
+        map->name = msStrdup(pszValue);
   }
   else
   {
@@ -919,7 +919,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   pszValue = (char*)CPLGetXMLValue(psLayer, "queryable", "0");
   if(pszValue !=NULL && (atoi(pszValue) == 1  || 
                          strcasecmp(pszValue, "true") == 0))
-      layer->template = strdup("ttt");
+      layer->template = msStrdup("ttt");
 
   /* Name and Title */
   pszValue = (char*)CPLGetXMLValue(psLayer, "Name", NULL);
@@ -931,17 +931,17 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
       {
           pszName = (char*)malloc(sizeof(char)*(strlen(pszValue)+10));
           sprintf(pszName, "l%d:%s", layer->index, pszValue);
-          layer->name = strdup(pszName);
+          layer->name = msStrdup(pszName);
           free(pszName);
       }
       else
-        layer->name  = strdup(pszValue);
+        layer->name  = msStrdup(pszValue);
   }
   else
   {
       pszName = (char*)malloc(sizeof(char)*10);
       sprintf(pszName, "l%d:", layer->index);
-      layer->name = strdup(pszName);
+      layer->name = msStrdup(pszName);
       free(pszName);
   }
 
@@ -1570,7 +1570,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   /* Bounding box corners and spatial reference system */
   if(tabspace)
       free(tabspace);
-  tabspace = strdup("    ");
+  tabspace = msStrdup("    ");
   value = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "MO", MS_TRUE);
   msIO_fprintf( stream, 
           "%s<!-- Bounding box corners and spatial reference system -->\n", 
@@ -1725,9 +1725,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
           /* Get base url of the online resource to be the default value */
           if(GET_LAYER(map, i)->connection)
-              pszValue = strdup( GET_LAYER(map, i)->connection );
+              pszValue = msStrdup( GET_LAYER(map, i)->connection );
           else
-              pszValue = strdup( "" );
+              pszValue = msStrdup( "" );
           pszChar = strchr(pszValue, '?');
           if( pszChar )
               pszValue[pszChar - pszValue] = '\0';
@@ -1822,9 +1822,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           {
               pszURL = NULL;
               if(GET_LAYER(map, i)->connection)
-                  pszURL = strdup( GET_LAYER(map, i)->connection );
+                  pszURL = msStrdup( GET_LAYER(map, i)->connection );
               else
-                  pszURL = strdup( "" );
+                  pszURL = msStrdup( "" );
               pszValue = pszURL;
               pszValue = strstr( pszValue, "FORMAT=" );
               if( pszValue )
@@ -1889,9 +1889,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               /* Check if the style is in the connection URL */
               pszURL = "";
               if(GET_LAYER(map, i)->connection)
-                  pszURL = strdup( GET_LAYER(map, i)->connection );
+                  pszURL = msStrdup( GET_LAYER(map, i)->connection );
               else
-                  pszURL = strdup( "" );
+                  pszURL = msStrdup( "" );
               pszValue = pszURL;
               /* Grab the STYLES in the URL */
               pszValue = strstr( pszValue, "STYLES=" );
@@ -1904,9 +1904,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
                   /* Check the SLD string from the URL */
                   if(GET_LAYER(map, i)->connection)
-                      pszSLD2 = strdup(GET_LAYER(map, i)->connection);
+                      pszSLD2 = msStrdup(GET_LAYER(map, i)->connection);
                   else
-                      pszSLD2 = strdup( "" );
+                      pszSLD2 = msStrdup( "" );
                   if(pszSLD2)
                   {
                       pszSLD = strstr(pszSLD2, "SLD=");
@@ -1994,7 +1994,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               /* Loop in each style in the style list */
               while(pszValue != NULL)
               {
-                  pszStyle = strdup(pszValue);
+                  pszStyle = msStrdup(pszValue);
                   pszChar = strchr(pszStyle, ',');
                   if(pszChar != NULL)
                       pszStyle[pszChar - pszStyle] = '\0';
@@ -2095,7 +2095,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           while(pszValue != NULL)
           {
               /* Extract the dimension name from the list */
-              pszDimension = strdup(pszValue);
+              pszDimension = msStrdup(pszValue);
               pszChar = strchr(pszDimension, ',');
               if(pszChar != NULL)
                   pszDimension[pszChar - pszDimension] = '\0';

@@ -161,7 +161,7 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
     /*	Ensure the extension is converted to dbf or DBF if it is 	    */
     /*	currently .shp or .shx.						    */
     /* -------------------------------------------------------------------- */
-    pszDBFFilename = (char *) malloc(strlen(pszFilename)+1);
+    pszDBFFilename = (char *) msSmallMalloc(strlen(pszFilename)+1);
     strcpy( pszDBFFilename, pszFilename );
     
     if( strcmp(pszFilename+strlen(pszFilename)-4,".shp") 
@@ -179,6 +179,7 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
     /*      Open the file.                                                  */
     /* -------------------------------------------------------------------- */
     psDBF = (DBFHandle) calloc( 1, sizeof(DBFInfo) );
+    MS_CHECK_ALLOC(psDBF, sizeof(DBFInfo), NULL);
     psDBF->fp = fopen( pszDBFFilename, pszAccess );
     if( psDBF->fp == NULL )
         return( NULL );
@@ -195,7 +196,7 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
     /* -------------------------------------------------------------------- */
     /*  Read Table Header info                                              */
     /* -------------------------------------------------------------------- */
-    pabyBuf = (uchar *) malloc(500);
+    pabyBuf = (uchar *) msSmallMalloc(500);
     fread( pabyBuf, 32, 1, psDBF->fp );
 
     psDBF->nRecords = nRecords = 
@@ -206,7 +207,7 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
     
     psDBF->nFields = nFields = (nHeadLen - 32) / 32;
 
-    psDBF->pszCurrentRecord = (char *) malloc(nRecLen);
+    psDBF->pszCurrentRecord = (char *) msSmallMalloc(nRecLen);
 
     /* -------------------------------------------------------------------- */
     /*  Read in Field Definitions                                           */
@@ -217,10 +218,10 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
     fseek( psDBF->fp, 32, 0 );
     fread( pabyBuf, nHeadLen, 1, psDBF->fp );
 
-    psDBF->panFieldOffset = (int *) malloc(sizeof(int) * nFields);
-    psDBF->panFieldSize = (int *) malloc(sizeof(int) * nFields);
-    psDBF->panFieldDecimals = (int *) malloc(sizeof(int) * nFields);
-    psDBF->pachFieldType = (char *) malloc(sizeof(char) * nFields);
+    psDBF->panFieldOffset = (int *) msSmallMalloc(sizeof(int) * nFields);
+    psDBF->panFieldSize = (int *) msSmallMalloc(sizeof(int) * nFields);
+    psDBF->panFieldDecimals = (int *) msSmallMalloc(sizeof(int) * nFields);
+    psDBF->pachFieldType = (char *) msSmallMalloc(sizeof(char) * nFields);
 
     for( iField = 0; iField < nFields; iField++ )
     {
@@ -338,6 +339,13 @@ DBFHandle msDBFCreate( const char * pszFilename )
     /*	Create the info structure.			  		    */
     /* -------------------------------------------------------------------- */
     psDBF = (DBFHandle) malloc(sizeof(DBFInfo));
+    if (psDBF == NULL)
+    {
+        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDBFCreate()",
+                   __FILE__, __LINE__, sizeof(DBFInfo));
+        fclose(fp);
+        return NULL;
+    }
 
     psDBF->fp = fp;
     psDBF->nRecords = 0;
@@ -841,14 +849,12 @@ char **msDBFGetItems(DBFHandle dbffile)
     return(NULL);
   }
 
-  if((items = (char **)malloc(sizeof(char *)*nFields)) == NULL) {
-    msSetError(MS_MEMERR, NULL, "msGetDBFItems()");
-    return(NULL);
-  }
+  items = (char **)malloc(sizeof(char *)*nFields);
+  MS_CHECK_ALLOC(items, sizeof(char *)*nFields, NULL);
 
   for(i=0;i<nFields;i++) {
     msDBFGetFieldInfo(dbffile, i, fName, NULL, NULL);
-    items[i] = strdup(fName);
+    items[i] = msStrdup(fName);
   }
 
   return(items);
@@ -867,13 +873,11 @@ char **msDBFGetValues(DBFHandle dbffile, int record)
     return(NULL);
   }
 
-  if((values = (char **)malloc(sizeof(char *)*nFields)) == NULL) {
-    msSetError(MS_MEMERR, NULL, "msGetAllDBFValues()");
-    return(NULL);
-  }
+  values = (char **)malloc(sizeof(char *)*nFields);
+  MS_CHECK_ALLOC(values, sizeof(char *)*nFields, NULL);
 
   for(i=0;i<nFields;i++)
-    values[i] = strdup(msDBFReadStringAttribute(dbffile, record, i));
+    values[i] = msStrdup(msDBFReadStringAttribute(dbffile, record, i));
 
   return(values);
 }
@@ -883,13 +887,10 @@ int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems)
   int *itemindexes=NULL, i;
 
   if(numitems == 0) return(NULL);
-
+  
   itemindexes = (int *)malloc(sizeof(int)*numitems);
-  if(!itemindexes) {
-    msSetError(MS_MEMERR, NULL, "msGetItemIndexes()");
-    return(NULL);
-  }
-
+  MS_CHECK_ALLOC(itemindexes, sizeof(int)*numitems, NULL);
+  
   for(i=0;i<numitems;i++) {
     itemindexes[i] = msDBFGetItemIndex(dbffile, items[i]);
     if(itemindexes[i] == -1) { 
@@ -909,16 +910,14 @@ char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int nu
 
   if(numitems == 0) return(NULL);
 
-  if((values = (char **)malloc(sizeof(char *)*numitems)) == NULL) {
-    msSetError(MS_MEMERR, NULL, "msGetSomeDBFValues()");
-    return(NULL);
-  }
+  values = (char **)malloc(sizeof(char *)*numitems);
+  MS_CHECK_ALLOC(values, sizeof(char *)*numitems, NULL);
 
   for(i=0;i<numitems;i++) {
     value = msDBFReadStringAttribute(dbffile, record, itemindexes[i]);
     if (value == NULL)
       return NULL; /* Error already reported by msDBFReadStringAttribute() */
-    values[i] = strdup(value);
+    values[i] = msStrdup(value);
   }
 
   return(values);

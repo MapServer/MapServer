@@ -89,19 +89,19 @@ int msGraticuleLayerOpen(layerObj *layer)
     pInfo->blabelaxes = 1;
   
   if( pInfo->labelformat == NULL ) {
-    pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DEFAULT ) + 1 );
+    pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DEFAULT ) + 1 );
     pInfo->ilabeltype = (int) lpDefault;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DEFAULT );
   } else if( strcmp( pInfo->labelformat, "DDMMSS" ) == 0 ) {
-    pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMMSS ) + 1 );
+    pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMMSS ) + 1 );
     pInfo->ilabeltype = (int) lpDDMMSS;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMMSS );
   } else if( strcmp( pInfo->labelformat, "DDMM" )   == 0 ) {
-    pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
+    pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
     pInfo->ilabeltype = (int) lpDDMM;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMM );
   } else if( strcmp( pInfo->labelformat, "DD" )   == 0 ) {
-    pInfo->labelformat = (char *) malloc( strlen( MAPGRATICULE_FORMAT_STRING_DD ) + 1 );
+    pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DD ) + 1 );
     pInfo->ilabeltype = (int) lpDD;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DD );
   }
@@ -203,10 +203,11 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
    * These lines will be used when generating labels to get correct placement at arc/rect edge intersections.
    */
   rectMapCoordinates = layer->map->extent;
-  pInfo->pboundinglines   = (lineObj *)  malloc( sizeof( lineObj )  * 4 );
-  pInfo->pboundingpoints = (pointObj *) malloc( sizeof( pointObj ) * 8 );
-
+  pInfo->pboundinglines   = (lineObj *)  msSmallMalloc( sizeof( lineObj )  * 4 );
+  pInfo->pboundingpoints = (pointObj *) msSmallMalloc( sizeof( pointObj ) * 8 );
+  
   {
+
     /*
      * top
      */
@@ -291,8 +292,8 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 
   shape->numlines = 1;
   shape->type = MS_SHAPE_LINE;
-  shape->line = (lineObj *) malloc(sizeof( lineObj ));
-  shape->line->numpoints = (int) pInfo->maxsubdivides;   
+  shape->line = (lineObj *) msSmallMalloc(sizeof( lineObj ));
+  shape->line->numpoints = (int) pInfo->maxsubdivides; 
 
   /*
    * Subdivide and draw current arc, rendering the arc labels first
@@ -317,7 +318,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 
       dStartY = (pInfo->pboundinglines[1].point[1].y - pInfo->pboundinglines[1].point[0].y) * dDeltaX + pInfo->pboundinglines[1].point[0].y;
       shape->line->numpoints = (int) 2;
-      shape->line->point = (pointObj *) malloc( sizeof( pointObj ) * 2 );
+      shape->line->point = (pointObj *) msSmallMalloc( sizeof( pointObj ) * 2 );
             
       shape->line->point[0].x = pInfo->dwhichlongitude;
       shape->line->point[0].y = dStartY;
@@ -344,7 +345,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 
       dStartY = (pInfo->pboundinglines[0].point[1].y - pInfo->pboundinglines[0].point[0].y) * dDeltaX + pInfo->pboundinglines[0].point[1].y;
       shape->line->numpoints = (int) 2;
-      shape->line->point = (pointObj *) malloc( sizeof( pointObj ) * 2 );
+      shape->line->point = (pointObj *) msSmallMalloc( sizeof( pointObj ) * 2 );
 
       shape->line->point[0].x = pInfo->dwhichlongitude;
       shape->line->point[0].y = dStartY - dArcDelta;
@@ -360,7 +361,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 
     case 2:
       shape->line->numpoints = (int) shape->line->numpoints + 1;
-      shape->line->point = (pointObj *) malloc( sizeof( pointObj ) * shape->line->numpoints );
+      shape->line->point = (pointObj *) msSmallMalloc( sizeof( pointObj ) * shape->line->numpoints );
 
       shape->line->point[0].x = pInfo->dwhichlongitude;
       shape->line->point[0].y = pInfo->dstartlatitude;
@@ -402,7 +403,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 
       dStartX = (pInfo->pboundinglines[2].point[1].x - pInfo->pboundinglines[2].point[0].x) * dDeltaY + pInfo->pboundinglines[2].point[0].x;
       shape->line->numpoints = (int) 2;
-      shape->line->point    = (pointObj *) malloc( sizeof( pointObj ) * 2 );
+      shape->line->point    = (pointObj *) msSmallMalloc( sizeof( pointObj ) * 2 );
             
       shape->line->point[0].x = dStartX;
       shape->line->point[0].y = pInfo->dwhichlatitude;
@@ -429,7 +430,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 
       dStartX = (pInfo->pboundinglines[3].point[1].x - pInfo->pboundinglines[3].point[0].x) * dDeltaY + pInfo->pboundinglines[3].point[0].x;
       shape->line->numpoints = (int) 2;
-      shape->line->point = (pointObj *) malloc( sizeof( pointObj ) * 2 );
+      shape->line->point = (pointObj *) msSmallMalloc( sizeof( pointObj ) * 2 );
 
       shape->line->point[0].x = dStartX - dArcDelta;
       shape->line->point[0].y = pInfo->dwhichlatitude;
@@ -445,7 +446,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 
     case 2:
       shape->line->numpoints = (int) shape->line->numpoints + 1;
-      shape->line->point = (pointObj *) malloc( sizeof( pointObj ) * shape->line->numpoints );
+      shape->line->point = (pointObj *) msSmallMalloc( sizeof( pointObj ) * shape->line->numpoints );
 
       shape->line->point[0].x = pInfo->dstartlongitude;
       shape->line->point[0].y = pInfo->dwhichlatitude;
@@ -487,9 +488,9 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
  */
 int msGraticuleLayerGetItems(layerObj *layer)
 {
-  char **ppItemName   = (char **) malloc( sizeof( char * ) );
+  char **ppItemName   = (char **) msSmallMalloc( sizeof( char * ) );
 
-  *ppItemName = (char *) malloc( 64 ); /* why is this necessary? */
+  *ppItemName = (char *) msSmallMalloc( 64 ); /* why is this necessary? */
   strcpy( *ppItemName, "Graticule" );
 
   layer->numitems   = 1;
@@ -638,7 +639,8 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
     if (map->cellsize == 0)
       map->cellsize = msAdjustExtent(&(map->extent),map->width,map->height);
 
-    psValues = (graticuleIntersectionObj *)malloc(sizeof(graticuleIntersectionObj));
+    psValues = (graticuleIntersectionObj *)msSmallMalloc(sizeof(graticuleIntersectionObj));
+ 
     msGraticuleLayerInitIntersectionPoints(psValues);
 
     if(layer->transform == MS_TRUE)
@@ -772,14 +774,14 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                     continue;
 
                   if (shapegrid.text)
-                    pszLabel =  strdup(shapegrid.text);
+                    pszLabel =  msStrdup(shapegrid.text);
                   else
                   {
                       _FormatLabel(layer, &tmpshape, tmpshape.line[0].point[tmpshape.line[0].numpoints-1].x );
                       if (tmpshape.text)
-                        pszLabel = strdup(tmpshape.text);
+                        pszLabel = msStrdup(tmpshape.text);
                       else
-                        pszLabel = strdup("unknown");
+                        pszLabel = msStrdup("unknown");
                   }
                   /*validate that the  value is not already in the array*/
                   if ( psValues->nBottom > 0)
@@ -797,20 +799,20 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                     }
                   if (psValues->pasBottom == NULL)
                     {
-                      psValues->pasBottom = (pointObj *)malloc(sizeof(pointObj));
-                      psValues->papszBottomLabels = (char **)malloc(sizeof(char *));
+                      psValues->pasBottom = (pointObj *)msSmallMalloc(sizeof(pointObj));
+                      psValues->papszBottomLabels = (char **)msSmallMalloc(sizeof(char *));
                       psValues->nBottom = 1;
                     }
                   else
                     {
                       psValues->nBottom++;
-                      psValues->pasBottom = (pointObj *)realloc(psValues->pasBottom, sizeof(pointObj)*psValues->nBottom);
-                      psValues->papszBottomLabels = (char **)realloc(psValues->papszBottomLabels, sizeof(char *)*psValues->nBottom);
+                      psValues->pasBottom = (pointObj *)msSmallRealloc(psValues->pasBottom, sizeof(pointObj)*psValues->nBottom);
+                      psValues->papszBottomLabels = (char **)msSmallRealloc(psValues->papszBottomLabels, sizeof(char *)*psValues->nBottom);
                     }
                       
                   psValues->pasBottom[psValues->nBottom-1].x = oFirstPoint.x;
                   psValues->pasBottom[psValues->nBottom-1].y = oFirstPoint.y;
-                  psValues->papszBottomLabels[psValues->nBottom-1] = strdup(pszLabel);
+                  psValues->papszBottomLabels[psValues->nBottom-1] = msStrdup(pszLabel);
 
                   msFree(pszLabel); 
 
@@ -826,14 +828,14 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                     continue;
 
                   if (shapegrid.text)
-                    pszLabel =  strdup(shapegrid.text);
+                    pszLabel =  msStrdup(shapegrid.text);
                   else
                   {
                       _FormatLabel(layer, &tmpshape, tmpshape.line[0].point[tmpshape.line[0].numpoints-1].x );
                        if (tmpshape.text)
-                         pszLabel = strdup(tmpshape.text);
+                         pszLabel = msStrdup(tmpshape.text);
                        else
-                         pszLabel = strdup("unknown");
+                         pszLabel = msStrdup("unknown");
                   }
                   /*validate if same value is not already there*/
                   if ( psValues->nTop > 0)
@@ -854,20 +856,20 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                     
                   if (psValues->pasTop == NULL)
                     {
-                      psValues->pasTop = (pointObj *)malloc(sizeof(pointObj));
-                      psValues->papszTopLabels = (char **)malloc(sizeof(char *));
+                      psValues->pasTop = (pointObj *)msSmallMalloc(sizeof(pointObj));
+                      psValues->papszTopLabels = (char **)msSmallMalloc(sizeof(char *));
                       psValues->nTop = 1;
                     }
                   else
                     {
                       psValues->nTop++;
-                      psValues->pasTop = (pointObj *)realloc(psValues->pasTop, sizeof(pointObj)*psValues->nTop);
-                      psValues->papszTopLabels = (char **)realloc(psValues->papszTopLabels, sizeof(char *)*psValues->nTop);
+                      psValues->pasTop = (pointObj *)msSmallRealloc(psValues->pasTop, sizeof(pointObj)*psValues->nTop);
+                      psValues->papszTopLabels = (char **)msSmallRealloc(psValues->papszTopLabels, sizeof(char *)*psValues->nTop);
                     }
                       
                   psValues->pasTop[psValues->nTop-1].x = oLastPoint.x;
                   psValues->pasTop[psValues->nTop-1].y = oLastPoint.y;
-                  psValues->papszTopLabels[psValues->nTop-1] = strdup(pszLabel);
+                  psValues->papszTopLabels[psValues->nTop-1] = msStrdup(pszLabel);
 
                   msFree(pszLabel); 
                 }
@@ -898,14 +900,14 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                     continue;
 
                   if (shapegrid.text)
-                    pszLabel =  strdup(shapegrid.text);
+                    pszLabel =  msStrdup(shapegrid.text);
                   else
                   {
                       _FormatLabel(layer, &tmpshape, tmpshape.line[0].point[tmpshape.line[0].numpoints-1].y );
                        if (tmpshape.text)
-                         pszLabel = strdup(tmpshape.text);
+                         pszLabel = msStrdup(tmpshape.text);
                        else
-                         pszLabel = strdup("unknown");
+                         pszLabel = msStrdup("unknown");
                   }
 
                   /*validate that the previous value is not the same*/
@@ -924,20 +926,20 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                     }
                   if (psValues->pasLeft == NULL)
                     {
-                      psValues->pasLeft = (pointObj *)malloc(sizeof(pointObj));
-                      psValues->papszLeftLabels = (char **)malloc(sizeof(char *));
+                      psValues->pasLeft = (pointObj *)msSmallMalloc(sizeof(pointObj));
+                      psValues->papszLeftLabels = (char **)msSmallMalloc(sizeof(char *));
                       psValues->nLeft = 1;
                     }
                   else
                     {
                       psValues->nLeft++;
-                      psValues->pasLeft = (pointObj *)realloc(psValues->pasLeft, sizeof(pointObj)*psValues->nLeft);
-                      psValues->papszLeftLabels = (char **)realloc(psValues->papszLeftLabels, sizeof(char *)*psValues->nLeft);
+                      psValues->pasLeft = (pointObj *)msSmallRealloc(psValues->pasLeft, sizeof(pointObj)*psValues->nLeft);
+                      psValues->papszLeftLabels = (char **)msSmallRealloc(psValues->papszLeftLabels, sizeof(char *)*psValues->nLeft);
                     }
                       
                   psValues->pasLeft[psValues->nLeft-1].x = oFirstPoint.x;
                   psValues->pasLeft[psValues->nLeft-1].y = oFirstPoint.y;
-                  psValues->papszLeftLabels[psValues->nLeft-1] = strdup(pszLabel);
+                  psValues->papszLeftLabels[psValues->nLeft-1] = msStrdup(pszLabel);
                   msFree(pszLabel); 
                 }
               /*first point should cross the RIGHT base where x=map=>width axis*/
@@ -951,14 +953,14 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                     continue;
 
                   if (shapegrid.text)
-                    pszLabel =  strdup(shapegrid.text);
+                    pszLabel =  msStrdup(shapegrid.text);
                   else
                   {
                       _FormatLabel(layer, &tmpshape, tmpshape.line[0].point[tmpshape.line[0].numpoints-1].y );
                        if (tmpshape.text)
-                         pszLabel = strdup(tmpshape.text);
+                         pszLabel = msStrdup(tmpshape.text);
                        else
-                         pszLabel = strdup("unknown");
+                         pszLabel = msStrdup("unknown");
                   }
 
                   /*validate that the previous value is not the same*/
@@ -976,20 +978,20 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                     }
                   if (psValues->pasRight == NULL)
                     {
-                      psValues->pasRight = (pointObj *)malloc(sizeof(pointObj));
-                      psValues->papszRightLabels = (char **)malloc(sizeof(char *));
+                      psValues->pasRight = (pointObj *)msSmallMalloc(sizeof(pointObj));
+                      psValues->papszRightLabels = (char **)msSmallMalloc(sizeof(char *));
                       psValues->nRight = 1;
                     }
                   else
                     {
                       psValues->nRight++;
-                      psValues->pasRight = (pointObj *)realloc(psValues->pasRight, sizeof(pointObj)*psValues->nRight);
-                      psValues->papszRightLabels = (char **)realloc(psValues->papszRightLabels, sizeof(char *)*psValues->nRight);
+                      psValues->pasRight = (pointObj *)msSmallRealloc(psValues->pasRight, sizeof(pointObj)*psValues->nRight);
+                      psValues->papszRightLabels = (char **)msSmallRealloc(psValues->papszRightLabels, sizeof(char *)*psValues->nRight);
                     }
                       
                   psValues->pasRight[psValues->nRight-1].x = oLastPoint.x;
                   psValues->pasRight[psValues->nRight-1].y = oLastPoint.y;
-                  psValues->papszRightLabels[psValues->nRight-1] = strdup(pszLabel);
+                  psValues->papszRightLabels[psValues->nRight-1] = msStrdup(pszLabel);
 
                   msFree(pszLabel); 
                 }
@@ -1068,7 +1070,7 @@ static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToForm
     sprintf( cBuffer, pInfo->labelformat, dDataToFormat );
   }
    
-  pShape->text = strdup( cBuffer );
+  pShape->text = msStrdup( cBuffer );
 }
 
 /**********************************************************************************************************************

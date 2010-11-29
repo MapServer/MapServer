@@ -70,7 +70,7 @@ static treeNodeObj *treeNodeCreate(rectObj rect)
 {
     treeNodeObj	*node;
 
-    node = (treeNodeObj *) malloc(sizeof(treeNodeObj));
+    node = (treeNodeObj *) msSmallMalloc(sizeof(treeNodeObj));
 
     node->numshapes = 0;
     node->ids = NULL;
@@ -104,13 +104,13 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
   /* -------------------------------------------------------------------- */
   /*	Initialize the info structure.					    */
   /* -------------------------------------------------------------------- */
-    psTree = (SHPTreeHandle) malloc(sizeof(SHPTreeInfo));
+    psTree = (SHPTreeHandle) msSmallMalloc(sizeof(SHPTreeInfo));
   
   /* -------------------------------------------------------------------- */
   /*	Compute the base (layer) name.  If there is any extension	    */
   /*	on the passed in filename we will strip it off.			    */
   /* -------------------------------------------------------------------- */
-    pszBasename = (char *) malloc(strlen(pszTree)+5);
+    pszBasename = (char *) msSmallMalloc(strlen(pszTree)+5);
     strcpy( pszBasename, pszTree );
     for( i = strlen(pszBasename)-1; 
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
@@ -124,7 +124,7 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
   /*	Open the .shp and .shx files.  Note that files pulled from	    */
   /*	a PC to Unix with upper case filenames won't work!		    */
   /* -------------------------------------------------------------------- */
-    pszFullname = (char *) malloc(strlen(pszBasename) + 5);
+    pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
     sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION); 
     psTree->fp = fopen(pszFullname, "rb" );
 
@@ -210,7 +210,7 @@ treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth)
   /* -------------------------------------------------------------------- */
   /*      Allocate the tree object                                        */
   /* -------------------------------------------------------------------- */
-  tree = (treeObj *) malloc(sizeof(treeObj));
+  tree = (treeObj *) msSmallMalloc(sizeof(treeObj));
   
   tree->numshapes = shapefile->numshapes;
   tree->maxdepth = maxdepth;
@@ -479,7 +479,7 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
     return;
   }
   if(numshapes > 0) {
-    ids = (int *)malloc(numshapes*sizeof(ms_int32));
+    ids = (int *)msSmallMalloc(numshapes*sizeof(ms_int32));
 
     fread( ids, numshapes*sizeof(ms_int32), 1, disktree->fp );
     if (disktree->needswap )
@@ -540,7 +540,7 @@ treeNodeObj *readTreeNode( SHPTreeHandle disktree )
   ms_int32 offset;
   treeNodeObj *node;
 
-  node = (treeNodeObj *) malloc(sizeof(treeNodeObj));
+  node = (treeNodeObj *) msSmallMalloc(sizeof(treeNodeObj));
   node->ids = NULL;
 
   res = fread( &offset, 4, 1, disktree->fp );
@@ -558,7 +558,7 @@ treeNodeObj *readTreeNode( SHPTreeHandle disktree )
   fread( &node->numshapes, 4, 1, disktree->fp );
   if ( disktree->needswap ) SwapWord ( 4, &node->numshapes );
   if( node->numshapes > 0 )
-    node->ids = (ms_int32 *)malloc(sizeof(ms_int32)*node->numshapes);
+    node->ids = (ms_int32 *)msSmallMalloc(sizeof(ms_int32)*node->numshapes);
   fread( node->ids, node->numshapes*4, 1, disktree->fp );
   for( i=0; i < node->numshapes; i++ )
   {
@@ -583,10 +583,7 @@ treeObj *msReadTree(char *filename, int debug)
   }
 
   tree = (treeObj *) malloc(sizeof(treeObj));
-  if(!tree) {
-    msSetError(MS_MEMERR, NULL, "msReadTree()");
-    return(NULL);
-  }
+  MS_CHECK_ALLOC(tree, sizeof(treeObj), NULL);
   
   tree->numshapes = disktree->nShapes;
   tree->maxdepth = disktree->nDepth;
@@ -629,7 +626,7 @@ static void writeTreeNode(SHPTreeHandle disktree, treeNodeObj *node)
 
   offset = getSubNodeOffset(node);
   
-  pabyRec = malloc(sizeof(rectObj) + (3 * sizeof(ms_int32)) + (node->numshapes * sizeof(ms_int32)) );
+  pabyRec = msSmallMalloc(sizeof(rectObj) + (3 * sizeof(ms_int32)) + (node->numshapes * sizeof(ms_int32)) );
 
   memcpy( pabyRec, &offset, 4);
   if( disktree->needswap ) SwapWord( 4, pabyRec );
@@ -675,12 +672,13 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   
   
   disktree = (SHPTreeHandle) malloc(sizeof(SHPTreeInfo));
+  MS_CHECK_ALLOC(disktree, sizeof(SHPTreeInfo), MS_FALSE);
 
   /* -------------------------------------------------------------------- */
   /*	Compute the base (layer) name.  If there is any extension	    */
   /*	on the passed in filename we will strip it off.			    */
   /* -------------------------------------------------------------------- */
-  pszBasename = (char *) malloc(strlen(filename)+5);
+  pszBasename = (char *) msSmallMalloc(strlen(filename)+5);
   strcpy( pszBasename, filename );
   for( i = strlen(pszBasename)-1; 
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
@@ -694,7 +692,7 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   /*	Open the .shp and .shx files.  Note that files pulled from	    */
   /*	a PC to Unix with upper case filenames won't work!		    */
   /* -------------------------------------------------------------------- */
-  pszFullname = (char *) malloc(strlen(pszBasename) + 5);
+  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION); 
   disktree->fp = fopen(pszFullname, "wb");
   

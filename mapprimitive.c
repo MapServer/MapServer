@@ -122,16 +122,16 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
   to->bounds.maxx = from->bounds.maxx;
   to->bounds.maxy = from->bounds.maxy;
 
-  if(from->text) to->text = strdup(from->text);
+  if(from->text) to->text = msStrdup(from->text);
 
   to->classindex = from->classindex;
   to->index = from->index;
   to->tileindex = from->tileindex;
 
   if(from->values) {    
-    to->values = (char **)malloc(sizeof(char *)*from->numvalues);
+    to->values = (char **)msSmallMalloc(sizeof(char *)*from->numvalues);
     for(i=0; i<from->numvalues; i++)
-      to->values[i] = strdup(from->values[i]);
+      to->values[i] = msStrdup(from->values[i]);
     to->numvalues = from->numvalues;
   }
 
@@ -248,7 +248,7 @@ int *msGetOuterList(shapeObj *shape)
   int *list;
 
   list = (int *)malloc(sizeof(int)*shape->numlines);
-  if(!list) return(NULL);
+  MS_CHECK_ALLOC(list, sizeof(int)*shape->numlines, NULL);
 
   for(i=0; i<shape->numlines; i++)
     list[i] = isOuterRing(shape, i);
@@ -265,7 +265,7 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist)
   int *list;
 
   list = (int *)malloc(sizeof(int)*shape->numlines);
-  if(!list) return(NULL);
+  MS_CHECK_ALLOC(list, sizeof(int)*shape->numlines, NULL);
 
   for(i=0; i<shape->numlines; i++) { /* test all rings against the ring */
 
@@ -293,7 +293,7 @@ int msAddPointToLine(lineObj *line, pointObj *point )
 {
   line->numpoints += 1;
     
-  line->point = (pointObj *) realloc(line->point, sizeof(pointObj) * line->numpoints);
+  line->point = (pointObj *) msSmallRealloc(line->point, sizeof(pointObj) * line->numpoints);
   line->point[line->numpoints-1] = *point;
 
   return MS_SUCCESS;
@@ -305,10 +305,7 @@ int msAddLine(shapeObj *p, lineObj *new_line)
 
   lineCopy.numpoints = new_line->numpoints;
   lineCopy.point = (pointObj *) malloc(new_line->numpoints*sizeof(pointObj));
-  if( lineCopy.point == NULL ) {
-    msSetError(MS_MEMERR, NULL, "msAddLine()");
-    return(MS_FAILURE);
-  }
+  MS_CHECK_ALLOC(lineCopy.point, new_line->numpoints*sizeof(pointObj), MS_FAILURE);
     
   memcpy( lineCopy.point, new_line->point, sizeof(pointObj) * new_line->numpoints );
 
@@ -323,14 +320,13 @@ int msAddLineDirectly(shapeObj *p, lineObj *new_line)
 {
   int c;
 
-  if( p->numlines == 0 )
-    p->line = (lineObj *) malloc(sizeof(lineObj));
-  else
-    p->line = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
-
-  if(!p->line) {
-    msSetError(MS_MEMERR, NULL, "msAddLineDirectly()");
-    return(MS_FAILURE);
+  if( p->numlines == 0 ) {
+      p->line = (lineObj *) malloc(sizeof(lineObj));
+      MS_CHECK_ALLOC(p->line, sizeof(lineObj), MS_FAILURE);
+  }
+  else {
+      p->line = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
+      MS_CHECK_ALLOC(p->line, (p->numlines+1)*sizeof(lineObj), MS_FAILURE);
   }
 
   /* Copy the new line onto the end of the extended line array */
@@ -360,7 +356,7 @@ void msRectToPolygon(rectObj rect, shapeObj *poly)
 {
   lineObj line={0,NULL};
 
-  line.point = (pointObj *)malloc(sizeof(pointObj)*5);
+  line.point = (pointObj *)msSmallMalloc(sizeof(pointObj)*5);
   
   line.point[0].x = rect.minx;
   line.point[0].y = rect.miny;
@@ -491,7 +487,7 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect)
 
   for(i=0; i<shape->numlines; i++) {
 
-    line.point = (pointObj *)malloc(sizeof(pointObj)*shape->line[i].numpoints);
+    line.point = (pointObj *)msSmallMalloc(sizeof(pointObj)*shape->line[i].numpoints);
     line.numpoints = 0;
 
     x1 = shape->line[i].point[0].x;
@@ -571,7 +567,7 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
 
   for(j=0; j<shape->numlines; j++) {
 
-    line.point = (pointObj *)malloc(sizeof(pointObj)*2*shape->line[j].numpoints+1); /* worst case scenario, +1 allows us to duplicate the 1st and last point */
+    line.point = (pointObj *)msSmallMalloc(sizeof(pointObj)*2*shape->line[j].numpoints+1); /* worst case scenario, +1 allows us to duplicate the 1st and last point */
     line.numpoints = 0;
 
     for (i = 0; i < shape->line[j].numpoints-1; i++) {
@@ -1055,8 +1051,8 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
 
   for (i = 0; i < p->numlines; i++) {
 
-    inside.point = (pointObj *)malloc(sizeof(pointObj)*p->line[i].numpoints);
-    outside.point = (pointObj *)malloc(sizeof(pointObj)*p->line[i].numpoints);
+    inside.point = (pointObj *)msSmallMalloc(sizeof(pointObj)*p->line[i].numpoints);
+    outside.point = (pointObj *)msSmallMalloc(sizeof(pointObj)*p->line[i].numpoints);
     inside.numpoints = outside.numpoints = p->line[i].numpoints;    
 
     angle = asin(MS_ABS(p->line[i].point[1].x - p->line[i].point[0].x)/sqrt((pow((p->line[i].point[1].x - p->line[i].point[0].x),2.0) + pow((p->line[i].point[1].y - p->line[i].point[0].y),2.0))));
@@ -1272,10 +1268,9 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
   n=0;
   for(j=0; j<p->numlines; j++) /* count total number of points */
     n += p->line[j].numpoints;
-  if(!(intersect = (double *) calloc(n, sizeof(double)))) {
-    msSetError(MS_MEMERR, "Allocation of intersection array failed.", "msPolygonLabelPoint()");
-    return MS_FAILURE;
-  }
+  intersect = (double *) calloc(n, sizeof(double));
+  MS_CHECK_ALLOC(intersect, n*sizeof(double), MS_FAILURE);
+  
 
   if(MS_ABS((int)lp->x - (int)cp.x) > MS_ABS((int)lp->y - (int)cp.y)) { /* center horizontally, fix y */
 
@@ -1453,8 +1448,8 @@ void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, d
   int i, j, temp_segment_index;
   double segment_length, max_segment_length;
 
-  (*segment_lengths) = (double **) malloc(sizeof(double *) * shape->numlines);
-  (*line_lengths) = (double *) malloc(sizeof(double) * shape->numlines);
+  (*segment_lengths) = (double **) msSmallMalloc(sizeof(double *) * shape->numlines);
+  (*line_lengths) = (double *) msSmallMalloc(sizeof(double) * shape->numlines);
 
   temp_segment_index = *segment_index = *max_line_index = 0;
 
@@ -1462,7 +1457,7 @@ void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, d
   *max_line_length = 0;
   for(i=0; i<shape->numlines; i++) {
     
-    (*segment_lengths)[i] = (double*) malloc(sizeof(double) * shape->line[i].numpoints);    
+    (*segment_lengths)[i] = (double*) msSmallMalloc(sizeof(double) * shape->line[i].numpoints);    
     
     (*line_lengths)[i] = 0;
     max_segment_length = 0;
@@ -1507,9 +1502,9 @@ pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_length, int repeat_
   labelpoints_size = p->numlines; // minimal array size
   *numpoints = 0;
 
-  labelpoints = (pointObj **) malloc(sizeof(pointObj *) * labelpoints_size);
-  (*angles) = (double **) malloc(sizeof(double *) * labelpoints_size);
-  (*lengths) = (double **) malloc(sizeof(double *) * labelpoints_size);
+  labelpoints = (pointObj **) msSmallMalloc(sizeof(pointObj *) * labelpoints_size);
+  (*angles) = (double **) msSmallMalloc(sizeof(double *) * labelpoints_size);
+  (*lengths) = (double **) msSmallMalloc(sizeof(double *) * labelpoints_size);
 
   msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &segment_index, &total_length);
 
@@ -1593,15 +1588,15 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
     do {
       if (*labelpoints_index == *labelpoints_size) {
         *labelpoints_size *= 2;
-        (*labelpoints) = (pointObj **) realloc(*labelpoints,sizeof(pointObj *) * (*labelpoints_size));
-        (*angles) = (double **) realloc(*angles,sizeof(double *) * (*labelpoints_size));
-        (*lengths) = (double **) realloc(*lengths,sizeof(double *) * (*labelpoints_size));
+        (*labelpoints) = (pointObj **) msSmallRealloc(*labelpoints,sizeof(pointObj *) * (*labelpoints_size));
+        (*angles) = (double **) msSmallRealloc(*angles,sizeof(double *) * (*labelpoints_size));
+        (*lengths) = (double **) msSmallRealloc(*lengths,sizeof(double *) * (*labelpoints_size));
       }
       
       index = (*labelpoints_index)++;
-      (*labelpoints)[index] = (pointObj *) malloc(sizeof(pointObj));
-      (*angles)[index] = (double *) malloc(sizeof(double));
-      (*lengths)[index] = (double *) malloc(sizeof(double));
+      (*labelpoints)[index] = (pointObj *) msSmallMalloc(sizeof(pointObj));
+      (*angles)[index] = (double *) msSmallMalloc(sizeof(double));
+      (*lengths)[index] = (double *) msSmallMalloc(sizeof(double));
 
       if (repeat_distance > 0)
         *(*lengths)[index] = line_length;
@@ -1670,8 +1665,8 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   segment_index = max_line_index = 0;
   total_length = max_line_length = 0.0;
 
-  labelpaths = (labelPathObj **) malloc(sizeof(labelPathObj *) * labelpaths_size);
-  (*regular_lines) = (int *) malloc(sizeof(int) * regular_lines_size);
+  labelpaths = (labelPathObj **) msSmallMalloc(sizeof(labelPathObj *) * labelpaths_size);
+  (*regular_lines) = (int *) msSmallMalloc(sizeof(int) * regular_lines_size);
 
   msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &segment_index, &total_length);
  
@@ -1827,10 +1822,10 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
 
     do {
         /* allocate the labelpath */
-        labelpath = (labelPathObj *) malloc(sizeof(labelPathObj));
+        labelpath = (labelPathObj *) msSmallMalloc(sizeof(labelPathObj));
         labelpath->path.numpoints = numchars;
-        labelpath->path.point = (pointObj *) calloc(labelpath->path.numpoints, sizeof(pointObj));
-        labelpath->angles = (double *) malloc(sizeof(double) * (labelpath->path.numpoints));
+        labelpath->path.point = (pointObj *) msSmallCalloc(labelpath->path.numpoints, sizeof(pointObj));
+        labelpath->angles = (double *) msSmallMalloc(sizeof(double) * (labelpath->path.numpoints));
         msInitShape(&(labelpath->bounds));
     
 
@@ -1840,7 +1835,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
         ** will be tied together.
         */
         bounds.numpoints = 2*numchars + 1;
-        bounds.point = (pointObj *) malloc(sizeof(pointObj) * bounds.numpoints);
+        bounds.point = (pointObj *) msSmallMalloc(sizeof(pointObj) * bounds.numpoints);
 
         /* the points start at (line_length - text_length) / 2 in order to be centred */
         //  text_start_length = (line_length - text_length) / 2.0;
@@ -2092,7 +2087,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
         if (labelpath) {
             if (*labelpaths_index == *labelpaths_size) {
                 *labelpaths_size *= 2;
-                (*labelpaths) = (labelPathObj **) realloc(*labelpaths,sizeof(labelPathObj *) * (*labelpaths_size));
+                (*labelpaths) = (labelPathObj **) msSmallRealloc(*labelpaths,sizeof(labelPathObj *) * (*labelpaths_size));
             }
             (*labelpaths)[(*labelpaths_index)++] = labelpath;
         }
@@ -2112,7 +2107,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
   ANGLEFOLLOW_FAILURE: // Angle follow failure: add the line index in the arrays
   if (*regular_lines_index == *regular_lines_size) {
       *regular_lines_size *= 2;
-      (*regular_lines) = (int*) realloc(*regular_lines,sizeof(int) * (*regular_lines_size));
+      (*regular_lines) = (int*) msSmallRealloc(*regular_lines,sizeof(int) * (*regular_lines_size));
   }
   (*regular_lines)[(*regular_lines_index)++] = line_index;
 

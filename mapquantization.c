@@ -144,8 +144,7 @@ int msQuantizeRasterBuffer(rasterBufferObj *rb,
 
     maxval = 255;
 
-    apixels=(rgbaPixel**)malloc(rb->height*sizeof(rgbaPixel**));
-    if(!apixels) return MS_FAILURE;
+    apixels=(rgbaPixel**)msSmallMalloc(rb->height*sizeof(rgbaPixel**));
     
     for(row=0;row<rb->height;row++) {
         apixels[row]=(rgbaPixel*)(&(rb->data.rgba.pixels[row * rb->data.rgba.row_step]));
@@ -700,9 +699,8 @@ int value;
     register int hash;
     register acolorhist_list achl;
 
-    achl = (acolorhist_list) malloc( sizeof(struct acolorhist_list_item) );
-    if ( achl == 0 )
-        return -1;
+    achl = (acolorhist_list) msSmallMalloc( sizeof(struct acolorhist_list_item) );
+
     hash = pam_hashapixel( *acolorP );
     achl->ch.acolor = *acolorP;
     achl->ch.value = value;

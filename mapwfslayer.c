@@ -79,7 +79,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     psParams = msWFSCreateParamsObj();
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "version");
     if (pszTmp)
-      psParams->pszVersion = strdup(pszTmp);
+      psParams->pszVersion = msStrdup(pszTmp);
     else
     {
         pszTmp = strstr(lp->connection, "VERSION=");
@@ -89,19 +89,19 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
         {
             pszVersion = strchr(pszTmp, '=')+1;
             if (strncmp(pszVersion, "0.0.14", 6) == 0)
-              psParams->pszVersion = strdup("0.0.14");
+              psParams->pszVersion = msStrdup("0.0.14");
             else if (strncmp(pszVersion, "1.0.0", 5) == 0)
-              psParams->pszVersion = strdup("1.0.0");
+              psParams->pszVersion = msStrdup("1.0.0");
         }
     }
 
     /*the service is always set to WFS : see bug 1302 */
-    psParams->pszService = strdup("WFS");
+    psParams->pszService = msStrdup("WFS");
 
     /*
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "service");
     if (pszTmp)
-      psParams->pszService = strdup(pszTmp);
+      psParams->pszService = msStrdup(pszTmp);
     else
     {
         pszTmp = strstr(lp->connection, "SERVICE=");
@@ -111,14 +111,14 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
         {
             pszService = strchr(pszTmp, '=')+1;
             if (strncmp(pszService, "WFS", 3) == 0)
-              psParams->pszService = strdup("WFS");
+              psParams->pszService = msStrdup("WFS");
         }
     }
     */
 
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "typename");
     if (pszTmp)
-      psParams->pszTypeName = strdup(pszTmp);
+      psParams->pszTypeName = msStrdup(pszTmp);
     else
     {
         pszTmp = strstr(lp->connection, "TYPENAME=");
@@ -141,13 +141,13 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
                     if (i<nLength)
                     {
                         char *pszTypeNameTmp = NULL;
-                        pszTypeNameTmp = strdup(pszTypeName);
+                        pszTypeNameTmp = msStrdup(pszTypeName);
                         pszTypeNameTmp[i] = '\0';
-                        psParams->pszTypeName = strdup(pszTypeNameTmp);
+                        psParams->pszTypeName = msStrdup(pszTypeNameTmp);
                         free(pszTypeNameTmp);
                     }
                     else
-                      psParams->pszTypeName = strdup(pszTypeName);
+                      psParams->pszTypeName = msStrdup(pszTypeName);
                 }
             }
         }
@@ -157,7 +157,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     if (pszTmp && strlen(pszTmp) > 0)
     {
         if (strstr(pszTmp, "<Filter>") !=NULL || strstr(pszTmp, "<ogc:Filter>") != NULL)
-          psParams->pszFilter = strdup(pszTmp);
+          psParams->pszFilter = msStrdup(pszTmp);
         else
         {
             psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter>");
@@ -171,7 +171,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
        psParams->nMaxFeatures = atoi(pszTmp);
 
     /* Request is always GetFeature; */
-    psParams->pszRequest = strdup("GetFeature");
+    psParams->pszRequest = msStrdup("GetFeature");
 
                
 /* ------------------------------------------------------------------
@@ -252,7 +252,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
     else
     {
         bufferSize = 500;
-        pszFilter = (char *)malloc(bufferSize);
+        pszFilter = (char *)msSmallMalloc(bufferSize);
         snprintf(pszFilter, bufferSize, "<ogc:Filter>\n"
 "<ogc:BBOX>\n"
 "<ogc:PropertyName>Geometry</ogc:PropertyName>\n"
@@ -264,7 +264,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
     }
     
     bufferSize = strlen(pszFilter)+500;
-    pszPostReq = (char *)malloc(bufferSize);
+    pszPostReq = (char *)msSmallMalloc(bufferSize);
     if (psParams->nMaxFeatures > 0)
       snprintf(pszPostReq, bufferSize, "<?xml version=\"1.0\" ?>\n"
 "<wfs:GetFeature\n"
@@ -391,11 +391,8 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
  * -------------------------------------------------------------------- */
     /* Make sure we have a big enough buffer for the URL */
     bufferSize = strlen(lp->connection)+1024;
-    if(!(pszURL = (char *)malloc(bufferSize)))
-    {
-        msSetError(MS_MEMERR, NULL, "msBuildWFSLayerGetURL()");
-        return NULL;
-    }
+    pszURL = (char *)malloc(bufferSize);
+    MS_CHECK_ALLOC(pszURL, bufferSize, NULL);
 
     /* __TODO__ We have to urlencode each value... especially the BBOX values */
     /* because if they end up in exponent format (123e+06) the + will be seen */
@@ -470,18 +467,13 @@ static msWFSLayerInfo *msAllocWFSLayerInfo(void)
     msWFSLayerInfo *psInfo;
 
     psInfo = (msWFSLayerInfo*)calloc(1,sizeof(msWFSLayerInfo));
-    if (psInfo)
-    {
-        psInfo->pszGMLFilename = NULL;
-        psInfo->rect.minx = psInfo->rect.maxx = 0;
-        psInfo->rect.miny = psInfo->rect.maxy = 0;
-        psInfo->pszGetUrl = NULL;
-        psInfo->nStatus = 0;
-    }
-    else
-    {
-        msSetError(MS_MEMERR, NULL, "msAllocWFSLayerInfo()");
-    }
+    MS_CHECK_ALLOC(psInfo, sizeof(msWFSLayerInfo), NULL);
+
+    psInfo->pszGMLFilename = NULL;
+    psInfo->rect.minx = psInfo->rect.maxx = 0;
+    psInfo->rect.miny = psInfo->rect.maxy = 0;
+    psInfo->pszGetUrl = NULL;
+    psInfo->nStatus = 0;
 
     return psInfo;
 }
@@ -565,7 +557,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     if (!pszURL)
     {
         bPostRequest = 1;
-        pszURL = strdup(lp->connection);
+        pszURL = msStrdup(lp->connection);
     }
 
     
@@ -599,12 +591,12 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
             pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
             if(pszTmp != NULL)
             {
-                pszHTTPCookieData = strdup(pszTmp);
+                pszHTTPCookieData = msStrdup(pszTmp);
             }
         }
         else
         {
-            pszHTTPCookieData = strdup(pszTmp);
+            pszHTTPCookieData = msStrdup(pszTmp);
         }
     }
     else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata), 
@@ -615,12 +607,12 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
             pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
             if(pszTmp != NULL)
             {
-                pszHTTPCookieData = strdup(pszTmp);
+                pszHTTPCookieData = msStrdup(pszTmp);
             }
         }
         else
         {
-            pszHTTPCookieData = strdup(pszTmp);
+            pszHTTPCookieData = msStrdup(pszTmp);
         }
     }
 
@@ -651,7 +643,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         pasReqInfo[(*numRequests)].pszPostRequest = 
             msBuildWFSLayerPostRequest(map, lp, &bbox, psParams);
         pasReqInfo[(*numRequests)].pszPostContentType =
-            strdup("text/xml");
+            msStrdup("text/xml");
     }
 
     /* We'll store the remote server's response to a tmp file. */
@@ -684,13 +676,13 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
     if (psInfo->pszGMLFilename) 
         free(psInfo->pszGMLFilename);
-    psInfo->pszGMLFilename=strdup(pasReqInfo[(*numRequests)].pszOutputFile);
+    psInfo->pszGMLFilename=msStrdup(pasReqInfo[(*numRequests)].pszOutputFile);
  
     psInfo->rect = pasReqInfo[(*numRequests)].bbox;
 
     if (psInfo->pszGetUrl) 
         free(psInfo->pszGetUrl);
-    psInfo->pszGetUrl = strdup(pasReqInfo[(*numRequests)].pszGetUrl);
+    psInfo->pszGetUrl = msStrdup(pasReqInfo[(*numRequests)].pszGetUrl);
 
     psInfo->nStatus = 0;
 
@@ -801,7 +793,7 @@ int msWFSLayerOpen(layerObj *lp,
     lp->wfslayerinfo = psInfo = msAllocWFSLayerInfo();
 
     if (pszGMLFilename)
-        psInfo->pszGMLFilename = strdup(pszGMLFilename);
+        psInfo->pszGMLFilename = msStrdup(pszGMLFilename);
     else
     {
         if (lp->map->web.imagepath==NULL || strlen(lp->map->web.imagepath)==0)
@@ -1341,7 +1333,7 @@ char *msWFSExecuteGetFeature(layerObj *lp)
   msWFSLayerOpen(lp, NULL, NULL);
   psInfo =(msWFSLayerInfo*)lp->wfslayerinfo;
   if (psInfo &&  psInfo->pszGMLFilename)
-    gmltmpfile = strdup(psInfo->pszGMLFilename);
+    gmltmpfile = msStrdup(psInfo->pszGMLFilename);
   msWFSLayerClose(lp);
 
   return gmltmpfile;

@@ -133,10 +133,8 @@ tileCacheObj *addTileCache(imageObj *img,
         
     } else {
         img->ntiles += 1;
-        if((cachep = (tileCacheObj*)malloc(sizeof(tileCacheObj))) == NULL) {
-            msSetError(MS_MEMERR, NULL, "addTileCache()");
-            return(NULL);
-        }
+        cachep = (tileCacheObj*)malloc(sizeof(tileCacheObj));
+        MS_CHECK_ALLOC(cachep, sizeof(tileCacheObj), NULL);
         cachep->next = img->tilecache;
         img->tilecache = cachep;
     }
@@ -379,7 +377,7 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 				switch (symbol->type) {
 					case (MS_SYMBOL_TRUETYPE): {
 						if(!symbol->full_font_path)
-							symbol->full_font_path =  strdup(msLookupHashTable(&(symbolset->fontset->fonts),
+							symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
 								symbol->font));
 						if(!symbol->full_font_path) {
 							msSetError(MS_MEMERR,"allocation error", "msDrawMArkerSymbol()");
@@ -401,7 +399,7 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                 s.style = style;
                 if(symbol->type == MS_SYMBOL_TRUETYPE) {
                     if(!symbol->full_font_path)
-                        symbol->full_font_path =  strdup(msLookupHashTable(&(symbolset->fontset->fonts),
+                        symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
                                     symbol->font));
                     assert(symbol->full_font_path);
                 }
@@ -526,7 +524,7 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
                break;
             case MS_SYMBOL_TRUETYPE:
                if(!symbol->full_font_path)
-                  symbol->full_font_path =  strdup(msLookupHashTable(&(symbolset->fontset->fonts),
+                  symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
                         symbol->font));
                if(!symbol->full_font_path) {
                   msSetError(MS_MEMERR,"allocation error", "msDrawMArkerSymbol()");
@@ -604,7 +602,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
          switch (symbol->type) {
          case (MS_SYMBOL_TRUETYPE): {
             if(!symbol->full_font_path)
-               symbol->full_font_path =  strdup(msLookupHashTable(&(symbolset->fontset->fonts),
+               symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
                      symbol->font));
             if(!symbol->full_font_path) {
                msSetError(MS_MEMERR,"allocation error", "msDrawMArkerSymbol()");
@@ -802,6 +800,7 @@ int msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p
   shapeObj *circle;
    if (!image) return MS_FAILURE;
    circle = msRasterizeArc(p->x, p->y, r, 0, 360, 0);
+   if (!circle) return MS_FAILURE;
    msDrawLineSymbol(symbolset, image, circle, style, scalefactor);
    msFreeShape(circle);
    msFree(circle);
@@ -813,6 +812,7 @@ int msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *
   shapeObj *circle;
   if (!image) return MS_FAILURE;
    circle = msRasterizeArc(p->x, p->y, r, 0, 360, 0);
+   if (!circle) return MS_FAILURE;
    msDrawShadeSymbol(symbolset, image, circle, style, scalefactor);
    msFreeShape(circle);
    msFree(circle);
@@ -830,6 +830,7 @@ int msDrawPieSlice(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleO
       center_y-=style->offsetx*sin(((-start-end)*MS_PI/360.));
    }
    circle = msRasterizeArc(center_x, center_y, radius, start, end, 1);
+   if (!circle) return MS_FAILURE;
    msDrawShadeSymbol(symbolset, image, circle, style, 1.0);
    msFreeShape(circle);
    msFree(circle);

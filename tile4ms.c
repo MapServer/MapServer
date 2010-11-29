@@ -81,7 +81,7 @@ int     tilesFound = 0;
 int     tilesProcessed = 0;
 
   msInitShape(&shapeRect);
-  line.point = (pointObj *)malloc(sizeof(pointObj)*5);
+  line.point = (pointObj *)msSmallMalloc(sizeof(pointObj)*5);
   line.numpoints = 5;
  
   /* open metafile */
@@ -147,7 +147,7 @@ int     tilesProcessed = 0;
 
     if( theFields == NULL ) {
         fieldCnt = msDBFGetFieldCount(shpDBF);
-        theFields = (DBFFieldDef *) calloc(fieldCnt, sizeof(DBFFieldDef));
+        theFields = (DBFFieldDef *) msSmallCalloc(fieldCnt, sizeof(DBFFieldDef));
         for (i=0; i<fieldCnt; i++) {
             theFields[i].type = msDBFGetFieldInfo(shpDBF, i, 
                     theFields[i].name, 

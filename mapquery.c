@@ -232,6 +232,7 @@ int msLoadQueryResults(mapObj *map, char *filename) {
 
     /* inialize the results for this layer */
     GET_LAYER(map, j)->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+    MS_CHECK_ALLOC(GET_LAYER(map, j)->resultcache, sizeof(resultCacheObj), MS_FAILURE);
 
     fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream); /* number of results    */
     GET_LAYER(map, j)->resultcache->cachesize = GET_LAYER(map, j)->resultcache->numresults;
@@ -239,6 +240,14 @@ int msLoadQueryResults(mapObj *map, char *filename) {
     fread(&(GET_LAYER(map, j)->resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
 
     GET_LAYER(map, j)->resultcache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*GET_LAYER(map, j)->resultcache->numresults);
+    if (GET_LAYER(map, j)->resultcache->results == NULL) 
+    {
+        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msLoadQueryResults()",
+                   __FILE__, __LINE__, sizeof(resultCacheMemberObj)*GET_LAYER(map, j)->resultcache->numresults);       
+        free(GET_LAYER(map, j)->resultcache);
+        GET_LAYER(map, j)->resultcache = NULL;
+        return MS_FAILURE;
+    }
 
     for(k=0; k<GET_LAYER(map, j)->resultcache->numresults; k++) {
       fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultCacheMemberObj), 1, stream); /* each result */
@@ -354,13 +363,13 @@ int msLoadQuery(mapObj *map, char *filename) {
       break;
     case 6:
       if(strncmp(buffer, "NULL", 4) != 0) {
-        map->query.item = strdup(buffer);
+        map->query.item = msStrdup(buffer);
         msStringChop(map->query.item);
       }
       break;
     case 7:
       if(strncmp(buffer, "NULL", 4) != 0) {
-        map->query.str = strdup(buffer);
+        map->query.str = msStrdup(buffer);
         msStringChop(map->query.str);
       }
       break;
@@ -374,7 +383,7 @@ int msLoadQuery(mapObj *map, char *filename) {
         int i, j;
         lineObj line;
 
-        map->query.shape = (shapeObj *) malloc(sizeof(shapeObj));
+        map->query.shape = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
         msInitShape(map->query.shape);
         map->query.shape->type = shapetype;
 
@@ -383,7 +392,7 @@ int msLoadQuery(mapObj *map, char *filename) {
           if(fscanf(stream, "%d\n", &numpoints) != 1) goto parse_error;
 
 	  line.numpoints = numpoints;
-	  line.point = (pointObj *) malloc(line.numpoints*sizeof(pointObj));
+	  line.point = (pointObj *) msSmallMalloc(line.numpoints*sizeof(pointObj));
 
           for(j=0; j<numpoints; j++)
             if(fscanf(stream, "%lf %lf\n", &line.point[j].x, &line.point[j].y) != 2) goto parse_error;
@@ -459,6 +468,7 @@ int msQueryByIndex(mapObj *map)
 
   if(map->query.clear_resultcache || lp->resultcache == NULL) {
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+    MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
     initResultCache( lp->resultcache);
   }
 
@@ -566,14 +576,14 @@ int msQueryByAttributes(mapObj *map)
   /* save any previously defined filter */
   if(lp->filter.string) {
     old_filtertype = lp->filter.type;
-    old_filterstring = strdup(lp->filter.string);
+    old_filterstring = msStrdup(lp->filter.string);
     if(lp->filteritem) 
-      old_filteritem = strdup(lp->filteritem);
+      old_filteritem = msStrdup(lp->filteritem);
   }
 
   /* apply the passed query parameters */
   if(map->query.item && map->query.item[0] != '\0') 
-    lp->filteritem = strdup(map->query.item);
+    lp->filteritem = msStrdup(map->query.item);
   else
     lp->filteritem = NULL;
   msLoadExpressionString(&(lp->filter), map->query.str);
@@ -616,6 +626,7 @@ int msQueryByAttributes(mapObj *map)
   }
 
   lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+  MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
   initResultCache( lp->resultcache);
   
   nclasses = 0;
@@ -781,6 +792,7 @@ int msQueryByRect(mapObj *map)
     }
 
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+    MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
     initResultCache( lp->resultcache);
 
     nclasses = 0;
@@ -1012,6 +1024,7 @@ int msQueryByFeatures(mapObj *map)
 
       if(i == 0) {
 	lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+        MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
         initResultCache( lp->resultcache);
 
       }      
@@ -1270,6 +1283,7 @@ int msQueryByPoint(mapObj *map)
     }
 
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+    MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
     initResultCache( lp->resultcache);
 
     nclasses = 0;
@@ -1459,6 +1473,7 @@ int msQueryByShape(mapObj *map)
     }
 
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+    MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
     initResultCache( lp->resultcache);
 
     nclasses = 0;
@@ -1694,6 +1709,7 @@ int msQueryByOperator(mapObj *map)
     }
 
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+    MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
     initResultCache( lp->resultcache);
 
     classgroup = NULL;

@@ -96,7 +96,7 @@ static char *DATAERRORMESSAGE(char *dataString, char *preamble)
 	char	tmp[5000];
         size_t buffer_size = 7000;
 
-	message = malloc(buffer_size);
+	message = msSmallMalloc(buffer_size);
 
 	snprintf(message, buffer_size, "%s",preamble);
 
@@ -183,7 +183,7 @@ void mysql_NOTICE_HANDLER(void *arg, const char *message)
 			free(((msMYGISLayerInfo *) arg)->fields); 	/* free up space */
 
 		}
-			result = malloc (buffer_size) ;
+			result = msSmallMalloc (buffer_size);
 			((msMYGISLayerInfo *) arg)->fields = result;
 			result[0] = 0; /* null terminate it */
 
@@ -282,7 +282,7 @@ if (SHOWQUERY || MYDEBUG) printf("%s<BR>\n", qbuf);
            qbuf);
         return MS_FAILURE;
     }
-   layer->query = strdup(qbuf);
+   layer->query = msStrdup(qbuf);
    if (layer->query_result) /* There were some rows found, write 'em out for debug */
    {
        numrows = mysql_affected_rows(&(layer->mysql));
@@ -364,6 +364,7 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 	/* have to setup a connection to the database */
 
 	layerinfo = (msMYGISLayerInfo *) malloc( sizeof(msMYGISLayerInfo) );
+        MS_CHECK_ALLOC(layerinfo, sizeof(msMYGISLayerInfo), MS_FAILURE);
 	layerinfo->sql = NULL; /* calc later */
 	layerinfo->row_num=0;
 	layerinfo->query_result= NULL;
@@ -385,12 +386,12 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 			free(layerinfo);	
 			return(MS_FAILURE);
 		}
-		delim = strdup(":");
-		DB_HOST = strdup(strtok(layer->connection, delim));
-		DB_USER = strdup(strtok(NULL, delim));
-		DB_PASSWD = strdup(strtok(NULL, delim));
-		DB_DATABASE = strdup(strtok(NULL, delim));
-		DB_DATATYPE = strdup(strtok(NULL, delim));
+		delim = msStrdup(":");
+		DB_HOST = msStrdup(strtok(layer->connection, delim));
+		DB_USER = msStrdup(strtok(NULL, delim));
+		DB_PASSWD = msStrdup(strtok(NULL, delim));
+		DB_DATABASE = msStrdup(strtok(NULL, delim));
+		DB_DATATYPE = msStrdup(strtok(NULL, delim));
 
 		wkbdata = strcmp(DB_DATATYPE, "num") ? 1 : 0;
 		
@@ -479,11 +480,8 @@ if (MYDEBUG)printf("msMYGISLayerInitItemInfo called<br>\n");
 	if (layer->iteminfo)
      	 	free(layer->iteminfo);
 
- 	if((layer->iteminfo = (int *)malloc(sizeof(int)*layer->numitems))== NULL)
-  	{
-   		msSetError(MS_MEMERR, NULL, "msMYGISLayerInitItemInfo()");
-   	 	return(MS_FAILURE);
-  	}
+ 	layer->iteminfo = (int *)malloc(sizeof(int)*layer->numitems);
+        MS_CHECK_ALLOC(layer->iteminfo, sizeof(int)*layer->numitems, MS_FAILURE);
 
 	itemindexes = (int*)layer->iteminfo;
   	for(i=0;i<layer->numitems;i++)
@@ -527,7 +525,7 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 	 */
 
 	pos_space = strstr(geom_table, " "); /* First space */
-        ftable = (char*)malloc((pos_space - geom_table) + 1);
+        ftable = (char*)msSmallMalloc((pos_space - geom_table) + 1);
 	strlcpy(ftable, geom_table, pos_space - geom_table + 1);
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 	layerinfo->feature = ftable;
@@ -578,7 +576,7 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 				char	*start, *end;
 				char	*result;
                                 size_t buffer_size = 7000;
-				result = malloc(buffer_size);
+				result = msSmallMalloc(buffer_size);
 
 				start = strstr(geom_table,"!BOX!");
 				end = start+5;
@@ -591,7 +589,7 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 				geom_table= result;
 		}
 	if (layer->type == MS_LAYER_ANNOTATION){
-/* attribselect = strdup(", feature.txt, feature.angle, ''"); */
+/* attribselect = msStrdup(", feature.txt, feature.angle, ''"); */
 /* if (layer->labelitem){ */
 /* strcat(attribselect,", feature."); */
 /* strcat(attribselect, layer->labelitem); */
@@ -703,7 +701,7 @@ if (MYDEBUG) printf("msMYGISLayerWhichShapes called<br>\n");
             return(MS_FAILURE);
         }
 
-	query_str = (char *) malloc(6000); /* should be big enough */
+	query_str = (char *) msSmallMalloc(6000); /* should be big enough */
 	memset(query_str,0,6000);		/* zero it out */
 
         if(MYDEBUG)
@@ -711,7 +709,7 @@ if (MYDEBUG) printf("msMYGISLayerWhichShapes called<br>\n");
         msMYGISLayerParseData(layer->data, geom_column_name, sizeof(geom_column_name), table_name, sizeof(table_name), urid_name, sizeof(urid_name), user_srid, sizeof(user_srid));
         if(MYDEBUG)
             printf("%s<br>\n", layer->data);
-	layerinfo->table = strdup(table_name);
+	layerinfo->table = msStrdup(table_name);
         if(MYDEBUG)
             printf("%s/%s/%s/%s/%s<br>\n", layer->data, geom_column_name, table_name, urid_name,user_srid);
 	set_up_result= prep_DB(table_name,geom_column_name, layer, &(layerinfo->query_result), rect,query_str, urid_name,user_srid);
@@ -778,7 +776,7 @@ static int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, l
 
 	shape->type = MS_SHAPE_POINT;
 	line.numpoints = ngeoms;
-	line.point = (pointObj *) malloc ((type == ETYPE_POINT ? 1 : 2) * ngeoms * sizeof(pointObj));
+	line.point = (pointObj *) msSmallMalloc ((type == ETYPE_POINT ? 1 : 2) * ngeoms * sizeof(pointObj));
 	line.point[0].x = atof(row[3]);
 	line.point[0].y = atof(row[4]);
 #ifdef USE_POINT_Z_M
@@ -843,7 +841,7 @@ static int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, lo
 /* x = atof(row[3]); */
 /* y = atof(row[4]); */
 	type = atoi(row[2]);
-	line.point = (pointObj *) malloc (2 * ngeoms * sizeof(pointObj));
+	line.point = (pointObj *) msSmallMalloc (2 * ngeoms * sizeof(pointObj));
 	for (t=0; t<ngeoms; t++)
 	{
 		int id = atoi(row[0]);
@@ -903,7 +901,7 @@ static int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape,
 	type = atoi(row[2]);
 	
 	/* we do one shape per call -> all geoms in this shape are the point of the poly */
-	line.point = (pointObj *) malloc (2 * sizeof(pointObj)* ngeoms ); /* point struct */
+	line.point = (pointObj *) msSmallMalloc (2 * sizeof(pointObj)* ngeoms ); /* point struct */
 /* line.point[0].x = x; */
 /* line.point[0].y = y; */
 /* line.point[0].m = 0; */
@@ -1009,7 +1007,7 @@ int	wkb_force_to_points(char	*wkb, shapeObj *shape)
 		{
 			shape->type = MS_SHAPE_POINT;
 			line.numpoints = 1;
-			line.point = (pointObj *) malloc (sizeof(pointObj));
+			line.point = (pointObj *) msSmallMalloc (sizeof(pointObj));
 
 				end_memcpy(byteorder,  &line.point[0].x , &wkb[offset+5  ], 8);
 				end_memcpy(byteorder,  &line.point[0].y , &wkb[offset+5+8], 8);
@@ -1022,7 +1020,7 @@ int	wkb_force_to_points(char	*wkb, shapeObj *shape)
 		{
 			shape->type = MS_SHAPE_POINT;
 			end_memcpy(byteorder, &line.numpoints, &wkb[offset+5],4); /* num points */
-			line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); /* point struct */
+			line.point = (pointObj *) msSmallMalloc (sizeof(pointObj)* line.numpoints ); /* point struct */
 			for(u=0;u<line.numpoints ; u++)
 			{
 				end_memcpy(byteorder,  &line.point[u].x , &wkb[offset+9 + (16 * u)], 8);
@@ -1043,7 +1041,7 @@ int	wkb_force_to_points(char	*wkb, shapeObj *shape)
 			{
 				end_memcpy(byteorder, &npoints, &wkb[offset],4); /* num points */
 				line.numpoints = npoints;
-				line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); /* point struct */
+				line.point = (pointObj *) msSmallMalloc (sizeof(pointObj)* npoints); /* point struct */
 				for(v=0;v<npoints;v++)
 				{
 					end_memcpy(byteorder,  &line.point[v].x , &wkb[offset+4 + (16 * v)], 8);
@@ -1090,7 +1088,7 @@ int	wkb_force_to_lines(char	*wkb, shapeObj *shape)
 		{
 			shape->type = MS_SHAPE_LINE;
 			end_memcpy(byteorder, &line.numpoints, &wkb[offset+5],4); /* num points */
-			line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); /* point struct */
+			line.point = (pointObj *) msSmallMalloc (sizeof(pointObj)* line.numpoints ); /* point struct */
 			for(u=0;u<line.numpoints ; u++)
 			{
 				end_memcpy(byteorder,  &line.point[u].x , &wkb[offset+9 + (16 * u)], 8);
@@ -1111,7 +1109,7 @@ int	wkb_force_to_lines(char	*wkb, shapeObj *shape)
 			{
 				end_memcpy(byteorder, &npoints, &wkb[offset],4); /* num points */
 				line.numpoints = npoints;
-				line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); /* point struct */
+				line.point = (pointObj *) msSmallMalloc (sizeof(pointObj)* npoints); /* point struct */
 				for(v=0;v<npoints;v++)
 				{
 					end_memcpy(byteorder,  &line.point[v].x , &wkb[offset+4 + (16 * v)], 8);
@@ -1161,7 +1159,7 @@ int	wkb_force_to_polygons(char	*wkb, shapeObj *shape)
 			{
 				end_memcpy(byteorder, &npoints, &wkb[offset],4); /* num points */
 				line.numpoints = npoints;
-				line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); /* point struct */
+				line.point = (pointObj *) msSmallMalloc (sizeof(pointObj)* npoints); /* point struct */
 				for(v=0;v<npoints;v++)
 				{
 					end_memcpy(byteorder,  &line.point[v].x , &wkb[offset+4 + (16 * v)], 8);
@@ -1392,21 +1390,21 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 			{
 /* if (MYDEBUG)printf("attrib<BR>\n"); */
 				/* have to retreive the attributes */
-			        shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
+			        shape->values = (char **) msSmallMalloc(sizeof(char *) * layer->numitems);
 				shape->index = atoi(row[0]);
 				shape->numvalues = layer->numitems;
 				if (layer->numitems > 0){
 /* if (MYDEBUG)printf("RETR attrib<BR>\n"); */
 					for (t=0;t<layer->numitems;t++){
                                             snprintf(tmpstr, sizeof(tmpstr), "%d", t);
-/* shape->values[t]=strdup(""); */
-                                            shape->values[t]=strdup(row[layerinfo->attriboffset+t]);
+/* shape->values[t]=msStrdup(""); */
+                                            shape->values[t]=msStrdup(row[layerinfo->attriboffset+t]);
 /* printf("%d/%s<BR>"); */
 					}
 					if (1){
 					} else if (1) {
 						    if (layer->labelitem && strlen(row[layerinfo->attriboffset+0]) > 0){
-						    	shape->values[layer->labelitemindex]=strdup(row[layerinfo->attriboffset+0]);
+						    	shape->values[layer->labelitemindex]=msStrdup(row[layerinfo->attriboffset+0]);
 						    }
 					} else {
 
@@ -1428,7 +1426,7 @@ if (MYDEBUG)					printf("%s<BR>\n", tmpstr);
 					printf("mysql query FAILED...<br>\n%s\n",tmpstr);
 						return MS_FAILURE;
 					    }
-					   layerinfo->query2 = strdup(tmpstr);
+					   layerinfo->query2 = msStrdup(tmpstr);
 					   if (layerinfo->query2_result) /* There were some rows found, write 'em out for debug */
 					   {
 /* numrows2 = mysql_affected_rows(&(layerinfo->mysql)); */
@@ -1443,7 +1441,7 @@ if (MYDEBUG)					printf("%s<BR>\n", tmpstr);
 							}
 /* printf("%s/%s,%s<BR>\n", layer->labelitem, row_attr[0], row_attr[1]); */
 						    if (layer->labelitem && strlen(row_attr[0]) > 0){
-						    	shape->values[layer->labelitemindex]=strdup(row_attr[0]);
+						    	shape->values[layer->labelitemindex]=msStrdup(row_attr[0]);
 						    }
 						}
 					   }
@@ -1503,7 +1501,7 @@ if (MYDEBUG) printf("msMYGISLayerGetShape called for record = %li<br>\n",record)
 		return(MS_FAILURE);
 	}
 
-	query_str = (char *) malloc(buffer_size); /* should be big enough */
+	query_str = (char *) msSmallMalloc(buffer_size); /* should be big enough */
 	memset(query_str,0,buffer_size);		/* zero it out */
 
 	msMYGISLayerParseData(layer->data, geom_column_name, sizeof(geom_column_name), table_name, sizeof(table_name), urid_name, sizeof(urid_name), user_srid, sizeof(user_srid));
@@ -1728,8 +1726,8 @@ if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 
 		if (strcmp(row[0], "x1") != 0 && strcmp(row[0], "x2") != 0 && strcmp(row[0], "y1") != 0 && strcmp(row[0], "y2") != 0){
 			t++;
-			layer->items = realloc (layer->items, sizeof(char *) * t);
-			layer->items[t-1] = strdup(row[0]);
+			layer->items = msSmallRealloc (layer->items, sizeof(char *) * t);
+			layer->items[t-1] = msStrdup(row[0]);
 
 		}
 	}

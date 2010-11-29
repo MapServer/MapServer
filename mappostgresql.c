@@ -255,7 +255,7 @@ int msPOSTGRESQLJoinPrepare(joinObj *join, shapeObj *shape) {
     }
 
     /* Copy the next join value from the shape. */
-    joininfo->from_value = strdup(shape->values[joininfo->from_index]);
+    joininfo->from_value = msStrdup(shape->values[joininfo->from_index]);
 
     if(joininfo->layer_debug) {
         msDebug("msPOSTGRESQLJoinPrepare() preping for value %s.\n", 
@@ -370,7 +370,7 @@ int msPOSTGRESQLJoinNext(joinObj *join) {
     /* Copy the resulting values into the joinObj. */
     join->values = (char **)malloc(sizeof(char *) * join->numitems);
     for(i = 0; i < join->numitems; i++) {
-        join->values[i] = strdup(PQgetvalue(
+        join->values[i] = msStrdup(PQgetvalue(
                 joininfo->query_result, joininfo->row_num, i));
     }
 

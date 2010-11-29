@@ -195,7 +195,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
         return NULL;
     }
 
-    column_name = (char*) malloc(SE_QUALIFIED_COLUMN_LEN+1);
+    column_name = (char*) msSmallMalloc(SE_QUALIFIED_COLUMN_LEN+1);
     column_name[0]='\0';
 
     proc_key = msLayerGetProcessingKey(layer,"OBJECTID");
@@ -207,7 +207,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
           msDebug("msSDELayerGetRowIDColumn(): Column was manually set to %s\n", column_name);
        return column_name;
     }
-    full_column_name = (char*) malloc(SE_QUALIFIED_COLUMN_LEN+1);
+    full_column_name = (char*) msSmallMalloc(SE_QUALIFIED_COLUMN_LEN+1);
     full_column_name[0]='\0';
     
     /*
@@ -293,7 +293,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
     }
     else {
         msFree(full_column_name);
-        return(strdup(MS_SDE_ROW_ID_COLUMN));
+        return(msStrdup(MS_SDE_ROW_ID_COLUMN));
     }
 
 #else
@@ -352,9 +352,9 @@ long msSDELCacheAdd( layerObj *layer,
         return(MS_FAILURE);
     }
     
-    lid->table = strdup(tableName);
-    lid->column = strdup(columnName);
-    lid->connection = strdup(connectionString);
+    lid->table = msStrdup(tableName);
+    lid->column = msStrdup(columnName);
+    lid->connection = msStrdup(connectionString);
   
     msReleaseLock( TLOCK_SDE );
     return (MS_SUCCESS);
@@ -515,12 +515,12 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
         return(MS_FAILURE);
     }
      
-    part_offsets = (long *) malloc( (num_parts + 1) * sizeof(long));
-    subpart_offsets = (long *) malloc( (num_subparts + 1)	* sizeof(long));
+    part_offsets = (long *) msSmallMalloc( (num_parts + 1) * sizeof(long));
+    subpart_offsets = (long *) msSmallMalloc( (num_subparts + 1)	* sizeof(long));
     part_offsets[num_parts] = num_subparts;
     subpart_offsets[num_subparts]	= num_points;
 
-    points = (SE_POINT *) malloc (num_points*sizeof(SE_POINT));
+    points = (SE_POINT *) msSmallMalloc (num_points*sizeof(SE_POINT));
     if(!points) {
         msSetError( MS_MEMERR, 
                     "Unable to allocate points array.", 
@@ -550,12 +550,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
             line.numpoints = subpart_offsets[i+1] - subpart_offsets[i];
     
         line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
-        if(!line.point) {
-            msSetError( MS_MEMERR, 
-                      "Unable to allocate temporary point cache.", 
-                      "sdeShapeCopy()");
-            return(MS_FAILURE);
-        }
+        MS_CHECK_ALLOC(line.point, sizeof(pointObj)*line.numpoints, MS_FAILURE);
          
         for(j=0; j < line.numpoints; j++) {
             line.point[j].x = points[k].x; 
@@ -633,12 +628,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     if(layer->numitems > 0) {
         shape->numvalues = layer->numitems;
         shape->values = (char **) malloc (sizeof(char *)*layer->numitems);
-        if(!shape->values) {
-            msSetError( MS_MEMERR, 
-                      "Error allocation shape attribute array.", 
-                      "sdeGetRecord()");
-            return(MS_FAILURE);
-        }
+        MS_CHECK_ALLOC(shape->values, sizeof(char *)*layer->numitems, MS_FAILURE) {
     }
 
     status = SE_shape_create(NULL, &shapeval);
@@ -658,7 +648,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                 return(MS_FAILURE);
             }
     
-            shape->values[i] = (char *)malloc(64); /* should be enough */
+            shape->values[i] = (char *)msSmallMalloc(64); /* should be enough */
             sprintf(shape->values[i], "%ld", shape->index);
             continue;
         }    
@@ -672,7 +662,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             if(status == SE_SUCCESS)
                 shape->values[i] = msLongToString(shortval);
             else if(status == SE_NULL_VALUE)
-                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+                shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
             else {
                 sde_error(  status, 
                             "sdeGetRecord()", 
@@ -687,7 +677,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             if(status == SE_SUCCESS)
                 shape->values[i] = msLongToString(longval);
             else if(status == SE_NULL_VALUE)
-                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+                shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
             else {
                 sde_error(  status, 
                             "sdeGetRecord()", 
@@ -702,7 +692,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             if(status == SE_SUCCESS)
                 shape->values[i] = msDoubleToString(floatval, MS_FALSE);
             else if(status == SE_NULL_VALUE)
-                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+                shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
             else {     
                 sde_error(  status, 
                             "sdeGetRecord()", 
@@ -717,7 +707,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             if(status == SE_SUCCESS)
                 shape->values[i] = msDoubleToString(doubleval, MS_FALSE);
             else if(status == SE_NULL_VALUE)
-                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+                shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
             else {     
                 sde_error(  status, 
                             "sdeGetRecord()", 
@@ -726,7 +716,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             }
             break;
         case SE_STRING_TYPE:
-            shape->values[i] = (char *)malloc(itemdefs[i].size+1);
+            shape->values[i] = (char *)msSmallMalloc(itemdefs[i].size+1);
             status = SE_stream_get_string(  sde->connPoolInfo->stream, 
                                             (short) (i+1), 
                                             shape->values[i]);
@@ -741,13 +731,13 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
             break;
 #ifdef SE_NSTRING_TYPE
             case SE_NSTRING_TYPE:
-                wide = (SE_WCHAR *)malloc(itemdefs[i].size*2*sizeof(SE_WCHAR)+1);
+                wide = (SE_WCHAR *)msSmallMalloc(itemdefs[i].size*2*sizeof(SE_WCHAR)+1);
                 memset(wide, 0, itemdefs[i].size*2*sizeof(SE_WCHAR)+1);
                 status = SE_stream_get_nstring( sde->connPoolInfo->stream, 
                                                 (short) (i+1), 
                                                 wide);
                 if(status == SE_NULL_VALUE) {
-                    shape->values[i] = (char *)malloc(itemdefs[i].size*sizeof(char)+1);
+                    shape->values[i] = (char *)msSmallMalloc(itemdefs[i].size*sizeof(char)+1);
                     shape->values[i][0] = '\0'; /* empty string */
                     msFree(wide);
                 }
@@ -766,7 +756,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                         msSetError( MS_SDEERR,
                                  "msConvertWideStringToUTF8()==NULL.",
                                  "sdeGetRecord()");
-                        shape->values[i] = (char *)malloc(itemdefs[i].size*sizeof(char)+1);
+                        shape->values[i] = (char *)msSmallMalloc(itemdefs[i].size*sizeof(char)+1);
                         shape->values[i][0] = '\0'; /* empty string */
                     }                    
                 }
@@ -776,7 +766,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 #ifdef SE_UUID_TYPE
 
         case SE_UUID_TYPE:
-            shape->values[i] = (char *)malloc(itemdefs[i].size+1);
+            shape->values[i] = (char *)msSmallMalloc(itemdefs[i].size+1);
             status = SE_stream_get_uuid  (  sde->connPoolInfo->stream, 
                                             (short) (i+1), 
                                             shape->values[i]);
@@ -797,14 +787,14 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
         case SE_CLOB_TYPE:
             status = SE_stream_get_clob(sde->connPoolInfo->stream, (short) (i+1), &clobval);
             if(status == SE_SUCCESS) {
-                shape->values[i] = (char *)malloc(sizeof(char)*clobval.clob_length);
+                shape->values[i] = (char *)msSmallMalloc(sizeof(char)*clobval.clob_length);
                 shape->values[i] = memcpy(  shape->values[i],
                                             clobval.clob_buffer, 
                                             clobval.clob_length);
                 SE_clob_free(&clobval);
             }
             else if (status == SE_NULL_VALUE) {
-                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+                shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
             }
             else {
                 sde_error(  status,  
@@ -820,14 +810,14 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
         case SE_NCLOB_TYPE:
             status = SE_stream_get_nclob(sde->connPoolInfo->stream, (short) (i+1), &nclobval);
             if(status == SE_SUCCESS) {
-                shape->values[i] = (char *)malloc(sizeof(char)*nclobval.nclob_length);
+                shape->values[i] = (char *)msSmallMalloc(sizeof(char)*nclobval.nclob_length);
                 shape->values[i] = memcpy(  shape->values[i],
                                             nclobval.nclob_buffer, 
                                             nclobval.nclob_length);
                 SE_nclob_free(&nclobval);
             }
             else if (status == SE_NULL_VALUE) {
-                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+                shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
             }
             else {
                 sde_error(  status,  
@@ -841,14 +831,14 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
         case SE_BLOB_TYPE:
             status = SE_stream_get_blob(sde->connPoolInfo->stream, (short) (i+1), &blobval);
             if(status == SE_SUCCESS) {
-                shape->values[i] = (char *)malloc(sizeof(char)*blobval.blob_length);
+                shape->values[i] = (char *)msSmallMalloc(sizeof(char)*blobval.blob_length);
                 shape->values[i] = memcpy(  shape->values[i],
                                             blobval.blob_buffer, 
                                             blobval.blob_length);
                 SE_blob_free(&blobval);
             }
             else if (status == SE_NULL_VALUE) {
-                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+                shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
             }
             else {
                 sde_error(  status,  
@@ -861,14 +851,14 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
         case SE_DATE_TYPE:
             status = SE_stream_get_date(sde->connPoolInfo->stream, (short)(i+1), &dateval);
             if(status == SE_SUCCESS) {
-                shape->values[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
+                shape->values[i] = (char *)msSmallMalloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
                 strftime(   shape->values[i], 
                             MS_SDE_TIMEFMTSIZE, 
                             MS_SDE_TIMEFMT, 
                             &dateval);
             } 
             else if(status == SE_NULL_VALUE)
-                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+                shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
             else {     
                 sde_error(  status, 
                             "sdeGetRecord()", 
@@ -879,9 +869,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
         case SE_SHAPE_TYPE:
             status = SE_stream_get_shape(sde->connPoolInfo->stream, (short)(i+1), shapeval);
             if(status == SE_SUCCESS)
-                shape->values[i] = strdup(MS_SDE_SHAPESTRING);
+                shape->values[i] = msStrdup(MS_SDE_SHAPESTRING);
             else if(status == SE_NULL_VALUE)
-                shape->values[i] = strdup(MS_SDE_NULLSTRING);
+                shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
             else {
                 sde_error(  status, 
                             "sdeGetRecord()", 
@@ -1000,7 +990,7 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer, long* id)
     long status;
     
     msSDELayerInfo *sde=NULL;
-    full_filter = (char*) malloc((1000+1)*sizeof (char));
+    full_filter = (char*) msSmallMalloc((1000+1)*sizeof (char));
     full_filter[0] = '\0';
     if(!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR, 
@@ -1039,7 +1029,7 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer, long* id)
         strcat(full_filter, "=");
         strcat(full_filter, pszId);
         msFree(pszId);
-        sql->where = strdup(full_filter);
+        sql->where = msStrdup(full_filter);
      
 
     } else {
@@ -1090,12 +1080,7 @@ int msSDELayerOpen(layerObj *layer) {
 
     /* allocate space for SDE structures */
     sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
-    if(!sde) {
-        msSetError( MS_MEMERR, 
-                    "Error allocating SDE layer structure.", 
-                    "msSDELayerOpen()");
-        return(MS_FAILURE);
-    }
+    MS_CHECK_ALLOC(sde, sizeof(msSDELayerInfo), MS_FAILURE);
  
     sde->state_id = SE_BASE_STATE_ID;
   
@@ -1106,11 +1091,11 @@ int msSDELayerOpen(layerObj *layer) {
     sde->join_table = NULL;
     sde->basedefs = NULL;
     sde->joindefs = NULL;
-    sde->extent = (rectObj *) malloc(sizeof(rectObj));
+    sde->extent = (rectObj *) msSmallMalloc(sizeof(rectObj));
 
-    sde->nBaseColumns = (short *) malloc(1*sizeof(short));
+    sde->nBaseColumns = (short *) msSmallMalloc(1*sizeof(short));
     *(sde->nBaseColumns) = 0;
-    sde->nJoinColumns = (short *) malloc(1*sizeof(short));
+    sde->nJoinColumns = (short *) msSmallMalloc(1*sizeof(short));
     *(sde->nJoinColumns) = 0;
 
     if(!sde->extent) {
@@ -1140,9 +1125,7 @@ int msSDELayerOpen(layerObj *layer) {
 
 
         poolinfo = (msSDEConnPoolInfo *)malloc(sizeof *poolinfo);
-        if (!poolinfo) {
-            return MS_FAILURE;
-        } 		
+        MS_CHECK_ALLOC(poolinfo, sizeof *poolinfo, MS_FAILURE);
 
         /* Decrypt any encrypted token in the connection string */
         conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
@@ -1235,12 +1218,12 @@ int msSDELayerOpen(layerObj *layer) {
         return(MS_FAILURE);
     }
 
-    sde->table = strdup(data_params[0]); 
-    sde->column = strdup(data_params[1]);
+    sde->table = msStrdup(data_params[0]); 
+    sde->column = msStrdup(data_params[1]);
     
     join_table = msLayerGetProcessingKey(layer,"JOINTABLE");
     if (join_table) {
-        sde->join_table = strdup(join_table);
+        sde->join_table = msStrdup(join_table);
         /* msFree(join_table); */
     }
     if (numparams < 3){ 
@@ -1881,7 +1864,7 @@ char *msSDELayerGetSpatialColumn(layerObj *layer)
 
     sde = layer->layerinfo;
   
-    return(strdup(sde->column));
+    return(msStrdup(sde->column));
 #else
     msSetError( MS_MISCERR, 
                 "SDE support is not available.", 
@@ -1994,6 +1977,7 @@ short nbasecol, njoincol;
 
     /* combine the itemdefs of both tables into one */
     all_itemdefs = (SE_COLUMN_DEF *) calloc( layer->numitems, sizeof(SE_COLUMN_DEF));
+    MS_CHECK_ALLOC(all_itemdefs, sizeof(SE_COLUMN_DEF), MS_FAILURE);
 
     for(i=0;i<nbasecol;i++) all_itemdefs[i] = sde->basedefs[i];
 
@@ -2009,6 +1993,7 @@ short nbasecol, njoincol;
             msSetError( MS_MEMERR, 
                         "Error allocating SDE item  information.", 
                         "msSDELayerInitItemInfo()");
+            free(all_itemdefs);
             return(MS_FAILURE);
         }
     } else {
@@ -2020,12 +2005,7 @@ short nbasecol, njoincol;
     if (!(layer->items)) {
         /* gather up all of the column names and put them onto layer->items */
         layer->items = (char **)malloc(layer->numitems*sizeof(char *)+10);
-        if(!layer->items) {
-            msSetError( MS_MEMERR, 
-                    "Error allocating layer items array.",  
-                    "msSDELayerInitItemInfo()");
-            return(MS_FAILURE);
-        }
+        MS_CHECK_ALLOC(layer->items, layer->numitems*sizeof(char *)+10, MS_FAILURE);
     } else {
        msDebug("layer->items has already been initialized!!!");
     }
@@ -2033,7 +2013,7 @@ short nbasecol, njoincol;
     proc_key = msLayerGetProcessingKey(layer,"ATTRIBUTE_QUALIFIED");
     if (!sde->join_table && 
         (proc_key == NULL ||  strcasecmp( proc_key, "TRUE") != 0)) {
-        for(i=0; i<layer->numitems; i++) layer->items[i] = strdup(all_itemdefs[i].column_name);
+        for(i=0; i<layer->numitems; i++) layer->items[i] = msStrdup(all_itemdefs[i].column_name);
         for(i=0; i<layer->numitems; i++) { /* requested columns */
             for(j=0; j<layer->numitems; j++) { /* all columns */
                 if(strcasecmp(layer->items[i], all_itemdefs[j].column_name) == 0) {
@@ -2046,7 +2026,7 @@ short nbasecol, njoincol;
     }
     else {
         for(i=0;i<nbasecol;i++) {
-            layer->items[i] = (char*) malloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
+            layer->items[i] = (char*) msSmallMalloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
             layer->items[i][0] = '\0';
             strcat(layer->items[i], sde->table);
             strcat(layer->items[i], ".");
@@ -2055,7 +2035,7 @@ short nbasecol, njoincol;
 
         }
         for(i=nbasecol;i<layer->numitems;i++) {
-            layer->items[i] = (char*) malloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
+            layer->items[i] = (char*) msSmallMalloc((SE_QUALIFIED_COLUMN_LEN+1)*sizeof (char));
             layer->items[i][0] = '\0';
 
             strcat(layer->items[i], sde->join_table);

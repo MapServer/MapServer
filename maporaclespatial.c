@@ -2093,16 +2093,16 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     /*assuming startindex starts at 1*/
     if (layer->startindex > 0)
      {
-       tmp1_str = strdup("SELECT * from (SELECT atmp.*, ROWNUM rnum from (");
+       tmp1_str = msStrdup("SELECT * from (SELECT atmp.*, ROWNUM rnum from (");
        tmp_str = msStringConcatenate(tmp_str,  tmp1_str);
        msFree(tmp1_str);
        tmp_str = msStringConcatenate(tmp_str, query_str);
        /*oder by rowid does not seem to work with function using the spatial filter, at least
          on layers loaded using ogr in a 11g database*/
        if (function == FUNCTION_NONE  || function == FUNCTION_RELATE || function == FUNCTION_GEOMRELATE)
-         tmp1_str = strdup( "order by rowid");
+         tmp1_str = msStrdup( "order by rowid");
        else
-         tmp1_str = strdup("");
+         tmp1_str = msStrdup("");
 
        if (layer->maxfeatures > 0)
            snprintf(query_str2, sizeof(query_str2),  " %s) atmp where ROWNUM<=%d) where rnum >=%d",   tmp1_str, 

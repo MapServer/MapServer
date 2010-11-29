@@ -162,8 +162,8 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
     len_hay = strlen(haystack);
     len_need = strlen(needle);
 
-    hay_lower = (char*) malloc(len_hay + 1);
-    needle_lower =(char*) malloc(len_need + 1);
+    hay_lower = (char*) msSmallMalloc(len_hay + 1);
+    needle_lower =(char*) msSmallMalloc(len_need + 1);
 
 
     for(t = 0; t < len_hay; t++) {
@@ -232,11 +232,7 @@ static msODBCconn * mssql2008Connect(const char * connString)
     char fullConnString[1024];
     SQLRETURN rc;
     msODBCconn * conn = malloc(sizeof(msODBCconn));
-
-    if (!conn)
-    {
-        return NULL;
-    }
+    MS_CHECK_ALLOC(conn, sizeof(msODBCconn), NULL);
 
     memset(conn, 0, sizeof(*conn));
 
@@ -364,6 +360,8 @@ int msMSSQL2008LayerOpen(layerObj *layer)
     /* have to setup a connection to the database */
 
     layerinfo = (msMSSQL2008LayerInfo*) malloc(sizeof(msMSSQL2008LayerInfo));
+    MS_CHECK_ALLOC(layerinfo, sizeof(msMSSQL2008LayerInfo), MS_FAILURE);
+
     layerinfo->sql = NULL; /* calc later */
     layerinfo->row_num = 0;
 	layerinfo->geom_column = NULL;
@@ -398,7 +396,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
             char *errMess = "Out of memory";
 
             msDebug("FAILURE!!!");
-            maskeddata = (char *)malloc(strlen(layer->connection) + 1);
+            maskeddata = (char *)msSmallMalloc(strlen(layer->connection) + 1);
             strcpy(maskeddata, layer->connection);
             index = strstr(maskeddata, "password=");
             if(index != NULL) {
@@ -487,11 +485,7 @@ int msMSSQL2008LayerInitItemInfo(layerObj *layer)
     }
 
     layer->iteminfo = (int *) malloc(sizeof(int) * layer->numitems);
-    if(!layer->iteminfo) {
-        msSetError(MS_MEMERR, NULL, "msMSSQL2008LayerInitItemInfo()");
-
-        return MS_FAILURE;
-    }
+    MS_CHECK_ALLOC(layer->iteminfo, sizeof(int) * layer->numitems, MS_FAILURE);
 
     itemindexes = (int*)layer->iteminfo;
 
@@ -537,11 +531,11 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
      *
      */
 
-	geom_table = _strdup(layerinfo->geom_table);
+	geom_table = _msStrdup(layerinfo->geom_table);
     pos_from = strstrIgnoreCase(geom_table, " from ");
 
     if(!pos_from) {
-        f_table_name = (char *) malloc(strlen(geom_table) + 1);
+        f_table_name = (char *) msSmallMalloc(strlen(geom_table) + 1);
         strcpy(f_table_name, geom_table);
     } else { /* geom_table is a sub-select clause */
         pos_ftab = pos_from + 6; /* This should be the start of the ftab name */
@@ -561,10 +555,10 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
         }
 
         if (pos_paren < pos_space) { /* closing parenthesis preceeds any space */
-            f_table_name = (char *) malloc(pos_paren - pos_ftab + 1);
+            f_table_name = (char *) msSmallMalloc(pos_paren - pos_ftab + 1);
             strlcpy(f_table_name, pos_ftab, pos_paren - pos_ftab + 1);
         } else {
-            f_table_name = (char *) malloc(pos_space - pos_ftab + 1);
+            f_table_name = (char *) msSmallMalloc(pos_space - pos_ftab + 1);
             strlcpy(f_table_name, pos_ftab, pos_space - pos_ftab + 1);
         }
     }
@@ -575,7 +569,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
         snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
-        columns_wanted = _strdup(buffer);
+        columns_wanted = _msStrdup(buffer);
     } 
     else 
     {
@@ -587,7 +581,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
         snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
-        columns_wanted = _strdup(buffer);
+        columns_wanted = _msStrdup(buffer);
     }
 
 	if (rect.minx == rect.maxx || rect.miny == rect.maxy)
@@ -614,7 +608,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
     if(!strstr(geom_table, "!BOX!")) 
     {
-        data_source = (char *) malloc(strlen(geom_table) + 1);
+        data_source = (char *) msSmallMalloc(strlen(geom_table) + 1);
         strcpy(data_source, geom_table);
     } 
     else 
@@ -629,7 +623,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
             start = strstr(geom_table,"!BOX!");
             end = start+5;
 
-            result = (char *)malloc((start - geom_table) + strlen(box3d) + strlen(end) +1);
+            result = (char *)msSmallMalloc((start - geom_table) + strlen(box3d) + strlen(end) +1);
 
             strlcpy(result, geom_table, start - geom_table + 1);
             strcpy(result + (start - geom_table), box3d);
@@ -650,7 +644,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 		/* given the template - figure out how much to malloc and malloc it */
 		char *with_template = "%s WITH (INDEX(%s))";
 		int need_len = strlen(data_source) + strlen(with_template) + strlen(layerinfo->index_name);
-		char *tmp = (char*) malloc( need_len + 1 );
+		char *tmp = (char*) msSmallMalloc( need_len + 1 );
 		sprintf( tmp, with_template, data_source, layerinfo->index_name );
 		free(data_source);
 		data_source = tmp;
@@ -677,7 +671,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
     if (executeSQL(layerinfo->conn, query_string_temp))
     {
-        *query_string = _strdup(query_string_temp);
+        *query_string = _msStrdup(query_string_temp);
 
         return MS_SUCCESS;
     }
@@ -842,7 +836,7 @@ static int  force_to_points(char *wkb, shapeObj *shape)
             /* Point */
             shape->type = MS_SHAPE_POINT;
             line.numpoints = 1;
-            line.point = (pointObj *) malloc(sizeof(pointObj));
+            line.point = (pointObj *) msSmallMalloc(sizeof(pointObj));
 
             memcpy(&line.point[0].x, &wkb[offset + 5], 8);
             memcpy(&line.point[0].y, &wkb[offset + 5 + 8], 8);
@@ -854,7 +848,7 @@ static int  force_to_points(char *wkb, shapeObj *shape)
             shape->type = MS_SHAPE_POINT;
 
             memcpy(&line.numpoints, &wkb[offset+5], 4); /* num points */
-            line.point = (pointObj *) malloc(sizeof(pointObj) * line.numpoints);
+            line.point = (pointObj *) msSmallMalloc(sizeof(pointObj) * line.numpoints);
             for(u = 0; u < line.numpoints; u++) {
                 memcpy( &line.point[u].x, &wkb[offset+9 + (16 * u)], 8);
                 memcpy( &line.point[u].y, &wkb[offset+9 + (16 * u)+8], 8);
@@ -874,7 +868,7 @@ static int  force_to_points(char *wkb, shapeObj *shape)
                 /* for each ring, make a line */
                 memcpy(&npoints, &wkb[offset], 4); /* num points */
                 line.numpoints = npoints;
-                line.point = (pointObj *) malloc(sizeof(pointObj)* npoints); 
+                line.point = (pointObj *) msSmallMalloc(sizeof(pointObj)* npoints); 
                 /* point struct */
                 for(v = 0; v < npoints; v++)
                 {
@@ -921,7 +915,7 @@ static int  force_to_lines(char *wkb, shapeObj *shape)
             shape->type = MS_SHAPE_LINE;
 
             memcpy(&line.numpoints, &wkb[offset + 5], 4);
-            line.point = (pointObj*) malloc(sizeof(pointObj) * line.numpoints );
+            line.point = (pointObj*) msSmallMalloc(sizeof(pointObj) * line.numpoints );
             for(u=0; u < line.numpoints; u++) {
                 memcpy(&line.point[u].x, &wkb[offset + 9 + (16 * u)], 8);
                 memcpy(&line.point[u].y, &wkb[offset + 9 + (16 * u)+8], 8);
@@ -941,7 +935,7 @@ static int  force_to_lines(char *wkb, shapeObj *shape)
                 /* for each ring, make a line */
                 memcpy(&npoints, &wkb[offset], 4);
                 line.numpoints = npoints;
-                line.point = (pointObj*) malloc(sizeof(pointObj) * npoints); 
+                line.point = (pointObj*) msSmallMalloc(sizeof(pointObj) * npoints); 
                 /* point struct */
                 for(v = 0; v < npoints; v++) {
                     memcpy(&line.point[v].x, &wkb[offset + 4 + (16 * v)], 8);
@@ -989,7 +983,7 @@ static int  force_to_polygons(char  *wkb, shapeObj *shape)
                 /* for each ring, make a line */
                 memcpy(&npoints, &wkb[offset], 4); /* num points */
                 line.numpoints = npoints;
-                line.point = (pointObj*) malloc(sizeof(pointObj) * npoints);
+                line.point = (pointObj*) msSmallMalloc(sizeof(pointObj) * npoints);
                 for(v=0; v < npoints; v++) {
                     memcpy(&line.point[v].x, &wkb[offset + 4 + (16 * v)], 8);
                     memcpy(&line.point[v].y, &wkb[offset + 4 + (16 * v) + 8], 8);
@@ -1074,7 +1068,7 @@ static int  force_to_shapeType(char *wkb, shapeObj *shape, int msShapeType)
             /* Point */
             shape->type = msShapeType;
             line.numpoints = 1;
-            line.point = (pointObj *) malloc(sizeof(pointObj));
+            line.point = (pointObj *) msSmallMalloc(sizeof(pointObj));
 
             memcpy(&line.point[0].x, &wkb[offset + 5], 8);
             memcpy(&line.point[0].y, &wkb[offset + 5 + 8], 8);
@@ -1093,7 +1087,7 @@ static int  force_to_shapeType(char *wkb, shapeObj *shape, int msShapeType)
             shape->type = msShapeType;
 
             memcpy(&line.numpoints, &wkb[offset+5], 4); /* num points */
-            line.point = (pointObj *) malloc(sizeof(pointObj) * line.numpoints);
+            line.point = (pointObj *) msSmallMalloc(sizeof(pointObj) * line.numpoints);
             for(u = 0; u < line.numpoints; u++) {
                 memcpy( &line.point[u].x, &wkb[offset+9 + (16 * u)], 8);
                 memcpy( &line.point[u].y, &wkb[offset+9 + (16 * u)+8], 8);
@@ -1119,7 +1113,7 @@ static int  force_to_shapeType(char *wkb, shapeObj *shape, int msShapeType)
                 /* for each ring, make a line */
                 memcpy(&npoints, &wkb[offset], 4); /* num points */
                 line.numpoints = npoints;
-                line.point = (pointObj *) malloc(sizeof(pointObj)* npoints); 
+                line.point = (pointObj *) msSmallMalloc(sizeof(pointObj)* npoints); 
                 /* point struct */
                 for(v = 0; v < npoints; v++)
                 {
@@ -1304,7 +1298,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
         {
             /* have to retrieve shape attributes */
-            shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
+            shape->values = (char **) msSmallMalloc(sizeof(char *) * layer->numitems);
             shape->numvalues = layer->numitems;
 
             for(t=0; t < layer->numitems; t++)
@@ -1317,7 +1311,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
                 if (needLen > 0)
                 {
 				    /* allocate the buffer - this will be a null-terminated string so alloc for the null too */
-				    valueBuffer = (char*) malloc( needLen + 1 );
+				    valueBuffer = (char*) msSmallMalloc( needLen + 1 );
 				    if ( valueBuffer == NULL )
 				    {
 					    msSetError( MS_QUERYERR, "Could not allocate value buffer.", "msMSSQL2008LayerGetShapeRandom()" );
@@ -1337,7 +1331,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
                 }
                 else
                     /* Copy empty sting for NULL values */
-                    shape->values[t] = strdup("");
+                    shape->values[t] = msStrdup("");
             }
 
             /* Get shape geometry */
@@ -1348,7 +1342,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
                     handleSQLError(layer);
 
                 /* allow space for coercion to geometry collection if needed*/
-                wkbTemp = (char*)malloc(needLen+9);  
+                wkbTemp = (char*)msSmallMalloc(needLen+9);  
 
                 /* write data above space allocated for geometry collection coercion */
                 wkbBuffer = wkbTemp + 9; 
@@ -1502,7 +1496,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
     if(layer->numitems == 0) 
     {
         snprintf(buffer, sizeof(buffer), "%s.STAsBinary(), convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
-        columns_wanted = _strdup(buffer);
+        columns_wanted = _msStrdup(buffer);
     } 
     else 
     {
@@ -1512,13 +1506,13 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
         snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(), convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
-        columns_wanted = _strdup(buffer);
+        columns_wanted = _msStrdup(buffer);
     }
 
 	/* index_name is ignored here since the hint should be for the spatial index, not the PK index */
     snprintf(buffer, sizeof(buffer), "select %s from %s where %s = %d", columns_wanted, layerinfo->geom_table, layerinfo->urid_name, record);
 
-    query_str = _strdup(buffer);
+    query_str = _msStrdup(buffer);
 
     if(layer->debug) {
         msDebug("msMSSQL2008LayerGetShape: %s \n", query_str);
@@ -1592,7 +1586,7 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
 
     layer->numitems = cols - 1; /* dont include the geometry column */
 
-    layer->items = malloc(sizeof(char *) * (layer->numitems + 1)); /* +1 in case there is a problem finding goeometry column */
+    layer->items = msSmallMalloc(sizeof(char *) * (layer->numitems + 1)); /* +1 in case there is a problem finding goeometry column */
                                                                 /* it will return an error if there is no geometry column found, */
                                                                 /* so this isnt a problem */
 
@@ -1607,7 +1601,7 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
 
         if(strcmp(colBuff, layerinfo->geom_column) != 0) {
             /* this isnt the geometry column */
-            layer->items[item_num] = (char *) malloc(strlen(colBuff) + 1);
+            layer->items[item_num] = (char *) msSmallMalloc(strlen(colBuff) + 1);
             strcpy(layer->items[item_num], colBuff);
             item_num++;
         } else {
@@ -1690,7 +1684,7 @@ int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_na
         char *tmp2 = NULL;
 
         tmp1 = "Error executing MSSQL2008 statement (msMSSQL2008LayerRetrievePK():";
-        tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql) + 1));
+        tmp2 = (char *)msSmallMalloc(sizeof(char)*(strlen(tmp1) + strlen(sql) + 1));
         strcpy(tmp2, tmp1);
         strcat(tmp2, sql);
         msSetError(MS_QUERYERR, tmp2, "msMSSQL2008LayerRetrievePK()");
@@ -1729,7 +1723,7 @@ int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_na
 
         buff[retLen] = 0;
 
-        *urid_name = _strdup(buff);
+        *urid_name = _msStrdup(buff);
     }
 
     return MS_SUCCESS;
@@ -1760,14 +1754,14 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
         if(!tmp) {
             tmp = pos_urid + strlen(pos_urid);
         }
-        *urid_name = (char *) malloc((tmp - (pos_urid + 14)) + 1);
+        *urid_name = (char *) msSmallMalloc((tmp - (pos_urid + 14)) + 1);
         strlcpy(*urid_name, pos_urid + 14, tmp - (pos_urid + 14 + 1));
     }
 
     /* Find the srid */
     pos_srid = strstrIgnoreCase(data, " using SRID=");
     if(!pos_srid) {
-        *user_srid = (char *) malloc(2);
+        *user_srid = (char *) msSmallMalloc(2);
         (*user_srid)[0] = '0';
         (*user_srid)[1] = 0;
     } else {
@@ -1777,7 +1771,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
 
             return MS_FAILURE;
         } else {
-            *user_srid = (char *) malloc(slength + 1);
+            *user_srid = (char *) msSmallMalloc(slength + 1);
             strlcpy(*user_srid, pos_srid + 12, slength+1);
         }
     }
@@ -1789,7 +1783,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
         if(!tmp) {
             tmp = pos_indexHint + strlen(pos_indexHint);
         }
-        *index_name = (char *) malloc((tmp - (pos_indexHint + 13)) + 1);
+        *index_name = (char *) msSmallMalloc((tmp - (pos_indexHint + 13)) + 1);
         strlcpy(*index_name, pos_indexHint + 13, tmp - (pos_indexHint + 13)+1);
     }
 
@@ -1823,21 +1817,21 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
             return MS_FAILURE;
         }
 
-        *geom_column_name = (char *) malloc((pos_geomtype - data) + 1);
+        *geom_column_name = (char *) msSmallMalloc((pos_geomtype - data) + 1);
         strlcpy(*geom_column_name, data, pos_geomtype - data + 1);
 
-        *geom_column_type = (char *) malloc(pos_geomtype2 - pos_geomtype);
+        *geom_column_type = (char *) msSmallMalloc(pos_geomtype2 - pos_geomtype);
         strlcpy(*geom_column_type, pos_geomtype + 1, pos_geomtype2 - pos_geomtype);
     }
     else {
     /* Copy the geometry column name */
-        *geom_column_name = (char *) malloc((pos_scn - data) + 1);
+        *geom_column_name = (char *) msSmallMalloc((pos_scn - data) + 1);
         strlcpy(*geom_column_name, data, pos_scn - data + 1);
-        *geom_column_type = strdup("geometry");
+        *geom_column_type = msStrdup("geometry");
     }
 
     /* Copy out the table name or sub-select clause */
-    *table_name = (char *) malloc((pos_opt - (pos_scn + 6)) + 1);
+    *table_name = (char *) msSmallMalloc((pos_opt - (pos_scn + 6)) + 1);
     strlcpy(*table_name, pos_scn + 6, pos_opt - (pos_scn + 6) + 1);
 
     if(strlen(*table_name) < 1 || strlen(*geom_column_name) < 1) {

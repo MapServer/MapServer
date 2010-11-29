@@ -137,7 +137,7 @@ char *msWrapText(labelObj *label, char *text) {
         numlines = numglyphs / maxlength; /*count total number of lines needed
                                             after splitting*/
         if(numlines>1) {
-            char *newtext = malloc(strlen(text)+numlines+1);
+            char *newtext = msSmallMalloc(strlen(text)+numlines+1);
             char *newtextptr = newtext;
             char *textptr = text;
             int glyphlen = 0, num_cur_glyph = 0;
@@ -213,10 +213,10 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
    
     
     /*length in pixels of each line*/
-    textlinelengths = (int*)malloc(numlines*sizeof(int));
+    textlinelengths = (int*)msSmallMalloc(numlines*sizeof(int));
     
     /*number of spaces that need to be added to each line*/
-    numspacesforpadding = (int*)malloc(numlines*sizeof(int));
+    numspacesforpadding = (int*)msSmallMalloc(numlines*sizeof(int));
     
     /*total number of spaces that need to be added*/
     numspacestoadd=0;
@@ -245,7 +245,7 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
     }
 
     /*allocate new text with room for the additional spaces needed*/
-    newtext = (char*)malloc(strlen(text)+1+numspacestoadd);
+    newtext = (char*)msSmallMalloc(strlen(text)+1+numspacestoadd);
     newtextptr=newtext;
     for(i=0;i<numlines;i++) {
         int j;
@@ -289,7 +289,7 @@ char *msTransformLabelText(mapObj *map, imageObj* image,labelObj *label, char *t
     if(label->encoding)
         newtext = msGetEncodedString(text, label->encoding);
     else
-        newtext=strdup(text);
+        newtext=msStrdup(text);
     
     if(newtext && (label->wrap!='\0' || label->maxlength!=0)) {
         newtext = msWrapText(label, newtext);
@@ -343,11 +343,8 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
 
   if(cacheslot->numlabels == cacheslot->cachesize) { /* just add it to the end */
     cacheslot->labels = (labelCacheMemberObj *) realloc(cacheslot->labels, sizeof(labelCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT));
-    if(!cacheslot->labels) {
-      msSetError(MS_MEMERR, "Realloc() error.", "msAddLabel()");
-      return(MS_FAILURE);
-    }
-   cacheslot->cachesize += MS_LABELCACHEINCREMENT;
+    MS_CHECK_ALLOC(cacheslot->labels, sizeof(labelCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT), MS_FAILURE);
+    cacheslot->cachesize += MS_LABELCACHEINCREMENT;
   }
 
   cachePtr = &(cacheslot->labels[cacheslot->numlabels]);
@@ -379,7 +376,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
     cachePtr->point.y = MS_NINT(labelpath->path.point[i].y);
   }
 
-  cachePtr->text = strdup(string); /* the actual text */
+  cachePtr->text = msStrdup(string); /* the actual text */
 
   /* TODO: perhaps we can get rid of this next section and just store a marker size? Why do we cache the styles for a point layer? */
 
@@ -390,7 +387,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
   cachePtr->numstyles = 0;
   if(layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) {
     cachePtr->numstyles = classPtr->numstyles;
-    cachePtr->styles = (styleObj *) malloc(sizeof(styleObj)*classPtr->numstyles);
+    cachePtr->styles = (styleObj *) msSmallMalloc(sizeof(styleObj)*classPtr->numstyles);
     if (classPtr->numstyles > 0) {
       for(i=0; i<classPtr->numstyles; i++) {
 	initStyle(&(cachePtr->styles[i]));
@@ -407,7 +404,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
 
   cachePtr->featuresize = featuresize;
 
-  cachePtr->poly = (shapeObj *) malloc(sizeof(shapeObj));
+  cachePtr->poly = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
   msInitShape(cachePtr->poly);
 
   cachePtr->status = MS_FALSE;
@@ -418,16 +415,13 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
 
     if(cacheslot->nummarkers == cacheslot->markercachesize) { /* just add it to the end */
       cacheslot->markers = (markerCacheMemberObj *) realloc(cacheslot->markers, sizeof(markerCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT));
-      if(!cacheslot->markers) {
-	msSetError(MS_MEMERR, "Realloc() error.", "msAddLabel()");
-	return(MS_FAILURE);
-      }
+      MS_CHECK_ALLOC(cacheslot->markers, sizeof(markerCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT), MS_FAILURE); 
       cacheslot->markercachesize+=MS_LABELCACHEINCREMENT;
     }
 
     i = cacheslot->nummarkers;
 
-    cacheslot->markers[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
+    cacheslot->markers[i].poly = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
     msInitShape(cacheslot->markers[i].poly);
 
     /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
@@ -685,6 +679,7 @@ int msGetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size, 
             }
 
             *advances = (double*)malloc( strlen(string) * sizeof(double) );
+            MS_CHECK_ALLOC(*advances, strlen(string) * sizeof(double), MS_FAILURE);
             s = strex.xshow;
             k = 0;
             while ( *s && k < strlen(string) ) {

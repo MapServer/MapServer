@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed: Memory allocation results should always be checked (#3559)
+
 - Fixed free(): invalid next size in mapfile.c (#3604)
 
 - Added a built-in OpenLayers map viewer (#3549)

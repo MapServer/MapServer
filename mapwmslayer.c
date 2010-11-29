@@ -174,7 +174,7 @@ static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams)
     }
 
     bufferSize = nLen+1;
-    pszURL = (char*)malloc(bufferSize);
+    pszURL = (char*)msSmallMalloc(bufferSize);
 
     /* Start with the onlineresource value and append trailing '?' or '&' 
      * if missing.
@@ -267,7 +267,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
         return MS_FAILURE;
     }
 
-    psWMSParams->onlineresource = strdup(pszOnlineResource);
+    psWMSParams->onlineresource = msStrdup(pszOnlineResource);
 
     if (strncmp(pszVersion, "1.0.7", 5) < 0) 
         pszVersionKeyword = "WMTVER";
@@ -502,7 +502,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     {
         /* CONNECTION string seems complete, start with that. */
         char *pszDelimiter;
-        psWMSParams->onlineresource = strdup(lp->connection);
+        psWMSParams->onlineresource = msStrdup(lp->connection);
 
         /* Fetch version info */
         pszVersion = strchr(pszVersion, '=')+1;
@@ -557,7 +557,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * ------------------------------------------------------------------ */
     if ((pszEPSG = (char*)msOWSGetEPSGProj(&(map->projection), 
                                            NULL, NULL, MS_TRUE)) != NULL &&
-        (pszEPSG = strdup(pszEPSG)) != NULL &&
+        (pszEPSG = msStrdup(pszEPSG)) != NULL &&
         (strncasecmp(pszEPSG, "EPSG:", 5) == 0 ||
          strncasecmp(pszEPSG, "AUTO:", 5) == 0) )
     {
@@ -593,7 +593,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     if (pszEPSG == NULL &&
         ((pszEPSG = (char*)msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
                                             "MO", MS_TRUE)) == NULL ||
-         (pszEPSG = strdup(pszEPSG)) == NULL ||
+         (pszEPSG = msStrdup(pszEPSG)) == NULL ||
          (strncasecmp(pszEPSG, "EPSG:", 5) != 0 &&
           strncasecmp(pszEPSG, "AUTO:", 5) != 0 ) ) )
     {
@@ -616,7 +616,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         oPoint.y = (map->extent.miny + map->extent.maxy)/2.0;
         msProjectPoint(&(map->projection), &(map->latlon), &oPoint);
 
-        pszNewEPSG = (char*)malloc(101*sizeof(char));
+        pszNewEPSG = (char*)msSmallMalloc(101*sizeof(char));
 
         snprintf(pszNewEPSG, 100, "%s,9001,%.16g,%.16g", 
                  pszEPSG, oPoint.x, oPoint.y);
@@ -1044,7 +1044,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
                                        "MO", "proxy_host")) != NULL)
     {
-        pszProxyHost = strdup(pszTmp);
+        pszProxyHost = msStrdup(pszTmp);
     }
     
     if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
@@ -1094,7 +1094,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
                                        "MO", "proxy_username")) != NULL)
     {
-        pszProxyUsername = strdup(pszTmp);
+        pszProxyUsername = msStrdup(pszTmp);
     }
     
     if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
@@ -1130,7 +1130,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
                                        "MO", "auth_username")) != NULL)
     {
-        pszHttpAuthUsername = strdup(pszTmp);
+        pszHttpAuthUsername = msStrdup(pszTmp);
     }
     
     if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
@@ -1227,12 +1227,12 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
             pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
             if(pszTmp != NULL)
             {
-                pszHTTPCookieData = strdup(pszTmp);
+                pszHTTPCookieData = msStrdup(pszTmp);
             }
         }
         else
         {
-            pszHTTPCookieData = strdup(pszTmp);
+            pszHTTPCookieData = msStrdup(pszTmp);
         }
     }
     else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata), 
@@ -1243,12 +1243,12 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
             pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
             if(pszTmp != NULL)
             {
-                pszHTTPCookieData = strdup(pszTmp);
+                pszHTTPCookieData = msStrdup(pszTmp);
             }
         }
         else
         {
-            pszHTTPCookieData = strdup(pszTmp);
+            pszHTTPCookieData = msStrdup(pszTmp);
         }
     }
 
@@ -1283,11 +1283,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
                 nLen = strlen(value1) + strlen(value2) +2;
                 pszBuf = malloc(nLen);
-                if (pszBuf == NULL)
-                {
-                    msSetError(MS_MEMERR, NULL, "msPrepareWMSLayerRequest()");
-                    return MS_FAILURE;
-                }
+                MS_CHECK_ALLOC(pszBuf, nLen, MS_FAILURE);
 
                 snprintf(pszBuf, nLen, "%s,%s", value1, value2);
                 msSetWMSParamString(&sThisWMSParams, keys[i], pszBuf,MS_FALSE);
@@ -1539,7 +1535,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     if( mem_filename != NULL )
         lp->data = mem_filename;
     else
-        lp->data =  strdup(pasReqInfo[iReq].pszOutputFile);
+        lp->data =  msStrdup(pasReqInfo[iReq].pszOutputFile);
 
     /* #3138 If PROCESSING "RESAMPLE=..." is set we cannot use the simple case */
     if (!msProjectionsDiffer(&(map->projection), &(lp->projection)) && 

@@ -160,6 +160,26 @@ typedef ms_uint32 *     ms_bitarray;
 extern "C" {
 #endif
 
+/* Memory allocation check utility */
+
+#ifndef __FUNCTION__
+#   define __FUNCTION__ "MapServer"
+#endif
+
+#define MS_CHECK_ALLOC(var, size, retval)     \
+    if (!var) {   \
+        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", __FUNCTION__, \
+                   __FILE__, __LINE__, size);  \
+        return retval;                         \
+    }
+
+#define MS_CHECK_ALLOC_NO_RET(var, size)                                   \
+    if (!var) {                                                       \
+        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", __FUNCTION__, \
+                   __FILE__, __LINE__, size);                           \
+        return;                                                         \
+    }
+
 /* General defines, wrapable */
 
 #define MS_TRUE 1 /* logical control variables */
@@ -1835,6 +1855,8 @@ MS_DLL_EXPORT size_t strlcat(char *dst, const char *src, size_t siz);
 MS_DLL_EXPORT size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif /* NEED_STRLCAT */
 
+MS_DLL_EXPORT char *msStrdup( const char * pszString );
+
 /* in mapsymbol.c */
 /* Use this function *only* with mapfile loading phase */
 MS_DLL_EXPORT int loadSymbolSet(symbolSetObj *symbolset, mapObj *map);
@@ -2141,6 +2163,10 @@ MS_DLL_EXPORT int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image
 /* ==================================================================== */
 /*      Prototypes for functions in maputil.c                           */
 /* ==================================================================== */
+
+MS_DLL_EXPORT void *msSmallMalloc( size_t nSize );
+MS_DLL_EXPORT void * msSmallRealloc( void * pData, size_t nNewSize );
+MS_DLL_EXPORT void *msSmallCalloc( size_t nCount, size_t nSize );
 
 MS_DLL_EXPORT int msExtentsOverlap(mapObj *map, layerObj *layer);
 

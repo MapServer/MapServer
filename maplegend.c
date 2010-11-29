@@ -69,9 +69,9 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   }
   
   /* initialize the box used for polygons and for outlines */
-  box.line = (lineObj *)malloc(sizeof(lineObj));
+  box.line = (lineObj *)msSmallMalloc(sizeof(lineObj));
   box.numlines = 1;
-  box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
+  box.line[0].point = (pointObj *)msSmallMalloc(sizeof(pointObj)*5);
   box.line[0].numpoints = 5;
 
   box.line[0].point[0].x = dstX + 0.5;
@@ -167,9 +167,9 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     if (theclass->numstyles > 0) {
       offset = (theclass->styles[0]->size != -1) ? theclass->styles[0]->size/2 : theclass->styles[0]->width/2;
     }
-    zigzag.line = (lineObj *)malloc(sizeof(lineObj));
+    zigzag.line = (lineObj *)msSmallMalloc(sizeof(lineObj));
     zigzag.numlines = 1;
-    zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
+    zigzag.line[0].point = (pointObj *)msSmallMalloc(sizeof(pointObj)*4);
     zigzag.line[0].numpoints = 4;
 
     zigzag.line[0].point[0].x = dstX + offset;
@@ -338,7 +338,7 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
        if(map->legend.label.encoding || map->legend.label.wrap)
          transformedText = msTransformLabelText(map,NULL,&map->legend.label, lp->class[j]->name);
        else
-         transformedText = strdup(lp->class[j]->name);
+         transformedText = msStrdup(lp->class[j]->name);
 
        if(transformedText == NULL || 
     		   msGetLabelSize(map, &map->legend.label, transformedText, map->legend.label.size, &rect, NULL) != MS_SUCCESS) { /* something bad happened */
@@ -433,7 +433,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
         if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom)) continue;
         if((lp->class[j]->minscaledenom > 0) && (map->scaledenom <= lp->class[j]->minscaledenom)) continue;
       }
-      cur = (legendlabel*) malloc(sizeof(legendlabel));
+      cur = (legendlabel*) msSmallMalloc(sizeof(legendlabel));
             
       /*
        * apply encoding and line wrapping to the legend label if requested
@@ -565,10 +565,8 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   /* copy renderered legend image into symbol */
   legendSymbol->pixmap_buffer = calloc(1,sizeof(rasterBufferObj));
-  if(!legendSymbol->pixmap_buffer) {
-	  msSetError(MS_MEMERR,"allocation failure","msEmbedLegend()");
-	  return MS_FAILURE;
-  }
+  MS_CHECK_ALLOC(legendSymbol->pixmap_buffer, sizeof(rasterBufferObj), MS_FAILURE);
+
   if(MS_SUCCESS != renderer->getRasterBufferCopy(image,legendSymbol->pixmap_buffer))
 	  return MS_FAILURE;
   legendSymbol->renderer = renderer;
@@ -578,7 +576,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   if(!legendSymbol->pixmap_buffer) return(-1); /* something went wrong creating scalebar */
 
   legendSymbol->type = MS_SYMBOL_PIXMAP; /* intialize a few things */
-  legendSymbol->name = strdup("legend");  
+  legendSymbol->name = msStrdup("legend");  
   legendSymbol->sizex = legendSymbol->pixmap_buffer->width;
   legendSymbol->sizey = legendSymbol->pixmap_buffer->height;
 
@@ -620,7 +618,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
     l = map->numlayers;
     map->numlayers++;
     if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
-    GET_LAYER(map, l)->name = strdup("__embed__legend");
+    GET_LAYER(map, l)->name = msStrdup("__embed__legend");
     GET_LAYER(map, l)->type = MS_LAYER_ANNOTATION;
 
     if(msGrowLayerClasses( GET_LAYER(map, l) ) == NULL)

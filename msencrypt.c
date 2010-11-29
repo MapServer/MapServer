@@ -72,11 +72,8 @@ int main(int argc, char *argv[])
         }
 
         pszBuf = (char*)malloc((strlen(argv[3])*2+17)*sizeof(char));
-        if (pszBuf == NULL)
-        {
-            printf("ERROR: Memory Allocation failed!\n");
-            return -1;
-        }
+        MS_CHECK_ALLOC(pszBuf, (strlen(argv[3])*2+17)*sizeof(char), -1);
+
         msEncryptStringWithKey(key, argv[3], pszBuf);
 
         printf("%s\n", pszBuf);

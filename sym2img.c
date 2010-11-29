@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   p.line[0].numpoints = 4;
 
   /* Initialize the symbol and font sets */
-  symbolSet.filename = strdup(argv[1]);
+  symbolSet.filename = msStrdup(argv[1]);
 
   /* 
   ** load the symbol file

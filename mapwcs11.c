@@ -114,7 +114,7 @@ int msWCSException11(mapObj *map, const char *locator,
 static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
 
 {
-    char *format_list = strdup("");
+    char *format_list = msStrdup("");
     char **tokens = NULL, **formats = NULL;
     int  i, numtokens = 0, numformats;
     const char *value;
@@ -143,7 +143,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
               case MS_RENDER_WITH_GD:
               case MS_RENDER_WITH_AGG:
               case MS_RENDER_WITH_RAWDATA:
-                tokens[numtokens++] = strdup(map->outputformatlist[i]->name);
+                tokens[numtokens++] = msStrdup(map->outputformatlist[i]->name);
                 break;
                 
                 /* rest of formats aren't really WCS compatible */
@@ -202,7 +202,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
             continue;
         }
         
-        formats[numformats++] = strdup(mimetype);
+        formats[numformats++] = msStrdup(mimetype);
     }
 
     msFreeCharArray(tokens,numtokens);
@@ -382,7 +382,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      Build list of layer identifiers available.                      */
 /* -------------------------------------------------------------------- */
-    identifier_list = strdup("");
+    identifier_list = msStrdup("");
     for(i=0; i<map->numlayers; i++)
     {
         layerObj *layer = map->layers[i];
@@ -426,7 +426,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
       xmlNewProp(psRootNode, BAD_CAST "updateSequence", BAD_CAST updatesequence);
 
     schemaLocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    xsi_schemaLocation = strdup("http://www.opengis.net/wcs/1.1");
+    xsi_schemaLocation = msStrdup("http://www.opengis.net/wcs/1.1");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemaLocation);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/wcs/1.1/wcsGetCapabilities.xsd ");
@@ -914,7 +914,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
 
     schemaLocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    xsi_schemaLocation = strdup("http://www.opengis.net/wcs/1.1");
+    xsi_schemaLocation = msStrdup("http://www.opengis.net/wcs/1.1");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemaLocation);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/wcs/1.1/wcsDescribeCoverage.xsd ");
@@ -1012,7 +1012,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
     if( value == NULL )
         return MS_SUCCESS;
 
-    rangesubset = strdup(value);
+    rangesubset = msStrdup(value);
 
 /* -------------------------------------------------------------------- */
 /*      What is the <Field identifier=...> (rangeset_name)?             */
@@ -1020,7 +1020,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
     value = msOWSLookupMetadata( &(lp->metadata), "COM", "rangeset_name" );
     if( value == NULL )
         value = "raster";
-    field_id = strdup(value);
+    field_id = msStrdup(value);
 
 /* -------------------------------------------------------------------- */
 /*      What is the <Axis identifier=...> (bands_name)?                 */
@@ -1057,7 +1057,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
     if( *value == ':' )
     {
         assert( params->interpolation == NULL );
-        params->interpolation = strdup(value+1);
+        params->interpolation = msStrdup(value+1);
         for( i = 0; params->interpolation[i] != '\0'; i++ )
         {
             if( params->interpolation[i] == '[' )
@@ -1095,7 +1095,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
 /* -------------------------------------------------------------------- */
     value += strlen(axis_id) + 1;
 
-    *p_bandlist = strdup(value);
+    *p_bandlist = msStrdup(value);
 
     for( i = 0; (*p_bandlist)[i] != '\0'; i++ )
     {
@@ -1157,7 +1157,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
             != NULL )
         {
 /*            CleanVSIDir( "/vsimem/wcsout" ); */
-            filename = strdup(CPLFormFilename("/vsimem/wcsout", 
+            filename = msStrdup(CPLFormFilename("/vsimem/wcsout", 
                                               "out", pszExtension ));
 
             msReleaseLock( TLOCK_GDAL );

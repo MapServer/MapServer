@@ -163,7 +163,7 @@ faceCacheObj *getFontFace(cairoCacheData *cache, char *font) {
     cairo_font_face_set_user_data (newface->face, &newface->facekey,
             &(newface->ftface), (cairo_destroy_func_t) FT_Done_Face);
 
-    newface->path = strdup(font);
+    newface->path = msStrdup(font);
     return newface;
 }
 

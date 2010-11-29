@@ -236,11 +236,11 @@ mapObj *loadMap(void)
     }
 
     /* runtime subtitution string */
-    tmpstr = (char *)malloc(sizeof(char)*strlen(mapserv->request->ParamNames[i]) + 3);
+    tmpstr = (char *)msSmallMalloc(sizeof(char)*strlen(mapserv->request->ParamNames[i]) + 3);
     sprintf(tmpstr,"%%%s%%", mapserv->request->ParamNames[i]);
 
     /* validation pattern metadata key */
-    key = (char *)malloc(sizeof(char)*strlen(mapserv->request->ParamNames[i]) + 20);
+    key = (char *)msSmallMalloc(sizeof(char)*strlen(mapserv->request->ParamNames[i]) + 20);
     sprintf(key,"%s_validation_pattern", mapserv->request->ParamNames[i]);
         
     for(j=0; j<map->numlayers; j++) {
@@ -333,12 +333,12 @@ void loadForm(void)
     
     
     if(strcasecmp(mapserv->request->ParamNames[i],"icon") == 0) {      
-      mapserv->icon = strdup(mapserv->request->ParamValues[i]);
+      mapserv->icon = msStrdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
     if(strcasecmp(mapserv->request->ParamNames[i],"queryfile") == 0) {      
-      QueryFile = strdup(mapserv->request->ParamValues[i]);
+      QueryFile = msStrdup(mapserv->request->ParamValues[i]);
       continue;
     }
     
@@ -799,9 +799,9 @@ void loadForm(void)
             writeError();
 
           if(GET_LAYER(mapserv->map, mapserv->NumLayers)->name) {
-            mapserv->Layers[mapserv->NumLayers] = strdup(GET_LAYER(mapserv->map, mapserv->NumLayers)->name);
+            mapserv->Layers[mapserv->NumLayers] = msStrdup(GET_LAYER(mapserv->map, mapserv->NumLayers)->name);
           } else {
-            mapserv->Layers[mapserv->NumLayers] = strdup("");
+            mapserv->Layers[mapserv->NumLayers] = msStrdup("");
           }
         }
       } else {
@@ -812,7 +812,7 @@ void loadForm(void)
         for(l=0; l<num_layers; l++) {
           if(msGrowMapservLayers(mapserv) == MS_FAILURE)
             writeError();
-          mapserv->Layers[mapserv->NumLayers++] = strdup(layers[l]);
+          mapserv->Layers[mapserv->NumLayers++] = msStrdup(layers[l]);
         }
 
         msFreeCharArray(layers, num_layers);
@@ -825,34 +825,34 @@ void loadForm(void)
     if(strncasecmp(mapserv->request->ParamNames[i],"layer", 5) == 0) { /* turn a single layer/group on */
       if(msGrowMapservLayers(mapserv) == MS_FAILURE)
         writeError();
-      mapserv->Layers[mapserv->NumLayers] = strdup(mapserv->request->ParamValues[i]);
+      mapserv->Layers[mapserv->NumLayers] = msStrdup(mapserv->request->ParamValues[i]);
       mapserv->NumLayers++;
       continue;
     }
 
     if(strcasecmp(mapserv->request->ParamNames[i],"qlayer") == 0) { /* layer to query (i.e search) */
-      QueryLayer = strdup(mapserv->request->ParamValues[i]);
+      QueryLayer = msStrdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
     if(strcasecmp(mapserv->request->ParamNames[i],"qitem") == 0) { /* attribute to query on (optional) */
-      QueryItem = strdup(mapserv->request->ParamValues[i]);
+      QueryItem = msStrdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
     if(strcasecmp(mapserv->request->ParamNames[i],"qstring") == 0) { /* attribute query string */
-      QueryString = strdup(mapserv->request->ParamValues[i]);
+      QueryString = msStrdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
     if(strcasecmp(mapserv->request->ParamNames[i],"qformat") == 0) { /* format to apply to query results (shortcut instead of having to use "map.web=QUERYFORMAT+foo") */
       if(mapserv->map->web.queryformat) free(mapserv->map->web.queryformat); /* avoid leak */
-      mapserv->map->web.queryformat = strdup(mapserv->request->ParamValues[i]);
+      mapserv->map->web.queryformat = msStrdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
     if(strcasecmp(mapserv->request->ParamNames[i],"slayer") == 0) { /* layer to select (for feature based search) */
-      SelectLayer = strdup(mapserv->request->ParamValues[i]);
+      SelectLayer = msStrdup(mapserv->request->ParamValues[i]);
       continue;
     }
 
@@ -889,7 +889,7 @@ void loadForm(void)
         writeError();
       }
       mapserv->CoordSource = FROMTILE;
-      mapserv->TileCoords = strdup(mapserv->request->ParamValues[i]);
+      mapserv->TileCoords = msStrdup(mapserv->request->ParamValues[i]);
       
       continue;
     }
@@ -1209,8 +1209,8 @@ int main(int argc, char *argv[]) {
     mapserv = msAllocMapServObj();
     mapserv->sendheaders = sendheaders; /* override the default if necessary (via command line -nh switch) */
 
-    mapserv->request->ParamNames = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
-    mapserv->request->ParamValues = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
+    mapserv->request->ParamNames = (char **) msSmallMalloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
+    mapserv->request->ParamValues = (char **) msSmallMalloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
     if(mapserv->request->ParamNames==NULL || mapserv->request->ParamValues==NULL) {
       msSetError(MS_MEMERR, NULL, "mapserv()");
       writeError();
@@ -1586,8 +1586,8 @@ int main(int argc, char *argv[]) {
             setExtent(mapserv); /* set user area of interest */
 
 	  mapserv->map->query.type = MS_QUERY_BY_ATTRIBUTE;
-          if(QueryItem) mapserv->map->query.item = strdup(QueryItem);
-          if(QueryString) mapserv->map->query.str = strdup(QueryString);
+          if(QueryItem) mapserv->map->query.item = msStrdup(QueryItem);
+          if(QueryString) mapserv->map->query.str = msStrdup(QueryString);
 
           mapserv->map->query.rect = mapserv->map->extent;
 
@@ -1680,8 +1680,8 @@ int main(int argc, char *argv[]) {
 
 	  mapserv->map->query.type = MS_QUERY_BY_ATTRIBUTE;
 	  mapserv->map->query.layer = QueryLayerIndex;
-          if(QueryItem) mapserv->map->query.item = strdup(QueryItem);
-          if(QueryString) mapserv->map->query.str = strdup(QueryString);
+          if(QueryItem) mapserv->map->query.item = msStrdup(QueryItem);
+          if(QueryString) mapserv->map->query.str = msStrdup(QueryString);
 
 	  mapserv->map->query.rect = mapserv->map->extent;
 

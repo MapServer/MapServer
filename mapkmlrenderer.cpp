@@ -257,13 +257,13 @@ char* KmlRenderer::getLayerName(layerObj *layer)
 
      name = msLookupHashTable(&layer->metadata, "ows_name");
      if (name && strlen(name) > 0)
-       return strdup(name);
+       return msStrdup(name);
 
     if (layer->name && strlen(layer->name) > 0)
-      return strdup(layer->name);
+      return msStrdup(layer->name);
 
      sprintf(stmp, "Layer%d",layer->index);
-     return strdup(stmp); 
+     return msStrdup(stmp); 
 
 }
 
@@ -386,9 +386,9 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
      NumItems = layer->numitems;
      if (NumItems)
      {
-         Items = (char **)calloc(NumItems, sizeof(char *));
+         Items = (char **)msSmallCalloc(NumItems, sizeof(char *));
          for (int i=0; i<NumItems; i++)
-           Items[i] = strdup(layer->items[i]);
+           Items[i] = msStrdup(layer->items[i]);
      }
 
     
@@ -435,7 +435,7 @@ int KmlRenderer::mergeRasterBuffer(imageObj *image, rasterBufferObj *rb) {
       msInitializeRendererVTable(aggFormat);
 
      msSaveRasterBuffer(rb,tmpFile,aggFormat);
-     tmpUrl = strdup( image->imageurl);
+     tmpUrl = msStrdup( image->imageurl);
      tmpUrl = msStringConcatenate(tmpUrl, (char *)(msGetBasename(tmpFileName)));
      tmpUrl = msStringConcatenate(tmpUrl, ".png");
         
@@ -1166,12 +1166,12 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
         char *pszTmp=NULL;
         char *pszTmpDesc = NULL;
         size_t bufferSize = 0;
-        pszTmpDesc = strdup(pszLayerDescMetadata);
+        pszTmpDesc = msStrdup(pszLayerDescMetadata);
         
         for (int i=0; i<currentLayer->numitems; i++)
         {
             bufferSize = strlen(currentLayer->items[i]) + 3;
-            pszTmp = (char *)malloc(bufferSize);
+            pszTmp = (char *)msSmallMalloc(bufferSize);
             snprintf(pszTmp, bufferSize, "%%%s%%",currentLayer->items[i]);
             if (strcasestr(pszTmpDesc, pszTmp))
               pszTmpDesc = msCaseReplaceSubstring(pszTmpDesc,  pszTmp, shape->values[i]);
@@ -1237,9 +1237,9 @@ void KmlRenderer::addLineStyleToList(strokeStyleObj *style)
     {
         numLineStyle++;
         if (LineStyle == NULL)
-          LineStyle = (strokeStyleObj *)malloc(sizeof(strokeStyleObj));
+          LineStyle = (strokeStyleObj *)msSmallMalloc(sizeof(strokeStyleObj));
         else
-          LineStyle = (strokeStyleObj *)realloc(LineStyle, sizeof(strokeStyleObj)*numLineStyle);
+          LineStyle = (strokeStyleObj *)msSmallRealloc(LineStyle, sizeof(strokeStyleObj)*numLineStyle);
 
         memcpy(&LineStyle[numLineStyle-1], style, sizeof(strokeStyleObj));
     }

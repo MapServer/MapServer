@@ -166,9 +166,9 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         image->resolution = map->resolution;
         image->resolutionfactor = map->resolution/map->defresolution;
         if (map->web.imagepath)
-            image->imagepath = strdup(map->web.imagepath);
+            image->imagepath = msStrdup(map->web.imagepath);
         if (map->web.imageurl)
-            image->imageurl = strdup(map->web.imageurl);
+            image->imageurl = msStrdup(map->web.imageurl);
 
 	}
     else if( MS_RENDERER_IMAGEMAP(map->outputformat) )

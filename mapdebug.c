@@ -92,12 +92,16 @@ debugInfoObj *msGetDebugInfoObj()
         debugInfoObj *new_link;
 
         new_link = (debugInfoObj *) malloc(sizeof(debugInfoObj));
-        new_link->next = debuginfo_list;
-        new_link->thread_id = thread_id;
-        new_link->global_debug_level = MS_DEBUGLEVEL_ERRORSONLY;
-        new_link->debug_mode = MS_DEBUGMODE_OFF;
-        new_link->errorfile = NULL;
-        new_link->fp = NULL;
+        if (new_link != NULL) 
+        {
+            new_link->next = debuginfo_list;
+            new_link->thread_id = thread_id;
+            new_link->global_debug_level = MS_DEBUGLEVEL_ERRORSONLY;
+            new_link->debug_mode = MS_DEBUGMODE_OFF;
+            new_link->errorfile = NULL;
+            new_link->fp = NULL;
+        } else
+            msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGetDebugInfoObj()", sizeof(debugInfoObj));
 
         debuginfo_list = new_link;
     }
@@ -131,7 +135,7 @@ int msSetErrorFile(const char *pszErrorFile)
 {
     debugInfoObj *debuginfo = msGetDebugInfoObj();
 
-    if (debuginfo->errorfile && pszErrorFile &&
+    if (debuginfo && debuginfo->errorfile && pszErrorFile &&
         strcmp(debuginfo->errorfile, pszErrorFile) == 0)
     {
         /* Nothing to do, already writing to the right place */
@@ -148,7 +152,7 @@ int msSetErrorFile(const char *pszErrorFile)
     if (strcmp(pszErrorFile, "stderr") == 0)
     {
         debuginfo->fp = stderr;
-        debuginfo->errorfile = strdup(pszErrorFile);
+        debuginfo->errorfile = msStrdup(pszErrorFile);
         debuginfo->debug_mode = MS_DEBUGMODE_STDERR;
 #if defined(NEED_NONBLOCKING_STDERR) && !defined(USE_MAPIO) && !defined(_WIN32)
         fcntl(fileno(stderr), F_SETFL, O_NONBLOCK);
@@ -158,13 +162,13 @@ int msSetErrorFile(const char *pszErrorFile)
     else if (strcmp(pszErrorFile, "stdout") == 0)
     {
         debuginfo->fp = stdout;
-        debuginfo->errorfile = strdup(pszErrorFile);
+        debuginfo->errorfile = msStrdup(pszErrorFile);
         debuginfo->debug_mode = MS_DEBUGMODE_STDOUT;
     }
     else if (strcmp(pszErrorFile, "windowsdebug") == 0)
     {
 #ifdef _WIN32
-        debuginfo->errorfile = strdup(pszErrorFile);
+        debuginfo->errorfile = msStrdup(pszErrorFile);
         debuginfo->fp = NULL;
         debuginfo->debug_mode = MS_DEBUGMODE_WINDOWSDEBUG;
 #else
@@ -180,7 +184,7 @@ int msSetErrorFile(const char *pszErrorFile)
             msSetError(MS_MISCERR, "Failed to open MS_ERRORFILE %s", "msSetErrorFile()", pszErrorFile);
             return MS_FAILURE;
         }
-        debuginfo->errorfile = strdup(pszErrorFile);
+        debuginfo->errorfile = msStrdup(pszErrorFile);
         debuginfo->debug_mode = MS_DEBUGMODE_FILE;
     }
 

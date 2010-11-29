@@ -64,7 +64,7 @@ int msCopyProjection(projectionObj *dst, projectionObj *src) {
 
     for (i = 0; i < dst->numargs; i++) {
         /* Our destination consists of unallocated pointers */
-        dst->args[i] = strdup(src->args[i]);
+        dst->args[i] = msStrdup(src->args[i]);
     }
     if (dst->numargs != 0) {
         if (msProcessProjection(dst) != MS_SUCCESS)

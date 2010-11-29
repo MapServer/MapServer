@@ -276,7 +276,7 @@ int pieLayerProcessDynamicDiameter(layerObj *layer) {
     chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );
     if(chartRangeProcessingKey==NULL)
         return MS_FALSE;
-    attrib = malloc(strlen(chartRangeProcessingKey)+1);
+    attrib = msSmallMalloc(strlen(chartRangeProcessingKey)+1);
     switch(sscanf(chartRangeProcessingKey,"%s %f %f %f %f",attrib,
                 &mindiameter,&maxdiameter,&minvalue,&maxvalue))
     {
@@ -308,8 +308,8 @@ int pieLayerProcessDynamicDiameter(layerObj *layer) {
     }
     initStyle(newstyle);
     newclass->numstyles++;
-    newclass->name=(char*)strdup("__MS_SIZE_ATTRIBUTE_");
-    newstyle->bindings[MS_STYLE_BINDING_SIZE].item=strdup(attrib);
+    newclass->name=(char*)msStrdup("__MS_SIZE_ATTRIBUTE_");
+    newstyle->bindings[MS_STYLE_BINDING_SIZE].item=msStrdup(attrib);
     newstyle->numbindings++;
     free(attrib);
 
@@ -342,14 +342,24 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     else
     {
         if(sscanf(chartSizeProcessingKey ,"%f",&diameter)!=1) {
-            msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawChartLayer()");
+            msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawPieChartLayer()");
             return MS_FAILURE;
         }
     }
     /* step through the target shapes */
     msInitShape(&shape);
+
     values=(float*)calloc(numvalues,sizeof(float));
+    MS_CHECK_ALLOC(values, numvalues*sizeof(float), MS_FAILURE);
     styles = (styleObj**)malloc((numvalues)*sizeof(styleObj*));
+    if (styles == NULL)
+    {
+        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawPieChartLayer()",
+                   __FILE__, __LINE__, numvalues*sizeof(styleObj*)); 
+        free(values);
+        return MS_FAILURE;
+    }
+
     if(chartRangeProcessingKey!=NULL) 
         numvalues--;
     while(MS_SUCCESS == getNextShape(map,layer,values,styles,&shape)) {
@@ -400,20 +410,30 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     else
     {
         if(sscanf(chartSizeProcessingKey ,"%f",&barWidth) != 1) {
-            msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawChartLayer()");
+            msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawVBarChartLayer()");
             return MS_FAILURE;
         }
     }
 
     if(chartScaleProcessingKey){
         if(sscanf(chartScaleProcessingKey,"%f",&scale)!=1) {
-            msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_SCALE\"", "msDrawBarChartLayerGD()");
+            msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_SCALE\"", "msDrawVBarChartLayer()");
             return MS_FAILURE;
         }
     }
     msInitShape(&shape);
+
     values=(float*)calloc(numvalues,sizeof(float));
+    MS_CHECK_ALLOC(values, numvalues*sizeof(float), MS_FAILURE);
     styles = (styleObj**)malloc(numvalues*sizeof(styleObj*));
+    if (styles == NULL)
+    {
+        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawVBarChartLayer()",
+                   __FILE__, __LINE__, numvalues*sizeof(styleObj*)); 
+        free(values);
+        return MS_FAILURE;
+    }
+
     while(MS_SUCCESS == getNextShape(map,layer,values,styles,&shape)) {
         int i;
         double h=0;
@@ -462,37 +482,47 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
                 height = width;
                 break;
             default:
-                msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawChartLayer()");
+                msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawBarChartLayer()");
                 return MS_FAILURE;
         }
     }
 
     if(barMax){
         if(sscanf(barMax,"%f",&barMaxVal)!=1) {
-            msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_BAR_MAXVAL\"", "msDrawBarChartLayerGD()");
+            msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_BAR_MAXVAL\"", "msDrawBarChartLayer()");
             return MS_FAILURE;
         }
     }
     if(barMin) {
         if(sscanf(barMin,"%f",&barMinVal)!=1) {
-            msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_BAR_MINVAL\"", "msDrawBarChartLayerGD()");
+            msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_BAR_MINVAL\"", "msDrawBarChartLayer()");
             return MS_FAILURE;
         }
     }
     if(barMin && barMax && barMinVal>=barMaxVal) {
-        msSetError(MS_MISCERR, "\"CHART_BAR_MINVAL\" must be less than \"CHART_BAR_MAXVAL\"", "msDrawBarChartLayerGD()");
+        msSetError(MS_MISCERR, "\"CHART_BAR_MINVAL\" must be less than \"CHART_BAR_MAXVAL\"", "msDrawBarChartLayer()");
         return MS_FAILURE;
     }
     barWidth=(float)width/(float)layer->numclasses;
     if(!barWidth)
     {
-        msSetError(MS_MISCERR, "Specified width of chart too small to fit given number of classes", "msDrawBarChartLayerGD()");
+        msSetError(MS_MISCERR, "Specified width of chart too small to fit given number of classes", "msDrawBarChartLayer()");
         return MS_FAILURE;
     }
 
     msInitShape(&shape);
+
     values=(float*)calloc(numvalues,sizeof(float));
+    MS_CHECK_ALLOC(values, numvalues*sizeof(float), MS_FAILURE);
     styles = (styleObj**)malloc(numvalues*sizeof(styleObj*));
+    if (styles == NULL)
+    {
+        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawBarChartLayer()",
+                   __FILE__, __LINE__, numvalues*sizeof(styleObj*)); 
+        free(values);
+        return MS_FAILURE;
+    }
+
     while(MS_SUCCESS == getNextShape(map,layer,values,styles,&shape)) {
         msDrawStartShape(map, layer, image, &shape);
         if(findChartPoint(map, &shape, width,height, &center)==MS_SUCCESS) {

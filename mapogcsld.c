@@ -253,7 +253,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                                           continue; 
                                         snprintf(szTmp, sizeof(szTmp), "%s_alias", GET_LAYER(map, i)->items[z]); 
                                         pszFullName = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "G", szTmp); 
-                                        pszTmp1 = strdup( GET_LAYER(map, i)->class[iClass]->text.string);
+                                        pszTmp1 = msStrdup( GET_LAYER(map, i)->class[iClass]->text.string);
                                         if (pszFullName != NULL && (strstr(pszTmp1, pszFullName) != NULL)) 
                                         { 
                                             char *tmpstr1= NULL; 
@@ -287,7 +287,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                             {
                                 if ( GET_LAYER(map, i)->classgroup)
                                   msFree( GET_LAYER(map, i)->classgroup);
-                                GET_LAYER(map, i)->classgroup = strdup(pasLayers[j].classgroup);
+                                GET_LAYER(map, i)->classgroup = msStrdup(pasLayers[j].classgroup);
                             }   
                             else
                             {
@@ -300,7 +300,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                         if (GET_LAYER(map, i)->labelitem)
                           free(GET_LAYER(map, i)->labelitem);
 
-                        GET_LAYER(map, i)->labelitem = strdup(pasLayers[j].labelitem);
+                        GET_LAYER(map, i)->labelitem = msStrdup(pasLayers[j].labelitem);
                     }
 
                     if (pasLayers[j].classitem)
@@ -308,7 +308,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                         if (GET_LAYER(map, i)->classitem)
                           free(GET_LAYER(map, i)->classitem);
 
-                        GET_LAYER(map, i)->classitem = strdup(pasLayers[j].classitem);
+                        GET_LAYER(map, i)->classitem = msStrdup(pasLayers[j].classitem);
                     }
                     
                     /* opacity for sld raster */
@@ -348,13 +348,13 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                             for (k=0; k<GET_LAYER(map, i)->numclasses; k++)
                             {
                                 if (!GET_LAYER(map, i)->class[k]->template)
-                                  GET_LAYER(map, i)->class[k]->template = strdup("ttt.html");
+                                  GET_LAYER(map, i)->class[k]->template = msStrdup("ttt.html");
                             }
                         }
                         else if (!GET_LAYER(map, i)->template)
                         {
                             bFreeTemplate = 1;
-                            GET_LAYER(map, i)->template = strdup("ttt.html");
+                            GET_LAYER(map, i)->template = msStrdup("ttt.html");
                         }
 
                         nLayerStatus =  GET_LAYER(map, i)->status;
@@ -603,7 +603,7 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
             initLayer(&pasLayers[iLayer], map);
             
             if (psName && psName->psChild &&  psName->psChild->pszValue)
-              pasLayers[iLayer].name = strdup(psName->psChild->pszValue);
+              pasLayers[iLayer].name = msStrdup(psName->psChild->pszValue);
             
             msSLDParseNamedLayer(psNamedLayer, &pasLayers[iLayer]);
             
@@ -689,11 +689,11 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
             if (!psLayer->class[psLayer->numclasses-1-i]->name)
             {
                 if (pszName)
-                  psLayer->class[psLayer->numclasses-1-i]->name = strdup(pszName);
+                  psLayer->class[psLayer->numclasses-1-i]->name = msStrdup(pszName);
                 else if (pszTitle)
-                  psLayer->class[psLayer->numclasses-1-i]->name = strdup(pszTitle);
+                  psLayer->class[psLayer->numclasses-1-i]->name = msStrdup(pszTitle);
                 else
-                  psLayer->class[psLayer->numclasses-1-i]->name = strdup("Unknown");
+                  psLayer->class[psLayer->numclasses-1-i]->name = msStrdup("Unknown");
             }
         }
         if (pszTitle)
@@ -701,7 +701,7 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
             for (i=0; i<nNewClasses; i++)
             {
                 psLayer->class[psLayer->numclasses-1-i]->title = 
-                  strdup(pszTitle);
+                  msStrdup(pszTitle);
             }                           
         }
           
@@ -914,7 +914,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
             {
                 psSLDName = CPLGetXMLNode(psNamedStyle, "Name");
                 if (psSLDName && psSLDName->psChild &&  psSLDName->psChild->pszValue)
-                  psLayer->classgroup = strdup(psSLDName->psChild->pszValue);
+                  psLayer->classgroup = msStrdup(psSLDName->psChild->pszValue);
             }
         }
 
@@ -1247,7 +1247,7 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                        int nDash = 0, i;
                        char **aszValues = NULL;
                        pszDashValue = 
-                          strdup(psCssParam->psChild->psNext->pszValue);
+                          msStrdup(psCssParam->psChild->psNext->pszValue);
                        aszValues = msStringSplit(pszDashValue, ' ', &nDash);
                        if (nDash > 0)
                        {
@@ -1609,7 +1609,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                 if (psPropertyName)
                 {   
                     snprintf(szTmp, sizeof(szTmp), "%s", CPLGetXMLValue(psPropertyName, NULL, NULL));
-                    psStyle->bindings[MS_STYLE_BINDING_ANGLE].item = strdup(szTmp);
+                    psStyle->bindings[MS_STYLE_BINDING_ANGLE].item = msStrdup(szTmp);
                     psStyle->numbindings++;
                 }
                 else
@@ -1644,7 +1644,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                 if (psWellKnownName && psWellKnownName->psChild &&
                     psWellKnownName->psChild->pszValue)
                   pszSymbolName = 
-                    strdup(psWellKnownName->psChild->pszValue);
+                    msStrdup(psWellKnownName->psChild->pszValue);
                     
                 /* default symbol is square */
                 
@@ -1657,7 +1657,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                      strcasecmp(pszSymbolName, "x") != 0))
                 {
                     if (msGetSymbolIndex(&map->symbolset, pszSymbolName,  MS_FALSE) < 0)
-                      pszSymbolName = strdup("square");
+                      pszSymbolName = msStrdup("square");
                 }
                 
                 
@@ -1771,7 +1771,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                 if (psStyle->symbol > 0 &&
                     psStyle->symbol < map->symbolset.numsymbols)
                   psStyle->symbolname = 
-                    strdup(map->symbolset.symbol[psStyle->symbol]->name);
+                    msStrdup(map->symbolset.symbol[psStyle->symbol]->name);
                     
             }
             else
@@ -1821,7 +1821,7 @@ int msSLDGetLineSymbol(mapObj *map)
     initSymbol(psSymbol);
     psSymbol->inmapfile = MS_TRUE;
 
-    psSymbol->name = strdup(SLD_LINE_SYMBOL_NAME);
+    psSymbol->name = msStrdup(SLD_LINE_SYMBOL_NAME);
     psSymbol->type = MS_SYMBOL_ELLIPSE;
     psSymbol->filled = MS_TRUE;
     psSymbol->points[psSymbol->numpoints].x = 1;
@@ -1863,7 +1863,7 @@ int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray)
     initSymbol(psSymbol);
     psSymbol->inmapfile = MS_TRUE;
 
-    psSymbol->name = strdup(SLD_LINE_SYMBOL_DASH_NAME);
+    psSymbol->name = msStrdup(SLD_LINE_SYMBOL_DASH_NAME);
     psSymbol->type = MS_SYMBOL_ELLIPSE;
     psSymbol->filled = MS_TRUE;
     psSymbol->points[psSymbol->numpoints].x = 1;
@@ -2015,9 +2015,9 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         if (strcasecmp(pszSymbolName, "square") == 0)
         {
             if (bFilled)
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_SQUARE_FILLED);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_SQUARE_FILLED);
             else
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_SQUARE);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_SQUARE);
 
             psSymbol->type = MS_SYMBOL_VECTOR;
             if (bFilled)
@@ -2041,9 +2041,9 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         else if (strcasecmp(pszSymbolName, "circle") == 0)
         {
             if (bFilled)
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_CIRCLE_FILLED);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_CIRCLE_FILLED);
             else
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_CIRCLE);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_CIRCLE);
             
             psSymbol->type = MS_SYMBOL_ELLIPSE;
             if (bFilled)
@@ -2058,9 +2058,9 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         else if (strcasecmp(pszSymbolName, "triangle") == 0)
         {
             if (bFilled)
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_TRIANGLE_FILLED);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_TRIANGLE_FILLED);
             else
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_TRIANGLE);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_TRIANGLE);
             
             psSymbol->type = MS_SYMBOL_VECTOR;
             if (bFilled)
@@ -2083,9 +2083,9 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         else if (strcasecmp(pszSymbolName, "star") == 0)
         {
             if (bFilled)
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_STAR_FILLED);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_STAR_FILLED);
             else
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_STAR);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_STAR);
 
             psSymbol->type = MS_SYMBOL_VECTOR;
             if (bFilled)
@@ -2127,9 +2127,9 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         {
             /* NEVER FILL CROSS */
             /* if (bFilled) */
-            /* psSymbol->name = strdup(SLD_MARK_SYMBOL_CROSS_FILLED); */
+            /* psSymbol->name = msStrdup(SLD_MARK_SYMBOL_CROSS_FILLED); */
             /* else */
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_CROSS);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_CROSS);
             
             psSymbol->type = MS_SYMBOL_VECTOR;
             /* if (bFilled) */
@@ -2155,9 +2155,9 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         {
             /* NEVER FILL X */
             /* if (bFilled) */
-            /* psSymbol->name = strdup(SLD_MARK_SYMBOL_X_FILLED); */
+            /* psSymbol->name = msStrdup(SLD_MARK_SYMBOL_X_FILLED); */
             /* else */
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_X);
+              psSymbol->name = msStrdup(SLD_MARK_SYMBOL_X);
             
             psSymbol->type = MS_SYMBOL_VECTOR;
             /* if (bFilled) */
@@ -2208,8 +2208,8 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
 		initSymbol(psSymbol);
 		psSymbol->inmapfile = MS_TRUE;
 		psSymbol->type = MS_SYMBOL_PIXMAP;
-		psSymbol->name = strdup(extGraphicName);
-		psSymbol->imagepath = strdup(pszFileName);
+		psSymbol->name = msStrdup(extGraphicName);
+		psSymbol->imagepath = msStrdup(pszFileName);
     }
     return nSymbolId;
 }
@@ -2335,7 +2335,7 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                             psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName, pszURL,
                                                                     (int)(-(2 * psStyle->size)));
                             if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
-                              psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol]->name);
+                              psStyle->symbolname = msStrdup(map->symbolset.symbol[psStyle->symbol]->name);
 
                             /* set the color parameter if not set. Does not make sense */
                             /* for pixmap but mapserver needs it. */
@@ -2350,7 +2350,7 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                     else 
                     {
                         if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
-                          psStyle->symbolname = strdup(map->symbolset.symbol[psStyle->symbol]->name);
+                          psStyle->symbolname = msStrdup(map->symbolset.symbol[psStyle->symbol]->name);
 
                         /* set the color parameter if not set. Does not make sense */
                         /* for pixmap but mapserver needs it. */
@@ -2696,9 +2696,9 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                                 /*set the class name using the label. If label not defined
                                   set it with the quantity*/
                                 if (pszPreviousLabel)
-                                  psLayer->class[nClassId]->name = strdup(pszPreviousLabel);
+                                  psLayer->class[nClassId]->name = msStrdup(pszPreviousLabel);
                                 else
-                                  psLayer->class[nClassId]->name = strdup(pszPreviousQuality);
+                                  psLayer->class[nClassId]->name = msStrdup(pszPreviousQuality);
 
                                 msMaybeAllocateClassStyle(psLayer->class[nClassId], 0);
 
@@ -2712,7 +2712,7 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                                 if (psLayer->classitem && 
                                     strcasecmp(psLayer->classitem, "[pixel]") != 0)
                                   free(psLayer->classitem);
-                                psLayer->classitem = strdup("[pixel]");
+                                psLayer->classitem = msStrdup("[pixel]");
 
                                 msLoadExpressionString(&psLayer->class[nClassId]->expression,
                                                        szExpression);
@@ -2763,9 +2763,9 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                         nClassId = psLayer->numclasses-1;
                         msMaybeAllocateClassStyle(psLayer->class[nClassId], 0);
                         if (pszLabel)
-                          psLayer->class[nClassId]->name = strdup(pszLabel);
+                          psLayer->class[nClassId]->name = msStrdup(pszLabel);
                         else
-                          psLayer->class[nClassId]->name = strdup(pszQuantity);
+                          psLayer->class[nClassId]->name = msStrdup(pszQuantity);
                         psLayer->class[nClassId]->numstyles = 1;
                         psLayer->class[nClassId]->styles[0]->color.red = 
                           sColor.red;
@@ -2777,7 +2777,7 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                         if (psLayer->classitem && 
                             strcasecmp(psLayer->classitem, "[pixel]") != 0)
                           free(psLayer->classitem);
-                        psLayer->classitem = strdup("[pixel]");
+                        psLayer->classitem = msStrdup("[pixel]");
 
                         msLoadExpressionString(&psLayer->class[nClassId]->expression,
                                                szExpression);
@@ -2883,7 +2883,7 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                             if (psLayer->classitem && 
                                 strcasecmp(psLayer->classitem, "[pixel]") != 0)
                               free(psLayer->classitem);
-                            psLayer->classitem = strdup("[pixel]");
+                            psLayer->classitem = msStrdup("[pixel]");
                             msLoadExpressionString(&psLayer->class[nClassId]->expression,
                                                    szExpression);
                         }
@@ -3067,7 +3067,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                     if ((msLookupHashTable(&(psLayer->map->fontset.fonts), szFontName) !=NULL))
                     {
                         bFontSet = 1;
-                        psClass->label.font = strdup(szFontName);
+                        psClass->label.font = msStrdup(szFontName);
                         psClass->label.type = MS_TRUETYPE;
                         psClass->label.size = dfFontSize;
                     }
@@ -3287,7 +3287,7 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
             if (psPropertyName)
             {   
                 snprintf(szTmp, sizeof(szTmp), "%s", CPLGetXMLValue(psPropertyName, NULL, NULL));
-                psClass->label.bindings[MS_LABEL_BINDING_ANGLE].item = strdup(szTmp);
+                psClass->label.bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(szTmp);
                 psClass->label.numbindings++;
             }
             else
@@ -3525,25 +3525,25 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         strcasecmp(psSymbol->name, "star") == 0 ||
                         strcasecmp(psSymbol->name, "cross") == 0 ||
                         strcasecmp(psSymbol->name, "x") == 0)
-                      pszSymbolName = strdup(psSymbol->name);
+                      pszSymbolName = msStrdup(psSymbol->name);
                     else if (strncasecmp(psSymbol->name, 
                                          "sld_mark_symbol_square", 22) == 0)
-                      pszSymbolName = strdup("square");
+                      pszSymbolName = msStrdup("square");
                     else if (strncasecmp(psSymbol->name, 
                                          "sld_mark_symbol_triangle", 24) == 0)
-                      pszSymbolName = strdup("triangle");
+                      pszSymbolName = msStrdup("triangle");
                     else if (strncasecmp(psSymbol->name, 
                                          "sld_mark_symbol_circle", 22) == 0)
-                      pszSymbolName = strdup("circle");
+                      pszSymbolName = msStrdup("circle");
                     else if (strncasecmp(psSymbol->name, 
                                          "sld_mark_symbol_star", 20) == 0)
-                      pszSymbolName = strdup("star");
+                      pszSymbolName = msStrdup("star");
                     else if (strncasecmp(psSymbol->name, 
                                          "sld_mark_symbol_cross", 21) == 0)
-                      pszSymbolName = strdup("cross");
+                      pszSymbolName = msStrdup("cross");
                     else if (strncasecmp(psSymbol->name, 
                                          "sld_mark_symbol_x", 17) == 0)
-                      pszSymbolName = strdup("X");
+                      pszSymbolName = msStrdup("X");
                              
 
                    
@@ -4684,21 +4684,21 @@ char *msSLDGetComparisonValue(char *pszExpression)
       return NULL;
 
     if (strstr(pszExpression, "<=") || strstr(pszExpression, " le "))
-      pszValue = strdup("PropertyIsLessThanOrEqualTo");
+      pszValue = msStrdup("PropertyIsLessThanOrEqualTo");
     else if (strstr(pszExpression, "=~"))
-      pszValue = strdup("PropertyIsLike");
+      pszValue = msStrdup("PropertyIsLike");
     else if (strstr(pszExpression, "~*"))
-      pszValue = strdup("PropertyIsLike");
+      pszValue = msStrdup("PropertyIsLike");
     else if (strstr(pszExpression, ">=") || strstr(pszExpression, " ge "))
-      pszValue = strdup("PropertyIsGreaterThanOrEqualTo");
+      pszValue = msStrdup("PropertyIsGreaterThanOrEqualTo");
     else if (strstr(pszExpression, "!=") || strstr(pszExpression, " ne "))
-      pszValue = strdup("PropertyIsNotEqualTo");
+      pszValue = msStrdup("PropertyIsNotEqualTo");
     else if (strstr(pszExpression, "=") || strstr(pszExpression, " eq "))
-      pszValue = strdup("PropertyIsEqualTo");
+      pszValue = msStrdup("PropertyIsEqualTo");
     else if (strstr(pszExpression, "<") || strstr(pszExpression, " lt "))
-      pszValue = strdup("PropertyIsLessThan");
+      pszValue = msStrdup("PropertyIsLessThan");
     else if (strstr(pszExpression, ">") || strstr(pszExpression, " gt "))
-      pszValue = strdup("PropertyIsGreaterThan");
+      pszValue = msStrdup("PropertyIsGreaterThan");
    
 
     return pszValue;
@@ -4713,13 +4713,13 @@ char *msSLDGetLogicalOperator(char *pszExpression)
     /* TODO for NOT */
 
     if(strstr(pszExpression, " AND ") || strstr(pszExpression, "AND("))
-      return strdup("And");
+      return msStrdup("And");
     
     if(strstr(pszExpression, " OR ") || strstr(pszExpression, "OR("))
-      return strdup("Or");
+      return msStrdup("Or");
 
      if(strstr(pszExpression, "NOT ") || strstr(pszExpression, "NOT("))
-      return strdup("Not");
+      return msStrdup("Not");
 
     return NULL;
 }
@@ -4733,7 +4733,7 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
       pszAnd = strstr(pszExpression, " and ");
   
     if (pszAnd)
-      return strdup(pszAnd+4);
+      return msStrdup(pszAnd+4);
     else
     {
         pszOr = strstr(pszExpression, " OR "); 
@@ -4741,7 +4741,7 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
           pszOr = strstr(pszExpression, " or ");
 
         if (pszOr)
-          return strdup(pszOr+3);
+          return msStrdup(pszOr+3);
         else
         {
             pszNot = strstr(pszExpression, "NOT ");
@@ -4753,7 +4753,7 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
               pszNot = strstr(pszExpression, "not(");
 
             if (pszNot)
-              return strdup(pszNot+4);
+              return msStrdup(pszNot+4);
         }
     }
     return NULL;
@@ -5019,8 +5019,8 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
         aszValues= msStringSplit (pszExpression, cCompare, &nTokens);
         if (nTokens > 1)
         {
-            pszAttributeName = strdup(aszValues[0]);
-            pszAttributeValue =  strdup(aszValues[1]);
+            pszAttributeName = msStrdup(aszValues[0]);
+            pszAttributeValue =  msStrdup(aszValues[1]);
             msFreeCharArray(aszValues, nTokens);
         }
         else
@@ -5042,7 +5042,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
                         (pszExpression[i+2] == ' '))
                     {
                         iValueIndex = i+3;
-                        pszAttributeValue = strdup(pszExpression+iValueIndex);
+                        pszAttributeValue = msStrdup(pszExpression+iValueIndex);
                         break;
                     }
                     else
@@ -5078,7 +5078,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
                     (pszExpression[i+2] == ' '))
                 {
                     iValueIndex = i+3;
-                    pszAttributeValue = strdup(pszExpression+iValueIndex);
+                    pszAttributeValue = msStrdup(pszExpression+iValueIndex);
                     break;
                 }
                 else
@@ -5268,23 +5268,23 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
         if (pszComparionValue && pszAttibuteName && pszAttibuteValue)
         {
             psNode->eType = FILTER_NODE_TYPE_COMPARISON;
-            psNode->pszValue = strdup(pszComparionValue);
+            psNode->pszValue = msStrdup(pszComparionValue);
 
             psNode->psLeftNode = FLTCreateFilterEncodingNode();
             psNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
-            psNode->psLeftNode->pszValue = strdup(pszAttibuteName);
+            psNode->psLeftNode->pszValue = msStrdup(pszAttibuteName);
 
             psNode->psRightNode = FLTCreateFilterEncodingNode();
             psNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
-            psNode->psRightNode->pszValue = strdup(pszAttibuteValue);
+            psNode->psRightNode->pszValue = msStrdup(pszAttibuteValue);
 
             if (strcasecmp(pszComparionValue, "PropertyIsLike") == 0)
             {
                 psNode->pOther = (FEPropertyIsLike *)malloc(sizeof(FEPropertyIsLike));
                 ((FEPropertyIsLike *)psNode->pOther)->bCaseInsensitive = 0;
-                ((FEPropertyIsLike *)psNode->pOther)->pszWildCard = strdup("*");
-                 ((FEPropertyIsLike *)psNode->pOther)->pszSingleChar = strdup("#");
-                 ((FEPropertyIsLike *)psNode->pOther)->pszEscapeChar = strdup("!");
+                ((FEPropertyIsLike *)psNode->pOther)->pszWildCard = msStrdup("*");
+                 ((FEPropertyIsLike *)psNode->pOther)->pszSingleChar = msStrdup("#");
+                 ((FEPropertyIsLike *)psNode->pOther)->pszEscapeChar = msStrdup("!");
             }
             free(pszComparionValue);
             free(pszAttibuteName);
@@ -5302,7 +5302,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
                   psNode = FLTCreateFilterEncodingNode();
 
             psNode->eType = FILTER_NODE_TYPE_LOGICAL;
-            psNode->pszValue = strdup(pszOperator);
+            psNode->pszValue = msStrdup(pszOperator);
             free(pszOperator);
 
             pszLeftExpression = msSLDGetLeftExpressionOfOperator(pszExpression);
@@ -5322,18 +5322,18 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
                     {
                         psNode->psLeftNode = FLTCreateFilterEncodingNode();
                         psNode->psLeftNode->eType = FILTER_NODE_TYPE_COMPARISON;
-                        psNode->psLeftNode->pszValue = strdup(pszComparionValue);
+                        psNode->psLeftNode->pszValue = msStrdup(pszComparionValue);
 
                         psNode->psLeftNode->psLeftNode = FLTCreateFilterEncodingNode();
                         psNode->psLeftNode->psLeftNode->eType = 
                           FILTER_NODE_TYPE_PROPERTYNAME;
-                        psNode->psLeftNode->psLeftNode->pszValue = strdup(pszAttibuteName);
+                        psNode->psLeftNode->psLeftNode->pszValue = msStrdup(pszAttibuteName);
 
                         psNode->psLeftNode->psRightNode = FLTCreateFilterEncodingNode();
                         psNode->psLeftNode->psRightNode->eType = 
                           FILTER_NODE_TYPE_LITERAL;
                         psNode->psLeftNode->psRightNode->pszValue = 
-                          strdup(pszAttibuteValue);
+                          msStrdup(pszAttibuteValue);
 
                         free(pszComparionValue);
                         free(pszAttibuteName);
@@ -5352,21 +5352,21 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
                     {
                         psNode->psRightNode = FLTCreateFilterEncodingNode();
                         psNode->psRightNode->eType = FILTER_NODE_TYPE_COMPARISON;
-                        psNode->psRightNode->pszValue = strdup(pszComparionValue);
+                        psNode->psRightNode->pszValue = msStrdup(pszComparionValue);
 
                         psNode->psRightNode->psLeftNode = 
                           FLTCreateFilterEncodingNode();
                         psNode->psRightNode->psLeftNode->eType = 
                           FILTER_NODE_TYPE_PROPERTYNAME;
                         psNode->psRightNode->psLeftNode->pszValue = 
-                          strdup(pszAttibuteName);
+                          msStrdup(pszAttibuteName);
 
                         psNode->psRightNode->psRightNode = 
                           FLTCreateFilterEncodingNode();
                         psNode->psRightNode->psRightNode->eType = 
                           FILTER_NODE_TYPE_LITERAL;
                         psNode->psRightNode->psRightNode->pszValue = 
-                          strdup(pszAttibuteValue);
+                          msStrdup(pszAttibuteValue);
 
                         free(pszComparionValue);
                         free(pszAttibuteName);
@@ -5476,7 +5476,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
             }    
         }
         else
-          pszFinalExpression = strdup(pszFinalExpression);
+          pszFinalExpression = msStrdup(pszFinalExpression);
 
         return BuildExpressionTree(pszFinalExpression, psNode);
     }
@@ -5537,7 +5537,7 @@ char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
         snprintf(szTmp, sizeof(szTmp), "<ogc:%s><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:%s>",
                  psNode->pszValue, psNode->psLeftNode->pszValue,
                  psNode->psRightNode->pszValue, psNode->pszValue);
-        pszExpression = strdup(szTmp);
+        pszExpression = msStrdup(szTmp);
     }
     else if (psNode->eType == FILTER_NODE_TYPE_LOGICAL && 
              psNode->pszValue && 
@@ -5698,7 +5698,7 @@ char *msSLDParseExpression(char *pszExpression)
             {
                 snprintf(szBuffer, sizeof(szBuffer), "<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>", 
                         szFinalAtt, szFinalValue);
-                pszFilter = strdup(szBuffer);
+                pszFilter = msStrdup(szBuffer);
             }
         }
     }
@@ -5770,7 +5770,7 @@ char *msSLDConvertRegexExpToOgcIsLike(char *pszRegex)
     }
     szBuffer[iBuffer] = '\0';
 
-    return strdup(szBuffer);
+    return msStrdup(szBuffer);
 }
 
 
@@ -5801,7 +5801,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
                 else
                   snprintf(szBuffer, sizeof(szBuffer), "<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>\n", 
                         psClass->layer->classitem, psClass->expression.string);
-                pszFilter = strdup(szBuffer);
+                pszFilter = msStrdup(szBuffer);
             }
         }
         else if (psClass->expression.type == MS_EXPRESSION)
@@ -5824,14 +5824,14 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
 
                 free(pszOgcFilter);
 
-                pszFilter = strdup(szBuffer);
+                pszFilter = msStrdup(szBuffer);
             }
         }
     }
     else if (pszWfsFilter)
     {
         snprintf(szBuffer, sizeof(szBuffer), "<ogc:Filter>%s</ogc:Filter>\n", pszWfsFilter);
-        pszFilter = strdup(szBuffer);
+        pszFilter = msStrdup(szBuffer);
     }
     return pszFilter;
 }            

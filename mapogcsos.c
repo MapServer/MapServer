@@ -288,7 +288,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
         psCompNode = xmlNewChild(psNode, psNsSwe, BAD_CAST "CompositePhenomenon", NULL);
         pszValue = msOWSLookupMetadata(&(lp->metadata), "S", 
                                        "observedproperty_id");
-        pszTmpVal = strdup(pszValue);
+        pszTmpVal = msStrdup(pszValue);
 
         if (pszCompositePhenomenonId != NULL) { /* unique value needs to be constructed */
             pszTmpVal = msStringConcatenate(pszTmpVal, "_");
@@ -314,11 +314,11 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
             pszValue = msOWSLookupMetadata(&(lp->metadata), "S", "observedproperty_authority");
 
             if (pszValue)
-              pszTmpVal = strdup(pszValue);
+              pszTmpVal = msStrdup(pszValue);
             else
-              pszTmpVal = strdup("OGC-SWE");
+              pszTmpVal = msStrdup("OGC-SWE");
 
-            pszFullName = strdup(pszComponentBase);
+            pszFullName = msStrdup(pszComponentBase);
 
             pszFullName = msStringConcatenate(pszFullName, pszTmpVal);
 
@@ -329,9 +329,9 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
             pszValue = msOWSLookupMetadata(&(lp->metadata), "S", "observedproperty_version");
 
             if (pszValue)
-              pszTmpVal = strdup(pszValue);
+              pszTmpVal = msStrdup(pszValue);
             else 
-              pszTmpVal = strdup("1");
+              pszTmpVal = msStrdup("1");
 
             pszFullName = msStringConcatenate(pszFullName, pszTmpVal);
 
@@ -343,9 +343,9 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
             pszValue = msOWSLookupMetadata(&(lp->metadata), "S", szTmp);
 
             if (pszValue)
-              pszTmpVal = strdup(pszValue);
+              pszTmpVal = msStrdup(pszValue);
             else
-              pszTmpVal = strdup(lp->items[i]);
+              pszTmpVal = msStrdup(lp->items[i]);
 
             pszFullName = msStringConcatenate(pszFullName, pszTmpVal);
 
@@ -956,7 +956,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
         {
             if (strcasecmp(lp->items[i], pszProcedureField) == 0)
             {
-                (*ppszProcedure) = strdup( sShape.values[i]);
+                (*ppszProcedure) = msStrdup( sShape.values[i]);
                 break;
             }
         }
@@ -1136,7 +1136,7 @@ char *msSOSParseTimeGML(char *pszGmlTime)
                     if (psTime && psTime->pszValue && psTime->eType == CXT_Text)
                     {
                         if (msParseTime(psTime->pszValue, &tm_struct) == MS_TRUE)
-                          pszReturn = strdup(psTime->pszValue);
+                          pszReturn = msStrdup(psTime->pszValue);
                     }
                 }
             }
@@ -1151,18 +1151,18 @@ char *msSOSParseTimeGML(char *pszGmlTime)
                 {
                     if (psBegin->psChild && psBegin->psChild->pszValue &&
                         psBegin->psChild->eType == CXT_Text)
-                      pszBegin = strdup( psBegin->psChild->pszValue);
+                      pszBegin = msStrdup( psBegin->psChild->pszValue);
 
                     if (psEnd->psChild && psEnd->psChild->pszValue &&
                         psEnd->psChild->eType == CXT_Text)
-                      pszEnd = strdup(psEnd->psChild->pszValue);
+                      pszEnd = msStrdup(psEnd->psChild->pszValue);
 
                     if (pszBegin && pszEnd)
                     {
                         if (msParseTime(pszBegin, &tm_struct) == MS_TRUE &&
                             msParseTime(pszEnd, &tm_struct) == MS_TRUE)
                         {
-                            pszReturn = strdup(pszBegin);
+                            pszReturn = msStrdup(pszBegin);
                             pszReturn = msStringConcatenate(pszReturn, "/");
                             pszReturn = msStringConcatenate(pszReturn, pszEnd);
                         }
@@ -1320,7 +1320,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
 
     /*schema fixed*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    xsi_schemaLocation = strdup(pszSOSNamespaceUri);
+    xsi_schemaLocation = msStrdup(pszSOSNamespaceUri);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/sos/");
@@ -1413,7 +1413,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                    panOfferingLayers[i] = nCurrentOff;
                  else /*new offering */
                  {
-                     papsOfferings[nOfferings] = strdup(value);
+                     papsOfferings[nOfferings] = msStrdup(value);
                      panOfferingLayers[i] = nOfferings;
                      nOfferings++;
                  }
@@ -1551,7 +1551,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
 
                              lpTmp = GET_LAYER(map,j);
                              if (lpTmp->template == NULL)
-                               lpTmp->template = strdup("ttt");
+                               lpTmp->template = msStrdup("ttt");
 
                              map->query.type = MS_QUERY_BY_RECT;
                              map->query.mode = MS_QUERY_MULTIPLE;
@@ -1605,7 +1605,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                                          pszProcedure = msStringConcatenate(pszProcedure, sShape.values[iItemPosition]);
                                          if (!_IsInList(papsProcedures, nDistinctProcedures, pszProcedure))
                                          {
-                                               papsProcedures[nDistinctProcedures] = strdup(pszProcedure);
+                                               papsProcedures[nDistinctProcedures] = msStrdup(pszProcedure);
                                                nDistinctProcedures++;
                                                snprintf(szTmp, sizeof(szTmp), "%s", "urn:ogc:def:procedure:");
                                                pszTmp = msStringConcatenate(pszTmp, szTmp);
@@ -1670,7 +1670,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                              }
                              if (k == nProperties)/*not found*/
                              {
-                                 papszProperties[nProperties] = strdup(value);
+                                 papszProperties[nProperties] = msStrdup(value);
                                  nProperties++;
                                  lpTmp = GET_LAYER(map, j);
                                  if (msLayerOpen(lpTmp) == MS_SUCCESS && msLayerGetItems(lpTmp) == MS_SUCCESS)
@@ -1904,11 +1904,11 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
           for (j=0; j<n; j++) {
             if(strcasecmp(pszTmp2, tokens[j]) == 0) {
               GET_LAYER(map, i)->status = MS_ON;
-              //opLayerName = strdup(GET_LAYER(map, i)->name);
+              //opLayerName = msStrdup(GET_LAYER(map, i)->name);
               opLayerName = GET_LAYER(map, i)->name;
               /* Force setting a template to enable query. */
               if (!GET_LAYER(map, i)->template)
-                GET_LAYER(map, i)->template = strdup("ttt.html");
+                GET_LAYER(map, i)->template = msStrdup("ttt.html");
               bLayerFound = 1;
               break;
             }
@@ -1981,7 +1981,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
               /* need to query the layer and get the values from each feature */
 
               if (lp->template == NULL)
-                lp->template = strdup("ttt");
+                lp->template = msStrdup("ttt");
 
               map->query.type = MS_QUERY_BY_RECT;
               map->query.mode = MS_QUERY_MULTIPLE;
@@ -2120,7 +2120,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
     /* this is passed directly to mapogcfilter.                                          */
     /* for GET requests, we strip the parent element before passing                      */
 
-    pszTmp = strdup(sosparams->pszEventTime);
+    pszTmp = msStrdup(sosparams->pszEventTime);
 
     pszTmp = msCaseReplaceSubstring(pszTmp, "<ogc:TM_Equals>", "");
     pszTmp = msCaseReplaceSubstring(pszTmp, "<TM_Equals>", "");
@@ -2373,7 +2373,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
     if ((script_url=msOWSGetOnlineResource(map, "SO", "onlineresource", req)) == NULL)
         return msSOSException(map, "NoApplicableCode", "NoApplicableCode");
 
-    xsi_schemaLocation = strdup("http://www.opengis.net/om/1.0 ");
+    xsi_schemaLocation = msStrdup("http://www.opengis.net/om/1.0 ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/om/1.0.0/om.xsd ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *) user_namespace_uri);
@@ -2554,7 +2554,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
                                                                                        sizeof(SOSProcedureNode)
                                                                                        *nDiffrentProc);
 
-                                        paDiffrentProc[nDiffrentProc-1].pszProcedure = strdup(pszProcedureValue);
+                                        paDiffrentProc[nDiffrentProc-1].pszProcedure = msStrdup(pszProcedureValue);
                                         psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map, 
                                                                                           (GET_LAYER(map, i)),
                                                                                           pszProcedureValue);
@@ -2654,11 +2654,11 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       tokens = msStringSplit(pszId, ' ', &n);
       for (k=0; k<n; k++) {
         if (tokens[k] && strlen(tokens[k]) > 0) {
-          pszProcedureURI = strdup("urn:ogc:def:procedure:");
+          pszProcedureURI = msStrdup("urn:ogc:def:procedure:");
           pszProcedureURI = msStringConcatenate(pszProcedureURI, tokens[k]);
           if (pszProcedureURI && strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) {
             bFound = 1; 
-            pszProcedureId = strdup(tokens[k]);
+            pszProcedureId = msStrdup(tokens[k]);
             msFree(pszProcedureURI);
             msFreeCharArray(tokens, n);
             break;
@@ -2668,7 +2668,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       if (bFound) {
         pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
         if (pszUrl) {
-          pszTmp = strdup(pszUrl);
+          pszTmp = msStrdup(pszUrl);
 
           /* %procedure% is the hardcoded variable name to use 
              within sos_describesensor_url */
@@ -2704,7 +2704,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
       }
       if (iItemPosition >=0) {
         if (lp->template == NULL)
-          lp->template = strdup("ttt");
+          lp->template = msStrdup("ttt");
 
         map->query.type = MS_QUERY_BY_RECT;
         map->query.mode = MS_QUERY_MULTIPLE;
@@ -2722,13 +2722,13 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
               continue;
 
             if (sShape.values[iItemPosition]) {
-              pszProcedureURI = strdup("urn:ogc:def:procedure:");
+              pszProcedureURI = msStrdup("urn:ogc:def:procedure:");
               pszProcedureURI = msStringConcatenate(pszProcedureURI, sShape.values[iItemPosition]);
               if (strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) {
                 pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
-                pszProcedureId = strdup(sShape.values[iItemPosition]);
+                pszProcedureId = msStrdup(sShape.values[iItemPosition]);
                 if (pszUrl) {   
-                  pszTmp = strdup(pszUrl);
+                  pszTmp = msStrdup(pszUrl);
 
                   /* %procedure% is the hardcoded variable names to use
                      within sos_describesensor_url */
@@ -2913,41 +2913,41 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
   if (request->NumParams) { /* this is a GET request */
     for(i=0; i<request->NumParams; i++) {
       if (strcasecmp(request->ParamNames[i], "SERVICE") == 0)
-        sosparams->pszService = strdup(request->ParamValues[i]);
+        sosparams->pszService = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "VERSION") == 0)
-        sosparams->pszVersion = strdup(request->ParamValues[i]);
+        sosparams->pszVersion = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "ACCEPTVERSIONS") == 0)
-        sosparams->pszAcceptVersions = strdup(request->ParamValues[i]);
+        sosparams->pszAcceptVersions = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
-        sosparams->pszRequest = strdup(request->ParamValues[i]);
+        sosparams->pszRequest = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "UPDATESEQUENCE") == 0)
-        sosparams->pszUpdateSequence = strdup(request->ParamValues[i]);
+        sosparams->pszUpdateSequence = msStrdup(request->ParamValues[i]);
       else  if (strcasecmp(request->ParamNames[i], "SENSORID") == 0)
-        sosparams->pszSensorId = strdup(request->ParamValues[i]);
+        sosparams->pszSensorId = msStrdup(request->ParamValues[i]);
       else  if (strcasecmp(request->ParamNames[i], "PROCEDURE") == 0)
-        sosparams->pszProcedure = strdup(request->ParamValues[i]);
+        sosparams->pszProcedure = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "OUTPUTFORMAT") == 0)
-        sosparams->pszOutputFormat = strdup(request->ParamValues[i]);
+        sosparams->pszOutputFormat = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "OFFERING") == 0)
-        sosparams->pszOffering = strdup(request->ParamValues[i]);
+        sosparams->pszOffering = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "OBSERVEDPROPERTY") == 0)
-        sosparams->pszObservedProperty = strdup(request->ParamValues[i]);
+        sosparams->pszObservedProperty = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "EVENTTIME") == 0)
-        sosparams->pszEventTime = strdup(request->ParamValues[i]);
+        sosparams->pszEventTime = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "RESULT") == 0)
-        sosparams->pszResult = strdup(request->ParamValues[i]);
+        sosparams->pszResult = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "RESULTMODEL") == 0)
-        sosparams->pszResultModel = strdup(request->ParamValues[i]);
+        sosparams->pszResultModel = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "RESPONSEFORMAT") == 0)
-        sosparams->pszResponseFormat = strdup(request->ParamValues[i]);
+        sosparams->pszResponseFormat = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "RESPONSEMODE") == 0)
-        sosparams->pszResponseMode = strdup(request->ParamValues[i]);
+        sosparams->pszResponseMode = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "BBOX") == 0)
-        sosparams->pszBBox = strdup(request->ParamValues[i]);
+        sosparams->pszBBox = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "SRSNAME") == 0)
-        sosparams->pszSrsName = strdup(request->ParamValues[i]);
+        sosparams->pszSrsName = msStrdup(request->ParamValues[i]);
       else if (strcasecmp(request->ParamNames[i], "FEATUREOFINTEREST") == 0)
-        sosparams->pszFeatureOfInterest = strdup(request->ParamValues[i]);
+        sosparams->pszFeatureOfInterest = msStrdup(request->ParamValues[i]);
     }
   }
 
@@ -3010,22 +3010,22 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetCapabilities");
 
     if (psXPathTmp)
-      sosparams->pszRequest = strdup("GetCapabilities");
+      sosparams->pszRequest = msStrdup("GetCapabilities");
 
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeSensor");
 
     if (psXPathTmp)
-      sosparams->pszRequest = strdup("DescribeSensor");
+      sosparams->pszRequest = msStrdup("DescribeSensor");
 
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation");
 
     if (psXPathTmp)
-      sosparams->pszRequest = strdup("GetObservation");
+      sosparams->pszRequest = msStrdup("GetObservation");
 
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeObservationType");
 
     if (psXPathTmp)
-      sosparams->pszRequest = strdup("DescribeObservationType");
+      sosparams->pszRequest = msStrdup("DescribeObservationType");
 
     xmlXPathFreeObject(psXPathTmp);
 
@@ -3123,12 +3123,12 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:result/child::*");
 
     if (psXPathTmp) {
-      sosparams->pszResult = strdup(msLibXml2GetXPathTree(doc, psXPathTmp));
+      sosparams->pszResult = msStrdup(msLibXml2GetXPathTree(doc, psXPathTmp));
       pszTmp = msStringConcatenate(pszTmp, "<ogc:Filter>");
       pszTmp = msStringConcatenate(pszTmp, sosparams->pszResult);
       pszTmp = msStringConcatenate(pszTmp, "</ogc:Filter>");
       msFree(sosparams->pszResult); 
-      sosparams->pszResult = strdup(pszTmp);
+      sosparams->pszResult = msStrdup(pszTmp);
       msFree(pszTmp);
     }
 

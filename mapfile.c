@@ -168,7 +168,7 @@ int getSymbol(int n, ...) {
 */
 static char *getToken(void) {
   msyylex();  
-  return strdup(msyytext);
+  return msStrdup(msyytext);
 }
 
 /*
@@ -182,7 +182,7 @@ int getString(char **s) {
 
   if(msyylex() == MS_STRING) {
     if(*s) free(*s); /* avoid leak */
-    *s = strdup(msyytext);
+    *s = msStrdup(msyytext);
     if (*s == NULL) {
       msSetError(MS_MEMERR, NULL, "getString()");
       return(MS_FAILURE);
@@ -289,7 +289,7 @@ int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
     if (NULL == msBuildPath(szLibPath, plugin_dir, lib_str)) {
         return MS_FAILURE;
     }
-    *dest = strdup(szLibPath);
+    *dest = msStrdup(szLibPath);
 
     return MS_SUCCESS;
 }
@@ -383,7 +383,7 @@ int loadColor(colorObj *color, attributeBindingObj *binding) {
        return MS_FAILURE;
     }
   } else {
-    binding->item = strdup(msyytext);
+    binding->item = msStrdup(msyytext);
     binding->index = -1;
   }
 
@@ -704,10 +704,8 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *s
 {
   featureListNodeObjPtr node;
 
-  if((node = (featureListNodeObjPtr) malloc(sizeof(featureListNodeObj))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "insertFeature()");
-    return(NULL);
-  }
+  node = (featureListNodeObjPtr) malloc(sizeof(featureListNodeObj));
+  MS_CHECK_ALLOC(node, sizeof(featureListNodeObj), NULL);
 
   msInitShape(&(node->shape));
   if(msCopyShape(shape, &(node->shape)) == -1) return(NULL);
@@ -751,10 +749,8 @@ static int loadFeaturePoints(lineObj *points)
 {
   int buffer_size=0;
 
-  if((points->point = (pointObj *)malloc(sizeof(pointObj)*MS_FEATUREINITSIZE)) == NULL) {
-    msSetError(MS_MEMERR, NULL, "loadFeaturePoints()");
-    return(MS_FAILURE);
-  }
+  points->point = (pointObj *)malloc(sizeof(pointObj)*MS_FEATUREINITSIZE);
+  MS_CHECK_ALLOC(points->point, sizeof(pointObj)*MS_FEATUREINITSIZE, MS_FAILURE);
   points->numpoints = 0;
   buffer_size = MS_FEATUREINITSIZE;
 
@@ -767,11 +763,8 @@ static int loadFeaturePoints(lineObj *points)
       return(MS_SUCCESS);
     case(MS_NUMBER):
       if(points->numpoints == buffer_size) { /* just add it to the end */
-	points->point = (pointObj *) realloc(points->point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT));    
-	if(points->point == NULL) {
-	  msSetError(MS_MEMERR, "Realloc() error.", "loadFeaturePoints()");
-	  return(MS_FAILURE);
-	}   
+	points->point = (pointObj *) realloc(points->point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT));
+        MS_CHECK_ALLOC(points->point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT), MS_FAILURE);
 	buffer_size+=MS_FEATUREINCREMENT;
       }
 
@@ -795,8 +788,9 @@ static int loadFeature(layerObj	*player, int type)
   multipointObj points={0,NULL};
   shapeObj *shape=NULL;
 
-  if((shape = (shapeObj *) malloc(sizeof(shapeObj))) == NULL)
-    return(MS_FAILURE);
+  shape = (shapeObj *) malloc(sizeof(shapeObj));
+  MS_CHECK_ALLOC(shape, sizeof(shapeObj), MS_FAILURE);
+
   msInitShape(shape);
   shape->type = type;
 
@@ -918,7 +912,7 @@ static int loadGrid( layerObj *pLayer )
     case( LABELFORMAT ):
       if(getString(&((graticuleObj *)pLayer->layerinfo)->labelformat) == MS_FAILURE) {
 	if(strcasecmp(msyytext, "DD") == 0) /* DD triggers a symbol to be returned instead of a string so check for this special case */
-	  ((graticuleObj *)pLayer->layerinfo)->labelformat = strdup("DD");
+	  ((graticuleObj *)pLayer->layerinfo)->labelformat = msStrdup("DD");
         else
 	  return(-1);
       }
@@ -980,10 +974,8 @@ int msInitProjection(projectionObj *p)
   p->args = NULL;
 #ifdef USE_PROJ  
   p->proj = NULL;
-  if((p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "msInitProjection()");
-    return(-1);
-  }
+  p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *));
+  MS_CHECK_ALLOC(p->args, MS_MAXPROJARGS*sizeof(char *), -1);
 #endif
   return(0);
 }
@@ -1222,7 +1214,7 @@ static int loadProjection(projectionObj *p)
       break;
     case(MS_STRING):
     case(MS_AUTO):
-      p->args[i] = strdup(msyytext);
+      p->args[i] = msStrdup(msyytext);
       p->automatic = MS_TRUE;
       i++;
       break;
@@ -1256,18 +1248,18 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
     if (strncasecmp(value, "EPSG:", 5) == 0)
     {
         size_t buffer_size = 10 + strlen(value+5) + 1;
-        char *init_string = (char*)malloc(buffer_size);
+        char *init_string = (char*)msSmallMalloc(buffer_size);
 
         /* translate into PROJ.4 format. */
         snprintf(init_string, buffer_size, "init=epsg:%s", value+5 );
 
-        p->args = (char**)malloc(sizeof(char*) * 2);
+        p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
         p->args[0] = init_string;
         p->numargs = 1;
 
         if( atoi(value+5) >= 4000 && atoi(value+5) < 5000 )
         {
-            p->args[1] = strdup("+epsgaxis=ne");
+            p->args[1] = msStrdup("+epsgaxis=ne");
             p->numargs = 2;
         }
 
@@ -1303,7 +1295,7 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       char 	*trimmed;
       int	i, i_out=0;
 
-      trimmed = strdup(value+1);
+      trimmed = msStrdup(value+1);
       for( i = 1; value[i] != '\0'; i++ )
       {
           if( !isspace( value[i] ) )
@@ -1321,19 +1313,19 @@ int msLoadProjectionString(projectionObj *p, const char *value)
      /* WMS 1.3.0 projection: "AUTO2:auto_crs_id,factor,lon0,lat0"*/
      /* Keep the projection defn into a single token for writeProjection() */
      /* to work fine. */
-      p->args = (char**)malloc(sizeof(char*));
-      p->args[0] = strdup(value);
+      p->args = (char**)msSmallMalloc(sizeof(char*));
+      p->args[0] = msStrdup(value);
       p->numargs = 1;
   }
   else if (strncasecmp(value, "EPSG:", 5) == 0)
   {
       size_t buffer_size = 10 + strlen(value+5) + 1;
-      char *init_string = (char*)malloc(buffer_size);
+      char *init_string = (char*)msSmallMalloc(buffer_size);
 
       /* translate into PROJ.4 format. */
       snprintf( init_string, buffer_size, "init=epsg:%s", value+5);
 
-      p->args = (char**)malloc(sizeof(char*) * 2);
+      p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
       p->args[0] = init_string;
       p->numargs = 1;
   }
@@ -1351,18 +1343,18 @@ int msLoadProjectionString(projectionObj *p, const char *value)
           code++;
 
       buffer_size = 10 + strlen(code) + 1;
-      init_string = (char*)malloc(buffer_size);
+      init_string = (char*)msSmallMalloc(buffer_size);
 
       /* translate into PROJ.4 format. */
       snprintf( init_string, buffer_size, "init=epsg:%s", code );
 
-      p->args = (char**)malloc(sizeof(char*) * 2);
+      p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
       p->args[0] = init_string;
       p->numargs = 1;
 
       if( atoi(code) >= 4000 && atoi(code) < 5000 )
       {
-          p->args[1] = strdup("+epsgaxis=ne");
+          p->args[1] = msStrdup("+epsgaxis=ne");
           p->numargs = 2;
       }
   }
@@ -1387,18 +1379,18 @@ int msLoadProjectionString(projectionObj *p, const char *value)
           code++;
 
       buffer_size = 10 + strlen(code) + 1;
-      init_string = (char*)malloc(buffer_size);
+      init_string = (char*)msSmallMalloc(buffer_size);
 
       /* translate into PROJ.4 format. */
       snprintf( init_string, buffer_size, "init=epsg:%s", code );
 
-      p->args = (char**)malloc(sizeof(char*) * 2);
+      p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
       p->args[0] = init_string;
       p->numargs = 1;
 
       if( atoi(code) >= 4000 && atoi(code) < 5000 )
       {
-          p->args[1] = strdup("+epsgaxis=ne");
+          p->args[1] = msStrdup("+epsgaxis=ne");
           p->numargs = 2;
       }
     
@@ -1432,8 +1424,8 @@ int msLoadProjectionString(projectionObj *p, const char *value)
           return -1;
       }
 
-      p->args = (char**)malloc(sizeof(char*) * 2);
-      p->args[0] = strdup(init_string);
+      p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
+      p->args[0] = msStrdup(init_string);
       p->numargs = 1;
   }
   else if (strncasecmp(value, "CRS:",4) == 0 )
@@ -1454,8 +1446,8 @@ int msLoadProjectionString(projectionObj *p, const char *value)
                       value );
           return -1;
       }
-      p->args = (char**)malloc(sizeof(char*) * 2);
-      p->args[0] = strdup(init_string);
+      p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
+      p->args[0] = msStrdup(init_string);
       p->numargs = 1;
   }
   /*
@@ -1585,7 +1577,7 @@ static int loadLabel(labelObj *label)
       else if(symbol == MS_BINDING) {
         if (label->bindings[MS_LABEL_BINDING_ANGLE].item != NULL)
           msFree(label->bindings[MS_LABEL_BINDING_ANGLE].item);
-        label->bindings[MS_LABEL_BINDING_ANGLE].item = strdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(msyytext);
         label->numbindings++;
       } else if ( symbol == MS_FOLLOW ) {
 #ifndef GD_HAS_FTEX_XSHOW
@@ -1645,11 +1637,11 @@ static int loadLabel(labelObj *label)
       if(symbol == MS_STRING) {
         if (label->font != NULL)
           msFree(label->font);
-        label->font = strdup(msyytext);
+        label->font = msStrdup(msyytext);
       } else {
         if (label->bindings[MS_LABEL_BINDING_FONT].item != NULL)
           msFree(label->bindings[MS_LABEL_BINDING_FONT].item);
-        label->bindings[MS_LABEL_BINDING_FONT].item = strdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_FONT].item = msStrdup(msyytext);
         label->numbindings++;
       }
 #else
@@ -1727,7 +1719,7 @@ static int loadLabel(labelObj *label)
       } else {
         if (label->bindings[MS_LABEL_BINDING_PRIORITY].item != NULL)
           msFree(label->bindings[MS_LABEL_BINDING_PRIORITY].item);
-        label->bindings[MS_LABEL_BINDING_PRIORITY].item = strdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_PRIORITY].item = msStrdup(msyytext);
         label->numbindings++;
       }
       break;
@@ -1752,7 +1744,7 @@ static int loadLabel(labelObj *label)
       if(symbol == MS_NUMBER) {
         label->size = (double) msyynumber;
       } else if(symbol == MS_BINDING) {
-        label->bindings[MS_LABEL_BINDING_SIZE].item = strdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_SIZE].item = msStrdup(msyytext);
         label->numbindings++;
       } else
         label->size = symbol;
@@ -1915,7 +1907,7 @@ int loadExpression(expressionObj *exp)
   if((exp->type = getSymbol(5, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX)) == -1) return(-1);
   if (exp->string != NULL)
     msFree(exp->string);
-  exp->string = strdup(msyytext);
+  exp->string = msStrdup(msyytext);
 
   if(exp->type == MS_ISTRING) {
     exp->flags = exp->flags | MS_EXP_INSENSITIVE;
@@ -1960,7 +1952,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   /* initExpression(exp); */
 
   if((exp->type = getSymbol(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
-    exp->string = strdup(msyytext);
+    exp->string = msStrdup(msyytext);
 
     if(exp->type == MS_ISTRING) {
       exp->type = MS_STRING;
@@ -1973,9 +1965,9 @@ int loadExpressionString(expressionObj *exp, char *value)
     msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
     exp->type = MS_STRING;
     if((strlen(value) - strlen(msyytext)) == 2)
-      exp->string = strdup(msyytext); /* value was quoted */
+      exp->string = msStrdup(msyytext); /* value was quoted */
     else
-      exp->string = strdup(value); /* use the whole value */
+      exp->string = msStrdup(value); /* use the whole value */
   }
 
   return(0); 
@@ -2000,7 +1992,7 @@ char *msGetExpressionString(expressionObj *exp)
 
     /* Alloc buffer big enough for string + 2 delimiters + 'i' + \0 */
     buffer_size = strlen(exp->string)+4;
-    exprstring = (char*)malloc(buffer_size);
+    exprstring = (char*)msSmallMalloc(buffer_size);
 
     switch(exp->type) {
     case(MS_REGEX):
@@ -2059,7 +2051,7 @@ int loadHashTable(hashTableObj *ptable)
     case(END):
       return(MS_SUCCESS);
     case(MS_STRING):
-      key = strdup(msyytext); /* the key is *always* a string */
+      key = msStrdup(msyytext); /* the key is *always* a string */
       if(getString(&data) == MS_FAILURE) return(MS_FAILURE);      
       msInsertHashTable(ptable, key, data);      
 
@@ -2189,7 +2181,7 @@ int loadStyle(styleObj *style) {
       else if(symbol==MS_BINDING){
         if (style->bindings[MS_STYLE_BINDING_ANGLE].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_ANGLE].item);
-        style->bindings[MS_STYLE_BINDING_ANGLE].item = strdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_ANGLE].item = msStrdup(msyytext);
         style->numbindings++;
       } else {
         style->autoangle=MS_TRUE;
@@ -2274,7 +2266,7 @@ int loadStyle(styleObj *style) {
       else {
         if (style->bindings[MS_STYLE_BINDING_OPACITY].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_OPACITY].item);
-        style->bindings[MS_STYLE_BINDING_OPACITY].item = strdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_OPACITY].item = msStrdup(msyytext);
         style->numbindings++;
       }
       break;
@@ -2329,7 +2321,7 @@ int loadStyle(styleObj *style) {
       else {
         if (style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item);
-        style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item = strdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item = msStrdup(msyytext);
         style->numbindings++;
       }
       break;
@@ -2340,7 +2332,7 @@ int loadStyle(styleObj *style) {
       else {
         if (style->bindings[MS_STYLE_BINDING_SIZE].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_SIZE].item);
- 	style->bindings[MS_STYLE_BINDING_SIZE].item = strdup(msyytext);
+ 	style->bindings[MS_STYLE_BINDING_SIZE].item = msStrdup(msyytext);
         style->numbindings++;
       }
       break;
@@ -2359,12 +2351,12 @@ int loadStyle(styleObj *style) {
       {
         if (style->symbolname != NULL)
           msFree(style->symbolname);
-        style->symbolname = strdup(msyytext);
+        style->symbolname = msStrdup(msyytext);
       }
       else {
         if (style->bindings[MS_STYLE_BINDING_SYMBOL].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_SYMBOL].item);
-        style->bindings[MS_STYLE_BINDING_SYMBOL].item = strdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_SYMBOL].item = msStrdup(msyytext);
         style->numbindings++;
       }
       break;
@@ -2375,7 +2367,7 @@ int loadStyle(styleObj *style) {
       else {
         if (style->bindings[MS_STYLE_BINDING_WIDTH].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_WIDTH].item);
-        style->bindings[MS_STYLE_BINDING_WIDTH].item = strdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_WIDTH].item = msStrdup(msyytext);
         style->numbindings++;
       }
       break;
@@ -2588,10 +2580,7 @@ styleObj *msGrowClassStyles( classObj *class )
         /* Alloc/realloc styles */
         newStylePtr = (styleObj**)realloc(class->styles,
                                           newsize*sizeof(styleObj*));
-        if (newStylePtr == NULL) {
-            msSetError(MS_MEMERR, "Failed to allocate memory for styles array.", "msGrowClassStyles()");
-            return NULL;
-        }
+        MS_CHECK_ALLOC(newStylePtr, newsize*sizeof(styleObj*), NULL);
 
         class->styles = newStylePtr;
         class->maxstyles = newsize;
@@ -2602,10 +2591,7 @@ styleObj *msGrowClassStyles( classObj *class )
 
     if (class->styles[class->numstyles]==NULL) {
         class->styles[class->numstyles]=(styleObj*)calloc(1,sizeof(styleObj));
-        if (class->styles[class->numstyles]==NULL) {
-          msSetError(MS_MEMERR, "Failed to allocate memory for a styleObj", "msGrowClassStyles()");
-          return NULL;
-        }
+        MS_CHECK_ALLOC(class->styles[class->numstyles], sizeof(styleObj), NULL);
     }
 
     return class->styles[class->numstyles];
@@ -2625,10 +2611,7 @@ styleObj *msGrowLabelStyles( labelObj *label )
         /* Alloc/realloc styles */
         newStylePtr = (styleObj**)realloc(label->styles,
                                           newsize*sizeof(styleObj*));
-        if (newStylePtr == NULL) {
-            msSetError(MS_MEMERR, "Failed to allocate memory for styles array.", "msGrowLabelStyles()");
-            return NULL;
-        }
+        MS_CHECK_ALLOC(newStylePtr, newsize*sizeof(styleObj*), NULL);
 
         label->styles = newStylePtr;
         label->maxstyles = newsize;
@@ -2639,10 +2622,7 @@ styleObj *msGrowLabelStyles( labelObj *label )
 
     if (label->styles[label->numstyles]==NULL) {
         label->styles[label->numstyles]=(styleObj*)calloc(1,sizeof(styleObj));
-        if (label->styles[label->numstyles]==NULL) {
-          msSetError(MS_MEMERR, "Failed to allocate memory for a styleObj", "msGrowLabelStyles()");
-          return NULL;
-        }
+        MS_CHECK_ALLOC(label->styles[label->numstyles], sizeof(styleObj), NULL);
     }
 
     return label->styles[label->numstyles];
@@ -2876,7 +2856,7 @@ int loadClass(classObj *class, layerObj *layer)
       {
         if (class->styles[0]->symbolname != NULL)
           msFree(class->styles[0]->symbolname);
-	class->styles[0]->symbolname = strdup(msyytext);
+	class->styles[0]->symbolname = msStrdup(msyytext);
         class->numstyles = 1;
       }
       break;
@@ -2918,7 +2898,7 @@ int loadClass(classObj *class, layerObj *layer)
       else  {
         if (class->styles[1]->symbolname != NULL)
           msFree(class->styles[1]->symbolname);
-	class->styles[1]->symbolname = strdup(msyytext);
+	class->styles[1]->symbolname = msStrdup(msyytext);
       }
       class->numstyles = 2;
       break;
@@ -3078,7 +3058,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->labelmaxscaledenom = -1;
   layer->labelminscaledenom = -1;
 
-  layer->tileitem = strdup("location");
+  layer->tileitem = msStrdup("location");
   layer->tileitemindex = -1;
   layer->tileindex = NULL;
 
@@ -3123,10 +3103,8 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->numprocessing = 0;
   layer->processing = NULL;
   layer->numjoins = 0;
-  if((layer->joins = (joinObj *) malloc(MS_MAXJOINS*sizeof(joinObj))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "initLayer()");
-    return(-1);
-  }
+  layer->joins = (joinObj *) malloc(MS_MAXJOINS*sizeof(joinObj));
+  MS_CHECK_ALLOC(layer->joins, MS_MAXJOINS*sizeof(joinObj), -1);
 
   layer->extent.minx = -1.0;
   layer->extent.miny = -1.0;
@@ -3234,10 +3212,7 @@ classObj *msGrowLayerClasses( layerObj *layer )
         /* Alloc/realloc classes */
         newClassPtr = (classObj**)realloc(layer->class,
                                           newsize*sizeof(classObj*));
-        if (newClassPtr == NULL) {
-            msSetError(MS_MEMERR, "Failed to allocate memory for class array.", "msGrowLayerClasses()");
-            return NULL;
-        }
+        MS_CHECK_ALLOC(newClassPtr, newsize*sizeof(classObj*), NULL);
 
         layer->class = newClassPtr;
         layer->maxclasses = newsize;
@@ -3248,10 +3223,7 @@ classObj *msGrowLayerClasses( layerObj *layer )
 
     if (layer->class[layer->numclasses]==NULL) {
         layer->class[layer->numclasses]=(classObj*)calloc(1,sizeof(classObj));
-        if (layer->class[layer->numclasses]==NULL) {
-          msSetError(MS_MEMERR, "Failed to allocate memory for a classObj", "msGrowLayerClasses()");
-          return NULL;
-        }
+        MS_CHECK_ALLOC(layer->class[layer->numclasses], sizeof(classObj), NULL);
     }
 
     return layer->class[layer->numclasses];
@@ -3400,9 +3372,7 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(GRID):
       layer->connectiontype = MS_GRATICULE;
       layer->layerinfo = (void *) malloc(sizeof(graticuleObj));
-
-      if(layer->layerinfo == NULL)
-	return(-1);
+      MS_CHECK_ALLOC(layer->layerinfo, sizeof(graticuleObj), -1);
 
       initGrid((graticuleObj *) layer->layerinfo);
       loadGrid(layer);
@@ -3846,7 +3816,7 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       {
         if (ref->markername != NULL)
           msFree(ref->markername);
-	ref->markername = strdup(msyytext);
+	ref->markername = msStrdup(msyytext);
       }
       break;
     case(MARKERSIZE):
@@ -3996,7 +3966,7 @@ static int loadOutputFormat(mapObj *map)
         if( numformatoptions > 0 )
         {
             format->formatoptions = (char **) 
-                malloc(sizeof(char *)*numformatoptions );
+                msSmallMalloc(sizeof(char *)*numformatoptions );
             memcpy( format->formatoptions, formatoptions, 
                     sizeof(char *)*numformatoptions );
         }
@@ -4019,16 +3989,16 @@ static int loadOutputFormat(mapObj *map)
         int s;
         if((s = getSymbol(2, MS_STRING, TEMPLATE)) == -1) return -1; /* allow the template to be quoted or not in the mapfile */
         if(s == MS_STRING)
-          driver = strdup(msyytext);
+          driver = msStrdup(msyytext);
         else
-          driver = strdup("TEMPLATE");
+          driver = msStrdup("TEMPLATE");
       }
       break;
     case(EXTENSION):
       if(getString(&extension) == MS_FAILURE) return(-1);
       if( extension[0] == '.' )
       {
-          char *temp = strdup(extension+1);
+          char *temp = msStrdup(extension+1);
           free( extension );
           extension = temp;
       }
@@ -4036,7 +4006,7 @@ static int loadOutputFormat(mapObj *map)
     case(FORMATOPTION):
       if(getString(&value) == MS_FAILURE) return(-1);
       if( numformatoptions < MAX_FORMATOPTIONS )
-          formatoptions[numformatoptions++] = strdup(value);
+          formatoptions[numformatoptions++] = msStrdup(value);
       free(value); value=NULL;
       break;
     case(IMAGEMODE):
@@ -4503,16 +4473,16 @@ void initWeb(webObj *web)
   web->mintemplate = web->maxtemplate = NULL;
   web->minscaledenom = web->maxscaledenom = -1;
   web->log = NULL;
-  web->imagepath = strdup("");
-  web->imageurl = strdup("");
+  web->imagepath = msStrdup("");
+  web->imageurl = msStrdup("");
   
   initHashTable(&(web->metadata));
   initHashTable(&(web->validation));  
 
   web->map = NULL;
-  web->queryformat = strdup("text/html");
-  web->legendformat = strdup("text/html");
-  web->browseformat = strdup("text/html");
+  web->queryformat = msStrdup("text/html");
+  web->legendformat = msStrdup("text/html");
+  web->browseformat = msStrdup("text/html");
 }
 
 void freeWeb(webObj *web)
@@ -4719,7 +4689,7 @@ int initMap(mapObj *map)
   map->layerorder = NULL; /* used to modify the order in which the layers are drawn */
 
   map->status = MS_ON;
-  map->name = strdup("MS");
+  map->name = msStrdup("MS");
   map->extent.minx = map->extent.miny = map->extent.maxx = map->extent.maxy = -1.0;
 
   map->scaledenom = -1.0;
@@ -4787,8 +4757,8 @@ int initMap(mapObj *map)
 
   /* initialize a default "geographic" projection */
   map->latlon.numargs = 2;
-  map->latlon.args[0] = strdup("proj=latlong");
-  map->latlon.args[1] = strdup("ellps=WGS84"); /* probably want a different ellipsoid */
+  map->latlon.args[0] = msStrdup("proj=latlong");
+  map->latlon.args[1] = msStrdup("ellps=WGS84"); /* probably want a different ellipsoid */
   if(msProcessProjection(&(map->latlon)) == -1) return(-1);
 #endif
 
@@ -4829,19 +4799,15 @@ layerObj *msGrowMapLayers( mapObj *map )
         /* Alloc/realloc layers */
         newLayersPtr = (layerObj**)realloc(map->layers,
                                            newsize*sizeof(layerObj*));
-        if (newLayersPtr == NULL) {
-            msSetError(MS_MEMERR, "Failed to allocate memory for layers array.", "msGrowMapLayers()");
-            return NULL;
-        }
+        MS_CHECK_ALLOC(newLayersPtr, newsize*sizeof(layerObj*), NULL);
+
         map->layers = newLayersPtr;
 
         /* Alloc/realloc layerorder */
         newLayerorderPtr = (int *)realloc(map->layerorder,
                                           newsize*sizeof(int));
-        if (newLayerorderPtr == NULL) {
-            msSetError(MS_MEMERR, "Failed to allocate memory for layerorder array.", "msGrowMapLayers()");
-            return NULL;
-        }
+        MS_CHECK_ALLOC(newLayerorderPtr, newsize*sizeof(int), NULL);
+        
         map->layerorder = newLayerorderPtr;
 
         map->maxlayers = newsize;
@@ -4853,10 +4819,7 @@ layerObj *msGrowMapLayers( mapObj *map )
 
     if (map->layers[map->numlayers]==NULL) {
         map->layers[map->numlayers]=(layerObj*)calloc(1,sizeof(layerObj));
-        if (map->layers[map->numlayers]==NULL) {
-          msSetError(MS_MEMERR, "Failed to allocate memory for a layerObj", "msGrowMapLayers()");
-          return NULL;
-        }
+        MS_CHECK_ALLOC(map->layers[map->numlayers], sizeof(layerObj), NULL);
     }
 
     return map->layers[map->numlayers];
@@ -4917,18 +4880,14 @@ int msInitLabelCacheSlot(labelCacheSlotObj *cacheslot) {
       msFreeLabelCacheSlot(cacheslot);
 
   cacheslot->labels = (labelCacheMemberObj *)malloc(sizeof(labelCacheMemberObj)*MS_LABELCACHEINITSIZE);
-  if(cacheslot->labels == NULL) {
-      msSetError(MS_MEMERR, NULL, "msInitLabelCacheSlot()");
-      return(MS_FAILURE);
-  }
+  MS_CHECK_ALLOC(cacheslot->labels, sizeof(labelCacheMemberObj)*MS_LABELCACHEINITSIZE, MS_FAILURE);
+
   cacheslot->cachesize = MS_LABELCACHEINITSIZE;
   cacheslot->numlabels = 0;
 
   cacheslot->markers = (markerCacheMemberObj *)malloc(sizeof(markerCacheMemberObj)*MS_LABELCACHEINITSIZE);
-  if(cacheslot->markers == NULL) {
-      msSetError(MS_MEMERR, NULL, "msInitLabelCacheSlot()");
-      return(MS_FAILURE);
-  }
+  MS_CHECK_ALLOC(cacheslot->markers, sizeof(markerCacheMemberObj)*MS_LABELCACHEINITSIZE, MS_FAILURE);
+
   cacheslot->markercachesize = MS_LABELCACHEINITSIZE;
   cacheslot->nummarkers = 0;
 
@@ -5276,10 +5235,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   ** Allocate mapObj structure
   */
   map = (mapObj *)calloc(sizeof(mapObj),1);
-  if(!map) {
-    msSetError(MS_MEMERR, NULL, "msLoadMap()");
-    return(NULL);
-  }
+  MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if(initMap(map) == -1) { /* initialize this map */
     msFree(map);
@@ -5297,10 +5253,10 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   /* If new_mappath is provided then use it, otherwise use the CWD */
   getcwd(szCWDPath, MS_MAXPATHLEN);
   if (new_mappath) {
-    mappath = strdup(new_mappath);
-    map->mappath = strdup(msBuildPath(szPath, szCWDPath, mappath));
+    mappath = msStrdup(new_mappath);
+    map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, mappath));
   } else
-    map->mappath = strdup(szCWDPath);
+    map->mappath = msStrdup(szCWDPath);
 
   msyybasepath = map->mappath; /* for INCLUDEs */
 
@@ -5368,10 +5324,7 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   ** Allocate mapObj structure
   */
   map = (mapObj *)calloc(sizeof(mapObj),1);
-  if(!map) {
-    msSetError(MS_MEMERR, NULL, "msLoadMap()");
-    return(NULL);
-  }
+  MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if(initMap(map) == -1) { /* initialize this map */
     msFree(map);
@@ -5421,10 +5374,10 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   /* of the mapfile as the default path */
   getcwd(szCWDPath, MS_MAXPATHLEN);
   if (new_mappath)
-    map->mappath = strdup(msBuildPath(szPath, szCWDPath, strdup(new_mappath)));
+    map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, msStrdup(new_mappath)));
   else {
     char *path = msGetPath(filename);
-    map->mappath = strdup(msBuildPath(szPath, szCWDPath, path));
+    map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, path));
     if( path ) free( path );
   }
 
@@ -5670,7 +5623,7 @@ void msLayerSubstituteString(layerObj *layer, const char *from, const char *to) 
 
  /* The bindvalues are most useful when able to substitute values from the URL */
   while(bindvals_key != NULL) {
-    bindvals_val = strdup((char*)msLookupHashTable(&layer->bindvals, bindvals_key));
+    bindvals_val = msStrdup((char*)msLookupHashTable(&layer->bindvals, bindvals_key));
     msInsertHashTable(&layer->bindvals, bindvals_key, msCaseReplaceSubstring(bindvals_val, from, to));
     bindvals_key = (char*)msNextKeyFromHashTable(&layer->bindvals, bindvals_key);
   }
@@ -5687,7 +5640,7 @@ void msApplyDefaultSubstitutions(mapObj *map) {
     while(defaultkey) {
       if(!strncmp(defaultkey,"default_",8)){
           size_t buffer_size = (strlen(defaultkey)-5);
-        char *tmpstr = (char *)malloc(buffer_size);
+        char *tmpstr = (char *)msSmallMalloc(buffer_size);
         snprintf(tmpstr, buffer_size, "%%%s%%", &(defaultkey[8]));
 
         msLayerSubstituteString(layer,tmpstr,msLookupHashTable(&(layer->metadata),defaultkey));
@@ -5773,24 +5726,21 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
         break;
       case(MS_STRING):
         buffer_size = strlen(msyytext)+2+1;
-        tokens[numtokens] = (char*) malloc(buffer_size);
-        if(tokens[numtokens])
-          snprintf(tokens[numtokens], buffer_size, "\"%s\"", msyytext);
+        tokens[numtokens] = (char*) msSmallMalloc(buffer_size);
+        snprintf(tokens[numtokens], buffer_size, "\"%s\"", msyytext);
         break;
       case(MS_EXPRESSION):
         buffer_size = strlen(msyytext)+2+1;
-        tokens[numtokens] = (char*) malloc(buffer_size);
-        if(tokens[numtokens])
-          snprintf(tokens[numtokens], buffer_size, "(%s)", msyytext);
+        tokens[numtokens] = (char*) msSmallMalloc(buffer_size);
+        snprintf(tokens[numtokens], buffer_size, "(%s)", msyytext);
         break;
       case(MS_REGEX):
         buffer_size = strlen(msyytext)+2+1;
-        tokens[numtokens] = (char*) malloc(buffer_size);
-        if(tokens[numtokens])
-          snprintf(tokens[numtokens], buffer_size, "/%s/", msyytext);
+        tokens[numtokens] = (char*) msSmallMalloc(buffer_size);
+        snprintf(tokens[numtokens], buffer_size, "/%s/", msyytext);
         break;
       default:
-        tokens[numtokens] = strdup(msyytext);
+        tokens[numtokens] = msStrdup(msyytext);
         break;
     }
 

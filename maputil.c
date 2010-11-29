@@ -204,7 +204,7 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
 
       if(label->bindings[MS_LABEL_BINDING_FONT].index != -1) {
         msFree(label->font);
-        label->font = strdup(shape->values[label->bindings[MS_LABEL_BINDING_FONT].index]);
+        label->font = msStrdup(shape->values[label->bindings[MS_LABEL_BINDING_FONT].index]);
       }
 
       if(label->bindings[MS_LABEL_BINDING_PRIORITY].index != -1) {
@@ -268,12 +268,12 @@ int msValidateContexts(mapObj *map)
   char **ltags;
   int status = MS_SUCCESS;
 
-  ltags = (char **) malloc(map->numlayers*sizeof(char *));
+  ltags = (char **) msSmallMalloc(map->numlayers*sizeof(char *));
   for(i=0; i<map->numlayers; i++) {
     if(GET_LAYER(map, i)->name == NULL) {
-      ltags[i] = strdup("[NULL]");
+      ltags[i] = msStrdup("[NULL]");
     } else {
-      ltags[i] = (char *) malloc(sizeof(char)*strlen(GET_LAYER(map, i)->name) + 3);
+      ltags[i] = (char *) msSmallMalloc(sizeof(char)*strlen(GET_LAYER(map, i)->name) + 3);
       sprintf(ltags[i], "[%s]", GET_LAYER(map, i)->name);
     }
   }
@@ -308,13 +308,13 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 
   if(!context) return(MS_TRUE); /* no context requirements */
 
-  tmpstr1 = strdup(context);
+  tmpstr1 = msStrdup(context);
 
   for(i=0; i<map->numlayers; i++) { /* step through all the layers */
     if(layer->index == i) continue; /* skip the layer in question */    
     if (GET_LAYER(map, i)->name == NULL) continue; /* Layer without name cannot be used in contexts */
 
-    tmpstr2 = (char *)malloc(sizeof(char)*strlen(GET_LAYER(map, i)->name) + 3);
+    tmpstr2 = (char *)msSmallMalloc(sizeof(char)*strlen(GET_LAYER(map, i)->name) + 3);
     sprintf(tmpstr2, "[%s]", GET_LAYER(map, i)->name);
 
     if(strstr(tmpstr1, tmpstr2)) {
@@ -377,10 +377,10 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     }
     break;
   case(MS_EXPRESSION):
-    tmpstr = strdup(expression->string);
+    tmpstr = msStrdup(expression->string);
 
     for(i=0; i<expression->numitems; i++) {
-      tmpstr2 = strdup(items[expression->indexes[i]]);
+      tmpstr2 = msStrdup(items[expression->indexes[i]]);
       tmpstr2 = msReplaceSubstring(tmpstr2, "\'", "\\\'");
       tmpstr2 = msReplaceSubstring(tmpstr2, "\"", "\\\"");
       tmpstr = msReplaceSubstring(tmpstr, expression->items[i], tmpstr2);
@@ -463,7 +463,7 @@ int *msAllocateValidClassGroups(layerObj *lp, int *nclasses)
     if (!lp || !lp->classgroup || lp->numclasses <=0 || !nclasses)
       return NULL;
 
-    classgroup = (int *)malloc(sizeof(int)*lp->numclasses);       
+    classgroup = (int *)msSmallMalloc(sizeof(int)*lp->numclasses);       
     nvalidclass = 0;
     for (i=0; i<lp->numclasses; i++)
     {
@@ -475,7 +475,7 @@ int *msAllocateValidClassGroups(layerObj *lp, int *nclasses)
     }
     if (nvalidclass > 0)
     {
-        classgroup = (int *)realloc(classgroup, sizeof(int)*nvalidclass);
+        classgroup = (int *)msSmallRealloc(classgroup, sizeof(int)*nvalidclass);
         *nclasses = nvalidclass;
         return classgroup;
     }
@@ -547,12 +547,12 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
   char *tmpstr=NULL;
 
   if(layer->class[shape->classindex]->text.string) { /* test for global label first */
-    tmpstr = strdup(layer->class[shape->classindex]->text.string);
+    tmpstr = msStrdup(layer->class[shape->classindex]->text.string);
     switch(layer->class[shape->classindex]->text.type) {
     case(MS_STRING):
       break;
     case(MS_EXPRESSION):
-      tmpstr = strdup(layer->class[shape->classindex]->text.string);
+      tmpstr = msStrdup(layer->class[shape->classindex]->text.string);
 
       for(i=0; i<layer->class[shape->classindex]->text.numitems; i++)
         tmpstr = msReplaceSubstring(tmpstr, layer->class[shape->classindex]->text.items[i], shape->values[layer->class[shape->classindex]->text.indexes[i]]);
@@ -560,7 +560,7 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
     }
   } else {
     if (shape->values && layer->labelitemindex >= 0)
-        tmpstr = strdup(shape->values[layer->labelitemindex]);
+        tmpstr = msStrdup(shape->values[layer->labelitemindex]);
   }
 
   return(tmpstr);
@@ -836,7 +836,7 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
         return NULL;
     }
 
-    aiIndex = (int *)malloc(sizeof(int) * map->numlayers);
+    aiIndex = (int *)msSmallMalloc(sizeof(int) * map->numlayers);
 
     for(i=0;i<map->numlayers; i++)
     {
@@ -857,7 +857,7 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
     }
     else
     {
-        aiIndex = (int *)realloc(aiIndex, sizeof(int)* iLayer);
+        aiIndex = (int *)msSmallRealloc(aiIndex, sizeof(int)* iLayer);
         *pnCount = iLayer;
     }
 
@@ -955,7 +955,7 @@ pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
         else
           dfFactor = 0;
 
-        point = (pointObj *)malloc(sizeof(pointObj));
+        point = (pointObj *)msSmallMalloc(sizeof(pointObj));
         
         point->x = dfFirstPointX + (dfFactor * (dfSecondPointX - dfFirstPointX));
         point->y = dfFirstPointY + 
@@ -1065,7 +1065,7 @@ pointObj *msIntersectionPointLine(pointObj *p, pointObj *a, pointObj *b)
         else
           r = 0;
 
-        result = (pointObj *)malloc(sizeof(pointObj));
+        result = (pointObj *)msSmallMalloc(sizeof(pointObj));
 /* -------------------------------------------------------------------- */
 /*      We want to make sure that the point returned is on the line     */
 /*                                                                      */
@@ -1194,7 +1194,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
    
     if (!map->layerorder)
     {
-       map->layerorder = (int*)malloc(map->numlayers * sizeof(int));
+       map->layerorder = (int*)msSmallMalloc(map->numlayers * sizeof(int));
 
        /*
         * Initiate to default order
@@ -1206,7 +1206,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
     if (map != NULL && map->numlayers > 0)
     {
         nCount = map->numlayers;
-        papszGroups = (char **)malloc(sizeof(char *)*nCount);
+        papszGroups = (char **)msSmallMalloc(sizeof(char *)*nCount);
 
         for (i=0; i<nCount; i++)
             papszGroups[i] = NULL;
@@ -1231,7 +1231,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
                 if (!bFound)
                 {
                     /* New group... add to the list of groups found */
-                    papszGroups[(*numTok)] = strdup(lp->group);
+                    papszGroups[(*numTok)] = msStrdup(lp->group);
                     (*numTok)++;
                 }
             }
@@ -1268,7 +1268,7 @@ void msForceTmpFileBase( const char *new_base )
 /* -------------------------------------------------------------------- */
 /*      Record new base.                                                */
 /* -------------------------------------------------------------------- */
-    ForcedTmpBase = strdup( new_base );
+    ForcedTmpBase = msStrdup( new_base );
     tmpCount = 0;
 }
 
@@ -1308,7 +1308,7 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
 
     if (ext == NULL)  ext = "";
     tmpFnameBufsize = strlen(tmpBase) + 10  + strlen(ext) + 1;
-    tmpFname = (char*)malloc(tmpFnameBufsize);
+    tmpFname = (char*)msSmallMalloc(tmpFnameBufsize);
 
     msAcquireLock( TLOCK_TMPFILE );
     snprintf(tmpFname, tmpFnameBufsize, "%s_%x.%s", tmpBase, tmpCount++, ext);
@@ -1318,7 +1318,7 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     free(tmpFname);
 
     if (fullFname)
-        return strdup(fullFname);
+        return msStrdup(fullFname);
 
     return NULL;
 }
@@ -1334,6 +1334,12 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     if(MS_RENDERER_PLUGIN(format)) {
         
     	image = format->vtable->createImage(width,height,format,bg);
+        if (image == NULL)
+        {
+            msSetError(MS_MEMERR, "Unable to create new image object.", "msImageCreate()");
+            return NULL;
+        }
+
     	image->format = format;
         format->refcount++;
 
@@ -1347,9 +1353,9 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         image->resolutionfactor = resolution/defresolution;
 
         if (imagepath)
-            image->imagepath = strdup(imagepath);
+            image->imagepath = msStrdup(imagepath);
         if (imageurl)
-            image->imageurl = strdup(imageurl);
+            image->imageurl = msStrdup(imageurl);
 
         return image;
     }
@@ -1366,16 +1372,21 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         }
 
         image = (imageObj *)calloc(1,sizeof(imageObj));
+        if (image == NULL)
+        {
+            msSetError(MS_MEMERR, "Unable to create new image object.", "msImageCreate()");
+            return NULL;
+        }
 
         if( format->imagemode == MS_IMAGEMODE_INT16 )
             image->img.raw_16bit = (short *) 
-                calloc(sizeof(short),width*height*format->bands);
+                msSmallCalloc(sizeof(short),width*height*format->bands);
         else if( format->imagemode == MS_IMAGEMODE_FLOAT32 )
             image->img.raw_float = (float *) 
-                calloc(sizeof(float),width*height*format->bands);
+                msSmallCalloc(sizeof(float),width*height*format->bands);
         else if( format->imagemode == MS_IMAGEMODE_BYTE )
             image->img.raw_byte = (unsigned char *) 
-                calloc(sizeof(unsigned char),width*height*format->bands);
+                msSmallCalloc(sizeof(unsigned char),width*height*format->bands);
 
         if( image->img.raw_16bit == NULL )
         {
@@ -1399,9 +1410,9 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         image->resolutionfactor = resolution/defresolution;
 
         if (imagepath)
-            image->imagepath = strdup(imagepath);
+            image->imagepath = msStrdup(imagepath);
         if (imageurl)
-            image->imageurl = strdup(imageurl);
+            image->imageurl = msStrdup(imageurl);
 
         /* initialize to requested nullvalue if there is one */
         if( msGetOutputFormatOption(image->format,"NULLVALUE",NULL) != NULL )
@@ -1573,13 +1584,13 @@ static double point_cross(const pointObj a, const pointObj b) {
 shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety) {
   int i, j, first,idx;
 
-  shapeObj *ret = (shapeObj*)malloc(sizeof(shapeObj));
+  shapeObj *ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
   msInitShape(ret);
   ret->numlines = p->numlines;
-  ret->line=(lineObj*)malloc(sizeof(lineObj)*ret->numlines);
+  ret->line=(lineObj*)msSmallMalloc(sizeof(lineObj)*ret->numlines);
   for(i=0;i<ret->numlines;i++) {
     ret->line[i].numpoints=p->line[i].numpoints;
-    ret->line[i].point=(pointObj*)malloc(sizeof(pointObj)*ret->line[i].numpoints);
+    ret->line[i].point=(pointObj*)msSmallMalloc(sizeof(pointObj)*ret->line[i].numpoints);
   }
 
   if(offsety == -99) { /* complex calculations */
@@ -1634,7 +1645,7 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety) {
       if(idx != p->line[i].numpoints) {
         /* printf("shouldn't happen :(\n"); */
         ret->line[i].numpoints=idx;
-        ret->line=realloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
+        ret->line=msSmallRealloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
       }
     }
   } else { /* normal offset (eg. drop shadow) */
@@ -1816,7 +1827,7 @@ void msBufferInit(bufferObj *buffer) {
 
 void msBufferResize(bufferObj *buffer, size_t target_size){
     while(buffer->available <= target_size) {
-        buffer->data = realloc(buffer->data,buffer->available+buffer->_next_allocation_size);
+        buffer->data = msSmallRealloc(buffer->data,buffer->available+buffer->_next_allocation_size);
         buffer->available += buffer->_next_allocation_size;
         buffer->_next_allocation_size *= 2;
     }
@@ -1912,5 +1923,92 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
     return MS_FALSE;
 #endif
 
+}
+
+/************************************************************************/
+/*                             msSmallMalloc()                          */
+/************************************************************************/
+
+/* Safe version of malloc(). This function is taken from gdal/cpl. */
+
+void *msSmallMalloc( size_t nSize )
+{
+    void        *pReturn;
+
+    if( nSize == 0 )
+        return NULL;
+
+    if( nSize < 0 )
+    {
+        fprintf(stderr, "msSmallMalloc(%ld): Silly size requested.\n",
+                (long) nSize );
+        return NULL;
+    }
+    
+    pReturn = malloc( nSize );
+    if( pReturn == NULL )
+    {
+        fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
+                (long) nSize );
+        exit(1);
+    }
+
+    return pReturn;
+}
+
+/************************************************************************/
+/*                             msSmallRealloc()                         */
+/************************************************************************/
+
+/* Safe version of realloc(). This function is taken from gdal/cpl. */
+
+void * msSmallRealloc( void * pData, size_t nNewSize )
+{
+    void        *pReturn;
+
+    if ( nNewSize == 0 )
+        return NULL;
+
+    if( nNewSize < 0 )
+    {
+        fprintf(stderr, "msSmallRealloc(%ld): Silly size requested.\n",
+                (long) nNewSize );
+        return NULL;
+    }
+
+    pReturn = realloc( pData, nNewSize );
+
+    if( pReturn == NULL )
+    {
+        fprintf(stderr, "msSmallRealloc(): Out of memory allocating %ld bytes.\n",
+                (long)nNewSize );
+        exit(1);
+    }
+
+    return pReturn;
+}
+
+/************************************************************************/
+/*                             msSmallCalloc()                         */
+/************************************************************************/
+
+/* Safe version of calloc(). This function is taken from gdal/cpl. */
+
+void *msSmallCalloc( size_t nCount, size_t nSize )
+{
+    void  *pReturn;
+
+    if( nSize * nCount == 0 )
+        return NULL;
+    
+    pReturn = calloc( nCount, nSize );
+    if( pReturn == NULL )
+    {
+        fprintf(stderr, "msSmallCalloc(): Out of memory allocating %ld bytes.\n",
+                (long)(nCount*nSize));
+        exit(1);
+    }
+
+    return pReturn;
 }
 

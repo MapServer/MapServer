@@ -238,13 +238,13 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
         if( psReq->result_data == NULL )
         {
             psReq->result_buf_size = size*nmemb + 10000;
-            psReq->result_data = (char *) malloc( psReq->result_buf_size );
+            psReq->result_data = (char *) msSmallMalloc( psReq->result_buf_size );
         }
         else if( psReq->result_size + nmemb * size > psReq->result_buf_size )
         {
             psReq->result_buf_size = psReq->result_size + nmemb*size + 10000;
-            psReq->result_data = (char *) realloc( psReq->result_data,
-                                                   psReq->result_buf_size );
+            psReq->result_data = (char *) msSmallRealloc( psReq->result_data,
+                                                          psReq->result_buf_size );
         }
 
         if( psReq->result_data == NULL )
@@ -396,7 +396,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                             pasReqInfo[i].nLayerId);
                 fclose(fp);
                 pasReqInfo[i].nStatus = 242;
-                pasReqInfo[i].pszContentType = strdup("unknown/cached");
+                pasReqInfo[i].pszContentType = msStrdup("unknown/cached");
                 continue;
             }
         }
@@ -422,7 +422,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
             psCurlVInfo = curl_version_info(CURLVERSION_NOW);
 
-            pasReqInfo[i].pszUserAgent = (char*)malloc(100*sizeof(char));
+            pasReqInfo[i].pszUserAgent = (char*)msSmallMalloc(100*sizeof(char));
 
             if (pasReqInfo[i].pszUserAgent)
             {
@@ -550,7 +550,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         /* Provide a buffer where libcurl can write human readable error msgs
          */
         if (pasReqInfo[i].pszErrBuf == NULL)
-            pasReqInfo[i].pszErrBuf = (char *)malloc((CURL_ERROR_SIZE+1)*
+            pasReqInfo[i].pszErrBuf = (char *)msSmallMalloc((CURL_ERROR_SIZE+1)*
                                                      sizeof(char));
         pasReqInfo[i].pszErrBuf[0] = '\0';
 
@@ -728,7 +728,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                                   &pszContentType) == CURLE_OK &&
                 pszContentType != NULL)
             {
-                psReq->pszContentType = strdup(pszContentType);
+                psReq->pszContentType = msStrdup(pszContentType);
             }
         }
 
@@ -843,10 +843,12 @@ int msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
      * object in the array can be set to NULL. 
     */
     pasReqInfo = (httpRequestObj*)calloc(2, sizeof(httpRequestObj));
+    MS_CHECK_ALLOC(pasReqInfo, 2*sizeof(httpRequestObj), MS_FAILURE);
+    
     msHTTPInitRequestObj(pasReqInfo, 2);
 
-    pasReqInfo[0].pszGetUrl = strdup(pszGetUrl);
-    pasReqInfo[0].pszOutputFile = strdup(pszOutputFile);
+    pasReqInfo[0].pszGetUrl = msStrdup(pszGetUrl);
+    pasReqInfo[0].pszOutputFile = msStrdup(pszOutputFile);
     pasReqInfo[0].debug = (char)bDebug;
 
     if (msHTTPExecuteRequests(pasReqInfo, 1, bCheckLocalCache) != MS_SUCCESS)

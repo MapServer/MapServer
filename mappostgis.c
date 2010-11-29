@@ -408,7 +408,7 @@ static int msPostGISRetrievePgVersion(PGconn *pgconn) {
     if (! PQparameterStatus(pgconn, "server_version") )
         return(MS_FAILURE); 
  
-    strVersion = strdup(PQparameterStatus(pgconn, "server_version"));
+    strVersion = msStrdup(PQparameterStatus(pgconn, "server_version"));
     if( ! strVersion ) 
         return MS_FAILURE; 
 
@@ -733,7 +733,7 @@ int msPostGISParseData(layerObj *layer) {
         if ( msPostGISRetrievePK(layer) != MS_SUCCESS ) {
             /* No user specified unique id so we will use the PostgreSQL oid */
             /* TODO: Deprecate this, oids are deprecated in PostgreSQL */
-            layerinfo->uid = strdup("oid");
+            layerinfo->uid = msStrdup("oid");
         }
     }
 
@@ -1010,7 +1010,7 @@ char *msPostGISBuildSQLItems(layerObj *layer) {
     ** Not requesting items? We just need geometry and unique id.
     */
     if (layer->numitems == 0) {
-        strItems = strdup(strGeom);
+        strItems = msStrdup(strGeom);
     } 
     /*
     ** Build SQL to pull all the items.
@@ -1055,7 +1055,7 @@ char *msPostGISBuildSQLSRID(layerObj *layer) {
 
     /* An SRID was already provided in the DATA line. */
     if ( layerinfo->srid && (strlen(layerinfo->srid) > 0) ) {
-        strSRID = strdup(layerinfo->srid);
+        strSRID = msStrdup(layerinfo->srid);
         if( layer->debug > 1 ) {
             msDebug("msPostGISBuildSQLSRID: SRID provided (%s)\n", strSRID);
         }
@@ -1075,7 +1075,7 @@ char *msPostGISBuildSQLSRID(layerObj *layer) {
 
         if ( ! pos ) {
             /* target table is one word */
-            f_table_name = strdup(layerinfo->fromsource);
+            f_table_name = msStrdup(layerinfo->fromsource);
             if( layer->debug > 1 ) {
                 msDebug("msPostGISBuildSQLSRID: Found table (%s)\n", f_table_name);
             }
@@ -1164,7 +1164,7 @@ static char *msPostGISReplaceBoxToken(layerObj *layer, rectObj *rect, const char
     }    
     else
     {
-        result = strdup(fromsource);
+        result = msStrdup(fromsource);
     }
     return result;
     
@@ -1462,7 +1462,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
             char *val = (char*)PQgetvalue(layerinfo->pgresult, layerinfo->rownum, t);
             int isnull = PQgetisnull(layerinfo->pgresult, layerinfo->rownum, t);
             if ( isnull ) {
-                shape->values[t] = strdup("");
+                shape->values[t] = msStrdup("");
             }
             else {
                 shape->values[t] = (char*) malloc(size + 1);
@@ -1590,7 +1590,7 @@ int msPostGISLayerOpen(layerObj *layer) {
             if (layer->debug)
                 msDebug("msPostGISLayerOpen: Connection failure.\n");
 
-            maskeddata = strdup(layer->connection);
+            maskeddata = msStrdup(layer->connection);
             index = strstr(maskeddata, "password=");
             if (index != NULL) {
                 index = (char*)(index + 9);
@@ -2268,7 +2268,7 @@ int msPostGISLayerGetItems(layerObj *layer) {
         col = PQfname(pgresult, t);
         if ( strcmp(col, layerinfo->geomcolumn) != 0 ) {
             /* this isnt the geometry column */
-            layer->items[item_num] = strdup(col);
+            layer->items[item_num] = msStrdup(col);
             item_num++;
         } else {
             found_geom = 1;
@@ -2339,7 +2339,7 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
 
     if (strstr(timestring, ",") == NULL && 
         strstr(timestring, "/") == NULL) /* discrete time */
-      tmpstimestring = strdup(timestring);
+      tmpstimestring = msStrdup(timestring);
     else
     {
         atimes = msStringSplit (timestring, ',', &numtimes);
@@ -2351,12 +2351,12 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
             tokens = msStringSplit(atimes[0],  '/', &ntmp);
             if (ntmp == 2) /* ranges */
             {
-                tmpstimestring = strdup(tokens[0]);
+                tmpstimestring = msStrdup(tokens[0]);
                 msFreeCharArray(tokens, ntmp);
             }
             else if (ntmp == 1) /* multiple times */
             {
-                tmpstimestring = strdup(atimes[0]);
+                tmpstimestring = msStrdup(atimes[0]);
             }
         }
         msFreeCharArray(atimes, numtimes);
@@ -2373,27 +2373,27 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
     switch (timesresol)
     {
         case (TIME_RESOLUTION_SECOND):
-          timeresolution = strdup("second");
+          timeresolution = msStrdup("second");
           break;
 
         case (TIME_RESOLUTION_MINUTE):
-          timeresolution = strdup("minute");
+          timeresolution = msStrdup("minute");
           break;
 
         case (TIME_RESOLUTION_HOUR):
-          timeresolution = strdup("hour");
+          timeresolution = msStrdup("hour");
           break;
 
         case (TIME_RESOLUTION_DAY):
-          timeresolution = strdup("day");
+          timeresolution = msStrdup("day");
           break;
 
         case (TIME_RESOLUTION_MONTH):
-          timeresolution = strdup("month");
+          timeresolution = msStrdup("month");
           break;
 
         case (TIME_RESOLUTION_YEAR):
-          timeresolution = strdup("year");
+          timeresolution = msStrdup("year");
           break;
 
         default:
@@ -2408,7 +2408,7 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
         strstr(timestring, "/") == NULL) /* discrete time */
     {
         if(lp->filteritem) free(lp->filteritem);
-        lp->filteritem = strdup(timefield);
+        lp->filteritem = msStrdup(timefield);
         if (&lp->filter)
         {
             /* if the filter is set and it's a string type, concatenate it with
@@ -2656,7 +2656,7 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
         {
             if(lp->filteritem) 
               free(lp->filteritem);
-            lp->filteritem = strdup(timefield);     
+            lp->filteritem = msStrdup(timefield);     
             if (&lp->filter)
             {
                 if (lp->filter.type == MS_EXPRESSION)

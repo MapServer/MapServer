@@ -124,7 +124,7 @@ static int suppressEmpty=0;
 static const char *makeFmtSafe(const char *fmt, int MAX) {
   /* format string should have exactly 'MAX' %s */
 
-  char *result = malloc(strlen(fmt)+1+3*MAX), *cp;
+  char *result = msSmallMalloc(strlen(fmt)+1+3*MAX), *cp;
   int numstr=0, saw_percent=0;
 
   strcpy(result, fmt);
@@ -186,7 +186,7 @@ static void im_iprintf(pString *ps, const char *fmt, ...) {
 			if (n>-1 && *(ps->alloc_size) <= (n + ps->string_len))
 				/* ensure at least as much as what is needed */
 				*(ps->alloc_size) = n+ps->string_len+1;
-			*(ps->string) = (char *) realloc
+			*(ps->string) = (char *) msSmallRealloc
 				(*(ps->string), *(ps->alloc_size));
 			/* if realloc doesn't work, we're screwed! */
 		}
@@ -246,9 +246,9 @@ void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image){
 DEBUG_IF printf("ImageStartLayerIM\n<BR>");
 	free(lname);
 	if (layer->name)
-		lname = strdup(layer->name);
+		lname = msStrdup(layer->name);
 	else
-		lname = strdup("NONE");
+		lname = msStrdup("NONE");
 	if (dxf == 2){
 		im_iprintf(&layerStr, "LAYER\n%s\n", lname);
 	} else if (dxf) {
@@ -272,10 +272,8 @@ DEBUG_IF printf("addImageCache\n<BR>");
   } else 
     *icsize += 1;
 
-  if((icp = (struct imageCacheObj *)malloc(sizeof(struct imageCacheObj))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "initImageCache()");
-    return(NULL);
-  }
+  icp = (struct imageCacheObj *)malloc(sizeof(struct imageCacheObj));
+  MS_CHECK_ALLOC(icp, sizeof(struct imageCacheObj), NULL);
   
   icp->img = img;
   icp->color = style->color;
@@ -303,6 +301,7 @@ DEBUG_IF printf("msImageCreateIM<BR>\n");
     if (width > 0 && height > 0)
     {
         image = (imageObj *)calloc(1,sizeof(imageObj));
+        MS_CHECK_ALLOC(image, sizeof(imageObj), NULL);
 /*
 
         if( format->imagemode == MS_IMAGEMODE_RGB 
@@ -365,8 +364,8 @@ DEBUG_IF printf("msImageCreateIM<BR>\n");
 	      suppressEmpty=1;
 	    }
 
-	    lname = strdup("NONE");
-	    *(imgStr.string) = strdup("");
+	    lname = msStrdup("NONE");
+	    *(imgStr.string) = msStrdup("");
 	    if (*(imgStr.string)){
 		    *(imgStr.alloc_size) =
 			    imgStr.string_len = strlen(*(imgStr.string));
@@ -376,11 +375,11 @@ DEBUG_IF printf("msImageCreateIM<BR>\n");
 	    }
             if (imagepath)
             {
-                image->imagepath = strdup(imagepath);
+                image->imagepath = msStrdup(imagepath);
             }
             if (imageurl)
             {
-                image->imageurl = strdup(imageurl);
+                image->imageurl = msStrdup(imageurl);
             }
             
             return image;

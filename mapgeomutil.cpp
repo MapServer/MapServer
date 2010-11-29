@@ -18,15 +18,30 @@
 shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle, double endAngle, int isSlice) {
 	static int allocated_size=100;
 	shapeObj *shape = (shapeObj*)calloc(1,sizeof(shapeObj));
+        MS_CHECK_ALLOC(shape, sizeof(shapeObj), NULL);
 	mapserver::arc arc ( x0, y0,radius,radius, startAngle*MS_DEG_TO_RAD, endAngle*MS_DEG_TO_RAD,true );
 	arc.approximation_scale ( 1 );
 	arc.rewind(1);
 	msInitShape(shape);
 	
 	lineObj *line = (lineObj*)calloc(1,sizeof(lineObj));
+        if (!line) {
+            msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
+                       __FILE__, __LINE__, sizeof(lineObj));       
+            free(shape);
+            return NULL; 
+        }
 	shape->line = line;
 	shape->numlines = 1;
 	line->point = (pointObj*)calloc(allocated_size,sizeof(pointObj));
+        if (!line->point) {
+            msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
+                       __FILE__, __LINE__, allocated_size*sizeof(pointObj));       
+            free(line);
+            free(shape);
+            return NULL; 
+        }
+
 	line->numpoints = 0;
 	
 	double x,y;
@@ -41,6 +56,13 @@ shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
 		if(line->numpoints == allocated_size) {
 			allocated_size *= 2;
 			line->point = (pointObj*)realloc(line->point, allocated_size * sizeof(pointObj));
+                        if (!line->point) {
+                            msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
+                                       __FILE__, __LINE__, allocated_size * sizeof(pointObj));       
+                            free(line);
+                            free(shape);
+                            return NULL; 
+                        }
 		}
 		line->point[line->numpoints].x = x;
 		line->point[line->numpoints].y = y;
@@ -54,6 +76,13 @@ shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
 			if(line->numpoints == allocated_size) {
 				allocated_size *= 2;
 				line->point = (pointObj*)realloc(line->point, allocated_size * sizeof(pointObj));
+                                if (!line->point) {
+                                    msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
+                                               __FILE__, __LINE__, allocated_size * sizeof(pointObj));       
+                                    free(line);
+                                    free(shape);
+                                    return NULL; 
+                                }
 			}
 			line->point[line->numpoints].x = line->point[0].x;
 			line->point[line->numpoints].y = line->point[0].y;
@@ -65,6 +94,13 @@ shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
 		if(line->numpoints == allocated_size) {
 			allocated_size *= 2;
 			line->point = (pointObj*)realloc(line->point, allocated_size * sizeof(pointObj));
+                        if (!line->point) {
+                            msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
+                                       __FILE__, __LINE__, allocated_size * sizeof(pointObj));       
+                            free(line);
+                            free(shape);
+                            return NULL; 
+                        }
 		}
 		line->point[line->numpoints].x = x0;
 		line->point[line->numpoints].y = y0;
@@ -160,7 +196,7 @@ int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, 
    lineObj line;
    shape.line = &line;
    shape.numlines = 1;
-   shape.line[0].point = (pointObj*)calloc(allocated,sizeof(pointObj));
+   shape.line[0].point = (pointObj*)msSmallCalloc(allocated,sizeof(pointObj));
    shape.line[0].numpoints = 0;
    mapserver::conv_stroke<mapserver::path_storage> stroke(lines);
    stroke.width(width);
@@ -177,7 +213,7 @@ int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, 
       case mapserver::path_cmd_line_to:
          if(shape.line[0].numpoints == allocated) {
             allocated *= 2;
-            shape.line[0].point = (pointObj*)realloc(shape.line[0].point, allocated*sizeof(pointObj));
+            shape.line[0].point = (pointObj*)msSmallRealloc(shape.line[0].point, allocated*sizeof(pointObj));
          }
          shape.line[0].point[shape.line[0].numpoints].x = x;
          shape.line[0].point[shape.line[0].numpoints].y = y;

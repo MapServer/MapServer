@@ -227,7 +227,7 @@ void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
         if (strstr(timestring, ",") == NULL &&
             strstr(timestring, "/") == NULL) /* discrete time */
         {
-            time = strdup(timestring);
+            time = msStrdup(timestring);
         }
         else
         {
@@ -237,11 +237,11 @@ void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
                 tokens = msStringSplit(atimes[0],  '/', &ntmp);
                 if (ntmp == 2 && tokens) /* range */
                 {
-                    time = strdup(tokens[0]);
+                    time = msStrdup(tokens[0]);
                 }
                 else /* multiple times */
                 {
-                    time = strdup(atimes[0]);
+                    time = msStrdup(atimes[0]);
                 }
                 msFreeCharArray(tokens, ntmp);
                 msFreeCharArray(atimes, numtimes);
@@ -432,7 +432,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
        sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
        if (sldenabled == NULL)
-         sldenabled = strdup("true");
+         sldenabled = msStrdup("true");
 
        if (ogrEnabled == 0)
        {
@@ -462,11 +462,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       int  j, k, iLayer, *layerOrder;
       
       layerOrder = (int*)malloc(map->numlayers * sizeof(int));
-      if (layerOrder == NULL)
-      {
-        msSetError(MS_MEMERR, NULL, "msWMSLoadGetMapParams()");
-        return MS_FAILURE;
-      }
+      MS_CHECK_ALLOC(layerOrder, map->numlayers * sizeof(int), MS_FAILURE)
 
       layers = msStringSplit(values[i], ',', &numlayers);
       if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) {
@@ -710,7 +706,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           }
       }
       msFree( map->imagetype );
-      map->imagetype = strdup(values[i]);
+      map->imagetype = msStrdup(values[i]);
     }
     else if (strcasecmp(names[i], "TRANSPARENT") == 0) {
       transparent = (strcasecmp(values[i], "TRUE") == 0);
@@ -1122,7 +1118,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                               {
                                   if (lp->classgroup)
                                     msFree(lp->classgroup);
-                                  lp->classgroup = strdup( tokens[i]);
+                                  lp->classgroup = msStrdup( tokens[i]);
                                   break;
                               }
                           }
@@ -1234,7 +1230,7 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
       /* Special case for early WMS with subelements in Format (bug 908) */
       if( nVersion <= OWS_1_0_7 )
       {
-          encoded = strdup( fmt );
+          encoded = msStrdup( fmt );
       }
 
       /* otherwise we HTML code special characters */
@@ -1654,7 +1650,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    if (pszStyle)
    {
        bufferSize = strlen(pszStyle)+205;
-       pszMetadataName = (char*)malloc(bufferSize);
+       pszMetadataName = (char*)msSmallMalloc(bufferSize);
        snprintf(pszMetadataName, bufferSize, "style_%s_legendurl_href", pszStyle);
        pszLegendURL = msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName);
    }
@@ -1737,7 +1733,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                            snprintf(height, sizeof(height), "%d", size_y);
 
                            bufferSize = strlen(script_url_encoded)+200;
-                           legendurl = (char*)malloc(bufferSize);
+                           legendurl = (char*)msSmallMalloc(bufferSize);
 
 #ifdef USE_GD_PNG
                            mimetype = msEncodeHTMLEntities("image/png");
@@ -1770,8 +1766,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                {
                                    if (!classgroups)
                                    {
-                                       classgroups = (char **)malloc(sizeof(char *));
-                                       classgroups[iclassgroups++]= strdup(lp->class[i]->group);
+                                       classgroups = (char **)msSmallMalloc(sizeof(char *));
+                                       classgroups[iclassgroups++]= msStrdup(lp->class[i]->group);
                                    }
                                    else
                                    {
@@ -1783,16 +1779,16 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                        if (j == iclassgroups)
                                        {
                                            iclassgroups++;
-                                           classgroups = (char **)realloc(classgroups, sizeof(char *)*iclassgroups);
-                                           classgroups[iclassgroups-1]= strdup(lp->class[i]->group);
+                                           classgroups = (char **)msSmallRealloc(classgroups, sizeof(char *)*iclassgroups);
+                                           classgroups[iclassgroups-1]= msStrdup(lp->class[i]->group);
                                        }
                                    }
                                }
                            }
                            if (classgroups == NULL)
                            {
-                               classgroups = (char **)malloc(sizeof(char *));
-                               classgroups[0]= strdup("default");
+                               classgroups = (char **)msSmallMalloc(sizeof(char *));
+                               classgroups[0]= msStrdup("default");
                                iclassgroups = 1;
                            }
                            for (i=0; i<iclassgroups; i++)
@@ -2012,7 +2008,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
   if (sldenabled == NULL)
-      sldenabled = strdup("true");
+      sldenabled = msStrdup("true");
 
   if (requested_updatesequence != NULL) {
       i = msOWSNegotiateUpdateSequence(requested_updatesequence, updatesequence);
@@ -2034,24 +2030,24 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   /* Decide which version we're going to return. */
   if (nVersion < OWS_1_0_7) {
     nVersion = OWS_1_0_0;
-    dtd_url = strdup(schemalocation);
+    dtd_url = msStrdup(schemalocation);
     dtd_url = msStringConcatenate(dtd_url, "/wms/1.0.0/capabilities_1_0_0.dtd");
   }
 
   else if (nVersion < OWS_1_1_0) {
     nVersion = OWS_1_0_7;
-    dtd_url = strdup(schemalocation);
+    dtd_url = msStrdup(schemalocation);
     dtd_url = msStringConcatenate(dtd_url, "/wms/1.0.7/capabilities_1_0_7.dtd");
   }
   else if (nVersion == OWS_1_1_0) {
     nVersion = OWS_1_1_0;
-    dtd_url = strdup(schemalocation);
+    dtd_url = msStrdup(schemalocation);
     dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.0/capabilities_1_1_0.dtd");
   }
   /*TODO review wms1.3.0*/
   else if (nVersion != OWS_1_3_0) {
     nVersion = OWS_1_1_1;
-    dtd_url = strdup(schemalocation);
+    dtd_url = msStrdup(schemalocation);
     /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
     if (strcasecmp(schemalocation, OWS_DEFAULT_SCHEMAS_LOCATION) == 0)
       dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
@@ -2418,9 +2414,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
 
 
   if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_keywordlist"))
-    pszTmp = strdup("rootlayer_keywordlist");
+    pszTmp = msStrdup("rootlayer_keywordlist");
    else
-    pszTmp = strdup("keywordlist");
+    pszTmp = msStrdup("keywordlist");
 
   if (nVersion == OWS_1_0_0)
   {
@@ -2511,11 +2507,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
 
      /* We'll use this array of booleans to track which layer/group have been */
      /* processed already */
-     pabLayerProcessed = (char *)calloc(map->numlayers, sizeof(char*));
+     pabLayerProcessed = (char *)msSmallCalloc(map->numlayers, sizeof(char*));
      /* This array holds the arrays of groups that have been set through the WMS_LAYER_GROUP metadata */
-     nestedGroups = (char***)calloc(map->numlayers, sizeof(char**));
+     nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
      /* This array holds the number of groups set in WMS_LAYER_GROUP for each layer */
-     numNestedGroups = (int*)calloc(map->numlayers, sizeof(int));
+     numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
 
      msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups);
 
@@ -2624,16 +2620,16 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
    {
       if (strcasecmp("X", names[i]) == 0)
       {
-         values[tmpNumentries] = strdup(values[i]);
-         names[tmpNumentries] = strdup("img.x");
+         values[tmpNumentries] = msStrdup(values[i]);
+         names[tmpNumentries] = msStrdup("img.x");
 
          tmpNumentries++;
       }
       else
       if (strcasecmp("Y", names[i]) == 0)
       {
-         values[tmpNumentries] = strdup(values[i]);
-         names[tmpNumentries] = strdup("img.y");
+         values[tmpNumentries] = msStrdup(values[i]);
+         names[tmpNumentries] = msStrdup("img.y");
 
          tmpNumentries++;
       }
@@ -2650,7 +2646,7 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
          {
             values[tmpNumentries] = layers[j];
             layers[j] = NULL;
-            names[tmpNumentries] = strdup("layer");
+            names[tmpNumentries] = msStrdup("layer");
 
             tmpNumentries++;
          }
@@ -2670,7 +2666,7 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
          {
             values[tmpNumentries] = layers[j];
             layers[j] = NULL;
-            names[tmpNumentries] = strdup("qlayer");
+            names[tmpNumentries] = msStrdup("qlayer");
 
             tmpNumentries++;
          }
@@ -2683,11 +2679,11 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
          char *imgext;
 
          /* Note msReplaceSubstring() works on the string itself, so we need to make a copy */
-         imgext = strdup(values[i]);
+         imgext = msStrdup(values[i]);
          imgext = msReplaceSubstring(imgext, ",", " ");
 
          values[tmpNumentries] = imgext;
-         names[tmpNumentries] = strdup("imgext");
+         names[tmpNumentries] = msStrdup("imgext");
 
          tmpNumentries++;
       }
@@ -2840,7 +2836,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion)
       if((value = msOWSLookupMetadata(&(lp->metadata), "MO", "exclude_items")) != NULL)  
           excitems = msStringSplit(value, ',', &numexcitems);
 
-      itemvisible = (int*)malloc(lp->numitems*sizeof(int));
+      itemvisible = (int*)msSmallMalloc(lp->numitems*sizeof(int));
       for(k=0; k<lp->numitems; k++)
       {
           int l;
@@ -3390,7 +3386,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
     sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
     if (sldenabled == NULL)
-       sldenabled = strdup("true");
+       sldenabled = msStrdup("true");
 
      for(i=0; map && i<numentries; i++)
      {
@@ -3529,7 +3525,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          {
              if (GET_LAYER(map, iLayerIndex)->classgroup)
                msFree(GET_LAYER(map, iLayerIndex)->classgroup);
-             GET_LAYER(map, iLayerIndex)->classgroup = strdup(pszStyle);
+             GET_LAYER(map, iLayerIndex)->classgroup = msStrdup(pszStyle);
              
          }
      }

@@ -232,14 +232,14 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
         value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_format");
 
         if (!value)
-          value = strdup("text/html"); /* default */
+          value = msStrdup("text/html"); /* default */
 
         xmlNewProp(psNode, BAD_CAST "format", BAD_CAST value);
 
         value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_type");
 
         if (!value)
-          value = strdup("FGDC"); /* default */
+          value = msStrdup("FGDC"); /* default */
 
         xmlNewProp(psNode, BAD_CAST "type", BAD_CAST value);
     }
@@ -326,7 +326,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
     /*schema*/
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    xsi_schemaLocation = strdup("http://www.opengis.net/wfs");
+    xsi_schemaLocation = msStrdup("http://www.opengis.net/wfs");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/wfs/1.1.0/wfs.xsd");

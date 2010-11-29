@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include <ctype.h> 
 #include "mapserver.h"
 #include "cgiutil.h"
 
@@ -84,6 +84,11 @@ static char *readPostBody( cgiRequestObj *request )
   data_max = DATA_ALLOC_SIZE;
   data_len = 0;
   data = (char *) malloc(data_max+1);
+  if (data == NULL) {
+    msIO_printf("Content-type: text/html%c%c",10,10);
+    msIO_printf("Out of memory allocating %u bytes.\n", data_max+1);
+    exit(1);
+  }
 
   while( (chunk_size = msIO_fread( data + data_len, 1, data_max-data_len, stdin )) > 0 ) {
     data_len += chunk_size;
@@ -144,14 +149,14 @@ int loadParams(cgiRequestObj *request,
 
     s = getenv2("CONTENT_TYPE", thread_context); 
     if (s != NULL)
-      request->contenttype = strdup(s);
+      request->contenttype = msStrdup(s);
      /* we've to set default content-type which is
       * application/octet-stream according to
       * W3 RFC 2626 section 7.2.1 */
-    else request->contenttype = strdup("application/octet-stream");
+    else request->contenttype = msStrdup("application/octet-stream");
 
     if (raw_post_data) {
-        post_data = strdup(raw_post_data);
+        post_data = msStrdup(raw_post_data);
         data_len = raw_post_data_length;
     }
     else {
@@ -198,7 +203,7 @@ int loadParams(cgiRequestObj *request,
       if (debuglevel >= MS_DEBUGLEVEL_DEBUG)
 		  msDebug("loadParams() QUERY_STRING: %s\n", s);
 
-      queryString = strdup(s);
+      queryString = msStrdup(s);
       for(x=0;queryString[0] != '\0';x++) {       
         if(m >= maxParams) {
           maxParams *= 2;
@@ -241,7 +246,7 @@ int loadParams(cgiRequestObj *request,
       }
       
       /* don't modify the string returned by getenv2 */
-      queryString = strdup(s);
+      queryString = msStrdup(s);
       for(x=0;queryString[0] != '\0';x++) {
           if(m >= maxParams) {
             maxParams *= 2;
@@ -272,8 +277,8 @@ int loadParams(cgiRequestObj *request,
   /* check for any available cookies */
   s = getenv2("HTTP_COOKIE", thread_context);
   if(s != NULL) {
-    httpCookie = strdup(s);
-    request->httpcookiedata = strdup(s);
+    httpCookie = msStrdup(s);
+    request->httpcookiedata = msStrdup(s);
     for(x=0;httpCookie[0] != '\0';x++) {
         if(m >= maxParams) {
           maxParams *= 2;
@@ -319,7 +324,7 @@ void getword(char *word, char *line, char stop) {
 
 char *makeword_skip(char *line, char stop, char skip) {
   int x = 0,y,offset=0;
-  char *word = (char *) malloc(sizeof(char) * (strlen(line) + 1));
+  char *word = (char *) msSmallMalloc(sizeof(char) * (strlen(line) + 1));
 
   for(x=0;((line[x]) && (line[x] == skip));x++);
   offset = x;
@@ -337,7 +342,7 @@ char *makeword_skip(char *line, char stop, char skip) {
 
 char *makeword(char *line, char stop) {
     int x = 0,y;
-  char *word = (char *) malloc(sizeof(char) * (strlen(line) + 1));
+  char *word = (char *) msSmallMalloc(sizeof(char) * (strlen(line) + 1));
   
   for(x=0;((line[x]) && (line[x] != stop));x++)
     word[x] = line[x];
@@ -357,20 +362,20 @@ char *fmakeword(FILE *f, char stop, int *cl) {
 
   wsize = 102400;
   ll=0;
-  word = (char *) malloc(sizeof(char) * (wsize + 1));
+  word = (char *) msSmallMalloc(sizeof(char) * (wsize + 1));
 
   while(1) {
     word[ll] = (char)fgetc(f);
     if(ll==wsize) {
       word[ll+1] = '\0';
       wsize+=102400;
-      word = (char *)realloc(word,sizeof(char)*(wsize+1));
+      word = (char *)msSmallRealloc(word,sizeof(char)*(wsize+1));
     }
     --(*cl);
     if((word[ll] == stop) || (feof(f)) || (!(*cl))) {
       if(word[ll] != stop) ll++;
       word[ll] = '\0';
-	    word = (char *) realloc(word, ll+1);
+      word = (char *) msSmallRealloc(word, ll+1);
       return word;
     }
     ++ll;

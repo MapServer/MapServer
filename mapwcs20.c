@@ -124,17 +124,14 @@ static int msWCSParseTimeOrScalar20(timeScalarUnion *u, const char *string)
 static wcs20SubsetObj *msWCSCreateSubsetObj20()
 {
     wcs20SubsetObj *subset = (wcs20SubsetObj *) malloc(sizeof(wcs20SubsetObj));
-    if (subset)
-    {
-        subset->axis = NULL;
-        subset->crs = NULL;
-        subset->min.scalar = subset->max.scalar = MS_WCS20_UNBOUNDED;
-        subset->min.unbounded = subset->max.unbounded = 0;
-        subset->operation = MS_WCS20_SLICE;
-    }
-    else
-        msSetError(MS_WCSERR, "Subset could not be created. ",
-                "msWCSCreateSubsetObj20()");
+    MS_CHECK_ALLOC(subset, sizeof(wcs20SubsetObj), NULL);
+
+    subset->axis = NULL;
+    subset->crs = NULL;
+    subset->min.scalar = subset->max.scalar = MS_WCS20_UNBOUNDED;
+    subset->min.unbounded = subset->max.unbounded = 0;
+    subset->operation = MS_WCS20_SLICE;
+
     return subset;
 }
 
@@ -165,22 +162,17 @@ static void msWCSFreeSubsetObj20(wcs20SubsetObj *subset)
 wcs20ParamsObj *msWCSCreateParamsObj20()
 {
     wcs20ParamsObj *params = (wcs20ParamsObj *) malloc(sizeof(wcs20ParamsObj));
-    if (params != NULL)
-    {
-        params->version = NULL; /* should be 2.0.0 */
-        params->request = NULL;
-        params->service = NULL; /* should be WCS anyway*/
-        params->ids = NULL;
-        params->numsubsets = 0;
-        params->subsets = NULL;
-        params->format = NULL;
-        params->multipart = 0;
-    }
-    else
-    {
-        msSetError(MS_WCSERR, "Params object could not be created. ",
-                "msWCSCreateParamsObj20()");
-    }
+    MS_CHECK_ALLOC(params, sizeof(wcs20ParamsObj), NULL);
+
+    params->version = NULL; /* should be 2.0.0 */
+    params->request = NULL;
+    params->service = NULL; /* should be WCS anyway*/
+    params->ids = NULL;
+    params->numsubsets = 0;
+    params->subsets = NULL;
+    params->format = NULL;
+    params->multipart = 0;
+
     return params;
 }
 
@@ -244,10 +236,10 @@ static int msWCSParseSubset20(wcs20SubsetObj *subset, const char *axis,
     msDebug("msWCSParseSubset20(): axis: %s, crs: %s, min: %s, max: %s\n",
             axis, crs ? crs : "none", min, max ? max : "none");
 
-    subset->axis = strdup(axis);
+    subset->axis = msStrdup(axis);
     if (crs != NULL)
     {
-        subset->crs = strdup(crs);
+        subset->crs = msStrdup(crs);
     }
 
     /* Parse first (probably only) part of interval/point;
@@ -441,7 +433,7 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
         root = xmlDocGetRootElement(doc);
 
         /* Get service, version and request from root */
-        params->request = strdup((char *) root->name);
+        params->request = msStrdup((char *) root->name);
         if ((tmp = (char *) xmlGetProp(root, BAD_CAST "service")) != NULL)
             params->service = tmp;
         if ((tmp = (char *) xmlGetProp(root, BAD_CAST "version")) != NULL)
@@ -478,7 +470,7 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
                     /* only accept versions 2.0.x */
                     if(EQUALN(content, "2.0", 3))
                     {
-                        params->version = strdup(content);
+                        params->version = msStrdup(content);
                     }
                     xmlFree(content);
                 }
@@ -504,9 +496,9 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
                 }
                 /* insert coverage ID into the list */
                 ++numIds;
-                params->ids = realloc(params->ids, sizeof(char *)
-                        * (numIds + 1));
-                params->ids[numIds - 1] = strdup((char *) tmp);
+                params->ids = msSmallRealloc(params->ids, sizeof(char *)
+                                             * (numIds + 1));
+                params->ids[numIds - 1] = msStrdup((char *) tmp);
                 params->ids[numIds] = NULL;
                 xmlFree(tmp);
             }
@@ -550,11 +542,11 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
                 /* min and max have to have a value */
                 if(min == NULL )
                 {
-                    min = strdup("*");
+                    min = msStrdup("*");
                 }
                 if(max == NULL)
                 {
-                    max = strdup("*");
+                    max = msStrdup("*");
                 }
                 if (msWCSParseSubset20(subset, axis, crs, min, max)
                         == MS_FAILURE)
@@ -563,7 +555,7 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
                     xmlParsingError = 1;
                 }
                 params->numsubsets++;
-                params->subsets = (wcs20SubsetObj**) realloc(params->subsets,
+                params->subsets = (wcs20SubsetObj**) msSmallRealloc(params->subsets,
                         sizeof(wcs20SubsetObj*) * (params->numsubsets));
                 params->subsets[params->numsubsets - 1] = subset;
 
@@ -602,7 +594,7 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
                         "msWCSParseRequest20()");
                 return MS_FAILURE;
             }
-            params->service = strdup(value);
+            params->service = msStrdup(value);
         }
         else if (EQUAL(key, "VERSION"))
         {
@@ -612,7 +604,7 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
                         "msWCSParseRequest20()");
                 return MS_FAILURE;
             }
-            params->version = strdup(value);
+            params->version = msStrdup(value);
         }
         else if (EQUAL(key, "REQUEST"))
         {
@@ -622,11 +614,11 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
                         "msWCSParseRequest20()");
                 return MS_FAILURE;
             }
-            params->request = strdup(value);
+            params->request = msStrdup(value);
         }
         else if (EQUAL(key, "FORMAT"))
         {
-            params->format = strdup(value);
+            params->format = msStrdup(value);
         }
         else if (EQUAL(key, "COVERAGEID"))
         {
@@ -640,10 +632,10 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
                 return MS_FAILURE;
             }
             tokens = msStringSplit(value, ',', &num);
-            params->ids = (char **) calloc(num + 1, sizeof(char*));
+            params->ids = (char **) msSmallCalloc(num + 1, sizeof(char*));
             for (j = 0; j < num; ++j)
             {
-                params->ids[j] = strdup(tokens[j]);
+                params->ids[j] = msStrdup(tokens[j]);
             }
             msFreeCharArray(tokens, num);
         }
@@ -656,7 +648,7 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params)
                 return MS_FAILURE;
             }
             params->numsubsets++;
-            params->subsets = (wcs20SubsetObj**) realloc(params->subsets,
+            params->subsets = (wcs20SubsetObj**) msSmallRealloc(params->subsets,
                     sizeof(wcs20SubsetObj*) * (params->numsubsets));
             params->subsets[params->numsubsets - 1] = pTemp;
         }
@@ -771,8 +763,9 @@ int msWCSCreateBoungingBoxAndGetProjection20(wcs20ParamsObj *params, rectObj *ou
     wcs20SubsetObj** subsets;
     
     subsets = (wcs20SubsetObj**)malloc(sizeof(wcs20SubsetObj*) * numAxis);
+    MS_CHECK_ALLOC(subsets, sizeof(wcs20SubsetObj*) * numAxis, MS_FAILURE);
 
-    validAxisNames = calloc(sizeof(char**), numAxis);
+    validAxisNames = msSmallCalloc(sizeof(char**), numAxis);
     validAxisNames[0] = validXAxisNames;
     validAxisNames[1] = validYAxisNames;
 
@@ -883,7 +876,7 @@ static void msWCSPrepareNamespaces20( xmlDocPtr pDoc, xmlNodePtr psRootNode, map
     psXsiNs = xmlSearchNs(pDoc, psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
 
     schemaLocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    xsi_schemaLocation = strdup(MS_OWSCOMMON_WCS_20_NAMESPACE_URI);
+    xsi_schemaLocation = msStrdup(MS_OWSCOMMON_WCS_20_NAMESPACE_URI);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemaLocation);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_OWSCOMMON_WCS_20_SCHEMAS_LOCATION);
@@ -905,7 +898,7 @@ static void msWCSPrepareNamespaces20( xmlDocPtr pDoc, xmlNodePtr psRootNode, map
 
 static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
 {
-    char *format_list = strdup("");
+    char *format_list = msStrdup("");
     char **tokens = NULL, **formats = NULL;
     int  i, numtokens = 0, numformats;
     const char *value;
@@ -925,7 +918,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
 /* -------------------------------------------------------------------- */
     else
     {
-        tokens = (char **) calloc(map->numoutputformats,sizeof(char*));
+        tokens = (char **) msSmallCalloc(map->numoutputformats,sizeof(char*));
         for( i = 0; i < map->numoutputformats; i++ )
         {
             switch( map->outputformatlist[i]->renderer )
@@ -934,7 +927,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
               case MS_RENDER_WITH_GD:
               case MS_RENDER_WITH_AGG:
               case MS_RENDER_WITH_RAWDATA:
-                tokens[numtokens++] = strdup(map->outputformatlist[i]->name);
+                tokens[numtokens++] = msStrdup(map->outputformatlist[i]->name);
                 break;
 
                 /* rest of formats aren't really WCS compatible */
@@ -950,7 +943,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
 /*      duplicates.                                                     */
 /* -------------------------------------------------------------------- */
     numformats = 0;
-    formats = (char **) calloc(sizeof(char*),numtokens);
+    formats = (char **) msSmallCalloc(sizeof(char*),numtokens);
 
     for( i = 0; i < numtokens; i++ )
     {
@@ -992,7 +985,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
             continue;
         }
 
-        formats[numformats++] = strdup(mimetype);
+        formats[numformats++] = msStrdup(mimetype);
     }
 
     msFreeCharArray(tokens,numtokens);
@@ -1007,7 +1000,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
         const char *format = formats[i];
 
         new_length = strlen(format_list) + strlen(format) + 2;
-        format_list = (char *) realloc(format_list,new_length);
+        format_list = (char *) msSmallRealloc(format_list,new_length);
 
         if( strlen(format_list) > 0 )
             strcat( format_list, "," );
@@ -1336,7 +1329,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObj* params
                 != NULL )
             {
                 /*            CleanVSIDir( "/vsimem/wcsout" ); */
-                filename = strdup(CPLFormFilename("/vsimem/wcsout",
+                filename = msStrdup(CPLFormFilename("/vsimem/wcsout",
                                         "out", pszExtension ));
 
                 msReleaseLock( TLOCK_GDAL );
@@ -1691,7 +1684,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             cm->numbands = atoi(value);
         }
 
-        cm->bands = calloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands);
+        cm->bands = msSmallCalloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands);
 
         /* get bands type, or assume float if not found */
         cm->imagemode = MS_IMAGEMODE_FLOAT32;
@@ -1732,14 +1725,14 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             {
                 int i;
                 cm->numnilvalues = n_nilvalues;
-                cm->nilvalues = calloc(sizeof(char*), n_nilvalues);
-                cm->nilvalues_reasons = calloc(sizeof(char*), n_nilvalues);
+                cm->nilvalues = msSmallCalloc(sizeof(char*), n_nilvalues);
+                cm->nilvalues_reasons = msSmallCalloc(sizeof(char*), n_nilvalues);
                 for(i = 0; i < n_nilvalues; ++i)
                 {
-                    cm->nilvalues[i] = strdup(t_nilvalues[i]);
+                    cm->nilvalues[i] = msStrdup(t_nilvalues[i]);
                     if(i < n_nilvalues_reasons)
                     {
-                        cm->nilvalues_reasons[i] = strdup(t_nilvalues_reasons[i]);
+                        cm->nilvalues_reasons[i] = msStrdup(t_nilvalues_reasons[i]);
                     }
                 }
             }
@@ -1777,7 +1770,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
                     /* fill in every band */
                     for(j = 0; j < cm->numbands; ++j)
                     {
-                        cm->bands[j].values[i] = strdup(tokens[i][0]);
+                        cm->bands[j].values[i] = msStrdup(tokens[i][0]);
                     }
                 }
                 else
@@ -1785,7 +1778,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
                     /* fill in as long as bands or values are available */
                     for(j = 0; j < nums[i] && j < cm->numbands; ++j)
                     {
-                        cm->bands[j].values[i] = strdup(tokens[i][j]);
+                        cm->bands[j].values[i] = msStrdup(tokens[i][j]);
                     }
                 }
                 msFreeCharArray(tokens[i], nums[i]);
@@ -1853,7 +1846,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             break;
         }
 
-        cm->bands = calloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands);
+        cm->bands = msSmallCalloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands);
 
         /* get as much band metadata as possible */
         for(i = 0; i < cm->numbands; ++i)
@@ -1861,9 +1854,9 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             GDALColorInterp colorInterp;
             hBand = GDALGetRasterBand(hDS, i + 1);
             colorInterp = GDALGetRasterColorInterpretation(hBand);
-            cm->bands[i].name = strdup(GDALGetColorInterpretationName(colorInterp));
-            cm->bands[i].interpretation = strdup(cm->bands[i].name);
-            cm->bands[i].uom = strdup(GDALGetRasterUnitType(hBand));
+            cm->bands[i].name = msStrdup(GDALGetColorInterpretationName(colorInterp));
+            cm->bands[i].interpretation = msStrdup(cm->bands[i].name);
+            cm->bands[i].uom = msStrdup(GDALGetRasterUnitType(hBand));
             if(strlen(cm->bands[i].uom) == 0)
             {
                 msFree(cm->bands[i].uom);
@@ -1958,7 +1951,7 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
     msOWSGetVersionString(OWS_2_0_0, version_string);
     version_string[3]= '\0';
 
-    xsi_schemaLocation = strdup((char *)psNsOws->href);
+    xsi_schemaLocation = msStrdup((char *)psNsOws->href);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *)schemasLocation);
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/ows/");
@@ -2123,7 +2116,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
 /* -------------------------------------------------------------------- */
 /*      Build list of layer identifiers available.                      */
 /* -------------------------------------------------------------------- */
-    identifier_list = strdup("");
+    identifier_list = msStrdup("");
     for(i=0; i<map->numlayers; i++)
     {
         layerObj *layer = map->layers[i];
@@ -2133,7 +2126,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             continue;
 
         new_length = strlen(identifier_list) + strlen(layer->name) + 2;
-        identifier_list = (char *) realloc(identifier_list,new_length);
+        identifier_list = (char *) msSmallRealloc(identifier_list,new_length);
 
         if( strlen(identifier_list) > 0 )
             strcat( identifier_list, "," );
@@ -2743,7 +2736,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 
     //status = msWCSGetCoverageBands11( map, request, params, layer, &bandlist );
     if(!bandlist) { // build a bandlist (default is ALL bands)
-        bandlist = (char *) malloc(cm.numbands*30+30 );
+        bandlist = (char *) msSmallMalloc(cm.numbands*30+30 );
         strcpy(bandlist, "1");
         for(i = 1; i < cm.numbands; i++)
             sprintf(bandlist+strlen(bandlist),",%d", i+1);

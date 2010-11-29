@@ -348,7 +348,7 @@ int sortLayerByOrder(mapObj *map, char* pszOrder)
 /* -------------------------------------------------------------------- */
     if(map->layerorder)
     {
-        panCurrentOrder = (int*)malloc(map->numlayers * sizeof(int));
+        panCurrentOrder = (int*)msSmallMalloc(map->numlayers * sizeof(int));
          for (i=0; i<map->numlayers ;i++)
            panCurrentOrder[i] = map->layerorder[i];
          
@@ -391,13 +391,13 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
      int *pnLayerOrder;
 
      /* Backup the original layer order to be able to reverse it */
-     pnLayerOrder = (int*)malloc(map->numlayers * sizeof(int));
+     pnLayerOrder = (int*)msSmallMalloc(map->numlayers * sizeof(int));
      for (i=0; i<map->numlayers ;i++)
        pnLayerOrder[i] = map->layerorder[i];
 
      /* Get a new layerorder array */
      free(map->layerorder);
-     map->layerorder = (int*)malloc(map->numlayers * sizeof(int));
+     map->layerorder = (int*)msSmallMalloc(map->numlayers * sizeof(int));
 
      /* Reverse the layerorder array */
      for (i=0; i<map->numlayers ;i++)
@@ -407,7 +407,7 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
    }
    else
    {
-     map->layerorder = (int*)malloc(map->numlayers * sizeof(int));
+     map->layerorder = (int*)msSmallMalloc(map->numlayers * sizeof(int));
 
      for (i=0; i<map->numlayers ;i++)
        map->layerorder[i] = map->numlayers - i - 1;
@@ -463,7 +463,7 @@ char *findTag(char *pszInstr, char *pszTag)
    }
 
    length = strlen(pszTag) + 1; /* adding [ character to the beginning */
-   pszTag1 = (char*) malloc(length+1);
+   pszTag1 = (char*) msSmallMalloc(length+1);
 
    strcpy(pszTag1, "[");   
    strcat(pszTag1, pszTag);
@@ -544,7 +544,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
          nLength = pszEnd - pszStart;
    
          if(nLength > 0) { /* is there arguments ? */
-            pszArgs = (char*)malloc(nLength + 1);
+            pszArgs = (char*)msSmallMalloc(nLength + 1);
             strlcpy(pszArgs, pszStart, nLength+1);
             
             if(!(*ppoHashTable))
@@ -599,7 +599,7 @@ int getInlineTag(char *pszTag, char *pszInstr, char **pszResult)
      return MS_FAILURE;
    }
 
-   pszEndTag = (char*)malloc(strlen(pszTag) + 3);
+   pszEndTag = (char*)msSmallMalloc(strlen(pszTag) + 3);
    strcpy(pszEndTag, "[/");
    strcat(pszEndTag, pszTag);
 
@@ -646,7 +646,7 @@ int getInlineTag(char *pszTag, char *pszInstr, char **pszResult)
          nLength = pszEnd - pszStart;
             
          if(nLength > 0) {
-            *pszResult = (char*)malloc(nLength + 1);
+            *pszResult = (char*)msSmallMalloc(nLength + 1);
 
             /* copy string beetween start and end tag */
             strlcpy(*pszResult, pszStart, nLength+1);
@@ -744,7 +744,7 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
        /* to replace if by then string if expression is true */
        /* or by a white space if not. */
        nLength = pszEnd - pszStart;
-       pszIfTag = (char*)malloc(nLength + 6);
+       pszIfTag = (char*)msSmallMalloc(nLength + 6);
        strlcpy(pszIfTag, pszStart, nLength+1);
        pszIfTag[nLength] = '\0';
        strcat(pszIfTag, "[/if]");
@@ -818,10 +818,10 @@ static char *getPreTagText(const char *string1, const char *string2)
   int n;
   char *result, *tmpstr;
 
-  if((tmpstr = strstr(string1, string2)) == NULL) return strdup(""); /* return an empty string */
+  if((tmpstr = strstr(string1, string2)) == NULL) return msStrdup(""); /* return an empty string */
 
   n = strlen(string1) - strlen(tmpstr);
-  result = (char *) malloc(n + 1);
+  result = (char *) msSmallMalloc(n + 1);
   strlcpy(result, string1, n+1);
 
   return result;
@@ -832,10 +832,10 @@ static char *getPostTagText(const char *string1, const char *string2)
 {
   char *tmpstr;
 
-  if((tmpstr = strstr(string1, string2)) == NULL) return strdup(""); /* return an empty string */
+  if((tmpstr = strstr(string1, string2)) == NULL) return msStrdup(""); /* return an empty string */
 
   tmpstr += strlen(string2); /* skip string2 */
-  return strdup(tmpstr); 
+  return msStrdup(tmpstr); 
 }
 
 /*
@@ -1129,7 +1129,7 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
 
     /* build the complete tag so we can do substitution */
     tagLength = tagEnd - tagStart;
-    tag = (char *) malloc(tagLength + 1);
+    tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* process any other tags in the content */
@@ -1247,18 +1247,18 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     if(shape->values[i] && strlen(shape->values[i]) > 0) {
 
       if(pattern && msEvalRegex(pattern, shape->values[i]) != MS_TRUE)
-        tagValue = strdup(nullFormat);
+        tagValue = msStrdup(nullFormat);
       else {
         char *itemValue=NULL;
 
         if(precision != -1) {
           char numberFormat[16];
         
-          itemValue = (char *) malloc(64); /* plenty big */
+          itemValue = (char *) msSmallMalloc(64); /* plenty big */
           snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
           snprintf(itemValue, 64, numberFormat, atof(shape->values[i]));
         } else
-          itemValue = strdup(shape->values[i]);
+          itemValue = msStrdup(shape->values[i]);
 
         if(commify == MS_TRUE)
           itemValue = msCommifyString(itemValue);
@@ -1269,7 +1269,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
         if(lc == MS_TRUE)
           for(j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
       
-        tagValue = strdup(format);
+        tagValue = msStrdup(format);
         tagValue = msReplaceSubstring(tagValue, "$value", itemValue);
         msFree(itemValue);
 
@@ -1279,7 +1279,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
         }
       }
     } else {
-      tagValue = strdup(nullFormat);
+      tagValue = msStrdup(nullFormat);
     }
 
     /* find the end of the tag */
@@ -1288,7 +1288,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
     /* build the complete tag so we can do substitution */
     tagLength = tagEnd - tagStart;
-    tag = (char *) malloc(tagLength + 1);
+    tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
@@ -1428,7 +1428,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
          msProjectRect(rectProj, &projection, &tempExtent);
     }
 
-    tagValue = strdup(format);
+    tagValue = msStrdup(format);
 
     if(precision != -1)
       snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
@@ -1450,7 +1450,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 
     /* build the complete tag so we can do substitution */
     tagLength = tagEnd - tagStart;
-    tag = (char *) malloc(tagLength + 1);
+    tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
@@ -1530,7 +1530,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     {
         if (shape)
           msFreeShape(shape);
-        shape = (shapeObj *) malloc(sizeof(shapeObj));
+        shape = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
         msInitShape(shape);
         msCopyShape(origshape, shape);
 
@@ -1564,7 +1564,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
         msInitShape(&tShape);
 
         tShape.type = MS_SHAPE_LINE;
-        tShape.line = (lineObj *) malloc(sizeof(lineObj));
+        tShape.line = (lineObj *) msSmallMalloc(sizeof(lineObj));
         tShape.numlines = 1;
         tShape.line[0].point = NULL; /* initialize the line */
         tShape.line[0].numpoints = 0;
@@ -1759,11 +1759,11 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 
           /* build the complete tag so we can do substitution */
           tagLength = tagEnd - tagStart;
-          tag = (char *) malloc(tagLength + 1);
+          tag = (char *) msSmallMalloc(tagLength + 1);
           strlcpy(tag, tagStart, tagLength+1);
 
           /* do the replacement */
-          tagValue = strdup(format);
+          tagValue = msStrdup(format);
           if(precision > 0)
             snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
           else
@@ -1809,7 +1809,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 
           /* build the complete tag so we can do substitution */
           tagLength = tagEnd - tagStart;
-          tag = (char *) malloc(tagLength + 1);
+          tag = (char *) msSmallMalloc(tagLength + 1);
           strlcpy(tag, tagStart, tagLength+1);
 
           *line = msReplaceSubstring(*line, tag, tagValue);
@@ -1984,9 +1984,9 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
     /* build the per point format strings (version 1 contains the coordinate seperator, version 2 doesn't) */
     pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + strlen("cs") + 10 + 1;
-    pointFormat1 = (char *) malloc(pointFormatLength);
+    pointFormat1 = (char *) msSmallMalloc(pointFormatLength);
     snprintf(pointFormat1, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s%s", xh, precision, xf, yh, precision, yf, cs); 
-    pointFormat2 = (char *) malloc(pointFormatLength); 
+    pointFormat2 = (char *) msSmallMalloc(pointFormatLength); 
     snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
  
     /* make a copy of the original shape or compute a centroid if necessary */
@@ -1998,7 +1998,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       p.y = (shape->bounds.miny + shape->bounds.maxy)/2;
 
       tShape.type = MS_SHAPE_POINT;
-      tShape.line = (lineObj *) malloc(sizeof(lineObj));
+      tShape.line = (lineObj *) msSmallMalloc(sizeof(lineObj));
       tShape.numlines = 1;
       tShape.line[0].point = NULL; /* initialize the line */
       tShape.line[0].numpoints = 0;
@@ -2106,7 +2106,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
     /* build the complete tag so we can do substitution */
     tagLength = tagEnd - tagStart;
-    tag = (char *) malloc(tagLength + 1);
+    tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
@@ -2172,7 +2172,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
            /* build the complete metadata tag ([metadata all_args]) */
            /* to replace it by the corresponding value from ht */
            nLength = pszEnd - pszStart;
-           pszMetadataTag = (char*)malloc(nLength + 1);
+           pszMetadataTag = (char*)msSmallMalloc(nLength + 1);
            strlcpy(pszMetadataTag, pszStart, nLength+1);
 
            *pszInstr = msReplaceSubstring(*pszInstr, pszMetadataTag, pszHashValue);
@@ -2263,7 +2263,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
                pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, 
                szStyleCode, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
-      pszFullImgFname = strdup(msBuildPath3(szPath, map->mappath, 
+      pszFullImgFname = msStrdup(msBuildPath3(szPath, map->mappath, 
                                             map->web.imagepath, szImgFname));
       
       /* check if icon already exist in cache */
@@ -2321,10 +2321,10 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
 
          /* rebuid image tag ([leg_class_img all_args]) */
          /* to replace it by the image url */
-         pszTag = (char*)malloc(nLen + 1);
+         pszTag = (char*)msSmallMalloc(nLen + 1);
          strlcpy(pszTag, pszImgTag, nLen+1);
 
-         pszFullImgFname = (char*)malloc(strlen(map->web.imageurl) + strlen(szImgFname) + 1);
+         pszFullImgFname = (char*)msSmallMalloc(strlen(map->web.imageurl) + strlen(szImgFname) + 1);
          strcpy(pszFullImgFname, map->web.imageurl);
          strcat(pszFullImgFname, szImgFname);
 
@@ -2441,7 +2441,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
    /*
     * Work from a copy
     */
-   *pszTemp = (char*)malloc(strlen(pszGroupTemplate) + 1);
+   *pszTemp = (char*)msSmallMalloc(strlen(pszGroupTemplate) + 1);
    strcpy(*pszTemp, pszGroupTemplate);
          
    /*
@@ -2584,7 +2584,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    /*
     * Work from a copy
     */
-   *pszTemp = strdup(pszLayerTemplate);
+   *pszTemp = msStrdup(pszLayerTemplate);
 
    /*
     * Change layer tags
@@ -2728,7 +2728,7 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    /*
     * Work from a copy
     */
-   *pszTemp = (char*)malloc(strlen(pszClassTemplate) + 1);
+   *pszTemp = (char*)msSmallMalloc(strlen(pszClassTemplate) + 1);
    strcpy(*pszTemp, pszClassTemplate);
          
    /*
@@ -2863,7 +2863,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
    if(mapserv && mapserv->map && mapserv->map->numlayers > 0)
    {
        panCurrentDrawingOrder = 
-           (int *)malloc(sizeof(int)*mapserv->map->numlayers); 
+           (int *)msSmallMalloc(sizeof(int)*mapserv->map->numlayers); 
       
        for (i=0; i<mapserv->map->numlayers; i++)
        {
@@ -2901,10 +2901,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
            int nLen;
 
            nLen = (mapserv->map->name?strlen(mapserv->map->name):0)  + 50;
-           pszPrefix = (char*)malloc((nLen+1) * sizeof(char));
-           if(pszPrefix == NULL) {
-
-           }
+           pszPrefix = (char*)msSmallMalloc((nLen+1) * sizeof(char));
            snprintf(pszPrefix, nLen, "%s_%ld_%ld", 
                     mapserv->map->name,
                     (long) tmpStat.st_size, 
@@ -2937,7 +2934,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
    length = ftell(stream);
    rewind(stream);
    
-   file = (char*)malloc(length + 1);
+   file = (char*)msSmallMalloc(length + 1);
 
    if(!file) {
      msSetError(MS_IOERR, "Error while allocating memory for template file.", "generateLegendTemplate()");
@@ -3330,7 +3327,7 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
   char line[MS_BUFFER_LENGTH], *tmpline;
   char szPath[MS_MAXPATHLEN];
 
-  if((outbuf = strdup("")) == NULL) return(NULL); /* empty at first */
+  if((outbuf = msStrdup("")) == NULL) return(NULL); /* empty at first */
 
   msJoinPrepare(join, &(mapserv->resultshape)); /* execute the join */
   while(msJoinNext(join) == MS_SUCCESS) {
@@ -3422,7 +3419,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   pointObj llpoint;
 #endif
 
-  outstr = strdup(instr); /* work from a copy */
+  outstr = msStrdup(instr); /* work from a copy */
 
   if(strstr(outstr, "[version]")) outstr = msReplaceSubstring(outstr, "[version]",  msGetVersion());
 
@@ -3433,7 +3430,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   if(strstr(outstr, "[errmsg")) {
     char *errmsg = msGetErrorString(";");
-    if(!errmsg) errmsg = strdup("Error message buffer is empty."); /* should never happen, but just in case... */
+    if(!errmsg) errmsg = msStrdup("Error message buffer is empty."); /* should never happen, but just in case... */
     outstr = msReplaceSubstring(outstr, "[errmsg]", errmsg);
     encodedstr = msEncodeUrl(errmsg);
     outstr = msReplaceSubstring(outstr, "[errmsg_esc]", encodedstr);
@@ -3953,7 +3950,7 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
 
   if(papszBuffer) {
     if((*papszBuffer) == NULL) {
-      (*papszBuffer) = (char *)malloc(MS_TEMPLATE_BUFFER);
+      (*papszBuffer) = (char *)msSmallMalloc(MS_TEMPLATE_BUFFER);
       (*papszBuffer)[0] = '\0';
       nBufferSize = MS_TEMPLATE_BUFFER;
       nCurrentSize = 0;
@@ -3976,7 +3973,7 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
         if(nBufferSize <= (int)(nCurrentSize + strlen(tmpline) + 1)) {
           nExpandBuffer = (strlen(tmpline) /  MS_TEMPLATE_BUFFER) + 1;
           nBufferSize = MS_TEMPLATE_BUFFER*nExpandBuffer + strlen((*papszBuffer));
-          (*papszBuffer) = (char *) realloc((*papszBuffer),sizeof(char)*nBufferSize);
+          (*papszBuffer) = (char *) msSmallRealloc((*papszBuffer),sizeof(char)*nBufferSize);
         }
         strcat((*papszBuffer), tmpline);
         nCurrentSize += strlen(tmpline);   
@@ -3989,7 +3986,7 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
         if(nBufferSize <= (int)(nCurrentSize + strlen(line))) {
           nExpandBuffer = (strlen(line) /  MS_TEMPLATE_BUFFER) + 1;
           nBufferSize = MS_TEMPLATE_BUFFER*nExpandBuffer + strlen((*papszBuffer));
-          (*papszBuffer) = (char *)realloc((*papszBuffer),sizeof(char)*nBufferSize);
+          (*papszBuffer) = (char *)msSmallRealloc((*papszBuffer),sizeof(char)*nBufferSize);
         }
         strcat((*papszBuffer), line);
         nCurrentSize += strlen(line);
@@ -4042,7 +4039,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
   layerObj *lp=NULL;
 
   if(papszBuffer) {
-    (*papszBuffer) = (char *)malloc(MS_TEMPLATE_BUFFER);
+    (*papszBuffer) = (char *)msSmallMalloc(MS_TEMPLATE_BUFFER);
     (*papszBuffer)[0] = '\0';
     nBufferSize = MS_TEMPLATE_BUFFER;
     nCurrentSize = 0;
@@ -4130,7 +4127,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
     snprintf(buffer, sizeof(buffer), "Content-type: %s%c%c", pszMimeType, 10, 10);
     if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
       nExpandBuffer++;
-      (*papszBuffer) = (char *)realloc((*papszBuffer), MS_TEMPLATE_BUFFER*nExpandBuffer);
+      (*papszBuffer) = (char *)msSmallRealloc((*papszBuffer), MS_TEMPLATE_BUFFER*nExpandBuffer);
       nBufferSize = MS_TEMPLATE_BUFFER*nExpandBuffer;
     }
     strcat((*papszBuffer), buffer);
@@ -4235,11 +4232,11 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
         }
         else if(strcasecmp(mapserv->request->ParamNames[i], "LAYERS") == 0) {
             free(mapserv->request->ParamNames[i]);
-            mapserv->request->ParamNames[i] = strdup("LAYERS");
+            mapserv->request->ParamNames[i] = msStrdup("LAYERS");
         }
         else if(strcasecmp(mapserv->request->ParamNames[i], "VERSION") == 0) {
             free(mapserv->request->ParamNames[i]);
-            mapserv->request->ParamNames[i] = strdup("VERSION");
+            mapserv->request->ParamNames[i] = msStrdup("VERSION");
         }
     }
 
@@ -4272,7 +4269,7 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
 
 mapservObj *msAllocMapServObj()
 {
-  mapservObj *mapserv = malloc(sizeof(mapservObj));
+  mapservObj *mapserv = msSmallMalloc(sizeof(mapservObj));
    
   mapserv->savemap=MS_FALSE;
   mapserv->savequery=MS_FALSE; /* should the query and/or map be saved  */
@@ -4390,11 +4387,11 @@ int msGrowMapservLayers( mapservObj* mapserv )
       /* initial allocation of array */
       mapserv->MaxLayers += MS_LAYER_ALLOCSIZE;
       mapserv->NumLayers = 0;
-      mapserv->Layers = (char**)malloc(mapserv->MaxLayers*sizeof(char*));
+      mapserv->Layers = (char**)msSmallMalloc(mapserv->MaxLayers*sizeof(char*));
     } else {
       /* realloc existing array */
       mapserv->MaxLayers += MS_LAYER_ALLOCSIZE;
-      mapserv->Layers = (char**)realloc(mapserv->Layers, mapserv->MaxLayers*sizeof(char*));
+      mapserv->Layers = (char**)msSmallRealloc(mapserv->Layers, mapserv->MaxLayers*sizeof(char*));
     }
 
     if(mapserv->Layers == NULL) {

@@ -400,9 +400,6 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   fontMetrics *font = NULL;
   char *imagepath = NULL, *imageurl = NULL;
   labelStyleObj ls;
-  colorObj labelcolor, labeloutlinecolor;
-  ls.color = &labelcolor;
-  ls.outlinecolor = &labeloutlinecolor;
   
   if (map) {
       if( map->width > 0 && map->height > 0 )
@@ -428,7 +425,6 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 	  if((font = renderer->bitmapFontMetrics[font_index]) != NULL) {
 	     ls.size = i;
 		  MS_INIT_COLOR(*ls.color,0,0,0);
-		  MS_INIT_COLOR(*ls.outlinecolor,255,255,255);
 		  break;
 	  }
   }
@@ -466,7 +462,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 		} else {
 		  nLines = 1;
 		  papszLines = (char **)malloc(nLines*sizeof(char *));
-		  papszLines[0] = strdup(errormsg);
+		  papszLines[0] = msStrdup(errormsg);
 		}   
 		for (i=0; i<nLines; i++) {
 		  nYPos = (font->charHeight) * ((i*2) +1); 

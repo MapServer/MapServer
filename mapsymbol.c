@@ -213,10 +213,10 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
 	return(-1);
       }
-      s->full_pixmap_path = strdup(msBuildPath(szPath, symbolpath, msyytext)); 
+      s->full_pixmap_path = msStrdup(msBuildPath(szPath, symbolpath, msyytext)); 
       
       /* Set imagepath */
-      s->imagepath = strdup(msyytext);
+      s->imagepath = msStrdup(msyytext);
 
       /* if this is SVG, load the SVG and
          punt if this is for a SVG symbol */
@@ -423,12 +423,12 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
       return -1;
   symbol = symbolset->symbol[symbolset->numsymbols];  
   if(symbolset->map) {
-    symbol->full_pixmap_path = strdup(msBuildPath(szPath, symbolset->map->mappath, filename));  
+    symbol->full_pixmap_path = msStrdup(msBuildPath(szPath, symbolset->map->mappath, filename));  
   } else {
-    symbol->full_pixmap_path = strdup(msBuildPath(szPath, NULL, filename));  
+    symbol->full_pixmap_path = msStrdup(msBuildPath(szPath, NULL, filename));  
   }
-  symbol->name = strdup(filename);
-  symbol->imagepath = strdup(filename);
+  symbol->name = msStrdup(filename);
+  symbol->imagepath = msStrdup(filename);
   symbol->type = MS_SYMBOL_PIXMAP;
 
   return(symbolset->numsymbols++);
@@ -669,7 +669,7 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
 			msSetError(MS_MISCERR,"font (%s) not found in fontset","msGetMarkerSize()",symbol->font);
 			return(MS_FAILURE);
 		}
-		symbol->full_font_path =  strdup(font);
+		symbol->full_font_path =  msStrdup(font);
 	}
     if(msGetTruetypeTextBBox(MS_MAP_RENDERER(symbolset->map),symbol->full_font_path,size,symbol->character,&rect,NULL) != MS_SUCCESS) 
       return(MS_FAILURE);
@@ -727,7 +727,7 @@ int msAddNewSymbol(mapObj *map, char *name)
         return -1;
 
     i = map->symbolset.numsymbols;  
-    map->symbolset.symbol[i]->name = strdup(name);
+    map->symbolset.symbol[i]->name = msStrdup(name);
 
     map->symbolset.numsymbols++;
 
@@ -811,7 +811,7 @@ int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename) {
 
 int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
     msFree(symbol->full_pixmap_path);
-    symbol->full_pixmap_path = strdup(filename);
+    symbol->full_pixmap_path = msStrdup(filename);
     return MS_SUCCESS;
 }
 

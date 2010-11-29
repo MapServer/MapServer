@@ -31,7 +31,7 @@
 
 void msStyleSetGeomTransform(styleObj *s, char *transform) {
   msFree(s->_geomtransformexpression);
-  s->_geomtransformexpression = strdup(transform);
+  s->_geomtransformexpression = msStrdup(transform);
   if(!strncasecmp("start",transform,5)) {
     s->_geomtransform = MS_GEOMTRANSFORM_START;
   }
@@ -66,7 +66,7 @@ void msStyleSetGeomTransform(styleObj *s, char *transform) {
 char *msStyleGetGeomTransform(styleObj *s) {
   if(s->_geomtransformexpression==NULL)
     return NULL;
-  return strdup(s->_geomtransformexpression);
+  return msStrdup(s->_geomtransformexpression);
 }
 
 

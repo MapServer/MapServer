@@ -54,7 +54,7 @@ static int msWCSValidateRangeSetParam(layerObj *lp, char *name, const char *valu
   const char *tmpvalue = NULL;
 
   if (name) {
-    tmpname = (char *)malloc(sizeof(char)*strlen(name) + 10);
+    tmpname = (char *)msSmallMalloc(sizeof(char)*strlen(name) + 10);
 
     /* set %s_values */
     sprintf(tmpname,"%s_values", name);
@@ -117,7 +117,7 @@ static char *msWCSConvertRangeSetToString(const char *value) {
    
     return buf2;
   } else
-    return strdup(value);
+    return msStrdup(value);
 }
 
 /************************************************************************/
@@ -200,7 +200,8 @@ static wcsParamsObj *msWCSCreateParams()
   wcsParamsObj *params;
  
   params = (wcsParamsObj *) calloc(1, sizeof(wcsParamsObj));
-  
+  MS_CHECK_ALLOC(params, sizeof(wcsParamsObj), NULL);
+
   return params;
 }
 
@@ -307,7 +308,7 @@ void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
     msInsertHashTable( &(lp->metadata), "wcs_bands_rangeitem", "_bands" ); /* ? */
 
     bufferSize = cm->bandcount*30+30;
-    bandlist = (char *) malloc(bufferSize);
+    bandlist = (char *) msSmallMalloc(bufferSize);
     strcpy( bandlist, "1" );
     for( i = 1; i < cm->bandcount; i++ )
       snprintf( bandlist+strlen(bandlist), bufferSize-strlen(bandlist), ",%d", i+1 );
@@ -373,19 +374,19 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
     for(i=0; i<request->NumParams; i++) {
     
        if(strcasecmp(request->ParamNames[i], "VERSION") == 0)
-           params->version = strdup(request->ParamValues[i]);
+           params->version = msStrdup(request->ParamValues[i]);
        if(strcasecmp(request->ParamNames[i], "UPDATESEQUENCE") == 0)
-           params->updatesequence = strdup(request->ParamValues[i]);
+           params->updatesequence = msStrdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "REQUEST") == 0)
-	     params->request = strdup(request->ParamValues[i]);
+	     params->request = msStrdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "INTERPOLATION") == 0)
-	     params->interpolation = strdup(request->ParamValues[i]);
+	     params->interpolation = msStrdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "SERVICE") == 0)
-	     params->service = strdup(request->ParamValues[i]);
+	     params->service = msStrdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "SECTION") == 0) /* 1.0 */
-           params->section = strdup(request->ParamValues[i]); /* TODO: validate value here */
+           params->section = msStrdup(request->ParamValues[i]); /* TODO: validate value here */
        else if(strcasecmp(request->ParamNames[i], "SECTIONS") == 0) /* 1.1 */
-           params->section = strdup(request->ParamValues[i]); /* TODO: validate value here */
+           params->section = msStrdup(request->ParamValues[i]); /* TODO: validate value here */
 
        /* GetCoverage parameters. */
        else if(strcasecmp(request->ParamNames[i], "BBOX") == 0) {
@@ -412,13 +413,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
        else if(strcasecmp(request->ParamNames[i], "COVERAGE") == 0)
          params->coverages = CSLAddString(params->coverages, request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "TIME") == 0)
-           params->time = strdup(request->ParamValues[i]);
+           params->time = msStrdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "FORMAT") == 0)
-           params->format = strdup(request->ParamValues[i]);
+           params->format = msStrdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "CRS") == 0)
-           params->crs = strdup(request->ParamValues[i]);
+           params->crs = msStrdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "RESPONSE_CRS") == 0)
-           params->response_crs = strdup(request->ParamValues[i]);
+           params->response_crs = msStrdup(request->ParamValues[i]);
 
        /* WCS 1.1 DescribeCoverage and GetCoverage ... */
        else if(strcasecmp(request->ParamNames[i], "IDENTIFIER") == 0
@@ -444,7 +445,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
          params->bbox.maxx = atof(tokens[2]);
          params->bbox.maxy = atof(tokens[3]);
            
-         params->crs = strdup(tokens[4]);
+         params->crs = msStrdup(tokens[4]);
          msFreeCharArray(tokens, n);
          /* normalize imageCRS urns to simply "imageCRS" */
          if( strncasecmp(params->crs,"urn:ogc:def:crs:",16) == 0 
@@ -780,7 +781,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   tmpInt = msOWSNegotiateVersion(msOWSParseVersionString(params->version), wcsSupportedVersions, wcsNumSupportedVersions);
 
   /* set result as string and carry on */
-  params->version = strdup(msOWSGetVersionString(tmpInt, tmpString));
+  params->version = msStrdup(msOWSGetVersionString(tmpInt, tmpString));
 
 /* -------------------------------------------------------------------- */
 /*      1.1.x is sufficiently different we have a whole case for        */
@@ -807,8 +808,8 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 
     else { /* set default updatesequence */
       if(!updatesequence)
-        updatesequence = strdup("0");
-      params->updatesequence = strdup(updatesequence);
+        updatesequence = msStrdup("0");
+      params->updatesequence = msStrdup(updatesequence);
     }
 
   /* if a bum section param is passed, throw exception */
@@ -838,7 +839,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
     /* TODO: DocType? */
 
   if (!updatesequence)
-    updatesequence = strdup("0");
+    updatesequence = msStrdup("0");
 
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n", "ISO-8859-1");
   
@@ -1194,7 +1195,7 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
  
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
   if (!updatesequence)
-    updatesequence = strdup("0");
+    updatesequence = msStrdup("0");
 
   /* printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10); */
   if (encoding)
@@ -1543,7 +1544,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     /* override filteritem if specified in metadata */
     if(value) {
       if(tlp->filteritem) free(tlp->filteritem);
-      tlp->filteritem = strdup(value);
+      tlp->filteritem = msStrdup(value);
     }
       
     /* finally set the filter */
@@ -1733,7 +1734,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
            
   if(!bandlist) { /* build a bandlist (default is ALL bands) */
     bufferSize = cm.bandcount*30+30;
-    bandlist = (char *) malloc(bufferSize);
+    bandlist = (char *) msSmallMalloc(bufferSize);
     strcpy(bandlist, "1");
     for(i = 1; i < cm.bandcount; i++)
       snprintf(bandlist+strlen(bandlist), bufferSize-strlen(bandlist), ",%d", i+1);
@@ -1888,7 +1889,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   /* For GetCapabilities, if version is not set, then set to the highest
      version supported.  This should be cleaned up once #996 gets implemented */
   if (!params->version || strcasecmp(params->version, "") == 0 || params->version == NULL) { /* this is a GetCapabilities request, set version */
-    params->version = strdup("1.1.2");
+    params->version = msStrdup("1.1.2");
   }
 
   /* version is optional, but we do set a default value of 1.1.2, make sure request isn't for something different */

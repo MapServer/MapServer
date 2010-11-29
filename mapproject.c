@@ -1080,7 +1080,7 @@ void msSetPROJ_LIB( const char *proj_lib )
     }
 
     if( proj_lib != NULL )
-        ms_proj_lib = strdup( proj_lib );
+        ms_proj_lib = msStrdup( proj_lib );
     
     msReleaseLock( TLOCK_PROJ );
 #endif

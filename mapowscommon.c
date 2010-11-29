@@ -458,7 +458,7 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
     xmlNewProp(psRootNode, BAD_CAST "xml:lang", BAD_CAST language);
   }
 
-  xsi_schemaLocation = strdup((char *)psNsOws->href);
+  xsi_schemaLocation = msStrdup((char *)psNsOws->href);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, (char *)schemas_location);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/ows/");

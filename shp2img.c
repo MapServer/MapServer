@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
       else
       {
           msFree( (char *) map->imagetype );
-          map->imagetype = strdup( argv[i+1] );
+          map->imagetype = msStrdup( argv[i+1] );
           msApplyOutputFormat( &(map->outputformat), format, MS_NOOVERRIDE,
                                MS_NOOVERRIDE, MS_NOOVERRIDE );
       }
@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
       for(j=0; j<map->numlayers; j++) {
 	 if(strcmp(GET_LAYER(map, j)->name, argv[i+1]) == 0) {
 	   free(GET_LAYER(map, j)->data);
-	   GET_LAYER(map, j)->data = strdup(argv[i+2]);
+	   GET_LAYER(map, j)->data = msStrdup(argv[i+2]);
 	   break;
 	 }
       }

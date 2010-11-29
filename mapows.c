@@ -939,7 +939,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
                 snprintf(type, buffer_size_tmp, type_format, default_type);
             }
             else if(!type)
-                type = strdup("");
+                type = msStrdup("");
             if(!width && width_format && default_width)
             {
                 buffer_size_tmp = strlen(width_format) + strlen(default_width) + 2;
@@ -947,7 +947,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
                 snprintf(width, buffer_size_tmp, width_format, default_width);
             }
             else if(!width)
-                width = strdup("");
+                width = msStrdup("");
             if(!height && height_format && default_height)
             {
                 buffer_size_tmp =  strlen(height_format) + strlen(default_height) + 2;
@@ -955,7 +955,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
                 snprintf(height, buffer_size_tmp, height_format, default_height);
             }
             else if(!height)
-                height = strdup("");
+                height = msStrdup("");
             if(!urlfrmt && urlfrmt_format && default_urlfrmt)
             {
                 buffer_size_tmp = strlen(urlfrmt_format) + strlen(default_urlfrmt) + 2;
@@ -963,7 +963,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
                 snprintf(urlfrmt, buffer_size_tmp, urlfrmt_format, default_urlfrmt);
             }
             else if(!urlfrmt)
-                urlfrmt = strdup("");
+                urlfrmt = msStrdup("");
             if(!href && href_format && default_href)
             {
                 buffer_size_tmp = strlen(href_format) + strlen(default_href) + 2;
@@ -971,7 +971,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
                 snprintf(href, buffer_size_tmp, href_format, default_href);
             }
             else if(!href)
-                href = strdup("");
+                href = msStrdup("");
 
             if(tag_format == NULL)
                 msIO_fprintf(stream, "%s<%s%s%s%s%s>%s</%s>\n", tabspace, 
@@ -1674,7 +1674,7 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
     if( oldStyle == NULL || strncmp(oldStyle,"EPSG:",5) != 0 )
         return NULL;
 
-    result = strdup("");
+    result = msStrdup("");
 
     tokens = msStringSplit(oldStyle, ' ', &numtokens);
     for(i=0; tokens != NULL && i<numtokens; i++)
@@ -1739,7 +1739,7 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
     if( strncmp(oldStyle,"EPSG:",5) != 0 )
         return NULL;
 
-    result = strdup("");
+    result = msStrdup("");
 
     tokens = msStringSplit(oldStyle, ' ', &numtokens);
     for(i=0; tokens != NULL && i<numtokens; i++)

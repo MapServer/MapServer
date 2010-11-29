@@ -46,6 +46,7 @@ imageObj* msCreateImageKml(int width, int height, outputFormatObj *format, color
 	imageObj *image = NULL;
 
 	image = (imageObj*)malloc(sizeof(imageObj));
+        MS_CHECK_ALLOC(image, sizeof(imageObj), NULL);
 	memset(image, 0, sizeof(imageObj));
 
 	KmlRenderer *ren = new KmlRenderer(width, height, format, bg);
@@ -144,7 +145,7 @@ int msGetTruetypeTextBBoxKml(rendererVTableObj *r,char *font, double size, char 
    rect->maxy=0.0;
    if (advances) {
          int numglyphs = msGetNumGlyphs(string);
-         *advances = (double*) malloc(numglyphs * sizeof (double));
+         *advances = (double*) msSmallMalloc(numglyphs * sizeof (double));
          for(int i=0;i<numglyphs;i++) {
             (*advances)[i] = size;
          }

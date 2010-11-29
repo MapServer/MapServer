@@ -112,7 +112,7 @@ const char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath) {
     if (xmlNodeDump(xbuf, doc, xpath->nodesetval->nodeTab[0], 0, 0) == -1) {
       return NULL;
     }
-    result = strdup((char *)xbuf->content);
+    result = msStrdup((char *)xbuf->content);
   }
   xmlBufferFree(xbuf);
   return result;

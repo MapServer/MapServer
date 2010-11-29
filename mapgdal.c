@@ -195,6 +195,12 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     else if( format->imagemode == MS_IMAGEMODE_RGBA )
     {
         pabyAlphaLine = (GByte *) calloc(image->width,1);
+        if (pabyAlphaLine == NULL)
+        {
+            msReleaseLock( TLOCK_GDAL );
+            msSetError( MS_MEMERR, "Out of memory allocating %u bytes.\n", "msSaveImageGDAL()", image->width);
+            return MS_FAILURE;
+        }
         nBands = 4;
         assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
         format->vtable->getRasterBufferHandle(image,&rb);
@@ -422,6 +428,14 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 /*      memory image.                                                   */
 /* -------------------------------------------------------------------- */
     papszOptions = (char**)calloc(sizeof(char *),(format->numformatoptions+1));
+    if (papszOptions == NULL)
+    {
+        msReleaseLock( TLOCK_GDAL );
+        msSetError( MS_MEMERR, "Out of memory allocating %u bytes.\n", "msSaveImageGDAL()", 
+                    sizeof(char *)*(format->numformatoptions+1));
+        return MS_FAILURE;
+    }
+
     memcpy( papszOptions, format->formatoptions, 
             sizeof(char *) * format->numformatoptions );
    
@@ -549,16 +563,16 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
 #ifdef GDAL_DMD_MIMETYPE 
     if( GDALGetMetadataItem( hDriver, GDAL_DMD_MIMETYPE, NULL ) != NULL )
         format->mimetype = 
-            strdup(GDALGetMetadataItem(hDriver,GDAL_DMD_MIMETYPE,NULL));
+            msStrdup(GDALGetMetadataItem(hDriver,GDAL_DMD_MIMETYPE,NULL));
     if( GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSION, NULL ) != NULL )
         format->extension = 
-            strdup(GDALGetMetadataItem(hDriver,GDAL_DMD_EXTENSION,NULL));
+            msStrdup(GDALGetMetadataItem(hDriver,GDAL_DMD_EXTENSION,NULL));
 
 #else
     if( strcasecmp(format->driver,"GDAL/GTiff") )
     {
-        format->mimetype = strdup("image/tiff");
-        format->extension = strdup("tif");
+        format->mimetype = msStrdup("image/tiff");
+        format->extension = msStrdup("tif");
     }
 #endif
     
@@ -638,7 +652,7 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
 
     if( pszWKT )
     {
-        char *pszWKT2 = strdup(pszWKT);
+        char *pszWKT2 = msStrdup(pszWKT);
         CPLFree( pszWKT );
 
         return pszWKT2;

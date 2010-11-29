@@ -103,7 +103,7 @@ int msPostMapParseOutputFormatSetup( mapObj *map )
 
     /* default to the first of these if IMAGETYPE not set. */
     if( map->imagetype == NULL && map->numoutputformats > 0 )
-        map->imagetype = strdup(map->outputformatlist[0]->name);
+        map->imagetype = msStrdup(map->outputformatlist[0]->name);
 
     /* select the current outputformat into map->outputformat */
     format = msSelectOutputFormat( map, map->imagetype );
@@ -147,9 +147,9 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"GD/GIF") == 0 )
     {
         format = msAllocOutputFormat( map, "gif", driver );
-        format->mimetype = strdup("image/gif");
+        format->mimetype = msStrdup("image/gif");
         format->imagemode = MS_IMAGEMODE_PC256;
-        format->extension = strdup("gif");
+        format->extension = msStrdup("gif");
         format->renderer = MS_RENDER_WITH_GD;
     }
 #endif
@@ -158,9 +158,9 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"GD/PNG") == 0 )
     {
         format = msAllocOutputFormat( map, "png", driver );
-        format->mimetype = strdup("image/png");
+        format->mimetype = msStrdup("image/png");
         format->imagemode = MS_IMAGEMODE_PC256;
-        format->extension = strdup("png");
+        format->extension = msStrdup("png");
         format->renderer = MS_RENDER_WITH_GD;
     }
 #endif /* USE_GD_PNG */
@@ -168,18 +168,18 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"AGG/PNG") == 0 )
     {
         format = msAllocOutputFormat( map, "png24", driver );
-        format->mimetype = strdup("image/png; mode=24bit");
+        format->mimetype = msStrdup("image/png; mode=24bit");
         format->imagemode = MS_IMAGEMODE_RGB;
-        format->extension = strdup("png");
+        format->extension = msStrdup("png");
         format->renderer = MS_RENDER_WITH_AGG;
     }
     
     if( strcasecmp(driver,"AGG/JPEG") == 0 )
     {
         format = msAllocOutputFormat( map, "jpeg", driver );
-        format->mimetype = strdup("image/jpeg");
+        format->mimetype = msStrdup("image/jpeg");
         format->imagemode = MS_IMAGEMODE_RGB;
-        format->extension = strdup("jpg");
+        format->extension = msStrdup("jpg");
         format->renderer = MS_RENDER_WITH_AGG;
     }
     
@@ -187,50 +187,50 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"CAIRO/PNG") == 0 )
     {
         format = msAllocOutputFormat( map, "cairopng", driver );
-        format->mimetype = strdup("image/png; mode=24bit");
+        format->mimetype = msStrdup("image/png; mode=24bit");
         format->imagemode = MS_IMAGEMODE_RGB;
-        format->extension = strdup("png");
+        format->extension = msStrdup("png");
         format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
     }
     if( strcasecmp(driver,"CAIRO/JPEG") == 0 )
     {
         format = msAllocOutputFormat( map, "cairojpeg", driver );
-        format->mimetype = strdup("image/jpeg");
+        format->mimetype = msStrdup("image/jpeg");
         format->imagemode = MS_IMAGEMODE_RGB;
-        format->extension = strdup("jpg");
+        format->extension = msStrdup("jpg");
         format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
     }
     if( strcasecmp(driver,"CAIRO/PDF") == 0 )
     {
         format = msAllocOutputFormat( map, "pdf", driver );
-        format->mimetype = strdup("application/x-pdf");
+        format->mimetype = msStrdup("application/x-pdf");
         format->imagemode = MS_IMAGEMODE_RGB;
-        format->extension = strdup("pdf");
+        format->extension = msStrdup("pdf");
         format->renderer = MS_RENDER_WITH_CAIRO_PDF;
     }
     if( strcasecmp(driver,"CAIRO/SVG") == 0 )
     {
         format = msAllocOutputFormat( map, "svg", driver );
-        format->mimetype = strdup("image/svg+xml");
+        format->mimetype = msStrdup("image/svg+xml");
         format->imagemode = MS_IMAGEMODE_RGB;
-        format->extension = strdup("svg");
+        format->extension = msStrdup("svg");
         format->renderer = MS_RENDER_WITH_CAIRO_SVG;
     }
 #ifdef _WIN32
     if( strcasecmp(driver,"CAIRO/WINGDI") == 0 )
     {
         format = msAllocOutputFormat( map, "cairowinGDI", driver );
-        format->mimetype = strdup("");
+        format->mimetype = msStrdup("");
         format->imagemode = MS_IMAGEMODE_RGB;
-        format->extension = strdup("");
+        format->extension = msStrdup("");
         format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
     }
     if( strcasecmp(driver,"CAIRO/WINGDIPRINT") == 0 )
     {
         format = msAllocOutputFormat( map, "cairowinGDIPrint", driver );
-        format->mimetype = strdup("");
+        format->mimetype = msStrdup("");
         format->imagemode = MS_IMAGEMODE_RGB;
-        format->extension = strdup("");
+        format->extension = msStrdup("");
         format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
     }
 #endif
@@ -240,9 +240,9 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"OGL/PNG") == 0 ) 
     { 
         format = msAllocOutputFormat( map, "oglpng24", driver ); 
-        format->mimetype = strdup("image/png; mode=24bit"); 
+        format->mimetype = msStrdup("image/png; mode=24bit"); 
         format->imagemode = MS_IMAGEMODE_RGB; 
-        format->extension = strdup("png"); 
+        format->extension = msStrdup("png"); 
         format->renderer = MS_RENDER_WITH_OGL; 
     } 
 #endif 
@@ -251,9 +251,9 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"KML") == 0 ) 
     { 
         format = msAllocOutputFormat( map, "kml", driver ); 
-        format->mimetype = strdup("application/vnd.google-earth.kml+xml"); 
+        format->mimetype = msStrdup("application/vnd.google-earth.kml+xml"); 
         format->imagemode = MS_IMAGEMODE_RGB; 
-        format->extension = strdup("kml"); 
+        format->extension = msStrdup("kml"); 
         format->renderer = MS_RENDER_WITH_KML; 
         msSetOutputFormatOption( format, "ATTACHMENT", "mapserver.kml");
     } 
@@ -272,9 +272,9 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"swf") == 0 )
     {
         format = msAllocOutputFormat( map, "swf", driver );
-        format->mimetype = strdup("application/x-shockwave-flash");
+        format->mimetype = msStrdup("application/x-shockwave-flash");
         format->imagemode = MS_IMAGEMODE_PC256;
-        format->extension = strdup("swf");
+        format->extension = msStrdup("swf");
         format->renderer = MS_RENDER_WITH_SWF;
     }
 #endif
@@ -316,16 +316,16 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"imagemap") == 0 )
     {
         format = msAllocOutputFormat( map, "imagemap", driver );
-        format->mimetype = strdup("text/html; driver=imagemap");
-        format->extension = strdup("html");
+        format->mimetype = msStrdup("text/html; driver=imagemap");
+        format->extension = msStrdup("html");
         format->imagemode = MS_IMAGEMODE_NULL;
         format->renderer = MS_RENDER_WITH_IMAGEMAP;
     }
 
     if( strcasecmp(driver,"template") == 0 ) {
         format = msAllocOutputFormat( map, "template", driver );
-        format->mimetype = strdup("text/html");
-        format->extension = strdup("html");
+        format->mimetype = msStrdup("text/html");
+        format->extension = msStrdup("html");
         format->imagemode = MS_IMAGEMODE_FEATURE;
         format->renderer = MS_RENDER_WITH_TEMPLATE;
     }
@@ -349,7 +349,7 @@ void msApplyDefaultOutputFormats( mapObj *map )
     if( map->imagetype == NULL )
         saved_imagetype = NULL;
     else
-        saved_imagetype = strdup(map->imagetype);
+        saved_imagetype = msStrdup(map->imagetype);
 
     if( msSelectOutputFormat( map, "gif" ) == NULL )
         msCreateDefaultOutputFormat( map, "GD/GIF" );
@@ -449,8 +449,8 @@ static outputFormatObj *msAllocOutputFormat( mapObj *map, const char *name,
 /*      Initialize various fields.                                      */
 /* -------------------------------------------------------------------- */
     format->bands = 1;
-    format->name = strdup(name);
-    format->driver = strdup(driver);
+    format->name = msStrdup(name);
+    format->driver = msStrdup(driver);
     format->refcount = 0;
     format->vtable = NULL;
     format->device = NULL;
@@ -602,7 +602,7 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
     {
         if (map->imagetype)
             free(map->imagetype);
-        map->imagetype = strdup(format->name);
+        map->imagetype = msStrdup(format->name);
     }
 
     if( format != NULL )
@@ -714,13 +714,13 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *src )
 
     msFree( dst->mimetype );
     if( src->mimetype )
-        dst->mimetype = strdup( src->mimetype );
+        dst->mimetype = msStrdup( src->mimetype );
     else
         dst->mimetype = NULL;
 
     msFree( dst->extension );
     if( src->extension )
-        dst->extension = strdup( src->extension );
+        dst->extension = msStrdup( src->extension );
     else
         dst->extension = NULL;
 
@@ -735,7 +735,7 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *src )
         malloc(sizeof(char *) * src->numformatoptions );
 
     for( i = 0; i < src->numformatoptions; i++ )
-        dst->formatoptions[i] = strdup(src->formatoptions[i]);
+        dst->formatoptions[i] = msStrdup(src->formatoptions[i]);
 
     dst->inmapfile = src->inmapfile;
     

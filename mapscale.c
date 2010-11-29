@@ -360,16 +360,14 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
 	  return MS_FAILURE;
   }
   embededSymbol->pixmap_buffer = calloc(1,sizeof(rasterBufferObj));
-  if( ! embededSymbol->pixmap_buffer) {
-	  msSetError(MS_MEMERR,"allocation error","msEmbedScalebar()");
-	  return MS_FAILURE;
-  }
+  MS_CHECK_ALLOC(embededSymbol->pixmap_buffer, sizeof(rasterBufferObj), MS_FAILURE);
+
   if(MS_SUCCESS != renderer->getRasterBufferCopy(image,embededSymbol->pixmap_buffer)) {
 	  return MS_FAILURE;
   }
   
   embededSymbol->type = MS_SYMBOL_PIXMAP; /* intialize a few things */
-  embededSymbol->name = strdup("scalebar");  
+  embededSymbol->name = msStrdup("scalebar");  
   embededSymbol->sizex = embededSymbol->pixmap_buffer->width;
   embededSymbol->sizey = embededSymbol->pixmap_buffer->height;
   if(map->scalebar.transparent) {
@@ -411,7 +409,7 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
     l = map->numlayers;
     map->numlayers++;
     if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
-    GET_LAYER(map, l)->name = strdup("__embed__scalebar");
+    GET_LAYER(map, l)->name = msStrdup("__embed__scalebar");
     GET_LAYER(map, l)->type = MS_LAYER_ANNOTATION;
 
     if (msGrowLayerClasses( GET_LAYER(map, l) ) == NULL)
