@@ -531,7 +531,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
      *
      */
 
-	geom_table = _msStrdup(layerinfo->geom_table);
+	geom_table = msStrdup(layerinfo->geom_table);
     pos_from = strstrIgnoreCase(geom_table, " from ");
 
     if(!pos_from) {
@@ -569,7 +569,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
         snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
-        columns_wanted = _msStrdup(buffer);
+        columns_wanted = msStrdup(buffer);
     } 
     else 
     {
@@ -581,7 +581,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
         snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
-        columns_wanted = _msStrdup(buffer);
+        columns_wanted = msStrdup(buffer);
     }
 
 	if (rect.minx == rect.maxx || rect.miny == rect.maxy)
@@ -671,7 +671,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
     if (executeSQL(layerinfo->conn, query_string_temp))
     {
-        *query_string = _msStrdup(query_string_temp);
+        *query_string = msStrdup(query_string_temp);
 
         return MS_SUCCESS;
     }
@@ -1496,7 +1496,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
     if(layer->numitems == 0) 
     {
         snprintf(buffer, sizeof(buffer), "%s.STAsBinary(), convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
-        columns_wanted = _msStrdup(buffer);
+        columns_wanted = msStrdup(buffer);
     } 
     else 
     {
@@ -1506,13 +1506,13 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
         snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(), convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
-        columns_wanted = _msStrdup(buffer);
+        columns_wanted = msStrdup(buffer);
     }
 
 	/* index_name is ignored here since the hint should be for the spatial index, not the PK index */
     snprintf(buffer, sizeof(buffer), "select %s from %s where %s = %d", columns_wanted, layerinfo->geom_table, layerinfo->urid_name, record);
 
-    query_str = _msStrdup(buffer);
+    query_str = msStrdup(buffer);
 
     if(layer->debug) {
         msDebug("msMSSQL2008LayerGetShape: %s \n", query_str);
@@ -1723,7 +1723,7 @@ int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_na
 
         buff[retLen] = 0;
 
-        *urid_name = _msStrdup(buff);
+        *urid_name = msStrdup(buff);
     }
 
     return MS_SUCCESS;
