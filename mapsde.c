@@ -628,7 +628,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     if(layer->numitems > 0) {
         shape->numvalues = layer->numitems;
         shape->values = (char **) malloc (sizeof(char *)*layer->numitems);
-        MS_CHECK_ALLOC(shape->values, sizeof(char *)*layer->numitems, MS_FAILURE) {
+        MS_CHECK_ALLOC(shape->values, sizeof(char *)*layer->numitems, MS_FAILURE);
     }
 
     status = SE_shape_create(NULL, &shapeval);
