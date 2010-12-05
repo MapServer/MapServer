@@ -22,3 +22,15 @@
     $result = rb_str_new($1.data, $1.size);
     gdFree($1.data);
 }
+
+/* Module initialization: call msSetup() and register msCleanup() */
+%init %{
+
+/* Copied from pymodule.i to fix #3619 */
+    if (msSetup() != MS_SUCCESS)
+    {
+        msSetError(MS_MISCERR, "Failed to set up threads and font cache",
+                   "msSetup()");
+    }
+%}
+
