@@ -495,6 +495,8 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
                s.color = &style->outlinecolor;
                s.color->alpha = style->color.alpha;
                s.width = (style->width == 0)?scalefactor:style->width*scalefactor;
+               s.width = MS_MIN(s.width, style->maxwidth);
+               s.width = MS_MAX(s.width, style->minwidth);  
                ret = renderer->renderLine(image,offsetPolygon,&s);
             }
             goto cleanup; /*finished plain polygon*/
