@@ -120,9 +120,9 @@ int jpeg_buffer_empty_output_buffer (j_compress_ptr cinfo) {
 
 
 int saveAsJPEG(rasterBufferObj *rb, streamInfo *info, outputFormatObj *format)  {
-  	struct jpeg_compress_struct cinfo;
-	struct jpeg_error_mgr jerr;
-	int quality = atoi(msGetOutputFormatOption( format, "QUALITY", "75"));
+    struct jpeg_compress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+    int quality = atoi(msGetOutputFormatOption( format, "QUALITY", "75"));
     ms_destination_mgr *dest;
     JSAMPLE *rowdata; 
     unsigned int row;
@@ -134,7 +134,7 @@ int saveAsJPEG(rasterBufferObj *rb, streamInfo *info, outputFormatObj *format)  
         if(info->fp) {
             cinfo.dest = (struct jpeg_destination_mgr *)
                 (*cinfo.mem->alloc_small) ((j_common_ptr) &cinfo, JPOOL_PERMANENT,
-                        sizeof (ms_stream_destination_mgr));
+                                           sizeof (ms_stream_destination_mgr));
             ((ms_stream_destination_mgr*)cinfo.dest)->mgr.pub.empty_output_buffer = jpeg_stream_empty_output_buffer;
             ((ms_stream_destination_mgr*)cinfo.dest)->mgr.pub.term_destination = jpeg_stream_term_destination;
             ((ms_stream_destination_mgr*)cinfo.dest)->stream = info->fp;
@@ -142,7 +142,7 @@ int saveAsJPEG(rasterBufferObj *rb, streamInfo *info, outputFormatObj *format)  
 
             cinfo.dest = (struct jpeg_destination_mgr *)
                 (*cinfo.mem->alloc_small) ((j_common_ptr) &cinfo, JPOOL_PERMANENT,
-                        sizeof (ms_buffer_destination_mgr));
+                                           sizeof (ms_buffer_destination_mgr));
             ((ms_buffer_destination_mgr*)cinfo.dest)->mgr.pub.empty_output_buffer = jpeg_buffer_empty_output_buffer;
             ((ms_buffer_destination_mgr*)cinfo.dest)->mgr.pub.term_destination = jpeg_buffer_term_destination;
             ((ms_buffer_destination_mgr*)cinfo.dest)->buffer = info->buffer;
@@ -350,157 +350,157 @@ int readPalette(const char *palette, rgbaPixel *entries, unsigned int *nEntries,
 }
 
 int saveAsPNG(rasterBufferObj *rb, streamInfo *info, outputFormatObj *format) {
-   int force_pc256 = MS_FALSE;
-   int force_palette = MS_FALSE;
+    int force_pc256 = MS_FALSE;
+    int force_palette = MS_FALSE;
    
-   int ret = MS_FAILURE;
-   const char *force_string;
+    int ret = MS_FAILURE;
+    const char *force_string;
    
    
-   force_string = msGetOutputFormatOption( format, "QUANTIZE_FORCE", NULL );
-   if( force_string && (strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0) )
-     force_pc256 = MS_TRUE;
+    force_string = msGetOutputFormatOption( format, "QUANTIZE_FORCE", NULL );
+    if( force_string && (strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0) )
+        force_pc256 = MS_TRUE;
 
-   force_string = msGetOutputFormatOption( format, "PALETTE_FORCE", NULL );
-   if( force_string && (strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0) )
-     force_palette = MS_TRUE;
+    force_string = msGetOutputFormatOption( format, "PALETTE_FORCE", NULL );
+    if( force_string && (strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0) )
+        force_palette = MS_TRUE;
        
-	if(force_pc256 || force_palette) {
-	   rasterBufferObj qrb;
-	   rgbaPixel palette[256], paletteGiven[256];
-	   unsigned int numPaletteGivenEntries;
-	   memset(&qrb,0,sizeof(rasterBufferObj));
-	   qrb.type = MS_BUFFER_BYTE_PALETTE;
-	   qrb.width = rb->width;
-	   qrb.height = rb->height;
-	   qrb.data.palette.pixels = (unsigned char*)malloc(qrb.width*qrb.height*sizeof(unsigned char));
-      if(force_pc256) {
-         qrb.data.palette.palette = palette;
-         qrb.data.palette.num_entries = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
-         ret = msQuantizeRasterBuffer(rb,&(qrb.data.palette.num_entries),qrb.data.palette.palette, NULL, 0);
-      } else {
-         int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "0"));
-         const char *palettePath = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
-
-         if(readPalette(palettePath,paletteGiven,&numPaletteGivenEntries,format->transparent) != MS_SUCCESS) {
-            return MS_FAILURE;
-         }
-         
-         if(numPaletteGivenEntries == 256 || colorsWanted == 0) {
-            qrb.data.palette.palette = paletteGiven;
-            qrb.data.palette.num_entries = numPaletteGivenEntries;
-            ret = MS_SUCCESS;
-            
-            //we have a full palette and don't want an additional quantization step
-         } else {
-            //quantize the image, and mix our colours in the resulting palette
+    if(force_pc256 || force_palette) {
+        rasterBufferObj qrb;
+        rgbaPixel palette[256], paletteGiven[256];
+        unsigned int numPaletteGivenEntries;
+        memset(&qrb,0,sizeof(rasterBufferObj));
+        qrb.type = MS_BUFFER_BYTE_PALETTE;
+        qrb.width = rb->width;
+        qrb.height = rb->height;
+        qrb.data.palette.pixels = (unsigned char*)malloc(qrb.width*qrb.height*sizeof(unsigned char));
+        if(force_pc256) {
             qrb.data.palette.palette = palette;
-            qrb.data.palette.num_entries = MS_MAX(colorsWanted,numPaletteGivenEntries);
-            ret = msQuantizeRasterBuffer(rb,&(qrb.data.palette.num_entries),qrb.data.palette.palette,
-                  paletteGiven,numPaletteGivenEntries);            
-         }
-      }
-      if(ret != MS_FAILURE) {
-         ret = msClassifyRasterBuffer(rb,&qrb);
-         ret = savePalettePNG(&qrb,info);  
-      }
-      //msFreeRasterBuffer(&qrb);
-      return ret;
-  	}
-	else if(rb->type == MS_BUFFER_BYTE_RGBA) {
-		png_infop info_ptr; 
-		int color_type;
-		int row;
-		unsigned int *rowdata;
-		png_structp png_ptr = png_create_write_struct(
-				PNG_LIBPNG_VER_STRING, NULL,NULL,NULL);
+            qrb.data.palette.num_entries = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
+            ret = msQuantizeRasterBuffer(rb,&(qrb.data.palette.num_entries),qrb.data.palette.palette, NULL, 0);
+        } else {
+            int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "0"));
+            const char *palettePath = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
+
+            if(readPalette(palettePath,paletteGiven,&numPaletteGivenEntries,format->transparent) != MS_SUCCESS) {
+                return MS_FAILURE;
+            }
+         
+            if(numPaletteGivenEntries == 256 || colorsWanted == 0) {
+                qrb.data.palette.palette = paletteGiven;
+                qrb.data.palette.num_entries = numPaletteGivenEntries;
+                ret = MS_SUCCESS;
+            
+                //we have a full palette and don't want an additional quantization step
+            } else {
+                //quantize the image, and mix our colours in the resulting palette
+                qrb.data.palette.palette = palette;
+                qrb.data.palette.num_entries = MS_MAX(colorsWanted,numPaletteGivenEntries);
+                ret = msQuantizeRasterBuffer(rb,&(qrb.data.palette.num_entries),qrb.data.palette.palette,
+                                             paletteGiven,numPaletteGivenEntries);            
+            }
+        }
+        if(ret != MS_FAILURE) {
+            ret = msClassifyRasterBuffer(rb,&qrb);
+            ret = savePalettePNG(&qrb,info);  
+        }
+        //msFreeRasterBuffer(&qrb);
+        return ret;
+    }
+    else if(rb->type == MS_BUFFER_BYTE_RGBA) {
+        png_infop info_ptr; 
+        int color_type;
+        int row;
+        unsigned int *rowdata;
+        png_structp png_ptr = png_create_write_struct(
+            PNG_LIBPNG_VER_STRING, NULL,NULL,NULL);
 				
-		if (!png_ptr)
-			return (MS_FAILURE);
+        if (!png_ptr)
+            return (MS_FAILURE);
 	
-		info_ptr = png_create_info_struct(png_ptr);
-		if (!info_ptr)
-		{
-			png_destroy_write_struct(&png_ptr,
-					(png_infopp)NULL);
-			return (MS_FAILURE);
-		}
+        info_ptr = png_create_info_struct(png_ptr);
+        if (!info_ptr)
+        {
+            png_destroy_write_struct(&png_ptr,
+                                     (png_infopp)NULL);
+            return (MS_FAILURE);
+        }
 	
-		if (setjmp(png_jmpbuf(png_ptr)))
-		{
-			png_destroy_write_struct(&png_ptr, &info_ptr);
-			return (MS_FAILURE);
-		}
-		if(info->fp) 
-			png_set_write_fn(png_ptr,info, png_write_data_to_stream, png_flush_data);
-		else
-			png_set_write_fn(png_ptr,info, png_write_data_to_buffer, png_flush_data);
+        if (setjmp(png_jmpbuf(png_ptr)))
+        {
+            png_destroy_write_struct(&png_ptr, &info_ptr);
+            return (MS_FAILURE);
+        }
+        if(info->fp) 
+            png_set_write_fn(png_ptr,info, png_write_data_to_stream, png_flush_data);
+        else
+            png_set_write_fn(png_ptr,info, png_write_data_to_buffer, png_flush_data);
 	
-		if(rb->data.rgba.a)
-			color_type = PNG_COLOR_TYPE_RGB_ALPHA;
-		else
-			color_type = PNG_COLOR_TYPE_RGB;
+        if(rb->data.rgba.a)
+            color_type = PNG_COLOR_TYPE_RGB_ALPHA;
+        else
+            color_type = PNG_COLOR_TYPE_RGB;
 	
-		png_set_IHDR(png_ptr, info_ptr, rb->width, rb->height,
-				8, color_type, PNG_INTERLACE_NONE,
-				PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+        png_set_IHDR(png_ptr, info_ptr, rb->width, rb->height,
+                     8, color_type, PNG_INTERLACE_NONE,
+                     PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	
-		png_write_info(png_ptr, info_ptr);
+        png_write_info(png_ptr, info_ptr);
 	
-		if(!rb->data.rgba.a && rb->data.rgba.pixel_step==4)
-		   png_set_filler(png_ptr, 0, PNG_FILLER_AFTER);
+        if(!rb->data.rgba.a && rb->data.rgba.pixel_step==4)
+            png_set_filler(png_ptr, 0, PNG_FILLER_AFTER);
 	
-		rowdata = (unsigned int*)malloc(rb->width*sizeof(unsigned int));
-		for(row=0;row<rb->height;row++) {
-			unsigned int *pixptr = rowdata;
-			int col;
-			unsigned char *a,*r,*g,*b;
-			r=rb->data.rgba.r+row*rb->data.rgba.row_step;
-			g=rb->data.rgba.g+row*rb->data.rgba.row_step;
-			b=rb->data.rgba.b+row*rb->data.rgba.row_step;
-			if(rb->data.rgba.a) {
-				a=rb->data.rgba.a+row*rb->data.rgba.row_step;
-				for(col=0;col<rb->width;col++) {
-					if(*a) {
-					   double da = *a/255.0;
-						unsigned char *pix = (unsigned char*)pixptr;
-						pix[0] = *r/da;
-						pix[1] = *g/da;
-						pix[2] = *b/da;
-						pix[3] = *a;
-					} else {
-						*pixptr=0;
-					}
-					pixptr++;
-					a+=rb->data.rgba.pixel_step;
-					r+=rb->data.rgba.pixel_step;
-					g+=rb->data.rgba.pixel_step;
-					b+=rb->data.rgba.pixel_step;
-				}
-			} else {
-				for(col=0;col<rb->width;col++) {
-					unsigned char *pix = (unsigned char*)pixptr;
-					pix[0] = *r;
-					pix[1] = *g;
-					pix[2] = *b;
-					pixptr++;
-					r+=rb->data.rgba.pixel_step;
-					g+=rb->data.rgba.pixel_step;
-					b+=rb->data.rgba.pixel_step;
-				}
-			}
+        rowdata = (unsigned int*)malloc(rb->width*sizeof(unsigned int));
+        for(row=0;row<rb->height;row++) {
+            unsigned int *pixptr = rowdata;
+            int col;
+            unsigned char *a,*r,*g,*b;
+            r=rb->data.rgba.r+row*rb->data.rgba.row_step;
+            g=rb->data.rgba.g+row*rb->data.rgba.row_step;
+            b=rb->data.rgba.b+row*rb->data.rgba.row_step;
+            if(rb->data.rgba.a) {
+                a=rb->data.rgba.a+row*rb->data.rgba.row_step;
+                for(col=0;col<rb->width;col++) {
+                    if(*a) {
+                        double da = *a/255.0;
+                        unsigned char *pix = (unsigned char*)pixptr;
+                        pix[0] = *r/da;
+                        pix[1] = *g/da;
+                        pix[2] = *b/da;
+                        pix[3] = *a;
+                    } else {
+                        *pixptr=0;
+                    }
+                    pixptr++;
+                    a+=rb->data.rgba.pixel_step;
+                    r+=rb->data.rgba.pixel_step;
+                    g+=rb->data.rgba.pixel_step;
+                    b+=rb->data.rgba.pixel_step;
+                }
+            } else {
+                for(col=0;col<rb->width;col++) {
+                    unsigned char *pix = (unsigned char*)pixptr;
+                    pix[0] = *r;
+                    pix[1] = *g;
+                    pix[2] = *b;
+                    pixptr++;
+                    r+=rb->data.rgba.pixel_step;
+                    g+=rb->data.rgba.pixel_step;
+                    b+=rb->data.rgba.pixel_step;
+                }
+            }
 	
-			png_write_row(png_ptr,(png_bytep)rowdata);
+            png_write_row(png_ptr,(png_bytep)rowdata);
 	
-		}
-		png_write_end(png_ptr, info_ptr);
-		free(rowdata);
-		png_destroy_write_struct(&png_ptr, &info_ptr);
-		return MS_SUCCESS;
-	} else {
-		msSetError(MS_MISCERR,"Unknown buffer type","saveAsPNG()");
-		return MS_FAILURE;
-	}
+        }
+        png_write_end(png_ptr, info_ptr);
+        free(rowdata);
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+        return MS_SUCCESS;
+    } else {
+        msSetError(MS_MISCERR,"Unknown buffer type","saveAsPNG()");
+        return MS_FAILURE;
+    }
 }
 
 /* For platforms with incomplete ANSI defines. Fortunately,
@@ -724,9 +724,6 @@ int readPNG(char *path, rasterBufferObj *rb) {
     for(i=0;i<height;i++) {
         row_pointers[i] = &(rb->data.rgba.pixels[i*rb->data.rgba.row_step]);
     }
-
-
-    
     
     if (color_type == PNG_COLOR_TYPE_PALETTE)
         /* expand palette images to RGB */
@@ -765,43 +762,44 @@ int readPNG(char *path, rasterBufferObj *rb) {
 }
 
 int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format) {
-	if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
-	    gdImageInterlace(ip, 1);
 
-	  if(format->transparent)
-	    gdImageColorTransparent(ip, 0);
+    if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
+        gdImageInterlace(ip, 1);
 
-	  if(msCaseFindSubstring(format->driver, "/gif")) {
-	#ifdef USE_GD_GIF
-	    gdImageGif(ip, fp);
-	#else
-	    msSetError(MS_MISCERR, "GIF output is not available.", "saveImageGD()");
-	    return(MS_FAILURE);
-	#endif
-	  } else if(msCaseFindSubstring(format->driver, "/png")) {
-	#ifdef USE_GD_PNG
-	    gdImagePng(ip, fp);
-	#else
-	    msSetError(MS_MISCERR, "PNG output is not available.", "saveImageGD()");
-	    return(MS_FAILURE);
-	#endif
-	  } else if(msCaseFindSubstring(format->driver, "/jpeg")) {
-	#ifdef USE_GD_JPEG
-	    gdImageJpeg(ip, fp, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
-	#else
-	    msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageGD()");
-	    return(MS_FAILURE);
-	#endif
-	  } else {
-	    msSetError(MS_MISCERR, "Unknown or unsupported format.", "saveImageGD()");
-	    return(MS_FAILURE);
-	  }
+    if(format->transparent)
+        gdImageColorTransparent(ip, 0);
 
-	  return MS_SUCCESS;
+    if(msCaseFindSubstring(format->driver, "/gif")) {
+#ifdef USE_GD_GIF
+        gdImageGif(ip, fp);
+#else
+        msSetError(MS_MISCERR, "GIF output is not available.", "saveImageGD()");
+        return(MS_FAILURE);
+#endif
+    } else if(msCaseFindSubstring(format->driver, "/png")) {
+#ifdef USE_GD_PNG
+        gdImagePng(ip, fp);
+#else
+        msSetError(MS_MISCERR, "PNG output is not available.", "saveImageGD()");
+        return(MS_FAILURE);
+#endif
+    } else if(msCaseFindSubstring(format->driver, "/jpeg")) {
+#ifdef USE_GD_JPEG
+        gdImageJpeg(ip, fp, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
+#else
+        msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageGD()");
+        return(MS_FAILURE);
+#endif
+    } else {
+        msSetError(MS_MISCERR, "Unknown or unsupported format.", "saveImageGD()");
+        return(MS_FAILURE);
+    }
+
+    return MS_SUCCESS;
 }
 
 int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format) {
-	gdIOCtx *ctx;
+    gdIOCtx *ctx;
 
     ctx = gdNewDynamicCtx (2048, NULL);
 
@@ -811,45 +809,45 @@ int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format)
         gdImageSaveAlpha( ip, 0 );
     
     if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
-	    gdImageInterlace(ip, 1);
+        gdImageInterlace(ip, 1);
 
-	  if(format->transparent)
-	    gdImageColorTransparent(ip, 0);
+    if(format->transparent)
+        gdImageColorTransparent(ip, 0);
 
-	  if(msCaseFindSubstring(format->driver, "/gif")) {
-	#ifdef USE_GD_GIF
-	    gdImageGifCtx( ip, ctx );
-	#else
-	    msSetError(MS_MISCERR, "GIF output is not available.", "saveImageGD()");
+    if(msCaseFindSubstring(format->driver, "/gif")) {
+#ifdef USE_GD_GIF
+        gdImageGifCtx( ip, ctx );
+#else
+        msSetError(MS_MISCERR, "GIF output is not available.", "saveImageGD()");
         ctx->gd_free(ctx);
-	    return(MS_FAILURE);
-	#endif
-	  } else if(msCaseFindSubstring(format->driver, "/png")) {
-	#ifdef USE_GD_PNG
-	    gdImagePngCtx(ip, ctx);
-	#else
-	    msSetError(MS_MISCERR, "PNG output is not available.", "saveImageGD()");
+        return(MS_FAILURE);
+#endif
+    } else if(msCaseFindSubstring(format->driver, "/png")) {
+#ifdef USE_GD_PNG
+        gdImagePngCtx(ip, ctx);
+#else
+        msSetError(MS_MISCERR, "PNG output is not available.", "saveImageGD()");
         ctx->gd_free(ctx);
-	    return(MS_FAILURE);
-	#endif
-	  } else if(msCaseFindSubstring(format->driver, "/jpeg")) {
-	#ifdef USE_GD_JPEG
-	    gdImageJpegCtx(ip, ctx, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
-	#else
-	    msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageGD()");
+        return(MS_FAILURE);
+#endif
+    } else if(msCaseFindSubstring(format->driver, "/jpeg")) {
+#ifdef USE_GD_JPEG
+        gdImageJpegCtx(ip, ctx, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
+#else
+        msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageGD()");
         ctx->gd_free(ctx);
-	    return(MS_FAILURE);
-	#endif
-	  } else {
-	    msSetError(MS_MISCERR, "Unknown or unsupported format.", "saveImageGD()");
+        return(MS_FAILURE);
+#endif
+    } else {
+        msSetError(MS_MISCERR, "Unknown or unsupported format.", "saveImageGD()");
         ctx->gd_free(ctx);
-	    return(MS_FAILURE);
-	  }
+        return(MS_FAILURE);
+    }
 
-      buffer->data = gdDPExtractData (ctx, &buffer->size);
+    buffer->data = gdDPExtractData (ctx, &buffer->size);
 
-      ctx->gd_free(ctx);
-	  return MS_SUCCESS;
+    ctx->gd_free(ctx);
+    return MS_SUCCESS;
 }
 
 int msSaveRasterBuffer(rasterBufferObj *rb, FILE *stream,
@@ -1178,12 +1176,12 @@ int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb) {
     fread(signature,1,8,stream);
     fclose(stream);
     if(png_check_sig(signature,8)) {
-         ret = readPNG(path,rb);
+        ret = readPNG(path,rb);
     }
 #ifdef USE_GIF
     else if (!strncmp((char*)signature,"GIF",3)) {
 
-       ret = readGIF(path,rb);
+        ret = readGIF(path,rb);
     }
 #endif
     else {
