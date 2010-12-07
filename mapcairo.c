@@ -477,7 +477,7 @@ int renderGlyphsCairo(imageObj *img,double x, double y, labelStyleObj *style, ch
     cairo_set_font_size(r->cr,style->size*96/72.0);
 
     cairo_save(r->cr);
-    cairo_translate(r->cr,x,y);
+    cairo_translate(r->cr,MS_NINT(x),MS_NINT(y));
     if(style->rotation != 0.0)
        cairo_rotate(r->cr, -style->rotation);
 

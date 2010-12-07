@@ -234,7 +234,7 @@ int agg2RenderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, ch
 
    const mapserver::glyph_cache* glyph;
    int unicode;
-   cache->m_feng.hinting(true);
+   //cache->m_feng.hinting(true);
    cache->m_feng.height(style->size);
    cache->m_feng.resolution(96);
    cache->m_feng.flip_y(true);
@@ -245,19 +245,19 @@ int agg2RenderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, ch
    mtx *= mapserver::trans_affine_rotation(-style->rotation);
    mtx *= mapserver::trans_affine_translation(x, y);
 
-   double fx = x, fy = y;
+   double fx = MS_NINT(x), fy = MS_NINT(y);
    const char *utfptr = text;
    mapserver::path_storage glyphs;
 
    //first render all the glyphs to a path
    while (*utfptr) {
       if (*utfptr == '\r') {
-         fx = x;
+         fx = MS_NINT(x);
          utfptr++;
          continue;
       }
       if (*utfptr == '\n') {
-         fx = x;
+         fx = MS_NINT(x);
          fy += ceil(style->size * AGG_LINESPACE);
          utfptr++;
          continue;
@@ -266,7 +266,7 @@ int agg2RenderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, ch
       glyph = cache->m_fman.glyph(unicode);
       ;
       if (glyph) {
-         cache->m_fman.add_kerning(&fx, &fy);
+         //cache->m_fman.add_kerning(&fx, &fy);
     	 cache->m_fman.init_embedded_adaptors(glyph, fx, fy);
          mapserver::conv_transform<font_curve_type, mapserver::trans_affine> trans_c(m_curves, mtx);
          glyphs.concat_path(trans_c);
