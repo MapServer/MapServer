@@ -816,89 +816,13 @@ void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer)
   return;
 }
 
-/**
- * Generic function to transorm the shape coordinates to output coordinates
- */
-void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize, 
-                       imageObj *image, enum MS_SIMPLIFY_MODE simplify_mode)   
-{
-	if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
-		image->format->vtable->transformShape(shape, extent, cellsize, simplify_mode);
-
-		return;
-	}
-#ifdef USE_MING_FLASH
-    if (image != NULL && MS_RENDERER_SWF(image->format) )
-    {
-        if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
-                       "FALSE") == 0)
-          msTransformShapeToPixel(shape, extent, cellsize, simplify_mode);
-        else
-          msTransformShapeSWF(shape, extent, cellsize);
-          
-
-        return;
-    }
-#endif
-    msTransformShapeToPixel(shape, extent, cellsize, simplify_mode);
-}
-
-int msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize, enum MS_SIMPLIFY_MODE simplifyMode)
-{
-	if(shape->numlines == 0) return;
-	switch(simplifyMode) {
-	case MS_SIMPLIFY_ROUND:
-		return msTransformShapeToPixelIntegerPrecision(shape,extent,cellsize);
-		break;
-	case MS_SIMPLIFY_NAIVE:
-	case MS_SIMPLIFY_NONE:
-	case MS_SIMPLIFY_DEFAULT:
-	default:
-		return msTransformShapeToPixelDoublePrecision(shape,extent,cellsize);
-	}
-
-}
-
-/*
-** converts from map coordinates to image coordinates
-*/
-int msTransformShapeToPixelIntegerPrecision(shapeObj *shape, rectObj extent, double cellsize)
-{
-  int i,j,k; /* loop counters */
-  double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
-
-  if(shape->numlines == 0) return; /* nothing to transform */
-
-  if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove duplicate vertices */
-    for(i=0; i<shape->numlines; i++) { /* for each part */
-      shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[0].x, extent.minx, inv_cs);
-      shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[0].y, extent.maxy, inv_cs);
-      for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
-        shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
-        shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
-        if(shape->line[i].point[k].x!=shape->line[i].point[k-1].x || shape->line[i].point[k].y!=shape->line[i].point[k-1].y)
-          k++;
-      }
-      shape->line[i].numpoints = k; /* save actual number kept */
-    }
-  } else { /* points or untyped shapes */
-    for(i=0; i<shape->numlines; i++) { /* for each part */
-      for(j=1; j < shape->line[i].numpoints; j++ ) {
-        shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
-        shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
-      }
-    }
-  }
-}
-
-int msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, double cellsize)
+void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
 {
     int i,j,k,beforelast; /* loop counters */
     double dx,dy;
     double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
-    pointObj *point;
     if(shape->numlines == 0) return; /* nothing to transform */
-
+    pointObj *point;
     if(shape->type == MS_SHAPE_LINE) {
         /*
          * loop through the shape's lines, and do naive simplification
@@ -937,7 +861,7 @@ int msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, doub
             }
             //skip degenerate line once more
             if(shape->line[i].numpoints<2)
-            	shape->line[i].numpoints=0;
+               shape->line[i].numpoints=0;
         }
     }
     else if(shape->type == MS_SHAPE_POLYGON) {
@@ -984,6 +908,156 @@ int msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, doub
             }
         }
     }
+}
+
+/**
+ * Generic function to transorm the shape coordinates to output coordinates
+ */
+void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize, imageObj *image)
+{
+	if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
+	   rendererVTableObj *renderer = MS_IMAGE_RENDERER(image);
+	   if(renderer->transform_mode == MS_TRANSFORM_SNAPTOGRID) {
+	      msTransformShapeToPixelSnapToGrid(shape, extent, cellsize, renderer->approximation_scale);
+	   } else if(renderer->transform_mode == MS_TRANSFORM_SIMPLIFY) {
+         msTransformShapeSimplify(shape, extent, cellsize);
+      } else if(renderer->transform_mode == MS_TRANSFORM_ROUND) {
+	      msTransformShapeToPixelRound(shape, extent, cellsize);
+      } else if(renderer->transform_mode == MS_TRANSFORM_FULLRESOLUTION) {
+	      msTransformShapeToPixelDoublePrecision(shape,extent,cellsize);
+	   } else if(renderer->transform_mode == MS_TRANSFORM_NONE) {
+         /* nothing to do */
+         return;
+      } 
+	   /* unknown, do nothing */
+		return;
+	}
+#ifdef USE_MING_FLASH
+    if (image != NULL && MS_RENDERER_SWF(image->format) )
+    {
+        if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
+                       "FALSE") == 0)
+          msTransformShapeToPixelRound(shape, extent, cellsize);
+        else
+          msTransformShapeSWF(shape, extent, cellsize);
+          
+
+        return;
+    }
+#endif
+    msTransformShapeToPixelRound(shape, extent, cellsize);
+}
+
+void msTransformShapeToPixelSnapToGrid(shapeObj *shape, rectObj extent, double cellsize, double grid_resolution)
+{
+   int i,j,k; /* loop counters */
+   double inv_cs;
+   if(shape->numlines == 0) return;
+   inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
+   
+   
+   if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove duplicate vertices */
+      for(i=0; i<shape->numlines; i++) { /* for each part */
+         int snap = 1;
+         double x0,y0,x1,y1,x2,y2;
+         /*do a quick heuristic: will we risk having a degenerate shape*/
+         if(shape->type == MS_SHAPE_LINE) {
+            /*a line is degenerate if it has a single pixel. we check that the first and last pixel are different*/
+            x0 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[0].x, extent.minx, inv_cs, grid_resolution);
+            y0 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[0].y, extent.maxy, inv_cs, grid_resolution);
+            x1 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[shape->line[i].numpoints-1].x, extent.minx, inv_cs, grid_resolution);
+            y1 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[shape->line[i].numpoints-1].y, extent.maxy, inv_cs, grid_resolution);
+            if(x0 == x1 && y0 == y1) {
+               snap = 0;
+            }
+         } else if(shape->type == MS_SHAPE_POLYGON) {
+            x0 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[0].x, extent.minx, inv_cs, grid_resolution);
+            y0 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[0].y, extent.maxy, inv_cs, grid_resolution);
+            x1 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3].x, extent.minx, inv_cs, grid_resolution);
+            y1 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3].y, extent.maxy, inv_cs, grid_resolution);
+            x2 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3*2].x, extent.minx, inv_cs, grid_resolution);
+            y2 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3*2].y, extent.maxy, inv_cs, grid_resolution);
+            if((x0 == x1 && y0 == y1) ||
+                  (x0 == x2 && y0 == y2) ||
+                  (x1 == x2 && y1 == y2)) {
+               snap = 0;
+            }
+         }
+         if(snap) {
+               shape->line[i].point[0].x = x0;
+               shape->line[i].point[0].y = y0;
+               for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
+                  shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[j].x, extent.minx, inv_cs, grid_resolution);
+                  shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[j].y, extent.maxy, inv_cs, grid_resolution);
+                  if(shape->line[i].point[k].x!=shape->line[i].point[k-1].x || shape->line[i].point[k].y!=shape->line[i].point[k-1].y)
+                     k++;
+               }
+               shape->line[i].numpoints=k;
+         } else {
+            if(shape->type == MS_SHAPE_LINE) {
+               shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[0].x, extent.minx, inv_cs);
+               shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[0].y, extent.maxy, inv_cs);
+               shape->line[i].point[1].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[shape->line[i].numpoints-1].x, extent.minx, inv_cs);
+               shape->line[i].point[1].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[shape->line[i].numpoints-1].y, extent.maxy, inv_cs);      
+               shape->line[i].numpoints = 2;
+            } else {
+               for(j=0; j < shape->line[i].numpoints; j++ ) {
+                  shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[j].x, extent.minx, inv_cs);
+                  shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[j].y, extent.maxy, inv_cs);
+               }
+            }
+         }
+      }
+   } else { /* points or untyped shapes */
+      for(i=0; i<shape->numlines; i++) { /* for each part */
+         for(j=1; j < shape->line[i].numpoints; j++ ) {
+            shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[j].x, extent.minx, inv_cs);
+            shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[j].y, extent.maxy, inv_cs);
+         }
+      }
+   }
+
+}
+
+void msTransformShapeToPixelRound(shapeObj *shape, rectObj extent, double cellsize)
+{
+   int i,j,k; /* loop counters */
+   double inv_cs;
+   if(shape->numlines == 0) return;
+   inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
+   if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove duplicate vertices */
+      for(i=0; i<shape->numlines; i++) { /* for each part */
+         shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[0].x, extent.minx, inv_cs);;
+         shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[0].y, extent.maxy, inv_cs);
+         for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
+            shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
+            shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
+            if(shape->line[i].point[k].x!=shape->line[i].point[k-1].x || shape->line[i].point[k].y!=shape->line[i].point[k-1].y)
+               k++;
+         }
+         shape->line[i].numpoints=k;
+      }
+   } else { /* points or untyped shapes */
+      for(i=0; i<shape->numlines; i++) { /* for each part */
+         for(j=1; j < shape->line[i].numpoints; j++ ) {
+            shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
+            shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
+         }
+      }
+   }
+
+}
+
+void msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, double cellsize)
+{
+   int i,j; /* loop counters */
+   double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
+   for(i=0; i<shape->numlines; i++) {
+      for(j=0;j<shape->line[i].numpoints;j++) {
+         shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC_DBL(shape->line[i].point[j].x, extent.minx, inv_cs);
+         shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC_DBL(shape->line[i].point[j].y, extent.maxy, inv_cs);
+      }
+   }
 }
 
 

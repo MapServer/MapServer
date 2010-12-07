@@ -200,11 +200,6 @@ int resetClipDummy(imageObj *img) {
 	return MS_FAILURE;
 }
 
-int transformShapeDummy(shapeObj *shape, rectObj extend, double cellsize, enum MS_SIMPLIFY_MODE simplify) {
-	msSetError(MS_RENDERERERR,"transformShape not implemented","transformShape()");
-	return MS_FAILURE;
-}
-
 int freeImageDummy(imageObj *image) {
 	msSetError(MS_RENDERERERR,"freeImage not implemented","freeImage()");
 	return MS_FAILURE;
@@ -232,6 +227,7 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer) {
 	renderer->supports_clipping = 0;
 	renderer->supports_bitmap_fonts = 0;
 	renderer->renderer_data = NULL;
+	renderer->transform_mode = MS_TRANSFORM_SIMPLIFY;
 	renderer->startLayer = &startLayerDummy;
 	renderer->endLayer = &endLayerDummy;
 	renderer->renderLine=&renderLineDummy;
@@ -240,7 +236,6 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer) {
 	renderer->getRasterBufferHandle=&getRasterBufferHandleDummy;
 	renderer->getRasterBufferCopy=getRasterBufferCopyDummy;
 	renderer->initializeRasterBuffer=initializeRasterBufferDummy;
-	renderer->transformShape=&msTransformShapeToPixel;
 	renderer->renderPolygon=&renderPolygonDummy;
 	renderer->renderGlyphs=&renderGlyphsDummy;
 	renderer->renderBitmapGlyphs = &renderGlyphsDummy;

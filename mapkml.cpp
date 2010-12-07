@@ -165,11 +165,6 @@ int msCloseNewLayerKml(imageObj *img, mapObj *map, layerObj *layer)
 	return renderer->closeNewLayer(img, layer);
 }
 
-int msTransformShapeKml(shapeObj *shape, rectObj extend, double cellsize, enum MS_SIMPLIFY_MODE simplifyMode)
-{
-   return MS_SUCCESS;
-}
-
 int msFreeImageKml(imageObj *image)
 {
 	KmlRenderer* renderer = getKmlRenderer(image);
@@ -223,14 +218,13 @@ int msPopulateRendererVTableKML( rendererVTableObj *renderer )
    renderer->supports_bitmap_fonts = 0;
    renderer->supports_clipping = 0;
    renderer->use_imagecache = 0;
-   
+   renderer->default_transform_mode = MS_TRANSFORM_NONE;
 
    renderer->startLayer = msStartNewLayerKml;
    renderer->endLayer = msCloseNewLayerKml;
    renderer->renderLine=&msRenderLineKml;
    renderer->createImage=&msCreateImageKml;
    renderer->saveImage=&msSaveImageKml;
-   renderer->transformShape=&msTransformShapeKml;
    renderer->renderPolygon=&msRenderPolygonKml;
    renderer->renderGlyphs=&msRenderGlyphsKml;
    renderer->renderEllipseSymbol = &msRenderEllipseSymbolKml;

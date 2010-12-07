@@ -910,6 +910,7 @@ int msPopulateRendererVTableGD( rendererVTableObj *renderer ) {
   renderer->supports_pixel_buffer=1;
   renderer->supports_transparent_layers = 0;
   renderer->supports_bitmap_fonts = 1;
+  renderer->default_transform_mode = MS_TRANSFORM_ROUND;
   
   for(i=0;i<5;i++) {
      gdFontPtr f = msGetBitmapFont(i);
@@ -928,8 +929,6 @@ int msPopulateRendererVTableGD( rendererVTableObj *renderer ) {
   renderer->getRasterBufferCopy = &getRasterBufferCopyGD;
   renderer->initializeRasterBuffer = initializeRasterBufferGD;
   renderer->loadImageFromFile = msLoadGDRasterBufferFromFile;
-    
-  renderer->transformShape = &msTransformShapeToPixel;
   renderer->renderPolygon = &renderPolygonGD;
   renderer->renderGlyphs = &renderGlyphsGD;
   renderer->renderBitmapGlyphs = &renderBitmapGlyphsGD;

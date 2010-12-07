@@ -790,6 +790,7 @@ int msPopulateRendererVTableCairoRaster( rendererVTableObj *renderer ) {
 #ifdef USE_CAIRO
     renderer->supports_pixel_buffer=1;
     renderer->supports_transparent_layers = 0;
+    renderer->default_transform_mode = MS_TRANSFORM_SIMPLIFY;
     initializeCache(&MS_RENDERER_CACHE(renderer));
     renderer->startLayer = startLayerRasterCairo;
     renderer->endLayer = closeLayerRasterCairo;
@@ -798,8 +799,6 @@ int msPopulateRendererVTableCairoRaster( rendererVTableObj *renderer ) {
     renderer->saveImage=&saveImageCairo;
     renderer->getRasterBufferHandle=&getRasterBufferHandleCairo;
     renderer->getRasterBufferCopy=&getRasterBufferCopyCairo;
-        
-    renderer->transformShape=&msTransformShapeToPixel;
     renderer->renderPolygon=&renderPolygonCairo;
     renderer->renderGlyphs=&renderGlyphsCairo;
     renderer->freeImage=&freeImageCairo;
@@ -827,6 +826,7 @@ inline int populateRendererVTableCairoVector( rendererVTableObj *renderer ) {
     renderer->use_imagecache=0;
     renderer->supports_pixel_buffer=0;
     renderer->supports_transparent_layers = 1;
+    renderer->default_transform_mode = MS_TRANSFORM_SIMPLIFY;
     initializeCache(&MS_RENDERER_CACHE(renderer));
     renderer->startLayer = startLayerVectorCairo;
     renderer->endLayer = closeLayerVectorCairo;
@@ -834,7 +834,6 @@ inline int populateRendererVTableCairoVector( rendererVTableObj *renderer ) {
     renderer->createImage=&createImageCairo;
     renderer->saveImage=&saveImageCairo;
     renderer->getRasterBufferHandle=&getRasterBufferHandleCairo;
-    renderer->transformShape=&msTransformShapeToPixel;
     renderer->renderPolygon=&renderPolygonCairo;
     renderer->renderGlyphs=&renderGlyphsCairo;
     renderer->freeImage=&freeImageCairo;

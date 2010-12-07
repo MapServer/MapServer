@@ -698,12 +698,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
       msClipPolylineRect(&shapegrid, cliprect);
      
 
-      if(MS_RENDERER_PLUGIN(map->outputformat)) {
-    	  rendererVTableObj *renderer = MS_MAP_RENDERER(map);
-    	  renderer->transformShape(&shapegrid, map->extent, map->cellsize, MS_SIMPLIFY_DEFAULT);
-      } else {
-    	  msTransformShapeToPixel(&shapegrid, map->extent, map->cellsize, MS_SIMPLIFY_DEFAULT);
-      }
+      msTransformShapeToPixelRound(&shapegrid, map->extent, map->cellsize);
 
      
  
@@ -1100,11 +1095,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
 #endif
 
   if(pLayer->transform) {
-	if(MS_RENDERER_PLUGIN(pLayer->map->outputformat)) {
-		MS_MAP_RENDERER(pLayer->map)->transformShape(pShape, pLayer->map->extent, pLayer->map->cellsize, MS_SIMPLIFY_DEFAULT);
-	} else {
-		msTransformShapeToPixel(pShape, pLayer->map->extent, pLayer->map->cellsize, MS_SIMPLIFY_DEFAULT);
-	}
+     msTransformShapeToPixelRound(pShape, pLayer->map->extent, pLayer->map->cellsize);
   }
 
   if(msGetLabelSize(pLayer->map, &pLayer->class[0]->label,pShape->text, size,&rectLabel,NULL) != MS_SUCCESS)

@@ -1470,7 +1470,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
         msInitShape(&annoshape);
         msCopyShape(shape, &annoshape);
-        msTransformShape(&annoshape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
+        msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
         if(layer->class[c]->label.anglemode == MS_FOLLOW ) {
           annopaths = msPolylineLabelPath(map,image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
@@ -1484,7 +1484,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       if(layer->transform == MS_TRUE) {
         msClipPolylineRect(shape, cliprect);
         if(shape->numlines == 0) return(MS_SUCCESS);
-        msTransformShape(shape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
+        msTransformShape(shape, map->extent, map->cellsize, image);
       } else
         msOffsetShapeRelativeTo(shape, layer);
 
@@ -1653,7 +1653,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       if(layer->transform == MS_TRUE) {
         msClipPolygonRect(shape, cliprect);
         if(shape->numlines == 0) return(MS_SUCCESS);
-        msTransformShape(shape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
+        msTransformShape(shape, map->extent, map->cellsize, image);
       } else
 	msOffsetShapeRelativeTo(shape, layer);
 
@@ -1795,7 +1795,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
       msInitShape(&annoshape);
       msCopyShape(shape, &annoshape);
-      msTransformShape(&annoshape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
+      msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
       if(layer->class[c]->label.anglemode == MS_FOLLOW) {
         annopaths = msPolylineLabelPath(map,image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
@@ -1827,9 +1827,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           msFreeShape(&nonClippedShape);   
         return(MS_SUCCESS);
       }
-      msTransformShape(shape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
+      msTransformShape(shape, map->extent, map->cellsize, image);
       if(hasGeomTransform)
-        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
+        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
     } else {
       msOffsetShapeRelativeTo(shape, layer);
     }
@@ -2045,13 +2045,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           msFreeShape(&nonClippedShape);   
         return(MS_SUCCESS);
       }
-      msTransformShape(shape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
+      msTransformShape(shape, map->extent, map->cellsize, image);
       if(hasGeomTransform)
-        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
+        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
     } else {
       msOffsetShapeRelativeTo(shape, layer);
       if(hasGeomTransform)
-        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image, MS_SIMPLIFY_DEFAULT);
+        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
     }
  
     for(s=0; s<layer->class[c]->numstyles; s++) {
@@ -2613,7 +2613,23 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
     if (image)
     {
         if( MS_RENDERER_PLUGIN(image->format) ) {
-            MS_IMAGE_RENDERER(image)->startLayer(image, map, layer);
+           char *approximation_scale = msLayerGetProcessingKey( layer, "APPROXIMATION_SCALE" );
+           if(approximation_scale) {
+              if(!strncasecmp(approximation_scale,"ROUND",5)) {
+                 MS_IMAGE_RENDERER(image)->transform_mode = MS_TRANSFORM_ROUND;
+              } else if(!strncasecmp(approximation_scale,"FULL",4)) {
+                 MS_IMAGE_RENDERER(image)->transform_mode = MS_TRANSFORM_FULLRESOLUTION;
+              } else if(!strncasecmp(approximation_scale,"SIMPLIFY",8)) {
+                 MS_IMAGE_RENDERER(image)->transform_mode = MS_TRANSFORM_SIMPLIFY;
+              } else {
+                 MS_IMAGE_RENDERER(image)->transform_mode = MS_TRANSFORM_SNAPTOGRID;
+                 MS_IMAGE_RENDERER(image)->approximation_scale = atof(approximation_scale);
+              }
+           } else {
+              MS_IMAGE_RENDERER(image)->transform_mode = MS_IMAGE_RENDERER(image)->default_transform_mode;
+              MS_IMAGE_RENDERER(image)->approximation_scale = MS_IMAGE_RENDERER(image)->default_approximation_scale;
+           }
+           MS_IMAGE_RENDERER(image)->startLayer(image, map, layer);
         }
         else if( MS_RENDERER_IMAGEMAP(image->format) )
             msImageStartLayerIM(map, layer, image);

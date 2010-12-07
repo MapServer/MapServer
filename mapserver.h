@@ -395,12 +395,15 @@ extern "C" {
 #define MS_IMAGE2MAP_X(x,minx,cx) (minx + cx*x)
 #define MS_IMAGE2MAP_Y(y,maxy,cy) (maxy - cy*y)
 
-/* this version of MS_MAP2IMAGE takes 1/cellsize and is much faster */
+/* these versions of MS_MAP2IMAGE takes 1/cellsize and is much faster */
 #define MS_MAP2IMAGE_X_IC(x,minx,icx) (MS_NINT((x - minx)*icx))
 #define MS_MAP2IMAGE_Y_IC(y,maxy,icy) (MS_NINT((maxy - y)*icy))
 
 #define MS_MAP2IMAGE_X_IC_DBL(x,minx,icx) ((x - minx)*icx)
 #define MS_MAP2IMAGE_Y_IC_DBL(y,maxy,icy) ((maxy - y)*icy)
+    
+#define MS_MAP2IMAGE_X_IC_SNAP(x,minx,icx,res) ((MS_NINT((x - minx)*icx*res))/(res))
+#define MS_MAP2IMAGE_Y_IC_SNAP(y,maxy,icy,res) ((MS_NINT((maxy - y)*icy*res))/(res))
 
 /* For CARTO symbols */
 #define MS_PI    3.14159265358979323846
@@ -451,11 +454,12 @@ enum MS_GEOS_OPERATOR {MS_GEOS_EQUALS, MS_GEOS_DISJOINT, MS_GEOS_TOUCHES, MS_GEO
 #define MS_FILE_DEFAULT MS_FILE_MAP   
 
 /* coordinate to pixel simplification modes, used in msTransformShape */
-enum MS_SIMPLIFY_MODE {
-	MS_SIMPLIFY_DEFAULT, /* use renderer default */ 
-	MS_SIMPLIFY_NONE, /* precise conversion */
-	MS_SIMPLIFY_ROUND, /* round to closest pixel, removing identical points */
-	MS_SIMPLIFY_NAIVE /* find better name */
+enum MS_TRANSFORM_MODE {
+   MS_TRANSFORM_NONE, /* no geographic to pixel transformation */
+   MS_TRANSFORM_ROUND, /* round to integer, might create degenerate geometries (used for GD)*/
+   MS_TRANSFORM_SNAPTOGRID, /* snap to a grid, should be user configurable in the future*/
+   MS_TRANSFORM_FULLRESOLUTION, /* keep full resolution */
+   MS_TRANSFORM_SIMPLIFY /* keep full resolution */
 };
 
 #ifndef SWIG
@@ -1921,16 +1925,17 @@ MS_DLL_EXPORT void msComputeBounds(shapeObj *shape);
 MS_DLL_EXPORT void msRectToPolygon(rectObj rect, shapeObj *poly);
 MS_DLL_EXPORT void msClipPolylineRect(shapeObj *shape, rectObj rect);
 MS_DLL_EXPORT void msClipPolygonRect(shapeObj *shape, rectObj rect);
-MS_DLL_EXPORT void msTransformShape(shapeObj *shape, rectObj extent, double cellsize, imageObj *image, enum MS_SIMPLIFY_MODE simplifyMode);
+MS_DLL_EXPORT void msTransformShape(shapeObj *shape, rectObj extent, double cellsize, imageObj *image);
 
 
 MS_DLL_EXPORT void msTransformPoint(pointObj *point, rectObj *extent, double cellsize, imageObj *image);
 
 MS_DLL_EXPORT void msOffsetPointRelativeTo(pointObj *point, layerObj *layer);
 MS_DLL_EXPORT void msOffsetShapeRelativeTo(shapeObj *shape, layerObj *layer);
-MS_DLL_EXPORT int msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize, enum MS_SIMPLIFY_MODE simplify_mode);
-MS_DLL_EXPORT int msTransformShapeToPixelIntegerPrecision(shapeObj *shape, rectObj extent, double cellsize);
-MS_DLL_EXPORT int msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, double cellsize);
+MS_DLL_EXPORT void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize);
+MS_DLL_EXPORT void msTransformShapeToPixelSnapToGrid(shapeObj *shape, rectObj extent, double cellsize, double grid_resolution);
+MS_DLL_EXPORT void msTransformShapeToPixelRound(shapeObj *shape, rectObj extent, double cellsize);
+MS_DLL_EXPORT void msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, double cellsize);
 
 MS_DLL_EXPORT void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize);
 MS_DLL_EXPORT void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, styleObj *style, symbolObj *symbol, int c, double size, double scalefactor);
@@ -2563,6 +2568,10 @@ struct rendererVTableObj {
 	int supports_clipping;
 	int supports_bitmap_fonts;
 	int use_imagecache;
+	enum MS_TRANSFORM_MODE default_transform_mode;
+	enum MS_TRANSFORM_MODE transform_mode;
+	double default_approximation_scale;
+	double approximation_scale;
 	
 	void *renderer_data;
 
@@ -2632,7 +2641,6 @@ struct rendererVTableObj {
 	int (*setClip)(imageObj *img, rectObj clipRect);
 	int (*resetClip)(imageObj *img);
 
-	int (*transformShape)(shapeObj *shape, rectObj extend, double cellsize, enum MS_SIMPLIFY_MODE simplify);
 	int (*freeImage)(imageObj *image);
 	int (*freeSymbol)(symbolObj *symbol);
 	int (*cleanup)(void *renderer_data);

@@ -789,6 +789,7 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer) {
    renderer->supports_pixel_buffer = 1;
    renderer->use_imagecache = 0;
    renderer->supports_clipping = 0;
+   renderer->default_transform_mode = MS_TRANSFORM_SIMPLIFY;
    
    agg2InitCache(&(MS_RENDERER_CACHE(renderer)));
    renderer->cleanup = agg2Cleanup;
@@ -825,7 +826,6 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer) {
    renderer->startLayer = &agg2StartNewLayer;
    renderer->endLayer = &agg2CloseNewLayer;
 
-   renderer->transformShape = &msTransformShapeToPixel;
    renderer->freeImage = &agg2FreeImage;
    renderer->freeSymbol = &agg2FreeSymbol;
    renderer->cleanup = agg2Cleanup;

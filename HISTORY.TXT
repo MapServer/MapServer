@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- Add support for per layer tuning of the shape to pixel conversion (SIMPLIFY, ROUND,
+  SNAPTOGRID, FULLRESOLUTION)
 
 - Fixed: Memory allocation results should always be checked (#3559)
 

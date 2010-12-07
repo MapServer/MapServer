@@ -1610,7 +1610,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
                   msClipPolylineRect(shape, layer->map->extent);
          
 
-                msTransformShapeToPixel(shape, layer->map->extent, cellsize, MS_SIMPLIFY_DEFAULT);
+                msTransformShapeToPixelRound(shape, layer->map->extent, cellsize);
             }
             else
               msOffsetShapeRelativeTo(shape, layer);
@@ -1653,7 +1653,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
                 if (clip_to_map)
                   msClipPolygonRect(shape, layer->map->extent);
 
-                msTransformShapeToPixel(shape, layer->map->extent, cellsize, MS_SIMPLIFY_DEFAULT);
+                msTransformShapeToPixelRound(shape, layer->map->extent, cellsize);
             }
             else
               msOffsetShapeRelativeTo(shape, layer);
@@ -1738,7 +1738,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       
               msClipPolylineRect(&tShape, layer->map->extent);
 
-              msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize, MS_SIMPLIFY_DEFAULT);
+              msTransformShapeToPixelRound(&tShape, layer->map->extent, layer->map->cellsize);
 
          } else if(projectionString) {
              projectionObj projection;
@@ -2046,7 +2046,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
         return(MS_FAILURE);
         break;
       }
-      msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize, MS_SIMPLIFY_DEFAULT);
+      msTransformShapeToPixelRound(&tShape, layer->map->extent, layer->map->cellsize);
 
 #ifdef USE_GEOS
       if(buffer != 0 && bufferUnits == MS_PIXELS) {

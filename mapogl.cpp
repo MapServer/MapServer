@@ -201,7 +201,7 @@ int msPopulateRendererVTableOGL(rendererVTableObj *renderer) {
 		renderer->supports_clipping = 0;
 		renderer->use_imagecache = 0;
 		renderer->supports_bitmap_fonts = 0;
-
+		renderer->transform_mode = MS_TRANSFORM_SIMPLIFY;
     	renderer->startLayer = msStartLayerOgl;
     	renderer->endLayer = msEndLayerOgl;        
         
@@ -221,7 +221,6 @@ int msPopulateRendererVTableOGL(rendererVTableObj *renderer) {
         renderer->renderPolygonTiled = &msDrawPolygonTiledOgl;
         renderer->renderLineTiled = &msDrawLineTiledOgl;
         
-		renderer->transformShape=&msTransformShapeToPixel;
 		renderer->getTruetypeTextBBox = &msGetTruetypeTextBBoxOgl;
         
 		renderer->getRasterBufferHandle = msGetRasterBufferHandleOgl;
