@@ -1626,6 +1626,9 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
     return;
 
   i = line_index;
+
+  if(p->line[i].numpoints < 2)
+	  return;
   point_distance = 0;
   point_repeat = 1;
   left_point_position = right_point_position = center_point_position = line_length / 2.0; 
