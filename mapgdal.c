@@ -71,8 +71,38 @@ void msGDALCleanup( void )
     if( bGDALInitialized )
     {
         int iRepeat = 5;
-
         msAcquireLock( TLOCK_GDAL );
+
+#if GDAL_RELEASE_DATE > 20101207
+        {
+            /* 
+            ** Cleanup any unreferenced but open datasets as will tend
+            ** to exist due to deferred close requests.  We are careful
+            ** to only close one file at a time before refecting the
+            ** list as closing some datasets may cause others to be 
+            ** closed (subdatasets in a VRT for instance).
+            */
+            GDALDatasetH *pahDSList = NULL;
+            int nDSCount = 0;
+            int bDidSomething;
+
+            do {
+                int i;
+                GDALGetOpenDatasets( &pahDSList, &nDSCount );
+                bDidSomething = FALSE;
+                for( i = 0; i < nDSCount && !bDidSomething; i++ )
+                {
+                    if( GDALReferenceDataset( pahDSList[i] ) == 1 )
+                    {
+                        GDALClose( pahDSList[i] );
+                        bDidSomething = TRUE;
+                    }
+                    else
+                        GDALDereferenceDataset( pahDSList[i] );
+                }
+            } while( bDidSomething );
+        }
+#endif
 
         while( iRepeat-- )
             CPLPopErrorHandler();

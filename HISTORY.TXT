@@ -13,6 +13,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- Cleanup open gdal datasets in msGDALCleanup() (if we have a very new
+  GDAL).  This makes it easier to identify memory leaks. 
+
 - Add support for per layer tuning of the shape to pixel conversion (SIMPLIFY, ROUND,
   SNAPTOGRID, FULLRESOLUTION)
 
