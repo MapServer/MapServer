@@ -2191,9 +2191,10 @@ msDrawRasterLayerGDAL_16BitClassification(
     const char *pszBuckets;
     int  bUseIntegers = FALSE;
     int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
+    unsigned char *rb_cmap[4];
     CPLErr eErr;
 
-    assert( rb->type == MS_BUFFER_GD );
+    assert( rb->type == MS_BUFFER_GD || rb->type == MS_BUFFER_BYTE_RGBA );
 
 /* ==================================================================== */
 /*      Read the requested data in one gulp into a floating point       */
@@ -2355,6 +2356,10 @@ msDrawRasterLayerGDAL_16BitClassification(
 /* ==================================================================== */
 
     cmap = (int *) msSmallCalloc(sizeof(int),nBucketCount);
+    rb_cmap[0] = (unsigned char *) msSmallCalloc(1,nBucketCount);
+    rb_cmap[1] = (unsigned char *) msSmallCalloc(1,nBucketCount);
+    rb_cmap[2] = (unsigned char *) msSmallCalloc(1,nBucketCount);
+    rb_cmap[3] = (unsigned char *) msSmallCalloc(1,nBucketCount);
 
     for(i=0; i < nBucketCount; i++) 
     {
@@ -2378,13 +2383,28 @@ msDrawRasterLayerGDAL_16BitClassification(
             }
             if(rb->type == MS_BUFFER_GD) {
             	RESOLVE_PEN_GD(rb->data.gd_img, layer->class[c]->styles[0]->color);
+                if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) )
+                    cmap[i] = -1;
+                else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color))
+                {
+                    /* use class color */
+                    cmap[i] = layer->class[c]->styles[0]->color.pen;
+                }
             }
-            if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) )
-                cmap[i] = -1;
-            else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color))
+            else if( rb->type == MS_BUFFER_BYTE_RGBA )
             {
-                /* use class color */
-                cmap[i] = layer->class[c]->styles[0]->color.pen;
+                if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) )
+                {
+                    /* leave it transparent */
+                }
+                else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color))
+                {
+                    /* use class color */
+                    rb_cmap[0][i] = layer->class[c]->styles[0]->color.red;
+                    rb_cmap[1][i] = layer->class[c]->styles[0]->color.green;
+                    rb_cmap[2][i] = layer->class[c]->styles[0]->color.blue;
+                    rb_cmap[3][i] = 255;
+                }
             }
         }
     }
@@ -2422,16 +2442,36 @@ msDrawRasterLayerGDAL_16BitClassification(
                 continue;
             }
 
-            result = cmap[iMapIndex];
-            if( result == -1 )
-                continue;
+            if( rb->type == MS_BUFFER_GD )
+            {
+                result = cmap[iMapIndex];
+                if( result == -1 )
+                    continue;
 
-            rb->data.gd_img->pixels[i][j] = result;
+                rb->data.gd_img->pixels[i][j] = result;
+            }
+            else if( rb->type == MS_BUFFER_BYTE_RGBA )
+            {
+                /* currently we never have partial alpha so keep simple */
+                if( rb_cmap[3][iMapIndex] > 0 )
+                    RB_SET_PIXEL( rb, j, i, 
+                                  rb_cmap[0][iMapIndex], 
+                                  rb_cmap[1][iMapIndex], 
+                                  rb_cmap[2][iMapIndex], 
+                                  rb_cmap[3][iMapIndex] );
+            }
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
     free( pafRawData );
     free( cmap );
+    free( rb_cmap[0] );
+    free( rb_cmap[1] );
+    free( rb_cmap[2] );
+    free( rb_cmap[3] );
 
     assert( k == dst_xsize * dst_ysize );
 

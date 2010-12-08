@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed 16bit classification support - problem introduced with new 
+  renderer architecture (#3624) 
+
 - Cleanup open gdal datasets in msGDALCleanup() (if we have a very new
   GDAL).  This makes it easier to identify memory leaks. 
 
