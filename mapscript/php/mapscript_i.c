@@ -1288,7 +1288,7 @@ int shapefileObj_getTransformed(shapefileObj *self, mapObj *map,
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
     msSHPReadShape(self->hSHP, i, shape);
-    msTransformShapeToPixel(shape, map->extent, map->cellsize, MS_SIMPLIFY_DEFAULT);
+    msTransformShapeSimplify(shape, map->extent, map->cellsize);
 
     return 0;
   }
