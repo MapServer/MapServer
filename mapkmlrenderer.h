@@ -95,7 +95,13 @@ protected:
 	int				Extrude;
 
 	enum altitudeModeEnum { undefined, clampToGround, relativeToGround, absolute };
-	
+        /**True if elevation is taken from a feature attribute*/
+        bool mElevationFromAttribute;
+        /**Attribute index of elevation (or -1 if elevation is not attribute driven*/
+        int mElevationAttributeIndex;
+        double mCurrentElevationValue;
+ 	
+
 	outputFormatObj *aggFormat;
 
 protected:

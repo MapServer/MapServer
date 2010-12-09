@@ -45,7 +45,7 @@ KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorOb
 	:	XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL), Width(width), Height(height),
 		FirstLayer(MS_TRUE), MapCellsize(1.0),
 		PlacemarkNode(NULL), GeomNode(NULL),
-		Items(NULL), NumItems(0), map(NULL), currentLayer(NULL)
+                Items(NULL), NumItems(0), map(NULL), currentLayer(NULL), mElevationFromAttribute( false ), mElevationAttributeIndex( -1 ), mCurrentElevationValue(0.0)
 
 {
     /*private variables*/        
@@ -301,10 +301,7 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
           xmlNewChild(LayerNode, NULL, BAD_CAST "styleUrl", BAD_CAST "#LayerFolder_check");
     }
 
-   
-
-    
-
+  
     /*Init few things on the first layer*/
     if (FirstLayer)
     {
@@ -338,13 +335,9 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
                  break;
              }
          } 
-
-        
     }
 
     currentLayer = layer;
-
-   
 
      if (!msLayerIsOpen(layer))
      {
@@ -368,20 +361,9 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
      if (value)
        papszLayerIncludeItems = msStringSplit(value, ',', &nIncludeItems);
 
-     
-     DumpAttributes = MS_FALSE;
-     char *attribVal = msLookupHashTable(&layer->metadata, "kml_dumpattributes");
-     if (attribVal && strlen(attribVal) > 0)
-     {
+     /*get all attributes*/
+     msLayerWhichItems(layer, MS_TRUE, NULL);
 
-         DumpAttributes = MS_TRUE;
-         msLayerWhichItems(layer, MS_FALSE, attribVal);
-
-     }
-     else
-     {
-         msLayerWhichItems(layer, MS_TRUE, NULL);
-     }
 
      NumItems = layer->numitems;
      if (NumItems)
@@ -392,6 +374,18 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
      }
 
     
+     char* elevationAttribute = msLookupHashTable(&layer->metadata, "kml_elevation_attribute");
+     if( elevationAttribute )
+     {
+         mElevationFromAttribute = true;
+         for( int i = 0; i < layer->numitems; ++i )
+         {
+             if( strcasecmp( layer->items[i], elevationAttribute ) == 0 )
+             {
+                 mElevationAttributeIndex = i;
+             }
+         }
+     }  
 
     setupRenderingParams(&layer->metadata);
     return MS_SUCCESS;
@@ -627,18 +621,22 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts
 
     for (int i=0; i<numPts; i++)
     {
-      if (AltitudeMode == relativeToGround || AltitudeMode == absolute)
-      {
+        if( mElevationFromAttribute )
+        {
+            sprintf(lineBuf, "\t%.8f,%.8f,%.8f\n", pts[i].x, pts[i].y, mCurrentElevationValue);
+        }
+        else if (AltitudeMode == relativeToGround || AltitudeMode == absolute)
+        {
 #ifdef USE_POINT_Z_M
-        sprintf(lineBuf, "\t%.8f,%.8f,%.8f\n", pts[i].x, pts[i].y, pts[i].z);
+            sprintf(lineBuf, "\t%.8f,%.8f,%.8f\n", pts[i].x, pts[i].y, pts[i].z);
 #else
-        msSetError(MS_MISCERR, "Z coordinates support not available  (mapserver not compiled with USE_POINT_Z_M option)", "KmlRenderer::addCoordsNode()");
+            msSetError(MS_MISCERR, "Z coordinates support not available  (mapserver not compiled with USE_POINT_Z_M option)", "KmlRenderer::addCoordsNode()");
 #endif
-      }
-      else
-        sprintf(lineBuf, "\t%.8f,%.8f\n", pts[i].x, pts[i].y);
+        }
+        else
+          sprintf(lineBuf, "\t%.8f,%.8f\n", pts[i].x, pts[i].y);
 
-      xmlNodeAddContent(coordsNode, BAD_CAST lineBuf);
+        xmlNodeAddContent(coordsNode, BAD_CAST lineBuf);
     }
     xmlNodeAddContent(coordsNode, BAD_CAST "\t");
 }
@@ -861,6 +859,13 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
     GeomNode = NULL;
 
     DescriptionNode = createDescriptionNode(shape);
+
+    if( mElevationFromAttribute && shape->numvalues > mElevationAttributeIndex && 
+        mElevationAttributeIndex >= 0 && shape->values[mElevationAttributeIndex])
+    {
+        mCurrentElevationValue = atof( shape->values[mElevationAttributeIndex] );
+    }
+
 
     memset(SymbologyFlag, 0, NumSymbologyFlag);
 }
