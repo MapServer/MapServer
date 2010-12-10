@@ -270,11 +270,6 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   MS_COPYSTELEM(shadowsizex);
   MS_COPYSTELEM(shadowsizey);
 
-  MS_COPYCOLOR(&(dst->backgroundcolor), &(src->backgroundcolor));
-  MS_COPYCOLOR(&(dst->backgroundshadowcolor), &(src->backgroundshadowcolor));
-
-  MS_COPYSTELEM(backgroundshadowsizex);
-  MS_COPYSTELEM(backgroundshadowsizey);
   MS_COPYSTELEM(size);
   MS_COPYSTELEM(minsize);
   MS_COPYSTELEM(maxsize);
@@ -424,8 +419,8 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(minvalue);
     MS_COPYSTELEM(maxvalue);
     MS_COPYSTELEM(opacity);
-    MS_COPYSTRING(dst->_geomtransformexpression,src->_geomtransformexpression);
-    MS_COPYSTELEM(_geomtransform);
+    MS_COPYSTRING(dst->_geomtransform.string, src->_geomtransform.string);
+    MS_COPYSTELEM(_geomtransform.type);
     MS_COPYSTRING(dst->rangeitem, src->rangeitem);
     MS_COPYSTELEM(rangeitemindex);
     MS_COPYSTELEM(outlinewidth);
