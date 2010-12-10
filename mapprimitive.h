@@ -87,6 +87,7 @@ typedef struct {
   int classindex;
   char *text;
   
+  int scratch;
 } shapeObj;
 
 typedef lineObj multipointObj;

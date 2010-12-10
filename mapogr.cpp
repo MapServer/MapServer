@@ -1877,8 +1877,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
       // Check the expression unless it is a WHERE clause already 
       // handled by OGR. 
       if( (layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6))
-          || msEvalExpression(&(layer->filter), layer->filteritemindex, 
-                              shape->values, layer->numitems) == MS_TRUE)
+          || msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex) == MS_TRUE )
       {
           // Feature matched filter expression... process geometry
           // shape->type will be set if geom is compatible with layer type

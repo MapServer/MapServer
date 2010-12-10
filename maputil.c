@@ -52,14 +52,8 @@
 
 MS_CVSID("$Id$")
 
-extern int msyyparse(void);
-extern int msyylex(void);
 extern int msyylex_destroy(void);
-extern char *msyytext;
-
-extern int msyyresult; /* result of parsing, true/false */
-extern int msyystate;
-extern char *msyystring;
+extern int yyparse(parseObj *);
 
 /*
 ** Helper functions to convert from strings to other types or objects.
@@ -328,9 +322,9 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
   }
 
   msAcquireLock( TLOCK_PARSER );
-  msyystate = MS_TOKENIZE_EXPRESSION; msyystring = tmpstr1;
-  status = msyyparse();
-  result = msyyresult;
+  
+  /* TODO: tokenize the context expression and parse */
+
   msReleaseLock( TLOCK_PARSER );
   free(tmpstr1);
 
@@ -349,111 +343,78 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
  * May also return MS_FALSE in case of parsing errors or invalid expressions
  * (check the error stack if you care)
  *
- * Parser mutex added for type MS_EXPRESSION -- SG
  */
-int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems)
+int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression, int itemindex)
 {
-  int i;
-  char *tmpstr=NULL, *tmpstr2=NULL;
-  int status;
-  int expresult;  /* result of logical expression parsing operation */
-  
-  if(!expression->string) return(MS_TRUE); /* empty expressions are ALWAYS true */
+  if(!expression->string) return MS_TRUE; /* empty expressions are ALWAYS true */
 
   switch(expression->type) {
   case(MS_STRING):
     if(itemindex == -1) {
       msSetError(MS_MISCERR, "Cannot evaluate expression, no item index defined.", "msEvalExpression()");
-      return(MS_FALSE);
+      return MS_FALSE;
     }
-    if(itemindex >= numitems) {
+    if(itemindex >= layer->numitems) {
       msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
-      return(MS_FALSE);
+      return MS_FALSE;
     }
     if(expression->flags & MS_EXP_INSENSITIVE) {
-      if(strcasecmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); /* got a match */
+      if(strcasecmp(expression->string, shape->values[itemindex]) == 0) return MS_TRUE; /* got a match */
     } else {
-      if(strcmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); /* got a match */
+      if(strcmp(expression->string, shape->values[itemindex]) == 0) return MS_TRUE; /* got a match */
     }
     break;
   case(MS_EXPRESSION):
-    tmpstr = msStrdup(expression->string);
+    {
+      int status;
+      parseObj p;
 
-    for(i=0; i<expression->numitems; i++) {
-      tmpstr2 = msStrdup(items[expression->indexes[i]]);
-      tmpstr2 = msReplaceSubstring(tmpstr2, "\'", "\\\'");
-      tmpstr2 = msReplaceSubstring(tmpstr2, "\"", "\\\"");
-      tmpstr = msReplaceSubstring(tmpstr, expression->items[i], tmpstr2);
-      free(tmpstr2);
+      p.shape = shape;
+      p.expr = expression;
+      p.expr->curtoken = p.expr->tokens; /* reset */
+      p.type = MS_PARSE_TYPE_BOOLEAN;
+
+      status = yyparse(&p);
+
+      if (status != 0) {
+        msSetError(MS_PARSEERR, "Failed to parse expression: %s", "msEvalExpression", expression->string);
+        return MS_FALSE;
+      }
+
+      return p.result.intval;
+      break;
     }
-
-    // fprintf(stderr, "exp; %s\n", tmpstr);
-
-    msAcquireLock( TLOCK_PARSER );
-    msyystate = MS_TOKENIZE_EXPRESSION;
-    msyystring = tmpstr; /* set lexer state to EXPRESSION_STRING */
-    status = msyyparse();
-    expresult = msyyresult;
-    msReleaseLock( TLOCK_PARSER );
-
-    if (status != 0) {
-      msSetError(MS_PARSEERR, "Failed to parse expression: %s", "msEvalExpression", tmpstr);
-      free(tmpstr);
-      return MS_FALSE;
-    }
-
-    free(tmpstr);
-    return expresult;
-    
-    break;
   case(MS_REGEX):
     if(itemindex == -1) {
       msSetError(MS_MISCERR, "Cannot evaluate expression, no item index defined.", "msEvalExpression()");
-      return(MS_FALSE);
+      return MS_FALSE;
     }
-    if(itemindex >= numitems) {
+    if(itemindex >= layer->numitems) {
       msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
-      return(MS_FALSE);
+      return MS_FALSE;
     }
 
     if(!expression->compiled) {
-      if(expression->flags & MS_EXP_INSENSITIVE)
-      {
+      if(expression->flags & MS_EXP_INSENSITIVE) {
         if(ms_regcomp(&(expression->regex), expression->string, MS_REG_EXTENDED|MS_REG_NOSUB|MS_REG_ICASE) != 0) { /* compile the expression */
           msSetError(MS_REGEXERR, "Invalid regular expression.", "msEvalExpression()");
-          return(MS_FALSE);
+          return MS_FALSE;
         }
-      }
-      else
-      {
+      } else {
         if(ms_regcomp(&(expression->regex), expression->string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression */
           msSetError(MS_REGEXERR, "Invalid regular expression.", "msEvalExpression()");
-          return(MS_FALSE);
+          return MS_FALSE;
         }
       }
       expression->compiled = MS_TRUE;
     }
 
-    if(ms_regexec(&(expression->regex), items[itemindex], 0, NULL, 0) == 0) return(MS_TRUE); /* got a match */
+    if(ms_regexec(&(expression->regex), shape->values[itemindex], 0, NULL, 0) == 0) return MS_TRUE; /* got a match */
     break;
   }
 
-  return(MS_FALSE);
+  return MS_FALSE;
 }
-
-/*
- * int msShapeGetClass(layerObj *layer, shapeObj *shape)
- * {
- *   int i;
- * 
- *   for(i=0; i<layer->numclasses; i++) {
- *     if(layer->class[i]->status != MS_DELETE && msEvalExpression(&(layer->class[i]->expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
- *       return(i);
- *   }
- * 
- *   return(-1); // no match
- * }
- */
 
 int *msAllocateValidClassGroups(layerObj *lp, int *nclasses)
 {
@@ -507,60 +468,69 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom, int *cl
     return(shape->classindex);
   }
 
-  if (layer->numclasses > 0)
-  {
+  if (layer->numclasses > 0) {
+    if (classgroup == NULL || numclasses <=0)
+      numclasses = layer->numclasses;
 
-      if (classgroup == NULL || numclasses <=0)
-        numclasses = layer->numclasses;
+    for(i=0; i<numclasses; i++) {
+      if (classgroup)
+        iclass = classgroup[i];
+      else
+        iclass = i;
 
-      for(i=0; i<numclasses; i++) 
-      {
-          if (classgroup)
-            iclass = classgroup[i];
-          else
-            iclass = i;
+       if (iclass < 0 || iclass >= layer->numclasses)        
+         continue; /* this should never happen but just in case */
 
-          if (iclass < 0 || iclass >= layer->numclasses)        
-            continue; /*this should never happen but just in case*/
+       if(scaledenom > 0) { /* verify scaledenom here  */
+         if((layer->class[iclass]->maxscaledenom > 0) && (scaledenom > layer->class[iclass]->maxscaledenom))
+           continue; /* can skip this one, next class */
+         if((layer->class[iclass]->minscaledenom > 0) && (scaledenom <= layer->class[iclass]->minscaledenom))
+           continue; /* can skip this one, next class */
+        }
 
-          if(scaledenom > 0) {  /* verify scaledenom here  */
-              if((layer->class[iclass]->maxscaledenom > 0) && (scaledenom > layer->class[iclass]->maxscaledenom))
-                continue; /* can skip this one, next class */
-              if((layer->class[iclass]->minscaledenom > 0) && (scaledenom <= layer->class[iclass]->minscaledenom))
-                continue; /* can skip this one, next class */
-          }
-
-          if(layer->class[iclass]->status != MS_DELETE && 
-             msEvalExpression(&(layer->class[iclass]->expression), 
-                              layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
-          {
-              return(iclass);
-          }
-      }
+       if(layer->class[iclass]->status != MS_DELETE && msEvalExpression(layer, shape, &(layer->class[iclass]->expression), layer->classitemindex) == MS_TRUE)
+	 return(iclass);
+    }
   }
+
   return(-1); /* no match */
 }
 
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
 {
-  int i;
   char *tmpstr=NULL;
 
   if(layer->class[shape->classindex]->text.string) { /* test for global label first */
-    tmpstr = msStrdup(layer->class[shape->classindex]->text.string);
     switch(layer->class[shape->classindex]->text.type) {
     case(MS_STRING):
+      tmpstr = msStrdup(layer->class[shape->classindex]->text.string);
       break;
     case(MS_EXPRESSION):
-      tmpstr = msStrdup(layer->class[shape->classindex]->text.string);
+      {
+        int status;
+        parseObj p;
 
-      for(i=0; i<layer->class[shape->classindex]->text.numitems; i++)
-        tmpstr = msReplaceSubstring(tmpstr, layer->class[shape->classindex]->text.items[i], shape->values[layer->class[shape->classindex]->text.indexes[i]]);
+        p.shape = shape;
+        p.expr = &(layer->class[shape->classindex]->text);
+        p.expr->curtoken = p.expr->tokens; /* reset */
+        p.type = MS_PARSE_TYPE_STRING;
+
+        status = yyparse(&p);
+
+        if (status != 0) {
+	  msSetError(MS_PARSEERR, "Failed to process text expression: %s", "msShapeGetAnnotation", layer->class[shape->classindex]->text.string);
+	  return NULL;
+        }
+
+        tmpstr = p.result.strval;        
+        break;
+      }
+    default:
       break;
     }
   } else {
     if (shape->values && layer->labelitemindex >= 0)
-        tmpstr = msStrdup(shape->values[layer->labelitemindex]);
+      tmpstr = msStrdup(shape->values[layer->labelitemindex]);
   }
 
   return(tmpstr);

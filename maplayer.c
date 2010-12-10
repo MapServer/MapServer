@@ -30,13 +30,15 @@
 #include "mapserver.h"
 #include "maptime.h"
 #include "mapogcfilter.h"
+#include "mapthread.h"
+#include "mapfile.h"
+
+#include "mapparser.h"
 
 #include <assert.h>
 MS_CVSID("$Id$")
 
-
 static int populateVirtualTable(layerVTableObj *vtable);
-
 
 /*
 ** Iteminfo is a layer parameter that holds information necessary to retrieve an individual item for
@@ -99,6 +101,19 @@ int msLayerIsOpen(layerObj *layer)
           return rv;
   }
   return layer->vtable->LayerIsOpen(layer);
+}
+
+/*
+** Returns MS_TRUE is a layer supports the common expression/filter syntax (RFC 64) and MS_FALSE otherwise.
+*/
+int msLayerSupportsCommonFilters(layerObj *layer)
+{
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
+  }
+  return layer->vtable->LayerSupportsCommonFilters(layer);
 }
 
 /*
@@ -196,13 +211,10 @@ void msLayerClose(layerObj *layer)
     layer->numitems = 0;
   }
 
-  /* clear out items used as part of expressions (bug #2702) */
+  /* clear out items used as part of expressions (bug #2702) -- what about the layer filter? */
   for(i=0; i<layer->numclasses; i++) {    
-    msFreeCharArray(layer->class[i]->expression.items, layer->class[i]->expression.numitems);
-    msFree(layer->class[i]->expression.indexes);
-    layer->class[i]->expression.items = NULL;
-    layer->class[i]->expression.indexes = NULL;
-    layer->class[i]->expression.numitems = 0;        
+    freeExpression(&(layer->class[i]->expression));
+    freeExpression(&(layer->class[i]->text));
   }
 
   if (layer->vtable) {
@@ -290,6 +302,17 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
   return(status);
 }
 
+int msLayerGetItemIndex(layerObj *layer, char *item)
+{
+  int i;
+
+  for(i=0; i<layer->numitems; i++) {
+    if(strcasecmp(layer->items[i], item) == 0) return(i);
+  }
+    
+  return -1; /* item not found */
+}
+
 static int string2list(char **list, int *listsize, char *string)
 {
   int i;
@@ -308,59 +331,121 @@ static int string2list(char **list, int *listsize, char *string)
   return(i);
 }
 
-/* TO DO: this function really needs to use the lexer */
-static void expression2list(char **list, int *listsize, expressionObj *expression)
+extern int msyylex(void);
+extern int msyylex_destroy(void);
+
+extern int msyystate;
+extern char *msyystring; /* string to tokenize */
+
+extern double msyynumber; /* token containers */
+extern char *msyytext;
+extern char *msyytext_esc;
+
+int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
 {
-  int i, j, l;
-  char tmpstr1[1024], tmpstr2[1024];
-  short in=MS_FALSE;
-  int tmpint;
+  tokenListNodeObjPtr node;
+  int token;
 
-  j = 0;
-  l = strlen(expression->string);
-  for(i=0; i<l; i++) {
-    if(expression->string[i] == '[') {
-      in = MS_TRUE;
-      tmpstr2[j] = expression->string[i];
-      j++;
-      continue;
+  /* TODO: make sure the constants can't somehow reference invalid expression types */
+  if(expression->type != MS_EXPRESSION && expression->type != MS_GEOMTRANSFORM_EXPRESSION) return MS_SUCCESS;
+
+  msAcquireLock(TLOCK_PARSER);
+  msyystate = MS_TOKENIZE_EXPRESSION;
+  msyystring = expression->string; /* the thing we're tokenizing */
+
+  while((token = msyylex()) != 0) { /* keep processing tokens until the end of the string (\0) */
+
+    if((node = (tokenListNodeObjPtr) malloc(sizeof(tokenListNodeObj))) == NULL) {
+      msSetError(MS_MEMERR, NULL, "msTokenizeExpression()");
+      goto parse_error;
     }
-    if(expression->string[i] == ']') {
-      in = MS_FALSE;
 
-      tmpint = expression->numitems;
+    node->tailifhead = NULL;
+    node->next = NULL;
 
-      tmpstr2[j] = expression->string[i];
-      tmpstr2[j+1] = '\0';
-      string2list(expression->items, &(expression->numitems), tmpstr2);
-
-      if(tmpint != expression->numitems) { /* not a duplicate, so no need to calculate the index */
-        tmpstr1[j-1] = '\0';
-        expression->indexes[expression->numitems - 1] = string2list(list, listsize, tmpstr1);
+    switch(token) {
+    case MS_TOKEN_LITERAL_NUMBER:
+      node->token = token;
+      node->tokenval.dblval = msyynumber;
+      break;
+    case MS_TOKEN_LITERAL_STRING:
+      node->token = token;
+      node->tokenval.strval = msStrdup(msyytext_esc);
+      free(msyytext_esc); msyytext_esc=NULL;
+      break;
+    case MS_TOKEN_LITERAL_TIME:
+      node->token = token;
+      msTimeInit(&(node->tokenval.tmval));
+      if(msParseTime(msyytext, &(node->tokenval.tmval)) != MS_TRUE) {
+        msSetError(MS_PARSEERR, "Parsing time value failed.", "msTokenizeExpression()");
+        goto parse_error;
+      }
+      break;
+    case MS_TOKEN_BINDING_DOUBLE: /* we've encountered an attribute (binding) reference */
+    case MS_TOKEN_BINDING_INTEGER:
+    case MS_TOKEN_BINDING_STRING:
+    case MS_TOKEN_BINDING_TIME: 
+      node->token = token; /* binding type */
+      node->tokenval.bindval.item = msStrdup(msyytext);
+      if(list) node->tokenval.bindval.index = string2list(list, listsize, msyytext);
+      break;
+    case MS_TOKEN_BINDING_SHAPE:
+      node->token = token;
+      break;
+    case MS_TOKEN_FUNCTION_FROMTEXT: /* we want to process a shape from WKT once and not for every feature being evaluated */
+      if((token = msyylex()) != 40) { /* ( */
+        msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+        goto parse_error;
       }
 
-      j = 0; /* reset */
+      if((token = msyylex()) != MS_TOKEN_LITERAL_STRING) {
+	msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+        goto parse_error;
+      }
 
-      continue;
+      node->token = MS_TOKEN_LITERAL_SHAPE;
+      node->tokenval.shpval = msShapeFromWKT(msyytext_esc);
+      free(msyytext_esc);
+
+      if(!node->tokenval.shpval) {
+        msSetError(MS_PARSEERR, "Parsing fromText function failed, WKT processing failed.", "msTokenizeExpression()");
+        goto parse_error;
+      }
+
+      /* todo: perhaps process optional args (e.g. projection) */
+
+      if((token = msyylex()) != 41) { /* ) */
+        msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+        goto parse_error;
+      }
+      break;
+    default:
+      node->token = token; /* for everything else */
+      break;
     }
 
-    if(in) {
-      tmpstr2[j] = expression->string[i];
-      tmpstr1[j-1] = expression->string[i];
-      j++;
+    /* add node to token list */
+    if(expression->tokens == NULL) {
+      expression->tokens = node;
+    } else {
+      if(expression->tokens->tailifhead != NULL) /* this should never be NULL, but just in case */
+	expression->tokens->tailifhead->next = node; /* put the node at the end of the list */
     }
-  }
-}
 
-int msLayerGetItemIndex(layerObj *layer, char *item)
-{
-  int i;
-
-  for(i=0; i<layer->numitems; i++) {
-    if(strcasecmp(layer->items[i], item) == 0) return(i);
+    /* repoint the head of the list to the end  - our new element                                                                                                   
+       this causes a loop if we are at the head, be careful not to                                                                                                  
+       walk in a loop */
+    expression->tokens->tailifhead = node;
   }
-    
-  return -1; /* item not found */
+
+  expression->curtoken = expression->tokens; /* point at the first token */
+
+  msReleaseLock(TLOCK_PARSER);
+  return MS_SUCCESS;
+
+  parse_error:
+    msReleaseLock(TLOCK_PARSER);
+    return MS_FAILURE;
 }
 
 /*
@@ -371,7 +456,7 @@ int msLayerGetItemIndex(layerObj *layer, char *item)
 int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 {
   int i, j, k, rv;
-  int nt=0, ne=0;
+  int nt=0;
 
   if (!layer->vtable) {
     rv =  msInitializeVirtualTable(layer);
@@ -386,23 +471,17 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     layer->numitems = 0;
   }
 
+  /*
+  ** need a count of potential items/attributes needed
+  */
+
   /* layer level counts */
   if(layer->classitem) nt++;
   if(layer->filteritem) nt++;
   if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") != 0) nt++;
 
-  ne = 0;
-  if(layer->filter.type == MS_EXPRESSION) {
-    ne = msCountChars(layer->filter.string, '[');
-    if(ne > 0) {
-      layer->filter.items = (char **) calloc(ne, sizeof(char *)); /* should be more than enough space */
-      MS_CHECK_ALLOC(layer->filter.items, ne* sizeof(char *), MS_FAILURE);
-      layer->filter.indexes = (int *) malloc(ne*sizeof(int));
-      MS_CHECK_ALLOC(layer->filter.indexes, ne*sizeof(int), MS_FAILURE);
-      layer->filter.numitems = 0;
-      nt += ne;
-    }
-  }
+  if(layer->filter.type == MS_EXPRESSION)
+    nt += msCountChars(layer->filter.string, '[');
 
   if(layer->labelitem) nt++;
 
@@ -412,36 +491,22 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     for(j=0; j<layer->class[i]->numstyles; j++) {
       if(layer->class[i]->styles[j]->rangeitem) nt++;
       nt += layer->class[i]->styles[j]->numbindings;
+      if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
+        nt += msCountChars(layer->class[i]->styles[j]->_geomtransform.string, '[');
     }
 
-    ne = 0;
-    if(layer->class[i]->expression.type == MS_EXPRESSION) {
-      ne = msCountChars(layer->class[i]->expression.string, '[');
-      if(ne > 0) {
-        layer->class[i]->expression.items = (char **) calloc(ne, sizeof(char *)); /* should be more than enough space */
-        MS_CHECK_ALLOC(layer->class[i]->expression.items, ne*sizeof(char *), MS_FAILURE);
-        layer->class[i]->expression.indexes = (int *) malloc(ne*sizeof(int));
-        MS_CHECK_ALLOC(layer->class[i]->expression.indexes, ne*sizeof(int), MS_FAILURE);
-        layer->class[i]->expression.numitems = 0;
-        nt += ne;
-      }
-    }
+    if(layer->class[i]->expression.type == MS_EXPRESSION)
+      nt += msCountChars(layer->class[i]->expression.string, '[');
 
     nt += layer->class[i]->label.numbindings;
 
-    ne = 0;
-    if(layer->class[i]->text.type == MS_EXPRESSION) {
-      ne = msCountChars(layer->class[i]->text.string, '[');
-      if(ne > 0) {
-        layer->class[i]->text.items = (char **) calloc(ne, sizeof(char *)); /* should be more than enough space */
-        MS_CHECK_ALLOC(layer->class[i]->text.items, sizeof(char *), MS_FAILURE);
-        layer->class[i]->text.indexes = (int *) malloc(ne*sizeof(int));
-        MS_CHECK_ALLOC(layer->class[i]->text.indexes, ne*sizeof(int), MS_FAILURE);
-        layer->class[i]->text.numitems = 0;
-        nt += ne;
-      }
-    }
+    if(layer->class[i]->text.type == MS_EXPRESSION)
+      nt += msCountChars(layer->class[i]->text.string, '[');
   }
+
+  /*
+  ** allocate space for the item list (worse case size)
+  */
 
   /* always retrieve all items in some cases */
   if(layer->connectiontype == MS_INLINE || get_all == MS_TRUE ||
@@ -455,28 +520,39 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
       return rv;
   }
 
+  /*
+  ** build layer item list, compute item indexes for explicity item references (e.g. classitem) or item bindings
+  */
+
   if(nt > 0) {
+    /* layer items */
     if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
     if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
     if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") != 0) layer->styleitemindex = string2list(layer->items, &(layer->numitems), layer->styleitem);
+    if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
 
+    /* layer classes */
     for(i=0; i<layer->numclasses; i++) {
-      if(layer->class[i]->expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i]->expression));
+      /* class expression */
+      if(layer->class[i]->expression.type == MS_EXPRESSION)  msTokenizeExpression(&(layer->class[i]->expression), layer->items, &(layer->numitems));
+
+      /* class styles (items, bindings, geomtransform) */
       for(j=0; j<layer->class[i]->numstyles; j++) {
         if(layer->class[i]->styles[j]->rangeitem) layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem);
         for(k=0; k<MS_STYLE_BINDING_LENGTH; k++)
           if(layer->class[i]->styles[j]->bindings[k].item) layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
+	if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) 
+          msTokenizeExpression(&(layer->class[i]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
       }
-    }
 
-    if(layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));
-
-    if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
-    for(i=0; i<layer->numclasses; i++) {
-      if(layer->class[i]->text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i]->text));
+      /* class text and label bindings */
+      if(layer->class[i]->text.type == MS_EXPRESSION) msTokenizeExpression(&(layer->class[i]->text), layer->items, &(layer->numitems));
       for(k=0; k<MS_LABEL_BINDING_LENGTH; k++)
-        if(layer->class[i]->label.bindings[k].item) layer->class[i]->label.bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->label.bindings[k].item);
+        if(layer->class[i]->label.bindings[k].item) layer->class[i]->label.bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->label.bindings[k].item);      
     }
+
+    /* layer filter */
+    if(layer->filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
   }
 
   if(metadata) {
@@ -1082,9 +1158,13 @@ int LayerDefaultGetNumFeatures(layerObj *layer)
 
 int LayerDefaultAutoProjection(layerObj *layer, projectionObj* projection)
 {
+  msSetError(MS_MISCERR, "This data driver does not implement AUTO projection support", "LayerDefaultAutoProjection()");
+  return MS_FAILURE;
+}
 
-    msSetError(MS_MISCERR, "This data driver does not implement AUTO projection support", "LayerDefaultAutoProjection()");
-    return MS_FAILURE;
+int LayerDefaultSupportsCommonFilters(layerObj *layer)
+{
+  return MS_FALSE;
 }
 
 /*
@@ -1121,6 +1201,7 @@ static int populateVirtualTable(layerVTableObj *vtable)
 {
   assert(vtable != NULL);
 
+  vtable->LayerSupportsCommonFilters = LayerDefaultSupportsCommonFilters;
   vtable->LayerInitItemInfo = LayerDefaultInitItemInfo;
   vtable->LayerFreeItemInfo = LayerDefaultFreeItemInfo;
   vtable->LayerOpen = LayerDefaultOpen;

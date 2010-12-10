@@ -1491,9 +1491,10 @@ void initLabel(labelObj *label)
   MS_INIT_COLOR(label->color, 0,0,0);  
   MS_INIT_COLOR(label->outlinecolor, -1,-1,-1); /* don't use it */
   label->outlinewidth=1;
+
   MS_INIT_COLOR(label->shadowcolor, -1,-1,-1); /* don't use it */
   label->shadowsizex = label->shadowsizey = 1;
-  
+
   MS_INIT_COLOR(label->backgroundcolor, -1,-1,-1); /* don't use it */
   MS_INIT_COLOR(label->backgroundshadowcolor, -1,-1,-1); /* don't use it   */
   label->backgroundshadowsizex = label->backgroundshadowsizey = 1;
@@ -1604,7 +1605,7 @@ static int loadLabel(labelObj *label)
     case(BACKGROUNDSHADOWCOLOR):
       if(loadColor(&(label->backgroundshadowcolor), NULL) != MS_SUCCESS) return(-1);      
       break;
-   case(BACKGROUNDSHADOWSIZE):
+    case(BACKGROUNDSHADOWSIZE):
       if(getInteger(&(label->backgroundshadowsizex)) == -1) return(-1);
       if(getInteger(&(label->backgroundshadowsizey)) == -1) return(-1);
       break;
@@ -1758,8 +1759,8 @@ static int loadLabel(labelObj *label)
         return(-1);
       initStyle(label->styles[label->numstyles]);
       if(loadStyle(label->styles[label->numstyles]) != MS_SUCCESS) return(-1);
-      if(label->styles[label->numstyles]->_geomtransform == MS_GEOMTRANSFORM_NONE) 
-        label->styles[label->numstyles]->_geomtransform = MS_GEOMTRANSFORM_LABELPOINT; /* set a default, a marker? */
+      if(label->styles[label->numstyles]->_geomtransform.type == MS_GEOMTRANSFORM_NONE) 
+        label->styles[label->numstyles]->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT; /* set a default, a marker? */
       label->numstyles++;
       break;
     case(TYPE):
@@ -1867,9 +1868,9 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   else writeNumber(stream, indent, "PRIORITY", MS_DEFAULT_LABEL_PRIORITY, label->priority);
 
   writeNumber(stream, indent, "REPEATDISTANCE", 0, label->repeatdistance);
-  writeNumber(stream, indent, "MAXOVERLAPANGLE", 22.5, label->maxoverlapangle);
   writeColor(stream, indent, "SHADOWCOLOR", &(label->shadowcolor));
   writeDimension(stream, indent, "SHADOWSIZE", label->shadowsizex, label->shadowsizey);
+  writeNumber(stream, indent, "MAXOVERLAPANGLE", 22.5, label->maxoverlapangle);
   for(i=0; i<label->numstyles; i++)
     writeStyle(stream, indent, label->styles[i]);
   writeKeyword(stream, indent, "TYPE", label->type, MS_BITMAP, "BITMAP", MS_TRUETYPE, "TRUETYPE");
@@ -1881,21 +1882,49 @@ void initExpression(expressionObj *exp)
 {
   exp->type = MS_STRING;
   exp->string = NULL;
-  exp->items = NULL;
-  exp->indexes = NULL;
-  exp->numitems = 0;
   exp->compiled = MS_FALSE;
   exp->flags = 0;
+  exp->tokens = exp->curtoken = NULL;
 }
 
 void freeExpression(expressionObj *exp)
 {
+  tokenListNodeObjPtr node = NULL;
+  tokenListNodeObjPtr nextNode = NULL;
+
   if(!exp) return;
 
   msFree(exp->string);
   if((exp->type == MS_REGEX) && exp->compiled) ms_regfree(&(exp->regex));
-  if(exp->type == MS_EXPRESSION && exp->numitems > 0) msFreeCharArray(exp->items, exp->numitems);
-  msFree(exp->indexes);
+
+  if(exp->tokens) {
+    node = exp->tokens;
+    while (node != NULL) {
+      nextNode = node->next;
+
+      switch(node->token) {
+      case MS_TOKEN_BINDING_DOUBLE:
+      case MS_TOKEN_BINDING_INTEGER:
+      case MS_TOKEN_BINDING_STRING:
+      case MS_TOKEN_BINDING_TIME:
+        msFree(node->tokenval.bindval.item);
+        break;
+      case MS_TOKEN_LITERAL_TIME:
+        /* anything to do? */
+        break;
+      case MS_TOKEN_LITERAL_STRING:
+        msFree(node->tokenval.strval);
+        break;
+      case MS_TOKEN_LITERAL_SHAPE:
+        msFreeShape(node->tokenval.shpval);
+        free(node->tokenval.shpval);
+        break;
+      }
+
+      msFree(node);
+      node = nextNode;
+    }
+  }
 
   initExpression(exp); /* re-initialize */
 }
@@ -1948,8 +1977,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   msyystate = MS_TOKENIZE_STRING; msyystring = value;
   msyylex(); /* sets things up but processes no tokens */
 
-  freeExpression(exp); /* we're totally replacing the old expression so free then init to start over */
-  /* initExpression(exp); */
+  freeExpression(exp); /* we're totally replacing the old expression so free (which re-inits) to start over */
 
   if((exp->type = getSymbol(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
     exp->string = msStrdup(msyytext);
@@ -2134,8 +2162,9 @@ int initStyle(styleObj *style) {
   style->angle = 0;
   style->autoangle= MS_FALSE;
   style->opacity = 100; /* fully opaque */
-  style->_geomtransformexpression = NULL;
-  style->_geomtransform = MS_GEOMTRANSFORM_NONE;
+
+  style->_geomtransform.string = NULL;  
+  style->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
   
   style->patternlength = 0; /* solid line */
   style->gap = 0;
@@ -2225,13 +2254,18 @@ int loadStyle(styleObj *style) {
       break;
     case(GEOMTRANSFORM):
       {
-        char *expr=NULL;
-        if(getString(&expr) == -1) return(MS_FAILURE);
-        msStyleSetGeomTransform(style,expr);
-        msFree(expr);expr=NULL;
+        int s;
+	if((s = getSymbol(2, MS_STRING, MS_EXPRESSION)) == -1) return(MS_FAILURE);
+        if(s == MS_STRING)
+          msStyleSetGeomTransform(style, msyytext);
+        else {
+          /* handle expression case here for the moment */
+          msFree(style->_geomtransform.string);
+	  style->_geomtransform.string = msStrdup(msyytext);
+          style->_geomtransform.type = MS_GEOMTRANSFORM_EXPRESSION;
+        }
       }
       break;
-      
     case(LINECAP):
       if((style->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1)
         return(-1);
@@ -2413,7 +2447,7 @@ int freeStyle(styleObj *style) {
   if( MS_REFCNT_DECR_IS_NOT_ZERO(style) ) { return MS_FAILURE; }
 
   msFree(style->symbolname);
-  msFree(style->_geomtransformexpression);
+  freeExpression(&style->_geomtransform);
   msFree(style->rangeitem);
 
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++)
@@ -2476,9 +2510,10 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
     writeDimension(stream, indent, "DATARANGE", style->minvalue, style->maxvalue);
   }
 
-  if(style->_geomtransformexpression) {
-    // TODO!!!
-    fprintf(stream, "        GEOMTRANSFORM \"%s\"\n",style->_geomtransformexpression);
+  if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
+    /*
+    ** TODO: fprintf(stream, "        GEOMTRANSFORM \"%s\"\n",style->_geomtransformexpression);
+    */
   }
   writeBlockEnd(stream, indent, "STYLE");
 }

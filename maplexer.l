@@ -22,6 +22,7 @@
 #include "maptime.h"
 #include "mapsymbol.h"
 #include "mapparser.h"
+#include "mapprimitive.h"
 
 /* msyylineno is required for flex 2.5.4 and older, but is already defined by
  * flex 2.5.31 (bug 975).
@@ -48,19 +49,19 @@ YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 int include_lineno[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
 char path[MS_MAXPATHLEN];
+
+char *msyytext_esc=NULL;
 %}
 
 %s URL_VARIABLE
 %s URL_STRING
 %s EXPRESSION_STRING
-%s EXPRESSION_STRING_REGEX
 %s INCLUDE
 %s MSSTR
 
 %%
-       char *string_buf=NULL;
-       int exp_string_size=1024;
-       char *string_buf_ptr=NULL;
+       int msyytext_esc_size=1024; /* don't need to be globals */
+       char *msyytext_esc_ptr=NULL;
 
        switch(msyystate) {
        case(MS_TOKENIZE_DEFAULT):
@@ -123,33 +124,47 @@ char path[MS_MAXPATHLEN];
          break;
        }
 
-<INITIAL,URL_STRING,EXPRESSION_STRING,EXPRESSION_STRING_REGEX,INCLUDE>[ \t\r]+             ;
+<INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
 
 <INITIAL>#.*                                   { if (msyyreturncomments) return(MS_COMMENT); }
 
 <URL_VARIABLE>_|\.                             ;
 
-<EXPRESSION_STRING>or|\|\|                     { return(OR); }
-<EXPRESSION_STRING>and|&&                      { return(AND); }
-<EXPRESSION_STRING>eq|=|==                     { return(EQ); }
-<EXPRESSION_STRING>ne|!=                       { return(NE); }
-<EXPRESSION_STRING>gt|>                        { return(GT); }
-<EXPRESSION_STRING>lt|<                        { return(LT); }
-<EXPRESSION_STRING>ge|>=                       { return(GE); }
-<EXPRESSION_STRING>le|<=                       { return(LE); }
-<EXPRESSION_STRING>=~                          { 
-                                                 BEGIN(EXPRESSION_STRING_REGEX);
-                                                 return(RE); 
-                                               }
-<EXPRESSION_STRING>~*                          {
-                                                 BEGIN(EXPRESSION_STRING_REGEX);
-                                                 return(IRE);
-                                               }
-<EXPRESSION_STRING>in                          { return(IN); }
-<EXPRESSION_STRING>not|!                       { return(NOT); }
+<EXPRESSION_STRING>or|\|\|                     { return(MS_TOKEN_LOGICAL_OR); }
+<EXPRESSION_STRING>and|&&                      { return(MS_TOKEN_LOGICAL_AND); }
+<EXPRESSION_STRING>not|!                       { return(MS_TOKEN_LOGICAL_NOT); }
+<EXPRESSION_STRING>eq|=|==                     { return(MS_TOKEN_COMPARISON_EQ); }
+<EXPRESSION_STRING>ne|!=                       { return(MS_TOKEN_COMPARISON_NE); }
+<EXPRESSION_STRING>gt|>                        { return(MS_TOKEN_COMPARISON_GT); }
+<EXPRESSION_STRING>lt|<                        { return(MS_TOKEN_COMPARISON_LT); }
+<EXPRESSION_STRING>ge|>=                       { return(MS_TOKEN_COMPARISON_GE); }
+<EXPRESSION_STRING>le|<=                       { return(MS_TOKEN_COMPARISON_LE); }
+<EXPRESSION_STRING>~                           { return(MS_TOKEN_COMPARISON_RE); }
 
-<EXPRESSION_STRING>length                      { return(LENGTH); }
-<EXPRESSION_STRING>ieq                         { return(IEQ); }
+<EXPRESSION_STRING>=\*                         { return(MS_TOKEN_COMPARISON_IEQ); }
+<EXPRESSION_STRING>~\*                         { return(MS_TOKEN_COMPARISON_IRE); }
+
+<EXPRESSION_STRING>in                          { return(IN); }
+
+<EXPRESSION_STRING>area                        { return(MS_TOKEN_FUNCTION_AREA); }
+<EXPRESSION_STRING>length                      { return(MS_TOKEN_FUNCTION_LENGTH); }
+<EXPRESSION_STRING>tostring                    { return(MS_TOKEN_FUNCTION_TOSTRING); }
+<EXPRESSION_STRING>commify                     { return(MS_TOKEN_FUNCTION_COMMIFY); }
+<EXPRESSION_STRING>round                       { return(MS_TOKEN_FUNCTION_ROUND); }
+
+<EXPRESSION_STRING>buffer                      { return(MS_TOKEN_FUNCTION_BUFFER); }
+
+<EXPRESSION_STRING>intersects                  { return(MS_TOKEN_COMPARISON_INTERSECTS); }
+<EXPRESSION_STRING>disjoint                    { return(MS_TOKEN_COMPARISON_DISJOINT); }
+<EXPRESSION_STRING>touches                     { return(MS_TOKEN_COMPARISON_TOUCHES); }
+<EXPRESSION_STRING>overlaps                    { return(MS_TOKEN_COMPARISON_OVERLAPS); }
+<EXPRESSION_STRING>crosses                     { return(MS_TOKEN_COMPARISON_CROSSES); }
+<EXPRESSION_STRING>within                      { return(MS_TOKEN_COMPARISON_WITHIN); }
+<EXPRESSION_STRING>contains                    { return(MS_TOKEN_COMPARISON_CONTAINS); }
+<EXPRESSION_STRING>beyond                      { return(MS_TOKEN_COMPARISON_BEYOND); }
+<EXPRESSION_STRING>dwithin                     { return(MS_TOKEN_COMPARISON_DWITHIN); }
+
+<EXPRESSION_STRING>fromtext                    { return(MS_TOKEN_FUNCTION_FROMTEXT); }
 
 <INITIAL>colorrange                            { return(COLORRANGE); }
 <INITIAL>alphacolorrange                       { return(ALPHACOLORRANGE); }
@@ -256,7 +271,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>minboxsize                            { return(MINBOXSIZE); }
 <INITIAL>mindistance                           { return(MINDISTANCE); }
 <INITIAL>repeatdistance                        { return(REPEATDISTANCE); }
-<INITIAL>maxoverlapangle                       { return(MAXOVERLAPANGLE); }
+<INITIAL>maxoverlapangle                       { return(MAXOVERLAPANGLE); } 
 <INITIAL>minfeaturesize                        { return(MINFEATURESIZE); }
 <INITIAL>mininterval                           { return(MININTERVAL); }
 <INITIAL,URL_STRING>minscale                   { return(MINSCALE); }
@@ -430,24 +445,38 @@ char path[MS_MAXPATHLEN];
                                                  return(MS_BINDING);
                                                }
 
+<EXPRESSION_STRING>\[shape\] { 
+  /* attribute binding - shape (fixed value) */
+  return(MS_TOKEN_BINDING_SHAPE);
+}
+<EXPRESSION_STRING>\[[^\]]*\] {
+  /* attribute binding - numeric (no quotes) */
+  msyytext++;
+  msyytext[strlen(msyytext)-1] = '\0';
+  return(MS_TOKEN_BINDING_DOUBLE);
+}
+<EXPRESSION_STRING>\"\[[^\"]*\]\"|\'\[[^\']*\]\' {
+  /* attribute binding - string (single or double quotes) */
+  msyytext+=2;
+  msyytext[strlen(msyytext)-2] = '\0';
+  return(MS_TOKEN_BINDING_STRING);
+}
+
 <INITIAL,URL_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
-                                                 msyynumber = atof(msyytext);
-                                                 return(MS_NUMBER); 
-                                               }
+  msyynumber = atof(msyytext);
+  return(MS_NUMBER); 
+}
 
-<EXPRESSION_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ { 
-                                                 msyylval.dblval = atof(msyytext); 
-                                                 return(NUMBER); 
-                                               }
+<EXPRESSION_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
+  msyynumber = atof(msyytext);
+  return(MS_TOKEN_LITERAL_NUMBER);
+}
 
-<EXPRESSION_STRING>\`[^\`]*\`                  {
-                                                 msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
-                                                 msTimeInit(&msyylval.tmval);
-                                                 msParseTime(msyytext, &msyylval.tmval);
-                                                 /* TODO: need to trap bad date formats somehow, should return a parse error (need an error token in mapparser.y)*/
-                                                 return(TIME);
-                                               }
+<EXPRESSION_STRING>\`[^\`]*\` {
+  msyytext++;
+  msyytext[strlen(msyytext)-1] = '\0';
+  return(MS_TOKEN_LITERAL_TIME);
+}
 
 <INITIAL,URL_STRING>\/[^\/]*\/i                {
                                                  msyytext++;
@@ -455,26 +484,10 @@ char path[MS_MAXPATHLEN];
                                                  return(MS_IREGEX);
                                                }
 
-<EXPRESSION_STRING_REGEX>\/[^\/]*\/i           {
-                                                 msyytext++;
-                                                 msyytext[strlen(msyytext)-2] = '\0';
-                                                 msyylval.strval = strdup(msyytext);
-                                                 BEGIN(EXPRESSION_STRING);
-                                                 return(REGEX);
-                                               }
-
 <INITIAL,URL_STRING>\/[^\/]*\/                 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_REGEX);
-                                               }
-
-<EXPRESSION_STRING_REGEX>\/[^\/]*\/            {
-                                                 msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
-                                                 msyylval.strval = strdup(msyytext);
-                                                 BEGIN(EXPRESSION_STRING);
-                                                 return(REGEX);
                                                }
 
 <INITIAL,URL_STRING>\(.*\)                     {
@@ -487,6 +500,12 @@ char path[MS_MAXPATHLEN];
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
                                                  return(MS_ISTRING);
+                                               }
+
+<INITIAL,URL_STRING>\"[^\"]*\"|\'[^\']*\'      {
+                                                 msyytext++;
+                                                 msyytext[strlen(msyytext)-1] = '\0';
+                                                 return(MS_STRING);
                                                }
 
 <INCLUDE>\"[^\"]*\"|\'[^\']*\'                 {
@@ -514,67 +533,50 @@ char path[MS_MAXPATHLEN];
                                                  BEGIN(INITIAL);
                                                }
 
-<INITIAL,URL_STRING>\"[^\"]*\"|\'[^\']*\'      {
-                                                 msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
-                                                 return(MS_STRING);
-                                               }
-
-<EXPRESSION_STRING>\"[^\"]*\"i|\'[^\']*\'i     {
-                                                 msyytext++;
-                                                 msyytext[strlen(msyytext)-2] = '\0';
-                                                 /* msyylval.strval = strdup(msyytext);*/
-                                                 msyylval.strval = msyytext;
-                                                 return(ISTRING);
-                                               }
-											   
-<EXPRESSION_STRING>\"|\'     		       {
-						 /* Beginning of a new String, skip the quote and enter the MSSTR context */
-						 int idx=0;
-						 string_buf = (char*) malloc(sizeof(char) * exp_string_size);
-						 msyytext++;
-						 for(idx=0; idx<exp_string_size; string_buf[idx++]='\0');
-						 string_buf_ptr = string_buf;
-						 BEGIN(MSSTR);
-                                               }
-											   
-<MSSTR>\\(.|\n)  			       {
-						  /* Escape code: skip the slash and use the escaped char */
-						  if(strlen(string_buf) < (exp_string_size-2))
-						    *string_buf_ptr++ = msyytext[1];
-						}
-
-<MSSTR>\"|\'        				{
-						  /*
-						   this is the closing quote - we're done
-					 	   Umberto: it should be possible to use yy_pop_stack to allow for this string
-					 	   parsing routine to be used in more places, but I can't make it work
-						  */
-						  BEGIN(EXPRESSION_STRING);
-						  *string_buf_ptr = '\0';
-						  msyylval.strval = strdup(string_buf);
-						  msyytext++;
-                                                  free(string_buf);
-						  return(STRING);
-						}
-
-<MSSTR>[^\\\"\\\']+        			{
-						  char *yptr = msyytext;
-                                                  int i=0;
-						  while ( *yptr ) {
-                                                    if (i == exp_string_size) {
-                                                      exp_string_size *= 2;
-                                                      string_buf = (char *) realloc(string_buf,sizeof(char *) * exp_string_size);
-                                                      /* update the pointer */
-                                                      string_buf_ptr = string_buf;
-                                                      string_buf_ptr += (exp_string_size/2);
-                                                    }                                                
-                                                    *string_buf_ptr = *yptr;
-						    string_buf_ptr++;
-						    yptr++;
-                                                    ++i;
-						  }
-						}
+<EXPRESSION_STRING>\"|\' {
+  /* Beginning of a new String, skip the quote and enter the MSSTR context */
+  int idx=0;
+  msyytext_esc = (char*) malloc(sizeof(char) * msyytext_esc_size);
+  msyytext++;
+  for(idx=0; idx<msyytext_esc_size; msyytext_esc[idx++]='\0');
+  msyytext_esc_ptr = msyytext_esc;
+  BEGIN(MSSTR);
+}
+<MSSTR>\\(.|\n) {
+  /* Escape code: skip the slash and use the escaped char */
+  if(strlen(msyytext_esc) < (msyytext_esc_size-2))
+  *msyytext_esc_ptr++ = msyytext[1];
+}
+<MSSTR>\"|\' {
+  /*
+    this is the closing quote - we're done
+    Umberto: it should be possible to use yy_pop_stack to allow for this string
+    parsing routine to be used in more places, but I can't make it work
+  */
+  BEGIN(EXPRESSION_STRING);
+  *msyytext_esc_ptr = '\0';  
+  /* msyylval.strval = strdup(msyytext_esc); */
+  /* free(msyytext_esc); */ 
+  msyytext++;
+  return(MS_TOKEN_LITERAL_STRING);
+}
+<MSSTR>[^\\\"\\\']+ {
+  char *yptr = msyytext;
+  int i=0;
+  while ( *yptr ) {
+    if(i == msyytext_esc_size) {
+      msyytext_esc_size *= 2;
+      msyytext_esc = (char *) realloc(msyytext_esc,sizeof(char *) * msyytext_esc_size);
+      /* update the pointer */
+      msyytext_esc_ptr = msyytext_esc;
+      msyytext_esc_ptr += (msyytext_esc_size/2);
+    }                                                
+    *msyytext_esc_ptr = *yptr;
+    msyytext_esc_ptr++;
+    yptr++;
+    ++i;
+  }
+}
 
 <INITIAL,URL_STRING>[a-z/\.][a-z0-9/\._\-\=]*   { return(MS_STRING); }
 
@@ -591,9 +593,9 @@ char path[MS_MAXPATHLEN];
                                                   }
                                                 }
 
-<EXPRESSION_STRING,URL_VARIABLE,URL_STRING>[\r|\n|\0] { 
-                                                 return(0); 
-                                                }
+<EXPRESSION_STRING,URL_VARIABLE,URL_STRING>[\r|\n|\0] {
+  return(0); 
+}
 
 <INITIAL,URL_VARIABLE,URL_STRING>.              { return(0); }
 <EXPRESSION_STRING>.                            { return(msyytext[0]); }

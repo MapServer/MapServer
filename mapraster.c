@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $id: mapraster.c 10772 2010-11-29 18:27:02Z aboudreault $
  *
  * Project:  MapServer
  * Purpose:  msDrawRasterLayer(): generic raster layer drawing.
@@ -37,13 +37,8 @@
 
 MS_CVSID("$Id$")
 
-extern int msyyparse(void);
-extern int msyylex(void);
-extern char *msyytext;
-
-extern int msyyresult; /* result of parsing, true/false */
-extern int msyystate;
-extern char *msyystring;
+extern int yyparse(void);
+extern parseResultObj yypresult; /* result of parsing, true/false */
 
 #ifdef USE_GDAL
 #include "gdal.h"
@@ -65,10 +60,7 @@ extern char *msyystring;
 int msGetClass(layerObj *layer, colorObj *color)
 {
   int i;
-  char *tmpstr1=NULL;
-  char tmpstr2[12]; /* holds either a single color index or something like 'rrr ggg bbb' */
-  int status;
-  int expresult;
+  char tmpstr[12]; /* holds either a single color index or something like 'rrr ggg bbb' */
   
   if((layer->numclasses == 1) && !(layer->class[0]->expression.string)) /* no need to do lookup */
     return(0);
@@ -80,10 +72,10 @@ int msGetClass(layerObj *layer, colorObj *color)
       return(i);
     switch(layer->class[i]->expression.type) {
     case(MS_STRING):
-      snprintf(tmpstr2, sizeof(tmpstr2), "%d %d %d", color->red, color->green, color->blue);
-      if(strcmp(layer->class[i]->expression.string, tmpstr2) == 0) return(i); /* matched */
-      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->pen);
-      if(strcmp(layer->class[i]->expression.string, tmpstr2) == 0) return(i); /* matched */
+      snprintf(tmpstr, sizeof(tmpstr), "%d %d %d", color->red, color->green, color->blue);
+      if(strcmp(layer->class[i]->expression.string, tmpstr) == 0) return(i); /* matched */
+      snprintf(tmpstr, sizeof(tmpstr), "%d", color->pen);
+      if(strcmp(layer->class[i]->expression.string, tmpstr) == 0) return(i); /* matched */
       break;
     case(MS_REGEX):
       if(!layer->class[i]->expression.compiled) {
@@ -94,34 +86,22 @@ int msGetClass(layerObj *layer, colorObj *color)
 	layer->class[i]->expression.compiled = MS_TRUE;
       }
 
-      snprintf(tmpstr2, sizeof(tmpstr2), "%d %d %d", color->red, color->green, color->blue);
-      if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
-      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->pen);
-      if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
+      snprintf(tmpstr, sizeof(tmpstr), "%d %d %d", color->red, color->green, color->blue);
+      if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr, 0, NULL, 0) == 0) return(i); /* got a match */
+      snprintf(tmpstr, sizeof(tmpstr), "%d", color->pen);
+      if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr, 0, NULL, 0) == 0) return(i); /* got a match */
       break;
     case(MS_EXPRESSION):
-      tmpstr1 = msStrdup(layer->class[i]->expression.string);
 
-      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->red);
-      tmpstr1 = msReplaceSubstring(tmpstr1, "[red]", tmpstr2);
-      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->green);
-      tmpstr1 = msReplaceSubstring(tmpstr1, "[green]", tmpstr2);
-      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->blue);
-      tmpstr1 = msReplaceSubstring(tmpstr1, "[blue]", tmpstr2);
+      /*
+      ** Big, fat TODO!
+      ** 
+      ** See msEvalExpression() in maputil.c for an example of how to do this. Basically need to define some raster bind 
+      ** variables: namely [red], [green], [blue] and [pixel]. Need to update the lexer and msTokenizeExpression() to 
+      ** recognize them...
+      */
 
-      snprintf(tmpstr2, sizeof(tmpstr2), "%d", color->pen);
-      tmpstr1 = msReplaceSubstring(tmpstr1, "[pixel]", tmpstr2);
-
-      msAcquireLock( TLOCK_PARSER );
-      msyystate = MS_TOKENIZE_EXPRESSION; msyystring = tmpstr1;
-      status = msyyparse();
-      expresult = msyyresult;
-      msReleaseLock( TLOCK_PARSER );
-
-      free(tmpstr1);
-
-      if( status != 0 ) return -1; /* error parsing expression. */
-      if( expresult ) return i;    /* got a match? */
+      return(-1);
     }
   }
 
@@ -141,7 +121,6 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue,
     int i;
     char *tmpstr1=NULL;
     char tmpstr2[100];
-    int status, expresult;
   
     if((layer->numclasses == 1) && !(layer->class[0]->expression.string)) /* no need to do lookup */
         return(0);
@@ -175,31 +154,15 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue,
             break;
 
           case(MS_EXPRESSION):
-            tmpstr1 = msStrdup(layer->class[i]->expression.string);
+            /*
+            ** Big, fat TODO!
+            **  
+            ** See msEvalExpression() in maputil.c for an example of how to do this. Basically need to define some raster bind 
+            ** variables: namely [red], [green], [blue] and [pixel]. Need to update the lexer and msTokenizeExpression() to 
+            ** recognize them...
+            */
 
-            if( red != -1 && green != -1 && blue != -1 )
-            {
-                snprintf(tmpstr2, sizeof(tmpstr2), "%d", red);
-                tmpstr1 = msReplaceSubstring(tmpstr1, "[red]", tmpstr2);
-                snprintf(tmpstr2, sizeof(tmpstr2), "%d", green);
-                tmpstr1 = msReplaceSubstring(tmpstr1, "[green]", tmpstr2);
-                snprintf(tmpstr2, sizeof(tmpstr2), "%d", blue);
-                tmpstr1 = msReplaceSubstring(tmpstr1, "[blue]", tmpstr2);
-            }
-
-            snprintf(tmpstr2, sizeof(tmpstr2), "%18g", fValue);
-            tmpstr1 = msReplaceSubstring(tmpstr1, "[pixel]", tmpstr2);
-
-            msAcquireLock( TLOCK_PARSER );
-            msyystate = MS_TOKENIZE_EXPRESSION; msyystring = tmpstr1;
-            status = msyyparse();
-            expresult = msyyresult;
-            msReleaseLock( TLOCK_PARSER );
-
-            free(tmpstr1);
-
-            if( status != 0 ) return -1;
-            if( expresult ) return i;
+            return(-1);
         }
     }
 

@@ -336,7 +336,7 @@ maplexer.o: maplexer.c mapserver.h mapfile.h
 mapparser.o: mapparser.c mapserver.h
 
 mapparser.c: mapparser.y
-	$(YACC) -p msyy -d -omapparser.c mapparser.y
+	$(YACC) -d -omapparser.c mapparser.y
 
 lib:    $(LIBMAP_STATIC)
 libmapserver: $(LIBMAP_STATIC)

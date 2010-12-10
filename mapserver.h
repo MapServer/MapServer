@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <direct.h>
@@ -495,6 +496,22 @@ typedef struct _FilterNode
     struct _FilterNode  *psRightNode;
 } FilterEncodingNode;
 
+/* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
+#define MS_STYLE_BINDING_LENGTH 8
+enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_WIDTH, MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR, MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL, MS_STYLE_BINDING_OUTLINEWIDTH, MS_STYLE_BINDING_OPACITY };
+#define MS_LABEL_BINDING_LENGTH 6
+enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR, MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, MS_LABEL_BINDING_PRIORITY };
+
+  /************************************************************************/
+  /*                         attributeBindingObj                          */
+  /************************************************************************/
+#ifndef SWIG
+  typedef struct {
+    char *item;
+    int index;
+  } attributeBindingObj;
+#endif
+
 /************************************************************************/
 /*                             labelPathObj                             */
 /*                                                                      */
@@ -560,26 +577,73 @@ typedef struct {
 #endif
 
 /************************************************************************/
-/*                            expressionObj                             */
+/*                     expressionObj & tokenObj                         */
 /************************************************************************/
 
+enum MS_TOKEN_LOGICAL_ENUM { MS_TOKEN_LOGICAL_AND=100, MS_TOKEN_LOGICAL_OR, MS_TOKEN_LOGICAL_NOT };
+enum MS_TOKEN_LITERAL_ENUM { MS_TOKEN_LITERAL_NUMBER=110, MS_TOKEN_LITERAL_STRING, MS_TOKEN_LITERAL_TIME, MS_TOKEN_LITERAL_SHAPE };
+enum MS_TOKEN_COMPARISON_ENUM { 
+  MS_TOKEN_COMPARISON_EQ=120, MS_TOKEN_COMPARISON_NE, MS_TOKEN_COMPARISON_GT, MS_TOKEN_COMPARISON_LT, MS_TOKEN_COMPARISON_LE, MS_TOKEN_COMPARISON_GE, MS_TOKEN_COMPARISON_IEQ,
+  MS_TOKEN_COMPARISON_RE, MS_TOKEN_COMPARISON_IRE,
+  MS_TOKEN_COMPARISON_IN, MS_TOKEN_COMPARISON_LIKE,
+  MS_TOKEN_COMPARISON_INTERSECTS, MS_TOKEN_COMPARISON_DISJOINT, MS_TOKEN_COMPARISON_TOUCHES, MS_TOKEN_COMPARISON_OVERLAPS, MS_TOKEN_COMPARISON_CROSSES, MS_TOKEN_COMPARISON_WITHIN, MS_TOKEN_COMPARISON_CONTAINS, 
+  MS_TOKEN_COMPARISON_BEYOND, MS_TOKEN_COMPARISON_DWITHIN
+};
+enum MS_TOKEN_FUNCTION_ENUM { 
+  MS_TOKEN_FUNCTION_LENGTH=140, MS_TOKEN_FUNCTION_TOSTRING, MS_TOKEN_FUNCTION_COMMIFY, MS_TOKEN_FUNCTION_AREA, MS_TOKEN_FUNCTION_ROUND, MS_TOKEN_FUNCTION_FROMTEXT, 
+  MS_TOKEN_FUNCTION_BUFFER
+};
+enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=150, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE };
+enum MS_PARSE_TYPE_ENUM { MS_PARSE_TYPE_BOOLEAN, MS_PARSE_TYPE_STRING, MS_PARSE_TYPE_SHAPE };
+
 #ifndef SWIG
+typedef union {
+  int intval;
+  char *strval;
+  shapeObj *shpval;
+} parseResultObj;
+
+typedef union {
+  double dblval;
+  int intval;
+  char *strval;
+  struct tm tmval;
+  shapeObj *shpval;
+  attributeBindingObj bindval;
+} tokenValueObj;
+
+typedef struct tokenListNode {
+  int token;
+  tokenValueObj tokenval;
+  struct tokenListNode *next;
+  struct tokenListNode *tailifhead; /* this is the tail node in the list if this is the head element, otherwise NULL */
+} tokenListNodeObj;
+
+typedef tokenListNodeObj * tokenListNodeObjPtr;
+
 typedef struct {
-    char *string;
-    int type;
-    /* container for expression options such as case-insensitiveness */
-    /* This is a boolean container. */
-    int flags;
+  char *string;
+  int type;
+  /* container for expression options such as case-insensitiveness */
+  /* This is a boolean container. */
+  int flags;
     
-    /* logical expression options */
-    char **items;
-    int *indexes;
-    int numitems;
-    
-    /* regular expression options */
-    ms_regex_t regex; /* compiled regular expression to be matched */
-    int compiled;
+  /* logical expression options */
+  tokenListNodeObjPtr tokens;
+  tokenListNodeObjPtr curtoken;
+
+  /* regular expression options */
+  ms_regex_t regex; /* compiled regular expression to be matched */
+  int compiled;
 } expressionObj;
+
+typedef struct {
+  colorObj *pixel; /* for raster layers */
+  shapeObj *shape; /* for vector layers */ 
+  expressionObj *expr; /* expression to be evaluated (contains tokens) */
+  int type; /* type of parse: boolean, string/text or shape/geometry */
+  parseResultObj result; /* parse result */
+} parseObj;
 #endif
 
 /************************************************************************/
@@ -686,22 +750,6 @@ typedef struct {
     colorObj color;
 } queryMapObj;
 
-/* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
-#define MS_STYLE_BINDING_LENGTH 8
-enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_WIDTH, MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR, MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL, MS_STYLE_BINDING_OUTLINEWIDTH, MS_STYLE_BINDING_OPACITY};
-#define MS_LABEL_BINDING_LENGTH 6
-enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR, MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, MS_LABEL_BINDING_PRIORITY};
-
-/************************************************************************/
-/*                         attributeBindingObj                          */
-/************************************************************************/
-#ifndef SWIG
-typedef struct {
-  char *item;
-  int index;
-} attributeBindingObj;
-#endif
-
 /************************************************************************/
 /*                                webObj                                */
 /*                                                                      */
@@ -764,9 +812,8 @@ typedef struct {
 #endif /* SWIG */
 
 #ifndef SWIG
-  /*private vars for rfc48*/
-  char *_geomtransformexpression;
-  int _geomtransform;
+  /* private vars for rfc 48 & 64 */
+  expressionObj _geomtransform;
 #endif
   
   /*should an angle be automatically computed*/
@@ -1559,35 +1606,25 @@ typedef struct {
 /************************************************************************/
 #ifndef SWIG
 struct layerVTable {
-    int (*LayerInitItemInfo)(layerObj *layer);
-    void (*LayerFreeItemInfo)(layerObj *layer);
-    int (*LayerOpen)(layerObj *layer);
-    int (*LayerIsOpen)(layerObj *layer);
-    int (*LayerWhichShapes)(layerObj *layer, rectObj rect);
-    int (*LayerNextShape)(layerObj *layer, shapeObj *shape);
-    int (*LayerResultsGetShape)(layerObj *layer, shapeObj *shape, 
-                         int tile, long record);
-    int (*LayerGetShape)(layerObj *layer, shapeObj *shape, 
-                         int tile, long record);
-    int (*LayerClose)(layerObj *layer);
-    int (*LayerGetItems)(layerObj *layer);
-    int (*LayerGetExtent)(layerObj *layer, rectObj *extent);
-    int (*LayerGetAutoStyle)(mapObj *map, layerObj *layer, classObj *c, 
-                             int tile, long record);
-
-    int (*LayerCloseConnection)(layerObj *layer);
-
-    int (*LayerSetTimeFilter)(layerObj *layer, 
-                              const char *timestring, 
-                              const char *timefield);
-
-    int (*LayerApplyFilterToLayer)(FilterEncodingNode *psNode, mapObj *map,
-                                   int iLayerIndex, 
-                                   int bOnlySpatialFilter);
-
-    int (*LayerCreateItems)(layerObj *layer, int nt);
-    int (*LayerGetNumFeatures)(layerObj *layer);
-    int (*LayerGetAutoProjection)(layerObj *layer, projectionObj *projection);
+  int (*LayerSupportsCommonFilters)(layerObj *layer);
+  int (*LayerInitItemInfo)(layerObj *layer);
+  void (*LayerFreeItemInfo)(layerObj *layer);
+  int (*LayerOpen)(layerObj *layer);
+  int (*LayerIsOpen)(layerObj *layer);
+  int (*LayerWhichShapes)(layerObj *layer, rectObj rect);
+  int (*LayerNextShape)(layerObj *layer, shapeObj *shape);
+  int (*LayerResultsGetShape)(layerObj *layer, shapeObj *shape, int tile, long record);
+  int (*LayerGetShape)(layerObj *layer, shapeObj *shape, int tile, long record);
+  int (*LayerClose)(layerObj *layer);
+  int (*LayerGetItems)(layerObj *layer);
+  int (*LayerGetExtent)(layerObj *layer, rectObj *extent);
+  int (*LayerGetAutoStyle)(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
+  int (*LayerCloseConnection)(layerObj *layer);
+  int (*LayerSetTimeFilter)(layerObj *layer, const char *timestring, const char *timefield);
+  int (*LayerApplyFilterToLayer)(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex, int bOnlySpatialFilter);
+  int (*LayerCreateItems)(layerObj *layer, int nt);
+  int (*LayerGetNumFeatures)(layerObj *layer);
+  int (*LayerGetAutoProjection)(layerObj *layer, projectionObj *projection);
 };
 #endif /*SWIG*/
 
@@ -2003,6 +2040,9 @@ MS_DLL_EXPORT char *msLayerGetProcessingKey( layerObj *layer, const char *);
 MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
 MS_DLL_EXPORT char* msLayerGetFilterString( layerObj *layer );
 
+MS_DLL_EXPORT int msLayerSupportsCommonFilters(layerObj *layer);
+MS_DLL_EXPORT int msTokenizeExpression(expressionObj *expression, char **list, int *listsize);
+
 MS_DLL_EXPORT int msLayerSetTimeFilter(layerObj *lp, const char *timestring, 
                                        const char *timefield);
 /* Helper functions for layers */ 
@@ -2181,7 +2221,7 @@ MS_DLL_EXPORT int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); /* maputi
 MS_DLL_EXPORT int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode);
 MS_DLL_EXPORT int msValidateContexts(mapObj *map);
 MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
-MS_DLL_EXPORT int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems);
+MS_DLL_EXPORT int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression, int itemindex);
 MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom, int *classgroup, int numclasses);
 MS_DLL_EXPORT char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
@@ -2413,6 +2453,7 @@ MS_DLL_EXPORT void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *i
 /* ==================================================================== */
 enum MS_GEOMTRANSFORM_TYPE {
   MS_GEOMTRANSFORM_NONE,
+  MS_GEOMTRANSFORM_EXPRESSION,
   MS_GEOMTRANSFORM_START,
   MS_GEOMTRANSFORM_END,
   MS_GEOMTRANSFORM_VERTICES,

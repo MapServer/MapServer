@@ -960,8 +960,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       for(current=shpcache; current; current=current->next) {
         if(layer->class[current->shape.classindex]->numstyles > s) {
           styleObj *pStyle = layer->class[current->shape.classindex]->styles[s];
-          if(pStyle->_geomtransform!=MS_GEOMTRANSFORM_NONE)
-        	continue; /*skip this as it has already been rendered*/
+          if(pStyle->_geomtransform.type != MS_GEOMTRANSFORM_NONE)
+            continue; /*skip this as it has already been rendered*/
           if(map->scaledenom > 0) {
             if((pStyle->maxscaledenom != -1) && (map->scaledenom >= pStyle->maxscaledenom))
               continue;
@@ -1806,7 +1806,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
 
     for(s=0;s<layer->class[c]->numstyles;s++){
-      if(layer->class[c]->styles[s]->_geomtransform != MS_GEOMTRANSFORM_NONE) {
+      if(layer->class[c]->styles[s]->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
         hasGeomTransform = MS_TRUE;
         break;
       }
@@ -1847,7 +1847,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
           continue;
       }
-      if(curStyle->_geomtransform != MS_GEOMTRANSFORM_NONE)
+      if(curStyle->_geomtransform.type != MS_GEOMTRANSFORM_NONE)
         msDrawTransformedShape(map, &map->symbolset, image, &nonClippedShape, curStyle, layer->scalefactor);
       else if(style==-1 || s==style)
         msDrawLineSymbol(&map->symbolset, image, shape, curStyle, layer->scalefactor);
@@ -2016,7 +2016,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
 
     for(s=0;s<layer->class[c]->numstyles;s++){
-      if(layer->class[c]->styles[s]->_geomtransform != MS_GEOMTRANSFORM_NONE) {
+      if(layer->class[c]->styles[s]->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
         hasGeomTransform = MS_TRUE;
         break;
       }
@@ -2062,7 +2062,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
           continue;
       }
-      if(curStyle->_geomtransform==MS_GEOMTRANSFORM_NONE)
+      if(curStyle->_geomtransform.type == MS_GEOMTRANSFORM_NONE)
     	msDrawShadeSymbol(&map->symbolset, image, shape, curStyle, layer->scalefactor);
       else
     	msDrawTransformedShape(map, &map->symbolset, image, &nonClippedShape, curStyle, layer->scalefactor);
@@ -2364,9 +2364,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                  /* here's where we draw the label styles */
                  if(cachePtr->label.numstyles > 0) {
                     for(i=0; i<cachePtr->label.numstyles; i++) {
-                       if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOINT)
+                       if(cachePtr->label.styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT)
                           msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), cachePtr->label.styles[i], layerPtr->scalefactor);
-                       else if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOLY) {
+                       else if(cachePtr->label.styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
                           msDrawShadeSymbol(&map->symbolset, image, &billboard, cachePtr->label.styles[i], layerPtr->scalefactor);
                        } else {
                           /* need error msg about unsupported geomtransform */
@@ -2413,13 +2413,11 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
              needBillboard = MS_FALSE;
              if(MS_VALID_COLOR(labelPtr->backgroundcolor)) needBillboard = MS_TRUE;
              for(i=0; i<labelPtr->numstyles; i++) {
-               if(labelPtr->styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOLY) {
+               if(labelPtr->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
                  needBillboard = MS_TRUE;
                  break;
                }
              }
-             
-             
    
              label_offset_x = labelPtr->offsetx*scalefactor;
              label_offset_y = labelPtr->offsety*scalefactor;
@@ -2546,9 +2544,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
              /* here's where we draw the label styles */
              if(cachePtr->label.numstyles > 0) {
                for(i=0; i<cachePtr->label.numstyles; i++) {
-                 if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOINT)
+                 if(cachePtr->label.styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT)
                    msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), cachePtr->label.styles[i], layerPtr->scalefactor);
-                 else if(cachePtr->label.styles[i]->_geomtransform == MS_GEOMTRANSFORM_LABELPOLY) {
+                 else if(cachePtr->label.styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
                    msDrawShadeSymbol(&map->symbolset, image, &billboard, cachePtr->label.styles[i], layerPtr->scalefactor);
                  } else {
                    /* need error msg about unsupported geomtransform */

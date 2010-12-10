@@ -105,6 +105,8 @@ void msInitShape(shapeObj *shape)
   /* bookkeeping component */
   shape->classindex = 0; /* default class */
   shape->tileindex = shape->index = -1;
+
+  shape->scratch = MS_FALSE; /* not a temporary/scratch shape */
 }
 
 int msCopyShape(shapeObj *from, shapeObj *to) {
@@ -136,6 +138,7 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
   }
 
   to->geometry = NULL; /* GEOS code will build automatically if necessary */
+  to->scratch = from->scratch;
 
   return(0);
 }

@@ -2085,15 +2085,13 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 {
   int i, status, filter_passed = MS_FALSE;
   char *filename, tilename[MS_MAXPATHLEN];
-  char **values=NULL;
   char tiFileAbsDir[MS_MAXPATHLEN];
 
   msTiledSHPLayerInfo *tSHP=NULL;
   
   if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
-	return MS_FAILURE;
+    return MS_FAILURE;
   
-
   tSHP = layer->layerinfo;
   if(!tSHP) {
     msSetError(MS_SHPERR, "Tiled shapefile layer has not been opened.", "msTiledSHPNextShape()");
@@ -2124,8 +2122,8 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
           if(!layer->data) /* assume whole filename is in attribute field */
             filename = (char *) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex);
           else {
-                snprintf(tilename, sizeof(tilename),"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex) , layer->data);
-	        filename = tilename;
+            snprintf(tilename, sizeof(tilename),"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex) , layer->data);
+	    filename = tilename;
           }
 
           if(strlen(filename) == 0) continue; /* check again */
@@ -2138,13 +2136,12 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 
           status = msShapefileWhichShapes(tSHP->shpfile, tSHP->tileshpfile->statusbounds, layer->debug);
           if(status == MS_DONE) {
-              /* Close and continue to next tile */
-              msShapefileClose(tSHP->shpfile);
-              continue;
-          }
-          else if(status != MS_SUCCESS) {
-              msShapefileClose(tSHP->shpfile);
-              return(MS_FAILURE);
+            /* Close and continue to next tile */
+            msShapefileClose(tSHP->shpfile);
+            continue;
+          } else if(status != MS_SUCCESS) {
+            msShapefileClose(tSHP->shpfile);
+            return(MS_FAILURE);
           }
 
           /* the layer functions keeps track of this */
@@ -2201,28 +2198,21 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
     
     tSHP->shpfile->lastshape = i;
  
-    filter_passed = MS_TRUE;  /* By default accept ANY shape */
-    if(layer->numitems > 0 && layer->iteminfo) {
-      values = msDBFGetValueList(tSHP->shpfile->hDBF, i, layer->iteminfo, layer->numitems);
-      if(!values) return(MS_FAILURE);      
-      if((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
-	    msFreeCharArray(values, layer->numitems);
-	    values = NULL;
-      }
-    }
-    
-    msSHPReadShape(tSHP->shpfile->hSHP, i, shape); /* ok to read the data now */
-    if(shape->type == MS_SHAPE_NULL) 
-    {
+    msSHPReadShape(tSHP->shpfile->hSHP, i, shape);
+    if(shape->type == MS_SHAPE_NULL) {
       msFreeShape(shape);
       continue; /* skip NULL shapes */
     }
     shape->tileindex = tSHP->tileshpfile->lastshape;
-    shape->values = values;
+    shape->values = msDBFGetValueList(tSHP->shpfile->hDBF, i, layer->iteminfo, layer->numitems);
     shape->numvalues = layer->numitems;
 
-    if (!filter_passed)
-       msFreeShape(shape);
+    filter_passed = MS_TRUE;  /* By default accept ANY shape */
+    if(layer->numitems > 0 && layer->iteminfo) {
+      filter_passed = msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex);
+    }
+    
+    if(!filter_passed) msFreeShape(shape); /* free's values as well */
 
   } while(!filter_passed);  /* Loop until both spatial and attribute filters match  */
 
@@ -2448,11 +2438,17 @@ int msTiledSHPLayerIsOpen(layerObj *layer)
     return MS_FALSE;
 }
 
+int msTiledSHPLayerSupportsCommonFilters(layerObj *layer)
+{
+  return MS_TRUE;
+}
+
 int msTiledSHPLayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
 
+  layer->vtable->LayerSupportsCommonFilters = msTiledSHPLayerSupportsCommonFilters;
   layer->vtable->LayerInitItemInfo = msTiledSHPLayerInitItemInfo;
   layer->vtable->LayerFreeItemInfo = msTiledSHPLayerFreeItemInfo;
   layer->vtable->LayerOpen = msTiledSHPOpenFile;
@@ -2575,8 +2571,7 @@ int msShapeFileLayerWhichShapes(layerObj *layer, rectObj rect)
 
 int msShapeFileLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
-  int i, filter_passed;
-  char **values=NULL;
+  int i, filter_passed=MS_FALSE;
   shapefileObj *shpfile;
 
   shpfile = layer->layerinfo;
@@ -2588,30 +2583,25 @@ int msShapeFileLayerNextShape(layerObj *layer, shapeObj *shape)
   
   do {
     i = msGetNextBit(shpfile->status, shpfile->lastshape + 1, shpfile->numshapes);
-
     shpfile->lastshape = i;
-
     if(i == -1) return(MS_DONE); /* nothing else to read */
+
+    msSHPReadShape(shpfile->hSHP, i, shape);
+    if(shape->type == MS_SHAPE_NULL) {
+      msFreeShape(shape);
+      continue; /* skip NULL shapes */
+    }
+    shape->values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
+    shape->numvalues = layer->numitems;
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
     if(layer->numitems > 0 && layer->iteminfo) {
-      values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
-      if(!values) return(MS_FAILURE);
-      if((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
-        msFreeCharArray(values, layer->numitems);
-        values = NULL;
-      }
+      filter_passed = msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex);
     }
+
+    if(!filter_passed) msFreeShape(shape);
   } while(!filter_passed);  /* Loop until both spatial and attribute filters match */
 
-  msSHPReadShape(shpfile->hSHP, i, shape); /* ok to read the data now */
-
-  /* skip NULL shapes (apparently valid for shapefiles, at least ArcView doesn't care) */
-  if(shape->type == MS_SHAPE_NULL) return(msLayerNextShape(layer, shape));
-
-  shape->values = values;
-  shape->numvalues = layer->numitems;
-    
   return MS_SUCCESS;
 }
 
@@ -2687,11 +2677,17 @@ int msShapeFileLayerGetExtent(layerObj *layer, rectObj *extent)
   return MS_SUCCESS;
 }
 
+int msShapeFileLayerSupportsCommonFilters(layerObj *layer)
+{
+  return MS_TRUE;
+}
+
 int msShapeFileLayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
 
+  layer->vtable->LayerSupportsCommonFilters = msShapeFileLayerSupportsCommonFilters;
   layer->vtable->LayerInitItemInfo = msShapeFileLayerInitItemInfo;
   layer->vtable->LayerFreeItemInfo = msShapeFileLayerFreeItemInfo;
   layer->vtable->LayerOpen = msShapeFileLayerOpen;
