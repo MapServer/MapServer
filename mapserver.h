@@ -495,6 +495,7 @@ typedef struct _FilterNode
     struct _FilterNode  *psLeftNode;
     struct _FilterNode  *psRightNode;
 } FilterEncodingNode;
+#endif /*SWIG*/
 
 /* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
 #define MS_STYLE_BINDING_LENGTH 8
@@ -510,7 +511,7 @@ enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_L
     char *item;
     int index;
   } attributeBindingObj;
-#endif
+#endif /*SWIG*/
 
 /************************************************************************/
 /*                             labelPathObj                             */
@@ -518,7 +519,7 @@ enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_L
 /*      Label path object - used to hold path and bounds of curved      */
 /*      labels - Bug #1620 implementation.                              */
 /************************************************************************/
-
+#ifndef SWIG
 typedef struct {
   multipointObj path;
   shapeObj bounds;

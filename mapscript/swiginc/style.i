@@ -165,7 +165,7 @@
   
   char *getGeomTransform() 
   {
-    return self->_geomtransformexpression;
+    return self->_geomtransform.string;
   }
   
   void setGeomTransform(char *transform) 
