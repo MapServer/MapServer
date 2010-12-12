@@ -2163,9 +2163,9 @@ int initStyle(styleObj *style) {
   style->autoangle= MS_FALSE;
   style->opacity = 100; /* fully opaque */
 
-  style->_geomtransform.string = NULL;  
+  initExpression(&(style->_geomtransform));
   style->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
-  
+
   style->patternlength = 0; /* solid line */
   style->gap = 0;
   style->position = MS_CC;
