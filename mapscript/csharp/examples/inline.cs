@@ -61,7 +61,7 @@ class Inline {
       classObj classobj = new classObj(layer);
       classobj.template = "query";   // making the layer queryable
       // setting up the text based on multiple attributes
-      classobj.setText("(Shape:[attribute1] Color:[attribute2] Size:[attribute3])");
+      classobj.setText("('Shape:' + '[attribute1]' + ' Color:' + '[attribute2]' + ' Size:' + '[attribute3]')");
       // define the label
       classobj.label.outlinecolor = new colorObj(255, 255, 255, 0);
       classobj.label.force = mapscript.MS_TRUE;
