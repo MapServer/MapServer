@@ -445,11 +445,11 @@ PHP_METHOD(styleObj, getGeomTransform)
     
     php_style = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    if (php_style->style->_geomtransform == MS_GEOMTRANSFORM_NONE ||
-        !php_style->style->_geomtransformexpression)
+    if (php_style->style->_geomtransform.type == MS_GEOMTRANSFORM_NONE ||
+        !php_style->style->_geomtransform.string)
         RETURN_STRING("", 1);
 
-    RETURN_STRING(php_style->style->_geomtransformexpression, 1);
+    RETURN_STRING(php_style->style->_geomtransform.string, 1);
 }
 /* }}} */
 
