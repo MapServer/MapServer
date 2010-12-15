@@ -400,6 +400,9 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   fontMetrics *font = NULL;
   char *imagepath = NULL, *imageurl = NULL;
   labelStyleObj ls;
+  colorObj labelcolor, labeloutlinecolor;
+  ls.color = &labelcolor;
+  ls.outlinecolor = &labeloutlinecolor;
   
   if (map) {
       if( map->width > 0 && map->height > 0 )
@@ -424,8 +427,9 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 	  /* use the first font we find */
 	  if((font = renderer->bitmapFontMetrics[font_index]) != NULL) {
 	     ls.size = i;
-		  MS_INIT_COLOR(*ls.color,0,0,0);
-		  break;
+         MS_INIT_COLOR(*ls.color,0,0,0);
+         MS_INIT_COLOR(*ls.outlinecolor,255,255,255);
+         break;
 	  }
   }
   /* if no font found we can't do much. this shouldn't happen */
