@@ -239,6 +239,8 @@ void KmlRenderer::processLayer(layerObj *layer)
     /*if layer has a metadata KML_OUTPUTASRASTER set to true, add a processing directive
       to use an agg driver*/
     asRaster = msLookupHashTable(&layer->metadata, "kml_outputasraster");
+    if (!asRaster)
+       asRaster = msLookupHashTable(&(layer->map->web.metadata), "kml_outputasraster");
     if (asRaster && (strcasecmp(asRaster, "true") == 0 ||
                      strcasecmp(asRaster, "yes") == 0))
       msLayerAddProcessing(layer, "RENDERER=png24");
