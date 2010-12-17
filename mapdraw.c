@@ -672,9 +672,11 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
   imageObj *image_draw = image;
-  outputFormatObj *transFormat = NULL;
+  outputFormatObj *transFormat = NULL, *altFormat=NULL;
   int retcode=MS_SUCCESS;
   int originalopacity = layer->opacity;
+  const char *alternativeFomatString = NULL;
+
   if(!msLayerIsVisible(map, layer))
     return MS_SUCCESS;  
 
@@ -687,7 +689,20 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* inform the rendering device that layer draw is starting. */
   msImageStartLayer(map, layer, image);
 
-  if (MS_RENDERER_PLUGIN(image_draw->format)) {
+  /*check if an alternative renderer should be used for this layer*/
+  alternativeFomatString = msLayerGetProcessingKey( layer, "RENDERER");
+  if (MS_RENDERER_PLUGIN(image_draw->format) && alternativeFomatString!=NULL && 
+      (altFormat=  msSelectOutputFormat(map, alternativeFomatString)))
+  {
+      rendererVTableObj *renderer=NULL; 
+      msInitializeRendererVTable(altFormat);
+
+      image_draw = msImageCreate(image->width, image->height,
+                                 altFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution, &map->imagecolor);
+      renderer = MS_IMAGE_RENDERER(image_draw);
+      renderer->startLayer(image_draw,map,layer);
+  }
+  else if (MS_RENDERER_PLUGIN(image_draw->format)) {
 	    rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
 		if (layer->opacity > 0 && layer->opacity < 100) {
 			if (!renderer->supports_transparent_layers) {
@@ -723,7 +738,21 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     retcode = msDrawVectorLayer(map, layer, image_draw);
   }
 
-  if( image != image_draw) {
+  if (altFormat)
+  {
+      rendererVTableObj *renderer = MS_IMAGE_RENDERER(image);
+      rendererVTableObj *altrenderer = MS_IMAGE_RENDERER(image_draw);
+      rasterBufferObj rb;
+      memset(&rb,0,sizeof(rasterBufferObj));
+
+      altrenderer->endLayer(image_draw,map,layer);
+
+      altrenderer->getRasterBufferHandle(image_draw,&rb);
+      renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);  
+      altrenderer->freeImage( image_draw );
+      
+  }
+  else if( image != image_draw) {
 	  rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
 	  rasterBufferObj rb;
 	  memset(&rb,0,sizeof(rasterBufferObj));
