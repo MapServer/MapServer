@@ -1283,11 +1283,14 @@
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:postLabelCache'"/>
     </xsl:call-template>
-    <xsl:call-template name="print">
-      <xsl:with-param name="indent" select="$indent"/>
-      <xsl:with-param name="node" select="'ms:processing'"/>
-      <xsl:with-param name="quote" select="1"/>
-    </xsl:call-template>
+    <xsl:for-each select="ms:processing">
+      <xsl:call-template name="print">
+        <xsl:with-param name="indent" select="$indent"/>
+        <xsl:with-param name="text">
+          <xsl:value-of select="concat('PROCESSING ','&#34;',.,'&#34;')"/>
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:for-each>
     <xsl:apply-templates select="ms:projection">
       <xsl:with-param name="indent" select="$indent + 1"/>
     </xsl:apply-templates>

@@ -114,7 +114,7 @@
     <plugin>myPlugin.lib</plugin>
     <postLabelCache>TRUE</postLabelCache>
     <processing>CLOSE_CONNECTION=DEFER</processing>
-    <processing>CLOSE_CONNECTION=DEFER</processing>
+    <processing>SCALE=AUTO</processing>
     <projection>init=epsg:4326 ellps=WGS84 datum=WGS84</projection>
     <requires>[orthoquads]</requires>
     <sizeUnits>METERS</sizeUnits>
