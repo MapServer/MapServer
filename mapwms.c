@@ -3117,7 +3117,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
         else
             msIO_printf("Content-type: application/vnd.ogc.gml%c%c",10,10);
 
-    msGMLWriteQuery(map, NULL, "GMO"); /* default is stdout */
+    msGMLWriteQuery(map, NULL, "OMG"); /* default is stdout */
 
   } 
   else
