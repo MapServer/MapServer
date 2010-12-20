@@ -208,5 +208,22 @@
   internal static $moduleObject the$moduleObject = new $moduleObject();
   protected static object ThisOwn_true() { return null; }
   protected static object ThisOwn_false() { return the$moduleObject; }
+  
+  [DllImport("$dllimport", EntryPoint="SetEnvironmentVariable")]
+  public static extern int SetEnvironmentVariable(string envstring);
 %}
 
+%insert(runtime) %{
+#ifdef __cplusplus
+extern "C" 
+#endif
+#ifdef SWIGEXPORT
+SWIGEXPORT int SWIGSTDCALL SetEnvironmentVariable(const char *envstring) {
+  return putenv(envstring);
+}
+#else
+DllExport int SWIGSTDCALL SetEnvironmentVariable(const char *envstring) {
+  return putenv(envstring);
+}
+#endif
+%}
