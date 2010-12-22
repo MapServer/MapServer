@@ -1428,6 +1428,63 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       p->args[0] = msStrdup(init_string);
       p->numargs = 1;
   }
+  /* URI projection support */
+  else if (EQUALN("http://www.opengis.net/def/crs/EPSG/", value, 36))
+  { /* this is very preliminary urn support ... expand later */
+      char init_string[100];
+      const char *code;
+
+      code = value + 36;
+      while( *code != '/' && *code != '\0' )
+          code++;
+      if( *code == '/' )
+          code++;
+
+      /* translate into PROJ.4 format. */
+      sprintf( init_string, "init=epsg:%s", code );
+
+      p->args = (char**)malloc(sizeof(char*) * 2);
+      p->args[0] = strdup(init_string);
+      p->numargs = 1;
+
+      if( atoi(code) >= 4000 && atoi(code) < 5000 )
+      {
+          p->args[1] = strdup("+epsgaxis=ne");
+          p->numargs = 2;
+      }
+  }
+  else if (EQUALN("http://www.opengis.net/def/crs/OGC/", value, 35) )
+  {
+      char init_string[100];
+      const char *id;
+
+      id = value + 35;
+      while( *id != '/' && *id == '\0' )
+          id++;
+      if( *id == '/' )
+          id++;
+
+      init_string[0] = '\0';
+
+      if( strcasecmp(id,"CRS84") == 0 )
+          strcpy( init_string, "init=epsg:4326" );
+      else if( strcasecmp(id,"CRS83") == 0 )
+          strcpy( init_string, "init=epsg:4269" );
+      else if( strcasecmp(id,"CRS27") == 0 )
+          strcpy( init_string, "init=epsg:4267" );
+      else
+      {
+          msSetError( MS_PROJERR,
+                      "Unrecognised OGC CRS def '%s'.",
+                      "msLoadProjectionString()",
+                      value );
+          return -1;
+      }
+
+      p->args = (char**)malloc(sizeof(char*) * 2);
+      p->args[0] = strdup(init_string);
+      p->numargs = 1;
+  }
   else if (strncasecmp(value, "CRS:",4) == 0 )
   {
       char init_string[100];

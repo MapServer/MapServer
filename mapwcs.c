@@ -132,8 +132,10 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
   if( version == NULL )
       version = "1.0.0";
 
+#if defined(USE_LIBXML2)
   if( msOWSParseVersionString(version) >= OWS_2_0_0 )
       return msWCSException20( map, code, locator, version );
+#endif
 
   if( msOWSParseVersionString(version) >= OWS_1_1_0 )
       return msWCSException11( map, code, locator, version );
@@ -1817,18 +1819,14 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   wcsParamsObj *params;  
   int retVal = MS_DONE;
 
-  /* First try to dispatch WCS 2.0 */
-  /* We need libxml2 for WCS 2.0   */
-#if defined(USE_LIBXML2)
+  /* First try to dispatch WCS 2.0.0.                                   */
+  /* TODO: Need to implement proper version negotiation (OWS Common)    */
+  /* once WCS 2.0.0 is fully specified.                                 */
+  /* Currently WCS 2.0.0 is only available if explicitly requested.     */
   if ((retVal = msWCSDispatch20(map, request)) != MS_DONE )
   {
-    msDebug("msWCSDispatch(): msWCSDispatch20() finished --> exiting\n");
     return retVal;
   }
-#else
-  /* TODO: If we don't have libxml2, then report WCS 2.0 requests  */
-  /* as unsupported if possible. Only KVP requests can be detected. */
-#endif /* defined(USE_LIBXML2) */
 
   /* populate the service parameters */
   params = msWCSCreateParams();
@@ -1864,7 +1862,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   /* check for existence of REQUEST parameter */
   if (!params->request) {
     msSetError(MS_WCSERR, "Missing REQUEST parameter", "msWCSDispatch()");
-    msWCSException(map, "MissingParameterValue", "request", 
+    msWCSException(map, "MissingParameterValue", "request",
                    params->version );
     msWCSFreeParams(params); /* clean up */
     free(params);

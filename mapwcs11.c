@@ -1380,7 +1380,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
 }
 
-int msWCSException11(mapObj *map, char *locator, char *exceptionCode, const char *version) {
+int msWCSException11(mapObj *map, const char *locator, const char *exceptionCode, const char *version) {
     /* fallback to reporting using 1.0 style exceptions. */
     return msWCSException( map, locator, exceptionCode, "1.0.0" );
 }

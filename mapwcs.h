@@ -144,27 +144,46 @@ typedef struct
 
 typedef struct
 {
-    char *axis; /* the name of the subsetted axis */
-    int operation; /* Either TRIM or SLICE */
-    char *crs; /* optional CRS to use */
-    int timeOrScalar; /* 0 if scalar value, 1 if time value */
+    char *axis;         /* the name of the subsetted axis */
+    int operation;      /* Either TRIM or SLICE */
+    char *crs;          /* optional CRS to use */
+    int timeOrScalar;   /* 0 if scalar value, 1 if time value */
     timeScalarUnion min; /* Minimum and Maximum of the subsetted axis;*/
     timeScalarUnion max;
 } wcs20SubsetObj;
+typedef wcs20SubsetObj * wcs20SubsetObjPtr;
 
 typedef struct
 {
-    char *version; /* 2.0.0 */
-    char *request; /* GetCapabilities|DescribeCoverage|GetCoverage */
-    char *service; /* MUST be WCS */
-    char **ids; /* NULL terminated list of coverages (in the case of a GetCoverage there will only be 1) */
-    long width, height, depth; /* image dimensions */
-    char *format;
-    int numsubsets; /* number of subsets */
-    wcs20SubsetObj **subsets; /* list of subsets, NULL if none*/
-    char *crs;
-    int multipart;
+    char *name;         /* name of the axis */
+    long size;          /* pixelsize of the axis */
+    double resolution;  /* resolution of the axis */
+    char *resolutionUOM; /* resolution units of measure */
+    wcs20SubsetObjPtr subset;
+} wcs20AxisObj;
+typedef wcs20AxisObj * wcs20AxisObjPtr;
+
+typedef struct
+{
+    char *version;      /* 2.0.0 */
+    char *request;      /* GetCapabilities|DescribeCoverage|GetCoverage */
+    char *service;      /* MUST be WCS */
+    char **accept_versions; /* Accepted versions for GetCapabilities */
+    char **ids;         /* NULL terminated list of coverages (in the case of a GetCoverage there will only be 1) */
+    long width, height; /* image dimensions */
+    double resolutionX; /* image resolution in X axis */
+    double resolutionY; /* image resolution in Y axis */
+    char *resolutionUnits; /* Units of Measure for resolution */
+    char *format;       /* requested output format */
+    int multipart;      /* flag for multipart GML+image */
+    char *interpolation; /* requested interpolation method */
+    char *outputcrs;    /* requested CRS for output */
+    char *subsetcrs;    /* determined CRS of the subsets */
+    rectObj bbox;       /* determined Bounding Box */
+    int numaxes;        /* number of axes */
+    wcs20AxisObjPtr *axes; /* list of axes, NULL if none*/
 } wcs20ParamsObj;
+typedef wcs20ParamsObj * wcs20ParamsObjPtr;
 
 typedef struct
 {
@@ -181,10 +200,11 @@ typedef struct
         char *values[5];
     };
 } wcs20rasterbandMetadataObj;
-
+typedef wcs20rasterbandMetadataObj * wcs20rasterbandMetadataObjPtr;
 
 typedef struct
 {
+    char *native_format;    /* mime type of the native format */
     const char *srs;
     char srs_uri[200];
     rectObj extent;
@@ -197,11 +217,11 @@ typedef struct
     size_t numnilvalues;
     char **nilvalues;
     char **nilvalues_reasons;
-
     size_t numbands;
-    wcs20rasterbandMetadataObj *bands;
-
+    wcs20rasterbandMetadataObjPtr bands;
 } wcs20coverageMetadataObj;
+typedef wcs20coverageMetadataObj * wcs20coverageMetadataObjPtr;
+
 #define MS_WCS_20_PROFILE_CORE      "http://www.opengis.net/spec/WCS/2.0/conf/core"
 #define MS_WCS_20_PROFILE_KVP       "http://www.opengis.net/spec/WCS_protocol-binding_get-kvp/1.0"
 #define MS_WCS_20_PROFILE_POST      "http://www.opengis.net/spec/WCS_protocol-binding_post-xml/1.0"
@@ -209,26 +229,25 @@ typedef struct
 #define MS_WCS_20_PROFILE_GML_GEOTIFF "http://www.placeholder.com/GML_and_GeoTIFF"
 #define MS_WCS_20_PROFILE_EPSG      "http://www.placeholder.com/EPSG"
 #define MS_WCS_20_PROFILE_IMAGECRS  "http://www.placeholder.com/IMAGECRS"
+#define MS_WCS_20_PROFILE_SCALING   "http://www.placeholder.com/SCALING"
+#define MS_WCS_20_PROFILE_INTERPOLATION "http://www.placeholder.com/INTERPOLATION"
 
 int msWCSDispatch20(mapObj *map, cgiRequestObj *request);
-
-int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
-                           wcs20ParamsObj *params);
-int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObj *params);
-
-int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
-                       wcs20ParamsObj *params);
 
 int msWCSException20(mapObj *map, const char *locator,
                      const char *exceptionCode, const char *version);
 
-wcs20ParamsObj *msWCSCreateParamsObj20();
+/* Makro to continue the iteration over an xml structure    */
+/* when the current node has the type 'text' or 'comment'   */
+#define XML_LOOP_IGNORE_COMMENT_OR_TEXT(node)                   \
+    if(xmlNodeIsText(node) || node->type == XML_COMMENT_NODE)   \
+    {                                                           \
+        continue;                                               \
+    }                                                           \
 
-int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObj *params);
+#define XML_UNKNOWN_NODE_ERROR(node,function)                    \
+    msSetError(MS_WCSERR, "Unknown XML element '%s'.",          \
+            function, (char *)node->name);                      \
+    return MS_FAILURE;                                          \
 
-void msWCSFreeParamsObj20(wcs20ParamsObj *pParams);
-
-int msWCSCreateBoundingBox20(wcs20ParamsObj *params, mapObj *map, layerObj *layer);
-//int msWCSCreateBoungingBoxAndProjection20(wcs20ParamsObj *params, rectObj *outBBOX, projectionObj *outProj, int *hasCRS);
-int msWCSCreateBoungingBoxAndGetProjection20(wcs20ParamsObj *params, rectObj *outBBOX, char *crs, size_t maxCRSStringLength);
 #endif /* nef MAPWCS_H */
