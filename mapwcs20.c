@@ -2432,8 +2432,8 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
 
 static int msWCSClearCoverageMetadata20(wcs20coverageMetadataObj *cm)
 {
-    msFree(cm->native_format);
     int i = 0, j = 0;
+    msFree(cm->native_format);
     for(i = 0; i < cm->numnilvalues; ++i)
     {
         msFree(cm->nilvalues[i]);

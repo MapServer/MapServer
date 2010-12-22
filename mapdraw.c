@@ -1407,12 +1407,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
    * do not enter the image */
   if(layer->class[c]->numstyles > 0 && layer->class[c]->styles[0] != NULL) {
       double maxsize,maxunscaledsize;
+      symbolObj *symbol;
       styleObj *style = layer->class[c]->styles[0];
       if (style->symbol >= map->symbolset.numsymbols) {
           msSetError(MS_SYMERR, "Invalid symbol index: %d", "msDrawShape()", style->symbol);
           return MS_FAILURE;
       }
-      symbolObj *symbol = map->symbolset.symbol[style->symbol];
+      symbol = map->symbolset.symbol[style->symbol];
       if(symbol->type == MS_SYMBOL_PIXMAP) {
     	  if(MS_SUCCESS != msPreloadImageSymbol(MS_MAP_RENDERER(map),symbol))
     		  return MS_FAILURE;
