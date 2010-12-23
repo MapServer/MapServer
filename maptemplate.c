@@ -1865,6 +1865,9 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   char *irh, *irf; /* inner ring: necessary for complex polygons */
   char *orh, *orf; /* outer ring */
 
+  int useRingFormatting = MS_FALSE; /* do we need to consider inner and outer rings in formatting */
+  int isOuterRing;
+
   int centroid;
   int precision;
 
@@ -1913,7 +1916,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     projectionString = NULL;
 
     tagOffset = tagStart - *line;
-    
+ 
     /* check for any tag arguments */
     if(getTagArgs("shpxy", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
@@ -2077,7 +2080,14 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       
     /* TODO: add thinning support here */
       
-    /* build the coordinate string */
+    /* 
+    ** build the coordinate string 
+    */
+
+    /* do we need to handle inner/outer rings */
+    if(tShape.type == MS_SHAPE_POLYGON && strlen(orh) > 0 && strlen(irh) > 0)
+      useRingFormatting = MS_TRUE;
+
     if(strlen(sh) > 0) coords = msStringConcatenate(coords, sh);
     for(i=0; i<tShape.numlines; i++) { /* e.g. part */
 
@@ -2086,14 +2096,32 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
         (tShape.type == MS_SHAPE_POLYGON && tShape.line[i].numpoints < 3))
         continue;
 
-      if(strlen(ph) > 0) coords = msStringConcatenate(coords, ph);
+      if(useRingFormatting) {
+        isOuterRing = msIsOuterRing(&tShape, i); /* compute once */
+        if(isOuterRing == MS_TRUE)
+          coords = msStringConcatenate(coords, orh);
+        else
+          coords = msStringConcatenate(coords, irh);
+      } else if(strlen(ph) > 0) {
+        coords = msStringConcatenate(coords, ph);
+      }
+
       for(j=0; j<tShape.line[i].numpoints-1; j++) {
         snprintf(point, sizeof(point), pointFormat1, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
         coords = msStringConcatenate(coords, point);
       }
       snprintf(point, sizeof(point), pointFormat2, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
       coords = msStringConcatenate(coords, point);
-      if(strlen(pf) > 0) coords = msStringConcatenate(coords, pf);
+
+      if(useRingFormatting) {
+        if(isOuterRing == MS_TRUE)
+          coords = msStringConcatenate(coords, orf);
+        else
+          coords = msStringConcatenate(coords, irf);
+      } else if(strlen(pf) > 0) {
+        coords = msStringConcatenate(coords, pf);
+      }
+
       if((i < tShape.numlines-1) && (strlen(ps) > 0)) coords = msStringConcatenate(coords, ps);
     }
     if(strlen(sf) > 0) coords = msStringConcatenate(coords, sf);
