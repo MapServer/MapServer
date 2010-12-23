@@ -212,7 +212,7 @@ void msComputeBounds(shapeObj *shape)
 }
 
 /* checks to see if ring r is an outer ring of shape */
-static int isOuterRing(shapeObj *shape, int r) 
+int msIsOuterRing(shapeObj *shape, int r) 
 {
   int i, status=MS_TRUE; 
   int result1, result2;
@@ -254,7 +254,7 @@ int *msGetOuterList(shapeObj *shape)
   MS_CHECK_ALLOC(list, sizeof(int)*shape->numlines, NULL);
 
   for(i=0; i<shape->numlines; i++)
-    list[i] = isOuterRing(shape, i);
+    list[i] = msIsOuterRing(shape, i);
 
   return(list);
 }
@@ -1207,7 +1207,7 @@ double msGetPolygonArea(shapeObj *p)
   double area=0;
 
   for(i=0; i<p->numlines; i++) {
-    if(isOuterRing(p, i))
+    if(msIsOuterRing(p, i))
       area += getRingArea(&(p->line[i]));
     else
       area -= getRingArea(&(p->line[i])); /* hole */

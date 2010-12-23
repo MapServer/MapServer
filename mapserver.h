@@ -1957,6 +1957,7 @@ MS_DLL_EXPORT char *msShapeToWKT(shapeObj *shape);
 MS_DLL_EXPORT void msInitShape(shapeObj *shape);
 MS_DLL_EXPORT void msShapeDeleteLine( shapeObj *shape, int line );
 MS_DLL_EXPORT int msCopyShape(shapeObj *from, shapeObj *to);
+MS_DLL_EXPORT int msIsOuterRing(shapeObj *shape, int r);
 MS_DLL_EXPORT int *msGetOuterList(shapeObj *shape);
 MS_DLL_EXPORT int *msGetInnerList(shapeObj *shape, int r, int *outerlist);
 MS_DLL_EXPORT void msComputeBounds(shapeObj *shape);
