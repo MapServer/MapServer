@@ -1410,11 +1410,11 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       init_string[0] = '\0';
 
       if( strcasecmp(id,"CRS84") == 0 )
-          strcpy( init_string, "init=epsg:4326" );
+          strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
       else if( strcasecmp(id,"CRS83") == 0 )
-          strcpy( init_string, "init=epsg:4269" );
+          strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
       else if( strcasecmp(id,"CRS27") == 0 )
-          strcpy( init_string, "init=epsg:4267" );
+          strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
       else
       {
           msSetError( MS_PROJERR, 
@@ -1441,15 +1441,15 @@ int msLoadProjectionString(projectionObj *p, const char *value)
           code++;
 
       /* translate into PROJ.4 format. */
-      sprintf( init_string, "init=epsg:%s", code );
+      snprintf( init_string, sizeof(init_string), "init=epsg:%s", code );
 
-      p->args = (char**)malloc(sizeof(char*) * 2);
-      p->args[0] = strdup(init_string);
+      p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
+      p->args[0] = msStrdup(init_string);
       p->numargs = 1;
 
       if( atoi(code) >= 4000 && atoi(code) < 5000 )
       {
-          p->args[1] = strdup("+epsgaxis=ne");
+          p->args[1] = msStrdup("+epsgaxis=ne");
           p->numargs = 2;
       }
   }
@@ -1467,11 +1467,11 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       init_string[0] = '\0';
 
       if( strcasecmp(id,"CRS84") == 0 )
-          strcpy( init_string, "init=epsg:4326" );
+          strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
       else if( strcasecmp(id,"CRS83") == 0 )
-          strcpy( init_string, "init=epsg:4269" );
+          strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
       else if( strcasecmp(id,"CRS27") == 0 )
-          strcpy( init_string, "init=epsg:4267" );
+          strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
       else
       {
           msSetError( MS_PROJERR,
@@ -1481,8 +1481,8 @@ int msLoadProjectionString(projectionObj *p, const char *value)
           return -1;
       }
 
-      p->args = (char**)malloc(sizeof(char*) * 2);
-      p->args[0] = strdup(init_string);
+      p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
+      p->args[0] = msStrdup(init_string);
       p->numargs = 1;
   }
   else if (strncasecmp(value, "CRS:",4) == 0 )
@@ -1490,11 +1490,11 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       char init_string[100];
       init_string[0] = '\0';
       if (atoi(value+4) == 84)
-        strcpy( init_string, "init=epsg:4326");
+        strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
       else if (atoi(value+4) == 83)
-        strcpy( init_string, "init=epsg:4269");
+        strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
       else if (atoi(value+4) == 27)
-        strcpy( init_string, "init=epsg:4267");
+        strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
       else
       {
           msSetError( MS_PROJERR, 

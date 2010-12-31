@@ -213,15 +213,11 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
 /* -------------------------------------------------------------------- */
     for(i=0; i<numformats; i++) 
     {
-        int       new_length;
-        const char *format = formats[i];
-            
-        new_length = strlen(format_list) + strlen(format) + 2;
-        format_list = (char *) realloc(format_list,new_length);
-        
-        if( strlen(format_list) > 0 )
-            strcat( format_list, "," );
-        strcat( format_list, format );
+        if(i > 0)
+        {
+            format_list = msStringConcatenate(format_list, (char *) ",");
+        }
+        format_list = msStringConcatenate(format_list, formats[i]);
     }
     msFreeCharArray(formats,numformats);
 

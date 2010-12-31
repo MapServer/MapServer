@@ -81,7 +81,7 @@ static int msStringParseInteger(const char *string, long *dest)
 /*                   msStringParseDouble()                              */
 /*                                                                      */
 /*      Tries to parse a string as a double value. If not possible      */
-/*      the value MS_WCS20_UNBOUNDED is stored as value.                */
+/*      the value 0 is stored as value.                                 */
 /*      If no characters could be parsed, MS_FAILURE is returned. If at */
 /*      least some characters could be parsed, MS_DONE is returned and  */
 /*      only if all characters could be parsed, MS_SUCCESS is returned. */
@@ -93,7 +93,6 @@ static int msStringParseDouble(const char *string, double *dest)
     *dest = strtod(string, &parse_check);
     if(parse_check == string)
     {
-        *dest = MS_WCS20_UNBOUNDED;
         return MS_FAILURE;
     }
     else if(parse_check - strlen(string) != string)
@@ -184,9 +183,6 @@ static void msWCSFreeSubsetObj20(wcs20SubsetObjPtr subset)
     {
         return;
     }
-
-    msDebug("msWCSFreeSubsetObj20(): freeing subset for axis %s\n",
-            subset->axis);
     msFree(subset->axis);
     msFree(subset->crs);
     msFree(subset);
@@ -254,6 +250,21 @@ static wcs20AxisObjPtr msWCSFindAxis20(wcs20ParamsObjPtr params,
 }
 
 /************************************************************************/
+/*                   msWCSInsertAxisObj20()                             */
+/*                                                                      */
+/*      Helper function to insert an axis object into the axes list of  */
+/*      a params object.                                                */
+/************************************************************************/
+
+static void msWCSInsertAxisObj20(wcs20ParamsObjPtr params, wcs20AxisObjPtr axis)
+{
+    params->numaxes++;
+    params->axes = (wcs20AxisObjPtr*) msSmallRealloc(params->axes,
+            sizeof(wcs20AxisObjPtr) * (params->numaxes));
+    params->axes[params->numaxes - 1] = axis;
+}
+
+/************************************************************************/
 /*                   msWCSCreateParamsObj20()                           */
 /*                                                                      */
 /*      Creates a new wcs20ParamsObj and initializes it to standard     */
@@ -262,28 +273,32 @@ static wcs20AxisObjPtr msWCSFindAxis20(wcs20ParamsObjPtr params,
 
 wcs20ParamsObjPtr msWCSCreateParamsObj20()
 {
-    wcs20ParamsObjPtr params = (wcs20ParamsObjPtr) malloc(sizeof(wcs20ParamsObj));
+    wcs20ParamsObjPtr params
+        = (wcs20ParamsObjPtr) malloc(sizeof(wcs20ParamsObj));
     MS_CHECK_ALLOC(params, sizeof(wcs20ParamsObj), NULL);
 
-    params->version = NULL; /* should be 2.0.0 */
-    params->request = NULL;
-    params->service = NULL; /* should be WCS anyway*/
+    params->version         = NULL;
+    params->request         = NULL;
+    params->service         = NULL;
     params->accept_versions = NULL;
-    params->ids = NULL;
-    params->width = 0;
-    params->height = 0;
-    params->resolutionX = MS_WCS20_UNBOUNDED;
-    params->resolutionY = MS_WCS20_UNBOUNDED;
+    params->sections        = NULL;
+    params->updatesequence  = NULL;
+    params->ids             = NULL;
+    params->width           = 0;
+    params->height          = 0;
+    params->resolutionX     = MS_WCS20_UNBOUNDED;
+    params->resolutionY     = MS_WCS20_UNBOUNDED;
     params->resolutionUnits = NULL;
-    params->numaxes = 0;
-    params->axes = NULL;
-    params->format = NULL;
-    params->multipart = 0;
-    params->interpolation = NULL;
-    params->outputcrs = NULL;
-    params->subsetcrs = NULL;
+    params->numaxes         = 0;
+    params->axes            = NULL;
+    params->format          = NULL;
+    params->multipart       = 0;
+    params->interpolation   = NULL;
+    params->outputcrs       = NULL;
+    params->subsetcrs       = NULL;
     params->bbox.minx = params->bbox.miny = -DBL_MAX;
-    params->bbox.maxx = params->bbox.maxy = DBL_MAX;
+    params->bbox.maxx = params->bbox.maxy =  DBL_MAX;
+    params->invalid_get_parameters = NULL;
 
     return params;
 }
@@ -300,10 +315,13 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
     {
         return;
     }
+
     msFree(params->version);
     msFree(params->request);
     msFree(params->service);
     CSLDestroy(params->accept_versions);
+    CSLDestroy(params->sections);
+    msFree(params->updatesequence);
     CSLDestroy(params->ids);
     msFree(params->resolutionUnits);
     msFree(params->format);
@@ -316,22 +334,8 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
         msWCSFreeAxisObj20(params->axes[params->numaxes]);
     }
     msFree(params->axes);
+    CSLDestroy(params->invalid_get_parameters);
     msFree(params);
-}
-
-/************************************************************************/
-/*                   msWCSInsertAxisObj20()                             */
-/*                                                                      */
-/*      Helper function to insert an axis object into the axes list of  */
-/*      a params object.                                                */
-/************************************************************************/
-
-static void msWCSInsertAxisObj20(wcs20ParamsObjPtr params, wcs20AxisObjPtr axis)
-{
-    params->numaxes++;
-    params->axes = (wcs20AxisObjPtr*) msSmallRealloc(params->axes,
-            sizeof(wcs20AxisObjPtr) * (params->numaxes));
-    params->axes[params->numaxes - 1] = axis;
 }
 
 /************************************************************************/
@@ -607,6 +611,7 @@ static int msWCSParseResolutionString20(char *string,
 
     if(msStringParseDouble(number, outResolution) != MS_SUCCESS)
     {
+        *outResolution = MS_WCS20_UNBOUNDED;
         msSetError(MS_WCSERR, "Invalid resolution parameter value.",
                 "msWCSParseSize20()", string);
         return MS_FAILURE;
@@ -626,6 +631,7 @@ static int msWCSParseRequest20_XMLGetCapabilities(
         xmlNodePtr firstChild, wcs20ParamsObjPtr params)
 {
     xmlNodePtr child;
+    char *content = NULL;
     for(child = firstChild; child != NULL; child = child->next)
     {
         XML_LOOP_IGNORE_COMMENT_OR_TEXT(child)
@@ -634,8 +640,6 @@ static int msWCSParseRequest20_XMLGetCapabilities(
             xmlNodePtr versionNode = NULL;
             for(versionNode = child->children; versionNode != NULL; versionNode = versionNode->next)
             {
-                char *content = NULL;
-
                 XML_LOOP_IGNORE_COMMENT_OR_TEXT(versionNode)
                 else if(!EQUAL((char *)versionNode->name, "Version"))
                 {
@@ -644,18 +648,40 @@ static int msWCSParseRequest20_XMLGetCapabilities(
                 }
 
                 content = (char *)xmlNodeGetContent(versionNode);
-                if(content != NULL)
-                {
-                    params->accept_versions = CSLAddString(params->accept_versions, content);
-                }
+                params->accept_versions = CSLAddString(params->accept_versions, content);
                 xmlFree(content);
             }
-
-            /* version 2.0.x was not in the list -> exiting */
-            if(!params->version)
+        }
+        else if(EQUAL((char *)child->name, "Sections"))
+        {
+            xmlNodePtr sectionNode = NULL;
+            for(sectionNode = child->children; sectionNode != NULL; sectionNode = sectionNode->next)
             {
-                return MS_DONE;
+                XML_LOOP_IGNORE_COMMENT_OR_TEXT(sectionNode)
+                else if(!EQUAL((char *)sectionNode->name, "Section"))
+                {
+                    XML_UNKNOWN_NODE_ERROR(sectionNode,
+                            "msWCSParseRequest20_XMLGetCapabilities()");
+                }
+
+                content = (char *)xmlNodeGetContent(sectionNode);
+                params->sections = CSLAddString(params->sections, content);
+                xmlFree(content);
             }
+        }
+        else if(EQUAL((char *)child->name, "UpdateSequence"))
+        {
+            params->updatesequence =
+                    (char *)xmlNodeGetContent(child);
+        }
+        else if(EQUAL((char *)child->name, "AcceptFormats"))
+        {
+            /* Maybe not necessary, since only format is xml.   */
+            /* At least ignore it, to not generate an error.    */
+        }
+        else if(EQUAL((char *)child->name, "AcceptLanguages"))
+        {
+            /* ignore */
         }
         else
         {
@@ -792,7 +818,14 @@ static int msWCSParseRequest20_XMLGetCoverage(
                     XML_UNKNOWN_NODE_ERROR(node, "msWCSParseRequest20_XMLGetCoverage()");
                 }
             }
-            subset = msWCSCreateSubsetObj20();
+            if(NULL == (subset = msWCSCreateSubsetObj20()))
+            {
+                msFree(axisName);
+                msFree(min);
+                msFree(max);
+                msFree(crs);
+                return MS_FAILURE;
+            }
 
             /* min and max have to have a value */
             if(min == NULL )
@@ -812,7 +845,14 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
             if(NULL == (axis = msWCSFindAxis20(params, subset->axis)))
             {
-                axis = msWCSCreateAxisObj20();
+                if(NULL == (axis = msWCSCreateAxisObj20()))
+                {
+                    msFree(axisName);
+                    msFree(min);
+                    msFree(max);
+                    msFree(crs);
+                    return MS_FAILURE;
+                }
                 axis->name = msStrdup(subset->axis);
                 msWCSInsertAxisObj20(params, axis);
             }
@@ -846,7 +886,10 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
             if(NULL == (axis = msWCSFindAxis20(params, axisName)))
             {
-                axis = msWCSCreateAxisObj20();
+                if(NULL == (axis = msWCSCreateAxisObj20()))
+                {
+                    return MS_FAILURE;
+                }
                 axis->name = msStrdup(axisName);
                 msWCSInsertAxisObj20(params, axis);
             }
@@ -877,7 +920,10 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
             if(NULL == (axis = msWCSFindAxis20(params, axisName)))
             {
-                axis = msWCSCreateAxisObj20();
+                if(NULL == (axis = msWCSCreateAxisObj20()))
+                {
+                    return MS_FAILURE;
+                }
                 axis->name = msStrdup(axisName);
                 msWCSInsertAxisObj20(params, axis);
             }
@@ -922,9 +968,11 @@ static int msWCSParseRequest20_XMLGetCoverage(
 int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
 {
     int i;
-    char **unknown_parameters = NULL;
-    if (!params || !request)
+    if (params == NULL || request == NULL)
+    {
+        msSetError(MS_WCSERR, "Internal error.", "msWCSParseRequest20()");
         return MS_FAILURE;
+    }
 
     /* Parse the POST request */
     if (request->type == MS_POST_REQUEST && request->postrequest &&
@@ -938,11 +986,11 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         msDebug("msWCSParseRequest20(): Parsing request %s\n",
                 request->postrequest);
 
-        if (params->version != NULL
-                || params->request != NULL
-                || params->service != NULL
-                || params->ids != NULL
-                || params->axes != NULL)
+        if (params->version    != NULL
+            || params->request != NULL
+            || params->service != NULL
+            || params->ids     != NULL
+            || params->axes    != NULL)
         {
             msSetError(MS_WCSERR, "Params object has already been parsed",
                     "msWCSParseRequest20()");
@@ -1064,9 +1112,10 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
     for (i = 0; i < request->NumParams; ++i)
     {
         char *key = NULL, *value = NULL;
+        char **tokens;
+        int num, j;
         key = request->ParamNames[i];
         value = request->ParamValues[i];
-
 
         if (EQUAL(key, "VERSION"))
         {
@@ -1100,20 +1149,38 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         }
         else if (EQUAL(key, "ACCEPTVERSIONS"))
         {
-            char **tokens;
-            int num, i;
             tokens = msStringSplit(value, ',', &num);
-            for(i = 0; i < num; ++i)
+            for(j = 0; j < num; ++j)
             {
                 params->accept_versions =
-                        CSLAddString(params->accept_versions, tokens[i]);
+                        CSLAddString(params->accept_versions, tokens[j]);
             }
             msFreeCharArray(tokens, num);
         }
+        else if (EQUAL(key, "SECTIONS"))
+        {
+            tokens = msStringSplit(value, ',', &num);
+            for(j = 0; j < num; ++j)
+            {
+                params->sections =
+                        CSLAddString(params->sections, tokens[j]);
+            }
+            msFreeCharArray(tokens, num);
+        }
+        else if (EQUAL(key, "UPDATESEQUENCE"))
+        {
+            params->updatesequence = msStrdup(value);
+        }
+        else if (EQUAL(key, "ACCEPTFORMATS"))
+        {
+            /* ignore */
+        }
+        else if (EQUAL(key, "ACCEPTLANGUAGES"))
+        {
+            /* ignore */
+        }
         else if (EQUAL(key, "COVERAGEID"))
         {
-            char **tokens;
-            int num = 0, j = 0;
             if (params->ids != NULL)
             {
                 msSetError(MS_WCSERR, "Parameter 'CoverageID' is already set. "
@@ -1148,7 +1215,6 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         {
             params->outputcrs = msStrdup(value);
         }
-
         else if (EQUALN(key, "SIZE", 4))
         {
             wcs20AxisObjPtr axis = NULL;
@@ -1162,7 +1228,10 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
 
             if(NULL == (axis = msWCSFindAxis20(params, axisName)))
             {
-                axis = msWCSCreateAxisObj20();
+                if(NULL == (axis = msWCSCreateAxisObj20()))
+                {
+                    return MS_FAILURE;
+                }
                 axis->name = msStrdup(axisName);
                 msWCSInsertAxisObj20(params, axis);
             }
@@ -1191,7 +1260,10 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
             /* check if axis object already exists, otherwise create a new one */
             if(NULL == (axis = msWCSFindAxis20(params, axisName)))
             {
-                axis = msWCSCreateAxisObj20();
+                if(NULL == (axis = msWCSCreateAxisObj20()))
+                {
+                    return MS_FAILURE;
+                }
                 axis->name = msStrdup(axisName);
                 msWCSInsertAxisObj20(params, axis);
             }
@@ -1209,6 +1281,10 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         {
             wcs20AxisObjPtr axis = NULL;
             wcs20SubsetObjPtr subset = msWCSCreateSubsetObj20();
+            if(NULL == subset)
+            {
+                return MS_FAILURE;
+            }
             if (msWCSParseSubsetKVPString20(subset, value) == MS_FAILURE)
             {
                 msWCSFreeSubsetObj20(subset);
@@ -1217,7 +1293,10 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
 
             if(NULL == (axis = msWCSFindAxis20(params, subset->axis)))
             {
-                axis = msWCSCreateAxisObj20();
+                if(NULL == (axis = msWCSCreateAxisObj20()))
+                {
+                    return MS_FAILURE;
+                }
                 axis->name = msStrdup(subset->axis);
                 msWCSInsertAxisObj20(params, axis);
             }
@@ -1225,47 +1304,20 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
             /* TODO: what if subset is not empty -> throw error*/
             axis->subset = subset;
         }
-        /* insert other mapserver internal parameters here */
+        /* insert other mapserver internal, to be ignored parameters here */
         else if(EQUAL(key, "MAP"))
         {
-            /* to be ignored */
             continue;
         }
         else
         {
             /* append unknown parameter to the list */
-            unknown_parameters = CSLAddString(unknown_parameters, key);
+            params->invalid_get_parameters
+                = CSLAddString(params->invalid_get_parameters, key);
         }
     }
 
-    /* check if any unknown parameters are present */
-    /* create nice error message, containing all unknown params */
-    if (CSLCount(unknown_parameters) > 0
-            && EQUAL(params->service, "WCS")
-            && EQUALN(params->version, "2.0", 3))
-    {
-        char *concat = NULL;
-        int count = CSLCount(unknown_parameters);
-        for(i = 0; i < count; ++i)
-        {
-            concat = msStringConcatenate(concat, (char *)"'");
-            concat = msStringConcatenate(concat,
-                    (char *)CSLGetField(unknown_parameters, i));
-            concat = msStringConcatenate(concat, (char *)"'");
-            if(i + 1 != count)
-            {
-                concat = msStringConcatenate(concat, ", ");
-            }
-        }
-        if(concat != NULL)
-        {
-            msSetError(MS_WCSERR, "Unknown parameter%s: %s.",
-                    "msWCSParseRequest20()", (count > 1) ? "s" : "", concat);
-            CSLDestroy(unknown_parameters);
-            msFree(concat);
-            return MS_FAILURE;
-        }
-    }
+
 
     return MS_SUCCESS;
 }
@@ -1499,15 +1551,11 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
     /* -------------------------------------------------------------------- */
     for(i = 0; i < numformats; i++)
     {
-        int new_length;
-        const char *format = formats[i];
-
-        new_length = strlen(format_list) + strlen(format) + 2;
-        format_list = (char *) msSmallRealloc(format_list,new_length);
-
-        if( strlen(format_list) > 0 )
-            strcat( format_list, "," );
-        strcat( format_list, format );
+        if(i > 0)
+        {
+            format_list = msStringConcatenate(format_list, (char *) ",");
+        }
+        format_list = msStringConcatenate(format_list, formats[i]);
     }
     msFreeCharArray(formats,numformats);
 
@@ -1716,7 +1764,7 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
             psNilValues = xmlNewChild(
                 xmlNewChild(psQuantity, psSweNs, BAD_CAST "nilValues", NULL),
                 psSweNs, BAD_CAST "NilValues", NULL);
-            sprintf(id, "NIL_VALUES_%s", layer->name);
+            snprintf(id, sizeof(id), "NIL_VALUES_%s", layer->name);
             xmlNewNsProp(psNilValues, psGmlNs, BAD_CAST "id", BAD_CAST id);
             for(j = 0; j < numNilValues; ++j)
             {
@@ -1731,7 +1779,7 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
             char href[100];
             xmlNodePtr psTemp =
                 xmlNewChild(psQuantity, psSweNs, BAD_CAST "nilValues", NULL);
-            sprintf(href, "#NIL_VALUES_%s", layer->name);
+            snprintf(href, sizeof(href), "#NIL_VALUES_%s", layer->name);
             xmlNewNsProp(psTemp, psXLinkNs, BAD_CAST "href", BAD_CAST href);
         }*/
     }
@@ -2030,39 +2078,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 /*      Inits a coverageMetadataObj. Uses msWCSGetCoverageMetadata()    */
 /*      but exchanges the SRS URN by an URI for compliancy with 2.0.    */
 /************************************************************************/
-/*
-static int msWCSGetCoverageMetadata20_old(layerObj *layer, coverageMetadataObj *cm)
-{
-    char *srs_uri;
-    int status = msWCSGetCoverageMetadata(layer, cm);
-    if(status != MS_SUCCESS)
-        return status;
 
-    if((srs_uri = msOWSGetProjURI(&(layer->projection), &(layer->metadata),
-    "COM", MS_TRUE)) == NULL)
-    {
-        srs_uri = msOWSGetProjURI(&(layer->map->projection),
-            &(layer->map->web.metadata),
-            "COM", MS_TRUE);
-    }
-    if( srs_uri != NULL )
-    {
-        if( strlen(srs_uri) > sizeof(cm->srs_urn) - 1 )
-        {
-            msFree( srs_uri );
-            msSetError(MS_WCSERR, "SRS URN too long!",
-                "msWCSGetCoverageMetadata20()");
-            return MS_FAILURE;
-        }
-
-        strcpy( cm->srs_urn, srs_uri );
-        msFree( srs_uri );
-    }
-    else
-        cm->srs_urn[0] = '\0';
-    return MS_SUCCESS;
-}
-*/
 static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj *cm)
 {
     char  *srs_uri = NULL;
@@ -2083,7 +2099,6 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         }
     }
 
-
     /* -------------------------------------------------------------------- */
     /*      Get the SRS in uri format.                                      */
     /* -------------------------------------------------------------------- */
@@ -2103,7 +2118,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             return MS_FAILURE;
         }
 
-        strncpy( cm->srs_uri, srs_uri, sizeof(cm->srs_uri) );
+        strlcpy( cm->srs_uri, srs_uri, sizeof(cm->srs_uri) );
         msFree( srs_uri );
     }
     else
@@ -2655,9 +2670,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
                            wcs20ParamsObjPtr params)
 {
     xmlDocPtr psDoc = NULL;       /* document pointer */
-    xmlNodePtr psRootNode, psOperationsNode, psNode;
-    xmlNodePtr psTmpNode, psServiceMetadataNode;
-    char *identifier_list = NULL, *format_list = NULL;
+    xmlNodePtr psRootNode, psOperationsNode, psServiceMetadataNode, psNode;
     const char *updatesequence = NULL;
     xmlNsPtr psOwsNs = NULL,
             psXLinkNs = NULL,
@@ -2666,38 +2679,18 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     char *script_url=NULL, *script_url_encoded=NULL;
     int i;
 
-/* -------------------------------------------------------------------- */
-/*      Build list of layer identifiers available.                      */
-/* -------------------------------------------------------------------- */
-    identifier_list = msStrdup("");
-    for(i=0; i<map->numlayers; i++)
-    {
-        layerObj *layer = map->layers[i];
-        int       new_length;
-
-        if(!msWCSIsLayerSupported(layer))
-            continue;
-
-        new_length = strlen(identifier_list) + strlen(layer->name) + 2;
-        identifier_list = (char *) msSmallRealloc(identifier_list,new_length);
-
-        if( strlen(identifier_list) > 0 )
-            strcat( identifier_list, "," );
-        strcat( identifier_list, layer->name );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create document.                                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create document.                                                */
+    /* -------------------------------------------------------------------- */
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
     psRootNode = xmlNewNode(NULL, BAD_CAST "Capabilities");
 
     xmlDocSetRootElement(psDoc, psRootNode);
 
-/* -------------------------------------------------------------------- */
-/*      Name spaces                                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Name spaces                                                     */
+    /* -------------------------------------------------------------------- */
 
     msWCSPrepareNamespaces20(psDoc, psRootNode, map);
 
@@ -2712,133 +2705,126 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->version );
 
     /* TODO: remove updatesequence? */
+
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
+    if (params->updatesequence != NULL)
+    {
+        i = msOWSNegotiateUpdateSequence(params->updatesequence, updatesequence);
+        if (i == 0) /* current */
+        {
+            msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)",
+                    "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
+            return msWCSException(map, "updatesequence",
+                    "CurrentUpdateSequence", params->version);
+        }
+        if (i > 0) /* invalid */
+        {
+            msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)",
+                    "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
+            return msWCSException(map, "updatesequence",
+                    "InvalidUpdateSequence", params->version);
+        }
+    }
+    if(updatesequence != NULL)
+    {
+        xmlNewProp(psRootNode, BAD_CAST "updateSequence", BAD_CAST updatesequence);
+    }
 
-    if (updatesequence)
-      xmlNewProp(psRootNode, BAD_CAST "updateSequence", BAD_CAST updatesequence);
+    /* -------------------------------------------------------------------- */
+    /*      Service identification.                                         */
+    /* -------------------------------------------------------------------- */
+    if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceIdentification") )
+    {
+        psNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
+                                    psOwsNs, map, "OGC WCS", params->version, "CO"));
+        msWCSGetCapabilities20_CreateProfiles(map, psNode, psOwsNs);
+    }
 
+    /* Service Provider */
+    if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceProvider") )
+    {
+        xmlAddChild(psRootNode,
+                msOWSCommonServiceProvider(psOwsNs, psXLinkNs, map, "CO"));
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Operations metadata.                                            */
+    /* -------------------------------------------------------------------- */
+    if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "OperationsMetadata") )
+    {
+        if ((script_url = msOWSGetOnlineResource(map, "COM", "onlineresource", req)) == NULL
+            || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
+        {
+            msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities20()");
+            return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
+        }
+        free(script_url);
+
+        psOperationsNode = xmlAddChild(psRootNode,msOWSCommonOperationsMetadata(psOwsNs));
+
+        /* -------------------------------------------------------------------- */
+        /*      GetCapabilities - add Sections and AcceptVersions?              */
+        /* -------------------------------------------------------------------- */
+        psNode = msOWSCommonOperationsMetadataOperation(
+            psOwsNs, psXLinkNs,
+            "GetCapabilities", OWS_METHOD_GETPOST, script_url_encoded);
+        xmlAddChild(psOperationsNode, psNode);
+
+        /* -------------------------------------------------------------------- */
+        /*      DescribeCoverage                                                */
+        /* -------------------------------------------------------------------- */
+        psNode = msOWSCommonOperationsMetadataOperation(
+            psOwsNs, psXLinkNs,
+            "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+        xmlAddChild(psOperationsNode, psNode);
+
+        /* -------------------------------------------------------------------- */
+        /*      GetCoverage                                                     */
+        /* -------------------------------------------------------------------- */
+        psNode = msOWSCommonOperationsMetadataOperation(
+            psOwsNs, psXLinkNs,
+            "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+        xmlAddChild(psOperationsNode, psNode);
+
+        msFree(script_url_encoded);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Service metadata.                                               */
+    /* -------------------------------------------------------------------- */
+    /* it is mandatory, but unused for now */
     psServiceMetadataNode = xmlAddChild(psRootNode, xmlNewNode(psWcsNs, BAD_CAST "ServiceMetadata"));
     xmlNewProp(psServiceMetadataNode, BAD_CAST "version", BAD_CAST "1.0.0");
 
-/* -------------------------------------------------------------------- */
-/*      Service metadata.                                               */
-/* -------------------------------------------------------------------- */
-
-    psTmpNode = xmlAddChild(psServiceMetadataNode,msOWSCommonServiceIdentification(
-                                psOwsNs, map, "OGC WCS", params->version, "CO"));
-
-
-    msWCSGetCapabilities20_CreateProfiles(map, psTmpNode, psOwsNs);
-
-    psTmpNode = xmlAddChild(psServiceMetadataNode, msOWSCommonServiceProvider(
-                                psOwsNs, psXLinkNs, map, "CO"));
-
-/* -------------------------------------------------------------------- */
-/*      Operations metadata.                                            */
-/* -------------------------------------------------------------------- */
-    /*operation metadata */
-    if ((script_url=msOWSGetOnlineResource(map, "COM", "onlineresource", req)) == NULL
-        || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
+    /* -------------------------------------------------------------------- */
+    /*      Contents section.                                               */
+    /* -------------------------------------------------------------------- */
+    if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "Contents") )
     {
-        msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities20()");
-        return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
+        psNode = xmlNewChild( psRootNode, psWcsNs, BAD_CAST "Contents", NULL );
+
+        for(i = 0; i < map->numlayers; ++i)
+        {
+            layerObj *layer = map->layers[i];
+            int       status;
+
+            if(!msWCSIsLayerSupported(layer))
+                continue;
+
+            status = msWCSGetCapabilities20_CoverageSummary(
+                map, params, psDoc, psNode, layer );
+            if(status != MS_SUCCESS)
+            {
+                return MS_FAILURE;
+            }
+        }
     }
-    free( script_url );
-
-
-    psOperationsNode = xmlAddChild(psServiceMetadataNode,msOWSCommonOperationsMetadata(psOwsNs));
-
-/* -------------------------------------------------------------------- */
-/*      GetCapabilities - add Sections and AcceptVersions?              */
-/* -------------------------------------------------------------------- */
-    psNode = msOWSCommonOperationsMetadataOperation(
-        psOwsNs, psXLinkNs,
-        "GetCapabilities", OWS_METHOD_GETPOST, script_url_encoded);
-
-    xmlAddChild(psOperationsNode, psNode);
-    /* TODO: Check if 'Parameter' tags are valid in the schema */
-    /*xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "service", "WCS"));
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "version", (char *)params->version));*/
-
-/* -------------------------------------------------------------------- */
-/*      DescribeCoverage                                                */
-/* -------------------------------------------------------------------- */
-    psNode = msOWSCommonOperationsMetadataOperation(
-        psOwsNs, psXLinkNs,
-        "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
-
-    xmlAddChild(psOperationsNode, psNode);
-    /*xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "service", "WCS"));
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "version", (char *)params->version));
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "identifiers", identifier_list )); */
-
-/* -------------------------------------------------------------------- */
-/*      GetCoverage                                                     */
-/* -------------------------------------------------------------------- */
-    psNode = msOWSCommonOperationsMetadataOperation(
-        psOwsNs, psXLinkNs,
-        "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
-
-    format_list = msWCSGetFormatsList20( map, NULL );
-
-    xmlAddChild(psOperationsNode, psNode);
-    /*xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "service", "WCS"));
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "version", (char *)params->version));
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "Identifier", identifier_list ));
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "InterpolationType",
-                    "NEAREST_NEIGHBOUR,BILINEAR" ));
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "format", format_list ));
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "store", "false" ));
-    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                    ows_version, psOwsNs, "Parameter", "GridBaseCRS",
-                    "urn:ogc:def:crs:epsg::4326" ));*/
-
-    msFree( format_list );
-
-/* -------------------------------------------------------------------- */
-/*      Contents section.                                               */
-/* -------------------------------------------------------------------- */
-    psOperationsNode = xmlNewChild( psRootNode, psWcsNs, BAD_CAST "Contents", NULL );
-
-    for(i=0; i<map->numlayers; i++)
-    {
-        layerObj *layer = map->layers[i];
-        int       status;
-
-        if(!msWCSIsLayerSupported(layer))
-            continue;
-
-        status = msWCSGetCapabilities20_CoverageSummary(
-            map, params, psDoc, psOperationsNode, layer );
-        if(status != MS_SUCCESS) return MS_FAILURE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Write out the document.                                         */
-/* -------------------------------------------------------------------- */
-
-    msDebug("Write Document");
-
+    /* -------------------------------------------------------------------- */
+    /*      Write out the document and clean up.                            */
+    /* -------------------------------------------------------------------- */
     msWCSWriteDocument20(map, psDoc);
     xmlFreeDoc(psDoc);
-
     xmlCleanupParser();
-
-    /* clean up */
-    free( script_url_encoded );
-    free( identifier_list );
-
     return MS_SUCCESS;
 }
 
@@ -3476,13 +3462,16 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     /* build a bandlist (default is ALL bands) */
     if(!bandlist)
     {
-        bandlist = (char *) msSmallMalloc(cm.numbands*30+30 );
-        strcpy(bandlist, "1");
+        bandlist = msStrdup("1");
         for(i = 1; i < cm.numbands; i++)
-            sprintf(bandlist+strlen(bandlist),",%d", i+1);
+        {
+            char strnumber[10];
+            snprintf(strnumber, sizeof(strnumber), ",%d", i + 1);
+            bandlist = msStringConcatenate(bandlist, strnumber);
+        }
     }
     msLayerSetProcessingKey(layer, "BANDS", bandlist);
-    sprintf(numbands, "%d", msCountChars(bandlist, ',')+1);
+    snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
     msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
 
     /* check for the interpolation */
@@ -3584,7 +3573,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         tmpCm.ysize = params->height;
         tmpCm.xresolution = params->resolutionX;
         tmpCm.yresolution = params->resolutionY;
-        strncpy(tmpCm.srs_uri, srs_uri, sizeof(tmpCm.srs_uri));
+        strlcpy(tmpCm.srs_uri, srs_uri, sizeof(tmpCm.srs_uri));
         msFree(srs_uri);
         /* WCS 2.0 is center of pixel oriented */
         tmpCm.extent.minx -= params->resolutionX * 0.5;
@@ -3648,7 +3637,7 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
 #if defined(USE_LIBXML2)
     if(status == MS_FAILURE)
     {
-        msDebug("msWCSDispatch20: Parse error occured.\n");
+        msDebug("msWCSDispatch20(): Parse error occurred.\n");
         msWCSException20(map, "InvalidParameterValue", "request", "2.0.0" );
         msWCSFreeParamsObj20(params);
         return MS_FAILURE;
@@ -3659,30 +3648,47 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
         /* continue for now...               */
     }
 
-    /* if no request was set */
+    /* first check if Service is WCS */
+    if (params->service == NULL
+        && !EQUAL(params->service, "WCS"))
+    {
+        /* The service is not WCS, exit with MS_DONE */
+        msDebug("msWCSDispatch20(): wrong service (%s)\n",
+                (params->service != NULL) ? params->service : "none");
+        msWCSFreeParamsObj20(params);
+        msResetErrorList();
+        return MS_DONE;
+    }
+
+    /* check if request is set */
     if(params->request == NULL)
     {
-        msSetError(MS_WCSERR, "Missing REQUEST parameter", "msWCSDispatch20()");
+        /* If service is WCS, a request must be set. */
+        /* Therefore, exit with a failure.           */
+        msSetError(MS_WCSERR, "Missing REQUEST parameter",
+                "msWCSDispatch20()");
         msWCSException20(map, "MissingParameterValue", "request",
                 params->version );
         msWCSFreeParamsObj20(params); /* clean up */
         return MS_FAILURE;
     }
 
-    /* TODO: GetCapablilities AcceptVersions */
-    if(EQUAL(params->service, "WCS")
-        && EQUAL(params->request, "GetCapabilities")
-        && params->accept_versions != NULL)
+    /* Handle version negotiation for GetCapabilities. */
+    /* Only if accepted versions are given, and not a  */
+    /* predefined version.                             */
+    if (EQUAL(params->request, "GetCapabilities")
+        && params->accept_versions != NULL
+        && params->version         == NULL)
     {
         int i, highest_version = 0;
         char version_string[OWS_VERSION_MAXLEN];
         for(i = 0; params->accept_versions[i] != NULL; ++i)
         {
             int version = msOWSParseVersionString(params->accept_versions[i]);
-            if(version == OWS_VERSION_BADFORMAT
-                || version == OWS_VERSION_NOTSET)
+            if (version == OWS_VERSION_BADFORMAT)
             {
-                msWCSException20(map, "InvalidParameterValue", "request", "2.0.0" );
+                msWCSException20(map, "InvalidParameterValue",
+                        "request", "2.0.0" );
                 msWCSFreeParamsObj20(params);
                 return MS_FAILURE;
             }
@@ -3695,17 +3701,39 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
         params->version = msStrdup(version_string);
     }
 
-    /* if version and service are not set, or not
-    * right for WCS 2.0 -> return with MS_DONE */
+    /* Now the version has to be set */
     if(params->version == NULL
-        || params->service == NULL
-        || !EQUAL(params->version, "2.0.0")
-        || !EQUAL(params->service, "WCS"))
+        || !EQUAL(params->version, "2.0.0"))
     {
-        msDebug("msWCSDispatch20: version and service are not compliant with WCS 2.0.0\n");
+        msDebug("msWCSDispatch20(): version and service are not compliant with WCS 2.0.0\n");
         msWCSFreeParamsObj20(params);
         msResetErrorList();
         return MS_DONE;
+    }
+
+    /* check if any unknown parameters are present              */
+    /* create an error message, containing all unknown params   */
+    if (params->invalid_get_parameters != NULL)
+    {
+        char *concat = NULL;
+        int i, count = CSLCount(params->invalid_get_parameters);
+        for(i = 0; i < count; ++i)
+        {
+            concat = msStringConcatenate(concat, (char *)"'");
+            concat = msStringConcatenate(concat, params->invalid_get_parameters[i]);
+            concat = msStringConcatenate(concat, (char *)"'");
+            if(i + 1 != count)
+            {
+                concat = msStringConcatenate(concat, ", ");
+            }
+        }
+        msSetError(MS_WCSERR, "Unknown parameter%s: %s.",
+                "msWCSParseRequest20()", (count > 1) ? "s" : "", concat);
+        msWCSException20(map, "InvalidParameterValue", "request",
+                params->version );
+        msFree(concat);
+        msWCSFreeParamsObj20(params);
+        return MS_FAILURE;
     }
 
     /* Call operation specific functions */
@@ -3723,9 +3751,10 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
     }
     else
     {
-        msSetError(MS_WCSERR, "Invalid request '%s'.", "msWCSDispatch20()", params->request);
-        returnValue = msWCSException20(map, "InvalidParameterValue", "request",
-                                   params->version);
+        msSetError(MS_WCSERR, "Invalid request '%s'.",
+                "msWCSDispatch20()", params->request);
+        returnValue = msWCSException20(map, "InvalidParameterValue",
+                "request", params->version);
     }
     /* clean up */
     msWCSFreeParamsObj20(params);

@@ -168,7 +168,9 @@ typedef struct
     char *version;      /* 2.0.0 */
     char *request;      /* GetCapabilities|DescribeCoverage|GetCoverage */
     char *service;      /* MUST be WCS */
-    char **accept_versions; /* Accepted versions for GetCapabilities */
+    char **accept_versions; /* NULL terminated list of Accepted versions */
+    char **sections;    /* NULL terminated list of GetCapabilities sections */
+    char *updatesequence; /* GetCapabilities updatesequence */
     char **ids;         /* NULL terminated list of coverages (in the case of a GetCoverage there will only be 1) */
     long width, height; /* image dimensions */
     double resolutionX; /* image resolution in X axis */
@@ -182,6 +184,7 @@ typedef struct
     rectObj bbox;       /* determined Bounding Box */
     int numaxes;        /* number of axes */
     wcs20AxisObjPtr *axes; /* list of axes, NULL if none*/
+    char **invalid_get_parameters; /* NULL terminated list of invalid GET parameters */
 } wcs20ParamsObj;
 typedef wcs20ParamsObj * wcs20ParamsObjPtr;
 
@@ -243,11 +246,18 @@ int msWCSException20(mapObj *map, const char *locator,
     if(xmlNodeIsText(node) || node->type == XML_COMMENT_NODE)   \
     {                                                           \
         continue;                                               \
-    }                                                           \
+    }
 
-#define XML_UNKNOWN_NODE_ERROR(node,function)                    \
+/* Makro to set an XML error that an unknown node type      */
+/* occurred.                                                */
+#define XML_UNKNOWN_NODE_ERROR(node,function)                   \
     msSetError(MS_WCSERR, "Unknown XML element '%s'.",          \
             function, (char *)node->name);                      \
-    return MS_FAILURE;                                          \
+    return MS_FAILURE;
+
+#define MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params,section)  \
+    (params->sections == NULL                                   \
+    || CSLFindString(params->sections, "All") != -1             \
+    || CSLFindString(params->sections, section) != -1)
 
 #endif /* nef MAPWCS_H */
