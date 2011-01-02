@@ -90,8 +90,6 @@ PHP_METHOD(labelObj, __get)
     else IF_GET_LONG("type", php_label->label->type)
     else IF_GET_LONG("shadowsizex",  php_label->label->shadowsizex)
     else IF_GET_LONG("shadowsizey",  php_label->label->shadowsizey)
-    else IF_GET_LONG("backgroundshadowsizex", php_label->label->backgroundshadowsizex)
-    else IF_GET_LONG("backgroundshadowsizey", php_label->label->backgroundshadowsizey)
     else IF_GET_DOUBLE("size", php_label->label->size)
     else IF_GET_DOUBLE("minsize", php_label->label->minsize)
     else IF_GET_DOUBLE("maxsize", php_label->label->maxsize)
@@ -117,8 +115,6 @@ PHP_METHOD(labelObj, __get)
     else IF_GET_OBJECT("color", mapscript_ce_color, php_label->color, &php_label->label->color) 
     else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_label->outlinecolor, &php_label->label->outlinecolor) 
     else IF_GET_OBJECT("shadowcolor", mapscript_ce_color, php_label->shadowcolor, &php_label->label->shadowcolor) 
-    else IF_GET_OBJECT("backgroundcolor", mapscript_ce_color, php_label->backgroundcolor, &php_label->label->backgroundcolor) 
-    else IF_GET_OBJECT("backgroundshadowcolor", mapscript_ce_color, php_label->backgroundshadowcolor, &php_label->label->backgroundshadowcolor) 
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -148,8 +144,6 @@ PHP_METHOD(labelObj, __set)
     else IF_SET_LONG("type", php_label->label->type, value)
     else IF_SET_LONG("shadowsizex",  php_label->label->shadowsizex, value)
     else IF_SET_LONG("shadowsizey",  php_label->label->shadowsizey, value)
-    else IF_SET_LONG("backgroundshadowsizex", php_label->label->backgroundshadowsizex, value)
-    else IF_SET_LONG("backgroundshadowsizey", php_label->label->backgroundshadowsizey, value)
     else IF_SET_DOUBLE("size", php_label->label->size, value)
     else IF_SET_DOUBLE("minsize", php_label->label->minsize, value)
     else IF_SET_DOUBLE("maxsize", php_label->label->maxsize, value)
@@ -174,9 +168,7 @@ PHP_METHOD(labelObj, __set)
     else IF_SET_LONG("priority", php_label->label->priority, value)
     else if ( (STRING_EQUAL("color", property)) ||
               (STRING_EQUAL("outlinecolor", property)) ||
-              (STRING_EQUAL("shadowcolor", property)) ||
-              (STRING_EQUAL("backgroundcolor", property)) ||
-              (STRING_EQUAL("backgroundshadowcolor", property)) )
+              (STRING_EQUAL("shadowcolor", property)) )
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
@@ -356,8 +348,6 @@ PHP_METHOD(labelObj, free)
     MAPSCRIPT_DELREF(php_label->color);
     MAPSCRIPT_DELREF(php_label->outlinecolor);
     MAPSCRIPT_DELREF(php_label->shadowcolor);
-    MAPSCRIPT_DELREF(php_label->backgroundcolor);
-    MAPSCRIPT_DELREF(php_label->backgroundshadowcolor);
 }
 /* }}} */
 
@@ -397,8 +387,6 @@ static void mapscript_label_object_destroy(void *object TSRMLS_DC)
     MAPSCRIPT_DELREF(php_label->color);
     MAPSCRIPT_DELREF(php_label->outlinecolor);
     MAPSCRIPT_DELREF(php_label->shadowcolor);
-    MAPSCRIPT_DELREF(php_label->backgroundcolor);
-    MAPSCRIPT_DELREF(php_label->backgroundshadowcolor);
     
     /* We don't need to free the labelObj, the mapObj will do it */ 
 
@@ -419,8 +407,6 @@ static zend_object_value mapscript_label_object_new(zend_class_entry *ce TSRMLS_
     php_label->color = NULL;
     php_label->outlinecolor = NULL;
     php_label->shadowcolor = NULL;
-    php_label->backgroundcolor = NULL;
-    php_label->backgroundshadowcolor = NULL;
 
     return retval;
 }

@@ -176,8 +176,6 @@ char *msyytext_esc=NULL;
 <INITIAL,URL_VARIABLE,URL_STRING>angle         { return(ANGLE); }
 <INITIAL,URL_STRING>antialias                  { return(ANTIALIAS); }
 <INITIAL,URL_STRING>backgroundcolor            { return(BACKGROUNDCOLOR); }
-<INITIAL,URL_STRING>backgroundshadowcolor      { return(BACKGROUNDSHADOWCOLOR); }
-<INITIAL,URL_STRING>backgroundshadowsize       { return(BACKGROUNDSHADOWSIZE); }
 <INITIAL>bandsitem                             { return(BANDSITEM); }
 <INITIAL>bindvals                              { return(BINDVALS); }
 <INITIAL>browseformat                          { return(BROWSEFORMAT); }

@@ -1552,10 +1552,6 @@ void initLabel(labelObj *label)
   MS_INIT_COLOR(label->shadowcolor, -1,-1,-1); /* don't use it */
   label->shadowsizex = label->shadowsizey = 1;
 
-  MS_INIT_COLOR(label->backgroundcolor, -1,-1,-1); /* don't use it */
-  MS_INIT_COLOR(label->backgroundshadowcolor, -1,-1,-1); /* don't use it   */
-  label->backgroundshadowsizex = label->backgroundshadowsizey = 1;
-
   label->font = NULL;
   label->type = MS_BITMAP;
   label->size = MS_MEDIUM;
@@ -1655,16 +1651,6 @@ static int loadLabel(labelObj *label)
     case(ANTIALIAS):
       if((label->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) 
 	return(-1);
-      break;
-    case(BACKGROUNDCOLOR):
-      if(loadColor(&(label->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
-      break;
-    case(BACKGROUNDSHADOWCOLOR):
-      if(loadColor(&(label->backgroundshadowcolor), NULL) != MS_SUCCESS) return(-1);      
-      break;
-    case(BACKGROUNDSHADOWSIZE):
-      if(getInteger(&(label->backgroundshadowsizex)) == -1) return(-1);
-      if(getInteger(&(label->backgroundshadowsizey)) == -1) return(-1);
       break;
     case(BUFFER):
       if(getInteger(&(label->buffer)) == -1) return(-1);
@@ -1893,9 +1879,6 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   }
 
   writeKeyword(stream, indent, "ALIGN", label->align, MS_ALIGN_CENTER, "CENTER", MS_ALIGN_RIGHT, "RIGHT");
-  writeColor(stream, indent, "BACKGROUNDCOLOR", &(label->backgroundcolor));
-  writeColor(stream, indent, "BACKGROUNDSHADOWCOLOR", &(label->backgroundshadowcolor));
-  writeDimension(stream, indent, "BACKGROUNDSHADOWSIZE", label->backgroundshadowsizex, label->backgroundshadowsizey); 
   writeNumber(stream, indent, "BUFFER", 0, label->buffer);
 
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_COLOR].item)

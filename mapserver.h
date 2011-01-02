@@ -884,10 +884,6 @@ typedef struct {
   colorObj shadowcolor;
   int shadowsizex, shadowsizey;
 
-  colorObj backgroundcolor;
-  colorObj backgroundshadowcolor;
-  int backgroundshadowsizex, backgroundshadowsizey;
-
   double size;
   double minsize, maxsize;
 

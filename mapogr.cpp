@@ -2962,15 +2962,6 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           }
 
           pszColor = OGR_ST_GetParamStr(hLabelStyle, 
-                                        OGRSTLabelBColor,
-                                        &bIsNull);
-          if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
-                                                  &r, &g, &b, &t))
-          {
-              MS_INIT_COLOR(c->label.backgroundcolor, r, g, b);
-          }
-
-          pszColor = OGR_ST_GetParamStr(hLabelStyle, 
                                         OGRSTLabelHColor,
                                         &bIsNull);
           if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
