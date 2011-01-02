@@ -1875,7 +1875,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 
       /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
       if (msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
-	return(-1);
+	return(MS_FAILURE);
 
       marker_width = (int) (marker_width * layerPtr->scalefactor);
       marker_height = (int) (marker_height * layerPtr->scalefactor);
@@ -1979,7 +1979,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
    } /* next label in cache */
   } /* next priority */
 
-  return(0);
+  return(MS_SUCCESS);
 }
 
 /*

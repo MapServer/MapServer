@@ -2261,8 +2261,9 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /************************************************************************/
 /*                             int draw_textSWF                         */
 /*                                                                      */
-/*      Renders a text using FDB fonts. FDB fonts are specific to       */
-/*      ming library. Returns 0 on success and -1 on error.             */
+/*  Renders a text using FDB fonts. FDB fonts are specific to           */
+/*  ming library. Returns MS_SUCCESS on success and MS_FAILURE          */
+/*  on error.                                                           */
 /************************************************************************/
 int draw_textSWF(imageObj *image, pointObj labelPnt, char *string, 
                 labelObj *label, fontSetObj *fontset, double scalefactor)
@@ -2285,16 +2286,16 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
     if (image == NULL || !MS_DRIVER_SWF(image->format))
-        return 0;
+        return MS_SUCCESS;
 
 /* -------------------------------------------------------------------- */
 /*      validate arguments.                                             */
 /* -------------------------------------------------------------------- */
     if(!string || strlen(string) == 0 || !label || !fontset)
-        return(0); /* not an error, just don't want to do anything */
+        return(MS_SUCCESS); /* not an error, just don't want to do anything */
 
     if(strlen(string) == 0)
-        return(0); /* not an error, just don't want to do anything */
+        return(MS_SUCCESS); /* not an error, just don't want to do anything */
 
     x = MS_NINT(labelPnt.x);
     y = MS_NINT(labelPnt.y);
@@ -2312,13 +2313,13 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     if(!fontset) 
     {
         msSetError(MS_TTFERR, "No fontset defined.", "draw_textSWF()");
-        return(-1);
+        return(MS_FAILURE);
     }
 
     if(!label->font) 
     {
         msSetError(MS_TTFERR, "No font defined.", "draw_textSWF()");
-        return(-1);
+        return(MS_FAILURE);
     }
 
     font = msLookupHashTable(&(fontset->fonts), label->font);
@@ -2327,7 +2328,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     {
         msSetError(MS_TTFERR, "Requested font (%s) not found.", "draw_textSWF()",
                    label->font);
-        return(-1);
+        return(MS_FAILURE);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2353,7 +2354,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     else
     {
         msSetError(MS_TTFERR, "Invalid color", "draw_textSWF()");
-	return(-1);
+	return(MS_FAILURE);
     }
     if (MS_VALID_COLOR(label->shadowcolor))
     {
@@ -2398,7 +2399,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
         SWFDisplayItem_rotate(oDisplay, (float)label->angle);
     }
     
-    return 0;
+    return MS_SUCCESS;
 }
 
 
@@ -2535,7 +2536,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 /*      test for driver.                                                */
 /* -------------------------------------------------------------------- */
     if (!image || !MS_DRIVER_SWF(image->format))
-        return -1;
+        return MS_FAILURE;
 
     marker_rect.minx = marker_rect.miny = marker_rect.maxx = marker_rect.maxy = 0;      
 #ifdef USE_POINT_Z_M
@@ -2563,7 +2564,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         StoreShape(oShape, image);
         /* nTmp = ((SWFObj *)image->img.swf)->nCurrentMovie; */
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
-        return 0;
+        return MS_SUCCESS;
     }
 /* -------------------------------------------------------------------- */
 /*      keep the current layer index.                                   */
@@ -2625,7 +2626,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
         if(msGetLabelSizeSWF(cachePtr->text, labelPtr, &r, 
                              &(map->fontset), layerPtr->scalefactor) == -1)
-            return(-1);
+            return(MS_FAILURE);
 
         label_offset_x = labelPtr->offsetx*layerPtr->scalefactor;
         label_offset_y = labelPtr->offsety*layerPtr->scalefactor;
@@ -2640,7 +2641,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
 	    /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
             if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
-	      return(-1);
+	      return(MS_FAILURE);
             
             marker_width = (int)(marker_width);
             marker_height = (int)(marker_height);
@@ -2754,7 +2755,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
     
     ((SWFObj *)image->img.swf)->nCurrentMovie = nCurrentMovie;
 
-    return(0);
+    return(MS_SUCCESS);
 }
 
 
@@ -2769,16 +2770,16 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
 {
     pointObj p;
     rectObj r;
-    int label_offset_x, label_offset_y;
+    int label_offset_x, label_offset_y;    
 
     if (!image || !MS_DRIVER_SWF(image->format))
-        return 0;
+        return MS_SUCCESS;
 
     if(!string)
-        return(0); /* not an error, just don't want to do anything */
+        return MS_SUCCESS; /* not an error, just don't want to do anything */
 
     if(strlen(string) == 0)
-        return(0); /* not an error, just don't want to do anything */
+        return MS_SUCCESS; /* not an error, just don't want to do anything */
     
     msGetLabelSizeSWF(string, label, &r, fontset, scalefactor);
     label_offset_x = label->offsetx*scalefactor;
@@ -2788,8 +2789,7 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
                     label_offset_y, label->angle, 0, NULL);
     /* labelPnt.x += label->offsetx; */
     /* labelPnt.y += label->offsety; */
-    return draw_textSWF(image, p, string, label, fontset, scalefactor);
-
+    return(draw_textSWF(image, p, string, label, fontset, scalefactor));
 }
 
 /************************************************************************/

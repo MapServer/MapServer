@@ -466,7 +466,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
   if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 
-  if(msDrawLabelCache(image, map) == -1) {
+  if(msDrawLabelCache(image, map) != MS_SUCCESS) {
     msFreeImage(image);
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     if (pasOWSReqInfo) {
