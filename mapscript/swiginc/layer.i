@@ -269,6 +269,29 @@
     /* For querying, we switch layer status ON and then back to original
        value before returning. */
 
+    int queryByFilter(mapObj *map, char *string)
+    {
+        int status;
+        int retval;
+
+        msInitQuery(&(map->query));
+
+        map->query.type = MS_QUERY_BY_FILTER;
+
+        map->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
+        map->query.filter->string = strdup(string);
+	map->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
+
+        map->query.layer = self->index;
+     	map->query.rect = map->extent;
+
+	status = self->status;
+	self->status = MS_ON;
+        retval = msQueryByFilter(map);
+        self->status = status;
+	return retval;
+    }
+
     int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) 
     {
         int status;
