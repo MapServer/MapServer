@@ -104,7 +104,7 @@ void msInitShape(shapeObj *shape)
 
   /* bookkeeping component */
   shape->classindex = 0; /* default class */
-  shape->tileindex = shape->index = -1;
+  shape->tileindex = shape->index = shape->resultindex = -1;
 
   shape->scratch = MS_FALSE; /* not a temporary/scratch shape */
 }
@@ -129,6 +129,7 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
   to->classindex = from->classindex;
   to->index = from->index;
   to->tileindex = from->tileindex;
+  to->resultindex = from->resultindex;
 
   if(from->values) {    
     to->values = (char **)msSmallMalloc(sizeof(char *)*from->numvalues);

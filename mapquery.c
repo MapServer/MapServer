@@ -135,7 +135,7 @@ int msIsLayerQueryable(layerObj *lp)
   return MS_FALSE;
 }
 
-static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int tileindex)
+static int addResult(resultCacheObj *cache, shapeObj *shape)
 {
   int i;
 
@@ -153,10 +153,16 @@ static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int 
 
   i = cache->numresults;
 
-  cache->results[i].classindex = classindex;
-  cache->results[i].tileindex = tileindex;
-  cache->results[i].shapeindex = shapeindex;
+  cache->results[i].classindex = shape->classindex;
+  cache->results[i].tileindex = shape->tileindex;
+  cache->results[i].shapeindex = shape->index;
+  cache->results[i].resultindex = shape->resultindex;
   cache->numresults++;
+
+  if(cache->numresults == 1)
+    cache->bounds = shape->bounds;
+  else
+    msMergeRect(&(cache->bounds), &(shape->bounds));
 
   return(MS_SUCCESS);
 }
@@ -494,11 +500,7 @@ int msQueryByIndex(mapObj *map)
     return(MS_FAILURE);
   }
 
-  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-  if(lp->resultcache->numresults == 1)
-    lp->resultcache->bounds = shape.bounds;
-  else
-    msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+  addResult(lp->resultcache, &shape);
 
   msFreeShape(&shape);
   /* msLayerClose(lp); */
@@ -654,12 +656,7 @@ int msQueryByAttributes(mapObj *map)
       lp->project = MS_FALSE;
 #endif
 
-    addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-    
-    if(lp->resultcache->numresults == 1)
-      lp->resultcache->bounds = shape.bounds;
-    else
-      msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+    addResult(lp->resultcache, &shape);
     
     msFreeShape(&shape);
 
@@ -837,14 +834,8 @@ int msQueryByRect(mapObj *map)
 	}
       }	
 
-      if(status == MS_TRUE) {
-	addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	
-	if(lp->resultcache->numresults == 1)
-	  lp->resultcache->bounds = shape.bounds;
-	else
-	  msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
-      }
+      if(status == MS_TRUE)
+	addResult(lp->resultcache, &shape);
 
       msFreeShape(&shape);
     } /* next shape */
@@ -1125,14 +1116,8 @@ int msQueryByFeatures(mapObj *map)
 	  break; /* should never get here as we test for selection shape type explicitly earlier */
 	}
 
-	if(status == MS_TRUE) {
-	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-
-	  if(lp->resultcache->numresults == 1)
-	    lp->resultcache->bounds = shape.bounds;
-	  else
-	    msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
-	}
+	if(status == MS_TRUE)
+	  addResult(lp->resultcache, &shape);
 
 	msFreeShape(&shape);
       } /* next shape */
@@ -1315,15 +1300,10 @@ int msQueryByPoint(mapObj *map)
       if( d <= t ) { /* found one */
 	if(map->query.mode == MS_QUERY_SINGLE) {
 	  lp->resultcache->numresults = 0;
-	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	  lp->resultcache->bounds = shape.bounds;
+	  addResult(lp->resultcache, &shape);	  
 	  t = d; /* next one must be closer */
 	} else {
-	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	  if(lp->resultcache->numresults == 1)
-	    lp->resultcache->bounds = shape.bounds;
-	  else
-	    msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+	  addResult(lp->resultcache, &shape);
 	}
       }
  
@@ -1574,14 +1554,8 @@ int msQueryByShape(mapObj *map)
 	break; /* should never get here as we test for selection shape type explicitly earlier */
       }
 
-      if(status == MS_TRUE) {
-	addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	
-	if(lp->resultcache->numresults == 1)
-	  lp->resultcache->bounds = shape.bounds;
-	else
-	  msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
-      }
+      if(status == MS_TRUE)
+	addResult(lp->resultcache, &shape);
 
       msFreeShape(&shape);
     } /* next shape */
@@ -1600,7 +1574,6 @@ int msQueryByShape(mapObj *map)
   msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByShape()"); 
   return(MS_FAILURE);
 }
-
 
 /************************************************************************/
 /*                            msQueryByOperator                         */
@@ -1807,14 +1780,8 @@ int msQueryByOperator(mapObj *map)
           return(MS_FAILURE);
       }
 
-      if(status == MS_TRUE) {
-        addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	
-        if(lp->resultcache->numresults == 1)
-          lp->resultcache->bounds = shape.bounds;
-        else
-          msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
-      }
+      if(status == MS_TRUE)
+        addResult(lp->resultcache, &shape);
 
       msFreeShape(&shape);
     } /* next shape */

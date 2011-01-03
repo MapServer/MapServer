@@ -88,6 +88,7 @@ typedef struct {
   char *text;
   
   int scratch;
+  int resultindex; /* index within a query result set */
 } shapeObj;
 
 typedef lineObj multipointObj;

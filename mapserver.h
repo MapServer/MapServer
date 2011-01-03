@@ -1080,6 +1080,7 @@ typedef struct {
 typedef struct {
   long shapeindex;
   int tileindex;
+  int resultindex;
   int classindex;
 } resultCacheMemberObj;
 #ifdef SWIG
