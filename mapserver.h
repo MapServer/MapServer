@@ -443,7 +443,7 @@ enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 #define MS_MULTIPLE 1
 
 enum MS_QUERY_MODE {MS_QUERY_SINGLE, MS_QUERY_MULTIPLE};
-enum MS_QUERY_TYPE {MS_QUERY_IS_NULL, MS_QUERY_BY_POINT, MS_QUERY_BY_RECT, MS_QUERY_BY_SHAPE, MS_QUERY_BY_ATTRIBUTE, MS_QUERY_BY_INDEX, MS_QUERY_BY_OPERATOR};
+enum MS_QUERY_TYPE {MS_QUERY_IS_NULL, MS_QUERY_BY_POINT, MS_QUERY_BY_RECT, MS_QUERY_BY_SHAPE, MS_QUERY_BY_ATTRIBUTE, MS_QUERY_BY_INDEX, MS_QUERY_BY_OPERATOR, MS_QUERY_BY_FILTER};
 
 enum MS_ALIGN_VALUE {MS_ALIGN_LEFT, MS_ALIGN_CENTER, MS_ALIGN_RIGHT}; 
 
@@ -732,6 +732,8 @@ typedef struct {
 
   char *item; /* by attribute */
   char *str;
+
+  expressionObj *filter; /* by filter */
 
   int op; /* by GEOS operator */
 
@@ -1682,8 +1684,8 @@ MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, char *value);
 /* Use this next, thread safe wrapper, function everywhere else */
 MS_DLL_EXPORT int msLoadExpressionString(expressionObj *exp, char *value);
 MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
+MS_DLL_EXPORT void initExpression(expressionObj *exp);
 MS_DLL_EXPORT void freeExpression(expressionObj *exp);
-MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
 
 MS_DLL_EXPORT void msLayerSubstituteString(layerObj *layer, const char *from, const char *to);
 MS_DLL_EXPORT void msApplyDefaultSubstitutions(mapObj *map);

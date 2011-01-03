@@ -55,6 +55,7 @@ int msInitQuery(queryObj *query)
   query->op = -1;
 
   query->item = query->str = NULL;
+  query->filter = NULL;
 
   return MS_SUCCESS;
 }
@@ -68,6 +69,10 @@ void msFreeQuery(queryObj *query)
 
   if(query->item) free(query->item);
   if(query->str) free(query->str);
+  if(query->filter) {
+    freeExpression(query->filter);
+    free(query->filter);
+  }
 }
 
 /*
@@ -92,6 +97,9 @@ int msExecuteQuery(mapObj *map)
     break;
   case MS_QUERY_BY_ATTRIBUTE:
     status = msQueryByAttributes(map);
+    break;
+  case MS_QUERY_BY_FILTER:
+    status = msQueryByFilter(map);
     break;
   case MS_QUERY_BY_OPERATOR:
     status = msQueryByOperator(map);
@@ -683,6 +691,169 @@ int msQueryByAttributes(mapObj *map)
   msLayerClose(lp);
   msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByAttributes()"); 
   return(MS_FAILURE);
+}
+
+/*
+** Query using common expression syntax.
+*/
+int msQueryByFilter(mapObj *map)
+{
+  int l;
+  int start, stop=0;
+
+  layerObj *lp;
+
+  char status;
+  
+  expressionObj old_filter;
+
+  rectObj search_rect;
+
+  shapeObj shape;
+  
+  int nclasses = 0;
+  int *classgroup = NULL;
+
+  if(map->query.type != MS_QUERY_BY_FILTER) {
+    msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByFilter()");
+    return(MS_FAILURE);
+  }
+  if(!map->query.filter) { // TODO: check filter type too
+    msSetError(MS_QUERYERR, "Filter is not set.", "msQueryByFilter()");
+    return(MS_FAILURE);
+  }
+  
+  msInitShape(&shape);
+
+  if(map->query.layer < 0 || map->query.layer >= map->numlayers)
+    start = map->numlayers-1;
+  else
+    start = stop = map->query.layer;
+
+  for(l=start; l>=stop; l--) {
+    lp = (GET_LAYER(map, l));
+
+    /* conditions may have changed since this layer last drawn, so set 
+       layer->project true to recheck projection needs (Bug #673) */ 
+    lp->project = MS_TRUE; 
+
+    /* free any previous search results, do it now in case one of the next few tests fail */
+    if(lp->resultcache) {
+      if(lp->resultcache->results) free(lp->resultcache->results);
+      free(lp->resultcache);
+      lp->resultcache = NULL;
+    }
+
+    if(!msIsLayerQueryable(lp)) continue;
+    if(lp->status == MS_OFF) continue;
+    if(lp->type == MS_LAYER_RASTER) continue; /* ok to skip? */
+
+    if(map->scaledenom > 0) {
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
+    }
+
+    if (lp->maxscaledenom <= 0 && lp->minscaledenom <= 0) {
+      if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
+      if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
+    }
+
+    initExpression(&old_filter);
+    msCopyExpression(&old_filter, &lp->filter); /* save existing filter */
+    if(msLayerSupportsCommonFilters(lp)) {
+      msCopyExpression(&lp->filter, map->query.filter); /* apply new filter */
+    }
+
+    status = msLayerOpen(lp);
+    if(status != MS_SUCCESS) goto query_error;
+
+    /* build item list, we want *all* items */
+    status = msLayerWhichItems(lp, MS_TRUE, NULL);
+    if(status != MS_SUCCESS) goto query_error;
+
+    if(!msLayerSupportsCommonFilters(lp)) {
+      freeExpression(&lp->filter); /* clear existing filter */
+      status = msTokenizeExpression(map->query.filter, lp->items, &(lp->numitems));
+      if(status != MS_SUCCESS) goto query_error;
+    }
+
+    search_rect = map->query.rect;
+#ifdef USE_PROJ
+    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      msProjectRect(&(map->projection), &(lp->projection), &search_rect); /* project the searchrect to source coords */
+    else
+      lp->project = MS_FALSE;
+#endif
+
+    status = msLayerWhichShapes(lp, search_rect);
+    if(status == MS_DONE) { /* no overlap */
+      msLayerClose(lp);
+      continue;
+    } else if(status != MS_SUCCESS) goto query_error;
+
+    lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+    initResultCache( lp->resultcache);
+
+    nclasses = 0;
+    classgroup = NULL;
+    if (lp->classgroup && lp->numclasses > 0)
+      classgroup = msAllocateValidClassGroups(lp, &nclasses);
+
+    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+
+      if(!msLayerSupportsCommonFilters(lp)) { /* we have to apply the filter here instead of within the driver */
+	if(msEvalExpression(lp, &shape, map->query.filter, -1) != MS_TRUE) { /* next shape */
+          msFreeShape(&shape);
+	  continue;
+        }
+      }
+
+      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
+      if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
+        msFreeShape(&shape);
+        continue;
+      }
+
+      if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
+        msFreeShape(&shape);
+        continue;
+      }
+
+#ifdef USE_PROJ
+      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+        msProjectShape(&(lp->projection), &(map->projection), &shape);
+      else
+        lp->project = MS_FALSE;
+#endif
+
+      addResult(lp->resultcache, &shape);
+      msFreeShape(&shape);
+    } /* next shape */
+
+    if(classgroup) msFree(classgroup);
+
+    msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+    freeExpression(&old_filter);
+
+    if(status != MS_DONE) goto query_error;
+    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+
+  } /* next layer */
+
+  /* was anything found? */
+  for(l=start; l>=stop; l--) {    
+    if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
+      return MS_SUCCESS;
+  }
+
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFilter()"); 
+  return MS_FAILURE;
+
+ query_error:
+  msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+  freeExpression(&old_filter);
+  msLayerClose(lp);
+  return MS_FAILURE;
 }
 
 int msQueryByRect(mapObj *map) 
