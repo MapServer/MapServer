@@ -1817,6 +1817,7 @@ MS_DLL_EXPORT int msQueryByRect(mapObj *map);
 MS_DLL_EXPORT int msQueryByFeatures(mapObj *map);
 MS_DLL_EXPORT int msQueryByShape(mapObj *map);
 MS_DLL_EXPORT int msQueryByOperator(mapObj *map);
+MS_DLL_EXPORT int msQueryByFilter(mapObj *map);
 
 MS_DLL_EXPORT int msGetQueryResultBounds(mapObj *map, rectObj *bounds);
 MS_DLL_EXPORT int msIsLayerQueryable(layerObj *lp);
