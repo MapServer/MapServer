@@ -5600,12 +5600,16 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 
       /* make sure any symbol names for this layer have been resolved (bug #2700) */
       for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
-	for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
+        for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
           if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname && GET_LAYER(map, i)->class[j]->styles[k]->symbol == 0) {
             if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
               msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msUpdateMapFromURL()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
               return MS_FAILURE;
             }
+          }
+          if(!MS_IS_VALID_ARRAY_INDEX(GET_LAYER(map, i)->class[j]->styles[k]->symbol, map->symbolset.numsymbols)) {
+            msSetError(MS_MISCERR, "Invalid symbol index in class %d, style %d of layer %s.", "msUpdateMapFromURL()", j, k, GET_LAYER(map, i)->name);
+            return MS_FAILURE;
           }
         }
       }
@@ -5878,7 +5882,6 @@ static int msResolveSymbolNames(mapObj* map)
     /* step through layers and classes to resolve symbol names */
     for(i=0; i<map->numlayers; i++) {
         for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
-          
             /* class styles */
             for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
                 if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
@@ -5886,6 +5889,10 @@ static int msResolveSymbolNames(mapObj* map)
                         msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
                         return MS_FAILURE;
                     }
+                }
+                if(!MS_IS_VALID_ARRAY_INDEX(GET_LAYER(map, i)->class[j]->styles[k]->symbol, map->symbolset.numsymbols)) {
+                    msSetError(MS_MISCERR, "Invalid symbol index in class %d, style %d of layer %s.", "msLoadMap()", j, k, GET_LAYER(map, i)->name);
+                    return MS_FAILURE;
                 }
             }
 
