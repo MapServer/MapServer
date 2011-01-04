@@ -535,9 +535,10 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
                }
                break;
             case MS_SYMBOL_VECTOR:
+            case MS_SYMBOL_ELLIPSE:
                break;
             default:
-               msSetError(MS_MISCERR,"unsupported symbol type %d", "msDrawShadeSymbol()", style->symbol);
+               msSetError(MS_MISCERR,"unsupported symbol type %d", "msDrawShadeSymbol()", symbol->type);
                ret = MS_FAILURE;
                goto cleanup;
             }
