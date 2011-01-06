@@ -4035,6 +4035,8 @@ static int loadOutputFormat(mapObj *map)
                 || format->imagemode == MS_IMAGEMODE_FLOAT32 
                 || format->imagemode == MS_IMAGEMODE_BYTE )
                 format->renderer = MS_RENDER_WITH_RAWDATA;
+            if( format->imagemode == MS_IMAGEMODE_PC256 )
+                format->renderer = MS_RENDER_WITH_GD;
         }
 
         format->numformatoptions = numformatoptions;
