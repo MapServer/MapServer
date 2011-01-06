@@ -296,6 +296,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   }
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+
+  /* Time the OWS query phase */
+  if(map->debug >= MS_DEBUGLEVEL_TUNING ) msGettimeofday(&starttime, NULL);
+
   /* How many OWS (WMS/WFS) layers do we have to draw?
    * Note: numOWSLayers is the number of actual layers and numOWSRequests is
    * the number of HTTP requests which could be lower if multiple layers 
@@ -307,6 +311,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
        msLayerIsVisible(map, GET_LAYER(map,map->layerorder[i])))
         numOWSLayers++;
   }
+
 
   if (numOWSLayers > 0) {
     /* Alloc and init pasOWSReqInfo...
@@ -362,6 +367,14 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     msFree(pasOWSReqInfo);
     return NULL;
   }
+
+  if(map->debug >= MS_DEBUGLEVEL_TUNING) {
+    msGettimeofday(&endtime, NULL);
+    msDebug("msDrawMap(): WMS/WFS set-up and query, %.3fs\n", 
+            (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+            (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+  }
+
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
 
   /* OK, now we can start drawing */
