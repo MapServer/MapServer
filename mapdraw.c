@@ -1399,7 +1399,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       double maxsize,maxunscaledsize;
       symbolObj *symbol;
       styleObj *style = layer->class[c]->styles[0];
-      if (style->symbol >= map->symbolset.numsymbols) {
+      if (!MS_IS_VALID_ARRAY_INDEX(style->symbol, map->symbolset.numsymbols)) {
           msSetError(MS_SYMERR, "Invalid symbol index: %d", "msDrawShape()", style->symbol);
           return MS_FAILURE;
       }
