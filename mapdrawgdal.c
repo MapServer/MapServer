@@ -1563,15 +1563,31 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
 /* -------------------------------------------------------------------- */
 	pafRawData = pafWholeRawData + iColorIndex * dst_xsize * dst_ysize;
 
+        dfNoDataValue = msGetGDALNoDataValue( layer, hBand, &bGotNoData );
+
 	if( dfScaleMin == dfScaleMax )
         {
-	    dfScaleMin = dfScaleMax = pafRawData[0];
-	    
-	    for( i = 1; i < nPixelCount; i++ )
+            int bMinMaxSet = 0;
+            
+            /* we force assignment to a float rather than letting pafRawData[i]
+               get promoted to double later to avoid float precision issues. */
+            float fNoDataValue = (float) dfNoDataValue; 
+
+	    for( i = 0; i < nPixelCount; i++ )
             {
+                if( bGotNoData && pafRawData[i] == fNoDataValue )
+                    continue;
+
+                if( !bMinMaxSet )
+                {
+                    dfScaleMin = dfScaleMax = pafRawData[i];
+                    bMinMaxSet = TRUE;
+                }
+
 		dfScaleMin = MIN(dfScaleMin,pafRawData[i]);
 		dfScaleMax = MAX(dfScaleMax,pafRawData[i]);
             }
+
 	    if( dfScaleMin == dfScaleMax )
                 dfScaleMax = dfScaleMin + 1.0;
         }
@@ -1603,11 +1619,11 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
 /*      unable to utilize it since we can't return any pixels marked    */
 /*      as nodata from this function.  Need to fix someday.             */
 /* -------------------------------------------------------------------- */
-	dfNoDataValue = msGetGDALNoDataValue( layer, hBand, &bGotNoData );
 	if( bGotNoData )
             msDebug( "LoadGDALImage(%s): NODATA value %g in GDAL\n"
-                     "file or PROCESSING directive ignored.  Not yet supported for\n"
-                     "unclassified scaled data.\n",
+                     "file or PROCESSING directive largely ignored.  Not yet fully supported for\n"
+                     "unclassified scaled data.  The NODATA value is excluded from auto-scaling\n"
+                     "min/max computation, but will not be transparent.\n",
                      layer->name, dfNoDataValue );
 	
 /* -------------------------------------------------------------------- */

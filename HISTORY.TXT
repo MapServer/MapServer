@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- NODATA values now excluded from autoscaling min/max for non-eight 
+  scaling computations (#3650)
+
 - Fixed missing time in msDrawMap logging (#3651)
 
 - Fixed Auto Angle - incorrectly placed Labels (#3648)
