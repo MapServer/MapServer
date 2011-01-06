@@ -1686,7 +1686,8 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
         *(*lengths)[index] = total_length;
 
       /* if there is only 1 label to place... put it in the middle of the current segment (as old behavior) */
-      if (anglemode != MS_NONE && (point_repeat == 1))
+      if ( ((anglemode == MS_AUTO) || (anglemode == MS_AUTO2)) &&  
+           (point_repeat == 1) ) 
       {
         j = segment_index;
         (*labelpoints)[index]->x = (p->line[i].point[j].x + p->line[i].point[j-1].x)/2.0;

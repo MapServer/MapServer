@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed Auto Angle - incorrectly placed Labels (#3648)
+
 - Fixed Improper validation of symbol index values (#3641)
 
 - Removed BACKGROUNDCOLOR, BACKGROUNDSHADOWCOLOR and BACKGROUNDSHADOWOFFSET label parameters (#3609)
