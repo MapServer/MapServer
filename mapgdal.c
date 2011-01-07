@@ -587,9 +587,6 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
     format->imagemode = MS_IMAGEMODE_RGB;
     format->renderer = MS_RENDER_WITH_AGG;
 
-    /* Eventually we should have a way of deriving the mime type and extension */
-    /* from the driver. */
-
 #ifdef GDAL_DMD_MIMETYPE 
     if( GDALGetMetadataItem( hDriver, GDAL_DMD_MIMETYPE, NULL ) != NULL )
         format->mimetype = 
