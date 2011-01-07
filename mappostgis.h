@@ -31,8 +31,97 @@ typedef struct {
     char        *geomcolumn; /* Specified geometry column, eg "THEGEOM from thetable" */
     char        *fromsource; /* Specified record source, ed "thegeom from THETABLE" or "thegeom from (SELECT..) AS FOO" */
     int         endian;      /* Endianness of the mapserver host */
+    int         version;     /* PostGIS version of the database */
 }
 msPostGISLayerInfo;
+
+
+/*
+** Utility structure for handling the WKB returned by the database while 
+** reading.
+*/
+typedef struct {
+    char *wkb; /* Pointer to front of WKB */
+    char *ptr; /* Pointer to current write point */
+    size_t size; /* Size of allocated space */
+    int *typemap; /* Look-up array to valid OGC types */
+} wkbObj;
+
+/*
+** Utility structure used when building up stroked lines while
+** handling curved feature types.
+*/
+typedef struct {
+    pointObj *data; /* Re-sizeable point buffer */
+    int npoints;  /* How many points are we currently storing */
+    int maxpoints; /* How big is our point buffer */
+} pointArrayObj;
+
+/*
+** All the WKB type numbers from the OGC 
+*/
+typedef enum {
+    WKB_POINT=1,
+    WKB_LINESTRING=2,
+    WKB_POLYGON=3,
+    WKB_MULTIPOINT=4,
+    WKB_MULTILINESTRING=5,
+    WKB_MULTIPOLYGON=6,
+    WKB_GEOMETRYCOLLECTION=7,
+    WKB_CIRCULARSTRING=8,
+    WKB_COMPOUNDCURVE=9,
+    WKB_CURVEPOLYGON=10,
+    WKB_MULTICURVE=11,
+    WKB_MULTISURFACE=12
+} wkb_typenum;
+
+/* 
+** See below.
+*/
+#define WKB_TYPE_COUNT 16
+
+/*
+** Map the WKB type numbers returned by PostGIS < 2.0 to the 
+** valid OGC numbers
+*/
+static int wkb_postgis15[WKB_TYPE_COUNT] = {
+    0,
+    WKB_POINT,
+    WKB_LINESTRING,
+    WKB_POLYGON,
+    WKB_MULTIPOINT,
+    WKB_MULTILINESTRING,
+    WKB_MULTIPOLYGON,
+    WKB_GEOMETRYCOLLECTION,
+    WKB_CIRCULARSTRING,
+    WKB_COMPOUNDCURVE,
+    0,0,0,
+    WKB_CURVEPOLYGON,
+    WKB_MULTICURVE,
+    WKB_MULTISURFACE 
+};
+
+/*
+** Map the WKB type numbers returned by PostGIS >= 2.0 to the 
+** valid OGC numbers
+*/
+static int wkb_postgis20[WKB_TYPE_COUNT] = {
+    0,
+    WKB_POINT,
+    WKB_LINESTRING,
+    WKB_POLYGON,
+    WKB_MULTIPOINT,
+    WKB_MULTILINESTRING,
+    WKB_MULTIPOLYGON,
+    WKB_GEOMETRYCOLLECTION,
+    WKB_CIRCULARSTRING,
+    WKB_COMPOUNDCURVE,
+    WKB_CURVEPOLYGON,
+    WKB_MULTICURVE,
+    WKB_MULTISURFACE,
+    0,0,0 
+};
+
 
 /*
 ** Prototypes
@@ -41,6 +130,10 @@ void msPostGISFreeLayerInfo(layerObj *layer);
 msPostGISLayerInfo *msPostGISCreateLayerInfo(void);
 char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid);
 int msPostGISParseData(layerObj *layer);
+int arcStrokeCircularString(wkbObj *w, double segment_angle, lineObj *line);
+int wkbConvGeometryToShape(wkbObj *w, shapeObj *shape);
+pointArrayObj* pointArrayNew(int maxpoints);
+void pointArrayFree(pointArrayObj *d);
 
 #endif /* USE_POSTGIS */
 
