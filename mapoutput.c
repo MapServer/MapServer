@@ -357,9 +357,6 @@ void msApplyDefaultOutputFormats( mapObj *map )
     if( msSelectOutputFormat( map, "png" ) == NULL )
         msCreateDefaultOutputFormat( map, "GD/PNG" );
 
-    if( msSelectOutputFormat( map, "wbmp" ) == NULL )
-        msCreateDefaultOutputFormat( map, "GD/WBMP" );
-
     if( msSelectOutputFormat( map, "png24" ) == NULL )
         msCreateDefaultOutputFormat( map, "AGG/PNG" );
     
@@ -954,7 +951,8 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
                (strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
                 strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0 ||
                 strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0 ||
-                strcasecmp(map->outputformatlist[i]->driver, "svg")==0 ||
+                strcasecmp(map->outputformatlist[i]->driver, "CAIRO/SVG")==0 ||
+                strcasecmp(map->outputformatlist[i]->driver, "CAIRO/PDF")==0 ||
                 strcasecmp(map->outputformatlist[i]->driver, "kml")==0 ||
                 strcasecmp(map->outputformatlist[i]->driver, "kmz")==0))
               mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
