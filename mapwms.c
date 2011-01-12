@@ -1730,7 +1730,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                    if (classnameset)
                    {
                        int size_x=0, size_y=0;
-                       if (msLegendCalcSize(map, 1, &size_x, &size_y, lp) == MS_SUCCESS)
+                       int layer_index[1];
+                       layer_index[0] = lp->index;
+                       if (msLegendCalcSize(map, 1, &size_x, &size_y,  layer_index, 1) == MS_SUCCESS)
                        {
                            snprintf(width, sizeof(width), "%d", size_x);
                            snprintf(height, sizeof(height), "%d", size_y);
@@ -2561,6 +2563,86 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                                      "MO", "GROUP_ABSTRACT", OWS_NOERR,
                                      "      <Abstract>%s</Abstract>\n", lp->group);
 
+             /*build a getlegendgraphicurl*/
+             if( script_url_encoded)
+             {
+                 int num_layers = 0;
+                 size_t bufferSize = 0;
+                 char width[10], height[10];
+                 char *name_encoded = msEncodeHTMLEntities(lp->group);
+                 int *group_layers = (int *)msSmallMalloc(sizeof(int)*map->numlayers);
+                 char *legendurl = NULL;
+                 int size_x=0, size_y=0;
+                 char *mimetype = NULL;
+                 char **tokens = NULL;
+                 int numtokens = 0;
+
+                 for(j=i; j<map->numlayers; j++)
+                   if (!pabLayerProcessed[j] &&
+                       GET_LAYER(map, j)->group &&
+                       strcmp(lp->group, GET_LAYER(map, j)->group) == 0 )
+                     group_layers[num_layers++] = j;
+                 if ( num_layers > 0)
+                 {
+                     group_layers =(int *)msSmallRealloc(group_layers,  sizeof(int)*num_layers);
+
+                     if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers , num_layers) == MS_SUCCESS)
+                     {
+                         bufferSize = strlen(script_url_encoded)+200;
+                         legendurl = (char*)msSmallMalloc(bufferSize);
+                         snprintf(width, sizeof(width), "%d", size_x);
+                         snprintf(height, sizeof(height), "%d", size_y);
+
+                         format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
+                                                           "getlegendgraphic_formatlist");
+                         if (format_list && strlen(format_list) > 0) 
+                         {
+                             tokens = msStringSplit(format_list,  ',', &numtokens);
+                             if (tokens && numtokens > 0)
+                             {
+                                 /*just grab the first mime type*/
+                                 mimetype = msEncodeHTMLEntities(tokens[0]);
+                                 msFreeCharArray(tokens, numtokens);
+                             }
+                         }
+                         else
+                           mimetype = msEncodeHTMLEntities("image/png; mode=24bit");
+
+                         if (nVersion >= OWS_1_3_0)
+                           
+                           snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=%s&amp;format=%s&amp;STYLE=default", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
+                                    mimetype);
+                         else 
+                           snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=default", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
+                                    mimetype);
+                         msIO_fprintf(stdout, "        <Style>\n");
+                         msIO_fprintf(stdout, "          <Name>default</Name>\n");
+                         msIO_fprintf(stdout, "          <Title>default</Title>\n");
+                      
+                         msOWSPrintURLType(stdout, NULL, 
+                                           "O", "ttt",
+                                           OWS_NOERR, NULL, 
+                                           "LegendURL", NULL, 
+                                           " width=\"%s\"", " height=\"%s\"", 
+                                           ">\n             <Format>%s</Format", 
+                                           "\n             <OnlineResource "
+                                           "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                                           " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                                           "          ",
+                                           MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, 
+                                           NULL, width, height, mimetype, legendurl, "          ");
+                 
+
+                         msIO_fprintf(stdout, "        </Style>\n");
+                         msFree(legendurl);
+                         msFree(mimetype);
+                         msFree(name_encoded);
+
+                 
+                     
+                     }
+                 }
+             }
              /* Dump all layers for this group */
              for(j=i; j<map->numlayers; j++)
              {
@@ -3452,7 +3534,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          msSetError(MS_WMSERR, "SLD_VERSION must be 1.1.0", "GetLegendGraphic()");
          return msWMSException(map, nVersion, "InvalidParameterValue", wms_exception_format);
      }
-     /* check if layer name is valid. we cjeck for layer's and group's name*/
+     /* check if layer name is valid. we check for layer's and group's name*/
      for (i=0; i<map->numlayers; i++)
      {
          lp = GET_LAYER(map, i);

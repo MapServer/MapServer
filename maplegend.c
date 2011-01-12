@@ -270,14 +270,16 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
  *   MS_SUCCESS
  *   MS_FAILURE
  */
-int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_y, layerObj *psForLayer) 
+int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_y, 
+                     int *layer_index, int num_layers)
 {
   int i, j;
   int status, maxwidth=0, nLegendItems=0;
   char *transformedText; /* Label text after applying wrapping, encoding if necessary */
   layerObj *lp;  
   rectObj rect;
-    
+  int current_layers=0;
+
   /* Reset sizes */
   *size_x = 0;
   *size_y = 0;
@@ -294,14 +296,22 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
    * step through all map classes, and for each one that will be displayed
    * calculate the label size
    */
-  for(i=0; i<map->numlayers; i++) {
-    if(psForLayer) {
-      lp = psForLayer;
-      i = map->numlayers;
-    } else
+
+
+  if (layer_index != NULL && num_layers >0)
+    current_layers  = num_layers;
+  else
+    current_layers = map->numlayers;
+  
+      
+  for(i=0; i< current_layers; i++) {
+
+    if (layer_index != NULL && num_layers > 0)
+      lp = GET_LAYER(map, layer_index[i]);
+    else
       lp = (GET_LAYER(map, map->layerorder[i]));
 
-    if((lp->status == MS_OFF && lp != psForLayer) || (lp->type == MS_LAYER_QUERY)) /* skip it */
+    if((lp->status == MS_OFF && (layer_index == NULL || num_layers <= 0)) || (lp->type == MS_LAYER_QUERY)) /* skip it */
       continue;
             
     if(!scale_independent && map->scaledenom > 0) {
@@ -401,7 +411,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       return NULL;
   }
   if(msValidateContexts(map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
-  if(msLegendCalcSize(map, scale_independent, &size_x, &size_y, NULL) != MS_SUCCESS) return NULL;
+  if(msLegendCalcSize(map, scale_independent, &size_x, &size_y, NULL, 0) != MS_SUCCESS) return NULL;
 
   /*
    * step through all map classes, and for each one that will be displayed
