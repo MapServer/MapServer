@@ -743,7 +743,8 @@ int readPNG(char *path, rasterBufferObj *rb) {
         png_set_gray_to_rgb(png_ptr);
     
     png_set_bgr(png_ptr);
-    if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY)
+    if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY ||
+        color_type == PNG_COLOR_TYPE_PALETTE)
         png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
 
     png_read_update_info(png_ptr, info_ptr);
