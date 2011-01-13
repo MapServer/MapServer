@@ -2912,6 +2912,13 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
     }
 }
 
+const char *msWFSGetDefaultVersion(mapObj *map)
+{
+  if (msOWSLookupMetadata(&(map->web.metadata), "F", "getcapabilities_version"))
+    return  msOWSLookupMetadata(&(map->web.metadata), "F", "getcapabilities_version");
+  else
+    return "1.1.0";
+}
 /************************************************************************/
 /*                            msWFSParseRequest                         */
 /*                                                                      */
@@ -2985,7 +2992,9 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         if (wfsparams->pszVersion == NULL &&
             wfsparams->pszRequest && 
             strcasecmp(wfsparams->pszRequest, "GetCapabilities") == 0)
-          wfsparams->pszVersion = msStrdup("1.1.0");
+        {
+          wfsparams->pszVersion = msStrdup(msWFSGetDefaultVersion(map));
+        }
     }
 /* -------------------------------------------------------------------- */
 /*      Parse the post request. It is assumed to be an XML document.    */
@@ -3038,7 +3047,9 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         /* version is optional for the GetCapabilities. If not provided, set it*/
         if (wfsparams->pszVersion == NULL && 
             strcmp(wfsparams->pszRequest,"GetCapabilities") == 0)
-           wfsparams->pszVersion = msStrdup("1.1.0");
+        {
+           wfsparams->pszVersion = msStrdup(msWFSGetDefaultVersion(map));
+        }
 
 
         /*do we validate the xml ?*/
@@ -3478,7 +3489,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                 if (pszValue)
                   wfsparams->pszVersion = msStrdup(pszValue);
                 else
-                  wfsparams->pszVersion = msStrdup("1.1.0");
+                  wfsparams->pszVersion = msStrdup(msStrdup(msWFSGetDefaultVersion(map));
 
                  pszValue = 
                    CPLGetXMLValue(psGetCapabilities, "service",

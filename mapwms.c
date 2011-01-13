@@ -72,9 +72,9 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
     const char *encoding;
     char *schemalocation = NULL;
 
-    /* Default to WMS 1.1.1 exceptions if version not set yet */
+    /* Default to WMS 1.3.0 exceptions if version not set yet */
     if (nVersion <= 0)
-        nVersion = OWS_1_1_1;
+        nVersion = OWS_1_3_0;
 
     /* get scheam location */
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
@@ -2045,13 +2045,12 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
     dtd_url = msStrdup(schemalocation);
     dtd_url = msStringConcatenate(dtd_url, "/wms/1.0.7/capabilities_1_0_7.dtd");
   }
-  else if (nVersion == OWS_1_1_0) {
+  else if (nVersion < OWS_1_1_1) {
     nVersion = OWS_1_1_0;
     dtd_url = msStrdup(schemalocation);
     dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.0/capabilities_1_1_0.dtd");
   }
-  /*TODO review wms1.3.0*/
-  else if (nVersion != OWS_1_3_0) {
+  else if (nVersion < OWS_1_3_0) {
     nVersion = OWS_1_1_1;
     dtd_url = msStrdup(schemalocation);
     /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
@@ -2060,6 +2059,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
     else
       dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
   }
+  else
+     nVersion = OWS_1_3_0;
 
   /* We need this server's onlineresource. */
   /* Default to use the value of the "onlineresource" metadata, and if not */
@@ -3903,7 +3904,14 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, int force_wms_mode)
                   strcasecmp(request, "GetCapabilities") == 0) )
   {
       if (nVersion == OWS_VERSION_NOTSET)
-          nVersion = OWS_1_3_0;/* VERSION is optional with getCapabilities only */
+      {
+          version = msOWSLookupMetadata(&(map->web.metadata), "M", "getcapabilities_version");
+          if (version)
+            nVersion = msOWSParseVersionString(version);
+          else
+            nVersion = OWS_1_3_0;/* VERSION is optional with getCapabilities only */
+      }
+
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
         return msWMSException(map, nVersion, NULL, wms_exception_format);
       return msWMSGetCapabilities(map, nVersion, req, updatesequence, wms_exception_format);
@@ -3990,6 +3998,17 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, int force_wms_mode)
       msSetError(MS_WMSERR,
                  "Incomplete WMS request: VERSION parameter missing",
                  "msWMSDispatch()");
+      return msWMSException(map, OWS_VERSION_NOTSET, NULL, wms_exception_format);
+  }
+
+   /*check if the version is one of the supported vcersions*/
+  if (nVersion != OWS_1_0_0 &&  nVersion != OWS_1_0_6 &&
+         nVersion != OWS_1_0_7 && nVersion != OWS_1_1_0 &&
+         nVersion != OWS_1_1_1 && nVersion != OWS_1_3_0)
+  {
+      msSetError(MS_WMSERR,
+                   "Invalid WMS version: VERSION %s is not supported. Supported versions are 1.0.0, 1.0.6, 1.0.7, 1.1.0, 1.1.1, 1.3.0",
+                   "msWMSDispatch()", version);
       return msWMSException(map, OWS_VERSION_NOTSET, NULL, wms_exception_format);
   }
 
