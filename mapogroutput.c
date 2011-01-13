@@ -729,7 +729,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
             if( item->precision != 0 )
                 OGR_Fld_SetPrecision( hFldDefn, item->precision );
 
-            eErr = OGR_L_CreateField( hOGRLayer, hFldDefn, FALSE );
+            eErr = OGR_L_CreateField( hOGRLayer, hFldDefn, TRUE );
             OGR_Fld_Destroy( hFldDefn );
 
             if( eErr != OGRERR_NONE )
