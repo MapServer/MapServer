@@ -747,8 +747,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
            strcasecmp(wms_exception_format, "XML") != 0)
        {
            msSetError(MS_WMSERR,
-                      "Invalid format for the EXCEPTION parameter.",
-                      "msWMSLoadGetMapParams()");
+                      "Invalid format %s for the EXCEPTIONS parameter.",
+                      "msWMSLoadGetMapParams()",  wms_exception_format);
            return msWMSException(map, nVersion, "InvalidFormat", wms_exception_format);
        }
    }
