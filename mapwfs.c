@@ -3489,7 +3489,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                 if (pszValue)
                   wfsparams->pszVersion = msStrdup(pszValue);
                 else
-                  wfsparams->pszVersion = msStrdup(msStrdup(msWFSGetDefaultVersion(map));
+                  wfsparams->pszVersion = msStrdup(msStrdup(msWFSGetDefaultVersion(map)));
 
                  pszValue = 
                    CPLGetXMLValue(psGetCapabilities, "service",
