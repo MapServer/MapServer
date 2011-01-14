@@ -17,6 +17,8 @@ Current Version
 Version 5.6.6 (SVN branch-5-6):
 -------------------------------
 
+- Fix WMS EXCEPTIONS parameter issue with fastcgi (#3525)
+
 - Fixed missing time in msDrawMap logging (#3651)
 
 - Fixed Internal error with Oracle Spatial multi point geometries (#3627)
