@@ -1648,22 +1648,22 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                             psCssParam = psCssParam->psNext;
                         }
                     }
-                    
+                }
 
                      /* set the default color if color is not not already set */
-                    if ((psStyle->color.red < 0 || 
-                        psStyle->color.green == -1 ||
-                         psStyle->color.blue == -1) &&
-                        (psStyle->outlinecolor.red == -1 ||
-                         psStyle->outlinecolor.green == -1 ||
-                         psStyle->outlinecolor.blue == -1))
-                    {
-                        psStyle->color.red = 128;
-                        psStyle->color.green = 128;
-                        psStyle->color.blue = 128;
-                    }
+                if ((psStyle->color.red < 0 || 
+                     psStyle->color.green == -1 ||
+                     psStyle->color.blue == -1) &&
+                    (psStyle->outlinecolor.red == -1 ||
+                     psStyle->outlinecolor.green == -1 ||
+                     psStyle->outlinecolor.blue == -1))
+                  {
+                    psStyle->color.red = 128;
+                    psStyle->color.green = 128;
+                    psStyle->color.blue = 128;
+                  }
                     
-                }
+                
                 /* Get the corresponding symbol id  */
                 psStyle->symbol = msSLDGetMarkSymbol(map, pszSymbolName, 
                                                      bFilled, pszDashValue);
