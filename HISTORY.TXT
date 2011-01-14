@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version
 ---------------
 
+Version 5.6.6 (SVN branch-5-6):
+-------------------------------
+
 - Fixed missing time in msDrawMap logging (#3651)
 
 - Fixed Internal error with Oracle Spatial multi point geometries (#3627)
@@ -22,7 +25,8 @@ Current Version
 
 - Fixed free(): invalid next size in mapfile.c (#3604)
 
-- Fix for the memory corruption when mapping the string data type in the Java bindings (3491)
+- Fix for the memory corruption when mapping the string data type in the 
+  Java bindings (3491)
 
 - Correct wms 1.3.0 latlong bbox error (#2578)
 
@@ -38,14 +42,16 @@ Current Version
 
 - Fixed multiple include tags not supported in xml mapfiles (#3530)
 
-- Ensure the class is not marked BeforeFieldInit causing memory corruption with C#/CLR4 (#3438)
+- Ensure the class is not marked BeforeFieldInit causing memory corruption 
+  with C#/CLR4 (#3438)
 
 - Fixed MSSQL2008 driver returning invalid extent (#3498)
 
 - Fix computation of shape bounds when the first line contains no points
   (#3119)(fixes #3383)
 
-- Fixed error message tiles on zero-sized map cause memory allocation errors in maperror.c. (#3524)
+- Fixed error message tiles on zero-sized map cause memory allocation errors 
+  in maperror.c. (#3524)
 
 Version 5.6.5 (2010-07-14):
 ---------------------------
