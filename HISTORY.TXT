@@ -11,6 +11,11 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Version 5.6.7 (SVN branch-5-6):
+---------------------------
+
+- ...
+
 Version 5.6.6 (2011-01-17):
 ---------------------------
 
