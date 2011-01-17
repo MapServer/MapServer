@@ -1,0 +1,130 @@
+Mapserver and Mapscript/Tcl for Windows
+
+These are the steps I have made to compile Mapserver and Mapscript/Tcl for
+Windows.  My build environment is the Mingw (Minimalist GNU for Windows)
+compiler and toolchain, hosted on Linux/Unix.  
+
+You probably want to use the pre-compiled DLL, if at all possible.
+Things get ugly after this......
+
+
+
+First, make a new directory to hold everthing we will need.
+
+	mkdir ms_win
+	cd ms_win
+
+Unpack the ms-mingw.tar.gz in that directory:
+
+	gunzip -c ../ms-mingw.tar.gz | tar xf -
+
+
+Next, you'll need the Mingw compiler and toolchain, compiled as a 
+cross compiler, hosted on your Linux or Unix platform.
+
+Mo DeJong has written a shell script to download, compile, and install *all*
+of the compiler, toolchain, and Mingw libraries.  The script is in
+ms-mingw/mingw-xcc.sh  I have set the script to install the tools into
+/opt/mingw.  If you want to change this, you'll need to also change the 'build'
+shell script.  The mingw-xcc.sh script uses the 'wget' program to fetch
+files via ftp (ftp://ftp.gnu.org/gnu/wget/).
+
+	cd ms-mingw
+	sh mingw-xcc.sh
+	cd ..
+
+
+Next, get *fresh* sources of all of the required MapServer packages, and 
+unpack in the ms_win directory.  Your 'ms_win' directory should look 
+like this after unpacking all of the sources:
+
+	README.ms-mingw  install     ms-mingw/    tcl8.3.2/
+	build            jpeg-6b/    proj-4.4.2/  tiff-v3.5.5/
+	freetype-1.3.1/  mapserver/  regex-0.12/  zlib-1.1.3/
+
+
+The 'ms-mingw' directory contains directories for each of the components we
+will be building.  Each directory consists of a Makefile for Mingw as a 
+cross compiler, and a 'build' script to copy the Makefile into the source
+directories (as above), and make the libraries.
+
+Software locations:
+
+mingw:	http://www.mingw.org
+	The mingw-xcc.sh script will grab things for you.
+	There's a lot of info on the Mingw compiler and its use as a 
+	cross compiler at the site.
+
+proj:	http://www.remotesensing.org/proj/
+	Get version 4.4.2
+
+zlib:   http://www.info-zip.org/pub/infozip/zlib/
+	Get version 1.1.3
+
+jpeg:   ftp://ftp.uu.net/graphics/jpeg/
+	Get version 6b.
+
+tiff:   http://www.libtiff.org/
+	Get version 3.5.5
+
+freetype: http://www.freetype.org
+	Get version 1.3.1
+	NOTE!!!  I have found the the freetype-1.3.1.tar.gz file contains
+	source files with dos style end of line characters (cr-lf).  This 
+	will likely confuse gcc.  The easy way to convert into normal
+	unix-style text files is to get the freetype-1.3.1.zip, and
+	use 'unzip -a freetype-1.3.1' to unpack it, converting the
+	files to use lf only.  Rename the 'freetype' directory to 
+	'freetype-1.3.1'.
+
+regex: ftp://ftp.gnu.org/pub/gnu/regex/regex-0.12.tar.gz
+	  
+mapserver: http://mapserver.gis.umn.edu/dload.html
+	Get the 'nightly' CVS builds for 3.4 (beta), nightly.tar.gz. 
+	We will also use the GD 1.2 and GDFT libraries that come with 
+	Mapserver.  As a side effect, we will also build an executable,
+	mapserv.exe.
+
+tcl:	http://dev.scriptics.com
+	Get version 8.3.2
+	We will only be building 'libtclstub83.a', not the entire 
+	Tcl library.  Also get 'tcl832.exe' and install it on your Windows
+	machine(s) if you don't already have it.  For best results,
+	let the installer place Tcl in 'C:\Program Files\Tcl'.
+
+
+
+
+Build everything:
+Use the build script in this directory.  (change the values of 'mingwbin' and
+'mingwxcc' if needed.)
+
+	sh build
+
+Install:
+You probably have to be root to write into /c.
+
+	sh install
+
+Or, you can ftp the files over to your windows box and use the 'setup.tcl' 
+installer.
+
+
+Notes:  
+
+Building for Windows is a royal pain in the ***!  The biggest problem is
+building the various libraries the 'right' way, i.e, as DLL files.  This
+requires a majic Windows macro to export the symbols for the DLL, but another
+majic macro for code that uses the symbols in a DLL.  For software originally
+not designed to be portable across Unix and Windows, this requires changing
+alot of source files.  
+
+    Examples of software that is written for portability: zlib, tcl
+    Examples of software that is not: proj, mapserver
+
+The alternative:  compile the source library code, and bundling it into
+a standard library file, e.g., libz.a, libjpeg.a, libttf.a, etc.
+We then take all of the libraries and create our final DLL, libMapscript.dll.
+The downside is that we're not allowing any reuse of the libaries, but the
+upside is we don't have to change much exisiting code.  I do this method.
+
