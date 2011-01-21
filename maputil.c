@@ -36,19 +36,15 @@
 
 #include "mapserver.h"
 #include "maptime.h"
-#include "mapparser.h"
 #include "mapthread.h"
-#include "mapfile.h"
 #include "mapcopy.h"
 
-#ifdef _WIN32
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
 # include <windows.h>
 # include <tchar.h>
 # include <fcntl.h>
 # include <io.h>
-#endif
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
 #include <process.h>
 #endif
 
