@@ -4551,6 +4551,7 @@ void initWeb(webObj *web)
   web->minscaledenom = web->maxscaledenom = -1;
   web->log = NULL;
   web->imagepath = msStrdup("");
+  web->temppath = NULL;
   web->imageurl = msStrdup("");
   
   initHashTable(&(web->metadata));
@@ -4573,6 +4574,7 @@ void freeWeb(webObj *web)
   msFree(web->mintemplate);
   msFree(web->log);
   msFree(web->imagepath);
+  msFree(web->temppath);
   msFree(web->imageurl);
   msFree(web->queryformat);
   msFree(web->legendformat);
@@ -4592,6 +4594,7 @@ static void writeWeb(FILE *stream, int indent, webObj *web)
   writeString(stream, indent, "FOOTER", NULL, web->footer);
   writeString(stream, indent, "HEADER", NULL, web->header);
   writeString(stream, indent, "IMAGEPATH", "", web->imagepath);
+  writeString(stream, indent, "TEMPPATH", NULL, web->temppath);
   writeString(stream, indent, "IMAGEURL", "", web->imageurl);
   writeString(stream, indent, "LEGENDFORMAT", "text/html", web->legendformat);
   writeString(stream, indent, "LOG", NULL, web->log);
@@ -4663,6 +4666,9 @@ int loadWeb(webObj *web, mapObj *map)
       break;
     case(IMAGEPATH):      
       if(getString(&web->imagepath) == MS_FAILURE) return(-1);
+      break;
+    case(TEMPPATH):      
+      if(getString(&web->temppath) == MS_FAILURE) return(-1);
       break;
     case(IMAGEURL):
       if(getString(&web->imageurl) == MS_FAILURE) return(-1);

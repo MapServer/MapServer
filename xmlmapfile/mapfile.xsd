@@ -179,6 +179,7 @@
 			<xs:element name="footer" type="xs:string" minOccurs="0"/>
 			<xs:element name="header" type="xs:string" minOccurs="0"/>
 			<xs:element name="imagePath" type="xs:string" minOccurs="0"/>
+			<xs:element name="tempPath" type="xs:string" minOccurs="0"/>
 			<xs:element name="imageUrl" type="xs:string" minOccurs="0"/>
 			<xs:element name="legendFormat" type="xs:string" minOccurs="0"/>
 			<xs:element name="log" type="xs:string" minOccurs="0"/>

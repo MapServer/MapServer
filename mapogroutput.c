@@ -500,10 +500,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 /* -------------------------------------------------------------------- */
     if( EQUAL(storage,"filesystem") )
     {
-        if( map->web.imagepath )
-            strcpy( base_dir, map->web.imagepath ); /* should this be treated as relative to mappath? */
-        else
-            strcpy( base_dir, "/tmp/" );
+        base_dir[0] = '\0' ;
     }
     else if( EQUAL(storage,"memory") )
     {
@@ -527,7 +524,10 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 /* -------------------------------------------------------------------- */
     if( !EQUAL(storage,"stream") )
     {
-        request_dir = msTmpFile( NULL, base_dir, "" );
+        if (strlen(base_dir) > 0)
+            request_dir = msTmpFile(map, NULL, base_dir, "" );                
+        else
+            request_dir = msTmpFile(map, NULL, NULL, "" );
 
         if( request_dir[strlen(request_dir)-1] == '.' )
             request_dir[strlen(request_dir)-1] = '\0';
@@ -969,7 +969,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         return MS_FAILURE;
 #else
         FILE *fp;
-        char *zip_filename = msTmpFile( NULL, "/vsimem/ogrzip/", "zip" );
+        char *zip_filename = msTmpFile(map, NULL, "/vsimem/ogrzip/", "zip" );
         void *hZip;
         int bytes_read;
         char buffer[1024];

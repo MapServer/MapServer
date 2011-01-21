@@ -42,8 +42,10 @@
 #include "mapcopy.h"
 
 #ifdef _WIN32
-#include <fcntl.h>
-#include <io.h>
+# include <windows.h>
+# include <tchar.h>
+# include <fcntl.h>
+# include <io.h>
 #endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -1245,52 +1247,87 @@ void msForceTmpFileBase( const char *new_base )
 /**********************************************************************
  *                          msTmpFile()
  *
- * Generate a Unique temporary filename using:
- * 
- *    PID + timestamp + sequence# + extension
- * 
- * If msForceTmpFileBase() has been called to control the temporary filename
- * then the filename will be:
- *
- *    TmpBase + sequence# + extension
+ * Generate a Unique temporary file.
  * 
  * Returns char* which must be freed by caller.
  **********************************************************************/
-char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
+char *msTmpFile(mapObj *map, const char *mappath, const char *tmppath, const char *ext)
 {
-    char *tmpFname;
     char szPath[MS_MAXPATHLEN];
     const char *fullFname;
-    char tmpId[128]; /* big enough for time + pid + ext */
+    char *tmpFileName; /* big enough for time + pid + ext */
     const char *tmpBase = NULL;
-    int tmpFnameBufsize;
+#ifdef _WIN32
+    DWORD dwRetVal = 0;
+    TCHAR lpTempPathBuffer[MAX_PATH];
+#endif
 
     if( ForcedTmpBase != NULL )
-    {
         tmpBase = ForcedTmpBase;
-    }
-    else 
+    else if (tmppath != NULL)
+        tmpBase = tmppath;
+    else if (getenv("MS_TEMPPATH"))
+        tmpBase = getenv("MS_TEMPPATH");
+    else if (map && map->web.temppath)
+        tmpBase = map->web.temppath;
+    else /* default paths */
     {
-        /* We'll use tmpId and tmpCount to generate unique filenames */
-        snprintf(tmpId, sizeof(tmpId), "%lx_%x",(long)time(NULL),(int)getpid());
-        tmpBase = tmpId;
+#ifndef _WIN32        
+        tmpBase = "/tmp/";
+#else
+        dwRetVal =  GetTempPath(MAX_PATH,          // length of the buffer
+                                lpTempPathBuffer); // buffer for path 
+        if (dwRetVal > MAX_PATH || (dwRetVal == 0))
+        {
+            tmpBase = "C:\\";
+        } 
+        else
+        {
+            tmpBase = (char*)lpTempPathBuffer; /* NOT SURE HOW TO CAST a TCHAR to char* */
+        }
+#endif
     }
 
-    if (ext == NULL)  ext = "";
-    tmpFnameBufsize = strlen(tmpBase) + 10  + strlen(ext) + 1;
-    tmpFname = (char*)msSmallMalloc(tmpFnameBufsize);
+    tmpFileName = msTmpFilename(ext);
 
-    msAcquireLock( TLOCK_TMPFILE );
-    snprintf(tmpFname, tmpFnameBufsize, "%s_%x.%s", tmpBase, tmpCount++, ext);
-    msReleaseLock( TLOCK_TMPFILE );
+    fullFname = msBuildPath3(szPath, mappath, tmpBase, tmpFileName);
 
-    fullFname = msBuildPath3(szPath, mappath, tmppath, tmpFname);
-    free(tmpFname);
-
+    free(tmpFileName);
+    
     if (fullFname)
         return msStrdup(fullFname);
 
     return NULL;
+}
+
+/**********************************************************************
+ *                          msTmpFilename()
+ *
+ * Generate a Unique temporary filename.
+ * 
+ * Returns char* which must be freed by caller.
+ **********************************************************************/
+char *msTmpFilename(const char *ext)
+{
+    char *tmpFname;
+    int tmpFnameBufsize;
+    char *fullFname;
+    char tmpId[128]; /* big enough for time + pid + ext */
+
+    snprintf(tmpId, sizeof(tmpId), "%lx_%x",(long)time(NULL),(int)getpid());
+
+    if (ext == NULL)  ext = "";
+    tmpFnameBufsize = strlen(tmpId) + 10 + strlen(ext) + 1;
+    tmpFname = (char*)msSmallMalloc(tmpFnameBufsize);
+
+    msAcquireLock( TLOCK_TMPFILE );
+    snprintf(tmpFname, tmpFnameBufsize, "%s_%x.%s", tmpId, tmpCount++, ext);
+    msReleaseLock( TLOCK_TMPFILE );
+
+    fullFname = strdup(tmpFname);
+    free(tmpFname);
+
+    return fullFname;
 }
 
 /**

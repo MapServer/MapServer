@@ -646,9 +646,10 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
             msStrdup("text/xml");
     }
 
+
     /* We'll store the remote server's response to a tmp file. */
-    pasReqInfo[(*numRequests)].pszOutputFile = msTmpFile(map->mappath, 
-                                                 map->web.imagepath, ".tmp.gml"); 
+    pasReqInfo[(*numRequests)].pszOutputFile = msTmpFile(map, map->mappath, NULL, "tmp.gml");
+
     /* TODO: Implement Caching of GML responses. There was an older caching 
      * method, but it suffered from a race condition. See #3137.
      */ 
@@ -796,16 +797,9 @@ int msWFSLayerOpen(layerObj *lp,
         psInfo->pszGMLFilename = msStrdup(pszGMLFilename);
     else
     {
-        if (lp->map->web.imagepath==NULL || strlen(lp->map->web.imagepath)==0)
-        {
-            msSetError(MS_WFSERR, 
-                  "WEB.IMAGEPATH must be set to use WFS client connections.",
-                       "msPrepareWMSLayerRequest()");
-            return MS_FAILURE;
-        }
-
-        psInfo->pszGMLFilename = msTmpFile(lp->map->mappath, 
-                                           lp->map->web.imagepath, 
+        psInfo->pszGMLFilename = msTmpFile(lp->map, 
+                                           lp->map->mappath,
+                                           NULL, 
                                            "tmp.gml");
     }
 

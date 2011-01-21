@@ -361,6 +361,11 @@
     </xsl:call-template>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:tempPath'"/>
+      <xsl:with-param name="quote" select="1"/>
+    </xsl:call-template>
+    <xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:imageUrl'"/>
       <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>

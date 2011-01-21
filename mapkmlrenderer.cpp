@@ -152,7 +152,7 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
         char *zip_filename =NULL;
         void *hZip=NULL;
 
-        zip_filename = msTmpFile( NULL, "/vsimem/kmlzip/", "kmz" );
+        zip_filename = msTmpFile(NULL, NULL, "/vsimem/kmlzip/", "kmz" );
         hZip = CPLCreateZip( zip_filename, NULL );
         CPLCreateFileInZip( hZip, "mapserver.kml", NULL );
         for (int i=0; i<bufSize; i+=chunkSize)
@@ -422,7 +422,7 @@ int KmlRenderer::mergeRasterBuffer(imageObj *image, rasterBufferObj *rb) {
    char *tmpUrl = NULL;
    FILE *tmpFile = NULL;
     
-   tmpFileName = msTmpFile(MapPath, image->imagepath, "png");
+   tmpFileName = msTmpFile(NULL, MapPath, image->imagepath, "png");
    tmpFile = fopen(tmpFileName,"wb");
    if (tmpFile)
    {
@@ -926,9 +926,9 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
 
       if (img->imagepath)
       {
-        char *tmpFileName = msTmpFile(MapPath, img->imagepath, "png");
-        snprintf(iconFileName, sizeof(iconFileName), "%s", tmpFileName);
-        msFree(tmpFileName);
+          char *tmpFileName = msTmpFile(NULL, MapPath, img->imagepath, "png");
+          snprintf(iconFileName, sizeof(iconFileName), "%s", tmpFileName);
+          msFree(tmpFileName);
       }
       else
       {

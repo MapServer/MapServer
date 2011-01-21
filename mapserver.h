@@ -763,7 +763,7 @@ typedef struct {
 
 typedef struct {
   char *log;
-  char *imagepath, *imageurl;
+  char *imagepath, *imageurl, *temppath;
 
 #ifdef SWIG
 %immutable;
@@ -2262,7 +2262,8 @@ MS_DLL_EXPORT pointObj *msGetPointUsingMeasure(shapeObj *shape, double m);
 MS_DLL_EXPORT pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point);
 
 MS_DLL_EXPORT char **msGetAllGroupNames(mapObj* map, int *numTok);
-MS_DLL_EXPORT char *msTmpFile(const char *mappath, const char *tmppath, const char *ext);
+MS_DLL_EXPORT char *msTmpFile(mapObj *map, const char *mappath, const char *tmppath, const char *ext);
+MS_DLL_EXPORT char *msTmpFilename(const char *ext);
 MS_DLL_EXPORT void msForceTmpFileBase( const char *new_base );
 
 

@@ -194,18 +194,14 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
             != NULL )
         {
             CleanVSIDir( "/vsimem/msout" );
-            filename = msTmpFile( NULL, "/vsimem/msout/", pszExtension );
+            filename = msTmpFile(map, NULL, "/vsimem/msout/", pszExtension );
         }
 #endif
-        if( filename == NULL && map != NULL && map->web.imagepath != NULL )
-            filename = msTmpFile(map->mappath,map->web.imagepath,pszExtension);
+        if( filename == NULL && map != NULL)
+            filename = msTmpFile(map, map->mappath,NULL,pszExtension);
         else if( filename == NULL )
         {
-#ifndef _WIN32
-            filename = msTmpFile(NULL, "/tmp/", pszExtension );
-#else
-            filename = msTmpFile(NULL, "C:\\", pszExtension );
-#endif
+            filename = msTmpFile(map, NULL, NULL, pszExtension );
         }
             
         bFileIsTemporary = MS_TRUE;

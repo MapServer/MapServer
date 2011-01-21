@@ -146,7 +146,7 @@ PHP_METHOD(imageObj, saveWebImage)
     
     php_image = (php_image_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    imageFilename = msTmpFile(NULL,NULL, php_image->image->format->extension);
+    imageFilename = msTmpFilename(php_image->image->format->extension);
     imageFile = msBuildPath(path, php_image->image->imagepath, imageFilename);
 
     if (msSaveImage(NULL, php_image->image, imageFile) != MS_SUCCESS)

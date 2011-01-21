@@ -74,14 +74,10 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
     
     if (map && szURL)
     {
-        pszSLDTmpFile = msTmpFile(map->mappath, map->web.imagepath, "sld.xml");
+        pszSLDTmpFile = msTmpFile(map, map->mappath, NULL, "sld.xml");
         if (pszSLDTmpFile == NULL)
         {
-#ifndef _WIN32
-            pszSLDTmpFile = msTmpFile(NULL, "/tmp/", "sld.xml" );
-#else
-            pszSLDTmpFile = msTmpFile(NULL, "C:\\", "sld.xml");
-#endif
+            pszSLDTmpFile = msTmpFile(map, NULL, NULL, "sld.xml" );
         }
         if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS)
         {
@@ -459,14 +455,10 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     }
     if(map->debug == MS_DEBUGLEVEL_VVV)
     {
-        tmpfilename = msTmpFile(map->mappath, map->web.imagepath, "_sld.map");
+        tmpfilename = msTmpFile(map, map->mappath, NULL, "_sld.map");
         if (tmpfilename == NULL)
         {
-#ifndef _WIN32
-            tmpfilename = msTmpFile(NULL, "/tmp/", "_sld.map" );
-#else
-            tmpfilename = msTmpFile(NULL, "C:\\", "_sld.map");
-#endif
+            tmpfilename = msTmpFile(map, NULL, NULL, "_sld.map" );
         }
         if (tmpfilename)
         {
@@ -2321,9 +2313,9 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                     {
                         if (strcasecmp(pszFormat, "GIF") == 0 || 
                             strcasecmp(pszFormat, "image/gif") == 0)
-                          pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "gif");
+                          pszTmpSymbolName = msTmpFile(map, map->mappath, NULL, "gif");
                         else
-                          pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "png");
+                            pszTmpSymbolName = msTmpFile(map, map->mappath, NULL, "png");
 
                         if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) == MS_SUCCESS)
                         {

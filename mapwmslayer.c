@@ -1326,7 +1326,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         pszHTTPCookieData = NULL;
         if( bCacheToDisk )
             pasReqInfo[(*numRequests)].pszOutputFile =
-                msTmpFile(map->mappath, map->web.imagepath, "img.tmp");
+                msTmpFile(map, map->mappath, NULL, "img.tmp");
         else
             pasReqInfo[(*numRequests)].pszOutputFile = NULL;
         pasReqInfo[(*numRequests)].nStatus = 0;
@@ -1499,7 +1499,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     if( pasReqInfo[iReq].pszOutputFile == NULL )
     {
         CleanVSIDir( "/vsimem/msout" );
-        mem_filename = msTmpFile( NULL, "/vsimem/msout/", "img.tmp" );
+        mem_filename = msTmpFile(map, NULL, "/vsimem/msout/", "img.tmp" );
         
         VSIFCloseL( 
             VSIFileFromMemBuffer( mem_filename, 

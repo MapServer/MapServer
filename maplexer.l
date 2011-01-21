@@ -222,6 +222,7 @@ char *msyytext_esc=NULL;
 <INITIAL>imagequality                          { return(IMAGEQUALITY); }
 <INITIAL>imagemode                             { return(IMAGEMODE); }
 <INITIAL>imagepath                             { return(IMAGEPATH); }
+<INITIAL>temppath                              { return(TEMPPATH); }
 <INITIAL>imageurl                              { return(IMAGEURL); }
 <INITIAL>include                               { BEGIN(INCLUDE); }
 <INITIAL>index                                 { return(INDEX); }

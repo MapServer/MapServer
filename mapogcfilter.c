@@ -1133,14 +1133,10 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
     if(map->debug == MS_DEBUGLEVEL_VVV)
     {
-        tmpfilename = msTmpFile(map->mappath, map->web.imagepath, "_filter.map");
+        tmpfilename = msTmpFile(map, map->mappath, NULL, "_filter.map");
         if (tmpfilename == NULL)
         {
-#ifndef _WIN32
-            tmpfilename = msTmpFile(NULL, "/tmp/", "_filter.map" );
-#else
-            tmpfilename = msTmpFile(NULL, "C:\\", "_filter.map");
-#endif
+            tmpfilename = msTmpFile(map, NULL, NULL, "_filter.map" );
         }
         if (tmpfilename)
         {
