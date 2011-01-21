@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -29,7 +29,9 @@
 
 #include "mapserver.h"
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 
 MS_CVSID("$Id$")
@@ -45,28 +47,28 @@ MS_CVSID("$Id$")
 char* AddFileSuffix ( const char * Filename, const char * Suffix ) {
     char	*pszFullname, *pszBasename;
     int	i;
-      
+
   /* -------------------------------------------------------------------- */
   /*	Compute the base (layer) name.  If there is any extension	    */
   /*	on the passed in filename we will strip it off.			    */
   /* -------------------------------------------------------------------- */
     pszBasename = (char *) msSmallMalloc(strlen(Filename)+5);
     strcpy( pszBasename, Filename );
-    for( i = strlen(pszBasename)-1; 
+    for( i = strlen(pszBasename)-1;
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
 	 && pszBasename[i] != '\\';
        i-- ) {}
-  
+
     if( pszBasename[i] == '.' )
       pszBasename[i] = '\0';
-  
+
   /* -------------------------------------------------------------------- */
   /*	Open the .shp and .shx files.  Note that files pulled from	    */
   /*	a PC to Unix with upper case filenames won't work!		    */
   /* -------------------------------------------------------------------- */
     pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
-    sprintf( pszFullname, "%s%s", pszBasename, Suffix); 
-      
+    sprintf( pszFullname, "%s%s", pszBasename, Suffix);
+
     return (pszFullname);
 }
 
@@ -75,13 +77,13 @@ int main( int argc, char ** argv )
 
 {
     SHPTreeHandle	qix;
-    
+
     int		i, j;
     rectObj	rect;
- 
+
     int		pos;
     ms_bitarray bitmap = NULL;
-     
+
     char	mBigEndian;
     treeNodeObj *node = NULL;
 
@@ -129,17 +131,17 @@ int main( int argc, char ** argv )
       if (node )
       {
         fprintf (stdout,"shapes %d, node %d, %f,%f,%f,%f \n",(int) node->numshapes,node->numsubnodes,node->rect.minx, node->rect.miny, node->rect.maxx, node->rect.maxy);
-            
+
       }
-      else 
+      else
       { pos = 0; }
     }
-    
+
     printf ("read entire file now at quad box rec %d file pos %ld\n", j, ftell (qix->fp));
 
     j = qix->nShapes;
     msSHPDiskTreeClose (qix);
-    
+
     if( argc >= 5 )
     {
       rect.minx = atof (argv[2]);
@@ -155,7 +157,7 @@ int main( int argc, char ** argv )
       rect.maxx =  node->rect.maxx;
       rect.maxy =  node->rect.maxy;
     }
-    
+
     bitmap = msSearchDiskTree( argv[1], rect, 0 /* no debug*/ );
 
     if ( bitmap )
@@ -165,7 +167,7 @@ int main( int argc, char ** argv )
       {
         if ( msGetBit(bitmap,i) )
         {
-          printf(" %d,",i); 
+          printf(" %d,",i);
         }
       }
     }
