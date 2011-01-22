@@ -31,6 +31,7 @@
 #ifndef MAPOWS_H
 #define MAPOWS_H
 
+#include "maphttp.h"
 #include <time.h>
 
 /* This is the URL to the official OGC Schema Repository. We use it by 
@@ -40,66 +41,8 @@
 #define OWS_DEFAULT_SCHEMAS_LOCATION   "http://schemas.opengis.net"
 
 /*====================================================================
- *   maphttp.c
+ *   mapows.c
  *====================================================================*/
-
-#define MS_HTTP_SUCCESS(status)  (status == 200 || status == 242)
-
-enum MS_HTTP_PROXY_TYPE
-{
-    MS_HTTP,
-    MS_SOCKS5
-};
-
-enum MS_HTTP_AUTH_TYPE
-{
-    MS_BASIC,
-    MS_DIGEST,
-    MS_NTLM,
-    MS_ANY,
-    MS_ANYSAFE
-};
-
-typedef struct http_request_info
-{
-    int     nLayerId;
-    char    *pszGetUrl;
-    char    *pszOutputFile;
-    int     nTimeout;
-    rectObj bbox;
-    int     width;
-    int     height;
-    int     nStatus;            /* 200=success, value < 0 if request failed */
-    char    *pszContentType;    /* Content-Type of the response */
-    char    *pszErrBuf;         /* Buffer where curl can write errors */
-    char    *pszPostRequest;    /* post request content (NULL for GET) */
-    char    *pszPostContentType;/* post request MIME type */
-    char    *pszUserAgent;      /* User-Agent, auto-generated if not set */
-    char    *pszHTTPCookieData; /* HTTP Cookie data */
-    
-    char    *pszProxyAddress;   /* The address (IP or hostname) of proxy svr */
-    long     nProxyPort;        /* The proxy's port                          */
-    enum MS_HTTP_PROXY_TYPE eProxyType; /* The type of proxy                 */
-    enum MS_HTTP_AUTH_TYPE  eProxyAuthType; /* Auth method against proxy     */
-    char    *pszProxyUsername;  /* Proxy authentication username             */
-    char    *pszProxyPassword;  /* Proxy authentication password             */
-    
-    enum MS_HTTP_AUTH_TYPE eHttpAuthType; /* HTTP Authentication type        */
-    char    *pszHttpUsername;   /* HTTP Authentication username              */
-    char    *pszHttpPassword;   /* HTTP Authentication password              */
-
-    /* For debugging/profiling */
-    int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
-
-    /* Private members */
-    void      * curl_handle;   /* CURLM * handle */
-    FILE      * fp;            /* FILE * used during download */
-    
-    char      * result_data;   /* output if pszOutputFile is NULL */
-    int       result_size;
-    int       result_buf_size;
-
-} httpRequestObj;
 
 typedef struct
 {
@@ -160,21 +103,8 @@ typedef  struct
   char         *httpcookiedata;
 } wmsParamsObj;
 
-int msHTTPInit(void);
-void msHTTPCleanup(void);
-
-void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
-                           int bCheckLocalCache);
-int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile, 
-                   int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
-                   int bDebug);
 
 
-/*====================================================================
- *   mapows.c
- *====================================================================*/
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode);
 
 MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj *metadata, 
@@ -294,8 +224,10 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
                             int nVersion, hashTableObj *metadata,
                             const char *namespaces  );
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectObj *ext);
+
 int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                          mapObj *map, int bCheckLocalCache);
+
 void msOWSProcessException(layerObj *lp, const char *pszFname, 
                            int nErrorCode, const char *pszFuncName);
 char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL, 

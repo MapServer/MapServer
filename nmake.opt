@@ -512,6 +512,7 @@ JPEG_INC = -I$(JPEG_DIR)
 # You may also need to the full path to the windows socket library.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #WMSCLIENT= -DUSE_WMS_LYR
+#CURL=-DUSE_CURL 
 #CURL_DIR=$(MS_BASE)\..\curl-7.19.4
 #WINSOCK_LIB ="C:\Program Files\Microsoft SDKs\Windows\v6.1\Lib\WS2_32.Lib"
 #WINSOCK_LIB ="C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\WS2_32.Lib"
@@ -899,7 +900,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
           $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) \
-          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(AGG_SVG_SYMBOLS) $(KML) $(GIF)
+          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(AGG_SVG_SYMBOLS) $(KML) $(GIF) $(CURL)
 
 !IFDEF WIN64
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT

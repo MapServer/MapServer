@@ -1463,7 +1463,7 @@ int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     int nStatus, iReq;
 
     /* Execute requests */
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+#if defined(USE_CURL)
     nStatus = msHTTPExecuteRequests(pasReqInfo, numRequests, bCheckLocalCache);
 #else
     msSetError(MS_WMSERR, "msOWSExecuteRequests() called apparently without libcurl configured, msHTTPExecuteRequests() not available.",

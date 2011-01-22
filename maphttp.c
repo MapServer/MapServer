@@ -30,11 +30,11 @@
  * This should be changed to a test on the presence of libcurl which
  * is really what the real dependency is.
  */
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+#if defined(USE_CURL)
 
 #include "mapserver.h"
+#include "maphttp.h"
 #include "maperror.h"
-#include "mapows.h"
 #include "mapthread.h"
 
 MS_CVSID("$Id$")
