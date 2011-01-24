@@ -1842,7 +1842,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 */
 static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape) 
 {
-  int i,j;
+  int i,j,p;
   int status;
   
   char *tag, *tagStart, *tagEnd;
@@ -1864,9 +1864,6 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   char *sh, *sf;
   char *irh, *irf; /* inner ring: necessary for complex polygons */
   char *orh, *orf; /* outer ring */
-
-  int useRingFormatting = MS_FALSE; /* do we need to consider inner and outer rings in formatting */
-  int isOuterRing;
 
   int centroid;
   int precision;
@@ -2084,45 +2081,72 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     ** build the coordinate string 
     */
 
-    /* do we need to handle inner/outer rings */
-    if(tShape.type == MS_SHAPE_POLYGON && strlen(orh) > 0 && strlen(irh) > 0)
-      useRingFormatting = MS_TRUE;
-
     if(strlen(sh) > 0) coords = msStringConcatenate(coords, sh);
-    for(i=0; i<tShape.numlines; i++) { /* e.g. part */
 
-      /* skip degenerate parts, really should only happen with pixel output */ 
-      if((tShape.type == MS_SHAPE_LINE && tShape.line[i].numpoints < 2) ||
-        (tShape.type == MS_SHAPE_POLYGON && tShape.line[i].numpoints < 3))
-        continue;
-
-      if(useRingFormatting) {
-        isOuterRing = msIsOuterRing(&tShape, i); /* compute once */
-        if(isOuterRing == MS_TRUE)
+    /* do we need to handle inner/outer rings */
+    if(tShape.type == MS_SHAPE_POLYGON && strlen(orh) > 0 && strlen(irh) > 0) {
+      int *outers;
+      int firstPart; /* to keep track of inserting part separators before each part after the first */
+      outers = msGetOuterList( &tShape );
+      firstPart = 1; 
+      /* loop over rings looking for outers*/
+      for(i=0; i<tShape.numlines; i++) { 
+        int *inners;
+        if( outers[i] ) {
+          /* this is an outer ring */ 
+          if((!firstPart) && (strlen(ps) > 0)) coords = msStringConcatenate(coords, ps);
+          firstPart = 0;
+          if(strlen(ph) > 0) coords = msStringConcatenate(coords, ph);
           coords = msStringConcatenate(coords, orh);
-        else
-          coords = msStringConcatenate(coords, irh);
-      } else if(strlen(ph) > 0) {
-        coords = msStringConcatenate(coords, ph);
-      }
-
-      for(j=0; j<tShape.line[i].numpoints-1; j++) {
-        snprintf(point, sizeof(point), pointFormat1, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
-        coords = msStringConcatenate(coords, point);
-      }
-      snprintf(point, sizeof(point), pointFormat2, scale_x*tShape.line[i].point[j].x, scale_y*tShape.line[i].point[j].y);
-      coords = msStringConcatenate(coords, point);
-
-      if(useRingFormatting) {
-        if(isOuterRing == MS_TRUE)
+          for(p=0; p<tShape.line[i].numpoints-1; p++) {
+            snprintf(point, sizeof(point), pointFormat1, scale_x*tShape.line[i].point[p].x, scale_y*tShape.line[i].point[p].y);
+            coords = msStringConcatenate(coords, point);
+          }
+          snprintf(point, sizeof(point), pointFormat2, scale_x*tShape.line[i].point[p].x, scale_y*tShape.line[i].point[p].y);
+          coords = msStringConcatenate(coords, point);
           coords = msStringConcatenate(coords, orf);
-        else
-          coords = msStringConcatenate(coords, irf);
-      } else if(strlen(pf) > 0) {
-        coords = msStringConcatenate(coords, pf);
-      }
 
-      if((i < tShape.numlines-1) && (strlen(ps) > 0)) coords = msStringConcatenate(coords, ps);
+          inners = msGetInnerList(&tShape, i, outers);
+          /* loop over rings looking for inners to this outer */
+          for(j=0; j<tShape.numlines; j++) {
+            if( inners[j] ) {
+              /* j is an inner ring of i */
+              coords = msStringConcatenate(coords, irh);
+              for(p=0; p<tShape.line[j].numpoints-1; p++) {
+                snprintf(point, sizeof(point), pointFormat1, scale_x*tShape.line[j].point[p].x, scale_y*tShape.line[j].point[p].y);
+                coords = msStringConcatenate(coords, point);
+              }
+              snprintf(point, sizeof(point), pointFormat2, scale_x*tShape.line[j].point[p].x, scale_y*tShape.line[j].point[p].y);
+              coords = msStringConcatenate(coords, irf);
+            }
+          }
+          free( inners );
+          if(strlen(pf) > 0) coords = msStringConcatenate(coords, pf);
+        }
+      } /* end of loop over outer rings */
+      free( outers );
+    } else { /* output without ring formatting */
+
+      for(i=0; i<tShape.numlines; i++) { /* e.g. part */
+
+        /* skip degenerate parts, really should only happen with pixel output */ 
+        if((tShape.type == MS_SHAPE_LINE && tShape.line[i].numpoints < 2) ||
+          (tShape.type == MS_SHAPE_POLYGON && tShape.line[i].numpoints < 3))
+          continue;
+
+        if(strlen(ph) > 0) coords = msStringConcatenate(coords, ph);
+
+        for(p=0; j<tShape.line[i].numpoints-1; p++) {
+          snprintf(point, sizeof(point), pointFormat1, scale_x*tShape.line[i].point[p].x, scale_y*tShape.line[i].point[p].y);
+          coords = msStringConcatenate(coords, point);
+        }
+        snprintf(point, sizeof(point), pointFormat2, scale_x*tShape.line[i].point[p].x, scale_y*tShape.line[i].point[p].y);
+        coords = msStringConcatenate(coords, point);
+
+        if(strlen(pf) > 0) coords = msStringConcatenate(coords, pf);
+
+        if((i < tShape.numlines-1) && (strlen(ps) > 0)) coords = msStringConcatenate(coords, ps);
+      }
     }
     if(strlen(sf) > 0) coords = msStringConcatenate(coords, sf);
 
