@@ -2806,7 +2806,7 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
  **********************************************************************/
 #ifdef USE_OGR
 static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId, 
-                            const char *pszDefaultSymbol)
+                            const char *pszDefaultSymbol, int try_addimage_if_notfound)
 {
     // Symbol name mapping:
     // First look for the native symbol name, then the ogr-...
@@ -2827,14 +2827,16 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
         {
             for(int j=0; j<numparams && nSymbol == -1; j++)
             {
-                nSymbol = msGetSymbolIndex(symbolset, params[j], MS_FALSE);
+                nSymbol = msGetSymbolIndex(symbolset, params[j], 
+                                           try_addimage_if_notfound);
             }
             msFreeCharArray(params, numparams);
         }
     }
     if (nSymbol == -1 && pszDefaultSymbol)
     {
-        nSymbol = msGetSymbolIndex(symbolset,(char*)pszDefaultSymbol,MS_FALSE);
+        nSymbol = msGetSymbolIndex(symbolset,(char*)pszDefaultSymbol,
+                                   try_addimage_if_notfound);
     }
     if (nSymbol == -1)
         nSymbol = 0;
@@ -2860,7 +2862,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
 {
     GBool bIsNull, bIsBrush=MS_FALSE, bIsPen=MS_FALSE;
     int r=0,g=0,b=0,t=0;
-
+    double dfTmp;
+    int try_addimage_if_notfound = MS_FALSE;
 #if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
     int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
 #else /* OGRStyle C++ */
@@ -3135,6 +3138,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           colorObj oPenColor;
           int nPenSymbol = 0;
           int nPenSize = 1;
+          t =-1;
 
           // Make sure pen is always initialized
           MS_INIT_COLOR(oPenColor, -1, -1, -1);
@@ -3166,7 +3170,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               {
                   // Try to match pen name in symbol file
                   nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
-                                                pszPenName, NULL);
+                                                pszPenName, NULL, MS_FALSE);
               }
           }
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
@@ -3189,6 +3193,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               c->styles[1]->size = nPenSize;
               c->styles[1]->symbol = nPenSymbol;
               c->styles[1]->width = nPenSize;
+              if (t >= 0 && t<=255)
+                c->styles[1]->opacity = (int)t*100/255;
           }
           else
           {
@@ -3211,6 +3217,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               c->styles[0]->symbol = nPenSymbol;
               c->styles[0]->size = nPenSize;
               c->styles[0]->width = nPenSize;
+               if (t >= 0 && t<=255)
+                c->styles[0]->opacity = (int)t*100/255;
           }
 
       }
@@ -3224,6 +3232,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           colorObj oPenColor;
           int nPenSymbol = 0;
           int nPenSize = 1;
+          t = -1;
 
           // Make sure pen is always initialized
           MS_INIT_COLOR(oPenColor, -1, -1, -1);
@@ -3251,7 +3260,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               {
                   // Try to match pen name in symbol file
                   nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
-                                                pszPenName, NULL);
+                                                pszPenName, NULL, MS_FALSE);
               }
           }
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
@@ -3274,6 +3283,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               c->styles[1]->size = nPenSize;
               c->styles[1]->symbol = nPenSymbol;
               c->styles[1]->width = nPenSize;
+              if (t >= 0 && t<=255)
+                c->styles[1]->opacity = (int)t*100/255;
           }
           else
           {
@@ -3296,6 +3307,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               c->styles[0]->symbol = nPenSymbol;
               c->styles[0]->size = nPenSize;
               c->styles[0]->width = nPenSize;
+              if (t >= 0 && t<=255)
+                c->styles[0]->opacity = (int)t*100/255;
           }
 
       }
@@ -3338,6 +3351,9 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                                       &r, &g, &b, &t))
               {
                   MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+                  if (t >= 0 && t<=255)
+                    c->styles[0]->opacity = (int)t*100/255;
+
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
               }
@@ -3360,7 +3376,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                                         OGRSTBrushId, 
                                                         &bIsNull);
               c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset), 
-                                                     pszName, NULL);
+                                                      pszName, NULL, MS_FALSE);
           }
       }
 #else /* OGR Style C++ */
@@ -3394,6 +3410,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
                   MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+                  if (t >= 0 && t<=255)
+                    c->styles[1]->opacity = (int)t*100/255;
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
               }
@@ -3413,7 +3431,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               if (bIsNull)
                   pszName = NULL;
               c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset), 
-                                                     pszName, NULL);
+                                                      pszName, NULL, MS_FALSE);
           }
       }
 #endif /* OGRStyle C API */
@@ -3441,6 +3459,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                                   &r, &g, &b, &t))
           {
               MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+              if (t >= 0 && t<=255)
+                c->styles[0]->opacity = (int)t*100/255;
           }
 
 #if GDAL_VERSION_NUM >= 1600              
@@ -3452,15 +3472,16 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                                   &r, &g, &b, &t))
           {
               MS_INIT_COLOR(c->styles[0]->outlinecolor, r, g, b);
+              if (t >= 0 && t<=255)
+                c->styles[0]->opacity = (int)t*100/255;
           }
 #endif /* GDAL_VERSION_NUM >= 1600 */
           c->styles[0]->angle = OGR_ST_GetParamNum(hSymbolStyle,
                                                    OGRSTSymbolAngle,
                                                    &bIsNull);
-          
-          c->styles[0]->size = OGR_ST_GetParamNum(hSymbolStyle, 
-                                                  OGRSTSymbolSize, 
-                                                  &bIsNull);
+          dfTmp = OGR_ST_GetParamNum(hSymbolStyle, OGRSTSymbolSize, &bIsNull);
+          if (!bIsNull)
+            c->styles[0]->size = dfTmp;
 
           // Symbol name mapping:
           // First look for the native symbol name, then the ogr-...
@@ -3472,9 +3493,15 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (bIsNull)
               pszName = NULL;
 
-          c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
-                                                pszName, 
-                                                "default-marker");
+          try_addimage_if_notfound = MS_FALSE;
+#ifdef USE_CURL
+          if (pszName && strncasecmp(pszName, "http", 4) == 0)
+            try_addimage_if_notfound =MS_TRUE;
+#endif
+          if (!c->styles[0]->symbolname)
+            c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
+                                                    pszName, 
+                                                    "default-marker",  try_addimage_if_notfound);
       }
 #else /* OGR Style C++ */
       {
@@ -3495,11 +3522,15 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (!bIsNull && poSymbolStyle->GetRGBFromString(pszColor,r,g,b,t))
           {
               MS_INIT_COLOR(c->styles[0]->color, r, g, b);
+              if (t >= 0 && t<=255)
+                c->styles[1]->opacity = (int)t*100/255;
           }
 
           c->styles[0]->angle = poSymbolStyle->Angle(bIsNull);
-              
-          c->styles[0]->size = (int)poSymbolStyle->Size(bIsNull);
+          
+          dfTmp = poSymbolStyle->Size(bIsNull);
+          if (!bIsNull)
+            c->styles[0]->size = dfTmp;
 
           // Symbol name mapping:
           // First look for the native symbol name, then the ogr-...
@@ -3509,9 +3540,14 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (bIsNull)
               pszName = NULL;
 
+          try_addimage_if_notfound = MS_FALSE;
+#ifdef USE_CURL
+          if (pszName && strncasecmp(pszName, "http", 4) == 0)
+            try_addimage_if_notfound =MS_TRUE;
+#endif
           c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
                                                 pszName, 
-                                                "default-marker");
+                                                  "default-marker", try_addimage_if_notfound);
       }
 #endif /* OGRStyle C API */
 

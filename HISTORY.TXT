@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- OGR auto-styling: use the color parameter and set the style's opacity when it is available.
+  Allow symbols that can be stored externally (#3660)
+
 - Add possiblity to use symbols stored externally, accessed through http (#3662)
 
 - Better handling of temporary files (#3354)
