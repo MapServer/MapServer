@@ -1832,6 +1832,91 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     return(MS_SUCCESS);
 }
 
+
+/*
+** Function to process a [date ...] tag
+*/
+
+static int processDateTag(char **line)
+{
+  struct tm *datetime;
+  time_t t;
+  int result;
+  char *tag, *tagStart, *tagEnd;
+  hashTableObj *tagArgs=NULL;
+  int tagOffset, tagLength;
+#define DATE_BUFLEN 1024
+  char datestr[DATE_BUFLEN]; 
+  char *argValue=NULL;
+  char *format, *tz; // tag parameters 
+
+  if(!*line) {
+    msSetError(MS_WEBERR, "Invalid line pointer.", "processDateTag()");
+    return(MS_FAILURE);
+  }
+
+  tagStart = findTag(*line, "date");
+
+  /* It is OK to have no date tags, just return. */
+  if( !tagStart )
+    return MS_SUCCESS;
+
+  while (tagStart) {
+    // set tag params to defaults
+    format = DEFAULT_DATE_FORMAT;
+    tz = "";
+    
+    tagOffset = tagStart - *line;
+
+    /* check for any tag arguments */
+    if(getTagArgs("date", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+
+    if(tagArgs) {
+      argValue = msLookupHashTable(tagArgs, "format");
+      if(argValue) format = argValue;
+      argValue = msLookupHashTable(tagArgs, "tz");
+      if(argValue) tz = argValue;
+    }
+
+    t = time(NULL);
+    if( strncasecmp( tz, "gmt", 4 ) == 0 )
+    {
+      datetime = gmtime(&t);
+    } else {
+      datetime = localtime(&t);
+    }
+    result = strftime(datestr, DATE_BUFLEN, format, datetime); 
+  
+    /* Only do the replacement if the date was successfully written */ 
+    if( result > 0 ) 
+    { 
+      /* find the end of the tag */
+      tagEnd = findTagEnd(tagStart);
+      tagEnd++;
+
+      /* build the complete tag so we can do substitution */
+      tagLength = tagEnd - tagStart;
+      tag = (char *) msSmallMalloc(tagLength + 1);
+      strlcpy(tag, tagStart, tagLength+1);
+
+      /* do the replacement */
+      *line = msReplaceSubstring(*line, tag, datestr);
+    }
+
+    /* clean up */
+    free(tag); tag = NULL;
+    msFreeHashTable(tagArgs); tagArgs=NULL;
+
+    if((*line)[tagOffset] != '\0')
+      tagStart = findTag(*line+tagOffset+1, "shpxy");
+    else
+      tagStart = NULL;  
+  }
+  
+  return(MS_SUCCESS);
+  
+}
+
 /*
 ** Function to process a [shpxy ...] tag: line contains the tag, shape holds the coordinates. 
 **
@@ -3682,6 +3767,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   outstr = msReplaceSubstring(outstr, "[miny]", repstr);
   snprintf(repstr, sizeof(repstr), "%f", mapserv->map->extent.maxy);
   outstr = msReplaceSubstring(outstr, "[maxy]", repstr);
+
+  if(processDateTag( &outstr ) != MS_SUCCESS)
+    return(NULL);
 
   if(processExtentTag(mapserv, &outstr, "mapext", &(mapserv->map->extent), &(mapserv->map->projection)) != MS_SUCCESS)
     return(NULL);
