@@ -421,16 +421,50 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   /* Allocate/init memory for new symbol if needed */
   if (msGrowSymbolSet(symbolset) == NULL)
       return -1;
-  symbol = symbolset->symbol[symbolset->numsymbols];  
-  if(symbolset->map) {
-    symbol->full_pixmap_path = msStrdup(msBuildPath(szPath, symbolset->map->mappath, filename));  
-  } else {
-    symbol->full_pixmap_path = msStrdup(msBuildPath(szPath, NULL, filename));  
+  symbol = symbolset->symbol[symbolset->numsymbols];
+
+#ifdef USE_CURL
+  if (strncasecmp(filename, "http", 4) == 0)
+  {
+      char *tmpfullfilename = NULL;
+      char *tmpfilename = NULL;
+      char *tmppath = NULL;
+      int status = 0;
+      char szPath[MS_MAXPATHLEN];
+     int bCheckLocalCache = MS_TRUE;
+ 
+     tmppath = msTmpPath(NULL, NULL, NULL);
+     if (tmppath)
+     {
+          tmpfilename = msEncodeUrl(filename);
+          tmpfullfilename = msBuildPath(szPath, tmppath, tmpfilename);
+          if (tmpfullfilename)
+          {
+              /*use the url for now as a caching mechanism*/
+              if (msHTTPGetFile(filename, tmpfullfilename, &status, -1, bCheckLocalCache, 0) == MS_SUCCESS)
+              {
+                  symbol->imagepath = msStrdup(tmpfullfilename);
+                  symbol->full_pixmap_path = msStrdup(tmpfullfilename);
+              }
+              msFree(tmpfilename);
+          }
+          msFree(tmpfilename);
+          msFree(tmppath);
+     }
+  }
+#endif
+  /*if the http did not work, allow it to be treated as a file*/
+  if (!symbol->full_pixmap_path)
+  {
+      if(symbolset->map) {
+          symbol->full_pixmap_path = msStrdup(msBuildPath(szPath, symbolset->map->mappath, filename));  
+      } else {
+          symbol->full_pixmap_path = msStrdup(msBuildPath(szPath, NULL, filename));  
+      }
+      symbol->imagepath = msStrdup(filename);
   }
   symbol->name = msStrdup(filename);
-  symbol->imagepath = msStrdup(filename);
   symbol->type = MS_SYMBOL_PIXMAP;
-
   return(symbolset->numsymbols++);
 }
 
