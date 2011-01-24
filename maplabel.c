@@ -326,13 +326,6 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
       return(MS_SUCCESS);
   }
 
-  if(map->scaledenom > 0) {
-    if((label->maxscaledenom != -1) && (map->scaledenom >= label->maxscaledenom))
-        return(MS_SUCCESS);
-    if((label->minscaledenom != -1) && (map->scaledenom < label->minscaledenom))
-        return(MS_SUCCESS);
-  }
-
   /* Validate label priority value and get ref on label cache for it */
   if (label->priority < 1)
     label->priority = 1;
