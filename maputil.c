@@ -1252,7 +1252,34 @@ char *msTmpFile(mapObj *map, const char *mappath, const char *tmppath, const cha
     char szPath[MS_MAXPATHLEN];
     const char *fullFname;
     char *tmpFileName; /* big enough for time + pid + ext */
-    const char *tmpBase = NULL;
+    char *tmpBase = NULL;
+
+    tmpBase = msTmpPath(map, mappath, tmppath);
+    tmpFileName = msTmpFilename(ext);
+
+    fullFname = msBuildPath(szPath, tmpBase, tmpFileName);
+
+    free(tmpFileName);
+    free(tmpBase);
+
+    if (fullFname)
+        return msStrdup(fullFname);
+
+    return NULL;
+}
+
+/**********************************************************************
+ *                          msTmpPath()
+ *
+ * Return the temporary path based on the platform.
+ * 
+ * Returns char* which must be freed by caller.
+ **********************************************************************/
+char *msTmpPath(mapObj *map, const char *mappath, const char *tmppath)
+{
+    char szPath[MS_MAXPATHLEN];
+    const char *fullPath;
+    const char *tmpBase;
 #ifdef _WIN32
     DWORD dwRetVal = 0;
     TCHAR lpTempPathBuffer[MAX_PATH];
@@ -1279,21 +1306,13 @@ char *msTmpFile(mapObj *map, const char *mappath, const char *tmppath, const cha
         } 
         else
         {
-            tmpBase = (char*)lpTempPathBuffer; /* NOT SURE HOW TO CAST a TCHAR to char* */
+            tmpBase = (char*)lpTempPathBuffer;
         }
 #endif
     }
 
-    tmpFileName = msTmpFilename(ext);
-
-    fullFname = msBuildPath3(szPath, mappath, tmpBase, tmpFileName);
-
-    free(tmpFileName);
-    
-    if (fullFname)
-        return msStrdup(fullFname);
-
-    return NULL;
+    fullPath = msBuildPath(szPath, mappath, tmpBase);
+    return strdup(fullPath);
 }
 
 /**********************************************************************
