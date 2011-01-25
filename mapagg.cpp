@@ -622,12 +622,14 @@ int aggGetRasterBufferCopy(imageObj *img, rasterBufferObj *rb) {
 
 
 
-int agg2MergeRasterBuffer(imageObj *dest, rasterBufferObj *overlay, double opacity, int srcX, int srcY, int dstX, int dstY, int width, int height) {
+int agg2MergeRasterBuffer(imageObj *dest, rasterBufferObj *overlay, double opacity, int srcX, int srcY,
+      int dstX, int dstY, int width, int height) {
 	assert(overlay->type == MS_BUFFER_BYTE_RGBA);
 	rendering_buffer b(overlay->data.rgba.pixels, overlay->width, overlay->height, overlay->data.rgba.row_step);
 	pixel_format pf(b);
 	AGG2Renderer *r = AGG_RENDERER(dest);
-	r->m_renderer_base.blend_from(pf,0, dstX, dstY,unsigned(opacity * 255));
+   mapserver::rect_base<int> src_rect(srcX,srcY,srcX+width,srcY+height);
+	r->m_renderer_base.blend_from(pf,&src_rect, dstX, dstY,unsigned(opacity * 255));
 	return MS_FAILURE;
 }
 
