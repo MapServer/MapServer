@@ -64,7 +64,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
 #ifdef USE_OGR
 
 /* needed for libcurl function msHTTPGetFile in maphttp.c */
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+#if defined(USE_CURL)
 
     char *pszSLDTmpFile = NULL;
     int status = 0;
@@ -96,7 +96,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
         }
         else
         {
-            msSetError(MS_WMSERR, "Could not open SLD %s and save it in temporary file %s. Please make sure that the sld url is valid and that imagepath and imageurl are set properly in the map file", "msSLDApplySLDURL", szURL, pszSLDTmpFile);
+            msSetError(MS_WMSERR, "Could not open SLD %s and save it in temporary file %s. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL, pszSLDTmpFile);
         }
         if (pszSLDbuf)
           nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName);
@@ -358,8 +358,8 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
                         nStatus = 
                             FLTApplyFilterToLayer(psNode, map,  
-                                                  GET_LAYER(map, i)->index,
-                                                  !FLTIsSimpleFilter(psNode));
+                                                  GET_LAYER(map, i)->index);
+
 
                         GET_LAYER(map, i)->status = nLayerStatus;
                         FLTFreeFilterEncodingNode(psNode);
@@ -2264,7 +2264,7 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                                styleObj *psStyle,  mapObj *map)
 {
 /* needed for libcurl function msHTTPGetFile in maphttp.c */
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+#if defined(USE_CURL)
 
     char *pszFormat = NULL;
     CPLXMLNode *psURL=NULL, *psFormat=NULL, *psTmp=NULL;
