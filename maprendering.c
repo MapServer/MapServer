@@ -706,8 +706,13 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
          if(computeLabelStyle(&s,label,fontset,scalefactor) == MS_FAILURE) {
             return MS_FAILURE;
          }
-			x = labelPnt.x;
-			y = labelPnt.y;
+         if(s.rotation == 0) {
+            x = MS_NINT(labelPnt.x);
+            y = MS_NINT(labelPnt.y);
+         } else {
+            x = labelPnt.x;
+            y = labelPnt.y;
+         }
 			if (label->type == MS_TRUETYPE) {
 			   if(MS_VALID_COLOR(label->shadowcolor)) {
 			      s.color = &label->shadowcolor;

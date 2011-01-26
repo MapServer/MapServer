@@ -245,19 +245,19 @@ int agg2RenderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, ch
    mtx *= mapserver::trans_affine_rotation(-style->rotation);
    mtx *= mapserver::trans_affine_translation(x, y);
 
-   double fx = MS_NINT(x), fy = MS_NINT(y);
+   double fx = x, fy = y;
    const char *utfptr = text;
    mapserver::path_storage glyphs;
 
    //first render all the glyphs to a path
    while (*utfptr) {
       if (*utfptr == '\r') {
-         fx = MS_NINT(x);
+         fx = x;
          utfptr++;
          continue;
       }
       if (*utfptr == '\n') {
-         fx = MS_NINT(x);
+         fx = x;
          fy += ceil(style->size * AGG_LINESPACE);
          utfptr++;
          continue;

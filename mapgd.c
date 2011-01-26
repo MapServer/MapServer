@@ -372,6 +372,8 @@ int renderGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char
    gdImagePtr ip;
    char *error=NULL;
    int bbox[8];
+   x = MS_NINT(x);
+   y = MS_NINT(y);
    if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return MS_FAILURE;
    if(!text || !strlen(text)) return(MS_SUCCESS); /* not errors, just don't want to do anything */
 
