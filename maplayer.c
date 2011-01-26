@@ -1093,11 +1093,11 @@ int LayerDefaultGetItems(layerObj *layer)
 
 int 
 msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                                 int iLayerIndex, int bOnlySpatialFilter)
+                                 int iLayerIndex)
 {
 #if USE_OGR
-    return FLTLayerApplyCondSQLFilterToLayer(psNode, map, iLayerIndex, 
-                                             bOnlySpatialFilter); 
+  return FLTLayerApplyCondSQLFilterToLayer(psNode, map, iLayerIndex);
+
 #else
     return MS_FAILURE;
 #endif
@@ -1113,11 +1113,10 @@ int msLayerSupportsPaging(layerObj *layer)
 
 int 
 msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                               int iLayerIndex, int bOnlySpatialFilter)
+                               int iLayerIndex)
 {
 #if USE_OGR
-    return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex, 
-                                           bOnlySpatialFilter); 
+  return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex); 
 #else
     return MS_FAILURE;
 #endif

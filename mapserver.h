@@ -1623,7 +1623,7 @@ struct layerVTable {
   int (*LayerGetAutoStyle)(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
   int (*LayerCloseConnection)(layerObj *layer);
   int (*LayerSetTimeFilter)(layerObj *layer, const char *timestring, const char *timefield);
-  int (*LayerApplyFilterToLayer)(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex, int bOnlySpatialFilter);
+  int (*LayerApplyFilterToLayer)(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex);
   int (*LayerCreateItems)(layerObj *layer, int nt);
   int (*LayerGetNumFeatures)(layerObj *layer);
   int (*LayerGetAutoProjection)(layerObj *layer, projectionObj *projection);
@@ -2058,10 +2058,10 @@ MS_DLL_EXPORT int msLayerMakePlainTimeFilter(layerObj *lp, const char *timestrin
                                              const char *timefield);
 
 MS_DLL_EXPORT int msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                                                   int iLayerIndex, int bOnlySpatialFilter);
+                                                   int iLayerIndex);
 
 MS_DLL_EXPORT int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                                                 int iLayerIndex, int bOnlySpatialFilter);
+                                                 int iLayerIndex);
 
 
 /* maplayer.c */

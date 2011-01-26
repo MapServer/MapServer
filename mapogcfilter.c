@@ -44,7 +44,7 @@ static int compare_ints( const void * a, const void * b)
     return (*(int*)a) - (*(int*)b);
 }
 
-static int FLTIsNumeric(char *pszValue)
+int FLTIsNumeric(char *pszValue)
 {
     if (pszValue)
     {
@@ -1267,11 +1267,6 @@ int FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map,
     return status;
 }
 
-int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                                 int iLayerIndex)
-{
-    return FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_TRUE);
-}
 
 /************************************************************************/
 /*                          FLTApplyFilterToLayer                       */
@@ -1280,7 +1275,7 @@ int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 /*      and apply it to the layer.                                      */
 /************************************************************************/
 int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                          int iLayerIndex, int bOnlySpatialFilter)
+                          int iLayerIndex)
 {
     layerObj *layer = GET_LAYER(map, iLayerIndex);
 
@@ -1289,9 +1284,8 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
         if (rv != MS_SUCCESS)
             return rv;
     }
-    return layer->vtable->LayerApplyFilterToLayer(psNode, map, 
-                                                  iLayerIndex, 
-                                                  bOnlySpatialFilter);
+    return layer->vtable->LayerApplyFilterToLayer(psNode, map,  iLayerIndex);
+
 }
 
 /************************************************************************/
@@ -1300,19 +1294,19 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 /* Helper function for layer virtual table architecture                 */
 /************************************************************************/
 int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                                      int iLayerIndex, int bOnlySpatialFilter)
+                                      int iLayerIndex)
 {
 /* ==================================================================== */
 /*      Check here to see if it is a simple filter and if that is       */
 /*      the case, we are going to use the FILTER element on             */
 /*      the layer.                                                      */
 /* ==================================================================== */
-    if (!bOnlySpatialFilter && FLTIsSimpleFilter(psNode))
+    if (FLTIsSimpleFilter(psNode))
     {
         return FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
     }        
     
-    return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex, bOnlySpatialFilter);
+    return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex);
 }
 
 /************************************************************************/
@@ -1321,46 +1315,18 @@ int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 /* Helper function for layer virtual table architecture                 */
 /************************************************************************/
 int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                                    int iLayerIndex, int bOnlySpatialFilter)
+                                    int iLayerIndex)
 {
-    int *panResults = NULL;
-    int nResults = 0;
-    layerObj *psLayer = NULL;
-    int status;
+    char *pszExpression  =NULL;
+    int status =MS_FALSE;
 
-/* ==================================================================== */
-/*      Check here to see if it is a simple filter and if that is       */
-/*      the case, we are going to use the FILTER element on             */
-/*      the layer.                                                      */
-/* ==================================================================== */
-    if (!bOnlySpatialFilter && FLTIsSimpleFilter(psNode))
+    pszExpression = FLTGetCommonExpression(psNode,  GET_LAYER(map, iLayerIndex));
+    if (pszExpression)
     {
-        return FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
-    }        
-
-    
-    psLayer = (GET_LAYER(map, iLayerIndex));
-    status = FLTGetQueryResults(psNode, map, iLayerIndex,
-                                &panResults, &nResults, bOnlySpatialFilter);
-    if (panResults) 
-        FLTAddToLayerResultCache(panResults, nResults, map, iLayerIndex);
-    /* clear the cache if the results is NULL to make sure there aren't */
-    /* any left over from intermediate queries. */
-    else 
-    {
-        if (psLayer && psLayer->resultcache)
-        {
-            if (psLayer->resultcache->results)
-                free (psLayer->resultcache->results);
-            free(psLayer->resultcache);
-            
-            psLayer->resultcache = NULL;
-        }
+        status = FLTApplyFilterToLayerCommonExpression(map, iLayerIndex, pszExpression);
+        msFree(pszExpression);
     }
 
-    if (panResults)
-      free(panResults);
-    
     return status;
 }
 

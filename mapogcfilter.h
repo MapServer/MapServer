@@ -56,15 +56,12 @@ typedef struct
 MS_DLL_EXPORT FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFilterEncodingNode(void);
 MS_DLL_EXPORT int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                         int iLayerIndex, int bOnlySpatialFilter);
+                                        int iLayerIndex);
 
 MS_DLL_EXPORT int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                                     int iLayerIndex, int bOnlySpatialFilter);
+                                                    int iLayerIndex);
 MS_DLL_EXPORT int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                                   int iLayerIndex, int bOnlySpatialFilter);
-
-MS_DLL_EXPORT int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                                 int iLayerIndex);
+                                                  int iLayerIndex);
 
 MS_DLL_EXPORT void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
 
@@ -122,6 +119,13 @@ MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszStri
 
 MS_DLL_EXPORT int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS);
 MS_DLL_EXPORT  int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS);
+
+MS_DLL_EXPORT int FLTIsNumeric(char *pszValue);
+/*common-expressions*/
+MS_DLL_EXPORT   char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
+MS_DLL_EXPORT  char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
+MS_DLL_EXPORT int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, char *pszExpression);
+
 
 #ifdef USE_LIBXML2
 MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal);

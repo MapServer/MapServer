@@ -2225,7 +2225,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
         /* run filter.  If no results are found, do not throw exception */
         /* this is a null result */
-        if( FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE) != MS_SUCCESS ) 
+        if( FLTApplyFilterToLayer(psNode, map, iLayerIndex) != MS_SUCCESS ) 
         {
             ms_error = msGetErrorObj();
 	
@@ -2326,7 +2326,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                      }
                      psNode = FLTCreateFeatureIdFilterEncoding(aFIDValues[j]);
 
-                     if( FLTApplyFilterToLayer(psNode, map, lp->index, MS_FALSE) != MS_SUCCESS ) {
+                     if( FLTApplyFilterToLayer(psNode, map, lp->index) != MS_SUCCESS ) {
                        msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature");
                        return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
                      }
@@ -2381,7 +2381,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     */
     /* __TODO__ Using a rectangle query may not be the most efficient way */
     /* to do things here. */
-    if (!bFilterSet) {
+    if (!bFilterSet && !bFeatureIdSet) {
 
       if (!bBBOXSet)
       {
