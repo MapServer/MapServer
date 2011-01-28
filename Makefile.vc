@@ -53,9 +53,9 @@ MS_OBJS = mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 MS_HDRS = 	mapserver.h mapfile.h
 
 MS_EXE = 	mapserv.exe
-#                shp2img.exe legend.exe \
-#		shptree.exe scalebar.exe sortshp.exe tile4ms.exe \
-#		shptreevis.exe msencrypt.exe
+                shp2img.exe legend.exe \
+		shptree.exe scalebar.exe sortshp.exe tile4ms.exe \
+		shptreevis.exe msencrypt.exe
 
 #
 #
