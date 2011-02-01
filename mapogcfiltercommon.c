@@ -684,7 +684,7 @@ char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
               pszExpression = FLTGetBinaryComparisonCommonExpression(psFilterNode, lp);
             
             else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
-              pszExpression = FLTGetIsLikeComparisonCommonExpression(psFilterNode, lp);
+              pszExpression = FLTGetIsLikeComparisonCommonExpression(psFilterNode);
 
             else if (strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0)
               pszExpression = FLTGetIsBetweenComparisonCommonExpresssion(psFilterNode, lp);

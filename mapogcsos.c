@@ -2297,7 +2297,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
           }
           msLayerClose(lp);
         }
-        FLTApplyFilterToLayer(psFilterNode, map, i, MS_FALSE);
+        FLTApplyFilterToLayer(psFilterNode, map, i);
       }
     }
 
