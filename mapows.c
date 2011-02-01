@@ -1255,69 +1255,107 @@ void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
 
 /*
 ** Emit a bounding box if we can find projection information.
+** If <namespaces>_bbox_extended is not set, emit a single bounding box 
+** using the layer's native SRS (ignoring any <namespaces>_srs metadata).
+**
+** If <namespaces>_bbox_extended is set to true, emit a bounding box
+** for every projection listed in the <namespaces>_srs list.
+** Check the map level metadata for both _bbox_extended and _srs,
+** if there is no such metadata at the layer level.
+** (These settings make more sense at the global/map level anyways)
 */
 void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
                            rectObj *extent, 
                            projectionObj *srcproj,
-                           hashTableObj *metadata,
+                           hashTableObj *layer_meta,
+                           hashTableObj *map_meta,
                            const char *namespaces,
                            int wms_version) 
 {
-    const char	*value, *resx, *resy;
-    char *encoded, *encoded_resx, *encoded_resy;
-    projectionObj proj;
+  const char	*value, *resx, *resy, *wms_bbox_extended, *epsg_str;
+  char *encoded, *encoded_resx, *encoded_resy;
+  char **epsgs;
+  int i, num_epsgs;
+  projectionObj proj;
+  rectObj ext;
 
+  wms_bbox_extended = msOWSLookupMetadata2(layer_meta, map_meta, namespaces, "bbox_extended");
+  if( wms_bbox_extended && strncasecmp(wms_bbox_extended, "true", 5) == 0 ) 
+  {
+    /* get a list of all projections from the metadata 
+       try the layer metadata first, otherwise use the map's */
+    if( msOWSLookupMetadata(layer_meta, namespaces, "srs") ) 
+    {
+      epsg_str = msOWSGetEPSGProj(srcproj, layer_meta, namespaces, MS_FALSE);
+    } else {
+      epsg_str = msOWSGetEPSGProj(srcproj, map_meta, namespaces, MS_FALSE);
+    }
+    epsgs = msStringSplit(epsg_str, ' ', &num_epsgs);
+  } else {
     /* Look for EPSG code in PROJECTION block only.  "wms_srs" metadata cannot be
      * used to establish the native projection of a layer for BoundingBox purposes.
      */
-    value = msOWSGetEPSGProj(srcproj, NULL, namespaces, MS_TRUE);
-    
-    /*for wms 1.3.0 we need to make sure that we present the BBOX with  
-      a revered axes for some espg codes*/
-    if (wms_version >= OWS_1_3_0 && value && strncasecmp(value, "EPSG:", 5) == 0)
+    epsgs = (char **) msSmallMalloc(sizeof(char *));
+    num_epsgs = 1;
+    epsgs[0] = msStrdup( msOWSGetEPSGProj(srcproj, NULL, namespaces, MS_TRUE) );
+  }
+
+  for( i = 0; i < num_epsgs; i++)
+  {
+    value = epsgs[i]; 
+    memcpy(&ext, extent, sizeof(rectObj));
+
+    /* reproject the extents for each SRS's bounding box */
+    msInitProjection(&proj);
+    if (msLoadProjectionStringEPSG(&proj, (char *)value) == 0)
     {
-        msInitProjection(&proj);
-        if (msLoadProjectionStringEPSG(&proj, (char *)value) == 0)
-        {
-            msAxisNormalizePoints( &proj, 1, &extent->minx, &extent->miny );
-            msAxisNormalizePoints( &proj, 1, &extent->maxx, &extent->maxy );
-        }
-        msFreeProjection( &proj );
+      if (msProjectionsDiffer(srcproj, &proj) == MS_TRUE)
+      {
+        msProjectRect(srcproj, &proj, &ext);
+      }
+      /*for wms 1.3.0 we need to make sure that we present the BBOX with  
+        a reversed axes for some espg codes*/
+      if (wms_version >= OWS_1_3_0 && value && strncasecmp(value, "EPSG:", 5) == 0)
+      {
+        msAxisNormalizePoints( &proj, 1, &(ext.minx), &(ext.miny) );
+        msAxisNormalizePoints( &proj, 1, &(ext.maxx), &(ext.maxy) );
+      }
     }
-    
+    msFreeProjection( &proj );
 
     if( value != NULL )
     {
-        encoded = msEncodeHTMLEntities(value);
-        if (wms_version >= OWS_1_3_0)
-          msIO_fprintf(stream, "%s<BoundingBox CRS=\"%s\"\n"
-               "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
-               tabspace, encoded, 
-               tabspace, extent->minx, extent->miny, 
-               extent->maxx, extent->maxy);
-        else
-          msIO_fprintf(stream, "%s<BoundingBox SRS=\"%s\"\n"
-               "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
-               tabspace, encoded, 
-               tabspace, extent->minx, extent->miny, 
-               extent->maxx, extent->maxy);
+      encoded = msEncodeHTMLEntities(value);
+      if (wms_version >= OWS_1_3_0)
+        msIO_fprintf(stream, "%s<BoundingBox CRS=\"%s\"\n"
+             "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
+             tabspace, encoded, 
+             tabspace, ext.minx, ext.miny, 
+             ext.maxx, ext.maxy);
+      else
+        msIO_fprintf(stream, "%s<BoundingBox SRS=\"%s\"\n"
+             "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
+             tabspace, encoded, 
+             tabspace, ext.minx, ext.miny, 
+             ext.maxx, ext.maxy);
 
-        msFree(encoded);
+      msFree(encoded);
 
-        if( (resx = msOWSLookupMetadata( metadata, "MFO", "resx" )) != NULL &&
-            (resy = msOWSLookupMetadata( metadata, "MFO", "resy" )) != NULL )
-        {
-            encoded_resx = msEncodeHTMLEntities(resx);
-            encoded_resy = msEncodeHTMLEntities(resy);
-            msIO_fprintf( stream, "\n%s            resx=\"%s\" resy=\"%s\"",
-                    tabspace, encoded_resx, encoded_resy );
-            msFree(encoded_resx);
-            msFree(encoded_resy);
-        }
+      if( (resx = msOWSLookupMetadata2( layer_meta, map_meta, "MFO", "resx" )) != NULL &&
+          (resy = msOWSLookupMetadata2( layer_meta, map_meta, "MFO", "resy" )) != NULL )
+      {
+          encoded_resx = msEncodeHTMLEntities(resx);
+          encoded_resy = msEncodeHTMLEntities(resy);
+          msIO_fprintf( stream, "\n%s            resx=\"%s\" resy=\"%s\"",
+                        tabspace, encoded_resx, encoded_resy );
+          msFree(encoded_resx);
+          msFree(encoded_resy);
+      }
  
-        msIO_fprintf( stream, " />\n" );
+      msIO_fprintf( stream, " />\n" );
     }
-
+  }
+  msFreeCharArray(epsgs, num_epsgs);
 }
 
 

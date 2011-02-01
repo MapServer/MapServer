@@ -1530,7 +1530,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                          &(lp->projection), NULL, OWS_WMS);
 
            msOWSPrintBoundingBox( stdout,"        ", &(ext), &(lp->projection),
-                                  &(lp->metadata), "MO", nVersion );
+                                  &(lp->metadata), &(map->web.metadata), "MO", nVersion );
        }
        else
        {
@@ -1541,7 +1541,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
               msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
                                          &(map->projection), NULL, OWS_WMS);
            msOWSPrintBoundingBox(stdout,"        ", &(ext), &(map->projection),
-                                 &(map->web.metadata), "MO", nVersion );
+                                 &(lp->metadata), &(map->web.metadata), "MO", nVersion );
        }
    }
    else
@@ -2488,7 +2488,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
                                 &(map->projection), NULL, OWS_WMS);
 
   msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
-                         &(map->web.metadata), "MO", nVersion);
+                         NULL, &(map->web.metadata), "MO", nVersion);
 
   if (nVersion >= OWS_1_0_7) {
     msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
