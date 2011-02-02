@@ -211,10 +211,7 @@ int mapObj_queryByIndex(mapObj *self, int qlayer, int tileindex, int shapeindex,
 }
 
 int mapObj_saveQuery(mapObj *self, char *filename, int results) {
-  if(results)
-    return msSaveQueryResults(self, filename);
-  else
-    return msSaveQueryParams(self, filename);
+  return msSaveQuery(self, filename, results);
 }
 int mapObj_loadQuery(mapObj *self, char *filename) {
   return msLoadQuery(self, filename);

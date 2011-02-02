@@ -310,10 +310,7 @@
   }
 
   int saveQuery(char *filename, int results=MS_FALSE) {
-    if(results)
-      return msSaveQueryResults(self, filename);
-    else
-      return msSaveQueryParams(self, filename);
+    return msSaveQuery(self, filename, results);
   }
 
   int loadQuery(char *filename)  {
