@@ -309,19 +309,20 @@
     return msSaveMap(self, filename);
   }
 
-    int saveQuery(char *filename) {
-        return msSaveQuery(self, filename);
-    }
+  int saveQuery(char *filename, int results=MS_FALSE) {
+    if(results)
+      return msSaveQueryResults(self, filename);
+    else
+      return msSaveQueryParams(self, filename);
+  }
 
-    int loadQuery(char *filename)
-    {
-        return msLoadQuery(self, filename);
-    }
+  int loadQuery(char *filename)  {
+    return msLoadQuery(self, filename);
+  }
 
-    void freeQuery(int qlayer=-1)
-    {
-        msQueryFree(self, qlayer);
-    }
+  void freeQuery(int qlayer=-1) {
+    msQueryFree(self, qlayer);
+  }
 
   int saveQueryAsGML(char *filename, const char *ns="GOMF") {
     return msGMLWriteQuery(self, filename, ns);

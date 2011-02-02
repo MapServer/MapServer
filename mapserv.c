@@ -1853,7 +1853,7 @@ int main(int argc, char *argv[]) {
           
         if(mapserv->savequery) {
           snprintf(buffer, sizeof(buffer), "%s%s%s%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_QUERY_EXTENSION);
-          if((status = msSaveQuery(mapserv->map, buffer)) != MS_SUCCESS) return status;
+          if((status = msSaveQueryParams(mapserv->map, buffer)) != MS_SUCCESS) return status;
         }
       }
 

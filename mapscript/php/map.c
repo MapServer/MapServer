@@ -167,6 +167,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(map_saveQuery_args, 0, 0, 1)
   ZEND_ARG_INFO(0, filename)
+  ZEND_ARG_INFO(0, results)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(map_loadQuery_args, 0, 0, 1)
@@ -1987,19 +1988,20 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 }
 /* }}} */
 
-/* {{{ proto int map.savequery(filename) 
+/* {{{ proto int map.savequery(string filename, int results) 
    Save the current query to a specfied file. Can be used with loadquery */
 PHP_METHOD(mapObj, saveQuery)
 {
     zval *zobj = getThis();
     char *filename;
     long filename_len;
+    int results = MS_FALSE;
     int status = MS_FAILURE;
     php_map_object *php_map;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
-                              &filename, &filename_len) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l",
+                              &filename, &filename_len, &results) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
     }
@@ -2007,7 +2009,7 @@ PHP_METHOD(mapObj, saveQuery)
     
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    status = mapObj_saveQuery(php_map->map, filename);    
+    status = mapObj_saveQuery(php_map->map, filename, results);    
 
     RETURN_LONG(status);
 }
