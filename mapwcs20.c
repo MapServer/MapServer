@@ -1039,7 +1039,6 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         xmlFreeDoc(doc);
         xmlCleanupParser();
 
-        msDebug("msWCSParseRequest20(): Request parsed\n");
         return ret;
 
 #else /* defined(USE_LIBXML2) */
@@ -1574,8 +1573,6 @@ static void msWCSCommon20_CreateBoundedBy(layerObj *layer, wcs20coverageMetadata
     xmlNodePtr psBoundedBy, psEnvelope;
     char lowerCorner[100], upperCorner[100], axisLabels[100], uomLabels[100];
 
-    msDebug("msWCSCommon20_CreateBoundedBy\n");
-
     psBoundedBy = xmlNewChild( psRoot, psGmlNs, BAD_CAST "boundedBy", NULL);
     {
         psEnvelope = xmlNewChild(psBoundedBy, psGmlNs, BAD_CAST "Envelope", NULL);
@@ -1617,8 +1614,6 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
     xmlNodePtr psDomainSet, psGrid, psLimits, psGridEnvelope, psOrigin,
         psPos, psOffsetX, psOffsetY;
     char low[100], high[100], id[100], point[100], resx[100], resy[100], axisLabels[100];
-
-    msDebug("msWCSCommon20_CreateDomainSet\n");
 
     psDomainSet = xmlNewChild( psRoot, psGmlNs, BAD_CAST "domainSet", NULL);
     {
@@ -1833,40 +1828,10 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 {
     int status;
     char* filename = NULL;
+    const char *fo_filename;
     int i;
-    /*if(multipart)
-    {
-        msIO_fprintf(
-                stdout,
-                "--wcs\n"
-                "Content-Type: %s\n"
-                "Content-Description: coverage data\n"
-                "Content-Transfer-Encoding: binary\n"
-                "Content-ID: coverage/wcs.%s\n"
-                "Content-Disposition: INLINE%c%c",
-                MS_IMAGE_EXTENSION(map->outputformat),
-                MS_IMAGE_MIME_TYPE(map->outputformat),
-                MS_IMAGE_EXTENSION(map->outputformat),
-                10, 10 );
-    }
-    else
-    {
-        msIO_fprintf(
-                stdout,
-                "Content-Type: %s\n",
-                "Content-Transfer-Encoding: binary\n",
-                MS_IMAGE_MIME_TYPE(map->outputformat));
-    }
-    status = msSaveImage(map, image, NULL);
-    if( status != MS_SUCCESS )
-    {
-            msSetError( MS_MISCERR, "msSaveImage() failed", "msWCSReturnCoverage11()");
-            return msWCSException(map, "mapserv", "NoApplicableCode", "2.0.0");
-    }
 
-    if(multipart)
-        msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );*/
-
+    fo_filename = msGetOutputFormatOption( image->format, "FILENAME", NULL );
 
     /* -------------------------------------------------------------------- */
     /*      Fetch the driver we will be using and check if it supports      */
@@ -1877,8 +1842,6 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         {
             GDALDriverH hDriver;
             const char *pszExtension = image->format->extension;
-
-            msDebug("In GDAL\n");
 
             msAcquireLock( TLOCK_GDAL );
             hDriver = GDALGetDriverByName( image->format->driver+5 );
@@ -1899,9 +1862,14 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
             if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL )
                 != NULL )
             {
+                if( fo_filename )
+                    filename = msStrdup(CPLFormFilename("/vsimem/wcsout",
+                                                        fo_filename,NULL));
+                else
+                    filename = msStrdup(CPLFormFilename("/vsimem/wcsout", 
+                                                        "out", pszExtension ));
+
                 /*            CleanVSIDir( "/vsimem/wcsout" ); */
-                filename = msStrdup(CPLFormFilename("/vsimem/wcsout",
-                                        "out", pszExtension ));
 
                 msReleaseLock( TLOCK_GDAL );
                 status = msSaveImage(map, image, filename);
@@ -1941,6 +1909,11 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         }
         else
         {
+            if( fo_filename != NULL )
+                msIO_fprintf( stdout, 
+                              "Content-Disposition: attachment; filename=%s\n",
+                              fo_filename );
+                
             msIO_fprintf(
                 stdout,
                 "Content-Type: %s\n%c",
@@ -2034,6 +2007,10 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
             }
             else
             {
+                msIO_fprintf( stdout, 
+                              "Content-Disposition: attachment; filename=%s\n",
+                              all_files[i] );
+                
                 msIO_fprintf(
                     stdout,
                     "Content-Type: %s\n%c",

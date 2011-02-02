@@ -1783,10 +1783,18 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   }
   else /* WCS 1.0.0 - just return the binary data with a content type */
   {
+      const char *fo_filename;
+
+      /* Do we have a predefined filename? */
+      fo_filename = msGetOutputFormatOption( format, "FILENAME", NULL );
+      if( fo_filename )
+            msIO_fprintf( stdout, 
+                          "Content-Disposition: attachment; filename=%s\n",
+                          fo_filename );
+
       /* Emit back to client. */
       msIO_printf("Content-type: %s%c%c", 
                   MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
-
       status = msSaveImage(map, image, NULL);
       
       if( status != MS_SUCCESS )

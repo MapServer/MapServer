@@ -1120,9 +1120,12 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     int status, i;
     char *filename = NULL;
     const char *encoding;
+    const char *fo_filename;
 
     encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
+    fo_filename = msGetOutputFormatOption( image->format, "FILENAME", NULL );
+        
 /* -------------------------------------------------------------------- */
 /*      Fetch the driver we will be using and check if it supports      */
 /*      VSIL IO.                                                        */
@@ -1152,10 +1155,15 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL ) 
             != NULL )
         {
-/*            CleanVSIDir( "/vsimem/wcsout" ); */
-            filename = msStrdup(CPLFormFilename("/vsimem/wcsout", 
-                                              "out", pszExtension ));
+            if( fo_filename )
+                filename = msStrdup(CPLFormFilename("/vsimem/wcsout",
+                                                    fo_filename,NULL));
+            else
+                filename = msStrdup(CPLFormFilename("/vsimem/wcsout", 
+                                                    "out", pszExtension ));
 
+/*            CleanVSIDir( "/vsimem/wcsout" ); */
+            
             msReleaseLock( TLOCK_GDAL );
             status = msSaveImage(map, image, filename);
             if( status != MS_SUCCESS )
