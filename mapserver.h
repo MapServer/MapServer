@@ -1080,14 +1080,14 @@ typedef struct {
 } labelCacheObj;
 
 /************************************************************************/
-/*                         resultCacheMemberObj                         */
+/*                         resultObj                                    */
 /************************************************************************/
 typedef struct {
   long shapeindex;
   int tileindex;
   int resultindex;
   int classindex;
-} resultCacheMemberObj;
+} resultObj;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
@@ -1099,7 +1099,7 @@ typedef struct {
 typedef struct {
 
 #ifndef SWIG
-  resultCacheMemberObj *results;
+  resultObj *results;
   int cachesize;
 #endif /* not SWIG */
 
@@ -1112,6 +1112,7 @@ typedef struct {
 %mutable;
 #endif /* SWIG */
   
+  /* TODO: remove for 6.0, confirm with Assefa */
   /*used to force the result retreiving to use getshape instead of resultgetshape*/
   int usegetshape;
 
@@ -1616,8 +1617,7 @@ struct layerVTable {
   int (*LayerIsOpen)(layerObj *layer);
   int (*LayerWhichShapes)(layerObj *layer, rectObj rect);
   int (*LayerNextShape)(layerObj *layer, shapeObj *shape);
-  int (*LayerResultsGetShape)(layerObj *layer, shapeObj *shape, int tile, long record);
-  int (*LayerGetShape)(layerObj *layer, shapeObj *shape, int tile, long record);
+  int (*LayerGetShape)(layerObj *layer, shapeObj *shape, resultObj *record);
   int (*LayerClose)(layerObj *layer);
   int (*LayerGetItems)(layerObj *layer);
   int (*LayerGetExtent)(layerObj *layer, rectObj *extent);
@@ -2030,8 +2030,7 @@ MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int get_all, char *metadata
 MS_DLL_EXPORT int msLayerNextShape(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msLayerGetItems(layerObj *layer);
 MS_DLL_EXPORT int msLayerSetItems(layerObj *layer, char **items, int numitems);
-MS_DLL_EXPORT int msLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
-MS_DLL_EXPORT int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
+MS_DLL_EXPORT int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record);
 MS_DLL_EXPORT int msLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msLayerSetExtent( layerObj *layer, double minx, double miny, double maxx, double maxy);
 MS_DLL_EXPORT int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
@@ -2088,7 +2087,7 @@ MS_DLL_EXPORT int msConnectLayer(layerObj *layer, const int connectiontype,
                                  const char *library_str);
 
 MS_DLL_EXPORT int msINLINELayerInitializeVirtualTable(layerObj *layer);
-MS_DLL_EXPORT int msShapeFileLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msSHPLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msTiledSHPLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msSDELayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msOGRLayerInitializeVirtualTable(layerObj *layer);

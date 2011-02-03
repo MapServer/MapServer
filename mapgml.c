@@ -1210,7 +1210,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       }
 
       for(j=0; j<lp->resultcache->numresults; j++) {
-        status = msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+        status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
         if(status != MS_SUCCESS) return(status);
 
 #ifdef USE_PROJ

@@ -518,9 +518,9 @@ void msGraticuleLayerFreeItemInfo(layerObj *layer)
 /**********************************************************************************************************************
  *
  */
-int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
+int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
-  return 0;
+  return MS_FAILURE;
 }
 
 /**********************************************************************************************************************

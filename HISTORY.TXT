@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Implemented RFC 65 which improves and simplifies one-pass query support. This causes
+  a few MapScript regressions with getShape/getFeature/getResultsShape. (#3647)
+
 - Support setting filenames for WCS GetCoverage results (#3665)
 
 - OGR auto-styling: use the color parameter and set the style's opacity when it is available.

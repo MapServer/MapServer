@@ -1570,7 +1570,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     status = SE_stream_close(sde->connPoolInfo->stream, 1);
     if(status != SE_SUCCESS) {
         sde_error(  status, 
-                    "msSDELayerGetShape()", 
+                    "msSDELayerWhichShapes()", 
                     "SE_stream_close()");
         return(MS_FAILURE);
     }
@@ -1740,8 +1740,7 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 /*     Queries SDE for a shape (and its attributes, if requested)       */
 /*     given the ID (which is the MS_SDE_ROW_ID_COLUMN column           */
 /* -------------------------------------------------------------------- */
-int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
-
+int msSDELayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
 #ifdef USE_SDE
     long status;
 
@@ -1749,6 +1748,8 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 
     msSDELayerInfo *sde=NULL;
   
+    long shapeindex = record->shapeindex;
+
     if(!msSDELayerIsOpen(layer)) {
         msSetError( MS_SDEERR, 
                     "SDE layer has not been opened.", 
@@ -1779,7 +1780,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 
         status = SE_stream_fetch_row(   sde->connPoolInfo->stream, 
                                         sde->table, 
-                                        record, 
+                                        shapeindex, 
                                         (short)(layer->numitems), 
                                         (const char **)layer->items);
 
@@ -1790,7 +1791,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
             return(MS_FAILURE);
         }
     } else {
-        sql = getSDESQLConstructInfo(layer, &record);
+        sql = getSDESQLConstructInfo(layer, &shapeindex);
 
         status = SE_stream_query(sde->connPoolInfo->stream, layer->numitems, (const CHAR**) layer->items, sql);
 ;
@@ -1830,16 +1831,6 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
     return(MS_FAILURE);
 #endif
 }
-
-/* -------------------------------------------------------------------- */
-/* msSDELayerGetShapeVT                                                 */
-/* -------------------------------------------------------------------- */
-/* Overloaded version for virtual table                                 */
-/* -------------------------------------------------------------------- */
-int msSDELayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record) {
-	return msSDELayerGetShape(layer, shape, record);
-}
-
 
 /* -------------------------------------------------------------------- */
 /* msSDELayerGetSpatialColumn                                           */
@@ -2156,35 +2147,32 @@ void msSDELayerFreeItemInfo(layerObj *layer)
 MS_DLL_EXPORT  int
 PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
 {
-    assert(layer != NULL);
-    assert(vtable != NULL);
-    
+  assert(layer != NULL);
+  assert(vtable != NULL);    
 
-    vtable->LayerInitItemInfo = msSDELayerInitItemInfo;
-    vtable->LayerFreeItemInfo = msSDELayerFreeItemInfo;
-    vtable->LayerOpen = msSDELayerOpen;
-    vtable->LayerIsOpen = msSDELayerIsOpen;
-    vtable->LayerWhichShapes = msSDELayerWhichShapes;
-    vtable->LayerNextShape = msSDELayerNextShape;
-    vtable->LayerResultsGetShape = msSDELayerGetShapeVT; /* no special version, use ...GetShape() */
-    vtable->LayerGetShape = msSDELayerGetShapeVT;
-    vtable->LayerClose = msSDELayerClose;
-    vtable->LayerGetItems = msSDELayerGetItems;
-    vtable->LayerGetExtent = msSDELayerGetExtent;
+  vtable->LayerInitItemInfo = msSDELayerInitItemInfo;
+  vtable->LayerFreeItemInfo = msSDELayerFreeItemInfo;
+  vtable->LayerOpen = msSDELayerOpen;
+  vtable->LayerIsOpen = msSDELayerIsOpen;
+  vtable->LayerWhichShapes = msSDELayerWhichShapes;
+  vtable->LayerNextShape = msSDELayerNextShape;
+  vtable->LayerGetShape = msSDELayerGetShape;
+  vtable->LayerClose = msSDELayerClose;
+  vtable->LayerGetItems = msSDELayerGetItems;
+  vtable->LayerGetExtent = msSDELayerGetExtent;
 
-    /* layer->vtable->LayerGetAutoStyle, use default */
-    /* layer->vtable->LayerApplyFilterToLayer, use default */
+  /* layer->vtable->LayerGetAutoStyle, use default */
+  /* layer->vtable->LayerApplyFilterToLayer, use default */
 
-    /* SDE uses pooled connections, close from msCloseConnections */
-    vtable->LayerCloseConnection = msSDELayerCloseConnection;
+  /* SDE uses pooled connections, close from msCloseConnections */
+  vtable->LayerCloseConnection = msSDELayerCloseConnection;
 
-    vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
-    vtable->LayerCreateItems = msSDELayerCreateItems;
-    /* layer->vtable->LayerGetNumFeatures, use default */
+  vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+  vtable->LayerCreateItems = msSDELayerCreateItems;
+  /* layer->vtable->LayerGetNumFeatures, use default */
 
-    return MS_SUCCESS;
+  return MS_SUCCESS;
 }
-
 #endif
 
 int
@@ -2199,8 +2187,7 @@ msSDELayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msSDELayerIsOpen;
     layer->vtable->LayerWhichShapes = msSDELayerWhichShapes;
     layer->vtable->LayerNextShape = msSDELayerNextShape;
-    layer->vtable->LayerResultsGetShape = msSDELayerGetShapeVT; /* no special version, use ...GetShape() */
-    layer->vtable->LayerGetShape = msSDELayerGetShapeVT;
+    layer->vtable->LayerGetShape = msSDELayerGetShape;
     layer->vtable->LayerClose = msSDELayerClose;
     layer->vtable->LayerGetItems = msSDELayerGetItems;
     layer->vtable->LayerGetExtent = msSDELayerGetExtent;

@@ -773,9 +773,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
             /*
             ** Read the shape.
             */
-            status = msLayerResultsGetShape(
-                layer, &resultshape,  layer->resultcache->results[i].tileindex,
-                layer->resultcache->results[i].shapeindex );
+            status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
             if(status != MS_SUCCESS) {
                 OGR_DS_Destroy( hDS );
                 msOGRCleanupDS( datasource_name );

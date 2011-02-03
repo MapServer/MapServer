@@ -1908,6 +1908,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
       shape->type = MS_SHAPE_NULL;
   }
 
+  /* TODO: Need to set result index too! */
   shape->index = psInfo->last_record_index_read;
   shape->tileindex = psInfo->nTileId;
 
@@ -2657,31 +2658,37 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, 
-                       long fid)
+int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
+  long shapeindex = record->shapeindex;
+  int tileindex = record->tileindex;
+  int resultindex = record->resultindex;
+
+  /*
+  ** TODO: Merge logic from msOGRLayerResultGetShape() based on result->resultindex (if not -1).
+  */ 
+
   if (psInfo == NULL || psInfo->hLayer == NULL)
   {
-    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
-               "msOGRLayerNextShape()");
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", "msOGRLayerGetShape()");
     return(MS_FAILURE);
   }
 
   if( layer->tileindex == NULL )
-      return msOGRFileGetShape(layer, shape, fid, psInfo, TRUE );
+      return msOGRFileGetShape(layer, shape, shapeindex, psInfo, TRUE );
   else
   {
       if( psInfo->poCurTile == NULL
-          || psInfo->poCurTile->nTileId != tile )
+          || psInfo->poCurTile->nTileId != tileindex )
       {
-          if( msOGRFileReadTile( layer, psInfo, tile ) != MS_SUCCESS )
+          if( msOGRFileReadTile( layer, psInfo, tileindex ) != MS_SUCCESS )
               return MS_FAILURE;
       }
 
-      return msOGRFileGetShape(layer, shape, fid, psInfo->poCurTile, TRUE );
+      return msOGRFileGetShape(layer, shape, shapeindex, psInfo->poCurTile, TRUE );
   }
 #else
 /* ------------------------------------------------------------------
@@ -2699,7 +2706,7 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
  *                     msOGRLayerResultGetShape()
  *
  * Returns shape from OGR data source by index into the current results
- * set.
+ * set. TODO: THIS FUNCTION GOES AWAY!
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
@@ -3747,7 +3754,7 @@ msOGRLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msOGRLayerIsOpen;
     layer->vtable->LayerWhichShapes = msOGRLayerWhichShapes;
     layer->vtable->LayerNextShape = msOGRLayerNextShape;
-    layer->vtable->LayerResultsGetShape = msOGRLayerResultGetShape; 
+    // layer->vtable->LayerResultsGetShape = msOGRLayerResultGetShape; 
     layer->vtable->LayerGetShape = msOGRLayerGetShape;
     layer->vtable->LayerClose = msOGRLayerClose;
     layer->vtable->LayerGetItems = msOGRLayerGetItems;

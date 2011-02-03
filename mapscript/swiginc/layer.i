@@ -192,33 +192,22 @@
         msLayerClose(self);
     }
 
-    %newobject getFeature;
-    shapeObj *getFeature(int shapeindex, int tileindex=-1) 
+    %newobject getShape;
+    shapeObj *getShape(resultObj *record) 
     {
-    /* This version properly returns shapeObj and also has its
-     * arguments properly ordered so that users can ignore the
-     * tileindex if they are not accessing a tileindexed layer.
-     * See bug 586:
-     * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=586 */
         int retval;
         shapeObj *shape;
-        shape = (shapeObj *)malloc(sizeof(shapeObj));
-        if (!shape)
-            return NULL;
-        msInitShape(shape);
-        shape->type = self->type;
-        retval = msLayerGetShape(self, shape, tileindex, shapeindex);
-        return shape;
-    }
 
-    int getShape(shapeObj *shape, int tileindex, int shapeindex) 
-    {
-        return msLayerGetShape(self, shape, tileindex, shapeindex);
-    }
-  
-    int resultsGetShape(shapeObj *shape, int shapeindex, int tileindex=-1)
-    {
-        return msLayerResultsGetShape(self, shape, tileindex, shapeindex);
+        if (!record) return NULL;
+    
+        shape = (shapeObj *)malloc(sizeof(shapeObj));
+        if (!shape) return NULL;
+
+        msInitShape(shape);
+        shape->type = self->type; /* is this right? */
+
+        retval = msLayerGetShape(self, shape, record);
+        return shape;
     }
 
     int getNumResults() 
@@ -227,7 +216,7 @@
         return self->resultcache->numresults;
     }
 
-    resultCacheMemberObj *getResult(int i) 
+    resultObj *getResult(int i) 
     {
         if (!self->resultcache) return NULL;
         if (i >= 0 && i < self->resultcache->numresults)

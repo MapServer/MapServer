@@ -1982,7 +1982,6 @@ msMYGISLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msMYGISLayerIsOpen;
     layer->vtable->LayerWhichShapes = msMYGISLayerWhichShapes;
     layer->vtable->LayerNextShape = msMYGISLayerNextShape;
-    layer->vtable->LayerResultsGetShape = msMYGISLayerGetShapeVT; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msMYGISLayerGetShapeVT;
     layer->vtable->LayerClose = msMYGISLayerClose;
     layer->vtable->LayerGetItems = msMYGISLayerGetItems;

@@ -598,17 +598,15 @@ int msCopyLabelCache(labelCacheObj *dst, labelCacheObj *src)
 }
 
 /***********************************************************************
- * msCopyMarkerCacheMember()                                           *
- *                                                                     *
- * Copy a markerCacheMemberObj                                         *
+ * msCopyResult()                                                      *
  **********************************************************************/
 
-int msCopyResultCacheMember(resultCacheMemberObj *dst,
-                            resultCacheMemberObj *src)
+int msCopyResult(resultObj *dst, resultObj *src)
 {
     MS_COPYSTELEM(shapeindex);
     MS_COPYSTELEM(tileindex);
     MS_COPYSTELEM(classindex);
+    MS_COPYSTELEM(resultindex);
 
     return MS_SUCCESS;
 }
@@ -623,7 +621,7 @@ int msCopyResultCache(resultCacheObj *dst, resultCacheObj *src)
     MS_COPYSTELEM(cachesize);
     MS_COPYSTELEM(numresults);
     for (i = 0; i < dst->numresults; i++) {
-        msCopyResultCacheMember(&(dst->results[i]), &(src->results[i]));
+        msCopyResult(&(dst->results[i]), &(src->results[i]));
     }
     MS_COPYRECT(&(dst->bounds), &(src->bounds));
 

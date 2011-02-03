@@ -896,8 +896,7 @@ int msWFSLayerInitItemInfo(layerObj *layer)
  *                          msWFSLayerGetShape()
  *
  **********************************************************************/
-int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, int tile, 
-                       long record)
+int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
 #ifdef USE_WFS_LYR
     msWFSLayerInfo* psInfo = NULL;
@@ -911,7 +910,7 @@ int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
     }
 
     if(psInfo->bLayerHasValidGML)
-      return msOGRLayerGetShape(layer, shape, tile, record);
+      return msOGRLayerGetShape(layer, shape, record);
     else
     {
           /* Layer is successful, but there is no data to process */
@@ -1356,7 +1355,7 @@ msWFSLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msWFSLayerIsOpen;
     layer->vtable->LayerWhichShapes = msWFSLayerWhichShapes;
     layer->vtable->LayerNextShape = msWFSLayerNextShape;
-    layer->vtable->LayerResultsGetShape = msWFSLayerResultGetShape; 
+    // layer->vtable->LayerResultsGetShape = msWFSLayerResultGetShape; 
     layer->vtable->LayerGetShape = msWFSLayerGetShape;
     layer->vtable->LayerClose = msWFSLayerClose;
     layer->vtable->LayerGetItems = msWFSLayerGetItems;

@@ -1117,14 +1117,11 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   msInitShape(&shape);
 
   for(i=0; i<layer->resultcache->numresults; i++) {
-    if(layer->resultcache->usegetshape) 
-      status = msLayerGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
-    else
-      status = msLayerResultsGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
+    status = msLayerGetShape(layer, &shape, &(layer->resultcache->results[i]));
     if(status != MS_SUCCESS) {
-        msFree(colorbuffer);
-        msFree(mindistancebuffer);
-        return(MS_FAILURE);
+      msFree(colorbuffer);
+      msFree(mindistancebuffer);
+      return(MS_FAILURE);
     }
 
     shape.classindex = layer->resultcache->results[i].classindex;

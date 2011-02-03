@@ -2958,7 +2958,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
         shapeObj shape;
 
         msInitShape(&shape);
-        if (msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
+        if (msLayerGetShape(lp, &shape, &(lp->resultcache->results[j])) != MS_SUCCESS)
         {
             msFree(itemvisible);
             return msWMSException(map, nVersion, NULL, wms_exception_format);

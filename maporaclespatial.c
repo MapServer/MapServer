@@ -2301,7 +2301,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
 
         /* get the items for the shape */
         shape->index = atol( (char *)(sthand->items[sthand->uniqueidindex][ sthand->row ])); /* Primary Key */
-        shape->tileindex = sthand->row_num; /* Index into cursor */
+        shape->tileindex = sthand->row_num; /* Index into cursor: TODO, THIS SHOULD SET THE RESULTINDEX INSTEAD */
         shape->numvalues = layer->numitems;
 
         shape->values = (char **)malloc( sizeof(char*) * shape->numvalues );
@@ -2911,7 +2911,7 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
     return msOracleSpatialLayerInitItemInfo( layer );
 }
 
-int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record )
+int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *record )
 {
     char *table_name;
     char query_str[6000], *geom_column_name = NULL, *unique = NULL, *srid = NULL;
@@ -2930,8 +2930,13 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     msOracleSpatialHandler *hand = NULL;
     msOracleSpatialStatement *sthand = NULL;
 
+    long shapeindex = record->shapeindex;
+    int resultindex = record->resultindex; 
+
+    /* TODO: MERGE WITH msOracleSpatialLayerGetShape(), use the result index if set */
+
     if (layer->debug)
-        msDebug("msOracleSpatialLayerGetShape was called. Using the record = %ld.\n", record);
+        msDebug("msOracleSpatialLayerGetShape was called. Using the record = %ld.\n", shapeindex);
 
     if (layerinfo == NULL)
     {
@@ -3032,7 +3037,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     for( i = 0; i < layer->numitems; ++i )
         snprintf( query_str + strlen(query_str), sizeof(query_str)-strlen(query_str), " %s,", layer->items[i] );
     
-    snprintf( query_str + strlen(query_str), sizeof(query_str)-strlen(query_str), " %s FROM %s WHERE %s = %ld", geom_column_name, table_name, unique, record);
+    snprintf( query_str + strlen(query_str), sizeof(query_str)-strlen(query_str), " %s FROM %s WHERE %s = %ld", geom_column_name, table_name, unique, shapeindex);
 
     /*if (layer->filter.string != NULL)
         sprintf( query_str + strlen(query_str), " AND %s", (layer->filter.string));*/
@@ -3147,7 +3152,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
         return MS_FAILURE;
     }
 
-    shape->index = record;
+    shape->index = shapeindex;
 
     for( i = 0; i < layer->numitems; ++i )
     {
@@ -3542,15 +3547,9 @@ int msOracleSpatialLayerGetItems(layerObj *layer)
   return MS_FAILURE;
 }
 
-int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record )
+int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *record )
 {
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerGetShape()" );
-  return MS_FAILURE;
-}
-
-int msOracleSpatialLayerResultGetShape(layerObj *layer, shapeObj *shape, int tile, long record )
-{
-  msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerResultGetShape" );
   return MS_FAILURE;
 }
 
@@ -3579,16 +3578,6 @@ int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c,
 
 #endif
 
-int msOracleSpatialLayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record)
-{
-    return msOracleSpatialLayerGetShape(layer, shape, record);
-}
-
-int msOracleSpatialLayerResultGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record)
-{
-    return msOracleSpatialLayerResultGetShape(layer, shape, tile, record);
-}
-
 #ifdef USE_ORACLE_PLUGIN 
 #ifdef USE_ORACLESPATIAL
 MS_DLL_EXPORT  int
@@ -3604,8 +3593,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     vtable->LayerIsOpen = msOracleSpatialLayerIsOpen;
     vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
     vtable->LayerNextShape = msOracleSpatialLayerNextShape;
-    vtable->LayerResultsGetShape = msOracleSpatialLayerResultGetShapeVT;
-    vtable->LayerGetShape = msOracleSpatialLayerGetShapeVT;
+    vtable->LayerGetShape = msOracleSpatialLayerGetShape;
     vtable->LayerClose = msOracleSpatialLayerClose;
     vtable->LayerGetItems = msOracleSpatialLayerGetItems;
     vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;
@@ -3633,8 +3621,7 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msOracleSpatialLayerIsOpen;
     layer->vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
     layer->vtable->LayerNextShape = msOracleSpatialLayerNextShape;
-    layer->vtable->LayerResultsGetShape = msOracleSpatialLayerResultGetShapeVT;
-    layer->vtable->LayerGetShape = msOracleSpatialLayerGetShapeVT;
+    layer->vtable->LayerGetShape = msOracleSpatialLayerGetShape;
     layer->vtable->LayerClose = msOracleSpatialLayerClose;
     layer->vtable->LayerGetItems = msOracleSpatialLayerGetItems;
     layer->vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;

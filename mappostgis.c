@@ -2121,7 +2121,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
             msDebug("msPostGISReadShape: Setting shape->tileindex = %d\n", layerinfo->rownum);
         }
         shape->index = uid;
-        shape->tileindex = layerinfo->rownum;
+        shape->tileindex = layerinfo->rownum; /* TODO: I think this should set resultindex now */
         
         if( layer->debug > 2 ) {
             msDebug("msPostGISReadShape: [index] %d\n",  shape->index);
@@ -2618,21 +2618,23 @@ int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, lo
 /*
 ** msPostGISLayerGetShape()
 **
-** Registered vtable->LayerGetShape function. We ignore the 'tile' 
-** parameter, as it means nothing to us.
+** Registered vtable->LayerGetShape function. TODO: MERGE WITH msPostGISLayerResultsGetShape()...
 */
-int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record) {
+int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
 #ifdef USE_POSTGIS
     PGresult *pgresult;
     msPostGISLayerInfo *layerinfo;
     int result, num_tuples;
     char *strSQL = 0;
 
+    long shapeindex = record->shapeindex; /* global index */
+    int resultindex = record->resultindex; /* local index to a result set (if set) */
+
     assert(layer != NULL);
     assert(layer->layerinfo != NULL);
 
     if (layer->debug) {
-        msDebug("msPostGISLayerGetShape called for record = %i\n", record);
+        msDebug("msPostGISLayerGetShape called for record = %i\n", shapeindex);
     }
 
     /* Fill out layerinfo with our current DATA state. */
@@ -2647,7 +2649,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long reco
     layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
 
     /* Build a SQL query based on our current state. */
-    strSQL = msPostGISBuildSQL(layer, 0, &record);
+    strSQL = msPostGISBuildSQL(layer, 0, &shapeindex);
     if ( ! strSQL ) {
         msSetError(MS_QUERYERR, "Failed to build query SQL.", "msPostGISLayerGetShape()");
         return MS_FAILURE;
@@ -3323,7 +3325,6 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer) {
     layer->vtable->LayerIsOpen = msPostGISLayerIsOpen;
     layer->vtable->LayerWhichShapes = msPostGISLayerWhichShapes;
     layer->vtable->LayerNextShape = msPostGISLayerNextShape;
-    layer->vtable->LayerResultsGetShape = msPostGISLayerResultsGetShape; 
     layer->vtable->LayerGetShape = msPostGISLayerGetShape;
     layer->vtable->LayerClose = msPostGISLayerClose;
     layer->vtable->LayerGetItems = msPostGISLayerGetItems;

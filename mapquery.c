@@ -149,9 +149,9 @@ static int addResult(resultCacheObj *cache, shapeObj *shape)
 
   if(cache->numresults == cache->cachesize) { /* just add it to the end */
     if(cache->cachesize == 0)
-      cache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*MS_RESULTCACHEINCREMENT);
+      cache->results = (resultObj *) malloc(sizeof(resultObj)*MS_RESULTCACHEINCREMENT);
     else
-      cache->results = (resultCacheMemberObj *) realloc(cache->results, sizeof(resultCacheMemberObj)*(cache->cachesize+MS_RESULTCACHEINCREMENT));
+      cache->results = (resultObj *) realloc(cache->results, sizeof(resultObj)*(cache->cachesize+MS_RESULTCACHEINCREMENT));
     if(!cache->results) {
       msSetError(MS_MEMERR, "Realloc() error.", "addResult()");
       return(MS_FAILURE);
@@ -207,7 +207,7 @@ static int saveQueryResults(mapObj *map, char *filename) {
       fwrite(&(GET_LAYER(map, i)->resultcache->numresults), sizeof(int), 1, stream); /* number of results */
       fwrite(&(GET_LAYER(map, i)->resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
       for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++)
-	fwrite(&(GET_LAYER(map, i)->resultcache->results[j]), sizeof(resultCacheMemberObj), 1, stream); /* each result */
+	fwrite(&(GET_LAYER(map, i)->resultcache->results[j]), sizeof(resultObj), 1, stream); /* each result */
     }
   }
 
@@ -237,20 +237,20 @@ static int loadQueryResults(mapObj *map, FILE *stream) {
 
     fread(&(GET_LAYER(map, j)->resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
 
-    GET_LAYER(map, j)->resultcache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*GET_LAYER(map, j)->resultcache->numresults);
+    GET_LAYER(map, j)->resultcache->results = (resultObj *) malloc(sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);
     if (GET_LAYER(map, j)->resultcache->results == NULL) 
     {
         msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "loadQueryResults()",
-                   __FILE__, __LINE__, sizeof(resultCacheMemberObj)*GET_LAYER(map, j)->resultcache->numresults);       
+                   __FILE__, __LINE__, sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);       
         free(GET_LAYER(map, j)->resultcache);
         GET_LAYER(map, j)->resultcache = NULL;
         return MS_FAILURE;
     }
 
     for(k=0; k<GET_LAYER(map, j)->resultcache->numresults; k++) {
-      fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultCacheMemberObj), 1, stream); /* each result */
+      fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultObj), 1, stream); /* each result */
       if(!GET_LAYER(map, j)->tileindex) GET_LAYER(map, j)->resultcache->results[k].tileindex = -1; /* reset the tile index for non-tiled layers */
-      GET_LAYER(map, j)->resultcache->results[k].resultindex = -1; /* all results loaded this way have a -1 result index */
+      GET_LAYER(map, j)->resultcache->results[k].resultindex = -1; /* all results loaded this way have a -1 result (set) index */
     }
   }
 
@@ -458,6 +458,8 @@ int msQueryByIndex(mapObj *map)
   layerObj *lp;
   int status;
 
+  resultObj record;
+
   shapeObj shape;
 
   if(map->query.type != MS_QUERY_BY_INDEX) {
@@ -500,7 +502,11 @@ int msQueryByIndex(mapObj *map)
   }
 
   msInitShape(&shape);
-  status = msLayerGetShape(lp, &shape, map->query.tileindex, map->query.shapeindex);
+
+  record.shapeindex = map->query.shapeindex;
+  record.tileindex = map->query.tileindex;
+
+  status = msLayerGetShape(lp, &shape, &record);
   if(status != MS_SUCCESS) {
     msSetError(MS_NOTFOUND, "Not valid record request.", "msQueryByIndex()"); 
     return(MS_FAILURE);
@@ -1150,7 +1156,7 @@ int msQueryByFeatures(mapObj *map)
     /* for each selection shape */
     for(i=0; i<slp->resultcache->numresults; i++) {
 
-      status = msLayerResultsGetShape(slp, &selectshape, slp->resultcache->results[i].tileindex, slp->resultcache->results[i].shapeindex);
+      status = msLayerGetShape(slp, &selectshape, &(slp->resultcache->results[i]));
       if(status != MS_SUCCESS) {
 	msLayerClose(lp);
 	msLayerClose(slp);

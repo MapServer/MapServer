@@ -164,7 +164,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 ** Used to retrieve a shape from a result set by index. Result sets are created by the various
 ** msQueryBy...() functions. The index is assigned by the data source.
 */
-int msLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
+/* int msLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
   if ( ! layer->vtable) {
     int rv =  msInitializeVirtualTable(layer);
@@ -173,27 +173,26 @@ int msLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long reco
   }
 
   return layer->vtable->LayerResultsGetShape(layer, shape, tile, record);
-}
+} */
 
 /*
 ** Used to retrieve a shape by index. All data sources must be capable of random access using
-** a record number of some sort.
+** a record number(s) of some sort.
 */
-int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
+int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
-  if ( ! layer->vtable) {
-      int rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS)
-          return rv;
+  if( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
+    if(rv != MS_SUCCESS)
+      return rv;
   }
 
-  /* At the end of switch case (default -> break; -> return MS_FAILURE), 
-   * was following TODO ITEM:
-   */
-  /* TO DO! This is where dynamic joins will happen. Joined attributes will be */
-  /* tagged on to the main attributes with the naming scheme [join name].[item name]. */
+  /*
+  ** TODO: This is where dynamic joins could happen. Joined attributes would be
+  ** tagged on to the main attributes with the naming scheme [join name].[item name].
+  */
 
-  return layer->vtable->LayerGetShape(layer, shape, tile, record);
+  return layer->vtable->LayerGetShape(layer, shape, record);
 }
 
 /*
@@ -1071,12 +1070,7 @@ int LayerDefaultNextShape(layerObj *layer, shapeObj *shape)
   return MS_FAILURE;
 }
 
-int LayerDefaultResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
-{
-  return MS_FAILURE;
-}
-
-int LayerDefaultGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
+int LayerDefaultGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
   return MS_FAILURE;
 }
@@ -1208,7 +1202,7 @@ static int populateVirtualTable(layerVTableObj *vtable)
   vtable->LayerWhichShapes = LayerDefaultWhichShapes;
 
   vtable->LayerNextShape = LayerDefaultNextShape;
-  vtable->LayerResultsGetShape = LayerDefaultResultsGetShape;
+  // vtable->LayerResultsGetShape = LayerDefaultResultsGetShape;
   vtable->LayerGetShape = LayerDefaultGetShape;
   vtable->LayerClose = LayerDefaultClose;
   vtable->LayerGetItems = LayerDefaultGetItems;
@@ -1266,7 +1260,7 @@ int msInitializeVirtualTable(layerObj *layer)
       return(msINLINELayerInitializeVirtualTable(layer));
       break;
     case(MS_SHAPEFILE):
-      return(msShapeFileLayerInitializeVirtualTable(layer));
+      return(msSHPLayerInitializeVirtualTable(layer));
       break;
     case(MS_TILED_SHAPEFILE):
       return(msTiledSHPLayerInitializeVirtualTable(layer));
@@ -1332,25 +1326,25 @@ int msINLINELayerOpen(layerObj *layer)
 }
 
 /* Author: Cristoph Spoerri and Sean Gillies */
-int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int tile, long shapeindex) 
+int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) 
 {
     int i=0;
     featureListNodeObjPtr current;
 
-    /* tile ; */ /* Not used -- commented out to silence compiler warning.  hobu*/
+    int shapeindex = record->shapeindex; /* only index necessary */
+
     current = layer->features;
     while (current!=NULL && i!=shapeindex) {
         i++;
         current = current->next;
     }
     if (current == NULL) {
-        msSetError(MS_SHPERR, "No inline feature with this index.",
-                   "msINLINELayerGetShape()");
+        msSetError(MS_SHPERR, "No inline feature with this index.", "msINLINELayerGetShape()");
         return MS_FAILURE;
     } 
     
     if (msCopyShape(&(current->shape), shape) != MS_SUCCESS) {
-        msSetError(MS_SHPERR, "Cannot retrieve inline shape. There some problem with the shape", "msLayerGetShape()");
+        msSetError(MS_SHPERR, "Cannot retrieve inline shape. There some problem with the shape", "msINLINELayerGetShape()");
         return MS_FAILURE;
     }
     /* check for the expected size of the values array */
@@ -1409,7 +1403,6 @@ msINLINELayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msINLINELayerIsOpen;
     /* layer->vtable->LayerWhichShapes, use default */
     layer->vtable->LayerNextShape = msINLINELayerNextShape;
-    layer->vtable->LayerResultsGetShape = msINLINELayerGetShape; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msINLINELayerGetShape;
     /* layer->vtable->LayerClose, use default */
     /* layer->vtable->LayerGetItems, use default */

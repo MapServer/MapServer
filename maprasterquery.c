@@ -34,7 +34,7 @@
 
 MS_CVSID("$Id$");
 
-int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
+int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record);
 int msRASTERLayerGetItems(layerObj *layer);
 
 #ifdef USE_GDAL
@@ -103,9 +103,9 @@ static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int 
 
   if(cache->numresults == cache->cachesize) { /* just add it to the end */
     if(cache->cachesize == 0)
-      cache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*MS_RESULTCACHEINCREMENT);
+      cache->results = (resultObj *) malloc(sizeof(resultObj)*MS_RESULTCACHEINCREMENT);
     else
-      cache->results = (resultCacheMemberObj *) realloc(cache->results, sizeof(resultCacheMemberObj)*(cache->cachesize+MS_RESULTCACHEINCREMENT));
+      cache->results = (resultObj *) realloc(cache->results, sizeof(resultObj)*(cache->cachesize+MS_RESULTCACHEINCREMENT));
     if(!cache->results) {
       msSetError(MS_MEMERR, "Realloc() error.", "addResult()");
       return(MS_FAILURE);
@@ -118,6 +118,7 @@ static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int 
   cache->results[i].classindex = classindex;
   cache->results[i].tileindex = tileindex;
   cache->results[i].shapeindex = shapeindex;
+  cache->results[i].resultindex = -1; /* unused */
   cache->numresults++;
 
   return(MS_SUCCESS);
@@ -1296,8 +1297,15 @@ int msRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
         shape->type = MS_SHAPE_NULL;
         return MS_DONE;
     }
-    else 
-        return msRASTERLayerGetShape( layer, shape, 0, rlinfo->next_shape++ );
+    else {
+      resultObj record;
+
+      record.shapeindex = rlinfo->next_shape++;
+      record.tileindex = 0;
+      record.classindex = record.resultindex = -1;
+
+      return msRASTERLayerGetShape( layer, shape, &record);
+    }
 #endif /* def USE_GDAL */
 }
 
@@ -1305,9 +1313,7 @@ int msRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
 /*                       msRASTERLayerGetShape()                        */
 /************************************************************************/
 
-int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile, 
-                          long record)
-
+int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
 #ifndef USE_GDAL
     return MS_FAILURE;
@@ -1315,19 +1321,21 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
     int i;
 
+    long shapeindex = record->shapeindex;
+
     msFreeShape(shape);
     shape->type = MS_SHAPE_NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Validate requested record id.                                   */
 /* -------------------------------------------------------------------- */
-    if( record < 0 || record >= rlinfo->query_results )
+    if( shapeindex < 0 || shapeindex >= rlinfo->query_results )
     {
         msSetError(MS_MISCERR, 
                    "Out of range shape index requested.  Requested %d\n"
                    "but only %d shapes available.",
                    "msRASTERLayerGetShape()",
-                   record, rlinfo->query_results );
+                   shapeindex, rlinfo->query_results );
         return MS_FAILURE;
     }
 
@@ -1344,8 +1352,8 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
         line.numpoints = 1;
         line.point = &point;
         
-        point.x = rlinfo->qc_x[record];
-        point.y = rlinfo->qc_y[record];
+        point.x = rlinfo->qc_x[shapeindex];
+        point.y = rlinfo->qc_y[shapeindex];
 #ifdef USE_POINT_Z_M
         point.m = 0.0;
 #endif
@@ -1369,9 +1377,9 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
 
             szWork[0] = '\0';
             if( EQUAL(layer->items[i],"x") && rlinfo->qc_x )
-                snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_x[record] );
+                snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_x[shapeindex] );
             else if( EQUAL(layer->items[i],"y") && rlinfo->qc_y )
-                snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_y[record] );
+                snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_y[shapeindex] );
 
             else if( EQUAL(layer->items[i],"value_list") && rlinfo->qc_values )
             {
@@ -1383,7 +1391,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
                         strlcat( szWork, ",", bufferSize);
 
                     snprintf( szWork+strlen(szWork), bufferSize-strlen(szWork), "%.8g", 
-                              rlinfo->qc_values[record * rlinfo->band_count
+                              rlinfo->qc_values[shapeindex * rlinfo->band_count
                                                 + iValue] );
                 }
             }
@@ -1391,24 +1399,24 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
             {
                 int iValue = atoi(layer->items[i]+6);
                 snprintf( szWork, bufferSize, "%.8g", 
-                          rlinfo->qc_values[record*rlinfo->band_count+iValue] );
+                          rlinfo->qc_values[shapeindex*rlinfo->band_count+iValue] );
             }
             else if( EQUAL(layer->items[i],"class") && rlinfo->qc_class ) 
             {
-                int p_class = rlinfo->qc_class[record];
+                int p_class = rlinfo->qc_class[shapeindex];
                 if( layer->class[p_class]->name != NULL )
                     snprintf( szWork, bufferSize, "%.999s", layer->class[p_class]->name );
                 else
                     snprintf( szWork, bufferSize, "%d", p_class );
             }
             else if( EQUAL(layer->items[i],"red") && rlinfo->qc_red )
-                snprintf( szWork, bufferSize, "%d", rlinfo->qc_red[record] );
+                snprintf( szWork, bufferSize, "%d", rlinfo->qc_red[shapeindex] );
             else if( EQUAL(layer->items[i],"green") && rlinfo->qc_green )
-                snprintf( szWork, bufferSize, "%d", rlinfo->qc_green[record] );
+                snprintf( szWork, bufferSize, "%d", rlinfo->qc_green[shapeindex] );
             else if( EQUAL(layer->items[i],"blue") && rlinfo->qc_blue )
-                snprintf( szWork, bufferSize, "%d", rlinfo->qc_blue[record] );
+                snprintf( szWork, bufferSize, "%d", rlinfo->qc_blue[shapeindex] );
             else if( EQUAL(layer->items[i],"count") && rlinfo->qc_count )
-                snprintf( szWork, bufferSize, "%d", rlinfo->qc_count[record] );
+                snprintf( szWork, bufferSize, "%d", rlinfo->qc_count[shapeindex] );
 
             shape->values[i] = msStrdup(szWork);
         }
@@ -1637,7 +1645,6 @@ msRASTERLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msRASTERLayerIsOpen;
     layer->vtable->LayerWhichShapes = msRASTERLayerWhichShapes;
     layer->vtable->LayerNextShape = msRASTERLayerNextShape;
-    layer->vtable->LayerResultsGetShape = msRASTERLayerGetShape; /* no special version, use ...GetShape() */
     layer->vtable->LayerGetShape = msRASTERLayerGetShape;
     layer->vtable->LayerClose = msRASTERLayerClose;
     layer->vtable->LayerGetItems = msRASTERLayerGetItems;

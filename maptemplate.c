@@ -914,7 +914,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     limit = MS_MIN(limit, layer->resultcache->numresults);
 
   for(i=0; i<limit; i++) {
-    status = msLayerResultsGetShape(layer, &(mapserv->resultshape), layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
+    status = msLayerGetShape(layer, &(mapserv->resultshape), &(layer->resultcache->results[i]));
     if(status != MS_SUCCESS) return status;
 
     mapserv->resultshape.classindex = msShapeGetClass(layer, &mapserv->resultshape, 
@@ -4218,7 +4218,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
         // status = msLayerGetItems(lp); /* retrieve all the item names */
         // if(status != MS_SUCCESS) return status;
 
-        status = msLayerResultsGetShape(lp, &(mapserv->resultshape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
+        status = msLayerGetShape(lp, &(mapserv->resultshape), &(lp->resultcache->results[0]));
         if(status != MS_SUCCESS) return status;
 
         if(lp->numjoins > 0) {
@@ -4309,7 +4309,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
 
     mapserv->LRN = 1; /* layer result number */
     for(j=0; j<lp->resultcache->numresults; j++) {
-      status = msLayerResultsGetShape(lp, &(mapserv->resultshape), lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+      status = msLayerGetShape(lp, &(mapserv->resultshape), &(lp->resultcache->results[j]));
       if(status != MS_SUCCESS) return status;
 
       /* prepare any necessary JOINs here (one-to-one only) */
