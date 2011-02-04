@@ -905,8 +905,8 @@ int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     	psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
     else
     {
-	msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerGetShape()");
-	return MS_FAILURE;
+      msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerGetShape()");
+      return MS_FAILURE;
     }
 
     if(psInfo->bLayerHasValidGML)
@@ -928,48 +928,6 @@ int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 #endif /* USE_WFS_LYR */
 
 }
-
-
-
-/**********************************************************************
- *                          msWFSLayerGetShape()
- *
- **********************************************************************/
-int msWFSLayerResultGetShape(layerObj *layer, shapeObj *shape, int tile, 
-                             long record)
-{
-#ifdef USE_WFS_LYR
-    msWFSLayerInfo* psInfo = NULL;
-
-    if(layer != NULL && layer->wfslayerinfo != NULL)
-    	psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
-    else
-    {
-	msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerResultGetShape()");
-	return MS_FAILURE;
-    }
-
-    if(psInfo->bLayerHasValidGML)
-      return msOGRLayerResultGetShape(layer, shape, tile, record);
-    else
-    {
-          /* Layer is successful, but there is no data to process */
-        msFreeShape(shape);
-        shape->type = MS_SHAPE_NULL;
-        return MS_FAILURE;
-    }
-#else
-/* ------------------------------------------------------------------
- * WFS CONNECTION Support not included...
- * ------------------------------------------------------------------ */
-  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
-             "msWFSLayerResultGetShape()");
-  return(MS_FAILURE);
-#endif /* USE_WFS_LYR */
-
-}
-
-
 
 /**********************************************************************
  *                          msWFSLayerGetNextShape()

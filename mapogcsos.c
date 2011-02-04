@@ -684,9 +684,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
     {
         msInitShape(&sShape);
     
-        status = msLayerResultsGetShape(lp, &sShape, 
-                                 lp->resultcache->results[iFeatureId].tileindex, 
-                                 lp->resultcache->results[iFeatureId].shapeindex);
+        status = msLayerGetShape(lp, &sShape, &(lp->resultcache->results[iFeatureId]));
         if(status != MS_SUCCESS) {
           xmlFreeNs(psNsOm);
           return;
@@ -931,9 +929,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
     const char *pszSep=NULL;
 
     msInitShape(&sShape);
-    status = msLayerResultsGetShape(lp, &sShape, 
-                             lp->resultcache->results[iFeatureId].tileindex, 
-                             lp->resultcache->results[iFeatureId].shapeindex);
+    status = msLayerGetShape(lp, &sShape, &(lp->resultcache->results[iFeatureId]));
     if(status != MS_SUCCESS) 
       return NULL;
 
@@ -1594,9 +1590,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                                  for(k=0; k<lpTmp->resultcache->numresults; k++)
                                  {      
                                      msInitShape(&sShape);
-                                     status = msLayerResultsGetShape(lp, &sShape, 
-                                                              lpTmp->resultcache->results[k].tileindex, 
-                                                              lpTmp->resultcache->results[k].shapeindex);
+                                     status = msLayerGetShape(lp, &sShape, &(lpTmp->resultcache->results[k]));
                                      if(status != MS_SUCCESS) 
                                        continue;
 
@@ -2010,7 +2004,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
 
                 for(k=0; k<lp->resultcache->numresults; k++) {      
                   msInitShape(&sShape);
-                  status = msLayerResultsGetShape(lp, &sShape, lp->resultcache->results[k].tileindex, lp->resultcache->results[k].shapeindex);
+                  status = msLayerGetShape(lp, &sShape, &(lp->resultcache->results[k]));
                   if(status != MS_SUCCESS) 
                     continue;
  
@@ -2717,7 +2711,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
         if (lp->resultcache && lp->resultcache->numresults > 0) {
           for(j=0; j<lp->resultcache->numresults; j++) {      
             msInitShape(&sShape);     
-            status = msLayerResultsGetShape(lp, &sShape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+            status = msLayerGetShape(lp, &sShape, &(lp->resultcache->results[j]));
             if(status != MS_SUCCESS) 
               continue;
 
