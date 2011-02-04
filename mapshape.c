@@ -2608,9 +2608,11 @@ int msSHPLayerNextShape(layerObj *layer, shapeObj *shape)
 int msSHPLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
   shapefileObj *shpfile;
+  long shapeindex;
+
   shpfile = layer->layerinfo;
 
-  long shapeindex = record->shapeindex;
+  shapeindex = record->shapeindex;
 
   if(!shpfile) {
     msSetError(MS_SHPERR, "Shapefile layer has not been opened.", "msSHPLayerGetShape()");
