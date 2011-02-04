@@ -2567,7 +2567,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                 {
                     memmove( lp->resultcache->results + 0,
                              lp->resultcache->results + to_skip, 
-                             sizeof(resultCacheMemberObj) * (lp->resultcache->numresults - to_skip) );
+                             sizeof(resultObj) * (lp->resultcache->numresults - to_skip) );
                     lp->resultcache->numresults -= to_skip;
                     to_skip = 0;
                 }

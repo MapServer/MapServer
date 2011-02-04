@@ -1456,10 +1456,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
             continue;
         }
 
-        if(lp->resultcache->usegetshape)
-           status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
-        else
-          status = msLayerResultsGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);        
+        status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
         if(status != MS_SUCCESS) 
             return(status);
 
