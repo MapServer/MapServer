@@ -167,12 +167,12 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
 
 
     for(t = 0; t < len_hay; t++) {
-        hay_lower[t] = tolower(haystack[t]);
+        hay_lower[t] = (char)tolower(haystack[t]);
     }
     hay_lower[t] = 0;
 
     for(t = 0; t < len_need; t++) {
-        needle_lower[t] = tolower(needle[t]);
+        needle_lower[t] = (char)tolower(needle[t]);
     }
     needle_lower[t] = 0;
 
@@ -229,7 +229,7 @@ static void setConnError(msODBCconn *conn)
 /* Connect to db */
 static msODBCconn * mssql2008Connect(const char * connString)
 {
-    char fullConnString[1024];
+    SQLCHAR fullConnString[1024];
     SQLRETURN rc;
     msODBCconn * conn = malloc(sizeof(msODBCconn));
     MS_CHECK_ALLOC(conn, sizeof(msODBCconn), NULL);
@@ -242,7 +242,7 @@ static msODBCconn * mssql2008Connect(const char * connString)
 
     SQLAllocHandle(SQL_HANDLE_DBC, conn->henv, &conn->hdbc);
 
-    snprintf(fullConnString, sizeof(fullConnString), "DRIVER=SQL Server;%s", connString);
+    snprintf((char*)fullConnString, sizeof(fullConnString), "DRIVER=SQL Server;%s", connString);
 
     {
         SQLCHAR outConnString[1024];
@@ -280,7 +280,7 @@ static int executeSQL(msODBCconn *conn, const char * sql)
 
     SQLCloseCursor(conn->hstmt);
 
-    rc = SQLExecDirect(conn->hstmt, (char *) sql, SQL_NTS);
+    rc = SQLExecDirect(conn->hstmt, (SQLCHAR *) sql, SQL_NTS);
 
     if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
     {
@@ -307,7 +307,7 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
 
     rc = SQLDescribeCol(
          conn->hstmt,
-         index,
+         (SQLUSMALLINT)index,
          columnName,
          SQL_COLUMN_NAME_MAX_LENGTH,
          &columnNameLen,
@@ -319,9 +319,9 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
     if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
     {
         if (bufferLength < SQL_COLUMN_NAME_MAX_LENGTH + 1)
-            strlcpy(buffer, columnName, bufferLength);
+            strlcpy(buffer, (const char *)columnName, bufferLength);
         else
-            strlcpy(buffer, columnName, SQL_COLUMN_NAME_MAX_LENGTH + 1);
+            strlcpy(buffer, (const char *)columnName, SQL_COLUMN_NAME_MAX_LENGTH + 1);
         return 1;
     }
     else
@@ -500,7 +500,6 @@ int msMSSQL2008LayerInitItemInfo(layerObj *layer)
 static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 {
     msMSSQL2008LayerInfo *layerinfo;
-    char        *temp = 0;
     char        *columns_wanted = 0;
     char        *data_source = 0;
     char        *f_table_name = 0;
@@ -515,9 +514,6 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     int         t;
 
     char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
-
-    char        *tmp2 = 0;
-    char        *error_message = 0;
 
     layerinfo =  getMSSQL2008LayerInfo(layer);
 
@@ -688,11 +684,6 @@ int msMSSQL2008LayerWhichShapes(layerObj *layer, rectObj rect)
 {
     msMSSQL2008LayerInfo  *layerinfo = 0;
     char    *query_str = 0;
-    char    *table_name = 0;
-    char    *geom_column_name = 0;
-    char    *urid_name = 0;
-    char    *user_srid = 0;
-	char	*index_name = 0;
     int     set_up_result;
 
     if(layer->debug) {
@@ -1304,7 +1295,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
             for(t=0; t < layer->numitems; t++)
 			{
 				/* figure out how big the buffer needs to be */
-                rc = SQLGetData(layerinfo->conn->hstmt, t + 1, SQL_C_BINARY, dummyBuffer, 0, &needLen);
+                rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(t + 1), SQL_C_BINARY, dummyBuffer, 0, &needLen);
                 if (rc == SQL_ERROR)
                     handleSQLError(layer);
 
@@ -1319,7 +1310,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 				    }
 
 				    /* Now grab the data */
-                    rc = SQLGetData(layerinfo->conn->hstmt, t + 1, SQL_C_BINARY, valueBuffer, needLen, &retLen);
+                    rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(t + 1), SQL_C_BINARY, valueBuffer, needLen, &retLen);
                     if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
                         handleSQLError(layer);
 
@@ -1337,7 +1328,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
             /* Get shape geometry */
             {
 				/* Set up to request the size of the buffer needed */
-                rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 1, SQL_C_BINARY, dummyBuffer, 0, &needLen);
+                rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(layer->numitems + 1), SQL_C_BINARY, dummyBuffer, 0, &needLen);
                 if (rc == SQL_ERROR)
                     handleSQLError(layer);
 
@@ -1354,7 +1345,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 				}
 
 				/* Grab the WKB */
-                rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 1, SQL_C_BINARY, wkbBuffer, needLen, &retLen);
+                rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(layer->numitems + 1), SQL_C_BINARY, wkbBuffer, needLen, &retLen);
                 if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
                     handleSQLError(layer);
 
@@ -1417,7 +1408,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
             }
 
             /* Next get unique id for row - since the OID shouldn't be larger than a long we'll assume billions as a limit */
-            rc = SQLGetData(layerinfo->conn->hstmt, layer->numitems + 2, SQL_C_BINARY, oidBuffer, sizeof(oidBuffer) - 1, &retLen);
+            rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(layer->numitems + 2), SQL_C_BINARY, oidBuffer, sizeof(oidBuffer) - 1, &retLen);
             if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
                     handleSQLError(layer);
 
@@ -1541,11 +1532,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
 int msMSSQL2008LayerGetItems(layerObj *layer)
 {
     msMSSQL2008LayerInfo  *layerinfo;
-    char                *table_name = 0;
     char                *geom_column_name = 0;
-    char                *urid_name = 0;
-    char                *user_srid = 0;
-	char				*index_name = 0;
     char                sql[1000];
     int                 t;
     char                found_geom = 0;
