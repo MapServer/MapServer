@@ -1470,18 +1470,19 @@ int msMSSQL2008LayerNextShape(layerObj *layer, shapeObj *shape)
     return result;
 }
 
-/* Execute a query on the DB based on record being an primary key. */
-int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
+/* Execute a query on the DB based on the query result. */
+int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
     char    *query_str;
     char    *columns_wanted = 0;
-
+    
     msMSSQL2008LayerInfo  *layerinfo;
     int                 t;
     char buffer[32000] = "";
+    long shapeindex = record->shapeindex;
 
     if(layer->debug) {
-        msDebug("msMSSQL2008LayerGetShape called for record = %i\n", record);
+        msDebug("msMSSQL2008LayerGetShape called for shapeindex = %i\n", shapeindex);
     }
 
     layerinfo = getMSSQL2008LayerInfo(layer);
@@ -1510,7 +1511,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
     }
 
 	/* index_name is ignored here since the hint should be for the spatial index, not the PK index */
-    snprintf(buffer, sizeof(buffer), "select %s from %s where %s = %d", columns_wanted, layerinfo->geom_table, layerinfo->urid_name, record);
+    snprintf(buffer, sizeof(buffer), "select %s from %s where %s = %d", columns_wanted, layerinfo->geom_table, layerinfo->urid_name, shapeindex);
 
     query_str = msStrdup(buffer);
 
@@ -1929,12 +1930,6 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
 /* end above's #ifdef USE_MSSQL2008 */
 #endif
 
-int 
-msMSSQL2008LayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record)
-{
-    return msMSSQL2008LayerGetShape(layer, shape, record);
-}
-
 #ifdef USE_MSSQL2008_PLUGIN
 
 MS_DLL_EXPORT  int
@@ -1949,8 +1944,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     vtable->LayerIsOpen = msMSSQL2008LayerIsOpen;
     vtable->LayerWhichShapes = msMSSQL2008LayerWhichShapes;
     vtable->LayerNextShape = msMSSQL2008LayerNextShape;
-    vtable->LayerGetShape = msMSSQL2008LayerGetShapeVT;
-    vtable->LayerResultsGetShape = msMSSQL2008LayerGetShapeVT; /* no special version, use ...GetShape() */
+    vtable->LayerGetShape = msMSSQL2008LayerGetShape;
 
     vtable->LayerClose = msMSSQL2008LayerClose;
 
@@ -1984,8 +1978,7 @@ msMSSQL2008LayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msMSSQL2008LayerIsOpen;
     layer->vtable->LayerWhichShapes = msMSSQL2008LayerWhichShapes;
     layer->vtable->LayerNextShape = msMSSQL2008LayerNextShape;
-    layer->vtable->LayerGetShape = msMSSQL2008LayerGetShapeVT;
-    layer->vtable->LayerResultsGetShape = msMSSQL2008LayerGetShapeVT; /* no special version, use ...GetShape() */
+    layer->vtable->LayerGetShape = msMSSQL2008LayerGetShape;
 
     layer->vtable->LayerClose = msMSSQL2008LayerClose;
 
