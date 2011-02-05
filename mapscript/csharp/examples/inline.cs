@@ -105,7 +105,7 @@ class Inline {
       //perform a query
       layer.queryByRect(map, new rectObj(0, 0, 450, 450, 0));
 
-      resultCacheMemberObj res;
+      resultObj res;
       shapeObj feature;
       using (resultCacheObj results = layer.getResults())
       {
@@ -116,7 +116,7 @@ class Inline {
               for (int j = 0; j < results.numresults; j++)
               {
                   res = results.getResult(j);
-                  feature = layer.getFeature(res.shapeindex, res.tileindex);
+                  feature = layer.getShape(res);
                   if (feature != null)
                   {
                       Console.WriteLine("  Feature: shapeindex=" + res.shapeindex + " tileindex=" + res.tileindex);
