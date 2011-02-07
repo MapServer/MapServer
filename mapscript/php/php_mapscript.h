@@ -275,11 +275,11 @@ typedef struct _php_labelcachemember_object {
     labelCacheMemberObj *labelcachemember;
 } php_labelcachemember_object;
 
-typedef struct _php_resultcachemember_object {
+typedef struct _php_result_object {
     zend_object std;
     parent_object parent;
-    resultCacheMemberObj *resultcachemember;
-} php_resultcachemember_object;
+    resultObj *result;
+} php_result_object;
 
 typedef struct _php_scalebar_object {
     zend_object std;
@@ -348,7 +348,7 @@ PHP_MINIT_FUNCTION(class);
 PHP_MINIT_FUNCTION(projection);
 PHP_MINIT_FUNCTION(labelcachemember);
 PHP_MINIT_FUNCTION(labelcache);
-PHP_MINIT_FUNCTION(resultcachemember);
+PHP_MINIT_FUNCTION(result);
 PHP_MINIT_FUNCTION(scalebar);
 PHP_MINIT_FUNCTION(owsrequest);
 PHP_MINIT_FUNCTION(point);
@@ -418,7 +418,7 @@ extern zend_class_entry *mapscript_ce_shape;
 extern zend_class_entry *mapscript_ce_shapefile;
 extern zend_class_entry *mapscript_ce_labelcachemember;
 extern zend_class_entry *mapscript_ce_labelcache;
-extern zend_class_entry *mapscript_ce_resultcachemember;
+extern zend_class_entry *mapscript_ce_result;
 extern zend_class_entry *mapscript_ce_scalebar;
 extern zend_class_entry *mapscript_ce_owsrequest;
 extern zend_class_entry *mapscript_ce_layer;
@@ -444,8 +444,8 @@ extern void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemem
                                               parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_labelcache(labelCacheObj *labelcache, 
                                               parent_object parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_resultcachemember(resultCacheMemberObj *resultcachemember, 
-                                               parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_result(resultObj *result, 
+                                    parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_scalebar(scalebarObj *scalebar, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_owsrequest(cgiRequestObj *cgirequest, zval *return_value TSRMLS_DC);
 extern void mapscript_create_image(imageObj *image, zval *return_value TSRMLS_DC);
@@ -506,7 +506,7 @@ int             mapObj_queryByShape(mapObj *self, shapeObj *shape);
 int              mapObj_queryByIndex(mapObj *self, int qlayer, 
                                      int tileindex, int shapeindex,
                                      int bAddToQuery);
-int             mapObj_saveQuery(mapObj *self, char *filename);
+int             mapObj_saveQuery(mapObj *self, char *filename, int results);
 int             mapObj_loadQuery(mapObj *self, char *filename);
 
 int             mapObj_setWKTProjection(mapObj *self, char *string);
@@ -563,7 +563,7 @@ shapeObj        *layerObj_nextShape(layerObj *self);
 void            layerObj_close(layerObj *self);
 int             layerObj_getShape(layerObj *self, shapeObj *shape,
                                   int tileindex, int shapeindex);
-resultCacheMemberObj *layerObj_getResult(layerObj *self, int i);
+resultObj *layerObj_getResult(layerObj *self, int i);
 classObj       *layerObj_getClass(layerObj *self, int i);
 int             layerObj_getClassIndex(layerObj *self, shapeObj *shape, double scaledenom, int *classgroup, int numclasses);
 int             layerObj_draw(layerObj *self, mapObj *map, imageObj *img);

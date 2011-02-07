@@ -317,7 +317,7 @@ PHP_METHOD(mapObj, __construct)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
     php_map = (php_map_object *)zend_object_store_get_object(zobj TSRMLS_CC);
-    
+
     map = mapObj_new(filename, path);
 
     if (map == NULL)

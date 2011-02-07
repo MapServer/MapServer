@@ -174,9 +174,8 @@ ZEND_BEGIN_ARG_INFO_EX(layer_queryByAttributes_args, 0, 0, 3)
   ZEND_ARG_INFO(0, mode)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(layer_resultsGetShape_args, 0, 0, 1)
-  ZEND_ARG_INFO(0, shapeindex)
-  ZEND_ARG_INFO(0, tileindex)
+ZEND_BEGIN_ARG_INFO_EX(layer_getShape_args, 0, 0, 1)
+  ZEND_ARG_OBJ_INFO(0, record, resultObj, 0)
 ZEND_END_ARG_INFO()
 
 /* {{{ proto void __construct(mapObj map [, layerObj layer]) 
@@ -935,12 +934,12 @@ PHP_METHOD(layerObj, getNumResults)
 /* }}} */
 
 /* {{{ proto int layer.getResult(int i)
-   Returns a resultCacheMemberObj by index from a layer object.*/  
+   Returns a resultObj by index from a layer object.*/  
 PHP_METHOD(layerObj, getResult)
 {
     zval *zobj = getThis();
     long index;
-    resultCacheMemberObj *resultcachemember = NULL;
+    resultObj *result = NULL;
     php_layer_object *php_layer;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -953,16 +952,16 @@ PHP_METHOD(layerObj, getResult)
     
     php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    if ((resultcachemember = layerObj_getResult(php_layer->layer, index)) == NULL)
+    if ((result = layerObj_getResult(php_layer->layer, index)) == NULL)
     {
         mapscript_throw_exception("Invalid result index." TSRMLS_CC);
         return;
     }
 
-    /* Return resultcachemember object */
+    /* Return result object */
     MAPSCRIPT_MAKE_PARENT(zobj, NULL);
-    mapscript_create_resultcachemember(&(php_layer->layer->resultcache->results[index]), 
-                                       parent, return_value TSRMLS_CC);
+    mapscript_create_result(&(php_layer->layer->resultcache->results[index]), 
+                            parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -1868,25 +1867,26 @@ PHP_METHOD(layerObj, getGridIntersectionCoordinates)
 }
 /* }}} */
 
-/* {{{ proto shapeObj layer.resultsGetShape(shapeindex, [tileindex])
+/* {{{ proto shapeObj layer.getShape(record)
    Retrieve shapeObj from a resultset by index. */
-PHP_METHOD(layerObj, resultsGetShape)
+PHP_METHOD(layerObj, getShape)
 {
     zval *zobj = getThis();
-    long shapeindex, tileindex = -1;
+    zval *zresult;
     shapeObj *shape = NULL;
+    php_result_object *php_result;
     php_layer_object *php_layer;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|l",
-                              &shapeindex, &tileindex) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
+                              &zresult, mapscript_ce_result) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-
+    php_result = (php_result_object *) zend_object_store_get_object(zresult TSRMLS_CC);
 
     /* Create a new shapeObj to hold the result 
      * Note that the type used to create the shape (MS_NULL) does not matter
@@ -1898,7 +1898,7 @@ PHP_METHOD(layerObj, resultsGetShape)
         return;
     }
 
-    if (msLayerResultsGetShape(php_layer->layer, shape, tileindex, shapeindex) != MS_SUCCESS)
+    if (msLayerGetShape(php_layer->layer, shape, php_result->result) != MS_SUCCESS)
     {
         shapeObj_destroy(shape);
         mapscript_throw_mapserver_exception("" TSRMLS_CC);
@@ -1983,7 +1983,7 @@ zend_function_entry layer_functions[] = {
     PHP_ME(layerObj, isVisible, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, setConnectionType, layer_setConnectionType_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, getGridIntersectionCoordinates, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(layerObj, resultsGetShape, layer_resultsGetShape_args, ZEND_ACC_PUBLIC)
+    PHP_ME(layerObj, getShape, layer_getShape_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };

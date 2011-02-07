@@ -124,8 +124,8 @@ void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_o
         mapscript_create_labelcachemember((labelCacheMemberObj*)internal_object, p, *php_object_storage TSRMLS_CC);
     else if (ce == mapscript_ce_labelcache)
         mapscript_create_labelcache((labelCacheObj*)internal_object, p, *php_object_storage TSRMLS_CC);
-    else if (ce == mapscript_ce_resultcachemember)
-        mapscript_create_resultcachemember((resultCacheMemberObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_result)
+        mapscript_create_result((resultObj*)internal_object, p, *php_object_storage TSRMLS_CC);
     else if (ce == mapscript_ce_scalebar)
         mapscript_create_scalebar((scalebarObj*)internal_object, p, *php_object_storage TSRMLS_CC);
     else if (ce == mapscript_ce_web)

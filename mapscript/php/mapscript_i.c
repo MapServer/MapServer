@@ -46,9 +46,9 @@
  **********************************************************************/
 mapObj *mapObj_new(char *filename, char *new_path) {
     if(filename && strlen(filename))
-      return msLoadMap(filename, new_path);
+        return msLoadMap(filename, new_path);
     else { /* create an empty map, no layers etc... */
-      return msNewMapObj();
+        return msNewMapObj();
     } 
 }
 
@@ -482,12 +482,7 @@ void layerObj_close(layerObj *self) {
     msLayerClose(self);
   }
 
-int layerObj_getShape(layerObj *self, shapeObj *shape, 
-                      int tileindex, int shapeindex) {
-    return msLayerGetShape(self, shape, tileindex, shapeindex);
-  }
-
-resultCacheMemberObj *layerObj_getResult(layerObj *self, int i) {
+resultObj *layerObj_getResult(layerObj *self, int i) {
     if(!self->resultcache) return NULL;
 
     if(i >= 0 && i < self->resultcache->numresults)
