@@ -31,31 +31,31 @@
 
 #include "php_mapscript.h"
 
-zend_class_entry *mapscript_ce_resultcachemember;
+zend_class_entry *mapscript_ce_result;
 
-ZEND_BEGIN_ARG_INFO_EX(resultcachemember___get_args, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(result___get_args, 0, 0, 1)
   ZEND_ARG_INFO(0, property)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(resultcachemember___set_args, 0, 0, 2)
+ZEND_BEGIN_ARG_INFO_EX(result___set_args, 0, 0, 2)
   ZEND_ARG_INFO(0, property)
   ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto resultCacheMemberObj __construct()
-   resultCacheMemberObj CANNOT be instanciated, this will throw an exception on use */
-PHP_METHOD(resultCacheMemberObj, __construct)
+/* {{{ proto resultObj __construct()
+   resultObj CANNOT be instanciated, this will throw an exception on use */
+PHP_METHOD(resultObj, __construct)
 {
-    mapscript_throw_exception("resultCacheMemberObj cannot be constructed" TSRMLS_CC);
+    mapscript_throw_exception("resultObj cannot be constructed" TSRMLS_CC);
 }
 /* }}} */
 
-PHP_METHOD(resultCacheMemberObj, __get)
+PHP_METHOD(resultObj, __get)
 {
     char *property;
     long property_len;
     zval *zobj = getThis();
-    php_resultcachemember_object *php_resultcachemember;
+    php_result_object *php_result;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
@@ -65,24 +65,25 @@ PHP_METHOD(resultCacheMemberObj, __get)
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
-    php_resultcachemember = (php_resultcachemember_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_result = (php_result_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    IF_GET_LONG("shapeindex", php_resultcachemember->resultcachemember->shapeindex)
-    else IF_GET_LONG("tileindex", php_resultcachemember->resultcachemember->tileindex)
-    else IF_GET_LONG("classindex", php_resultcachemember->resultcachemember->classindex)
+    IF_GET_LONG("shapeindex", php_result->result->shapeindex)
+    else IF_GET_LONG("tileindex", php_result->result->tileindex)
+    else IF_GET_LONG("classindex", php_result->result->classindex)
+    else IF_GET_LONG("resultindex", php_result->result->resultindex)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
 
-PHP_METHOD(resultCacheMemberObj, __set)
+PHP_METHOD(resultObj, __set)
 {
     char *property;
     long property_len;
     zval *value;
     zval *zobj = getThis();
-    php_resultcachemember_object *php_resultcachemember;
+    php_result_object *php_result;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -92,10 +93,11 @@ PHP_METHOD(resultCacheMemberObj, __set)
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
-    php_resultcachemember = (php_resultcachemember_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_result = (php_result_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
     if ( (STRING_EQUAL("shapeindex", property)) ||
          (STRING_EQUAL("tileindex", property)) ||
+         (STRING_EQUAL("resultindex", property)) ||
          (STRING_EQUAL("classindex", property)))
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
@@ -106,63 +108,63 @@ PHP_METHOD(resultCacheMemberObj, __set)
     }
 }
 
-zend_function_entry resultcachemember_functions[] = {
-    PHP_ME(resultCacheMemberObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
-    PHP_ME(resultCacheMemberObj, __get, resultcachemember___get_args, ZEND_ACC_PUBLIC)
-    PHP_ME(resultCacheMemberObj, __set, resultcachemember___set_args, ZEND_ACC_PUBLIC)
+zend_function_entry result_functions[] = {
+    PHP_ME(resultObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+    PHP_ME(resultObj, __get, result___get_args, ZEND_ACC_PUBLIC)
+    PHP_ME(resultObj, __set, result___set_args, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
-void mapscript_create_resultcachemember(resultCacheMemberObj *resultcachemember, parent_object parent,
+void mapscript_create_result(resultObj *result, parent_object parent,
                                         zval *return_value TSRMLS_DC)
 {
-    php_resultcachemember_object * php_resultcachemember;
-    object_init_ex(return_value, mapscript_ce_resultcachemember); 
-    php_resultcachemember = (php_resultcachemember_object *)zend_object_store_get_object(return_value TSRMLS_CC);
-    php_resultcachemember->resultcachemember = resultcachemember;
+    php_result_object * php_result;
+    object_init_ex(return_value, mapscript_ce_result); 
+    php_result = (php_result_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+    php_result->result = result;
 
-    php_resultcachemember->parent = parent;
+    php_result->parent = parent;
     MAPSCRIPT_ADDREF(parent.val);
 }
 
-static void mapscript_resultcachemember_object_destroy(void *object TSRMLS_DC)
+static void mapscript_result_object_destroy(void *object TSRMLS_DC)
 {
-    php_resultcachemember_object *php_resultcachemember = (php_resultcachemember_object *)object;
+    php_result_object *php_result = (php_result_object *)object;
 
-    MAPSCRIPT_FREE_OBJECT(php_resultcachemember);
+    MAPSCRIPT_FREE_OBJECT(php_result);
 
-    MAPSCRIPT_FREE_PARENT(php_resultcachemember->parent);
+    MAPSCRIPT_FREE_PARENT(php_result->parent);
 
-    /* We don't need to free the resultCacheMemberObj */ 
+    /* We don't need to free the resultObj */ 
     
     efree(object);
 }
 
-static zend_object_value mapscript_resultcachemember_object_new(zend_class_entry *ce TSRMLS_DC)
+static zend_object_value mapscript_result_object_new(zend_class_entry *ce TSRMLS_DC)
 {
     zend_object_value retval;
-    php_resultcachemember_object *php_resultcachemember;
+    php_result_object *php_result;
 
-    MAPSCRIPT_ALLOC_OBJECT(php_resultcachemember, php_resultcachemember_object);
+    MAPSCRIPT_ALLOC_OBJECT(php_result, php_result_object);
 
-    retval = mapscript_object_new(&php_resultcachemember->std, ce,
-                                  &mapscript_resultcachemember_object_destroy TSRMLS_CC);
+    retval = mapscript_object_new(&php_result->std, ce,
+                                  &mapscript_result_object_destroy TSRMLS_CC);
 
-    MAPSCRIPT_INIT_PARENT(php_resultcachemember->parent);
+    MAPSCRIPT_INIT_PARENT(php_result->parent);
 
     return retval;
 }
 
-PHP_MINIT_FUNCTION(resultcachemember)
+PHP_MINIT_FUNCTION(result)
 {
     zend_class_entry ce;
 
-    MAPSCRIPT_REGISTER_CLASS("resultCacheMemberObj", 
-                             resultcachemember_functions,
-                             mapscript_ce_resultcachemember,
-                             mapscript_resultcachemember_object_new);
+    MAPSCRIPT_REGISTER_CLASS("resultObj", 
+                             result_functions,
+                             mapscript_ce_result,
+                             mapscript_result_object_new);
 
-    mapscript_ce_resultcachemember->ce_flags |= ZEND_ACC_FINAL_CLASS; 
+    mapscript_ce_result->ce_flags |= ZEND_ACC_FINAL_CLASS; 
     
     return SUCCESS;
 }
