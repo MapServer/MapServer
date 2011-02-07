@@ -599,7 +599,10 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
             if (hStylePart && OGR_ST_GetType(hStylePart) == OGRSTCLabel)
                 hLabelStyle = hStylePart;
             else if (hStylePart)
+            {
                 OGR_ST_Destroy(hStylePart);
+                hStylePart =  NULL;
+            }
 
           /* Setting up the size units according to msOGRLayerGetAutoStyle*/
           if (hStylePart && layer->map)
@@ -897,7 +900,10 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
         if (poStylePart && poStylePart->GetType() == OGRSTCLabel)
             poLabelStyle = (OGRStyleLabel*)poStylePart;
         else if (poStylePart)
+        {
             delete poStylePart;
+            poStylePart = NULL;
+        }
         /* Setting up the size units according to msOGRLayerGetAutoStyle*/
         if (poStylePart && layer->map)
             poStylePart->SetUnit(OGRSTUPixel, layer->map->cellsize*72.0*39.37);
