@@ -629,8 +629,8 @@ int agg2MergeRasterBuffer(imageObj *dest, rasterBufferObj *overlay, double opaci
    pixel_format pf(b);
    AGG2Renderer *r = AGG_RENDERER(dest);
    mapserver::rect_base<int> src_rect(srcX,srcY,srcX+width,srcY+height);
-   r->m_renderer_base.blend_from(pf,&src_rect, dstX, dstY,unsigned(opacity * 255));
-   return MS_FAILURE;
+   r->m_renderer_base.blend_from(pf,&src_rect, dstX-srcX, dstY-srcY, unsigned(opacity * 255));
+   return MS_SUCCESS;
 }
 
 /* image i/o */
