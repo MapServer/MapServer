@@ -2118,10 +2118,10 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
         }
         if( layer->debug > 4 ) {
             msDebug("msPostGISReadShape: Setting shape->index = %d\n", uid);
-            msDebug("msPostGISReadShape: Setting shape->tileindex = %d\n", layerinfo->rownum);
+            msDebug("msPostGISReadShape: Setting shape->resultindex = %d\n", layerinfo->rownum);
         }
         shape->index = uid;
-        shape->tileindex = layerinfo->rownum; /* TODO: I think this should set resultindex now */
+        shape->resultindex = layerinfo->rownum;
         
         if( layer->debug > 2 ) {
             msDebug("msPostGISReadShape: [index] %d\n",  shape->index);
@@ -2543,160 +2543,139 @@ int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape) {
 }
 
 /*
-** msPostGISLayerResultsGetShape()
+** msPostGISLayerGetShape()
 **
 ** Registered vtable->LayerGetShape function. For pulling from a prepared and 
-** undisposed result set. We ignore the 'tile' parameter, as it means nothing to us.
+** undisposed result set.
 */
-int msPostGISLayerResultsGetShape(layerObj *layer, shapeObj *shape, int tile, long record) {
+int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
 #ifdef USE_POSTGIS
     
     PGresult *pgresult = NULL;
     msPostGISLayerInfo *layerinfo = NULL;
     int result = MS_SUCCESS;
-    int status;
+
+    long shapeindex = record->shapeindex;
+    int resultindex = record->resultindex; 
 
     assert(layer != NULL);
     assert(layer->layerinfo != NULL);
 
     if (layer->debug) {
-        msDebug("msPostGISLayerResultsGetShape called for record = %i\n", record);
+        msDebug("msPostGISLayerGetShape called for record = %i\n", resultindex);
     }
 
-    if( tile < 0 ) {
-        msDebug("msPostGISLayerResultsGetShape called for record = %i\n", record);
-        return msPostGISLayerResultsGetShape(layer, shape, tile, record);
-    }
+    /* If resultindex is set, fetch the shape from the resultcache, otherwise fetch it from the DB  */
+    if (resultindex >= 0)
+    {
+        int status;
 
-    layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+        layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
 
-    /* Check the validity of the open result. */
-    pgresult = layerinfo->pgresult;
-    if ( ! pgresult ) {
-        msSetError( MS_MISCERR,
-                    "PostgreSQL result set is null.",
-                    "msPostGISLayerResultsGetShape()");
-        return MS_FAILURE;
-    }
-    status = PQresultStatus(pgresult);
-    if ( layer->debug > 1 ) {
-        msDebug("msPostGISLayerResultsGetShape query status: %s (%d)\n", PQresStatus(status), status);
-    }    
-    if( ! ( status == PGRES_COMMAND_OK || status == PGRES_TUPLES_OK) ) {
-        msSetError( MS_MISCERR,
-                    "PostgreSQL result set is not ready.",
-                    "msPostGISLayerResultsGetShape()");
-        return MS_FAILURE;
-    }
-
-    /* Check the validity of the requested record number. */
-    if( tile >= PQntuples(pgresult) ) {
-        msDebug("msPostGISLayerResultsGetShape got request for (%d) but only has %d tuples.\n", tile, PQntuples(pgresult));
-        msSetError( MS_MISCERR,
-                    "Got request larger than result set.",
-                    "msPostGISLayerResultsGetShape()");
-        return MS_FAILURE;
-    }
-
-    layerinfo->rownum = tile; /* Only return one result. */
-
-    /* We don't know the shape type until we read the geometry. */
-    shape->type = MS_SHAPE_NULL;
-
-    /* Return the shape, cursor access mode. */
-    result = msPostGISReadShape(layer, shape);
-
-    return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : MS_SUCCESS;
-#else
-    msSetError( MS_MISCERR,
-                "PostGIS support is not available.",
-                "msPostGISLayerResultsGetShape()");
-    return MS_FAILURE;
-#endif
-}
-
-/*
-** msPostGISLayerGetShape()
-**
-** Registered vtable->LayerGetShape function. TODO: MERGE WITH msPostGISLayerResultsGetShape()...
-*/
-int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
-#ifdef USE_POSTGIS
-    PGresult *pgresult;
-    msPostGISLayerInfo *layerinfo;
-    int result, num_tuples;
-    char *strSQL = 0;
-
-    long shapeindex = record->shapeindex; /* global index */
-    int resultindex = record->resultindex; /* local index to a result set (if set) */
-
-    assert(layer != NULL);
-    assert(layer->layerinfo != NULL);
-
-    if (layer->debug) {
-        msDebug("msPostGISLayerGetShape called for record = %i\n", shapeindex);
-    }
-
-    /* Fill out layerinfo with our current DATA state. */
-    if ( msPostGISParseData(layer) != MS_SUCCESS) {
-        return MS_FAILURE;
-    }
-
-    /* 
-    ** This comes *after* parsedata, because parsedata fills in 
-    ** layer->layerinfo.
-    */
-    layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
-
-    /* Build a SQL query based on our current state. */
-    strSQL = msPostGISBuildSQL(layer, 0, &shapeindex);
-    if ( ! strSQL ) {
-        msSetError(MS_QUERYERR, "Failed to build query SQL.", "msPostGISLayerGetShape()");
-        return MS_FAILURE;
-    }
-
-    if (layer->debug) {
-        msDebug("msPostGISLayerGetShape query: %s\n", strSQL);
-    }
-
-    pgresult = PQexec(layerinfo->pgconn, strSQL);
-
-    /* Something went wrong. */
-    if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
-        msSetError(MS_QUERYERR, "Error (%s) executing SQL: %s", "msPostGISLayerGetShape()", PQerrorMessage(layerinfo->pgconn), strSQL );
-
-        if (pgresult) {
-            PQclear(pgresult);
+        /* Check the validity of the open result. */
+        pgresult = layerinfo->pgresult;
+        if ( ! pgresult ) {
+            msSetError( MS_MISCERR,
+                        "PostgreSQL result set is null.",
+                        "msPostGISLayerGetShape()");
+            return MS_FAILURE;
         }
-        free(strSQL);
+        status = PQresultStatus(pgresult);
+        if ( layer->debug > 1 ) {
+            msDebug("msPostGISLayerGetShape query status: %s (%d)\n", PQresStatus(status), status);
+        }    
+        if( ! ( status == PGRES_COMMAND_OK || status == PGRES_TUPLES_OK) ) {
+            msSetError( MS_MISCERR,
+                        "PostgreSQL result set is not ready.",
+                        "msPostGISLayerGetShape()");
+            return MS_FAILURE;
+        }
 
-        return MS_FAILURE;
-    }
+        /* Check the validity of the requested record number. */
+        if( resultindex >= PQntuples(pgresult) ) {
+            msDebug("msPostGISLayerGetShape got request for (%d) but only has %d tuples.\n", resultindex, PQntuples(pgresult));
+            msSetError( MS_MISCERR,
+                        "Got request larger than result set.",
+                        "msPostGISLayerGetShape()");
+            return MS_FAILURE;
+        }
 
-    /* Clean any existing pgresult before storing current one. */
-    if(layerinfo->pgresult) PQclear(layerinfo->pgresult);
-    layerinfo->pgresult = pgresult;
+        layerinfo->rownum = resultindex; /* Only return one result. */
 
-    /* Clean any existing SQL before storing current. */
-    if(layerinfo->sql) free(layerinfo->sql);
-    layerinfo->sql = strSQL;
+        /* We don't know the shape type until we read the geometry. */
+        shape->type = MS_SHAPE_NULL;
 
-    layerinfo->rownum = 0; /* Only return one result. */
-
-    /* We don't know the shape type until we read the geometry. */
-    shape->type = MS_SHAPE_NULL;
-
-    num_tuples = PQntuples(pgresult);
-    if (layer->debug) {
-        msDebug("msPostGISLayerGetShape number of records: %d\n", num_tuples);
-    }
-
-    if (num_tuples > 0) {
-        /* Get shape in random access mode. */
+        /* Return the shape, cursor access mode. */
         result = msPostGISReadShape(layer, shape);
-    }
 
-    return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : ( (num_tuples > 0) ? MS_SUCCESS : MS_DONE );
+        return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : MS_SUCCESS;
+    }
+    else /* no resultindex, fetch the shape from the DB */
+    {
+        int num_tuples;
+        char *strSQL = 0;
+
+        /* Fill out layerinfo with our current DATA state. */
+        if ( msPostGISParseData(layer) != MS_SUCCESS) {
+            return MS_FAILURE;
+        }
+
+        /* 
+        ** This comes *after* parsedata, because parsedata fills in 
+        ** layer->layerinfo.
+        */
+        layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+
+        /* Build a SQL query based on our current state. */
+        strSQL = msPostGISBuildSQL(layer, 0, &shapeindex);
+        if ( ! strSQL ) {
+            msSetError(MS_QUERYERR, "Failed to build query SQL.", "msPostGISLayerGetShape()");
+            return MS_FAILURE;
+        }
+
+        if (layer->debug) {
+            msDebug("msPostGISLayerGetShape query: %s\n", strSQL);
+        }
+
+        pgresult = PQexec(layerinfo->pgconn, strSQL);
+
+        /* Something went wrong. */
+        if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
+            msSetError(MS_QUERYERR, "Error (%s) executing SQL: %s", "msPostGISLayerGetShape()", PQerrorMessage(layerinfo->pgconn), strSQL );
+
+            if (pgresult) {
+                PQclear(pgresult);
+            }
+            free(strSQL);
+
+            return MS_FAILURE;
+        }
+
+        /* Clean any existing pgresult before storing current one. */
+        if(layerinfo->pgresult) PQclear(layerinfo->pgresult);
+        layerinfo->pgresult = pgresult;
+
+        /* Clean any existing SQL before storing current. */
+        if(layerinfo->sql) free(layerinfo->sql);
+        layerinfo->sql = strSQL;
+
+        layerinfo->rownum = 0; /* Only return one result. */
+
+        /* We don't know the shape type until we read the geometry. */
+        shape->type = MS_SHAPE_NULL;
+
+        num_tuples = PQntuples(pgresult);
+        if (layer->debug) {
+            msDebug("msPostGISLayerGetShape number of records: %d\n", num_tuples);
+        }
+
+        if (num_tuples > 0) {
+            /* Get shape in random access mode. */
+            result = msPostGISReadShape(layer, shape);
+        }
+
+        return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : ( (num_tuples > 0) ? MS_SUCCESS : MS_DONE );
+    }
 #else
     msSetError( MS_MISCERR,
                 "PostGIS support is not available.",
