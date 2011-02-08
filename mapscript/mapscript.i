@@ -262,6 +262,7 @@ typedef struct {
 %include "../swiginc/color.i"
 %include "../swiginc/hashtable.i"
 %include "../swiginc/resultcache.i"
+%include "../swiginc/result.i"
 %include "../swiginc/owsrequest.i"
 %include "../swiginc/connpool.i"
 %include "../swiginc/msio.i"
