@@ -1975,7 +1975,14 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     /* -------------------------------------------------------------------- */
         count = CSLCount(all_files);
 
-        msDebug("%s\n", all_files[0]);
+        if(count > 1 && multipart == MS_FALSE)
+        {
+            msDebug( "msWCSWriteFile20(): force multipart output without gml summary because we have multiple files in the result.\n" );
+
+            multipart = MS_TRUE;
+            msIO_printf(
+                    "Content-Type: multipart/mixed; boundary=wcs%c%c", 10, 10);
+        }
 
         for( i = 0; i < count; i++ )
         {
