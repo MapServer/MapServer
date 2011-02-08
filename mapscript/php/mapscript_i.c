@@ -1536,3 +1536,12 @@ void hashTableObj_clear(hashTableObj *self) {
 char *hashTableObj_nextKey(hashTableObj *self, const char *previousKey) {
    return ((char *)msNextKeyFromHashTable(self, previousKey));
 }
+
+resultObj *resultObj_new() {
+    resultObj *r = (resultObj *) msSmallMalloc(sizeof(resultObj));
+    r->tileindex = -1;
+    r->shapeindex = -1;
+    r->resultindex = -1;
+    return r;
+}
+

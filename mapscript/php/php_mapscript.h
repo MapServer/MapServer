@@ -760,4 +760,6 @@ char *cgirequestObj_getValue(cgiRequestObj *self, int index);
 char *cgirequestObj_getValueByName(cgiRequestObj *self, const char *name);
 void cgirequestObj_destroy(cgiRequestObj *self);
 
+resultObj *resultObj_new();
+
 #endif /* PHP_MAPSCRIPT_H */

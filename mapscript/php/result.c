@@ -33,6 +33,10 @@
 
 zend_class_entry *mapscript_ce_result;
 
+ZEND_BEGIN_ARG_INFO_EX(result___construct_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, shapeindex)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(result___get_args, 0, 0, 1)
   ZEND_ARG_INFO(0, property)
 ZEND_END_ARG_INFO()
@@ -42,11 +46,31 @@ ZEND_BEGIN_ARG_INFO_EX(result___set_args, 0, 0, 2)
   ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
+
 /* {{{ proto resultObj __construct()
-   resultObj CANNOT be instanciated, this will throw an exception on use */
+   Create a new resultObj instance */
 PHP_METHOD(resultObj, __construct)
 {
-    mapscript_throw_exception("resultObj cannot be constructed" TSRMLS_CC);
+    long shapeindex;
+    php_result_object *php_result;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &shapeindex) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_result = (php_result_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    
+    if ((php_result->result = resultObj_new()) == NULL)
+    {
+        mapscript_throw_exception("Unable to construct resultObj." TSRMLS_CC);
+        return;
+    }
+    
+    php_result->result->shapeindex = shapeindex;
 }
 /* }}} */
 
@@ -109,7 +133,7 @@ PHP_METHOD(resultObj, __set)
 }
 
 zend_function_entry result_functions[] = {
-    PHP_ME(resultObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+    PHP_ME(resultObj, __construct, result___construct_args, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(resultObj, __get, result___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(resultObj, __set, result___set_args, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
