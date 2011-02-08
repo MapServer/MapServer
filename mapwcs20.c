@@ -1837,53 +1837,53 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     /*      Fetch the driver we will be using and check if it supports      */
     /*      VSIL IO.                                                        */
     /* -------------------------------------------------------------------- */
-    #ifdef GDAL_DCAP_VIRTUALIO
-        if( EQUALN(image->format->driver,"GDAL/",5) )
-        {
-            GDALDriverH hDriver;
-            const char *pszExtension = image->format->extension;
+#ifdef GDAL_DCAP_VIRTUALIO
+    if( EQUALN(image->format->driver,"GDAL/",5) )
+    {
+        GDALDriverH hDriver;
+        const char *pszExtension = image->format->extension;
 
-            msAcquireLock( TLOCK_GDAL );
-            hDriver = GDALGetDriverByName( image->format->driver+5 );
-            if( hDriver == NULL )
-            {
-                msReleaseLock( TLOCK_GDAL );
-                msSetError( MS_MISCERR,
+        msAcquireLock( TLOCK_GDAL );
+        hDriver = GDALGetDriverByName( image->format->driver+5 );
+        if( hDriver == NULL )
+        {
+            msReleaseLock( TLOCK_GDAL );
+            msSetError( MS_MISCERR,
                         "Failed to find %s driver.",
                         "msWCSWriteFile20()",
                         image->format->driver+5 );
-                return msWCSException(map, "mapserv", "NoApplicableCode",
-                        params->version);
-            }
-
-            if( pszExtension == NULL )
-                pszExtension = "img.tmp";
-
-            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL )
-                != NULL )
-            {
-                if( fo_filename )
-                    filename = msStrdup(CPLFormFilename("/vsimem/wcsout",
-                                                        fo_filename,NULL));
-                else
-                    filename = msStrdup(CPLFormFilename("/vsimem/wcsout", 
-                                                        "out", pszExtension ));
-
-                /*            CleanVSIDir( "/vsimem/wcsout" ); */
-
-                msReleaseLock( TLOCK_GDAL );
-                status = msSaveImage(map, image, filename);
-                if( status != MS_SUCCESS )
-                {
-                    msSetError(MS_MISCERR, "msSaveImage() failed",
-                            "msWCSWriteFile20()");
-                    return msWCSException20(map, "mapserv", "NoApplicableCode",
-                            params->version);
-                }
-            }
-            msReleaseLock( TLOCK_GDAL );
+            return msWCSException(map, "mapserv", "NoApplicableCode",
+                                  params->version);
         }
-    #endif
+
+        if( pszExtension == NULL )
+            pszExtension = "img.tmp";
+
+        if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL )
+            != NULL )
+        {
+            if( fo_filename )
+                filename = msStrdup(CPLFormFilename("/vsimem/wcsout",
+                                                    fo_filename,NULL));
+            else
+                filename = msStrdup(CPLFormFilename("/vsimem/wcsout", 
+                                                    "out", pszExtension ));
+
+            /*            CleanVSIDir( "/vsimem/wcsout" ); */
+
+            msReleaseLock( TLOCK_GDAL );
+            status = msSaveImage(map, image, filename);
+            if( status != MS_SUCCESS )
+            {
+                msSetError(MS_MISCERR, "msSaveImage() failed",
+                           "msWCSWriteFile20()");
+                return msWCSException20(map, "mapserv", "NoApplicableCode",
+                                        params->version);
+            }
+        }
+        msReleaseLock( TLOCK_GDAL );
+    }
+#endif
 
     /* -------------------------------------------------------------------- */
     /*      If we weren't able to write data under /vsimem, then we just    */
@@ -1891,21 +1891,20 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     /* -------------------------------------------------------------------- */
     if( filename == NULL )
     {
-        msDebug("filename == NULL\n");
         if(multipart)
         {
             msIO_fprintf(
-            stdout,
-            "--wcs\n"
-            "Content-Type: %s\n"
-            "Content-Description: coverage data\n"
-            "Content-Transfer-Encoding: binary\n"
-            "Content-ID: coverage/wcs.%s\n"
-            "Content-Disposition: INLINE%c%c",
-            MS_IMAGE_EXTENSION(map->outputformat),
-            MS_IMAGE_MIME_TYPE(map->outputformat),
-            MS_IMAGE_EXTENSION(map->outputformat),
-            10, 10 );
+                stdout,
+                "--wcs\n"
+                "Content-Type: %s\n"
+                "Content-Description: coverage data\n"
+                "Content-Transfer-Encoding: binary\n"
+                "Content-ID: coverage/wcs.%s\n"
+                "Content-Disposition: INLINE%c%c",
+                MS_IMAGE_EXTENSION(map->outputformat),
+                MS_IMAGE_MIME_TYPE(map->outputformat),
+                MS_IMAGE_EXTENSION(map->outputformat),
+                10, 10 );
         }
         else
         {
@@ -1937,7 +1936,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     /*      to identify the "primary" file and list it first.  In fact      */
     /*      it is the only file listed in the coverages document.           */
     /* -------------------------------------------------------------------- */
-    #ifdef GDAL_DCAP_VIRTUALIO
+#ifdef GDAL_DCAP_VIRTUALIO
     {
         char **all_files = CPLReadDir( "/vsimem/wcsout" );
         int count = CSLCount(all_files);
@@ -1945,34 +1944,28 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         if( msIO_needBinaryStdout() == MS_FAILURE )
             return MS_FAILURE;
 
-        msDebug("NumFiles: %d\n", count);
-
         msAcquireLock( TLOCK_GDAL );
         for( i = count-1; i >= 0; i-- )
         {
             const char *this_file = all_files[i];
-            msDebug("ThisFile: %s\n", this_file);
 
             if( EQUAL(this_file,".") || EQUAL(this_file,"..") )
             {
-                msDebug("yy\n");
                 all_files = CSLRemoveStrings( all_files, i, 1, NULL );
                 continue;
             }
 
             if( i > 0 && EQUAL(this_file,CPLGetFilename(filename)) )
             {
-                msDebug("xx\n");
                 all_files = CSLRemoveStrings( all_files, i, 1, NULL );
                 all_files = CSLInsertString(all_files,0,CPLGetFilename(filename));
                 i++;
             }
         }
 
-        msDebug("%s\n", all_files[0]);
-    /* -------------------------------------------------------------------- */
-    /*      Dump all the files in the memory directory as mime sections.    */
-    /* -------------------------------------------------------------------- */
+        /* -------------------------------------------------------------------- */
+        /*      Dump all the files in the memory directory as mime sections.    */
+        /* -------------------------------------------------------------------- */
         count = CSLCount(all_files);
 
         if(count > 1 && multipart == MS_FALSE)
@@ -1981,7 +1974,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 
             multipart = MS_TRUE;
             msIO_printf(
-                    "Content-Type: multipart/mixed; boundary=wcs%c%c", 10, 10);
+                "Content-Type: multipart/mixed; boundary=wcs%c%c", 10, 10);
         }
 
         for( i = 0; i < count; i++ )
@@ -1990,8 +1983,6 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
             FILE *fp;
             unsigned char block[4000];
             int bytes_read;
-
-            msDebug("Outputformat: %s\nFile: %s\n", map->outputformat->name, all_files[i]);
 
             if( i == 0 )
                 mimetype = MS_IMAGE_MIME_TYPE(map->outputformat);
