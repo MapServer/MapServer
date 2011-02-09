@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Implemented support in for classifying rasters using the new
+  expression parsing (msGetClass()...)  (#3663)
+
 - Implemented RFC 65 which improves and simplifies one-pass query support. This causes
   a few MapScript regressions with getShape/getFeature/getResultsShape. (#3647)
 

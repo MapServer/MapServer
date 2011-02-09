@@ -37,7 +37,9 @@
 
 MS_CVSID("$Id$")
 
-extern int yyparse(void);
+extern int msyylex_destroy(void);
+extern int yyparse(parseObj *);
+
 extern parseResultObj yypresult; /* result of parsing, true/false */
 
 #ifdef USE_GDAL
@@ -54,92 +56,71 @@ extern parseResultObj yypresult; /* result of parsing, true/false */
 #define NUMGRAYS 16
 
 /************************************************************************/
-/*                             msGetClass()                             */
+/*                         msGetClass_String()                          */
 /************************************************************************/
 
-int msGetClass(layerObj *layer, colorObj *color)
-{
-  int i;
-  char tmpstr[12]; /* holds either a single color index or something like 'rrr ggg bbb' */
-  
-  if((layer->numclasses == 1) && !(layer->class[0]->expression.string)) /* no need to do lookup */
-    return(0);
+static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixel_value )
 
-  if(!color) return(-1);
-
-  for(i=0; i<layer->numclasses; i++) {
-    if (layer->class[i]->expression.string == NULL) /* Empty expression - always matches */
-      return(i);
-    switch(layer->class[i]->expression.type) {
-    case(MS_STRING):
-      snprintf(tmpstr, sizeof(tmpstr), "%d %d %d", color->red, color->green, color->blue);
-      if(strcmp(layer->class[i]->expression.string, tmpstr) == 0) return(i); /* matched */
-      snprintf(tmpstr, sizeof(tmpstr), "%d", color->pen);
-      if(strcmp(layer->class[i]->expression.string, tmpstr) == 0) return(i); /* matched */
-      break;
-    case(MS_REGEX):
-      if(!layer->class[i]->expression.compiled) {
-	if(ms_regcomp(&(layer->class[i]->expression.regex), layer->class[i]->expression.string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression  */
-	  msSetError(MS_REGEXERR, "Invalid regular expression.", "msGetClass()");
-	  return(-1);
-	}
-	layer->class[i]->expression.compiled = MS_TRUE;
-      }
-
-      snprintf(tmpstr, sizeof(tmpstr), "%d %d %d", color->red, color->green, color->blue);
-      if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr, 0, NULL, 0) == 0) return(i); /* got a match */
-      snprintf(tmpstr, sizeof(tmpstr), "%d", color->pen);
-      if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr, 0, NULL, 0) == 0) return(i); /* got a match */
-      break;
-    case(MS_EXPRESSION):
-
-      /*
-      ** Big, fat TODO!
-      ** 
-      ** See msEvalExpression() in maputil.c for an example of how to do this. Basically need to define some raster bind 
-      ** variables: namely [red], [green], [blue] and [pixel]. Need to update the lexer and msTokenizeExpression() to 
-      ** recognize them...
-      */
-
-      return(-1);
-    }
-  }
-
-  return(-1); /* not found */
-}
-
-/************************************************************************/
-/*                          msGetClass_FloatRGB()                       */
-/*                                                                      */
-/*      Returns the class based on classification of a floating         */
-/*      pixel value.                                                    */
-/************************************************************************/
-
-int msGetClass_FloatRGB(layerObj *layer, float fValue,
-                        int red, int green, int blue )
 {
     int i;
-    char *tmpstr1=NULL;
-    char tmpstr2[100];
-  
+    const char *tmpstr1=NULL;
+    int numitems;
+    char *item_names[4] = { "pixel", "red", "green", "blue" };
+    char *item_values[4];
+    char red_value[8], green_value[8], blue_value[8];
+
+/* -------------------------------------------------------------------- */
+/*      No need to do a lookup in the case of one default class.        */
+/* -------------------------------------------------------------------- */
     if((layer->numclasses == 1) && !(layer->class[0]->expression.string)) /* no need to do lookup */
         return(0);
 
+/* -------------------------------------------------------------------- */
+/*      Setup values list for expressions.                              */
+/* -------------------------------------------------------------------- */
+    if( color->red != -1 )
+    {
+        sprintf( red_value, "%d", color->red );
+        sprintf( green_value, "%d", color->green );
+        sprintf( blue_value, "%d", color->blue );
+        item_values[1] = red_value;
+        item_values[2] = green_value;
+        item_values[3] = blue_value;
+        numitems = 4;
+    }
+    else
+    {
+        numitems = 1;
+    }
+        
+    item_values[0] = (char *)pixel_value;
+
+/* -------------------------------------------------------------------- */
+/*      Loop over classes till we find a match.                         */
+/* -------------------------------------------------------------------- */
     for(i=0; i<layer->numclasses; i++) {
-        if (layer->class[i]->expression.string == NULL) /* Empty expression - always matches */
+
+        /* Empty expression - always matches */
+        if (layer->class[i]->expression.string == NULL)
             return(i);
 
         switch(layer->class[i]->expression.type) {
+
+/* -------------------------------------------------------------------- */
+/*      Simple string match                                             */
+/* -------------------------------------------------------------------- */
           case(MS_STRING):
-            snprintf(tmpstr2, sizeof(tmpstr2), "%18g", fValue );
             /* trim junk white space */
-            tmpstr1= tmpstr2;
+            tmpstr1= pixel_value;
             while( *tmpstr1 == ' ' )
                 tmpstr1++;
 
             if(strcmp(layer->class[i]->expression.string, tmpstr1) == 0) return(i); /* matched */
             break;
 
+/* -------------------------------------------------------------------- */
+/*      Regular expression.  Rarely used for raster.                    */
+/* -------------------------------------------------------------------- */
           case(MS_REGEX):
             if(!layer->class[i]->expression.compiled) {
                 if(ms_regcomp(&(layer->class[i]->expression.regex), layer->class[i]->expression.string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression  */
@@ -149,24 +130,79 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue,
                 layer->class[i]->expression.compiled = MS_TRUE;
             }
 
-            snprintf(tmpstr2, sizeof(tmpstr2), "%18g", fValue );
-            if(ms_regexec(&(layer->class[i]->expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
+            if(ms_regexec(&(layer->class[i]->expression.regex), pixel_value, 0, NULL, 0) == 0) return(i); /* got a match */
             break;
 
+/* -------------------------------------------------------------------- */
+/*      Parsed expression.                                              */
+/* -------------------------------------------------------------------- */
           case(MS_EXPRESSION):
-            /*
-            ** Big, fat TODO!
-            **  
-            ** See msEvalExpression() in maputil.c for an example of how to do this. Basically need to define some raster bind 
-            ** variables: namely [red], [green], [blue] and [pixel]. Need to update the lexer and msTokenizeExpression() to 
-            ** recognize them...
-            */
+          {
+              int status;
+              parseObj p;
+              shapeObj dummy_shape;
+              expressionObj *expression = &(layer->class[i]->expression);
+ 
+              dummy_shape.numvalues = numitems;
+              dummy_shape.values = item_values;
 
-            return(-1);
+              if( expression->tokens == NULL )
+                  msTokenizeExpression( expression, item_names, &numitems );
+
+              p.shape = &dummy_shape;
+              p.expr = expression;
+              p.expr->curtoken = p.expr->tokens; /* reset */
+              p.type = MS_PARSE_TYPE_BOOLEAN;
+              
+              status = yyparse(&p);
+              
+              if (status != 0) {
+                  msSetError(MS_PARSEERR, "Failed to parse expression: %s", "msGetClass_FloatRGB", expression->string);
+                  return -1;
+              }
+              
+              if( p.result.intval )
+                  return i;
+              break;
+          }
         }
     }
 
     return(-1); /* not found */
+}
+
+/************************************************************************/
+/*                             msGetClass()                             */
+/************************************************************************/
+
+int msGetClass(layerObj *layer, colorObj *color )
+{
+    char pixel_value[12];
+
+    snprintf( pixel_value, sizeof(pixel_value), "%d", color->pen );
+
+    return msGetClass_String( layer, color, pixel_value );
+}
+
+/************************************************************************/
+/*                          msGetClass_FloatRGB()                       */
+/*                                                                      */
+/*      Returns the class based on classification of a floating         */
+/*      pixel value.                                                    */
+/************************************************************************/
+
+int msGetClass_FloatRGB(layerObj *layer, float fValue, int red, int green, int blue )
+{
+    char pixel_value[100];
+    colorObj color;
+
+    color.red = red;
+    color.green = green;
+    color.blue = blue;
+
+    snprintf( pixel_value, sizeof(pixel_value), "%18g", fValue );
+
+    return msGetClass_String( layer, &color, pixel_value );
 }
 
 /************************************************************************/
