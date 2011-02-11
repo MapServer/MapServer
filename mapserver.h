@@ -990,6 +990,7 @@ typedef struct class_obj{
 #endif /* SWIG */
 
   double minscaledenom, maxscaledenom;
+  int minfeaturesize; /* minimum feature size (in pixels) to shape */
 #ifdef SWIG
 %immutable;
 #endif /* SWIG */
@@ -1335,6 +1336,7 @@ typedef struct layer_obj {
 
   double symbolscaledenom; /* scale at which symbols are default size */
   double minscaledenom, maxscaledenom;
+  int minfeaturesize; /* minimum feature size (in pixels) to shape */
   double labelminscaledenom, labelmaxscaledenom;
   double mingeowidth, maxgeowidth; /* map width (in map units) at which the layer should be drawn */
 

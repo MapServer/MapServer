@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Added minfeaturesize support at layer or class level (#1340)
+
 - Implemented support in for classifying rasters using the new
   expression parsing (msGetClass()...)  (#3663)
 

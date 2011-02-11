@@ -2585,6 +2585,7 @@ int initClass(classObj *class)
   initHashTable(&(class->validation));
   
   class->maxscaledenom = class->minscaledenom = -1.0;
+  class->minfeaturesize = -1; /* no limit */
 
   /* Set maxstyles = 0, styles[] will be allocated as needed on first call 
    * to msGrowClassStyles()
@@ -2835,6 +2836,9 @@ int loadClass(classObj *class, layerObj *layer)
     case(MINSCALEDENOM):
       if(getDouble(&(class->minscaledenom)) == -1) return(-1);
       break;
+    case(MINFEATURESIZE):
+      if(getInteger(&(class->minfeaturesize)) == -1) return(-1);
+      break;
     case(NAME):
       if(getString(&class->name) == MS_FAILURE) return(-1);
       break;         
@@ -3058,6 +3062,7 @@ static void writeClass(FILE *stream, int indent, classObj *class)
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, class->maxscaledenom);
   writeHashTable(stream, indent, "METADATA", &(class->metadata));
   writeNumber(stream, indent, "MINSCALEDENOM", -1, class->minscaledenom);
+  writeNumber(stream, indent, "MINFEATURESIZE", -1, class->minfeaturesize);
   writeKeyword(stream, indent, "STATUS", class->status, 1, MS_OFF, "OFF");
   for(i=0; i<class->numstyles; i++) writeStyle(stream, indent, class->styles[i]);
   writeString(stream, indent, "TEMPLATE", NULL, class->template);
@@ -3103,6 +3108,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->scalefactor = 1.0;
   layer->maxscaledenom = -1.0;
   layer->minscaledenom = -1.0;
+  layer->minfeaturesize = -1; /* no limit */
   layer->maxgeowidth = -1.0;
   layer->mingeowidth = -1.0;
 
@@ -3534,6 +3540,9 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(MINGEOWIDTH):
       if(getDouble(&(layer->mingeowidth)) == -1) return(-1);
       break;
+    case(MINFEATURESIZE):
+      if(getInteger(&(layer->minfeaturesize)) == -1) return(-1);
+      break;
     case(NAME):
       if(getString(&layer->name) == MS_FAILURE) return(-1);
       break;
@@ -3762,6 +3771,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeHashTable(stream, indent, "METADATA", &(layer->metadata));
   writeNumber(stream, indent, "MINGEOWIDTH", -1, layer->mingeowidth);
   writeNumber(stream, indent, "MINSCALEDENOM", -1, layer->minscaledenom);
+  writeNumber(stream, indent, "MINFEATURESIZE", -1, layer->minfeaturesize);
   writeString(stream, indent, "NAME", NULL, layer->name);
   writeColor(stream, indent, "OFFSITE", &(layer->offsite));
   writeString(stream, indent, "PLUGIN", NULL, layer->plugin_library_original);
