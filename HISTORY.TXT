@@ -16,6 +16,8 @@ Version 5.6.7 (SVN branch-5-6):
 
 - Fixed possible seg. fault when using "OGR:Label*" special attributes (#3667)
 
+- Fixed bug with newlines around multipart boundaries in wcs multipart (#3672)
+
 Version 5.6.6 (2011-01-17):
 ---------------------------
 
