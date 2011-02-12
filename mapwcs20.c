@@ -1893,32 +1893,28 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     {
         if(multipart)
         {
-            msIO_fprintf(
-                stdout,
-                "--wcs\n"
-                "Content-Type: %s\n"
-                "Content-Description: coverage data\n"
-                "Content-Transfer-Encoding: binary\n"
+            msIO_fprintf( stdout, "--wcs\n" );
+        }
+        msIO_fprintf(
+            stdout,
+            "Content-Type: %s\n"
+            "Content-Description: coverage data\n"
+            "Content-Transfer-Encoding: binary\n",
+            MS_IMAGE_MIME_TYPE(map->outputformat));
+
+        if( fo_filename != NULL )
+            msIO_fprintf( stdout, 
+                "Content-ID: coverage/%s\n"
+                "Content-Disposition: attachment; filename=%s%c%c",
+                fo_filename,
+                fo_filename,
+                10, 10 );
+        else
+            msIO_fprintf( stdout, 
                 "Content-ID: coverage/wcs.%s\n"
                 "Content-Disposition: INLINE%c%c",
                 MS_IMAGE_EXTENSION(map->outputformat),
-                MS_IMAGE_MIME_TYPE(map->outputformat),
-                MS_IMAGE_EXTENSION(map->outputformat),
                 10, 10 );
-        }
-        else
-        {
-            if( fo_filename != NULL )
-                msIO_fprintf( stdout, 
-                              "Content-Disposition: attachment; filename=%s\n",
-                              fo_filename );
-                
-            msIO_fprintf(
-                stdout,
-                "Content-Type: %s\n%c",
-                MS_IMAGE_MIME_TYPE(map->outputformat),
-                10);
-        }
 
         status = msSaveImage(map, image, NULL);
         if( status != MS_SUCCESS )
@@ -1984,37 +1980,28 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
             unsigned char block[4000];
             int bytes_read;
 
-            if( i == 0 )
+            if( i == 0
+                && !EQUAL(MS_IMAGE_MIME_TYPE(map->outputformat), "unknown") )
                 mimetype = MS_IMAGE_MIME_TYPE(map->outputformat);
 
             if( mimetype == NULL )
                 mimetype = "application/octet-stream";
             if(multipart)
             {
-                msIO_fprintf(
-                    stdout,
-                    "--wcs\n"
-                    "Content-Type: %s\n"
-                    "Content-Description: coverage data\n"
-                    "Content-Transfer-Encoding: binary\n"
-                    "Content-ID: coverage/%s\n"
-                    "Content-Disposition: INLINE%c%c",
-                    mimetype,
-                    all_files[i],
-                    10, 10 );
+                msIO_fprintf( stdout, "--wcs\n" );
             }
-            else
-            {
-                msIO_fprintf( stdout, 
-                              "Content-Disposition: attachment; filename=%s\n",
-                              all_files[i] );
-                
-                msIO_fprintf(
-                    stdout,
-                    "Content-Type: %s\n%c",
-                    mimetype,
-                    10 );
-            }
+
+            msIO_fprintf(
+                stdout,
+                "Content-Type: %s\n"
+                "Content-Description: coverage data\n"
+                "Content-Transfer-Encoding: binary\n"
+                "Content-ID: coverage/%s\n"
+                "Content-Disposition: attachment; filename=%s%c%c",
+                mimetype,
+                all_files[i],
+                all_files[i],
+                10, 10 );
 
             fp = VSIFOpenL(
                 CPLFormFilename("/vsimem/wcsout", all_files[i], NULL),
