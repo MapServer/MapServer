@@ -1923,7 +1923,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
             return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
         }
         if(multipart)
-            msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );
+            msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
         return MS_SUCCESS;
     }
 
@@ -2026,7 +2026,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         CSLDestroy( all_files );
         msReleaseLock( TLOCK_GDAL );
         if(multipart)
-            msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );
+            msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
         return MS_SUCCESS;
     }
 #endif /* def GDAL_DCAP_VIRTUALIO */

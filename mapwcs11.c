@@ -1246,7 +1246,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
             return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
         }
 
-        msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );
+        msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
         return MS_SUCCESS;
     }
 
@@ -1342,7 +1342,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         CSLDestroy( all_files );
         msReleaseLock( TLOCK_GDAL );
 
-        msIO_fprintf( stdout, "--wcs--%c%c", 10, 10 );
+        msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
         return MS_SUCCESS;
     }
 #endif /* def GDAL_DCAP_VIRTUALIO */    
