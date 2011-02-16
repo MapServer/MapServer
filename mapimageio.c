@@ -46,7 +46,7 @@ typedef struct _streamInfo {
 
 void png_write_data_to_stream(png_structp png_ptr, png_bytep data, png_size_t length) {
     FILE *fp = ((streamInfo*)png_get_io_ptr(png_ptr))->fp;
-    fwrite(data,length,1,fp);
+    msIO_fwrite(data,length,1,fp);
 }
 
 void png_write_data_to_buffer(png_structp png_ptr, png_bytep data, png_size_t length) {
@@ -90,7 +90,7 @@ jpeg_init_destination (j_compress_ptr cinfo) {
 
 void jpeg_stream_term_destination (j_compress_ptr cinfo) {
     ms_stream_destination_mgr *dest = (ms_stream_destination_mgr*) cinfo->dest;
-    fwrite(dest->mgr.data, OUTPUT_BUF_SIZE-dest->mgr.pub.free_in_buffer, 1, dest->stream);
+    msIO_fwrite(dest->mgr.data, OUTPUT_BUF_SIZE-dest->mgr.pub.free_in_buffer, 1, dest->stream);
     dest->mgr.pub.next_output_byte = dest->mgr.data;
     dest->mgr.pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
@@ -104,7 +104,7 @@ void jpeg_buffer_term_destination (j_compress_ptr cinfo) {
 
 int jpeg_stream_empty_output_buffer (j_compress_ptr cinfo) {
     ms_stream_destination_mgr *dest = (ms_stream_destination_mgr*) cinfo->dest;
-    fwrite(dest->mgr.data, OUTPUT_BUF_SIZE, 1, dest->stream);
+    msIO_fwrite(dest->mgr.data, OUTPUT_BUF_SIZE, 1, dest->stream);
     dest->mgr.pub.next_output_byte = dest->mgr.data;
     dest->mgr.pub.free_in_buffer = OUTPUT_BUF_SIZE;
     return TRUE;
@@ -542,7 +542,7 @@ static int fileGetbuf (gdIOCtx * ctx, void *buf, int size)
   fileIOCtx *fctx;
   fctx = (fileIOCtx *) ctx;
 
-  return (fread (buf, 1, size, fctx->f));
+  return (msIO_fread (buf, 1, size, fctx->f));
 
 }
 
