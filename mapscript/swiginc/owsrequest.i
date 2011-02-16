@@ -32,6 +32,19 @@
 */
 
 
+%{
+static char *msGetEnvURL( const char *key, void *thread_context )
+{
+    if( strcmp(key,"REQUEST_METHOD") == 0 )
+        return "GET";
+
+    if( strcmp(key,"QUERY_STRING") == 0 )
+        return (char *) thread_context;
+
+    return NULL;
+}
+%}
+
 %rename(OWSRequest) cgiRequestObj;
 
 %include "../../cgiutil.h"
@@ -77,6 +90,12 @@
     int loadParams()
     {
 	self->NumParams = loadParams( self, NULL, NULL, 0, NULL);
+	return self->NumParams;
+    }
+
+    int loadParamsFromURL( const char *url )
+    {
+	self->NumParams = loadParams( self, msGetEnvURL, NULL, 0, (void*)url );
 	return self->NumParams;
     }
 
