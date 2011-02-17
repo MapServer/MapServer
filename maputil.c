@@ -668,7 +668,9 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
             } else {
                 ret = renderer->saveImage(img, stream, img->format);
             }
-            fclose(stream);
+            if( stream != stdout )
+                fclose(stream);
+
             return ret;
         }
         else if( MS_DRIVER_IMAGEMAP(img->format) )
