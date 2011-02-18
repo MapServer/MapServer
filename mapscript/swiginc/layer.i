@@ -622,8 +622,8 @@
         return msConnectLayer(self, connectiontype, library_str);
     }
 
-    int getClassIndex(shapeObj *shape, double scaledenom, int *classgroup=NULL, int numclasses=0) {
-        return msShapeGetClass(self, shape, scaledenom, classgroup, numclasses);
+    int getClassIndex(mapObj *map, shapeObj *shape, int *classgroup=NULL, int numclasses=0) {
+        return msShapeGetClass(self, map, shape, classgroup, numclasses);
     }
 
 }

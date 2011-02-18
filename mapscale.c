@@ -528,3 +528,20 @@ double Pix2Georef(int nPixPos, int nPixMin, int nPixMax,
     }
     return (dfPosGeo);
 }
+
+/* This function converts a pixel value in geo ref. The return value is in
+ * layer units. This function has been added for the purpose of the ticket #1340 */
+
+double Pix2LayerGeoref(mapObj *map, layerObj *layer, int value)
+{
+    double cellsize = MS_MAX(MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width), 
+                             MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height));
+    
+    double resolutionFactor = map->resolution/map->defresolution;
+    double unitsFactor = 1;
+    
+    if (layer->sizeunits != MS_PIXELS)
+        unitsFactor = msInchesPerUnit(map->units,0)/msInchesPerUnit(layer->sizeunits,0);
+    
+    return value*cellsize*resolutionFactor*unitsFactor;
+}

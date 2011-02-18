@@ -1774,6 +1774,7 @@ MS_DLL_EXPORT imageObj *msDrawScalebar(mapObj *map); /* in mapscale.c */
 MS_DLL_EXPORT int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scaledenom);
 MS_DLL_EXPORT double GetDeltaExtentsUsingScale(double scale, int units, double centerLat, int width, double resolution);
 MS_DLL_EXPORT double Pix2Georef(int nPixPos, int nPixMin, int nPixMax, double dfGeoMin, double dfGeoMax, int bULisYOrig);
+MS_DLL_EXPORT double Pix2LayerGeoref(mapObj *map, layerObj *layer, int value);
 MS_DLL_EXPORT double msInchesPerUnit(int units, double center_lat);
 MS_DLL_EXPORT int msEmbedScalebar(mapObj *map, imageObj *img);
 
@@ -2226,8 +2227,9 @@ MS_DLL_EXPORT int msBindLayerToShape(layerObj *layer, shapeObj *shape, int query
 MS_DLL_EXPORT int msValidateContexts(mapObj *map);
 MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
 MS_DLL_EXPORT int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression, int itemindex);
-MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom, int *classgroup, int numclasses);
+MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses);
 MS_DLL_EXPORT char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
+MS_DLL_EXPORT int msShapeCheckSize(shapeObj *shape, double minfeaturesize);
 MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
 MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);
 MS_DLL_EXPORT int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay);

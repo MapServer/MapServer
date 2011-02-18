@@ -565,7 +565,8 @@ int             layerObj_getShape(layerObj *self, shapeObj *shape,
                                   int tileindex, int shapeindex);
 resultObj *layerObj_getResult(layerObj *self, int i);
 classObj       *layerObj_getClass(layerObj *self, int i);
-int             layerObj_getClassIndex(layerObj *self, shapeObj *shape, double scaledenom, int *classgroup, int numclasses);
+int layerObj_getClassIndex(layerObj *self, mapObj *map, shapeObj *shape, 
+                           int *classgroup, int numclasses);
 int             layerObj_draw(layerObj *self, mapObj *map, imageObj *img);
 int             layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img);
 int             layerObj_queryByAttributes(layerObj *self, mapObj *map, 

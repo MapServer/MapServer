@@ -57,7 +57,6 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(layer_getClassIndex_args, 0, 0, 2)
   ZEND_ARG_OBJ_INFO(0, shape, shapeObj, 0)
-  ZEND_ARG_INFO(0, scaledenom)
   ZEND_ARG_INFO(0, classGroup)
   ZEND_ARG_INFO(0, numClasses)
 ZEND_END_ARG_INFO()
@@ -265,6 +264,7 @@ PHP_METHOD(layerObj, __get)
     else IF_GET_DOUBLE("maxscaledenom", php_layer->layer->maxscaledenom)
     else IF_GET_DOUBLE("labelminscaledenom", php_layer->layer->labelminscaledenom)
     else IF_GET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom)
+    else IF_GET_LONG("minfeaturesize", php_layer->layer->minfeaturesize)
     else IF_GET_LONG("maxfeatures", php_layer->layer->maxfeatures)
     else IF_GET_LONG("annotate", php_layer->layer->annotate)
     else IF_GET_LONG("transform", php_layer->layer->transform)
@@ -327,6 +327,7 @@ PHP_METHOD(layerObj, __set)
     else IF_SET_DOUBLE("symbolscaledenom", php_layer->layer->symbolscaledenom, value)
     else IF_SET_DOUBLE("minscaledenom", php_layer->layer->minscaledenom, value)
     else IF_SET_DOUBLE("maxscaledenom", php_layer->layer->maxscaledenom, value)
+    else IF_SET_LONG("minfeaturesize", php_layer->layer->minfeaturesize, value)
     else IF_SET_DOUBLE("labelminscaledenom", php_layer->layer->labelminscaledenom, value)
     else IF_SET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom, value)
     else IF_SET_LONG("maxfeatures", php_layer->layer->maxfeatures, value)
@@ -694,7 +695,7 @@ PHP_METHOD(layerObj, getClass)
 }
 /* }}} */
 
-/* {{{ proto int layer.getClassIndex(shapeObj shape, int scaledenom [, string classGroup, int numClasses])
+/* {{{ proto int layer.getClassIndex(shapeObj shape [, string classGroup, int numClasses])
    Returns the class index for the shape */
 PHP_METHOD(layerObj, getClassIndex)
 {
@@ -703,15 +704,15 @@ PHP_METHOD(layerObj, getClassIndex)
     int numElements, *classGroups = NULL;
     int retval = -1, i = 0;
     long numClasses = 0;
-    double scaledenom;
     HashTable *classgroup_hash = NULL;
     php_shape_object *php_shape;
     php_layer_object *php_layer;
+    php_map_object *php_map;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Od|a!l",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|a!l",
                               &zshape, mapscript_ce_shape,
-                              &scaledenom, &zclassgroup,
+                              &zclassgroup,
                               &numClasses) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
@@ -720,6 +721,14 @@ PHP_METHOD(layerObj, getClassIndex)
     
     php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     php_shape = (php_shape_object *) zend_object_store_get_object(zshape TSRMLS_CC);
+
+    if (!php_layer->parent.val)
+    {
+        mapscript_throw_exception("No map object associated with this layer object." TSRMLS_CC);
+        return;
+    }
+    
+    php_map = (php_map_object *) zend_object_store_get_object(php_layer->parent.val TSRMLS_CC);
 
     if (zclassgroup)
     {
@@ -736,7 +745,7 @@ PHP_METHOD(layerObj, getClassIndex)
         }
     }
     
-    retval = layerObj_getClassIndex(php_layer->layer, php_shape->shape, scaledenom, classGroups, numClasses);
+    retval = layerObj_getClassIndex(php_layer->layer, php_map->map, php_shape->shape, classGroups, numClasses);
   
     if (zclassgroup)
         free(classGroups);

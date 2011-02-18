@@ -446,20 +446,19 @@ int *msAllocateValidClassGroups(layerObj *lp, int *nclasses)
         
 }       
 
-int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom, int *classgroup, int numclasses)
+int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses)
 {
   int i, iclass;
-
 
   /* INLINE features do not work with expressions, allow the classindex */
   /* value set prior to calling this function to carry through. */
   if(layer->connectiontype == MS_INLINE) {
     if(shape->classindex < 0 || shape->classindex >= layer->numclasses) return(-1);
 
-    if(scaledenom > 0) {  /* verify scaledenom here */
-      if((layer->class[shape->classindex]->maxscaledenom > 0) && (scaledenom > layer->class[shape->classindex]->maxscaledenom))
+    if(map->scaledenom > 0) {  /* verify scaledenom here */
+      if((layer->class[shape->classindex]->maxscaledenom > 0) && (map->scaledenom > layer->class[shape->classindex]->maxscaledenom))
         return(-1); /* can skip this feature */
-      if((layer->class[shape->classindex]->minscaledenom > 0) && (scaledenom <= layer->class[shape->classindex]->minscaledenom))
+      if((layer->class[shape->classindex]->minscaledenom > 0) && (map->scaledenom <= layer->class[shape->classindex]->minscaledenom))
         return(-1); /* can skip this feature */
     }
 
@@ -479,12 +478,21 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scaledenom, int *cl
        if (iclass < 0 || iclass >= layer->numclasses)        
          continue; /* this should never happen but just in case */
 
-       if(scaledenom > 0) { /* verify scaledenom here  */
-         if((layer->class[iclass]->maxscaledenom > 0) && (scaledenom > layer->class[iclass]->maxscaledenom))
+       if(map->scaledenom > 0) { /* verify scaledenom here  */
+         if((layer->class[iclass]->maxscaledenom > 0) && (map->scaledenom > layer->class[iclass]->maxscaledenom))
            continue; /* can skip this one, next class */
-         if((layer->class[iclass]->minscaledenom > 0) && (scaledenom <= layer->class[iclass]->minscaledenom))
+         if((layer->class[iclass]->minscaledenom > 0) && (map->scaledenom <= layer->class[iclass]->minscaledenom))
            continue; /* can skip this one, next class */
         }
+
+       /* verify the minfeaturesize */
+       if ((shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) && (layer->class[iclass]->minfeaturesize > 0))
+       {
+           double minfeaturesize = Pix2LayerGeoref(map, layer,
+                                                   layer->class[iclass]->minfeaturesize);
+           if (msShapeCheckSize(shape, minfeaturesize) == MS_FALSE)
+               continue; //skip this one, next class
+       }
 
        if(layer->class[iclass]->status != MS_DELETE && msEvalExpression(layer, shape, &(layer->class[iclass]->expression), layer->classitemindex) == MS_TRUE)
 	 return(iclass);
@@ -532,6 +540,22 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
   }
 
   return(tmpstr);
+}
+
+/* Check if the shape is enough big to be drawn with the
+   layer::minfeaturesize setting. The minfeaturesize parameter should be
+   the value in geo ref (not in pixel) and should have been multiplied by
+   the resolution factor.
+ */
+int msShapeCheckSize(shapeObj *shape, double minfeaturesize)
+{
+    double dx = (shape->bounds.maxx-shape->bounds.minx);
+    double dy = (shape->bounds.maxy-shape->bounds.miny);
+
+    if (pow(minfeaturesize,2.0) > (pow(dx,2.0)+pow(dy,2.0)))
+        return MS_FALSE;
+    
+    return MS_TRUE;
 }
 
 /*

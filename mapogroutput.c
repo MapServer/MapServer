@@ -784,8 +784,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
             ** Perform classification, and some annotation related magic.
             */
             resultshape.classindex = 
-                msShapeGetClass(layer, &resultshape, 
-                                map->scaledenom, NULL, -1);
+                msShapeGetClass(layer, map, &resultshape, NULL, -1);
 
             if( resultshape.classindex >= 0 
                 && (layer->class[resultshape.classindex]->text.string 

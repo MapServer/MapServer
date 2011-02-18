@@ -461,6 +461,7 @@ int msQueryByIndex(mapObj *map)
   resultObj record;
 
   shapeObj shape;
+  double minfeaturesize = -1;
 
   if(map->query.type != MS_QUERY_BY_INDEX) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByIndex()");
@@ -512,7 +513,23 @@ int msQueryByIndex(mapObj *map)
     return(MS_FAILURE);
   }
 
-  shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, NULL, 0);
+  if (lp->minfeaturesize > 0)
+      minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+
+  /* Check if the shape size is ok to be drawn */
+  if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
+  {
+
+      if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
+      {
+          msSetError(MS_NOTFOUND, "Requested shape not valid against layer minfeaturesize.", "msQueryByIndex()");
+          msFreeShape(&shape);
+          msLayerClose(lp);
+          return(MS_FAILURE);
+      }
+  }
+
+  shape.classindex = msShapeGetClass(lp, map, &shape, NULL, 0);
   if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
     msSetError(MS_NOTFOUND, "Requested shape not valid against layer classification scheme.", "msQueryByIndex()");
     msFreeShape(&shape);
@@ -568,6 +585,7 @@ int msQueryByAttributes(mapObj *map)
   
   int nclasses = 0;
   int *classgroup = NULL;
+  double minfeaturesize = -1; 
 
   if(map->query.type != MS_QUERY_BY_ATTRIBUTE) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByAttribute()");
@@ -663,9 +681,24 @@ int msQueryByAttributes(mapObj *map)
   if (lp->classgroup && lp->numclasses > 0)
     classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
-  while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+  if (lp->minfeaturesize > 0)
+      minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
-    shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
+  while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+      
+    /* Check if the shape size is ok to be drawn */
+    if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
+    {
+        if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
+        {
+            if( lp->debug >= MS_DEBUGLEVEL_V )
+                msDebug("msQueryByAttributes(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msFreeShape(&shape);
+            continue;
+        }
+    }
+
+    shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
     if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
       msFreeShape(&shape);
       continue;
@@ -732,6 +765,7 @@ int msQueryByFilter(mapObj *map)
   
   int nclasses = 0;
   int *classgroup = NULL;
+  double minfeaturesize = -1;
 
   if(map->query.type != MS_QUERY_BY_FILTER) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByFilter()");
@@ -818,6 +852,10 @@ int msQueryByFilter(mapObj *map)
     if (lp->classgroup && lp->numclasses > 0)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
+
+    if (lp->minfeaturesize > 0)
+        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
       if(!msLayerSupportsCommonFilters(lp)) { /* we have to apply the filter here instead of within the driver */
@@ -827,7 +865,19 @@ int msQueryByFilter(mapObj *map)
         }
       }
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
+      /* Check if the shape size is ok to be drawn */
+      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
+      {
+          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
+          {
+              if( lp->debug >= MS_DEBUGLEVEL_V )
+                  msDebug("msQueryByFilter(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+              msFreeShape(&shape);
+              continue;
+          }
+      }
+      
+      shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
         msFreeShape(&shape);
         continue;
@@ -889,6 +939,7 @@ int msQueryByRect(mapObj *map)
   
   int nclasses = 0;
   int *classgroup = NULL;
+  double minfeaturesize = -1;
 
   if(map->query.type != MS_QUERY_BY_RECT) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByRect()");
@@ -987,8 +1038,24 @@ int msQueryByRect(mapObj *map)
     if (lp->classgroup && lp->numclasses > 0)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
+    if (lp->minfeaturesize > 0)
+        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+    
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
-      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
+        
+      /* Check if the shape size is ok to be drawn */
+      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
+      {
+          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
+          {
+              if( lp->debug >= MS_DEBUGLEVEL_V )
+                  msDebug("msQueryByRect(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+              msFreeShape(&shape);
+              continue;      
+          }
+      }
+
+      shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
         msFreeShape(&shape);
         continue;
@@ -1072,6 +1139,7 @@ int msQueryByFeatures(mapObj *map)
   shapeObj shape, selectshape;
   int nclasses = 0;
   int *classgroup = NULL;
+  double minfeaturesize = -1;
 
   if(map->debug) msDebug("in msQueryByFeatures()\n");
 
@@ -1215,12 +1283,28 @@ int msQueryByFeatures(mapObj *map)
       if (lp->classgroup && lp->numclasses > 0)
         classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
-      while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+      if (lp->minfeaturesize > 0)
+          minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
+      while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+          
 	/* check for dups when there are multiple selection shapes */
 	if(i > 0 && is_duplicate(lp->resultcache, shape.index, shape.tileindex)) continue;
+        
 
-	shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
+        /* Check if the shape size is ok to be drawn */
+        if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
+        {
+            if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
+            {
+                if( lp->debug >= MS_DEBUGLEVEL_V )
+                    msDebug("msQueryByFeature(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+                msFreeShape(&shape);
+                continue;      
+            }
+        }
+
+	shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
 	if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	  msFreeShape(&shape);
 	  continue;
@@ -1362,6 +1446,7 @@ int msQueryByPoint(mapObj *map)
   shapeObj shape;
   int nclasses = 0;
   int *classgroup = NULL;
+  double minfeaturesize = -1;
 
   if(map->query.type != MS_QUERY_BY_POINT) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByPoint()");
@@ -1376,7 +1461,7 @@ int msQueryByPoint(mapObj *map)
     start = stop = map->query.layer;
 
   for(l=start; l>=stop; l--) {
-    lp = (GET_LAYER(map, l));    
+      lp = (GET_LAYER(map, l));    
 
     /* conditions may have changed since this layer last drawn, so set 
        layer->project true to recheck projection needs (Bug #673) */ 
@@ -1466,9 +1551,24 @@ int msQueryByPoint(mapObj *map)
     if (lp->classgroup && lp->numclasses > 0)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
-    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+    if (lp->minfeaturesize > 0)
+        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
+    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+        
+      /* Check if the shape size is ok to be drawn */
+      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
+      {
+          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
+          {
+              if( lp->debug >= MS_DEBUGLEVEL_V )
+                  msDebug("msQueryByPoint(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+              msFreeShape(&shape);
+              continue;      
+          }
+      }
+      
+      shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
@@ -1537,6 +1637,7 @@ int msQueryByShape(mapObj *map)
 
   int nclasses = 0;
   int *classgroup = NULL;
+  double minfeaturesize = -1;
 
   if(map->query.type != MS_QUERY_BY_SHAPE) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByShape()");
@@ -1651,9 +1752,24 @@ int msQueryByShape(mapObj *map)
     if (lp->classgroup && lp->numclasses > 0)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
+    if (lp->minfeaturesize > 0)
+        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
+      /* Check if the shape size is ok to be drawn */
+      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
+      {
+          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
+          {
+              if( lp->debug >= MS_DEBUGLEVEL_V )
+                  msDebug("msQueryByShape(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+              msFreeShape(&shape);
+              continue;      
+          }
+      }
+
+      shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
 	msFreeShape(&shape);
 	continue;
@@ -1783,6 +1899,7 @@ int msQueryByOperator(mapObj *map)
   int nclasses = 0;
   int *classgroup = NULL;
   double dfValue;
+  double minfeaturesize = -1;
 
   if(map->query.type != MS_QUERY_BY_OPERATOR) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByOperator()");
@@ -1879,9 +1996,24 @@ int msQueryByOperator(mapObj *map)
     if (lp->classgroup && lp->numclasses > 0)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
+    if (lp->minfeaturesize > 0)
+        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
-      shape.classindex = msShapeGetClass(lp, &shape, map->scaledenom, classgroup, nclasses);
+      /* Check if the shape size is ok to be drawn */
+      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
+      {
+          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
+          {
+              if( lp->debug >= MS_DEBUGLEVEL_V )
+                  msDebug("msQueryByOperator(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+              msFreeShape(&shape);
+              continue;      
+          }
+      }
+
+      shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
         msFreeShape(&shape);
         continue;

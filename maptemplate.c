@@ -917,8 +917,8 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     status = msLayerGetShape(layer, &(mapserv->resultshape), &(layer->resultcache->results[i]));
     if(status != MS_SUCCESS) return status;
 
-    mapserv->resultshape.classindex = msShapeGetClass(layer, &mapserv->resultshape, 
-                                                      layer->map->scaledenom, NULL, -1);
+    mapserv->resultshape.classindex = msShapeGetClass(layer, layer->map, &mapserv->resultshape,  NULL, -1);
+
     if ( mapserv->resultshape.classindex>=0 &&
          (layer->class[mapserv->resultshape.classindex]->text.string || layer->labelitem) && 
          layer->class[mapserv->resultshape.classindex]->label.size != -1)
