@@ -534,7 +534,7 @@ static int msWCSParseSubsetKVPString20(wcs20SubsetObjPtr subset, char *string)
 /*      Size string: axis ( size )                                      */
 /************************************************************************/
 
-static int msWCSParseSizeString20(char *string, char **outAxis, int *outSize)
+static int msWCSParseSizeString20(char *string, char *outAxis, size_t axisStringLen, int *outSize)
 {
     char *number = NULL;
     char *check = NULL;
@@ -561,7 +561,7 @@ static int msWCSParseSizeString20(char *string, char **outAxis, int *outSize)
     ++number;
     *check = '\0';
 
-    *outAxis = string;
+    strlcpy(outAxis, string, axisStringLen);
 
     /* parse size value */
     if(msStringParseInteger(number, outSize) != MS_SUCCESS)
@@ -579,18 +579,14 @@ static int msWCSParseSizeString20(char *string, char **outAxis, int *outSize)
 /*                                                                      */
 /*      Parses a resolution string and returns the axis, the units of   */
 /*      measure and the resolution value.                               */
-/*      Subset string: axis [ , unitsOfMeasure ] ( value )          */
+/*      Subset string: axis ( value )                                   */
 /************************************************************************/
 
 static int msWCSParseResolutionString20(char *string,
-        char **outAxis, char **outUOM, double *outResolution)
+        char *outAxis, size_t axisStringLen, double *outResolution)
 {
     char *number = NULL;
-    char *uom = NULL;
     char *check = NULL;
-
-    /* check if there is a UOM defined */
-    uom = strchr(string, ',');
 
     /* find brackets */
     number = strchr(string, '(');
@@ -614,13 +610,8 @@ static int msWCSParseResolutionString20(char *string,
     *number = '\0';
     ++number;
     *check = '\0';
-    if(uom != NULL)
-    {
-        *uom = '\0';
-        *outUOM = uom;
-    }
 
-    *outAxis = string;
+    strlcpy(outAxis, string, axisStringLen);
 
     if(msStringParseDouble(number, outResolution) != MS_SUCCESS)
     {
@@ -1232,10 +1223,10 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         else if (EQUALN(key, "SIZE", 4))
         {
             wcs20AxisObjPtr axis = NULL;
-            char *axisName = NULL;
+            char axisName[500];
             int size = 0;
 
-            if(msWCSParseSizeString20(value, &axisName, &size) == MS_FAILURE)
+            if(msWCSParseSizeString20(value, axisName, sizeof(axisName), &size) == MS_FAILURE)
             {
                 return MS_FAILURE;
             }
@@ -1262,11 +1253,10 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         else if (EQUALN(key, "RESOLUTION", 10))
         {
             wcs20AxisObjPtr axis = NULL;
-            char *axisName = NULL;
-            char *UOM = NULL;
+            char axisName[500];
             double resolution = 0;
 
-            if(msWCSParseResolutionString20(value, &axisName, &UOM, &resolution) == MS_FAILURE)
+            if(msWCSParseResolutionString20(value, axisName, sizeof(axisName), &resolution) == MS_FAILURE)
             {
                 return MS_FAILURE;
             }
