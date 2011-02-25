@@ -1428,7 +1428,6 @@ static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapO
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI,           BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI,       BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI,     BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
-    xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI,       BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_WCS_20_NAMESPACE_URI,        BAD_CAST MS_OWSCOMMON_WCS_NAMESPACE_PREFIX);
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_GML_32_NAMESPACE_URI,        BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
     xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_GMLCOV_10_NAMESPACE_URI,     BAD_CAST MS_OWSCOMMON_GMLCOV_NAMESPACE_PREFIX);
@@ -1707,11 +1706,7 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
         }
         if(cm->bands[i].description != NULL)
         {
-            xmlNewChild(psQuantity, psGmlNs, BAD_CAST "description", BAD_CAST cm->bands[i].description);
-        }
-        if(cm->bands[i].name != NULL)
-        {
-            xmlNewChild(psQuantity, psGmlNs, BAD_CAST "name", BAD_CAST cm->bands[i].name);
+            xmlNewChild(psQuantity, psSweNs, BAD_CAST "description", BAD_CAST cm->bands[i].description);
         }
 
         psUom = xmlNewChild(psQuantity, psSweNs, BAD_CAST "uom", NULL);
@@ -1721,7 +1716,7 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
         }
         else
         {
-            xmlNewProp(psUom, BAD_CAST "code", BAD_CAST "W/cm2");
+            xmlNewProp(psUom, BAD_CAST "code", BAD_CAST "W.m-2.Sr-1");
         }
 
         /* add constraint */
@@ -1729,10 +1724,7 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
         
         {
             char interval[100];
-            char id[100];
             psAllowedValues = xmlNewChild(psConstraint, psSweNs, BAD_CAST "AllowedValues", NULL);
-            snprintf(id, sizeof(id), "VALUE_SPACE_%d", i);
-            xmlNewNsProp(psAllowedValues, psGmlNs, BAD_CAST "id", BAD_CAST id);
             switch(cm->imagemode)
             {
                 case MS_IMAGEMODE_BYTE:
