@@ -3021,7 +3021,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params)
 /*      is found out.                                                   */
 /************************************************************************/
 
-static int msWCSGetCoverage_FinalizeParamsObj20(wcs20ParamsObjPtr params)
+static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params)
 {
     int returnValue;
     static const int numAxis = 2;
@@ -3202,7 +3202,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     msInitProjection(&imageProj);
     msLoadProjectionString(&imageProj, cm.srs);
 
-    if(msWCSGetCoverage_FinalizeParamsObj20(params) == MS_FAILURE)
+    if(msWCSGetCoverage20_FinalizeParamsObj(params) == MS_FAILURE)
     {
         return msWCSException(map, "InvalidParameterValue", "extent", params->version);
     }
@@ -3522,14 +3522,16 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     if(params->multipart == MS_TRUE)
     {
         xmlDocPtr psDoc = NULL;       /* document pointer */
-        xmlNodePtr psRootNode, psRangeSet, psFile;
+        xmlNodePtr psRootNode, psRangeSet, psFile, psRangeParameters;
         xmlNsPtr psGmlNs = NULL,
             psGmlcovNs = NULL,
             psSweNs = NULL,
             psWcsNs = NULL,
             psXLinkNs = NULL;
         wcs20coverageMetadataObj tmpCm;
-        char *srs_uri;
+        char *srs_uri, *filename, *default_filename;
+        char *file_ref;
+        int length = 0;
 
         /* Create Document  */
         psDoc = xmlNewDoc(BAD_CAST "1.0");
@@ -3573,9 +3575,26 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         psFile     = xmlNewChild(psRangeSet, psGmlNs, BAD_CAST "File", NULL);
 
         /* TODO: wait for updated specifications */
-        xmlNewChild(psFile, psGmlNs, BAD_CAST "rangeParameters", NULL);
-        xmlNewChild(psFile, psGmlNs, BAD_CAST "fileReference", BAD_CAST "file");
+        psRangeParameters = xmlNewChild(psFile, psGmlNs, BAD_CAST "rangeParameters", NULL);
+
+        default_filename = msStrdup("out.");
+        default_filename = msStringConcatenate(default_filename, MS_IMAGE_EXTENSION(image->format));
+
+        filename = msGetOutputFormatOption(image->format, "FILENAME", default_filename);
+        length = strlen("coverage/") + strlen(filename) + 1;
+        file_ref = msSmallMalloc(length);
+        strlcpy(file_ref, "coverage/", length);
+        strlcat(file_ref, filename, length);
+
+        msDebug("File reference: %s\n", file_ref);
+
+        xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "href", BAD_CAST file_ref);
+        xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "role", BAD_CAST MS_IMAGE_MIME_TYPE(map->outputformat));
+        xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "arcrole", BAD_CAST "fileReference");
+
+        xmlNewChild(psFile, psGmlNs, BAD_CAST "fileReference", BAD_CAST file_ref);
         xmlNewChild(psFile, psGmlNs, BAD_CAST "fileStructure", NULL);
+        xmlNewChild(psFile, psGmlNs, BAD_CAST "mimeType", BAD_CAST MS_IMAGE_MIME_TYPE(map->outputformat));
 
         msWCSCommon20_CreateRangeType(layer, &cm, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psRootNode);
 
