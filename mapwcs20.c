@@ -309,6 +309,7 @@ wcs20ParamsObjPtr msWCSCreateParamsObj20()
     params->subsetcrs       = NULL;
     params->bbox.minx = params->bbox.miny = -DBL_MAX;
     params->bbox.maxx = params->bbox.maxy =  DBL_MAX;
+    params->range_subset    = NULL;
     params->invalid_get_parameters = NULL;
 
     return params;
@@ -345,6 +346,7 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
         msWCSFreeAxisObj20(params->axes[params->numaxes]);
     }
     msFree(params->axes);
+    CSLDestroy(params->range_subset);
     CSLDestroy(params->invalid_get_parameters);
     msFree(params);
 }
@@ -639,24 +641,21 @@ static int msWCSParseResolutionString20(char *string,
 /************************************************************************/
 
 static int msWCSParseRequest20_XMLGetCapabilities(
-        xmlNodePtr firstChild, wcs20ParamsObjPtr params)
+        xmlNodePtr root, wcs20ParamsObjPtr params)
 {
     xmlNodePtr child;
     char *content = NULL;
-    for(child = firstChild; child != NULL; child = child->next)
+    XML_FOREACH_CHILD(root, child)
     {
         XML_LOOP_IGNORE_COMMENT_OR_TEXT(child)
         else if (EQUAL((char *)child->name, "AcceptVersions"))
         {
             xmlNodePtr versionNode = NULL;
-            for(versionNode = child->children; versionNode != NULL; versionNode = versionNode->next)
+            XML_FOREACH_CHILD(child, versionNode)
             {
-                XML_LOOP_IGNORE_COMMENT_OR_TEXT(versionNode)
-                else if(!EQUAL((char *)versionNode->name, "Version"))
-                {
-                    XML_UNKNOWN_NODE_ERROR(versionNode,
-                            "msWCSParseRequest20_XMLGetCapabilities()");
-                }
+                //for(child = firstChild->children; child != NULL; child = child->next)
+                XML_LOOP_IGNORE_COMMENT_OR_TEXT(versionNode);
+                XML_ASSERT_NODE_NAME(versionNode, "Version");
 
                 content = (char *)xmlNodeGetContent(versionNode);
                 params->accept_versions = CSLAddString(params->accept_versions, content);
@@ -666,14 +665,10 @@ static int msWCSParseRequest20_XMLGetCapabilities(
         else if(EQUAL((char *)child->name, "Sections"))
         {
             xmlNodePtr sectionNode = NULL;
-            for(sectionNode = child->children; sectionNode != NULL; sectionNode = sectionNode->next)
+            XML_FOREACH_CHILD(child, sectionNode)
             {
                 XML_LOOP_IGNORE_COMMENT_OR_TEXT(sectionNode)
-                else if(!EQUAL((char *)sectionNode->name, "Section"))
-                {
-                    XML_UNKNOWN_NODE_ERROR(sectionNode,
-                            "msWCSParseRequest20_XMLGetCapabilities()");
-                }
+                XML_ASSERT_NODE_NAME(sectionNode, "Section");
 
                 content = (char *)xmlNodeGetContent(sectionNode);
                 params->sections = CSLAddString(params->sections, content);
@@ -696,8 +691,7 @@ static int msWCSParseRequest20_XMLGetCapabilities(
         }
         else
         {
-            XML_UNKNOWN_NODE_ERROR(child,
-                    "msWCSParseRequest20_XMLGetCapabilities()");
+            XML_UNKNOWN_NODE_ERROR(child);
         }
     }
     return MS_SUCCESS;
@@ -711,34 +705,29 @@ static int msWCSParseRequest20_XMLGetCapabilities(
 /************************************************************************/
 
 static int msWCSParseRequest20_XMLDescribeCoverage(
-        xmlNodePtr firstChild, wcs20ParamsObjPtr params)
+        xmlNodePtr root, wcs20ParamsObjPtr params)
 {
     xmlNodePtr child;
     int numIds = 0;
     char *id;
 
-    for(child = firstChild; child != NULL; child = child->next)
+    XML_FOREACH_CHILD(root, child)
     {
         XML_LOOP_IGNORE_COMMENT_OR_TEXT(child)
-        else if (EQUAL((char *)child->name, "CoverageID"))
+        XML_ASSERT_NODE_NAME(child, "CoverageID");
+
+        /* Node content is the coverage ID */
+        id = (char *)xmlNodeGetContent(child);
+        if (id == NULL || strlen(id) == 0)
         {
-            /* Node content is the coverage ID */
-            id = (char *)xmlNodeGetContent(child);
-            if (id == NULL || strlen(id) == 0)
-            {
-                msSetError(MS_WCSERR, "CoverageID could not be parsed.",
-                        "msWCSParseRequest20_XMLDescribeCoverage()");
-                return MS_FAILURE;
-            }
-            /* insert coverage ID into the list */
-            ++numIds;
-            params->ids = CSLAddString(params->ids, (char *)id);
-            xmlFree(id);
+            msSetError(MS_WCSERR, "CoverageID could not be parsed.",
+                    "msWCSParseRequest20_XMLDescribeCoverage()");
+            return MS_FAILURE;
         }
-        else
-        {
-            XML_UNKNOWN_NODE_ERROR(child, "msWCSParseRequest20_XMLDescribeCoverage()");
-        }
+        /* insert coverage ID into the list */
+        ++numIds;
+        params->ids = CSLAddString(params->ids, (char *)id);
+        xmlFree(id);
     }
     return MS_SUCCESS;
 }
@@ -751,13 +740,13 @@ static int msWCSParseRequest20_XMLDescribeCoverage(
 /************************************************************************/
 
 static int msWCSParseRequest20_XMLGetCoverage(
-        xmlNodePtr firstChild, wcs20ParamsObjPtr params)
+        xmlNodePtr root, wcs20ParamsObjPtr params)
 {
     xmlNodePtr child;
     int numIds = 0;
     char *id;
 
-    for(child = firstChild; child != NULL; child = child->next)
+    XML_FOREACH_CHILD(root, child)
     {
         XML_LOOP_IGNORE_COMMENT_OR_TEXT(child)
         else if (EQUAL((char *)child->name, "CoverageID"))
@@ -797,7 +786,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
             char *axisName = NULL, *min = NULL, *max = NULL, *crs = NULL;
 
             /* get strings for axis, min and max */
-            for (node = child->children; node != NULL; node = node->next)
+            XML_FOREACH_CHILD(child, node)
             {
                 XML_LOOP_IGNORE_COMMENT_OR_TEXT(node)
                 else if (EQUAL((char *)node->name, "Dimension"))
@@ -826,7 +815,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
                     msFree(min);
                     msFree(max);
                     msFree(crs);
-                    XML_UNKNOWN_NODE_ERROR(node, "msWCSParseRequest20_XMLGetCoverage()");
+                    XML_UNKNOWN_NODE_ERROR(node);
                 }
             }
             if(NULL == (subset = msWCSCreateSubsetObj20()))
@@ -947,6 +936,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
                 msSetError(MS_WCSERR, "Value of element 'Resolution' could not "
                         "be parsed to a valid value.",
                         "msWCSParseRequest20_XMLGetCoverage()");
+                xmlFree(content);
                 return MS_FAILURE;
             }
             xmlFree(content);
@@ -959,9 +949,23 @@ static int msWCSParseRequest20_XMLGetCoverage(
         {
             params->outputcrs = (char *) xmlNodeGetContent(child);
         }
+        else if(EQUAL((char *) child->name, "rangeSubset"))
+        {
+            xmlNodePtr bandNode = NULL;
+            XML_FOREACH_CHILD(child, bandNode)
+            {
+                char *content = NULL;
+                XML_ASSERT_NODE_NAME(bandNode, "band");
+
+                content = (char *)xmlNodeGetContent(bandNode);
+                params->range_subset =
+                        CSLAddString(params->range_subset, content);
+                xmlFree(content);
+            }
+        }
         else
         {
-            XML_UNKNOWN_NODE_ERROR(child, "msWCSParseRequest20_XMLGetCoverage()");
+            XML_UNKNOWN_NODE_ERROR(child);
         }
     }
     return MS_SUCCESS;
@@ -1028,17 +1032,17 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         {
             if(EQUAL(params->request, "GetCapabilities"))
             {
-                ret = msWCSParseRequest20_XMLGetCapabilities(root->children, params);
+                ret = msWCSParseRequest20_XMLGetCapabilities(root, params);
             }
             else if(params->version != NULL && EQUALN(params->version, "2.0", 3))
             {
                 if(EQUAL(params->request, "DescribeCoverage"))
                 {
-                    ret = msWCSParseRequest20_XMLDescribeCoverage(root->children, params);
+                    ret = msWCSParseRequest20_XMLDescribeCoverage(root, params);
                 }
                 else if(EQUAL(params->request, "GetCoverage"))
                 {
-                    ret = msWCSParseRequest20_XMLGetCoverage(root->children, params);
+                    ret = msWCSParseRequest20_XMLGetCoverage(root, params);
                 }
             }
         }
@@ -1311,8 +1315,24 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
                 msWCSInsertAxisObj20(params, axis);
             }
 
-            /* TODO: what if subset is not empty -> throw error*/
+            if(NULL != axis->subset)
+            {
+                msSetError(MS_WCSERR, "The axis '%s' is already subsetted.",
+                        "msWCSParseRequest20()", axis->name);
+                msWCSFreeSubsetObj20(subset);
+                return MS_FAILURE;
+            }
             axis->subset = subset;
+        }
+        else if(EQUAL(key, "RANGESUBSET"))
+        {
+            tokens = msStringSplit(value, ',', &num);
+            for(j = 0; j < num; ++j)
+            {
+                params->range_subset =
+                        CSLAddString(params->range_subset, tokens[j]);
+            }
+            msFreeCharArray(tokens, num);
         }
         /* insert other mapserver internal, to be ignored parameters here */
         else if(EQUAL(key, "MAP"))
@@ -1926,7 +1946,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         if( status != MS_SUCCESS )
         {
             msSetError( MS_MISCERR, "msSaveImage() failed", "msWCSWriteFile20()");
-            return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
+            return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
         }
         if(multipart)
             msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
@@ -3122,6 +3142,90 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params)
 }
 
 /************************************************************************/
+/*                   msWCSGetCoverage20_GetBands()                      */
+/*                                                                      */
+/*      Returns a string, containing a comma-separated list of band     */
+/*      indices.                                                        */
+/************************************************************************/
+
+static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
+        wcs20ParamsObjPtr params, wcs20coverageMetadataObjPtr cm, char **bandlist)
+{
+    int i = 0, count, maxlen, index;
+    char *current = NULL, *tmp = NULL;
+    char **band_ids = NULL;
+
+    /* if rangesubset parameter is not given, default to all bands */
+    if(NULL == params->range_subset)
+    {
+        *bandlist = msStrdup("1");
+        for(i = 1; i < cm->numbands; ++i)
+        {
+            char strnumber[10];
+            snprintf(strnumber, sizeof(strnumber), ",%d", i + 1);
+            *bandlist = msStringConcatenate(*bandlist, strnumber);
+        }
+        return MS_SUCCESS;
+    }
+
+    count = CSLCount(params->range_subset);
+    maxlen = count * 4 * sizeof(char);
+    *bandlist = msSmallCalloc(sizeof(char), maxlen);
+    current = *bandlist;
+
+    tmp = msOWSGetEncodeMetadata(&layer->metadata,
+                                 "COM",
+                                 "rangeset_axes",
+                                 NULL);
+    if(NULL != tmp)
+    {
+        band_ids = CSLTokenizeString2(tmp, " ", 0);
+        msFree(tmp);
+    }
+
+    for(i = 0; i < count; ++i)
+    {
+        /* print ',' if not the first value */
+        if(i != 0)
+        {
+            current = strlcat(*bandlist, ",", maxlen) + *bandlist;
+        }
+        /*current += snprintf(current, maxlen - (current - *bandlist),
+                                "%s%d", (i == 0) ? "" : ",", index))*/
+
+        /* check if the string represents an integer */
+        if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS)
+        {
+            tmp = msIntToString((int)index);
+            strlcat(*bandlist, tmp, maxlen);
+            msFree(tmp);
+            /*current += snprintf(current, maxlen - (current - *bandlist),
+                                "%d", index);*/
+            continue;
+        }
+
+        /* check if the string is equal to a band identifier    */
+        /* if so, what is the index of the band                 */
+        index = CSLFindString(band_ids, params->range_subset[i]);
+        if(index != -1)
+        {
+            tmp = msIntToString((int)index + 1);
+            strlcat(*bandlist, tmp, maxlen);
+            msFree(tmp);
+            /*current += snprintf(current, maxlen - (current - *bandlist),
+                                "%d", index+1);*/
+            continue;
+        }
+
+        msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
+                       "msWCSGetCoverage20_GetBands()", params->range_subset[i]);
+        return MS_FAILURE;
+    }
+    CSLDestroy(band_ids);
+    return MS_SUCCESS;
+}
+
+/************************************************************************/
 /*                   msWCSGetCoverage20()                               */
 /*                                                                      */
 /*      Implementation of the GetCoverage Operation. The coverage       */
@@ -3428,17 +3532,10 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE,
             MS_NOOVERRIDE, MS_NOOVERRIDE);
 
-    //status = msWCSGetCoverageBands11( map, request, params, layer, &bandlist );
-    /* build a bandlist (default is ALL bands) */
-    if(!bandlist)
+    if(msWCSGetCoverage20_GetBands(map, layer, params, &cm, &bandlist) != MS_SUCCESS)
     {
-        bandlist = msStrdup("1");
-        for(i = 1; i < cm.numbands; i++)
-        {
-            char strnumber[10];
-            snprintf(strnumber, sizeof(strnumber), ",%d", i + 1);
-            bandlist = msStringConcatenate(bandlist, strnumber);
-        }
+        return msWCSException(map, "InvalidParameterValue", "format",
+                params->version);
     }
     msLayerSetProcessingKey(layer, "BANDS", bandlist);
     snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);

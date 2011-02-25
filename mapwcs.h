@@ -184,6 +184,7 @@ typedef struct
     rectObj bbox;       /* determined Bounding Box */
     int numaxes;        /* number of axes */
     wcs20AxisObjPtr *axes; /* list of axes, NULL if none*/
+    char **range_subset;
     char **invalid_get_parameters; /* NULL terminated list of invalid GET parameters */
 } wcs20ParamsObj;
 typedef wcs20ParamsObj * wcs20ParamsObjPtr;
@@ -240,6 +241,9 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request);
 int msWCSException20(mapObj *map, const char *locator,
                      const char *exceptionCode, const char *version);
 
+#define XML_FOREACH_CHILD(parent_node, child_node)              \
+    for(child_node = parent_node->children; child_node != NULL; child_node = child_node->next)
+
 /* Makro to continue the iteration over an xml structure    */
 /* when the current node has the type 'text' or 'comment'   */
 #define XML_LOOP_IGNORE_COMMENT_OR_TEXT(node)                   \
@@ -250,10 +254,16 @@ int msWCSException20(mapObj *map, const char *locator,
 
 /* Makro to set an XML error that an unknown node type      */
 /* occurred.                                                */
-#define XML_UNKNOWN_NODE_ERROR(node,function)                   \
+#define XML_UNKNOWN_NODE_ERROR(node)                            \
     msSetError(MS_WCSERR, "Unknown XML element '%s'.",          \
-            function, (char *)node->name);                      \
+            __func__, (char *)node->name);                      \
     return MS_FAILURE;
+
+#define XML_ASSERT_NODE_NAME(node,nodename)                     \
+    if(EQUAL((char *)node->name, nodename) == MS_FALSE)         \
+    {                                                           \
+        XML_UNKNOWN_NODE_ERROR(node);                           \
+    }
 
 #define MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params,section)  \
     (params->sections == NULL                                   \
