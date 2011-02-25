@@ -1444,6 +1444,9 @@ static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapO
     xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
 
     xmlNewNsProp(psRootNode, psXsiNs, BAD_CAST "schemaLocation", BAD_CAST xsi_schemaLocation);
+
+    msFree(schemaLocation);
+    msFree(xsi_schemaLocation);
 }
 
 /************************************************************************/
@@ -2023,6 +2026,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
             VSIUnlink( all_files[i] );
         }
 
+        msFree(filename);
         CSLDestroy( all_files );
         msReleaseLock( TLOCK_GDAL );
         if(multipart)
@@ -2455,9 +2459,6 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
     xmlNsPtr psNsXsi = NULL;
     xmlChar *buffer = NULL;
 
-    psNsOws = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_20_NAMESPACE_URI,
-            BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
-
     encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
     errorString = msGetErrorString("\n");
     errorMessage = msEncodeHTMLEntities(errorString);
@@ -2465,15 +2466,15 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
 
     psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-    psRootNode = xmlNewNode(psNsOws, BAD_CAST "ExceptionReport");
+    psRootNode = xmlNewNode(NULL, BAD_CAST "ExceptionReport");
     psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_20_NAMESPACE_URI,
                 BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+    xmlSetNs(psRootNode, psNsOws);
 
     psNsXsi = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
 
     /* add attributes to root element */
     xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST version);
-
     xmlNewProp(psRootNode, BAD_CAST "xml:lang", BAD_CAST msOWSGetLanguage(map, "exception"));
 
     /* get 2 digits version string: '2.0' */
@@ -2616,6 +2617,8 @@ static int msWCSGetCapabilities20_CoverageSummary(
     psCSummary = xmlNewChild( psContents, psWcsNs, BAD_CAST "CoverageSummary", NULL );
     xmlNewChild(psCSummary, psWcsNs, BAD_CAST "CoverageId", BAD_CAST layer->name);
     xmlNewChild(psCSummary, psWcsNs, BAD_CAST "CoverageSubtype", BAD_CAST "RectifiedGridCoverage");
+
+    msWCSClearCoverageMetadata20(&cm);
 
     return MS_SUCCESS;
 }
@@ -2777,7 +2780,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
                 map, params, psDoc, psNode, layer );
             if(status != MS_SUCCESS)
             {
-                return MS_FAILURE;
+                xmlFreeDoc(psDoc);
+                xmlCleanupParser();
+                return msWCSException(map, "mapserv", "Internal", params->version);
             }
         }
     }
@@ -3159,8 +3164,9 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         if (EQUAL(coverageName, params->ids[0]))
         {
             layer = GET_LAYER(map, i);
-            break;
+            i = map->numlayers; /* to exit loop don't use break, we want to free resources first */
         }
+        msFree(coverageName);
     }
 
     /* throw exception if no Layer was found */
@@ -3384,7 +3390,6 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     else
         map->cellsize = params->resolutionY;
 
-
     msDebug("msWCSGetCoverage20(): Set parameters from original"
                    "data. Width: %d, height: %d, cellsize: %f, extent: %f,%f,%f,%f\n",
                map->width, map->height, map->cellsize, map->extent.minx,
@@ -3435,6 +3440,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     msLayerSetProcessingKey(layer, "BANDS", bandlist);
     snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
     msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
+    msFree(bandlist);
 
     /* check for the interpolation */
     /* TODO: defaults to what? do we need a default? */
@@ -3458,6 +3464,15 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
                     "msWCSGetCoverage20()", params->interpolation );
             return msWCSException(map, "InvalidParameterValue", "interpolation", params->version);
         }
+    }
+
+    /* since the dataset is only used in one layer, set it to be    */
+    /* closed after drawing the layer. This normally defaults to    */
+    /* DEFER and will produce a memory leak, because the dataset    */
+    /* will not be closed.                                          */
+    if( msLayerGetProcessingKey(layer, "CLOSE_CONNECTION") == NULL )
+    {
+        msLayerSetProcessingKey(layer, "CLOSE_CONNECTION", "NORMAL");
     }
 
     /* create the image object  */
@@ -3495,6 +3510,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         return msWCSException(map, NULL, NULL, params->version );
     }
     msDebug("image:%s\n", image->imagepath);
+
 
     /* GML+GeoTIFF */
     /* Embed the GeoTIFF into multipart message */
@@ -3573,6 +3589,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     }
 
     msWCSClearCoverageMetadata20(&cm);
+    msFreeImage(image);
     return MS_SUCCESS;
 }
 
@@ -3691,11 +3708,9 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
         }
         msSetError(MS_WCSERR, "Unknown parameter%s: %s.",
                 "msWCSParseRequest20()", (count > 1) ? "s" : "", concat);
-        msWCSException20(map, "InvalidParameterValue", "request",
-                params->version );
         msFree(concat);
         msWCSFreeParamsObj20(params);
-        return MS_FAILURE;
+        return msWCSException(map, "InvalidParameterValue", "request", "2.0.0");
     }
 
     /* Call operation specific functions */
