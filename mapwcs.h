@@ -156,7 +156,7 @@ typedef wcs20SubsetObj * wcs20SubsetObjPtr;
 typedef struct
 {
     char *name;         /* name of the axis */
-    long size;          /* pixelsize of the axis */
+    int size;           /* pixelsize of the axis */
     double resolution;  /* resolution of the axis */
     char *resolutionUOM; /* resolution units of measure */
     wcs20SubsetObjPtr subset;

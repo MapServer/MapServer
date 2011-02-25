@@ -62,10 +62,10 @@
 /*      only if all characters could be parsed, MS_SUCCESS is returned. */
 /************************************************************************/
 
-static int msStringParseInteger(const char *string, long *dest)
+static int msStringParseInteger(const char *string, int *dest)
 {
     char *parse_check;
-    *dest = strtol(string, &parse_check, 0);
+    *dest = (int)strtol(string, &parse_check, 0);
     if(parse_check == string)
     {
         return MS_FAILURE;
@@ -562,7 +562,7 @@ static int msWCSParseSizeString20(char *string, char **outAxis, int *outSize)
     *outAxis = string;
 
     /* parse size value */
-    if(msStringParseInteger(number, (long int *)outSize) != MS_SUCCESS)
+    if(msStringParseInteger(number, outSize) != MS_SUCCESS)
     {
         msSetError(MS_WCSERR, "Parameter value '%s' is not a valid integer.",
                 "msWCSParseSize20()", number);
