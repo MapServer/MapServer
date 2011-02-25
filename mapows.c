@@ -1774,7 +1774,7 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
     const char *oldStyle = msOWSGetEPSGProj( proj, metadata, namespaces,
                                              bReturnOnlyFirstOne );
 
-    if( strncmp(oldStyle,"EPSG:",5) != 0 )
+    if( oldStyle == NULL || !EQUALN(oldStyle,"EPSG:",5) )
         return NULL;
 
     result = msStrdup("");
@@ -1785,13 +1785,13 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
         char urn[100];
 
         if( strncmp(tokens[i],"EPSG:",5) == 0 )
-            sprintf( urn, "http://www.opengis.net/def/crs/EPSG/0/%s", tokens[i]+5 );
+            snprintf( urn, sizeof(urn), "http://www.opengis.net/def/crs/EPSG/0/%s", tokens[i]+5 );
         else if( strcasecmp(tokens[i],"imageCRS") == 0 )
-            sprintf( urn, "http://www.opengis.net/def/crs/OGC/0/imageCRS" );
+            snprintf( urn, sizeof(urn), "http://www.opengis.net/def/crs/OGC/0/imageCRS" );
         else if( strncmp(tokens[i],"http://www.opengis.net/def/crs/",16) == 0 )
-            sprintf( urn, "%s", tokens[i] );
+            snprintf( urn, sizeof(urn), "%s", tokens[i] );
         else
-            strcpy( urn, "" );
+            strlcpy( urn, "", sizeof(urn) );
 
         if( strlen(urn) > 0 )
         {
