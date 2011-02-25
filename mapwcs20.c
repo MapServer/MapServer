@@ -151,6 +151,17 @@ static int msWCSParseTimeOrScalar20(timeScalarUnion *u, const char *string)
 }
 
 /************************************************************************/
+/*                   msStringIsNCName()                                 */
+/*                                                                      */
+/*      Evaluates if a string is a valid NCName.                        */
+/************************************************************************/
+
+static int msStringIsNCName(char *string)
+{
+    return msEvalRegex("^[a-zA-z_][a-zA-Z0-9_.-]*$" , string);
+}
+
+/************************************************************************/
 /*                   msWCSCreateSubsetObj20()                           */
 /*                                                                      */
 /*      Creates a new wcs20SubsetObj and initializes it to standard     */
@@ -3705,6 +3716,24 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
         msFree(concat);
         msWCSFreeParamsObj20(params);
         return msWCSException(map, "InvalidParameterValue", "request", "2.0.0");
+    }
+
+    /* check if all layer names are valid NCNames */
+    {
+        int i;
+        for(i = 0; i < map->numlayers; ++i)
+        {
+            if(!msWCSIsLayerSupported(map->layers[i]))
+                continue;
+
+            if(msStringIsNCName(map->layers[i]->name) == MS_FALSE)
+            {
+                msSetError(MS_WCSERR, "Layer name '%s' is not a valid NCName.",
+                        "msWCSDescribeCoverage20()", map->layers[i]->name);
+                msWCSFreeParamsObj20(params);
+                return msWCSException(map, "mapserv", "Internal", "2.0.0");
+            }
+        }
     }
 
     /* Call operation specific functions */
