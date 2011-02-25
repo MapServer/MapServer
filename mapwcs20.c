@@ -3740,7 +3740,7 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
 
     /* first check if Service is WCS */
     if (params->service == NULL
-        && !EQUAL(params->service, "WCS"))
+        || !EQUAL(params->service, "WCS"))
     {
         /* The service is not WCS, exit with MS_DONE */
         msDebug("msWCSDispatch20(): wrong service (%s)\n",
