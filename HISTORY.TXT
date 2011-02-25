@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- mapprojhack.c: restructure to avoid needing projects, or any internal 
+  knowledge of PROJ.4.  
+
 - Fix newlines around part boundaries in WCS multipart results (#3672)
 
 - Added minfeaturesize support at layer or class level (#1340)

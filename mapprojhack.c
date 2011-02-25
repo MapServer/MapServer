@@ -26,20 +26,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  ****************************************************************************/
 
-/* ==================================================================== 
-      This file includes only mapproject.h (which includes projects.h)
-      and none of the windows include files. This is because of a conflict
-      in names (PJ_VALUE) between the projects.h and windows include file
-      winreg.h.                
- ==================================================================== */
-
-/* Make sure we include projects.h before mapproject.h, because proj_api.h
- * may end up being included instead by mapproject.h ifdef USE_PROJ_API_H
- */
-#ifdef USE_PROJ
-#include <projects.h>
-#endif
-
 #include <string.h>
 #include "mapproject.h"
 
@@ -67,7 +53,7 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
     }
     else if (strcmp(pszProjUnit, "mi") ==0 || strcmp(pszProjUnit, "us-mi") ==0)
     {
-        return MS_FEET;
+        return MS_MILES;
     }
     else if (strcmp(pszProjUnit, "in") ==0 || strcmp(pszProjUnit, "us-in") ==0 )
     {
@@ -87,39 +73,6 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
 #endif /* def USE_PROJ */
 
 /************************************************************************/
-/*       pj_units[] copy.  It is safer for win32 builds to include a    */
-/*      copy of pj_units instead of trying to get the variable from     */
-/*      the proj dll.                                                   */
-/************************************************************************/
-#ifdef USE_PROJ 
-struct PJ_UNITS
-pj_units_copy[] = {
-       {"km",  "1000.",        "Kilometer"},
-       {"m",   "1.",           "Meter"},
-       {"dm",  "1/10",         "Decimeter"},
-       {"cm",  "1/100",        "Centimeter"},
-       {"mm",  "1/1000",       "Millimeter"},
-       {"kmi", "1852.0",       "International Nautical Mile"},
-       {"in",  "0.0254",       "International Inch"},
-       {"ft",  "0.3048",       "International Foot"},
-       {"yd",  "0.9144",       "International Yard"},
-       {"mi",  "1609.344",     "International Statute Mile"},
-       {"fath",        "1.8288",       "International Fathom"},
-       {"ch",  "20.1168",      "International Chain"},
-       {"link",        "0.201168",     "International Link"},
-       {"us-in",       "1./39.37",     "U.S. Surveyor's Inch"},
-       {"us-ft",       "0.304800609601219",    "U.S. Surveyor's Foot"},
-       {"us-yd",       "0.914401828803658",    "U.S. Surveyor's Yard"},
-       {"us-ch",       "20.11684023368047",    "U.S. Surveyor's Chain"},
-       {"us-mi",       "1609.347218694437",    "U.S. Surveyor's Statute Mile"},
-       {"ind-yd",      "0.91439523",   "Indian Yard"},
-       {"ind-ft",      "0.30479841",   "Indian Foot"},
-       {"ind-ch",      "20.11669506",  "Indian Chain"},
-       {(char *)0, (char *)0, (char *)0}
-};
-#endif /* def USE_PROJ */
-
-/************************************************************************/
 /*           int GetMapserverUnitUsingProj(projectionObj *psProj)       */
 /*                                                                      */
 /*      Return a mapserver unit corresponding to the projection         */
@@ -128,19 +81,62 @@ pj_units_copy[] = {
 int GetMapserverUnitUsingProj(projectionObj *psProj)
 {
 #ifdef USE_PROJ
-    struct PJ_UNITS *lu;
-    if (psProj && psProj->proj)
-    {
-        if (psProj->proj->is_latlong)
-            return MS_DD;
+    char *proj_str = pj_get_def( psProj->proj, 0 );
 
-        /* psProj->proj->to_meter; */
-        for (lu = pj_units_copy; lu->id ; ++lu)
-        {
-            if (strtod(lu->to_meter, NULL) == psProj->proj->to_meter)
-                return ConvertProjUnitStringToMS(lu->id);
-        }
+/* -------------------------------------------------------------------- */
+/*      Handle case of named units.                                     */
+/* -------------------------------------------------------------------- */
+    if( strstr(proj_str,"units=") != NULL )
+    {
+        char units[32];
+        char *blank;
+
+        strncpy( units, (strstr(proj_str,"units=")+6), sizeof(units)-2 );
+        pj_dalloc( proj_str );
+
+        blank = strchr(units, ' ');
+        if( blank != NULL )
+            *blank = '\0';
+
+        return ConvertProjUnitStringToMS( units );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Handle case of to_meter value.                                  */
+/* -------------------------------------------------------------------- */
+    if( strstr(proj_str,"to_meter=") != NULL )
+    {
+        char to_meter_str[32];
+        char *blank;
+        double to_meter;
+
+        strncpy(to_meter_str,(strstr(proj_str,"to_meter=")+9),
+                sizeof(to_meter_str)-2);
+        pj_dalloc( proj_str );
+
+        blank = strchr(to_meter_str, ' ');
+        if( blank != NULL )
+            *blank = '\0';
+
+        to_meter = atof(to_meter_str);
+
+        if( fabs(to_meter-1.0) < 0.0000001 )
+            return MS_METERS;
+        else if( fabs(to_meter-1000.0) < 0.00001 )
+            return MS_KILOMETERS;
+        else if( fabs(to_meter-0.3048) < 0.0001 )
+            return MS_FEET;
+        else if( fabs(to_meter-0.0254) < 0.0001 )
+            return MS_INCHES;
+        else if( fabs(to_meter-1609.344) < 0.001 )
+            return MS_MILES;
+        else if( fabs(to_meter-1852.0) < 0.1 )
+            return MS_NAUTICALMILES;
+        else
+            return -1;
+    }
+
+    pj_dalloc( proj_str );
 #endif
     return -1;
 }
