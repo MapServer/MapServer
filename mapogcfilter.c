@@ -2040,7 +2040,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     CPLSearchXMLNode(psXMLNode,  "PropertyName") &&
                     CPLGetXMLValue(psXMLNode, "wildCard", "") &&
                     CPLGetXMLValue(psXMLNode, "singleChar", "") &&
-                    CPLGetXMLValue(psXMLNode, "escape", ""))
+                    (CPLGetXMLValue(psXMLNode, "escape", "") ||
+                     CPLGetXMLValue(psXMLNode, "escapeChar", "")))
                   /*
                     psXMLNode->psChild &&  
                     strcasecmp(psXMLNode->psChild->pszValue, "wildCard") == 0 &&
@@ -2062,7 +2063,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive = 0;
 
                     pszTmp = (char *)CPLGetXMLValue(psXMLNode, "wildCard", "");
-                    if (pszTmp)
+                    if (pszTmp)  
                       ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard = 
                         strdup(pszTmp);
                     pszTmp = (char *)CPLGetXMLValue(psXMLNode, "singleChar", "");
@@ -2070,10 +2071,16 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                       ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar = 
                         strdup(pszTmp);
                     pszTmp = (char *)CPLGetXMLValue(psXMLNode, "escape", "");
-                    if (pszTmp)
+                    if (pszTmp  && strlen(pszTmp)>0)
                       ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar = 
                         strdup(pszTmp);
-
+                    else
+                    {
+                       pszTmp = (char *)CPLGetXMLValue(psXMLNode, "escapeChar", "");
+                        if (pszTmp)
+                          ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar = 
+                            strdup(pszTmp);
+                    }
                     pszTmp = (char *)CPLGetXMLValue(psXMLNode, "matchCase", "");
                     if (pszTmp && strlen(pszTmp) > 0 && 
                         strcasecmp(pszTmp, "false") == 0)
