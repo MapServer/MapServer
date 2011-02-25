@@ -772,15 +772,23 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 {
   char tmpString[OWS_VERSION_MAXLEN];
   int i, tmpInt = 0;
-  int wcsSupportedVersions[] = {OWS_2_0_0, OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
-  int wcsNumSupportedVersions = 5;
+  int wcsSupportedVersions[] = {OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
+  int wcsNumSupportedVersions = 4;
   const char *updatesequence=NULL;
   const char *encoding;
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
+  /* check version is valid */
+  tmpInt = msOWSParseVersionString(params->version);
+  if (tmpInt == OWS_VERSION_BADFORMAT)
+  {
+    return msWCSException(map, "InvalidParameterValue",
+                          "request", "1.0.0 ");
+  }
+
   /* negotiate version */
-  tmpInt = msOWSNegotiateVersion(msOWSParseVersionString(params->version), wcsSupportedVersions, wcsNumSupportedVersions);
+  tmpInt = msOWSNegotiateVersion(tmpInt, wcsSupportedVersions, wcsNumSupportedVersions);
 
   /* set result as string and carry on */
   params->version = msStrdup(msOWSGetVersionString(tmpInt, tmpString));
@@ -1903,7 +1911,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
      && strcmp(params->version, "1.1.0") != 0
      && strcmp(params->version, "1.1.1") != 0
      && strcmp(params->version, "1.1.2") != 0)
-     && strcmp(params->request, "GetCapabilities") != 0) {
+     && strcasecmp(params->request, "GetCapabilities") != 0) {
     msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.", "msWCSDispatch()", params->version);
     msWCSException(map, "InvalidParameterValue", "version", params->version);
   
