@@ -3443,7 +3443,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     msFree(bandlist);
 
     /* check for the interpolation */
-    /* TODO: defaults to what? do we need a default? */
+    /* Defaults to NEAREST */
     if(params->interpolation != NULL)
     {
         if(EQUALN(params->interpolation,"NEAREST",7))
@@ -3464,6 +3464,8 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
                     "msWCSGetCoverage20()", params->interpolation );
             return msWCSException(map, "InvalidParameterValue", "interpolation", params->version);
         }
+    } else { 
+        msLayerSetProcessingKey(layer, "RESAMPLE", "NEAREST");
     }
 
     /* since the dataset is only used in one layer, set it to be    */
