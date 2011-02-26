@@ -256,7 +256,7 @@ int msWCSException20(mapObj *map, const char *locator,
 /* occurred.                                                */
 #define XML_UNKNOWN_NODE_ERROR(node)                            \
     msSetError(MS_WCSERR, "Unknown XML element '%s'.",          \
-            __func__, (char *)node->name);                      \
+            __FUNCTION__, (char *)node->name);                  \
     return MS_FAILURE;
 
 #define XML_ASSERT_NODE_NAME(node,nodename)                     \
