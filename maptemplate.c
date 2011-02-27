@@ -982,6 +982,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   hashTableObj *tagArgs=NULL;
 
   char *layerName=NULL;
+  char *nodata=NULL;
 
   int layerIndex=-1;
   layerObj *lp;
@@ -1003,6 +1004,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     if(getTagArgs("resultset", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
       layerName = msLookupHashTable(tagArgs, "layer");
+      nodata = msLookupHashTable(tagArgs, "nodata");
     }
 
     if(!layerName) {
@@ -1054,6 +1056,8 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
       if(processFeatureTag(mapserv, &tag, lp) != MS_SUCCESS)
         return(MS_FAILURE); /* TODO: how to handle */ 
       *line = msStringConcatenate(*line, tag);
+    } else if(nodata) {
+      *line = msStringConcatenate(*line, nodata);
     }
 
     *line = msStringConcatenate(*line, postTag);
