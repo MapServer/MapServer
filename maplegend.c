@@ -275,35 +275,31 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
 {
   int i, j;
   int status, maxwidth=0, nLegendItems=0;
-  char *transformedText; /* Label text after applying wrapping, encoding if necessary */
+  char *text, *transformedText; /* legend text before/after applying wrapping, encoding if necessary */
   layerObj *lp;  
   rectObj rect;
   int current_layers=0;
 
-  /* Reset sizes */
+  /* reset sizes */
   *size_x = 0;
   *size_y = 0;
     
-  /* Enable scale-dependent calculations */
+  /* enable scale-dependent calculations */
   if(!scale_independent) {
     map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
     status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
     if(status != MS_SUCCESS) return MS_FAILURE;
   }
 
-
   /*
    * step through all map classes, and for each one that will be displayed
    * calculate the label size
    */
-
-
   if (layer_index != NULL && num_layers >0)
     current_layers  = num_layers;
   else
     current_layers = map->numlayers;
-  
-      
+       
   for(i=0; i< current_layers; i++) {
 
     if (layer_index != NULL && num_layers > 0)
@@ -315,14 +311,13 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
       continue;
             
     if(!scale_independent && map->scaledenom > 0) {
-      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom))
-        continue;
-      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom))
-        continue;
+      if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
+      if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
     }
         
     for(j=lp->numclasses-1; j>=0; j--) {
-      if(!lp->class[j]->name) continue; /* skip it */
+      text = lp->class[j]->title?lp->class[j]->title:lp->class[j]->name; /* point to the right legend text, title takes precedence */
+      if(!text) continue; /* skip it */
             
       /* skip the class if the classgroup is defined */
       if(lp->classgroup && (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
@@ -330,11 +325,8 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
 
        /* verify class scale */
        if(!scale_independent && map->scaledenom > 0) {
-         if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom))
-           continue;
-                    
-         if((lp->class[j]->minscaledenom > 0) && (map->scaledenom <= lp->class[j]->minscaledenom))
-           continue;
+         if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom)) continue;                    
+         if((lp->class[j]->minscaledenom > 0) && (map->scaledenom <= lp->class[j]->minscaledenom)) continue;
        }
             
        /*
@@ -346,12 +338,11 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
         * same as the class name pointer
         */
        if(map->legend.label.encoding || map->legend.label.wrap)
-         transformedText = msTransformLabelText(map,NULL,&map->legend.label, lp->class[j]->name);
+         transformedText = msTransformLabelText(map,NULL,&map->legend.label, text);
        else
-         transformedText = msStrdup(lp->class[j]->name);
+         transformedText = msStrdup(text);
 
-       if(transformedText == NULL || 
-    		   msGetLabelSize(map, &map->legend.label, transformedText, map->legend.label.size, &rect, NULL) != MS_SUCCESS) { /* something bad happened */
+       if(transformedText == NULL || msGetLabelSize(map, &map->legend.label, transformedText, map->legend.label.size, &rect, NULL) != MS_SUCCESS) { /* something bad happened */
          if(transformedText) msFree(transformedText);
          return MS_FAILURE;
        }
@@ -387,8 +378,6 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
 */
 imageObj *msDrawLegend(mapObj *map, int scale_independent)
 {
-
-  
   int i,j; /* loop counters */
   pointObj pnt;
   int size_x, size_y=0;
@@ -396,6 +385,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   rectObj rect;
   imageObj *image = NULL;
   outputFormatObj *format = NULL;
+  char *text;
+
   struct legend_struct {
     int height;
     char *transformedText;
@@ -428,21 +419,24 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
     }
 
-    if (!scale_independent && lp->maxscaledenom <=0 && lp->minscaledenom <=0) {
+    if(!scale_independent && lp->maxscaledenom <=0 && lp->minscaledenom <=0) {
       if((lp->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > lp->maxgeowidth)) continue;
       if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
     }
 
     for(j=lp->numclasses-1;j>=0;j--) {
+      text = lp->class[j]->title?lp->class[j]->title:lp->class[j]->name; /* point to the right legend text, title takes precedence */
+      if(!text) continue; /* skip it */
 
       /* skip the class if the classgroup is defined */
       if(lp->classgroup && (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
         continue;
-      if(!lp->class[j]->name) continue; /* skip it */
+
       if(!scale_independent && map->scaledenom > 0) {  /* verify class scale here */
         if((lp->class[j]->maxscaledenom > 0) && (map->scaledenom > lp->class[j]->maxscaledenom)) continue;
         if((lp->class[j]->minscaledenom > 0) && (map->scaledenom <= lp->class[j]->minscaledenom)) continue;
       }
+
       cur = (legendlabel*) msSmallMalloc(sizeof(legendlabel));
             
       /*
@@ -450,13 +444,13 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
        * this is done conditionnally as the text transformation function
        * does some memory allocations that can be avoided in most cases.
        * the transformed text must be freed once finished, this must be done
-       * conditionnally by testing if the transformed text pointer is the
+       * conditionally by testing if the transformed text pointer is the
        * same as the class name pointer
        */
       if(map->legend.label.encoding || map->legend.label.wrap)
-        cur->transformedText = msTransformLabelText(map,NULL,&map->legend.label,lp->class[j]->name);
+        cur->transformedText = msTransformLabelText(map,NULL,&map->legend.label,text);
       else
-        cur->transformedText = lp->class[j]->name;
+        cur->transformedText = msStrdup(text); /* so we can always do msFree() when cleaning up */
 
       cur->theclass = lp->class[j];
       cur->layer = lp;
@@ -465,9 +459,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
       if(cur->transformedText==NULL || 
     		  msGetLabelSize(map, &map->legend.label, cur->transformedText, map->legend.label.size, &rect, NULL) != MS_SUCCESS) { /* something bad happened, free allocated mem */
-        while(cur) {
-          if(cur->transformedText!=cur->theclass->name)
-            free(cur->transformedText);
+        while(cur) {          
+          free(cur->transformedText);
           head = cur;
           cur = cur->pred;
           free(head);
@@ -485,9 +478,9 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   /* initialize the legend image */
   image = msImageCreate(size_x, size_y, format, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->legend.imagecolor);
   if(!image) {
-      msSetError(MS_MISCERR, "Unable to initialize image.", "msDrawScalebar()");
-      return NULL;
-    }
+    msSetError(MS_MISCERR, "Unable to initialize image.", "msDrawLegend()");
+    return NULL;
+  }
   //image = renderer->createImage(size_x,size_y,format,&(map->legend.imagecolor));
 
   /* drop this reference to output format */
@@ -501,8 +494,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     int number_of_newlines=0, offset=0;
 
     /* set the scale factor so that scale dependant symbols are drawn in the legend with their default size */
-    if(cur->layer->sizeunits != MS_PIXELS)
-    {
+    if(cur->layer->sizeunits != MS_PIXELS) {
        map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
       cur->layer->scalefactor = (msInchesPerUnit(cur->layer->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
     }
@@ -531,9 +523,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     }
     pnt.y += map->legend.keyspacingy; /* bump y for next label */
         
-    /* free the transformed text if needed */
-    if(cur->transformedText!=cur->theclass->name)
-      free(cur->transformedText);
+    /* clean up */
+    free(cur->transformedText);
     head = cur;
     cur = cur->pred;
     free(head);
