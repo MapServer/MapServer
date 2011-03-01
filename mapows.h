@@ -113,6 +113,10 @@ MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
                                                 hashTableObj *sec,
                                                 const char *namespaces,
                                                 const char *name);
+MS_DLL_EXPORT int msOWSRequestIsEnabled(mapObj *map, layerObj *layer, 
+                                        const char *namespaces, const char *name);
+MS_DLL_EXPORT int msOWSParseRequestMetadata(const char *metadata, const char *request, 
+                                            int *disabled);
 
 /* Constants for OWS Service version numbers */
 #define OWS_0_1_2   0x000102
@@ -358,7 +362,8 @@ MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, 
  *====================================================================*/
 int msWMSDispatch(mapObj *map, cgiRequestObj *req, int force_wms_mode); 
 MS_DLL_EXPORT int msWMSLoadGetMapParams(mapObj *map, int nVersion,
-                                        char **names, char **values, int numentries, char *wms_exception_format);
+                                        char **names, char **values, int numentries, 
+                                        char *wms_exception_format, const char *wms_request);
 
 
 /*====================================================================

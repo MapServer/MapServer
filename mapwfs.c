@@ -801,6 +801,10 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       if (lp->status == MS_DELETE)
          continue;
 
+      if (!msOWSRequestIsEnabled(map, lp, "F", "GetCapabilities"))
+          continue;
+
+      printf("passed\n");
       /* List only vector layers in which DUMP=TRUE */
       if (msWFSIsLayerSupported(lp))
       {
@@ -1120,7 +1124,8 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   /* Validate layers */
   if (numlayers > 0) {
     for (i=0; i<numlayers; i++) {
-      if (msGetLayerIndex(map, layers[i]) < 0) {
+        int index = msGetLayerIndex(map, layers[i]);
+        if ( (index < 0) || (!msOWSRequestIsEnabled(map, GET_LAYER(map, index), "F", "DescribeFeatureType")) ) {
 	      msSetError(MS_WFSERR, "Invalid typename (%s).", "msWFSDescribeFeatureType()", layers[i]);/* paramsObj->pszTypeName); */
               return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
       }
@@ -1238,7 +1243,8 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
       bFound = 1;
     }
 
-    if ((numlayers == 0 || bFound) && msWFSIsLayerSupported(lp)) {
+    if ((numlayers == 0 || bFound) && msWFSIsLayerSupported(lp) && 
+        (msOWSRequestIsEnabled(map, lp, "F", "DescribeFeatureType"))) {
 
       /*
       ** OK, describe this layer IF you can open it and retrieve items
@@ -1726,7 +1732,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
 	lp = GET_LAYER(map, j);
 	
-	if (msWFSIsLayerSupported(lp) && lp->name && strcasecmp(lp->name, layers[k]) == 0) {
+	if (msWFSIsLayerSupported(lp) && lp->name && (strcasecmp(lp->name, layers[k]) == 0) && 
+            (msOWSRequestIsEnabled(map, lp, "F", "GetFeature"))) {
 	  bLayerFound = MS_TRUE;
 	  
 	  lp->status = MS_ON;

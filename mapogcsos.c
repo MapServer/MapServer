@@ -1373,7 +1373,6 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
     /*Offerings */
      psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Contents", NULL);
      psMainNode = xmlNewChild(psNode, NULL, BAD_CAST "ObservationOfferingList", NULL);
-                                             
      
      /*go through the layers and check for metadata sos_offering_id.
        One or more layers could have the same offering id. In that case they
@@ -1394,7 +1393,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                 continue;
 
              value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_id");
-             if (value)
+             if (value && (msOWSRequestIsEnabled(map, lp, "S", "GetCapabilities")))
              {
                  nCurrentOff = -1;
                  for (j=0; j<nOfferings; j++)
@@ -1415,7 +1414,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                  }
              }
          }
-
+         
          if (nOfferings > 0)
          {
              for (i=0; i<nOfferings; i++)
@@ -1868,8 +1867,9 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
 
   /*validate if offering exists*/
   for (i=0; i<map->numlayers; i++) {
-    pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
-    if (pszTmp && (strcasecmp(pszTmp, sosparams->pszOffering) == 0))
+      pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
+    if (pszTmp && (strcasecmp(pszTmp, sosparams->pszOffering) == 0) && 
+        (msOWSRequestIsEnabled(map, GET_LAYER(map, i), "S", "GetObservation")))
       break;
   }
 
@@ -2650,7 +2650,8 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
         if (tokens[k] && strlen(tokens[k]) > 0) {
           pszProcedureURI = msStrdup("urn:ogc:def:procedure:");
           pszProcedureURI = msStringConcatenate(pszProcedureURI, tokens[k]);
-          if (pszProcedureURI && strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) {
+          if ( (pszProcedureURI && strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) &&
+               (msOWSRequestIsEnabled(map, lp, "S", "DescribeSensor")) ) {
             bFound = 1; 
             pszProcedureId = msStrdup(tokens[k]);
             msFree(pszProcedureURI);

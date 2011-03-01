@@ -750,8 +750,11 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->updatesequence, msOWSGetSchemasLocation(map), params->version); 
 
-  for(i=0; i<map->numlayers; i++)
-  {
+  for(i=0; i<map->numlayers; i++) {
+  
+      if (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "GetCapabilities"))
+          continue;
+  
       if( msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params) != MS_SUCCESS ) {
           msIO_printf("</ContentMetadata>\n");
           return MS_FAILURE;
@@ -1191,7 +1194,9 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
           
         for(i=0; i<map->numlayers; i++) {
           coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "COM", "name", GET_LAYER(map, i)->name);
-          if( EQUAL(coverageName, coverages[k]) ) break;
+          if( EQUAL(coverageName, coverages[k]) &&
+              (msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage")) )
+              break;
         }
 
         /* i = msGetLayerIndex(map, coverages[k]); */
@@ -1237,8 +1242,12 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
       }
     }
   } else { /* return all layers */
-    for(i=0; i<map->numlayers; i++)
-      msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
+      for(i=0; i<map->numlayers; i++) {
+          if (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage"))
+              continue;
+
+          msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
+      }
   }
 
  
@@ -1455,7 +1464,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   lp = NULL;
   for(i=0; i<map->numlayers; i++) {
      coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "COM", "name", GET_LAYER(map, i)->name);
-    if( EQUAL(coverageName, params->coverages[0]) ) {
+    if( EQUAL(coverageName, params->coverages[0]) &&
+        (msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "GetCoverage")) ) {
       lp = GET_LAYER(map, i);
       break;
     }

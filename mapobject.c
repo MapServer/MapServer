@@ -805,6 +805,7 @@ int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
 #ifdef USE_WMS_SVR
     int version;
     char *wms_exception_format = NULL;
+    const char *wms_request= NULL;
     int i =0;
 
     version = msOWSParseVersionString(wmtver);
@@ -812,9 +813,12 @@ int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
      {
          if (strcasecmp(request->ParamNames[i], "EXCEPTIONS") == 0)
            wms_exception_format = request->ParamValues[i];
+         else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
+             wms_request = request->ParamValues[i];
+
      }
-    return msWMSLoadGetMapParams(map, version, request->ParamNames,
-                                 request->ParamValues, request->NumParams,  wms_exception_format);
+     return msWMSLoadGetMapParams(map, version, request->ParamNames,
+                                  request->ParamValues, request->NumParams,  wms_exception_format, wms_request);
 #else
     msSetError(MS_WMSERR, "WMS server support is not available.",
                "msMapLoadOWSParameters()");

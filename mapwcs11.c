@@ -545,6 +545,9 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
             if(!msWCSIsLayerSupported(layer)) 
                 continue;
             
+            if (!msOWSRequestIsEnabled(map, layer, "C", "GetCapabilities"))
+                continue;
+
             status = msWCSGetCapabilities11_CoverageSummary( 
                 map, params, req, psDoc, psMainNode, layer );
             if(status != MS_SUCCESS) return MS_FAILURE;
@@ -882,7 +885,8 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
     if(params->coverages) { /* use the list */
         for( j = 0; params->coverages[j]; j++ ) {
             i = msGetLayerIndex(map, params->coverages[j]);
-            if(i == -1) {
+            if ( (i == -1) || (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage")) )
+            {
                 msSetError( MS_WCSERR,
                             "COVERAGE %s cannot be opened / does not exist",
                             "msWCSDescribeCoverage()", params->coverages[j]);
@@ -932,10 +936,15 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
                                                         psOwsNs );
         }
     } else { /* return all layers */
-        for(i=0; i<map->numlayers; i++)
+        for(i=0; i<map->numlayers; i++) {
+
+            if (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage"))
+                continue;
+
             msWCSDescribeCoverage_CoverageDescription11((GET_LAYER(map, i)), 
                                                         params, psRootNode,
                                                         psOwsNs );
+        }
     }
   
 /* -------------------------------------------------------------------- */

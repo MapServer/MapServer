@@ -142,6 +142,117 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 
 
 /*
+** msOWSRequestIsEnabled()
+**
+** Check if a layer is visible for a specific OWS request.
+**
+** 'namespaces' is a string with a letter for each namespace to lookup 
+** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
+** If namespaces is NULL then this function just does a regular metadata
+** lookup.
+*/
+int msOWSRequestIsEnabled(mapObj *map, layerObj *layer, 
+                          const char *namespaces, const char *request)
+{
+    int disabled = MS_FALSE; /* explicitly disabled flag */
+    
+    if (request == NULL)
+        return MS_FALSE;
+
+    /* First, we check in the layer metadata */
+    const char *enable_request = msOWSLookupMetadata(&layer->metadata, namespaces, "enable_request");
+    if (msOWSParseRequestMetadata(enable_request, request, &disabled))
+        return MS_TRUE;
+    if (disabled) return MS_FALSE;
+
+    enable_request = msOWSLookupMetadata(&layer->metadata, "O", "enable_request");
+    if (msOWSParseRequestMetadata(enable_request, request, &disabled))
+        return MS_TRUE;
+    if (disabled) return MS_FALSE;
+
+    /* then we check in the map metadata */
+    enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
+    if (msOWSParseRequestMetadata(enable_request, request, &disabled))
+        return MS_TRUE;
+    if (disabled) return MS_FALSE;
+    
+    enable_request = msOWSLookupMetadata(&map->web.metadata, "O", "enable_request");
+    if (msOWSParseRequestMetadata(enable_request, request, &disabled))
+        return MS_TRUE;
+    if (disabled) return MS_FALSE;
+    
+    return MS_FALSE;
+}
+
+/* msOWSParseRequestMetadata 
+ *  
+ * This function parse a enable_request metadata string and check if the
+ * given request is present and enabled.
+ */
+int msOWSParseRequestMetadata(const char *metadata, const char *request, int *disabled)
+{
+    char requestBuffer[32];
+    int wordFlag = MS_FALSE;
+    int disableFlag = MS_FALSE;
+    int allFlag = MS_FALSE;
+    char *bufferPtr, *ptr = NULL;
+    int i;
+    size_t len = 0;
+
+    *disabled = MS_FALSE;
+    
+    if (metadata == NULL)
+        return MS_FALSE;
+
+    ptr = (char*)metadata;
+    len = strlen(ptr);
+    requestBuffer[0] = '\0';
+    bufferPtr = requestBuffer;
+    
+    for (i=0; i<=len;++i,++ptr) {
+        
+        if (!wordFlag && isspace(*ptr))
+            continue;
+        
+        wordFlag = MS_TRUE;
+        
+        if (*ptr == '!') {
+            disableFlag = MS_TRUE;
+            continue;
+        }
+        else if ( (*ptr == ' ') || (ptr[1] == '\0')) { /* end of word */
+            if (ptr[1] == '\0') {
+                *bufferPtr = *ptr;
+                ++bufferPtr;
+            }
+            
+            *bufferPtr = '\0'; 
+            if (strcasecmp(request, requestBuffer) == 0) {
+                *disabled =  MS_TRUE; /* explicitly disabled, will stop the process in msOWSRequestIsEnabled() */
+                return (disableFlag ? MS_FALSE:MS_TRUE);
+            }
+            else {
+                if (strcmp("*", requestBuffer) == 0) { /* check if we read the all flag */
+                    if (disableFlag)
+                        *disabled =  MS_TRUE;
+                    allFlag = disableFlag ? MS_FALSE:MS_TRUE;
+                }
+                /* reset flags */
+                wordFlag = MS_FALSE;
+                disableFlag = MS_FALSE;
+                bufferPtr = requestBuffer;
+            }
+        }
+        else {
+            *bufferPtr = *ptr;
+            ++bufferPtr;
+        } 
+    }
+    
+    return allFlag;
+}
+
+/*
 ** msOWSLookupMetadata()
 **
 ** Attempts to lookup a given metadata name in multiple OWS namespaces.
@@ -754,7 +865,7 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
 
     for (i=0; i<map->numlayers; i++)
     {
-       if (GET_LAYER(map, i)->group && (strcmp(GET_LAYER(map, i)->group, pszGroupName) == 0) && &(GET_LAYER(map, i)->metadata))
+        if (GET_LAYER(map, i)->group && (strcmp(GET_LAYER(map, i)->group, pszGroupName) == 0) && &(GET_LAYER(map, i)->metadata))
        {
          if((value = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), namespaces, name)))
          { 

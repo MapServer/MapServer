@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Implemented RFC 67: Enable/Disable layers in ogc web services (#3703)
+
 - Class title can now be used in legends. It's value takes precedence over class name. Previously
   title was not used any place in the code but it is supported for read/write. (#3702)
 

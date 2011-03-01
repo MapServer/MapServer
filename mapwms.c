@@ -374,7 +374,7 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
 **
 */
 int msWMSLoadGetMapParams(mapObj *map, int nVersion,
-                          char **names, char **values, int numentries, char *wms_exception_format)
+                          char **names, char **values, int numentries, char *wms_exception_format, const char *wms_request)
 {
   int i, adjust_extent = MS_FALSE, nonsquare_enabled = MS_FALSE;
   int iUnits = -1;
@@ -510,10 +510,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           for (j=0; j<map->numlayers; j++)
           {
               /* Turn on selected layers only. */
-              if ((GET_LAYER(map, j)->name &&
-                   strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
-                  (map->name && strcasecmp(map->name, layers[k]) == 0) ||
-                  (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0))
+              if ( ((GET_LAYER(map, j)->name &&
+                     strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
+                    (map->name && strcasecmp(map->name, layers[k]) == 0) ||
+                    (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0)) &&
+                   (msOWSRequestIsEnabled(map, GET_LAYER(map, j), "M", wms_request)) )
               {
                   if (GET_LAYER(map, j)->status != MS_DEFAULT)
                   {
@@ -2527,8 +2528,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
          layerObj *lp;
          lp = (GET_LAYER(map, i));
 
-         if (pabLayerProcessed[i] || (lp->status == MS_DELETE))
-             continue;  /* Layer has already been handled */
+         if (pabLayerProcessed[i] || (lp->status == MS_DELETE) || (!msOWSRequestIsEnabled(map, lp, "M", "GetCapabilities")))
+             continue;  /* Layer is hidden or has already been handled */
 
 
          if (numNestedGroups[i] > 0) 
@@ -2825,6 +2826,11 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       }
   }
 
+  /* turn off layer if WMS GetMap is not enabled */
+  for (i=0; i<map->numlayers; i++)
+      if (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "M", "GetMap"))
+          GET_LAYER(map, i)->status = MS_OFF;
+
   if (sldrequested && sldspatialfilter)
   {
       /* set the quermap style so that only selected features will be retruned */
@@ -2863,8 +2869,8 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       }
 
   }
-  else
-    img = msDrawMap(map, MS_FALSE);
+  else 
+      img = msDrawMap(map, MS_FALSE);
   if (img == NULL)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
   
@@ -3024,9 +3030,10 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
         /* Force all layers OFF by default */
 	GET_LAYER(map, j)->status = MS_OFF;
         for(k=0; k<numlayers; k++) {
-          if ((GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
+         if (((GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
               (map->name && strcasecmp(map->name, layers[k]) == 0) ||
-              (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0))
+              (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0)) &&
+             (msOWSRequestIsEnabled(map, GET_LAYER(map, j), "M", "GetFeatureInfo")))
             {
                 numlayers_found++;     
                 GET_LAYER(map, j)->status = MS_ON;               
@@ -3091,7 +3098,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   for (i=0; i<map->numlayers; i++)
   {
       if (GET_LAYER(map, i)->status == MS_ON && !msIsLayerQueryable(GET_LAYER(map, i)))
-      {
+      { 
           msSetError(MS_WMSERR, "Requested layer(s) are not queryable.", "msWMSFeatureInfo()");
           return msWMSException(map, nVersion, "LayerNotQueryable", wms_exception_format);
       }
@@ -3539,8 +3546,9 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      for (i=0; i<map->numlayers; i++)
      {
          lp = GET_LAYER(map, i);
-         if ((lp->name && strcasecmp(lp->name, pszLayer) == 0) ||
-             (lp->group && strcasecmp(lp->group, pszLayer) == 0))
+         if ( ((lp->name && strcasecmp(lp->name, pszLayer) == 0) ||
+               (lp->group && strcasecmp(lp->group, pszLayer) == 0)) &&
+              (msOWSRequestIsEnabled(map, lp, "M", "GetLegendGraphic")) )
            {
                nLayers++;
                lp->status = MS_ON;
@@ -4039,7 +4047,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, int force_wms_mode)
       strcasecmp(request, "feature_info") == 0 || strcasecmp(request, "GetFeatureInfo") == 0 || strcasecmp(request, "DescribeLayer") == 0)
   {
       status = msWMSLoadGetMapParams(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams, 
-                                     wms_exception_format);
+                                     wms_exception_format, request);
       if (status != MS_SUCCESS) return status;
   }
 

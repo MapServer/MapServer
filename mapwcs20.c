@@ -2789,6 +2789,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             if(!msWCSIsLayerSupported(layer))
                 continue;
 
+            if (!msOWSRequestIsEnabled(map, layer, "C", "GetCapabilities"))
+                continue;
+
             status = msWCSGetCapabilities20_CoverageSummary(
                 map, params, psDoc, psNode, layer );
             if(status != MS_SUCCESS)
@@ -2988,7 +2991,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params)
         for (j = 0; params->ids[j]; j++)
         {
             i = msGetLayerIndex(map, params->ids[j]);
-            if (i == -1)
+            if (i == -1 || (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage")) )
             {
                 msSetError(MS_WCSERR, "Unknown coverage: (%s)",
                         "msWCSDescribeCoverage20()", params->ids[j]);
@@ -3258,7 +3261,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata),
                                               "COM", "name",
                                               GET_LAYER(map, i)->name);
-        if (EQUAL(coverageName, params->ids[0]))
+        if (EQUAL(coverageName, params->ids[0]) && (msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "GetCoverage")))
         {
             layer = GET_LAYER(map, i);
             i = map->numlayers; /* to exit loop don't use break, we want to free resources first */

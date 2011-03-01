@@ -428,6 +428,9 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
      {
          layerObj *lp;
          lp = GET_LAYER(map, i);
+         
+         if (!msOWSRequestIsEnabled(map, lp, "F", "GetCapabilities"))
+             continue;
 
          /* List only vector layers in which DUMP=TRUE */
          if (msWFSIsLayerSupported(lp))
