@@ -1802,7 +1802,6 @@ void msAlphaBlend( unsigned char red_src, unsigned char green_src,
                     unsigned char *red_dst, unsigned char *green_dst,
                     unsigned char *blue_dst, unsigned char *alpha_dst )
 {
-    double alpha , onealpha, dstalpha;
 /* -------------------------------------------------------------------- */
 /*      Simple cases we want to handle fast.                            */
 /* -------------------------------------------------------------------- */
@@ -1818,29 +1817,38 @@ void msAlphaBlend( unsigned char red_src, unsigned char green_src,
             *alpha_dst = 255;
         return;
     }
-    alpha = alpha_src/255.0;
+
     if( alpha_dst && *alpha_dst == 0) {
-       *red_dst = red_src * alpha;
-       *green_dst = green_src *alpha;
-       *blue_dst = blue_src *alpha;
+       *red_dst = red_src;
+       *green_dst = green_src;
+       *blue_dst = blue_src;
        *alpha_dst = alpha_src;
        return;
     }
-    onealpha = 1.0-alpha;
-    if(!alpha_dst || *alpha_dst == 255) {
-       *red_dst = red_src * alpha + onealpha * *red_dst;
-       *green_dst = green_src * alpha + onealpha * *green_dst;
-       *blue_dst = blue_src * alpha + onealpha * *blue_dst;
-    } else {
-       dstalpha = alpha + *alpha_dst*(onealpha/255.0);
-       *red_dst = (red_src * alpha + onealpha * *red_dst)*dstalpha;
-       *green_dst = (green_src * alpha + onealpha * *green_dst)*dstalpha;
-       *blue_dst = (blue_src * alpha + onealpha * *blue_dst)*dstalpha;
-       *alpha_dst = dstalpha * 255;
+
+/* -------------------------------------------------------------------- */
+/*      Cases with actual blending.                                     */
+/* -------------------------------------------------------------------- */
+    if(!alpha_dst || *alpha_dst == 255) 
+    {
+        int weight_dst = 255 - alpha_src;
+
+        *red_dst = (red_src * alpha_src + *red_dst * weight_dst) / 255;
+        *green_dst = (green_src * alpha_src + *green_dst * weight_dst) / 255;
+        *blue_dst = (blue_src * alpha_src + *blue_dst * weight_dst) / 255;
+    } 
+    else 
+    {
+        int weight_src = alpha_src;
+        int weight_dst = (*alpha_dst * (255-alpha_src)) / 255;
+        int weight_tot = weight_src + weight_dst;
+
+        *red_dst = (red_src*weight_src + *red_dst*weight_dst) / weight_tot;
+        *green_dst = (green_src*weight_src + *green_dst*weight_dst) /weight_tot;
+        *blue_dst = (blue_src*weight_src + *blue_dst*weight_dst) / weight_tot;
+
+        *alpha_dst = weight_tot;
     }
-    
-    
-    return;
 }
 
 /*
