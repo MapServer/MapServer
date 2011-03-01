@@ -1927,15 +1927,12 @@ void initExpression(expressionObj *exp)
   exp->tokens = exp->curtoken = NULL;
 }
 
-void freeExpression(expressionObj *exp)
+void freeExpressionTokens(expressionObj *exp)
 {
   tokenListNodeObjPtr node = NULL;
   tokenListNodeObjPtr nextNode = NULL;
 
   if(!exp) return;
-
-  msFree(exp->string);
-  if((exp->type == MS_REGEX) && exp->compiled) ms_regfree(&(exp->regex));
 
   if(exp->tokens) {
     node = exp->tokens;
@@ -1964,8 +1961,16 @@ void freeExpression(expressionObj *exp)
       msFree(node);
       node = nextNode;
     }
+    exp->tokens = exp->curtoken = NULL;
   }
+}
 
+void freeExpression(expressionObj *exp)
+{
+  if(!exp) return;
+  msFree(exp->string);
+  if((exp->type == MS_REGEX) && exp->compiled) ms_regfree(&(exp->regex));
+  freeExpressionTokens(exp);
   initExpression(exp); /* re-initialize */
 }
 

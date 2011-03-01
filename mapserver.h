@@ -1690,6 +1690,7 @@ MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, char *value);
 MS_DLL_EXPORT int msLoadExpressionString(expressionObj *exp, char *value);
 MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
 MS_DLL_EXPORT void initExpression(expressionObj *exp);
+MS_DLL_EXPORT void freeExpressionTokens(expressionObj *exp);
 MS_DLL_EXPORT void freeExpression(expressionObj *exp);
 
 MS_DLL_EXPORT void msLayerSubstituteString(layerObj *layer, const char *from, const char *to);
