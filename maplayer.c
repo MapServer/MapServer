@@ -200,7 +200,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 */
 void msLayerClose(layerObj *layer) 
 {
-  int i;
+  int i,j;
 
   /* no need for items once the layer is closed */
   msLayerFreeItemInfo(layer);
@@ -211,9 +211,12 @@ void msLayerClose(layerObj *layer)
   }
 
   /* clear out items used as part of expressions (bug #2702) -- what about the layer filter? */
+  freeExpressionTokens(&(layer->filter));
   for(i=0; i<layer->numclasses; i++) {    
-    freeExpression(&(layer->class[i]->expression));
-    freeExpression(&(layer->class[i]->text));
+    freeExpressionTokens(&(layer->class[i]->expression));
+    freeExpressionTokens(&(layer->class[i]->text));
+    for(j=0; j<layer->class[i]->numstyles; j++)
+      freeExpressionTokens(&(layer->class[i]->styles[j]->_geomtransform));
   }
 
   if (layer->vtable) {
