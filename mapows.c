@@ -155,12 +155,13 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
                           const char *namespaces, const char *request)
 {
     int disabled = MS_FALSE; /* explicitly disabled flag */
+    const char *enable_request;
     
     if (request == NULL)
         return MS_FALSE;
 
     /* First, we check in the layer metadata */
-    const char *enable_request = msOWSLookupMetadata(&layer->metadata, namespaces, "enable_request");
+    enable_request = msOWSLookupMetadata(&layer->metadata, namespaces, "enable_request");
     if (msOWSParseRequestMetadata(enable_request, request, &disabled))
         return MS_TRUE;
     if (disabled) return MS_FALSE;
