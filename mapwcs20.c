@@ -3600,7 +3600,17 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         return msWCSException(map, NULL, NULL, params->version);
 
     /* Actually produce the "grid". */
-    status = msDrawRasterLayerLow( map, layer, image, NULL );
+    if( MS_RENDERER_RAWDATA(map->outputformat) )
+    {
+        status = msDrawRasterLayerLow( map, layer, image, NULL );
+    }
+    else
+    {
+        rasterBufferObj rb;
+        MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
+        status = msDrawRasterLayerLow( map, layer, image, &rb );
+    }
+
     if( status != MS_SUCCESS ) {
         return msWCSException(map, NULL, NULL, params->version );
     }
