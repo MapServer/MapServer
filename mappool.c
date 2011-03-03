@@ -56,13 +56,17 @@ following information for each:
 
 The life span indicator is controlled by the CLOSE_CONNECTION PROCESSING
 option on the layer(s).  If this is set to NORMAL (or not set at all) the
-connection will be close as soon as the reference count drops to zero.  This
+connection will be closed as soon as the reference count drops to zero.  This
 is MS_LIFE_ZEROREF, and in normal use results in connections only be shared
 between layers in a given map as the connection will be closed when no layers
 are open against it anymore.  The other possible value for the CLOSE_CONNECTION
 option is DEFER which basically results in the connection being kept open
 till the application closes (msCleanup() will ensure the connection is closed
 on exit if called).  This case is called MS_LIFE_FOREVER.
+The CLOSE_CONNECTION=ALWAYS setting provides to suppress the connection pooling
+for a particular layer. In this case the MS_LIFE_SINGLE setting is used, which
+ensures that a new connection is created for each request and it is always 
+closed when the connection is released. This kind of connection cannot be reused.
 
 The callback is a function provided with the connection handle when it is
 registered.  It takes a single "void *" argument which is the connection
@@ -137,6 +141,7 @@ MS_CVSID("$Id$")
 
 #define MS_LIFE_FOREVER       -1
 #define MS_LIFE_ZEROREF       -2
+#define MS_LIFE_SINGLE        -3
 
 typedef struct {
     enum MS_CONNECTION_TYPE connectiontype;
@@ -253,6 +258,8 @@ void msConnPoolRegister( layerObj *layer,
         conn->lifespan = MS_LIFE_ZEROREF;
     else if( strcasecmp(close_connection,"DEFER") == 0 )
         conn->lifespan = MS_LIFE_FOREVER;
+    else if( strcasecmp(close_connection,"ALWAYS") == 0 )
+        conn->lifespan = MS_LIFE_SINGLE;
     else
     {
         msDebug("msConnPoolRegister(): "
@@ -346,7 +353,8 @@ void *msConnPoolRequest( layerObj *layer )
 
         if( layer->connectiontype == conn->connectiontype
             && strcasecmp( layer->connection, conn->connection ) == 0 
-            && (conn->ref_count == 0 || conn->thread_id == msGetThreadId()) )
+            && (conn->ref_count == 0 || conn->thread_id == msGetThreadId())
+            && conn->lifespan != MS_LIFE_SINGLE)
         {
             void *conn_handle = NULL;
 
@@ -409,7 +417,7 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
             if( conn->ref_count == 0 )
                 conn->thread_id = 0;
 
-            if( conn->ref_count == 0 && conn->lifespan == MS_LIFE_ZEROREF )
+            if( conn->ref_count == 0 && (conn->lifespan == MS_LIFE_ZEROREF || conn->lifespan == MS_LIFE_SINGLE) )
                 msConnPoolClose( i );
 
             msReleaseLock( TLOCK_POOL );
