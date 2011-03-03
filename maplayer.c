@@ -635,7 +635,7 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* sha
       if (rv != MS_SUCCESS)
           return rv;
   }
-  return layer->vtable->LayerGetAutoStyle(map, layer, c, tile, record);
+  return layer->vtable->LayerGetAutoStyle(map, layer, c, shape);
 }
 
 /*
