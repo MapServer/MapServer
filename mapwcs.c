@@ -334,39 +334,186 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
 /* -------------------------------------------------------------------- */
 /*      Check if this appears to be an XML POST WCS request.            */
 /* -------------------------------------------------------------------- */
+
+  msDebug("msWCSParseRequest(): request is %s.\n", (request->type == MS_POST_REQUEST)?"POST":"KVP");
+
   if( request->type == MS_POST_REQUEST 
       && request->postrequest )
   {
-      const char *pszSERVICE = request->postrequest;
+#if defined(USE_LIBXML2)
+      xmlDocPtr doc = NULL;
+      xmlNodePtr root = NULL, child = NULL;
+      char *tmp = NULL;
 
-      while( *pszSERVICE != '\0' )
-      {
-          if( (*pszSERVICE == 's' || *pszSERVICE == 'S') 
-              && strncasecmp(pszSERVICE,"SERVICE",7) == 0 )
-          {
-              pszSERVICE += 7;
-              break;
-          }
-              
-          pszSERVICE++;
+      /* parse to DOM-Structure and get root element */
+      if((doc = xmlParseMemory(request->postrequest, strlen(request->postrequest)))
+              == NULL) {
+          xmlErrorPtr error = xmlGetLastError();
+          msSetError(MS_WCSERR, "XML parsing error: %s",
+                  "msWCSParseRequest()", error->message);
+          return MS_FAILURE;
       }
+      root = xmlDocGetRootElement(doc);
 
-      while( *pszSERVICE == '"' 
-             || *pszSERVICE == '\''
-             || *pszSERVICE == ' '
-             || *pszSERVICE == '=' )
-          pszSERVICE++;
-      
-      /* apparently not a WCS request? */
-      if( strncasecmp(pszSERVICE,"WCS",3) != 0 )
-          return MS_SUCCESS;
+      /* Get service, version and request from root */
+      params->request = strdup((char *) root->name);
+      if ((tmp = (char *) xmlGetProp(root, BAD_CAST "service")) != NULL)
+          params->service = tmp;
+      if ((tmp = (char *) xmlGetProp(root, BAD_CAST "version")) != NULL)
+          params->version = tmp;
 
-      msSetError(MS_WCSERR, 
-                 "WCS Server does not support XML POST requests, please use KVP.", 
-                 "msWCSParseRequest()" );
-      msWCSException(map, NULL, NULL, params->version );
-
+      /* search first level children, either CoverageID,  */
+      for (child = root->children; child != NULL; child = child->next)
+      {
+          if (EQUAL((char *)child->name, "AcceptVersions"))
+          {
+              /* will be overridden to 1.1.1 anyway */
+          }
+          else if (EQUAL((char *) child->name, "UpdateSequence"))
+          {
+              params->updatesequence = (char *)xmlNodeGetContent(child);
+          }
+          else if (EQUAL((char *) child->name, "Sections"))
+          {
+              xmlNodePtr sectionNode = NULL;
+              /* concatenate all sections by ',' */
+              for(sectionNode = child->children; sectionNode != NULL; sectionNode = sectionNode->next)
+              {
+                  if(!EQUAL((char *)sectionNode->name, "Section"))
+                      continue;
+                  char *content = (char *)xmlNodeGetContent(sectionNode);
+                  if(!params->section)
+                  {
+                      params->section = content;
+                  }
+                  else
+                  {
+                      params->section = msStringConcatenate(params->section, ",");
+                      params->section = msStringConcatenate(params->section, content);
+                      xmlFree(content);
+                  }
+              }
+          }
+          else if(EQUAL((char *) child->name, "AcceptFormats"))
+          {
+              /* TODO: implement */
+          }
+          else if(EQUAL((char *) child->name, "Identifier"))
+          {
+              char *content = (char *)xmlNodeGetContent(child);
+              params->coverages = CSLAddString(params->coverages, content);
+              xmlFree(content);
+          }
+          else if(EQUAL((char *) child->name, "DomainSubset"))
+          {
+              xmlNodePtr tmpNode = NULL;
+              for(tmpNode = child->children; tmpNode != NULL; tmpNode = tmpNode->next)
+              {
+                  if(EQUAL((char *) tmpNode->name, "BoundingBox"))
+                  {
+                      xmlNodePtr cornerNode = NULL;
+                      params->crs = (char *)xmlGetProp(tmpNode, BAD_CAST "crs");
+                      if( strncasecmp(params->crs,"urn:ogc:def:crs:",16) == 0
+                          && strncasecmp(params->crs+strlen(params->crs)-8,"imageCRS",8)==0)
+                         strcpy( params->crs, "imageCRS" );
+                      for(cornerNode = tmpNode->children; cornerNode != NULL; cornerNode = cornerNode->next)
+                      {
+                          if(EQUAL((char *) cornerNode->name, "LowerCorner"))
+                          {
+                              char *value = (char *)xmlNodeGetContent(cornerNode);
+                              tokens = msStringSplit(value, ' ', &n);
+                              if(tokens==NULL || n < 2) {
+                                msSetError(MS_WCSERR, "Wrong number of arguments for LowerCorner",
+                                           "msWCSParseRequest()");
+                                return msWCSException(map, "InvalidParameterValue", "LowerCorner",
+                                                      params->version );
+                              }
+                              params->bbox.minx = atof(tokens[0]);
+                              params->bbox.miny = atof(tokens[1]);
+                              msFreeCharArray(tokens, n);
+                              xmlFree(value);
+                          }
+                          if(EQUAL((char *) cornerNode->name, "UpperCorner"))
+                          {
+                              char *value = (char *)xmlNodeGetContent(cornerNode);
+                              tokens = msStringSplit(value, ' ', &n);
+                              if(tokens==NULL || n < 2) {
+                                msSetError(MS_WCSERR, "Wrong number of arguments for UpperCorner",
+                                           "msWCSParseRequest()");
+                                return msWCSException(map, "InvalidParameterValue", "UpperCorner",
+                                                      params->version );
+                              }
+                              params->bbox.maxx = atof(tokens[0]);
+                              params->bbox.maxy = atof(tokens[1]);
+                              msFreeCharArray(tokens, n);
+                              xmlFree(value);
+                          }
+                      }
+                  }
+              }
+          }
+          else if(EQUAL((char *) child->name, "RangeSubset"))
+          {
+              /* TODO: not implemented in mapserver WCS 1.1? */
+          }
+          else if(EQUAL((char *) child->name, "Output"))
+          {
+              xmlNodePtr tmpNode = NULL;
+              params->format = (char *)xmlGetProp(child, BAD_CAST "format");
+              for(tmpNode = child->children; tmpNode != NULL; tmpNode = tmpNode->next)
+              {
+                  if(EQUAL((char *) tmpNode->name, "GridCRS"))
+                  {
+                      xmlNodePtr crsNode = NULL;
+                      for(crsNode = tmpNode->children; crsNode != NULL; crsNode = crsNode->next)
+                      {
+                          if(EQUAL((char *) crsNode->name, "GridBaseCRS"))
+                          {
+                              params->response_crs = (char *) xmlNodeGetContent(crsNode);
+                          }
+                          else if (EQUAL((char *) crsNode->name, "GridOrigin"))
+                          {
+                              char *value = (char *)xmlNodeGetContent(crsNode);
+                              tokens = msStringSplit(value, ' ', &n);
+                              if(tokens==NULL || n < 2) {
+                                msSetError(MS_WCSERR, "Wrong number of arguments for GridOrigin",
+                                           "msWCSParseRequest()");
+                                return msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                                                      params->version );
+                              }
+                              params->originx = atof(tokens[0]);
+                              params->originy = atof(tokens[1]);
+                              msFreeCharArray(tokens, n);
+                              xmlFree(value);
+                          }
+                          else if (EQUAL((char *) crsNode->name, "GridOffsets"))
+                          {
+                              char *value = (char *)xmlNodeGetContent(crsNode);
+                              tokens = msStringSplit(value, ' ', &n);
+                              if(tokens==NULL || n < 2) {
+                                  msSetError(MS_WCSERR, "Wrong number of arguments for GridOffsets",
+                                  "msWCSParseRequest()");
+                                  return msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                                                        params->version );
+                              }
+                              /* take absolute values to convert to positive RESX/RESY style
+                              WCS 1.0 behavior.  *but* this does break some possibilities! */
+                              params->resx = fabs(atof(tokens[0]));
+                              params->resy = fabs(atof(tokens[1]));
+                              msFreeCharArray(tokens, n);
+                              xmlFree(value);
+                          }
+                      }
+                  }
+              }
+          }
+      }
+      xmlFreeDoc(doc);
+      xmlCleanupParser();
+      return MS_SUCCESS;
+#else /* defined(USE_LIBXML2) */
       return MS_FAILURE;
+#endif /* defined(USE_LIBXML2) */
   }
 
 /* -------------------------------------------------------------------- */
