@@ -804,7 +804,6 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       if (!msOWSRequestIsEnabled(map, lp, "F", "GetCapabilities"))
           continue;
 
-      printf("passed\n");
       /* List only vector layers in which DUMP=TRUE */
       if (msWFSIsLayerSupported(lp))
       {
