@@ -184,6 +184,7 @@ char *msyytext_esc=NULL;
 <INITIAL,URL_VARIABLE>class                    { return(CLASS); }
 <INITIAL,URL_STRING>classitem                  { return(CLASSITEM); }
 <INITIAL,URL_STRING>classgroup                 { return(CLASSGROUP); }
+<INITIAL>cluster                               { return(CLUSTER); }
 <INITIAL,URL_STRING>color                      { return(COLOR); }
 <INITIAL>config                                { return(CONFIG); }
 <INITIAL,URL_STRING>connection                 { return(CONNECTION); }
@@ -254,6 +255,7 @@ char *msyytext_esc=NULL;
 <INITIAL>markersize                            { return(MARKERSIZE); }
 <INITIAL>maxarcs                               { return(MAXARCS); }
 <INITIAL>maxboxsize                            { return(MAXBOXSIZE); }
+<INITIAL>maxdistance                           { return(MAXDISTANCE); }
 <INITIAL>maxfeatures                           { return(MAXFEATURES); }
 <INITIAL>maxinterval                           { return(MAXINTERVAL); }
 <INITIAL,URL_STRING>maxscale                   { return(MAXSCALE); }
@@ -307,6 +309,7 @@ char *msyytext_esc=NULL;
 <INITIAL>queryformat                           { return(QUERYFORMAT); }
 <INITIAL,URL_VARIABLE>querymap                 { return(QUERYMAP); }
 <INITIAL,URL_VARIABLE>reference                { return(REFERENCE); }
+<INITIAL>region                                { return(REGION); }
 <INITIAL>relativeto                            { return(RELATIVETO); }
 <INITIAL,URL_STRING>requires                   { return(REQUIRES); }
 <INITIAL,URL_VARIABLE>resolution               { return(RESOLUTION); }
@@ -421,6 +424,7 @@ char *msyytext_esc=NULL;
 <INITIAL,URL_STRING>uc                         { return(MS_UC); }
 <INITIAL,URL_STRING>ul                         { return(MS_UL); }
 <INITIAL,URL_STRING>ur                         { return(MS_UR); }
+<INITIAL>union                                 { return(MS_UNION); }
 <INITIAL>vector                                { return(MS_SYMBOL_VECTOR); }
 <INITIAL>wfs                                   { return(MS_WFS); }
 <INITIAL>wms                                   { return(MS_WMS); }

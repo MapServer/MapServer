@@ -438,7 +438,7 @@ enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_
 
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_RASTER, MS_PLUGIN };
+enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_RASTER, MS_PLUGIN, MS_UNION };
 enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
@@ -649,6 +649,17 @@ typedef struct {
   parseResultObj result; /* parse result */
 } parseObj;
 #endif
+
+/* MS RFC 69*/
+typedef struct {
+  double maxdistance; /* max distance between clusters */
+  double buffer;      /* the buffer size around the selection area */
+  char* region;       /* type of the cluster region (rectangle or ellipse) */ 
+#ifndef SWIG
+  expressionObj group; /* expression to identify the groups */
+  expressionObj filter; /* expression for filtering the shapes */
+#endif
+} clusterObj;
 
 /************************************************************************/
 /*                               joinObj                                */
@@ -1416,6 +1427,7 @@ typedef struct layer_obj {
   hashTableObj metadata;
   hashTableObj validation;
   hashTableObj bindvals;
+  clusterObj cluster;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
@@ -1623,7 +1635,7 @@ struct layerVTable {
   int (*LayerClose)(layerObj *layer);
   int (*LayerGetItems)(layerObj *layer);
   int (*LayerGetExtent)(layerObj *layer, rectObj *extent);
-  int (*LayerGetAutoStyle)(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape);
+  int (*LayerGetAutoStyle)(mapObj *map, layerObj *layer, classObj *c, shapeObj *shape);
   int (*LayerCloseConnection)(layerObj *layer);
   int (*LayerSetTimeFilter)(layerObj *layer, const char *timestring, const char *timefield);
   int (*LayerApplyFilterToLayer)(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex);
@@ -1750,6 +1762,7 @@ MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);
 MS_DLL_EXPORT int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_string);
 MS_DLL_EXPORT int msUpdateQueryMapFromString(queryMapObj *querymap, char *string, int url_string);
 MS_DLL_EXPORT int msUpdateLabelFromString(labelObj *label, char *string);
+MS_DLL_EXPORT int msUpdateClusterFromString(clusterObj *cluster, char *string);
 MS_DLL_EXPORT int msUpdateReferenceMapFromString(referenceMapObj *ref, char *string, int url_string);
 MS_DLL_EXPORT int msUpdateLegendFromString(legendObj *legend, char *string, int url_string);
 MS_DLL_EXPORT int msUpdateWebFromString(webObj *web, char *string, int url_string);
@@ -2027,6 +2040,7 @@ MS_DLL_EXPORT int msLayerInitItemInfo(layerObj *layer);
 MS_DLL_EXPORT void msLayerFreeItemInfo(layerObj *layer); 
 
 MS_DLL_EXPORT int msLayerOpen(layerObj *layer); /* in maplayer.c */
+MS_DLL_EXPORT int msClusterLayerOpen(layerObj *layer); /* in mapcluster.c */
 MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msLayerClose(layerObj *layer);
 MS_DLL_EXPORT int msLayerWhichShapes(layerObj *layer, rectObj rect);
@@ -2102,6 +2116,7 @@ MS_DLL_EXPORT int msGraticuleLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msMYGISLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msRASTERLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msPluginLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msUnionLayerInitializeVirtualTable(layerObj *layer);
 
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */

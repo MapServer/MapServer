@@ -286,7 +286,7 @@ OBJS= $(AGG_OBJ) mapgeomutil.o mapdummyrenderer.o mapogl.o mapoglrenderer.o mapo
 				maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o \
 				mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o \
 				maplibxml2.o mapdebug.o mapchart.o maptclutf.o mapxml.o mapkml.o mapkmlrenderer.o \
-				mapogroutput.o mapwcs20.o  mapogcfiltercommon.o
+				mapogroutput.o mapwcs20.o  mapogcfiltercommon.o mapunion.o mapcluster.o
 
 EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms \

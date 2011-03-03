@@ -14,6 +14,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Implement MS RFC 69: Support for clustering of features in point layers (#3700)
+
+- Implement MS RFC 68: Support for combining features from multiple layers (#3674)
+
 - Add support for WCS 1.1 Post (#3710)
 
 - Fixed OGR query handling according to RFC 65 (#3647)

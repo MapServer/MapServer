@@ -291,6 +291,14 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 /* rfc66 temporary path */
 #define TEMPPATH 1224
 
+/* rfc68 union connection type */
+#define UNION 1225
+
+/* rfc69 cluster */
+#define CLUSTER 1226
+#define MAXDISTANCE 1227
+#define REGION 1228
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 

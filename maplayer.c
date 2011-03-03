@@ -73,6 +73,10 @@ void msLayerFreeItemInfo(layerObj *layer)
 */
 int msLayerOpen(layerObj *layer)
 {
+  /* RFC-69 clustering support */
+  if (layer->cluster.region)
+    return msClusterLayerOpen(layer);
+    
   if(layer->features && layer->connectiontype != MS_GRATICULE ) 
     layer->connectiontype = MS_INLINE;
 
@@ -212,6 +216,8 @@ void msLayerClose(layerObj *layer)
 
   /* clear out items used as part of expressions (bug #2702) -- what about the layer filter? */
   freeExpressionTokens(&(layer->filter));
+  freeExpressionTokens(&(layer->cluster.group));
+  freeExpressionTokens(&(layer->cluster.filter));
   for(i=0; i<layer->numclasses; i++) {    
     freeExpressionTokens(&(layer->class[i]->expression));
     freeExpressionTokens(&(layer->class[i]->text));
@@ -254,7 +260,8 @@ int msLayerGetItems(layerObj *layer)
   if (itemNames)
   {
     layer->items = msStringSplit(itemNames, ',', &layer->numitems);
-    return MS_SUCCESS;
+    /* populate the iteminfo array */
+    return (msLayerInitItemInfo(layer));
   }
   else
     return layer->vtable->LayerGetItems(layer);
@@ -485,6 +492,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   if(layer->filter.type == MS_EXPRESSION)
     nt += msCountChars(layer->filter.string, '[');
 
+  if(layer->cluster.group.type == MS_EXPRESSION)
+    nt += msCountChars(layer->cluster.group.string, '[');
+
+  if(layer->cluster.filter.type == MS_EXPRESSION)
+    nt += msCountChars(layer->cluster.filter.string, '[');
+
   if(layer->labelitem) nt++;
 
   /* class level counts */
@@ -555,6 +568,10 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 
     /* layer filter */
     if(layer->filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
+
+    /* cluster expressions */
+    if(layer->cluster.group.type == MS_EXPRESSION) msTokenizeExpression(&(layer->cluster.group), layer->items, &(layer->numitems));
+    if(layer->cluster.filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->cluster.filter), layer->items, &(layer->numitems));
   }
 
   if(metadata) {
@@ -1123,7 +1140,7 @@ int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
   return MS_FAILURE;
 }
 
-int LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape)
+int LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj *shape)
 {
   msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
   return MS_FAILURE; 
@@ -1297,6 +1314,9 @@ int msInitializeVirtualTable(layerObj *layer)
       break;
     case(MS_PLUGIN):
       return(msPluginLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_UNION):
+      return(msUnionLayerInitializeVirtualTable(layer));
       break;
     default:
       msSetError(MS_MISCERR, "Unknown connectiontype, it was %d", "msInitializeVirtualTable()", layer->connectiontype);

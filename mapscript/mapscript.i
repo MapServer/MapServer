@@ -248,6 +248,7 @@ typedef struct {
 %include "../swiginc/symbolset.i"
 %include "../swiginc/layer.i"
 %include "../swiginc/class.i"
+%include "../swiginc/cluster.i"
 %include "../swiginc/style.i"
 %include "../swiginc/rect.i"
 %include "../swiginc/image.i"

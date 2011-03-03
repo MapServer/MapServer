@@ -511,6 +511,29 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     return MS_SUCCESS;
 }
 
+int msCopyCluster(clusterObj *dst, clusterObj *src) 
+{
+    int i, return_value;
+
+    MS_COPYSTELEM(maxdistance);
+    MS_COPYSTELEM(buffer);
+    MS_COPYSTRING(dst->region, src->region);
+    
+    return_value = msCopyExpression(&(dst->group),&(src->group));
+    if (return_value != MS_SUCCESS) {
+        msSetError(MS_MEMERR, "Failed to copy cluster group.", "msCopyCluster()");
+        return MS_FAILURE;
+    }
+
+    return_value = msCopyExpression(&(dst->filter),&(src->filter));
+    if (return_value != MS_SUCCESS) {
+        msSetError(MS_MEMERR, "Failed to copy cluster filter.", "msCopyCluster()");
+        return MS_FAILURE;
+    }
+
+    return MS_SUCCESS;
+}
+
 /***********************************************************************
  * msCopyLabelCacheMember()                                            *
  *                                                                     *
@@ -828,6 +851,11 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     return_value = msCopyProjection(&(dst->projection),&(src->projection));
     if (return_value != MS_SUCCESS) {
         msSetError(MS_MEMERR, "Failed to copy projection.", "msCopyLayer()");
+        return MS_FAILURE;
+    }
+
+    return_value = msCopyCluster(&(dst->cluster),&(src->cluster));
+    if (return_value != MS_SUCCESS) {
         return MS_FAILURE;
     }
 

@@ -2177,6 +2177,84 @@ static void writeHashTableInline(FILE *stream, int indent, char *name, hashTable
 }
 
 /*
+** Initialize, load and free a cluster object
+*/
+void initCluster(clusterObj *cluster) {
+    cluster->maxdistance = 10;
+    cluster->buffer = 0;
+    cluster->region = NULL;
+    initExpression(&(cluster->group));
+    initExpression(&(cluster->filter));
+}
+
+int freeCluster(clusterObj *cluster) {
+    msFree(cluster->region);
+    freeExpression(&(cluster->group));
+    freeExpression(&(cluster->filter));
+}
+
+int loadCluster(clusterObj *cluster) {
+  for(;;) {
+    switch(msyylex()) {
+    case(CLUSTER):
+      break; /* for string loads */
+    case(MAXDISTANCE):
+      if(getDouble(&(cluster->maxdistance)) == -1) return(-1);
+      break;
+    case(BUFFER):
+      if(getDouble(&(cluster->buffer)) == -1) return(-1);
+      break;
+    case(REGION):
+      if(getString(&cluster->region) == MS_FAILURE) return(-1);
+      break;
+    case(END):
+      return(0);
+      break;
+    case(GROUP):
+      if(loadExpression(&(cluster->group)) == -1) return(-1);
+      break;
+    case(FILTER):
+      if(loadExpression(&(cluster->filter)) == -1) return(-1);
+      break;
+    }
+  }
+  return(MS_SUCCESS);
+}
+
+int msUpdateClusterFromString(clusterObj *cluster, char *string)
+{
+  if(!cluster || !string) return MS_FAILURE;
+
+  msAcquireLock( TLOCK_PARSER );
+
+  msyystate = MS_TOKENIZE_STRING;
+  msyystring = string;
+  msyylex(); /* sets things up, but doesn't process any tokens */
+
+  msyylineno = 1; /* start at line 1 */
+
+  if(loadCluster(cluster) == -1) {
+    msReleaseLock( TLOCK_PARSER );
+    return MS_FAILURE; /* parse error */;
+  }
+  msReleaseLock( TLOCK_PARSER );
+
+  msyylex_destroy();
+  return MS_SUCCESS;
+}
+
+static void writeCluster(FILE *stream, int indent, clusterObj *cluster) {
+  indent++;
+  writeBlockBegin(stream, indent, "CLUSTER");
+  writeNumber(stream, indent, "MAXDISTANCE", 0, cluster->maxdistance);
+  writeNumber(stream, indent, "BUFFER", 0, cluster->maxdistance);
+  writeString(stream, indent, "REGION", NULL, cluster->region);
+  writeExpression(stream, indent, "GROUP", &(cluster->group));
+  writeExpression(stream, indent, "FILTER", &(cluster->filter));
+  writeBlockEnd(stream, indent, "CLUSTER");
+}
+
+/*
 ** Initialize, load and free a single style
 */
 int initStyle(styleObj *style) {
@@ -3133,6 +3211,8 @@ int initLayer(layerObj *layer, mapObj *map)
   if(msInitProjection(&(layer->projection)) == -1) return(-1);
   layer->project = MS_TRUE;
 
+  initCluster(&layer->cluster);
+
   MS_INIT_COLOR(layer->offsite, -1,-1,-1);
 
   layer->labelcache = MS_ON;
@@ -3229,6 +3309,8 @@ int freeLayer(layerObj *layer) {
   msFree(layer->classgroup);
 
   msFreeProjection(&(layer->projection));
+
+  freeCluster(&layer->cluster);
 
   for(i=0;i<layer->maxclasses;i++) {
     if (layer->class[i] != NULL) {
@@ -3334,6 +3416,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(layer->class[layer->numclasses]->type == -1) layer->class[layer->numclasses]->type = layer->type;
       layer->numclasses++;
       break;
+    case(CLUSTER):
+      initCluster(&layer->cluster);
+      if(loadCluster(&layer->cluster) == -1) return(-1);
+      break;
     case(CLASSGROUP):
       if(getString(&layer->classgroup) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
       if(msyysource == MS_URL_TOKENS) {
@@ -3365,7 +3451,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       }
       break;
     case(CONNECTIONTYPE):
-      if((layer->connectiontype = getSymbol(9, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_PLUGIN)) == -1) return(-1);
+      if((layer->connectiontype = getSymbol(10, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_PLUGIN, MS_UNION)) == -1) return(-1);
       break;
     case(DATA):
       if(getString(&layer->data) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
@@ -3754,7 +3840,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "CLASSGROUP", NULL, layer->classgroup);
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 9, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_MYGIS, "MYGIS", MS_PLUGIN, "PLUGIN");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 10, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_MYGIS, "MYGIS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION");
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */ 
   writeKeyword(stream, indent, "DUMP", layer->dump, 1, MS_TRUE, "TRUE");
