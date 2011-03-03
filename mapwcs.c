@@ -379,9 +379,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
               /* concatenate all sections by ',' */
               for(sectionNode = child->children; sectionNode != NULL; sectionNode = sectionNode->next)
               {
+                  char *content;
                   if(!EQUAL((char *)sectionNode->name, "Section"))
                       continue;
-                  char *content = (char *)xmlNodeGetContent(sectionNode);
+                  content = (char *)xmlNodeGetContent(sectionNode);
                   if(!params->section)
                   {
                       params->section = content;
