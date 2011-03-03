@@ -82,7 +82,7 @@ typedef struct ms_ogr_file_info_t
 static int msOGRLayerIsOpen(layerObj *layer);
 static int msOGRLayerInitItemInfo(layerObj *layer);
 static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
-                                  int tile, long record);
+                                  shapeObj* shape);
 static void msOGRCloseConnection( void *conn_handle );
 
 /* ==================================================================
@@ -1914,8 +1914,8 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
       shape->type = MS_SHAPE_NULL;
   }
 
-  /* TODO: Need to set result index too! */
-  shape->index = psInfo->last_record_index_read;
+  shape->index =  OGR_F_GetFID( hFeature );;
+  shape->resultindex = psInfo->last_record_index_read;
   shape->tileindex = psInfo->nTileId;
 
   if (layer->debug >= MS_DEBUGLEVEL_VVV)
@@ -2037,7 +2037,17 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
 
   }   
 
-  shape->index = record;
+  if (record_is_fid)
+  {
+      shape->index = record;
+      shape->resultindex = -1;
+  }
+  else
+  {
+      shape->index = OGR_F_GetFID( hFeature );
+      shape->resultindex = record;
+  }
+
   shape->tileindex = psInfo->nTileId;
 
   // Keep ref. to last feature read in case we need style info.
@@ -2672,10 +2682,14 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   long shapeindex = record->shapeindex;
   int tileindex = record->tileindex;
   int resultindex = record->resultindex;
+  int record_is_fid = TRUE;
 
-  /*
-  ** TODO: Merge logic from msOGRLayerResultGetShape() based on result->resultindex (if not -1).
-  */ 
+  /* set the resultindex as shapeindex if available */
+  if (resultindex >= 0)
+  {
+    record_is_fid = FALSE;
+    shapeindex = resultindex;
+  }
 
   if (psInfo == NULL || psInfo->hLayer == NULL)
   {
@@ -2684,7 +2698,7 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   }
 
   if( layer->tileindex == NULL )
-      return msOGRFileGetShape(layer, shape, shapeindex, psInfo, TRUE );
+      return msOGRFileGetShape(layer, shape, shapeindex, psInfo, record_is_fid );
   else
   {
       if( psInfo->poCurTile == NULL
@@ -2694,53 +2708,7 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
               return MS_FAILURE;
       }
 
-      return msOGRFileGetShape(layer, shape, shapeindex, psInfo->poCurTile, TRUE );
-  }
-#else
-/* ------------------------------------------------------------------
- * OGR Support not included...
- * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.", 
-             "msOGRLayerGetShape()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
-}
-
-/**********************************************************************
- *                     msOGRLayerResultGetShape()
- *
- * Returns shape from OGR data source by index into the current results
- * set. TODO: THIS FUNCTION GOES AWAY!
- *
- * Returns MS_SUCCESS/MS_FAILURE
- **********************************************************************/
-int msOGRLayerResultGetShape(layerObj *layer, shapeObj *shape, int tile, 
-                             long record)
-{
-#ifdef USE_OGR
-  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
-
-  if (psInfo == NULL || psInfo->hLayer == NULL)
-  {
-    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
-               "msOGRLayerNextShape()");
-    return(MS_FAILURE);
-  }
-
-  if( layer->tileindex == NULL )
-      return msOGRFileGetShape(layer, shape, record, psInfo, FALSE );
-  else
-  {
-      if( psInfo->poCurTile == NULL
-          || psInfo->poCurTile->nTileId != tile )
-      {
-          if( msOGRFileReadTile( layer, psInfo, tile ) != MS_SUCCESS )
-              return MS_FAILURE;
-      }
-
-      return msOGRFileGetShape(layer, shape, record, psInfo->poCurTile, FALSE );
+      return msOGRFileGetShape(layer, shape, shapeindex, psInfo->poCurTile, record_is_fid );
   }
 #else
 /* ------------------------------------------------------------------
@@ -3589,7 +3557,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
  * the next call and that shouldn't be freed by the caller.
  **********************************************************************/
 static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
-                                  int tile, long record)
+                                  shapeObj* shape)
 {
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
@@ -3603,7 +3571,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
   if( layer->tileindex != NULL )
   {
-      if( (psInfo->poCurTile == NULL || tile != psInfo->poCurTile->nTileId)
+      if( (psInfo->poCurTile == NULL || shape->tileindex != psInfo->poCurTile->nTileId)
           && msOGRFileReadTile( layer, psInfo ) != MS_SUCCESS )
           return MS_FAILURE;
       
@@ -3615,7 +3583,7 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
  * ------------------------------------------------------------------ */
   ACQUIRE_OGR_LOCK;
   if (psInfo->hLastFeature == NULL || 
-      psInfo->last_record_index_read != record)
+      psInfo->last_record_index_read != shape->resultindex)
   {
       RELEASE_OGR_LOCK;
       msSetError(MS_MISCERR, 
@@ -3760,7 +3728,6 @@ msOGRLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msOGRLayerIsOpen;
     layer->vtable->LayerWhichShapes = msOGRLayerWhichShapes;
     layer->vtable->LayerNextShape = msOGRLayerNextShape;
-    // layer->vtable->LayerResultsGetShape = msOGRLayerResultGetShape; 
     layer->vtable->LayerGetShape = msOGRLayerGetShape;
     layer->vtable->LayerClose = msOGRLayerClose;
     layer->vtable->LayerGetItems = msOGRLayerGetItems;

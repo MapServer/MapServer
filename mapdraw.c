@@ -898,7 +898,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     /* style parameters for this shape. */
     if(layer->styleitem) {
         if(strcasecmp(layer->styleitem, "AUTO") == 0) {
-            if (msLayerGetAutoStyle(map, layer, layer->class[shape.classindex], shape.tileindex, shape.index) != MS_SUCCESS) {
+            if (msLayerGetAutoStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
                 retcode = MS_FAILURE;
                 break;
             }
@@ -1073,6 +1073,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
 	if (msCopyLayer(&tmp_layer, layer) != MS_SUCCESS)
 		return(MS_FAILURE);
+
+    /* disable the connection pool for this layer */
+    msLayerSetProcessingKey(&tmp_layer, "CLOSE_CONNECTION", "ALWAYS");
 
     status = msDrawLayer(map, &tmp_layer, image);
 

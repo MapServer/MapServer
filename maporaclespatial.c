@@ -3482,7 +3482,7 @@ void msOracleSpatialLayerFreeItemInfo( layerObj *layer )
     /* nothing to do */
 }
 
-int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c, int tile, long record )
+int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c, shapeObj *shape )
 {
     msSetError( MS_ORACLESPATIALERR, "Function not implemented yet", "msLayerGetAutoStyle()" );
     return MS_FAILURE; 
@@ -3550,7 +3550,7 @@ void msOracleSpatialLayerFreeItemInfo(layerObj *layer)
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerFreeItemInfo()" );
 }
 
-int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c, int tile, long record )
+int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c, shapeObj *shape )
 {
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerGetAutoStyle()" );
   return MS_FAILURE;

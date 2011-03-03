@@ -628,8 +628,7 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
 ** twice.
 ** 
 */
-int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
-                        int tile, long record)
+int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape)
 {
   if ( ! layer->vtable) {
       int rv =  msInitializeVirtualTable(layer);
@@ -1124,7 +1123,7 @@ int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
   return MS_FAILURE;
 }
 
-int LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record)
+int LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape)
 {
   msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
   return MS_FAILURE; 
