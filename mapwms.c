@@ -435,7 +435,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
        sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
        if (sldenabled == NULL)
-         sldenabled = msStrdup("true");
+         sldenabled = "true";
 
        if (ogrEnabled == 0)
        {
@@ -2015,7 +2015,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
   encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
   if (sldenabled == NULL)
-      sldenabled = msStrdup("true");
+      sldenabled = "true";
 
   if (requested_updatesequence != NULL) {
       i = msOWSNegotiateUpdateSequence(requested_updatesequence, updatesequence);
@@ -3482,7 +3482,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
     sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
     if (sldenabled == NULL)
-       sldenabled = msStrdup("true");
+       sldenabled = "true";
 
      for(i=0; map && i<numentries; i++)
      {

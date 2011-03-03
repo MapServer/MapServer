@@ -559,7 +559,10 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
         if( lp->projection.numargs > 0)
         {
             if (psNode->pszSRS && FTLParseEpsgString(psNode->pszSRS, &sProjTmp))
+            {
               msProjectShape(&sProjTmp, &lp->projection, psTmpShape);
+              msFreeProjection(&sProjTmp);
+            }
             else if (lp->map->projection.numargs > 0)
               msProjectShape(&lp->map->projection, &lp->projection, psTmpShape);
         }

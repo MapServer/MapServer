@@ -579,8 +579,6 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     xmlCleanupParser();
 
     /* clean up */
-    msWCSFreeParams(params);
-    free(params);
     free( script_url_encoded );
     free( identifier_list );
 
@@ -975,9 +973,6 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
 /* -------------------------------------------------------------------- */
     xmlFreeDoc(psDoc);
     xmlCleanupParser();
-    msWCSFreeParams(params);
-
-    free(params);
 
     return MS_SUCCESS;
 }

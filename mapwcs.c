@@ -785,10 +785,12 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
 
 static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cgiRequestObj *req)
 {
-  char *script_url=NULL, *script_url_encoded;
+  char *script_url=NULL, *script_url_encoded=NULL;
 
    /* we need this server's onlineresource for the request section */
   if((script_url=msOWSGetOnlineResource(map, "CO", "onlineresource", req)) == NULL || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
+      free(script_url);
+      free(script_url_encoded);
       return msWCSException(map, NULL, NULL, params->version );
   }
 
@@ -824,6 +826,9 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
 
   /* done */
   msIO_printf("</Capability>\n");
+
+  free(script_url);
+  free(script_url_encoded);
 
   return MS_SUCCESS;
 }
@@ -942,6 +947,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   tmpInt = msOWSNegotiateVersion(tmpInt, wcsSupportedVersions, wcsNumSupportedVersions);
 
   /* set result as string and carry on */
+  free(params->version);
   params->version = msStrdup(msOWSGetVersionString(tmpInt, tmpString));
 
 /* -------------------------------------------------------------------- */
@@ -1032,9 +1038,6 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
     /* done */
     if(!params->section || (params->section && strcasecmp(params->section, "/")  == 0)) msIO_printf("</WCS_Capabilities>\n");
   }
-
-  /* clean up */
-  /* msWCSFreeParams(params); */
 
   return MS_SUCCESS;
 }
@@ -2084,11 +2087,11 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   ** Start dispatching requests
   */
   if(strcasecmp(params->request, "GetCapabilities") == 0)    
-    return msWCSGetCapabilities(map, params, request);
+    retVal = msWCSGetCapabilities(map, params, request);
   else if(strcasecmp(params->request, "DescribeCoverage") == 0)    
-    return msWCSDescribeCoverage(map, params);
+    retVal = msWCSDescribeCoverage(map, params);
   else if(strcasecmp(params->request, "GetCoverage") == 0)    
-    return msWCSGetCoverage(map, request, params);
+    retVal = msWCSGetCoverage(map, request, params);
   else {
     msSetError(MS_WCSERR, "Invalid REQUEST parameter \"%s\"", "msWCSDispatch()", params->request);
     msWCSException(map, "InvalidParameterValue", "request", params->version);
@@ -2098,7 +2101,9 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
     return MS_FAILURE;
   }  
 
-  return MS_DONE; /* not a WCS request, let MapServer take it */
+  msWCSFreeParams(params); /* clean up */
+  free(params);
+  return retVal; /* not a WCS request, let MapServer take it */
 #else
   msSetError(MS_WCSERR, "WCS server support is not available.", "msWCSDispatch()");
   return MS_FAILURE;
