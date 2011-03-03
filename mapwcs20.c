@@ -1194,10 +1194,22 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
                 return MS_FAILURE;
             }
             tokens = msStringSplit(value, ',', &num);
-            params->ids = (char **) msSmallCalloc(num + 1, sizeof(char *));
+            params->ids = (char **) VSICalloc(num + 1, sizeof(char *));
+            if (params->ids == NULL)
+            {
+                fprintf(stderr, "VSICalloc(): Out of memory allocating %ld bytes.\n",
+                        (long)((num + 1)*sizeof(char *)));
+                exit(1);
+            }
             for (j = 0; j < num; ++j)
             {
-                params->ids[j] = msStrdup(tokens[j]);
+                params->ids[j] = VSIStrdup(tokens[j]);
+                if (params->ids[j] == NULL)
+                {
+                    fprintf(stderr, "VSIStrdup(): Out of memory allocating %ld bytes.\n",
+                        (long)(strlen(tokens[j])));
+                    exit(1);
+                }
             }
             msFreeCharArray(tokens, num);
         }
