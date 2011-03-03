@@ -221,7 +221,7 @@ int msOWSParseRequestMetadata(const char *metadata, const char *request, int *di
             disableFlag = MS_TRUE;
             continue;
         }
-        else if ( (*ptr == ' ') || (ptr[1] == '\0')) { /* end of word */
+        else if ( (*ptr == ' ') || (*ptr != '\0' && ptr[1] == '\0')) { /* end of word */
             if (ptr[1] == '\0') {
                 *bufferPtr = *ptr;
                 ++bufferPtr;
