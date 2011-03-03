@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Add support for WCS 1.1 Post (#3710)
+
 - Fixed OGR query handling according to RFC 65 (#3647)
 
 - Implement CLOSE_CONNECTION=ALWAYS to suppress the connection pooling
