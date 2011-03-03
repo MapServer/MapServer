@@ -334,6 +334,13 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
                   break;
                }
                assert(pixptr);
+               if( pixptr == NULL )
+               {
+                   msReleaseLock( TLOCK_GDAL );
+                   msSetError( MS_MISCERR, "Missing RGB or A buffer.\n",
+                               "msSaveImageGDAL()" );
+                   return MS_FAILURE;
+               }
                pabyData = (GByte *)(pixptr + iLine*rb.data.rgba.row_step);
                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
                              pabyData, image->width, 1, GDT_Byte, rb.data.rgba.pixel_step, 0 );
