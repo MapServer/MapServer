@@ -78,23 +78,16 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
 /* -------------------------------------------------------------------- */
 /*      Setup values list for expressions.                              */
 /* -------------------------------------------------------------------- */
-    if( color->red != -1 )
-    {
-        sprintf( red_value, "%d", color->red );
-        sprintf( green_value, "%d", color->green );
-        sprintf( blue_value, "%d", color->blue );
-        item_values[1] = red_value;
-        item_values[2] = green_value;
-        item_values[3] = blue_value;
-        numitems = 4;
-    }
-    else
-    {
-        numitems = 1;
-    }
-        
-    item_values[0] = (char *)pixel_value;
+    numitems = 4;
+    sprintf( red_value, "%d", color->red );
+    sprintf( green_value, "%d", color->green );
+    sprintf( blue_value, "%d", color->blue );
 
+    item_values[0] = (char *)pixel_value;
+    item_values[1] = red_value;
+    item_values[2] = green_value;
+    item_values[3] = blue_value;
+        
 /* -------------------------------------------------------------------- */
 /*      Loop over classes till we find a match.                         */
 /* -------------------------------------------------------------------- */
