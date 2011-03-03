@@ -7,6 +7,17 @@ applications when migrating from version 5.6.x (or earlier versions)
 to 6.0 (i.e. backwards incompatibilities), as well as information
 on some of the new features.
 
+
+-----------------
+OGC Web Services
+-----------------
+
+All OGC Web Services are now disabled by default. If you want to enable them as they were in MapServer 5.6 and older releases, add the following metadata in the MAP::WEB section::
+
+ "ows_enable_request"   "*"
+
+See also: http://mapserver.org/development/rfc/ms-rfc-67.html
+
 ---------------------
 PHP MapScript Changes
 ---------------------
