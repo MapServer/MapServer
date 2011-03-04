@@ -1743,7 +1743,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
             tmp = pos_urid + strlen(pos_urid);
         }
         *urid_name = (char *) msSmallMalloc((tmp - (pos_urid + 14)) + 1);
-        strlcpy(*urid_name, pos_urid + 14, tmp - (pos_urid + 14 + 1));
+        strlcpy(*urid_name, pos_urid + 14, (tmp - (pos_urid + 14)) + 1);
     }
 
     /* Find the srid */

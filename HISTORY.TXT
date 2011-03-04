@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed Sql Server 2008 key column name truncation (#3654)
+
 - Added label position binding (#3612) and label shadow size binding (#2924)
 
 - Implement MS RFC 69: Support for clustering of features in point layers (#3700)
