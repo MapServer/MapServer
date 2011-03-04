@@ -203,6 +203,36 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
         label->priority = MS_DEFAULT_LABEL_PRIORITY;
         bindIntegerAttribute(&label->priority, shape->values[label->bindings[MS_LABEL_BINDING_PRIORITY].index]);
       }
+
+      if(label->bindings[MS_LABEL_BINDING_POSITION].index != -1) {
+        int tmpPosition;
+        bindIntegerAttribute(&tmpPosition, shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index]);
+        if(tmpPosition != 0) { /* is this test sufficient */
+          label->position = tmpPosition;
+        } else { /* Integer binding failed, look for strings like cc,ul,lr etc */
+          if(strlen(shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index]) == 2) {
+            char *vp = shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index];
+            if(!strncasecmp(vp,"ul",2))
+              label->position = MS_UL;     
+            else if(!strncasecmp(vp,"lr",2))
+              label->position = MS_LR;     
+            else if(!strncasecmp(vp,"ur",2))
+              label->position = MS_UR;     
+            else if(!strncasecmp(vp,"ll",2))
+              label->position = MS_LL;     
+            else if(!strncasecmp(vp,"cr",2))
+              label->position = MS_CR;     
+            else if(!strncasecmp(vp,"cl",2))
+              label->position = MS_CL;     
+	    else if(!strncasecmp(vp,"uc",2))
+              label->position = MS_UC;     
+            else if(!strncasecmp(vp,"lc",2))
+              label->position = MS_LC;     
+            else if(!strncasecmp(vp,"cc",2))
+              label->position = MS_CC;     
+          }       
+        }
+      }
     }
   } /* next classObj */
 

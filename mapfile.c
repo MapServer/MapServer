@@ -1747,8 +1747,14 @@ static int loadLabel(labelObj *label)
       if((label->partials = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
       break;
     case(POSITION):
-      if((label->position = getSymbol(10, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR,MS_AUTO)) == -1) 
-	return(-1);
+      if((label->position = getSymbol(11, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR,MS_AUTO,MS_BINDING)) == -1)
+        return(-1);
+      if(label->position == MS_BINDING) {
+        if(label->bindings[MS_LABEL_BINDING_POSITION].item != NULL)
+	  msFree(label->bindings[MS_LABEL_BINDING_POSITION].item);
+	  label->bindings[MS_LABEL_BINDING_POSITION].item = strdup(msyytext);
+	  label->numbindings++;
+	}
       break;
     case(PRIORITY):
       if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
@@ -1901,7 +1907,10 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
 
   writeNumber(stream, indent, "OUTLINEWIDTH", 1, label->outlinewidth);
   writeKeyword(stream, indent, "PARTIALS", label->partials, 1, MS_FALSE, "FALSE");
-  writeKeyword(stream, indent, "POSITION", label->position, 10, MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR", MS_AUTO, "AUTO");
+
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_POSITION].item)
+     writeAttributeBinding(stream, indent, "POSITION", &(label->bindings[MS_LABEL_BINDING_POSITION]));
+  else writeKeyword(stream, indent, "POSITION", label->position, 10, MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR", MS_AUTO, "AUTO");
 
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_PRIORITY].item)
     writeAttributeBinding(stream, indent, "PRIORITY", &(label->bindings[MS_LABEL_BINDING_PRIORITY]));
