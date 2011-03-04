@@ -181,8 +181,8 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
         match = loc - hay_lower;
     }
 
-    free(hay_lower);
-    free(needle_lower);
+    msFree(hay_lower);
+    msFree(needle_lower);
 
     return (char *) (match < 0 ? NULL : haystack + match);
 }
@@ -213,7 +213,7 @@ static void msMSSQL2008CloseConnection(void *conn_handle)
 		SQLFreeHandle(SQL_HANDLE_ENV, conn->henv);   
 	}
 
-	free(conn);
+	msFree(conn);
 }
 
 /* Set the error string for the connection */
@@ -231,8 +231,7 @@ static msODBCconn * mssql2008Connect(const char * connString)
 {
     SQLCHAR fullConnString[1024];
     SQLRETURN rc;
-    msODBCconn * conn = malloc(sizeof(msODBCconn));
-    MS_CHECK_ALLOC(conn, sizeof(msODBCconn), NULL);
+    msODBCconn * conn = msSmallMalloc(sizeof(msODBCconn));
 
     memset(conn, 0, sizeof(*conn));
 
@@ -359,8 +358,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
 
     /* have to setup a connection to the database */
 
-    layerinfo = (msMSSQL2008LayerInfo*) malloc(sizeof(msMSSQL2008LayerInfo));
-    MS_CHECK_ALLOC(layerinfo, sizeof(msMSSQL2008LayerInfo), MS_FAILURE);
+    layerinfo = (msMSSQL2008LayerInfo*) msSmallMalloc(sizeof(msMSSQL2008LayerInfo));
 
     layerinfo->sql = NULL; /* calc later */
     layerinfo->row_num = 0;
@@ -388,7 +386,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
 
 		layerinfo->conn = mssql2008Connect(conn_decrypted);
 
-		free(conn_decrypted);
+		msFree(conn_decrypted);
 		conn_decrypted = NULL;
 
         if(!layerinfo->conn || layerinfo->conn->errorMessage[0]) 
@@ -424,9 +422,9 @@ int msMSSQL2008LayerOpen(layerObj *layer)
                 "(4) TCPIP not enabled for SQL Client or server <br>\n\n", 
                 "msMSSQL2008LayerOpen()", maskeddata, errMess);
 
-            free(maskeddata);
+            msFree(maskeddata);
             msMSSQL2008CloseConnection(layerinfo->conn);
-            free(layerinfo);
+            msFree(layerinfo);
             return MS_FAILURE;
         }
 
@@ -459,7 +457,7 @@ void msMSSQL2008LayerFreeItemInfo(layerObj *layer)
     }
 
     if(layer->iteminfo) {
-        free(layer->iteminfo);
+        msFree(layer->iteminfo);
     }
 
     layer->iteminfo = NULL;
@@ -480,12 +478,9 @@ int msMSSQL2008LayerInitItemInfo(layerObj *layer)
         return MS_SUCCESS;
     }
 
-    if(layer->iteminfo) {
-        free(layer->iteminfo);
-    }
+    msFree(layer->iteminfo);
 
-    layer->iteminfo = (int *) malloc(sizeof(int) * layer->numitems);
-    MS_CHECK_ALLOC(layer->iteminfo, sizeof(int) * layer->numitems, MS_FAILURE);
+    layer->iteminfo = (int *) msSmallMalloc(sizeof(int) * layer->numitems);
 
     itemindexes = (int*)layer->iteminfo;
 
@@ -626,8 +621,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
             strcat(result, end);
 
             geom_table= result;
-            if (oldresult != NULL)
-             free(oldresult);
+            msFree(oldresult);
         }
 
        /* if we're here, this will be a malloc'd string, so no need to copy it */
@@ -642,7 +636,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 		int need_len = strlen(data_source) + strlen(with_template) + strlen(layerinfo->index_name);
 		char *tmp = (char*) msSmallMalloc( need_len + 1 );
 		sprintf( tmp, with_template, data_source, layerinfo->index_name );
-		free(data_source);
+		msFree(data_source);
 		data_source = tmp;
 	}
 
@@ -657,9 +651,9 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
             columns_wanted, data_source, layer->filter.string, layerinfo->geom_column, box3d );
     }
 
-    free(data_source);
-    free(f_table_name);
-    free(columns_wanted);
+    msFree(data_source);
+    msFree(f_table_name);
+    msFree(columns_wanted);
 
     if(layer->debug) {
         msDebug("query_string_temp:%s\n", query_string_temp);
@@ -708,7 +702,7 @@ int msMSSQL2008LayerWhichShapes(layerObj *layer, rectObj rect)
 	set_up_result = prepare_database(layer, rect, &query_str);
 
     if(set_up_result != MS_SUCCESS) {
-        free(query_str);
+        msFree(query_str);
 
         return set_up_result; /* relay error */
     }
@@ -748,42 +742,42 @@ int msMSSQL2008LayerClose(layerObj *layer)
         layerinfo->conn = NULL;
 
 		if(layerinfo->user_srid) {
-			free(layerinfo->user_srid);
+			msFree(layerinfo->user_srid);
 			layerinfo->user_srid = NULL;
 		}
 
         if(layerinfo->urid_name) {
-            free(layerinfo->urid_name);
+            msFree(layerinfo->urid_name);
             layerinfo->urid_name = NULL;
         }
 
 		if(layerinfo->index_name) {
-			free(layerinfo->index_name);
+			msFree(layerinfo->index_name);
 			layerinfo->index_name = NULL;
 		}
 
         if(layerinfo->sql) {
-            free(layerinfo->sql);
+            msFree(layerinfo->sql);
             layerinfo->sql = NULL;
         }
 
         if(layerinfo->geom_column) {
-            free(layerinfo->geom_column);
+            msFree(layerinfo->geom_column);
             layerinfo->geom_column = NULL;
         }
 
         if(layerinfo->geom_column_type) {
-            free(layerinfo->geom_column_type);
+            msFree(layerinfo->geom_column_type);
             layerinfo->geom_column_type = NULL;
         }
 
         if(layerinfo->geom_table) {
-            free(layerinfo->geom_table);
+            msFree(layerinfo->geom_table);
             layerinfo->geom_table = NULL;
         }
 
         setMSSQL2008LayerInfo(layer, NULL);
-        free(layerinfo);
+        msFree(layerinfo);
     }
 
     return MS_SUCCESS;
@@ -833,7 +827,7 @@ static int  force_to_points(char *wkb, shapeObj *shape)
             memcpy(&line.point[0].y, &wkb[offset + 5 + 8], 8);
             offset += 5 + 16;
             msAddLine(shape, &line);
-            free(line.point);
+            msFree(line.point);
         } else if(type == 2) {
             /* Linestring */
             shape->type = MS_SHAPE_POINT;
@@ -846,7 +840,7 @@ static int  force_to_points(char *wkb, shapeObj *shape)
             }
             offset += 9 + 16 * line.numpoints;  /* length of object */
             msAddLine(shape, &line);
-            free(line.point);
+            msFree(line.point);
         } else if(type == 3) {
             /* Polygon */
             shape->type = MS_SHAPE_POINT;
@@ -868,7 +862,7 @@ static int  force_to_points(char *wkb, shapeObj *shape)
                 }
                 /* make offset point to next linear ring */
                 msAddLine(shape, &line);
-                free(line.point);
+                msFree(line.point);
                 offset += 4 + 16 *npoints;
             }
         } 
@@ -913,7 +907,7 @@ static int  force_to_lines(char *wkb, shapeObj *shape)
             }
             offset += 9 + 16 * line.numpoints;  /* length of object */
             msAddLine(shape, &line);
-            free(line.point);
+            msFree(line.point);
         } else if(type == 3) {
             /* polygon */
             shape->type = MS_SHAPE_LINE;
@@ -934,7 +928,7 @@ static int  force_to_lines(char *wkb, shapeObj *shape)
                 }
                 /* make offset point to next linear ring */
                 msAddLine(shape, &line);
-                free(line.point);
+                msFree(line.point);
                 offset += 4 + 16 * npoints;
             }
         }
@@ -981,7 +975,7 @@ static int  force_to_polygons(char  *wkb, shapeObj *shape)
                 }
                 /* make offset point to next linear ring */
                 msAddLine(shape, &line);
-                free(line.point);
+                msFree(line.point);
                 offset += 4 + 16 * npoints;
             }
         }
@@ -1070,7 +1064,7 @@ static int  force_to_shapeType(char *wkb, shapeObj *shape, int msShapeType)
                 msAddLine(shape, &line);
             }
 
-            free(line.point);
+            msFree(line.point);
         } 
         else if(type == 2) 
         {
@@ -1090,7 +1084,7 @@ static int  force_to_shapeType(char *wkb, shapeObj *shape, int msShapeType)
                 msAddLine(shape, &line);
             }
 
-            free(line.point);
+            msFree(line.point);
         } 
         else if(type == 3) 
         {
@@ -1113,7 +1107,7 @@ static int  force_to_shapeType(char *wkb, shapeObj *shape, int msShapeType)
                 }
                 /* make offset point to next linear ring */
                 msAddLine(shape, &line);
-                free(line.point);
+                msFree(line.point);
                 offset += 4 + 16 *npoints;
             }
         } 
@@ -1404,7 +1398,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
                 }
 
                 //free(wkbBuffer);
-                free(wkbTemp);
+                msFree(wkbTemp);
             }
 
             /* Next get unique id for row - since the OID shouldn't be larger than a long we'll assume billions as a limit */
@@ -1510,18 +1504,19 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
         msDebug("msMSSQL2008LayerGetShape: %s \n", query_str);
     }
 
-    free(columns_wanted);
+    msFree(columns_wanted);
 
     if (!executeSQL(layerinfo->conn, query_str))
 	{
         msSetError(MS_QUERYERR, "Error executing MSSQL2008 SQL statement: %s\n-%s\n", "msMSSQL2008LayerGetShape()", 
             query_str, layerinfo->conn->errorMessage);
 
-        free(query_str);
+        msFree(query_str);
 
         return MS_FAILURE;
     }
 
+    msFree(layerinfo->sql);
     layerinfo->sql = query_str;
     layerinfo->row_num = 0;
 
@@ -1565,7 +1560,7 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
 
     if (!executeSQL(layerinfo->conn, sql))
     {
-        free(geom_column_name);
+        msFree(geom_column_name);
 
         return MS_FAILURE;
     }
@@ -1676,7 +1671,7 @@ int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_na
         strcpy(tmp2, tmp1);
         strcat(tmp2, sql);
         msSetError(MS_QUERYERR, tmp2, "msMSSQL2008LayerRetrievePK()");
-        free(tmp2);
+        msFree(tmp2);
         return(MS_FAILURE);
     }
 
