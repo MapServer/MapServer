@@ -707,6 +707,7 @@ int msMSSQL2008LayerWhichShapes(layerObj *layer, rectObj rect)
         return set_up_result; /* relay error */
     }
 
+    msFree(layerinfo->sql);
     layerinfo->sql = query_str;
     layerinfo->row_num = 0;
 
@@ -1410,6 +1411,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
             record_oid = strtol(oidBuffer, NULL, 10);
 
             shape->index = record_oid;
+            shape->resultindex = (*record);
 
             find_bounds(shape);
             (*record)++;        /* move to next shape */
@@ -1465,6 +1467,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
     int                 t;
     char buffer[32000] = "";
     long shapeindex = record->shapeindex;
+    long resultindex = record->resultindex;
 
     if(layer->debug) {
         msDebug("msMSSQL2008LayerGetShape called for shapeindex = %i\n", shapeindex);
@@ -1478,6 +1481,32 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
 
         return MS_FAILURE;
     }
+
+    if (resultindex >= 0 && layerinfo->sql)
+    {
+        /* trying to provide the result from the current resultset (single-pass query) */
+        if( resultindex < layerinfo->row_num)
+        {
+            /* re-issue the query */
+            if (!executeSQL(layerinfo->conn, layerinfo->sql))
+            {
+                msSetError(MS_QUERYERR, "Error executing MSSQL2008 SQL statement: %s\n-%s\n", "msMSSQL2008LayerGetShape()", layerinfo->sql, layerinfo->conn->errorMessage);
+
+                return MS_FAILURE;
+            }
+            layerinfo->row_num = 0;
+        }
+        while( layerinfo->row_num < resultindex )
+        {
+            /* move forward until we reach the desired index */
+            if (msMSSQL2008LayerGetShapeRandom(layer, shape, &(layerinfo->row_num)) != MS_SUCCESS)
+                return MS_FAILURE;
+        }
+
+        return msMSSQL2008LayerGetShapeRandom(layer, shape, &(layerinfo->row_num));
+    }
+
+    /* non single-pass case, fetch the record from the database */
 
     if(layer->numitems == 0) 
     {
@@ -1516,8 +1545,8 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
         return MS_FAILURE;
     }
 
-    msFree(layerinfo->sql);
-    layerinfo->sql = query_str;
+    /* we don't preserve the query string in this case (cannot be re-used) */
+    msFree(query_str);
     layerinfo->row_num = 0;
 
 	return msMSSQL2008LayerGetShapeRandom(layer, shape, &(layerinfo->row_num));
