@@ -2216,7 +2216,7 @@ void initCluster(clusterObj *cluster) {
     initExpression(&(cluster->filter));
 }
 
-int freeCluster(clusterObj *cluster) {
+void freeCluster(clusterObj *cluster) {
     msFree(cluster->region);
     freeExpression(&(cluster->group));
     freeExpression(&(cluster->filter));
