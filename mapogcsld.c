@@ -855,6 +855,8 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                                              class[psLayer->numclasses-1-i]->
                                                              expression, szExpression);
                                     }
+                                    msFree(szExpression);
+                                    szExpression = NULL;
                                 }
                             }
                         }
