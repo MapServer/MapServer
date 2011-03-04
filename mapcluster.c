@@ -893,7 +893,7 @@ static int ValidateTree(msClusterLayerInfo* layerinfo, clusterTreeNode *node)
 }
 
 /* rebuild the clusters according to the current extent */
-int RebuildClusters(layerObj *layer, rectObj rect)
+int RebuildClusters(layerObj *layer)
 {
     mapObj* map;
 	layerObj* srcLayer;
@@ -1056,8 +1056,10 @@ int RebuildClusters(layerObj *layer, rectObj rect)
 
     while (layerinfo->root)
     {
+#ifdef TESTCOUNT
         int n;
         double avgx, avgy;
+#endif
         
         /* pick up the best cluster from the tree and do the finalization */
         /* the initial rank must be big enough */
@@ -1244,7 +1246,7 @@ int msClusterLayerInitItemInfo(layerObj *layer)
 int msClusterLayerWhichShapes(layerObj *layer, rectObj rect)
 {
     /* rebuild the cluster database */
-    return RebuildClusters(layer, rect);
+    return RebuildClusters(layer);
 }
 
 static int prepareShape(layerObj* layer, msClusterLayerInfo* layerinfo, clusterInfo* current, shapeObj* shape)
