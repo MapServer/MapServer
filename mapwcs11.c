@@ -475,7 +475,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
         psNode = msOWSCommonOperationsMetadataOperation( 
             psOwsNs, psXLinkNs,
-            "GetCapabilities", OWS_METHOD_GET, script_url_encoded);
+            "GetCapabilities", OWS_METHOD_GETPOST, script_url_encoded);
         
         xmlAddChild(psMainNode, psNode);
         xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
@@ -488,7 +488,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
         psNode = msOWSCommonOperationsMetadataOperation(
             psOwsNs, psXLinkNs,
-            "DescribeCoverage", OWS_METHOD_GET, script_url_encoded);
+            "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
         
         xmlAddChild(psMainNode, psNode);
         xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
@@ -503,7 +503,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
         psNode = msOWSCommonOperationsMetadataOperation(
             psOwsNs, psXLinkNs,
-            "GetCoverage", OWS_METHOD_GET, script_url_encoded);
+            "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
         
         format_list = msWCSGetFormatsList11( map, NULL );
         
