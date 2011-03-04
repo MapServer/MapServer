@@ -349,7 +349,7 @@ void *msConnPoolRequest( layerObj *layer )
 
     /* check if we must always create a new connection */
     close_connection = msLayerGetProcessingKey( layer, "CLOSE_CONNECTION" );
-    if( strcasecmp(close_connection,"ALWAYS") == 0 )
+    if( close_connection && strcasecmp(close_connection,"ALWAYS") == 0 )
         return NULL;
 
     msAcquireLock( TLOCK_POOL );
