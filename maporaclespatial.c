@@ -1998,11 +1998,14 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 
     /* Check if the unique field is already in the items list */
     existunique = MS_FALSE;
-    for( i=0; i < layer->numitems; ++i ) {
-        if (strcasecmp(unique, layer->items[i])==0) {
-            sthand->uniqueidindex = i;
-            existunique = MS_TRUE;
-            break;
+    if (unique)
+    {
+        for( i=0; i < layer->numitems; ++i ) {
+            if (strcasecmp(unique, layer->items[i])==0) {
+                sthand->uniqueidindex = i;
+                existunique = MS_TRUE;
+                break;
+            }
         }
     }
 
