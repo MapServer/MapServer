@@ -112,7 +112,11 @@ static int msStringParseDouble(const char *string, double *dest)
 static int msWCSParseTimeOrScalar20(timeScalarUnion *u, const char *string)
 {
     struct tm time;
-    msStringTrim((char *) string);
+    if (string)
+    {
+        while(*string == ' ')
+            string ++;
+    }
 
     if (!string || strlen(string) == 0 || !u)
     {
@@ -3373,10 +3377,13 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
             map->extent = layer->extent;
             msFreeProjection(&(map->projection));
             map->projection = subsetProj;
+            msFreeProjection(&imageProj);
         }
         else
         {
+            msFreeProjection(&(map->projection));
             map->projection = imageProj;
+            msFreeProjection(&subsetProj);
         }
     }
 
