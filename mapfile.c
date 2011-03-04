@@ -477,10 +477,12 @@ static void writeKeyword(FILE *stream, int indent, const char *name, int value, 
   va_end(argp);
 }
 
-static void writeDimension(FILE *stream, int indent, const char *name, int x, int y) {
-  if(!(x > 0 && y > 0)) return;
+static void writeDimension(FILE *stream, int indent, const char *name, int x, int y, char *bind_x, char *bind_y) {
   writeIndent(stream, ++indent);
-  fprintf(stream, "%s %d %d\n", name, x, y);
+  if(bind_x) fprintf(stream, "%s [%s] ", name, bind_x);
+  else fprintf(stream, "%s %d ", name, x);
+  if(bind_y) fprintf(stream, "[%s]\n", bind_y);
+  else fprintf(stream, "%d\n", y);
 }
 
 static void writeExtent(FILE *stream, int indent, const char *name, rectObj extent) {
@@ -1758,13 +1760,11 @@ static int loadLabel(labelObj *label)
       break;
     case(PRIORITY):
       if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
-
       if(symbol == MS_NUMBER) {
         label->priority = (int) msyynumber;
         if(label->priority < 1 || label->priority > MS_MAX_LABEL_PRIORITY) {
-            msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d." , 
-                       "loadLabel()", MS_MAX_LABEL_PRIORITY);
-            return(-1);
+          msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d." , "loadLabel()", MS_MAX_LABEL_PRIORITY);
+          return(-1);
         }
       } else {
         if (label->bindings[MS_LABEL_BINDING_PRIORITY].item != NULL)
@@ -1777,8 +1777,27 @@ static int loadLabel(labelObj *label)
       if(loadColor(&(label->shadowcolor), NULL) != MS_SUCCESS) return(-1);      
       break;
     case(SHADOWSIZE):
-      if(getInteger(&(label->shadowsizex)) == -1) return(-1);
-      if(getInteger(&(label->shadowsizey)) == -1) return(-1);
+      /* if(getInteger(&(label->shadowsizex)) == -1) return(-1); */
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
+      if(symbol == MS_NUMBER) {
+        label->shadowsizex = (int) msyynumber;
+      } else {
+        if (label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item != NULL)
+          msFree(label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item);
+        label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item = msStrdup(msyytext);
+        label->numbindings++;
+      }
+
+      /* if(getInteger(&(label->shadowsizey)) == -1) return(-1); */
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
+      if(symbol == MS_NUMBER) {
+	label->shadowsizey = (int) msyynumber;
+      } else {
+	if (label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item != NULL)
+          msFree(label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item);
+        label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item = msStrdup(msyytext);
+        label->numbindings++;
+      }
       break;
     case(SIZE):
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
@@ -1899,7 +1918,7 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   writeNumberOrKeyword(stream, indent, "MINFEATURESIZE", -1, label->minfeaturesize, 1, label->autominfeaturesize, MS_TRUE, "AUTO");
   writeNumber(stream, indent, "MINLENGTH", 0, label->minlength);
   writeNumber(stream, indent, "MINSCALEDENOM", -1, label->minscaledenom);
-  writeDimension(stream, indent, "OFFSET",  label->offsetx, label->offsety);
+  writeDimension(stream, indent, "OFFSET",  label->offsetx, label->offsety, NULL, NULL);
     
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item)
     writeAttributeBinding(stream, indent, "OUTLINECOLOR", &(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR]));
@@ -1918,7 +1937,8 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
 
   writeNumber(stream, indent, "REPEATDISTANCE", 0, label->repeatdistance);
   writeColor(stream, indent, "SHADOWCOLOR", &(label->shadowcolor));
-  writeDimension(stream, indent, "SHADOWSIZE", label->shadowsizex, label->shadowsizey);
+  writeDimension(stream, indent, "SHADOWSIZE", label->shadowsizex, label->shadowsizey, label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item, label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item);
+
   writeNumber(stream, indent, "MAXOVERLAPANGLE", 22.5, label->maxoverlapangle);
   for(i=0; i<label->numstyles; i++)
     writeStyle(stream, indent, label->styles[i]);
@@ -2610,7 +2630,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
   writeNumber(stream, indent, "MINSCALEDENOM", -1, style->minscaledenom);
   writeNumber(stream, indent, "MINSIZE", MS_MINSYMBOLSIZE, style->minsize);
   writeNumber(stream, indent, "MINWIDTH", MS_MINSYMBOLWIDTH, style->minwidth);
-  writeDimension(stream, indent, "OFFSET", style->offsetx, style->offsety);
+  writeDimension(stream, indent, "OFFSET", style->offsetx, style->offsety, NULL, NULL);
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OPACITY].item)
     writeAttributeBinding(stream, indent, "OPACITY", &(style->bindings[MS_STYLE_BINDING_OPACITY]));
@@ -2639,7 +2659,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
   if(style->rangeitem) {
     writeString(stream, indent, "RANGEITEM", NULL, style->rangeitem);
     writeColorRange(stream, indent, "COLORRANGE", &(style->mincolor), &(style->maxcolor));
-    writeDimension(stream, indent, "DATARANGE", style->minvalue, style->maxvalue);
+    writeDimension(stream, indent, "DATARANGE", style->minvalue, style->maxvalue, NULL, NULL);
   }
 
   if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
@@ -4061,7 +4081,7 @@ static void writeReferenceMap(FILE *stream, int indent, referenceMapObj *ref)
   writeExtent(stream, indent, "EXTENT", ref->extent);
   writeString(stream, indent, "IMAGE", NULL, ref->image);
   writeColor(stream, indent, "OUTLINECOLOR", &(ref->outlinecolor));
-  writeDimension(stream, indent, "SIZE", ref->width, ref->height);
+  writeDimension(stream, indent, "SIZE", ref->width, ref->height, NULL, NULL);
   writeKeyword(stream, indent, "STATUS", ref->status, 2, MS_ON, "ON", MS_OFF, "OFF");
   writeNumberOrString(stream, indent, "MARKER", 0, ref->marker, ref->markername);
   writeNumber(stream, indent, "MARKERSIZE", -1, ref->markersize);
@@ -4393,8 +4413,8 @@ static void writeLegend(FILE *stream, int indent, legendObj *legend)
   writeBlockBegin(stream, indent, "LEGEND");
   writeColor(stream, indent, "IMAGECOLOR", &(legend->imagecolor));
   writeKeyword(stream, indent, "INTERLACE", legend->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
-  writeDimension(stream, indent, "KEYSIZE", legend->keysizex, legend->keysizey);
-  writeDimension(stream, indent, "KEYSPACING", legend->keyspacingx, legend->keyspacingy);
+  writeDimension(stream, indent, "KEYSIZE", legend->keysizex, legend->keysizey, NULL, NULL);
+  writeDimension(stream, indent, "KEYSPACING", legend->keyspacingx, legend->keyspacingy, NULL, NULL);
   writeLabel(stream, indent, &(legend->label));
   writeColor(stream, indent, "OUTLINECOLOR", &(legend->outlinecolor));
   if(legend->status == MS_EMBED) writeKeyword(stream, indent, "POSITION", legend->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
@@ -4549,7 +4569,7 @@ static void writeScalebar(FILE *stream, int indent, scalebarObj *scalebar)
   writeColor(stream, indent, "OUTLINECOLOR", &(scalebar->outlinecolor));
   if(scalebar->status == MS_EMBED) writeKeyword(stream, indent, "POSITION", scalebar->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
   writeKeyword(stream, indent, "POSTLABELCACHE", scalebar->postlabelcache, 1, MS_TRUE, "TRUE");
-  writeDimension(stream, indent, "SIZE", scalebar->width, scalebar->height);
+  writeDimension(stream, indent, "SIZE", scalebar->width, scalebar->height, NULL, NULL);
   writeKeyword(stream, indent, "STATUS", scalebar->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_EMBED, "EMBED");
   writeNumber(stream, indent, "STYLE", 0, scalebar->style);
   writeKeyword(stream, indent, "TRANSPARENT", scalebar->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
@@ -4641,7 +4661,7 @@ static void writeQueryMap(FILE *stream, int indent, queryMapObj *querymap)
   indent++;
   writeBlockBegin(stream, indent, "QUERYMAP");
   writeColor(stream, indent, "COLOR", &(querymap->color));
-  writeDimension(stream, indent, "SIZE", querymap->width, querymap->height);
+  writeDimension(stream, indent, "SIZE", querymap->width, querymap->height, NULL, NULL);
   writeKeyword(stream, indent, "STATUS", querymap->status, 2, MS_ON, "ON", MS_OFF, "OFF");
   writeKeyword(stream, indent, "STYLE", querymap->style, 3, MS_NORMAL, "NORMAL", MS_HILITE, "HILITE", MS_SELECTED, "SELECTED");
   writeBlockEnd(stream, indent, "QUERYMAP");
@@ -5136,7 +5156,7 @@ int msSaveMap(mapObj *map, char *filename)
   writeString(stream, indent, "NAME", NULL, map->name);
   writeNumber(stream, indent, "RESOLUTION", 72.0, map->resolution);
   writeString(stream, indent, "SHAPEPATH", NULL, map->shapepath);   
-  writeDimension(stream, indent, "SIZE", map->width, map->height);
+  writeDimension(stream, indent, "SIZE", map->width, map->height, NULL, NULL);
   writeKeyword(stream, indent, "STATUS", map->status, 2, MS_ON, "ON", MS_OFF, "OFF");
   writeString(stream, indent, "SYMBOLSET", NULL, map->symbolset.filename);
   writeString(stream, indent, "TEMPLATEPATTERN", NULL, map->templatepattern); /* depricated */

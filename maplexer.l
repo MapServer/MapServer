@@ -442,7 +442,7 @@ char *msyytext_esc=NULL;
                                                  return(MS_NUMBER);
                                                }
 
-<INITIAL>\[.*\]                                {
+<INITIAL>\[[^\]]*\]                            {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  return(MS_BINDING);

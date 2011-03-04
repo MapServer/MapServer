@@ -503,17 +503,17 @@ typedef struct _FilterNode
 /* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
 #define MS_STYLE_BINDING_LENGTH 8
 enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_WIDTH, MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR, MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL, MS_STYLE_BINDING_OUTLINEWIDTH, MS_STYLE_BINDING_OPACITY };
-#define MS_LABEL_BINDING_LENGTH 7
-enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR, MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, MS_LABEL_BINDING_PRIORITY, MS_LABEL_BINDING_POSITION };
+#define MS_LABEL_BINDING_LENGTH 9
+enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR, MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, MS_LABEL_BINDING_PRIORITY, MS_LABEL_BINDING_POSITION, MS_LABEL_BINDING_SHADOWSIZEX, MS_LABEL_BINDING_SHADOWSIZEY };
 
-  /************************************************************************/
-  /*                         attributeBindingObj                          */
-  /************************************************************************/
+/************************************************************************/
+/*                         attributeBindingObj                          */
+/************************************************************************/
 #ifndef SWIG
-  typedef struct {
-    char *item;
-    int index;
-  } attributeBindingObj;
+typedef struct {
+  char *item;
+  int index;
+} attributeBindingObj;
 #endif /*SWIG*/
 
 /************************************************************************/

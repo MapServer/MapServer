@@ -109,6 +109,43 @@ static int bindColorAttribute(colorObj *attribute, char *value)
   return MS_FAILURE; /* shouldn't get here */
 }
 
+static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int querymapMode) {
+  if(style->numbindings > 0) {
+    if(style->bindings[MS_STYLE_BINDING_SYMBOL].index != -1) {
+      style->symbol = msGetSymbolIndex(&(layer->map->symbolset), shape->values[style->bindings[MS_STYLE_BINDING_SYMBOL].index], MS_TRUE);
+      if(style->symbol == -1) style->symbol = 0; /* a reasonable default (perhaps should throw an error?) */
+    }
+    if(style->bindings[MS_STYLE_BINDING_ANGLE].index != -1) {
+      style->angle = 360.0;
+      bindDoubleAttribute(&style->angle, shape->values[style->bindings[MS_STYLE_BINDING_ANGLE].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_SIZE].index != -1) {
+      style->size = 1;
+      bindDoubleAttribute(&style->size, shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_WIDTH].index != -1) {
+      style->width = 1;
+      bindDoubleAttribute(&style->width, shape->values[style->bindings[MS_STYLE_BINDING_WIDTH].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1 && (querymapMode != MS_TRUE)) {
+      MS_INIT_COLOR(style->color, -1,-1,-1);
+      bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1 && (querymapMode != MS_TRUE)) {
+      MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
+      bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
+        style->outlinewidth = 1;
+        bindDoubleAttribute(&style->outlinewidth, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_OPACITY].index != -1) {
+      style->opacity = 100;
+      bindIntegerAttribute(&style->opacity, shape->values[style->bindings[MS_STYLE_BINDING_OPACITY].index]);
+    }
+  }
+}
+
 /*
 ** Function to bind various layer properties to shape attributes.
 */
@@ -116,7 +153,6 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
 {
   int i, j;
   labelObj *label; /* for brevity */
-  styleObj *style;
 
   if(!layer || !shape) return MS_FAILURE;
 
@@ -124,54 +160,16 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
 
     /* check the styleObj's */
     for(j=0; j<layer->class[i]->numstyles; j++) {
-      style = layer->class[i]->styles[j];
-
-      if(style->numbindings > 0) {
-
-        if(style->bindings[MS_STYLE_BINDING_SYMBOL].index != -1) {
-          style->symbol = msGetSymbolIndex(&(layer->map->symbolset), shape->values[style->bindings[MS_STYLE_BINDING_SYMBOL].index], MS_TRUE);
-          if(style->symbol == -1) style->symbol = 0; /* a reasonable default (perhaps should throw an error?) */
-        }
-
-        if(style->bindings[MS_STYLE_BINDING_ANGLE].index != -1) {
-          style->angle = 360.0;
-          bindDoubleAttribute(&style->angle, shape->values[style->bindings[MS_STYLE_BINDING_ANGLE].index]);
-        }
-
-        if(style->bindings[MS_STYLE_BINDING_SIZE].index != -1) {
-          style->size = 1;
-          bindDoubleAttribute(&style->size, shape->values[style->bindings[MS_STYLE_BINDING_SIZE].index]);
-        }
-
-        if(style->bindings[MS_STYLE_BINDING_WIDTH].index != -1) {
-          style->width = 1;
-          bindDoubleAttribute(&style->width, shape->values[style->bindings[MS_STYLE_BINDING_WIDTH].index]);
-        }
-
-        if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1 && (querymapMode != MS_TRUE)) {
-          MS_INIT_COLOR(style->color, -1,-1,-1);
-          bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);
-        }
-
-        if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1 && (querymapMode != MS_TRUE)) {
-          MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
-          bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
-        }
-
-        if(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
-          style->outlinewidth = 1;
-          bindDoubleAttribute(&style->outlinewidth, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index]);
-        }
-
-        if(style->bindings[MS_STYLE_BINDING_OPACITY].index != -1) {
-          style->opacity = 100;
-          bindIntegerAttribute(&style->opacity, shape->values[style->bindings[MS_STYLE_BINDING_OPACITY].index]);
-        }
-      }
+      bindStyle(layer, shape, layer->class[i]->styles[j], querymapMode);
     } /* next styleObj */
 
     /* check the labelObj */
     label = &(layer->class[i]->label);
+
+    /* check the label styleObj's */
+    for(j=0; j<label->numstyles; j++) {
+      bindStyle(layer, shape, label->styles[j], querymapMode);
+    }
 
     if(label->numbindings > 0) {
       if(label->bindings[MS_LABEL_BINDING_ANGLE].index != -1) {
@@ -203,6 +201,15 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
         label->priority = MS_DEFAULT_LABEL_PRIORITY;
         bindIntegerAttribute(&label->priority, shape->values[label->bindings[MS_LABEL_BINDING_PRIORITY].index]);
       }
+
+      if(label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].index != -1) { 
+        label->shadowsizex = 1; 
+        bindIntegerAttribute(&label->shadowsizex, shape->values[label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].index]); 
+      } 
+      if(label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].index != -1) { 
+        label->shadowsizey = 1; 
+        bindIntegerAttribute(&label->shadowsizey, shape->values[label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].index]); 
+      } 
 
       if(label->bindings[MS_LABEL_BINDING_POSITION].index != -1) {
         int tmpPosition;
