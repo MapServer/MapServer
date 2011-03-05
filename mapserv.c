@@ -1566,8 +1566,6 @@ int main(int argc, char *argv[]) {
         switch(mapserv->Mode) {
         case ITEMFEATUREQUERY:
         case ITEMFEATURENQUERY:
-        case ITEMFEATUREQUERYMAP:
-        case ITEMFEATURENQUERYMAP:
           if((SelectLayerIndex = msGetLayerIndex(mapserv->map, SelectLayer)) == -1) { /* force the selection layer on */
             msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
             writeError();
@@ -1592,7 +1590,7 @@ int main(int argc, char *argv[]) {
           mapserv->map->query.rect = mapserv->map->extent;
 
           mapserv->map->query.mode = MS_QUERY_MULTIPLE;
-          if(mapserv->Mode == ITEMFEATUREQUERY || mapserv->Mode == ITEMFEATUREQUERYMAP)
+          if(mapserv->Mode == ITEMFEATUREQUERY)
             mapserv->map->query.mode = MS_QUERY_SINGLE;
 
           mapserv->map->query.layer = QueryLayerIndex;
@@ -1600,15 +1598,13 @@ int main(int argc, char *argv[]) {
           break;
         case FEATUREQUERY:
         case FEATURENQUERY:
-        case FEATUREQUERYMAP:
-        case FEATURENQUERYMAP:
           if((SelectLayerIndex = msGetLayerIndex(mapserv->map, SelectLayer)) == -1) { /* force the selection layer on */
             msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
             writeError();
           }
           GET_LAYER(mapserv->map, SelectLayerIndex)->status = MS_ON;
       
-          if(mapserv->Mode == FEATUREQUERY || mapserv->Mode == FEATUREQUERYMAP) {
+          if(mapserv->Mode == FEATUREQUERY) {
             switch(QueryCoordSource) {
             case FROMIMGPNT:
               mapserv->map->extent = mapserv->ImgExt; /* use the existing map extent */    
@@ -1630,7 +1626,7 @@ int main(int argc, char *argv[]) {
 
             mapserv->map->query.layer = QueryLayerIndex;
 	    mapserv->map->query.slayer = SelectLayerIndex; /* this will trigger the feature query eventually */
-          } else { /* FEATURENQUERY/FEATURENQUERYMAP */
+          } else { /* FEATURENQUERY */
             switch(QueryCoordSource) {
             case FROMIMGPNT:
               mapserv->map->extent = mapserv->ImgExt; /* use the existing map extent */    
@@ -1660,8 +1656,6 @@ int main(int argc, char *argv[]) {
           break;
         case ITEMQUERY:
         case ITEMNQUERY:
-        case ITEMQUERYMAP:
-        case ITEMNQUERYMAP:
           if(QueryLayerIndex < 0 || QueryLayerIndex >= mapserv->map->numlayers) {
             msSetError(MS_WEBERR, "Query layer not set or references an invalid layer.", "mapserv()"); 
             writeError();
@@ -1686,10 +1680,9 @@ int main(int argc, char *argv[]) {
 	  mapserv->map->query.rect = mapserv->map->extent;
 
 	  mapserv->map->query.mode = MS_QUERY_MULTIPLE;
-          if(mapserv->Mode == ITEMQUERY || mapserv->Mode == ITEMQUERYMAP) mapserv->map->query.mode = MS_QUERY_SINGLE;
+          if(mapserv->Mode == ITEMQUERY) mapserv->map->query.mode = MS_QUERY_SINGLE;
           break;
         case NQUERY:
-        case NQUERYMAP:
           mapserv->map->query.mode = MS_QUERY_MULTIPLE; /* all of these cases return multiple results */
           mapserv->map->query.layer = QueryLayerIndex;
 
@@ -1787,7 +1780,6 @@ int main(int argc, char *argv[]) {
 	  }
           break;
         case QUERY:
-        case QUERYMAP:
           switch(QueryCoordSource) {
           case FROMIMGPNT:
             setCoordinate();
@@ -1812,7 +1804,6 @@ int main(int argc, char *argv[]) {
           mapserv->map->query.buffer = mapserv->Buffer;          
           break;
         case INDEXQUERY:
-        case INDEXQUERYMAP:
           mapserv->map->query.type = MS_QUERY_BY_INDEX;
           mapserv->map->query.mode = MS_QUERY_SINGLE;
           mapserv->map->query.layer = QueryLayerIndex;
@@ -1831,32 +1822,13 @@ int main(int argc, char *argv[]) {
       if(mapserv->UseShapes)
         setExtentFromShapes();
 
-      /* just return the image, should be able to depricate these */
-      if(mapserv->Mode == QUERYMAP || mapserv->Mode == NQUERYMAP || mapserv->Mode == ITEMQUERYMAP || mapserv->Mode == ITEMNQUERYMAP || mapserv->Mode == FEATUREQUERYMAP || mapserv->Mode == FEATURENQUERYMAP || mapserv->Mode == ITEMFEATUREQUERYMAP || mapserv->Mode == ITEMFEATURENQUERYMAP || mapserv->Mode == INDEXQUERYMAP) {
-
-        checkWebScale(mapserv);
-
-        img = msDrawMap(mapserv->map, MS_TRUE);
-        if(!img) writeError();
-
-        if(mapserv->sendheaders) {
-          const char *attachment = msGetOutputFormatOption(mapserv->map->outputformat, "ATTACHMENT", NULL ); 
-          if(attachment) msIO_printf("Content-disposition: attachment; filename=%s\n", attachment);
-          msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), 10,10);
-         }
-        status = msSaveImage(mapserv->map, img, NULL);
-        if(status != MS_SUCCESS) writeError();
-        msFreeImage(img);
-
-      } else { /* process the query through templates */
-        if(msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, NULL) != MS_SUCCESS) writeError();
+      if(msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, NULL) != MS_SUCCESS) writeError();
           
-        if(mapserv->savequery) {
-          snprintf(buffer, sizeof(buffer), "%s%s%s%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_QUERY_EXTENSION);
-          if((status = msSaveQuery(mapserv->map, buffer, MS_FALSE)) != MS_SUCCESS) return status;
-        }
+      if(mapserv->savequery) {
+        snprintf(buffer, sizeof(buffer), "%s%s%s%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_QUERY_EXTENSION);
+        if((status = msSaveQuery(mapserv->map, buffer, MS_FALSE)) != MS_SUCCESS) return status;
       }
-
+      
     } else if(mapserv->Mode == COORDINATE) {
       setCoordinate(); /* mouse click => map coord */
       returnCoordinate(mapserv->mappnt);

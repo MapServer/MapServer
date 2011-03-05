@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Remove map-oriented query modes (e.g. QUERYMAP). Use qformat parameter instead. (#3712)
+
 - Implement single-pass query handling in mssql2008 driver as per RFC 65.
 
 - Fixed Sql Server 2008 key column name truncation (#3654)
