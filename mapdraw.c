@@ -1524,6 +1524,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
         if(layer->class[c]->label.anglemode == MS_FOLLOW ) {
+          if (layer->class[c]->label.type != MS_TRUETYPE) {
+            msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with truetype fonts.", "msDrawShape()");
+            return(MS_FAILURE);
+          }
           annopaths = msPolylineLabelPath(map,image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
         } else {
             annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.anglemode);
@@ -1542,6 +1546,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       
       if (layer->class[c]->label.anglemode == MS_FOLLOW) 
       {
+        if (layer->class[c]->label.type != MS_TRUETYPE) {
+          msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with truetype fonts.", "msDrawShape()");
+          return(MS_FAILURE);
+        }
         /* Determine the label path if it has not been computed above */
         if (bLabelNoClip == MS_FALSE) {
           if ( annopaths ) {
@@ -1562,6 +1570,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         {
           /* Bug #1620 implementation */
           if(layer->class[c]->label.anglemode == MS_FOLLOW) {
+            if (layer->class[c]->label.type != MS_TRUETYPE) {
+              msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with truetype fonts.", "msDrawShape()");
+              return(MS_FAILURE);
+            }
             layer->class[c]->label.position = MS_CC; /* Force all label positions to MS_CC regardless if a path is computed */
 
             if( annopaths[i] ) {
@@ -1849,6 +1861,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msTransformShape(&annoshape, map->extent, map->cellsize, image);
 
       if(layer->class[c]->label.anglemode == MS_FOLLOW) {
+        if (layer->class[c]->label.type != MS_TRUETYPE) {
+           msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with truetype fonts.", "msDrawShape()");
+           return(MS_FAILURE);
+        }
         annopaths = msPolylineLabelPath(map,image,&annoshape, minfeaturesize, &(map->fontset), shape->text, &(layer->class[c]->label), layer->scalefactor, &numpaths, &regularLines, &numRegularLines);
       } else {
         annopoints = msPolylineLabelPoint(&annoshape, minfeaturesize, (layer->class[c]->label).repeatdistance, &angles, &lengths, &numpoints, layer->class[c]->label.anglemode);
@@ -1912,6 +1928,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
       if (layer->class[c]->label.anglemode == MS_FOLLOW) 
       {
+        if (layer->class[c]->label.type != MS_TRUETYPE) {
+          msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with truetype fonts.", "msDrawShape()");
+          return(MS_FAILURE);
+        }
         /* Determine the label path if it has not been computed above */
         if (bLabelNoClip == MS_FALSE) {
           if ( annopaths ) {
@@ -1931,10 +1951,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         for (i = 0; i < numpaths; i++)
         {
           /* Bug #1620 implementation */
-          if(layer->class[c]->label.anglemode == MS_FOLLOW) {
+            if(layer->class[c]->label.anglemode == MS_FOLLOW) {
             labelObj label;
+
+            if (layer->class[c]->label.type != MS_TRUETYPE) {
+              msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with truetype fonts.", "msDrawShape()");
+              return(MS_FAILURE);
+            }
+
             layer->class[c]->label.position = MS_CC; /* Force all label positions to MS_CC regardless if a path is computed */
-            
+
             label = layer->class[c]->label;
             
             if(layer->labelcache) {
