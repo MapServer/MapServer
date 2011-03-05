@@ -286,6 +286,34 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %}
 
 
+%csmethodmodifiers processTemplate "private";
+%csmethodmodifiers processLegendTemplate "private";
+%csmethodmodifiers processQueryTemplate "private";
+
+%typemap(cscode) mapObj %{
+  public string processTemplate(int bGenerateImages, string[] names, string[] values)
+  {
+	if (names.Length != values.Length)
+	    throw new ArgumentException("Invalid array length specified!");
+	return processTemplate(bGenerateImages, names, values, values.Length);
+  }
+  
+  public string processLegendTemplate(string[] names, string[] values)
+  {
+	if (names.Length != values.Length)
+	    throw new ArgumentException("Invalid array length specified!");
+	return processLegendTemplate(names, values, values.Length);
+  }
+  
+  public string processQueryTemplate(string[] names, string[] values)
+  {
+	if (names.Length != values.Length)
+	    throw new ArgumentException("Invalid array length specified!");
+	return processQueryTemplate(names, values, values.Length);
+  }
+%}
+
+
 %typemap(ctype) gdBuffer    %{void%}
 %typemap(imtype) gdBuffer  %{void%}
 %typemap(cstype) gdBuffer %{byte[]%}

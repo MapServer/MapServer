@@ -53,7 +53,7 @@ class HTMLTemplate
 		string[] names = null, values = null;
 		names = new string[] {"map"};
 		values = new string[] { args[0] };
-		str = map.processLegendTemplate(names, values, names.Length);
+		str = map.processLegendTemplate(names, values);
 		Console.Write(str);
     }
 }
