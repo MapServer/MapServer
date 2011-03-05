@@ -56,7 +56,9 @@ typedef struct {
 %immutable;
 #endif
   int numpoints;
+#ifndef SWIG
   pointObj *point;
+#endif
 #ifdef SWIG
 %mutable;
 #endif
@@ -68,10 +70,9 @@ typedef struct {
 #endif
   int numlines;
   int numvalues;
+#ifndef SWIG
   lineObj *line;
   char **values;
-
-#ifndef SWIG
   void *geometry;
   void *renderer_cache;
 #endif
