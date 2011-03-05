@@ -1817,6 +1817,9 @@ void msCleanup()
 
   /* Close/cleanup log/debug output. Keep this at the very end. */
   msDebugCleanup();
+
+  /* Clean up the vtable factory */
+  msPluginFreeVirtualTableFactory();
 }
 
 
