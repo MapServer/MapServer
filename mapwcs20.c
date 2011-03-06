@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: mapwcs20.c
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  OpenGIS Web Coverage Server (WCS) 2.0 implementation.
@@ -51,6 +51,8 @@
     #include <libxml/parser.h>
 
 #endif /* defined(USE_LIBXML2) */
+
+MS_CVSID("$Id$")
 
 /************************************************************************/
 /*                   msStringParseInteger()                             */
