@@ -33,6 +33,10 @@
 #include <assert.h>
 #include "mapserver.h"
 
+#ifndef EQUAL
+#define EQUAL(a,b) (strcasecmp(a, b) == 0)
+#endif
+
 MS_CVSID("$Id$")
 
 #define MSUNION_NUMITEMS        2

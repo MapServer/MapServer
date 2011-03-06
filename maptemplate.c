@@ -3611,9 +3611,11 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.map", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id);
     outstr = msReplaceSubstring(outstr, "[map]", repstr);
   }
-  
+
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",
                               msOWSGetOnlineResource(mapserv->map, "O", "onlineresource", mapserv->request));
+#endif
 
   if(getenv("HTTP_HOST")) {
     snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("HTTP_HOST")); 
