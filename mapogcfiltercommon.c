@@ -647,7 +647,7 @@ char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj
                     }
                     else
                     {   
-                        bufferSize = 7+strlen(tokens[i])+strlen(pszAttribute)+1;
+                        bufferSize = 8+strlen(tokens[i])+strlen(pszAttribute)+1;
                         pszTmp = (char *)malloc(bufferSize);
                         snprintf(pszTmp, bufferSize, "([%s] == %s)" , pszAttribute, tokens[i]);
                     }
