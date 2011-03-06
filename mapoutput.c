@@ -296,7 +296,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         }
     }
 #endif
-#ifdef USE_GDAL
+#ifdef USE_OGR
     if( strncasecmp(driver,"ogr/",4) == 0 )
     {
         format = msAllocOutputFormat( map, driver+4, driver );
