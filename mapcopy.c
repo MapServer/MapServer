@@ -513,7 +513,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
 
 int msCopyCluster(clusterObj *dst, clusterObj *src) 
 {
-    int i, return_value;
+    int return_value;
 
     MS_COPYSTELEM(maxdistance);
     MS_COPYSTELEM(buffer);
