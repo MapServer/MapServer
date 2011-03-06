@@ -42,10 +42,10 @@
 
 
 KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color/*=NULL*/) 
-	:	XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL), Width(width), Height(height),
-		FirstLayer(MS_TRUE), MapCellsize(1.0),
-		PlacemarkNode(NULL), GeomNode(NULL),
-                Items(NULL), NumItems(0), map(NULL), currentLayer(NULL), mElevationFromAttribute( false ), mElevationAttributeIndex( -1 ), mCurrentElevationValue(0.0)
+    : Width(width), Height(height), MapCellsize(1.0), XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL),
+      PlacemarkNode(NULL), GeomNode(NULL),
+      Items(NULL), NumItems(0), FirstLayer(MS_TRUE), map(NULL), currentLayer(NULL),
+      mElevationFromAttribute( false ), mElevationAttributeIndex( -1 ), mCurrentElevationValue(0.0)
 
 {
     /*private variables*/        
@@ -102,6 +102,9 @@ KmlRenderer::~KmlRenderer()
 
 	if (StyleHashTable)
 		msFreeHashTable(StyleHashTable);
+
+    if(LineStyle)
+        msFree(LineStyle);
 
 	xmlCleanupParser();
 }
@@ -524,7 +527,7 @@ xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUr
     /*always add a name. It will be replaced by a text value if available*/
     char tmpid[100];
     char *stmp=NULL, *layerName=NULL;
-    sprintf(tmpid, ".%d_%d", CurrentShapeIndex);
+    sprintf(tmpid, ".%d", CurrentShapeIndex);
     layerName = getLayerName(currentLayer);
     stmp = msStringConcatenate(stmp, layerName);
     stmp = msStringConcatenate(stmp, tmpid);
@@ -802,7 +805,7 @@ xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *ima
     xmlNewChild(groundOverlayNode, NULL, BAD_CAST "name", BAD_CAST layerName);
     if (layer->opacity > 0 && layer->opacity < 100)
     {
-        sprintf(layerHexColor, "%02xffffff", MS_NINT(layer->opacity*2.55));
+        sprintf(layerHexColor, "%02xffffff", (unsigned int)MS_NINT(layer->opacity*2.55));
         xmlNewChild(groundOverlayNode, NULL, BAD_CAST "color", BAD_CAST layerHexColor);
     }
     else
@@ -877,7 +880,7 @@ void KmlRenderer::endShape(imageObj*, shapeObj*)
     CurrentShapeIndex = -1;
 }
 
-xmlNodePtr KmlRenderer::getGeomParentNode(char *geomName)
+xmlNodePtr KmlRenderer::getGeomParentNode(const char *geomName)
 {
     
     /*we do not need a multi-geometry for point layers*/

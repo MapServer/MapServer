@@ -132,7 +132,7 @@ protected:
 
 	char* lookupPlacemarkStyle();
 	void flushPlacemark();
-	xmlNodePtr getGeomParentNode(char *geomName);
+	xmlNodePtr getGeomParentNode(const char *geomName);
         char* getLayerName(layerObj *layer);
         void processLayer(layerObj *layer);
         void addLineStyleToList(strokeStyleObj *style);
