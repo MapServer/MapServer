@@ -634,7 +634,7 @@ static int msWCSParseResolutionString20(char *string,
 /*      Parses a DOM element, representing a GetCapabilities-request    */
 /*      to a params object.                                             */
 /************************************************************************/
-
+#if defined(USE_LIBXML2)
 static int msWCSParseRequest20_XMLGetCapabilities(
         xmlNodePtr root, wcs20ParamsObjPtr params)
 {
@@ -691,6 +691,7 @@ static int msWCSParseRequest20_XMLGetCapabilities(
     }
     return MS_SUCCESS;
 }
+#endif
 
 /************************************************************************/
 /*                   msWCSParseRequest20_XMLDescribeCoverage()          */
@@ -698,7 +699,7 @@ static int msWCSParseRequest20_XMLGetCapabilities(
 /*      Parses a DOM element, representing a DescribeCoverage-request   */
 /*      to a params object.                                             */
 /************************************************************************/
-
+#if defined(USE_LIBXML2)
 static int msWCSParseRequest20_XMLDescribeCoverage(
         xmlNodePtr root, wcs20ParamsObjPtr params)
 {
@@ -726,6 +727,7 @@ static int msWCSParseRequest20_XMLDescribeCoverage(
     }
     return MS_SUCCESS;
 }
+#endif
 
 /************************************************************************/
 /*                   msWCSParseRequest20_XMLGetCoverage()               */
@@ -733,7 +735,7 @@ static int msWCSParseRequest20_XMLDescribeCoverage(
 /*      Parses a DOM element, representing a GetCoverage-request to a   */
 /*      params object.                                                  */
 /************************************************************************/
-
+#if defined(USE_LIBXML2)
 static int msWCSParseRequest20_XMLGetCoverage(
         xmlNodePtr root, wcs20ParamsObjPtr params)
 {
@@ -965,6 +967,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
     }
     return MS_SUCCESS;
 }
+#endif
 
 /************************************************************************/
 /*                   msWCSParseRequest20()                              */
@@ -3900,7 +3903,7 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
 
 #else /* defined(USE_LIBXML2) */
     if(params->service && params->version &&
-            EQUAL(params->service, "WCS") && EQUAL(params->version, "2.0.0", 3))
+            EQUAL(params->service, "WCS") && EQUAL(params->version, "2.0.0"))
     {
         msSetError(MS_WCSERR, "WCS 2.0.0 needs mapserver to be compiled with libxml2.", "msWCSDispatch20()");
         return msWCSException(map, "mapserv", "NoApplicableCode", "1.0.0");

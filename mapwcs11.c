@@ -1349,7 +1349,9 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
         return MS_SUCCESS;
     }
-#endif /* def GDAL_DCAP_VIRTUALIO */    
+#else
+    return MS_SUCCESS;
+#endif /* def GDAL_DCAP_VIRTUALIO */
 }
 #endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
 
