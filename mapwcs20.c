@@ -3651,7 +3651,8 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
             psWcsNs = NULL,
             psXLinkNs = NULL;
         wcs20coverageMetadataObj tmpCm;
-        char *srs_uri, *filename, *default_filename;
+        char *srs_uri, *default_filename;
+        const char *filename;
         char *file_ref;
         int length = 0;
 
