@@ -2362,6 +2362,8 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
         }
         
         return MS_SUCCESS;
+#else
+    return MS_FAILURE;
 #endif
 }
 
