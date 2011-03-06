@@ -33,12 +33,15 @@
 
 MS_CVSID("$Id$")
 
+#if defined(USE_GDAL) || defined(USE_OGR)
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "ogr_srs_api.h"
+#endif
+
 #ifdef USE_GDAL
 
 #include "gdal.h"
-#include "ogr_srs_api.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
 
 static int    bGDALInitialized = 0;
 
