@@ -7,6 +7,16 @@ applications when migrating from version 5.6.x (or earlier versions)
 to 6.0 (i.e. backwards incompatibilities), as well as information
 on some of the new features.
 
+-----------
+CGI Changes
+-----------
+
+All of the query map related modes (e.g. NQUERYMAP, ITEMQUERYMAP, etc...) have 
+been removed in favor of using the "qformat" parameter. That parameter takes 
+an output format name or mime/type as a value and uses that to process a set
+of query results. For example:
+
+  ...&mode=nquerymap&... would become ...&mode=nquery&qformat=png24&...
 
 -----------------
 OGC Web Services
