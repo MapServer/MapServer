@@ -275,20 +275,24 @@ static void msSourceSample( imageObj *psSrcImage, rasterBufferObj *rb,
     {
         assert(rb);
         if(rb->type == MS_BUFFER_GD) {
-        	assert(!gdImageTrueColor(rb->data.gd_img) );
+            assert(!gdImageTrueColor(rb->data.gd_img) );
             padfPixelSum[0] += (dfWeight * rb->data.gd_img->pixels[iSrcY][iSrcX]);
             *pdfWeightSum += dfWeight;
         } else if(rb->type == MS_BUFFER_BYTE_RGBA) {
-        	rgbaArrayObj *rgba = &(rb->data.rgba);
-        	int rb_off = iSrcX * rgba->pixel_step + iSrcY * rgba->row_step;
+            rgbaArrayObj *rgba = &(rb->data.rgba);
+            int rb_off = iSrcX * rgba->pixel_step + iSrcY * rgba->row_step;
 
-			if( rgba->a == NULL || rgba->a[rb_off] > 1 )
-			{
-				padfPixelSum[0] += rgba->r[rb_off] * dfWeight;
-				padfPixelSum[1] += rgba->g[rb_off] * dfWeight;
-				padfPixelSum[2] += rgba->b[rb_off] * dfWeight;
-				*pdfWeightSum += dfWeight; /* should we be using src alpha? */
-			}
+            if( rgba->a == NULL || rgba->a[rb_off] > 1 )
+            {
+                padfPixelSum[0] += rgba->r[rb_off] * dfWeight;
+                padfPixelSum[1] += rgba->g[rb_off] * dfWeight;
+                padfPixelSum[2] += rgba->b[rb_off] * dfWeight;
+                
+                if( rgba->a == NULL )
+                    *pdfWeightSum += dfWeight;
+                else
+                    *pdfWeightSum += dfWeight * (rgba->a[rb_off] / 255.0);
+            }
         }
     }
     else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
