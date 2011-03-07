@@ -2206,6 +2206,7 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
 		psSymbol->type = MS_SYMBOL_PIXMAP;
 		psSymbol->name = msStrdup(extGraphicName);
 		psSymbol->imagepath = msStrdup(pszFileName);
+                psSymbol->full_pixmap_path = msStrdup(pszFileName);
     }
     return nSymbolId;
 }
