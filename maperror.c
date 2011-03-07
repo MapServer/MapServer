@@ -508,9 +508,6 @@ char *msGetVersion() {
 #ifdef USE_GD_JPEG
   strcat(version, " OUTPUT=JPEG");
 #endif
-#ifdef USE_GD_WBMP
-  strcat(version, " OUTPUT=WBMP");
-#endif
 #ifdef USE_PDF
   strcat(version, " OUTPUT=PDF");
 #endif

@@ -1754,10 +1754,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                            if (!mimetype)
                              mimetype = msEncodeHTMLEntities("image/jpeg");
 #endif
-#ifdef USE_GD_WBMP
-                           if (!mimetype)
-                             mimetype = msEncodeHTMLEntities("image/vnd.wap.wbmp");
-#endif
                            if (!mimetype)
                                mimetype = msEncodeHTMLEntities(MS_IMAGE_MIME_TYPE(map->outputformat));
 
@@ -2224,9 +2220,6 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
 #endif
 #ifdef USE_GD_JPEG
                       "<JPEG />"
-#endif
-#ifdef USE_GD_WBMP
-                      "<WBMP />"
 #endif
                        "<SVG />"  
                       , NULL);
