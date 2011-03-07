@@ -142,59 +142,59 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
             if( MS_RENDERER_PLUGIN(psSrcImage->format) )
             {
             	if(src_rb->type == MS_BUFFER_GD) {
-            		assert(!gdImageTrueColor(src_rb->data.gd_img));
-            		nValue = panCMap[src_rb->data.gd_img->pixels[nSrcY][nSrcX]];
+                    assert(!gdImageTrueColor(src_rb->data.gd_img));
+                    nValue = panCMap[src_rb->data.gd_img->pixels[nSrcY][nSrcX]];
 
-            		if( nValue == -1 )
-            			continue;
+                    if( nValue == -1 )
+                        continue;
 
-            		nSetPoints++;
-            		dst_rb->data.gd_img->pixels[nDstY][nDstX] = nValue; 
+                    nSetPoints++;
+                    dst_rb->data.gd_img->pixels[nDstY][nDstX] = nValue; 
 
             	}
             	else if( src_rb->type == MS_BUFFER_BYTE_RGBA )
             	{
-            		int src_rb_off;
-            		rgbaArrayObj *src = &src_rb->data.rgba, *dst = &dst_rb->data.rgba;
-                        assert( src_rb && dst_rb );
-            		src_rb_off = nSrcX * src->pixel_step 
-            				+ nSrcY * src->row_step;
+                    int src_rb_off;
+                    rgbaArrayObj *src = &src_rb->data.rgba, *dst = &dst_rb->data.rgba;
+                    assert( src_rb && dst_rb );
+                    src_rb_off = nSrcX * src->pixel_step 
+                        + nSrcY * src->row_step;
 
-            		if( src->a == NULL || src->a[src_rb_off] == 255 )
-            		{
-            			int dst_rb_off;
+                    if( src->a == NULL || src->a[src_rb_off] == 255 )
+                    {
+                        int dst_rb_off;
 
-            			dst_rb_off = nDstX * dst->pixel_step 
-            					+ nDstY * dst->row_step;
+                        dst_rb_off = nDstX * dst->pixel_step 
+                            + nDstY * dst->row_step;
 
-            			nSetPoints++;
+                        nSetPoints++;
 
-            			dst->r[dst_rb_off] = src->r[src_rb_off];
-            			dst->g[dst_rb_off] = src->g[src_rb_off];
-            			dst->b[dst_rb_off] = src->b[src_rb_off];
-            			if( dst->a )
-            			   dst->a[dst_rb_off] = 255;
-            		}
-            		else if( src->a[src_rb_off] != 0 )
-            		{
-            			int dst_rb_off;
+                        dst->r[dst_rb_off] = src->r[src_rb_off];
+                        dst->g[dst_rb_off] = src->g[src_rb_off];
+                        dst->b[dst_rb_off] = src->b[src_rb_off];
+                        if( dst->a )
+                            dst->a[dst_rb_off] = 255;
+                    }
+                    else if( src->a[src_rb_off] != 0 )
+                    {
+                        int dst_rb_off;
 
-            			dst_rb_off = nDstX * dst->pixel_step 
-            					+ nDstY * dst->row_step;
+                        dst_rb_off = nDstX * dst->pixel_step 
+                            + nDstY * dst->row_step;
 
-            			nSetPoints++;
+                        nSetPoints++;
 
-            			/* actual alpha blending is required */
-            			msAlphaBlend( src->r[src_rb_off],
-            					src->g[src_rb_off],
-            					src->b[src_rb_off],
-            					src->a[src_rb_off],
-            					dst->r + dst_rb_off, 
-            					dst->g + dst_rb_off, 
-            					dst->b + dst_rb_off, 
-            					dst->a ? dst->a + dst_rb_off : NULL  );
+                        /* actual alpha blending is required */
+                        msAlphaBlend( src->r[src_rb_off],
+                                      src->g[src_rb_off],
+                                      src->b[src_rb_off],
+                                      src->a[src_rb_off],
+                                      dst->r + dst_rb_off, 
+                                      dst->g + dst_rb_off, 
+                                      dst->b + dst_rb_off, 
+                                      dst->a ? dst->a + dst_rb_off : NULL  );
 
-            		}
+                    }
             	}
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
@@ -447,8 +447,8 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
             {
             	assert(src_rb && dst_rb);
             	if(src_rb->type == MS_BUFFER_GD) {
-            		int nResult;
-            		assert( !gdImageTrueColor(src_rb->data.gd_img) &&  !gdImageTrueColor(dst_rb->data.gd_img));
+                    int nResult;
+                    assert( !gdImageTrueColor(src_rb->data.gd_img) &&  !gdImageTrueColor(dst_rb->data.gd_img));
                     nResult = panCMap[(int) padfPixelSum[0]];
                     if( nResult != -1 )
                     {                        
@@ -457,23 +457,23 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                     }
                 }
                 else if( src_rb->type == MS_BUFFER_BYTE_RGBA ) {
-					int dst_rb_off;
-					assert( src_rb->type == dst_rb->type );
+                    int dst_rb_off;
+                    assert( src_rb->type == dst_rb->type );
 	
-					dst_rb_off = nDstX * dst_rb->data.rgba.pixel_step + nDstY * dst_rb->data.rgba.row_step;
+                    dst_rb_off = nDstX * dst_rb->data.rgba.pixel_step + nDstY * dst_rb->data.rgba.row_step;
 	
-					nSetPoints++;
+                    nSetPoints++;
 	
-					if( dfWeightSum > 0.001 )
-						msAlphaBlend( (unsigned char) padfPixelSum[0],
-									   (unsigned char) padfPixelSum[1],
-									   (unsigned char) padfPixelSum[2],
-									   (unsigned char) (dfWeightSum * 255),
-									   dst_rb->data.rgba.r + dst_rb_off, 
-									   dst_rb->data.rgba.g + dst_rb_off, 
-									   dst_rb->data.rgba.b + dst_rb_off, 
-									   (dst_rb->data.rgba.a == NULL) ? NULL : dst_rb->data.rgba.a + dst_rb_off );
-				}
+                    if( dfWeightSum > 0.001 )
+                        msAlphaBlend( (unsigned char) padfPixelSum[0],
+                                      (unsigned char) padfPixelSum[1],
+                                      (unsigned char) padfPixelSum[2],
+                                      (unsigned char) (dfWeightSum * 255),
+                                      dst_rb->data.rgba.r + dst_rb_off, 
+                                      dst_rb->data.rgba.g + dst_rb_off, 
+                                      dst_rb->data.rgba.b + dst_rb_off, 
+                                      (dst_rb->data.rgba.a == NULL) ? NULL : dst_rb->data.rgba.a + dst_rb_off );
+                }
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
             {
@@ -667,8 +667,8 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
             {
             	assert(dst_rb && src_rb);
             	if(dst_rb->type == MS_BUFFER_GD) {
-            		int nResult = panCMap[(int) padfPixelSum[0]];
-            		assert( !gdImageTrueColor(dst_rb->data.gd_img) );
+                    int nResult = panCMap[(int) padfPixelSum[0]];
+                    assert( !gdImageTrueColor(dst_rb->data.gd_img) );
                     if( nResult != -1 )
                     {                        
                         nSetPoints++;
@@ -676,21 +676,21 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                     }
                 }
             	else if( dst_rb->type == MS_BUFFER_BYTE_RGBA )
-				{
+                {
 	
-					assert( src_rb->type == dst_rb ->type );
+                    assert( src_rb->type == dst_rb ->type );
 	
-					nSetPoints++;
+                    nSetPoints++;
 	
-					if( dfAlpha01 > 0 )
-					{
-						RB_SET_PIXEL(dst_rb,nDstX,nDstY,
-						      (unsigned char) (padfPixelSum[0]+0.5),
-						      (unsigned char) (padfPixelSum[1]+0.5),
-						      (unsigned char) (padfPixelSum[2]+0.5),
-						      (unsigned char) (dfAlpha01*255+0.5));
-					}
-				}
+                    if( dfAlpha01 > 0 )
+                    {
+                        RB_SET_PIXEL(dst_rb,nDstX,nDstY,
+                                     (unsigned char) (padfPixelSum[0]+0.5),
+                                     (unsigned char) (padfPixelSum[1]+0.5),
+                                     (unsigned char) (padfPixelSum[2]+0.5),
+                                     (unsigned char) (dfAlpha01*255+0.5));
+                    }
+                }
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
             {
@@ -1506,27 +1506,26 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     	assert(rb);
     	msInitializeRendererVTable(sDummyMap.outputformat);
     	if( rb->type == MS_BUFFER_GD ) {
-    		assert( !gdImageTrueColor( rb->data.gd_img ) );
-			sDummyMap.outputformat->transparent = MS_TRUE;
-			sDummyMap.imagecolor.red = 117;
-			sDummyMap.imagecolor.green = 17;
-			sDummyMap.imagecolor.blue = 191;
-		}
+            assert( !gdImageTrueColor( rb->data.gd_img ) );
+            sDummyMap.outputformat->transparent = MS_TRUE;
+            sDummyMap.imagecolor.red = 117;
+            sDummyMap.imagecolor.green = 17;
+            sDummyMap.imagecolor.blue = 191;
+        }
 /* -------------------------------------------------------------------- */
 /*      If we are working in RGB mode ensure we produce an RGBA         */
 /*      image so the transparency can be preserved.                     */
 /* -------------------------------------------------------------------- */
-		else
-		{
-			assert( sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGB
-					|| sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGBA );
+        else
+        {
+            assert( sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGB
+                    || sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGBA );
 	
-			sDummyMap.outputformat->transparent = MS_TRUE;
-			sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
-			MS_INIT_COLOR(sDummyMap.imagecolor,-1,-1,-1);
-		}
+            sDummyMap.outputformat->transparent = MS_TRUE;
+            sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
+            MS_INIT_COLOR(sDummyMap.imagecolor,-1,-1,-1);
+        }
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Setup a dummy map object we can use to read from the source     */
@@ -1545,9 +1544,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         memset( psrc_rb, 0, sizeof(rasterBufferObj) );
         if( srcImage->format->vtable->supports_pixel_buffer )
         {
-        	  srcImage->format->vtable->getRasterBufferHandle( srcImage, psrc_rb );
+            srcImage->format->vtable->getRasterBufferHandle( srcImage, psrc_rb );
         } else {
-           srcImage->format->vtable->initializeRasterBuffer(psrc_rb,nLoadImgXSize, nLoadImgYSize,MS_IMAGEMODE_RGBA);
+            srcImage->format->vtable->initializeRasterBuffer(psrc_rb,nLoadImgXSize, nLoadImgYSize,MS_IMAGEMODE_RGBA);
         }
     }
 
@@ -1569,7 +1568,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         if( result )
         {
             if( MS_RENDERER_PLUGIN( srcImage->format ) && !srcImage->format->vtable->supports_pixel_buffer)
-               msFreeRasterBuffer(psrc_rb);
+                msFreeRasterBuffer(psrc_rb);
             
             msFreeImage( srcImage );
             
@@ -1613,7 +1612,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         if( layer->debug )
             msDebug( "msInitProjTransformer() returned NULL.\n" );
         if( MS_RENDERER_PLUGIN( srcImage->format ) && !srcImage->format->vtable->supports_pixel_buffer)
-           msFreeRasterBuffer(psrc_rb);
+            msFreeRasterBuffer(psrc_rb);
         msFreeImage( srcImage );
         return MS_PROJERR;
     }
@@ -1647,7 +1646,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
     if( MS_RENDERER_PLUGIN( srcImage->format ) && !srcImage->format->vtable->supports_pixel_buffer)
-       msFreeRasterBuffer(psrc_rb);
+        msFreeRasterBuffer(psrc_rb);
     msFreeImage( srcImage );
 
     msFreeProjTransformer( pTCBData );
