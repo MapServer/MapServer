@@ -469,14 +469,20 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                     nSetPoints++;
 	
                     if( dfWeightSum > 0.001 )
-                        msAlphaBlend( (unsigned char) padfPixelSum[0],
-                                      (unsigned char) padfPixelSum[1],
-                                      (unsigned char) padfPixelSum[2],
-                                      (unsigned char) (dfWeightSum * 255),
+                    {
+                        unsigned char red, green, blue, alpha;
+                        
+                        red   = (unsigned char) MAX(0,MIN(255,padfPixelSum[0]));
+                        green = (unsigned char) MAX(0,MIN(255,padfPixelSum[1]));
+                        blue  = (unsigned char) MAX(0,MIN(255,padfPixelSum[2]));
+                        alpha = (unsigned char) MAX(0,MIN(255,255.5*dfWeightSum));
+                        
+                        msAlphaBlend( red, green, blue, alpha,
                                       dst_rb->data.rgba.r + dst_rb_off, 
                                       dst_rb->data.rgba.g + dst_rb_off, 
                                       dst_rb->data.rgba.b + dst_rb_off, 
                                       (dst_rb->data.rgba.a == NULL) ? NULL : dst_rb->data.rgba.a + dst_rb_off );
+                    }
                 }
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
@@ -501,7 +507,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                     else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE )
                     {
                         psDstImage->img.raw_byte[dst_off]
-                            = (unsigned char) padfPixelSum[band];
+                            = (unsigned char)MAX(0,MIN(255,padfPixelSum[band]));
                     } 
 
                     dst_off += psDstImage->width*psDstImage->height;
@@ -688,11 +694,19 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 	
                     if( dfAlpha01 > 0 )
                     {
-                        RB_SET_PIXEL(dst_rb,nDstX,nDstY,
-                                     (unsigned char) (padfPixelSum[0]+0.5),
-                                     (unsigned char) (padfPixelSum[1]+0.5),
-                                     (unsigned char) (padfPixelSum[2]+0.5),
-                                     (unsigned char) (dfAlpha01*255+0.5));
+                        unsigned char red, green, blue, alpha;
+                        
+                        red   = (unsigned char) 
+                            MAX(0,MIN(255,padfPixelSum[0]+0.5));
+                        green = (unsigned char) 
+                            MAX(0,MIN(255,padfPixelSum[1]+0.5));
+                        blue  = (unsigned char) 
+                            MAX(0,MIN(255,padfPixelSum[2]+0.5));
+                        alpha = (unsigned char) 
+                            MAX(0,MIN(255,255*dfAlpha01+0.5));
+                        
+                        RB_SET_PIXEL(dst_rb,nDstX,nDstY, 
+                                     red, green, blue, alpha );
                     }
                 }
             }
