@@ -801,6 +801,7 @@ int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format) {
 
 int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format) {
     gdIOCtx *ctx;
+    int tmp_size;
 
     ctx = gdNewDynamicCtx (2048, NULL);
 
@@ -845,7 +846,10 @@ int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format)
         return(MS_FAILURE);
     }
 
-    buffer->data = gdDPExtractData (ctx, &buffer->size);
+    /* gdDPExtractData expects a int*, but bufferObj::size is a size_t */
+    /* so use a temp variable to hold it */
+    buffer->data = gdDPExtractData (ctx, &tmp_size);
+    buffer->size = tmp_size;
 
     ctx->gd_free(ctx);
     return MS_SUCCESS;
