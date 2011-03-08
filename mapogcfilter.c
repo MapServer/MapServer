@@ -39,11 +39,6 @@ MS_CVSID("$Id$")
 
 #ifdef USE_OGR
 
-static int compare_ints( const void * a, const void * b)
-{
-    return (*(int*)a) - (*(int*)b);
-}
-
 int FLTIsNumeric(char *pszValue)
 {
     if (pszValue)
