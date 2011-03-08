@@ -34,7 +34,6 @@
 #include "mapkmlrenderer.h"
 #include "mapio.h"
 
-
 #if defined(USE_OGR)
 #  include "cpl_conv.h"
 #  include "cpl_vsi.h"
@@ -149,7 +148,7 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
 #if defined(CPL_ZIP_API_OFFERED) 
     if (bZip)
     {
-        VSILFILE *fpZip;
+        FILE *fpZip;
         int bytes_read;
         char buffer[1024];
         char *zip_filename =NULL;
