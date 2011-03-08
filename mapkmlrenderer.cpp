@@ -148,7 +148,7 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
 #if defined(CPL_ZIP_API_OFFERED) 
     if (bZip)
     {
-        FILE *fpZip;
+         VSILFILE *fpZip;
         int bytes_read;
         char buffer[1024];
         char *zip_filename =NULL;
