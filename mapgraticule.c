@@ -541,7 +541,7 @@ int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent)
 /**********************************************************************************************************************
  *
  */
-int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record)
+int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape)
 {
   return MS_SUCCESS;
 }
