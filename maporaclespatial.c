@@ -3185,8 +3185,6 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
                                                  layer->items[count_item-1], 
                                                  pard );
             }
-            else
-                layer->numitems--;
         }
         else
             existgeom = 1;
@@ -3195,6 +3193,9 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
         free(flk); /* Better?!*/
         flk_len = 0;
     }
+
+    layer->numitems = count_item;
+
     if (!(existgeom))
     {
         msSetError (MS_ORACLESPATIALERR, "No geometry column, check stmt", "msOracleSpatialLayerGetItems()" );
