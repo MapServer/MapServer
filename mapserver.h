@@ -33,10 +33,10 @@
 /*
 ** MapServer version - to be updated for every release 
 */
-#define MS_VERSION "5.7-dev"
+#define MS_VERSION "6.0.0-beta1"
 
-#define MS_VERSION_MAJOR    5
-#define MS_VERSION_MINOR    7
+#define MS_VERSION_MAJOR    6
+#define MS_VERSION_MINOR    0
 #define MS_VERSION_REV      0
 
 #define MS_VERSION_NUM (MS_VERSION_MAJOR*10000+MS_VERSION_MINOR*100+MS_VERSION_REV)
