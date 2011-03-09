@@ -193,7 +193,7 @@ OUTPUTFORMAT
 The OUTPUTFORMAT parameter validation when reading from the mapfile 
 will now trigger an error on some problems that in the past were 
 silently fixed up.  For instance using RGBA IMAGEMODE with JPEG format 
-not triggers an error instead of switching to IMAGEMODE RGB silently.  
+now triggers an error instead of switching to IMAGEMODE RGB silently.  
 
 -------
 Rasters
@@ -203,6 +203,19 @@ Rasters
   RASTER layers (or WMS layers) require that MapServer be built against 
   the GDAL library.  
 * The above change also means there is no longer support for EPPL raster layers.
+
+-------------------
+Deprecated features
+-------------------
+
+- Support for Flash/SWF output has been removed as part of the rendering overhaul
+  because it was no longer compatible with the new architecture. 
+  Support for Flash/SWF could be reintroduced but would require a nono trivial
+  amount of work (i.e. would require funding).
+
+- Support for "CONNECTIONTYPE MyGIS" has been dropped since it was no longer 
+  being maintained and there are better ways to use MySQL data sources theses 
+  days, going through OGR for instance.
 
 
 =====================================
