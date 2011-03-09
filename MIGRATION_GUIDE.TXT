@@ -99,7 +99,35 @@ PHP MapScript Changes
   - symbolObj: getPatternArray
   - layerObj: getItems, getProcessing, getGridIntersectionCoordinates
   - mapObj: getLayersIndexByGroup, getAllGroupNames, getLayersDrawingOrder, getAllLayerNames
-  
+
+-----------------------
+MapScript (All Flavors)
+-----------------------
+
+The layer query result handing has been re-worked (again) to address some issues introduced in
+the 5.4/5.6 versions. Gone are resultsGetShape and getFeature methods. You should now use a 
+refactored getShape method to access layer shapes. That method takes a resultObj and returns
+a shapeObj. Typical use would be (in Perl):
+
+  $layer->queryByRect($map, $map->{extent}); # layer is still open                                                                             
+
+  for($i=0; $i<$layer->getNumResults(); $i++) {
+    $shape = $layer->getShape($layer->getResult($i));
+    print "$i: ". $shape->getValue(1) ."\n";
+  }
+
+  $layer->close();
+
+A resultObj encapsulates the data used to manage a result set.
+
+To access shapes independently of a query use the new resultObj class:
+
+  $layer->open();
+  $shape = $layer->getShape(new mapscript::resultObj(1));  
+  $layer->close();
+
+See http://mapserver.org/development/rfc/ms-rfc-65.html for more information.
+
 ------------
 OUTPUTFORMAT
 ------------
