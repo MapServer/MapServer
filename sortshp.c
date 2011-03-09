@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
       exit(0);
   }
 
-  msSetErrorFile("stderr");
+  msSetErrorFile("stderr", NULL);
 
   /* ------------------------------------------------------------------------------- */
   /*       Open the shapefile                                                        */

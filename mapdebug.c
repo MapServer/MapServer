@@ -129,11 +129,26 @@ debugInfoObj *msGetDebugInfoObj()
 **
 ** Set output target, ready to write to it, open file if necessary
 **
+** If pszRelToPath != NULL then we will try to make the value relative to 
+** this path if it is not absolute already and it's not one of the special
+** values (stderr, stdout, windowsdebug)
+**
 ** Returns MS_SUCCESS/MS_FAILURE
 */
-int msSetErrorFile(const char *pszErrorFile)
+int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath)
 {
+    char extended_path[MS_MAXPATHLEN];
     debugInfoObj *debuginfo = msGetDebugInfoObj();
+
+    if (strcmp(pszErrorFile, "stderr") != 0 &&
+        strcmp(pszErrorFile, "stdout") != 0 &&
+        strcmp(pszErrorFile, "windowsdebug") != 0)
+    {
+        /* Try to make the path relative */
+        if(msBuildPath(extended_path, pszRelToPath, pszErrorFile) == NULL)
+            return MS_FAILURE;
+        pszErrorFile = extended_path;
+    }
 
     if (debuginfo && debuginfo->errorfile && pszErrorFile &&
         strcmp(debuginfo->errorfile, pszErrorFile) == 0)
@@ -271,7 +286,7 @@ int msDebugInitFromEnv()
 
     if( (val=getenv( "MS_ERRORFILE" )) != NULL )
     {
-        if ( msSetErrorFile(val) != MS_SUCCESS )
+        if ( msSetErrorFile(val, NULL) != MS_SUCCESS )
             return MS_FAILURE;
     }
     

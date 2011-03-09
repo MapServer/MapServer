@@ -159,7 +159,7 @@ typedef struct debug_info_obj
 
 
 MS_DLL_EXPORT void msDebug( const char * pszFormat, ... );
-MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile);
+MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath);
 MS_DLL_EXPORT void msCloseErrorFile( void );
 MS_DLL_EXPORT const char *msGetErrorFile( void );
 MS_DLL_EXPORT void msSetGlobalDebugLevel(int level);

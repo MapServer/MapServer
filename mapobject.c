@@ -191,10 +191,12 @@ int msSetConfigOption( mapObj *map, const char *key, const char *value)
     }
 
     /* Same for MS_ERRORFILE, we want it to kick in as early as possible
-     * to catch parsing errors */
+     * to catch parsing errors.
+     * Value can be relative to mapfile, unless it's already absolute 
+     */
     if( strcasecmp(key,"MS_ERRORFILE") == 0 )
     {
-        if (msSetErrorFile( value ) != MS_SUCCESS)
+        if (msSetErrorFile( value, map->mappath ) != MS_SUCCESS)
             return MS_FAILURE;
     }
 
@@ -245,7 +247,7 @@ void msApplyMapConfigOptions( mapObj *map )
         }
         else if( strcasecmp(key,"MS_ERRORFILE") == 0 )
         {
-            msSetErrorFile( value );
+            msSetErrorFile( value, map->mappath );
         }
         else 
         {

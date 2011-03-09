@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
         /* Send output to stderr by default */ 
         if (msGetErrorFile() == NULL)
-            msSetErrorFile("stderr");
+            msSetErrorFile("stderr", NULL);
 
         continue;
     }
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 
         /* Send output to stderr by default */ 
         if (msGetErrorFile() == NULL)
-            msSetErrorFile("stderr");
+            msSetErrorFile("stderr", NULL);
     }
     
     if(strcmp(argv[i], "-layer_debug") == 0) /* debug */
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 
         /* Send output to stderr by default */ 
         if (msGetErrorFile() == NULL)
-            msSetErrorFile("stderr");
+            msSetErrorFile("stderr", NULL);
     }
     
     if(strcmp(argv[i],"-e") == 0) { /* change extent */
