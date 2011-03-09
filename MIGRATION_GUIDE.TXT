@@ -210,7 +210,7 @@ Deprecated features
 
 - Support for Flash/SWF output has been removed as part of the rendering overhaul
   because it was no longer compatible with the new architecture. 
-  Support for Flash/SWF could be reintroduced but would require a nono trivial
+  Support for Flash/SWF could be reintroduced but would require a non trivial
   amount of work (i.e. would require funding).
 
 - Support for "CONNECTIONTYPE MyGIS" has been dropped since it was no longer 
