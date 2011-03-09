@@ -172,14 +172,6 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         image = msImageCreate(map->width, map->height, map->outputformat,
                               map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->imagecolor);
     }
-#ifdef USE_MING_FLASH
-    else if( MS_RENDERER_SWF(map->outputformat) )
-    {
-        image = msImageCreateSWF(map->width, map->height, map->outputformat,
-                                 map->web.imagepath, map->web.imageurl,
-                                 map->resolution, map->defresolution);
-    }
-#endif
     else
     {
         image = NULL;
@@ -394,10 +386,6 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 #ifdef USE_WMS_LYR 
         if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
           status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests,  map, lp, image);
-#ifdef USE_MING_FLASH                
-        else if(MS_RENDERER_SWF(image->format))
-          status = msDrawWMSLayerSWF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
-#endif
         else {
           msSetError(MS_WMSCONNERR, "Output format '%s' doesn't support WMS layers.", "msDrawMap()", image->format->name);
           status = MS_FAILURE;
@@ -510,10 +498,6 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 #ifdef USE_WMS_LYR 
       if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
         status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
-#ifdef USE_MING_FLASH
-      else if(MS_RENDERER_SWF(image->format) )
-        status = msDrawWMSLayerSWF(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
-#endif
 
 #else
       status = MS_FAILURE;
@@ -789,22 +773,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   int *classgroup = NULL;
   double minfeaturesize = -1;
 
-/* ==================================================================== */
-/*      For Flash, we use a metadata called SWFOUTPUT that              */
-/*      is used to render vector layers as rasters. It is also true     */
-/*      if  the output movie  format indicated in the map file is       */
-/*      SINGLE.                                                         */
-/* ==================================================================== */
-#ifdef USE_MING_FLASH
-  if(image &&  MS_RENDERER_SWF(image->format))
-  {
-    if ((msLookupHashTable(&(layer->metadata), "SWFOUTPUT") &&
-        strcasecmp(msLookupHashTable(&(layer->metadata), "SWFOUTPUT"),"RASTER")==0) ||
-        strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE", ""),  
-                   "MULTIPLE") != 0)
-    return msDrawVectorLayerAsRasterSWF(map, layer, image);
-  }
-#endif
+
   
   //TODO TBT: draw as raster layer in vector renderers
 
@@ -822,14 +791,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(status != MS_SUCCESS) return MS_FAILURE;
   
   /* build item list */
-/* ==================================================================== */
-/*      For Flash, we use a metadata called SWFDUMPATTRIBUTES that      */
-/*      contains a list of attributes that we want to write to the      */
-/*      flash movie for query purpose.                                  */
-/* ==================================================================== */
-  if(image && MS_RENDERER_SWF(image->format))
-    status = msLayerWhichItems(layer, MS_FALSE, msLookupHashTable(&(layer->metadata), "SWFDUMPATTRIBUTES"));                                
-  else        
     status = msLayerWhichItems(layer, MS_FALSE, NULL);
 
   if(status != MS_SUCCESS) {
@@ -1295,10 +1256,6 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
         }
         else if( MS_RENDERER_RAWDATA(image->format) )
             return msDrawRasterLayerLow(map, layer, image, NULL);
-#ifdef USE_MING_FLASH
-        else if( MS_RENDERER_SWF(image->format) )
-            return  msDrawRasterLayerSWF(map, layer, image);
-#endif
     }
 
     return MS_FAILURE;
@@ -1346,11 +1303,6 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
             nStatus = msDrawWMSLayerLow(1, asReqInfo, numReq,
                                         map, layer, image) ;
 
-#ifdef USE_MING_FLASH                
-        else if( MS_RENDERER_SWF(image->format) )
-            nStatus = msDrawWMSLayerSWF(1, asReqInfo, numReq,
-                                        map, layer, image);
-#endif
         else
         {
             msSetError(MS_WMSCONNERR, 
@@ -2280,16 +2232,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   if(!string) return MS_SUCCESS; /* not an error, just don't need to do anything more */
   if(strlen(string) == 0) return MS_SUCCESS; /* not an error, just don't need to do anything more */
 
-  /* ======================================================================= */
-  /*      TODO : This is a temporary hack to call the drawlableswf directly. */
-  /*      Normally the only functions that should be wrapped here is         */
-  /*      draw_text. We did this since msGetLabelSize has not yet been       */
-  /*      implemented for MING FDB fonts.                                    */
-  /* ======================================================================= */
-#ifdef USE_MING_FLASH
-  if ( MS_RENDERER_SWF(image->format) )
-    return msDrawLabelSWF(image, labelPnt, string, label, &(map->fontset), scalefactor);
-#endif
+  
 
   if(label->type == MS_TRUETYPE) {
     size = label->size * scalefactor;
@@ -2646,10 +2589,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
       return MS_SUCCESS; /* necessary? */
     } else if( MS_RENDERER_IMAGEMAP(image->format) )
       nReturnVal = msDrawLabelCacheIM(image, map);
-#ifdef USE_MING_FLASH
-    else if( MS_RENDERER_SWF(image->format) )
-      nReturnVal = msDrawLabelCacheSWF(image, map);
-#endif
+
   }
 
   return nReturnVal;
@@ -2685,10 +2625,7 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
         }
         else if( MS_RENDERER_IMAGEMAP(image->format) )
             msImageStartLayerIM(map, layer, image);
-#ifdef USE_MING_FLASH
-        else if( MS_RENDERER_SWF(image->format) )
-            msImageStartLayerSWF(map, layer, image);
-#endif
+
     }
 }
 
@@ -2722,10 +2659,7 @@ void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
 		  if (image->format->vtable->startShape)
 			image->format->vtable->startShape(image, shape);
 		}
-#ifdef USE_MING_FLASH
-    	else if( MS_RENDERER_SWF(map->outputformat) )
-            msDrawStartShapeSWF(map, layer, image, shape);
-#endif
+
         
     }
 }

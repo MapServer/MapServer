@@ -268,16 +268,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     } 
 #endif
 
-#ifdef USE_MING_FLASH
-    if( strcasecmp(driver,"swf") == 0 )
-    {
-        format = msAllocOutputFormat( map, "swf", driver );
-        format->mimetype = msStrdup("application/x-shockwave-flash");
-        format->imagemode = MS_IMAGEMODE_PC256;
-        format->extension = msStrdup("swf");
-        format->renderer = MS_RENDER_WITH_SWF;
-    }
-#endif
+
 
 #ifdef USE_GDAL
     if( strncasecmp(driver,"gdal/",5) == 0 )
@@ -363,9 +354,7 @@ void msApplyDefaultOutputFormats( mapObj *map )
     if( msSelectOutputFormat( map, "jpeg" ) == NULL )
         msCreateDefaultOutputFormat( map, "AGG/JPEG" );
 
-    if( msSelectOutputFormat( map, "swf" ) == NULL )
-        msCreateDefaultOutputFormat( map, "swf" );
-
+ 
     if( msSelectOutputFormat( map, "imagemap" ) == NULL )
         msCreateDefaultOutputFormat( map, "imagemap" );
 

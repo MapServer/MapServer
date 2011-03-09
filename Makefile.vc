@@ -34,7 +34,7 @@ MS_OBJS = mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj maptime.obj \
 		maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
 		mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
-		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj \
+		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj \
 		mapgdal.obj mapwfs.obj mapwfs11.obj mapwfslayer.obj mapows.obj maphttp.obj \
 		mapcontext.obj mapdrawgdal.obj mapjoin.obj mapgraticule.obj \
 		mapmygis.obj mapimagemap.obj mapcopy.obj maprasterquery.obj \

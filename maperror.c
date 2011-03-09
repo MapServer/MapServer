@@ -511,10 +511,6 @@ char *msGetVersion() {
 #ifdef USE_PDF
   strcat(version, " OUTPUT=PDF");
 #endif
-#ifdef USE_MING_FLASH
-  strcat(version, " OUTPUT=SWF");
-#endif
-  strcat(version, " OUTPUT=SVG");
 #ifdef USE_KML
   strcat(version, " OUTPUT=KML");
 #endif
