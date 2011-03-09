@@ -7,6 +7,62 @@ applications when migrating from version 5.6.x (or earlier versions)
 to 6.0 (i.e. backwards incompatibilities), as well as information
 on some of the new features.
 
+------------------------------------
+Mapfile Changes - Expression Parsing
+------------------------------------
+
+Version 6.0 features an extensive reworking of the expression parsing capabilities.
+While this adds functionality it also introduces a couple of regressions:
+
+Logical Expressions
+
+* a regex is now deliniated as a string (e.g. '^a' rather than /^a/)
+* the regex operator is ~ for case sensitive comparisons and ~* for case insensitive
+* case insensitive string comparison operator is =*
+
+Class text expressions are true expressions in 6.0. This allows for fancy formatting
+of numeric data but also means string operators must be used to concatenate attribute
+values and string literals.
+
+* Old/bad: TEXT ([area] acres)
+* New/good: TEXT ([area] + ' acres')
+
+On the plus side you can now control the number of decimal places, round and even commify
+the area value for annotion.
+
+See http://mapserver.org/development/rfc/ms-rfc-64.html for more information.
+
+------------------------------
+Mapfile Changes	- Label Styles
+------------------------------
+
+As the need for more and more control of label drawing increased it became apparent that
+we couldn't extend labelObj's endlessly. In 6.0 we introduce the idea of label styles, that
+is, a styleObj inside a labelObj. The styles can be used to add accompanying markers or 
+bounding box elements to a label- kinda like annotation layers. The big benefit is that 
+it's done in one pass. So you can draw complex roadwork and shields all at the same time.
+Pretty neat huh? Plus you can do attribute binding for any of the styleObj attributes that
+support it.
+
+As a result the parameters BACKGROUNDCOLOR, BACKGROUNDSHADOWCOLOR, BACKGROUNDSHADOWSIZE
+are no more. To draw a label "box" in 6.0 you'd do:
+
+  LABEL
+    ...
+    STYLE # a shadow
+      GEOMTRANSFORM 'labelpoly'
+      COLOR 222 222 222
+      OFFSET 2 2
+    END
+    STYLE # bbox
+      GEOMTRANSFORM 'labelpoly'
+      COLOR 255 255 255
+      OUTLINECOLOR 0 0 0
+    END
+  END
+
+More verbose but *much* more flexible in the long run.
+
 -----------
 CGI Changes
 -----------
@@ -22,7 +78,9 @@ of query results. For example:
 OGC Web Services
 -----------------
 
-All OGC Web Services are now disabled by default. If you want to enable them as they were in MapServer 5.6 and older releases, add the following metadata in the MAP::WEB section::
+All OGC Web Services are now disabled by default. If you want to enable them as 
+they were in MapServer 5.6 and older releases, add the following metadata in the 
+MAP::WEB section::
 
  "ows_enable_request"   "*"
 
