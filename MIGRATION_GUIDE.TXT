@@ -47,6 +47,7 @@ support it.
 As a result the parameters BACKGROUNDCOLOR, BACKGROUNDSHADOWCOLOR, BACKGROUNDSHADOWSIZE
 are no more. To draw a label "box" in 6.0 you'd do:
 
+{{{
   LABEL
     ...
     STYLE # a shadow
@@ -60,6 +61,7 @@ are no more. To draw a label "box" in 6.0 you'd do:
       OUTLINECOLOR 0 0 0
     END
   END
+}}}
 
 More verbose but *much* more flexible in the long run.
 
@@ -167,6 +169,7 @@ the 5.4/5.6 versions. Gone are resultsGetShape and getFeature methods. You shoul
 refactored getShape method to access layer shapes. That method takes a resultObj and returns
 a shapeObj. Typical use would be (in Perl):
 
+{{{
   $layer->queryByRect($map, $map->{extent}); # layer is still open                                                                             
 
   for($i=0; $i<$layer->getNumResults(); $i++) {
@@ -175,6 +178,7 @@ a shapeObj. Typical use would be (in Perl):
   }
 
   $layer->close();
+}}}
 
 A resultObj encapsulates the data used to manage a result set.
 
