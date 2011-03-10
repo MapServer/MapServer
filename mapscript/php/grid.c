@@ -53,6 +53,7 @@ PHP_METHOD(gridObj, __construct)
     zval *zlayer;
     php_layer_object *php_layer;
     php_grid_object *php_grid, *php_old_grid;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",

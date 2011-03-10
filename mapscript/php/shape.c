@@ -149,6 +149,7 @@ PHP_METHOD(shapeObj, __construct)
     zval *zobj = getThis();
     php_shape_object *php_shape;
     long type;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -273,6 +274,7 @@ PHP_METHOD(shapeObj, line)
     zval *zobj =  getThis();
     long index;
     php_shape_object *php_shape;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -391,6 +393,7 @@ PHP_METHOD(shapeObj, getPointUsingMeasure)
     double measure;
     pointObj *point = NULL;
     php_shape_object *php_shape;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d",
@@ -422,6 +425,7 @@ PHP_METHOD(shapeObj, getMeasureUsingPoint)
     pointObj *intersection = NULL;
     php_shape_object *php_shape;
     php_point_object *php_point;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
@@ -489,6 +493,7 @@ PHP_METHOD(shapeObj, buffer)
     double width;
     shapeObj *shape = NULL;
     php_shape_object *php_shape;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d",
@@ -517,6 +522,7 @@ PHP_METHOD(shapeObj, convexhull)
     zval *zobj =  getThis();
     shapeObj *shape = NULL;
     php_shape_object *php_shape;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
@@ -544,6 +550,7 @@ PHP_METHOD(shapeObj, boundary)
     zval *zobj =  getThis();
     shapeObj *shape = NULL;
     php_shape_object *php_shape;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
@@ -602,6 +609,7 @@ PHP_METHOD(shapeObj, union)
     zval *zshape;
     shapeObj *shape;
     php_shape_object *php_shape, *php_shape2;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
@@ -633,6 +641,7 @@ PHP_METHOD(shapeObj, intersection)
     zval *zshape;
     shapeObj *shape;
     php_shape_object *php_shape, *php_shape2;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
@@ -664,6 +673,7 @@ PHP_METHOD(shapeObj, difference)
     zval *zshape;
     shapeObj *shape;
     php_shape_object *php_shape, *php_shape2;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
@@ -695,6 +705,7 @@ PHP_METHOD(shapeObj, symdifference)
     zval *zshape;
     shapeObj *shape;
     php_shape_object *php_shape, *php_shape2;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
@@ -899,6 +910,7 @@ PHP_METHOD(shapeObj, getCentroid)
     zval *zobj =  getThis();
     pointObj *point;
     php_shape_object *php_shape;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
@@ -972,6 +984,7 @@ PHP_METHOD(shapeObj, getLabelPoint)
     zval *zobj =  getThis();
     pointObj *point;
     php_shape_object *php_shape;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
@@ -1054,6 +1067,7 @@ PHP_METHOD(shapeObj, simplify)
     double tolerance;
     shapeObj *shape = NULL;
     php_shape_object *php_shape;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d",
@@ -1083,6 +1097,7 @@ PHP_METHOD(shapeObj, topologyPreservingSimplify)
     double tolerance;
     shapeObj *shape = NULL;
     php_shape_object *php_shape;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d",

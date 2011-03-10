@@ -182,6 +182,7 @@ PHP_METHOD(layerObj, __construct)
     int index;
     php_map_object *php_map;
     php_layer_object *php_layer, *php_layer2;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|O",
@@ -672,6 +673,7 @@ PHP_METHOD(layerObj, getClass)
     long index;
     classObj *class = NULL;
     php_layer_object *php_layer;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -945,6 +947,7 @@ PHP_METHOD(layerObj, getResult)
     long index;
     resultObj *result = NULL;
     php_layer_object *php_layer;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -1045,6 +1048,7 @@ PHP_METHOD(layerObj, nextShape)
     zval *zobj = getThis();
     shapeObj *shape = NULL;
     php_layer_object *php_layer;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
@@ -1093,6 +1097,7 @@ PHP_METHOD(layerObj, getExtent)
     zval *zobj = getThis();
     rectObj *rect = NULL;
     php_layer_object *php_layer;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
@@ -1584,6 +1589,7 @@ PHP_METHOD(layerObj, removeClass)
     long index;
     classObj *class;
     php_layer_object *php_layer;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -1837,6 +1843,7 @@ PHP_METHOD(layerObj, getShape)
     shapeObj *shape = NULL;
     php_result_object *php_result;
     php_layer_object *php_layer;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",

@@ -162,12 +162,12 @@ PHP_METHOD(OWSRequestObj, loadParams)
     thread_context = NULL;
 #endif
 
-    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    //PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
-        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+      //PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
     }
-    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    //PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_owsrequest = (php_owsrequest_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 

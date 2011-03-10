@@ -69,6 +69,7 @@ PHP_METHOD(symbolObj, __construct)
     int symbolId = -1;
     php_symbol_object *php_symbol;
     php_map_object *php_map;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os",

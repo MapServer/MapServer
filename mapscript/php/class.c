@@ -111,6 +111,7 @@ PHP_METHOD(classObj, __construct)
     classObj *class;
     php_layer_object *php_layer;
     php_class_object *php_class, *php_class2;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|O",
@@ -383,6 +384,7 @@ PHP_METHOD(classObj, getStyle)
     zval *zobj = getThis();
     php_class_object *php_class;
     styleObj *style = NULL;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",

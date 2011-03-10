@@ -188,6 +188,7 @@ PHP_FUNCTION(ms_newLayerObj)
     int index;
     php_map_object *php_map;
     php_layer_object *php_layer;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|O",
@@ -229,6 +230,7 @@ PHP_FUNCTION(ms_newProjectionObj)
     char *projString;
     long projString_len;
     projectionObj *projection = NULL;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
@@ -278,6 +280,7 @@ PHP_FUNCTION(ms_newRectObj)
 PHP_FUNCTION(ms_newPointObj)
 {
     pointObj *point = NULL;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
@@ -336,6 +339,7 @@ PHP_FUNCTION(ms_newStyleObj)
     styleObj *style;
     php_class_object *php_class;
     php_style_object *php_style;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|O",
@@ -369,6 +373,7 @@ PHP_FUNCTION(ms_newClassObj)
     classObj *class;
     php_layer_object *php_layer;
     php_class_object *php_class;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|O",
@@ -537,6 +542,7 @@ PHP_FUNCTION(ms_newGridObj)
     zval *zlayer;
     php_layer_object *php_layer;
     php_grid_object *php_grid;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",

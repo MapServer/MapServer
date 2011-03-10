@@ -168,6 +168,7 @@ PHP_METHOD(shapeFileObj, getShape)
     long index;
     shapeObj *shape;
     php_shapefile_object *php_shapefile;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -209,6 +210,7 @@ PHP_METHOD(shapeFileObj, getPoint)
     long index;
     pointObj *point;
     php_shapefile_object *php_shapefile;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -347,6 +349,7 @@ PHP_METHOD(shapeFileObj, getTransformed)
     php_shapefile_object *php_shapefile;
     php_map_object *php_map;
     shapeObj *shape = NULL;    
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ol",

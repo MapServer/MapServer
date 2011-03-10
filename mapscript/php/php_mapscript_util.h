@@ -87,7 +87,6 @@
     MAPSCRIPT_DELREF(parent.val);
 
 #define MAPSCRIPT_MAKE_PARENT(zobj, ptr)            \
-    parent_object parent; \
     parent.val = zobj; \
     parent.child_ptr = ptr;
 

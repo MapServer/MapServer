@@ -279,6 +279,7 @@ PHP_METHOD(lineObj, point)
     zval *zobj = getThis();
     php_line_object *php_line;
     long index;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &index) == FAILURE) {

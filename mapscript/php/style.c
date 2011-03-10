@@ -79,6 +79,7 @@ PHP_METHOD(styleObj, __construct)
     styleObj *style;
     php_class_object *php_class;
     php_style_object *php_style, *php_style2;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|O",

@@ -480,6 +480,7 @@ PHP_METHOD(mapObj, getSymbolObjectById)
     long symbolId;
     symbolObj *symbol = NULL;
     php_map_object *php_map;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -805,6 +806,7 @@ PHP_METHOD(mapObj, getLayer)
     long index;
     layerObj *layer = NULL;
     php_map_object *php_map;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -839,6 +841,7 @@ PHP_METHOD(mapObj, getLayerByName)
     long layerName_len;
     layerObj *layer = NULL;
     php_map_object *php_map;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
@@ -873,6 +876,7 @@ PHP_METHOD(mapObj, getColorByIndex)
     paletteObj palette;
     colorObj color;
     php_map_object *php_map;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -3231,6 +3235,7 @@ PHP_METHOD(mapObj, removeLayer)
     long index = -1;
     layerObj *layer = NULL;
     php_map_object *php_map;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -3263,6 +3268,7 @@ PHP_METHOD(mapObj, getLabel)
     long index = -1;
     labelCacheMemberObj *labelCacheMember = NULL; 
     php_map_object *php_map;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
@@ -3300,6 +3306,7 @@ PHP_METHOD(mapObj, getLatLongExtent)
     zval *zobj = getThis();
     rectObj     geoRefExt;
     php_map_object *php_map;
+    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
