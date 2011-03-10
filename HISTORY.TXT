@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fix PHP Windows build (#3714)
+
 - Fixed --with-opengl build issue: Look for OpenGL libs under /usr/lib64 as 
   well (#3724)
 
