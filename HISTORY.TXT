@@ -14,7 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
-- ...
+- Fixed --with-opengl build issue: Look for OpenGL libs under /usr/lib64 as 
+  well (#3724)
+
 
 Version 6.0.0-beta1 (2011-03-09)
 --------------------------------

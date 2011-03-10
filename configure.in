@@ -950,9 +950,10 @@ if test -n "$with_opengl" -a "$with_opengl" != "no" ; then
   fi
   
   test -f $OGL_DIR/lib/libGL.so -a -f $OGL_DIR/lib/libGLU.so && OGL_LIBDIR="$OGL_DIR/lib"
+  test -f $OGL_DIR/lib64/libGL.so -a -f $OGL_DIR/lib64/libGLU.so && OGL_LIBDIR="$OGL_DIR/lib64"
    
   if test -z "$OGL_LIBDIR" ; then
-      AC_MSG_ERROR("could not find libGL or libGLU in $OGL_DIR/lib/.")
+      AC_MSG_ERROR("could not find libGL or libGLU in $OGL_DIR/lib/ or $OGL_DIR/lib64/.")
   fi
 
   
