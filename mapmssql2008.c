@@ -573,7 +573,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     {
         char buffer[1000];
 
-        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = _strdup(buffer);
     } 
@@ -585,7 +585,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
             snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
         }
 
-        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = _strdup(buffer);
     }
@@ -1485,7 +1485,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
     if(layer->numitems == 0) 
     {
-        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(), convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(), convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
         columns_wanted = _strdup(buffer);
     } 
     else 
@@ -1494,7 +1494,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
             snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
         }
 
-        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(), convert(varchar(20), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(), convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = _strdup(buffer);
     }

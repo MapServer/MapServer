@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Version 5.6.7 (SVN branch-5-6):
 ---------------------------
 
+- Fixed SQL Spatial to be able to use UniqueIdentifier field as unique key (#3722)
+
 - Fixed possible seg. fault when using "OGR:Label*" special attributes (#3667)
 
 - Fixed bug with newlines around multipart boundaries in wcs multipart (#3672)
