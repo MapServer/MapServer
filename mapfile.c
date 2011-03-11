@@ -637,7 +637,7 @@ int loadJoin(joinObj *join)
       if(getString(&join->connection) == MS_FAILURE) return(-1);
       break;
     case(CONNECTIONTYPE):
-      if((join->connectiontype = getSymbol(5, MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES, MS_DB_CSV)) == -1) return(-1);
+      if((join->connectiontype = getSymbol(4, MS_DB_XBASE, MS_DB_ORACLE, MS_DB_POSTGRES, MS_DB_CSV)) == -1) return(-1);
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadJoin()");
@@ -696,7 +696,7 @@ static void writeJoin(FILE *stream, int indent, joinObj *join)
   writeString(stream, indent, "TABLE", NULL, join->table);
   writeString(stream, indent, "TEMPLATE", NULL, join->template);
   writeString(stream, indent, "TO", NULL, join->to);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRESQL", MS_DB_MYSQL, "MYSQL");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", join->connectiontype, 2, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRESQL");
   writeKeyword(stream, indent, "TYPE", join->type, 1, MS_JOIN_ONE_TO_MANY, "ONE-TO-MANY");
   writeBlockEnd(stream, indent, "JOIN");
 }
@@ -3480,7 +3480,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       }
       break;
     case(CONNECTIONTYPE):
-      if((layer->connectiontype = getSymbol(10, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_PLUGIN, MS_UNION)) == -1) return(-1);
+      if((layer->connectiontype = getSymbol(9, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION)) == -1) return(-1);
       break;
     case(DATA):
       if(getString(&layer->data) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
@@ -3869,7 +3869,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "CLASSGROUP", NULL, layer->classgroup);
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 10, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_MYGIS, "MYGIS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 9, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION");
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */ 
   writeKeyword(stream, indent, "DUMP", layer->dump, 1, MS_TRUE, "TRUE");

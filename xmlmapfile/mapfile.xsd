@@ -584,7 +584,6 @@
 					<xs:restriction base="xs:string">
 						<xs:enumeration value="SDE"/>
 						<xs:enumeration value="OGR"/>
-						<xs:enumeration value="MYGIS"/>
 						<xs:enumeration value="WFS"/>
 						<xs:enumeration value="POSTGIS"/>
 						<xs:enumeration value="ORACLESPATIAL"/>

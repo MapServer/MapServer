@@ -587,9 +587,6 @@ char *msGetVersion() {
 #ifdef USE_GDAL
   strcat(version, " INPUT=GDAL");
 #endif
-#ifdef USE_MYGIS
-  strcat(version, " INPUT=MYGIS");
-#endif
   strcat(version, " INPUT=SHAPEFILE");
   return(version);
 }

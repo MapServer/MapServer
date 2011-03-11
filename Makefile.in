@@ -145,11 +145,6 @@ POSTGIS=      @POSTGIS_ENABLED@
 POSTGIS_LIB=  @POSTGIS_LIB@
 POSTGIS_INC=  @POSTGIS_INC@
 
-# Optional MyGIS Support. 
-MYGIS=      @MYGIS_ENABLED@
-MYGIS_LIB=  @MYGIS_LIB@
-MYGIS_INC=  @MYGIS_INC@
-
 # Optional ORACLESPATIAL Support. Contact: cabral@cttmar.univali.br
 ORACLESPATIAL=@ORACLESPATIAL_ENABLED@
 ORACLESPATIAL_LIB=@ORACLESPATIAL_LIB@
@@ -250,7 +245,7 @@ DEFINES = $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ $(FRI
 
 INCLUDES = $(FT_INC) $(REGEX_INC) $(PNG_INC) $(GIF_INC) $(JPEG_INC) $(GD_INC) \
         $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PROJ_INC) $(EGIS_INC) \
-        $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
+        $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) \
         $(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
         $(FASTCGI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC)
 
@@ -262,7 +257,7 @@ CXXFLAGS = @CXXFLAGS@ $(FLAGS)
 # Link flags and shared libs only
 SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(PNG_LIB) $(GIF_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
-	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
+	  $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
 	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
 	  $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB)
 
@@ -278,7 +273,7 @@ OBJS= $(AGG_OBJ) mapgeomutil.o mapdummyrenderer.o mapogl.o mapoglrenderer.o mapo
 				maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o \
 				maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o \
 				mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o \
-				mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o \
+				mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o \
 				mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o \
 				mapgd.o mapagg.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o \
 				mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mapjoin.o mapgraticule.o \

@@ -438,8 +438,8 @@ enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_
 
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_RASTER, MS_PLUGIN, MS_UNION };
-enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
+enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_RASTER, MS_PLUGIN, MS_UNION };
+enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
 #define MS_SINGLE 0 /* modes for searching (spatial/database) */
@@ -677,7 +677,7 @@ typedef struct {
     char *table;
     char *from, *to; /* item names */
     
-    void *joininfo; /* vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistant access */
+    void *joininfo; /* vendor specific (i.e. XBase, etc.) stuff to allow for persistant access */
     
     char *header, *footer;
 #ifndef __cplusplus
@@ -1391,7 +1391,7 @@ typedef struct layer_obj {
 #ifndef SWIG
   layerVTableObj *vtable;
 
-  /* SDL has converted OracleSpatial, SDE, Graticules, MyGIS */
+  /* SDL has converted OracleSpatial, SDE, Graticules */
   void *layerinfo; /* all connection types should use this generic pointer to a vendor specific structure */
   void *wfslayerinfo; /* For WFS layers, will contain a msWFSLayerInfo struct */
 #endif /* not SWIG */
@@ -2110,7 +2110,6 @@ MS_DLL_EXPORT int msPostGISLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msWFSLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msGraticuleLayerInitializeVirtualTable(layerObj *layer);
-MS_DLL_EXPORT int msMYGISLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msRASTERLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msPluginLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msUnionLayerInitializeVirtualTable(layerObj *layer);

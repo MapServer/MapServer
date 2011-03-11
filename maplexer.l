@@ -364,7 +364,6 @@ char *msyytext_esc=NULL;
 <INITIAL,URL_STRING>cl                         { return(MS_CL); }
 <INITIAL,URL_STRING>cr                         { return(MS_CR); }
 <INITIAL>csv                                   { return(MS_DB_CSV); }
-<INITIAL>mysql                                 { return(MS_DB_MYSQL); }
 <INITIAL>postgresql                            { return(MS_DB_POSTGRES); }
 <INITIAL,URL_STRING>default                    { return(MS_DEFAULT); }
 <INITIAL,URL_STRING>dd                         { return(MS_DD); }
@@ -404,7 +403,6 @@ char *msyytext_esc=NULL;
 <INITIAL>point                                 { return(MS_LAYER_POINT); }
 <INITIAL>polygon                               { return(MS_LAYER_POLYGON); }
 <INITIAL>postgis                               { return(MS_POSTGIS); }
-<INITIAL>mygis                                 { return(MS_MYGIS); }
 <INITIAL>plugin                                { return(MS_PLUGIN); }
 <INITIAL>query                                 { return(MS_LAYER_QUERY); }
 <INITIAL>raster                                { return(MS_LAYER_RASTER); }

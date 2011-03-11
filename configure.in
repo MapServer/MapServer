@@ -1534,50 +1534,6 @@ ALL_INC="$POSTGIS_INC $ALL_INC"
 ALL_LIB="$POSTGIS_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------------
-dnl Try to find MySQL if MYGIS support requested.
-dnl ---------------------------------------------------------------------------
-
-AC_MSG_CHECKING(if MyGIS support requested)
-
-AC_ARG_WITH(mygis,[  --with-mygis[[=ARG]]      Include MyGIS Support (ARG=yes/path to mysql_config)],,)
-
-if test "$with_mygis" = "no" -o "$with_mygis" = "" ; then
-  AC_MSG_RESULT(no)
-  MY_CONFIG="no"
-elif test "$with_mygis" = "yes" ; then
-  AC_MSG_RESULT(yes)
-  AC_PATH_PROG(MY_CONFIG, mysql_config, no)
-else
-  MY_CONFIG=$with_mygis
-fi
-
-if test "$MY_CONFIG" = "no" ; then
-  MYGIS_ENABLED=
-  MYGIS_INC=
-  MYGIS_LIB=
-else
-  if test -f "$MY_CONFIG" -a -x "$MY_CONFIG" ; then
-    AC_MSG_RESULT([yes, user supplied mysql_config ($MY_CONFIG)])
-  else
-    AC_MSG_ERROR(['$MY_CONFIG' is not an executable.  Make sure you use --with-mygis=/path/to/mysql_config])
-  fi
-
-  MYGIS_ENABLED=-DUSE_MYGIS
-  MYGIS_LIB="`$MY_CONFIG --libs` -lmysqlclient"
-#  MYGIS_LIB="-L/usr/lib/mysql -lmysqlclient"
-  MYGIS_INC="`$MY_CONFIG --cflags`"
-#  MYGIS_INC="-I/usr/include/mysql"
-fi
-
-AC_SUBST(MYGIS_ENABLED,$MYGIS_ENABLED)
-AC_SUBST(MYGIS_INC,$MYGIS_INC)
-AC_SUBST(MYGIS_LIB,$MYGIS_LIB)
-
-ALL_ENABLED="$MYGIS_ENABLED $ALL_ENABLED"
-ALL_INC="$MYGIS_INC $ALL_INC"
-ALL_LIB="$MYGIS_LIB $ALL_LIB"
-
-dnl ---------------------------------------------------------------------------
 dnl Try to find out if OracleSpatial support requested.
 dnl ---------------------------------------------------------------------------
 

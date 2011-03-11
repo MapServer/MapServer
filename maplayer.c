@@ -1306,9 +1306,6 @@ int msInitializeVirtualTable(layerObj *layer)
     case(MS_GRATICULE):
       return(msGraticuleLayerInitializeVirtualTable(layer));
       break;
-    case(MS_MYGIS):
-      return(msMYGISLayerInitializeVirtualTable(layer));
-      break;         
     case(MS_RASTER):
       return(msRASTERLayerInitializeVirtualTable(layer));
       break;
