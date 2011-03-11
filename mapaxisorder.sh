@@ -66,13 +66,15 @@ print_body ()
 	# unset first array element
    unset ARRAY[0]
    # traverse array and print out elements
+        let count=0
 	for x in "${ARRAY[@]}"; do
 		echo "  {${x}},"
+		((count++))
 	done
 
 	echo '};'
    echo ' '
-	echo '#define AXIS_ORIENTATION_TABLE_SIZE 8'
+	echo '#define AXIS_ORIENTATION_TABLE_SIZE '${count}
    echo ' '
 	echo '#ifdef __cplusplus'
 	echo '}'

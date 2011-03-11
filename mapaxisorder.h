@@ -49,7 +49,7 @@ static struct axisOrientationEpsgCodes_s {
   {4471,0},
 };
  
-#define AXIS_ORIENTATION_TABLE_SIZE 8
+#define AXIS_ORIENTATION_TABLE_SIZE 7
  
 #ifdef __cplusplus
 }
