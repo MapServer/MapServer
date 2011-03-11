@@ -51,6 +51,7 @@ KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorOb
     pszLayerDescMetadata = NULL;  
     papszLayerIncludeItems = NULL;
     nIncludeItems=0;
+    pszLayerNameAttributeMetadata = NULL;  /*metadata to use for a name for each feature*/
     
     LineStyle = NULL;
     numLineStyle = 0;
@@ -365,6 +366,9 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
      if (value)
        papszLayerIncludeItems = msStringSplit(value, ',', &nIncludeItems);
 
+     if (msLookupHashTable(&layer->metadata, "kml_name_item"))
+       pszLayerNameAttributeMetadata = msLookupHashTable(&layer->metadata, "kml_name_item");
+
      /*get all attributes*/
      msLayerWhichItems(layer, MS_TRUE, NULL);
 
@@ -410,6 +414,8 @@ int KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
 
     if (pszLayerDescMetadata)
       pszLayerDescMetadata = NULL;
+    if (pszLayerNameAttributeMetadata)
+      pszLayerNameAttributeMetadata = NULL;
 
     if (papszLayerIncludeItems && nIncludeItems>0)
       msFreeCharArray(papszLayerIncludeItems, nIncludeItems);
@@ -526,11 +532,18 @@ xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUr
     /*always add a name. It will be replaced by a text value if available*/
     char tmpid[100];
     char *stmp=NULL, *layerName=NULL;
+    if (CurrentShapeName && strlen(CurrentShapeName)>0)
+    {
+        xmlNewChild(placemarkNode, NULL, BAD_CAST "name", BAD_CAST CurrentShapeName);
+    }
+    else
+    {
     sprintf(tmpid, ".%d", CurrentShapeIndex);
     layerName = getLayerName(currentLayer);
     stmp = msStringConcatenate(stmp, layerName);
     stmp = msStringConcatenate(stmp, tmpid);
     xmlNewChild(placemarkNode, NULL, BAD_CAST "name", BAD_CAST stmp);
+    }
     msFree(layerName);
     msFree(stmp);
     if (styleUrl)
@@ -845,6 +858,7 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
 
     CurrentShapeIndex=-1;
     CurrentDrawnShapeIndex = -1;
+    CurrentShapeName=NULL;
 
     /*should be done at endshape but the plugin architecture does not call endshape yet*/
     if(LineStyle)
@@ -858,6 +872,17 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
     if (shape)
     {
         CurrentShapeIndex = shape->index;
+        if (pszLayerNameAttributeMetadata)
+        {
+            for (int i=0; i<currentLayer->numitems; i++)
+            {
+                if (strcasecmp(currentLayer->items[i], pszLayerNameAttributeMetadata) == 0 && shape->values[i])
+                {
+                    CurrentShapeName = msStrdup(shape->values[i]);
+                    break;
+                }
+            }
+        }
     }
     PlacemarkNode = NULL;
     GeomNode = NULL;
@@ -877,6 +902,9 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
 void KmlRenderer::endShape(imageObj*, shapeObj*)
 {
     CurrentShapeIndex = -1;
+    if (CurrentShapeName)
+      msFree(CurrentShapeName);
+    CurrentShapeName = NULL;
 }
 
 xmlNodePtr KmlRenderer::getGeomParentNode(const char *geomName)

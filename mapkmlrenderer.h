@@ -43,6 +43,7 @@ class KmlRenderer
   const char *pszLayerDescMetadata; /*if the kml_description is set*/
   char **papszLayerIncludeItems;
   int nIncludeItems;
+  char *pszLayerNameAttributeMetadata;
 
 protected:
 
@@ -65,6 +66,7 @@ protected:
 
 	int	        CurrentShapeIndex;
 	int	        CurrentDrawnShapeIndex;
+        char            *CurrentShapeName;
 	char		**Items;
 	int			NumItems;
 	int			DumpAttributes;
