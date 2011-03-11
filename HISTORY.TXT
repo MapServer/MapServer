@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed mapfile parsing error when a label angle referenced an attribute 
+  (e.g. ANGLE [angle]) #3727
+
 - Removed executable flag on some source files (#3726)
 
 - Fixed SQL Spatial to be able to use UniqueIdentifier field as unique key (#3722)

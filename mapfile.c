@@ -1625,7 +1625,7 @@ static int loadLabel(labelObj *label)
   for(;;) {
     switch(msyylex()) {
     case(ANGLE):
-      if((symbol = getSymbol(4, MS_NUMBER,MS_AUTO,MS_AUTO2,MS_FOLLOW,MS_BINDING)) == -1) 
+      if((symbol = getSymbol(5, MS_NUMBER,MS_AUTO,MS_AUTO2,MS_FOLLOW,MS_BINDING)) == -1) 
 	return(-1);
 
       if(symbol == MS_NUMBER)
