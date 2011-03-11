@@ -37,6 +37,7 @@
 #include "mapfile.h"
 #include "mapthread.h"
 #include "maptime.h"
+#include "mapaxisorder.h"
 
 #ifdef USE_GDAL
 #  include "cpl_conv.h"
@@ -66,6 +67,29 @@ static int loadGrid( layerObj *pLayer );
 static int loadStyle(styleObj *style);
 static void writeStyle(FILE* stream, int indent, styleObj *style);
 static int msResolveSymbolNames(mapObj *map);
+
+
+/************************************************************************/
+/*                           int msIsAxisInverted                       */
+/*      check to see if we shoudl invert the axis.                      */
+/*                                                                      */
+/************************************************************************/
+static int msIsAxisInverted(int epsg_code)
+{
+    int i;
+    /*check first in the static table*/
+    for (i=0; i<AXIS_ORIENTATION_TABLE_SIZE; i++)
+    {
+        if (axisOrientationEpsgCodes[i].code == epsg_code)
+          return axisOrientationEpsgCodes[i].inverted;
+    }
+    if ( epsg_code >=4000 &&  epsg_code < 5000)
+      return MS_TRUE;
+
+    return MS_FALSE;
+    
+}
+
 /*
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in mapserver.h.
@@ -1258,8 +1282,9 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
         p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
         p->args[0] = init_string;
         p->numargs = 1;
+        
 
-        if( atoi(value+5) >= 4000 && atoi(value+5) < 5000 )
+        if( msIsAxisInverted(atoi(value+5)))
         {
             p->args[1] = msStrdup("+epsgaxis=ne");
             p->numargs = 2;
