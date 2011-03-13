@@ -3615,6 +3615,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",
                               msOWSGetOnlineResource(mapserv->map, "O", "onlineresource", mapserv->request));
+#else
+  outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",
+                              msBuildOnlineResource(mapserv->map, mapserv->request));  
 #endif
 
   if(getenv("HTTP_HOST")) {

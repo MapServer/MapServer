@@ -2232,6 +2232,7 @@ MS_DLL_EXPORT void * msSmallRealloc( void * pData, size_t nNewSize );
 MS_DLL_EXPORT void *msSmallCalloc( size_t nCount, size_t nSize );
 
 MS_DLL_EXPORT int msExtentsOverlap(mapObj *map, layerObj *layer);
+MS_DLL_EXPORT char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req);
 
 /* For mapswf */
 MS_DLL_EXPORT int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); /* maputil.c */

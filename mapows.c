@@ -570,7 +570,6 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
                               cgiRequestObj *req)
 {
     const char *value;
-    size_t buffer_size = 0;
     char *online_resource = NULL;
 
     /* We need this script's URL, including hostname. */
@@ -584,67 +583,11 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
     }
     else 
     {
-        const char *hostname, *port, *script, *protocol="http", *mapparam=NULL;
-        int mapparam_len = 0;
-
-        hostname = getenv("SERVER_NAME");
-        port = getenv("SERVER_PORT");
-        script = getenv("SCRIPT_NAME");
-
-        /* HTTPS is set by Apache to "on" in an HTTPS server ... if not set */
-        /* then check SERVER_PORT: 443 is the default https port. */
-        if ( ((value=getenv("HTTPS")) && strcasecmp(value, "on") == 0) ||
-             ((value=getenv("SERVER_PORT")) && atoi(value) == 443) )
-        {
-            protocol = "https";
-        }
-
-        /* If map=.. was explicitly set then we'll include it in onlineresource
-         */
-        if (req->type == MS_GET_REQUEST)
-        {
-            int i;
-            for(i=0; i<req->NumParams; i++)
-            {
-                if (strcasecmp(req->ParamNames[i], "map") == 0)
-                {
-                    mapparam = req->ParamValues[i];
-                    mapparam_len = strlen(mapparam)+5; /* +5 for "map="+"&" */
-                    break;
-                }
-            }
-        }
-
-        if (hostname && port && script) {
-            buffer_size = strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+10;
-            online_resource = (char*)malloc(buffer_size);
-            if (online_resource) 
-            {
-                if ((atoi(port) == 80 && strcmp(protocol, "http") == 0) ||
-                    (atoi(port) == 443 && strcmp(protocol, "https") == 0) )
-                    snprintf(online_resource, buffer_size, "%s://%s%s?", protocol, hostname, script);
-                else
-                    snprintf(online_resource, buffer_size, "%s://%s:%s%s?", protocol, hostname, port, script);
-
-                if (mapparam)
-                {
-                    int baselen;
-                    baselen = strlen(online_resource);
-                    snprintf(online_resource+baselen, buffer_size-baselen, "map=%s&", mapparam);
-                }
-            }
-        }
-        else 
+        if ((online_resource = msBuildOnlineResource(map, req)) == NULL)
         {
             msSetError(MS_CGIERR, "Impossible to establish server URL.  Please set \"%s\" metadata.", "msOWSGetOnlineResource()", metadata_name);
             return NULL;
         }
-    }
-
-    if (online_resource == NULL) 
-    {
-        msSetError(MS_MEMERR, NULL, "msOWSGetOnlineResource()");
-        return NULL;
     }
 
     return online_resource;
