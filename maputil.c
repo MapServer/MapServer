@@ -31,14 +31,12 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-
 #include <time.h>
 
 #include "mapserver.h"
 #include "maptime.h"
 #include "mapthread.h"
 #include "mapcopy.h"
-
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 # include <windows.h>
@@ -546,7 +544,27 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
   if(layer->class[shape->classindex]->text.string) { /* test for global label first */
     switch(layer->class[shape->classindex]->text.type) {
     case(MS_STRING):
-      tmpstr = msStrdup(layer->class[shape->classindex]->text.string);
+      {
+        char *target=NULL;
+        tokenListNodeObjPtr node=NULL;
+        tokenListNodeObjPtr nextNode=NULL;
+
+        tmpstr = msStrdup(layer->class[shape->classindex]->text.string);
+
+        node = layer->class[shape->classindex]->text.tokens;
+        if(node) {
+          while(node != NULL) {
+            nextNode = node->next;
+            if(node->token == MS_TOKEN_BINDING_DOUBLE || node->token == MS_TOKEN_BINDING_INTEGER || node->token == MS_TOKEN_BINDING_STRING || node->token == MS_TOKEN_BINDING_TIME) {
+              target = (char *) msSmallMalloc(strlen(node->tokenval.bindval.item) + 3);
+              sprintf(target, "[%s]", node->tokenval.bindval.item);
+              tmpstr = msReplaceSubstring(tmpstr, target, shape->values[node->tokenval.bindval.index]);
+              msFree(target);
+	    }
+            node = nextNode;
+          }
+        }
+      }
       break;
     case(MS_EXPRESSION):
       {

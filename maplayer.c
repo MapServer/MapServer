@@ -356,7 +356,7 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
   int token;
 
   /* TODO: make sure the constants can't somehow reference invalid expression types */
-  if(expression->type != MS_EXPRESSION && expression->type != MS_GEOMTRANSFORM_EXPRESSION) return MS_SUCCESS;
+  // if(expression->type != MS_EXPRESSION && expression->type != MS_GEOMTRANSFORM_EXPRESSION) return MS_SUCCESS;
 
   msAcquireLock(TLOCK_PARSER);
   msyystate = MS_TOKENIZE_EXPRESSION;
@@ -515,7 +515,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 
     nt += layer->class[i]->label.numbindings;
 
-    if(layer->class[i]->text.type == MS_EXPRESSION)
+    if(layer->class[i]->text.type == MS_EXPRESSION || (layer->class[i]->text.string && strchr(layer->class[i]->text.string,'[') != NULL && strchr(layer->class[i]->text.string,']') != NULL))
       nt += msCountChars(layer->class[i]->text.string, '[');
   }
 
@@ -561,9 +561,10 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
       }
 
       /* class text and label bindings */
-      if(layer->class[i]->text.type == MS_EXPRESSION) msTokenizeExpression(&(layer->class[i]->text), layer->items, &(layer->numitems));
+      if(layer->class[i]->text.type == MS_EXPRESSION || (layer->class[i]->text.string && strchr(layer->class[i]->text.string,'[') != NULL && strchr(layer->class[i]->text.string,']') != NULL))
+        msTokenizeExpression(&(layer->class[i]->text), layer->items, &(layer->numitems));
       for(k=0; k<MS_LABEL_BINDING_LENGTH; k++)
-        if(layer->class[i]->label.bindings[k].item) layer->class[i]->label.bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->label.bindings[k].item);      
+        if(layer->class[i]->label.bindings[k].item) layer->class[i]->label.bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->label.bindings[k].item);
     }
 
     /* layer filter */
