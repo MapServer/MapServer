@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed segmentation fault when parsing invalid extent arguments in shp2img (#3734)
+
 - Make "openlayers mode" work even without OWS support (#3732)
 
 - Add a static table to define the axis order for soem epsg codes (#3582)

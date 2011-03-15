@@ -239,6 +239,12 @@ int main(int argc, char *argv[])
     }
     
     if(strcmp(argv[i],"-e") == 0) { /* change extent */
+        if( argc <= i+4 ) {
+            fprintf( stderr, 
+                     "Argument -e needs 4 space separated numbers as argument.\n" ); 
+            msCleanup();
+            exit(0);
+        }
       map->extent.minx = atof(argv[i+1]);
       map->extent.miny = atof(argv[i+2]);
       map->extent.maxx = atof(argv[i+3]);
