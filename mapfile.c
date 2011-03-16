@@ -2402,11 +2402,27 @@ int loadStyle(styleObj *style) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadStyle()");
       return(MS_FAILURE); /* missing END (probably) */
-    case(END):     
-      return(MS_SUCCESS); /* done */
+    case(END): 
+      {
+        int alpha;
+
+        /* apply opacity as the alpha channel color(s) */
+        if(style->opacity < 100) {
+          alpha = MS_NINT(style->opacity*2.55);
+
+          style->color.alpha = alpha; 
+          style->outlinecolor.alpha = alpha;
+          style->backgroundcolor.alpha = alpha;
+
+          style->mincolor.alpha = alpha;
+          style->maxcolor.alpha = alpha;
+        }
+
+        return(MS_SUCCESS);
+      }
       break;
     case(GAP):
-      if((getDouble(&style->gap)) == -1) return(-1);
+      if((getDouble(&style->gap)) == -1) return(MS_FAILURE);
       break;
     case(MAXSCALEDENOM):
       if(getDouble(&(style->maxscaledenom)) == -1) return(MS_FAILURE);
@@ -2429,15 +2445,13 @@ int loadStyle(styleObj *style) {
       }
       break;
     case(LINECAP):
-      if((style->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1)
-        return(-1);
+      if((style->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1) return(MS_FAILURE);
       break;
     case(LINEJOIN):
-      if((style->linejoin = getSymbol(4,MS_CJC_NONE, MS_CJC_ROUND, MS_CJC_MITER, MS_CJC_BEVEL)) == -1)
-        return(-1);
+      if((style->linejoin = getSymbol(4,MS_CJC_NONE, MS_CJC_ROUND, MS_CJC_MITER, MS_CJC_BEVEL)) == -1) return(MS_FAILURE);
       break;
     case(LINEJOINMAXSIZE):
-      if((getDouble(&style->linejoinmaxsize)) == -1) return(-1);
+      if((getDouble(&style->linejoinmaxsize)) == -1) return(MS_FAILURE);
       break;
     case(MAXSIZE):
       if(getDouble(&(style->maxsize)) == -1) return(MS_FAILURE);      
@@ -2458,7 +2472,7 @@ int loadStyle(styleObj *style) {
     case(OPACITY):
       if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
       if(symbol == MS_NUMBER)
-        style->opacity = (int) msyynumber;
+        style->opacity = MS_MAX(MS_MIN((int) msyynumber, 100), 0); /* force opacity to between 0 and 100 */
       else {
         if (style->bindings[MS_STYLE_BINDING_OPACITY].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_OPACITY].item);
@@ -2470,7 +2484,6 @@ int loadStyle(styleObj *style) {
       if(loadColor(&(style->outlinecolor), &(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR])) != MS_SUCCESS) return(MS_FAILURE);
       if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item) style->numbindings++;
       break;
-      
     case(PATTERN): {
       int done = MS_FALSE;
       for(;;) { /* read till the next END */
