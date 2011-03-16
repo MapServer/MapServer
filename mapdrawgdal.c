@@ -2123,6 +2123,7 @@ msDrawRasterLayerGDAL_RawMode(
                 {
                     int off = j + i * image->width
                         + band*image->width*image->height;
+                    int off_mask = j + i * image->width;
 
                     if( i_nodatas 
                         && ((GInt16 *) pBuffer)[k] == i_nodatas[band] )
@@ -2132,7 +2133,7 @@ msDrawRasterLayerGDAL_RawMode(
                     }
 
                     image->img.raw_16bit[off] = ((GInt16 *) pBuffer)[k++];
-                    MS_SET_BIT(image->img_mask,off);
+                    MS_SET_BIT(image->img_mask,off_mask);
                 }
             }
             else if( image->format->imagemode == MS_IMAGEMODE_FLOAT32 )
@@ -2141,6 +2142,7 @@ msDrawRasterLayerGDAL_RawMode(
                 {
                     int off = j + i * image->width
                         + band*image->width*image->height;
+                    int off_mask = j + i * image->width;
 
                     if( f_nodatas 
                         && ((float *) pBuffer)[k] == f_nodatas[band] )
@@ -2150,7 +2152,7 @@ msDrawRasterLayerGDAL_RawMode(
                     }
 
                     image->img.raw_float[off] = ((float *) pBuffer)[k++];
-                    MS_SET_BIT(image->img_mask,off);
+                    MS_SET_BIT(image->img_mask,off_mask);
                 }
             }
             else if( image->format->imagemode == MS_IMAGEMODE_BYTE )
@@ -2159,6 +2161,7 @@ msDrawRasterLayerGDAL_RawMode(
                 {
                     int off = j + i * image->width
                         + band*image->width*image->height;
+                    int off_mask = j + i * image->width;
 
                     if( b_nodatas 
                         && ((unsigned char *) pBuffer)[k] == b_nodatas[band] )
@@ -2168,7 +2171,7 @@ msDrawRasterLayerGDAL_RawMode(
                     }
 
                     image->img.raw_byte[off] = ((unsigned char *) pBuffer)[k++];
-                    MS_SET_BIT(image->img_mask,off);
+                    MS_SET_BIT(image->img_mask,off_mask);
                 }
             }
         }
