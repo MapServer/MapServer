@@ -1198,6 +1198,11 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, "layername", OWS_NOERR, "\t<%s>\n", value);
       msFree(value);
 
+      value = (char *) msOWSLookupMetadata(&(lp->metadata), "OM", "title");
+      if (value) {
+        msOWSPrintMetadata(stream, &(lp->metadata), namespaces, "title", OWS_NOERR, "\t<gml:name>%s</gml:name>\n", value);
+      }
+
       /* populate item and group metadata structures */
       itemList = msGMLGetItems(lp, namespaces); 
       constantList = msGMLGetConstants(lp, namespaces);
