@@ -2004,7 +2004,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
       if(paramsObj->pszVersion == NULL || strncmp(paramsObj->pszVersion,"1.1",3) == 0 )
       {
           outputformat = OWS_GML3;
-          gmlinfo.output_schema_format = "text/xml; subtype=gml/3.1.1";
+          gmlinfo.output_schema_format = "text/xml;%20subtype=gml/3.1.1";
           output_mime_type = "text/xml; subtype=gml/3.1.1";
       }
   }
