@@ -256,7 +256,9 @@ static int msWCSGetCapabilities11_CoverageSummary(
 /* -------------------------------------------------------------------- */
     value = msOWSLookupMetadata( &(layer->metadata), "COM", "description");
     if( value == NULL )
-        value = layer->name;
+        value = msOWSLookupMetadata( &(layer->metadata), "COM", "title");
+        if( value == NULL )
+            value = layer->name;
     xmlNewChild( psCSummary, psOwsNs, BAD_CAST "Title", BAD_CAST value );
 
 /* -------------------------------------------------------------------- */

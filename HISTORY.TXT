@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- fallback to ows_title for WCS ows:Title of CoverageDescription (#3528)
+
 - Added msIO_stripStdoutBufferContentHeaders() to strip off all Content-* headers from a buffer (#3673, #3665).
 
 - Added raster classification support for STYLE level OPACITY.
