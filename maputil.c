@@ -140,6 +140,18 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int que
     if(style->bindings[MS_STYLE_BINDING_OPACITY].index != -1) {
       style->opacity = 100;
       bindIntegerAttribute(&style->opacity, shape->values[style->bindings[MS_STYLE_BINDING_OPACITY].index]);
+
+      if(style->opacity < 100) {
+        int alpha;
+	alpha = MS_NINT(style->opacity*2.55);
+
+	style->color.alpha = alpha;
+	style->outlinecolor.alpha = alpha;
+	style->backgroundcolor.alpha = alpha;
+
+	style->mincolor.alpha = alpha;
+	style->maxcolor.alpha = alpha;
+      }
     }
   }
 }
