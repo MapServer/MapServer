@@ -2420,7 +2420,7 @@ msDrawRasterLayerGDAL_16BitClassification(
                     rb_cmap[0][i] = layer->class[c]->styles[0]->color.red;
                     rb_cmap[1][i] = layer->class[c]->styles[0]->color.green;
                     rb_cmap[2][i] = layer->class[c]->styles[0]->color.blue;
-                    rb_cmap[3][i] = 255;
+                    rb_cmap[3][i] = (255*layer->class[c]->styles[0]->opacity / 100);
                 }
             }
         }
