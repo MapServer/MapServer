@@ -233,7 +233,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             if( layer->debug )
                 msDebug( "msDrawRasterLayerGDAL(): Error in overlap calculation.\n" );
             return 0;
-		}
+        }
 
         /*
          * Copy the source and destination raster coordinates.
@@ -257,12 +257,13 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             return 0;
         }
 
-      if (map->cellsize == 0)
-      {
-          if( layer->debug )
-              msDebug( "msDrawRasterLayerGDAL(): Cellsize can't be 0.\n" );
-          return 0;
-      }
+        if (map->cellsize == 0)
+        {
+            if( layer->debug )
+                msDebug( "msDrawRasterLayerGDAL(): Cellsize can't be 0.\n" );
+            return 0;
+        }
+
         dst_xoff = (int) ((copyRect.minx - mapRect.minx) / map->cellsize);
         dst_yoff = (int) ((mapRect.maxy - copyRect.maxy) / map->cellsize);
 
@@ -655,7 +656,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                             rb_cmap[0][i] = layer->class[c]->styles[0]->color.red;
                             rb_cmap[1][i] = layer->class[c]->styles[0]->color.green;
                             rb_cmap[2][i] = layer->class[c]->styles[0]->color.blue;
-                            rb_cmap[3][i] = 255;
+                            rb_cmap[3][i] = (255*layer->class[c]->styles[0]->opacity / 100);
                         }
 
                         else /* Use raster color */
@@ -859,7 +860,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                 */
 
                 if( result != -1 && alpha >= 128 )
-                	rb->data.gd_img->pixels[i][j] = result;
+                    rb->data.gd_img->pixels[i][j] = result;
             }
         }
 
@@ -883,7 +884,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                 result = cmap[pabyRaw1[k++]];
                 if( result != -1 )
                 {
-                	rb->data.gd_img->pixels[i][j] = result;
+                    rb->data.gd_img->pixels[i][j] = result;
                 }
             }
         }
@@ -1100,8 +1101,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             }
         }
         else {
-        	msSetError(MS_MISCERR,"Unsupported raster configuration","msDrawRasterLayerGDAL()");
-        	return MS_FAILURE;
+            msSetError(MS_MISCERR,"Unsupported raster configuration","msDrawRasterLayerGDAL()");
+            return MS_FAILURE;
         }
     }
 

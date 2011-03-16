@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Added raster classification support for STYLE level OPACITY.
+
 - Allow attribute references, that is [itemname], within a TEXT string (#3736)
 
 - Fixed segmentation fault when parsing invalid extent arguments in shp2img (#3734)
