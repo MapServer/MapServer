@@ -3508,6 +3508,15 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     map->width = params->width;
     map->height = params->height;
 
+    /* Are we exceeding the MAXSIZE limit on result size? */
+    if(map->width > map->maxsize || map->height > map->maxsize )
+    {
+        msSetError(MS_WCSERR, "Raster size out of range, width and height of resulting coverage must be no more than MAXSIZE=%d.", "msWCSGetCoverage20()", map->maxsize);
+
+        return msWCSException(map, "InvalidParameterValue", 
+                                   "size", params->version);
+    }
+
     /* Mapserver only supports square cells */
     if (params->resolutionX <= params->resolutionY)
         map->cellsize = params->resolutionX;

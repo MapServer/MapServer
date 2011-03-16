@@ -1828,16 +1828,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* Are we exceeding the MAXSIZE limit on result size? */
   if(map->width > map->maxsize || map->height > map->maxsize )
   {
-      msSetError(MS_WCSERR, "Raster size out of range, width and height must be no more than MAXSIZE=%d.", "msWCSGetCoverage()", map->maxsize);
-
-      return msWCSException(map, "InvalidParameterValue", 
-                            "width/height", params->version);
-  }
-
-  /* Are we exceeding the MAXSIZE limit on result size? */
-  if(map->width > map->maxsize || map->height > map->maxsize )
-  {
-      msSetError(MS_WCSERR, "Raster size out of range, width and height must be no more than MAXSIZE=%d.", "msWCSGetCoverage()", map->maxsize);
+      msSetError(MS_WCSERR, "Raster size out of range, width and height of resulting coverage must be no more than MAXSIZE=%d.", "msWCSGetCoverage()", map->maxsize);
 
       return msWCSException(map, "InvalidParameterValue", 
                             "width/height", params->version);
