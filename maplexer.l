@@ -167,12 +167,10 @@ char *msyytext_esc=NULL;
 <EXPRESSION_STRING>fromtext                    { return(MS_TOKEN_FUNCTION_FROMTEXT); }
 
 <INITIAL>colorrange                            { return(COLORRANGE); }
-<INITIAL>alphacolorrange                       { return(ALPHACOLORRANGE); }
 <INITIAL>datarange                             { return(DATARANGE); }
 <INITIAL>rangeitem                             { return(RANGEITEM); }
 
 <INITIAL,URL_STRING>align                       { return(ALIGN); }
-<INITIAL>alphacolor                            { return(ALPHACOLOR); }
 <INITIAL,URL_VARIABLE,URL_STRING>angle         { return(ANGLE); }
 <INITIAL,URL_STRING>antialias                  { return(ANTIALIAS); }
 <INITIAL,URL_STRING>backgroundcolor            { return(BACKGROUNDCOLOR); }

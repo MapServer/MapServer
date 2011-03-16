@@ -429,7 +429,7 @@ int loadColorWithAlpha(colorObj *color) {
       hex[0] = msyytext[5];
       hex[1] = msyytext[6];
       color->blue = msHexToInt(hex);
-	  color->alpha = 0;
+      color->alpha = 0;
 
       return(MS_SUCCESS);
     }
@@ -1682,11 +1682,6 @@ static int loadLabel(labelObj *label)
     case(BUFFER):
       if(getInteger(&(label->buffer)) == -1) return(-1);
       break;
-#if ALPHACOLOR_ENABLED
-    case(ALPHACOLOR): 
-      if(loadColorWithAlpha(&(label->color)) != MS_SUCCESS) return(-1);      
-      break;
-#endif
     case(COLOR): 
       if(loadColor(&(label->color), &(label->bindings[MS_LABEL_BINDING_COLOR])) != MS_SUCCESS) return(-1);      
       if(label->bindings[MS_LABEL_BINDING_COLOR].item) label->numbindings++;
@@ -2404,16 +2399,6 @@ int loadStyle(styleObj *style) {
       if(loadColor(&(style->color), &(style->bindings[MS_STYLE_BINDING_COLOR])) != MS_SUCCESS) return(MS_FAILURE);
       if(style->bindings[MS_STYLE_BINDING_COLOR].item) style->numbindings++;
       break;
-#if ALPHACOLOR_ENABLED
-    case(ALPHACOLOR):
-      if(loadColorWithAlpha(&(style->color)) != MS_SUCCESS) return(MS_FAILURE);
-      break;
-    case (ALPHACOLORRANGE):
-      /*These will load together*/
-      if(loadColorWithAlpha(&(style->mincolor)) != MS_SUCCESS) return(MS_FAILURE);
-      if(loadColorWithAlpha(&(style->maxcolor)) != MS_SUCCESS) return(MS_FAILURE);
-      break;
-#endif
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadStyle()");
       return(MS_FAILURE); /* missing END (probably) */
@@ -3039,13 +3024,6 @@ int loadClass(classObj *class, layerObj *layer)
       if(loadColor(&(class->styles[0]->color), NULL) != MS_SUCCESS) return(-1);
       class->numstyles = 1; /* must *always* set a color or outlinecolor */
       break;
-#if ALPHACOLOR_ENABLED
-    case(ALPHACOLOR):
-      if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
-      if(loadColorWithAlpha(&(class->styles[0]->color)) != MS_SUCCESS) return(-1);
-      class->numstyles = 1; /* must *always* set a color, symbol or outlinecolor */
-      break;
-#endif
     case(MAXSIZE):
       if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
       if(getDouble(&(class->styles[0]->maxsize)) == -1) return(-1);
@@ -4008,11 +3986,6 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
     case(COLOR):
       if(loadColor(&(ref->color), NULL) != MS_SUCCESS) return(-1);
       break;
-#if ALPHACOLOR_ENABLED
-    case(ALPHACOLOR):
-      if(loadColorWithAlpha(&(ref->color)) != MS_SUCCESS) return(-1);
-      break;
-#endif
     case(EXTENT):
       if(getDouble(&(ref->extent.minx)) == -1) return(-1);
       if(getDouble(&(ref->extent.miny)) == -1) return(-1);
@@ -4492,11 +4465,6 @@ int loadScalebar(scalebarObj *scalebar)
     case(COLOR):
       if(loadColor(&(scalebar->color), NULL) != MS_SUCCESS) return(-1);   
       break;
-#if ALPHACOLOR_ENABLED
-    case(ALPHACOLOR):
-      if(loadColorWithAlpha(&(scalebar->color)) != MS_SUCCESS) return(-1);   
-      break;
-#endif
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadScalebar()");      
       return(-1);
@@ -4623,11 +4591,6 @@ int loadQueryMap(queryMapObj *querymap)
     case(COLOR):      
       loadColor(&(querymap->color), NULL);
       break;
-#if ALPHACOLOR_ENABLED
-    case(ALPHACOLOR):      
-      loadColorWithAlpha(&(querymap->color));
-      break;
-#endif
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadQueryMap()");
       return(-1);
