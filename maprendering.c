@@ -155,7 +155,8 @@ tileCacheObj *addTileCache(imageObj *img,
    return(cachep);
 }
 
-imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int width, int height) {
+imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int width, int height,
+      int seamlessmode) {
    tileCacheObj *tile;
    rendererVTableObj *renderer = img->format->vtable;
    if(width==-1 || height == -1) {
@@ -165,27 +166,68 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
    if(tile==NULL) {
       imageObj *tileimg;
       double p_x,p_y;
-      p_x = width/2.0;
-      p_y = height/2.0;
       tileimg = msImageCreate(width,height,img->format,NULL,NULL,img->resolution, img->resolution, NULL);
-      switch(symbol->type) {
-      case (MS_SYMBOL_TRUETYPE):
-         renderer->renderTruetypeSymbol(tileimg, p_x, p_y, symbol, s);
-         break;
-      case (MS_SYMBOL_PIXMAP):
-         if(msPreloadImageSymbol(renderer,symbol) != MS_SUCCESS) {
-            return NULL; //failed to load image, renderer should have set the error message
+      if(!seamlessmode) {
+         p_x = width/2.0;
+         p_y = height/2.0;
+         switch(symbol->type) {
+            case (MS_SYMBOL_TRUETYPE):
+               renderer->renderTruetypeSymbol(tileimg, p_x, p_y, symbol, s);
+               break;
+            case (MS_SYMBOL_PIXMAP):
+               if(msPreloadImageSymbol(renderer,symbol) != MS_SUCCESS) {
+                  return NULL; //failed to load image, renderer should have set the error message
+               }
+               renderer->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
+               break;
+            case (MS_SYMBOL_ELLIPSE):
+               renderer->renderEllipseSymbol(tileimg, p_x, p_y,symbol, s);
+               break;
+            case (MS_SYMBOL_VECTOR):
+               renderer->renderVectorSymbol(tileimg, p_x, p_y, symbol, s);
+               break;
+            default:
+               break;
          }
-         renderer->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
-         break;
-      case (MS_SYMBOL_ELLIPSE):
-         renderer->renderEllipseSymbol(tileimg, p_x, p_y,symbol, s);
-         break;
-      case (MS_SYMBOL_VECTOR):
-         renderer->renderVectorSymbol(tileimg, p_x, p_y, symbol, s);
-         break;
-      default:
-         break;
+      } else {
+         /*
+          * in seamless mode, we render the the symbol 9 times on a 3x3 grid to account for
+          * antialiasing blending from one tile to the next. We finally keep the center tile
+          */
+         imageObj *tile3img = msImageCreate(width*3,height*3,img->format,NULL,NULL,
+               img->resolution, img->resolution, NULL);
+         int i,j;
+         for(i=1;i<=3;i++) {
+            p_x = (i+0.5)*width;  
+            for(j=1;j<=3;j++) {
+               p_y = (j+0.5) * height;
+               switch(symbol->type) {
+                  case (MS_SYMBOL_TRUETYPE):
+                     renderer->renderTruetypeSymbol(tile3img, p_x, p_y, symbol, s);
+                     break;
+                  case (MS_SYMBOL_PIXMAP):
+                     if(msPreloadImageSymbol(renderer,symbol) != MS_SUCCESS) {
+                        return NULL; //failed to load image, renderer should have set the error message
+                     }
+                     renderer->renderPixmapSymbol(tile3img, p_x, p_y, symbol, s);
+                     break;
+                  case (MS_SYMBOL_ELLIPSE):
+                     renderer->renderEllipseSymbol(tile3img, p_x, p_y,symbol, s);
+                     break;
+                  case (MS_SYMBOL_VECTOR):
+                     renderer->renderVectorSymbol(tile3img, p_x, p_y, symbol, s);
+                     break;
+                  default:
+                     break;
+               }
+            }
+         }
+         rasterBufferObj tmpraster;
+         MS_IMAGE_RENDERER(tile3img)->getRasterBufferHandle(tile3img,&tmpraster);
+         renderer->mergeRasterBuffer(tileimg, 
+               &tmpraster,
+               1.0,width,height,0,0,width,height
+               );
       }
       tile = addTileCache(img,tileimg,symbol,s,width,height);
    }
@@ -517,6 +559,7 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             symbolStyleObj s;
             int pw,ph;
             imageObj *tile;
+            int seamless = 0;
             switch(symbol->type) {
             case MS_SYMBOL_PIXMAP:
                if(MS_SUCCESS != msPreloadImageSymbol(renderer,symbol)) {
@@ -559,11 +602,19 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
 
 
 
-            pw = MS_NINT(symbol->sizex * s.scale);
-            ph = MS_NINT(symbol->sizey * s.scale);
-            pw += style->gap;
-            ph += style->gap;
-            tile = getTile(image,symbol,&s,pw,ph);
+            pw = MS_NINT(symbol->sizex * s.scale)+1+style->gap;
+            ph = MS_NINT(symbol->sizey * s.scale)+1+style->gap;
+
+            /* if we're doing vector symbols with an antialiased pixel rendererer, we want to enable
+             * seamless mode, i.e. comute a tile that accounts for the blending of neighbouring
+             * tiles at the tile border
+             */
+            if(symbol->type == MS_SYMBOL_VECTOR && style->gap == 0 &&
+                  (image->format->renderer == MS_RENDER_WITH_AGG ||
+                   image->format->renderer == MS_RENDER_WITH_CAIRO_RASTER)) {
+               seamless = 1;
+            }
+            tile = getTile(image,symbol,&s,pw,ph,seamless);
             ret = renderer->renderPolygonTiled(image,offsetPolygon, tile);
          }
 
@@ -639,7 +690,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
          p_y = p->y + style->offsety * scalefactor;
 
          if(renderer->use_imagecache) {
-            imageObj *tile = getTile(image, symbol, &s, -1, -1);
+            imageObj *tile = getTile(image, symbol, &s, -1, -1,0);
             if(tile!=NULL)
                return renderer->renderTile(image, tile, p_x, p_y);
             else {
