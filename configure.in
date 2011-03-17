@@ -1502,25 +1502,42 @@ if test "$PG_CONFIG" = "no" ; then
   POSTGIS_INC=
   POSTGIS_LIB=
 else
+  POSTGIS_ENABLED=
+
   if test -f "$PG_CONFIG" -a -x "$PG_CONFIG" ; then
     AC_MSG_RESULT([yes, user supplied pg_config ($PG_CONFIG)])
   else
     AC_MSG_ERROR(['$PG_CONFIG' is not an executable.  Make sure you use --with-postgis=/path/to/pg_config])
   fi
 
-  POSTGIS_ENABLED=-DUSE_POSTGIS
-  POSTGIS_EXTRALIBS=`$PG_CONFIG --libs`
+  POSTGIS_EXTRALIBS="`$PG_CONFIG --libs`"
   dnl Verify if pg_config has the "--libs" option..
-  if test $? -eq 0 ; then  
-      POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq $POSTGIS_EXTRALIBS"
-  else
-      POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
+  if test $? -ne 0 ; then  
+      POSTGIS_EXTRALIBS=
   fi
+
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
 
   old_LDFLAGS="$LDFLAGS"
-  LDFLAGS="$LDFLAGS -L`$PG_CONFIG --libdir`"
-  AC_CHECK_LIB(pq, PQserverVersion, POSTGIS_ENABLED="$POSTGIS_ENABLED -DPOSTGIS_HAS_SERVER_VERSION")
+
+  POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
+  LDFLAGS="$LDFLAGS $POSTGIS_LIB"
+
+  AC_CHECK_LIB(pq, PQconnectdb, POSTGIS_ENABLED="-DUSE_POSTGIS")
+
+  dnl if that didn't work, try adding in the dependent libs. 
+  if test  "$POSTGIS_ENABLED"x = x ; then
+    POSTGIS_LIB="$POSTGIS_LIB $POSTGIS_EXTRALIBS"
+    LDFLAGS="$old_LDFLAGS $POSTGIS_LIB"
+    unset ac_cv_lib_pq_PQconnectdb
+    AC_CHECK_LIB(pq, PQconnectdb, POSTGIS_ENABLED="-DUSE_POSTGIS")
+  fi
+
+  dnl If we have postgresql client lib, check for versioninfo.
+  if test "$POSTGIS_ENABLED" = "-DUSE_POSTGIS" ; then
+    AC_CHECK_LIB(pq, PQserverVersion, POSTGIS_ENABLED="$POSTGIS_ENABLED -DPOSTGIS_HAS_SERVER_VERSION")
+  fi
+
   LDFLAGS="$old_LDFLAGS"
 
 fi
