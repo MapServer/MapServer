@@ -111,7 +111,7 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
 #endif
 #ifdef USE_KML
    {"kml","KML","application/vnd.google-earth.kml+xml"},
-   {"kmz","KMZ","application/vnd.google-earth.kmz"}
+   {"kmz","KMZ","application/vnd.google-earth.kmz"},
 #endif
    {NULL,NULL,NULL}
 };
