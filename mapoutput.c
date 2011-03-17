@@ -125,7 +125,10 @@ int msPostMapParseOutputFormatSetup( mapObj *map )
 {
     outputFormatObj *format;
 
-    /* default to the first of these if IMAGETYPE not set. */
+    /* If IMAGETYPE not set use the first user defined OUTPUTFORMAT.
+       If none, use the first default format. */
+    if( map->imagetype == NULL && map->numoutputformats > 0 )
+        map->imagetype = msStrdup(map->outputformatlist[0]->name);
     if( map->imagetype == NULL)
         map->imagetype = msStrdup(defaultoutputformats[0].name);
 
