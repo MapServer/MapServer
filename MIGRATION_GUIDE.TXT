@@ -1,7 +1,19 @@
-=====================================
-MapServer 5.6 to 6.0 Migration Guide
-=====================================
+.. _migration:
 
+*****************************************************************************
+MapServer Migration Guide
+*****************************************************************************
+
+:Last Updated: 2011-03-17
+
+.. contents:: Table of Contents
+    :depth: 2
+    :backlinks: top
+    
+    
+MapServer 5.6 to 6.0 Migration
+==============================
+    
 This section documents the changes that must be made to MapServer 
 applications when migrating from version 5.6.x (or earlier versions) 
 to 6.0 (i.e. backwards incompatibilities), as well as information
@@ -224,10 +236,8 @@ Deprecated features
   being maintained and there are better ways to use MySQL data sources theses 
   days, going through OGR for instance.
 
-
-=====================================
-MapServer 5.4 to 5.6 Migration Guide
-=====================================
+MapServer 5.4 to 5.6 Migration
+==============================
 
 This section documents the changes that must be made to MapServer 
 applications when migrating from version 5.4.x (or earlier versions) 
@@ -273,9 +283,8 @@ much side-effects to existing applications, but the change is documented here
 just in case.
 
 
-=====================================
-MapServer 5.2 to 5.4 Migration Guide
-=====================================
+MapServer 5.2 to 5.4 Migration
+==============================
 
 This section documents the changes that must be made to MapServer 
 applications when migrating from version 5.2. (or earlier versions) 
@@ -309,9 +318,8 @@ The new requirements are as follows:
 See also: http://mapserver.org/development/rfc/ms-rfc-56.html
 
 
-=====================================
-MapServer 4.10 to 5.0 Migration Guide
-=====================================
+MapServer 4.10 to 5.0 Migration
+===============================
 
 This section documents the changes that must be made to MapServer 
 applications when migrating from version 4.10.x (or earlier versions) 
