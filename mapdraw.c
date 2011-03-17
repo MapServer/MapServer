@@ -287,6 +287,11 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     return(NULL);
   }
 
+  if( map->debug >= MS_DEBUGLEVEL_DEBUG )
+      msDebug( "msDrawMap(): rendering using outputformat named %s (%s).\n",
+               map->outputformat->name, 
+               map->outputformat->driver );
+
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
   /* Time the OWS query phase */
