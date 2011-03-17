@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
     fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
     fprintf(stdout,"  -s sizex sizey: output image size\n");
-    fprintf(stdout,"  -l layers: layers to enable - make sure they are quoted and space seperated if more than one listed\n" );
+    fprintf(stdout,"  -l layers: layers / groups to enable - make sure they are quoted and space seperated if more than one listed\n" );
     fprintf(stdout,"  -all_debug n: Set debug level for map and all layers\n" );
     fprintf(stdout,"  -map_debug n: Set map debug level\n" );
     fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level\n" );
@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
       for(j=0; j<num_layers; j++) { /* loop over -l */
           layer_found=0;
           for(k=0; k<map->numlayers; k++) {
-              if(GET_LAYER(map, k)->name && strcmp(GET_LAYER(map, k)->name, layers[j]) == 0) {
+              if((GET_LAYER(map, k)->name && strcasecmp(GET_LAYER(map, k)->name, layers[j]) == 0) || (GET_LAYER(map, k)->group && strcasecmp(GET_LAYER(map, k)->group, layers[j]) == 0)) {
                   layer_found = 1;
                   break;
               }
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
 	else {
 	  GET_LAYER(map, j)->status = MS_OFF;
 	  for(k=0; k<num_layers; k++) {
-	    if(GET_LAYER(map, j)->name && strcmp(GET_LAYER(map, j)->name, layers[k]) == 0) {
+	    if(GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) {
 	      GET_LAYER(map, j)->status = MS_ON;
 	      break;
 	    }
