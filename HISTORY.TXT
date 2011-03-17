@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Fixed big Oracle memory leak when rendering in KML (#3719)
+
 - avoid linking in postgres dependencies unnecessarily (#3708)
 
 - don't initialize outputformats until they are selected

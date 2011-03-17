@@ -3115,7 +3115,9 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
 
     if (layer->numitems > 0)
     {
-        sthand->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
+        if (sthand->items_query == NULL)
+            sthand->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
+
         if (sthand->items_query == NULL)
         {
             msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer", "msOracleSpatialLayerGetItems()" );
