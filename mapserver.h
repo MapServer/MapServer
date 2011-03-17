@@ -1874,7 +1874,6 @@ MS_DLL_EXPORT char *msStringConcatenate(char *pszDest, const char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 MS_DLL_EXPORT char *msCommifyString(char *str);
-MS_DLL_EXPORT const char *msCaseFindSubstring(const char *haystack, const char *needle);
 MS_DLL_EXPORT int msHexToInt(char *hex);
 MS_DLL_EXPORT char *msGetEncodedString(const char *string, const char *encoding);
 MS_DLL_EXPORT char *msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding);

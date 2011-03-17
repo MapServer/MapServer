@@ -1458,39 +1458,6 @@ char *msCommifyString(char *str)
 }
 
 
-/************************************************************************/
-/*                  case incensitive equivalent of strstr               */
-/************************************************************************/
-const char *msCaseFindSubstring(const char *haystack, const char *needle)
-{   
-    if ( !*needle )   
-    {      
-        return haystack;   
-    }   
-    for ( ; *haystack; ++haystack )   
-    {      
-        if ( toupper(*haystack) == toupper(*needle) )      
-        {         
-            /*          * Matched starting char -- loop through remaining chars.          */
-            const char *h, *n;         
-            for ( h = haystack, n = needle; *h && *n; ++h, ++n )         
-            {            
-                if ( toupper(*h) != toupper(*n) )            
-                {
-                    break;            
-                }         
-            }         
-            if ( !*n ) /* matched all of 'needle' to null termination */         
-            {            
-                return haystack; /* return the start of the match */         
-            }      
-        }   
-    }   
-    return 0;
-}
-
-
-
 /* ------------------------------------------------------------------------------- */
 /*       Replace all occurances of old with new in str.                            */
 /*       It is assumed that str was dynamically created using malloc.              */
@@ -1507,7 +1474,7 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
       /*
       ** If old is not found then leave str alone
       */
-      if( (tmp_ptr = (char *) msCaseFindSubstring(str, old)) == NULL)
+      if( (tmp_ptr = (char *) strcasestr(str, old)) == NULL)
 	return(str);
 
       /*
@@ -1548,7 +1515,7 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
         /*
         ** And look for more matches in the rest of the string
         */
-        tmp_ptr = (char *) msCaseFindSubstring(tmp_ptr + new_len, old);
+        tmp_ptr = (char *) strcasestr(tmp_ptr + new_len, old);
       }
 
       return(str);

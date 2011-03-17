@@ -2669,7 +2669,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
              within sos_describesensor_url */
           tmpstr = (char *)malloc(sizeof(char)*strlen("procedure") + 3);
           sprintf(tmpstr,"%%%s%%", "procedure");
-          if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
+          if (strcasestr(pszUrl, tmpstr) != NULL)
             pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, pszProcedureId);
           msFree(tmpstr);
 
@@ -2729,7 +2729,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
                      within sos_describesensor_url */
                   tmpstr = (char *)malloc(sizeof(char)*strlen("procedure") + 3);
                   sprintf(tmpstr,"%%%s%%", "procedure");
-                  if (msCaseFindSubstring(pszUrl, tmpstr) != NULL)
+                  if (strcasestr(pszUrl, tmpstr) != NULL)
                     pszTmp = msCaseReplaceSubstring(pszTmp, tmpstr, pszProcedureId);
                   msFree(tmpstr);
 

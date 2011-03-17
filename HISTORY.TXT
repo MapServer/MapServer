@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Globally replace msCaseFindSubstring with strcasestr (#3255)
+
 - support GROUP layers in shp2img (#3746)
 
 - Honour MAXSIZE for WCS 2.0 responses (#3204).

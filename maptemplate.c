@@ -80,7 +80,7 @@ static int isValidTemplate(FILE *stream, const char *filename)
   char buffer[MS_BUFFER_LENGTH];
 
   if(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {
-    if(!msCaseFindSubstring(buffer, MS_TEMPLATE_MAGIC_STRING)) {
+    if(!strcasestr(buffer, MS_TEMPLATE_MAGIC_STRING)) {
       msSetError(MS_WEBERR, "Missing magic string, %s doesn't look like a MapServer template.", "isValidTemplate()", filename);
       return MS_FALSE;
     }
@@ -1775,33 +1775,33 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 
           if (tShape.numlines > 0)
           {
-              if(msCaseFindSubstring(tagValue, "$x") != 0)
+              if(strcasestr(tagValue, "$x") != 0)
               {
                   snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[0].x);
                   tagValue = msReplaceSubstring(tagValue, "$x", number);
               }
-              if(msCaseFindSubstring(tagValue, "$y") != 0)
+              if(strcasestr(tagValue, "$y") != 0)
               {
                   snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[0].y);
                   tagValue = msReplaceSubstring(tagValue, "$y", number);
               }
           
-              if(msCaseFindSubstring(tagValue, "$minx") != 0)
+              if(strcasestr(tagValue, "$minx") != 0)
               {
                   snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[0].x);
                   tagValue = msReplaceSubstring(tagValue, "$minx", number);
               }
-              if(msCaseFindSubstring(tagValue, "$miny") != 0)
+              if(strcasestr(tagValue, "$miny") != 0)
               {
                   snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[0].y);
                   tagValue = msReplaceSubstring(tagValue, "$miny", number);
               }
-              if(msCaseFindSubstring(tagValue, "$maxx") != 0)
+              if(strcasestr(tagValue, "$maxx") != 0)
               {
                   snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[1].x);
                   tagValue = msReplaceSubstring(tagValue, "$maxx", number);
               }
-              if(msCaseFindSubstring(tagValue, "$maxy") != 0)
+              if(strcasestr(tagValue, "$maxy") != 0)
               {
                   snprintf(number, sizeof(number), numberFormat, tShape.line[0].point[1].y);
                   tagValue = msReplaceSubstring(tagValue, "$maxy", number);

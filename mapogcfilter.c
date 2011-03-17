@@ -463,24 +463,24 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
       
     if (lp->connectiontype ==  MS_ORACLESPATIAL && FLTIsSimpleFilterNoSpatial(psNode))
     {
-        if (msCaseFindSubstring(lp->data, "USING") == 0)
+        if (strcasestr(lp->data, "USING") == 0)
           lp->data = msStringConcatenate(lp->data, " USING NONE"); 
-        else if (msCaseFindSubstring(lp->data, "NONE") == 0)
+        else if (strcasestr(lp->data, "NONE") == 0)
         {
             /*if one of the functions is used, just replace it with NONE*/
-            if (msCaseFindSubstring(lp->data, "FILTER"))
+            if (strcasestr(lp->data, "FILTER"))
               lp->data = msCaseReplaceSubstring(lp->data, "FILTER", "NONE");
-            else if (msCaseFindSubstring(lp->data, "GEOMRELATE"))
+            else if (strcasestr(lp->data, "GEOMRELATE"))
               lp->data = msCaseReplaceSubstring(lp->data, "GEOMRELATE", "NONE");
-            else if (msCaseFindSubstring(lp->data, "RELATE"))
+            else if (strcasestr(lp->data, "RELATE"))
               lp->data = msCaseReplaceSubstring(lp->data, "RELATE", "NONE");
-            else if (msCaseFindSubstring(lp->data, "VERSION"))
+            else if (strcasestr(lp->data, "VERSION"))
             {
                 /*should add NONE just before the VERSION. Cases are:
                   DATA "ORA_GEOMETRY FROM data USING VERSION 10g
                   DATA "ORA_GEOMETRY FROM data  USING UNIQUE FID VERSION 10g"
                  */
-                pszTmp = (char *)msCaseFindSubstring(lp->data, "VERSION");
+                pszTmp = (char *)strcasestr(lp->data, "VERSION");
                 pszTmp2 = msStringConcatenate(pszTmp2, " NONE ");
                 pszTmp2 = msStringConcatenate(pszTmp2, pszTmp);
                 
@@ -489,7 +489,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
                 msFree(pszTmp2);
                 
             }
-            else if (msCaseFindSubstring(lp->data, "SRID"))
+            else if (strcasestr(lp->data, "SRID"))
             {
                 lp->data = msStringConcatenate(lp->data, " NONE"); 
             }

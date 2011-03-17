@@ -2276,14 +2276,14 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, const ch
             }
         }
         /*add text/plain and gml */
-        if (msCaseFindSubstring(format_list, "GML") == 0 &&
-            msCaseFindSubstring(format_list, "application/vnd.ogc.gml") == 0)
+        if (strcasestr(format_list, "GML") == 0 &&
+            strcasestr(format_list, "application/vnd.ogc.gml") == 0)
         {
             if (mime_count<max_mime)
               mime_list[mime_count++] = "application/vnd.ogc.gml";
         }
-        if (msCaseFindSubstring(format_list, "text/plain") == 0 &&
-            msCaseFindSubstring(format_list, "MIME") == 0)
+        if (strcasestr(format_list, "text/plain") == 0 &&
+            strcasestr(format_list, "MIME") == 0)
         {
             if (mime_count<max_mime)
               mime_list[mime_count++] = "text/plain";
@@ -3150,7 +3150,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
         since old way of using template with web->header/footer and
         layer templates need to still be supported. 
         We can only validate if it was part of the format list*/
-      if (msCaseFindSubstring(format_list, info_format))
+      if (strcasestr(format_list, info_format))
         valid_format = MS_TRUE;
   }
    /*check to see if the format passed is text/plain or GML and if is

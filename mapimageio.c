@@ -770,21 +770,21 @@ int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format) {
     if(format->transparent)
         gdImageColorTransparent(ip, 0);
 
-    if(msCaseFindSubstring(format->driver, "/gif")) {
+    if(strcasestr(format->driver, "/gif")) {
 #ifdef USE_GD_GIF
         gdImageGif(ip, fp);
 #else
         msSetError(MS_MISCERR, "GIF output is not available.", "saveImageGD()");
         return(MS_FAILURE);
 #endif
-    } else if(msCaseFindSubstring(format->driver, "/png")) {
+    } else if(strcasestr(format->driver, "/png")) {
 #ifdef USE_GD_PNG
         gdImagePng(ip, fp);
 #else
         msSetError(MS_MISCERR, "PNG output is not available.", "saveImageGD()");
         return(MS_FAILURE);
 #endif
-    } else if(msCaseFindSubstring(format->driver, "/jpeg")) {
+    } else if(strcasestr(format->driver, "/jpeg")) {
 #ifdef USE_GD_JPEG
         gdImageJpeg(ip, fp, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
 #else
@@ -816,7 +816,7 @@ int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format)
     if(format->transparent)
         gdImageColorTransparent(ip, 0);
 
-    if(msCaseFindSubstring(format->driver, "/gif")) {
+    if(strcasestr(format->driver, "/gif")) {
 #ifdef USE_GD_GIF
         gdImageGifCtx( ip, ctx );
 #else
@@ -824,7 +824,7 @@ int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format)
         ctx->gd_free(ctx);
         return(MS_FAILURE);
 #endif
-    } else if(msCaseFindSubstring(format->driver, "/png")) {
+    } else if(strcasestr(format->driver, "/png")) {
 #ifdef USE_GD_PNG
         gdImagePngCtx(ip, ctx);
 #else
@@ -832,7 +832,7 @@ int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format)
         ctx->gd_free(ctx);
         return(MS_FAILURE);
 #endif
-    } else if(msCaseFindSubstring(format->driver, "/jpeg")) {
+    } else if(strcasestr(format->driver, "/jpeg")) {
 #ifdef USE_GD_JPEG
         gdImageJpegCtx(ip, ctx, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
 #else
@@ -860,13 +860,13 @@ int msSaveRasterBuffer(rasterBufferObj *rb, FILE *stream,
 	if(rb->type == MS_BUFFER_GD) {
 		return saveGdImage(rb->data.gd_img, stream, format);
 	}
-    if(msCaseFindSubstring(format->driver,"/png")) {
+    if(strcasestr(format->driver,"/png")) {
         streamInfo info;
         info.fp = stream;
         info.buffer = NULL;
         
         return saveAsPNG(rb,&info,format);
-    } else if(msCaseFindSubstring(format->driver,"/jpeg")) {
+    } else if(strcasestr(format->driver,"/jpeg")) {
         streamInfo info;
         info.fp = stream;
         info.buffer=NULL;
@@ -882,12 +882,12 @@ int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer,
     if(data->type == MS_BUFFER_GD) {
 		return saveGdImageBuffer(data->data.gd_img, buffer, format);
 	}
-    if(msCaseFindSubstring(format->driver,"/png")) {
+    if(strcasestr(format->driver,"/png")) {
         streamInfo info;
         info.fp = NULL;
         info.buffer = buffer;
         return saveAsPNG(data,&info,format);
-    } else if(msCaseFindSubstring(format->driver,"/jpeg")) {
+    } else if(strcasestr(format->driver,"/jpeg")) {
         streamInfo info;
         info.fp = NULL;
         info.buffer=buffer;
