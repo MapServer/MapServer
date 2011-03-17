@@ -89,6 +89,33 @@ typedef struct {
 
  *************************************************************************/
 
+
+struct defaultOutputFormatEntry{
+   const char *name;
+   const char *driver;
+   const char *mimetype;
+} ;
+
+struct defaultOutputFormatEntry defaultoutputformats[] = {
+   {"png","AGG/PNG","image/png"},
+   {"jpeg","AGG/JPEG","image/jpeg"},
+   {"gif","GD/GIF","image/gif"},
+   {"png24","AGG/PNG","image/png; mode=24bit"},
+#ifdef USE_CAIRO
+   {"pdf","CAIRO/PDF","application/x-pdf"},
+   {"svg","CAIRO/SVG","image/svg+xml"},
+   {"cairopng","CAIRO/PNG","image/png"},
+#endif
+#ifdef USE_GDAL
+   {"GTiff","GDAL/GTiff","image/tiff"},
+#endif
+#ifdef USE_KML
+   {"kml","KML","application/vnd.google-earth.kml+xml"},
+   {"kmz","KMZ","application/vnd.google-earth.kmz"}
+#endif
+   {NULL,NULL,NULL}
+};
+
 /************************************************************************/
 /*                  msPostMapParseOutputFormatSetup()                   */
 /************************************************************************/
@@ -98,12 +125,9 @@ int msPostMapParseOutputFormatSetup( mapObj *map )
 {
     outputFormatObj *format;
 
-    /* Provide default output formats. */
-    msApplyDefaultOutputFormats( map );
-
     /* default to the first of these if IMAGETYPE not set. */
-    if( map->imagetype == NULL && map->numoutputformats > 0 )
-        map->imagetype = msStrdup(map->outputformatlist[0]->name);
+    if( map->imagetype == NULL)
+        map->imagetype = msStrdup(defaultoutputformats[0].name);
 
     /* select the current outputformat into map->outputformat */
     format = msSelectOutputFormat( map, map->imagetype );
@@ -332,8 +356,8 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 /*                    msApplyDefaultOutputFormats()                     */
 /************************************************************************/
 
-void msApplyDefaultOutputFormats( mapObj *map )
 
+void msApplyDefaultOutputFormats( mapObj *map )
 {
     char *saved_imagetype;
 
@@ -342,49 +366,12 @@ void msApplyDefaultOutputFormats( mapObj *map )
     else
         saved_imagetype = msStrdup(map->imagetype);
 
-    if( msSelectOutputFormat( map, "gif" ) == NULL )
-        msCreateDefaultOutputFormat( map, "GD/GIF" );
-
-    if( msSelectOutputFormat( map, "png" ) == NULL )
-        msCreateDefaultOutputFormat( map, "GD/PNG" );
-
-    if( msSelectOutputFormat( map, "png24" ) == NULL )
-        msCreateDefaultOutputFormat( map, "AGG/PNG" );
-    
-    if( msSelectOutputFormat( map, "jpeg" ) == NULL )
-        msCreateDefaultOutputFormat( map, "AGG/JPEG" );
-
- 
-    if( msSelectOutputFormat( map, "imagemap" ) == NULL )
-        msCreateDefaultOutputFormat( map, "imagemap" );
-
-    if( msSelectOutputFormat( map, "GTiff" ) == NULL )
-        msCreateDefaultOutputFormat( map, "GDAL/GTiff" );
-
-
-#if defined(USE_CAIRO)
-    if( msSelectOutputFormat( map, "cairopng" ) == NULL )
-        msCreateDefaultOutputFormat( map, "CAIRO/PNG" );
-    if( msSelectOutputFormat( map, "cairojpeg" ) == NULL )
-        msCreateDefaultOutputFormat( map, "CAIRO/JPEG" );
-    if( msSelectOutputFormat( map, "pdf" ) == NULL )
-        msCreateDefaultOutputFormat( map, "CAIRO/PDF" );
-    if( msSelectOutputFormat( map, "svg" ) == NULL )
-        msCreateDefaultOutputFormat( map, "CAIRO/SVG" );
-#endif
-
-#if defined(USE_OGL)
-    if( msSelectOutputFormat( map, "oglpng24" ) == NULL )
-        msCreateDefaultOutputFormat( map, "OGL/PNG" );
-#endif 
-
-#if defined(USE_KML)
-    if( msSelectOutputFormat( map, "kml" ) == NULL )
-        msCreateDefaultOutputFormat( map, "kml" );
-    if( msSelectOutputFormat( map, "kmz" ) == NULL )
-        msCreateDefaultOutputFormat( map, "kmz" );
-#endif
-
+    struct defaultOutputFormatEntry *defEntry = defaultoutputformats;
+    while(defEntry->name) {
+       if( msSelectOutputFormat( map, defEntry->name ) == NULL )
+          msCreateDefaultOutputFormat( map, defEntry->driver );
+       defEntry++;
+    }
     if( map->imagetype != NULL )
         free( map->imagetype );
     map->imagetype = saved_imagetype;
@@ -566,6 +553,8 @@ int msGetOutputFormatIndex(mapObj *map, const char *imagetype)
 /*                        msSelectOutputFormat()                        */
 /************************************************************************/
 
+
+
 outputFormatObj *msSelectOutputFormat( mapObj *map, 
                                        const char *imagetype )
 
@@ -581,8 +570,19 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
 /*      mime type, and then by output format name.                      */
 /* -------------------------------------------------------------------- */
     index = msGetOutputFormatIndex(map, imagetype);
-    if (index >= 0)
+    if (index >= 0) {
         format = map->outputformatlist[index];
+    } else {
+       struct defaultOutputFormatEntry *formatEntry = defaultoutputformats;
+       while(formatEntry->name) {
+          if(!strcasecmp(imagetype,formatEntry->name) || !strcasecmp(imagetype,formatEntry->mimetype)) {
+             format = msCreateDefaultOutputFormat( map, formatEntry->driver );
+             break;
+          }
+          formatEntry++;
+       }
+
+    }
 
     if (format)
     {
@@ -903,7 +903,7 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
     char **tokens = NULL;
     int numtokens = 0;
     outputFormatObj *format;
-
+    msApplyDefaultOutputFormats(map);
     format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getmap_formatlist");
     if ( format_list && strlen(format_list) > 0)
       tokens = msStringSplit(format_list,  ',', &numtokens);
