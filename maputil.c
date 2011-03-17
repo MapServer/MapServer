@@ -127,11 +127,11 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int que
       bindDoubleAttribute(&style->width, shape->values[style->bindings[MS_STYLE_BINDING_WIDTH].index]);
     }
     if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1 && (querymapMode != MS_TRUE)) {
-      MS_INIT_COLOR(style->color, -1,-1,-1);
+      MS_INIT_COLOR(style->color, -1,-1,-1,255);
       bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);
     }
     if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1 && (querymapMode != MS_TRUE)) {
-      MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
+      MS_INIT_COLOR(style->outlinecolor, -1,-1,-1,255);
       bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
     }
     if(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
@@ -194,12 +194,12 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
       }
 
       if(label->bindings[MS_LABEL_BINDING_COLOR].index != -1) {
-        MS_INIT_COLOR(label->color, -1,-1,-1);
+        MS_INIT_COLOR(label->color, -1,-1,-1,255);
         bindColorAttribute(&label->color, shape->values[label->bindings[MS_LABEL_BINDING_COLOR].index]);
       }
 
       if(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].index != -1) {
-        MS_INIT_COLOR(label->outlinecolor, -1,-1,-1);
+        MS_INIT_COLOR(label->outlinecolor, -1,-1,-1,255);
         bindColorAttribute(&label->outlinecolor, shape->values[label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].index]);
       }
 

@@ -1573,11 +1573,11 @@ void initLabel(labelObj *label)
 
   label->antialias = -1; /* off  */
   label->align = MS_ALIGN_LEFT;
-  MS_INIT_COLOR(label->color, 0,0,0);  
-  MS_INIT_COLOR(label->outlinecolor, -1,-1,-1); /* don't use it */
+  MS_INIT_COLOR(label->color, 0,0,0,255);  
+  MS_INIT_COLOR(label->outlinecolor, -1,-1,-1,255); /* don't use it */
   label->outlinewidth=1;
 
-  MS_INIT_COLOR(label->shadowcolor, -1,-1,-1); /* don't use it */
+  MS_INIT_COLOR(label->shadowcolor, -1,-1,-1,255); /* don't use it */
   label->shadowsizex = label->shadowsizey = 1;
 
   label->font = NULL;
@@ -2312,12 +2312,12 @@ static void writeCluster(FILE *stream, int indent, clusterObj *cluster) {
 int initStyle(styleObj *style) {
   int i;
   MS_REFCNT_INIT(style);
-  MS_INIT_COLOR(style->color, -1,-1,-1); /* must explictly set colors */
-  MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1);
-  MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
+  MS_INIT_COLOR(style->color, -1,-1,-1,255); /* must explictly set colors */
+  MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1,255);
+  MS_INIT_COLOR(style->outlinecolor, -1,-1,-1,255);
   /* New Color Range fields*/
-  MS_INIT_COLOR(style->mincolor, -1,-1,-1);
-  MS_INIT_COLOR(style->maxcolor, -1,-1,-1);
+  MS_INIT_COLOR(style->mincolor, -1,-1,-1,255);
+  MS_INIT_COLOR(style->maxcolor, -1,-1,-1,255);
   style->minvalue = 0.0;
   style->maxvalue = 1.0;
   style->rangeitem = NULL;
@@ -3261,7 +3261,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   initCluster(&layer->cluster);
 
-  MS_INIT_COLOR(layer->offsite, -1,-1,-1);
+  MS_INIT_COLOR(layer->offsite, -1,-1,-1, 255);
 
   layer->labelcache = MS_ON;
   layer->postlabelcache = MS_FALSE;
@@ -3960,8 +3960,8 @@ void initReferenceMap(referenceMapObj *ref)
   ref->height = ref->width = 0;
   ref->extent.minx = ref->extent.miny = ref->extent.maxx = ref->extent.maxy = -1.0;
   ref->image = NULL;
-  MS_INIT_COLOR(ref->color, 255, 0, 0);
-  MS_INIT_COLOR(ref->outlinecolor, 0, 0, 0);  
+  MS_INIT_COLOR(ref->color, 255, 0, 0, 255);
+  MS_INIT_COLOR(ref->outlinecolor, 0, 0, 0, 255);  
   ref->status = MS_OFF;
   ref->marker = 0;
   ref->markername = NULL;
@@ -4310,8 +4310,8 @@ static void writeOutputformat(FILE *stream, int indent, mapObj *map)
 void initLegend(legendObj *legend)
 {
   legend->height = legend->width = 0; 
-  MS_INIT_COLOR(legend->imagecolor, 255,255,255); /* white */
-  MS_INIT_COLOR(legend->outlinecolor, -1,-1,-1);
+  MS_INIT_COLOR(legend->imagecolor, 255,255,255,255); /* white */
+  MS_INIT_COLOR(legend->outlinecolor, -1,-1,-1,255);
   initLabel(&legend->label);
   legend->label.position = MS_XY; /* override */
   legend->keysizex = 20;
@@ -4445,16 +4445,16 @@ static void writeLegend(FILE *stream, int indent, legendObj *legend)
 */
 void initScalebar(scalebarObj *scalebar)
 {
-  MS_INIT_COLOR(scalebar->imagecolor, 255,255,255);
+  MS_INIT_COLOR(scalebar->imagecolor, 255,255,255,255);
   scalebar->width = 200; 
   scalebar->height = 3;
   scalebar->style = 0; /* only 2 styles at this point */
   scalebar->intervals = 4;
   initLabel(&scalebar->label);
   scalebar->label.position = MS_XY; /* override */
-  MS_INIT_COLOR(scalebar->backgroundcolor, -1,-1,-1);  /* if not set, scalebar creation needs to set this to match the background color */
-  MS_INIT_COLOR(scalebar->color, 0,0,0); /* default to black */
-  MS_INIT_COLOR(scalebar->outlinecolor, -1,-1,-1);
+  MS_INIT_COLOR(scalebar->backgroundcolor, -1,-1,-1,255);  /* if not set, scalebar creation needs to set this to match the background color */
+  MS_INIT_COLOR(scalebar->color, 0,0,0,255); /* default to black */
+  MS_INIT_COLOR(scalebar->outlinecolor, -1,-1,-1,255);
   scalebar->units = MS_MILES;
   scalebar->status = MS_OFF;
   scalebar->position = MS_LL;
@@ -4595,7 +4595,7 @@ void initQueryMap(queryMapObj *querymap)
   querymap->width = querymap->height = -1;
   querymap->style = MS_HILITE;
   querymap->status = MS_OFF;
-  MS_INIT_COLOR(querymap->color, 255,255,0); /* yellow */
+  MS_INIT_COLOR(querymap->color, 255,255,0,255); /* yellow */
 }
 
 int loadQueryMap(queryMapObj *querymap)
@@ -4924,7 +4924,7 @@ int initMap(mapObj *map)
   map->shapepath = NULL;
   map->mappath = NULL;
 
-  MS_INIT_COLOR(map->imagecolor, 255,255,255); /* white */
+  MS_INIT_COLOR(map->imagecolor, 255,255,255,255); /* white */
 
   map->numoutputformats = 0;
   map->outputformatlist = NULL;

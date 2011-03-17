@@ -35,12 +35,9 @@ int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
    return MS_SUCCESS;
 }
 void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, double scalefactor) {
-
-   int alpha;
    double default_size;
    double target_size;
 
-   alpha = MS_NINT(src->opacity*2.55);;
    default_size = msSymbolGetDefaultSize(symbol);
    target_size = (src->size==-1)?default_size:src->size;
 
@@ -59,13 +56,10 @@ void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, dou
          s->outlinecolor = &(src->outlinecolor);
       s->color = NULL;
    }
-   if(s->color) s->color->alpha = alpha;
-   if(s->outlinecolor) s->outlinecolor->alpha = alpha;
 
 
    if(MS_VALID_COLOR(src->backgroundcolor)) {
       s->backgroundcolor = &(src->backgroundcolor);
-      s->backgroundcolor->alpha = alpha;
    }
 
    target_size *= scalefactor;
@@ -411,7 +405,6 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                msSetError(MS_MISCERR,"no color defined for line styling","msDrawLineSymbol()");
                return MS_FAILURE;
             }
-            s.color->alpha = MS_NINT(style->opacity * 2.55);
             renderer->renderLine(image,offsetLine,&s);
          }
          else {
@@ -528,7 +521,6 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
          /* simple polygon drawing, without any specific symbol.
           * also draws an optional outline */
          if(style->symbol == 0 || symbol->type == MS_SYMBOL_SIMPLE) {
-            style->color.alpha = MS_NINT(style->opacity*2.55);
             ret = renderer->renderPolygon(image,offsetPolygon,&style->color);
             if(ret != MS_SUCCESS) goto cleanup;
             if(MS_VALID_COLOR(style->outlinecolor)) {
@@ -550,7 +542,6 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
                if(ret != MS_SUCCESS) goto cleanup;
             }
             width = (style->width <= 0)?scalefactor:style->width*scalefactor;
-            style->color.alpha = MS_NINT(style->opacity*2.55);
             spacing = (style->size <= 0)?scalefactor:style->size*scalefactor;
             ret = msHatchPolygon(image,offsetPolygon,spacing,width,style->angle, &style->color);
             goto cleanup;

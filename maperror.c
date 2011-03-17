@@ -427,8 +427,8 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 	  /* use the first font we find */
 	  if((font = renderer->bitmapFontMetrics[font_index]) != NULL) {
 	     ls.size = i;
-         MS_INIT_COLOR(*ls.color,0,0,0);
-         MS_INIT_COLOR(*ls.outlinecolor,255,255,255);
+         MS_INIT_COLOR(*ls.color,0,0,0,255);
+         MS_INIT_COLOR(*ls.outlinecolor,255,255,255,255);
          break;
 	  }
   }

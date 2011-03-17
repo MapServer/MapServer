@@ -2942,7 +2942,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
                                                   &r, &g, &b, &t))
           {
-              MS_INIT_COLOR(c->label.color, r, g, b);
+              MS_INIT_COLOR(c->label.color, r, g, b, t);
           }
 
           pszColor = OGR_ST_GetParamStr(hLabelStyle, 
@@ -2951,7 +2951,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
                                                   &r, &g, &b, &t))
           {
-              MS_INIT_COLOR(c->label.shadowcolor, r, g, b);
+              MS_INIT_COLOR(c->label.shadowcolor, r, g, b, t);
           }
 
 #if GDAL_VERSION_NUM >= 1600
@@ -2961,7 +2961,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
                                                   &r, &g, &b, &t))
           {
-              MS_INIT_COLOR(c->label.outlinecolor, r, g, b);
+              MS_INIT_COLOR(c->label.outlinecolor, r, g, b, t);
           }
 #endif /* GDAL_VERSION_NUM >= 1600 */
 
@@ -3044,19 +3044,19 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           const char *pszColor = poLabelStyle->ForeColor(bIsNull);
           if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
           {
-              MS_INIT_COLOR(c->label.color, r, g, b);
+              MS_INIT_COLOR(c->label.color, r, g, b, t);
           }
 
           pszColor = poLabelStyle->BackColor(bIsNull);
           if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
           {
-              MS_INIT_COLOR(c->label.backgroundcolor, r, g, b);
+              MS_INIT_COLOR(c->label.backgroundcolor, r, g, b, t);
           }
 #if GDAL_VERSION_NUM >= 1400
           pszColor = poLabelStyle->ShadowColor(bIsNull);
           if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
           {
-              MS_INIT_COLOR(c->label.shadowcolor, r, g, b);
+              MS_INIT_COLOR(c->label.shadowcolor, r, g, b, t);
           }
 #endif
           // Label font... do our best to use TrueType fonts, otherwise
@@ -3122,13 +3122,13 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           t =-1;
 
           // Make sure pen is always initialized
-          MS_INIT_COLOR(oPenColor, -1, -1, -1);
+          MS_INIT_COLOR(oPenColor, -1, -1, -1,255);
 
           // Check for Pen Pattern "ogr-pen-1": the invisible pen
           // If that's what we have then set pen color to -1
           if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL)
           {
-              MS_INIT_COLOR(oPenColor, -1, -1, -1);
+              MS_INIT_COLOR(oPenColor, -1, -1, -1,255);
           }
           else
           {
@@ -3138,7 +3138,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               if (!bIsNull && OGR_ST_GetRGBFromString(hPenStyle, pszColor,
                                                       &r, &g, &b, &t))
               {
-                  MS_INIT_COLOR(oPenColor, r, g, b);
+                  MS_INIT_COLOR(oPenColor, r, g, b, t);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** PEN COLOR = %d %d %d **\n", r,g,b);
               }
@@ -3174,8 +3174,6 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               c->styles[1]->size = nPenSize;
               c->styles[1]->symbol = nPenSymbol;
               c->styles[1]->width = nPenSize;
-              if (t >= 0 && t<=255)
-                c->styles[1]->opacity = (int)t*100/255;
           }
           else
           {
@@ -3198,8 +3196,6 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               c->styles[0]->symbol = nPenSymbol;
               c->styles[0]->size = nPenSize;
               c->styles[0]->width = nPenSize;
-               if (t >= 0 && t<=255)
-                c->styles[0]->opacity = (int)t*100/255;
           }
 
       }
@@ -3229,7 +3225,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               const char *pszColor = poPenStyle->Color(bIsNull);
               if (!bIsNull && poPenStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
-                  MS_INIT_COLOR(oPenColor, r, g, b);
+                  MS_INIT_COLOR(oPenColor, r, g, b, t);
+
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** PEN COLOR = %d %d %d **\n", r,g,b);
               }
@@ -3264,8 +3261,6 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               c->styles[1]->size = nPenSize;
               c->styles[1]->symbol = nPenSymbol;
               c->styles[1]->width = nPenSize;
-              if (t >= 0 && t<=255)
-                c->styles[1]->opacity = (int)t*100/255;
           }
           else
           {
@@ -3288,8 +3283,6 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               c->styles[0]->symbol = nPenSymbol;
               c->styles[0]->size = nPenSize;
               c->styles[0]->width = nPenSize;
-              if (t >= 0 && t<=255)
-                c->styles[0]->opacity = (int)t*100/255;
           }
 
       }
@@ -3319,7 +3312,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           // If that's what we have then set fill color to -1
           if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL)
           {
-              MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1);
+              MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1, 255);
           }
           else
           {
@@ -3331,9 +3324,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                                       pszColor,
                                                       &r, &g, &b, &t))
               {
-                  MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-                  if (t >= 0 && t<=255)
-                    c->styles[0]->opacity = (int)t*100/255;
+                  MS_INIT_COLOR(c->styles[0]->color, r, g, b, t);
 
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
@@ -3345,7 +3336,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                                       pszColor,
                                                       &r, &g, &b, &t))
               {
-                  MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b);
+                  MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b, t);
               }
 
               // Symbol name mapping:
@@ -3382,7 +3373,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           // If that's what we have then set fill color to -1
           if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL)
           {
-              MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1);
+              MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1, 255);
           }
           else
           {
@@ -3390,9 +3381,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               const char *pszColor = poBrushStyle->ForeColor(bIsNull);
               if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
-                  MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-                  if (t >= 0 && t<=255)
-                    c->styles[1]->opacity = (int)t*100/255;
+                  MS_INIT_COLOR(c->styles[0]->color, r, g, b, t);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
               }
@@ -3400,7 +3389,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
               pszColor = poBrushStyle->BackColor(bIsNull);
               if (!bIsNull && poBrushStyle->GetRGBFromString(pszColor,r,g,b,t))
               {
-                  MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b);
+                  MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b, t);
               }
 
               // Symbol name mapping:
@@ -3439,9 +3428,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                                   pszColor,
                                                   &r, &g, &b, &t))
           {
-              MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-              if (t >= 0 && t<=255)
-                c->styles[0]->opacity = (int)t*100/255;
+              MS_INIT_COLOR(c->styles[0]->color, r, g, b, t);
           }
 
 #if GDAL_VERSION_NUM >= 1600              
@@ -3452,9 +3439,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                                   pszColor,
                                                   &r, &g, &b, &t))
           {
-              MS_INIT_COLOR(c->styles[0]->outlinecolor, r, g, b);
-              if (t >= 0 && t<=255)
-                c->styles[0]->opacity = (int)t*100/255;
+              MS_INIT_COLOR(c->styles[0]->outlinecolor, r, g, b, t);
           }
 #endif /* GDAL_VERSION_NUM >= 1600 */
           c->styles[0]->angle = OGR_ST_GetParamNum(hSymbolStyle,
@@ -3502,9 +3487,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           const char *pszColor = poSymbolStyle->Color(bIsNull);
           if (!bIsNull && poSymbolStyle->GetRGBFromString(pszColor,r,g,b,t))
           {
-              MS_INIT_COLOR(c->styles[0]->color, r, g, b);
-              if (t >= 0 && t<=255)
-                c->styles[1]->opacity = (int)t*100/255;
+              MS_INIT_COLOR(c->styles[0]->color, r, g, b, t);
           }
 
           c->styles[0]->angle = poSymbolStyle->Angle(bIsNull);

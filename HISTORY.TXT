@@ -13,6 +13,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- change MS_INIT_COLOR to take alpha as a parameter
+
+- stop using style->opacity in rendering code, use alpha from colorObjs.
 
 - Fixed big Oracle memory leak when rendering in KML (#3719)
 

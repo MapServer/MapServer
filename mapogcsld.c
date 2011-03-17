@@ -1261,8 +1261,8 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                     if(psCssParam->psChild &&  psCssParam->psChild->psNext && 
                        psCssParam->psChild->psNext->pszValue)
                     {
-                        psStyle->opacity = 
-                          (int)(atof(psCssParam->psChild->psNext->pszValue) * 100);
+                        psStyle->color.alpha = 
+                           (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
                     }
                 }
             }
@@ -1523,8 +1523,7 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
                     if(psCssParam->psChild &&  psCssParam->psChild->psNext && 
                        psCssParam->psChild->psNext->pszValue)
                     {
-                        psStyle->opacity = 
-                          (int)(atof(psCssParam->psChild->psNext->pszValue)*100);
+                        psStyle->color.alpha = (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
                     }
                 }
             }
@@ -3896,9 +3895,11 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
             sCssParam, szHexColor, sCssParam);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-    snprintf(szTmp, sizeof(szTmp),
-            "<%s name=\"stroke-opacity\">%.2f</%s>\n", 
-            sCssParam, (float)psStyle->opacity/100, sCssParam);
+    if(psStyle->color.alpha != 255 && psStyle->color.alpha!=-1) {
+      snprintf(szTmp, sizeof(szTmp),
+               "<%s name=\"stroke-opacity\">%.2f</%s>\n", 
+               sCssParam, (float)psStyle->color.alpha/255, sCssParam);
+    }
 
     pszSLD = msStringConcatenate(pszSLD, szTmp);
                             
@@ -4030,9 +4031,11 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
                 sCssParam, szHexColor, sCssParam);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-        snprintf(szTmp, sizeof(szTmp),
-            "<%s name=\"fill-opacity\">%.2f</%s>\n", 
-                sCssParam, ((float)psStyle->opacity)/100, sCssParam);
+        if(psStyle->color.alpha != 255 && psStyle->color.alpha!=-1) {
+           snprintf(szTmp, sizeof(szTmp),
+                 "<%s name=\"fill-opacity\">%.2f</%s>\n", 
+                 sCssParam, (float)psStyle->color.alpha/255, sCssParam);
+        }
         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
 

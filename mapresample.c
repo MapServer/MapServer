@@ -1541,7 +1541,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 	
             sDummyMap.outputformat->transparent = MS_TRUE;
             sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
-            MS_INIT_COLOR(sDummyMap.imagecolor,-1,-1,-1);
+            MS_INIT_COLOR(sDummyMap.imagecolor,-1,-1,-1,255);
         }
     }
 
