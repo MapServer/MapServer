@@ -40,7 +40,7 @@ MS_CVSID("$Id$")
 extern int msyylex(void); /* lexer globals */
 extern void msyyrestart(FILE *);
 extern double msyynumber;
-extern char *msyytext;
+extern char *msyystring_buffer;
 extern int msyylineno;
 extern FILE *msyyin;
 
@@ -210,13 +210,13 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       break;
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
-	msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
+	msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
 	return(-1);
       }
-      s->full_pixmap_path = msStrdup(msBuildPath(szPath, symbolpath, msyytext)); 
+      s->full_pixmap_path = msStrdup(msBuildPath(szPath, symbolpath, msyystring_buffer)); 
       
       /* Set imagepath */
-      s->imagepath = msStrdup(msyytext);
+      s->imagepath = msStrdup(msyystring_buffer);
 
       /* if this is SVG, load the SVG and
          punt if this is for a SVG symbol */
@@ -224,7 +224,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
         if((stream = fopen(s->full_pixmap_path, "rb")) == NULL)
         {
 	        msSetError(MS_IOERR, "Parsing error near (%s):(line %d)", "loadSymbol()", 
-                     msyytext, msyylineno);
+                     msyystring_buffer, msyylineno);
 	        return(-1);
         }      
         fseek(stream, 0, SEEK_END);
@@ -268,11 +268,11 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	    msSetError(MS_SYMERR, "Pattern too long.", "loadSymbol()");
 	    return(-1);
 	  }
-	  s->pattern[s->patternlength] = atoi(msyytext);
+	  s->pattern[s->patternlength] = atoi(msyystring_buffer);
 	  s->patternlength++;
 	  break;
 	default:
-	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
+	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
 	  return(-1);
 	}
 	if(done == MS_TRUE)
@@ -289,7 +289,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	  done = MS_TRUE;
 	  break;
 	case(MS_NUMBER):
-	  s->points[s->numpoints].x = atof(msyytext); /* grab the x */
+	  s->points[s->numpoints].x = atof(msyystring_buffer); /* grab the x */
 	  if(getDouble(&(s->points[s->numpoints].y)) == -1) return(-1); /* grab the y */
 	  if(s->points[s->numpoints].x!=-99) {
 	  s->sizex = MS_MAX(s->sizex, s->points[s->numpoints].x);
@@ -298,7 +298,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	  s->numpoints++;
 	  break;
 	default:
-	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
+	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
 	  return(-1);
 	}
 
@@ -322,7 +322,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	s->type = MS_SYMBOL_TRUETYPE;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
       return(-1);
     } /* end switch */
   } /* end for */
@@ -647,7 +647,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
       foundSymbolSetToken = MS_TRUE;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbolSet()", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbolSet()", msyystring_buffer, msyylineno);
       status = -1;
     } /* end switch */
 

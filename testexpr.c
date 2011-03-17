@@ -37,7 +37,7 @@ MS_CVSID("$Id$")
 
 extern int msyyparse();
 extern int msyylex();
-extern char *msyytext;
+extern char *msyystring_buffer;
 
 extern int msyyresult; /* result of parsing, true/false */
 extern int msyystate;
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
   status = msyyparse();
   if(status != 0) 
-    printf("Error parsing expression near %s.\n", msyytext);
+    printf("Error parsing expression near %s.\n", msyystring_buffer);
   else
     printf("Expression evalulated to: %d.\n", msyyresult);
 

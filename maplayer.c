@@ -347,8 +347,7 @@ extern int msyystate;
 extern char *msyystring; /* string to tokenize */
 
 extern double msyynumber; /* token containers */
-extern char *msyytext;
-extern char *msyytext_esc;
+extern char *msyystring_buffer;
 
 int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
 {
@@ -379,13 +378,12 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
       break;
     case MS_TOKEN_LITERAL_STRING:
       node->token = token;
-      node->tokenval.strval = msStrdup(msyytext_esc);
-      free(msyytext_esc); msyytext_esc=NULL;
+      node->tokenval.strval = msStrdup(msyystring_buffer);
       break;
     case MS_TOKEN_LITERAL_TIME:
       node->token = token;
       msTimeInit(&(node->tokenval.tmval));
-      if(msParseTime(msyytext, &(node->tokenval.tmval)) != MS_TRUE) {
+      if(msParseTime(msyystring_buffer, &(node->tokenval.tmval)) != MS_TRUE) {
         msSetError(MS_PARSEERR, "Parsing time value failed.", "msTokenizeExpression()");
         goto parse_error;
       }
@@ -395,8 +393,8 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
     case MS_TOKEN_BINDING_STRING:
     case MS_TOKEN_BINDING_TIME: 
       node->token = token; /* binding type */
-      node->tokenval.bindval.item = msStrdup(msyytext);
-      if(list) node->tokenval.bindval.index = string2list(list, listsize, msyytext);
+      node->tokenval.bindval.item = msStrdup(msyystring_buffer);
+      if(list) node->tokenval.bindval.index = string2list(list, listsize, msyystring_buffer);
       break;
     case MS_TOKEN_BINDING_SHAPE:
       node->token = token;
@@ -413,8 +411,7 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
       }
 
       node->token = MS_TOKEN_LITERAL_SHAPE;
-      node->tokenval.shpval = msShapeFromWKT(msyytext_esc);
-      free(msyytext_esc);
+      node->tokenval.shpval = msShapeFromWKT(msyystring_buffer);
 
       if(!node->tokenval.shpval) {
         msSetError(MS_PARSEERR, "Parsing fromText function failed, WKT processing failed.", "msTokenizeExpression()");

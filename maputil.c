@@ -48,6 +48,7 @@
 
 MS_CVSID("$Id$")
 
+extern char *msyystring_buffer;
 extern int msyylex_destroy(void);
 extern int yyparse(parseObj *);
 
@@ -1814,6 +1815,8 @@ void msCleanup()
 {
   msForceTmpFileBase( NULL );
   msConnPoolFinalCleanup();
+  /* Lexer string parsing variable */
+  msFree(msyystring_buffer);
   msyylex_destroy();
 
 #ifdef USE_OGR

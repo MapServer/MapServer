@@ -51,7 +51,6 @@ extern void msyyrestart(FILE *);
 extern int msyylex_destroy(void);
 
 extern double msyynumber;
-extern char *msyytext;
 extern int msyylineno;
 extern FILE *msyyin;
 
@@ -60,6 +59,8 @@ extern int msyystate;
 extern char *msyystring;
 extern char *msyybasepath;
 extern int msyyreturncomments;
+extern char *msyystring_buffer;
+extern char msyystring_icase;
 
 extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
 extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
@@ -182,7 +183,7 @@ int getSymbol(int n, ...) {
 
   va_end(argp);
 
-  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getSymbol()", msyytext, msyylineno);  
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getSymbol()", msyystring_buffer, msyylineno);  
   return(-1);
 }
 
@@ -192,7 +193,7 @@ int getSymbol(int n, ...) {
 */
 static char *getToken(void) {
   msyylex();  
-  return msStrdup(msyytext);
+  return msStrdup(msyystring_buffer);
 }
 
 /*
@@ -200,13 +201,12 @@ static char *getToken(void) {
 */
 int getString(char **s) {
   /* if (*s)
-    msSetError(MS_SYMERR, "Duplicate item (%s):(line %d)", "getString()", msyytext, msyylineno);
+    msSetError(MS_SYMERR, "Duplicate item (%s):(line %d)", "getString()", msyystring_buffer, msyylineno);
     return(MS_FAILURE);
   } else */
-
   if(msyylex() == MS_STRING) {
     if(*s) free(*s); /* avoid leak */
-    *s = msStrdup(msyytext);
+    *s = msStrdup(msyystring_buffer);
     if (*s == NULL) {
       msSetError(MS_MEMERR, NULL, "getString()");
       return(MS_FAILURE);
@@ -214,7 +214,7 @@ int getString(char **s) {
     return(MS_SUCCESS);
   }
 
-  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getString()", msyytext, msyylineno);
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getString()", msyystring_buffer, msyylineno);
   return(MS_FAILURE);
 }
 
@@ -227,7 +227,7 @@ int getDouble(double *d) {
     return(0); /* success */
   }
 
-  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getDouble()", msyytext, msyylineno); 
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getDouble()", msyystring_buffer, msyylineno); 
   return(-1);
 }
 
@@ -240,17 +240,17 @@ int getInteger(int *i) {
     return(0); /* success */
   }
 
-  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getInteger()", msyytext, msyylineno); 
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getInteger()", msyystring_buffer, msyylineno); 
   return(-1);
 }
 
 int getCharacter(char *c) {
   if(msyylex() == MS_STRING) {
-    *c = msyytext[0];
+    *c = msyystring_buffer[0];
     return(0);
   }
 
-  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getCharacter()", msyytext, msyylineno); 
+  msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getCharacter()", msyystring_buffer, msyylineno); 
   return(-1);
 }
 
@@ -283,7 +283,7 @@ int getIntegerOrSymbol(int *i, int n, ...)
     va_end(argp);
 
     msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)",
-               "getIntegerOrSymbol()", msyytext, msyylineno); 
+               "getIntegerOrSymbol()", msyystring_buffer, msyylineno); 
     return(-1);
 }
 
@@ -391,23 +391,23 @@ int loadColor(colorObj *color, attributeBindingObj *binding) {
     if(getInteger(&(color->green)) == -1) return MS_FAILURE;
     if(getInteger(&(color->blue)) == -1) return MS_FAILURE;
   } else if(symbol == MS_STRING) {
-    if(msyytext[0] == '#' && strlen(msyytext) == 7) { /* got a hex color */
-      hex[0] = msyytext[1];
-      hex[1] = msyytext[2];
+    if(msyystring_buffer[0] == '#' && strlen(msyystring_buffer) == 7) { /* got a hex color */
+      hex[0] = msyystring_buffer[1];
+      hex[1] = msyystring_buffer[2];
       color->red = msHexToInt(hex);
-      hex[0] = msyytext[3];
-      hex[1] = msyytext[4];
+      hex[0] = msyystring_buffer[3];
+      hex[1] = msyystring_buffer[4];
       color->green = msHexToInt(hex);
-      hex[0] = msyytext[5];
-      hex[1] = msyytext[6];
+      hex[0] = msyystring_buffer[5];
+      hex[1] = msyystring_buffer[6];
       color->blue = msHexToInt(hex);
     } else {
        /* TODO: consider named colors here */
-       msSetError(MS_SYMERR, "Invalid hex color (%s):(line %d)", "loadColor()", msyytext, msyylineno); 
+       msSetError(MS_SYMERR, "Invalid hex color (%s):(line %d)", "loadColor()", msyystring_buffer, msyylineno); 
        return MS_FAILURE;
     }
   } else {
-    binding->item = msStrdup(msyytext);
+    binding->item = msStrdup(msyystring_buffer);
     binding->index = -1;
   }
 
@@ -419,32 +419,32 @@ int loadColorWithAlpha(colorObj *color) {
   char hex[2];
 
   if(getInteger(&(color->red)) == -1) {
-    if(msyytext[0] == '#' && strlen(msyytext) == 7) { /* got a hex color */
-      hex[0] = msyytext[1];
-      hex[1] = msyytext[2];
+    if(msyystring_buffer[0] == '#' && strlen(msyystring_buffer) == 7) { /* got a hex color */
+      hex[0] = msyystring_buffer[1];
+      hex[1] = msyystring_buffer[2];
       color->red = msHexToInt(hex);      
-      hex[0] = msyytext[3];
-      hex[1] = msyytext[4];
+      hex[0] = msyystring_buffer[3];
+      hex[1] = msyystring_buffer[4];
       color->green = msHexToInt(hex);
-      hex[0] = msyytext[5];
-      hex[1] = msyytext[6];
+      hex[0] = msyystring_buffer[5];
+      hex[1] = msyystring_buffer[6];
       color->blue = msHexToInt(hex);
       color->alpha = 0;
 
       return(MS_SUCCESS);
     }
-    else if(msyytext[0] == '#' && strlen(msyytext) == 9) { /* got a hex color with alpha */
-      hex[0] = msyytext[1];
-      hex[1] = msyytext[2];
+    else if(msyystring_buffer[0] == '#' && strlen(msyystring_buffer) == 9) { /* got a hex color with alpha */
+      hex[0] = msyystring_buffer[1];
+      hex[1] = msyystring_buffer[2];
       color->red = msHexToInt(hex);      
-      hex[0] = msyytext[3];
-      hex[1] = msyytext[4];
+      hex[0] = msyystring_buffer[3];
+      hex[1] = msyystring_buffer[4];
       color->green = msHexToInt(hex);
-      hex[0] = msyytext[5];
-      hex[1] = msyytext[6];
+      hex[0] = msyystring_buffer[5];
+      hex[1] = msyystring_buffer[6];
       color->blue = msHexToInt(hex);
-      hex[0] = msyytext[7];
-      hex[1] = msyytext[8];
+      hex[0] = msyystring_buffer[7];
+      hex[1] = msyystring_buffer[8];
       color->alpha = msHexToInt(hex);
       return(MS_SUCCESS);
     }
@@ -703,7 +703,7 @@ int loadJoin(joinObj *join)
       if((join->type = getSymbol(2, MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadJoin()", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadJoin()", msyystring_buffer, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -794,13 +794,13 @@ static int loadFeaturePoints(lineObj *points)
 	buffer_size+=MS_FEATUREINCREMENT;
       }
 
-      points->point[points->numpoints].x = atof(msyytext);
+      points->point[points->numpoints].x = atof(msyystring_buffer);
       if(getDouble(&(points->point[points->numpoints].y)) == -1) return(MS_FAILURE);
 
       points->numpoints++;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadFeaturePoints()",  msyytext, msyylineno );
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadFeaturePoints()",  msyystring_buffer, msyylineno );
       return(MS_FAILURE);
     }
   }
@@ -879,7 +879,7 @@ static int loadFeature(layerObj	*player, int type)
 	break;
       }
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadfeature()", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadfeature()", msyystring_buffer, msyylineno);
       return(MS_FAILURE);
     }
   } /* next token */  
@@ -937,7 +937,7 @@ static int loadGrid( layerObj *pLayer )
       break; /* for string loads */
     case( LABELFORMAT ):
       if(getString(&((graticuleObj *)pLayer->layerinfo)->labelformat) == MS_FAILURE) {
-	if(strcasecmp(msyytext, "DD") == 0) /* DD triggers a symbol to be returned instead of a string so check for this special case */
+	if(strcasecmp(msyystring_buffer, "DD") == 0) /* DD triggers a symbol to be returned instead of a string so check for this special case */
 	  ((graticuleObj *)pLayer->layerinfo)->labelformat = msStrdup("DD");
         else
 	  return(-1);
@@ -968,7 +968,7 @@ static int loadGrid( layerObj *pLayer )
 	return(-1);
       break;				
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadGrid()", msyytext, msyylineno);          
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadGrid()", msyystring_buffer, msyylineno);          
       return(-1);      
     }
   }
@@ -1240,13 +1240,13 @@ static int loadProjection(projectionObj *p)
       break;
     case(MS_STRING):
     case(MS_AUTO):
-      p->args[i] = msStrdup(msyytext);
+      p->args[i] = msStrdup(msyystring_buffer);
       p->automatic = MS_TRUE;
       i++;
       break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadProjection()",
-                 msyytext, msyylineno);
+                 msyystring_buffer, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -1658,7 +1658,7 @@ static int loadLabel(labelObj *label)
       else if(symbol == MS_BINDING) {
         if (label->bindings[MS_LABEL_BINDING_ANGLE].item != NULL)
           msFree(label->bindings[MS_LABEL_BINDING_ANGLE].item);
-        label->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(msyystring_buffer);
         label->numbindings++;
       } else if ( symbol == MS_FOLLOW ) {
 #ifndef GD_HAS_FTEX_XSHOW
@@ -1703,11 +1703,11 @@ static int loadLabel(labelObj *label)
       if(symbol == MS_STRING) {
         if (label->font != NULL)
           msFree(label->font);
-        label->font = msStrdup(msyytext);
+        label->font = msStrdup(msyystring_buffer);
       } else {
         if (label->bindings[MS_LABEL_BINDING_FONT].item != NULL)
           msFree(label->bindings[MS_LABEL_BINDING_FONT].item);
-        label->bindings[MS_LABEL_BINDING_FONT].item = msStrdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_FONT].item = msStrdup(msyystring_buffer);
         label->numbindings++;
       }
 #else
@@ -1774,7 +1774,7 @@ static int loadLabel(labelObj *label)
       if(label->position == MS_BINDING) {
         if(label->bindings[MS_LABEL_BINDING_POSITION].item != NULL)
 	  msFree(label->bindings[MS_LABEL_BINDING_POSITION].item);
-	  label->bindings[MS_LABEL_BINDING_POSITION].item = strdup(msyytext);
+	  label->bindings[MS_LABEL_BINDING_POSITION].item = strdup(msyystring_buffer);
 	  label->numbindings++;
 	}
       break;
@@ -1789,7 +1789,7 @@ static int loadLabel(labelObj *label)
       } else {
         if (label->bindings[MS_LABEL_BINDING_PRIORITY].item != NULL)
           msFree(label->bindings[MS_LABEL_BINDING_PRIORITY].item);
-        label->bindings[MS_LABEL_BINDING_PRIORITY].item = msStrdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_PRIORITY].item = msStrdup(msyystring_buffer);
         label->numbindings++;
       }
       break;
@@ -1804,7 +1804,7 @@ static int loadLabel(labelObj *label)
       } else {
         if (label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item != NULL)
           msFree(label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item);
-        label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item = msStrdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item = msStrdup(msyystring_buffer);
         label->numbindings++;
       }
 
@@ -1815,7 +1815,7 @@ static int loadLabel(labelObj *label)
       } else {
 	if (label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item != NULL)
           msFree(label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item);
-        label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item = msStrdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item = msStrdup(msyystring_buffer);
         label->numbindings++;
       }
       break;
@@ -1833,7 +1833,7 @@ static int loadLabel(labelObj *label)
       if(symbol == MS_NUMBER) {
         label->size = (double) msyynumber;
       } else if(symbol == MS_BINDING) {
-        label->bindings[MS_LABEL_BINDING_SIZE].item = msStrdup(msyytext);
+        label->bindings[MS_LABEL_BINDING_SIZE].item = msStrdup(msyystring_buffer);
         label->numbindings++;
       } else
         label->size = symbol;
@@ -1858,8 +1858,8 @@ static int loadLabel(labelObj *label)
       if(getCharacter(&(label->wrap)) == -1) return(-1);
       break;
     default:
-      if(strlen(msyytext) > 0) {
-        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLabel()", msyytext, msyylineno);
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLabel()", msyystring_buffer, msyylineno);
         return(-1);
       } else {
         return(0); /* end of a string, not an error */
@@ -2027,10 +2027,11 @@ int loadExpression(expressionObj *exp)
 {
   /* TODO: should we fall freeExpression if exp->string != NULL? We do some checking to avoid a leak but is it enough... */
 
+  msyystring_icase = MS_TRUE;
   if((exp->type = getSymbol(5, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX)) == -1) return(-1);
   if (exp->string != NULL)
     msFree(exp->string);
-  exp->string = msStrdup(msyytext);
+  exp->string = msStrdup(msyystring_buffer);
 
   if(exp->type == MS_ISTRING) {
     exp->flags = exp->flags | MS_EXP_INSENSITIVE;
@@ -2073,8 +2074,9 @@ int loadExpressionString(expressionObj *exp, char *value)
 
   freeExpression(exp); /* we're totally replacing the old expression so free (which re-inits) to start over */
 
+  msyystring_icase = MS_TRUE;
   if((exp->type = getSymbol(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
-    exp->string = msStrdup(msyytext);
+    exp->string = msStrdup(msyystring_buffer);
 
     if(exp->type == MS_ISTRING) {
       exp->type = MS_STRING;
@@ -2086,8 +2088,8 @@ int loadExpressionString(expressionObj *exp, char *value)
   } else {
     msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
     exp->type = MS_STRING;
-    if((strlen(value) - strlen(msyytext)) == 2)
-      exp->string = msStrdup(msyytext); /* value was quoted */
+    if((strlen(value) - strlen(msyystring_buffer)) == 2)
+      exp->string = msStrdup(msyystring_buffer); /* value was quoted */
     else
       exp->string = msStrdup(value); /* use the whole value */
   }
@@ -2173,7 +2175,7 @@ int loadHashTable(hashTableObj *ptable)
     case(END):
       return(MS_SUCCESS);
     case(MS_STRING):
-      key = msStrdup(msyytext); /* the key is *always* a string */
+      key = msStrdup(msyystring_buffer); /* the key is *always* a string */
       if(getString(&data) == MS_FAILURE) return(MS_FAILURE);      
       msInsertHashTable(ptable, key, data);      
 
@@ -2181,7 +2183,7 @@ int loadHashTable(hashTableObj *ptable)
       free(data); data=NULL;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadHashTable()", msyytext, msyylineno );
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadHashTable()", msyystring_buffer, msyylineno );
       return(MS_FAILURE);
     }
   }
@@ -2382,7 +2384,7 @@ int loadStyle(styleObj *style) {
       else if(symbol==MS_BINDING){
         if (style->bindings[MS_STYLE_BINDING_ANGLE].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_ANGLE].item);
-        style->bindings[MS_STYLE_BINDING_ANGLE].item = msStrdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_ANGLE].item = msStrdup(msyystring_buffer);
         style->numbindings++;
       } else {
         style->autoangle=MS_TRUE;
@@ -2435,11 +2437,11 @@ int loadStyle(styleObj *style) {
         int s;
 	if((s = getSymbol(2, MS_STRING, MS_EXPRESSION)) == -1) return(MS_FAILURE);
         if(s == MS_STRING)
-          msStyleSetGeomTransform(style, msyytext);
+          msStyleSetGeomTransform(style, msyystring_buffer);
         else {
           /* handle expression case here for the moment */
           msFree(style->_geomtransform.string);
-	  style->_geomtransform.string = msStrdup(msyytext);
+	  style->_geomtransform.string = msStrdup(msyystring_buffer);
           style->_geomtransform.type = MS_GEOMTRANSFORM_EXPRESSION;
         }
       }
@@ -2476,7 +2478,7 @@ int loadStyle(styleObj *style) {
       else {
         if (style->bindings[MS_STYLE_BINDING_OPACITY].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_OPACITY].item);
-        style->bindings[MS_STYLE_BINDING_OPACITY].item = msStrdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_OPACITY].item = msStrdup(msyystring_buffer);
         style->numbindings++;
       }
       break;
@@ -2500,11 +2502,11 @@ int loadStyle(styleObj *style) {
             msSetError(MS_SYMERR, "Pattern too long.", "loadStyle()");
             return(-1);
           }
-          style->pattern[style->patternlength] = atof(msyytext);
+          style->pattern[style->patternlength] = atof(msyystring_buffer);
           style->patternlength++;
           break;
         default:
-          msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadStyle()", msyytext, msyylineno);
+          msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadStyle()", msyystring_buffer, msyylineno);
           return(-1);
         }
         if(done == MS_TRUE)
@@ -2530,7 +2532,7 @@ int loadStyle(styleObj *style) {
       else {
         if (style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item);
-        style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item = msStrdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item = msStrdup(msyystring_buffer);
         style->numbindings++;
       }
       break;
@@ -2541,7 +2543,7 @@ int loadStyle(styleObj *style) {
       else {
         if (style->bindings[MS_STYLE_BINDING_SIZE].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_SIZE].item);
- 	style->bindings[MS_STYLE_BINDING_SIZE].item = msStrdup(msyytext);
+ 	style->bindings[MS_STYLE_BINDING_SIZE].item = msStrdup(msyystring_buffer);
         style->numbindings++;
       }
       break;
@@ -2560,12 +2562,12 @@ int loadStyle(styleObj *style) {
       {
         if (style->symbolname != NULL)
           msFree(style->symbolname);
-        style->symbolname = msStrdup(msyytext);
+        style->symbolname = msStrdup(msyystring_buffer);
       }
       else {
         if (style->bindings[MS_STYLE_BINDING_SYMBOL].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_SYMBOL].item);
-        style->bindings[MS_STYLE_BINDING_SYMBOL].item = msStrdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_SYMBOL].item = msStrdup(msyystring_buffer);
         style->numbindings++;
       }
       break;
@@ -2576,13 +2578,13 @@ int loadStyle(styleObj *style) {
       else {
         if (style->bindings[MS_STYLE_BINDING_WIDTH].item != NULL)
           msFree(style->bindings[MS_STYLE_BINDING_WIDTH].item);
-        style->bindings[MS_STYLE_BINDING_WIDTH].item = msStrdup(msyytext);
+        style->bindings[MS_STYLE_BINDING_WIDTH].item = msStrdup(msyystring_buffer);
         style->numbindings++;
       }
       break;
     default:
-      if(strlen(msyytext) > 0) {
-        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadStyle()", msyytext, msyylineno);
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadStyle()", msyystring_buffer, msyylineno);
         return(MS_FAILURE);
       } else {
         return(MS_SUCCESS); /* end of a string, not an error */
@@ -3063,7 +3065,7 @@ int loadClass(classObj *class, layerObj *layer)
       {
         if (class->styles[0]->symbolname != NULL)
           msFree(class->styles[0]->symbolname);
-	class->styles[0]->symbolname = msStrdup(msyytext);
+	class->styles[0]->symbolname = msStrdup(msyystring_buffer);
         class->numstyles = 1;
       }
       break;
@@ -3105,7 +3107,7 @@ int loadClass(classObj *class, layerObj *layer)
       else  {
         if (class->styles[1]->symbolname != NULL)
           msFree(class->styles[1]->symbolname);
-	class->styles[1]->symbolname = msStrdup(msyytext);
+	class->styles[1]->symbolname = msStrdup(msyystring_buffer);
       }
       class->numstyles = 2;
       break;
@@ -3114,8 +3116,8 @@ int loadClass(classObj *class, layerObj *layer)
       if(loadHashTable(&(class->validation)) != MS_SUCCESS) return(-1);
       break;
     default:
-      if(strlen(msyytext) > 0) {
-        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadClass()", msyytext, msyylineno);
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadClass()", msyystring_buffer, msyylineno);
         return(-1);
       } else {
         return(0); /* end of a string, not an error */
@@ -3807,8 +3809,8 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(loadHashTable(&(layer->validation)) != MS_SUCCESS) return(-1);
       break;
     default:
-      if(strlen(msyytext) > 0) {
-        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLayer()", msyytext, msyylineno);      
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLayer()", msyystring_buffer, msyylineno);      
         return(-1);
       } else {
         return(0); /* end of a string, not an error */
@@ -4032,7 +4034,7 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       {
         if (ref->markername != NULL)
           msFree(ref->markername);
-	ref->markername = msStrdup(msyytext);
+	ref->markername = msStrdup(msyystring_buffer);
       }
       break;
     case(MARKERSIZE):
@@ -4047,8 +4049,8 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
     case(REFERENCE):
       break; /* for string loads */
     default:
-      if(strlen(msyytext) > 0) {
-        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadReferenceMap()", msyytext, msyylineno);
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadReferenceMap()", msyystring_buffer, msyylineno);
         return(-1);
       } else {
         return(0); /* end of a string, not an error */
@@ -4131,7 +4133,7 @@ static int loadOutputFormat(mapObj *map)
             msSetError(MS_MISCERR, 
                        "OUTPUTFORMAT clause lacks DRIVER keyword near (%s):(%d)",
                        "loadOutputFormat()",
-                       msyytext, msyylineno );
+                       msyystring_buffer, msyylineno );
             return -1;
         }
         format = msCreateDefaultOutputFormat( map, driver );
@@ -4207,7 +4209,7 @@ static int loadOutputFormat(mapObj *map)
         int s;
         if((s = getSymbol(2, MS_STRING, TEMPLATE)) == -1) return -1; /* allow the template to be quoted or not in the mapfile */
         if(s == MS_STRING)
-          driver = msStrdup(msyytext);
+          driver = msStrdup(msyystring_buffer);
         else
           driver = msStrdup("TEMPLATE");
       }
@@ -4247,7 +4249,7 @@ static int loadOutputFormat(mapObj *map)
       {
           msSetError(MS_IDENTERR, 
                      "Parsing error near (%s):(line %d), expected PC256, RGB, RGBA, FEATURE, BYTE, INT16, or FLOAT32 for IMAGEMODE.", "loadOutputFormat()", 
-                     msyytext, msyylineno);      
+                     msyystring_buffer, msyylineno);      
           return -1;
       }
       free(value); value=NULL;
@@ -4257,7 +4259,7 @@ static int loadOutputFormat(mapObj *map)
       break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadOutputFormat()", 
-                 msyytext, msyylineno);      
+                 msyystring_buffer, msyylineno);      
       return(-1);
     }
   } /* next token */
@@ -4383,8 +4385,8 @@ int loadLegend(legendObj *legend, mapObj *map)
       if(getString(&legend->template) == MS_FAILURE) return(-1);
       break;
     default:
-      if(strlen(msyytext) > 0) {
-        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLegend()", msyytext, msyylineno);
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLegend()", msyystring_buffer, msyylineno);
         return(-1);
       } else {
         return(0); /* end of a string, not an error */
@@ -4526,8 +4528,8 @@ int loadScalebar(scalebarObj *scalebar)
       if((scalebar->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES)) == -1) return(-1);
       break;
     default:
-      if(strlen(msyytext) > 0) {
-        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadScalebar()", msyytext, msyylineno);
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadScalebar()", msyystring_buffer, msyylineno);
         return(-1);
       } else {
         return(0); /* end of a string, not an error */
@@ -4622,8 +4624,8 @@ int loadQueryMap(queryMapObj *querymap)
       if((querymap->style = getSymbol(3, MS_NORMAL,MS_HILITE,MS_SELECTED)) == -1) return(-1);
       break;
     default:
-      if(strlen(msyytext) > 0) {
-        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadQueryMap()", msyytext, msyylineno);
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadQueryMap()", msyystring_buffer, msyylineno);
         return(-1);
       } else {
         return(0); /* end of a string, not an error */
@@ -4846,8 +4848,8 @@ int loadWeb(webObj *web, mapObj *map)
       if(loadHashTable(&(web->validation)) != MS_SUCCESS) return(-1);
       break;
     default:
-      if(strlen(msyytext) > 0) {
-        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadWeb()", msyytext, msyylineno);
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadWeb()", msyystring_buffer, msyylineno);
         return(-1);
       } else {
         return(0); /* end of a string, not an error */
@@ -5415,7 +5417,7 @@ static int loadMapInternal(mapObj *map)
       if(loadWeb(&(map->web), map) == -1) return MS_FAILURE;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadMap()", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadMap()", msyystring_buffer, msyylineno);
       return MS_FAILURE;
     }
   } /* next token */
@@ -5692,7 +5694,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
         return MS_FAILURE;
       }
       if(s == MS_STRING)
-        i = msGetLayerIndex(map, msyytext);
+        i = msGetLayerIndex(map, msyystring_buffer);
       else
         i = (int) msyynumber;
 
@@ -5708,7 +5710,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
       if(msyylex() == CLASS) {
         if((s = getSymbol(2, MS_NUMBER, MS_STRING)) == -1) return MS_FAILURE;
         if(s == MS_STRING)
-          j = msGetClassIndex(GET_LAYER(map, i), msyytext);
+          j = msGetClassIndex(GET_LAYER(map, i), msyystring_buffer);
         else
           j = (int) msyynumber;
 
@@ -5943,22 +5945,22 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
         return(tokens);
         break;
       case(MS_STRING):
-        buffer_size = strlen(msyytext)+2+1;
+        buffer_size = strlen(msyystring_buffer)+2+1;
         tokens[numtokens] = (char*) msSmallMalloc(buffer_size);
-        snprintf(tokens[numtokens], buffer_size, "\"%s\"", msyytext);
+        snprintf(tokens[numtokens], buffer_size, "\"%s\"", msyystring_buffer);
         break;
       case(MS_EXPRESSION):
-        buffer_size = strlen(msyytext)+2+1;
+        buffer_size = strlen(msyystring_buffer)+2+1;
         tokens[numtokens] = (char*) msSmallMalloc(buffer_size);
-        snprintf(tokens[numtokens], buffer_size, "(%s)", msyytext);
+        snprintf(tokens[numtokens], buffer_size, "(%s)", msyystring_buffer);
         break;
       case(MS_REGEX):
-        buffer_size = strlen(msyytext)+2+1;
+        buffer_size = strlen(msyystring_buffer)+2+1;
         tokens[numtokens] = (char*) msSmallMalloc(buffer_size);
-        snprintf(tokens[numtokens], buffer_size, "/%s/", msyytext);
+        snprintf(tokens[numtokens], buffer_size, "/%s/", msyystring_buffer);
         break;
       default:
-        tokens[numtokens] = msStrdup(msyytext);
+        tokens[numtokens] = msStrdup(msyystring_buffer);
         break;
     }
 

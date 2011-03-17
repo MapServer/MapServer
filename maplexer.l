@@ -41,8 +41,23 @@ double msyynumber;
 int msyystate=MS_TOKENIZE_DEFAULT;
 char *msyystring=NULL;
 char *msyybasepath=NULL;
+char *msyystring_buffer_ptr;
+int  msyystring_buffer_size = 256;
+int  msyystring_size;
+char msyystring_begin;
+char *msyystring_buffer = NULL;
+int  msyystring_icase = MS_FALSE;
+int  msyystring_state;
 
 int msyyreturncomments = 0;
+
+#define MS_LEXER_STRING_REALLOC(string, msyystring_size, max_size, string_ptr)   \
+   if (msyystring_size == max_size) {         \
+       max_size *= 2;                     \
+       string = (char *) msSmallRealloc(string, sizeof(char *) * max_size);  \
+       string_ptr = string;    \
+       string_ptr += (max_size/2); \
+   }
 
 #define MAX_INCLUDE_DEPTH 5
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
@@ -50,18 +65,17 @@ int include_lineno[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
 char path[MS_MAXPATHLEN];
 
-char *msyytext_esc=NULL;
 %}
 
 %s URL_VARIABLE
 %s URL_STRING
 %s EXPRESSION_STRING
 %s INCLUDE
-%s MSSTR
+%s MSSTRING
 
 %%
-       int msyytext_esc_size=1024; /* don't need to be globals */
-       char *msyytext_esc_ptr=NULL;
+       if (msyystring_buffer == NULL)
+           msyystring_buffer = (char*) msSmallMalloc(sizeof(char) * msyystring_buffer_size);
 
        switch(msyystate) {
        case(MS_TOKENIZE_DEFAULT):
@@ -429,11 +443,13 @@ char *msyytext_esc=NULL;
 <URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=_ ]*\]   {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
+                                                 strcpy(msyystring_buffer,msyytext);
                                                  return(MS_STRING);
                                                }
 <URL_VARIABLE>\[[0-9]*\]                       {
                                                  msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';                                                 
+                                                 msyytext[strlen(msyytext)-1] = '\0';
+                                                 strcpy(msyystring_buffer,msyytext);                                                 
                                                  msyynumber = atof(msyytext);
                                                  return(MS_NUMBER);
                                                }
@@ -441,6 +457,7 @@ char *msyytext_esc=NULL;
 <INITIAL>\[[^\]]*\]                            {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
+                                                 strcpy(msyystring_buffer,msyytext);
                                                  return(MS_BINDING);
                                                }
 
@@ -452,21 +469,25 @@ char *msyytext_esc=NULL;
   /* attribute binding - numeric (no quotes) */
   msyytext++;
   msyytext[strlen(msyytext)-1] = '\0';
+  strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_DOUBLE);
 }
 <EXPRESSION_STRING>\"\[[^\"]*\]\"|\'\[[^\']*\]\' {
   /* attribute binding - string (single or double quotes) */
   msyytext+=2;
   msyytext[strlen(msyytext)-2] = '\0';
+  strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_STRING);
 }
 
 <INITIAL,URL_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
+  strcpy(msyystring_buffer,msyytext);
   msyynumber = atof(msyytext);
   return(MS_NUMBER); 
 }
 
 <EXPRESSION_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
+  strcpy(msyystring_buffer,msyytext);
   msyynumber = atof(msyytext);
   return(MS_TOKEN_LITERAL_NUMBER);
 }
@@ -474,38 +495,83 @@ char *msyytext_esc=NULL;
 <EXPRESSION_STRING>\`[^\`]*\` {
   msyytext++;
   msyytext[strlen(msyytext)-1] = '\0';
+  strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_LITERAL_TIME);
 }
 
 <INITIAL,URL_STRING>\/[^\/]*\/i                {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
+                                                 strcpy(msyystring_buffer, msyytext);
                                                  return(MS_IREGEX);
                                                }
 
 <INITIAL,URL_STRING>\/[^\/]*\/                 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
+                                                 strcpy(msyystring_buffer, msyytext);
                                                  return(MS_REGEX);
                                                }
 
 <INITIAL,URL_STRING>\(.*\)                     {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
+                                                 strcpy(msyystring_buffer, msyytext);
                                                  return(MS_EXPRESSION);
                                                }
 
-<INITIAL>\"[^\"]*\"i|\'[^\']*\'i               {                                                 
-                                                 msyytext++;
-                                                 msyytext[strlen(msyytext)-2] = '\0';
-                                                 return(MS_ISTRING);
-                                               }
+<INITIAL,URL_STRING>\'|\"                     {
+                                                 msyystring_state = MS_STRING;
+                                                 msyystring_begin = msyytext[0]; 
+                                                 msyystring_size = 0;
+                                                 msyystring_buffer_ptr = msyystring_buffer;
+                                                 BEGIN(MSSTRING);
+                                              }
 
-<INITIAL,URL_STRING>\"[^\"]*\"|\'[^\']*\'      {
-                                                 msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
-                                                 return(MS_STRING);
-                                               }
+<MSSTRING>\'|\"|\"i|\'i                               {
+                                                MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, msyystring_buffer_size, msyystring_buffer_ptr);
+                                                if (msyystring_begin == msyytext[0]) {
+                                                   if (msyystring_state == MS_TOKEN_LITERAL_STRING)
+                                                       BEGIN(EXPRESSION_STRING);
+                                                   else
+                                                       BEGIN(INITIAL);
+
+                                                   *msyystring_buffer_ptr = '\0';
+
+                                                   if (msyystring_state == MS_STRING) {
+                                                      if (msyystring_icase && strlen(msyytext)==2) {
+                                                         msyystring_icase = MS_FALSE; // reset
+                                                         return MS_ISTRING;
+                                                      } else
+                                                        return MS_STRING;
+                                                   }
+                                                   return msyystring_state;
+
+                                                }
+                                                else {
+                                                  ++msyystring_size;
+                                                  *msyystring_buffer_ptr++ = *msyytext;
+                                                  if (strlen(msyytext)==2) {
+                                                     ++msyystring_size;
+                                                     *msyystring_buffer_ptr++ = msyytext[1];
+                                                  }
+                                                }
+                                              }
+
+<MSSTRING>\\\'|\\\"                          { 
+                                                MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, msyystring_buffer_size, msyystring_buffer_ptr);
+                                                ++msyystring_size;
+                                                *msyystring_buffer_ptr++ = msyytext[1]; 
+                                             }
+
+<MSSTRING>[^\\\'\\\"]+                       {
+                                                 char *yptr = msyytext;
+                                                 while ( *yptr ) { 
+                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, msyystring_buffer_size, msyystring_buffer_ptr);
+                                                   ++msyystring_size;
+                                                   *msyystring_buffer_ptr++ = *yptr++;
+                                                 }
+                                             }
 
 <INCLUDE>\"[^\"]*\"|\'[^\']*\'                 {
                                                  msyytext++;
@@ -532,52 +598,15 @@ char *msyytext_esc=NULL;
                                                  BEGIN(INITIAL);
                                                }
 
-<EXPRESSION_STRING>\"|\' {
-  /* Beginning of a new String, skip the quote and enter the MSSTR context */
-  int idx=0;
-  msyytext_esc = (char*) malloc(sizeof(char) * msyytext_esc_size);
-  msyytext++;
-  for(idx=0; idx<msyytext_esc_size; msyytext_esc[idx++]='\0');
-  msyytext_esc_ptr = msyytext_esc;
-  BEGIN(MSSTR);
-}
-<MSSTR>\\(.|\n) {
-  /* Escape code: skip the slash and use the escaped char */
-  if(strlen(msyytext_esc) < (msyytext_esc_size-2))
-  *msyytext_esc_ptr++ = msyytext[1];
-}
-<MSSTR>\"|\' {
-  /*
-    this is the closing quote - we're done
-    Umberto: it should be possible to use yy_pop_stack to allow for this string
-    parsing routine to be used in more places, but I can't make it work
-  */
-  BEGIN(EXPRESSION_STRING);
-  *msyytext_esc_ptr = '\0';  
-  /* msyylval.strval = strdup(msyytext_esc); */
-  /* free(msyytext_esc); */ 
-  msyytext++;
-  return(MS_TOKEN_LITERAL_STRING);
-}
-<MSSTR>[^\\\"\\\']+ {
-  char *yptr = msyytext;
-  int i=0;
-  while ( *yptr ) {
-    if(i == msyytext_esc_size) {
-      msyytext_esc_size *= 2;
-      msyytext_esc = (char *) realloc(msyytext_esc,sizeof(char *) * msyytext_esc_size);
-      /* update the pointer */
-      msyytext_esc_ptr = msyytext_esc;
-      msyytext_esc_ptr += (msyytext_esc_size/2);
-    }                                                
-    *msyytext_esc_ptr = *yptr;
-    msyytext_esc_ptr++;
-    yptr++;
-    ++i;
-  }
-}
+<EXPRESSION_STRING>\'|\"                      {
+                                                 msyystring_state = MS_TOKEN_LITERAL_STRING;
+                                                 msyystring_begin = msyytext[0]; 
+                                                 msyystring_size = 0;
+                                                 msyystring_buffer_ptr = msyystring_buffer;
+                                                 BEGIN(MSSTRING);
+                                              }
 
-<INITIAL,URL_STRING>[a-z/\.][a-z0-9/\._\-\=]*   { return(MS_STRING); }
+<INITIAL,URL_STRING>[a-z/\.][a-z0-9/\._\-\=]*   { strcpy(msyystring_buffer, msyytext); return(MS_STRING); }
 
 <INITIAL>\n                                     { msyylineno++; }
 
