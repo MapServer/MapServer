@@ -129,7 +129,7 @@ PHP_METHOD(colorObj, setRGB)
     php_color = (php_color_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     
 
-    MS_INIT_COLOR(*(php_color->color), red, green, blue);
+    MS_INIT_COLOR(*(php_color->color), red, green, blue,255);
 
     RETURN_LONG(MS_SUCCESS);
 }

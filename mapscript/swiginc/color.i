@@ -50,7 +50,7 @@
         if (!color)
             return(NULL);
     
-        MS_INIT_COLOR(*color, red, green, blue);
+        MS_INIT_COLOR(*color, red, green, blue, 255);
 
         return(color);    	
     }
@@ -68,7 +68,7 @@
             return MS_FAILURE;
         }
     
-        MS_INIT_COLOR(*self, red, green, blue);
+        MS_INIT_COLOR(*self, red, green, blue, 255);
         return MS_SUCCESS;
     }
 
@@ -84,7 +84,7 @@
                 return MS_FAILURE;
             }
 
-            MS_INIT_COLOR(*self, red, green, blue);
+            MS_INIT_COLOR(*self, red, green, blue, 255);
             return MS_SUCCESS;
         }
         else {
