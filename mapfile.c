@@ -60,6 +60,7 @@ extern char *msyystring;
 extern char *msyybasepath;
 extern int msyyreturncomments;
 extern char *msyystring_buffer;
+extern char *msyytext;
 extern char msyystring_icase;
 
 extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
@@ -193,7 +194,7 @@ int getSymbol(int n, ...) {
 */
 static char *getToken(void) {
   msyylex();  
-  return msStrdup(msyystring_buffer);
+  return msStrdup(msyytext);
 }
 
 /*
