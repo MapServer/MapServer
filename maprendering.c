@@ -191,6 +191,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
          imageObj *tile3img = msImageCreate(width*3,height*3,img->format,NULL,NULL,
                img->resolution, img->resolution, NULL);
          int i,j;
+         rasterBufferObj tmpraster;
          for(i=1;i<=3;i++) {
             p_x = (i+0.5)*width;  
             for(j=1;j<=3;j++) {
@@ -216,7 +217,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
                }
             }
          }
-         rasterBufferObj tmpraster;
+        
          MS_IMAGE_RENDERER(tile3img)->getRasterBufferHandle(tile3img,&tmpraster);
          renderer->mergeRasterBuffer(tileimg, 
                &tmpraster,

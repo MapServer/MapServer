@@ -184,8 +184,8 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 #ifdef USE_GD_PNG
     if( strcasecmp(driver,"GD/PNG") == 0 )
     {
-        format = msAllocOutputFormat( map, "png", driver );
-        format->mimetype = msStrdup("image/png");
+        format = msAllocOutputFormat( map, "png8", driver );
+        format->mimetype = msStrdup("image/png; mode=8bit");
         format->imagemode = MS_IMAGEMODE_PC256;
         format->extension = msStrdup("png");
         format->renderer = MS_RENDER_WITH_GD;
@@ -194,13 +194,20 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 
     if( strcasecmp(driver,"AGG/PNG") == 0 )
     {
+        format = msAllocOutputFormat( map, "png", driver );
+        format->mimetype = msStrdup("image/png");
+        format->imagemode = MS_IMAGEMODE_RGB;
+        format->extension = msStrdup("png");
+        format->renderer = MS_RENDER_WITH_AGG;
+    }
+    if( strcasecmp(driver,"AGG/PNG") == 0 )
+    {
         format = msAllocOutputFormat( map, "png24", driver );
         format->mimetype = msStrdup("image/png; mode=24bit");
         format->imagemode = MS_IMAGEMODE_RGB;
         format->extension = msStrdup("png");
         format->renderer = MS_RENDER_WITH_AGG;
     }
-    
     if( strcasecmp(driver,"AGG/JPEG") == 0 )
     {
         format = msAllocOutputFormat( map, "jpeg", driver );
@@ -363,13 +370,14 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 void msApplyDefaultOutputFormats( mapObj *map )
 {
     char *saved_imagetype;
+    struct defaultOutputFormatEntry *defEntry;
 
     if( map->imagetype == NULL )
         saved_imagetype = NULL;
     else
         saved_imagetype = msStrdup(map->imagetype);
 
-    struct defaultOutputFormatEntry *defEntry = defaultoutputformats;
+    defEntry = defaultoutputformats;
     while(defEntry->name) {
        if( msSelectOutputFormat( map, defEntry->name ) == NULL )
           msCreateDefaultOutputFormat( map, defEntry->driver );
