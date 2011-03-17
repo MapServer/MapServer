@@ -138,6 +138,9 @@ char path[MS_MAXPATHLEN];
          break;
        }
 
+       /* Used to get the proper error messages */
+       strcpy(msyystring_buffer, msyytext);
+
 <INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
 
 <INITIAL>#.*                                   { if (msyyreturncomments) return(MS_COMMENT); }
@@ -378,7 +381,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>csv                                   { return(MS_DB_CSV); }
 <INITIAL>postgresql                            { return(MS_DB_POSTGRES); }
 <INITIAL,URL_STRING>default                    { return(MS_DEFAULT); }
-<INITIAL,URL_STRING>dd                         { return(MS_DD); }
+<INITIAL,URL_STRING>dd                         { strcpy(msyystring_buffer, msyytext); return(MS_DD); }
 <INITIAL>ellipse                               { return(MS_SYMBOL_ELLIPSE); }
 <INITIAL,URL_STRING>embed                      { return(MS_EMBED); }
 <INITIAL,URL_STRING>false                      { return(MS_FALSE); }
@@ -528,7 +531,7 @@ char path[MS_MAXPATHLEN];
                                                  BEGIN(MSSTRING);
                                               }
 
-<MSSTRING>\'|\"|\"i|\'i                               {
+<MSSTRING>\'|\"|\"i|\'i                       {
                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, msyystring_buffer_size, msyystring_buffer_ptr);
                                                 if (msyystring_begin == msyytext[0]) {
                                                    if (msyystring_state == MS_TOKEN_LITERAL_STRING)
@@ -625,7 +628,7 @@ char path[MS_MAXPATHLEN];
   return(0); 
 }
 
-<INITIAL,URL_VARIABLE,URL_STRING>.              { return(0); }
+<INITIAL,URL_VARIABLE,URL_STRING>.              { strcpy(msyystring_buffer, msyytext); return(0); }
 <EXPRESSION_STRING>.                            { return(msyytext[0]); }
 %%
 
