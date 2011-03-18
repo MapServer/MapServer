@@ -36,7 +36,7 @@
     {
         outputFormatObj *format;
 
-        format = msCreateDefaultOutputFormat(NULL, driver);
+        format = msCreateDefaultOutputFormat(NULL, driver, name);
 
         /* in the case of unsupported formats, msCreateDefaultOutputFormat
            should return NULL */
@@ -53,11 +53,6 @@
         format->refcount++;
 	format->inmapfile = MS_TRUE;
 
-        if (name != NULL)
-        {
-            free(format->name);
-            format->name = strdup(name);
-        }
         return format;
     }
 

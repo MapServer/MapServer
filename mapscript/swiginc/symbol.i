@@ -119,13 +119,9 @@
         }
         else 
         {
-            format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
+            format = msCreateDefaultOutputFormat(NULL, "GD/GIF", "gdgif");
             if (format == NULL)
-                format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
-            if (format == NULL)
-                format = msCreateDefaultOutputFormat(NULL, "GD/JPEG");
-            if (format == NULL)
-                format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
+                format = msCreateDefaultOutputFormat(NULL, "GD/PNG", "gdpng");
 
             if (format)
                 msInitializeRendererVTable(format);

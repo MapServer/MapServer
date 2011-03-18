@@ -47,13 +47,10 @@
             format = input_format;
         }
         else {
-            format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
+            format = msCreateDefaultOutputFormat(NULL, "GD/GIF", "gdgif");
             if (format == NULL)
-                format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
+                format = msCreateDefaultOutputFormat(NULL, "GD/PNG", "gdpng");
             if (format == NULL)
-                format = msCreateDefaultOutputFormat(NULL, "GD/JPEG");
-            if (format == NULL)
-                format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
 
             if (format)
                 msInitializeRendererVTable(format);

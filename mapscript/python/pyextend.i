@@ -185,20 +185,17 @@ def fromstring(data, mappath=None):
         if ((PyInt_Check(arg1) && PyInt_Check(arg2)) || PyString_Check(arg1))
         {
             if (input_format == Py_None) {
-                format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
+                format = msCreateDefaultOutputFormat(NULL, "GD/GIF", "gdgif");
                 if (format == NULL)
-                    format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
-                if (format == NULL)
-                    format = msCreateDefaultOutputFormat(NULL, "GD/JPEG");
-                if (format == NULL)
-                    format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
+                    format = msCreateDefaultOutputFormat(NULL, "GD/PNG", "gdpng");
 
-            if (format)
-                msInitializeRendererVTable(format);
+                if (format)
+                  msInitializeRendererVTable(format);
             }
             else if (PyString_Check(input_format)) {
                 format = msCreateDefaultOutputFormat(NULL, 
-                                                     PyString_AsString(input_format));
+                                                     PyString_AsString(input_format),
+                                                     NULL);
             }
             else {
                 if ((SWIG_ConvertPtr(input_format, (void **) &format,
