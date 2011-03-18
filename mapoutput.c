@@ -184,22 +184,14 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 #ifdef USE_GD_PNG
     if( strcasecmp(driver,"GD/PNG") == 0 )
     {
-        format = msAllocOutputFormat( map, "png8", driver );
-        format->mimetype = msStrdup("image/png; mode=8bit");
+        format = msAllocOutputFormat( map, "png", driver );
+        format->mimetype = msStrdup("image/png");
         format->imagemode = MS_IMAGEMODE_PC256;
         format->extension = msStrdup("png");
         format->renderer = MS_RENDER_WITH_GD;
     }
 #endif /* USE_GD_PNG */
 
-    if( strcasecmp(driver,"AGG/PNG") == 0 )
-    {
-        format = msAllocOutputFormat( map, "png", driver );
-        format->mimetype = msStrdup("image/png");
-        format->imagemode = MS_IMAGEMODE_RGB;
-        format->extension = msStrdup("png");
-        format->renderer = MS_RENDER_WITH_AGG;
-    }
     if( strcasecmp(driver,"AGG/PNG") == 0 )
     {
         format = msAllocOutputFormat( map, "png24", driver );
