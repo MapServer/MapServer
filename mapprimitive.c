@@ -937,20 +937,7 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize, imageOb
 	   /* unknown, do nothing */
 		return;
 	}
-#ifdef USE_MING_FLASH
-    if (image != NULL && MS_RENDERER_SWF(image->format) )
-    {
-        if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
-                       "FALSE") == 0)
-          msTransformShapeToPixelRound(shape, extent, cellsize);
-        else
-          msTransformShapeSWF(shape, extent, cellsize);
-          
-
-        return;
-    }
-#endif
-    msTransformShapeToPixelRound(shape, extent, cellsize);
+   msTransformShapeToPixelRound(shape, extent, cellsize);
 }
 
 void msTransformShapeToPixelSnapToGrid(shapeObj *shape, rectObj extent, double cellsize, double grid_resolution)

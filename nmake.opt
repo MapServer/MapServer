@@ -271,19 +271,6 @@ FT_DIR=$(MS_BASE)\..\freetype-2.3.9
 RGBA_PNG_ENABLED=-DUSE_RGBA_PNG
 !ENDIF
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# MING (Macromedia Flash SWF output support)
-# ----------------------------------------------------------------------
-# The MING library can be used to allow MapServer to output maps in
-# flash format.  Ming 0.2a is the only version known to compile and work
-# on Win32.  The 0.3 version does not work at this time.  See
-# http://ming.sourceforge.net for the support library and more
-# information
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#MING=-DUSE_MING_FLASH
-#MING_DIR=$(MS_BASE)\..\ming-0.2a
-
-
 # If you wish to use AGG
 # The AGG (Ant-Grain Geometry) libraray http://www.antigrain.com/
 #is used in Mapserver to putput high class rendering
@@ -757,13 +744,6 @@ POSTGIS_INC=-I$(POSTGIS_DIR)/src/interfaces/libpq -I$(POSTGIS_DIR)/src/include
 POSTGIS_LIB=$(POSTGIS_DIR)/src/interfaces/libpq/release/libpqdll.lib
 !ENDIF
 
-# Setup FLASH includes and libs
-!IFDEF MING
-MING_INC=-I$(MING_DIR)/src -I$(MING_DIR)
-MING_LIB= $(MING_DIR)/src/libming.lib
-#MING_VERSION=-DMING_VERSION_03
-!ENDIF
-
 # Setup OGL
 !IFDEF OGL
 OGL_INC= -I$(FTGL_DIR)\src
@@ -873,7 +853,7 @@ IMGGEN_LIB=-L$(IMGGEN_DIR) -limgGEN
 !IFNDEF EXTERNAL_LIBS
 EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
-     $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
+     $(CURL_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
      $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
      $(LIBXML_LIB) $(EXPAT_LIB) $(OGL_LIB) $(CAIRO_LIB) $(FRIBIDI_LIB) $(GIFLIB_LIB)
@@ -885,7 +865,7 @@ LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
 !IFNDEF INCLUDES
 INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
-         $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
+         $(CURL_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
          $(AGG_INC) $(EXPAT_INC) $(OGL_INC) $(CAIRO_INC) $(PNG_INC) $(FRIBIDI_INC) $(GIFLIB_INC)
@@ -894,11 +874,11 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(THREADS) \
-          $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) \
+          $(WMSCLIENT) $(IGNORE_MISSING_DATA) \
           $(NEED_NONBLOCKING_STDERR) $(ENABLE_STDERR_DEBUG) \
           $(USE_POINT_Z_M) $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
-          $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) \
+          $(USE_GD_ANTIALIAS) $(ORACLE) \
           $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) \
           $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(AGG_SVG_SYMBOLS) $(KML) $(GIF) $(CURL)
 

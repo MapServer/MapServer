@@ -767,20 +767,6 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         }
         else if( MS_DRIVER_IMAGEMAP(img->format) )
             nReturnVal = msSaveImageIM(img, filename, img->format);
-
-#ifdef USE_MING_FLASH
-        else if(MS_DRIVER_SWF(img->format) )
-        {
-            if (map != NULL && filename != NULL )
-              nReturnVal = msSaveImageSWF(img, 
-                                          msBuildPath(szPath, map->mappath, 
-                                                      filename));
-            else
-              nReturnVal = msSaveImageSWF(img, filename);
-        }
-
-#endif
-
         else
             msSetError(MS_MISCERR, "Unknown image type", 
                        "msSaveImage()"); 
@@ -855,10 +841,6 @@ void msFreeImage(imageObj *image)
             msFreeImageIM(image);
         else if( MS_RENDERER_RAWDATA(image->format) )
             msFree(image->img.raw_16bit);
-#ifdef USE_MING_FLASH
-        else if( MS_RENDERER_SWF(image->format) )
-            msFreeImageSWF(image);
-#endif
         else
             msSetError(MS_MISCERR, "Unknown image type", 
                        "msFreeImage()"); 
@@ -1567,14 +1549,6 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
                                 imagepath, imageurl, resolution, defresolution);
         if( image != NULL ) msImageInitIM( image );
     }
-#ifdef USE_MING_FLASH
-    else if( MS_RENDERER_SWF(format))
-    {
-        image = msImageCreateSWF(width, height, format,
-                                 imagepath, imageurl, resolution, defresolution);
-    }
-#endif
-    
     else 
     {
         msSetError(MS_MISCERR, 

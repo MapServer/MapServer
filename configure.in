@@ -1622,35 +1622,35 @@ dnl ---------------------------------------------------------------------------
 dnl Try to find out if MING FLASH support requested.
 dnl ---------------------------------------------------------------------------
 
-AC_MSG_CHECKING(if MING/Flash support requested)
-AC_ARG_WITH(ming,
-[  --with-ming[[=DIR]]       Include MING/Flash Support (DIR=path to Ming
-                          directory)],,)
-
-if test "$with_ming" = "no" -o "$with_ming" = ""; then
-  AC_MSG_RESULT([no])
-  MING_ENABLED=
-  MING_LIB=
-  MING_INC=
-elif test "$with_ming" = "yes"; then
-  AC_MSG_RESULT([yes])
-  MING_ENABLED=-DUSE_MING_FLASH
-  MING_LIB="-lming"
-  MING_INC=
-else
-  AC_MSG_RESULT([yes, user supplied MING directory])
-  MING_ENABLED=-DUSE_MING_FLASH
-  MING_LIB="-L$with_ming/lib -lming"
-  MING_INC="-I$with_ming/include"
-fi
-
-AC_SUBST(MING_ENABLED,$MING_ENABLED)
-AC_SUBST(MING_INC,$MING_INC)
-AC_SUBST(MING_LIB,$MING_LIB)
-
-ALL_ENABLED="$MING_ENABLED $ALL_ENABLED"
-ALL_INC="$MING_INC $ALL_INC"
-ALL_LIB="$MING_LIB $ALL_LIB"
+dnl AC_MSG_CHECKING(if MING/Flash support requested)
+dnl AC_ARG_WITH(ming,
+dnl [  --with-ming[[=DIR]]       Include MING/Flash Support (DIR=path to Ming
+dnl                           directory)],,)
+dnl 
+dnl if test "$with_ming" = "no" -o "$with_ming" = ""; then
+dnl   AC_MSG_RESULT([no])
+dnl   MING_ENABLED=
+dnl   MING_LIB=
+dnl   MING_INC=
+dnl elif test "$with_ming" = "yes"; then
+dnl   AC_MSG_RESULT([yes])
+dnl   MING_ENABLED=-DUSE_MING_FLASH
+dnl   MING_LIB="-lming"
+dnl   MING_INC=
+dnl else
+dnl   AC_MSG_RESULT([yes, user supplied MING directory])
+dnl   MING_ENABLED=-DUSE_MING_FLASH
+dnl   MING_LIB="-L$with_ming/lib -lming"
+dnl   MING_INC="-I$with_ming/include"
+dnl fi
+dnl 
+dnl AC_SUBST(MING_ENABLED,$MING_ENABLED)
+dnl AC_SUBST(MING_INC,$MING_INC)
+dnl AC_SUBST(MING_LIB,$MING_LIB)
+dnl 
+dnl ALL_ENABLED="$MING_ENABLED $ALL_ENABLED"
+dnl ALL_INC="$MING_INC $ALL_INC"
+dnl ALL_LIB="$MING_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl WMS Server Compatibility - Enabled by default if PROJ.4 is there.
@@ -2811,7 +2811,6 @@ AC_MSG_RESULT([  iconv support:             ${ICONV_ENABLED}])
 AC_MSG_RESULT([  AGG support:               ${AGG_ENABLED}])
 AC_MSG_RESULT([  SVG Symbol support:        ${AGG_SVG_SYMBOLS_ENABLED}])
 AC_MSG_RESULT([  Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}])
-AC_MSG_RESULT([  Ming(flash) support:       ${MING_ENABLED}])
 AC_MSG_RESULT([  KML support:               ${KML_ENABLED}])
 AC_MSG_RESULT()
 

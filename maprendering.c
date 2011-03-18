@@ -458,11 +458,6 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
       }
       else if( MS_RENDERER_IMAGEMAP(image->format) )
          msDrawLineSymbolIM(symbolset, image, p, style, scalefactor);
-
-#ifdef USE_MING_FLASH
-      else if( MS_RENDERER_SWF(image->format) )
-         msDrawLineSymbolSWF(symbolset, image, p,  style, scalefactor);
-#endif
       else {
          msSetError(MS_RENDERERERR, "unsupported renderer", "msDrawShadeSymbol()");
          return MS_FAILURE;
@@ -622,11 +617,6 @@ cleanup:
       }
       else if( MS_RENDERER_IMAGEMAP(image->format) )
          msDrawShadeSymbolIM(symbolset, image, p, style, scalefactor);
-
-#ifdef USE_MING_FLASH
-      else if( MS_RENDERER_SWF(image->format) )
-         msDrawShadeSymbolSWF(symbolset, image, p, style, scalefactor);
-#endif
    }
    return ret;
 }
@@ -722,11 +712,6 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
       else if( MS_RENDERER_IMAGEMAP(image->format) )
          msDrawMarkerSymbolIM(symbolset, image, p, style, scalefactor);
 
-#ifdef USE_MING_FLASH
-      else if( MS_RENDERER_SWF(image->format) )
-         msDrawMarkerSymbolSWF(symbolset, image, p, style, scalefactor);
-#endif
-
    }
    return ret;
 }
@@ -788,10 +773,6 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
       }
       else if( MS_RENDERER_IMAGEMAP(image->format) )
          nReturnVal = msDrawTextIM(image, labelPnt, string, label, fontset, scalefactor);
-#ifdef USE_MING_FLASH
-      else if( MS_RENDERER_SWF(image->format) )
-         nReturnVal = draw_textSWF(image, labelPnt, string, label, fontset, scalefactor);
-#endif
    }
    return nReturnVal;
 }

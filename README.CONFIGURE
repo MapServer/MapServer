@@ -108,8 +108,6 @@ Optional Packages:
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
   --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to
                           Oracle home)
-  --with-ming[=DIR]       Include MING/Flash Support (DIR=path to Ming
-                          directory)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
   --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).
   --with-wcs              Enable OGC WCS Server Support (GDAL+PROJ4 required).
@@ -433,47 +431,16 @@ Flash/SWF/Ming Output Support:
 
 ::
 
-  --with-ming[=DIR]       Include MING/Flash Support (DIR=path to Ming
-                          directory)
-
-- Support for generating Flash output is enabled only if requested.  Use
-  the --with-ming switch to request it if the ming libraries have been 
-  installed in the default path.  To use a local ming build also provide the
-  path to the ming build directory.
-
-- The IMAGETYPE for Flash output is SWF.  
-
-More information on the MING library should be available at http://www.opaque.net/ming/
-
-
+Flash support has been removed since MapServer 6.0 due to lack of support and/or
+funding. Get in touch with the mapserver team if this is something you wish to sponsor.
 
 PDF output support:
 -------------------
 
 ::
 
-  --without-pdf           Disable PDF support.
-  --with-pdf[=DIR]        Include PDF support (DIR is PDFlib's install dir).
-
-- Support for PDF output using PDFLib (http://www.pdflib.com/)
-  is disabled by default and can be enabled using the --with-pdf option.
-
-- If PDFLib is installed in the default system directories then using 
-  --with-pdf with no argument should be enough.  If not then pass the 
-  full path to the PDFLib installation directory.
-  e.g.
-
-      ./configure ..... --with-pdf=/usr/local
-
-IMPORTANT NOTE: PDFLib comes bundled with and is built by default using
-its own internal copy of libpng and zlib.  The PDFLib internal copy of
-those libpng and zlib are very likely of different versions from the
-ones used by the GD library.  Loading both versions could lead to 
-crashes or instability of your MapServer or MapScript installation.  
-For this reason you should make sure that your PDFLib is configured 
-using '--with-pnglib --with-zlib' which will force PDFLib to use the 
-system verison of libpng and zlib.
-
+PDF support has been transitionned to use the cairo rendering backend. Use --with-cairo
+to enable it.
 
 CAIRO Support:
 --------------

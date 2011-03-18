@@ -150,11 +150,6 @@ ORACLESPATIAL=@ORACLESPATIAL_ENABLED@
 ORACLESPATIAL_LIB=@ORACLESPATIAL_LIB@
 ORACLESPATIAL_INC=@ORACLESPATIAL_INC@
 
-# Optional MING/SWF/FLASH Support. Contact: assefa@dmsolutions.ca
-MING=@MING_ENABLED@
-MING_LIB=@MING_LIB@
-MING_INC=@MING_INC@
-
 # libcurl ... required for WMS/WFS Client Connections
 CURL_INC=@CURL_INC@
 CURL_LIB=@CURL_LIB@
@@ -246,7 +241,7 @@ DEFINES = $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ $(FRI
 INCLUDES = $(FT_INC) $(REGEX_INC) $(PNG_INC) $(GIF_INC) $(JPEG_INC) $(GD_INC) \
         $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PROJ_INC) $(EGIS_INC) \
         $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) \
-        $(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
+        $(CURL_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
         $(FASTCGI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC)
 
 FLAGS = @DEBUG_FLAGS@ $(DEFINES) $(INCLUDES)
@@ -256,7 +251,7 @@ CXXFLAGS = @CXXFLAGS@ $(FLAGS)
 
 # Link flags and shared libs only
 SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
-          $(JPEG_LIB) $(PNG_LIB) $(GIF_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
+          $(JPEG_LIB) $(PNG_LIB) $(GIF_LIB) $(SDE_LIB) $(GDAL_LIB) $(POSTGIS_LIB) \
 	  $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
 	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
 	  $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB)
@@ -275,7 +270,7 @@ OBJS= $(AGG_OBJ) mapgeomutil.o mapdummyrenderer.o mapogl.o mapoglrenderer.o mapo
 				mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o \
 				mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o \
 				mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o \
-				mapgd.o mapagg.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o \
+				mapgd.o mapagg.o mapoutput.o mapgdal.o mapimagemap.o mapows.o mapwfs.o \
 				mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mapjoin.o mapgraticule.o \
 				mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o \
 				maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o \
