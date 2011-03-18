@@ -1356,7 +1356,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
      */
     epsgs = (char **) msSmallMalloc(sizeof(char *));
     num_epsgs = 1;
-    epsgs[0] = msStrdup( msOWSGetEPSGProj(srcproj, NULL, namespaces, MS_TRUE) );
+    epsgs[0] = msStrdup( msOWSGetEPSGProj(srcproj, layer_meta, namespaces, MS_TRUE) );
   }
 
   for( i = 0; i < num_epsgs; i++)
