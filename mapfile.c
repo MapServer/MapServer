@@ -2174,10 +2174,17 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
     fprintf(stream, "%s /%s/", name, exp->string);
     break;
   case(MS_STRING):
-    if (strchr(exp->string, '\"') != NULL)
-      fprintf(stream, "%s '%s'", name, exp->string);
-    else
-      fprintf(stream, "%s \"%s\"", name, exp->string);
+      if ( (strchr(exp->string, '\'') == NULL) && (strchr(exp->string, '\"') == NULL))
+          fprintf(stream, "%s \"%s\"", name, exp->string);
+      else if ( (strchr(exp->string, '\"') != NULL) && (strchr(exp->string, '\'') == NULL))
+          fprintf(stream, "%s \'%s\'", name, exp->string);
+      else if ( (strchr(exp->string, '\'') != NULL) && (strchr(exp->string, '\"') == NULL))
+          fprintf(stream, "%s \"%s\"", name, exp->string);
+      else {
+          string_tmp = msStringEscape(exp->string);
+          fprintf(stream, "%s \"%s\"", name, string_tmp);
+          free(string_tmp);
+      }   
     break;
   case(MS_EXPRESSION):
     fprintf(stream, "%s (%s)", name, exp->string);

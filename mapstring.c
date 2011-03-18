@@ -2126,7 +2126,7 @@ char* msStringEscape( const char * pszString )
         return msStrdup("");
 
     string_tmp = (char*)msSmallMalloc((strlen(pszString)*2)+1);
-    for (string_ptr=pszString,i=0; *string_ptr!='\0'; ++string_ptr,++i) {
+    for (string_ptr=(char*)pszString,i=0; *string_ptr!='\0'; ++string_ptr,++i) {
         if ( (*string_ptr == '\"') || (*string_ptr == '\'') ) {
             string_tmp[i] = '\\';
             ++i;
