@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#define _GNU_SOURCE
+
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapgml.h"

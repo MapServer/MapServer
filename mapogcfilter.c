@@ -27,6 +27,8 @@
  ****************************************************************************/
 
 
+#define _GNU_SOURCE
+
 #ifdef USE_OGR
 #include "cpl_minixml.h"
 #endif

@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#define _GNU_SOURCE
+
 #include "mapserver.h"
 
 
@@ -3192,4 +3194,3 @@ void msSOSFreeParamsObj(sosParamsObj *sosparams) {
   }
 }
 #endif /* defined(USE_SOS_SVR) && defined(USE_LIBXML2) */
-
