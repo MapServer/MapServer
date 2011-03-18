@@ -100,6 +100,7 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
    {"png","AGG/PNG","image/png"},
    {"jpeg","AGG/JPEG","image/jpeg"},
    {"gif","GD/GIF","image/gif"},
+   {"png8","AGG/PNG8","image/png; mode=8bit"},
    {"png24","AGG/PNG","image/png; mode=24bit"},
 #ifdef USE_CAIRO
    {"pdf","CAIRO/PDF","application/x-pdf"},
@@ -200,6 +201,17 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->extension = msStrdup("png");
         format->renderer = MS_RENDER_WITH_AGG;
     }
+    if( strcasecmp(driver,"AGG/PNG8") == 0 )
+    {
+        format = msAllocOutputFormat( map, "png8", driver );
+        format->mimetype = msStrdup("image/png; mode=8bit");
+        format->imagemode = MS_IMAGEMODE_RGB;
+        format->extension = msStrdup("png");
+        format->renderer = MS_RENDER_WITH_AGG;
+        msSetOutputFormatOption( format, "QUANTIZE_FORCE", "on");
+        msSetOutputFormatOption( format, "QUANTIZE_COLORS", "256");
+    }
+    
     if( strcasecmp(driver,"AGG/JPEG") == 0 )
     {
         format = msAllocOutputFormat( map, "jpeg", driver );
