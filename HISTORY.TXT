@@ -12,13 +12,15 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
+Version 6.0.0-beta2 (2011-03-18)
+--------------------------------
+
 - correct scaling of symbol GAP and PATTERN (#3752)
 
 - remove references to SWF/MING
 
-- CGI runtime substitution requires a validation pattern (was optional before) (#3522)
+- CGI runtime substitution requires a validation pattern (was optional 
+  before) (#3522)
 
 - add a default png8 outputformat that uses AGG/PNG with quantization
 
@@ -44,13 +46,15 @@ Current Version (SVN trunk):
 
 - fallback to ows_title for WCS ows:Title of CoverageDescription (#3528)
 
-- Added msIO_stripStdoutBufferContentHeaders() to strip off all Content-* headers from a buffer (#3673, #3665).
+- Added msIO_stripStdoutBufferContentHeaders() to strip off all 
+  Content-* headers from a buffer (#3673, #3665).
 
 - Added raster classification support for STYLE level OPACITY.
 
 - Allow attribute references, that is [itemname], within a TEXT string (#3736)
 
-- Fixed segmentation fault when parsing invalid extent arguments in shp2img (#3734)
+- Fixed segmentation fault when parsing invalid extent arguments in 
+  shp2img (#3734)
 
 - Make "openlayers mode" work even without OWS support (#3732)
 
@@ -63,7 +67,8 @@ Current Version (SVN trunk):
 
 - Removed executable flag on some source files (#3726)
 
-- Fixed SQL Spatial to be able to use UniqueIdentifier field as unique key (#3722)
+- Fixed SQL Spatial to be able to use UniqueIdentifier field as unique 
+  key (#3722)
 
 - Fix PHP Windows build (#3714)
 
