@@ -60,7 +60,6 @@ extern char *msyystring;
 extern char *msyybasepath;
 extern int msyyreturncomments;
 extern char *msyystring_buffer;
-extern char *msyytext;
 extern char msyystring_icase;
 
 extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
@@ -194,7 +193,7 @@ int getSymbol(int n, ...) {
 */
 static char *getToken(void) {
   msyylex();  
-  return msStrdup(msyytext);
+  return msStrdup(msyystring_buffer);
 }
 
 /*
@@ -529,14 +528,23 @@ static void writeCharacter(FILE *stream, int indent, const char *name, const cha
 }
 
 static void writeString(FILE *stream, int indent, const char *name, const char *defaultString, char *string) {
+  char *string_tmp;
+
   if(!string) return;
   if(defaultString && strcmp(string, defaultString) == 0) return;
   writeIndent(stream, ++indent);
   if(name) fprintf(stream, "%s ", name);
-  if(strchr(string, '\"') != NULL)    
-    fprintf(stream, "'%s'\n", string);
-  else
+  if ( (strchr(string, '\'') == NULL) && (strchr(string, '\"') == NULL))
+      fprintf(stream, "\"%s\"\n", string);
+  else if ( (strchr(string, '\"') != NULL) && (strchr(string, '\'') == NULL))
+      fprintf(stream, "'%s'\n", string);
+  else if ( (strchr(string, '\'') != NULL) && (strchr(string, '\"') == NULL))
     fprintf(stream, "\"%s\"\n", string);
+  else {
+      string_tmp = msStringEscape(string);
+      fprintf(stream, "\"%s\"\n", string_tmp);
+      free(string_tmp);
+  }   
 }
 
 static void writeNumberOrString(FILE *stream, int indent, const char *name, double defaultNumber, double number, char *string) {
@@ -569,16 +577,33 @@ static void writeNumberOrKeyword(FILE *stream, int indent, const char *name, dou
 }
 
 static void writeNameValuePair(FILE *stream, int indent, const char *name, const char *value) {
+  char *string_tmp;
   if(!name || !value) return;
   writeIndent(stream, ++indent);  
-  if(strchr(name, '\"') != NULL)
-    fprintf(stream, "'%s'\t", name);
-  else
+
+  if ( (strchr(name, '\'') == NULL) && (strchr(name, '\"') == NULL))
+      fprintf(stream, "\"%s\"\t", name);
+  else if ( (strchr(name, '\"') != NULL) && (strchr(name, '\'') == NULL))
+      fprintf(stream, "'%s'\t", name);
+  else if ( (strchr(name, '\'') != NULL) && (strchr(name, '\"') == NULL))
     fprintf(stream, "\"%s\"\t", name);
-  if(strchr(value, '\"') != NULL)
-    fprintf(stream, "'%s'\n", value);
-  else
+  else {
+      string_tmp = msStringEscape(name);
+      fprintf(stream, "\"%s\"\t", string_tmp);
+      free(string_tmp);
+  }   
+
+  if ( (strchr(value, '\'') == NULL) && (strchr(value, '\"') == NULL))
+      fprintf(stream, "\"%s\"\n", value);
+  else if ( (strchr(value, '\"') != NULL) && (strchr(value, '\'') == NULL))
+      fprintf(stream, "'%s'\n", value);
+  else if ( (strchr(value, '\'') != NULL) && (strchr(value, '\"') == NULL))
     fprintf(stream, "\"%s\"\n", value);
+  else {
+      string_tmp = msStringEscape(value);
+      fprintf(stream, "\"%s\"\n", string_tmp);
+      free(string_tmp);
+  }   
 }
 
 static void writeAttributeBinding(FILE *stream, int indent, const char *name, attributeBindingObj *binding) {
@@ -1963,7 +1988,7 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   writeNumber(stream, indent, "MAXOVERLAPANGLE", 22.5, label->maxoverlapangle);
   for(i=0; i<label->numstyles; i++)
     writeStyle(stream, indent, label->styles[i]);
-  writeKeyword(stream, indent, "TYPE", label->type, MS_BITMAP, "BITMAP", MS_TRUETYPE, "TRUETYPE");
+  writeKeyword(stream, indent, "TYPE", label->type, 2, MS_BITMAP, "BITMAP", MS_TRUETYPE, "TRUETYPE");
   writeCharacter(stream, indent, "WRAP", '\0', label->wrap);
   writeBlockEnd(stream, indent, "LABEL");
 }
@@ -2140,6 +2165,7 @@ char *msGetExpressionString(expressionObj *exp)
 
 static void writeExpression(FILE *stream, int indent, const char *name, expressionObj *exp)
 {
+  char *string_tmp;
   if(!exp || !exp->string) return;
 
   writeIndent(stream, ++indent);

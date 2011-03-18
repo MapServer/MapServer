@@ -2108,3 +2108,32 @@ char *msStrdup( const char * pszString )
 
     return( pszReturn );
 }
+
+
+/************************************************************************/
+/*                             msStringEscape()                         */
+/************************************************************************/
+
+/* Checks if a string contains single or double quotes and escape them.
+   NOTE: the user have to free the returned char */
+
+char* msStringEscape( const char * pszString )
+{
+    char *string_tmp, *string_ptr;
+    int i;
+    
+    if (pszString ==  NULL || strlen(pszString) == 0)
+        return msStrdup("");
+
+    string_tmp = (char*)msSmallMalloc((strlen(pszString)*2)+1);
+    for (string_ptr=pszString,i=0; *string_ptr!='\0'; ++string_ptr,++i) {
+        if ( (*string_ptr == '\"') || (*string_ptr == '\'') ) {
+            string_tmp[i] = '\\';
+            ++i;
+        }
+        string_tmp[i] = *string_ptr;
+    }
+
+    string_tmp[i] = '\0';
+    return string_tmp;
+}
