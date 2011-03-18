@@ -4137,7 +4137,8 @@ static int loadOutputFormat(mapObj *map)
                        msyystring_buffer, msyylineno );
             return -1;
         }
-        format = msCreateDefaultOutputFormat( map, driver );
+        
+        format = msCreateDefaultOutputFormat( map, driver, name );
         if( format == NULL )
         {
             msSetError(MS_MISCERR, 
@@ -4147,11 +4148,6 @@ static int loadOutputFormat(mapObj *map)
         }
         msFree( driver );
 
-        if( name != NULL )
-        {
-            msFree( format->name );
-            format->name = name;
-        }
         if( transparent != MS_NOOVERRIDE )
             format->transparent = transparent;
         if( extension != NULL )

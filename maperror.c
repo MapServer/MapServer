@@ -417,7 +417,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 
   /* Default to GIF if no suitable GD output format set */
   if (format == NULL || !MS_RENDERER_PLUGIN(format) || !format->vtable->supports_bitmap_fonts) 
-    format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
+    format = msCreateDefaultOutputFormat( NULL, "GD/PC256", "gif" );
 
 
   img = msImageCreate(width,height,format,imagepath,imageurl,MS_DEFAULT_RESOLUTION,MS_DEFAULT_RESOLUTION,NULL);
