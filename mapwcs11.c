@@ -119,6 +119,8 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
     int  i, numtokens = 0, numformats;
     const char *value;
 
+    msApplyDefaultOutputFormats(map);
+
 /* -------------------------------------------------------------------- */
 /*      Parse from layer metadata.                                      */
 /* -------------------------------------------------------------------- */
