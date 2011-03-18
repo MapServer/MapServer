@@ -3898,10 +3898,10 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
     if(psStyle->color.alpha != 255 && psStyle->color.alpha!=-1) {
       snprintf(szTmp, sizeof(szTmp),
                "<%s name=\"stroke-opacity\">%.2f</%s>\n", 
-               sCssParam, (float)psStyle->color.alpha/255, sCssParam);
+               sCssParam, (float)psStyle->color.alpha/255.0, sCssParam);
+      pszSLD = msStringConcatenate(pszSLD, szTmp);
     }
 
-    pszSLD = msStringConcatenate(pszSLD, szTmp);
                             
     nSymbol = -1;
 
@@ -4035,8 +4035,8 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
            snprintf(szTmp, sizeof(szTmp),
                  "<%s name=\"fill-opacity\">%.2f</%s>\n", 
                  sCssParam, (float)psStyle->color.alpha/255, sCssParam);
+           pszSLD = msStringConcatenate(pszSLD, szTmp);
         }
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
 
 
         snprintf(szTmp, sizeof(szTmp), "</%sFill>\n",  sNameSpace);
