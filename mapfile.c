@@ -4172,6 +4172,8 @@ static int loadOutputFormat(mapObj *map)
         }
         
         format = msCreateDefaultOutputFormat( map, driver, name );
+        msFree( name );
+        name = NULL;
         if( format == NULL )
         {
             msSetError(MS_MISCERR, 
