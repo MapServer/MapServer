@@ -657,12 +657,14 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
    r->m_pixel_format.attach(r->m_rendering_buffer);
    r->m_renderer_base.attach(r->m_pixel_format);
    r->m_renderer_scanline.attach(r->m_renderer_base);
-   if (format->transparent || !bg || !MS_VALID_COLOR(*bg)
-       || format->imagemode == MS_IMAGEMODE_RGBA ) {
+   if( bg && !format->transparent )
+      r->m_renderer_base.clear(aggColor(bg));
+   else
       r->m_renderer_base.clear(AGG_NO_COLOR);
+
+   if (format->transparent || format->imagemode == MS_IMAGEMODE_RGBA ) {
       r->use_alpha = true;
    } else {
-      r->m_renderer_base.clear(aggColor(bg));
       r->use_alpha = false;
    }
    image->img.plugin = (void*) r;
