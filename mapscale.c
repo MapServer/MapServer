@@ -216,6 +216,10 @@ imageObj *msDrawScalebar(mapObj *map)
                        map->scalebar.interlace, 
                        MS_NOOVERRIDE );
 
+  if(map->scalebar.transparent == MS_OFF) {
+     if(!MS_VALID_COLOR(map->scalebar.imagecolor))
+        MS_INIT_COLOR(map->scalebar.imagecolor,255,255,255,255);
+  }
   image = msImageCreate(map->scalebar.width, sy, format,
           map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->scalebar.imagecolor);
 
