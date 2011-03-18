@@ -3835,7 +3835,6 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
     char szTmp[100];
     char szHexColor[7];
     int nSymbol = -1;
-    symbolObj *psSymbol = NULL;
     int i = 0;
     double dfSize = 1.0;
     char *pszDashArray = NULL;
@@ -3933,23 +3932,18 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
 /* -------------------------------------------------------------------- */
                             
                             
-    if (nSymbol > 0 && nSymbol < psLayer->map->symbolset.numsymbols)
+    if (psStyle->patternlength > 0)
     {
-        psSymbol =  psLayer->map->symbolset.symbol[nSymbol];
-        if (psSymbol->patternlength > 0)
+        for (i=0; i<psStyle->patternlength; i++)
         {
-            for (i=0; i<psSymbol->patternlength; i++)
-            {
-                snprintf(szTmp, sizeof(szTmp), "%d ", psSymbol->pattern[i]);
-                pszDashArray = msStringConcatenate(pszDashArray, szTmp);
-            }
-            snprintf(szTmp, sizeof(szTmp),
-                     "<%s name=\"stroke-dasharray\">%s</%s>\n", 
-                     sCssParam, pszDashArray, sCssParam);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
-        }  
-                                           
-    }
+            snprintf(szTmp, sizeof(szTmp), "%.2f ", psStyle->pattern[i]);
+            pszDashArray = msStringConcatenate(pszDashArray, szTmp);
+        }
+        snprintf(szTmp, sizeof(szTmp),
+                 "<%s name=\"stroke-dasharray\">%s</%s>\n", 
+                 sCssParam, pszDashArray, sCssParam);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
+    }  
 
     snprintf(szTmp, sizeof(szTmp), "</%sStroke>\n",  sNameSpace);
 
