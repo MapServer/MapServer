@@ -1913,21 +1913,21 @@ void msAlphaBlend( unsigned char red_src, unsigned char green_src,
 /* -------------------------------------------------------------------- */
     if(!alpha_dst || *alpha_dst == 255) 
     {
-        int weight_dst = 255 - alpha_src;
+        int weight_dst = 256 - alpha_src;
 
-        *red_dst   = (255 * red_src   + *red_dst   * weight_dst) / 255;
-        *green_dst = (255 * green_src + *green_dst * weight_dst) / 255;
-        *blue_dst  = (255 * blue_src  + *blue_dst  * weight_dst) / 255;
+        *red_dst   = (256 * red_src   + *red_dst   * weight_dst) >> 8;
+        *green_dst = (256 * green_src + *green_dst * weight_dst) >> 8;
+        *blue_dst  = (256 * blue_src  + *blue_dst  * weight_dst) >> 8;
     } 
     else 
     {
-        int   weight_dst = (255 - alpha_src);
+        int   weight_dst = (256 - alpha_src);
 
-        *red_dst   = (255 * red_src   + *red_dst   * weight_dst) / 255;
-        *green_dst = (255 * green_src + *green_dst * weight_dst) / 255;
-        *blue_dst  = (255 * blue_src  + *blue_dst  * weight_dst) / 255;
+        *red_dst   = (256 * red_src   + *red_dst   * weight_dst) >> 8;
+        *green_dst = (256 * green_src + *green_dst * weight_dst) >> 8;
+        *blue_dst  = (256 * blue_src  + *blue_dst  * weight_dst) >> 8;
 
-        *alpha_dst = (alpha_src * 255 + *alpha_dst * weight_dst) / 255;
+        *alpha_dst = (256 * alpha_src + *alpha_dst * weight_dst) >> 8;
     }
 }
 
@@ -1976,21 +1976,21 @@ void msAlphaBlendPM( unsigned char red_src, unsigned char green_src,
 /* -------------------------------------------------------------------- */
     if(!alpha_dst || *alpha_dst == 255) 
     {
-        int weight_dst = 255 - alpha_src;
+        int weight_dst = 256 - alpha_src;
 
-        *red_dst   = (255 * red_src   + *red_dst   * weight_dst) / 255;
-        *green_dst = (255 * green_src + *green_dst * weight_dst) / 255;
-        *blue_dst  = (255 * blue_src  + *blue_dst  * weight_dst) / 255;
+        *red_dst   = (256 * red_src   + *red_dst   * weight_dst) >> 8;
+        *green_dst = (256 * green_src + *green_dst * weight_dst) >> 8;
+        *blue_dst  = (256 * blue_src  + *blue_dst  * weight_dst) >> 8;
     } 
     else 
     {
-        int   weight_dst = (255 - alpha_src);
+        int   weight_dst = (256 - alpha_src);
 
-        *red_dst   = (255 * red_src   + *red_dst   * weight_dst) / 255;
-        *green_dst = (255 * green_src + *green_dst * weight_dst) / 255;
-        *blue_dst  = (255 * blue_src  + *blue_dst  * weight_dst) / 255;
+        *red_dst   = (256 * red_src   + *red_dst   * weight_dst) >> 8;
+        *green_dst = (256 * green_src + *green_dst * weight_dst) >> 8;
+        *blue_dst  = (256 * blue_src  + *blue_dst  * weight_dst) >> 8;
 
-        *alpha_dst = (alpha_src * 255 + *alpha_dst * weight_dst) / 255;
+        *alpha_dst = (256 * alpha_src + *alpha_dst * weight_dst) >> 8;
     }
 }
 
