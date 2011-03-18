@@ -2528,6 +2528,10 @@ typedef struct {
     /* rotation to apply on the symbol (and the tile?)
      * in radians */
     double rotation;
+   
+    /* the gap to space symbols appart when used as a polygon tile
+     */
+    double gap;
 
     /* style object, necessary for vector type renderers to be able
      * to render symbols through other renders such as cairo/agg */

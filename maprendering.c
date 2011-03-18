@@ -37,9 +37,10 @@ int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
 void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, double scalefactor) {
    double default_size;
    double target_size;
+   double style_size;
 
    default_size = msSymbolGetDefaultSize(symbol);
-   target_size = (src->size==-1)?default_size:src->size;
+   style_size = (src->size==-1)?default_size:src->size;
 
    INIT_SYMBOL_STYLE(*s);
    if(symbol->type == MS_SYMBOL_PIXMAP) {
@@ -62,10 +63,11 @@ void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, dou
       s->backgroundcolor = &(src->backgroundcolor);
    }
 
-   target_size *= scalefactor;
+   target_size = style_size * scalefactor;
    target_size = MS_MAX(target_size, src->minsize);
    target_size = MS_MIN(target_size, src->maxsize);
    s->scale = target_size / default_size;
+   s->gap = src->gap * target_size / style_size;
 
    if(s->outlinecolor) {
       s->outlinewidth =  src->width * scalefactor;
@@ -443,10 +445,10 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             //compute a markerStyle and use it on the line
             if(style->gap<0) {
                //special function that treats any other symbol used as a marker, not a brush
-               msImagePolylineMarkers(image,p,symbol,&s,-style->gap,1);
+               msImagePolylineMarkers(image,p,symbol,&s,-s.gap,1);
             }
             else if(style->gap>0) {
-               msImagePolylineMarkers(image,p,symbol,&s,style->gap,0);
+               msImagePolylineMarkers(image,p,symbol,&s,s.gap,0);
             } else {
                //void* tile = getTile(image, symbolset, &s);
                //r->renderLineTiled(image, theShape, tile);
@@ -587,13 +589,12 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
                if(ret != MS_SUCCESS) goto cleanup;
             }
 
-
             if(s.scale != 1) {
-               pw = MS_NINT(symbol->sizex * s.scale)+1+style->gap;
-               ph = MS_NINT(symbol->sizey * s.scale)+1+style->gap;
+               pw = MS_NINT(symbol->sizex * s.scale + s.gap)+1;
+               ph = MS_NINT(symbol->sizey * s.scale + s.gap)+1;
             } else {
-               pw = symbol->sizex + style->gap;
-               ph = symbol->sizey + style->gap;
+               pw = symbol->sizex + s.gap;
+               ph = symbol->sizey + s.gap;
             }
 
             /* if we're doing vector symbols with an antialiased pixel rendererer, we want to enable
