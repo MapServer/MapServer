@@ -2289,6 +2289,11 @@ MS_DLL_EXPORT void msAlphaBlend(
     unsigned char blue_src, unsigned char alpha_src, 
     unsigned char *red_dst, unsigned char *green_dst,
     unsigned char *blue_dst, unsigned char *alpha_dst );
+MS_DLL_EXPORT void msAlphaBlendPM( 
+    unsigned char red_src, unsigned char green_src,
+    unsigned char blue_src, unsigned char alpha_src, 
+    unsigned char *red_dst, unsigned char *green_dst,
+    unsigned char *blue_dst, unsigned char *alpha_dst );
 
 MS_DLL_EXPORT int msCheckParentPointer(void* p, char* objname);
 

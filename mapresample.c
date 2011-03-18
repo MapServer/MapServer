@@ -185,14 +185,14 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                         nSetPoints++;
 
                         /* actual alpha blending is required */
-                        msAlphaBlend( src->r[src_rb_off],
-                                      src->g[src_rb_off],
-                                      src->b[src_rb_off],
-                                      src->a[src_rb_off],
-                                      dst->r + dst_rb_off, 
-                                      dst->g + dst_rb_off, 
-                                      dst->b + dst_rb_off, 
-                                      dst->a ? dst->a + dst_rb_off : NULL  );
+                        msAlphaBlendPM( src->r[src_rb_off],
+                                        src->g[src_rb_off],
+                                        src->b[src_rb_off],
+                                        src->a[src_rb_off],
+                                        dst->r + dst_rb_off, 
+                                        dst->g + dst_rb_off, 
+                                        dst->b + dst_rb_off, 
+                                        dst->a ? dst->a + dst_rb_off : NULL  );
 
                     }
             	}
@@ -475,13 +475,13 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                         red   = (unsigned char) MAX(0,MIN(255,padfPixelSum[0]));
                         green = (unsigned char) MAX(0,MIN(255,padfPixelSum[1]));
                         blue  = (unsigned char) MAX(0,MIN(255,padfPixelSum[2]));
-                        alpha = (unsigned char) MAX(0,MIN(255,255.5*dfWeightSum));
+                        alpha = (unsigned char)MAX(0,MIN(255,255.5*dfWeightSum));
                         
-                        msAlphaBlend( red, green, blue, alpha,
-                                      dst_rb->data.rgba.r + dst_rb_off, 
-                                      dst_rb->data.rgba.g + dst_rb_off, 
-                                      dst_rb->data.rgba.b + dst_rb_off, 
-                                      (dst_rb->data.rgba.a == NULL) ? NULL : dst_rb->data.rgba.a + dst_rb_off );
+                        msAlphaBlendPM( red, green, blue, alpha,
+                                        dst_rb->data.rgba.r + dst_rb_off, 
+                                        dst_rb->data.rgba.g + dst_rb_off, 
+                                        dst_rb->data.rgba.b + dst_rb_off, 
+                                        (dst_rb->data.rgba.a == NULL) ? NULL : dst_rb->data.rgba.a + dst_rb_off );
                     }
                 }
             }

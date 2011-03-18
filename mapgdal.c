@@ -344,9 +344,42 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
                                "msSaveImageGDAL()" );
                    return MS_FAILURE;
                }
+
                pabyData = (GByte *)(pixptr + iLine*rb.data.rgba.row_step);
-               GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
-                             pabyData, image->width, 1, GDT_Byte, rb.data.rgba.pixel_step, 0 );
+
+               if( rb.data.rgba.a == NULL || iBand == 3 )
+               {
+                   GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                                 pabyData, image->width, 1, GDT_Byte, 
+                                 rb.data.rgba.pixel_step, 0 );
+               }
+               else /* We need to un-pre-multiple RGB by alpha. */
+               {
+                   GByte *pabyUPM = (GByte*) malloc(image->width);
+                   GByte *pabyAlpha= (GByte *)(rb.data.rgba.a + iLine*rb.data.rgba.row_step);
+                   int i;
+
+                   for( i = 0; i < image->width; i++ )
+                   {
+                       int alpha = pabyAlpha[i*rb.data.rgba.pixel_step];
+
+                       if( alpha == 0 )
+                           pabyUPM[i] = 0;
+                       else
+                       {
+                           int result = (pabyData[i*rb.data.rgba.pixel_step] * 255) / alpha;
+                           
+                           if( result > 255 )
+                               result = 255;
+
+                           pabyUPM[i] = result;
+                       }
+                   }
+
+                   GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                                 pabyUPM, image->width, 1, GDT_Byte, 1, 0 );
+                   free( pabyUPM );
+               }
             }
         }
     }

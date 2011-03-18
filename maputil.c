@@ -1855,17 +1855,15 @@ void msCleanup()
   msPluginFreeVirtualTableFactory();
 }
 
-
-
 /************************************************************************/
-/*                           msAlphaBlend()                             */
+/*                            msAlphaBlend()                            */
 /*                                                                      */
 /*      Function to overlay/blend an RGBA value into an existing        */
 /*      RGBA value using the Porter-Duff "over" operator.               */
 /*      Primarily intended for use with rasterBufferObj                 */
 /*      raster rendering.  The "src" is the overlay value, and "dst"    */
 /*      is the existing value being overlaid. dst is expected to be     */
-/*      premultiplied.                                                  */
+/*      premultiplied, but the source should not be.                    */
 /*                                                                      */
 /*      NOTE: alpha_dst may be NULL.                                    */
 /************************************************************************/
@@ -1891,6 +1889,17 @@ void msAlphaBlend( unsigned char red_src, unsigned char green_src,
         return;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Premultiple alpha for source values now.                        */
+/* -------------------------------------------------------------------- */
+    red_src   = red_src * alpha_src / 255;
+    green_src = green_src * alpha_src / 255;
+    blue_src  = blue_src * alpha_src / 255;
+
+/* -------------------------------------------------------------------- */
+/*      Another pretty fast case if there is nothing in the             */
+/*      destination to mix with.                                        */
+/* -------------------------------------------------------------------- */
     if( alpha_dst && *alpha_dst == 0) {
        *red_dst = red_src;
        *green_dst = green_src;
@@ -1906,21 +1915,82 @@ void msAlphaBlend( unsigned char red_src, unsigned char green_src,
     {
         int weight_dst = 255 - alpha_src;
 
-        *red_dst = (red_src * alpha_src + *red_dst * weight_dst) / 255;
-        *green_dst = (green_src * alpha_src + *green_dst * weight_dst) / 255;
-        *blue_dst = (blue_src * alpha_src + *blue_dst * weight_dst) / 255;
+        *red_dst   = (255 * red_src   + *red_dst   * weight_dst) / 255;
+        *green_dst = (255 * green_src + *green_dst * weight_dst) / 255;
+        *blue_dst  = (255 * blue_src  + *blue_dst  * weight_dst) / 255;
     } 
     else 
     {
-        int weight_src = alpha_src;
-        int weight_dst = (*alpha_dst * (255-alpha_src)) / 255;
-        int weight_tot = weight_src + weight_dst;
+        int   weight_dst = (255 - alpha_src);
 
-        *red_dst = (red_src*weight_src + *red_dst*weight_dst) / weight_tot;
-        *green_dst = (green_src*weight_src + *green_dst*weight_dst) /weight_tot;
-        *blue_dst = (blue_src*weight_src + *blue_dst*weight_dst) / weight_tot;
+        *red_dst   = (255 * red_src   + *red_dst   * weight_dst) / 255;
+        *green_dst = (255 * green_src + *green_dst * weight_dst) / 255;
+        *blue_dst  = (255 * blue_src  + *blue_dst  * weight_dst) / 255;
 
-        *alpha_dst = weight_tot;
+        *alpha_dst = (alpha_src * 255 + *alpha_dst * weight_dst) / 255;
+    }
+}
+
+/************************************************************************/
+/*                           msAlphaBlendPM()                           */
+/*                                                                      */
+/*      Same as msAlphaBlend() except that the source RGBA is           */
+/*      assumed to already be premultiplied.                            */
+/************************************************************************/
+
+void msAlphaBlendPM( unsigned char red_src, unsigned char green_src,
+                     unsigned char blue_src, unsigned char alpha_src, 
+                     unsigned char *red_dst, unsigned char *green_dst,
+                     unsigned char *blue_dst, unsigned char *alpha_dst )
+{
+/* -------------------------------------------------------------------- */
+/*      Simple cases we want to handle fast.                            */
+/* -------------------------------------------------------------------- */
+    if( alpha_src == 0 )
+        return;
+    
+    if( alpha_src == 255 )
+    {
+        *red_dst = red_src;
+        *green_dst = green_src;
+        *blue_dst = blue_src;
+        if( alpha_dst )
+            *alpha_dst = 255;
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Another pretty fast case if there is nothing in the             */
+/*      destination to mix with.                                        */
+/* -------------------------------------------------------------------- */
+    if( alpha_dst && *alpha_dst == 0) {
+       *red_dst = red_src;
+       *green_dst = green_src;
+       *blue_dst = blue_src;
+       *alpha_dst = alpha_src;
+       return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cases with actual blending.                                     */
+/* -------------------------------------------------------------------- */
+    if(!alpha_dst || *alpha_dst == 255) 
+    {
+        int weight_dst = 255 - alpha_src;
+
+        *red_dst   = (255 * red_src   + *red_dst   * weight_dst) / 255;
+        *green_dst = (255 * green_src + *green_dst * weight_dst) / 255;
+        *blue_dst  = (255 * blue_src  + *blue_dst  * weight_dst) / 255;
+    } 
+    else 
+    {
+        int   weight_dst = (255 - alpha_src);
+
+        *red_dst   = (255 * red_src   + *red_dst   * weight_dst) / 255;
+        *green_dst = (255 * green_src + *green_dst * weight_dst) / 255;
+        *blue_dst  = (255 * blue_src  + *blue_dst  * weight_dst) / 255;
+
+        *alpha_dst = (alpha_src * 255 + *alpha_dst * weight_dst) / 255;
     }
 }
 

@@ -84,6 +84,9 @@ typedef struct {
 	} data;
 } rasterBufferObj;
 
+/* NOTE: RB_SET_PIXEL() will premultiply by alpha, inputs should not be 
+         premultiplied */
+
 #define RB_SET_PIXEL(rb,x,y,red,green,blue,alpha) \
     {  \
         int _rb_off = (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step;   \
@@ -99,6 +102,22 @@ typedef struct {
            (rb)->data.rgba.a[_rb_off] = alpha; \
         } \
     }
+
+/* This versions receives an input red/green/blue that is already
+   premultiplied with alpha */
+#define RB_SET_PIXEL_PM(rb,x,y,red,green,blue,alpha) \
+    {  \
+        int _rb_off = (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step;   \
+        (rb)->data.rgba.r[_rb_off] = red; \
+        (rb)->data.rgba.g[_rb_off] = green; \
+        (rb)->data.rgba.b[_rb_off] = blue; \
+        if( rb->data.rgba.a ) { \
+           (rb)->data.rgba.a[_rb_off] = alpha; \
+        } \
+    }
+
+/* NOTE: RB_MIX_PIXEL() will premultiply by alpha, inputs should not be 
+         premultiplied */
 
 #define RB_MIX_PIXEL(rb,x,y,red,green,blue,alpha) \
     {  \
