@@ -3688,6 +3688,7 @@ void msOGRCleanup( void )
     if( bOGRDriversRegistered == MS_TRUE )
     {
 #if GDAL_VERSION_NUM >= 1400
+        CPLPopErrorHandler();
         OGRCleanupAll();
         bOGRDriversRegistered = MS_FALSE;
 #endif
