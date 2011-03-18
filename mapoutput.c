@@ -832,6 +832,7 @@ void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime )
 {
     int mime_count = 0, i;
 
+    msApplyDefaultOutputFormats(map);
     for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ )
     {
         int  j;
@@ -866,6 +867,7 @@ void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
     int numtokens = 0;
     outputFormatObj *format;
 
+    msApplyDefaultOutputFormats(map);
     format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getlegendgraphic_formatlist");
     if ( format_list && strlen(format_list) > 0)
       tokens = msStringSplit(format_list,  ',', &numtokens);
