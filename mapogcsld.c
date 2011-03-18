@@ -2876,9 +2876,9 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                 /* supports  - <TextSymbolizer><Label>MY_COLUMN</Label> */
                 if (psLabel->psChild && psLabel->psChild->pszValue)
                 {
-                    pszClassText = msStringConcatenate(pszClassText, "([");
+                    pszClassText = msStringConcatenate(pszClassText, "(\"[");
                     pszClassText = msStringConcatenate(pszClassText, psLabel->psChild->pszValue);
-                    pszClassText = msStringConcatenate(pszClassText, "])");
+                    pszClassText = msStringConcatenate(pszClassText, "]\")");
                 }
             }
             
