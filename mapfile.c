@@ -5823,36 +5823,51 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
   return(MS_SUCCESS);
 }
 
-/* look in places authorized for url substitution and replace "from" by "to" */ 
-void msLayerSubstituteString(layerObj *layer, const char *from, const char *to) {
-  int k;
-  char* bindvals_key = (char*)msFirstKeyFromHashTable(&layer->bindvals);
-  char* bindvals_val;
+static int layerNeedsSubstitutions(layerObj *layer, char *from) {
+  int i;
 
-  if(layer->data && (strcasestr(layer->data, from) != NULL)) 
-    layer->data = msCaseReplaceSubstring(layer->data, from, to);
-  if(layer->tileindex && (strcasestr(layer->tileindex, from) != NULL)) 
-    layer->tileindex = msCaseReplaceSubstring(layer->tileindex, from, to);
-  if(layer->connection && (strcasestr(layer->connection, from) != NULL)) 
-    layer->connection = msCaseReplaceSubstring(layer->connection, from, to);
-  if(layer->filter.string && (strcasestr(layer->filter.string, from) != NULL)) 
-    layer->filter.string = msCaseReplaceSubstring(layer->filter.string, from, to);
-  for(k=0; k<layer->numclasses; k++) {
-    if(layer->class[k]->expression.string && (strcasestr(layer->class[k]->expression.string, from) != NULL)) 
-      layer->class[k]->expression.string = msCaseReplaceSubstring(layer->class[k]->expression.string, from, to);
+  if(layer->data && (strcasestr(layer->data, from) != NULL)) return MS_TRUE;
+  if(layer->tileindex && (strcasestr(layer->tileindex, from) != NULL)) return MS_TRUE;
+  if(layer->connection && (strcasestr(layer->connection, from) != NULL)) return MS_TRUE;
+  if(layer->filter.string && (strcasestr(layer->filter.string, from) != NULL)) return MS_TRUE;
+
+  for(i=0; i<layer->numclasses; i++) {
+    if(layer->class[i]->expression.string && (strcasestr(layer->class[i]->expression.string, from) != NULL)) 
+      return MS_TRUE;
   }
 
- /* The bindvalues are most useful when able to substitute values from the URL */
+  if(!msHashIsEmpty(&layer->bindvals)) return MS_TRUE;
+
+  return MS_FALSE;
+}
+
+static void layerSubstituteString(layerObj *layer, char *from, char *to) {
+  int i;
+  char *bindvals_key, *bindvals_val;
+
+  if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, from, to);
+  if(layer->tileindex) layer->tileindex = msCaseReplaceSubstring(layer->tileindex, from, to);
+  if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, from, to);
+  if(layer->filter.string) layer->filter.string = msCaseReplaceSubstring(layer->filter.string, from, to);
+
+  for(i=0; i<layer->numclasses; i++) {
+    if(layer->class[i]->expression.string)
+      layer->class[i]->expression.string = msCaseReplaceSubstring(layer->class[i]->expression.string, from, to);
+  }
+
+  /* The bindvalues are most useful when able to substitute values from the URL */
+  bindvals_key = (char*)msFirstKeyFromHashTable(&layer->bindvals);
   while(bindvals_key != NULL) {
     bindvals_val = msStrdup((char*)msLookupHashTable(&layer->bindvals, bindvals_key));
     msInsertHashTable(&layer->bindvals, bindvals_key, msCaseReplaceSubstring(bindvals_val, from, to));
     bindvals_key = (char*)msNextKeyFromHashTable(&layer->bindvals, bindvals_key);
   }
 }
-  
 
-/* loop through layer metadata for keys that have a default_%key% pattern to replace
-* remaining %key% entries by their default value */
+/* 
+** Loop through layer metadata for keys that have a default_%key% pattern to replace
+** remaining %key% entries by their default value. 
+*/
 void msApplyDefaultSubstitutions(mapObj *map) {
   int i;
   for(i=0;i<map->numlayers;i++) {
@@ -5864,12 +5879,45 @@ void msApplyDefaultSubstitutions(mapObj *map) {
         char *tmpstr = (char *)msSmallMalloc(buffer_size);
         snprintf(tmpstr, buffer_size, "%%%s%%", &(defaultkey[8]));
 
-        msLayerSubstituteString(layer,tmpstr,msLookupHashTable(&(layer->metadata),defaultkey));
+        layerSubstituteString(layer,tmpstr,msLookupHashTable(&(layer->metadata),defaultkey));
         free(tmpstr);
       }
       defaultkey = msNextKeyFromHashTable(&(layer->metadata),defaultkey);
     }
   }
+}
+
+void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs) {
+  int i,j;
+
+  char *tag=NULL;
+  char *validation_pattern_key=NULL;
+
+  for(i=0; i<npairs; i++) {
+
+    /* runtime subtitution string */
+    tag = (char *) msSmallMalloc(sizeof(char)*strlen(names[i]) + 3);
+    sprintf(tag, "%%%s%%", names[i]);
+
+    /* validation pattern key - depricated */
+    validation_pattern_key = (char *) msSmallMalloc(sizeof(char)*strlen(names[i]) + 20);
+    sprintf(validation_pattern_key,"%s_validation_pattern", names[i]);
+
+    for(j=0; j<map->numlayers; j++) {
+      layerObj *layer = GET_LAYER(map, j);
+
+      if(!layerNeedsSubstitutions(layer, tag)) continue;
+
+      fprintf(stderr, "Layer %s, tag %s...\n", layer->name, tag);
+
+      if(msValidateParameter(values[i], msLookupHashTable(&(layer->validation), names[i]), msLookupHashTable(&(layer->metadata), validation_pattern_key), msLookupHashTable(&(map->web.validation), names[i]), NULL) == MS_SUCCESS) {
+        layerSubstituteString(layer, tag, values[i]);
+      }
+    }
+
+    msFree(tag);
+    msFree(validation_pattern_key);
+  } /* next name/value pair */
 }
 
 /*

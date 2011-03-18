@@ -1,3 +1,4 @@
+
 MapServer Revision History
 ==========================
 
@@ -13,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- CGI runtime substitution requires a validation pattern (was optional before) (#3522)
+
 - add a default png8 outputformat that uses AGG/PNG with quantization
 
 - change MS_INIT_COLOR to take alpha as a parameter

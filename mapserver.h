@@ -1702,7 +1702,7 @@ MS_DLL_EXPORT void initExpression(expressionObj *exp);
 MS_DLL_EXPORT void freeExpressionTokens(expressionObj *exp);
 MS_DLL_EXPORT void freeExpression(expressionObj *exp);
 
-MS_DLL_EXPORT void msLayerSubstituteString(layerObj *layer, const char *from, const char *to);
+MS_DLL_EXPORT void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs);
 MS_DLL_EXPORT void msApplyDefaultSubstitutions(mapObj *map);
 
 MS_DLL_EXPORT int getClassIndex(layerObj *layer, char *str);

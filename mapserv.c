@@ -183,9 +183,8 @@ static double getNumeric(char *s)
 */
 mapObj *loadMap(void)
 {
-  int i,j;
+  int i;
   mapObj *map = NULL;
-  char *tmpstr, *key, *value=NULL;
 
   for(i=0;i<mapserv->request->NumParams;i++) /* find the mapfile parameter first */
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
@@ -234,31 +233,9 @@ mapObj *loadMap(void)
       if(msUpdateMapFromURL(map, mapserv->request->ParamNames[i], mapserv->request->ParamValues[i]) != MS_SUCCESS) writeError();
       continue;
     }
-
-    /* runtime subtitution string */
-    tmpstr = (char *)msSmallMalloc(sizeof(char)*strlen(mapserv->request->ParamNames[i]) + 3);
-    sprintf(tmpstr,"%%%s%%", mapserv->request->ParamNames[i]);
-
-    /* validation pattern metadata key */
-    key = (char *)msSmallMalloc(sizeof(char)*strlen(mapserv->request->ParamNames[i]) + 20);
-    sprintf(key,"%s_validation_pattern", mapserv->request->ParamNames[i]);
-        
-    for(j=0; j<map->numlayers; j++) {
-      layerObj *layer = GET_LAYER(map, j);
-      value = msLookupHashTable(&(layer->metadata), key);
-      if(value) { /* validate parameter value */
-        if(msEvalRegex(value, mapserv->request->ParamValues[i]) == MS_FALSE) {
-          msSetError(MS_WEBERR, "Parameter '%s' value fails to validate.", "loadMap()", mapserv->request->ParamNames[i]);
-          writeError();
-        }
-      }
-      msLayerSubstituteString(layer, tmpstr, mapserv->request->ParamValues[i]);
-    }
-    
-    free(tmpstr);
-    free(key);
   }
 
+  msApplySubstitutions(map, mapserv->request->ParamNames, mapserv->request->ParamValues, mapserv->request->NumParams);
   msApplyDefaultSubstitutions(map);
 
   /* check to see if a ogc map context is passed as argument. if there */

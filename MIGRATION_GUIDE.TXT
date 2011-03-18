@@ -83,6 +83,11 @@ More verbose but *much* more flexible in the long run.
 CGI Changes
 -----------
 
+Runtime subsitution now *requires* a validation pattern be present before the
+substitution will take place (this had been optional). This can be done via
+a layer metadata tag as before or within layer or web VALIDATION blocks. See
+ticket #3522 for more information.
+
 All of the query map related modes (e.g. NQUERYMAP, ITEMQUERYMAP, etc...) have 
 been removed in favor of using the "qformat" parameter. That parameter takes 
 an output format name or mime/type as a value and uses that to process a set
