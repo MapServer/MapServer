@@ -343,8 +343,13 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                 
                 OGR_G_AddGeometryDirectly( hGeom, hRing );
             }
+
+            free(inner_flags);
+
             OGR_G_AddGeometryDirectly( hMP, hGeom );
         }
+
+        free(outer_flags);
 
         if( OGR_G_GetGeometryCount( hMP ) == 1 )
         {
