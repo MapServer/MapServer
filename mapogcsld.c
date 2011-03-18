@@ -1249,9 +1249,10 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                        {
                            psStyle->patternlength = nDash;
                            for (i=0; i<nDash; i++)
-                              psStyle->pattern[i] = atoi(aszValues[i]);
+                              psStyle->pattern[i] = atof(aszValues[i]);
 
                            msFreeCharArray(aszValues, nDash);
+                           psStyle->linecap = MS_CJC_BUTT;
                        }
                         
                     }

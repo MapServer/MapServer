@@ -2703,6 +2703,18 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
     writeAttributeBinding(stream, indent, "OUTLINEWIDTH", &(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH]));
   else writeNumber(stream, indent, "OUTLINEWIDTH", 0, style->outlinewidth);
 
+  /* PATTERN */
+  if(style->patternlength != 0) {
+     int i;
+     indent++;
+     writeBlockBegin(stream,indent,"PATTERN");
+     for(i=0;i<style->patternlength;i++)
+       fprintf(stream, " %.2f", style->pattern[i]);
+     fprintf(stream,"\n");
+     writeBlockEnd(stream,indent,"PATTERN");
+     indent--;
+  }
+
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SIZE].item)
     writeAttributeBinding(stream, indent, "SIZE", &(style->bindings[MS_STYLE_BINDING_SIZE]));
   else writeNumber(stream, indent, "SIZE", -1, style->size);
