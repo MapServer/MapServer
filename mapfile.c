@@ -5875,8 +5875,8 @@ static int layerNeedsSubstitutions(layerObj *layer, char *from) {
   if(layer->filter.string && (strcasestr(layer->filter.string, from) != NULL)) return MS_TRUE;
 
   for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i]->expression.string && (strcasestr(layer->class[i]->expression.string, from) != NULL)) 
-      return MS_TRUE;
+    if(layer->class[i]->expression.string && (strcasestr(layer->class[i]->expression.string, from) != NULL)) return MS_TRUE;
+    if(layer->class[i]->text.string && (strcasestr(layer->class[i]->text.string, from) != NULL)) return MS_TRUE;
   }
 
   if(!msHashIsEmpty(&layer->bindvals)) return MS_TRUE;
@@ -5896,6 +5896,8 @@ static void layerSubstituteString(layerObj *layer, char *from, char *to) {
   for(i=0; i<layer->numclasses; i++) {
     if(layer->class[i]->expression.string)
       layer->class[i]->expression.string = msCaseReplaceSubstring(layer->class[i]->expression.string, from, to);
+    if(layer->class[i]->text.string)
+      layer->class[i]->text.string = msCaseReplaceSubstring(layer->class[i]->text.string, from, to);
   }
 
   /* The bindvalues are most useful when able to substitute values from the URL */
