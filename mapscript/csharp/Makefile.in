@@ -25,128 +25,6 @@ USE_POINT_Z_M = @USE_POINT_Z_M@
 # STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP -DNEED_STRLCAT
 STRINGS= @STRINGS@
 
-# Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
-PROJ_INC= @PROJ_INC@
-PROJ_LIBS= @PROJ_LIBS@
-PROJ=     @PROJ_ENABLED@
-
-# GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
-#
-#   - Versions 1.3 to 1.5 write non-LZW GIF (-DUSE_GD_1_3).
-#   - Versions 1.6 and greater write PNG (-DUSE_GD_1_6). Add -lpng -lz to GD_LIB line.
-#
-#
-GDFONT_OBJ=gd-1.2/gdfontt.o gd-1.2/gdfonts.o gd-1.2/gdfontmb.o gd-1.2/gdfontl.o gd-1.2/gdfontg.o
-GD_INC=  @GD_INC@
-GD_LIB=  @GD_LIB@
-GD=      @GD_DEF@
-GD_STATIC = @GD_STATIC@
-
-#
-# Optional Anti-Grain Geometry Support.
-#
-AGG=     @AGG_ENABLED@
-AGG_INC=  @AGG_INC@
-
-
-# 
-# ZLIB option (compressed SVG)
-#
-ZLIB_INC=  @ZLIB_INC@
-ZLIB_LIB=  @ZLIB_LIB@
-ZLIB=      @ZLIB_ENABLED@
-
-# PDFlib distribution (PDF library w/ PDF support). (EXPERIMENTAL)
-#
-#
-#
-PDF_INC=  @PDF_INC@
-PDF_LIB=  @PDF_LIB@
-PDF=      @PDF_ENABLED@
-
-# JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
-JPEG_INC= @JPEG_INC@
-JPEG_LIB= @JPEG_LIB@
-JPEG=     @JPEG_ENABLED@
-
-# ESRI SDE Support. You MUST have the SDE Client libraries and include files
-# on your system someplace. The actual SDE server you wish to connect to can
-# be elsewhere.
-SDE=	  @SDE_ENABLED@
-SDE_LIB=  @SDE_LIB@
-SDE_INC=  @SDE_INC@
-
-# Optional OGR Support.  OGC Simple Feature inspired interface for vector
-# formats.  See http://ogr.maptools.org/
-# Note that since OGR is part of the GDAL library, it uses GDAL_LIB + GDAL_INC
-OGR=	  @OGR_ENABLED@
-
-# Optional GDAL Support (provides read access to a variety of raster formats)
-# See http://www.remotesensing.org/gdal/
-GDAL=	  @GDAL_ENABLED@
-GDAL_LIB=  @GDAL_LIB@
-GDAL_INC=  @GDAL_INC@
-
-# Optional GEOS Support.
-# See http://geos.refractions.net/
-GEOS=     @GEOS_ENABLED@
-GEOS_LIB=  @GEOS_LIB@
-GEOS_INC=  @GEOS_INC@
-
-# Optional PostGIS Support.  See http://postgis.refractions.net/
-POSTGIS=      @POSTGIS_ENABLED@
-POSTGIS_LIB=  @POSTGIS_LIB@
-POSTGIS_INC=  @POSTGIS_INC@
-
-# Optional ORACLESPATIAL Support. Contact: cabral@cttmar.univali.br
-ORACLESPATIAL=@ORACLESPATIAL_ENABLED@
-ORACLESPATIAL_LIB=@ORACLESPATIAL_LIB@
-ORACLESPATIAL_INC=@ORACLESPATIAL_INC@
-
-# libcurl ... required for WMS/WFS Client Connections
-CURL_INC=@CURL_INC@
-CURL_LIB=@CURL_LIB@
-
-# libxml2 ... required for OGC SOS Server
-XML2_INC=@XML2_INC@
-XML2_LIB=@XML2_LIB@
-
-# Optional FastCGI
-FASTCGI=@FASTCGI_ENABLED@
-FASTCGI_INC=@FASTCGI_INC@
-FASTCGI_LIB=@FASTCGI_LIB@
-
-# OWS: OGC Web Services support
-# OGC WMS Server:  -DUSE_WMS_SVR (Requires PROJ4 support)
-# OGC WMS Client Connections:  -DUSE_WMS_LYR (Requires PROJ4 and libcurl)
-# OGC WFS Server: -DUSE_WFS_SVR (Requires OGR, PROJ4 recommended)
-# OGC WFS Client: -DUSE_WFS_LYR (Requires OGR, PROJ4 and libcurl)
-# OGC WCS Server: -DUSE_WCS_SVR (Requires GDAL and PROJ4)
-# OGC SOS Server: -DUSE_SOS_SVR (Requires PROJ4 and libxml2)
-OWS=@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@ @WCS_SVR_ENABLED@ @SOS_SVR_ENABLED@
-
-#
-# IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
-#
-# In order to compile the PHP_MAPSCRIPT module, we have to make MapServer
-# uses the same version of the REGEX library that PHP was compiled with:
-#
-PHP_REGEX_OBJ=@PHP_REGEX_OBJ@
-PHP_REGEX_INC=@PHP_REGEX_INC@
-
-#
-# Multithreading support.
-#
-THREAD=@THREAD_FLAG@
-THREAD_LIB=@THREAD_LIB@
-
-#
-# libiconv - Enables Internationalization
-#
-ICONV=@ICONV_ENABLED@
-ICONV_LIB=@ICONV_LIB@
-ICONV_INC=@ICONV_INC@
-
 #
 # Flags.
 #
@@ -154,23 +32,12 @@ ICONV_INC=@ICONV_INC@
 XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
-FLAGS = @DEBUG_FLAGS@ \
-        $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) $(PROJ) \
-	$(OWS) $(ORACLESPATIAL) $(JPEG) $(GD) $(AGG) $(PDF) $(SDE) \
-	$(SDERASTER) $(OGR) $(GDAL) $(GEOS) $(ICONV) $(FASTCGI) $(PHP_REGEX) \
-	$(REGEX_INC) $(POSTGIS) $(THREAD) $(ZLIB) \
-	$(GD_INC) $(AGG_INC) $(PDF_INC) $(PROJ_INC) $(JPEG_INC) $(EGIS_INC) \
-	$(SDE_INC) $(GDAL_INC) $(POSTGIS_INC)  \
-	$(CURL_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
-	$(FASTCGI_INC) $(ZLIB_INC) $(XML2_INC)
+FLAGS = @DEBUG_FLAGS@ @ALL_ENABLED@ @ALL_INC@ $(STRINGS) $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M)
 
 CCFLAGS   = @CFLAGS@ $(FLAGS)
 
 # Link flags and shared libs only
-SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(PROJ_LIBS) \
-          $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(POSTGIS_LIB) \
-	  $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
-	  $(THREAD_LIB) $(ICONV_LIB) $(ZLIB_LIB) $(XML2_LIB) $(XTRALIBS)
+SUP_LIBS =  @ALL_LIB@
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC)
