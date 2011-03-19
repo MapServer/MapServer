@@ -23,6 +23,14 @@ IGNORE_MISSING_DATA = @IGNORE_MISSING_DATA@
 USE_POINT_Z_M = @USE_POINT_Z_M@
 
 #
+# If you want to use disable fast versions of NINT (used by default) then
+# define the following
+# It's OFF by default.
+#
+#USE_NINT=-DUSE_GENERIC_MS_NINT
+USE_NINT = @USE_NINT@
+
+#
 # Apparently these aren't as commonplace as I'd hoped. Edit the
 # following line to reflect the missing functions on your platform.
 #
@@ -46,21 +54,49 @@ GD_LIB=  @GD_LIB@
 GD=      @GD_DEF@
 GD_STATIC = @GD_STATIC@
 
-
 #
 # Optional Anti-Grain Geometry Support.
 #
-AGG=     @AGG_ENABLED@
+#AGG=     @AGG_ENABLED@ commented because it breaks the build
 AGG_INC=  @AGG_INC@
+AGG_OBJ=  @AGG_OBJ@
+AGG_LIB= @AGG_LIB@
 
+#
+# Optional Opengl Support.
+#
+FTGL=     @FTGL_ENABLED@
+FTGL_LIB=  @FTGL_LIB@
+FTGL_INC=  @FTGL_INC@
 
-# PDFlib distribution (PDF library w/ PDF support). (EXPERIMENTAL)
+#Freetype support
+FT_ENABLE=     @FT_ENABLED@
+FT_LIB=  @FT_LIB@
+FT_INC=  @FT_INC@
+
 #
+# Optional Opengl Support.
 #
+OGL=     @OGL_ENABLED@
+OGL_LIB=  @OGL_LIB@
+OGL_INC=  @OGL_INC@
+
+PNG_INC= @PNG_INC@
+PNG_LIB= @PNG_LIB@
+
 #
-PDF_INC=  @PDF_INC@
-PDF_LIB=  @PDF_LIB@
-PDF=      @PDF_ENABLED@
+# Giflib support
+#
+GIF_INC= @GIF_INC@
+GIF_LIB= @GIF_LIB@
+GIF=     @GIF_ENABLED@
+
+# 
+# ZLIB option (compressed SVG)
+#
+ZLIB_INC=  @ZLIB_INC@
+ZLIB_LIB=  @ZLIB_LIB@
+ZLIB=      @ZLIB_ENABLED@
 
 # JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
 JPEG_INC= @JPEG_INC@
@@ -105,9 +141,23 @@ ORACLESPATIAL_INC=@ORACLESPATIAL_INC@
 CURL_INC=@CURL_INC@
 CURL_LIB=@CURL_LIB@
 
+# libfribibi ... 
+FRIBIDI=@FRIBIDI_ENABLED@
+FRIBIDI_INC=@FRIBIDI_INC@
+FRIBIDI_LIB=@FRIBIDI_LIB@
+
+
 # libxml2 ... required for OGC SOS Server
 XML2_INC=@XML2_INC@
 XML2_LIB=@XML2_LIB@
+
+# libxslt ... required for xml mapfile
+XSLT_INC=@XSLT_INC@
+XSLT_LIB=@XSLT_LIB@
+
+# libexslt ... required for xml mapfile
+EXSLT_INC=@EXSLT_INC@
+EXSLT_LIB=@EXSLT_LIB@
 
 # OWS: OGC Web Services support
 # OGC WMS Server:  -DUSE_WMS_SVR (Requires PROJ4 support)
@@ -140,6 +190,10 @@ ICONV=@ICONV_ENABLED@
 ICONV_LIB=@ICONV_LIB@
 ICONV_INC=@ICONV_INC@
 
+CAIRO=@CAIRO_ENABLED@
+CAIRO_LIB=@CAIRO_LIB@
+CAIRO_INC=@CAIRO_INC@
+
 #
 # Pick a compiler, etc. Flex and bison are only required if you need to modify the mapserver lexer (maplexer.l) or expression parser (mapparser.y).
 #
@@ -158,16 +212,18 @@ RUNPATHS= @RPATHS@
 CCFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
         $(IGNORE_MISSING_DATA) $(STRINGS) $(PROJ) $(OWS) \
 	$(ORACLESPATIAL) $(JPEG) $(GD) $(AGG) $(PDF) $(SDE) $(OGR) $(GDAL) $(GEOS) $(ICONV) \
-	$(POSTGIS) $(THREAD) $(GD_INC) $(AGG_INC) $(PDF_INC) \
+	$(POSTGIS) $(THREAD) $(GD_INC) $(AGG_INC) \
 	$(PROJ_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
 	$(REGEX_INC) $(GDAL_INC) $(POSTGIS_INC)  \
-	$(CURL_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) $(XML2_INC)
+	$(CURL_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) $(XML2_INC) \
+	$(FRIBIDI_INC) $(CAIRO_INC) $(OGL_INC) $(FTGL_INC)
 
 # Link flags and shared libs only
-SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(PROJ_LIBS) \
-          $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(POSTGIS_LIB) \
-	  $(CURL_LIB) $(ORACLESPATIAL_LIB) \
-	  $(THREAD_LIB) $(XTRALIBS) $(GEOS_LIB) $(ICONV_INC) $(XML2_LIB)
+SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
+          $(JPEG_LIB) $(PNG_LIB) $(GIF_LIB) $(SDE_LIB) $(GDAL_LIB) $(POSTGIS_LIB) \
+          $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
+          $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
+          $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS) $(CAIRO_LIB)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC)
