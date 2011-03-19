@@ -593,7 +593,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
         pszExpression = msStringConcatenate(pszExpression, pszWktText);
         sprintf(szBuffer, "%s", "')");
         pszExpression = msStringConcatenate(pszExpression, szBuffer);
-        
+        msGEOSFreeWKT(pszWktText);
     }
     if (psBufferShape)
       msFreeShape(psBufferShape);

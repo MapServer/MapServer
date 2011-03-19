@@ -74,7 +74,12 @@ shapeObj *msShapeFromWKT(const char *string)
 char *msShapeToWKT(shapeObj *shape)
 {
 #ifdef USE_GEOS
-  return msGEOSShapeToWKT(shape);
+  char* pszGEOSStr;
+  char* pszStr;
+  pszGEOSStr = msGEOSShapeToWKT(shape);
+  pszStr = (pszGEOSStr) ? msStrdup(pszGEOSStr) : NULL;
+  msGEOSFreeWKT(pszGEOSStr);
+  return pszStr;
 #elif defined(USE_OGR)
   return msOGRShapeToWKT(shape);
 #else

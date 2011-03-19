@@ -619,6 +619,7 @@ shapeObj *msGEOSShapeFromWKT(const char *wkt)
 #endif
 }
 
+/* Return should be freed with msGEOSFreeWKT */
 char *msGEOSShapeToWKT(shapeObj *shape)
 {
 #ifdef USE_GEOS
@@ -638,6 +639,17 @@ char *msGEOSShapeToWKT(shapeObj *shape)
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSShapeToWKT()");
   return NULL;
+#endif
+}
+
+void msGEOSFreeWKT(char* pszGEOSWKT)
+{
+#ifdef USE_GEOS
+#if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 2)
+  GEOSFree(pszGEOSWKT);
+#endif
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSFreeWKT()");
 #endif
 }
 
