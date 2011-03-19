@@ -451,7 +451,9 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
         && (line_out->point[0].x != line_out->point[line_out->numpoints-1].x
             || line_out->point[0].y != line_out->point[line_out->numpoints-1].y) )
     {
-        msAddPointToLine( line_out, line_out->point + 0 );
+        /* make a copy because msAddPointToLine can realloc the array */
+        pointObj sFirstPoint = line_out->point[0];
+        msAddPointToLine( line_out, &sFirstPoint );
     }
 
     return(MS_SUCCESS);
