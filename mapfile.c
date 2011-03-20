@@ -5953,7 +5953,9 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs) 
 
       if(!layerNeedsSubstitutions(layer, tag)) continue;
 
-      fprintf(stderr, "Layer %s, tag %s...\n", layer->name, tag);
+      if( layer->debug >= MS_DEBUGLEVEL_V ) 
+          msDebug( "  runtime substitution - Layer %s, tag %s...\n", 
+                   layer->name, tag);
 
       if(msValidateParameter(values[i], msLookupHashTable(&(layer->validation), names[i]), msLookupHashTable(&(layer->metadata), validation_pattern_key), msLookupHashTable(&(map->web.validation), names[i]), NULL) == MS_SUCCESS) {
         layerSubstituteString(layer, tag, values[i]);
