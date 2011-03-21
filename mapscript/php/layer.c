@@ -1175,8 +1175,9 @@ PHP_METHOD(layerObj, getMetaData)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-    
-    args[0] = zname; 
+    CHECK_OBJECT(mapscript_ce_hashtable, php_layer->metadata, &php_layer->layer->metadata);
+
+    args[0] = zname;
     MAPSCRIPT_CALL_METHOD(php_layer->metadata, "get", retval, 1, args);
 
     RETURN_STRING(Z_STRVAL(retval),1);
@@ -1203,6 +1204,7 @@ PHP_METHOD(layerObj, setMetaData)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    CHECK_OBJECT(mapscript_ce_hashtable, php_layer->metadata, &php_layer->layer->metadata);
     
     args[0] = zname; 
     args[1] = zvalue; 
@@ -1232,6 +1234,7 @@ PHP_METHOD(layerObj, removeMetaData)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    CHECK_OBJECT(mapscript_ce_hashtable, php_layer->metadata, &php_layer->layer->metadata);
     
     args[0] = zname; 
     MAPSCRIPT_CALL_METHOD(php_layer->metadata, "remove", retval, 1, args);

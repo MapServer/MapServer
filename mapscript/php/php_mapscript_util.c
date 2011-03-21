@@ -152,8 +152,10 @@ void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_o
     MAPSCRIPT_ADDREF(*php_object_storage);
 
     // return a reference to the object
-    zval_ptr_dtor(*return_value_ptr);
-    zval_set_isref_p(*php_object_storage);
-    **return_value_ptr = *php_object_storage;
+    if (return_value_ptr) {
+        zval_ptr_dtor(*return_value_ptr);
+        zval_set_isref_p(*php_object_storage);
+        **return_value_ptr = *php_object_storage;
+    }
 }
 

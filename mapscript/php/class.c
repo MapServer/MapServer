@@ -511,6 +511,7 @@ PHP_METHOD(classObj, getMetaData)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    CHECK_OBJECT(mapscript_ce_hashtable, php_class->metadata, &php_class->class->metadata);
     
     args[0] = zname; 
     MAPSCRIPT_CALL_METHOD(php_class->metadata, "get", retval, 1, args);
@@ -539,6 +540,7 @@ PHP_METHOD(classObj, setMetaData)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    CHECK_OBJECT(mapscript_ce_hashtable, php_class->metadata, &php_class->class->metadata);
     
     args[0] = zname; 
     args[1] = zvalue; 
@@ -568,6 +570,7 @@ PHP_METHOD(classObj, removeMetaData)
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     
     php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    CHECK_OBJECT(mapscript_ce_hashtable, php_class->metadata, &php_class->class->metadata);
     
     args[0] = zname; 
     MAPSCRIPT_CALL_METHOD(php_class->metadata, "remove", retval, 1, args);

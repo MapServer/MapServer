@@ -131,6 +131,12 @@
         return;                                                         \
     } 
 
+#define CHECK_OBJECT(mapscript_ce, php_object_storage, internal_object) \
+    if (!php_object_storage) {                                          \
+        mapscript_fetch_object(mapscript_ce, zobj, NULL, (void*)internal_object, \
+                           &php_object_storage, NULL TSRMLS_CC); \
+    }
+
 /* helpers for setters */
 #define IF_SET_STRING(property_name, internal, value)        \
     if (strcmp(property, property_name)==0)                  \
