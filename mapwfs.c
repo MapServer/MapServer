@@ -224,10 +224,9 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
 
 /* msWFSLocateSRSInList()
 **
-** Utility function to check if a space separated list contains of srs
-** contain the one passed in argument.  The list comes normaly
-** from ows_srs metadata, and is expected to using the simple EPSG notation
-** (EPSG:4326 ESPG:42304 ...). The srs comes from the query strin and can either
+** Utility function to check if a space separated list contains  the one passed in argument. 
+**  The list comes normaly from ows_srs metadata, and is expected to use the simple EPSG notation
+** (EPSG:4326 ESPG:42304 ...). The srs comes from the query string and can either
 ** be of simple EPSG format or using gc:def:crs:EPSG:xxx format
 */
 int msWFSLocateSRSInList(const char *pszList, const char *srs)
@@ -386,7 +385,17 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
     }
 
     if (pszOutputSRS && nVersion >= OWS_1_1_0)
-    {     
+    {    
+        projectionObj sProjTmp;
+        int nTmp=0;
+         
+        msInitProjection(&sProjTmp);
+         nTmp = msLoadProjectionStringEPSG(&(sProjTmp), pszOutputSRS);        
+         if (nTmp == 0)
+         {
+             msProjectRect(&(map->projection), &(sProjTmp), &map->extent);
+             msFreeProjection(&(sProjTmp));
+         }
           /*check if the srs passed is valid. Assuming that it is an EPSG:xxx format,
             Or urn:ogc:def:crs:EPSG:xxx format. */
         if (strncasecmp(pszOutputSRS, "EPSG:", 5) == 0 ||
@@ -401,6 +410,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
         {
             char epsg_string[100];
             const char *code;
+            
 
             code = pszOutputSRS + 23;
             
@@ -408,6 +418,8 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
             
             /*we load the projection sting in the map and possibly 
               set the axis order*/
+            /*reproject the map extent from current projection to output projection*/
+
             msFreeProjection(&map->projection);
             msLoadProjectionStringEPSG(&(map->projection), epsg_string);
         }
@@ -416,6 +428,19 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
     else if (pszOutputSRS && strncasecmp(pszOutputSRS, "EPSG:", 5) == 0) 
     {
         int nTmp =0;
+        projectionObj sProjTmp;
+
+        /*reproject the map extent from current projection to output projection*/
+        msInitProjection(&sProjTmp);
+        if (nVersion >= OWS_1_1_0)
+          nTmp = msLoadProjectionStringEPSG(&(sProjTmp), pszOutputSRS);
+        else
+          nTmp = msLoadProjectionString(&(sProjTmp), pszOutputSRS);
+        
+        if (nTmp == 0)
+          msProjectRect(&(map->projection), &(sProjTmp), &map->extent);
+        msFreeProjection(&(sProjTmp));
+
         msFreeProjection(&map->projection);
         msInitProjection(&map->projection);
 
@@ -2117,6 +2142,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     bFeatureIdSet = 1;
   }
 
+
+ 
 #ifdef USE_OGR
     if (bFilterSet && pszFilter && strlen(pszFilter) > 0) {
       char **tokens = NULL;
@@ -2315,7 +2342,24 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
          }
          if (tokens)
            msFreeCharArray(tokens, nTokens);
-
+    
+         /*turn on the layers and make sure projections are set properly*/
+         for (j=0; j< iFIDLayers; j++)
+         {
+             for (k=0; k<map->numlayers; k++) 
+             {
+                 layerObj *lp;
+                 lp = GET_LAYER(map, k);
+                 if (msWFSIsLayerSupported(lp) && lp->name && 
+                     strcasecmp(lp->name, aFIDLayers[j]) == 0)
+                 {
+                     lp->status = MS_ON;
+                 }
+             }
+             if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
+               return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
+         }
+    
          for (j=0; j< iFIDLayers; j++)
          {
              for (k=0; k<map->numlayers; k++) 
@@ -2379,9 +2423,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     if(layers)
       msFreeCharArray(layers, numlayers);
 
-    if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
+ 
+ if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
       return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
-
+ 
     /*
     ** Perform Query (only BBOX for now)
     */
