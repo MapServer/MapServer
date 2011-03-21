@@ -2419,10 +2419,8 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         driver_short_name = GDALGetDriverShortName(hDriver);
         driver_long_name = GDALGetDriverLongName(hDriver);
         /* TODO: improve this, exchange strstr() */
-        msDebug("msWCSGetCoverageMetadata20(): Driver long name = '%s' and short name = '%s'.\n", driver_long_name, driver_short_name);
         for(i = 0; i < layer->map->numoutputformats; ++i)
         {
-            msDebug("msWCSGetCoverageMetadata20(): processing outputformat %s.\n", layer->map->outputformatlist[i]->driver);
             if(strstr( layer->map->outputformatlist[i]->driver, driver_short_name) != NULL
                || strstr(layer->map->outputformatlist[i]->driver, driver_long_name) != NULL)
             {
@@ -3545,10 +3543,12 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     //msWCSSetDefaultBandsRangeSetInfo(params, &cm, layer);
     //msDebug("Bandcount: %d\n", cm.bandcount);
 
+    msApplyDefaultOutputFormats(map);
+
     if (msGetOutputFormatIndex(map, params->format) == -1)
     {
-        msSetError(MS_WCSERR, "Unrecognized value for the FORMAT parameter.",
-                "msWCSGetCoverage20()");
+        msSetError(MS_WCSERR, "Unrecognized value '%s' for the FORMAT parameter.",
+                "msWCSGetCoverage20()", params->format);
         return msWCSException(map, "InvalidParameterValue", "format",
                 params->version);
     }
