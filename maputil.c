@@ -1790,7 +1790,11 @@ void msCleanup()
   msForceTmpFileBase( NULL );
   msConnPoolFinalCleanup();
   /* Lexer string parsing variable */
-  msFree(msyystring_buffer);
+  if (msyystring_buffer != NULL)
+  {
+    msFree(msyystring_buffer);
+    msyystring_buffer = NULL;
+  }
   msyylex_destroy();
 
 #ifdef USE_OGR
