@@ -15,6 +15,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- KML: update code to reflect output changes. Fix true type symbols. (#3766)
+
+- SLD: Text Symbolizer now uses the new expression syntax (#3757)
+
 - WFS: correct bbox values for GetFeature with featureid request (#3761) 
 
 - Mapscript Seg Fault on mapObj->getMetaData (#3738)

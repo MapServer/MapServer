@@ -330,16 +330,9 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
         BgColor = layer->map->imagecolor;
 
          xmlNewChild(DocNode, NULL, BAD_CAST "name", BAD_CAST layer->map->name);
+         aggFormat = msSelectOutputFormat( layer->map, "png24");
+         aggFormat->transparent = MS_TRUE;
          
-         for (int i=0; i<map->numoutputformats; i++)
-         {
-             outputFormatObj *iFormat = layer->map->outputformatlist[i];
-             if(!strcasecmp(iFormat->name,"png24"))
-             {
-                 aggFormat = iFormat;
-                 break;
-             }
-         } 
     }
 
     currentLayer = layer;

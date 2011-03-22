@@ -118,10 +118,12 @@ int msRenderEllipseSymbolKml(imageObj *image, double x, double y,
     return MS_SUCCESS;
 }
 
-int msRenderTruetypeSymbolKml(imageObj *img, double x, double y,
+int msRenderTruetypeSymbolKml(imageObj *image, double x, double y,
         symbolObj *symbol, symbolStyleObj *style)
 {
-   return MS_SUCCESS;
+    KmlRenderer* renderer = getKmlRenderer(image);
+    renderer->renderTruetypeSymbol(image, x, y, symbol, style);
+    return MS_SUCCESS;
 }
 
 
