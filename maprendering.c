@@ -739,7 +739,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
          if(computeLabelStyle(&s,label,fontset,scalefactor) == MS_FAILURE) {
             return MS_FAILURE;
          }
-         if(s.rotation == 0) {
+         if(s.rotation == 0 && !MS_RENDERER_KML(image->format)) {
             x = MS_NINT(labelPnt.x);
             y = MS_NINT(labelPnt.y);
          } else {
