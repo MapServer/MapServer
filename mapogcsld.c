@@ -2861,7 +2861,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                              strcasecmp(psTmpNode->pszValue,"PropertyName") ==0 &&
                              CPLGetXMLValue(psTmpNode, NULL, NULL))
                     {
-                        snprintf(szTmp, sizeof(szTmp), "[%s]", CPLGetXMLValue(psTmpNode, NULL, NULL));
+                        snprintf(szTmp, sizeof(szTmp), "\"[%s]\"", CPLGetXMLValue(psTmpNode, NULL, NULL));
                         pszClassText = msStringConcatenate(pszClassText, szTmp);
                     }
                     psTmpNode = psTmpNode->psNext;
