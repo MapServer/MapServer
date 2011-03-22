@@ -48,15 +48,17 @@ char msyystring_begin;
 char *msyystring_buffer = NULL;
 int  msyystring_icase = MS_FALSE;
 int  msyystring_state;
+int  msyystring_size_tmp;
 
 int msyyreturncomments = 0;
 
 #define MS_LEXER_STRING_REALLOC(string, string_size, max_size, string_ptr)   \
    if (string_size >= max_size) {         \
+       msyystring_size_tmp = max_size;     \
        max_size = ((max_size*2) > string_size) ? max_size*2 : string_size+1;                     \
        string = (char *) msSmallRealloc(string, sizeof(char *) * max_size);  \
        string_ptr = string;    \
-       string_ptr += (max_size/2); \
+       string_ptr += msyystring_size_tmp; \
    }
 
 #define MS_LEXER_RETURN_TOKEN(token) \
@@ -592,12 +594,15 @@ char path[MS_MAXPATHLEN];
                                                 }
                                               }
 
-<MSSTRING>\\\'|\\\"                          { 
+<MSSTRING>\\\'|\\\"|\\\\|\\                  { 
                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
                                                                                            msyystring_buffer_size, msyystring_buffer_ptr);
 
                                                 ++msyystring_size;
-                                                *msyystring_buffer_ptr++ = msyytext[1]; 
+                                                if (strlen(msyytext) == 2)
+                                                    *msyystring_buffer_ptr++ = msyytext[1]; 
+                                                else
+                                                    *msyystring_buffer_ptr++ = msyytext[0];
                                              }
 
 <MSSTRING>[^\\\'\\\"]+                       {
