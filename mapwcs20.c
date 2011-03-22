@@ -3371,7 +3371,8 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
             msSetError(MS_WCSERR,
                 "Error loading CRS %s.",
                 "msWCSGetCoverage20()", params->subsetcrs);
-            return MS_FAILURE;
+            return msWCSException(map, "InvalidParameterValue",
+                "projection", params->version);
         }
 
         if(msProjectionsDiffer(&imageProj, &subsetProj))
