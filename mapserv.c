@@ -1150,7 +1150,7 @@ int main(int argc, char *argv[]) {
             
       exit(0);
     } else if( strncmp(argv[iArg], "MS_ERRORFILE=", 13) == 0 ) {
-      msSetErrorFile( argv[iArg] + 13 );
+        msSetErrorFile( argv[iArg] + 13, NULL );
     } else if( strncmp(argv[iArg], "MS_DEBUGLEVEL=", 14) == 0) {
       msSetGlobalDebugLevel( atoi(argv[iArg] + 14) );
     } 

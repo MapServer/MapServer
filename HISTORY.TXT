@@ -31,7 +31,10 @@ Current Version (SVN trunk):
 
 - Fix csharp Makefile.in (#3758)
 
-- Allow run-time subs in class->text (makes sense if you allow it in class->expression).
+- Allow run-time subs in class->text (makes sense if you allow it in 
+  class->expression).
+
+- Fix build problem when --enable-cgi-cl-debug-args is enabled (#2853)
 
 Version 6.0.0-beta2 (2011-03-18)
 --------------------------------
