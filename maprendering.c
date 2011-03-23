@@ -385,10 +385,10 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
          width = MS_MAX(width,style->minwidth);
 
          if(style->offsety==-99) {
-            offsetLine = msOffsetPolyline(p,style->offsetx * width,-99);
+            offsetLine = msOffsetPolyline(p,style->offsetx * width/style->width,-99);
          } else if(style->offsetx!=0 || style->offsety!=0) {
-            offsetLine = msOffsetPolyline(p,
-                                          style->offsetx * width, style->offsety * width);
+            offsetLine = msOffsetPolyline(p, style->offsetx * width/style->width,
+                  style->offsety * width/style->width);
          }
          if(style->symbol == 0 || (symbol->type==MS_SYMBOL_SIMPLE)) {
             strokeStyleObj s;
@@ -398,7 +398,7 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             s.width = width;
             s.patternlength = style->patternlength;
             for(i=0; i<s.patternlength; i++)
-               s.pattern[i] = style->pattern[i]*s.width;
+               s.pattern[i] = style->pattern[i]*s.width/style->width;
 
             if(MS_VALID_COLOR(style->color))
                s.color = &style->color;
