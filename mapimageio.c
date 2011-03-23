@@ -1180,7 +1180,7 @@ int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb) {
     }
     fread(signature,1,8,stream);
     fclose(stream);
-    if(png_check_sig(signature,8)) {
+    if(png_sig_cmp(signature,0,8) == 0) {
         ret = readPNG(path,rb);
     }
 #ifdef USE_GIF
