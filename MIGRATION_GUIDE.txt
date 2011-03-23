@@ -269,7 +269,7 @@ WFS 1.1 axis orientation
 ------------------------
 
 The axis order in previous versions of the WFS specifications was to always use 
-easting (x or lon ) and northing (y or lat).  WMS 1.1 specifies that, depending 
+easting (x or lon ) and northing (y or lat).  WFS 1.1 specifies that, depending 
 on the particular SRS, the x axis may or may not be oriented West-to-East, and 
 the y axis may or may not be oriented South-to-North. The WFS portrayal operation 
 shall account for axis order. This affects some of the EPSG codes that were commonly 
