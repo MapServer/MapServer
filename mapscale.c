@@ -165,8 +165,9 @@ imageObj *msDrawScalebar(mapObj *map)
   shapeObj shape;
   lineObj line;
   pointObj points[5];
-  strokeStyle.patternlength=0;
   rendererVTableObj *renderer;
+
+  strokeStyle.patternlength=0;
   
   if(map->units == -1) {
     msSetError(MS_MISCERR, "Map units not set.", "msDrawScalebar()");
