@@ -1,4 +1,4 @@
-MapServer Revision History
+MapServer Revsion History
 ==========================
 
 $Id$
@@ -13,6 +13,7 @@ For a complete change history, please see the Subversion log comments.
 
 Version 5.6.7 (SVN branch-5-6):
 ---------------------------
+- Fixed false computation of symbol size when used as a brush on line (#3760)
 
 - Fixed SQL Spatial to be able to use UniqueIdentifier field as unique key (#3722)
 

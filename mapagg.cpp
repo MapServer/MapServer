@@ -1694,8 +1694,8 @@ void msDrawLineSymbolAGG(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
                 symbol = msRotateSymbol(symbol, style->angle);
             }
 
-            int pw =(int) ceil(symbol->sizex*d);    
-            int ph =(int) ceil(symbol->sizey*d);
+            int pw =(int) MS_MAX(1,ceil(symbol->sizex*d));    
+            int ph =(int) MS_MAX(1,ceil(symbol->sizey*d));
             
             
             if((pw <= 1) && (ph <= 1)) { // No sense using a tile, just draw a simple line
