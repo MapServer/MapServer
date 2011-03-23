@@ -12,16 +12,18 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
-- apply min/max size/width style values to polygon spacing (vaguely related to #3132)
+Version 6.0.0-beta2 (2011-03-18)
+--------------------------------
+
+- apply min/max size/width style values to polygon spacing (vaguely related 
+  to #3132)
 
 - assure that a created tile has a non-zero width and height (#3370)
 
 - use png_sig_cmp instead of png_check_sig (#3762)
 
-- Rendering: scale style OFFSET and GAP the same way we scale other style attributes.
-  Beforehand, we scaled them proportionaly to the computeed width.
+- Rendering: scale style OFFSET and GAP the same way we scale other style 
+  attributes. Beforehand, we scaled them proportionaly to the computed width.
 
 - KML: fix rounding problem for point feautres (#3767)
 
