@@ -165,6 +165,7 @@ imageObj *msDrawScalebar(mapObj *map)
   shapeObj shape;
   lineObj line;
   pointObj points[5];
+  strokeStyle.patternlength=0;
   rendererVTableObj *renderer;
   
   if(map->units == -1) {
