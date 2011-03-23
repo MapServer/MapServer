@@ -14,7 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
- - use png_sig_cmp instead of png_check_sig (#3762)
+- assure that a created tile has a non-zero width and height (#3370)
+
+- use png_sig_cmp instead of png_check_sig (#3762)
 
 - Rendering: scale style OFFSET and GAP the same way we scale other style attributes.
   Beforehand, we scaled them proportionaly to the computeed width.

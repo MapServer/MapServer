@@ -596,6 +596,8 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
                pw = symbol->sizex + s.gap;
                ph = symbol->sizey + s.gap;
             }
+            if(pw<1) pw=1;
+            if(ph<1) ph=1;
 
             /* if we're doing vector symbols with an antialiased pixel rendererer, we want to enable
              * seamless mode, i.e. comute a tile that accounts for the blending of neighbouring
