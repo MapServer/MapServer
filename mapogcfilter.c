@@ -1020,7 +1020,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                       psFilterNode->psRightNode->pszValue = pszSRS;
 
                     psFilterNode->psRightNode->pOther =     
-                      (rectObj *)malloc(sizeof(rectObj));
+                      (rectObj *)msSmallMalloc(sizeof(rectObj));
                     ((rectObj *)psFilterNode->psRightNode->pOther)->minx = sBox.minx; 
                     ((rectObj *)psFilterNode->psRightNode->pOther)->miny = sBox.miny; 
                     ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = sBox.maxx; 
@@ -1067,7 +1067,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     psDistance->psChild->psNext && psDistance->psChild->psNext->pszValue)
                 {
                     pszUnits = (char *)CPLGetXMLValue(psDistance, "units", NULL);
-                    psShape = (shapeObj *)malloc(sizeof(shapeObj));
+                    psShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
                     msInitShape(psShape);
                     if (FLTShapeFromGMLTree(psGMLElement, psShape, &pszSRS))
                       /* if (FLTGML2Shape_XMLNode(psPoint, psShape)) */
@@ -1145,7 +1145,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
                 if (psGMLElement)
                 {
-                    psShape = (shapeObj *)malloc(sizeof(shapeObj));
+                    psShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
                     msInitShape(psShape);
                     if (FLTShapeFromGMLTree(psGMLElement, psShape, &pszSRS))
                       /* if (FLTGML2Shape_XMLNode(psPoint, psShape)) */
@@ -1874,7 +1874,7 @@ char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect)
     if (!psFilterNode || !psRect)
       return NULL;
 
-    if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
+    if (psFilterNode->pszValue && strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
     {
         if (psFilterNode->psRightNode && psFilterNode->psRightNode->pOther)
         {
