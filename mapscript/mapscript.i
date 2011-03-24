@@ -37,6 +37,10 @@
 %include swig_csharp_extensions.i
 #endif
 
+#ifdef SWIGJAVA
+%ignore layer_obj::extent;
+#endif
+
 %{
 #include "../../mapserver.h"
 #include "../../maptemplate.h"
