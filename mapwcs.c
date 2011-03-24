@@ -2244,7 +2244,7 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
       else if( EQUAL(value,"BYTE") )
         cm->imagemode = MS_IMAGEMODE_BYTE;
       else {
-        msSetError( MS_WCSERR, "Content of wcs|ows_imagemode (%s) not recognised.  Should be one of PC256 (byte), INT16 or FLOAT32.", "msWCSGetCoverageMetadata()", value );
+        msSetError( MS_WCSERR, "Content of wcs|ows_imagemode (%s) not recognised.  Should be one of BYTE, INT16 or FLOAT32.", "msWCSGetCoverageMetadata()", value );
         return MS_FAILURE;
       }
     }
