@@ -1242,13 +1242,18 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                     {
                        int nDash = 0, i;
                        char **aszValues = NULL;
+                       int nMaxDash;
                        pszDashValue = 
                           msStrdup(psCssParam->psChild->psNext->pszValue);
                        aszValues = msStringSplit(pszDashValue, ' ', &nDash);
                        if (nDash > 0)
                        {
-                           psStyle->patternlength = nDash;
-                           for (i=0; i<nDash; i++)
+                           nMaxDash = nDash;
+                           if (nDash > MS_MAXPATTERNLENGTH)
+                             nMaxDash =  MS_MAXPATTERNLENGTH;
+
+                           psStyle->patternlength = nMaxDash;
+                           for (i=0; i<nMaxDash; i++)
                               psStyle->pattern[i] = atof(aszValues[i]);
 
                            msFreeCharArray(aszValues, nDash);
