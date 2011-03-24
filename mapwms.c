@@ -408,6 +408,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
   char *bboxrequest=NULL;
   const char *sldenabled=NULL;
+  char *sld_url=NULL, *sld_body=NULL;
 
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
@@ -450,13 +451,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           {
             if (strcasecmp(names[i], "SLD") == 0)
             {
-              if ((status = msSLDApplySLDURL(map, values[i], -1, NULL)) != MS_SUCCESS)
-                return msWMSException(map, nVersion, NULL, wms_exception_format);
+              sld_url =  values[i];
             }
             if (strcasecmp(names[i], "SLD_BODY") == 0)
             {
-              if ((status =msSLDApplySLD(map, values[i], -1, NULL)) != MS_SUCCESS)
-                return msWMSException(map, nVersion, NULL, wms_exception_format);
+              sld_body =  values[i];
             }
           }
        }
@@ -1078,6 +1077,18 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         map->units = iUnits;
   }
 
+  /*apply sld if defined. This is done here so that bbox and srs are already applied*/
+  if (sld_url)
+  {
+      if ((status = msSLDApplySLDURL(map, sld_url, -1, NULL)) != MS_SUCCESS)
+        return msWMSException(map, nVersion, NULL, wms_exception_format);
+      
+  }
+  else if (sld_body)
+  {
+      if ((status =msSLDApplySLD(map, sld_body, -1, NULL)) != MS_SUCCESS)
+        return msWMSException(map, nVersion, NULL, wms_exception_format);
+  }
   /* Validate Styles :
   ** mapserv does not advertize any styles (the default styles are the
   ** one that are used. So we are expecting here to have empty values
