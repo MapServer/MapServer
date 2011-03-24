@@ -1181,7 +1181,7 @@ char *msSOSParseTimeGML(char *pszGmlTime)
 /*                                                                      */
 /*      getCapabilities request handler.                                */
 /************************************************************************/
-int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req) {
+int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req, owsRequestObj *ows_request) {
     xmlDocPtr psDoc = NULL;       /* document pointer */
     xmlNodePtr psRootNode, psMainNode, psNode;
     xmlNodePtr psOfferingNode;
@@ -1395,7 +1395,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                 continue;
 
              value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_id");
-             if (value && (msOWSRequestIsEnabled(map, lp, "S", "GetCapabilities")))
+             if (value && (msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)))
              {
                  nCurrentOff = -1;
                  for (j=0; j<nOfferings; j++)
@@ -1789,7 +1789,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
 /*                                                                      */
 /*      GetObservation request handler                                  */
 /************************************************************************/
-int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req) {
+int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req, owsRequestObj *ows_request) {
   char *schemalocation = NULL;
   char *xsi_schemaLocation = NULL;
   const char *pszTmp = NULL, *pszTmp2 = NULL;
@@ -1871,7 +1871,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   for (i=0; i<map->numlayers; i++) {
       pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
     if (pszTmp && (strcasecmp(pszTmp, sosparams->pszOffering) == 0) && 
-        (msOWSRequestIsEnabled(map, GET_LAYER(map, i), "S", "GetObservation")))
+        (msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)))
       break;
   }
 
@@ -2614,7 +2614,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
 /*                                                                      */
 /*      Describe sensor request handler.                               */
 /************************************************************************/
-int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
+int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams, owsRequestObj *ows_request) {
   char *pszEncodedUrl = NULL;
   const char *pszId = NULL, *pszUrl = NULL;
   int i = 0, j=0, k=0;
@@ -2653,7 +2653,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
           pszProcedureURI = msStrdup("urn:ogc:def:procedure:");
           pszProcedureURI = msStringConcatenate(pszProcedureURI, tokens[k]);
           if ( (pszProcedureURI && strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) &&
-               (msOWSRequestIsEnabled(map, lp, "S", "DescribeSensor")) ) {
+               (msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)) ) {
             bFound = 1; 
             pszProcedureId = msStrdup(tokens[k]);
             msFree(pszProcedureURI);
@@ -2760,7 +2760,8 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams) {
 /*                                                                      */
 /*      DescribeObserrvationType request handler                        */
 /************************************************************************/
-int msSOSDescribeObservationType(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req) {
+int msSOSDescribeObservationType(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req, owsRequestObj *ows_request)
+{
   int i, j, n = 0, bLayerFound = 0;
   char **tokens = NULL;
   char *script_url=NULL;
@@ -2776,6 +2777,8 @@ int msSOSDescribeObservationType(mapObj *map, sosParamsObj *sosparams, cgiReques
   tokens = msStringSplit(sosparams->pszObservedProperty, ',', &n);
 
   for (i=0; i<map->numlayers; i++) {
+    if (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers))
+      continue;
     pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "observedproperty_id");
     if (pszTmp) {
       if (strcasecmp(pszTmp, sosparams->pszObservedProperty) == 0) {
@@ -2820,7 +2823,7 @@ int msSOSDescribeObservationType(mapObj *map, sosParamsObj *sosparams, cgiReques
 ** - If this is a valid request then it is processed and MS_SUCCESS is returned
 **   on success, or MS_FAILURE on failure.
 */
-int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
+int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request) {
 #if defined(USE_SOS_SVR) && defined(USE_LIBXML2)
   int returnvalue = MS_DONE;
   sosParamsObj *paramsObj = (sosParamsObj *)calloc(1, sizeof(sosParamsObj));
@@ -2838,8 +2841,18 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
       return msSOSException(map, "request", "MissingParameterValue");
     }
 
+    msOWSRequestLayersEnabled(map, "S", paramsObj->pszRequest, ows_request);
+    if (ows_request->numlayers == 0)
+    {
+        msSetError(MS_SOSERR, "Unsupported SOS request", "msSOSDispatch()");
+        msSOSFreeParamsObj(paramsObj);
+        free(paramsObj);
+        paramsObj = NULL;
+        return msSOSException(map, "request", "InvalidParameterValue");
+    }
+
     if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0) {
-      returnvalue = msSOSGetCapabilities(map, paramsObj, req);
+      returnvalue = msSOSGetCapabilities(map, paramsObj, req, ows_request);
       msSOSFreeParamsObj(paramsObj);
       free(paramsObj);
       paramsObj = NULL;
@@ -2868,13 +2881,13 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req) {
       }
 
       if (strcasecmp(paramsObj->pszRequest, "DescribeSensor") == 0)
-        returnvalue = msSOSDescribeSensor(map, paramsObj);
+        returnvalue = msSOSDescribeSensor(map, paramsObj, ows_request);
 
       else if (strcasecmp(paramsObj->pszRequest, "GetObservation") == 0)
-        returnvalue = msSOSGetObservation(map, paramsObj, req);
+        returnvalue = msSOSGetObservation(map, paramsObj, req, ows_request);
 
       else if (strcasecmp(paramsObj->pszRequest, "DescribeObservationType") == 0)
-        returnvalue = msSOSDescribeObservationType(map, paramsObj, req);
+          returnvalue = msSOSDescribeObservationType(map, paramsObj, req, ows_request);
 
       msSOSFreeParamsObj(paramsObj);
       free(paramsObj);

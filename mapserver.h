@@ -1882,6 +1882,7 @@ MS_DLL_EXPORT int msStringIsInteger(const char *string);
 MS_DLL_EXPORT int msUTF8ToUniChar(const char *str, int *chPtr); /* maptclutf.c */
 MS_DLL_EXPORT char* msGetFirstLine(char* text);
 MS_DLL_EXPORT char* msStringEscape( const char * pszString );
+MS_DLL_EXPORT int msStringInArray( const char * pszString, char **array, int numelements);
 
 #ifdef NEED_STRDUP
 MS_DLL_EXPORT char *strdup(char *s);

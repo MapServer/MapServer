@@ -341,7 +341,7 @@ static int msWCSGetCapabilities11_CoverageSummary(
 /*                       msWCSGetCapabilities11()                       */
 /************************************************************************/
 int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params, 
-                                  cgiRequestObj *req)
+                           cgiRequestObj *req, owsRequestObj *ows_request)
 {
     xmlDocPtr psDoc = NULL;       /* document pointer */
     xmlNodePtr psRootNode, psMainNode, psNode;
@@ -549,7 +549,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
             if(!msWCSIsLayerSupported(layer)) 
                 continue;
             
-            if (!msOWSRequestIsEnabled(map, layer, "C", "GetCapabilities"))
+            if (!msStringInArray(layer->name, ows_request->enabled_layers, ows_request->numlayers))
                 continue;
 
             status = msWCSGetCapabilities11_CoverageSummary( 
@@ -854,7 +854,7 @@ msWCSDescribeCoverage_CoverageDescription11(
 /*                      msWCSDescribeCoverage11()                       */
 /************************************************************************/
 
-int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
+int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request)
 {
     xmlDocPtr psDoc = NULL;       /* document pointer */
     xmlNodePtr psRootNode;
@@ -887,7 +887,8 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
     if(params->coverages) { /* use the list */
         for( j = 0; params->coverages[j]; j++ ) {
             i = msGetLayerIndex(map, params->coverages[j]);
-            if ( (i == -1) || (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage")) )
+            if ( (i == -1) || 
+                 (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)) )
             {
                 msSetError( MS_WCSERR,
                             "COVERAGE %s cannot be opened / does not exist",
@@ -940,7 +941,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
     } else { /* return all layers */
         for(i=0; i<map->numlayers; i++) {
 
-            if (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage"))
+            if (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers))
                 continue;
 
             msWCSDescribeCoverage_CoverageDescription11((GET_LAYER(map, i)), 

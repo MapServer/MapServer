@@ -253,7 +253,7 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
 /*      Return the capabilities document for wfs 1.1.0                  */
 /************************************************************************/
 int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params, 
-                         cgiRequestObj *req) 
+                           cgiRequestObj *req, owsRequestObj *ows_request) 
 {
     xmlDocPtr psDoc = NULL;       /* document pointer */
     xmlNodePtr psRootNode, psMainNode, psNode, psFtNode;
@@ -429,7 +429,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
          layerObj *lp;
          lp = GET_LAYER(map, i);
          
-         if (!msOWSRequestIsEnabled(map, lp, "F", "GetCapabilities"))
+         if (!msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers))
              continue;
 
          /* List only vector layers in which DUMP=TRUE */

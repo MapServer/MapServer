@@ -2664,7 +2664,7 @@ static int msWCSGetCapabilities20_CoverageSummary(
 /************************************************************************/
 
 int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
-                           wcs20ParamsObjPtr params)
+                           wcs20ParamsObjPtr params, owsRequestObj *ows_request)
 {
     xmlDocPtr psDoc = NULL;       /* document pointer */
     xmlNodePtr psRootNode, psOperationsNode, psServiceMetadataNode, psNode;
@@ -2808,7 +2808,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             if(!msWCSIsLayerSupported(layer))
                 continue;
 
-            if (!msOWSRequestIsEnabled(map, layer, "C", "GetCapabilities"))
+            if (!msStringInArray(layer->name, ows_request->enabled_layers, ows_request->numlayers))
                 continue;
 
             status = msWCSGetCapabilities20_CoverageSummary(
@@ -2984,7 +2984,7 @@ static int msWCSDescribeCoverage_CoverageDescription20(mapObj *map,
 /*      is written on the stream.                                       */
 /************************************************************************/
 
-int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params)
+int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj *ows_request)
 {
     xmlDocPtr psDoc = NULL; /* document pointer */
     xmlNodePtr psRootNode;
@@ -3010,7 +3010,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params)
         for (j = 0; params->ids[j]; j++)
         {
             i = msGetLayerIndex(map, params->ids[j]);
-            if (i == -1 || (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage")) )
+            if (i == -1 || (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)) )
             {
                 msSetError(MS_WCSERR, "Unknown coverage: (%s)",
                         "msWCSDescribeCoverage20()", params->ids[j]);
@@ -3246,7 +3246,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
 /************************************************************************/
 
 int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
-                       wcs20ParamsObjPtr params)
+                       wcs20ParamsObjPtr params, owsRequestObj *ows_request)
 {
     layerObj *layer = NULL;
     wcs20coverageMetadataObj cm;
@@ -3280,7 +3280,8 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata),
                                               "COM", "name",
                                               GET_LAYER(map, i)->name);
-        if (EQUAL(coverageName, params->ids[0]) && (msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "GetCoverage")))
+        if (EQUAL(coverageName, params->ids[0]) && 
+            (msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)))
         {
             layer = GET_LAYER(map, i);
             i = map->numlayers; /* to exit loop don't use break, we want to free resources first */
@@ -3764,7 +3765,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 /*      operations are executed.                                        */
 /************************************************************************/
 
-int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
+int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request)
 {
     wcs20ParamsObjPtr params = NULL;
     int returnValue = MS_FAILURE, status;
@@ -3849,6 +3850,16 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
         return MS_DONE;
     }
 
+    msOWSRequestLayersEnabled(map, "C", params->request, ows_request);
+    if (ows_request->numlayers == 0)
+    {
+        msSetError(MS_WCSERR, "Unsupported WCS request", "msWCSDispatch20()");
+        msWCSException20(map, "InvalidParameterValue", "request",
+                         params->version );
+        msWCSFreeParamsObj20(params); /* clean up */
+        return MS_FAILURE;
+    }
+
     /* check if any unknown parameters are present              */
     /* create an error message, containing all unknown params   */
     if (params->invalid_get_parameters != NULL)
@@ -3893,15 +3904,15 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request)
     /* Call operation specific functions */
     if (EQUAL(params->request, "GetCapabilities"))
     {
-        returnValue = msWCSGetCapabilities20(map, request, params);
+        returnValue = msWCSGetCapabilities20(map, request, params, ows_request);
     }
     else if (EQUAL(params->request, "DescribeCoverage"))
     {
-        returnValue = msWCSDescribeCoverage20(map, params);
+        returnValue = msWCSDescribeCoverage20(map, params, ows_request);
     }
     else if (EQUAL(params->request, "GetCoverage"))
     {
-        returnValue = msWCSGetCoverage20(map, request, params);
+        returnValue = msWCSGetCoverage20(map, request, params, ows_request);
     }
     else
     {

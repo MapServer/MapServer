@@ -2137,3 +2137,18 @@ char* msStringEscape( const char * pszString )
     string_tmp[i] = '\0';
     return string_tmp;
 }
+
+/************************************************************************/
+/*                             msStringInArray()                        */
+/************************************************************************/
+
+/* Check if a string is in a array */
+int msStringInArray( const char * pszString, char **array, int numelements)
+{
+    int i;
+    for (i=0;i<numelements;++i) {
+        if (strcasecmp(pszString, array[i])==0)
+            return MS_TRUE;
+    }
+    return MS_FALSE;
+}

@@ -103,7 +103,13 @@ typedef  struct
   char         *httpcookiedata;
 } wmsParamsObj;
 
-
+/* owsRequestObj: Represent a OWS specific request with its enabled layers */
+typedef struct
+{
+    int numlayers;
+    char **enabled_layers;
+    
+} owsRequestObj;
 
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode);
 
@@ -115,6 +121,8 @@ MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
                                                 const char *name);
 MS_DLL_EXPORT int msOWSRequestIsEnabled(mapObj *map, layerObj *layer, 
                                         const char *namespaces, const char *name);
+MS_DLL_EXPORT void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces, 
+                                             const char *request, owsRequestObj *request_layers);
 MS_DLL_EXPORT int msOWSParseRequestMetadata(const char *metadata, const char *request, 
                                             int *disabled);
 
@@ -360,10 +368,10 @@ MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, 
 /*====================================================================
  *   mapwms.c
  *====================================================================*/
-int msWMSDispatch(mapObj *map, cgiRequestObj *req, int force_wms_mode); 
+int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, int force_wms_mode); 
 MS_DLL_EXPORT int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                                         char **names, char **values, int numentries, 
-                                        char *wms_exception_format, const char *wms_request);
+                                        char *wms_exception_format, const char *wms_request, owsRequestObj *ows_request);
 
 
 /*====================================================================
@@ -395,8 +403,10 @@ MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
 #define OWS_DEFAULT_SCHEMA 0 /* basically a GML 2.1 schema */
 #define OWS_SFE_SCHEMA 1 /* GML for simple feature exchange (formerly GML3L0) */
 
-MS_DLL_EXPORT int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, int force_wfs_mode);
-int msWFSParseRequest(mapObj *map, cgiRequestObj *, wfsParamsObj *, int force_wfs_mode);
+MS_DLL_EXPORT int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, 
+                                owsRequestObj *ows_request, int force_wfs_mode);
+int msWFSParseRequest(mapObj *map, cgiRequestObj *, owsRequestObj *ows_request,
+                      wfsParamsObj *, int force_wfs_mode);
 wfsParamsObj *msWFSCreateParamsObj(void);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
 int msWFSIsLayerSupported(layerObj *lp);
@@ -409,7 +419,7 @@ const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp);
 int msWFSException11(mapObj *map, const char *locator, 
                      const char *exceptionCode, const char *version);
 int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *wfsparams, 
-                           cgiRequestObj *req); 
+                           cgiRequestObj *req, owsRequestObj *ows_request); 
 char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer,const char*version);
 #endif
 
@@ -443,7 +453,7 @@ MS_DLL_EXPORT int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique
  *   mapwcs.c
  *====================================================================*/
 
-int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj); /* only 1 public function */
+int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request); /* only 1 public function */
 
 
 
@@ -451,7 +461,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj); /* only 1 public func
  *   mapogsos.c
  *====================================================================*/
 
-int msSOSDispatch(mapObj *map, cgiRequestObj *requestobj); /* only 1 public function */
+int msSOSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request); /* only 1 public function */
 
 
 #endif /* MAPOWS_H */

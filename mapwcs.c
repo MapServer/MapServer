@@ -885,7 +885,7 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
 /*                msWCSGetCapabilities_ContentMetadata()                */
 /************************************************************************/
 
-static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *params)
+static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request)
 {
   int i;
 
@@ -905,7 +905,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
 
   for(i=0; i<map->numlayers; i++) {
   
-      if (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "GetCapabilities"))
+      if (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers))
           continue;
   
       if( msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params) != MS_SUCCESS ) {
@@ -924,7 +924,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
 /*                        msWCSGetCapabilities()                        */
 /************************************************************************/
 
-static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj *req)
+static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj *req, owsRequestObj *ows_request)
 {
   char tmpString[OWS_VERSION_MAXLEN];
   int i, tmpInt = 0;
@@ -955,7 +955,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 /*      it.  The remainder of this function is for 1.0.0.               */
 /* -------------------------------------------------------------------- */
     if( strncmp(params->version,"1.1",3) == 0 )
-        return msWCSGetCapabilities11( map, params, req );
+        return msWCSGetCapabilities11( map, params, req, ows_request);
 
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
 
@@ -1027,12 +1027,12 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
       msWCSGetCapabilities_Capability(map, params, req);
   
     if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata")  == 0)
-      msWCSGetCapabilities_ContentMetadata(map, params);
+        msWCSGetCapabilities_ContentMetadata(map, params, ows_request);
   
     if(params->section && strcasecmp(params->section, "/")  == 0) {
       msWCSGetCapabilities_Service(map, params);
       msWCSGetCapabilities_Capability(map, params, req);
-      msWCSGetCapabilities_ContentMetadata(map, params);
+      msWCSGetCapabilities_ContentMetadata(map, params, ows_request);
     }
   
     /* done */
@@ -1316,7 +1316,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 /*                       msWCSDescribeCoverage()                        */
 /************************************************************************/
 
-static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
+static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request)
 {
   int i = 0,j = 0, k = 0;
   const char *updatesequence=NULL;
@@ -1332,7 +1332,7 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 /*      it.  The remainder of this function is for 1.0.0.               */
 /* -------------------------------------------------------------------- */
   if( strncmp(params->version,"1.1",3) == 0 )
-      return msWCSDescribeCoverage11( map, params );
+      return msWCSDescribeCoverage11( map, params, ows_request);
 
 /* -------------------------------------------------------------------- */
 /*      Process 1.0.0...                                                */
@@ -1346,7 +1346,7 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
         for(i=0; i<map->numlayers; i++) {
           coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "COM", "name", GET_LAYER(map, i)->name);
           if( EQUAL(coverageName, coverages[k]) &&
-              (msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage")) )
+              (msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)) )
               break;
         }
 
@@ -1394,7 +1394,7 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
     }
   } else { /* return all layers */
       for(i=0; i<map->numlayers; i++) {
-          if (!msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "DescribeCoverage"))
+          if (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers))
               continue;
 
           msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
@@ -1546,7 +1546,7 @@ static int msWCSGetCoverage_ImageCRSSetup(
 /************************************************************************/
 
 static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, 
-                            wcsParamsObj *params)
+                            wcsParamsObj *params, owsRequestObj *ows_request)
 {
   imageObj   *image;
   layerObj   *lp;
@@ -1616,7 +1616,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   for(i=0; i<map->numlayers; i++) {
      coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "COM", "name", GET_LAYER(map, i)->name);
     if( EQUAL(coverageName, params->coverages[0]) &&
-        (msOWSRequestIsEnabled(map, GET_LAYER(map, i), "C", "GetCoverage")) ) {
+        (msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)) ) {
       lp = GET_LAYER(map, i);
       break;
     }
@@ -1981,7 +1981,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
 /*      Entry point for WCS requests                                    */
 /************************************************************************/
 
-int msWCSDispatch(mapObj *map, cgiRequestObj *request)
+int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request)
 {
 #ifdef USE_WCS_SVR
   wcsParamsObj *params;  
@@ -1991,7 +1991,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   /* TODO: Need to implement proper version negotiation (OWS Common)    */
   /* once WCS 2.0.0 is fully specified.                                 */
   /* Currently WCS 2.0.0 is only available if explicitly requested.     */
-  if ((retVal = msWCSDispatch20(map, request)) != MS_DONE )
+  if ((retVal = msWCSDispatch20(map, request, ows_request)) != MS_DONE )
   {
     return retVal;
   }
@@ -2023,15 +2023,27 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
       return MS_DONE;
   }
 
+  msOWSRequestLayersEnabled(map, "C", params->request, ows_request);
+  if (ows_request->numlayers == 0)
+  {
+      msSetError(MS_WCSERR, "Unsupported WCS request", "msWCSDispatch()");
+      msWCSException(map, "InvalidParameterValue", "request",
+                     params->version );
+      msWCSFreeParams(params); /* clean up */
+      free(params);
+      params = NULL;
+      return MS_FAILURE;
+  }
+
   /*
   ** ok, it's a WCS request, check what we can at a global level and then dispatch to the various request handlers
   */
 
   /* check for existence of REQUEST parameter */
   if (!params->request) {
-    msSetError(MS_WCSERR, "Missing REQUEST parameter", "msWCSDispatch()");
-    msWCSException(map, "MissingParameterValue", "request",
-                   params->version );
+      msSetError(MS_WCSERR, "Missing REQUEST parameter", "msWCSDispatch()");
+      msWCSException(map, "MissingParameterValue", "request",
+                     params->version );
     msWCSFreeParams(params); /* clean up */
     free(params);
     params = NULL;
@@ -2078,11 +2090,11 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   ** Start dispatching requests
   */
   if(strcasecmp(params->request, "GetCapabilities") == 0)    
-    retVal = msWCSGetCapabilities(map, params, request);
+    retVal = msWCSGetCapabilities(map, params, request, ows_request);
   else if(strcasecmp(params->request, "DescribeCoverage") == 0)    
-    retVal = msWCSDescribeCoverage(map, params);
+    retVal = msWCSDescribeCoverage(map, params, ows_request);
   else if(strcasecmp(params->request, "GetCoverage") == 0)    
-    retVal = msWCSGetCoverage(map, request, params);
+    retVal = msWCSGetCoverage(map, request, params, ows_request);
   else {
     msSetError(MS_WCSERR, "Invalid REQUEST parameter \"%s\"", "msWCSDispatch()", params->request);
     msWCSException(map, "InvalidParameterValue", "request", params->version);

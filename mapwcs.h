@@ -101,8 +101,8 @@ const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name);
 /*      Some WCS 1.1 specific functions from mapwcs11.c                 */
 /* -------------------------------------------------------------------- */
 int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params, 
-                           cgiRequestObj *req);
-int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params );
+                           cgiRequestObj *req, owsRequestObj *ows_request);
+int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request);
 int msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map, imageObj *image);
 int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request, 
                              wcsParamsObj *params, layerObj *lp,
@@ -236,7 +236,7 @@ typedef wcs20coverageMetadataObj * wcs20coverageMetadataObjPtr;
 #define MS_WCS_20_PROFILE_SCALING   "http://www.placeholder.com/SCALING"
 #define MS_WCS_20_PROFILE_INTERPOLATION "http://www.placeholder.com/INTERPOLATION"
 
-int msWCSDispatch20(mapObj *map, cgiRequestObj *request);
+int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request);
 
 int msWCSException20(mapObj *map, const char *locator,
                      const char *exceptionCode, const char *version);

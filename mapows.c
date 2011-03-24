@@ -56,14 +56,17 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
     int i, status = MS_DONE;
     const char *service=NULL;
     int force_ows_mode = 0;
-
+    owsRequestObj ows_request;
 
     if (!request)
       return status;
 
     if (ows_mode == OWS || ows_mode == WFS)
       force_ows_mode = 1;
-
+    
+    ows_request.numlayers = 0;
+    ows_request.enabled_layers = NULL;
+    
     for( i=0; i<request->NumParams; i++ ) 
     {
         if(strcasecmp(request->ParamNames[i], "SERVICE") == 0)
@@ -74,8 +77,11 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
     /* Note: SERVICE param did not exist in WMS 1.0.0, it was added only in WMS 1.1.0,
      * so we need to let msWMSDispatch check for known REQUESTs even if SERVICE is not set.
      */
-    if ((status = msWMSDispatch(map, request, MS_FALSE)) != MS_DONE )
+    if ((status = msWMSDispatch(map, request, &ows_request, MS_FALSE)) != MS_DONE )
+    {
+        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
         return status;
+    }
 #else
     if( service != NULL && strcasecmp(service,"WMS") == 0 )
         msSetError( MS_WMSERR, 
@@ -87,8 +93,12 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
     /* Note: WFS supports POST requests, so the SERVICE param may only be in the post data
      * and not be present in the GET URL
      */
-    if ((status = msWFSDispatch(map, request, (ows_mode == WFS))) != MS_DONE )
+    if ((status = msWFSDispatch(map, request, &ows_request, (ows_mode == WFS))) != MS_DONE )
+    {
+        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
         return status;
+    }
+
 #else
     if( service != NULL && strcasecmp(service,"WFS") == 0 )
         msSetError( MS_WFSERR, 
@@ -97,8 +107,11 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 #endif
 
 #ifdef USE_WCS_SVR
-    if ((status = msWCSDispatch(map, request)) != MS_DONE )
+    if ((status = msWCSDispatch(map, request, &ows_request)) != MS_DONE )
+    {
+        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
         return status;
+    }
 #else
     if( service != NULL && strcasecmp(service,"WCS") == 0 )
         msSetError( MS_WCSERR, 
@@ -107,8 +120,11 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 #endif
 
 #ifdef USE_SOS_SVR
-    if ((status = msSOSDispatch(map, request)) != MS_DONE )
+    if ((status = msSOSDispatch(map, request, &ows_request)) != MS_DONE )
+    {
+        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
         return status;
+    }
 #else
     if( service != NULL && strcasecmp(service,"SOS") == 0 )
         msSetError( MS_SOSERR, 
@@ -137,9 +153,11 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
          * return MS_SUCCESS since the exception will have been processed 
          * the OWS way, which is a success as far as mapserv is concerned 
          */
+        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
         return MS_FAILURE; 
     }
 
+    msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
     return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it 
                       * since we're not in force_ows_mode*/
 }
@@ -165,28 +183,113 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
         return MS_FALSE;
 
     /* First, we check in the layer metadata */
-    enable_request = msOWSLookupMetadata(&layer->metadata, namespaces, "enable_request");
-    if (msOWSParseRequestMetadata(enable_request, request, &disabled))
-        return MS_TRUE;
-    if (disabled) return MS_FALSE;
+    if (layer) 
+    {
+        enable_request = msOWSLookupMetadata(&layer->metadata, namespaces, "enable_request");
+        if (msOWSParseRequestMetadata(enable_request, request, &disabled))
+            return MS_TRUE;
+        if (disabled) return MS_FALSE;
+        
+        enable_request = msOWSLookupMetadata(&layer->metadata, "O", "enable_request");
+        if (msOWSParseRequestMetadata(enable_request, request, &disabled))
+            return MS_TRUE;
+        if (disabled) return MS_FALSE;
+    }
 
-    enable_request = msOWSLookupMetadata(&layer->metadata, "O", "enable_request");
-    if (msOWSParseRequestMetadata(enable_request, request, &disabled))
-        return MS_TRUE;
-    if (disabled) return MS_FALSE;
+    if (map)
+    {
+        /* then we check in the map metadata */
+        enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
+        if (msOWSParseRequestMetadata(enable_request, request, &disabled))
+            return MS_TRUE;
+        if (disabled) return MS_FALSE;
+        
+        enable_request = msOWSLookupMetadata(&map->web.metadata, "O", "enable_request");
+        if (msOWSParseRequestMetadata(enable_request, request, &disabled))
+            return MS_TRUE;
+        if (disabled) return MS_FALSE;
+    }
+
+    return MS_FALSE;
+}
+
+/*
+** msOWSRequestLayersEnabled()
+**
+** Check if the layers are visible for a specific OWS request.
+**
+** 'namespaces' is a string with a letter for each namespace to lookup 
+** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
+** If namespaces is NULL then this function just does a regular metadata
+** lookup.
+**
+** Returns an array of the layers enabled.
+*/
+void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces, 
+                               const char *request, owsRequestObj *ows_request)
+{
+    int disabled = MS_FALSE; /* explicitly disabled flag */
+    int globally_enabled = MS_FALSE;
+    const char *enable_request;
+
+    if (ows_request->numlayers > 0) 
+        msFreeCharArray(ows_request->enabled_layers, ows_request->numlayers);
+    
+    ows_request->numlayers = 0;
+    ows_request->enabled_layers = NULL;
+
+    if (request == NULL)
+        return;
 
     /* then we check in the map metadata */
     enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
-    if (msOWSParseRequestMetadata(enable_request, request, &disabled))
-        return MS_TRUE;
-    if (disabled) return MS_FALSE;
-    
-    enable_request = msOWSLookupMetadata(&map->web.metadata, "O", "enable_request");
-    if (msOWSParseRequestMetadata(enable_request, request, &disabled))
-        return MS_TRUE;
-    if (disabled) return MS_FALSE;
-    
-    return MS_FALSE;
+    globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
+
+    if (!globally_enabled && !disabled)
+    {
+        enable_request = msOWSLookupMetadata(&map->web.metadata, "O", "enable_request");
+        globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
+    }
+
+    if (map->numlayers)
+    {
+        int i, layers_size = map->numlayers; //for most of cases, this will be relatively small
+
+        ows_request->enabled_layers = (char**)msSmallMalloc(sizeof(char*)*layers_size);
+
+        for(i=0; i<map->numlayers; i++)
+        {
+            int result = MS_FALSE;
+            layerObj *lp;
+            lp = (GET_LAYER(map, i));
+
+            enable_request = msOWSLookupMetadata(&lp->metadata, namespaces, "enable_request");
+            result = msOWSParseRequestMetadata(enable_request, request, &disabled);
+            if (!result && disabled) continue; /* if the request has been explicitly set to disabled, continue */
+            
+            if (!result && !disabled) /* if the request has not been found in the wms metadata, */
+            {                         /* check the ows namespace  */
+            
+                enable_request = msOWSLookupMetadata(&lp->metadata, "O", "enable_request");
+                result = msOWSParseRequestMetadata(enable_request, request, &disabled);
+                if (!result && disabled) continue;
+            }
+            
+            if (result || (!disabled && globally_enabled))
+            {
+                size_t size = strlen(lp->name)+1;
+                ows_request->enabled_layers[ows_request->numlayers] = (char *)msSmallMalloc(sizeof(char) * size);
+                strlcpy(ows_request->enabled_layers[ows_request->numlayers], lp->name, size);
+                ows_request->numlayers++;
+            }
+        }
+
+        if (ows_request->numlayers == 0) 
+        {
+            msFree(ows_request->enabled_layers);
+            ows_request->enabled_layers = NULL;
+        }
+    }
 }
 
 /* msOWSParseRequestMetadata 
@@ -226,14 +329,14 @@ int msOWSParseRequestMetadata(const char *metadata, const char *request, int *di
             continue;
         }
         else if ( (*ptr == ' ') || (*ptr != '\0' && ptr[1] == '\0')) { /* end of word */
-            if (ptr[1] == '\0') {
+            if (ptr[1] == '\0' && *ptr != ' ') {
                 *bufferPtr = *ptr;
                 ++bufferPtr;
             }
             
             *bufferPtr = '\0'; 
             if (strcasecmp(request, requestBuffer) == 0) {
-                *disabled =  MS_TRUE; /* explicitly disabled, will stop the process in msOWSRequestIsEnabled() */
+                *disabled =  MS_TRUE; /* explicitly found, will stop the process in msOWSRequestIsEnabled() */
                 return (disableFlag ? MS_FALSE:MS_TRUE);
             }
             else {

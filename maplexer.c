@@ -2048,7 +2048,7 @@ int msyystate=MS_TOKENIZE_DEFAULT;
 char *msyystring=NULL;
 char *msyybasepath=NULL;
 char *msyystring_buffer_ptr;
-int  msyystring_buffer_size = 1;
+int  msyystring_buffer_size = 256;
 int  msyystring_size;
 char msyystring_begin;
 char *msyystring_buffer = NULL;

@@ -636,7 +636,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
 /*
 ** msWFSGetCapabilities()
 */
-int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *req) 
+int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *req, owsRequestObj *ows_request) 
 {
   char *script_url=NULL, *script_url_encoded;
   const char *updatesequence=NULL;
@@ -691,7 +691,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   wfsparams->pszVersion = msStrdup(msOWSGetVersionString(tmpInt, tmpString));
 
   if( wfsparams->pszVersion == NULL ||  strncmp(wfsparams->pszVersion,"1.1",3) == 0 )
-    return msWFSGetCapabilities11( map, wfsparams, req );
+    return msWFSGetCapabilities11( map, wfsparams, req, ows_request);
 
   /* Decide which version we're going to return... only 1.0.0 for now */
   wmtver = "1.0.0";
@@ -826,7 +826,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       if (lp->status == MS_DELETE)
          continue;
 
-      if (!msOWSRequestIsEnabled(map, lp, "F", "GetCapabilities"))
+      if (!msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers))
           continue;
 
       /* List only vector layers in which DUMP=TRUE */
@@ -1066,7 +1066,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group, gmlItem
 /*
 ** msWFSDescribeFeatureType()
 */
-int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
+int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj *ows_request)
 {
   int i, numlayers=0;
   char **layers = NULL;
@@ -1149,7 +1149,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
   if (numlayers > 0) {
     for (i=0; i<numlayers; i++) {
         int index = msGetLayerIndex(map, layers[i]);
-        if ( (index < 0) || (!msOWSRequestIsEnabled(map, GET_LAYER(map, index), "F", "DescribeFeatureType")) ) {
+        if ( (index < 0) || (!msStringInArray(GET_LAYER(map, index)->name, ows_request->enabled_layers, ows_request->numlayers)) ) {
 	      msSetError(MS_WFSERR, "Invalid typename (%s).", "msWFSDescribeFeatureType()", layers[i]);/* paramsObj->pszTypeName); */
               return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
       }
@@ -1268,7 +1268,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     }
 
     if ((numlayers == 0 || bFound) && msWFSIsLayerSupported(lp) && 
-        (msOWSRequestIsEnabled(map, lp, "F", "DescribeFeatureType"))) {
+        (msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)) ) {        
 
       /*
       ** OK, describe this layer IF you can open it and retrieve items
@@ -1622,7 +1622,7 @@ static int msWFSGetFeature_GMLPostfix( mapObj *map,
 /*
 ** msWFSGetFeature()
 */
-int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
+int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, owsRequestObj *ows_request)
   /* const char *wmtver, char **names, char **values, int numentries) */
 {
   int   i, j, status; 
@@ -1757,7 +1757,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 	lp = GET_LAYER(map, j);
 	
 	if (msWFSIsLayerSupported(lp) && lp->name && (strcasecmp(lp->name, layers[k]) == 0) && 
-            (msOWSRequestIsEnabled(map, lp, "F", "GetFeature"))) {
+            (msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)) ) {
 	  bLayerFound = MS_TRUE;
 	  
 	  lp->status = MS_ON;
@@ -2682,7 +2682,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 **   is returned and MapServer is expected to process this as a regular
 **   MapServer request.
 */
-int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, int force_wfs_mode)
+int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request, int force_wfs_mode)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -2696,8 +2696,10 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, int force_wfs_mode)
   paramsObj = msWFSCreateParamsObj();
   /* TODO : store also parameters that are inside the map object */
   /* into the paramsObj.  */
-  if (msWFSParseRequest(map, requestobj, paramsObj, force_wfs_mode) == MS_FAILURE)
+  if (msWFSParseRequest(map, requestobj, ows_request, paramsObj, force_wfs_mode) == MS_FAILURE)
     return msWFSException(map, "request", "InvalidRequest", NULL);
+
+  msOWSRequestLayersEnabled(map, "F", paramsObj->pszRequest, ows_request);
   if (force_wfs_mode)
   {
       /*request is always required*/
@@ -2788,7 +2790,6 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, int force_wfs_mode)
       return MS_DONE;  /* Not a WFS request */
   }
 
-
   /* If SERVICE, VERSION and REQUEST not included than this isn't a WFS req*/
   if (paramsObj->pszService == NULL && paramsObj->pszVersion==NULL && 
       paramsObj->pszRequest==NULL)
@@ -2854,7 +2855,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, int force_wfs_mode)
   */
   if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0 ) 
   {
-      returnvalue = msWFSGetCapabilities(map, paramsObj, requestobj);
+      returnvalue = msWFSGetCapabilities(map, paramsObj, requestobj, ows_request);
       msWFSFreeParamsObj(paramsObj);
       free(paramsObj);
       paramsObj = NULL;
@@ -2879,14 +2880,25 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, int force_wfs_mode)
                                                                  
   }
 
+  if (ows_request->numlayers == 0 && (strcasecmp(paramsObj->pszService, "WFS") == 0))
+  {
+      msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
+                 paramsObj->pszRequest);
+      returnvalue = msWFSException(map, "request", "InvalidParameterValue", paramsObj->pszVersion);
+      msWFSFreeParamsObj(paramsObj);
+      free(paramsObj);
+      paramsObj = NULL;
+      return returnvalue;
+  }
+
   returnvalue = MS_DONE;
   /* Continue dispatching... 
    */
   if (strcasecmp(paramsObj->pszRequest, "DescribeFeatureType") == 0)
-    returnvalue = msWFSDescribeFeatureType(map, paramsObj);
+    returnvalue = msWFSDescribeFeatureType(map, paramsObj, ows_request);
 
   else if (strcasecmp(paramsObj->pszRequest, "GetFeature") == 0)
-    returnvalue = msWFSGetFeature(map, paramsObj, requestobj);
+    returnvalue = msWFSGetFeature(map, paramsObj, requestobj, ows_request);
 
 
   else if (strcasecmp(paramsObj->pszRequest, "GetFeatureWithLock") == 0 ||
@@ -2975,7 +2987,7 @@ const char *msWFSGetDefaultVersion(mapObj *map)
 /*                                                                      */
 /*      Parse request into the params object.                           */
 /************************************************************************/
-int msWFSParseRequest(mapObj *map, cgiRequestObj *request, 
+int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
                       wfsParamsObj *wfsparams, int force_wfs_mode)
 {
 #ifdef USE_WFS_SVR
@@ -3047,6 +3059,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
           wfsparams->pszVersion = msStrdup(msWFSGetDefaultVersion(map));
         }
     }
+
 /* -------------------------------------------------------------------- */
 /*      Parse the post request. It is assumed to be an XML document.    */
 /* -------------------------------------------------------------------- */
@@ -3079,7 +3092,8 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         else if (strcasecmp(rootnode->name, "DescribeFeatureType") == 0)
           wfsparams->pszRequest = "DescribeFeatureType";
 
-        if (wfsparams->pszRequest == NULL)
+        msOWSRequestLayersEnabled(map, "F", wfsparams->pszRequest, ows_request);
+        if (wfsparams->pszRequest == NULL || ows_request->numlayers == 0)
         {
           /* Unsupported WFS request */
             msSetError(MS_WFSERR, "Unsupported WFS request", "msWFSParseRequest()");
