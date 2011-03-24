@@ -451,7 +451,10 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
             if (bUseSpecificLayer)
               break;
         }
-
+	
+	for (i=0; i<nLayers; i++)
+	  freeLayer(&pasLayers[i]);
+	msFree(pasLayers);
     }
     if(map->debug == MS_DEBUGLEVEL_VVV)
     {
