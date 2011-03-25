@@ -811,8 +811,10 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   msIO_printf("  <Request>\n");
 
   msWCSPrintRequestCapability(params->version, "GetCapabilities", script_url_encoded);
-  msWCSPrintRequestCapability(params->version, "DescribeCoverage", script_url_encoded);
-  msWCSPrintRequestCapability(params->version, "GetCoverage", script_url_encoded);
+  if (msOWSRequestIsEnabled(map, NULL, "C", "DescribeCoverage", MS_TRUE)) 
+      msWCSPrintRequestCapability(params->version, "DescribeCoverage", script_url_encoded);
+  if (msOWSRequestIsEnabled(map, NULL, "C", "GetCoverage", MS_TRUE)) 
+      msWCSPrintRequestCapability(params->version, "GetCoverage", script_url_encoded);
  
   msIO_printf("  </Request>\n");
 

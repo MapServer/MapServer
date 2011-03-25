@@ -797,11 +797,15 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   /* msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", "GML2", "GML3", NULL); */
 
   /* don't advertise the GML3 or GML for SFE support */
-  msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA" );
+  if (msOWSRequestIsEnabled(map, NULL, "F", "DescribeFeatureType", MS_TRUE)) 
+      msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA" );
 
-  formats_list = msWFSGetOutputFormatList( map, NULL, wfsparams->pszVersion );
-  msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", formats_list );
-  msFree( formats_list );
+  if (msOWSRequestIsEnabled(map, NULL, "F", "GetFeature", MS_TRUE)) 
+  {
+      formats_list = msWFSGetOutputFormatList( map, NULL, wfsparams->pszVersion );
+      msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", formats_list );
+      msFree( formats_list );
+  }
 
   msIO_printf("  </Request>\n");
   msIO_printf("</Capability>\n\n");
@@ -2699,7 +2703,6 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
   if (msWFSParseRequest(map, requestobj, ows_request, paramsObj, force_wfs_mode) == MS_FAILURE)
     return msWFSException(map, "request", "InvalidRequest", NULL);
 
-  msOWSRequestLayersEnabled(map, "F", paramsObj->pszRequest, ows_request);
   if (force_wfs_mode)
   {
       /*request is always required*/
@@ -2855,6 +2858,18 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
   */
   if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0 ) 
   {
+      msOWSRequestLayersEnabled(map, "F", paramsObj->pszRequest, ows_request);
+      if (ows_request->numlayers == 0)
+      {
+          msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
+                     paramsObj->pszRequest);
+          returnvalue = msWFSException(map, "request", "InvalidParameterValue", paramsObj->pszVersion);
+          msWFSFreeParamsObj(paramsObj);
+          free(paramsObj);
+          paramsObj = NULL;
+          return returnvalue;
+      }
+
       returnvalue = msWFSGetCapabilities(map, paramsObj, requestobj, ows_request);
       msWFSFreeParamsObj(paramsObj);
       free(paramsObj);
@@ -2880,15 +2895,21 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
                                                                  
   }
 
-  if (ows_request->numlayers == 0 && (strcasecmp(paramsObj->pszService, "WFS") == 0))
+  /* Since the function can still return MS_DONE, we add an extra service check to not call 
+     msOWSRequestLayersEnabled twice */
+  if (strcasecmp(paramsObj->pszService, "WFS") == 0) 
   {
-      msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
-                 paramsObj->pszRequest);
-      returnvalue = msWFSException(map, "request", "InvalidParameterValue", paramsObj->pszVersion);
-      msWFSFreeParamsObj(paramsObj);
-      free(paramsObj);
-      paramsObj = NULL;
-      return returnvalue;
+      msOWSRequestLayersEnabled(map, "F", paramsObj->pszRequest, ows_request);
+      if (ows_request->numlayers == 0)
+      {
+          msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
+                     paramsObj->pszRequest);
+          returnvalue = msWFSException(map, "request", "InvalidParameterValue", paramsObj->pszVersion);
+          msWFSFreeParamsObj(paramsObj);
+          free(paramsObj);
+          paramsObj = NULL;
+          return returnvalue;
+      }
   }
 
   returnvalue = MS_DONE;
@@ -3107,7 +3128,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
         pszValue = xmlGetProp(rootnode, (xmlChar *)"service");
         if (pszValue)
           wfsparams->pszService = msStrdup(pszValue);     
-
+s
         
         /* version is optional for the GetCapabilities. If not provided, set it*/
         if (wfsparams->pszVersion == NULL && 

@@ -490,46 +490,53 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      DescribeCoverage                                                */
 /* -------------------------------------------------------------------- */
-        psNode = msOWSCommonOperationsMetadataOperation(
-            psOwsNs, psXLinkNs,
-            "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
-        
-        xmlAddChild(psMainNode, psNode);
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "service", "WCS"));
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "version", (char *)params->version));
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "identifiers", identifier_list ));
+        if (msOWSRequestIsEnabled(map, NULL, "C", "DescribeCoverage", MS_TRUE)) 
+        {
+            psNode = msOWSCommonOperationsMetadataOperation(
+                psOwsNs, psXLinkNs,
+                "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+            
+            xmlAddChild(psMainNode, psNode);
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "service", "WCS"));
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "version", (char *)params->version));
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "identifiers", identifier_list ));
+        }
         
 /* -------------------------------------------------------------------- */
 /*      GetCoverage                                                     */
 /* -------------------------------------------------------------------- */
-        psNode = msOWSCommonOperationsMetadataOperation(
-            psOwsNs, psXLinkNs,
-            "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+        if (msOWSRequestIsEnabled(map, NULL, "C", "GetCoverage", MS_TRUE)) 
+        {
+
+            psNode = msOWSCommonOperationsMetadataOperation(
+                psOwsNs, psXLinkNs,
+                "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+            
+            format_list = msWCSGetFormatsList11( map, NULL );
+            
+            xmlAddChild(psMainNode, psNode);
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "service", "WCS"));
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "version", (char *)params->version));
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "Identifier", identifier_list ));
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "InterpolationType", 
+                            "NEAREST_NEIGHBOUR,BILINEAR" ));
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "format", format_list ));
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "store", "false" ));
+            xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
+                            ows_version, psOwsNs, "Parameter", "GridBaseCRS", 
+                            "urn:ogc:def:crs:epsg::4326" ));
         
-        format_list = msWCSGetFormatsList11( map, NULL );
-        
-        xmlAddChild(psMainNode, psNode);
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "service", "WCS"));
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "version", (char *)params->version));
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "Identifier", identifier_list ));
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "InterpolationType", 
-                        "NEAREST_NEIGHBOUR,BILINEAR" ));
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "format", format_list ));
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "store", "false" ));
-        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
-                        ows_version, psOwsNs, "Parameter", "GridBaseCRS", 
-                        "urn:ogc:def:crs:epsg::4326" ));
-        
-        msFree( format_list );
+            msFree( format_list );
+        }
     }    
 
 /* -------------------------------------------------------------------- */

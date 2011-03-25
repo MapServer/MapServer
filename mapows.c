@@ -168,13 +168,13 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 **
 ** Check if a layer is visible for a specific OWS request.
 **
-** 'namespaces' is a string with a letter for each namespace to lookup 
-** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
-** If namespaces is NULL then this function just does a regular metadata
-** lookup.
-*/
+** 'namespaces' is a string with a letter for each namespace to lookup in
+** the order they should be looked up. e.g. "MO" to lookup wms_ and ows_ If
+** namespaces is NULL then this function just does a regular metadata
+** lookup. If check_all_layers is set to MS_TRUE, the function will check
+** all layers to see if the request is enable. (returns as soon as one is found) */
 int msOWSRequestIsEnabled(mapObj *map, layerObj *layer, 
-                          const char *namespaces, const char *request)
+                          const char *namespaces, const char *request, int check_all_layers)
 {
     int disabled = MS_FALSE; /* explicitly disabled flag */
     const char *enable_request;
@@ -183,7 +183,7 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
         return MS_FALSE;
 
     /* First, we check in the layer metadata */
-    if (layer) 
+    if (layer && check_all_layers == MS_FALSE) 
     {
         enable_request = msOWSLookupMetadata(&layer->metadata, namespaces, "enable_request");
         if (msOWSParseRequestMetadata(enable_request, request, &disabled))
@@ -196,7 +196,7 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
         if (disabled) return MS_FALSE;
     }
 
-    if (map)
+    if (map && check_all_layers == MS_FALSE)
     {
         /* then we check in the map metadata */
         enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
@@ -208,6 +208,42 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
         if (msOWSParseRequestMetadata(enable_request, request, &disabled))
             return MS_TRUE;
         if (disabled) return MS_FALSE;
+    }
+
+    if (map && (map->numlayers > 0) && check_all_layers == MS_TRUE)
+    {
+        int i, globally_enabled = MS_FALSE;
+        enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
+        globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
+        
+        if (!globally_enabled && !disabled)
+        {
+            enable_request = msOWSLookupMetadata(&map->web.metadata, "O", "enable_request");
+            globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
+        }
+
+        /* Check all layers */
+        for(i=0; i<map->numlayers; i++)
+        {
+            int result = MS_FALSE;
+            layerObj *lp;
+            lp = (GET_LAYER(map, i));
+
+            enable_request = msOWSLookupMetadata(&lp->metadata, namespaces, "enable_request");
+            result = msOWSParseRequestMetadata(enable_request, request, &disabled);
+            if (!result && disabled) continue; /* if the request has been explicitly set to disabled, continue */
+            
+            if (!result && !disabled) /* if the request has not been found in the wms metadata, */
+            {                         /* check the ows namespace  */
+            
+                enable_request = msOWSLookupMetadata(&lp->metadata, "O", "enable_request");
+                result = msOWSParseRequestMetadata(enable_request, request, &disabled);
+                if (!result && disabled) continue;
+            }
+            
+            if (result || (!disabled && globally_enabled))
+                return MS_TRUE;
+        }
     }
 
     return MS_FALSE;
@@ -238,10 +274,9 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
     ows_request->numlayers = 0;
     ows_request->enabled_layers = NULL;
 
-    if (request == NULL)
+    if (request == NULL || (map == NULL) || (map->numlayers <= 0))
         return;
 
-    /* then we check in the map metadata */
     enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
     globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
 

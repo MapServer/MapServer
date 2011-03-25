@@ -2798,20 +2798,26 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
         /* -------------------------------------------------------------------- */
         /*      DescribeCoverage                                                */
         /* -------------------------------------------------------------------- */
-        psNode = msOWSCommonOperationsMetadataOperation(
-            psOwsNs, psXLinkNs,
-            "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
-        xmlAddChild(psOperationsNode, psNode);
+        if (msOWSRequestIsEnabled(map, NULL, "C", "DescribeCoverage", MS_TRUE)) 
+        {
+            psNode = msOWSCommonOperationsMetadataOperation(
+                psOwsNs, psXLinkNs,
+                "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+            xmlAddChild(psOperationsNode, psNode);
+        }
 
         /* -------------------------------------------------------------------- */
         /*      GetCoverage                                                     */
         /* -------------------------------------------------------------------- */
-        psNode = msOWSCommonOperationsMetadataOperation(
-            psOwsNs, psXLinkNs,
-            "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
-        xmlAddChild(psOperationsNode, psNode);
-
-        msFree(script_url_encoded);
+        if (msOWSRequestIsEnabled(map, NULL, "C", "GetCoverage", MS_TRUE)) 
+        {
+            psNode = msOWSCommonOperationsMetadataOperation(
+                psOwsNs, psXLinkNs,
+                "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+            xmlAddChild(psOperationsNode, psNode);
+            
+            msFree(script_url_encoded);
+        }
     }
 
     /* -------------------------------------------------------------------- */

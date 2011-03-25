@@ -2225,7 +2225,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   if (nVersion <= OWS_1_0_7)
   {
     /* WMS 1.0.0 to 1.0.7 - We don't try to use outputformats list here for now */
-    msWMSPrintRequestCap(nVersion, "Map", script_url_encoded, ""
+      if (msOWSRequestIsEnabled(map, NULL, "M", "GetMap", MS_TRUE)) 
+          msWMSPrintRequestCap(nVersion, "Map", script_url_encoded, ""
+
 #ifdef USE_GD_GIF
                       "<GIF />"
 #endif
@@ -2237,8 +2239,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 #endif
                        "<SVG />"  
                       , NULL);
-    msWMSPrintRequestCap(nVersion, "Capabilities", script_url_encoded, "<WMS_XML />", NULL);
-    msWMSPrintRequestCap(nVersion, "FeatureInfo", script_url_encoded, "<MIME /><GML.1 />", NULL);
+      if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE)) 
+          msWMSPrintRequestCap(nVersion, "Capabilities", script_url_encoded, "<WMS_XML />", NULL);
+      if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_TRUE)) 
+          msWMSPrintRequestCap(nVersion, "FeatureInfo", script_url_encoded, "<MIME /><GML.1 />", NULL);
   }
   else
   {
@@ -2248,23 +2252,27 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     /* WMS 1.1.0 and later */
     /* Note changes to the request names, their ordering, and to the formats */
 
-    if (nVersion >= OWS_1_3_0)
-      msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
-                           "text/xml",
-                           NULL);
-    else
-      msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
-                           "application/vnd.ogc.wms_xml",
-                           NULL);
+     if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE)) 
+     {
+         if (nVersion >= OWS_1_3_0)
+             msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
+                                  "text/xml",
+                                  NULL);
+         else
+             msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
+                                  "application/vnd.ogc.wms_xml",
+                                  NULL);
+     }
 
     msGetOutputFormatMimeListWMS(map,mime_list,sizeof(mime_list)/sizeof(char*));
-    msWMSPrintRequestCap(nVersion, "GetMap", script_url_encoded,
-                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
-                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
-                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
-                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
-                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
-                    NULL );
+    if (msOWSRequestIsEnabled(map, NULL, "M", "GetMap", MS_TRUE))
+        msWMSPrintRequestCap(nVersion, "GetMap", script_url_encoded,
+                             mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                             mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                             mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                             mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                             mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                             NULL );
 
     format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
                                       "getfeatureinfo_formatlist");
@@ -2306,65 +2314,78 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
         }
         
         
-        if (mime_count>0)
+        if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_TRUE)) 
         {
-            if (mime_count<max_mime)
-              mime_list[mime_count] = NULL;
-           msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
-                                mime_list[0], mime_list[1], mime_list[2], mime_list[3],
-                                mime_list[4], mime_list[5], mime_list[6], mime_list[7],
-                                mime_list[8], mime_list[9], mime_list[10], mime_list[11],
-                                mime_list[12], mime_list[13], mime_list[14], mime_list[15],
-                                mime_list[16], mime_list[17], mime_list[18], mime_list[19],
-                                NULL);
+            if (mime_count>0)
+            {
+                if (mime_count<max_mime)
+                    mime_list[mime_count] = NULL;
+                msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
+                                     mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                                     mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                                     mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                                     mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                                     mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                                     NULL);
+            }
+            /*if all formats given are invalid go to default*/
+            else
+                msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
+                                     "text/plain",
+                                     "application/vnd.ogc.gml",
+                                     NULL);
         }
-        /*if all formats given are invalid go to default*/
-        else
-            msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
-                       "text/plain",
-                       "application/vnd.ogc.gml",
-                       NULL);
 
         if (numtokens>0)
           msFreeCharArray(tokens, numtokens);
     }
     else 
-        msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
-                             "text/plain",
-                             "application/vnd.ogc.gml",
-                             NULL);
+    {
+        if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_TRUE)) 
+            msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
+                                 "text/plain",
+                                 "application/vnd.ogc.gml",
+                                 NULL);
+    }
     
 
     if (strcasecmp(sldenabled, "true") == 0) {
-        if (nVersion == OWS_1_3_0)
-           msWMSPrintRequestCap(nVersion, "sld:DescribeLayer", script_url_encoded, "text/xml", NULL);
-        else
-           msWMSPrintRequestCap(nVersion, "DescribeLayer", script_url_encoded, "text/xml", NULL);
+        if (msOWSRequestIsEnabled(map, NULL, "M", "DescribeLayer", MS_TRUE)) 
+        {
+            if (nVersion == OWS_1_3_0)
+                msWMSPrintRequestCap(nVersion, "sld:DescribeLayer", script_url_encoded, "text/xml", NULL);
+            else
+                msWMSPrintRequestCap(nVersion, "DescribeLayer", script_url_encoded, "text/xml", NULL);
+        }
 
         msGetOutputFormatMimeListImg(map,mime_list,sizeof(mime_list)/sizeof(char*));
 
         if (nVersion >= OWS_1_1_1) {
            if (nVersion == OWS_1_3_0)
            {
-              msWMSPrintRequestCap(nVersion, "sld:GetLegendGraphic", script_url_encoded,
-                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
-                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
-                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
-                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
-                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
-                    NULL );
-              msWMSPrintRequestCap(nVersion, "ms:GetStyles", script_url_encoded, "text/xml", NULL);
+               if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_TRUE)) 
+                   msWMSPrintRequestCap(nVersion, "sld:GetLegendGraphic", script_url_encoded,
+                                        mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                                        mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                                        mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                                        mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                                        mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                                        NULL );
+               if (msOWSRequestIsEnabled(map, NULL, "M", "GetStyles", MS_TRUE)) 
+                   msWMSPrintRequestCap(nVersion, "ms:GetStyles", script_url_encoded, "text/xml", NULL);
            }
            else 
            {
-              msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
-                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
-                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
-                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
-                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
-                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
-                    NULL );
-              msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded, "text/xml", NULL);
+               if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_TRUE)) 
+                   msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
+                                        mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                                        mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                                        mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                                        mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                                        mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                                        NULL );
+               if (msOWSRequestIsEnabled(map, NULL, "M", "GetStyles", MS_TRUE)) 
+                   msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded, "text/xml", NULL);
            }
        }
     }
@@ -4043,11 +4064,29 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
       return msWMSException(map, nVersion, NULL, wms_exception_format);
   }
 
-  msOWSRequestLayersEnabled(map, "M", request, ows_request); 
-  if (service != NULL && (strcasecmp(service, "WMS") == 0) && ows_request->numlayers == 0)
+  /* hack !? The function can return MS_DONE ... be sure it's a wms request
+   * before checking the enabled layers */
+  if ( (strcasecmp(request, "GetStyles") == 0) ||
+       (strcasecmp(request, "GetLegendGraphic") == 0) ||
+       (strcasecmp(request, "GetSchemaExtension") == 0) ||
+       (strcasecmp(request, "map") == 0 || strcasecmp(request, "GetMap") == 0) ||
+       (strcasecmp(request, "feature_info") == 0 || strcasecmp(request, "GetFeatureInfo") == 0) || 
+       (strcasecmp(request, "DescribeLayer") == 0) )
   {
-      msSetError(MS_WMSERR, "Incomplete or unsupported WMS request", "msWMSDispatch()");
-      return msWMSException(map, nVersion, NULL, wms_exception_format);
+      char request_tmp[32];
+      if (strcasecmp(request, "map") == 0)
+          strlcpy(request_tmp, "GetMap", sizeof(request_tmp));
+      else if (strcasecmp(request, "feature_info") == 0)
+          strlcpy(request_tmp, "GetFeatureInfo", sizeof(request_tmp));
+      else
+          strlcpy(request_tmp, request, sizeof(request_tmp));
+
+      msOWSRequestLayersEnabled(map, "M", request_tmp, ows_request); 
+      if (ows_request->numlayers == 0)
+      {
+          msSetError(MS_WMSERR, "Incomplete or unsupported WMS request", "msWMSDispatch()");
+          return msWMSException(map, nVersion, NULL, wms_exception_format);
+      }
   }
 
   if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)

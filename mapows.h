@@ -120,7 +120,7 @@ MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
                                                 const char *namespaces,
                                                 const char *name);
 MS_DLL_EXPORT int msOWSRequestIsEnabled(mapObj *map, layerObj *layer, 
-                                        const char *namespaces, const char *name);
+                                        const char *namespaces, const char *name, int check_all_layers);
 MS_DLL_EXPORT void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces, 
                                              const char *request, owsRequestObj *request_layers);
 MS_DLL_EXPORT int msOWSParseRequestMetadata(const char *metadata, const char *request, 

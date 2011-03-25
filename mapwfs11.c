@@ -293,7 +293,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
       }
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Create document.                                                */
 /* -------------------------------------------------------------------- */
@@ -379,40 +378,47 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      DescribeFeatureType                                             */
 /* -------------------------------------------------------------------- */
-     psNode = xmlAddChild(psMainNode, 
-                          msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"DescribeFeatureType", 
+    if (msOWSRequestIsEnabled(map, NULL, "F", "DescribeFeatureType", MS_TRUE)) 
+    {
+        psNode = xmlAddChild(psMainNode, 
+                             msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"DescribeFeatureType", 
                                                                  OWS_METHOD_GETPOST, script_url_encoded));
-     xmlAddChild(psMainNode, psNode);
-
-     /*output format*/
-      xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
-                                                                  "Parameter", "outputFormat", 
-                                                                  "XMLSCHEMA,text/xml; subtype=gml/2.1.2,text/xml; subtype=gml/3.1.1"));
+        xmlAddChild(psMainNode, psNode);
+        
+        /*output format*/
+        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
+                                                                    "Parameter", "outputFormat", 
+                                                                    "XMLSCHEMA,text/xml; subtype=gml/2.1.2,text/xml; subtype=gml/3.1.1"));
+    }
 
 /* -------------------------------------------------------------------- */
 /*      GetFeature                                                      */
 /* -------------------------------------------------------------------- */
-      psNode = xmlAddChild(psMainNode, 
-                          msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetFeature", 
+    if (msOWSRequestIsEnabled(map, NULL, "F", "GetFeature", MS_TRUE)) 
+    {
+
+        psNode = xmlAddChild(psMainNode, 
+                             msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetFeature", 
                                                                  OWS_METHOD_GETPOST, script_url_encoded));
-     xmlAddChild(psMainNode, psNode);
+        xmlAddChild(psMainNode, psNode);
+        
+        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
+                                                                    "Parameter", "resultType", 
+                                                                    "results,hits"));
 
-     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
-                                                                 "Parameter", "resultType", 
-                                                                 "results,hits"));
+        formats_list = msWFSGetOutputFormatList( map, NULL, "1.1.0" );
+        xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
+                                                                    "Parameter", "outputFormat", 
+                                                                    formats_list));
+        msFree( formats_list );
 
-     formats_list = msWFSGetOutputFormatList( map, NULL, "1.1.0" );
-     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws, 
-                                                                  "Parameter", "outputFormat", 
-                                                                  formats_list));
-     msFree( formats_list );
+        value = msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures");
 
-     value = msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures");
-
-    if (value) {
-         xmlAddChild(psMainNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
-                                                                  "Constraint", "DefaultMaxFeatures",
-                                                                  (char *)value));
+        if (value) {
+            xmlAddChild(psMainNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
+                                                                            "Constraint", "DefaultMaxFeatures",
+                                                                            (char *)value));
+        }
     }
 
 /* -------------------------------------------------------------------- */
