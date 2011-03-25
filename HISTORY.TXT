@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- WCS 2.0: Report only bands in the range subset.
+
 - OWS requests should be completely blocked by default (#3755)
 
 - SLD: check for limit on dash arrays (#3772)

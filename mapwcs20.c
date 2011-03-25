@@ -5,9 +5,10 @@
  * Purpose:  OpenGIS Web Coverage Server (WCS) 2.0 implementation.
  * Author:   Stephan Meissl <stephan.meissl@eox.at>
  *           Fabian Schindler <fabian.schindler@eox.at>
+ *           and the MapServer team.
  *
  ******************************************************************************
- * Copyright (c) 2010 EOX IT Services GmbH, Austria
+ * Copyright (c) 2010, 2011 EOX IT Services GmbH, Austria
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1716,19 +1717,46 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
 /*      Inserts the RangeType section into an existing DOM structure.   */
 /************************************************************************/
 
-static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadataObjPtr cm,
+static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadataObjPtr cm, char *bands,
         xmlNsPtr psGmlNs, xmlNsPtr psGmlcovNs, xmlNsPtr psSweNs, xmlNsPtr psXLinkNs, xmlNodePtr psRoot)
 {
     xmlNodePtr psRangeType, psDataRecord, psField, psQuantity,
         psUom, psConstraint, psAllowedValues = NULL/*, psNilValues = NULL*/;
     char * value;
-    int i;
+    char **arr = NULL;
+    int i, num = 0;
+
+    if(NULL != bands)
+    {
+        arr = msStringSplit(bands, ',', &num);
+    }
+
     psRangeType = xmlNewChild( psRoot, psGmlcovNs, BAD_CAST "rangeType", NULL);
     psDataRecord  = xmlNewChild(psRangeType, psSweNs, BAD_CAST "DataRecord", NULL);
 
     /* iterate over every band */
-    for(i = 0; i < cm->numbands && i < 10; ++i)
+    for(i = 0; i < cm->numbands; ++i)
     {
+        /* only add bands that are in the range subset */
+        if (NULL != arr && num > 0)
+        {
+            int found = MS_FALSE, j, repr;
+            for(j = 0; j < num; ++j)
+            {
+                msStringParseInteger(arr[j], &repr);
+                if(repr == i + 1)
+                {
+                    found = MS_TRUE;
+                    break;
+                }
+            }
+            if(found == MS_FALSE)
+            {
+                /* ignore this band since it is not in the range subset */
+                continue;
+            }
+        }
+
         /* add field tag */
         psField = xmlNewChild(psDataRecord, psSweNs, BAD_CAST "field", NULL);
 
@@ -2892,7 +2920,7 @@ static int msWCSDescribeCoverage_CoverageDescription20(mapObj *map,
     /* -------------------------------------------------------------------- */
     /*      gmlcov:rangeType                                                */
     /* -------------------------------------------------------------------- */
-    msWCSCommon20_CreateRangeType(layer, &cm, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psCD);
+    msWCSCommon20_CreateRangeType(layer, &cm, NULL, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psCD);
 
     /* -------------------------------------------------------------------- */
     /*      wcs:ServiceParameters                                           */
@@ -3202,8 +3230,6 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
         {
             current = strlcat(*bandlist, ",", maxlen) + *bandlist;
         }
-        /*current += snprintf(current, maxlen - (current - *bandlist),
-                                "%s%d", (i == 0) ? "" : ",", index))*/
 
         /* check if the string represents an integer */
         if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS)
@@ -3211,8 +3237,6 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
             tmp = msIntToString((int)index);
             strlcat(*bandlist, tmp, maxlen);
             msFree(tmp);
-            /*current += snprintf(current, maxlen - (current - *bandlist),
-                                "%d", index);*/
             continue;
         }
 
@@ -3224,8 +3248,6 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
             tmp = msIntToString((int)index + 1);
             strlcat(*bandlist, tmp, maxlen);
             msFree(tmp);
-            /*current += snprintf(current, maxlen - (current - *bandlist),
-                                "%d", index+1);*/
             continue;
         }
 
@@ -3568,7 +3590,6 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     msLayerSetProcessingKey(layer, "BANDS", bandlist);
     snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
     msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
-    msFree(bandlist);
 
     /* check for the interpolation */
     /* Defaults to NEAREST */
@@ -3592,7 +3613,9 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
                     "msWCSGetCoverage20()", params->interpolation );
             return msWCSException(map, "InvalidParameterValue", "interpolation", params->version);
         }
-    } else { 
+    }
+    else
+    {
         msLayerSetProcessingKey(layer, "RESAMPLE", "NEAREST");
     }
 
@@ -3626,13 +3649,17 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     }
     else
     {
+        msFree(bandlist);
         msSetError(MS_WCSERR, "Map outputformat not supported for WCS!",
                 "msWCSGetCoverage20()");
         return msWCSException(map, NULL, NULL, params->version);
     }
 
     if (image == NULL)
+    {
+        msFree(bandlist);
         return msWCSException(map, NULL, NULL, params->version);
+    }
 
     /* Actually produce the "grid". */
     if( MS_RENDERER_RAWDATA(map->outputformat) )
@@ -3646,14 +3673,15 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         status = msDrawRasterLayerLow( map, layer, image, &rb );
     }
 
-    if( status != MS_SUCCESS ) {
+    if( status != MS_SUCCESS )
+    {
+        msFree(bandlist);
+        msFreeImage(image);
         return msWCSException(map, NULL, NULL, params->version );
     }
-    msDebug("image:%s\n", image->imagepath);
 
-
-    /* GML+GeoTIFF */
-    /* Embed the GeoTIFF into multipart message */
+    /* GML+Image */
+    /* Embed the image into multipart message */
     if(params->multipart == MS_TRUE)
     {
         xmlDocPtr psDoc = NULL;       /* document pointer */
@@ -3722,8 +3750,6 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         strlcpy(file_ref, "coverage/", length);
         strlcat(file_ref, filename, length);
 
-        msDebug("File reference: %s\n", file_ref);
-
         xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "href", BAD_CAST file_ref);
         xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "role", BAD_CAST MS_IMAGE_MIME_TYPE(map->outputformat));
         xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "arcrole", BAD_CAST "fileReference");
@@ -3732,13 +3758,15 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         xmlNewChild(psFile, psGmlNs, BAD_CAST "fileStructure", NULL);
         xmlNewChild(psFile, psGmlNs, BAD_CAST "mimeType", BAD_CAST MS_IMAGE_MIME_TYPE(map->outputformat));
 
-        msWCSCommon20_CreateRangeType(layer, &cm, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psRootNode);
+        msWCSCommon20_CreateRangeType(layer, &cm, bandlist, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psRootNode);
 
         msIO_printf( "Content-Type: multipart/mixed; boundary=wcs%c%c"
                      "--wcs\n", 10, 10);
 
         msWCSWriteDocument20(map, psDoc);
         msWCSWriteFile20(map, image, params, 1);
+
+        msFree(file_ref);
         xmlFreeDoc(psDoc);
         xmlCleanupParser();
     }
@@ -3748,6 +3776,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         msWCSWriteFile20(map, image, params, 0);
     }
 
+    msFree(bandlist);
     msWCSClearCoverageMetadata20(&cm);
     msFreeImage(image);
     return MS_SUCCESS;
