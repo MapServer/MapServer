@@ -203,6 +203,9 @@ typedef struct
         };
         char *values[5];
     };
+    double interval_min;
+    double interval_max;
+    int significant_figures;
 } wcs20rasterbandMetadataObj;
 typedef wcs20rasterbandMetadataObj * wcs20rasterbandMetadataObjPtr;
 
@@ -235,6 +238,7 @@ typedef wcs20coverageMetadataObj * wcs20coverageMetadataObjPtr;
 #define MS_WCS_20_PROFILE_IMAGECRS  "http://www.placeholder.com/IMAGECRS"
 #define MS_WCS_20_PROFILE_SCALING   "http://www.placeholder.com/SCALING"
 #define MS_WCS_20_PROFILE_INTERPOLATION "http://www.placeholder.com/INTERPOLATION"
+#define MS_WCS_20_PROFILE_RANGESUBSET "http://www.placeholder.com/RANGESUBSET"
 
 int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request);
 

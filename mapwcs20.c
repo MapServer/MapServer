@@ -1722,7 +1722,6 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
 {
     xmlNodePtr psRangeType, psDataRecord, psField, psQuantity,
         psUom, psConstraint, psAllowedValues = NULL/*, psNilValues = NULL*/;
-    char * value;
     char **arr = NULL;
     int i, num = 0;
 
@@ -1760,9 +1759,9 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
         /* add field tag */
         psField = xmlNewChild(psDataRecord, psSweNs, BAD_CAST "field", NULL);
 
-        if(cm->bands[i].interpretation != NULL)
+        if(cm->bands[i].name != NULL)
         {
-            xmlNewProp(psField, BAD_CAST "name", BAD_CAST cm->bands[i].interpretation);
+            xmlNewProp(psField, BAD_CAST "name", BAD_CAST cm->bands[i].name);
         }
         else
         {
@@ -1779,6 +1778,8 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
             xmlNewChild(psQuantity, psSweNs, BAD_CAST "description", BAD_CAST cm->bands[i].description);
         }
 
+        xmlNewChild(psQuantity, psSweNs, BAD_CAST "nilValues", NULL);
+
         psUom = xmlNewChild(psQuantity, psSweNs, BAD_CAST "uom", NULL);
         if(cm->bands[i].uom != NULL)
         {
@@ -1793,25 +1794,16 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
         psConstraint = xmlNewChild(psQuantity, psSweNs, BAD_CAST "constraint", NULL);
         
         {
-            char interval[100];
+            char interval[100], significant_figures[100];
             psAllowedValues = xmlNewChild(psConstraint, psSweNs, BAD_CAST "AllowedValues", NULL);
-            switch(cm->imagemode)
-            {
-                case MS_IMAGEMODE_BYTE:
-                    snprintf(interval, sizeof(interval), "%d %d", 0, 255);
-                    break;
-                case MS_IMAGEMODE_INT16:
-                    snprintf(interval, sizeof(interval), "%d %d", 0, USHRT_MAX);
-                    break;
-                case MS_IMAGEMODE_FLOAT32:
-                    snprintf(interval, sizeof(interval), "%.5f %.5f", -FLT_MAX, FLT_MAX);
-                    break;
-            }
+
+            /* Interval */
+            snprintf(interval, sizeof(interval), "%.5g %.5g", cm->bands[i].interval_min, cm->bands[i].interval_max);
             xmlNewChild(psAllowedValues, psSweNs, BAD_CAST "interval", BAD_CAST interval);
-            if((value  = msOWSGetEncodeMetadata(&(layer->metadata), "COM", "band_significant_figures", NULL)) != NULL)
-            {
-                xmlNewChild(psAllowedValues, psSweNs, BAD_CAST "significantFigures", BAD_CAST value);
-            }
+
+            /* Significant figures */
+            snprintf(significant_figures, sizeof(significant_figures), "%d", cm->bands[i].significant_figures);
+            xmlNewChild(psAllowedValues, psSweNs, BAD_CAST "significantFigures", BAD_CAST significant_figures);
         }
 
         /* if there are given nilvalues -> add them to the first field */
@@ -2101,6 +2093,32 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 }
 
 /************************************************************************/
+/*                   msWCSGetRangesetAxisMetadata20()                   */
+/*                                                                      */
+/*      Looks up a layers metadata for a specific axis information.     */
+/************************************************************************/
+
+static const char *msWCSLookupRangesetAxisMetadata20(hashTableObj *table,
+        const char *axis, const char *item)
+{
+    char buf[500], *value;
+
+    if(table == NULL || axis == NULL || item == NULL)
+    {
+        return NULL;
+    }
+
+    strlcpy(buf, axis, sizeof(buf));
+    strlcat(buf, "_", sizeof(buf));
+    strlcat(buf, item, sizeof(buf));
+    if((value = msLookupHashTable(table, buf)) != NULL)
+    {
+        return value;
+    }
+    return msOWSLookupMetadata(table, "COM", buf);
+}
+
+/************************************************************************/
 /*                   msWCSGetCoverageMetadata20()                       */
 /*                                                                      */
 /*      Inits a coverageMetadataObj. Uses msWCSGetCoverageMetadata()    */
@@ -2190,7 +2208,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             tokens = msStringSplit(value, ' ', &n);
             if( tokens == NULL || n != 2 )
             {
-                msSetError( MS_WCSERR, "Wrong number of arguments for wcs|ows_resolution metadata.", "msWCSGetCoverageMetadata()");
+                msSetError( MS_WCSERR, "Wrong number of arguments for wcs|ows_resolution metadata.", "msWCSGetCoverageMetadata20()");
                 msFreeCharArray( tokens, n );
                 return MS_FAILURE;
             }
@@ -2210,7 +2228,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             tokens = msStringSplit(value, ' ', &n);
             if( tokens == NULL || n != 2 )
             {
-                msSetError( MS_WCSERR, "Wrong number of arguments for wcs|ows_size metadata.", "msWCSGetCoverageDomain()");
+                msSetError( MS_WCSERR, "Wrong number of arguments for wcs|ows_size metadata.", "msWCSGetCoverageMetadata20()");
                 msFreeCharArray( tokens, n );
                 return MS_FAILURE;
             }
@@ -2236,7 +2254,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         /* do we have information to do anything */
         if( cm->xresolution == 0.0 || cm->yresolution == 0.0 || cm->xsize == 0 || cm->ysize == 0 )
         {
-            msSetError( MS_WCSERR, "Failed to collect extent and resolution for WCS coverage from metadata for layer '%s'.  Need value wcs|ows_resolution or wcs|ows_size values.", "msWCSGetCoverageMetadata()", layer->name );
+            msSetError( MS_WCSERR, "Failed to collect extent and resolution for WCS coverage from metadata for layer '%s'.  Need value wcs|ows_resolution or wcs|ows_size values.", "msWCSGetCoverageMetadata20()", layer->name );
             return MS_FAILURE;
         }
 
@@ -2252,7 +2270,9 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         cm->numbands = 1;
         if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", "bandcount")) != NULL)
         {
-            cm->numbands = atoi(value);
+            int numbands = 0;
+            msStringParseInteger(value, &numbands);
+            cm->numbands = (size_t)numbands;
         }
 
         cm->bands = msSmallCalloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands);
@@ -2269,7 +2289,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
                 cm->imagemode = MS_IMAGEMODE_BYTE;
             else
             {
-                msSetError( MS_WCSERR, "Content of wcs|ows_imagemode (%s) not recognised.  Should be one of BYTE, INT16 or FLOAT32.", "msWCSGetCoverageMetadata()", value );
+                msSetError( MS_WCSERR, "Content of wcs|ows_imagemode (%s) not recognised.  Should be one of BYTE, INT16 or FLOAT32.", "msWCSGetCoverageMetadata20()", value );
                 return MS_FAILURE;
             }
         }
@@ -2317,53 +2337,193 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         }
 
         {
-            char *keys[] =
-                { "band_name", "band_interpretation", "band_uom", "band_definition", "band_description" };
-            int nums[5], i, j;
-            char **tokens[5];
+            int num_band_names = 0, i, j;
+            char **band_names = NULL;
 
-            for(i = 0; i < 5; ++i)
+            char *wcs11_band_names_key = "rangeset_axes";
+            char *wcs20_band_names_key = "band_names";
+
+            char *wcs11_interval_key = "interval";
+            char *wcs20_interval_key = "interval";
+            char *interval_key = NULL;
+
+            char *significant_figures_key = "significant_figures";
+
+            char *wcs11_keys[] =
+            { "label", "semantic", "values_type", "values_semantic", "description" };
+            char *wcs20_keys[] =
+            { "band_name", "band_interpretation", "band_uom", "band_definition", "band_description" };
+            char **keys = NULL;
+
+            char **interval_array;
+            int num_interval;
+
+            wcs20rasterbandMetadataObj default_values;
+
+            /* Decide whether WCS1.1 or WCS2.0 keys should be used */
+            if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", wcs20_band_names_key) ) != NULL )
             {
-                nums[i] = 0;
-                tokens[i] = NULL;
+                keys = wcs20_keys;
+                interval_key = wcs20_interval_key;
+                band_names = msStringSplit(value, ' ', &num_band_names);
+            }
+            else if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", wcs11_band_names_key)) != NULL )
+            {
+                keys = wcs11_keys;
+                interval_key = wcs11_interval_key;
+                band_names = msStringSplit(value, ' ', &num_band_names);
             }
 
-            /* get string arrays from metadata for specific keys */
-            for(i = 0; i < 5; ++i)
+            /* return with error when number of bands does not match    */
+            /* the number of names                                      */
+            if (num_band_names != cm->numbands && num_band_names != 0)
             {
-                if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", keys[i])) != NULL )
+                msFreeCharArray(band_names, num_band_names);
+                msSetError( MS_WCSERR,
+                        "Wrong number of band names given in layer '%s'. "
+                        "Expected %d, got %d.", "msWCSGetCoverageMetadata20()",
+                        layer->name, cm->numbands, num_band_names );
+                return MS_FAILURE;
+            }
+
+            /* default values */
+            for(j = 1; j < 5; ++j)
+            {
+                if(keys != NULL)
                 {
-                    tokens[i] = msStringSplit(value, ' ', &nums[i]);
+                    default_values.values[j] = (char *)msOWSLookupMetadata(&(layer->metadata), "COM", keys[j]);
                 }
             }
 
-            /* iterate over all string arrays */
-            for(i = 0; i < 5; ++i)
+            /* default interval values */
+            if (interval_key != NULL
+                && (value = msOWSLookupMetadata(&(layer->metadata), "COM", interval_key)) != NULL)
             {
-                /* if only one value for a key -> fill it to every band */
-                if(nums[i] == 1)
+                interval_array = msStringSplit(value, ' ', &num_interval);
+
+                if (num_interval != 2
+                    || msStringParseDouble(interval_array[0], &(default_values.interval_min)) != MS_SUCCESS
+                    || msStringParseDouble(interval_array[1], &(default_values.interval_max)) != MS_SUCCESS)
                 {
-                    /* fill in every band */
-                    for(j = 0; j < cm->numbands; ++j)
+                    msFreeCharArray(band_names, num_band_names);
+                    msFreeCharArray(interval_array, num_interval);
+                    msSetError(MS_WCSERR, "Wrong interval format for default axis.",
+                            "msWCSGetCoverageMetadata20()");
+                    return MS_FAILURE;
+                }
+                msFreeCharArray(interval_array, num_interval);
+            }
+            else
+            {
+                switch(cm->imagemode)
+                {
+                case MS_IMAGEMODE_BYTE:
+                case MS_IMAGEMODE_PC256:
+                    default_values.interval_min = 0.;
+                    default_values.interval_max = 255.;
+                    default_values.significant_figures = 3;
+                    break;
+                case MS_IMAGEMODE_INT16:
+                    default_values.interval_min = 0.;
+                    default_values.interval_max = (double)USHRT_MAX;
+                    default_values.significant_figures = 5;
+                    break;
+                case MS_IMAGEMODE_FLOAT32:
+                    default_values.interval_min = -FLT_MAX;
+                    default_values.interval_max = FLT_MAX;
+                    default_values.significant_figures = 12;
+                    break;
+                }
+            }
+
+            /* default value for significant figures */
+            if((value = msOWSLookupMetadata(&(layer->metadata), "COM", significant_figures_key)) != NULL)
+            {
+                if(msStringParseInteger(value, &(default_values.significant_figures)) != MS_SUCCESS)
+                {
+                    msFreeCharArray(band_names, num_band_names);
+                    msSetError(MS_WCSERR, "Wrong significant figures format "
+                            "for default axis.",
+                            "msWCSGetCoverageMetadata20()");
+                    return MS_FAILURE;
+                }
+            }
+
+            for(i = 0; i < cm->numbands; ++i)
+            {
+                cm->bands[i].name = NULL;
+
+                if(num_band_names != 0)
+                {
+                    cm->bands[i].name = msStrdup(band_names[i]);
+                    for(j = 1; j < 5; ++j)
                     {
-                        cm->bands[j].values[i] = msStrdup(tokens[i][0]);
+                        value = (char *)msWCSLookupRangesetAxisMetadata20(&(layer->metadata),
+                                cm->bands[i].name, keys[j]);
+                        if(value != NULL)
+                        {
+                            cm->bands[i].values[j] = msStrdup(value);
+                        }
+                        else if(default_values.values[j] != NULL)
+                        {
+                            cm->bands[i].values[j] = msStrdup(default_values.values[j]);
+                        }
+                    }
+                }
+
+                /* set up interval */
+                value = (char *)msWCSLookupRangesetAxisMetadata20(&(layer->metadata),
+                        cm->bands[i].name, interval_key);
+                if(value != NULL)
+                {
+                    num_interval = 0;
+                    interval_array = msStringSplit(value, ' ', &num_interval);
+
+                    if (num_interval != 2
+                        || msStringParseDouble(interval_array[0], &(cm->bands[i].interval_min)) != MS_SUCCESS
+                        || msStringParseDouble(interval_array[1], &(cm->bands[i].interval_max)) != MS_SUCCESS)
+                    {
+                        msFreeCharArray(band_names, num_band_names);
+                        msFreeCharArray(interval_array, num_interval);
+                        msSetError(MS_WCSERR, "Wrong interval format for axis %s.",
+                                "msWCSGetCoverageMetadata20()", cm->bands[i].name);
+                        return MS_FAILURE;
+                    }
+
+                    msFreeCharArray(interval_array, num_interval);
+                }
+                else
+                {
+                    cm->bands[i].interval_min = default_values.interval_min;
+                    cm->bands[i].interval_max = default_values.interval_max;
+                }
+
+                /* set up significant figures */
+                value = (char *)msWCSLookupRangesetAxisMetadata20(&(layer->metadata),
+                        cm->bands[i].name, significant_figures_key);
+                if(value != NULL)
+                {
+                    if(msStringParseInteger(value, &(cm->bands[i].significant_figures)) != MS_SUCCESS)
+                    {
+                        msFreeCharArray(band_names, num_band_names);
+                        msSetError(MS_WCSERR, "Wrong significant figures format "
+                                "for axis %s.",
+                                "msWCSGetCoverageMetadata20()", cm->bands[i].name);
+                        return MS_FAILURE;
                     }
                 }
                 else
                 {
-                    /* fill in as long as bands or values are available */
-                    for(j = 0; j < nums[i] && j < cm->numbands; ++j)
-                    {
-                        cm->bands[j].values[i] = msStrdup(tokens[i][j]);
-                    }
+                    cm->bands[i].significant_figures = default_values.significant_figures;
                 }
-                msFreeCharArray(tokens[i], nums[i]);
             }
+
+            msFreeCharArray(band_names, num_band_names);
         }
     }
     else if( layer->data == NULL )
     { /* no virtual metadata, not ok unless we're talking 1 image, hopefully we can fix that */
-        msSetError( MS_WCSERR, "RASTER Layer with no DATA statement and no WCS virtual dataset metadata.  Tileindexed raster layers not supported for WCS without virtual dataset metadata (cm->extent, wcs_res, wcs_size).", "msWCSGetCoverageDomain()" );
+        msSetError( MS_WCSERR, "RASTER Layer with no DATA statement and no WCS virtual dataset metadata.  Tileindexed raster layers not supported for WCS without virtual dataset metadata (cm->extent, wcs_res, wcs_size).", "msWCSGetCoverageMetadata20()" );
         return MS_FAILURE;
     }
     else
@@ -2406,7 +2566,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         if( cm->numbands == 0 )
         {
             msReleaseLock( TLOCK_GDAL );
-            msSetError( MS_WCSERR, "Raster file %s has no raster bands.  This cannot be used in a layer.", "msWCSGetCoverageMetadata()", layer->data );
+            msSetError( MS_WCSERR, "Raster file %s has no raster bands.  This cannot be used in a layer.", "msWCSGetCoverageMetadata20()", layer->data );
             return MS_FAILURE;
         }
 
@@ -2429,18 +2589,40 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         /* get as much band metadata as possible */
         for(i = 0; i < cm->numbands; ++i)
         {
+            char bandname[32];
             GDALColorInterp colorInterp;
             hBand = GDALGetRasterBand(hDS, i + 1);
+            snprintf(bandname, sizeof(bandname), "band%d", i+1);
+            cm->bands[i].name = msStrdup(bandname);
             colorInterp = GDALGetRasterColorInterpretation(hBand);
-            cm->bands[i].name = msStrdup(GDALGetColorInterpretationName(colorInterp));
-            cm->bands[i].interpretation = msStrdup(cm->bands[i].name);
+            cm->bands[i].interpretation = msStrdup(GDALGetColorInterpretationName(colorInterp));
             cm->bands[i].uom = msStrdup(GDALGetRasterUnitType(hBand));
             if(strlen(cm->bands[i].uom) == 0)
             {
                 msFree(cm->bands[i].uom);
                 cm->bands[i].uom = NULL;
             }
-            /* TODO: description and definition cannot be retrieved? */
+
+            /* set up interval and significant figures */
+            switch(cm->imagemode)
+            {
+            case MS_IMAGEMODE_BYTE:
+            case MS_IMAGEMODE_PC256:
+                cm->bands[i].interval_min = 0.;
+                cm->bands[i].interval_max = 255.;
+                cm->bands[i].significant_figures = 3;
+                break;
+            case MS_IMAGEMODE_INT16:
+                cm->bands[i].interval_min = 0.;
+                cm->bands[i].interval_max = (double)USHRT_MAX;
+                cm->bands[i].significant_figures = 5;
+                break;
+            case MS_IMAGEMODE_FLOAT32:
+                cm->bands[i].interval_min = -FLT_MAX;
+                cm->bands[i].interval_max = FLT_MAX;
+                cm->bands[i].significant_figures = 12;
+                break;
+            }
         }
 
         hDriver = GDALGetDatasetDriver(hDS);
@@ -2617,6 +2799,7 @@ static int msWCSGetCapabilities20_CreateProfiles(
         MS_WCS_20_PROFILE_GML_GEOTIFF, NULL,
         MS_WCS_20_PROFILE_SCALING, NULL,
         MS_WCS_20_PROFILE_INTERPOLATION, NULL,
+        MS_WCS_20_PROFILE_RANGESUBSET, NULL,
         NULL, NULL /* guardian */
     };
 
@@ -2871,7 +3054,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
 /*      major sections: BoundedBy, DomainSet and RangeType.             */
 /************************************************************************/
 
-static int msWCSDescribeCoverage_CoverageDescription20(mapObj *map,
+static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
     layerObj *layer, wcs20ParamsObjPtr params, xmlDocPtr psDoc, xmlNodePtr psRootNode )
 {
     int status;
@@ -3052,7 +3235,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj
                         params->version);
             }
             /* create coverage description for the specified layer */
-            if(msWCSDescribeCoverage_CoverageDescription20(map, (GET_LAYER(map, i)),
+            if(msWCSDescribeCoverage20_CoverageDescription(map, (GET_LAYER(map, i)),
                     params, psDoc, psRootNode) == MS_FAILURE)
             {
                 msSetError(MS_WCSERR, "Error retrieving coverage description.", "msWCSDescribeCoverage20()");
@@ -3219,10 +3402,13 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
     *bandlist = msSmallCalloc(sizeof(char), maxlen);
     current = *bandlist;
 
-    tmp = msOWSGetEncodeMetadata(&layer->metadata,
-                                 "COM",
-                                 "rangeset_axes",
-                                 NULL);
+    if (NULL == (tmp = msOWSGetEncodeMetadata(&layer->metadata,
+                        "COM", "rangeset_axes", NULL)))
+    {
+        tmp = msOWSGetEncodeMetadata(&layer->metadata,
+                        "COM", "band_names", NULL);
+    }
+
     if(NULL != tmp)
     {
         band_ids = CSLTokenizeString2(tmp, " ", 0);
@@ -3590,7 +3776,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 
     if(msWCSGetCoverage20_GetBands(map, layer, params, &cm, &bandlist) != MS_SUCCESS)
     {
-        return msWCSException(map, "InvalidParameterValue", "format",
+        return msWCSException(map, "InvalidParameterValue", "rangesubset",
                 params->version);
     }
     msLayerSetProcessingKey(layer, "BANDS", bandlist);
