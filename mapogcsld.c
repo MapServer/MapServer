@@ -370,6 +370,8 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                             GET_LAYER(map, i)->template = NULL;
                         }
 
+                        pasLayers[j].layerinfo=NULL;
+
                         if( nStatus != MS_SUCCESS )
                             return nStatus;
                     }
