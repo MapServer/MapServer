@@ -3128,7 +3128,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
         pszValue = xmlGetProp(rootnode, (xmlChar *)"service");
         if (pszValue)
           wfsparams->pszService = msStrdup(pszValue);     
-s
+
         
         /* version is optional for the GetCapabilities. If not provided, set it*/
         if (wfsparams->pszVersion == NULL && 
