@@ -556,7 +556,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
             if(!msWCSIsLayerSupported(layer)) 
                 continue;
             
-            if (!msStringInArray(layer->name, ows_request->enabled_layers, ows_request->numlayers))
+            if (!msIntegerInArray(layer->index, ows_request->enabled_layers, ows_request->numlayers))
                 continue;
 
             status = msWCSGetCapabilities11_CoverageSummary( 
@@ -895,7 +895,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ow
         for( j = 0; params->coverages[j]; j++ ) {
             i = msGetLayerIndex(map, params->coverages[j]);
             if ( (i == -1) || 
-                 (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)) )
+                 (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) )
             {
                 msSetError( MS_WCSERR,
                             "COVERAGE %s cannot be opened / does not exist",
@@ -948,7 +948,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ow
     } else { /* return all layers */
         for(i=0; i<map->numlayers; i++) {
 
-            if (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers))
+            if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
                 continue;
 
             msWCSDescribeCoverage_CoverageDescription11((GET_LAYER(map, i)), 

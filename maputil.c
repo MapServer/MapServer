@@ -2260,3 +2260,18 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
     return online_resource;
 }
 
+
+/************************************************************************/
+/*                             msIntegerInArray()                        */
+/************************************************************************/
+
+/* Check if a integer is in a array */
+int msIntegerInArray(const int value, int *array, int numelements)
+{
+    int i;
+    for (i=0;i<numelements;++i) {
+        if (value == array[i])
+            return MS_TRUE;
+    }
+    return MS_FALSE;
+}

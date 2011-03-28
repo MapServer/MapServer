@@ -435,7 +435,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
          layerObj *lp;
          lp = GET_LAYER(map, i);
          
-         if (!msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers))
+         if (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers))
              continue;
 
          /* List only vector layers in which DUMP=TRUE */

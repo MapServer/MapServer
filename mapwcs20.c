@@ -3026,7 +3026,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             if(!msWCSIsLayerSupported(layer))
                 continue;
 
-            if (!msStringInArray(layer->name, ows_request->enabled_layers, ows_request->numlayers))
+            if (!msIntegerInArray(layer->index, ows_request->enabled_layers, ows_request->numlayers))
                 continue;
 
             status = msWCSGetCapabilities20_CoverageSummary(
@@ -3228,7 +3228,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj
         for (j = 0; params->ids[j]; j++)
         {
             i = msGetLayerIndex(map, params->ids[j]);
-            if (i == -1 || (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)) )
+            if (i == -1 || (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) )
             {
                 msSetError(MS_WCSERR, "Unknown coverage: (%s)",
                         "msWCSDescribeCoverage20()", params->ids[j]);
@@ -3496,7 +3496,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
                                               "CO", "name",
                                               GET_LAYER(map, i)->name);
         if (EQUAL(coverageName, params->ids[0]) && 
-            (msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)))
+            (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)))
         {
             layer = GET_LAYER(map, i);
             i = map->numlayers; /* to exit loop don't use break, we want to free resources first */

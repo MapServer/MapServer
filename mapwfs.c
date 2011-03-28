@@ -830,7 +830,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       if (lp->status == MS_DELETE)
          continue;
 
-      if (!msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers))
+      if (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers))
           continue;
 
       /* List only vector layers in which DUMP=TRUE */
@@ -1153,7 +1153,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
   if (numlayers > 0) {
     for (i=0; i<numlayers; i++) {
         int index = msGetLayerIndex(map, layers[i]);
-        if ( (index < 0) || (!msStringInArray(GET_LAYER(map, index)->name, ows_request->enabled_layers, ows_request->numlayers)) ) {
+        if ( (index < 0) || (!msIntegerInArray(GET_LAYER(map, index)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
 	      msSetError(MS_WFSERR, "Invalid typename (%s).", "msWFSDescribeFeatureType()", layers[i]);/* paramsObj->pszTypeName); */
               return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
       }
@@ -1272,7 +1272,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
     }
 
     if ((numlayers == 0 || bFound) && msWFSIsLayerSupported(lp) && 
-        (msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)) ) {        
+        (msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)) ) {        
 
       /*
       ** OK, describe this layer IF you can open it and retrieve items
@@ -1761,7 +1761,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
 	lp = GET_LAYER(map, j);
 	
 	if (msWFSIsLayerSupported(lp) && lp->name && (strcasecmp(lp->name, layers[k]) == 0) && 
-            (msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)) ) {
+            (msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
 	  bLayerFound = MS_TRUE;
 	  
 	  lp->status = MS_ON;

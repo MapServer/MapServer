@@ -2229,6 +2229,7 @@ MS_DLL_EXPORT int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image
 MS_DLL_EXPORT void *msSmallMalloc( size_t nSize );
 MS_DLL_EXPORT void * msSmallRealloc( void * pData, size_t nNewSize );
 MS_DLL_EXPORT void *msSmallCalloc( size_t nCount, size_t nSize );
+MS_DLL_EXPORT int msIntegerInArray(const int value, int *array, int numelements);
 
 MS_DLL_EXPORT int msExtentsOverlap(mapObj *map, layerObj *layer);
 MS_DLL_EXPORT char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req);

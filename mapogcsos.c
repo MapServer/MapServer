@@ -1401,7 +1401,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                 continue;
 
              value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_id");
-             if (value && (msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)))
+             if (value && (msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)))
              {
                  nCurrentOff = -1;
                  for (j=0; j<nOfferings; j++)
@@ -1877,7 +1877,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   for (i=0; i<map->numlayers; i++) {
       pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "offering_id");
     if (pszTmp && (strcasecmp(pszTmp, sosparams->pszOffering) == 0) && 
-        (msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)))
+        (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)))
       break;
   }
 
@@ -2659,7 +2659,7 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams, owsRequestObj *ows
           pszProcedureURI = msStrdup("urn:ogc:def:procedure:");
           pszProcedureURI = msStringConcatenate(pszProcedureURI, tokens[k]);
           if ( (pszProcedureURI && strcasecmp(pszProcedureURI, sosparams->pszProcedure) == 0) &&
-               (msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)) ) {
+               (msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
             bFound = 1; 
             pszProcedureId = msStrdup(tokens[k]);
             msFree(pszProcedureURI);
@@ -2783,7 +2783,7 @@ int msSOSDescribeObservationType(mapObj *map, sosParamsObj *sosparams, cgiReques
   tokens = msStringSplit(sosparams->pszObservedProperty, ',', &n);
 
   for (i=0; i<map->numlayers; i++) {
-    if (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers))
+    if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
       continue;
     pszTmp = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "observedproperty_id");
     if (pszTmp) {

@@ -516,7 +516,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                      strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
                     (map->name && strcasecmp(map->name, layers[k]) == 0) ||
                     (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0)) &&
-                   ((msStringInArray(GET_LAYER(map, j)->name, ows_request->enabled_layers, ows_request->numlayers))) )
+                   ((msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers))) )
               {
                   if (GET_LAYER(map, j)->status != MS_DEFAULT)
                   {
@@ -2558,7 +2558,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
          lp = (GET_LAYER(map, i));
 
          if (pabLayerProcessed[i] || (lp->status == MS_DELETE) || 
-             (!msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)))
+             (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)))
              continue;  /* Layer is hidden or has already been handled */
          
          if (numNestedGroups[i] > 0) 
@@ -2857,7 +2857,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
 
   /* turn off layer if WMS GetMap is not enabled */
   for (i=0; i<map->numlayers; i++)
-      if (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers))
+      if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
           GET_LAYER(map, i)->status = MS_OFF;
 
   if (sldrequested && sldspatialfilter)
@@ -3062,7 +3062,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
          if (((GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
               (map->name && strcasecmp(map->name, layers[k]) == 0) ||
               (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0)) &&
-             (msStringInArray(GET_LAYER(map, j)->name, ows_request->enabled_layers, ows_request->numlayers)) )
+             (msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers)) )
             {
                 numlayers_found++;     
                 GET_LAYER(map, j)->status = MS_ON;               
@@ -3577,7 +3577,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          lp = GET_LAYER(map, i);
          if ( ((lp->name && strcasecmp(lp->name, pszLayer) == 0) ||
                (lp->group && strcasecmp(lp->group, pszLayer) == 0)) &&
-              (msStringInArray(lp->name, ows_request->enabled_layers, ows_request->numlayers)) )
+              (msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)) )
            {
                nLayers++;
                lp->status = MS_ON;

@@ -907,7 +907,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
 
   for(i=0; i<map->numlayers; i++) {
   
-      if (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers))
+      if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
           continue;
   
       if( msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params) != MS_SUCCESS ) {
@@ -1348,7 +1348,7 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
         for(i=0; i<map->numlayers; i++) {
           coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
           if( EQUAL(coverageName, coverages[k]) &&
-              (msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)) )
+              (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) )
               break;
         }
 
@@ -1396,7 +1396,7 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
     }
   } else { /* return all layers */
       for(i=0; i<map->numlayers; i++) {
-          if (!msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers))
+          if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
               continue;
 
           msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
@@ -1618,7 +1618,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   for(i=0; i<map->numlayers; i++) {
      coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
     if( EQUAL(coverageName, params->coverages[0]) &&
-        (msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)) ) {
+        (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
       lp = GET_LAYER(map, i);
       break;
     }

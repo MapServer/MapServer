@@ -79,7 +79,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
      */
     if ((status = msWMSDispatch(map, request, &ows_request, MS_FALSE)) != MS_DONE )
     {
-        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
+        msFree(ows_request.enabled_layers);
         return status;
     }
 #else
@@ -95,7 +95,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
      */
     if ((status = msWFSDispatch(map, request, &ows_request, (ows_mode == WFS))) != MS_DONE )
     {
-        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
+        msFree(ows_request.enabled_layers);
         return status;
     }
 
@@ -109,7 +109,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 #ifdef USE_WCS_SVR
     if ((status = msWCSDispatch(map, request, &ows_request)) != MS_DONE )
     {
-        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
+        msFree(ows_request.enabled_layers);
         return status;
     }
 #else
@@ -122,7 +122,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 #ifdef USE_SOS_SVR
     if ((status = msSOSDispatch(map, request, &ows_request)) != MS_DONE )
     {
-        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
+        msFree(ows_request.enabled_layers);
         return status;
     }
 #else
@@ -153,11 +153,11 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
          * return MS_SUCCESS since the exception will have been processed 
          * the OWS way, which is a success as far as mapserv is concerned 
          */
-        msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
+        msFree(ows_request.enabled_layers);
         return MS_FAILURE; 
     }
 
-    msFreeCharArray(ows_request.enabled_layers, ows_request.numlayers);
+    msFree(ows_request.enabled_layers);
     return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it 
                       * since we're not in force_ows_mode*/
 }
@@ -259,7 +259,7 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
 ** If namespaces is NULL then this function just does a regular metadata
 ** lookup.
 **
-** Returns an array of the layers enabled.
+** Generates an array of the layer ids enabled.
 */
 void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces, 
                                const char *request, owsRequestObj *ows_request)
@@ -269,7 +269,7 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
     const char *enable_request;
 
     if (ows_request->numlayers > 0) 
-        msFreeCharArray(ows_request->enabled_layers, ows_request->numlayers);
+        msFree(ows_request->enabled_layers);
     
     ows_request->numlayers = 0;
     ows_request->enabled_layers = NULL;
@@ -290,7 +290,7 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
     {
         int i, layers_size = map->numlayers; //for most of cases, this will be relatively small
 
-        ows_request->enabled_layers = (char**)msSmallMalloc(sizeof(char*)*layers_size);
+        ows_request->enabled_layers = (int*)msSmallMalloc(sizeof(int)*layers_size);
 
         for(i=0; i<map->numlayers; i++)
         {
@@ -312,9 +312,7 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
             
             if (result || (!disabled && globally_enabled))
             {
-                size_t size = strlen(lp->name)+1;
-                ows_request->enabled_layers[ows_request->numlayers] = (char *)msSmallMalloc(sizeof(char) * size);
-                strlcpy(ows_request->enabled_layers[ows_request->numlayers], lp->name, size);
+                ows_request->enabled_layers[ows_request->numlayers] = lp->index;
                 ows_request->numlayers++;
             }
         }

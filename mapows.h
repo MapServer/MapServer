@@ -107,7 +107,7 @@ typedef  struct
 typedef struct
 {
     int numlayers;
-    char **enabled_layers;
+    int *enabled_layers;
     
 } owsRequestObj;
 
