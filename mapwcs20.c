@@ -2386,7 +2386,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
                 return MS_FAILURE;
             }
 
-            /* default values */
+            /* look up default metadata values */
             for(j = 1; j < 5; ++j)
             {
                 if(keys != NULL)
@@ -2394,8 +2394,29 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
                     default_values.values[j] = (char *)msOWSLookupMetadata(&(layer->metadata), "COM", keys[j]);
                 }
             }
+            
+            /* set default values for interval and significant figures */
+            switch(cm->imagemode)
+            {
+            case MS_IMAGEMODE_BYTE:
+            case MS_IMAGEMODE_PC256:
+                default_values.interval_min = 0.;
+                default_values.interval_max = 255.;
+                default_values.significant_figures = 3;
+                break;
+            case MS_IMAGEMODE_INT16:
+                default_values.interval_min = 0.;
+                default_values.interval_max = (double)USHRT_MAX;
+                default_values.significant_figures = 5;
+                break;
+            case MS_IMAGEMODE_FLOAT32:
+                default_values.interval_min = -FLT_MAX;
+                default_values.interval_max = FLT_MAX;
+                default_values.significant_figures = 12;
+                break;
+            }
 
-            /* default interval values */
+            /* lookup default interval values */
             if (interval_key != NULL
                 && (value = msOWSLookupMetadata(&(layer->metadata), "COM", interval_key)) != NULL)
             {
@@ -2413,30 +2434,8 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
                 }
                 msFreeCharArray(interval_array, num_interval);
             }
-            else
-            {
-                switch(cm->imagemode)
-                {
-                case MS_IMAGEMODE_BYTE:
-                case MS_IMAGEMODE_PC256:
-                    default_values.interval_min = 0.;
-                    default_values.interval_max = 255.;
-                    default_values.significant_figures = 3;
-                    break;
-                case MS_IMAGEMODE_INT16:
-                    default_values.interval_min = 0.;
-                    default_values.interval_max = (double)USHRT_MAX;
-                    default_values.significant_figures = 5;
-                    break;
-                case MS_IMAGEMODE_FLOAT32:
-                    default_values.interval_min = -FLT_MAX;
-                    default_values.interval_max = FLT_MAX;
-                    default_values.significant_figures = 12;
-                    break;
-                }
-            }
 
-            /* default value for significant figures */
+            /* lookup default value for significant figures */
             if((value = msOWSLookupMetadata(&(layer->metadata), "COM", significant_figures_key)) != NULL)
             {
                 if(msStringParseInteger(value, &(default_values.significant_figures)) != MS_SUCCESS)
@@ -2449,10 +2448,12 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
                 }
             }
 
+            /* iterate over every band */
             for(i = 0; i < cm->numbands; ++i)
             {
                 cm->bands[i].name = NULL;
-
+                
+                /* look up band metadata or copy defaults */
                 if(num_band_names != 0)
                 {
                     cm->bands[i].name = msStrdup(band_names[i]);
