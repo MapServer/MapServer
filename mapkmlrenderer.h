@@ -138,6 +138,7 @@ protected:
         char* getLayerName(layerObj *layer);
         void processLayer(layerObj *layer);
         void addLineStyleToList(strokeStyleObj *style);
+        const char *getAliasName(layerObj *lp, char *pszItemName, const char *namespaces);
 
 public:
 

@@ -251,6 +251,11 @@ void KmlRenderer::processLayer(layerObj *layer)
     
 }
 
+/************************************************************************/
+/*                               getLayerName                           */
+/*                                                                      */
+/*      Internal utility function to build name used fo rthe layer.     */
+/************************************************************************/
 char* KmlRenderer::getLayerName(layerObj *layer)
 {
     char stmp[20];
@@ -270,6 +275,18 @@ char* KmlRenderer::getLayerName(layerObj *layer)
      sprintf(stmp, "Layer%d",layer->index);
      return msStrdup(stmp); 
 
+}
+
+const char* KmlRenderer::getAliasName(layerObj *lp, char *pszItemName, const char *namespaces)
+{
+    const char *pszAlias = NULL;
+    if (lp && pszItemName && strlen(pszItemName) > 0)
+    {
+        char szTmp[256];
+        snprintf(szTmp, sizeof(szTmp), "%s_alias", pszItemName);
+        pszAlias = msOWSLookupMetadata(&(lp->metadata), namespaces, szTmp);
+    }
+    return pszAlias;
 }
 
 int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
@@ -1214,11 +1231,15 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
     }
     else if (papszLayerIncludeItems && nIncludeItems > 0)
     {
+/* -------------------------------------------------------------------- */
+/*      preffered way is to use the ExtendedData tag (#3728)            */
+/*      http://code.google.com/apis/kml/documentation/extendeddata.html */
+/* -------------------------------------------------------------------- */
+        
         char lineBuf[512];
-        xmlNodePtr descriptionNode = xmlNewNode(NULL, BAD_CAST "description");
-
-        /*xmlNodeAddContent(descriptionNode, BAD_CAST "\n\t<![CDATA[\n");*/
-        xmlNodeAddContent(descriptionNode, BAD_CAST "<table>");
+        xmlNodePtr extendedDataNode = xmlNewNode(NULL, BAD_CAST "ExtendedData");
+        xmlNodePtr dataNode = NULL; 
+        const char*pszAlias=NULL;
 
         for (int i=0; i<currentLayer->numitems; i++)
         {
@@ -1231,19 +1252,24 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
             }
             if (j<nIncludeItems)
             {
-                if (shape->values[i] && strlen(shape->values[i]))
-                  snprintf(lineBuf, sizeof(lineBuf), "<tr><td><b>%s</b></td><td>%s</td></tr>\n", currentLayer->items[i], shape->values[i]);
+                dataNode = xmlNewNode(NULL, BAD_CAST "Data");
+                xmlNewProp(dataNode, BAD_CAST "name", BAD_CAST  currentLayer->items[i]);
+                pszAlias = getAliasName(currentLayer, currentLayer->items[i], "GO");
+                if (pszAlias)
+                  xmlNewChild(dataNode, NULL, BAD_CAST "displayName", BAD_CAST  pszAlias);
                 else
-                  snprintf(lineBuf, sizeof(lineBuf), "<tr><td><b>%s</b></td><td></td></tr>\n", currentLayer->items[i]);
-                xmlNodeAddContent(descriptionNode, BAD_CAST lineBuf);
+                  xmlNewChild(dataNode, NULL, BAD_CAST "displayName", BAD_CAST  currentLayer->items[i]);
+                if (shape->values[i] && strlen(shape->values[i]))
+                  xmlNewChild(dataNode, NULL, BAD_CAST "value", BAD_CAST  shape->values[i]);
+                else
+                  xmlNewChild(dataNode, NULL, BAD_CAST "value", NULL);
+                xmlAddChild(extendedDataNode, dataNode);
             }
-           
         }
 
-        xmlNodeAddContent(descriptionNode, BAD_CAST "</table>");
-	/*xmlNodeAddContent(descriptionNode, BAD_CAST "\t]]>\n");*/
+        return extendedDataNode;
 
-        return descriptionNode;
+        
     }
 
     return NULL;
