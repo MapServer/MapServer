@@ -1508,7 +1508,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
     /*      Parse from layer metadata.                                      */
     /* -------------------------------------------------------------------- */
     if( layer != NULL
-        && (value = msOWSGetEncodeMetadata( &(layer->metadata),"COM","formats",
+        && (value = msOWSGetEncodeMetadata( &(layer->metadata),"CO","formats",
                                             NULL )) != NULL )
     {
         tokens = msStringSplit(value, ' ', &numtokens);
@@ -2115,7 +2115,7 @@ static const char *msWCSLookupRangesetAxisMetadata20(hashTableObj *table,
     {
         return value;
     }
-    return msOWSLookupMetadata(table, "COM", buf);
+    return msOWSLookupMetadata(table, "CO", buf);
 }
 
 /************************************************************************/
@@ -2133,10 +2133,10 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         return MS_FAILURE;
 
     if((cm->srs = msOWSGetEPSGProj(&(layer->projection),
-            &(layer->metadata), "COM", MS_TRUE)) == NULL)
+            &(layer->metadata), "CO", MS_TRUE)) == NULL)
     {
         if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection),
-                &(layer->map->web.metadata), "COM", MS_TRUE)) == NULL)
+                &(layer->map->web.metadata), "CO", MS_TRUE)) == NULL)
         {
             msSetError(MS_WCSERR, "Unable to determine the SRS for this layer, "
                     "no projection defined and no metadata available.",
@@ -2149,10 +2149,10 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
     /*      Get the SRS in uri format.                                      */
     /* -------------------------------------------------------------------- */
     if((srs_uri = msOWSGetProjURI(&(layer->projection), &(layer->metadata),
-        "COM", MS_TRUE)) == NULL)
+        "CO", MS_TRUE)) == NULL)
     {
         srs_uri = msOWSGetProjURI(&(layer->map->projection),
-                &(layer->map->web.metadata), "COM", MS_TRUE);
+                &(layer->map->web.metadata), "CO", MS_TRUE);
     }
 
     if( srs_uri != NULL )
@@ -2183,9 +2183,9 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
     /*      that in preference to inspecting the file(s).                   */
     /*      We require extent and either size or resolution.                */
     /* -------------------------------------------------------------------- */
-    if( msOWSLookupMetadata(&(layer->metadata), "COM", "extent") != NULL
-        && (msOWSLookupMetadata(&(layer->metadata), "COM", "resolution") != NULL
-        || msOWSLookupMetadata(&(layer->metadata), "COM", "size") != NULL) )
+    if( msOWSLookupMetadata(&(layer->metadata), "CO", "extent") != NULL
+        && (msOWSLookupMetadata(&(layer->metadata), "CO", "resolution") != NULL
+        || msOWSLookupMetadata(&(layer->metadata), "CO", "size") != NULL) )
     {
         const char *value;
 
@@ -2200,7 +2200,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         /* get resolution */
         cm->xresolution = 0.0;
         cm->yresolution = 0.0;
-        if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", "resolution")) != NULL )
+        if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", "resolution")) != NULL )
         {
             char **tokens;
             int n;
@@ -2220,7 +2220,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         /* get Size (in pixels and lines) */
         cm->xsize = 0;
         cm->ysize = 0;
-        if( (value=msOWSLookupMetadata(&(layer->metadata), "COM", "size")) != NULL )
+        if( (value=msOWSLookupMetadata(&(layer->metadata), "CO", "size")) != NULL )
         {
             char **tokens;
             int n;
@@ -2268,7 +2268,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
 
         /* get bands count, or assume 1 if not found */
         cm->numbands = 1;
-        if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", "bandcount")) != NULL)
+        if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", "bandcount")) != NULL)
         {
             int numbands = 0;
             msStringParseInteger(value, &numbands);
@@ -2279,7 +2279,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
 
         /* get bands type, or assume float if not found */
         cm->imagemode = MS_IMAGEMODE_FLOAT32;
-        if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", "imagemode")) != NULL )
+        if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", "imagemode")) != NULL )
         {
             if( EQUAL(value,"INT16") )
                 cm->imagemode = MS_IMAGEMODE_INT16;
@@ -2294,7 +2294,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             }
         }
 
-        if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", "native_format")) != NULL )
+        if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", "native_format")) != NULL )
         {
             cm->native_format = msStrdup(value);
         }
@@ -2303,16 +2303,16 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         {
             int n_nilvalues = 0, n_nilvalues_reasons = 0;
             char **t_nilvalues = NULL, **t_nilvalues_reasons = NULL;
-            if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", "nilvalues")) != NULL )
+            if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", "nilvalues")) != NULL )
             {
                 t_nilvalues = msStringSplit(value, ' ', &n_nilvalues);
             }
-            else if((value = msOWSLookupMetadata(&(layer->metadata), "COM", "rangeset_nullvalue")) != NULL)
+            else if((value = msOWSLookupMetadata(&(layer->metadata), "CO", "rangeset_nullvalue")) != NULL)
             {
                 t_nilvalues = msStringSplit(value, ' ', &n_nilvalues);
             }
 
-            if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", "nilvalues_reasons")) != NULL )
+            if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", "nilvalues_reasons")) != NULL )
             {
                 t_nilvalues_reasons = msStringSplit(value, ' ', &n_nilvalues_reasons);
             }
@@ -2361,13 +2361,13 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             wcs20rasterbandMetadataObj default_values;
 
             /* Decide whether WCS1.1 or WCS2.0 keys should be used */
-            if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", wcs20_band_names_key) ) != NULL )
+            if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", wcs20_band_names_key) ) != NULL )
             {
                 keys = wcs20_keys;
                 interval_key = wcs20_interval_key;
                 band_names = msStringSplit(value, ' ', &num_band_names);
             }
-            else if( (value = msOWSLookupMetadata(&(layer->metadata), "COM", wcs11_band_names_key)) != NULL )
+            else if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", wcs11_band_names_key)) != NULL )
             {
                 keys = wcs11_keys;
                 interval_key = wcs11_interval_key;
@@ -2391,7 +2391,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             {
                 if(keys != NULL)
                 {
-                    default_values.values[j] = (char *)msOWSLookupMetadata(&(layer->metadata), "COM", keys[j]);
+                    default_values.values[j] = (char *)msOWSLookupMetadata(&(layer->metadata), "CO", keys[j]);
                 }
             }
             
@@ -2418,7 +2418,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
 
             /* lookup default interval values */
             if (interval_key != NULL
-                && (value = msOWSLookupMetadata(&(layer->metadata), "COM", interval_key)) != NULL)
+                && (value = msOWSLookupMetadata(&(layer->metadata), "CO", interval_key)) != NULL)
             {
                 interval_array = msStringSplit(value, ' ', &num_interval);
 
@@ -2436,7 +2436,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
             }
 
             /* lookup default value for significant figures */
-            if((value = msOWSLookupMetadata(&(layer->metadata), "COM", significant_figures_key)) != NULL)
+            if((value = msOWSLookupMetadata(&(layer->metadata), "CO", significant_figures_key)) != NULL)
             {
                 if(msStringParseInteger(value, &(default_values.significant_figures)) != MS_SUCCESS)
                 {
@@ -2961,7 +2961,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     /* -------------------------------------------------------------------- */
     if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "OperationsMetadata") )
     {
-        if ((script_url = msOWSGetOnlineResource(map, "COM", "onlineresource", req)) == NULL
+        if ((script_url = msOWSGetOnlineResource(map, "CO", "onlineresource", req)) == NULL
             || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
         {
             msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities20()");
@@ -3133,10 +3133,10 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
                     BAD_CAST "SupportedCRSs", NULL);
 
             if ((owned_value = msOWSGetProjURI(&(layer->projection),
-                    &(layer->metadata), "COM", MS_FALSE)) != NULL)
+                    &(layer->metadata), "CO", MS_FALSE)) != NULL)
             { }
             else if ((owned_value = msOWSGetProjURI(&(layer->map->projection),
-                    &(layer->map->web.metadata), "COM", MS_FALSE)) != NULL)
+                    &(layer->map->web.metadata), "CO", MS_FALSE)) != NULL)
             { }
             else
             {
@@ -3404,10 +3404,10 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
     current = *bandlist;
 
     if (NULL == (tmp = msOWSGetEncodeMetadata(&layer->metadata,
-                        "COM", "rangeset_axes", NULL)))
+                        "CO", "rangeset_axes", NULL)))
     {
         tmp = msOWSGetEncodeMetadata(&layer->metadata,
-                        "COM", "band_names", NULL);
+                        "CO", "band_names", NULL);
     }
 
     if(NULL != tmp)
@@ -3493,7 +3493,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     layer = NULL;
     for(i = 0; i < map->numlayers; i++) {
         coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata),
-                                              "COM", "name",
+                                              "CO", "name",
                                               GET_LAYER(map, i)->name);
         if (EQUAL(coverageName, params->ids[0]) && 
             (msStringInArray(GET_LAYER(map, i)->name, ows_request->enabled_layers, ows_request->numlayers)))
@@ -3907,7 +3907,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 
         xmlSetNs(psRootNode, psGmlcovNs);
 
-        srs_uri = msOWSGetProjURI(&map->projection, NULL, "COM", 1);
+        srs_uri = msOWSGetProjURI(&map->projection, NULL, "CO", 1);
 
         tmpCm = cm;
         tmpCm.extent = map->extent;

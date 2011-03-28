@@ -125,7 +125,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
 /*      Parse from layer metadata.                                      */
 /* -------------------------------------------------------------------- */
     if( layer != NULL 
-        && (value = msOWSGetEncodeMetadata( &(layer->metadata),"COM","formats",
+        && (value = msOWSGetEncodeMetadata( &(layer->metadata),"CO","formats",
                                             "GTiff" )) != NULL ) {
         tokens = msStringSplit(value, ' ', &numtokens);
     }
@@ -256,9 +256,9 @@ static int msWCSGetCapabilities11_CoverageSummary(
 /* -------------------------------------------------------------------- */
 /*      Title (from description)                                        */
 /* -------------------------------------------------------------------- */
-    value = msOWSLookupMetadata( &(layer->metadata), "COM", "description");
+    value = msOWSLookupMetadata( &(layer->metadata), "CO", "description");
     if( value == NULL )
-        value = msOWSLookupMetadata( &(layer->metadata), "COM", "title");
+        value = msOWSLookupMetadata( &(layer->metadata), "CO", "title");
         if( value == NULL )
             value = layer->name;
     xmlNewChild( psCSummary, psOwsNs, BAD_CAST "Title", BAD_CAST value );
@@ -266,13 +266,13 @@ static int msWCSGetCapabilities11_CoverageSummary(
 /* -------------------------------------------------------------------- */
 /*      Abstract                                                        */
 /* -------------------------------------------------------------------- */
-    value = msOWSLookupMetadata( &(layer->metadata), "COM", "abstract");
+    value = msOWSLookupMetadata( &(layer->metadata), "CO", "abstract");
     xmlNewChild( psCSummary, psOwsNs, BAD_CAST "Abstract", BAD_CAST value );
 
 /* -------------------------------------------------------------------- */
 /*      Keywords                                                        */
 /* -------------------------------------------------------------------- */
-    value = msOWSLookupMetadata(&(layer->metadata), "COM", "keywordlist");
+    value = msOWSLookupMetadata(&(layer->metadata), "CO", "keywordlist");
 
     if (value) {
         xmlNodePtr psNode;
@@ -302,12 +302,12 @@ static int msWCSGetCapabilities11_CoverageSummary(
 /* -------------------------------------------------------------------- */
     if( (owned_value = 
          msOWSGetProjURN( &(layer->projection), &(layer->metadata), 
-                          "COM", MS_FALSE)) != NULL ) {
+                          "CO", MS_FALSE)) != NULL ) {
         /* ok */
     } else if((owned_value = 
                msOWSGetProjURN( &(layer->map->projection), 
                                 &(layer->map->web.metadata), 
-                                "COM", MS_FALSE)) != NULL ) {
+                                "CO", MS_FALSE)) != NULL ) {
         /* ok */
     } else 
         msDebug( "mapwcs.c: missing required information, no SRSs defined.\n");
@@ -460,7 +460,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /*      Operations metadata.                                            */
 /* -------------------------------------------------------------------- */
     /*operation metadata */
-    if ((script_url=msOWSGetOnlineResource(map, "COM", "onlineresource", req)) == NULL 
+    if ((script_url=msOWSGetOnlineResource(map, "CO", "onlineresource", req)) == NULL 
         || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
     {
         msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities11()");
@@ -637,7 +637,7 @@ msWCSDescribeCoverage_CoverageDescription11(
 /* -------------------------------------------------------------------- */
 /*      Title (from description)                                        */
 /* -------------------------------------------------------------------- */
-    value = msOWSLookupMetadata( &(layer->metadata), "COM", "description");
+    value = msOWSLookupMetadata( &(layer->metadata), "CO", "description");
     if( value == NULL )
         value = layer->name;
     xmlNewChild( psCD, psOwsNs, BAD_CAST "Title", BAD_CAST value );
@@ -645,13 +645,13 @@ msWCSDescribeCoverage_CoverageDescription11(
 /* -------------------------------------------------------------------- */
 /*      Abstract                                                        */
 /* -------------------------------------------------------------------- */
-    value = msOWSLookupMetadata( &(layer->metadata), "COM", "abstract");
+    value = msOWSLookupMetadata( &(layer->metadata), "CO", "abstract");
     xmlNewChild( psCD, psOwsNs, BAD_CAST "Abstract", BAD_CAST value );
 
 /* -------------------------------------------------------------------- */
 /*      Keywords                                                        */
 /* -------------------------------------------------------------------- */
-    value = msOWSLookupMetadata(&(layer->metadata), "COM", "keywordlist");
+    value = msOWSLookupMetadata(&(layer->metadata), "CO", "keywordlist");
 
     if (value)
         msLibXml2GenerateList( 
@@ -731,11 +731,11 @@ msWCSDescribeCoverage_CoverageDescription11(
   /* TemporalDomain */
 
   /* TODO: figure out when a temporal domain is valid, for example only tiled rasters support time as a domain, plus we need a timeitem */
-  if(msOWSLookupMetadata(&(layer->metadata), "COM", "timeposition") || msOWSLookupMetadata(&(layer->metadata), "COM", "timeperiod")) {
+  if(msOWSLookupMetadata(&(layer->metadata), "CO", "timeposition") || msOWSLookupMetadata(&(layer->metadata), "CO", "timeperiod")) {
     msIO_printf("      <temporalDomain>\n");
 
     /* TimePosition (should support a value AUTO, then we could mine positions from the timeitem) */
-    msOWSPrintEncodeMetadataList(stdout, &(layer->metadata), "COM", "timeposition", NULL, NULL, "        <gml:timePosition>%s</gml:timePosition>\n", NULL);    
+    msOWSPrintEncodeMetadataList(stdout, &(layer->metadata), "CO", "timeposition", NULL, NULL, "        <gml:timePosition>%s</gml:timePosition>\n", NULL);    
 
     /* TODO:  add TimePeriod (only one per layer)  */
 
@@ -757,14 +757,14 @@ msWCSDescribeCoverage_CoverageDescription11(
                 xmlNewChild( psCD, NULL, BAD_CAST "Range", NULL ),
                 NULL, BAD_CAST "Field", NULL );
         
-        value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", 
+        value = msOWSGetEncodeMetadata( &(layer->metadata), "CO", 
                                         "rangeset_label", NULL );
         if( value )
             xmlNewChild( psField, psOwsNs, BAD_CAST "Title", BAD_CAST value );
 
         /* ows:Abstract? TODO */
 
-        value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", 
+        value = msOWSGetEncodeMetadata( &(layer->metadata), "CO", 
                                         "rangeset_name", "raster" );
         xmlNewChild( psField, NULL, BAD_CAST "Identifier", BAD_CAST value );
        
@@ -774,7 +774,7 @@ msWCSDescribeCoverage_CoverageDescription11(
                 psOwsNs, BAD_CAST "AnyValue", NULL );
 
         /* NullValue */
-        value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", 
+        value = msOWSGetEncodeMetadata( &(layer->metadata), "CO", 
                                         "rangeset_nullvalue", NULL);
         if( value )
             xmlNewChild( psField, NULL, BAD_CAST "NullValue", 
@@ -795,7 +795,7 @@ msWCSDescribeCoverage_CoverageDescription11(
             xmlNodePtr psKeys;
             int iBand;
 
-            value = msOWSGetEncodeMetadata( &(layer->metadata), "COM", 
+            value = msOWSGetEncodeMetadata( &(layer->metadata), "CO", 
                                             "bands_name", "bands" );
             psAxis = xmlNewChild( psField, NULL, BAD_CAST "Axis", NULL );
             xmlNewProp( psAxis, BAD_CAST "identifier", BAD_CAST value );
@@ -822,12 +822,12 @@ msWCSDescribeCoverage_CoverageDescription11(
         
         if( (owned_value = 
              msOWSGetProjURN( &(layer->projection), &(layer->metadata), 
-                              "COM", MS_FALSE)) != NULL ) {
+                              "CO", MS_FALSE)) != NULL ) {
             /* ok */
         } else if((owned_value = 
                    msOWSGetProjURN( &(layer->map->projection), 
                                     &(layer->map->web.metadata), 
-                                    "COM", MS_FALSE)) != NULL ) {
+                                    "CO", MS_FALSE)) != NULL ) {
             /* ok */
         } else 
             msDebug( "mapwcs.c: missing required information, no SRSs defined.\n");
@@ -1029,7 +1029,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
 /* -------------------------------------------------------------------- */
 /*      What is the <Field identifier=...> (rangeset_name)?             */
 /* -------------------------------------------------------------------- */
-    value = msOWSLookupMetadata( &(lp->metadata), "COM", "rangeset_name" );
+    value = msOWSLookupMetadata( &(lp->metadata), "CO", "rangeset_name" );
     if( value == NULL )
         value = "raster";
     field_id = msStrdup(value);
@@ -1037,7 +1037,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
 /* -------------------------------------------------------------------- */
 /*      What is the <Axis identifier=...> (bands_name)?                 */
 /* -------------------------------------------------------------------- */
-    axis_id = msOWSLookupMetadata( &(lp->metadata), "COM", "bands_name" );
+    axis_id = msOWSLookupMetadata( &(lp->metadata), "CO", "bands_name" );
     if( axis_id == NULL )
         axis_id = "bands";
 

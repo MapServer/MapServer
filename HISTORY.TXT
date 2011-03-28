@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- WCS implementation should not lookup wms_* metadata (#3779)
+
 - WCS 2.0: Adjusted definition of rangeType.
 
 - Fixed OWS GetCapabilities to report only requests/operations that are enabled.

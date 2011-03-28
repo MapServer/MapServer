@@ -107,6 +107,15 @@ MAP::WEB section::
 
 See also: http://mapserver.org/development/rfc/ms-rfc-67.html
 
+------------------------------
+Mapfile Changes - WCS Metadata
+------------------------------
+
+To avoid confusion only "wcs_*" and "ows_*" prefixed metadata entries
+are evaluated in OGC WCS services. Previous versions used "wms_*"
+prefixed entries as fallback which is dropped in version 6.0 in favor of
+forcing explicit decisions.
+
 ---------------------
 PHP MapScript Changes
 ---------------------
