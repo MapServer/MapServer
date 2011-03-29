@@ -179,10 +179,10 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
             dash.add_dash(MS_MAX(1,MS_NINT(style->pattern[i])),
                     MS_MAX(1,MS_NINT(style->pattern[i + 1])));
          }
-         stroke_dash.width(style->width);
-         applyCJC(stroke_dash, style->linecap, style->linejoin);
-         r->m_rasterizer_aa.add_path(stroke_dash);
       }
+      stroke_dash.width(style->width);
+      applyCJC(stroke_dash, style->linecap, style->linejoin);
+      r->m_rasterizer_aa.add_path(stroke_dash);
    }
    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
    return MS_SUCCESS;

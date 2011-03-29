@@ -14,6 +14,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- fix incorrect PATTERN behavior on agg lines (#3787)
 
 - report SOS DescribeObservationType in Capabilities (#3777)
 
