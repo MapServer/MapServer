@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Mainline of commandline legend generation test utility.
