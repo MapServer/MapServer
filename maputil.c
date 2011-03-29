@@ -343,43 +343,53 @@ int msValidateContexts(mapObj *map)
 int msEvalContext(mapObj *map, layerObj *layer, char *context)
 {
   int i, status;
-  char *tmpstr1=NULL, *tmpstr2=NULL;
-  int result;       /* result of expression parsing operation */
+  char *tag=NULL;
 
-  if(!context) return(MS_TRUE); /* no context requirements */
+  expressionObj e;
+  parseObj p;
 
-  tmpstr1 = msStrdup(context);
+  if(!context) return(MS_TRUE);
+
+  /* initialize a temporary expression (e) */
+  initExpression(&e);
+
+  e.string = msStrdup(context);
+  e.type = MS_EXPRESSION; /* todo */
 
   for(i=0; i<map->numlayers; i++) { /* step through all the layers */
     if(layer->index == i) continue; /* skip the layer in question */    
     if (GET_LAYER(map, i)->name == NULL) continue; /* Layer without name cannot be used in contexts */
 
-    tmpstr2 = (char *)msSmallMalloc(sizeof(char)*strlen(GET_LAYER(map, i)->name) + 3);
-    sprintf(tmpstr2, "[%s]", GET_LAYER(map, i)->name);
+    tag = (char *)msSmallMalloc(sizeof(char)*strlen(GET_LAYER(map, i)->name) + 3);
+    sprintf(tag, "[%s]", GET_LAYER(map, i)->name);
 
-    if(strstr(tmpstr1, tmpstr2)) {
+    if(strstr(e.string, tag)) {
       if(msLayerIsVisible(map, (GET_LAYER(map, i))))
-          tmpstr1 = msReplaceSubstring(tmpstr1, tmpstr2, "1");
+        e.string = msReplaceSubstring(e.string, tag, "1");
       else
-          tmpstr1 = msReplaceSubstring(tmpstr1, tmpstr2, "0");
+        e.string = msReplaceSubstring(e.string, tag, "0");
     }
 
-    free(tmpstr2);
+    free(tag);
   }
 
-  msAcquireLock( TLOCK_PARSER );
-  
-  /* TODO: tokenize the context expression and parse */
+  msTokenizeExpression(&e, NULL, NULL);
 
-  msReleaseLock( TLOCK_PARSER );
-  free(tmpstr1);
+  p.shape = NULL;
+  p.expr = &e;
+  p.expr->curtoken = p.expr->tokens; /* reset */
+  p.type = MS_PARSE_TYPE_BOOLEAN;
+
+  status = yyparse(&p);
+
+  freeExpression(&e);
 
   if (status != 0) {
     msSetError(MS_PARSEERR, "Failed to parse context", "msEvalContext");
     return MS_FALSE; /* error in parse */
   }
 
-  return result;
+  return p.result.intval;
 }
 
 /* msEvalExpression()
