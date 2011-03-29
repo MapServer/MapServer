@@ -502,6 +502,15 @@ char path[MS_MAXPATHLEN];
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_STRING);
 }
+<EXPRESSION_STRING>\`\[[^\`]*\]\` {
+  /* attribute binding - time */
+  msyytext+=2;
+  msyytext[strlen(msyytext)-2] = '\0';
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
+                          msyystring_buffer_size, msyystring_buffer_ptr);
+  strcpy(msyystring_buffer, msyytext);
+  return(MS_TOKEN_BINDING_TIME);
+}
 
 <INITIAL,URL_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
