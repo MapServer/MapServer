@@ -101,8 +101,15 @@ int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape , char **ppszSRS)
 
         if (hGeometry)
         {
-            FLTogrConvertGeometry(hGeometry, psShape, 
-                                  OGR_G_GetGeometryType(hGeometry));
+            OGRwkbGeometryType nType;
+            nType = OGR_G_GetGeometryType(hGeometry);
+            if (nType == wkbPolygon25D || nType == wkbMultiPolygon25D)
+              nType = wkbPolygon;
+            else if (nType == wkbLineString25D || nType == wkbMultiLineString25D)
+              nType = wkbLineString;
+            else if (nType == wkbPoint25D  || nType ==  wkbMultiPoint25D)
+              nType = wkbPoint;
+            FLTogrConvertGeometry(hGeometry, psShape, nType);
         }
 
         pszSRS = (char *)CPLGetXMLValue(psTree, "srsName", NULL);
@@ -1747,9 +1754,11 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     if (psGMLElement)
                       bPolygon = 1;
                     else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPolygon")))
-                    {
-                          bPolygon = 1;
-                    }
+                      bPolygon = 1;
+                    else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiSurface")))
+                      bPolygon = 1; 
+                    else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
+                      bPolygon = 1;
                     else
                     {
                         psGMLElement= CPLGetXMLNode(psXMLNode, "LineString");
@@ -1822,9 +1831,11 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 if (psGMLElement)
                   bPolygon = 1;
                 else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPolygon")))
-                {
-                      bPolygon = 1;
-                }
+                  bPolygon = 1;
+                 else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiSurface")))
+                  bPolygon = 1;
+                 else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
+                   bPolygon = 1;
                 else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
                 {
                     if (psGMLElement)
@@ -2895,10 +2906,19 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
                     for (i=0; i<nTokens; i++)
                     {
                         if (i == 0)
-                        {
+                        {       
+                            char *pszTmpType = NULL;
+                            pszTmpType = (char *)malloc(sizeof(char)*strlen(pszAttribute)+7);
                             pszTmp = tokens[0];
-                            if (FLTIsNumeric(pszTmp) == MS_FALSE)    
+                            sprintf(pszTmpType, "%s_type",  pszAttribute);
+                            if (msOWSLookupMetadata(&(lp->metadata), "G", pszTmpType) != NULL &&
+                                (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", pszTmpType), "Character") == 0))
+                              bString = 1;
+
+                             else if (FLTIsNumeric(pszTmp) == MS_FALSE)    
                                bString = 1;
+                            
+                            msFree(pszTmpType);
                         }
                         if (bString)
                           sprintf(szTmp, "(%s = '%s')" , pszAttribute, tokens[i]);
