@@ -356,6 +356,11 @@ int msMSSQL2008LayerOpen(layerObj *layer)
         return MS_FAILURE;
     }
 
+    if(!layer->connection) {
+		msSetError( MS_QUERYERR, "MSSQL connection parameter not specified.", "msMSSQL2008LayerOpen()");
+        return MS_FAILURE;
+    }
+
     /* have to setup a connection to the database */
 
     layerinfo = (msMSSQL2008LayerInfo*) msSmallMalloc(sizeof(msMSSQL2008LayerInfo));
