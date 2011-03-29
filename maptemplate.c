@@ -240,10 +240,16 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
     return MS_FAILURE;
   }
 
+  msApplyDefaultOutputFormats(map);
+
   i = msGetOutputFormatIndex(map, queryFormat); /* queryFormat can be a mime-type or name */
   if(i >= 0) outputFormat = map->outputformatlist[i];
 
   if(outputFormat) {
+     if( MS_RENDERER_PLUGIN(outputFormat) ) {
+         msInitializeRendererVTable(outputFormat);
+     }
+
      if( MS_RENDERER_OGR(outputFormat) )
      {
          if( mapserv != NULL )
