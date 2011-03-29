@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+
+- add support for gml:Box for spatail filters (#3789)
+
 - fix query map generation error introduced in beta2 when output format 
   initialized was made as needed. 
 

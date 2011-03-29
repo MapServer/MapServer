@@ -98,8 +98,16 @@ int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape , char **ppszSRS)
 
         if (hGeometry)
         {
-            FLTogrConvertGeometry(hGeometry, psShape, 
-                                  OGR_G_GetGeometryType(hGeometry));
+            OGRwkbGeometryType nType;
+            nType = OGR_G_GetGeometryType(hGeometry);
+            if (nType == wkbPolygon25D || nType == wkbMultiPolygon25D)
+              nType = wkbPolygon;
+            else if (nType == wkbLineString25D || nType == wkbMultiLineString25D)
+              nType = wkbLineString;
+            else if (nType == wkbPoint25D  || nType ==  wkbMultiPoint25D)
+              nType = wkbPoint;
+            FLTogrConvertGeometry(hGeometry, psShape, nType);
+
             OGR_G_DestroyGeometry(hGeometry);
         }
 
@@ -1053,7 +1061,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPolygon")))
                       bPolygon = 1;
                     else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiSurface")))
-                      bPolygon = 1;                    
+                      bPolygon = 1; 
+                    else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
+                      bPolygon = 1;
                     else
                     {
                         psGMLElement= CPLGetXMLNode(psXMLNode, "LineString");
@@ -1129,11 +1139,14 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                   bPolygon = 1;
                 else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiSurface")))
                   bPolygon = 1;
+                else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
+                  bPolygon = 1;
                 else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
                 {
                     if (psGMLElement)
                       bLine = 1;
                 }
+
 		else
                 {
                      psGMLElement = CPLGetXMLNode(psXMLNode, "Point");
