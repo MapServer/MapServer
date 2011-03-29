@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
       continue;
     }
 
-    if(strcmp(argv[i], "-all_debug") == 0) /* global debug */
+    if(strcmp(argv[i], "-all_debug") == 0 && i < argc-1 ) /* global debug */
     {
         int debug_level = atoi(argv[++i]);
 
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
       i+=2;
     }
 
-    if(strcmp(argv[i], "-all_debug") == 0) /* global debug */
+    if(strcmp(argv[i], "-all_debug") == 0 && i < argc-1 ) /* global debug */
     {
         int debug_level = atoi(argv[++i]);
 
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
 
     }
     
-    if(strcmp(argv[i], "-map_debug") == 0) /* debug */
+    if(strcmp(argv[i], "-map_debug") == 0 && i < argc-1 ) /* debug */
     {
         map->debug = atoi(argv[++i]);
 
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
             msSetErrorFile("stderr", NULL);
     }
     
-    if(strcmp(argv[i], "-layer_debug") == 0) /* debug */
+    if(strcmp(argv[i], "-layer_debug") == 0 && i < argc-1 ) /* debug */
     {
         const char *layer_name = argv[++i];
         int debug_level = atoi(argv[++i]);
