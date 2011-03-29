@@ -935,9 +935,7 @@ if test "$with_opengl" = "yes" ; then
 fi
 if test -n "$with_opengl" -a "$with_opengl" != "no" ; then
 
-  if test -n "$FTGL_LIB" ; then
-     FT_INC=`$FTGL_LIB --cflags`
-  else
+  if test -z "$FTGL_LIB" ; then
      AC_MSG_ERROR([FTGL required for opengl support - please configure --with-ftgl.])
   fi
   

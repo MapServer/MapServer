@@ -9884,9 +9884,7 @@ echo "${ECHO_T}looking for opengl libs in /usr" >&6
 fi
 if test -n "$with_opengl" -a "$with_opengl" != "no" ; then
 
-  if test -n "$FTGL_LIB" ; then
-     FT_INC=`$FTGL_LIB --cflags`
-  else
+  if test -z "$FTGL_LIB" ; then
      { { echo "$as_me:$LINENO: error: FTGL required for opengl support - please configure --with-ftgl." >&5
 echo "$as_me: error: FTGL required for opengl support - please configure --with-ftgl." >&2;}
    { (exit 1); exit 1; }; }
