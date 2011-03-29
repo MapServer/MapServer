@@ -86,6 +86,7 @@ int msUnionLayerOpen(layerObj *layer)
     char **layerNames;
     mapObj* map;
     int i;
+    int layerCount;
 
     if (layer->layerinfo != NULL)
     {
@@ -114,10 +115,12 @@ int msUnionLayerOpen(layerObj *layer)
 
     layerinfo->classgroup = NULL;
     layerinfo->nclasses = 0;
-    
-    layerNames = msStringSplit(layer->connection, ',', &layerinfo->layerCount);
 
-    if (layerinfo->layerCount == 0)
+    layerinfo->layerCount = 0;
+    
+    layerNames = msStringSplit(layer->connection, ',', &layerCount);
+
+    if (layerCount == 0)
     {
         msSetError(MS_MISCERR, "No source layers specified in layer: %s", layer->name);
         if(layerNames)
@@ -126,10 +129,10 @@ int msUnionLayerOpen(layerObj *layer)
         return MS_FAILURE;
     }
 
-    layerinfo->layers =(layerObj*)malloc(layerinfo->layerCount * sizeof(layerObj));
-    MS_CHECK_ALLOC(layerinfo->layers, layerinfo->layerCount * sizeof(layerObj), MS_FAILURE);
+    layerinfo->layers =(layerObj*)malloc(layerCount * sizeof(layerObj));
+    MS_CHECK_ALLOC(layerinfo->layers, layerCount * sizeof(layerObj), MS_FAILURE);
 
-    for(i=0; i < layerinfo->layerCount; i++)
+    for(i=0; i < layerCount; i++)
     {
         int layerindex = msGetLayerIndex(map, layerNames[i]);
         if (layerindex >= 0 && layerindex < map->numlayers)
@@ -154,6 +157,8 @@ int msUnionLayerOpen(layerObj *layer)
                 msUnionLayerClose(layer);
                 return MS_FAILURE;
             }
+
+            ++layerinfo->layerCount; 
 
 	        if (msCopyLayer(&layerinfo->layers[i], srclayer) != MS_SUCCESS)
             {
