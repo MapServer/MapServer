@@ -1820,7 +1820,7 @@ void msCleanup()
   pj_deallocate_grids();
   msSetPROJ_LIB( NULL );
 #endif
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+#if defined(USE_CURL)
   msHTTPCleanup();
 #endif
 
