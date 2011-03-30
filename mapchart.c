@@ -451,6 +451,8 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         msDrawEndShape(map,layer,image,&shape);
         msFreeShape(&shape);
     }
+    free(values);
+    free(styles);
     return status;
 }
 
