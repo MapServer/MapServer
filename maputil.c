@@ -1818,7 +1818,7 @@ void msCleanup()
   pj_clear_initcache();
 #  endif
   pj_deallocate_grids();
-  msSetPROJ_LIB( NULL );
+  msSetPROJ_LIB( NULL, NULL );
 #endif
 #if defined(USE_CURL)
   msHTTPCleanup();

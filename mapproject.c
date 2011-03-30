@@ -31,6 +31,8 @@
 #include "mapproject.h"
 #include "mapthread.h"
 #include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 MS_CVSID("$Id$")
 
@@ -1053,11 +1055,33 @@ static const char *msProjFinder( const char *filename)
 /************************************************************************/
 /*                           msSetPROJ_LIB()                            */
 /************************************************************************/
-void msSetPROJ_LIB( const char *proj_lib )
+void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 
 {
 #ifdef USE_PROJ
     static int finder_installed = 0;
+    char *extended_path = NULL;
+
+    /* Handle relative path if applicable */
+    if( proj_lib && pszRelToPath
+        && proj_lib[0] != '/'
+        && proj_lib[0] != '\\'
+        && !(proj_lib[0] != '\0' && proj_lib[1] == ':') )
+    {
+        struct stat stat_buf;
+        extended_path = (char*) msSmallMalloc(strlen(pszRelToPath)
+                                              + strlen(proj_lib) + 10);
+        sprintf( extended_path, "%s/%s", pszRelToPath, proj_lib );
+
+#ifndef S_ISDIR
+#  define S_ISDIR(x) ((x) & S_IFDIR)
+#endif            
+            
+        if( stat( extended_path, &stat_buf ) == 0 
+            && S_ISDIR(stat_buf.st_mode) )
+            proj_lib = extended_path;
+    }
+
 
     msAcquireLock( TLOCK_PROJ );
 
@@ -1085,6 +1109,9 @@ void msSetPROJ_LIB( const char *proj_lib )
         ms_proj_lib = msStrdup( proj_lib );
     
     msReleaseLock( TLOCK_PROJ );
+
+    if ( extended_path )
+        msFree( extended_path );
 #endif
 }
 

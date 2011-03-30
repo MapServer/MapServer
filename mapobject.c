@@ -29,8 +29,6 @@
  ****************************************************************************/
 
 #include "mapserver.h"
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #ifdef USE_GDAL
 #  include "gdal.h"
@@ -161,33 +159,8 @@ int msSetConfigOption( mapObj *map, const char *key, const char *value)
     /* in effect when the projection blocks are parsed and pj_init is called. */
     if( strcasecmp(key,"PROJ_LIB") == 0 )
     {
-        /* check if this is map relative */
-        if( !map->mappath 
-            || value[0] == '/'
-            || value[0] == '\\'
-            || (value[0] != '\0' && value[1] == ':') )
-        {
-            msSetPROJ_LIB( value );
-        }
-        else
-        {
-            struct stat stat_buf;
-            char *extended_path = (char*) malloc(strlen(map->mappath)
-                                                 + strlen(value) + 10);
-            sprintf( extended_path, "%s/%s", map->mappath, value );
-
-#ifndef S_ISDIR
-#  define S_ISDIR(x) ((x) & S_IFDIR)
-#endif            
-            
-            if( stat( extended_path, &stat_buf ) == 0 
-                && S_ISDIR(stat_buf.st_mode) )
-                msSetPROJ_LIB( extended_path );
-            else
-                msSetPROJ_LIB( value );
-            
-            free( extended_path );
-        }
+        /* value may be relative to map path */
+        msSetPROJ_LIB( value, map->mappath );
     }
 
     /* Same for MS_ERRORFILE, we want it to kick in as early as possible
@@ -243,7 +216,7 @@ void msApplyMapConfigOptions( mapObj *map )
         const char *value = msLookupHashTable( &(map->configoptions), key );
         if( strcasecmp(key,"PROJ_LIB") == 0 )
         {
-            msSetPROJ_LIB( value );
+            msSetPROJ_LIB( value, map->mappath );
         }
         else if( strcasecmp(key,"MS_ERRORFILE") == 0 )
         {

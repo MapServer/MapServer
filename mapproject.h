@@ -83,7 +83,7 @@ MS_DLL_EXPORT void msAxisNormalizePoints( projectionObj *proj, int count,
 MS_DLL_EXPORT void msAxisDenormalizePoints( projectionObj *proj, int count,
                                             double *x, double *y );
 
-MS_DLL_EXPORT void msSetPROJ_LIB( const char * );
+MS_DLL_EXPORT void msSetPROJ_LIB( const char *, const char * );
 
 /* Provides compatiblity with PROJ.4 4.4.2 */
 #ifndef PJ_VERSION
