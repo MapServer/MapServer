@@ -1593,6 +1593,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     FriBidiLevel *levels;
     FriBidiStrIndex new_len;
     fribidi_boolean log2vis;
+    int i, j;
 
     visual = (FriBidiChar *) msSmallMalloc (sizeof (FriBidiChar) * (len + 1));
     ltov = NULL;
@@ -1626,6 +1627,22 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
      new_len =
        fribidi_unicode_to_charset (from_char_set_num,
            visual, len, outstring);
+
+    /* scan str and compress out FRIBIDI_CHAR_FILL UTF8 characters */
+
+    for (i=0, j=0; i<new_len; i++, j++)
+    {
+      if (outstring[i] == '\xef' && outstring[i+1] == '\xbb' && outstring[i+2] == '\xbf')
+      {
+         i += 3;
+      }
+      if (i != j)
+      {
+        outstring[j] = outstring[i];
+      }
+    }
+    outstring[j] = '\0';
+
 #endif
      return msStrdup(outstring);
   }

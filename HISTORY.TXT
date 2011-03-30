@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Applied patch to filter unwanted fribidi characters (#3763)
+
 - Fixed lexer to set the proper state on URL variable substitutions
 
 - Fixed Memory leak in PostGIS driver (#3768)
@@ -81,6 +83,7 @@ Version 6.0.0-beta3 (2011-03-23)
 
 - SLD: Text Symbolizer now uses the new expression syntax (#3757)
 
+>>>>>>> .r11395
 - WFS: correct bbox values for GetFeature with featureid request (#3761) 
 
 - Mapscript Seg Fault on mapObj->getMetaData (#3738)
