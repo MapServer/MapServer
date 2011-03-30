@@ -384,14 +384,15 @@ int loadColor(colorObj *color, attributeBindingObj *binding) {
   } else {
     if((symbol = getSymbol(2, MS_NUMBER, MS_STRING)) == -1) return MS_FAILURE;
   }
-  color->alpha=255;
 
+  color->alpha=255;
   if(symbol == MS_NUMBER) {
     color->red = (int) msyynumber;
     if(getInteger(&(color->green)) == -1) return MS_FAILURE;
     if(getInteger(&(color->blue)) == -1) return MS_FAILURE;
   } else if(symbol == MS_STRING) {
-    if(msyystring_buffer[0] == '#' && strlen(msyystring_buffer) == 7) { /* got a hex color */
+    int len = strlen(msyystring_buffer);
+    if(msyystring_buffer[0] == '#' && (len == 7 || len == 9)) { /* got a hex color w/optional alpha */
       hex[0] = msyystring_buffer[1];
       hex[1] = msyystring_buffer[2];
       color->red = msHexToInt(hex);
@@ -401,6 +402,11 @@ int loadColor(colorObj *color, attributeBindingObj *binding) {
       hex[0] = msyystring_buffer[5];
       hex[1] = msyystring_buffer[6];
       color->blue = msHexToInt(hex);
+      if(len == 9) {
+        hex[0] = msyystring_buffer[7];
+        hex[1] = msyystring_buffer[8];
+        color->alpha = msHexToInt(hex);
+      }
     } else {
        /* TODO: consider named colors here */
        msSetError(MS_SYMERR, "Invalid hex color (%s):(line %d)", "loadColor()", msyystring_buffer, msyylineno); 

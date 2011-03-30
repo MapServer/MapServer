@@ -71,9 +71,11 @@ static int bindDoubleAttribute(double *attribute, char *value)
 
 static int bindColorAttribute(colorObj *attribute, char *value)
 {
-  if(!value || strlen(value) == 0) return MS_FAILURE;
+  int len;
 
-  if(value[0] == '#' && strlen(value) == 7) { /* got a hex color */
+  if(!value || ((len = strlen(value)) == 0)) return MS_FAILURE;
+  
+  if(value[0] == '#' && (len == 7 || len == 9)) { /* got a hex color */
     char hex[2];
 
     hex[0] = value[1];
@@ -85,7 +87,11 @@ static int bindColorAttribute(colorObj *attribute, char *value)
     hex[0] = value[5];
     hex[1] = value[6];
     attribute->blue = msHexToInt(hex);
-
+    if(len == 9) {
+      hex[0] = value[7];
+      hex[1] = value[8];
+      attribute->alpha = msHexToInt(hex);
+    }
     return MS_SUCCESS;
   } else { /* try a space delimited string */
     char **tokens=NULL;
