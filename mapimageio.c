@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "mapserver.h"
 #include "png.h"
 #include "setjmp.h"
-#include "mapserver.h"
 #include <assert.h>
 #include "jpeglib.h"
 
