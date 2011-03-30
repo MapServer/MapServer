@@ -380,7 +380,8 @@ wkbConvPointToShape(wkbObj *w, shapeObj *shape)
     line->point = msSmallMalloc(sizeof(pointObj));
     line->point[0] = wkbReadPoint(w);
     msAddLineDirectly(shape, line);
-      return MS_SUCCESS;
+    free(line);
+    return MS_SUCCESS;
   }
 
 /*
@@ -391,13 +392,16 @@ wkbConvLineStringToShape(wkbObj *w, shapeObj *shape)
 {
     char endian;
     int type;
+    lineObj *line;
 
     endian = wkbReadChar(w);
     type = wkbTypeMap(w,wkbReadInt(w));
 
     if( type != WKB_LINESTRING ) return MS_FAILURE;
     
-    msAddLineDirectly(shape, wkbReadLine(w));
+    line = wkbReadLine(w);
+    msAddLineDirectly(shape, line);
+    free(line);
     
     return MS_SUCCESS;
 }
@@ -411,6 +415,7 @@ wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
     char endian;
     int type;
     int i, nrings;
+    lineObj *line;
 
     endian = wkbReadChar(w);
     type = wkbTypeMap(w,wkbReadInt(w));
@@ -421,9 +426,12 @@ wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
     nrings = wkbReadInt(w);
     
     /* Add each ring to the shape */
-    for( i = 0; i < nrings; i++ ) 
-        msAddLineDirectly(shape, wkbReadLine(w));
-    
+    for( i = 0; i < nrings; i++ ) { 
+        line = wkbReadLine(w);
+        msAddLineDirectly(shape, line);
+        free(line);
+    }    
+
     return MS_SUCCESS;
 }
 
