@@ -14,6 +14,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk):
 ----------------------------
+- fix memory leak in bar charts
 
 - fix some valgrind errors on agg rotated pixmap symbols
 
