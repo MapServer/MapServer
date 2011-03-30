@@ -86,6 +86,8 @@ char path[MS_MAXPATHLEN];
        if (msyystring_buffer == NULL)
            msyystring_buffer = (char*) msSmallMalloc(sizeof(char) * msyystring_buffer_size);
 
+       msyystring_buffer[0] = '\0';
+       msyystring_buffer_size = 0;
        switch(msyystate) {
        case(MS_TOKENIZE_DEFAULT):
          break;
@@ -150,11 +152,6 @@ char path[MS_MAXPATHLEN];
        default:
          break;
        }
-
-       /* Used to get the proper error messages */ 
-       MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                               msyystring_buffer_size, msyystring_buffer_ptr);
-       strcpy(msyystring_buffer, msyytext); 
 
 <INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
 
