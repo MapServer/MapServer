@@ -92,7 +92,7 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 
 errorObj *msGetErrorObj()
 {
-    static errorObj ms_error = {MS_NOERR, "", "", NULL};
+    static errorObj ms_error = {MS_NOERR, "", "", MS_FALSE, NULL};
 
     return &ms_error;
 }

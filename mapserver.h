@@ -46,6 +46,10 @@
 ** Main includes. If a particular header was needed by several .c files then
 ** I just put it here. What the hell, it works and it's all right here. -SDL-
 */
+#ifndef NEED_STRCASESTR
+#define _GNU_SOURCE /* Required for <string.h> strcasestr() defn */
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
