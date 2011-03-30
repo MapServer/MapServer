@@ -149,7 +149,6 @@ PHP_METHOD(shapeObj, __construct)
     zval *zobj = getThis();
     php_shape_object *php_shape;
     long type;
-    parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
