@@ -221,6 +221,13 @@ void msUnionLayerFreeItemInfo(layerObj *layer)
     for (i = 0; i < layerinfo->layerCount; i++)
     {
         msLayerFreeItemInfo(&layerinfo->layers[i]);
+        if(layerinfo->layers[i].items) 
+        {
+            /* need to remove the source layer items */
+            msFreeCharArray(layerinfo->layers[i].items, layerinfo->layers[i].numitems);
+            layerinfo->layers[i].items = NULL;
+            layerinfo->layers[i].numitems = 0;
+        }
     }
 }
 
