@@ -167,7 +167,7 @@ PHP_METHOD(symbolObj, __set)
     else IF_SET_LONG("antialias", php_symbol->symbol->antialias, value) 
     else IF_SET_STRING("font", php_symbol->symbol->font, value)
     else IF_SET_LONG("position", php_symbol->symbol->position, value) 
-    if ( (STRING_EQUAL("numpoints", property)) ||
+    else if ( (STRING_EQUAL("numpoints", property)) ||
          (STRING_EQUAL("patternlength", property)) ||
          (STRING_EQUAL("imagepath", property)))
     {
