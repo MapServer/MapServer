@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- fix some valgrind errors on agg rotated pixmap symbols
+
 - WCS 2.0: Adjusted definition of NilValues.
 
 - Fixed handling of PROJ_LIB value relative to mapfile path (#3094)

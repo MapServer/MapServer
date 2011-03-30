@@ -460,7 +460,7 @@ int agg2RenderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol,
 		// "hardcoded" bilinear filter
 		//------------------------------------------
 		typedef mapserver::span_image_filter_rgba_bilinear_clip<pixel_format, interpolator_type> span_gen_type;
-		span_gen_type sg(pf, mapserver::rgba( ), interpolator);
+		span_gen_type sg(pf, mapserver::rgba(0,0,0,0), interpolator);
 		mapserver::path_storage pixmap_bbox;
 		int ims_2 = MS_NINT(MS_MAX(pixmap->width,pixmap->height)*style->scale*1.415)/2+1;
 
@@ -470,7 +470,7 @@ int agg2RenderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol,
 		pixmap_bbox.line_to(x-ims_2,y+ims_2);
 
 		r->m_rasterizer_aa.add_path(pixmap_bbox);
-		mapserver::render_scanlines_aa(r->m_rasterizer_aa, r->sl_line, r->m_renderer_base, sa, sg);
+		mapserver::render_scanlines_aa(r->m_rasterizer_aa, r->sl_poly, r->m_renderer_base, sa, sg);
 	}
 	else {
 		//just copy the image at the correct location (we place the pixmap on 
