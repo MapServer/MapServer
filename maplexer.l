@@ -47,7 +47,8 @@ int  msyystring_size;
 char msyystring_begin;
 char *msyystring_buffer = NULL;
 int  msyystring_icase = MS_FALSE;
-int  msyystring_state;
+int  msyystring_return_state;
+int  msyystring_begin_state;
 int  msyystring_size_tmp;
 
 int msyyreturncomments = 0;
@@ -99,6 +100,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_STRING):
          BEGIN(INITIAL);
+         msyystring_begin_state = INITIAL;
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyy_scan_string(msyystring);
          msyysource=MS_STRING_TOKENS;
@@ -110,6 +112,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_URL_VARIABLE):
          BEGIN(URL_VARIABLE);
+         msyystring_begin_state = URL_VARIABLE;
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyy_scan_string(msyystring);
          msyysource=MS_URL_TOKENS;
@@ -119,6 +122,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_URL_STRING):
          BEGIN(URL_STRING);
+         msyystring_begin_state = URL_STRING;
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyy_scan_string(msyystring);
          msyysource=MS_URL_TOKENS;
@@ -129,6 +133,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_EXPRESSION):
          BEGIN(EXPRESSION_STRING);
+         msyystring_begin_state = EXPRESSION_STRING;
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyy_scan_string(msyystring);
          msyystate=MS_TOKENIZE_DEFAULT;
@@ -565,7 +570,7 @@ char path[MS_MAXPATHLEN];
                                                }
 
 <INITIAL,URL_STRING>\'|\"                     {
-                                                 msyystring_state = MS_STRING;
+                                                 msyystring_return_state = MS_STRING;
                                                  msyystring_begin = msyytext[0]; 
                                                  msyystring_size = 0;
                                                  msyystring_buffer_ptr = msyystring_buffer;
@@ -576,21 +581,18 @@ char path[MS_MAXPATHLEN];
                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
                                                                                            msyystring_buffer_size, msyystring_buffer_ptr);
                                                 if (msyystring_begin == msyytext[0]) {
-                                                   if (msyystring_state == MS_TOKEN_LITERAL_STRING)
-                                                       BEGIN(EXPRESSION_STRING);
-                                                   else
-                                                       BEGIN(INITIAL);
+                                                   BEGIN(msyystring_begin_state);
 
                                                    *msyystring_buffer_ptr = '\0';
 
-                                                   if (msyystring_state == MS_STRING) {
+                                                   if (msyystring_return_state == MS_STRING) {
                                                       if (msyystring_icase && strlen(msyytext)==2) {
                                                          msyystring_icase = MS_FALSE; // reset
                                                          return MS_ISTRING;
                                                       } else
                                                         return MS_STRING;
                                                    }
-                                                   return msyystring_state;
+                                                   return msyystring_return_state;
 
                                                 }
                                                 else {
@@ -650,7 +652,7 @@ char path[MS_MAXPATHLEN];
                                                }
 
 <EXPRESSION_STRING>\'|\"                      {
-                                                 msyystring_state = MS_TOKEN_LITERAL_STRING;
+                                                 msyystring_return_state = MS_TOKEN_LITERAL_STRING;
                                                  msyystring_begin = msyytext[0]; 
                                                  msyystring_size = 0;
                                                  msyystring_buffer_ptr = msyystring_buffer;
