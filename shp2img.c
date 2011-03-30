@@ -176,8 +176,9 @@ int main(int argc, char *argv[])
       {
           msFree( (char *) map->imagetype );
           map->imagetype = msStrdup( argv[i+1] );
-          msApplyOutputFormat( &(map->outputformat), format, MS_NOOVERRIDE,
-                               MS_NOOVERRIDE, MS_NOOVERRIDE );
+          msApplyOutputFormat( &(map->outputformat), format, 
+                               map->transparent, map->interlace, 
+                               map->imagequality );
       }
       i+=1;
     }
