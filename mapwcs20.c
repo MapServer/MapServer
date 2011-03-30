@@ -1721,7 +1721,7 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
         xmlNsPtr psGmlNs, xmlNsPtr psGmlcovNs, xmlNsPtr psSweNs, xmlNsPtr psXLinkNs, xmlNodePtr psRoot)
 {
     xmlNodePtr psRangeType, psDataRecord, psField, psQuantity,
-        psUom, psConstraint, psAllowedValues = NULL/*, psNilValues = NULL*/;
+        psUom, psConstraint, psAllowedValues = NULL, psNilValues = NULL;
     char **arr = NULL;
     int i, num = 0;
 
@@ -1778,7 +1778,26 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
             xmlNewChild(psQuantity, psSweNs, BAD_CAST "description", BAD_CAST cm->bands[i].description);
         }
 
-        xmlNewChild(psQuantity, psSweNs, BAD_CAST "nilValues", NULL);
+        /* if there are given nilvalues -> add them to the first field */
+        /* all other fields get a reference to these */
+        if(cm->numnilvalues > 0)
+        {
+            int j;
+            psNilValues = xmlNewChild(
+                xmlNewChild(psQuantity, psSweNs, BAD_CAST "nilValues", NULL),
+                psSweNs, BAD_CAST "NilValues", NULL);
+            for(j = 0; j < cm->numnilvalues; ++j)
+            {
+                xmlNodePtr psTemp =
+                    xmlNewChild(psNilValues, psSweNs, BAD_CAST "nilValue", BAD_CAST cm->nilvalues[j]);
+                if(j < cm->numnilvalues)
+                    xmlNewProp(psTemp, BAD_CAST "reason", BAD_CAST cm->nilvalues_reasons[j]);
+            }
+        }
+        else /* create an empty nilValues tag */
+        {
+            xmlNewChild(psQuantity, psSweNs, BAD_CAST "nilValues", NULL);
+        }
 
         psUom = xmlNewChild(psQuantity, psSweNs, BAD_CAST "uom", NULL);
         if(cm->bands[i].uom != NULL)
@@ -1805,35 +1824,6 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
             snprintf(significant_figures, sizeof(significant_figures), "%d", cm->bands[i].significant_figures);
             xmlNewChild(psAllowedValues, psSweNs, BAD_CAST "significantFigures", BAD_CAST significant_figures);
         }
-
-        /* if there are given nilvalues -> add them to the first field */
-        /* all other fields get a reference to these */
-        /* TODO: look up specs for nilValue */
-        /*if(psNilValues == NULL && numNilValues > 0)
-        {
-            int j;
-            char id[100];
-            psNilValues = xmlNewChild(
-                xmlNewChild(psQuantity, psSweNs, BAD_CAST "nilValues", NULL),
-                psSweNs, BAD_CAST "NilValues", NULL);
-            snprintf(id, sizeof(id), "NIL_VALUES_%s", layer->name);
-            xmlNewNsProp(psNilValues, psGmlNs, BAD_CAST "id", BAD_CAST id);
-            for(j = 0; j < numNilValues; ++j)
-            {
-                xmlNodePtr psTemp =
-                    xmlNewChild(psNilValues, psSweNs, BAD_CAST "nilValue", BAD_CAST nilValues[j]);
-                if(j < numNilValueReasons)
-                    xmlNewProp(psTemp, BAD_CAST "reason", BAD_CAST nilValueReasons[j]);
-            }
-        }
-        else if(numNilValues > 0)
-        {
-            char href[100];
-            xmlNodePtr psTemp =
-                xmlNewChild(psQuantity, psSweNs, BAD_CAST "nilValues", NULL);
-            snprintf(href, sizeof(href), "#NIL_VALUES_%s", layer->name);
-            xmlNewNsProp(psTemp, psXLinkNs, BAD_CAST "href", BAD_CAST href);
-        }*/
     }
 }
 
@@ -2329,6 +2319,10 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
                     if(i < n_nilvalues_reasons)
                     {
                         cm->nilvalues_reasons[i] = msStrdup(t_nilvalues_reasons[i]);
+                    }
+                    else
+                    {
+                        cm->nilvalues_reasons[i] = msStrdup("");
                     }
                 }
             }
