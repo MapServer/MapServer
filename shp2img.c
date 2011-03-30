@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
   {
       msWriteError(stderr);
       msCleanup();
-      exit(0);
+      exit(1);
   }
 
   for(i=1;i<argc;i++) { /* Step though the user arguments, 1st to find map file */
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
       if(!map) {
 	msWriteError(stderr);
         msCleanup();
-	exit(0);
+	exit(1);
       }
       msApplyDefaultSubstitutions(map);
     }
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
   if(!map) {
     fprintf(stderr, "Mapfile (-m) option not specified.\n");
     msCleanup();
-    exit(0);
+    exit(1);
   }
 
 
@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
             fprintf( stderr, 
                      "Argument -e needs 4 space separated numbers as argument.\n" ); 
             msCleanup();
-            exit(0);
+            exit(1);
         }
       map->extent.minx = atof(argv[i+1]);
       map->extent.miny = atof(argv[i+2]);
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
           if (layer_found==0) {
               fprintf(stderr, "Layer (-l) \"%s\" not found\n", layers[j]);
               msCleanup();
-              exit(0);
+              exit(1);
           }
       }
 
@@ -302,7 +302,7 @@ int main(int argc, char *argv[])
 
     msFreeMap(map);
     msCleanup();
-    exit(0);
+    exit(1);
   }
 
   if( msSaveImage(map, image, outfile) != MS_SUCCESS ) {

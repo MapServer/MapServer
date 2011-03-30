@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
   */
   if(msLoadSymbolSet(&symbolSet) == -1) { 
     msWriteError(stderr);
-    exit(0);
+    exit(1);
   }
   
   ns = symbolSet.numsymbols;
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
 
  if((stream = fopen(argv[2],"wb")) == NULL) { /* open the file */
     fprintf(stderr, "Unable to open output file: %s\n", argv[2]);
-    exit(0);
+    exit(1);
   }
 #ifndef USE_GD_1_6
   gdImageGif(img, stream);

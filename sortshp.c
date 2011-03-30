@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
   /* ------------------------------------------------------------------------------- */
   if( argc != 5 ) {
       fprintf(stderr,"Syntax: sortshp [infile] [outfile] [item] [ascending|descending]\n" );
-      exit(0);
+      exit(1);
   }
 
   msSetErrorFile("stderr", NULL);
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
   inSHP = msSHPOpen(argv[1], "rb" );
   if( !inSHP ) {
     fprintf(stderr,"Unable to open %s shapefile.\n",argv[1]);
-    exit(0);
+    exit(1);
   }
   msSHPGetInfo(inSHP, &nShapes, &shpType);
 
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
   inDBF = msDBFOpen(buffer,"rb");
   if( inDBF == NULL ) {
     fprintf(stderr,"Unable to open %s XBASE file.\n",buffer);
-    exit(0);
+    exit(1);
   }
 
   num_fields = msDBFGetFieldCount(inDBF);
@@ -139,13 +139,13 @@ int main(int argc, char *argv[])
 
   if(fieldNumber < 0) {
     fprintf(stderr,"Item %s doesn't exist in %s\n",argv[3],buffer);
-    exit(0);
+    exit(1);
   }  
 
   array = (sortStruct *)malloc(sizeof(sortStruct)*num_records); /* ---- Allocate the array ---- */
   if(!array) {
     fprintf(stderr, "Unable to allocate sort array.\n");
-    exit(0);
+    exit(1);
   }
   
   /* ------------------------------------------------------------------------------- */
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
     break;
   default:
       fprintf(stderr,"Data type for item %s not supported.\n",argv[3]);
-      exit(0);
+      exit(1);
   } 
   
   /* ------------------------------------------------------------------------------- */

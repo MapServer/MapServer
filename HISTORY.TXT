@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk):
 ----------------------------
 
+- Make sure command-line programs use an exit status other than 0 
+  when an error is encountered. (#3753)
+
 - Applied patch to filter unwanted fribidi characters (#3763)
 
 - Fixed lexer to set the proper state on URL variable substitutions

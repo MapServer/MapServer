@@ -43,21 +43,21 @@ int main(int argc, char *argv[])
 
   /* ---- check the number of arguments, return syntax if not correct ---- */
   if( argc < 3 ) {
-      fprintf(stdout,"Syntax: scalebar [mapfile] [output image]\n" );
-      exit(0);
+    fprintf(stdout,"Syntax: scalebar [mapfile] [output image]\n" );
+    exit(1);
   }
 
   map = msLoadMap(argv[1], NULL);
   if(!map) { 
     msWriteError(stderr);
-    exit(0);
+    exit(1);
   }
 
   image = msDrawScalebar(map);
 
   if(!image) { 
     msWriteError(stderr);
-    exit(0);
+    exit(1);
   }
 
   msSaveImage(map, image, argv[2]);
