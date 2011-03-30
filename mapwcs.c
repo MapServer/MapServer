@@ -2028,7 +2028,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
   msOWSRequestLayersEnabled(map, "C", params->request, ows_request);
   if (ows_request->numlayers == 0)
   {
-      msSetError(MS_WCSERR, "Unsupported WCS request", "msWCSDispatch()");
+      msSetError(MS_WCSERR, "WCS request not enabled. Check wcs/ows_enable_request settings.", "msWCSDispatch()");
       msWCSException(map, "InvalidParameterValue", "request",
                      params->version );
       msWCSFreeParams(params); /* clean up */

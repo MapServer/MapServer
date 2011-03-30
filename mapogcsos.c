@@ -2858,7 +2858,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request) {
     msOWSRequestLayersEnabled(map, "S", paramsObj->pszRequest, ows_request);
     if (ows_request->numlayers == 0)
     {
-        msSetError(MS_SOSERR, "Unsupported SOS request", "msSOSDispatch()");
+        msSetError(MS_SOSERR, "SOS request not enabled. Check sos/ows_enable_request settings.", "msSOSDispatch()");
         msSOSFreeParamsObj(paramsObj);
         free(paramsObj);
         paramsObj = NULL;

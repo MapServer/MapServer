@@ -2861,8 +2861,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
       msOWSRequestLayersEnabled(map, "F", paramsObj->pszRequest, ows_request);
       if (ows_request->numlayers == 0)
       {
-          msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
-                     paramsObj->pszRequest);
+          msSetError(MS_WFSERR, "WFS request not enabled. Check wfs/ows_enable_request settings.", "msWFSDispatch()");
           returnvalue = msWFSException(map, "request", "InvalidParameterValue", paramsObj->pszVersion);
           msWFSFreeParamsObj(paramsObj);
           free(paramsObj);
@@ -2902,8 +2901,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
       msOWSRequestLayersEnabled(map, "F", paramsObj->pszRequest, ows_request);
       if (ows_request->numlayers == 0)
       {
-          msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
-                     paramsObj->pszRequest);
+          msSetError(MS_WFSERR, "WFS request not enabled. Check wfs/ows_enable_request settings.", "msWFSDispatch()");
           returnvalue = msWFSException(map, "request", "InvalidParameterValue", paramsObj->pszVersion);
           msWFSFreeParamsObj(paramsObj);
           free(paramsObj);
@@ -3114,10 +3112,17 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
           wfsparams->pszRequest = "DescribeFeatureType";
 
         msOWSRequestLayersEnabled(map, "F", wfsparams->pszRequest, ows_request);
-        if (wfsparams->pszRequest == NULL || ows_request->numlayers == 0)
+        if (wfsparams->pszRequest == NULL)
         {
           /* Unsupported WFS request */
-            msSetError(MS_WFSERR, "Unsupported WFS request", "msWFSParseRequest()");
+            msSetError(MS_WFSERR, "Unsupported WFS request.", "msWFSParseRequest()");
+            return MS_FAILURE;
+        }
+
+        if (ows_request->numlayers == 0)
+        {
+            /* not enabled WFS request */
+            msSetError(MS_WFSERR, "WFS request not enabled. Check wfs/ows_enable_request settings.", "msWFSParseRequest()");
             return MS_FAILURE;
         }
 

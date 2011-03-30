@@ -3955,7 +3955,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
       msOWSRequestLayersEnabled(map, "M", "GetCapabilities", ows_request); 
       if (ows_request->numlayers == 0)
       {
-          msSetError(MS_WMSERR, "Incomplete or unsupported WMS request", "msWMSGetCapabilities()");
+          msSetError(MS_WMSERR, "WMS request not enabled. Check wms/ows_enable_request settings.", "msWMSGetCapabilities()");
           return msWMSException(map, nVersion, NULL, wms_exception_format);
       }
       return msWMSGetCapabilities(map, nVersion, req, ows_request, updatesequence, wms_exception_format);
@@ -4084,7 +4084,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
       msOWSRequestLayersEnabled(map, "M", request_tmp, ows_request); 
       if (ows_request->numlayers == 0)
       {
-          msSetError(MS_WMSERR, "Incomplete or unsupported WMS request", "msWMSDispatch()");
+          msSetError(MS_WMSERR, "WMS request not enabled. Check wms/ows_enable_request settings.", "msWMSDispatch()");
           return msWMSException(map, nVersion, NULL, wms_exception_format);
       }
   }
