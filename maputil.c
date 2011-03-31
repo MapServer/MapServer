@@ -1702,6 +1702,10 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety) {
   if(offsety == -99) { /* complex calculations */
     for (i = 0; i < p->numlines; i++) {
       pointObj old_pt, old_diffdir, old_offdir;
+      /* initialize old_offdir and old_diffdir, as gcc isn't smart enough to see that it
+       * is not an error to do so, and prints a warning */
+      old_offdir.x=old_offdir.y=old_diffdir.x=old_diffdir.y = 0;
+
       idx=0;
       first = 1;
 
