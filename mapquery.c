@@ -240,12 +240,16 @@ static int loadQueryResults(mapObj *map, FILE *stream) {
 
     if(1 != fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream)) { /* number of results */
        msSetError(MS_MISCERR,"failed to read number of results from query file stream", "loadQueryResults()");
+       free(GET_LAYER(map, j)->resultcache);
+       GET_LAYER(map, j)->resultcache = NULL;
        return MS_FAILURE; 
     }
     GET_LAYER(map, j)->resultcache->cachesize = GET_LAYER(map, j)->resultcache->numresults;
 
     if(1 != fread(&(GET_LAYER(map, j)->resultcache->bounds), sizeof(rectObj), 1, stream)) { /* bounding box */
        msSetError(MS_MISCERR,"failed to read bounds from query file stream", "loadQueryResults()");
+       free(GET_LAYER(map, j)->resultcache);
+       GET_LAYER(map, j)->resultcache = NULL;
        return MS_FAILURE; 
     }
 
@@ -262,6 +266,9 @@ static int loadQueryResults(mapObj *map, FILE *stream) {
     for(k=0; k<GET_LAYER(map, j)->resultcache->numresults; k++) {
       if(1 != fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultObj), 1, stream)) { /* each result */
          msSetError(MS_MISCERR,"failed to read result %d from query file stream", "loadQueryResults()", k);
+         free(GET_LAYER(map, j)->resultcache->results);
+         free(GET_LAYER(map, j)->resultcache);
+         GET_LAYER(map, j)->resultcache = NULL;
          return MS_FAILURE; 
       }
       if(!GET_LAYER(map, j)->tileindex) GET_LAYER(map, j)->resultcache->results[k].tileindex = -1; /* reset the tile index for non-tiled layers */
