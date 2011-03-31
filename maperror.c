@@ -400,7 +400,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   fontMetrics *font = NULL;
   char *imagepath = NULL, *imageurl = NULL;
   labelStyleObj ls;
-  colorObj labelcolor, labeloutlinecolor;
+  colorObj labelcolor, labeloutlinecolor, imagecolor, *imagecolorptr=NULL;
   ls.color = &labelcolor;
   ls.outlinecolor = &labeloutlinecolor;
   
@@ -419,8 +419,16 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   if (format == NULL || !MS_RENDERER_PLUGIN(format) || !format->vtable->supports_bitmap_fonts) 
     format = msCreateDefaultOutputFormat( NULL, "GD/PC256", "gif" );
 
+  if(!format->transparent) {
+     if(map && MS_VALID_COLOR(map->imagecolor)) {
+        imagecolorptr = &map->imagecolor;
+     } else {
+         MS_INIT_COLOR(imagecolor,255,255,255,255);
+         imagecolorptr = &imagecolor;
+     }
+  }
 
-  img = msImageCreate(width,height,format,imagepath,imageurl,MS_DEFAULT_RESOLUTION,MS_DEFAULT_RESOLUTION,NULL);
+  img = msImageCreate(width,height,format,imagepath,imageurl,MS_DEFAULT_RESOLUTION,MS_DEFAULT_RESOLUTION,imagecolorptr);
   renderer = MS_IMAGE_RENDERER(img);
 
   for(i=0;i<5;i++) {

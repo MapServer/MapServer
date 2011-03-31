@@ -15,7 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
-- ...
+- fix incorrect background color for INIMAGE exceptions (#3790)
 
 Version 6.0.0-beta4 (2011-03-30)
 --------------------------------
