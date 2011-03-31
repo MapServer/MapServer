@@ -217,11 +217,17 @@ static int saveQueryResults(mapObj *map, char *filename) {
 static int loadQueryResults(mapObj *map, FILE *stream) {
   int i, j, k, n=0;
 
-  fread(&n, sizeof(int), 1, stream);
+  if(1 != fread(&n, sizeof(int), 1, stream)) {
+     msSetError(MS_MISCERR,"failed to read query count from query file stream", "loadQueryResults()");
+    return MS_FAILURE; 
+  }
 
   /* now load the result set for each layer found in the query file */
   for(i=0; i<n; i++) {
-    fread(&j, sizeof(int), 1, stream); /* layer index */
+    if(1 != fread(&j, sizeof(int), 1, stream)) { /* layer index */
+       msSetError(MS_MISCERR,"failed to read layer index from query file stream", "loadQueryResults()");
+       return MS_FAILURE; 
+    }
 
     if(j<0 || j>map->numlayers) {
       msSetError(MS_MISCERR, "Invalid layer index loaded from query file.", "loadQueryResults()");
@@ -232,10 +238,16 @@ static int loadQueryResults(mapObj *map, FILE *stream) {
     GET_LAYER(map, j)->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
     MS_CHECK_ALLOC(GET_LAYER(map, j)->resultcache, sizeof(resultCacheObj), MS_FAILURE);
 
-    fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream); /* number of results    */
+    if(1 != fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream)) { /* number of results */
+       msSetError(MS_MISCERR,"failed to read number of results from query file stream", "loadQueryResults()");
+       return MS_FAILURE; 
+    }
     GET_LAYER(map, j)->resultcache->cachesize = GET_LAYER(map, j)->resultcache->numresults;
 
-    fread(&(GET_LAYER(map, j)->resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
+    if(1 != fread(&(GET_LAYER(map, j)->resultcache->bounds), sizeof(rectObj), 1, stream)) { /* bounding box */
+       msSetError(MS_MISCERR,"failed to read bounds from query file stream", "loadQueryResults()");
+       return MS_FAILURE; 
+    }
 
     GET_LAYER(map, j)->resultcache->results = (resultObj *) malloc(sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);
     if (GET_LAYER(map, j)->resultcache->results == NULL) 
@@ -248,7 +260,10 @@ static int loadQueryResults(mapObj *map, FILE *stream) {
     }
 
     for(k=0; k<GET_LAYER(map, j)->resultcache->numresults; k++) {
-      fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultObj), 1, stream); /* each result */
+      if(1 != fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultObj), 1, stream)) { /* each result */
+         msSetError(MS_MISCERR,"failed to read result %d from query file stream", "loadQueryResults()", k);
+         return MS_FAILURE; 
+      }
       if(!GET_LAYER(map, j)->tileindex) GET_LAYER(map, j)->resultcache->results[k].tileindex = -1; /* reset the tile index for non-tiled layers */
       GET_LAYER(map, j)->resultcache->results[k].resultindex = -1; /* all results loaded this way have a -1 result (set) index */
     }
