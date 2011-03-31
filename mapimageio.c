@@ -618,7 +618,11 @@ int msLoadGDRasterBufferFromFile(char *path, rasterBufferObj *rb) {
         msSetError(MS_MISCERR, "unable to open file %s for reading", "loadGDImg()", path);
         return MS_FAILURE;
     }
-    fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
+    if(1 != fread(bytes,8,1,stream)) /* read some bytes to try and identify the file */
+    {
+        msSetError(MS_MISCERR, "Unable to read header from image file %s", "msLoadGDRasterBufferFromFile()",path);
+        return MS_FAILURE;
+    }
     rewind(stream); /* reset the image for the readers */
     if(memcmp(bytes,"GIF8",4)==0) {
 #ifdef USE_GD_GIF
@@ -627,7 +631,7 @@ int msLoadGDRasterBufferFromFile(char *path, rasterBufferObj *rb) {
         img = gdImageCreateFromGifCtx(ctx);
         ctx->gd_free(ctx);
 #else
-        msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msGetSymbolGdPixmap()");
+        msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msLoadGDRasterBufferFromFile()");
         return MS_FAILURE;
 #endif
     } else if (memcmp(bytes,PNGsig,8)==0) {
@@ -637,7 +641,7 @@ int msLoadGDRasterBufferFromFile(char *path, rasterBufferObj *rb) {
         img = gdImageCreateFromPngCtx(ctx);
         ctx->gd_free(ctx);
 #else
-        msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msGetSymbolGdPixmap()");
+        msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msLoadGDRasterBufferFromFile()");
         return MS_FAILURE;
 #endif
     }
@@ -1175,10 +1179,13 @@ int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb) {
     int ret = MS_FAILURE;
     stream = fopen(path,"rb");
     if(!stream) {
-        msSetError(MS_MISCERR, "unable to open file %s for reading", "msLoadRasterBuffer()", path);
+        msSetError(MS_MISCERR, "unable to open file %s for reading", "msLoadMSRasterBufferFromFile()", path);
         return MS_FAILURE;
     }
-    fread(signature,1,8,stream);
+    if(1 != fread(signature,8,1,stream)) {
+       msSetError(MS_MISCERR, "Unable to read header from image file %s", "msLoadMSRasterBufferFromFile()",path);
+       return MS_FAILURE;
+    }
     fclose(stream);
     if(png_sig_cmp(signature,0,8) == 0) {
         ret = readPNG(path,rb);
