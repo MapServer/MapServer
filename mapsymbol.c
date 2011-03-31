@@ -231,7 +231,11 @@ int loadSymbol(symbolObj *s, char *symbolpath)
         file_len = ftell(stream);
         rewind(stream);
         s->svg_text = (char*)malloc(sizeof(char) * file_len);
-        fread(s->svg_text, file_len, 1, stream);
+        if(1 != fread(s->svg_text, file_len, 1, stream)) {
+          msSetError(MS_IOERR, "failed to read %d bytes from svg file %s", "loadSymbol()", file_len, s->full_pixmap_path);
+          free(s->svg_text);
+          return -1;
+        }
         fclose(stream);
 	    break;
       }
