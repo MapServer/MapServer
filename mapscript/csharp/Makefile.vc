@@ -1,0 +1,126 @@
+#
+# makefile.vc - MSVC++ makefile for the C#/MapScript extension
+#
+# This VC++ makefile will build the PHP module CSHARP_MAPSCRIPT.DLL
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+
+
+# Flag indicating to the option files that this is the build of C#/MapScript
+!INCLUDE ../../nmake.opt
+
+# Be aware when setting different options for libmap.dll and mapscript.dll (Bug 1476)
+# To change the options for mapscript.dll uncomment the following line
+# otherwise the options of nmake.opt will be used
+#OPTFLAGS =	/nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG)
+BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32
+#LDFLAGS =	/NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /dll $(LDEBUG)
+LDFLAGS =	/dll $(LDEBUG)
+CFLAGS = 	$(BASE_CFLAGS) $(MS_CFLAGS) -I../.. 
+
+CC=     cl
+LINK=   link
+
+!IFDEF MS_DEBUG
+CSDEBUG = /debug:full
+!ELSE
+CSDEBUG =
+!ENDIF
+
+!IFDEF MONO
+CSC = mcs
+!ELSE
+!IF $(MSVC_VER) >= 1400
+!IFDEF WIN64
+CSC = csc /platform:anycpu $(CSDEBUG)
+!ELSE
+CSC = csc /platform:x86 $(CSDEBUG)
+!ENDIF
+!ELSE
+CSC = csc $(CSDEBUG)
+!ENDIF
+!ENDIF
+
+!IF $(MSVC_VER) >= 1600
+CSC = $(CSC) /define:CLR4
+!ENDIF
+
+#SWIG = swig
+
+!IFDEF DLLBUILD
+MS_LIBS = ../../mapserver_i.lib $(EXTERNAL_LIBS)
+!ELSE
+MS_LIBS = $(EXTERNAL_LIBS) ../../mapserver.lib
+!ENDIF
+
+#
+# The rest of the file should not have to be edited...
+#
+
+MAPSCRIPT_OBJS =  mapscript_wrap.obj  
+MAPSCRIPT_DLL =   mapscript.dll
+CSHARP_DLL = mapscript_csharp.dll
+
+default: 	all
+
+all:		interface $(MAPSCRIPT_DLL) $(CSHARP_DLL)
+
+sign:
+	sn -k mapscript.snk
+
+interface: ../mapscript.i
+	$(SWIG) -csharp -namespace OSGeo.MapServer $(MS_DEFS) -DWIN32 -o mapscript_wrap.c ../mapscript.i
+
+.c.obj:
+	$(CC) $(CFLAGS) /DCOMPILE_DL=1 /c $*.c /Fo$*.obj	
+		
+$(MAPSCRIPT_DLL): $(MAPSCRIPT_OBJS)
+	$(LINK) $(LDFLAGS) /out:$(MAPSCRIPT_DLL) $(MAPSCRIPT_OBJS) $(MS_LIBS)
+	if exist $(MAPSCRIPT_DLL).manifest mt -manifest $(MAPSCRIPT_DLL).manifest -outputresource:$(MAPSCRIPT_DLL);2
+
+$(CSHARP_DLL)::
+	$(CSC) $(CSFLAGS) /t:library /out:mapscript_csharp.dll *.cs config\AssemblyInfo.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:shpdump.exe examples\shpdump.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:drawmap.exe examples\drawmap.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:inline.exe examples\inline.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:shapeinfo.exe examples\shapeinfo.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:drawquery.exe examples\drawquery.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe examples\getbytes.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:HTMLtemplate.exe examples\HTMLtemplate.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:RFC24.exe examples\RFC24.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirect.exe examples\drawmapDirect.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirectPrint.exe examples\drawmapDirectPrint.cs	
+
+test:
+!IFDEF MONO
+	mono shpdump.exe ../../tests/point.shp
+	mono shapeinfo.exe ../../tests/point.shp
+	mono inline.exe aggpng24 inline_test.png
+	mono getbytes.exe ../../tests/test.map test_csharp2.png
+	mono RFC24.exe ../../tests/test.map
+!ELSE
+	shpdump ../../tests/point.shp
+	shapeinfo ../../tests/point.shp
+	inline png24 inline_test.png
+	getbytes ../../tests/test.map test_csharp2.png
+	RFC24.exe ../../tests/test.map
+!ENDIF
+	
+clean:
+	del *.obj
+	del *.dll
+	del *.lib
+	del *.pdb
+	del *.exp
+	del *.ilk
+	del *.cs
+	del *.c
+	del *.exe
+	del *.manifest
+

@@ -1,0 +1,100 @@
+# Run ./configure in the main MapServer directory to turn this Makefile.in
+# into a proper Makefile
+
+#
+# This is an adapted version of php-3.0.14/dl/Makefile.tmpl for the 
+# MapServer php_mapscript.so module.
+#
+# $Id$
+#
+
+# +----------------------------------------------------------------------+
+# | PHP HTML Embedded Scripting Language Version 3.0                     |
+# +----------------------------------------------------------------------+
+# | Copyright (c) 1997,1998 PHP Development Team (See Credits file)      |
+# +----------------------------------------------------------------------+
+# | This program is free software; you can redistribute it and/or modify |
+# | it under the terms of one of the following licenses:                 |
+# |                                                                      |
+# |  A) the GNU General Public License as published by the Free Software |
+# |     Foundation; either version 2 of the License, or (at your option) |
+# |     any later version.                                               |
+# |                                                                      |
+# |  B) the PHP License as published by the PHP Development Team and     |
+# |     included in the distribution in the file: LICENSE                |
+# |                                                                      |
+# | This program is distributed in the hope that it will be useful,      |
+# | but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+# | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+# | GNU General Public License for more details.                         |
+# |                                                                      |
+# | You should have received a copy of both licenses referred to here.   |
+# | If you did not, or have any questions about PHP licensing, please    |
+# | contact core@php.net.                                                |
+# +----------------------------------------------------------------------+
+
+CC =     @PHP_CC@
+LD =     @PHP_LD@
+CFLAGS = @CFLAGS@ @USE_PHP_REGEX@ -DCOMPILE_DL=1 @PHP_VERSION_FLAG@
+RUNPATHS= @RPATHS@
+
+#
+# Set PHP_SRC_DIR to point to the root of the PHP source tree
+#
+PHP_SRC_DIR = @PHP_SRC_DIR@
+
+PHP_INC = -I$(PHP_SRC_DIR) -I$(PHP_SRC_DIR)/dl -I$(PHP_SRC_DIR)/main \
+	  -I$(PHP_SRC_DIR)/Zend -I$(PHP_SRC_DIR)/include \
+	  -I$(PHP_SRC_DIR)/TSRM @APACHE_INC@
+
+#
+# IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
+#
+# In order to compile the PHP_MAPSCRIPT module, we have to make MapServer
+# uses the same version of the REGEX library that PHP was compiled with:
+#
+PHP_REGEX_OBJ=@PHP_REGEX_OBJ@
+PHP_REGEX_INC=@PHP_REGEX_INC@
+
+
+#
+# Set MapServer extensions parameters.  See main MapServer Makefile for 
+# more details... 
+# Common defaults are:
+# MS_DEFINE = -DUSE_TTF -DUSE_TIFF -DUSE_EPPL -DUSE_GD_1_2
+# MS_INCLUDE = -I../.. -I../../gd-1.2 -I../../gdft
+# MS_LIBS = -L../.. -lmap -L../../gdft -lgdft -ltiff -lttf -L../../gd-1.2 -lgd
+#
+MS_DEFINE = @ALL_ENABLED@
+MS_INC =    @MS_INC@ @ALL_INC@
+MS_STATIC = @ALL_STATIC_LIB@
+MS_LIBS =   $(RUNPATHS) @MS_LIB@ @ALL_LIB@ @XTRALIBS@ $(MS_STATIC)
+
+
+#
+# The rest of the file should not have to be edited...
+#
+
+CFLAGS112 = $(CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC) $(PHP_REGEX_INC)
+
+all: php_mapscript.so
+
+PHPMS_CLASS_OBJS =  mapscript_error.o color.o rect.o hashtable.o web.o grid.o error.o referencemap.o querymap.o outputformat.o scalebar.o label.o legend.o symbol.o style.o image.o class.o projection.o line.o shape.o shapefile.o point.o labelcache.o labelcachemember.o result.o owsrequest.o layer.o map.o
+PHPMS_OBJS =  php_mapscript_util.o $(PHPMS_CLASS_OBJS) php_mapscript.o mapscript_i.o $(PHP_REGEX_OBJ)
+
+PHPPROJ_OBJS = php_mapscript_util.o php_proj.o $(PHP_REGEX_OBJ)
+
+
+php_mapscript.so: $(PHPMS_OBJS) ../../libmapserver.a
+	$(LD) -o $@ $(PHPMS_OBJS) $(MS_LIBS)
+
+php_proj.so:  $(PHPPROJ_OBJS)
+	$(LD) -o $@ $(PHPPROJ_OBJS) $(MS_LIBS)
+
+%.o: %.c php_mapscript_util.h php_mapscript.h
+	$(CC) $(CFLAGS112) -c -o $@ $<
+
+
+clean:
+	-rm -f *.so *.o perl.out
+
