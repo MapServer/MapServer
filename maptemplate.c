@@ -3085,13 +3085,19 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
    if(!file) {
      msSetError(MS_IOERR, "Error while allocating memory for template file.", "generateLegendTemplate()");
+     fclose(stream);
      return NULL;
    }
    
    /*
     * Read all the template file
     */
-   fread(file, 1, length, stream);
+   if( 1 != fread(file, length, 1, stream)) {
+     msSetError(MS_IOERR, "Error while reading template file.", "generateLegendTemplate()");
+     free(file);
+     fclose(stream);
+     return NULL;
+   }
    file[length] = '\0';
 
    if(msValidateContexts(mapserv->map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
