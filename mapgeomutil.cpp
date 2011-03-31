@@ -206,7 +206,7 @@ int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, 
    mapserver::conv_clipper<polygon_adaptor,mapserver::conv_stroke<mapserver::path_storage> > clipper(polygons,stroke, mapserver::clipper_and); 
    clipper.rewind(0);
    
-   double x,y;
+   double x=0,y=0;
    unsigned int cmd, prevCmd=-1;
    while((cmd = clipper.vertex(&x,&y)) != mapserver::path_cmd_stop) {
       switch(cmd) {
