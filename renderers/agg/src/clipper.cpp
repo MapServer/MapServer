@@ -1450,7 +1450,6 @@ void Clipper::ProcessHorizontal(TEdge *horzEdge)
 bool Clipper::Execute(TClipType clipType, TPolyPolygon &polypoly)
 {
 	double ybot; double ytop;
-	int i;
 
 	polypoly.resize(0);
 	if(  m_ExecuteLocked || !InitializeScanbeam() ) return false;

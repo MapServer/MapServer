@@ -35,7 +35,7 @@ namespace svg
 
     //------------------------------------------------------------------------
     path_tokenizer::path_tokenizer()
-        : m_path(0), m_last_command(0), m_last_number(0.0)
+        : m_path(0), m_last_number(0.0), m_last_command(0)
     {
         init_char_mask(m_commands_mask,   s_commands);
         init_char_mask(m_numeric_mask,    s_numeric);
@@ -120,7 +120,7 @@ namespace svg
         char* buf_ptr = buf;
 
         // Copy all sign characters
-        while(buf_ptr < buf+255 && *m_path == '-' || *m_path == '+')
+        while((buf_ptr < buf+255 && *m_path == '-') || *m_path == '+')
         {
             *buf_ptr++ = *m_path++;
         }

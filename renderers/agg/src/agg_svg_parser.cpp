@@ -243,7 +243,7 @@ namespace svg
                 sprintf(msg,
                     "%s at line %d\n",
                     XML_ErrorString(XML_GetErrorCode(p)),
-                    XML_GetCurrentLineNumber(p));
+                    (int)XML_GetCurrentLineNumber(p));
                 throw exception(msg);
             }
         }
