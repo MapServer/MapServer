@@ -12,8 +12,8 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk):
-----------------------------
+Version 6.0.0-beta4 (2011-03-30)
+--------------------------------
 
 - Fix shp2img's -i flag to honour map level transparent, image quality and 
   interlace settings.
@@ -48,7 +48,8 @@ Current Version (SVN trunk):
 
 - report SOS DescribeObservationType in Capabilities (#3777)
 
-- Updated lexer to detect time attribute bindings (e.g. `[item]`) in logical expressions
+- Updated lexer to detect time attribute bindings (e.g. `[item]`) in logical
+  expressions
 
 - Fixed layer context expressions (REQUIRES/LABELREQUIRES) (#3737)
 
@@ -60,7 +61,8 @@ Current Version (SVN trunk):
 
 - WCS 2.0: Adjusted definition of rangeType.
 
-- Fixed OWS GetCapabilities to report only requests/operations that are enabled.
+- Fixed OWS GetCapabilities to report only requests/operations that are 
+  enabled.
 
 - WCS 2.0: Report only bands in the range subset.
 
