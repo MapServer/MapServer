@@ -125,8 +125,9 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
     xmlChar *buf = NULL;
     msIOContext *context = NULL;
     int chunkSize = 4096;
-    
+#if defined(CPL_ZIP_API_OFFERED)
     int bZip = MS_FALSE;
+#endif
  
     if( msIO_needBinaryStdout() == MS_FAILURE )
       return MS_FAILURE;
@@ -1236,7 +1237,6 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
 /*      http://code.google.com/apis/kml/documentation/extendeddata.html */
 /* -------------------------------------------------------------------- */
         
-        char lineBuf[512];
         xmlNodePtr extendedDataNode = xmlNewNode(NULL, BAD_CAST "ExtendedData");
         xmlNodePtr dataNode = NULL; 
         const char*pszAlias=NULL;
