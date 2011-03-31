@@ -66,7 +66,7 @@ typedef int (*clusterCompareRegionFunc)(clusterInfo* current, clusterInfo* other
 #define TREE_MAX_DEPTH  10
 
 /* cluster data */
-typedef struct cluster_info
+struct cluster_info
 {
     double x;    /* x position of the current point */
     double y;    /* y position of the current point */
@@ -92,7 +92,7 @@ typedef struct cluster_info
 };
 
 /* quadtree node */
-typedef struct cluster_tree_node 
+struct cluster_tree_node 
 {
     /* area covered by this node */
     rectObj rect;
@@ -106,7 +106,7 @@ typedef struct cluster_tree_node
 };
 
 /* layeinfo */
-typedef struct cluster_layer_info
+struct cluster_layer_info
 {
     /* array of features (finalized clusters) */
     clusterInfo* finalized;
