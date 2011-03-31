@@ -543,8 +543,8 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             width = MS_MIN(width, style->maxwidth);
             width = MS_MAX(width, style->minwidth);
             spacing = (style->size <= 0)?scalefactor:style->size*scalefactor;
-            spacing = MS_MIN(spacing, style->size);
-            spacing = MS_MAX(spacing, style->size);
+            spacing = MS_MIN(spacing, style->maxsize);
+            spacing = MS_MAX(spacing, style->minsize);
             ret = msHatchPolygon(image,offsetPolygon,spacing,width,style->angle, &style->color);
             goto cleanup;
          }
