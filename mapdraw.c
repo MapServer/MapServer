@@ -2344,7 +2344,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
       int marker_width, marker_height;
       int marker_offset_x, marker_offset_y, label_offset_x, label_offset_y;
-      rectObj marker_rect;
+      rectObj marker_rect = {0,0,0,0};
       int label_mindistance=-1,
       label_buffer=0, map_edge_buffer=0;
 
