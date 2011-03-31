@@ -5517,7 +5517,11 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   msyylineno = 1; /* start at line 1 (do lines mean anything here?) */
 
   /* If new_mappath is provided then use it, otherwise use the CWD */
-  getcwd(szCWDPath, MS_MAXPATHLEN);
+  if(NULL == getcwd(szCWDPath, MS_MAXPATHLEN)) {
+     msSetError(MS_MISCERR, "getcwd() returned a too long path", "msLoadMapFromString()");
+     msFreeMap(map);
+     msReleaseLock( TLOCK_PARSER );
+  }
   if (new_mappath) {
     mappath = msStrdup(new_mappath);
     map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, mappath));
@@ -5638,7 +5642,12 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
 
   /* If new_mappath is provided then use it, otherwise use the location */
   /* of the mapfile as the default path */
-  getcwd(szCWDPath, MS_MAXPATHLEN);
+  if(NULL == getcwd(szCWDPath, MS_MAXPATHLEN)) {
+     msSetError(MS_MISCERR, "getcwd() returned a too long path", "msLoadMap()");
+     msFreeMap(map);
+     msReleaseLock( TLOCK_PARSER );
+  }
+  
   if (new_mappath)
     map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, msStrdup(new_mappath)));
   else {
