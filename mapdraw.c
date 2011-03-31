@@ -2424,6 +2424,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               scalefactor = size / labelPtr->size;
             } else {
               size = labelPtr->size;
+              scalefactor = 1;
             }
             if(msGetLabelSize(map,labelPtr,cachePtr->text,size,&r,NULL) != MS_SUCCESS)
               return MS_FAILURE;
