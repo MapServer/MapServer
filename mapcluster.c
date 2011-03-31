@@ -140,8 +140,6 @@ extern int yyparse(parseObj *p);
 /* evaluate the filter expression */
 int msClusterEvaluateFilter(expressionObj* expression, shapeObj *shape)
 {
-    if(!expression->string) return 1; /* empty expressions are ALWAYS true */
-
     if (expression->type == MS_EXPRESSION)
     {
         int status;
@@ -283,7 +281,7 @@ static clusterInfo *clusterInfoCreate(msClusterLayerInfo* layerinfo)
     feature->group = NULL;
     feature->siblings = NULL;
     feature->index = layerinfo->numFeatures;
-    feature->filter = -1; // not yer calculated
+    feature->filter = -1; // not yet calculated
     ++layerinfo->numFeatures;
     return feature;
 }
@@ -514,13 +512,16 @@ static void InitShapeAttributes(layerObj* layer, clusterInfo* base)
 
         if (itemindexes[i] == MSCLUSTER_FEATURECOUNTINDEX)
         {
-            if (base->numsiblings > 0) 
-                base->shape.values[i] = msIntToString(base->numsiblings + 1);
-            else
-                base->shape.values[i] = msStrdup("");
+            if (base->shape.values[i])
+                msFree(base->shape.values[i]);
+
+            base->shape.values[i] = msIntToString(base->numsiblings + 1);
         }
         else if (itemindexes[i] == MSCLUSTER_GROUPINDEX)
         {
+            if (base->shape.values[i])
+                msFree(base->shape.values[i]);
+
             if (base->group) 
                 base->shape.values[i] = msStrdup(base->group);
             else
@@ -576,11 +577,11 @@ static int BuildFeatureAttributes(layerObj* layer, msClusterLayerInfo* layerinfo
     {
         if (itemindexes[i] == MSCLUSTER_FEATURECOUNTINDEX)
         {
-            values[i] = msStrdup(""); // not yet assigned
+            values[i] = NULL; // not yet assigned
         }
         else if (itemindexes[i] == MSCLUSTER_GROUPINDEX)
         {
-            values[i] = msStrdup(""); // not yet assigned
+            values[i] = NULL; // not yet assigned
         }
         else if (shape->values[itemindexes[i]])
             values[i] = msStrdup(shape->values[itemindexes[i]]);
@@ -605,7 +606,7 @@ static void findBestCluster(layerObj* layer, msClusterLayerInfo* layerinfo, clus
     clusterInfo* s = node->shapes;
     while (s)
     {
-        if (s->filter < 0)
+        if (s->filter < 0 && layer->cluster.filter.string != NULL)
         {
             InitShapeAttributes(layer, s);
             s->filter = msClusterEvaluateFilter(&layer->cluster.filter, &s->shape);
@@ -1077,6 +1078,9 @@ int RebuildClusters(layerObj *layer)
 
         if (layerinfo->current == NULL)
             break; /* completed */
+
+        /* Update the feature count of the shape */
+        InitShapeAttributes(layer, layerinfo->current);
         
         /* collecting the shapes of the cluster */
         collectClusterShapes(layerinfo, layerinfo->root, layerinfo->current);

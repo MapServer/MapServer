@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk): 
 ---------------------------- 
+- fix for the cluster layer returning invalid feature count (#3794)
+
 - remove some compiler warnings
 
 - fix incorrect scaling of hatch symbol spacing (#3773)
