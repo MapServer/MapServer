@@ -825,6 +825,7 @@ int selectClusterShape(layerObj* layer, long shapeindex)
 }
 
 /* update the parameters from the related shapes */
+#ifndef NDEBUG
 static void UpdateClusterParameters(msClusterLayerInfo* layerinfo, clusterTreeNode *node, clusterInfo *shape)
 {
     int i;
@@ -895,6 +896,7 @@ static int ValidateTree(msClusterLayerInfo* layerinfo, clusterTreeNode *node)
     /* returns true if this node contains only valid clusters */
     return MS_TRUE;
 }
+#endif
 
 /* rebuild the clusters according to the current extent */
 int RebuildClusters(layerObj *layer)
