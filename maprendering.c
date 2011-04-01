@@ -445,13 +445,28 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             //compute a markerStyle and use it on the line
             if(style->gap<0) {
                //special function that treats any other symbol used as a marker, not a brush
-               msImagePolylineMarkers(image,p,symbol,&s,-s.gap,1);
+               msImagePolylineMarkers(image,offsetLine,symbol,&s,-s.gap,1);
             }
             else if(style->gap>0) {
-               msImagePolylineMarkers(image,p,symbol,&s,s.gap,0);
+               msImagePolylineMarkers(image,offsetLine,symbol,&s,s.gap,0);
             } else {
-               //void* tile = getTile(image, symbolset, &s);
-               //r->renderLineTiled(image, theShape, tile);
+               if(renderer->renderLineTiled != NULL) {
+                  int pw,ph;
+                  if(s.scale != 1) {
+                     pw = MS_NINT(symbol->sizex * s.scale)+1;
+                     ph = MS_NINT(symbol->sizey * s.scale)+1;
+                  } else {
+                     pw = symbol->sizex;
+                     ph = symbol->sizey;
+                  }
+                  if(pw<1) pw=1;
+                  if(ph<1) ph=1;
+                  imageObj* tile = getTile(image, symbol,&s,pw,ph,0);
+                  renderer->renderLineTiled(image, p, tile);
+               } else {
+                  msSetError(MS_RENDERERERR, "renderer does not support brushed lines", "msDrawLineSymbol()");
+                  return MS_FAILURE;
+               }
             }
          }
 

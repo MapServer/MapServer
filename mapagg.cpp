@@ -53,6 +53,11 @@
 #include "renderers/agg/include/agg_conv_contour.h"
 #include "renderers/agg/include/agg_ellipse.h"
 
+#include "renderers/agg/include/agg_rasterizer_outline_aa.h"
+#include "renderers/agg/include/agg_renderer_outline_aa.h"
+#include "renderers/agg/include/agg_renderer_outline_image.h"
+#include "renderers/agg/include/agg_span_pattern_rgba.h"
+#include "renderers/agg/include/agg_span_image_filter_rgba.h"
 #include "renderers/agg/include/agg_glyph_raster_bin.h"
 #include "renderers/agg/include/agg_renderer_raster_text.h"
 #include "renderers/agg/include/agg_embedded_raster_fonts.h"
@@ -189,8 +194,23 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
 }
 
 int agg2RenderLineTiled(imageObj *img, shapeObj *p, imageObj * tile) {
-	msSetError(MS_AGGERR, "renderLineTiled not implemented", "aggRenderLineTiled()");
-	return MS_FAILURE;
+
+   mapserver::pattern_filter_bilinear_rgba8 fltr;
+   typedef mapserver::line_image_pattern<mapserver::pattern_filter_bilinear_rgba8> pattern_type;
+   typedef mapserver::renderer_outline_image<renderer_base, pattern_type> renderer_img_type;
+   typedef mapserver::rasterizer_outline_aa<renderer_img_type, mapserver::line_coord_sat> rasterizer_img_type;
+   pattern_type patt(fltr);  
+
+   AGG2Renderer *r = AGG_RENDERER(img);
+   AGG2Renderer *tileRenderer = AGG_RENDERER(tile);
+   
+   line_adaptor lines(p);
+
+   patt.create(tileRenderer->m_pixel_format);
+   renderer_img_type ren_img(r->m_renderer_base, patt);
+   rasterizer_img_type ras_img(ren_img);
+   ras_img.add_path(lines);
+   return MS_SUCCESS;
 }
 
 int agg2RenderPolygon(imageObj *img, shapeObj *p, colorObj * color) {

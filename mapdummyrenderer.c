@@ -231,6 +231,7 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer) {
 	renderer->startLayer = &startLayerDummy;
 	renderer->endLayer = &endLayerDummy;
 	renderer->renderLine=&renderLineDummy;
+   renderer->renderLineTiled = NULL;
 	renderer->createImage=&createImageDummy;
 	renderer->saveImage=&saveImageDummy;
 	renderer->getRasterBufferHandle=&getRasterBufferHandleDummy;

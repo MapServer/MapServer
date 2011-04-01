@@ -239,7 +239,7 @@ int msPopulateRendererVTableKML( rendererVTableObj *renderer )
    renderer->getTruetypeTextBBox = &msGetTruetypeTextBBoxKml;
    renderer->renderTile = &msRenderTileKml;
    renderer->renderPolygonTiled = &msRenderPolygonTiledKml;
-   renderer->renderLineTiled = &msRenderLineTiledKml;
+   renderer->renderLineTiled = NULL;
    renderer->freeSymbol = &msFreeSymbolKml;
    renderer->freeImage=&msFreeImageKml;
    renderer->mergeRasterBuffer = msMergeRasterBufferKml;

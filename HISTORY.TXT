@@ -14,6 +14,11 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk): 
 ---------------------------- 
+
+- add brushed line support for agg renderer (#3792)
+
+- fix bug with marker symbols along offset line
+
 - fix for the cluster layer returning invalid feature count (#3794)
 
 - remove some compiler warnings

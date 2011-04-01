@@ -924,6 +924,7 @@ int msPopulateRendererVTableGD( rendererVTableObj *renderer ) {
   
   renderer->startLayer = startNewLayerGD;
   renderer->endLayer = closeNewLayerGD;
+  renderer->renderLineTiled = NULL;
   renderer->renderLine = &renderLineGD;
   renderer->createImage = &createImageGD;
   renderer->saveImage = &saveImageGD;

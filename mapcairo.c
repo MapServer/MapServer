@@ -794,6 +794,7 @@ int msPopulateRendererVTableCairoRaster( rendererVTableObj *renderer ) {
     initializeCache(&MS_RENDERER_CACHE(renderer));
     renderer->startLayer = startLayerRasterCairo;
     renderer->endLayer = closeLayerRasterCairo;
+    renderer->renderLineTiled = NULL;
     renderer->renderLine=&renderLineCairo;
     renderer->createImage=&createImageCairo;
     renderer->saveImage=&saveImageCairo;
@@ -831,6 +832,7 @@ inline int populateRendererVTableCairoVector( rendererVTableObj *renderer ) {
     renderer->startLayer = startLayerVectorCairo;
     renderer->endLayer = closeLayerVectorCairo;
     renderer->renderLine=&renderLineCairo;
+    renderer->renderLineTiled = NULL;
     renderer->createImage=&createImageCairo;
     renderer->saveImage=&saveImageCairo;
     renderer->getRasterBufferHandle=&getRasterBufferHandleCairo;
