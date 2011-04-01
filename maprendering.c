@@ -452,6 +452,7 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             } else {
                if(renderer->renderLineTiled != NULL) {
                   int pw,ph;
+                  imageObj* tile=NULL;
                   if(s.scale != 1) {
                      pw = MS_NINT(symbol->sizex * s.scale)+1;
                      ph = MS_NINT(symbol->sizey * s.scale)+1;
@@ -461,7 +462,7 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                   }
                   if(pw<1) pw=1;
                   if(ph<1) ph=1;
-                  imageObj* tile = getTile(image, symbol,&s,pw,ph,0);
+                  tile = getTile(image, symbol,&s,pw,ph,0);
                   renderer->renderLineTiled(image, p, tile);
                } else {
                   msSetError(MS_RENDERERERR, "renderer does not support brushed lines", "msDrawLineSymbol()");
