@@ -731,12 +731,13 @@ int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay)
 
 int msSaveImage(mapObj *map, imageObj *img, char *filename)
 {
-    int nReturnVal = -1;
+    int nReturnVal = MS_FAILURE;
     char szPath[MS_MAXPATHLEN];
     struct mstimeval starttime, endtime;
 
-    if(map && map->debug >= MS_DEBUGLEVEL_TUNING) 
+    if(map && map->debug >= MS_DEBUGLEVEL_TUNING) {
         msGettimeofday(&starttime, NULL);
+    }
 
     if (img)
     {
@@ -753,33 +754,38 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 #endif
        if (MS_RENDERER_PLUGIN(img->format)) {
             rendererVTableObj *renderer = img->format->vtable;
-            FILE *stream;
-            int ret;
+            FILE *stream = NULL;
             if(filename) {
                if(map)
                   stream = fopen(msBuildPath(szPath, map->mappath, filename),"wb");
                else
                   stream = fopen(filename,"wb");
+
+               if(!stream) {
+                  msSetError(MS_IOERR, 
+                             "Failed to create output file (%s).", 
+                             "msSaveImage()", (map?szPath:filename) );
+                  return MS_FAILURE;
+               }
+ 
             } else {
                 if ( msIO_needBinaryStdout() == MS_FAILURE )
                     return MS_FAILURE;
                 stream = stdout;
             }
-            if(!stream)
-                return MS_FAILURE;
-            if(renderer->supports_pixel_buffer) {
+
+           if(renderer->supports_pixel_buffer) {
                 rasterBufferObj data;
                 if(renderer->getRasterBufferHandle(img,&data) != MS_SUCCESS)
                    return MS_FAILURE;
 
-                ret = msSaveRasterBuffer(&data,stream,img->format );
+                nReturnVal = msSaveRasterBuffer(&data,stream,img->format );
             } else {
-                ret = renderer->saveImage(img, stream, img->format);
+                nReturnVal = renderer->saveImage(img, stream, img->format);
             }
             if( stream != stdout )
                 fclose(stream);
 
-            return ret;
         }
         else if( MS_DRIVER_IMAGEMAP(img->format) )
             nReturnVal = msSaveImageIM(img, filename, img->format);
@@ -790,7 +796,8 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 
     if(map && map->debug >= MS_DEBUGLEVEL_TUNING) {
       msGettimeofday(&endtime, NULL);
-      msDebug("msSaveImage() total time: %.3fs\n", 
+      msDebug("msSaveImage(%s) total time: %.3fs\n", 
+              (filename ? filename : "stdout"), 
               (endtime.tv_sec+endtime.tv_usec/1.0e6)-
               (starttime.tv_sec+starttime.tv_usec/1.0e6) );
     }
