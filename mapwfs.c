@@ -1176,7 +1176,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
   
   if (value)
-    msIO_printf("Content-type: %s charset=%s%c%c", mimetype,value,10,10);
+    msIO_printf("Content-type: %s; charset=%s%c%c", mimetype,value,10,10);
   else
     msIO_printf("Content-type: %s%c%c",mimetype,10,10);
 
