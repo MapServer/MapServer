@@ -2025,6 +2025,7 @@ else
 
   test -f $XSLT_DIR/include/libxslt/xslt.h && XSLT_INCDIR="$XSLT_DIR/include"
   test -f $XSLT_DIR/lib/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib"
+  test -f $XSLT_DIR/lib64/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib64"
 
   if test -n "$XSLT_LIBDIR" -a -n "$XSLT_INCDIR" ; then
     dnl
