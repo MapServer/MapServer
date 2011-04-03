@@ -527,10 +527,17 @@ static void InitShapeAttributes(layerObj* layer, clusterInfo* base)
             else
                 base->shape.values[i] = msStrdup("");
         }
+        else if (EQUALN(layer->items[i], "Count:", 6))
+        {
+            if (base->shape.values[i])
+                msFree(base->shape.values[i]);
+
+            base->shape.values[i] = msStrdup("1"); // initial count 
+        }
     }
 }
 
-/* update the shape attributes (the non matching attributes are set to empty) */
+/* update the shape attributes (aggregate) */
 static void UpdateShapeAttributes(layerObj* layer, clusterInfo* base, clusterInfo* current)
 {
     int i;
@@ -550,13 +557,33 @@ static void UpdateShapeAttributes(layerObj* layer, clusterInfo* base, clusterInf
         
         if (current->shape.values[i])
         {
-            if (EQUAL(base->shape.values[i], "Cluster:Empty"))
-            continue; // already cleared
-        
-            if (!EQUAL(base->shape.values[i], current->shape.values[i]))
+            if (EQUALN(layer->items[i], "Min:", 4))
             {
+                if (strcasecmp(base->shape.values[i], current->shape.values[i]) > 0)
+                {
+                    msFree(base->shape.values[i]);
+                    base->shape.values[i] = msStrdup(current->shape.values[i]);
+                }
+            }
+            else if (EQUALN(layer->items[i], "Max:", 4))
+            {
+                if (strcasecmp(base->shape.values[i], current->shape.values[i]) < 0)
+                {
+                    msFree(base->shape.values[i]);
+                    base->shape.values[i] = msStrdup(current->shape.values[i]);
+                }
+            }
+            else if (EQUALN(layer->items[i], "Sum:", 4))
+            {
+                double sum = atof(base->shape.values[i]) + atof(current->shape.values[i]);
                 msFree(base->shape.values[i]);
-                base->shape.values[i] = msStrdup("Cluster:Empty");
+                base->shape.values[i] = msDoubleToString(sum, MS_FALSE);
+            }
+            else if (EQUALN(layer->items[i], "Count:", 6))
+            {
+                int count = atoi(base->shape.values[i]) + 1;
+                msFree(base->shape.values[i]);
+                base->shape.values[i] = msIntToString(count);
             }
         }
     }
@@ -1242,7 +1269,18 @@ int msClusterLayerInitItemInfo(layerObj *layer)
         for (i = 0; i < layer->numitems; i++)
         {
             if (itemindexes[i] >= 0)
-                layerinfo->srcLayer.items[itemindexes[i]] = msStrdup(layer->items[i]);
+            {
+                if (EQUALN(layer->items[i], "Min:", 4))
+                    layerinfo->srcLayer.items[itemindexes[i]] = msStrdup(layer->items[i] + 4);
+                else if (EQUALN(layer->items[i], "Max:", 4))
+                    layerinfo->srcLayer.items[itemindexes[i]] = msStrdup(layer->items[i] + 4);
+                else if (EQUALN(layer->items[i], "Sum:", 4))
+                    layerinfo->srcLayer.items[itemindexes[i]] = msStrdup(layer->items[i] + 4);
+                else if (EQUALN(layer->items[i], "Count:", 6))
+                    layerinfo->srcLayer.items[itemindexes[i]] = msStrdup(layer->items[i] + 6);
+                else
+                    layerinfo->srcLayer.items[itemindexes[i]] = msStrdup(layer->items[i]);
+            }   
         }
 
         if (msLayerInitItemInfo(&layerinfo->srcLayer) != MS_SUCCESS)
