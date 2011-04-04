@@ -3255,6 +3255,8 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
      msTranslateWMS2Mapserv(names, values, &numentries);
 
      msObj->map = map;
+     msFreeCharArray(msObj->request->ParamNames, msObj->request->NumParams);
+     msFreeCharArray(msObj->request->ParamValues, msObj->request->NumParams);
      msObj->request->ParamNames = names;
      msObj->request->ParamValues = values;
      msObj->Mode = QUERY;

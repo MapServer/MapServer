@@ -67,12 +67,6 @@ static char *msGetEnvURL( const char *key, void *thread_context )
             return NULL;
         }
         
-        request->ParamNames = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
-        request->ParamValues = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
-        if (request->ParamNames==NULL || request->ParamValues==NULL) {
-	        msSetError(MS_MEMERR, NULL, "OWSRequest()");
-            return NULL;
-        }
         return request;
     }
 
@@ -82,8 +76,6 @@ static char *msGetEnvURL( const char *key, void *thread_context )
     ~cgiRequestObj(void)
 #endif
     {
-        msFreeCharArray(self->ParamNames, self->NumParams);
-        msFreeCharArray(self->ParamValues, self->NumParams);
         free(self);
     }
 

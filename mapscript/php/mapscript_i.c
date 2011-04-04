@@ -1424,9 +1424,6 @@ cgiRequestObj *cgirequestObj_new()
     cgiRequestObj *request;
     request = msAllocCgiObj();
 
-    request->ParamNames = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
-    request->ParamValues = (char **) malloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
-
     return request;
 }
 
@@ -1493,8 +1490,6 @@ char *cgirequestObj_getValueByName(cgiRequestObj *self, const char *name)
 }
 void cgirequestObj_destroy(cgiRequestObj *self)
 {
-    msFreeCharArray(self->ParamNames, self->NumParams);
-    msFreeCharArray(self->ParamValues, self->NumParams);
     free(self);
 }
 

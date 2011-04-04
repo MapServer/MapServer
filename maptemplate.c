@@ -4670,6 +4670,8 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages, char **names, char **v
     mapserv->Mode = BROWSE;
 
     if(names && values && numentries > 0) {
+      msFreeCharArray(mapserv->request->ParamNames, mapserv->request->NumParams);
+      msFreeCharArray(mapserv->request->ParamValues, mapserv->request->NumParams);
       mapserv->request->ParamNames = names;
       mapserv->request->ParamValues = values;
       mapserv->request->NumParams = numentries;    
@@ -4721,6 +4723,8 @@ char *msProcessLegendTemplate(mapObj *map, char **names, char **values, int nume
     mapserv->Mode = BROWSE;
 
     if(names && values && numentries > 0) {
+      msFreeCharArray(mapserv->request->ParamNames, mapserv->request->NumParams);
+      msFreeCharArray(mapserv->request->ParamValues, mapserv->request->NumParams);
       mapserv->request->ParamNames = names;
       mapserv->request->ParamValues = values;
       mapserv->request->NumParams = numentries;    
@@ -4756,6 +4760,8 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, char **names, cha
     mapserv->Mode = QUERY;
 
     if(names && values && numentries > 0) {
+      msFreeCharArray(mapserv->request->ParamNames, mapserv->request->NumParams);
+      msFreeCharArray(mapserv->request->ParamValues, mapserv->request->NumParams);
       mapserv->request->ParamNames = names;
       mapserv->request->ParamValues = values;
       mapserv->request->NumParams = numentries;    
