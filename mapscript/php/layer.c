@@ -288,6 +288,7 @@ PHP_METHOD(layerObj, __get)
     else IF_GET_OBJECT("offsite", mapscript_ce_color, php_layer->offsite, &php_layer->layer->offsite) 
     else IF_GET_OBJECT("grid",  mapscript_ce_grid, php_layer->grid, (graticuleObj *)(php_layer->layer->layerinfo)) 
     else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_layer->metadata, &php_layer->layer->metadata) 
+    else IF_GET_OBJECT("cluster", mapscript_ce_cluster, php_layer->cluster, &php_layer->layer->cluster) 
     else IF_GET_OBJECT("projection", mapscript_ce_projection, php_layer->projection, &php_layer->layer->projection) 
     else 
     {
@@ -353,7 +354,7 @@ PHP_METHOD(layerObj, __set)
               (STRING_EQUAL("grid", property)) ||
               (STRING_EQUAL("metadata", property)) ||
               (STRING_EQUAL("projection", property)) ||
-              (STRING_EQUAL("projection", property)) )
+              (STRING_EQUAL("cluster", property)) )
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
@@ -1903,6 +1904,7 @@ PHP_METHOD(layerObj, free)
     if (php_layer->grid && Z_TYPE_P(php_layer->grid) == IS_OBJECT)
         MAPSCRIPT_DELREF(php_layer->grid);
     MAPSCRIPT_DELREF(php_layer->metadata);
+    MAPSCRIPT_DELREF(php_layer->cluster);
     MAPSCRIPT_DELREF(php_layer->projection);
 }
 /* }}} */
@@ -1990,6 +1992,7 @@ static void mapscript_layer_object_destroy(void *object TSRMLS_DC)
     if (php_layer->grid && Z_TYPE_P(php_layer->grid) == IS_OBJECT)
         MAPSCRIPT_DELREF(php_layer->grid);
     MAPSCRIPT_DELREF(php_layer->metadata);
+    MAPSCRIPT_DELREF(php_layer->cluster);
     MAPSCRIPT_DELREF(php_layer->projection);
 
     if (php_layer->layer && !php_layer->is_ref) {
@@ -2013,6 +2016,7 @@ static zend_object_value mapscript_layer_object_new(zend_class_entry *ce TSRMLS_
     php_layer->offsite = NULL;
     php_layer->grid = NULL;
     php_layer->metadata = NULL;
+    php_layer->cluster = NULL;
     php_layer->projection = NULL;
 
     return retval;

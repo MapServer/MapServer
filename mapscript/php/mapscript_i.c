@@ -1544,17 +1544,6 @@ resultObj *resultObj_new() {
  * class extensions clusterObj
  **********************************************************************/
 
-clusterObj *clusterObj_new() {
-    clusterObj *c = (clusterObj *) msSmallMalloc(sizeof(clusterObj));
-    initCluster(c);
-    return c;
-}
-
-void clusterObj_destroy(clusterObj *self)
-{
-    freeCluster(self);
-}
-
 int clusterObj_updateFromString(clusterObj *self, char *snippet) {
     return msUpdateClusterFromString(self, snippet);
 }

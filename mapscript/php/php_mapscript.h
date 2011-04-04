@@ -304,6 +304,7 @@ typedef struct _php_layer_object {
     zval *grid;
     zval *metadata;
     zval *projection;
+    zval *cluster;
     int is_ref;
     layerObj *layer;
 } php_layer_object;
@@ -773,8 +774,6 @@ void cgirequestObj_destroy(cgiRequestObj *self);
 
 resultObj *resultObj_new();
 
-clusterObj* clusterObj_new();
-void clusterObj_destroy(clusterObj *self);
 int clusterObj_updateFromString(clusterObj *self, char *snippet);
 int clusterObj_setGroup(clusterObj *self, char *string);
 char *clusterObj_getGroupString(clusterObj *self);
