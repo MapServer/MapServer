@@ -324,6 +324,13 @@ typedef struct _php_map_object {
     mapObj *map;
 } php_map_object;
 
+typedef struct _php_cluster_object {
+    zend_object std;
+    parent_object parent;
+    int is_ref;
+    clusterObj *cluster;
+} php_cluster_object;
+
 /* Lifecyle functions*/
 PHP_MINIT_FUNCTION(mapscript);
 PHP_MINFO_FUNCTION(mapscript);
@@ -359,6 +366,7 @@ PHP_MINIT_FUNCTION(shape);
 PHP_MINIT_FUNCTION(shapefile);
 PHP_MINIT_FUNCTION(layer);
 PHP_MINIT_FUNCTION(map);
+PHP_MINIT_FUNCTION(cluster);
 
 /* mapscript functions */
 PHP_FUNCTION(ms_GetVersion);
@@ -423,6 +431,7 @@ extern zend_class_entry *mapscript_ce_scalebar;
 extern zend_class_entry *mapscript_ce_owsrequest;
 extern zend_class_entry *mapscript_ce_layer;
 extern zend_class_entry *mapscript_ce_map;
+extern zend_class_entry *mapscript_ce_cluster;
 
 /* PHP Object constructors */
 extern zend_object_value mapscript_object_new(zend_object *zobj, zend_class_entry *ce,
@@ -464,6 +473,7 @@ extern void mapscript_create_shape(shapeObj *shape, parent_object parent, php_la
 extern void mapscript_create_shapefile(shapefileObj *shapefile, zval *return_value TSRMLS_DC);
 extern void mapscript_create_layer(layerObj *layer, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_map(mapObj *map, zval *return_value TSRMLS_DC);
+extern void mapscript_create_cluster(clusterObj *cluster, parent_object php_parent, zval *return_value TSRMLS_DC);
 
 /* Exported functions for PHP Mapscript API */
 /* throw a MapScriptException */
@@ -762,5 +772,13 @@ char *cgirequestObj_getValueByName(cgiRequestObj *self, const char *name);
 void cgirequestObj_destroy(cgiRequestObj *self);
 
 resultObj *resultObj_new();
+
+clusterObj* clusterObj_new();
+void clusterObj_destroy(clusterObj *self);
+int clusterObj_updateFromString(clusterObj *self, char *snippet);
+int clusterObj_setGroup(clusterObj *self, char *string);
+char *clusterObj_getGroupString(clusterObj *self);
+int clusterObj_setFilter(clusterObj *self, char *string);
+char *clusterObj_getFilterString(clusterObj *self);
 
 #endif /* PHP_MAPSCRIPT_H */

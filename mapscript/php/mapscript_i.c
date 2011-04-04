@@ -1540,3 +1540,45 @@ resultObj *resultObj_new() {
     return r;
 }
 
+/**********************************************************************
+ * class extensions clusterObj
+ **********************************************************************/
+
+clusterObj *clusterObj_new() {
+    clusterObj *c = (clusterObj *) msSmallMalloc(sizeof(clusterObj));
+    initCluster(c);
+    return c;
+}
+
+void clusterObj_destroy(clusterObj *self)
+{
+    freeCluster(self);
+}
+
+int clusterObj_updateFromString(clusterObj *self, char *snippet) {
+    return msUpdateClusterFromString(self, snippet);
+}
+
+int clusterObj_setGroup(clusterObj *self, char *string) {
+    if (!string || strlen(string) == 0) {
+        freeExpression(&self->group);
+        return MS_SUCCESS;
+    }
+    else return msLoadExpressionString(&self->group, string);
+}
+
+char *clusterObj_getGroupString(clusterObj *self) {
+    return msGetExpressionString(&(self->group));
+  }
+
+int clusterObj_setFilter(clusterObj *self, char *string) {
+    if (!string || strlen(string) == 0) {
+        freeExpression(&self->filter);
+        return MS_SUCCESS;
+    }
+    else return msLoadExpressionString(&self->filter, string);
+}
+
+char *clusterObj_getFilterString(clusterObj *self) {
+    return msGetExpressionString(&(self->filter));
+  }

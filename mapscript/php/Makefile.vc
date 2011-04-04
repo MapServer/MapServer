@@ -52,7 +52,7 @@ MS_LIBS = $(EXTERNAL_LIBS) ../../mapserver.lib
 # The rest of the file should not have to be edited...
 #
 
-PHPMS_CLASS_OBJS =  mapscript_error.obj color.obj rect.obj hashtable.obj web.obj grid.obj error.obj referencemap.obj querymap.obj outputformat.obj scalebar.obj label.obj legend.obj symbol.obj style.obj image.obj class.obj projection.obj line.obj shape.obj shapefile.obj point.obj labelcache.obj labelcachemember.obj result.obj owsrequest.obj layer.obj map.obj
+PHPMS_CLASS_OBJS =  mapscript_error.obj color.obj rect.obj hashtable.obj web.obj grid.obj error.obj referencemap.obj querymap.obj outputformat.obj scalebar.obj label.obj legend.obj symbol.obj style.obj image.obj class.obj projection.obj line.obj shape.obj shapefile.obj point.obj labelcache.obj labelcachemember.obj result.obj owsrequest.obj cluster.obj layer.obj map.obj
 
 PHPMS_OBJS =  php_mapscript_util.obj $(PHPMS_CLASS_OBJS) php_mapscript.obj mapscript_i.obj
 

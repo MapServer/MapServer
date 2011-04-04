@@ -79,7 +79,7 @@ CFLAGS112 = $(CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC) $(PHP_REGEX_INC)
 
 all: php_mapscript.so
 
-PHPMS_CLASS_OBJS =  mapscript_error.o color.o rect.o hashtable.o web.o grid.o error.o referencemap.o querymap.o outputformat.o scalebar.o label.o legend.o symbol.o style.o image.o class.o projection.o line.o shape.o shapefile.o point.o labelcache.o labelcachemember.o result.o owsrequest.o layer.o map.o
+PHPMS_CLASS_OBJS =  mapscript_error.o color.o rect.o hashtable.o web.o grid.o error.o referencemap.o querymap.o outputformat.o scalebar.o label.o legend.o symbol.o style.o image.o class.o projection.o line.o shape.o shapefile.o point.o labelcache.o labelcachemember.o result.o owsrequest.o cluster.o layer.o map.o
 PHPMS_OBJS =  php_mapscript_util.o $(PHPMS_CLASS_OBJS) php_mapscript.o mapscript_i.o $(PHP_REGEX_OBJ)
 
 PHPPROJ_OBJS = php_mapscript_util.o php_proj.o $(PHP_REGEX_OBJ)
