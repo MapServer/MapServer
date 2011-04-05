@@ -264,7 +264,7 @@
 					<xs:union memberTypes="ms:angleType ms:attributeType">
 						<xs:simpleType>
 							<xs:restriction base="xs:string">
-								<xs:pattern value="[aA][uU][tT][oO]|[fF][oO][lL][lL][oO][wW]"/>
+								<xs:pattern value="[aA][uU][tT][oO]|[fF][oO][lL][lL][oO][wW]|[aA][uU][tT][oO]2"/>
 								<!-- attribute -->
 							</xs:restriction>
 						</xs:simpleType>
@@ -272,15 +272,13 @@
 				</xs:simpleType>
 			</xs:element>
 			<xs:element name="antialias" type="ms:booleanEnum" minOccurs="0"/>
-			<xs:element name="backgroundColor" type="ms:rgbColorType" minOccurs="0"/>
-			<xs:element name="backgroundShadowColor" type="ms:rgbColorType" minOccurs="0"/>
-			<xs:element name="backgroundShadowSize" type="ms:sizeType" minOccurs="0"/>
 			<xs:element name="buffer" type="xs:integer" minOccurs="0"/>
 			<xs:choice minOccurs="0">
 				<xs:element name="color" type="ms:rgbColorType"/>
 				<xs:element name="colorAttribute" type="ms:attributeType"/>
 			</xs:choice>
 			<xs:element name="encoding" minOccurs="0"/>
+			<xs:element name="maxoverlapangle" minOccurs="0"/>
 			<xs:element name="font" type="xs:string" minOccurs="0"/>
 			<xs:element name="force" type="ms:booleanEnum" default="FALSE" minOccurs="0"/>
 			<xs:element name="maxLength" type="xs:integer" default="0" minOccurs="0"/>
@@ -452,6 +450,7 @@
 						<xs:enumeration value="ROUND"/>
 						<xs:enumeration value="SQUARE"/>
 						<xs:enumeration value="TRIANGLE"/>
+				                <xs:enumeration value="SVG"/>
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:element>
@@ -572,12 +571,23 @@
 		</xs:sequence>
 		<xs:attribute name="status" type="ms:stateEnum" default="OFF"/>
 	</xs:complexType>
+        <!-- CLUSTER Definition -->
+	<xs:complexType name="Cluster">
+		<xs:sequence>
+			<xs:element name="buffer" type="xs:positiveInteger" minOccurs="0"/>
+			<xs:element name="filter" type="ms:expressionType" minOccurs="0"/>
+			<xs:element name="group" type="ms:expressionType" minOccurs="0"/>
+			<xs:element name="maxdistance" type="xs:positiveInteger" minOccurs="0"/>
+			<xs:element name="region" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
 	<!-- LAYER Definition -->
 	<xs:complexType name="Layer">
 		<xs:sequence>
 			<xs:element name="Class" type="ms:Class" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="classGroup" type="xs:string" minOccurs="0"/>
 			<xs:element name="classItem" type="xs:string" minOccurs="0"/>
+			<xs:element name="Cluster" type="ms:Cluster" minOccurs="0"/>
 			<xs:element name="connection" type="xs:string" minOccurs="0"/>
 			<xs:element name="connectionType" minOccurs="0">
 				<xs:simpleType>
@@ -589,6 +599,7 @@
 						<xs:enumeration value="ORACLESPATIAL"/>
 						<xs:enumeration value="WMS"/>
 						<xs:enumeration value="PLUGIN"/>
+						<xs:enumeration value="UNION"/>
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:element>

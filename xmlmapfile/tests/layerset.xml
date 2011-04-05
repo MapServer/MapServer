@@ -10,11 +10,8 @@
       <keyImage>/home/myusername/layer1.png</keyImage>
       <Label type="TRUETYPE">
         <align>LEFT</align>
-        <angle>12</angle>
+        <angle>AUTO2</angle>
         <antialias>TRUE</antialias>
-        <backgroundColor red="244" green="43" blue="22"/>
-        <backgroundShadowColor red="244" green="43" blue="22"/>
-        <backgroundShadowSize x="2" y="2"/>
         <buffer>2</buffer>
         <colorAttribute>[myColor]</colorAttribute>
         <encoding>ISO 8859-1</encoding>
@@ -65,6 +62,13 @@
     </Class>
     <classGroup>group1</classGroup>
     <classItem>population</classItem>
+    <Cluster>
+      <buffer>2</buffer>
+      <filter type="MSEXPR">(type=’road’ and size &lt; 2)</filter>
+      <group type="REGEX">/ddea/i</group>
+      <maxdistance>20</maxdistance>
+      <region>region1</region>
+    </Cluster>
     <connection>user=nobody password=****** dbname=dbname host=localhost port=5432</connection>
     <connectionType>SDE</connectionType>
     <data>../data</data>
