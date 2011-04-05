@@ -392,6 +392,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>cr                         { MS_LEXER_RETURN_TOKEN(MS_CR); }
 <INITIAL>csv                                   { MS_LEXER_RETURN_TOKEN(MS_DB_CSV); }
 <INITIAL>postgresql                            { MS_LEXER_RETURN_TOKEN(MS_DB_POSTGRES); }
+<INITIAL>mysql                                 { MS_LEXER_RETURN_TOKEN(MS_DB_MYSQL); }
 <INITIAL,URL_STRING>default                    { MS_LEXER_RETURN_TOKEN(MS_DEFAULT); }
 <INITIAL,URL_STRING>dd                         { MS_LEXER_RETURN_TOKEN(MS_DD); }
 <INITIAL>ellipse                               { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_ELLIPSE); }

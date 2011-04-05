@@ -1549,6 +1549,50 @@ ALL_INC="$POSTGIS_INC $ALL_INC"
 ALL_LIB="$POSTGIS_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------------
+dnl Try to find MySQL if MYSQL support requested.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(if Mysql support requested)
+
+AC_ARG_WITH(mysql,[  --with-mysql[[=ARG]]      Include Mysql Support (ARG=yes/path to mysql_config)],,)
+
+if test "$with_mysql" = "no" -o "$with_mysql" = "" ; then
+  AC_MSG_RESULT(no)
+  MY_CONFIG="no"
+elif test "$with_mysql" = "yes" ; then
+  AC_MSG_RESULT(yes)
+  AC_PATH_PROG(MY_CONFIG, mysql_config, no)
+else
+  MY_CONFIG=$with_mysql
+fi
+
+if test "$MY_CONFIG" = "no" ; then
+  MYSQL_ENABLED=
+  MYSQL_INC=
+  MYSQL_LIB=
+else
+  if test -f "$MY_CONFIG" -a -x "$MY_CONFIG" ; then
+    AC_MSG_RESULT([yes, user supplied mysql_config ($MY_CONFIG)])
+  else
+    AC_MSG_ERROR(['$MY_CONFIG' is not an executable.  Make sure you use --with-mysql=/path/to/mysql_config])
+  fi
+
+  MYSQL_ENABLED=-DUSE_MYSQL
+  MYSQL_LIB="`$MY_CONFIG --libs` -lmysqlclient"
+#  MYSQL_LIB="-L/usr/lib/mysql -lmysqlclient"
+  MYSQL_INC="`$MY_CONFIG --cflags`"
+#  MYSQL_INC="-I/usr/include/mysql"
+fi
+
+AC_SUBST(MYSQL_ENABLED,$MYSQL_ENABLED)
+AC_SUBST(MYSQL_INC,$MYSQL_INC)
+AC_SUBST(MYSQL_LIB,$MYSQL_LIB)
+
+ALL_ENABLED="$MYSQL_ENABLED $ALL_ENABLED"
+ALL_INC="$MYSQL_INC $ALL_INC"
+ALL_LIB="$MYSQL_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------------
 dnl Try to find out if OracleSpatial support requested.
 dnl ---------------------------------------------------------------------------
 

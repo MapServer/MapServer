@@ -106,6 +106,7 @@ Optional Packages:
   --without-tiff          Disable TIFF support.
   --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
+  --with-mysql[=ARG]      Include Mysql Support (ARG=yes/path to my_config)
   --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to
                           Oracle home)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
@@ -410,6 +411,16 @@ PostGIS Support:
   be found.
 
 
+
+Mysql (MySQL v3.xx SFSQL) Support:
+----------------------------------
+
+::
+
+  --with-mysql[=ARG]      Include Mysql Support (ARG=yes/path to my_config)
+
+- Mysql provides join support using MySQl v3.xx.  This option is 
+  disabled by default and can be enabled using the --with-mysql option.
 
 Oracle Spatial Support:
 -----------------------

@@ -693,7 +693,7 @@ int loadJoin(joinObj *join)
       if(getString(&join->connection) == MS_FAILURE) return(-1);
       break;
     case(CONNECTIONTYPE):
-      if((join->connectiontype = getSymbol(4, MS_DB_XBASE, MS_DB_ORACLE, MS_DB_POSTGRES, MS_DB_CSV)) == -1) return(-1);
+      if((join->connectiontype = getSymbol(5, MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES, MS_DB_CSV)) == -1) return(-1);
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadJoin()");
@@ -752,7 +752,7 @@ static void writeJoin(FILE *stream, int indent, joinObj *join)
   writeString(stream, indent, "TABLE", NULL, join->table);
   writeString(stream, indent, "TEMPLATE", NULL, join->template);
   writeString(stream, indent, "TO", NULL, join->to);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", join->connectiontype, 2, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRESQL");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRESQL", MS_DB_MYSQL, "MYSQL");
   writeKeyword(stream, indent, "TYPE", join->type, 1, MS_JOIN_ONE_TO_MANY, "ONE-TO-MANY");
   writeBlockEnd(stream, indent, "JOIN");
 }

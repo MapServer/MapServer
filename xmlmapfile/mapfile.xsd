@@ -527,7 +527,9 @@
 			<xs:element name="connectionType" minOccurs="0">
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
-						<xs:enumeration value="OGR"/>
+						<xs:enumeration value="MYSQL"/>
+						<xs:enumeration value="POSTGRESQL"/>
+						<xs:enumeration value="CSV"/>
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:element>

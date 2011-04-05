@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Re-added the MYSQL JOIN support. Had been removed with the MYGIS deprecated driver.
+
 - Add opacity to legend (#3740)
 
 - Updated PHP/MapScript with the new objects properties (#3735)
