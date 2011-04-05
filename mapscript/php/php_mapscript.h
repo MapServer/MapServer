@@ -303,6 +303,7 @@ typedef struct _php_layer_object {
     zval *offsite;
     zval *grid;
     zval *metadata;
+    zval *bindvals;
     zval *projection;
     zval *cluster;
     int is_ref;

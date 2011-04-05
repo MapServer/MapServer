@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Updated PHP/MapScript with the new objects properties (#3735)
+
 - KML: set layeer's projection when it is not defined (#3809)
 
 - Updated xml mapfile schema and xsl with the new lexer properties (#3735)

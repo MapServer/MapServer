@@ -267,6 +267,7 @@ PHP_METHOD(layerObj, __get)
     else IF_GET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom)
     else IF_GET_LONG("minfeaturesize", php_layer->layer->minfeaturesize)
     else IF_GET_LONG("maxfeatures", php_layer->layer->maxfeatures)
+    else IF_GET_LONG("startindex", php_layer->layer->startindex)
     else IF_GET_LONG("annotate", php_layer->layer->annotate)
     else IF_GET_LONG("transform", php_layer->layer->transform)
     else IF_GET_LONG("labelcache", php_layer->layer->labelcache)
@@ -288,6 +289,7 @@ PHP_METHOD(layerObj, __get)
     else IF_GET_OBJECT("offsite", mapscript_ce_color, php_layer->offsite, &php_layer->layer->offsite) 
     else IF_GET_OBJECT("grid",  mapscript_ce_grid, php_layer->grid, (graticuleObj *)(php_layer->layer->layerinfo)) 
     else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_layer->metadata, &php_layer->layer->metadata) 
+    else IF_GET_OBJECT("bindvals", mapscript_ce_hashtable, php_layer->bindvals, &php_layer->layer->bindvals) 
     else IF_GET_OBJECT("cluster", mapscript_ce_cluster, php_layer->cluster, &php_layer->layer->cluster) 
     else IF_GET_OBJECT("projection", mapscript_ce_projection, php_layer->projection, &php_layer->layer->projection) 
     else 
@@ -333,6 +335,7 @@ PHP_METHOD(layerObj, __set)
     else IF_SET_DOUBLE("labelminscaledenom", php_layer->layer->labelminscaledenom, value)
     else IF_SET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom, value)
     else IF_SET_LONG("maxfeatures", php_layer->layer->maxfeatures, value)
+    else IF_SET_LONG("startindex", php_layer->layer->startindex, value)
     else IF_SET_LONG("annotate", php_layer->layer->annotate, value)
     else IF_SET_LONG("transform", php_layer->layer->transform, value)
     else IF_SET_LONG("labelcache", php_layer->layer->labelcache, value)
@@ -353,6 +356,7 @@ PHP_METHOD(layerObj, __set)
     else if ( (STRING_EQUAL("offsite", property)) ||
               (STRING_EQUAL("grid", property)) ||
               (STRING_EQUAL("metadata", property)) ||
+              (STRING_EQUAL("bindvals", property)) ||
               (STRING_EQUAL("projection", property)) ||
               (STRING_EQUAL("cluster", property)) )
     {
@@ -1904,6 +1908,7 @@ PHP_METHOD(layerObj, free)
     if (php_layer->grid && Z_TYPE_P(php_layer->grid) == IS_OBJECT)
         MAPSCRIPT_DELREF(php_layer->grid);
     MAPSCRIPT_DELREF(php_layer->metadata);
+    MAPSCRIPT_DELREF(php_layer->bindvals);
     MAPSCRIPT_DELREF(php_layer->cluster);
     MAPSCRIPT_DELREF(php_layer->projection);
 }
@@ -1992,6 +1997,7 @@ static void mapscript_layer_object_destroy(void *object TSRMLS_DC)
     if (php_layer->grid && Z_TYPE_P(php_layer->grid) == IS_OBJECT)
         MAPSCRIPT_DELREF(php_layer->grid);
     MAPSCRIPT_DELREF(php_layer->metadata);
+    MAPSCRIPT_DELREF(php_layer->bindvals);
     MAPSCRIPT_DELREF(php_layer->cluster);
     MAPSCRIPT_DELREF(php_layer->projection);
 
@@ -2016,6 +2022,7 @@ static zend_object_value mapscript_layer_object_new(zend_class_entry *ce TSRMLS_
     php_layer->offsite = NULL;
     php_layer->grid = NULL;
     php_layer->metadata = NULL;
+    php_layer->bindvals = NULL;
     php_layer->cluster = NULL;
     php_layer->projection = NULL;
 

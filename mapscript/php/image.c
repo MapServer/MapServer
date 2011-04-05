@@ -85,6 +85,8 @@ PHP_METHOD(imageObj, __get)
 
     IF_GET_LONG("width", php_image->image->width)
     else IF_GET_LONG("height", php_image->image->height) 
+    else IF_GET_LONG("resolution", php_image->image->resolution) 
+    else IF_GET_LONG("resolutionfactor", php_image->image->resolutionfactor) 
     else IF_GET_STRING("imagepath", php_image->image->imagepath) 
     else IF_GET_STRING("imageurl", php_image->image->imageurl) 
     else IF_GET_STRING("imagetype", php_image->image->format->name) 
@@ -116,6 +118,8 @@ PHP_METHOD(imageObj, __set)
     else IF_SET_STRING("imageurl", php_image->image->imageurl, value) 
     else IF_SET_STRING("imagetype", php_image->image->format->name, value) 
     else if ( (STRING_EQUAL("width", property)) ||
+              (STRING_EQUAL("resolution", property)) ||
+              (STRING_EQUAL("resolutionfactor", property)) ||
               (STRING_EQUAL("height", property)) )
     {
         mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
