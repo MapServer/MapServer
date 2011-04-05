@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Fixed msGEOSGeometry2Shape to handle 'GEOMETRYCOLLECTION EMPTY' 
+  as null geometry instead of raising an error (#3811)
+
 - Re-added the MYSQL JOIN support. Had been removed with the MYGIS deprecated driver.
 
 - Add opacity to legend (#3740)

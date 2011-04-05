@@ -568,7 +568,8 @@ shapeObj *msGEOSGeometry2Shape(GEOSGeom g)
     return msGEOSGeometry2Shape_multipolygon(g);
     break;
   default:
-    msSetError(MS_GEOSERR, "Unsupported GEOS geometry type (%d).", "msGEOSGeometry2Shape()", type);
+    if (!GEOSisEmpty(g))
+        msSetError(MS_GEOSERR, "Unsupported GEOS geometry type (%d).", "msGEOSGeometry2Shape()", type);
     return NULL;
   }
 }
