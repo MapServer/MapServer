@@ -524,7 +524,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
         if (pszEPSG)
           psNode->pszSRS = msStrdup(pszEPSG);
         
-        psTmpShape = (shapeObj *)malloc(sizeof(shapeObj));
+        psTmpShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
         msInitShape(psTmpShape);
         msRectToPolygon(sQueryRect, psTmpShape);
         bBBoxQuery = 1;
@@ -642,13 +642,13 @@ char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj
                     if (bString)
                     {   
                         bufferSize = 11+strlen(tokens[i])+strlen(pszAttribute)+1;
-                        pszTmp = (char *)malloc(bufferSize);
+                        pszTmp = (char *)msSmallMalloc(bufferSize);
                         snprintf(pszTmp, bufferSize, "(\"[%s]\" ==\"%s\")" , pszAttribute, tokens[i]);
                     }
                     else
                     {   
                         bufferSize = 8+strlen(tokens[i])+strlen(pszAttribute)+1;
-                        pszTmp = (char *)malloc(bufferSize);
+                        pszTmp = (char *)msSmallMalloc(bufferSize);
                         snprintf(pszTmp, bufferSize, "([%s] == %s)" , pszAttribute, tokens[i]);
                     }
 
@@ -715,7 +715,7 @@ int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, char *ps
     
     map->query.type = MS_QUERY_BY_FILTER;
 
-    map->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
+    map->query.filter = (expressionObj *) msSmallMalloc(sizeof(expressionObj));
     initExpression( map->query.filter);
     map->query.filter->string = msStrdup(pszExpression);
     map->query.filter->type = 2000;
