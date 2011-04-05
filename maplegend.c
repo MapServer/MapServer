@@ -49,14 +49,46 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   pointObj marker;
   char szPath[MS_MAXPATHLEN];
   styleObj outline_style;
+  imageObj *image_draw = image;
+  int originalopacity = lp->opacity;
   rendererVTableObj *renderer;
+  outputFormatObj *transFormat = NULL, *altFormat=NULL;
+  const char *alternativeFormatString = NULL;
 
   if(!MS_RENDERER_PLUGIN(image->format)) {
       msSetError(MS_MISCERR,"unsupported image format","msDrawLegendIcon()");
       return MS_FAILURE;
   }
+ 
+  alternativeFormatString = msLayerGetProcessingKey(lp, "RENDERER");
+  if (MS_RENDERER_PLUGIN(image_draw->format) && alternativeFormatString!=NULL && 
+      (altFormat=  msSelectOutputFormat(map, alternativeFormatString)))
+  {
+      msInitializeRendererVTable(altFormat);
+
+      image_draw = msImageCreate(image->width, image->height,
+                                 altFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution, &map->imagecolor);
+      renderer = MS_IMAGE_RENDERER(image_draw);
+  }
+  else if (MS_RENDERER_PLUGIN(image_draw->format)) {
+      renderer = MS_IMAGE_RENDERER(image_draw);
+      if (lp->opacity > 0 && lp->opacity < 100) {
+          if (!renderer->supports_transparent_layers) {
+              msApplyOutputFormat(&transFormat, image->format, MS_TRUE,
+                                  MS_NOOVERRIDE,MS_NOOVERRIDE);
+              image_draw = msImageCreate(image->width, image->height,
+                                         transFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
+              if (!image_draw) {
+                  msSetError(MS_MISCERR, "Unable to initialize temporary transparent image.",
+                             "msDrawLegendIcon()");
+                  return (MS_FAILURE);
+              }
+              /* set opacity to full, as the renderer should be rendering a fully opaque image */
+              lp->opacity=100;
+          } 
+      }
+  }
   
-  renderer = MS_IMAGE_RENDERER(image);
   
   if(renderer->supports_clipping && MS_VALID_COLOR(map->legend.outlinecolor)) {
     /* keep GD specific code here for now as it supports clipping */
@@ -65,7 +97,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     clip.maxy = dstY + height -1;
     clip.minx = dstX;
     clip.miny = dstY;
-    renderer->setClip(image,clip);
+    renderer->setClip(image_draw,clip);
   }
   
   /* initialize the box used for polygons and for outlines */
@@ -113,7 +145,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     marker.y = dstY + MS_NINT(height / 2.0);
     if (theclass->numstyles > 0) {
       for(i=0; i<theclass->numstyles; i++)
-        msDrawMarkerSymbol(&map->symbolset, image, &marker, theclass->styles[i], lp->scalefactor);          
+        msDrawMarkerSymbol(&map->symbolset, image_draw, &marker, theclass->styles[i], lp->scalefactor);          
     } else if (theclass->label.size!=-1) {
       labelObj label = theclass->label;
       double lsize = label.size;
@@ -122,7 +154,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
       label.angle = 0;
       label.position = MS_CC;
       if (label.type == MS_TRUETYPE) label.size = height;
-      msDrawLabel(map, image, marker, (char*)"Az", &label,1.0);
+      msDrawLabel(map, image_draw, marker, (char*)"Az", &label,1.0);
       label.size = lsize;
       label.position = lpos;
       label.angle = langle;
@@ -154,11 +186,11 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
         imgStyle.maxsize = imgStyle.size;
 
       imgStyle.symbol = symbolNum;
-      msDrawMarkerSymbol(&map->symbolset,image,&marker,&imgStyle,lp->scalefactor);
+      msDrawMarkerSymbol(&map->symbolset,image_draw,&marker,&imgStyle,lp->scalefactor);
       /* TO DO: we may want to handle this differently depending on the relative size of the keyimage */
     } else {
       for(i=0; i<theclass->numstyles; i++)
-        msDrawMarkerSymbol(&map->symbolset, image, &marker, theclass->styles[i], lp->scalefactor);
+        msDrawMarkerSymbol(&map->symbolset, image_draw, &marker, theclass->styles[i], lp->scalefactor);
     }
     break;
   case MS_LAYER_LINE:
@@ -182,7 +214,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     zigzag.line[0].point[3].y = dstY + offset;
 
     for(i=0; i<theclass->numstyles; i++)
-      msDrawLineSymbol(&map->symbolset, image, &zigzag, theclass->styles[i], lp->scalefactor); 
+      msDrawLineSymbol(&map->symbolset, image_draw, &zigzag, theclass->styles[i], lp->scalefactor); 
 
     free(zigzag.line[0].point);
     free(zigzag.line);    
@@ -192,7 +224,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   case MS_LAYER_CHART:
   case MS_LAYER_POLYGON:
     for(i=0; i<theclass->numstyles; i++)     
-      msDrawShadeSymbol(&map->symbolset, image, &box, theclass->styles[i], lp->scalefactor);
+      msDrawShadeSymbol(&map->symbolset, image_draw, &box, theclass->styles[i], lp->scalefactor);
     break;
   default:
     return MS_FAILURE;
@@ -203,10 +235,38 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   if(MS_VALID_COLOR(map->legend.outlinecolor)) {
     initStyle(&outline_style);
     outline_style.color = map->legend.outlinecolor;
-    msDrawLineSymbol(&map->symbolset, image, &box, &outline_style, 1.0);
+    msDrawLineSymbol(&map->symbolset, image_draw, &box, &outline_style, 1.0);
     /* reset clipping rectangle */
     if(renderer->supports_clipping)
-    	renderer->resetClip(image);
+    	renderer->resetClip(image_draw);
+  }
+
+  if (altFormat)
+  {
+      rendererVTableObj *renderer = MS_IMAGE_RENDERER(image);
+      rendererVTableObj *altrenderer = MS_IMAGE_RENDERER(image_draw);
+      rasterBufferObj rb;
+      memset(&rb,0,sizeof(rasterBufferObj));
+
+      altrenderer->getRasterBufferHandle(image_draw,&rb);
+      renderer->mergeRasterBuffer(image,&rb,lp->opacity*0.01,0,0,0,0,rb.width,rb.height);  
+      msFreeImage(image_draw);
+      
+  }
+  else if(image != image_draw) {
+	  rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
+	  rasterBufferObj rb;
+	  memset(&rb,0,sizeof(rasterBufferObj));
+
+	  lp->opacity = originalopacity;
+
+	  renderer->getRasterBufferHandle(image_draw,&rb);
+	  renderer->mergeRasterBuffer(image,&rb,lp->opacity*0.01,0,0,0,0,rb.width,rb.height);  
+	  msFreeImage(image_draw);
+
+	  /* deref and possibly free temporary transparent output format.  */
+	  msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+
   }
 
   free(box.line[0].point);

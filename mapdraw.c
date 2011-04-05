@@ -741,7 +741,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
       altrenderer->getRasterBufferHandle(image_draw,&rb);
       renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);  
-      altrenderer->freeImage( image_draw );
+      msFreeImage(image_draw);
       
   }
   else if( image != image_draw) {
@@ -754,7 +754,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
 	  renderer->getRasterBufferHandle(image_draw,&rb);
 	  renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);  
-	  renderer->freeImage( image_draw );
+	  msFreeImage(image_draw);
 
 	  /* deref and possibly free temporary transparent output format.  */
 	  msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
