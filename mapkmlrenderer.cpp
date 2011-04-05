@@ -51,6 +51,8 @@ KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorOb
     pszLayerDescMetadata = NULL;  
     papszLayerIncludeItems = NULL;
     nIncludeItems=0;
+    papszLayerExcludeItems = NULL;
+    nExcludeItems=0;
     pszLayerNameAttributeMetadata = NULL;  /*metadata to use for a name for each feature*/
     
     LineStyle = NULL;
@@ -222,7 +224,7 @@ void KmlRenderer::processLayer(layerObj *layer)
       return;
 
     /*turn of labelcache*/
-    //layer->labelcache = MS_OFF;
+    layer->labelcache = MS_OFF;
     
     /*if there are labels we want the coordinates to 
       be the center of the element.*/
@@ -377,6 +379,13 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
      if (value)
        papszLayerIncludeItems = msStringSplit(value, ',', &nIncludeItems);
 
+     value=msLookupHashTable(&layer->metadata, "kml_exclude_items");
+     if (!value)
+       value=msLookupHashTable(&layer->metadata, "ows_exclude_items");
+     if (value)
+       papszLayerExcludeItems = msStringSplit(value, ',', &nExcludeItems);
+
+     
      if (msLookupHashTable(&layer->metadata, "kml_name_item"))
        pszLayerNameAttributeMetadata = msLookupHashTable(&layer->metadata, "kml_name_item");
 
@@ -430,8 +439,12 @@ int KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
 
     if (papszLayerIncludeItems && nIncludeItems>0)
       msFreeCharArray(papszLayerIncludeItems, nIncludeItems);
-
     papszLayerIncludeItems=NULL;
+
+    if (papszLayerExcludeItems && nExcludeItems>0)
+      msFreeCharArray(papszLayerExcludeItems, nExcludeItems);
+    papszLayerExcludeItems=NULL;
+
     return MS_SUCCESS;
 }
 
@@ -1252,7 +1265,8 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
         msFree(pszTmpDesc);
         return descriptionNode;
     }
-    else if (papszLayerIncludeItems && nIncludeItems > 0)
+    else if ((papszLayerIncludeItems && nIncludeItems > 0) || 
+             (papszLayerExcludeItems && nExcludeItems > 0))
     {
 /* -------------------------------------------------------------------- */
 /*      preffered way is to use the ExtendedData tag (#3728)            */
@@ -1262,30 +1276,47 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
         xmlNodePtr extendedDataNode = xmlNewNode(NULL, BAD_CAST "ExtendedData");
         xmlNodePtr dataNode = NULL; 
         const char*pszAlias=NULL;
+        int bIncludeAll = MS_FALSE;
 
+        if(papszLayerIncludeItems && nIncludeItems == 1 &&
+           strcasecmp(papszLayerIncludeItems[0], "all") == 0)
+          bIncludeAll = MS_TRUE;
+           
         for (int i=0; i<currentLayer->numitems; i++)
         {
-            int j=0;
+            int j=0,k=0;
+            
             /*TODO optimize to calculate this only once per layer*/
             for (j=0; j<nIncludeItems;j++)
             {
                 if (strcasecmp(currentLayer->items[i], papszLayerIncludeItems[j]) == 0)
                   break;
             }
-            if (j<nIncludeItems)
+            if (j<nIncludeItems || bIncludeAll)
             {
-                dataNode = xmlNewNode(NULL, BAD_CAST "Data");
-                xmlNewProp(dataNode, BAD_CAST "name", BAD_CAST  currentLayer->items[i]);
-                pszAlias = getAliasName(currentLayer, currentLayer->items[i], "GO");
-                if (pszAlias)
-                  xmlNewChild(dataNode, NULL, BAD_CAST "displayName", BAD_CAST  pszAlias);
-                else
-                  xmlNewChild(dataNode, NULL, BAD_CAST "displayName", BAD_CAST  currentLayer->items[i]);
-                if (shape->values[i] && strlen(shape->values[i]))
-                  xmlNewChild(dataNode, NULL, BAD_CAST "value", BAD_CAST  shape->values[i]);
-                else
-                  xmlNewChild(dataNode, NULL, BAD_CAST "value", NULL);
-                xmlAddChild(extendedDataNode, dataNode);
+                if (papszLayerExcludeItems && nExcludeItems > 0)
+                {
+                    for (k=0; k<nExcludeItems;k++)
+                    {
+                        if (strcasecmp(currentLayer->items[i], papszLayerExcludeItems[k]) == 0)
+                          break;
+                    }
+                }
+                if (nExcludeItems == 0 || k == nExcludeItems)
+                {
+                    dataNode = xmlNewNode(NULL, BAD_CAST "Data");
+                    xmlNewProp(dataNode, BAD_CAST "name", BAD_CAST  currentLayer->items[i]);
+                    pszAlias = getAliasName(currentLayer, currentLayer->items[i], "GO");
+                    if (pszAlias)
+                      xmlNewChild(dataNode, NULL, BAD_CAST "displayName", BAD_CAST  pszAlias);
+                    else
+                      xmlNewChild(dataNode, NULL, BAD_CAST "displayName", BAD_CAST  currentLayer->items[i]);
+                    if (shape->values[i] && strlen(shape->values[i]))
+                      xmlNewChild(dataNode, NULL, BAD_CAST "value", BAD_CAST  shape->values[i]);
+                    else
+                      xmlNewChild(dataNode, NULL, BAD_CAST "value", NULL);
+                    xmlAddChild(extendedDataNode, dataNode);
+                }
             }
         }
 
