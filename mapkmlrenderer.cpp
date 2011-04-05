@@ -222,7 +222,7 @@ void KmlRenderer::processLayer(layerObj *layer)
       return;
 
     /*turn of labelcache*/
-    layer->labelcache = MS_OFF;
+    //layer->labelcache = MS_OFF;
     
     /*if there are labels we want the coordinates to 
       be the center of the element.*/
@@ -510,6 +510,28 @@ int KmlRenderer::checkProjection(mapObj *map)
         char epsg_string[100];
         rectObj sRect;
         projectionObj out;
+
+        /* for layer the do not have any projection set, set them with the current map
+           projection*/
+        if (projection && projection->numargs > 0)
+        {
+            layerObj *lp = NULL;
+            int i =0;
+            char *pszMapProjectString = msGetProjectionString(projection);
+            if (pszMapProjectString)
+            {
+                 for(i=0; i<map->numlayers; i++)
+                 {
+                     lp = GET_LAYER(map, i);
+                     if (lp->projection.numargs == 0 && lp->transform == MS_TRUE)
+                     {
+                          msFreeProjection(&lp->projection);
+                          msLoadProjectionString(&lp->projection, pszMapProjectString);
+                     }
+                 }
+                 msFree(pszMapProjectString);
+            }
+        }
         strcpy(epsg_string, "epsg:4326" );
         msInitProjection(&out);
         msLoadProjectionString(&out, epsg_string);
