@@ -3,7 +3,7 @@ import edu.umn.gis.mapscript.*;
 public class QueryByAttributeUnicode {
 	public static void main(String[] args)  {
 
-		String filter="/Südliche Weinstraße/";
+		String filter="/SÃ¼dliche WeinstraÃŸe/";
 		if (args.length == 2) {
 			filter=args[1];
 		}

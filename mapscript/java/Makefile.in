@@ -297,7 +297,7 @@ ifneq ($(PROJ),)
 ifneq ($(GDAL),)
 test:
 	$(JAVAC) -classpath ./:examples/:./mapscript.jar -d examples/ examples/RFC24.java examples/ConnPool.java examples/DrawMap.java examples/DumpShp.java examples/MakePoint.java examples/QueryByAttribute.java examples/ShapeInfo.java examples/WxSTest.java examples/Metadata.java examples/RunTimeBuiltWMSClient.java
-	$(JAVAC) -encoding iso-8859-15 -classpath ./:examples/:./mapscript.jar -d examples/ examples/QueryByAttributeUnicode.java 
+	$(JAVAC) -encoding utf8 -classpath ./:examples/:./mapscript.jar -d examples/ examples/QueryByAttributeUnicode.java 
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DumpShp ../../tests/point.shp
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. ShapeInfo ../../tests/point.shp ../../tests/point.dbf
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DrawMap ../../tests/test.map ./map.png
@@ -309,7 +309,7 @@ else
 	@echo "WARN: Skipping WxSTest because OWS is not enabled"
 endif
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. RFC24 ../../tests/test.map
-	LC_ALL=de_DE $(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttributeUnicode data/subset-umlauts.map
+	LC_ALL=en_US.UTF-8 $(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttributeUnicode data/subset-umlauts.map
 else
 test:
 	@echo "To run the tests GDAL and PROJ must be enabled"
