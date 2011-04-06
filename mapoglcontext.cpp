@@ -424,6 +424,11 @@ bool OglContext::initWindow()
 	}
 
 	window = XOpenDisplay(display_name);
+    if (!window)
+    {
+        msSetError(MS_OGLERR, "XOpenDisplay() failed.", "OglContext::init()");
+        return false;
+    }
 
 	const int fb_attributes[] = {
 			GLX_RENDER_TYPE, GLX_RGBA_BIT,
