@@ -628,9 +628,6 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
     // msImageTruetypePolyline(img, p, symbol, fc, size, symbolset->fontset);
     return;
     break;
-  case(MS_SYMBOL_CARTOLINE):
-    return;
-    break;
   case(MS_SYMBOL_ELLIPSE):   
     bc = imTransparent;
 
@@ -1263,16 +1260,6 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
     break;
   case(MS_SYMBOL_TRUETYPE):
     msImageTruetypePolyline(symbolset, img, p, style, scalefactor);
-    return;
-    break;
-  case(MS_SYMBOL_CARTOLINE):
-    // Single line //
-    if (size == 1) {
-      bc = imTransparent;
-      break;
-    } else {
-      msImageCartographicPolyline(img, p, fc, size, symbol->linecap, symbol->linejoin, symbol->linejoinmaxsize);
-    }
     return;
     break;
   case(MS_SYMBOL_ELLIPSE):

@@ -1376,8 +1376,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     
   }
   
-  /* changed when Tomas added CARTOLINE symbols
-   * adjust the clipping rectangle so that clipped polygon shapes with thick lines
+  /* adjust the clipping rectangle so that clipped polygon shapes with thick lines
    * do not enter the image */
   if(layer->class[c]->numstyles > 0 && layer->class[c]->styles[0] != NULL) {
       double maxsize,maxunscaledsize;

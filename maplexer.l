@@ -383,7 +383,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>bevel                                 { MS_LEXER_RETURN_TOKEN(MS_CJC_BEVEL); }
 <INITIAL>bitmap                                { MS_LEXER_RETURN_TOKEN(MS_BITMAP); }
 <INITIAL>butt                                  { MS_LEXER_RETURN_TOKEN(MS_CJC_BUTT); }
-<INITIAL>cartoline                             { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_CARTOLINE); }
 <INITIAL,URL_STRING>cc                         { MS_LEXER_RETURN_TOKEN(MS_CC); }
 <INITIAL,URL_STRING>center                     { MS_LEXER_RETURN_TOKEN(MS_ALIGN_CENTER); }
 <INITIAL>chart                                 { MS_LEXER_RETURN_TOKEN(MS_LAYER_CHART); }
