@@ -47,6 +47,8 @@ private:
 	static OglContext* current;
 	static bool initWindow();
 	static bool initSharingContext();
+	static ms_uint32 getTextureSize(GLuint dimension, ms_uint32 value);
+	static GLuint NextPowerOf2(GLuint in);
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	static HDC window;
@@ -68,40 +70,24 @@ public:
 
 	OglContext(ms_uint32 width, ms_uint32 height);
 	~OglContext();
-	int getHeight() { return height; }
-	int getWidth() { return width; }
+	int getHeight() const { return height; }
+	int getWidth() const { return width; }
+	bool isValid() const { return valid; }
 	bool makeCurrent();
 	void bindPBufferToTexture();
 private:
 	bool createPBuffer(ms_uint32 width, ms_uint32 height);
 	ms_uint32 width;
 	ms_uint32 height;
-	int windowPixelFormat;
+	bool valid;
+	int windowPixelFormat;	
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB ;
-	static PFNWGLGETPIXELFORMATATTRIBIVARBPROC wglGetPixelFormatAttribivARB ;
-	static PFNWGLGETPIXELFORMATATTRIBFVARBPROC wglGetPixelFormatAttribfvARB ;
-	static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB ;
-	static PFNWGLCREATEPBUFFERARBPROC wglCreatePbufferARB ;
-	static PFNWGLGETPBUFFERDCARBPROC wglGetPbufferDCARB ;
-	static PFNWGLRELEASEPBUFFERDCARBPROC wglReleasePbufferDCARB ;
-	static PFNWGLDESTROYPBUFFERARBPROC wglDestroyPbufferARB ;
-	static PFNWGLQUERYPBUFFERARBPROC wglQueryPbufferARB ;
-	static PFNWGLBINDTEXIMAGEARBPROC wglBindTexImageARB ;
-	static PFNWGLRELEASETEXIMAGEARBPROC wglReleaseTexImageARB ;
+	static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+	static PFNWGLCREATEPBUFFERARBPROC wglCreatePbufferARB;
+	static PFNWGLGETPBUFFERDCARBPROC wglGetPbufferDCARB;
+	static PFNWGLRELEASEPBUFFERDCARBPROC wglReleasePbufferDCARB;
 	static PFNWGLMAKECONTEXTCURRENTARBPROC wglMakeContextCurrentARB;
-	static PFNWGLGETPIXELFORMATATTRIBIVEXTPROC wglGetPixelFormatAttribivEXT;
-
-	static PFNGLGENBUFFERSARBPROC wglGenBuffersARB;                     // VBO Name Generation Procedure
-	static PFNGLBINDBUFFERARBPROC wglBindBufferARB;                     // VBO Bind Procedure
-	static PFNGLBUFFERDATAARBPROC wglBufferDataARB;                     // VBO Data Loading Procedure
-	static PFNGLBUFFERSUBDATAARBPROC wglBufferSubDataARB;               // VBO Sub Data Loading Procedure
-	static PFNGLDELETEBUFFERSARBPROC wglDeleteBuffersARB;               // VBO Deletion Procedure
-	static PFNGLGETBUFFERPARAMETERIVARBPROC wglGetBufferParameterivARB; // return various parameters of VBO
-	static PFNGLMAPBUFFERARBPROC wglMapBufferARB;                       // map VBO procedure
-	static PFNGLUNMAPBUFFERARBPROC wglUnmapBufferARB;                   // unmap VBO procedure
-
 #endif
 };
 

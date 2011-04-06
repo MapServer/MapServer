@@ -20,12 +20,52 @@ ms_uint32 OglContext::MIN_TEXTURE_SIZE = 0;
 OglContext* OglContext::current = NULL;
 
 OglContext::OglContext(ms_uint32 width, ms_uint32 height)
-	: width(width), height(height)
+	: valid(false)
 {
-	if (!window) initWindow();
-	if (!sharingContext) initSharingContext();
-	createPBuffer(width, height);
-	makeCurrent();
+	if (!window && !initWindow()) return;
+	if (!sharingContext && !initSharingContext()) return;
+
+	if (!(this->width = getTextureSize(GL_TEXTURE_WIDTH, width))) return;
+	if (!(this->height = getTextureSize(GL_TEXTURE_HEIGHT, height))) return;
+
+	if (!createPBuffer(this->width, this->height)) return;
+	if (!makeCurrent()) return;	
+	valid = true;
+}
+
+ms_uint32 OglContext::getTextureSize(GLuint dimension, ms_uint32 value)
+{
+	glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA,  value, value, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    GLint check = 0;
+    glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, dimension, &check);
+
+    if (glGetError() != GL_NO_ERROR)
+    {
+    	msSetError(MS_OGLERR, "glGetTexLevelParameteriv failed. glError: %d", "OglContext::getTextureSize()", glGetError());
+    }
+
+    if (check == 0)
+    {
+    	return MS_MAX(MS_MIN(NextPowerOf2(value), OglContext::MAX_TEXTURE_SIZE), OglContext::MIN_TEXTURE_SIZE);
+    }
+    else
+    {
+    	msSetError(MS_OGLERR, "Unable to create opengl texture of map size", "OglContext::getTextureSize()");
+    	return value;
+    }
+}
+
+GLuint OglContext::NextPowerOf2(GLuint in)
+{
+	in -= 1;
+
+	in |= in >> 16;
+	in |= in >> 8;
+	in |= in >> 4;
+	in |= in >> 2;
+	in |= in >> 1;
+
+	return in + 1;
 }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -137,19 +177,19 @@ bool OglContext::initWindow()
 
 	if (!(window=GetDC(hWnd)))
 	{
-		msSetError(MS_OGLERR, "Can't Create A GL Device Context.", "OglContext::initWindow()");
+		msSetError(MS_OGLERR, "Can't Create A GL Device Context.. Last Error: %d", "OglContext::initWindow()", GetLastError());
 		return FALSE;
 	}
 
 	if (!(windowPixelFormat=ChoosePixelFormat(window,&pfd)))
 	{
-		msSetError(MS_OGLERR, "Can't Find A Suitable windowPixelFormat.", "OglContext::initWindow()");
+		msSetError(MS_OGLERR, "Can't Find A Suitable windowPixelFormat. Last Error: %d", "OglContext::initWindow()", GetLastError());
 		return FALSE;
 	}
 
 	if(!SetPixelFormat(window,windowPixelFormat,&pfd))
 	{
-		msSetError(MS_OGLERR, "Can't Set The windowPixelFormat.", "OglContext::initWindow()");
+		msSetError(MS_OGLERR, "Can't Set The windowPixelFormat. Last Error: %d", "OglContext::initWindow()", GetLastError());
 		return FALSE;
 	}
 	return TRUE;
@@ -159,38 +199,45 @@ bool OglContext::initSharingContext()
 {
 	if (!(sharingContext=wglCreateContext(window)))
 	{
-		msSetError(MS_OGLERR, "Can't Create A GL Rendering Context.", "OglContext::createContext()");
+		msSetError(MS_OGLERR, "Can't Create A GL Rendering Context. glError: %d", "OglContext::createContext()", glGetError());
 		return FALSE;
 	}
 
 	if(!wglMakeCurrent(window,sharingContext))
 	{
-		msSetError(MS_OGLERR, "Can't Activate The GL Rendering Context.", "OglContext::createContext()");
+		msSetError(MS_OGLERR, "Can't Activate The GL Rendering Context. glError: %d", "OglContext::createContext()", glGetError());
 		return FALSE;
 	}
 
-	wglMakeContextCurrentARB = (PFNWGLMAKECONTEXTCURRENTARBPROC)wglGetProcAddress("wglMakeContextCurrentARB");
-	wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
-	wglGetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)wglGetProcAddress("wglGetPixelFormatAttribivARB");
-	wglGetPixelFormatAttribfvARB = (PFNWGLGETPIXELFORMATATTRIBFVARBPROC)wglGetProcAddress("wglGetPixelFormatAttribfvARB");
-	wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	wglCreatePbufferARB = (PFNWGLCREATEPBUFFERARBPROC)wglGetProcAddress("wglCreatePbufferARB");
-	wglGetPbufferDCARB = (PFNWGLGETPBUFFERDCARBPROC)wglGetProcAddress("wglGetPbufferDCARB");
-	wglReleasePbufferDCARB = (PFNWGLRELEASEPBUFFERDCARBPROC)wglGetProcAddress("wglReleasePbufferDCARB");
-	wglDestroyPbufferARB = (PFNWGLDESTROYPBUFFERARBPROC)wglGetProcAddress("wglDestroyPbufferARB");
-	wglQueryPbufferARB = (PFNWGLQUERYPBUFFERARBPROC)wglGetProcAddress("wglQueryPbufferARB");
-	wglBindTexImageARB = (PFNWGLBINDTEXIMAGEARBPROC)wglGetProcAddress("wglBindTexImageARB");
-	wglReleaseTexImageARB = (PFNWGLRELEASETEXIMAGEARBPROC)wglGetProcAddress("wglReleaseTexImageARB");
-	wglGetPixelFormatAttribivEXT = (PFNWGLGETPIXELFORMATATTRIBIVEXTPROC)wglGetProcAddress("wglGetPixelFormatAttribivARB");
-
-	wglGenBuffersARB = (PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
-	wglBindBufferARB = (PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
-	wglBufferDataARB = (PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
-	wglBufferSubDataARB = (PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
-	wglDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
-	wglGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
-	wglMapBufferARB = (PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
-	wglUnmapBufferARB = (PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
+	if (!(wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB")))
+	{
+		msSetError(MS_OGLERR, "unable to retreive wglChoosePixelFormatARB method.", "OglContext::createContext()");
+		return FALSE;
+	}
+	
+	if (!(wglCreatePbufferARB = (PFNWGLCREATEPBUFFERARBPROC)wglGetProcAddress("wglCreatePbufferARB")))
+	{
+		msSetError(MS_OGLERR, "unable to retreive wglCreatePbufferARB method.", "OglContext::createContext()");
+		return FALSE;
+	}
+	
+	if (!(wglGetPbufferDCARB = (PFNWGLGETPBUFFERDCARBPROC)wglGetProcAddress("wglGetPbufferDCARB")))
+	{
+		msSetError(MS_OGLERR, "unable to retreive wglGetPbufferDCARB method.", "OglContext::createContext()");
+		return FALSE;
+	}
+	
+	if (!(wglReleasePbufferDCARB = (PFNWGLRELEASEPBUFFERDCARBPROC)wglGetProcAddress("wglReleasePbufferDCARB")))
+	{
+		msSetError(MS_OGLERR, "unable to retreive wglReleasePbufferDCARB method.", "OglContext::createContext()");
+		return FALSE;
+	}
+	
+	if (!(wglMakeContextCurrentARB = (PFNWGLMAKECONTEXTCURRENTARBPROC)wglGetProcAddress("wglMakeContextCurrentARB")))
+	{
+		msSetError(MS_OGLERR, "unable to retreive wglMakeContextCurrentARB method.", "OglContext::createContext()");
+		return FALSE;
+	}
 
 	glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &MAX_ANISOTROPY);
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*)&MAX_TEXTURE_SIZE);
@@ -242,28 +289,34 @@ bool OglContext::createPBuffer(ms_uint32 width, ms_uint32 height)
 
 	if (!(hPBuffer = wglCreatePbufferARB(window, pixelFormat, width, height, 0)))
 	{
-		msSetError(MS_OGLERR, "P-buffer Error: Unable to create P-buffer.", "OglContext::createPBuffer()");
+		msSetError(MS_OGLERR, "P-buffer Error: Unable to create P-buffer. glError: %d", "OglContext::createPBuffer()", glGetError());
 		return FALSE;
 	}
 	if (!(hPBufferDC = wglGetPbufferDCARB(hPBuffer)))
 	{
-		msSetError(MS_OGLERR, "P-buffer Error: Unable to get P-buffer DC.", "OglContext::createPBuffer()");
+		msSetError(MS_OGLERR, "P-buffer Error: Unable to get P-buffer DC. glError: %d", "OglContext::createPBuffer()", glGetError());
 		return FALSE;
 	}
 	if (!(hPBufferRC = wglCreateContext(hPBufferDC)))
 	{
-		msSetError(MS_OGLERR, "P-buffer Error: Unable to get P-buffer DC.", "OglContext::createPBuffer()");
+		msSetError(MS_OGLERR, "P-buffer Error: Unable to get P-buffer DC. glError: %d", "OglContext::createPBuffer()", glGetError());
 		return FALSE;
 	}
 
 	if (wglShareLists(sharingContext,hPBufferRC) == FALSE)
 	{
-		msSetError(MS_OGLERR, "P-buffer Error: Unable to share display lists.", "OglContext::createPBuffer()");
+		msSetError(MS_OGLERR, "P-buffer Error: Unable to share display lists. glError: %d", "OglContext::createPBuffer()", glGetError());
 		return FALSE;
 	}
 
 	return TRUE;
 }
+
+PFNWGLCHOOSEPIXELFORMATARBPROC OglContext::wglChoosePixelFormatARB = NULL;
+PFNWGLCREATEPBUFFERARBPROC OglContext::wglCreatePbufferARB = NULL;
+PFNWGLGETPBUFFERDCARBPROC OglContext::wglGetPbufferDCARB = NULL;
+PFNWGLRELEASEPBUFFERDCARBPROC OglContext::wglReleasePbufferDCARB = NULL;
+PFNWGLMAKECONTEXTCURRENTARBPROC OglContext::wglMakeContextCurrentARB = NULL;
 
 #else /* UNIX */
 
@@ -282,7 +335,11 @@ bool OglContext::makeCurrent()
 	if (current != this)
 	{
 		current = this;
-		glXMakeCurrent(window, pbuffer, sharingContext);
+		if (!glXMakeCurrent(window, pbuffer, sharingContext))
+		{
+			msSetError(MS_OGLERR, "glXMakeCurrent failed. glError: %d", "OglContext::makeCurrent()", glGetError());
+			return false;
+		}
 	}
 	return true;
 }
@@ -313,14 +370,14 @@ bool OglContext::initSharingContext()
 
 	if (configs == NULL || num_configs == 0)
 	{
-		msSetError(MS_OGLERR, "glXChooseFBConfig could not find any configs.", "OglContext::init()");
+		msSetError(MS_OGLERR, "glXChooseFBConfig could not find any configs. Likely your video card or drivers are not supported. glError: %d", "OglContext::init()", glGetError());
 		return false;
 	}
 
 	sharingContext = glXCreateNewContext(window, *configs, GLX_RGBA_TYPE, NULL, 1);
 	if (sharingContext == NULL)
 	{
-		msSetError(MS_OGLERR, "glXCreateNewContext failed.", "OglContext::initSharingContext()");
+		msSetError(MS_OGLERR, "glXCreateNewContext failed. glError: %d", "OglContext::initSharingContext()", glGetError());
 		return false;
 	}
 
@@ -350,7 +407,7 @@ bool OglContext::createPBuffer(ms_uint32 width, ms_uint32 height)
 	pbuffer = glXCreatePbuffer(window, *configs, iPbufferAttributes);
 	if (pbuffer == 0)
 	{
-		msSetError(MS_OGLERR, "glXCreatePbuffer failed.", "OglContext::init()");
+		msSetError(MS_OGLERR, "glXCreatePbuffer failed. glError: %d", "OglContext::init()", glGetError());
 		return false;
 	}
 
@@ -386,14 +443,14 @@ bool OglContext::initWindow()
 
 	if (tempConfigs == NULL || num_configs == 0)
 	{
-		msSetError(MS_OGLERR, "glXChooseFBConfig could not find any configs.", "OglContext::initWindow()");
+		msSetError(MS_OGLERR, "glXChooseFBConfig could not find any configs. Likely your video card or drivers are not supported. glError: %d", "OglContext::initWindow()", glGetError());
 		return false;
 	}
 
 	GLXContext tempContext = glXCreateNewContext(window, *tempConfigs, GLX_RGBA_TYPE, NULL, 1);
 	if (tempContext == NULL)
 	{
-		msSetError(MS_OGLERR, "glXCreateNewContext failed.", "OglContext::initWindow()");
+		msSetError(MS_OGLERR, "glXCreateNewContext failed. glError: %d", "OglContext::initWindow()", glGetError());
 		return false;
 	}
 
@@ -402,11 +459,15 @@ bool OglContext::initWindow()
 	GLXPbuffer tempBuffer = glXCreatePbuffer(window, *tempConfigs, iPbufferAttributes);
 	if (tempBuffer == 0)
 	{
-		msSetError(MS_OGLERR, "glXCreatePbuffer failed.", "OglContext::initWindow()");
+		msSetError(MS_OGLERR, "glXCreatePbuffer failed. glError: %d", "OglContext::initWindow()", glGetError());
 		return false;
 	}
 
-	glXMakeCurrent(window, tempBuffer, tempContext);
+	if (!glXMakeCurrent(window, tempBuffer, tempContext))
+	{
+		msSetError(MS_OGLERR, "glXMakeCurrent failed. glError: %d", "OglContext::initWindow()", glGetError());
+		return false;
+	}
 
 	glGetIntegerv(GL_MAX_SAMPLES_EXT, (GLint*)&MAX_MULTISAMPLE_SAMPLES);
 	glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &MAX_ANISOTROPY);
@@ -418,263 +479,5 @@ bool OglContext::initWindow()
 }
 
 #endif /* UNIX */
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-
-PFNWGLGETEXTENSIONSSTRINGARBPROC OglContext::wglGetExtensionsStringARB = NULL;
-PFNWGLGETPIXELFORMATATTRIBIVARBPROC OglContext::wglGetPixelFormatAttribivARB = NULL;
-PFNWGLGETPIXELFORMATATTRIBFVARBPROC OglContext::wglGetPixelFormatAttribfvARB = NULL;
-PFNWGLCHOOSEPIXELFORMATARBPROC OglContext::wglChoosePixelFormatARB = NULL;
-PFNWGLCREATEPBUFFERARBPROC OglContext::wglCreatePbufferARB = NULL;
-PFNWGLGETPBUFFERDCARBPROC OglContext::wglGetPbufferDCARB = NULL;
-PFNWGLRELEASEPBUFFERDCARBPROC OglContext::wglReleasePbufferDCARB = NULL;
-PFNWGLDESTROYPBUFFERARBPROC OglContext::wglDestroyPbufferARB = NULL;
-PFNWGLQUERYPBUFFERARBPROC OglContext::wglQueryPbufferARB = NULL;
-PFNWGLBINDTEXIMAGEARBPROC OglContext::wglBindTexImageARB = NULL;
-PFNWGLRELEASETEXIMAGEARBPROC OglContext::wglReleaseTexImageARB = NULL;
-PFNWGLMAKECONTEXTCURRENTARBPROC OglContext::wglMakeContextCurrentARB = NULL;
-PFNWGLGETPIXELFORMATATTRIBIVEXTPROC OglContext::wglGetPixelFormatAttribivEXT = NULL;
-
-PFNGLGENBUFFERSARBPROC OglContext::wglGenBuffersARB = 0; // VBO Name Generation Procedure
-PFNGLBINDBUFFERARBPROC OglContext::wglBindBufferARB = 0; // VBO Bind Procedure
-PFNGLBUFFERDATAARBPROC OglContext::wglBufferDataARB = 0; // VBO Data Loading Procedure
-PFNGLBUFFERSUBDATAARBPROC OglContext::wglBufferSubDataARB = 0; // VBO Sub Data Loading Procedure
-PFNGLDELETEBUFFERSARBPROC OglContext::wglDeleteBuffersARB = 0; // VBO Deletion Procedure
-PFNGLGETBUFFERPARAMETERIVARBPROC OglContext::wglGetBufferParameterivARB = 0; // return various parameters of VBO
-PFNGLMAPBUFFERARBPROC OglContext::wglMapBufferARB = 0; // map VBO procedure
-PFNGLUNMAPBUFFERARBPROC OglContext::wglUnmapBufferARB = 0; // unmap VBO procedure
-
-#endif
-
-/*
-HDC OglContext::hWINDOWDC = NULL;
-HGLRC OglContext::hWINDOWRC = NULL;
-int OglContext::windowPixelFormat = 0;
-
-HPBUFFERARB OglContext::hPBuffer = NULL;
-HDC OglContext::hPBufferDC = NULL;
-HGLRC OglContext::hPBufferRC = NULL;
-
-// P-Buffer for texture rendering.
-HPBUFFERARB OglContext::hTexPBuffer = NULL;
-HDC OglContext::hTexPBufferDC = NULL;
-HGLRC OglContext::hTexPBufferRC = NULL;
-
-bool OglContext::init()
-{
-	WNDCLASS wc;
-	DWORD dwExStyle;
-	DWORD dwStyle;
-	RECT WindowRect;
-	HMODULE hInstance = NULL;
-	HWND hWnd = NULL;
-	WindowRect.left=(long)0;
-	WindowRect.right=(long)0;
-	WindowRect.top=(long)0;
-	WindowRect.bottom=(long)0;
-	hInstance = GetModuleHandle(NULL);
-	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.lpfnWndProc = (WNDPROC) WndProc;
-	wc.hInstance = hInstance;
-	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = NULL;
-	wc.lpszMenuName = NULL;
-	wc.lpszClassName = L"OpenGL";
-
-	if (!RegisterClass(&wc))
-	{
-		printError("Failed To Register The Window Class.");
-		return FALSE;
-	}
-	dwExStyle=WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-	dwStyle=WS_OVERLAPPEDWINDOW;
-
-	AdjustWindowRectEx(&WindowRect, dwStyle, FALSE, dwExStyle);
-
-	if (!(hWnd=CreateWindowEx( dwExStyle,
-							L"OpenGL",
-							L"temp",
-							dwStyle |
-							WS_CLIPSIBLINGS |
-							WS_CLIPCHILDREN,
-							0, 0,
-							WindowRect.right-WindowRect.left,
-							WindowRect.bottom-WindowRect.top,
-							NULL,
-							NULL,
-							hInstance,
-							NULL)))
-	{
-		printError("Window Creation Error.");
-		return FALSE;
-	}
-
-	static PIXELFORMATDESCRIPTOR pfd=
-	{
-		sizeof(PIXELFORMATDESCRIPTOR),
-		1,
-		PFD_DRAW_TO_WINDOW |
-		PFD_SUPPORT_OPENGL |
-		PFD_DOUBLEBUFFER,
-		PFD_TYPE_RGBA,
-		24, // Select Our Color Depth
-		0, 0, 0, 0, 0, 0, // Color Bits Ignored
-		8, // Alpha Buffer
-		0, // Shift Bit Ignored
-		0, // No Accumulation Buffer
-		0, 0, 0, 0, // Accumulation Bits Ignored
-		16, // 16Bit Z-Buffer (Depth Buffer)
-		0, // No Stencil Buffer
-		0, // No Auxiliary Buffer
-		PFD_MAIN_PLANE, // Main Drawing Layer
-		0, // Reserved
-		0, 0, 0 // Layer Masks Ignored
-	};
-
-	if (!(hWINDOWDC=GetDC(hWnd)))
-	{
-		printError("Can't Create A GL Device Context.");
-		return FALSE;
-	}
-
-	if (!(windowPixelFormat=ChoosePixelFormat(hWINDOWDC,&pfd)))
-	{
-		printError("Can't Find A Suitable windowPixelFormat.");
-		return FALSE;
-	}
-
-	if(!SetPixelFormat(hWINDOWDC,windowPixelFormat,&pfd))
-	{
-		printError("Can't Set The windowPixelFormat.");
-		return FALSE;
-	}
-
-	if (!(hWINDOWRC=wglCreateContext(hWINDOWDC)))
-	{
-		printError("Can't Create A GL Rendering Context.");
-		return FALSE;
-	}
-
-	if(!wglMakeCurrent(hWINDOWDC,hWINDOWRC))
-	{
-		printError("Can't Activate The GL Rendering Context.");
-		return FALSE;
-	}
-	wglMakeContextCurrentARB = (PFNWGLMAKECONTEXTCURRENTARBPROC)wglGetProcAddress("wglMakeContextCurrentARB");
-	wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
-	wglGetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)wglGetProcAddress("wglGetPixelFormatAttribivARB");
-	wglGetPixelFormatAttribfvARB = (PFNWGLGETPIXELFORMATATTRIBFVARBPROC)wglGetProcAddress("wglGetPixelFormatAttribfvARB");
-	wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	wglCreatePbufferARB = (PFNWGLCREATEPBUFFERARBPROC)wglGetProcAddress("wglCreatePbufferARB");
-	wglGetPbufferDCARB = (PFNWGLGETPBUFFERDCARBPROC)wglGetProcAddress("wglGetPbufferDCARB");
-	wglReleasePbufferDCARB = (PFNWGLRELEASEPBUFFERDCARBPROC)wglGetProcAddress("wglReleasePbufferDCARB");
-	wglDestroyPbufferARB = (PFNWGLDESTROYPBUFFERARBPROC)wglGetProcAddress("wglDestroyPbufferARB");
-	wglQueryPbufferARB = (PFNWGLQUERYPBUFFERARBPROC)wglGetProcAddress("wglQueryPbufferARB");
-	wglBindTexImageARB = (PFNWGLBINDTEXIMAGEARBPROC)wglGetProcAddress("wglBindTexImageARB");
-	wglReleaseTexImageARB = (PFNWGLRELEASETEXIMAGEARBPROC)wglGetProcAddress("wglReleaseTexImageARB");
-	wglGetPixelFormatAttribivEXT = (PFNWGLGETPIXELFORMATATTRIBIVEXTPROC)wglGetProcAddress("wglGetPixelFormatAttribivARB");
-
-	wglGenBuffersARB = (PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
-	wglBindBufferARB = (PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
-	wglBufferDataARB = (PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
-	wglBufferSubDataARB = (PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
-	wglDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
-	wglGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
-	wglMapBufferARB = (PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
-	wglUnmapBufferARB = (PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
-
-	loadShapes();
-
-	hPBufferRC = NULL;
-	hPBufferDC = NULL;
-	hPBuffer = NULL;
-	int pixelFormat;
-	int valid;
-	UINT numFormats;
-	float fAttributes[] =
-	{	0,0};
-	int iAttributes[] =
-	{
-		WGL_DRAW_TO_PBUFFER_ARB,GL_TRUE,
-		WGL_SUPPORT_OPENGL_ARB,GL_TRUE,
-		WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
-		WGL_COLOR_BITS_ARB,24,
-		WGL_ALPHA_BITS_ARB,8,
-		WGL_DEPTH_BITS_ARB,16,
-		WGL_STENCIL_BITS_ARB,0,
-		WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
-		WGL_SAMPLES_ARB,MUTLISAMPLE_SAMPLES,
-		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-		0,0
-	};
-
-	valid = wglChoosePixelFormatARB(hWINDOWDC,iAttributes,fAttributes,1,&pixelFormat,&numFormats);
-	if(numFormats == 0)
-	{
-		printError("P-buffer Error: Unable to find an acceptable pixel format");
-		return FALSE;
-	}
-
-	if (!(hPBuffer = wglCreatePbufferARB(hWINDOWDC, pixelFormat, MAX_WIDTH, MAX_HEIGHT, 0)))
-	{
-		printError("P-buffer Error: Unable to create P-buffer");
-		return FALSE;
-	}
-	if (!(hPBufferDC = wglGetPbufferDCARB(hPBuffer)))
-	{
-		printError("P-buffer Error: Unable to get P-buffer DC");
-		return FALSE;
-	}
-	if (!(hPBufferRC = wglCreateContext(hPBufferDC)))
-	{
-		printError("P-buffer Error: Unable to get P-buffer DC");
-		return FALSE;
-	}
-
-	if (wglShareLists(hWINDOWRC,hPBufferRC) == FALSE)
-	{
-		printError("P-buffer Error: Unable to share display lists");
-		return FALSE;
-	}
-
-	initialised = true;
-}
-
-PFNWGLGETEXTENSIONSSTRINGARBPROC OglContext::wglGetExtensionsStringARB = NULL;
-PFNWGLGETPIXELFORMATATTRIBIVARBPROC OglContext::wglGetPixelFormatAttribivARB = NULL;
-PFNWGLGETPIXELFORMATATTRIBFVARBPROC OglContext::wglGetPixelFormatAttribfvARB = NULL;
-PFNWGLCHOOSEPIXELFORMATARBPROC OglContext::wglChoosePixelFormatARB = NULL;
-PFNWGLCREATEPBUFFERARBPROC OglContext::wglCreatePbufferARB = NULL;
-PFNWGLGETPBUFFERDCARBPROC OglContext::wglGetPbufferDCARB = NULL;
-PFNWGLRELEASEPBUFFERDCARBPROC OglContext::wglReleasePbufferDCARB = NULL;
-PFNWGLDESTROYPBUFFERARBPROC OglContext::wglDestroyPbufferARB = NULL;
-PFNWGLQUERYPBUFFERARBPROC OglContext::wglQueryPbufferARB = NULL;
-PFNWGLBINDTEXIMAGEARBPROC OglContext::wglBindTexImageARB = NULL;
-PFNWGLRELEASETEXIMAGEARBPROC OglContext::wglReleaseTexImageARB = NULL;
-PFNWGLMAKECONTEXTCURRENTARBPROC OglContext::wglMakeContextCurrentARB = NULL;
-PFNWGLGETPIXELFORMATATTRIBIVEXTPROC OglContext::wglGetPixelFormatAttribivEXT = NULL;
-
-PFNGLGENBUFFERSARBPROC OglContext::wglGenBuffersARB = 0; // VBO Name Generation Procedure
-PFNGLBINDBUFFERARBPROC OglContext::wglBindBufferARB = 0; // VBO Bind Procedure
-PFNGLBUFFERDATAARBPROC OglRenderer::wglBufferDataARB = 0; // VBO Data Loading Procedure
-PFNGLBUFFERSUBDATAARBPROC OglContext::wglBufferSubDataARB = 0; // VBO Sub Data Loading Procedure
-PFNGLDELETEBUFFERSARBPROC OglContext::wglDeleteBuffersARB = 0; // VBO Deletion Procedure
-PFNGLGETBUFFERPARAMETERIVARBPROC OglContext::wglGetBufferParameterivARB = 0; // return various parameters of VBO
-PFNGLMAPBUFFERARBPROC OglContext::wglMapBufferARB = 0; // map VBO procedure
-PFNGLUNMAPBUFFERARBPROC OglContext::wglUnmapBufferARB = 0; // unmap VBO procedure
-
-LRESULT CALLBACK WndProc(HWND hWnd,
-		UINT message,
-		WPARAM wParam,
-		LPARAM lParam)
-{
-	return(1L);
-}
-
-#endif
-*/
 
 #endif /* USE_OGL */

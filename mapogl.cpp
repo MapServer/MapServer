@@ -16,6 +16,7 @@
 
 imageObj* createImageObjOgl(OglRenderer* renderer)
 {	
+	if (!renderer->isValid()) return NULL;
 	imageObj* pNewImage = (imageObj*)calloc(1, sizeof(imageObj));
 	if (!pNewImage)
 		return pNewImage;	
@@ -104,8 +105,14 @@ int msRenderTileOgl(imageObj *img, imageObj *tile, double x, double y)
 
 int msGetTruetypeTextBBoxOgl(rendererVTableObj *renderer, char *font, double size, char *string, rectObj *rect, double **advances)
 {	
-	OglRenderer::getStringBBox(font, size, string, rect, advances);
-	return MS_SUCCESS;
+	if (OglRenderer::getStringBBox(font, size, string, rect, advances))
+	{
+		return MS_SUCCESS;
+	}
+	else
+	{
+		return MS_FAILURE;
+	}
 }
 
 int msRenderGlyphsOgl(imageObj *img, double x, double y,

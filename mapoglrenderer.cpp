@@ -28,8 +28,11 @@ GLvoid CALLBACK combineDataCallback(GLdouble coords[3], GLdouble* vertex_data[4]
 GLvoid CALLBACK vertexCallback(GLdouble *vertex);
 
 OglRenderer::OglRenderer(ms_uint32 width, ms_uint32 height, colorObj* color)
+	: width(width), height(height), texture(NULL), transparency(1.0), valid(false)
 {	
-	this->texture = NULL;
+	context = new OglContext(width, height);
+	if (!context->isValid()) return;
+	if (!context->makeCurrent()) return;
 
 	int viewPort[4];
 	glGetIntegerv(GL_VIEWPORT ,viewPort);
@@ -39,12 +42,6 @@ OglRenderer::OglRenderer(ms_uint32 width, ms_uint32 height, colorObj* color)
 	viewportHeight = viewPort[3];
 
 	glPushMatrix();
-
-	this->width = width;
-	this->height = height;
-	context = new OglContext(getTextureSize(GL_TEXTURE_WIDTH, width), getTextureSize(GL_TEXTURE_HEIGHT, height));
-	context->makeCurrent();
-	transparency = 1.0;
 
 	// set read/write context to pbuffer
 	glEnable(GL_MULTISAMPLE_ARB);
@@ -66,6 +63,7 @@ OglRenderer::OglRenderer(ms_uint32 width, ms_uint32 height, colorObj* color)
 	{
 		msSetError(MS_OGLERR, "P-buffer Error: Unable to create tessalotor",
 				"OglRenderer");
+		return;
 	}
 
 	gluTessCallback(tess, GLU_TESS_VERTEX, (void (CALLBACK*)(void)) vertexCallback);
@@ -93,6 +91,7 @@ OglRenderer::OglRenderer(ms_uint32 width, ms_uint32 height, colorObj* color)
 	glOrtho(0.0, width, 0.0, height, -3.0, 3.0);
 
 	createShapes();
+	valid = true;
 }
 
 OglRenderer::~OglRenderer()
@@ -135,25 +134,14 @@ GLuint OglRenderer::createTexture(ms_uint32 offsetX, ms_uint32 offsetY)
 	return texture;
 }
 
-ms_uint32 OglRenderer::getTextureSize(GLuint dimension, ms_uint32 value)
-{
-	glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA,  value, value, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    GLint check;
-    glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, dimension, &check);
-    if (check == 0)
-    {
-    	return MS_MAX(MS_MIN(NextPowerOf2(value), OglContext::MAX_TEXTURE_SIZE), OglContext::MIN_TEXTURE_SIZE);
-    }
-    else
-    {
-    	return value;
-    }
-}
-
-void OglRenderer::getStringBBox(char *font, double size, char *string, rectObj *rect, double** advances)
+bool OglRenderer::getStringBBox(char *font, double size, char *string, rectObj *rect, double** advances)
 {	
 	FTFont* face = getFTFont(font, size);
-	if (!face) return;
+	if (!face) 
+	{
+		msSetError(MS_OGLERR, "Failed to load font (%s).", "OglRenderer::getStringBBox()", font);
+		return false;
+	}
 	
 	float llx =0.0f, lly=0.0f, llz=0.0f, urx=0.0f, ury=0.0f, urz=0.0f;
 	glPushAttrib( GL_ALL_ATTRIB_BITS );
@@ -174,6 +162,8 @@ void OglRenderer::getStringBBox(char *font, double size, char *string, rectObj *
 			(*advances)[i] = face->Advance(&string[i], 1);
 		}
 	}
+
+	return true;
 }
 
 void OglRenderer::initializeRasterBuffer(rasterBufferObj * rb, int width, int height, bool useAlpha) 
@@ -563,7 +553,11 @@ void OglRenderer::renderGlyphs(double x, double y, colorObj *color,
 {
 	makeCurrent();	
 	FTFont* face = getFTFont(font, size);
-	if (!face) return;
+	if (!face) 
+	{
+		msSetError(MS_OGLERR, "Failed to load font (%s).", "OglRenderer::renderGlyphs()", font);
+		return;
+	}
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glPushMatrix();
@@ -715,23 +709,13 @@ FTFont* OglRenderer::getFTFont(char* font, double size)
 	if (*face == NULL && ifstream(font))
 	{
 		*face = new FTGLTextureFont( font );
-		(*face)->UseDisplayList(true);
-		(*face)->FaceSize(size*SIZE_RES);		
+		if (*face)
+		{
+			(*face)->UseDisplayList(true);
+			(*face)->FaceSize(size*SIZE_RES);		
+		}
 	}	
 	return *face;
-}
-
-GLuint OglRenderer::NextPowerOf2(GLuint in)
-{
-	in -= 1;
-
-	in |= in >> 16;
-	in |= in >> 8;
-	in |= in >> 4;
-	in |= in >> 2;
-	in |= in >> 1;
-
-	return in + 1;
 }
 
 GLvoid CALLBACK beginCallback(GLenum which)

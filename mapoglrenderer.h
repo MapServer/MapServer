@@ -10,7 +10,8 @@
 #include <map>
 #include <memory>
 
-#include <FTGL/ftgl.h>#include <FTGL/FTGLTextureFont.h>
+#include <FTGL/ftgl.h>
+#include <FTGL/FTGLTextureFont.h>
 
 class OglCache
 {
@@ -41,7 +42,7 @@ public:
     void renderTile(const OglCachePtr& tile, double x, double y, double angle);
     void renderPolylineTile(shapeObj *p, const OglCachePtr& tile);
 
-    static void getStringBBox(char *font, double size, char *string, rectObj *rect, double** advances);    
+    static bool getStringBBox(char *font, double size, char *string, rectObj *rect, double** advances);    
 	void setTransparency(double transparency);    
 	
 	void readRasterBuffer(rasterBufferObj * rb);
@@ -49,14 +50,16 @@ public:
 	static void initializeRasterBuffer(rasterBufferObj * rb, int width, int height, bool useAlpha);	
 
 	OglCachePtr getTexture();
-    int getWidth() { return width; }
-    int getHeight() { return height; }
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
+	bool isValid() const { return valid && context->isValid(); }
 protected:
     OglCachePtr texture;
 	
 	ms_uint32 width;
     ms_uint32 height;
 	double transparency;
+	bool valid;
 
 	GLint viewportX;
 	GLint viewportY;
@@ -74,9 +77,6 @@ protected:
     void drawFan(pointObj* center, pointObj* from, pointObj* to, int resolution);
     void createShapes();
 	
-	// texture functions	
-	ms_uint32 getTextureSize(GLuint dimension, ms_uint32 value);
-	GLuint NextPowerOf2(GLuint in);
 	GLuint createTexture(ms_uint32 x, ms_uint32 y);
 
 	void makeCurrent();
