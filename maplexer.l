@@ -93,6 +93,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(MS_TOKENIZE_FILE):
          BEGIN(INITIAL);
+         msyystring_begin_state = INITIAL;
          msyysource=MS_FILE_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
          msyystring=NULL;
@@ -143,6 +144,7 @@ char path[MS_MAXPATHLEN];
          break;
        case(99):
          BEGIN(INITIAL); /* may not need this one */
+         msyystring_begin_state = INITIAL;
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyystate=MS_TOKENIZE_DEFAULT;
          msyystring=NULL;

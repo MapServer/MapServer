@@ -15,7 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
--  KML: Add ows/kml_exclude_items (#3560)
+- Fixed FCGI on Windows problem related to lexer (#3812)
+
+- KML: Add ows/kml_exclude_items (#3560)
 
 - Removed all refs left to MS_SYMBOL_CARTOLINE (#3798)
 
