@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Fixed handling of STYLEITEM AUTO label position codes 10,11,12 (#3806)
+
 - Fixed msGEOSGeometry2Shape to handle 'GEOMETRYCOLLECTION EMPTY' 
   as null geometry instead of raising an error (#3811)
 

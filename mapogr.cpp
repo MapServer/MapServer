@@ -2929,9 +2929,9 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                 case 7: c->label.position = MS_LR; break;
                 case 8: c->label.position = MS_LC; break;
                 case 9: c->label.position = MS_LL; break;
-                case 10: c->label.position = MS_LR; break; /*approximate*/
-                case 11: c->label.position = MS_LC; break;
-                case 12: c->label.position = MS_LL; break;
+                case 10: c->label.position = MS_UR; break; /*approximate*/
+                case 11: c->label.position = MS_UC; break;
+                case 12: c->label.position = MS_UL; break;
                 default: break;
               }
           }
