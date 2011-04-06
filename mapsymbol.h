@@ -177,11 +177,6 @@ typedef struct {
 #endif /* SWIG */
   int filled;
   
-  
-  /*deprecated, moved to styleObj*/
-  int patternlength;                      /* Number of intervals (eg. dashes) in the pattern (was style, see bug 2119) */
-  int pattern[MS_MAXPATTERNLENGTH];
-
   /*
   ** MS_SYMBOL_PIXMAP options
   */
@@ -210,14 +205,6 @@ typedef struct {
   char *character;
   int antialias;
   char *font;
-  int gap; /*deprecated, moved to styleObj*/
-  int position; /*deprecated, moved to styleObj*/
-
-  /*
-  ** MS_SYMBOL_CARTOLINE options
-  */
-  int linecap, linejoin; /*deprecated, moved to styleObj*/
-  double linejoinmaxsize;/*deprecated, moved to styleObj*/
 
   char* svg_text;
 

@@ -69,8 +69,7 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle,
 
 int msSLDGetLineSymbol(mapObj *map);
 int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray);
-int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
-                       char *pszDashValue);
+int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled);
 int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName, char *extGraphicName, int nGap);
 
 int msSLDSetColorObject(char *psHexColor, colorObj *psColor);

@@ -5243,7 +5243,6 @@ int msSaveMap(mapObj *map, char *filename)
 
 static int loadMapInternal(mapObj *map)
 {
-  int i,j,k;
   int foundMapToken=MS_FALSE; 
   int token; 
 
@@ -5302,40 +5301,6 @@ static int loadMapInternal(mapObj *map)
       if(loadSymbolSet(&(map->symbolset), map) == -1) return MS_FAILURE;
 
       if (msResolveSymbolNames(map) == MS_FAILURE) return MS_FAILURE;
-      
-      /*backwards compatibility symbol to style merging*/
-      for(i=0; i<map->numlayers; i++) {
-        layerObj *layer = GET_LAYER(map, i);
-        for(j=0; j<layer->numclasses; j++) {
-          classObj *class = layer->class[j];
-          for(k=0; k<class->numstyles; k++) {
-            styleObj *style = class->styles[k];
-            if(style->symbol != 0) {
-              symbolObj *symbol = map->symbolset.symbol[style->symbol];
-              if (symbol)
-              {
-                  if(style->gap == 0)
-                    style->gap = symbol->gap;
-                  if(style->patternlength == 0) {
-                      int idx;
-                      style->patternlength = symbol->patternlength;
-                      for(idx=0;idx<style->patternlength;idx++)
-                        style->pattern[idx] = (double)(symbol->pattern[idx]);
-                  }
-                  if(style->position == MS_CC)
-                    style->position = symbol->position;
-                  if(style->linecap == MS_CJC_ROUND)
-                    style->linecap = symbol->linecap;
-                  if(style->linejoin == MS_CJC_NONE)
-                    style->linejoin = symbol->linejoin;
-                  if(style->linejoinmaxsize == 3)
-                    style->linejoinmaxsize = symbol->linejoinmaxsize;
-              }
-            }
-          }
-        }
-      }
-      
       
 
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)

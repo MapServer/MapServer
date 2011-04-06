@@ -104,7 +104,6 @@ void initSymbol(symbolObj *s)
   s->type = MS_SYMBOL_VECTOR;
   s->transparent = MS_FALSE;
   s->transparentcolor = 0;
-  s->patternlength = 0; /* solid line */
   s->sizex = 1;
   s->sizey = 1;
   s->filled = MS_FALSE;
@@ -114,19 +113,13 @@ void initSymbol(symbolObj *s)
   s->pixmap_buffer=NULL;
   s->imagepath = NULL;
   s->name = NULL;
-  s->gap = 0;
   s->inmapfile = MS_FALSE;
   s->antialias = MS_FALSE;
   s->font = NULL;
   s->full_font_path = NULL;
   s->full_pixmap_path = NULL;
   s->character = NULL;
-  s->position = MS_CC;
 
-  s->linecap = MS_CJC_BUTT;
-  s->linejoin = MS_CJC_NONE;
-  s->linejoinmaxsize = 3;
-  
   s->svg_text = NULL;
 }
 
@@ -199,15 +192,6 @@ int loadSymbol(symbolObj *s, char *symbolpath)
     case(FONT):
       if(getString(&s->font) == MS_FAILURE) return(-1);
       break;  
-    case(GAP):
-      if((getInteger(&s->gap)) == -1) return(-1);
-      break;
-    case(POSITION):
-      /* if((s->position = getSymbol(3, MS_UC,MS_CC,MS_LC)) == -1)  */
-      /* return(-1); */
-      if((s->position = getSymbol(9, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) 
-	return(-1);
-      break;
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
 	msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
@@ -240,48 +224,8 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	    break;
       }
       break;
-    case(LINECAP):
-      if((s->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1)
-        return(-1);
-      break;
-    case(LINEJOIN):
-      if((s->linejoin = getSymbol(4,MS_CJC_NONE, MS_CJC_ROUND, MS_CJC_MITER, MS_CJC_BEVEL)) == -1)
-        return(-1);
-      break;
-    case(LINEJOINMAXSIZE):
-      if((getDouble(&s->linejoinmaxsize)) == -1) return(-1);
-      break;
     case(NAME):
       if(getString(&s->name) == MS_FAILURE) return(-1);
-      break;
-    case(STYLE): /* depricated */
-      /* TODO: output warning */
-    case(PATTERN):
-      done = MS_FALSE;
-      for(;;) { /* read till the next END */
-	switch(msyylex()) {  
-	case(END):
-	  if(s->patternlength < 2) {
-	    msSetError(MS_SYMERR, "Not enough pattern elements. A minimum of 2 are required", "loadSymbol()");
-	    return(-1);
-	  }	  
-	  done = MS_TRUE;
-	  break;
-	case(MS_NUMBER): /* read the pattern values */
-	  if(s->patternlength == MS_MAXPATTERNLENGTH) {
-	    msSetError(MS_SYMERR, "Pattern too long.", "loadSymbol()");
-	    return(-1);
-	  }
-	  s->pattern[s->patternlength] = atoi(msyystring_buffer);
-	  s->patternlength++;
-	  break;
-	default:
-	  msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
-	  return(-1);
-	}
-	if(done == MS_TRUE)
-	  break;
-      }      
       break;
     case(POINTS):
       done = MS_FALSE;
@@ -348,23 +292,13 @@ void writeSymbol(symbolObj *s, FILE *stream)
   case(MS_SYMBOL_PIXMAP):
     fprintf(stream, "    TYPE PIXMAP\n");
     if(s->imagepath != NULL) fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
-    if (s->gap != 0)
-      fprintf(stream, "    GAP %d\n", s->gap);
     fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
     break;
   case(MS_SYMBOL_TRUETYPE):
     fprintf(stream, "    TYPE TRUETYPE\n");
     if(s->antialias == MS_TRUE) fprintf(stream, "    ANTIALIAS TRUE\n");
     if (s->character != NULL) fprintf(stream, "    CHARACTER \"%s\"\n", s->character);
-    fprintf(stream, "    GAP %d\n", s->gap);
     if (s->font != NULL) fprintf(stream, "    FONT \"%s\"\n", s->font);
-    fprintf(stream, "    POSITION %s\n", msPositionsText[s->position - MS_UL]);
-    break;
-  case(MS_SYMBOL_CARTOLINE):
-    fprintf(stream, "    TYPE CARTOLINE\n");
-    fprintf(stream, "    LINECAP %s\n", msCapsJoinsCorners[s->linecap]);
-    fprintf(stream, "    LINEJOIN %s\n", msCapsJoinsCorners[s->linejoin]);
-    fprintf(stream, "    LINEJOINMAXSIZE %g\n", s->linejoinmaxsize);
     break;
   default:
     if(s->type == MS_SYMBOL_ELLIPSE)
@@ -383,15 +317,6 @@ void writeSymbol(symbolObj *s, FILE *stream)
 	fprintf(stream, "      %g %g\n", s->points[i].x, s->points[i].y);
       }
       fprintf(stream, "    END\n");
-    }
-
-    /* PATTERN */
-    if(s->patternlength != 0) {
-      fprintf(stream, "    PATTERN\n     ");
-      for(i=0; i<s->patternlength; i++) {
-	fprintf(stream, " %d", s->pattern[i]);
-      }
-      fprintf(stream, "\n    END\n");
     }
     break;
   }
@@ -894,11 +819,6 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   
   MS_COPYSTELEM(numpoints);
   MS_COPYSTELEM(filled);
-  MS_COPYSTELEM(patternlength);
-
-  for (i=0; i < src->patternlength; i++) {
-    dst->pattern[i] = src->pattern[i];
-  }
 
   MS_COPYSTRING(dst->imagepath, src->imagepath);
   MS_COPYSTELEM(transparent);
@@ -906,11 +826,6 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   MS_COPYSTRING(dst->character, src->character);
   MS_COPYSTELEM(antialias);
   MS_COPYSTRING(dst->font, src->font);
-  MS_COPYSTELEM(gap);
-  MS_COPYSTELEM(position);
-  MS_COPYSTELEM(linecap);
-  MS_COPYSTELEM(linejoin);
-  MS_COPYSTELEM(linejoinmaxsize);
   MS_COPYSTRING(dst->full_pixmap_path,src->full_pixmap_path);
 
   return(MS_SUCCESS);

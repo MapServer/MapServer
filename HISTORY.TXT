@@ -15,18 +15,21 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Removed GAP, PATTERN, LINECAP/JOIN and POSITION from symbolObj (#3797)
+
 - Fixed handling of STYLEITEM AUTO label position codes 10,11,12 (#3806)
 
 - Fixed msGEOSGeometry2Shape to handle 'GEOMETRYCOLLECTION EMPTY' 
   as null geometry instead of raising an error (#3811)
 
-- Re-added the MYSQL JOIN support. Had been removed with the MYGIS deprecated driver.
+- Re-added the MYSQL JOIN support. Had been removed with the MYGIS 
+  deprecated driver.
 
 - Add opacity to legend (#3740)
 
 - Updated PHP/MapScript with the new objects properties (#3735)
 
-- KML: set layeer's projection when it is not defined (#3809)
+- KML: set layer's projection when it is not defined (#3809)
 
 - Updated xml mapfile schema and xsl with the new lexer properties (#3735)
 

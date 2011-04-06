@@ -1772,8 +1772,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                     
                 
                 /* Get the corresponding symbol id  */
-                psStyle->symbol = msSLDGetMarkSymbol(map, pszSymbolName, 
-                                                     bFilled, pszDashValue);
+                psStyle->symbol = msSLDGetMarkSymbol(map, pszSymbolName, bFilled);
                 if (psStyle->symbol > 0 &&
                     psStyle->symbol < map->symbolset.numsymbols)
                   psStyle->symbolname = 
@@ -1799,12 +1798,9 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 /*      square, circle, triangle, star, cross, x.                       */
 /*      If the symbol does not exsist add it to the symbol list.        */
 /************************************************************************/
-int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
-                       char *pszDashValue)
+int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled)
 {
     int nSymbolId = 0;
-    char **aszValues = NULL;
-    int nDash, i;
     symbolObj *psSymbol = NULL;
 
     if (!map || !pszSymbolName)
@@ -1900,20 +1896,6 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         psSymbol->sizex = 1;
         psSymbol->sizey = 1; 
         
-        if (pszDashValue)
-        {
-            nDash = 0;
-            aszValues = msStringSplit(pszDashValue, ' ', &nDash);
-            if (nDash > 0)
-            {
-                psSymbol->patternlength = nDash;
-                for (i=0; i<nDash; i++)
-                  psSymbol->pattern[i] = atoi(aszValues[i]);
-
-                msFreeCharArray(aszValues, nDash);
-            }
-        }
-
         if (strcasecmp(pszSymbolName, "square") == 0)
         {
             if (bFilled)

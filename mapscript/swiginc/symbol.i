@@ -88,16 +88,7 @@
         line->numpoints = self->numpoints;
         return line;
     }
-
-    int setPattern(int index, int value) 
-    {
-        if (index < 0 || index > MS_MAXPATTERNLENGTH) {
-            msSetError(MS_SYMERR, "Can't set pattern at index %d.", "setPattern()", index);
-            return MS_FAILURE;
-        }
-        self->pattern[index] = value;
-        return MS_SUCCESS;
-    }
+    
 
     %newobject getImage;
     imageObj *getImage(outputFormatObj *input_format)

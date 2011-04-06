@@ -123,14 +123,12 @@ PHP_METHOD(symbolObj, __get)
     else IF_GET_DOUBLE("sizey", php_symbol->symbol->sizey) 
     else IF_GET_LONG("numpoints", php_symbol->symbol->numpoints) 
     else IF_GET_LONG("filled", php_symbol->symbol->filled) 
-    else IF_GET_LONG("patternlength", php_symbol->symbol->patternlength) 
     else IF_GET_STRING("imagepath", php_symbol->symbol->imagepath)
     else IF_GET_LONG("transparent", php_symbol->symbol->transparent) 
     else IF_GET_LONG("transparentcolor", php_symbol->symbol->transparentcolor) 
     else IF_GET_STRING("character", php_symbol->symbol->character)
     else IF_GET_LONG("antialias", php_symbol->symbol->antialias) 
     else IF_GET_STRING("font", php_symbol->symbol->font)
-    else IF_GET_LONG("position", php_symbol->symbol->position) 
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -166,7 +164,6 @@ PHP_METHOD(symbolObj, __set)
     else IF_SET_STRING("character", php_symbol->symbol->character, value)
     else IF_SET_LONG("antialias", php_symbol->symbol->antialias, value) 
     else IF_SET_STRING("font", php_symbol->symbol->font, value)
-    else IF_SET_LONG("position", php_symbol->symbol->position, value) 
     else if ( (STRING_EQUAL("numpoints", property)) ||
          (STRING_EQUAL("patternlength", property)) ||
          (STRING_EQUAL("imagepath", property)))
@@ -269,82 +266,7 @@ PHP_METHOD(symbolObj, getPointsArray)
 }
 /* }}} */
 
-/* {{{ proto int symbol.setpattern(array points)
-   Set the pattern of the symbol ) */ 
-PHP_METHOD(symbolObj, setPattern)
-{
-    zval *zpattern, **ppzval;
-    HashTable *pattern_hash = NULL;
-    zval *zobj = getThis();
-    int index = 0, numelements = 0;
-    php_symbol_object *php_symbol;
 
-    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a",
-                              &zpattern) == FAILURE) {
-        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-        return;
-    }
-    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
-    php_symbol = (php_symbol_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-    pattern_hash = Z_ARRVAL_P(zpattern);
-
-    numelements = zend_hash_num_elements(pattern_hash);
-    if (numelements == 0)
-    {
-        mapscript_report_php_error(E_WARNING, 
-                                   "symbol->setpoints : invalid array of %d element(s) as parameter." TSRMLS_CC, numelements);
-        RETURN_LONG(MS_FAILURE);
-    }
-
-    for(zend_hash_internal_pointer_reset(pattern_hash); 
-        zend_hash_has_more_elements(pattern_hash) == SUCCESS; 
-        zend_hash_move_forward(pattern_hash))
-    { 
-        
-        zend_hash_get_current_data(pattern_hash, (void **)&ppzval);
-        if (Z_TYPE_PP(ppzval) != IS_LONG)
-            convert_to_long(*ppzval);
-	     
-        php_symbol->symbol->pattern[index] = Z_LVAL_PP(ppzval);
-        index++;
-    }
-
-    php_symbol->symbol->patternlength = numelements;
-
-    RETURN_LONG(MS_SUCCESS);
-}
-/* }}} */
-
-/* {{{ proto int symbol.getPatternArray()
-   Returns an array containing the pattern.*/
-PHP_METHOD(symbolObj, getPatternArray)
-{
-    zval *zobj = getThis();
-    php_symbol_object *php_symbol;
-    int index;
-
-    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters_none() == FAILURE) {
-        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-        return;
-    }
-    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
-    php_symbol = (php_symbol_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-    
-    array_init(return_value);
-    
-    if (php_symbol->symbol->patternlength > 0)
-    {
-        for (index=0; index < php_symbol->symbol->patternlength; index++)
-        {
-            add_next_index_long(return_value, php_symbol->symbol->pattern[index]);
-        }
-    }
-}
-/* }}} */
 
 /* {{{ proto int symbol.setimagepath(char *imagefile)
    loads a new symbol image  ) */ 
@@ -385,8 +307,6 @@ zend_function_entry symbol_functions[] = {
     PHP_MALIAS(symbolObj, set, __set, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(symbolObj, setPoints, symbol_setPoints_args, ZEND_ACC_PUBLIC)
     PHP_ME(symbolObj, getPointsArray, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(symbolObj, setPattern, symbol_setPattern_args, ZEND_ACC_PUBLIC)
-    PHP_ME(symbolObj, getPatternArray, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(symbolObj, setImagePath, symbol_setImagePath_args, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
