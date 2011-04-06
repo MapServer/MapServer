@@ -767,6 +767,36 @@ char *msLayerGetProcessingKey( layerObj *layer, const char *key )
     return NULL;
 }
 
+
+/************************************************************************/
+/*                       msLayerGetMaxFeaturesToDraw                    */
+/*                                                                      */
+/*      Check to see if maxfeaturestodraw is set as a metadata or an    */
+/*      output format option. Used for vector layers to limit the       */
+/*      number of fatures rendered.                                     */
+/************************************************************************/
+int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format)
+{
+    int nMaxFeatures = -1;
+    const char *pszTmp = NULL;
+    if (layer && format)
+    {
+        pszTmp = msLookupHashTable(&layer->metadata, "maxfeaturestodraw");
+        if (pszTmp)
+          nMaxFeatures = atoi(pszTmp);
+        else
+        {
+            pszTmp = msLookupHashTable(&layer->map->web.metadata, "maxfeaturestodraw");
+            if (pszTmp)
+              nMaxFeatures = atoi(pszTmp);
+        }
+        if (nMaxFeatures < 0)
+          nMaxFeatures = atoi(msGetOutputFormatOption( format, "maxfeaturestodraw", "-1"));
+     }
+    
+    return nMaxFeatures;
+
+}
 int msLayerClearProcessing( layerObj *layer ) {
     if (layer->numprocessing > 0) {
         msFreeCharArray( layer->processing, layer->numprocessing );
@@ -1441,3 +1471,5 @@ msINLINELayerInitializeVirtualTable(layerObj *layer)
 
     return MS_SUCCESS;
 }
+
+

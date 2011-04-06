@@ -39,6 +39,7 @@
 #  include "cpl_vsi.h"
 #endif
 
+#define  KML_MAXFEATURES_TODRAW 1000
 
 KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color/*=NULL*/) 
     : Width(width), Height(height), MapCellsize(1.0), XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL),
@@ -216,10 +217,14 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
 /*                                                                      */
 /*      Set parameters that make sense to a kml output.                 */
 /************************************************************************/
-void KmlRenderer::processLayer(layerObj *layer)
+void KmlRenderer::processLayer(layerObj *layer, outputFormatObj *format)
 {
     int i;
     const char *asRaster = NULL;
+    int nMaxFeatures = -1;
+    const char *pszTmp;
+    char szTmp[10]; 
+
     if (!layer)
       return;
 
@@ -252,6 +257,26 @@ void KmlRenderer::processLayer(layerObj *layer)
       msLayerAddProcessing(layer, "RENDERER=png24");
       
     
+    /*set a maxfeaturestodraw, if not already set*/
+    
+    pszTmp = msLookupHashTable(&layer->metadata, "maxfeaturestodraw");
+    if (pszTmp)
+      nMaxFeatures = atoi(pszTmp);
+    else
+    {
+        pszTmp = msLookupHashTable(&layer->map->web.metadata, "maxfeaturestodraw");
+        if (pszTmp)
+          nMaxFeatures = atoi(pszTmp);
+    }
+    if (nMaxFeatures < 0 && format)
+      nMaxFeatures = atoi(msGetOutputFormatOption( format, "maxfeaturestodraw", "-1"));
+    
+    if (nMaxFeatures < 0 && format)
+    {
+        snprintf(szTmp, sizeof(szTmp), "%d", KML_MAXFEATURES_TODRAW);
+        msSetOutputFormatOption( format, "maxfeaturestodraw", szTmp);
+    }
+
 }
 
 /************************************************************************/
@@ -292,7 +317,7 @@ const char* KmlRenderer::getAliasName(layerObj *lp, char *pszItemName, const cha
     return pszAlias;
 }
 
-int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
+int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
 {
     char *layerName=NULL;
     const char *value=NULL;
@@ -366,7 +391,10 @@ int KmlRenderer::startNewLayer(imageObj *, layerObj *layer)
      }
 
      /*pre process the layer to set things that make sense for kml output*/
-     processLayer(layer);
+     if (img)
+       processLayer(layer, img->format);
+     else
+       processLayer(layer, NULL);
 
      if (msLookupHashTable(&layer->metadata, "kml_description"))
        pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "kml_description");

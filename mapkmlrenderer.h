@@ -138,7 +138,7 @@ protected:
 	void flushPlacemark();
 	xmlNodePtr getGeomParentNode(const char *geomName);
         char* getLayerName(layerObj *layer);
-        void processLayer(layerObj *layer);
+        void processLayer(layerObj *layer, outputFormatObj *format);
         void addLineStyleToList(strokeStyleObj *style);
         const char *getAliasName(layerObj *lp, char *pszItemName, const char *namespaces);
 

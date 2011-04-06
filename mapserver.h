@@ -2086,6 +2086,8 @@ MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
 
 MS_DLL_EXPORT int msLayerSupportsPaging(layerObj *layer);
 
+MS_DLL_EXPORT int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format);
+
 /* These are special because SWF is using these */
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
 int msOGRLayerGetItems(layerObj *layer);

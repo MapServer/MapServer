@@ -777,8 +777,11 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+  int maxfeatures=-1;
+  int featuresdrawn=0;
 
-
+  if (image)
+    maxfeatures=msLayerGetMaxFeaturesToDraw(layer, image->format);
   
   //TODO TBT: draw as raster layer in vector renderers
 
@@ -855,6 +858,13 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
        continue;
     }
   
+    if (maxfeatures >=0 && featuresdrawn >= maxfeatures)
+    {
+        status = MS_DONE;
+        break;
+    }
+    featuresdrawn++;
+
     cache = MS_FALSE;
     if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1 || 
         (layer->class[shape.classindex]->numstyles == 1 && layer->class[shape.classindex]->styles[0]->outlinewidth>0)))
@@ -884,6 +894,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(annotate && (layer->class[shape.classindex]->text.string || layer->labelitem) && layer->class[shape.classindex]->label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
+    
     if (cache) {
         int i;
         for (i = 0; i < layer->class[shape.classindex]->numstyles; i++) {
