@@ -42,10 +42,10 @@
 #define  KML_MAXFEATURES_TODRAW 1000
 
 KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color/*=NULL*/) 
-    : Width(width), Height(height), MapCellsize(1.0), XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL),
-      PlacemarkNode(NULL), GeomNode(NULL),
-      Items(NULL), NumItems(0), FirstLayer(MS_TRUE), map(NULL), currentLayer(NULL),
-      mElevationFromAttribute( false ), mElevationAttributeIndex( -1 ), mCurrentElevationValue(0.0)
+  : Width(width), Height(height), MapCellsize(1.0), XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL),
+    PlacemarkNode(NULL), GeomNode(NULL),
+    Items(NULL), NumItems(0), FirstLayer(MS_TRUE), map(NULL), currentLayer(NULL),
+    mElevationFromAttribute( false ), mElevationAttributeIndex( -1 ), mCurrentElevationValue(0.0)
 
 {
     /*private variables*/        
@@ -61,7 +61,7 @@ KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorOb
 
     xmlNodePtr styleNode;
     xmlNodePtr listStyleNode;
-  /*	Create document.*/
+    /*	Create document.*/
     XmlDoc = xmlNewDoc(BAD_CAST "1.0");
 
     xmlNodePtr rootNode = xmlNewNode(NULL, BAD_CAST "kml");
@@ -71,58 +71,57 @@ KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorOb
 
     xmlDocSetRootElement(XmlDoc, rootNode);
 
-	DocNode = xmlNewChild(rootNode, NULL, BAD_CAST "Document", NULL);
+    DocNode = xmlNewChild(rootNode, NULL, BAD_CAST "Document", NULL);
 
-        styleNode = xmlNewChild(DocNode, NULL, BAD_CAST "Style", NULL);
-	xmlNewProp(styleNode, BAD_CAST "id", BAD_CAST "LayerFolder_check");
-	listStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "ListStyle", NULL);
-	xmlNewChild(listStyleNode, NULL, BAD_CAST "listItemType", BAD_CAST "check");
+    styleNode = xmlNewChild(DocNode, NULL, BAD_CAST "Style", NULL);
+    xmlNewProp(styleNode, BAD_CAST "id", BAD_CAST "LayerFolder_check");
+    listStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "ListStyle", NULL);
+    xmlNewChild(listStyleNode, NULL, BAD_CAST "listItemType", BAD_CAST "check");
 
-        styleNode = xmlNewChild(DocNode, NULL, BAD_CAST "Style", NULL);
-	xmlNewProp(styleNode, BAD_CAST "id", BAD_CAST "LayerFolder_checkHideChildren");
-	listStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "ListStyle", NULL);
-	xmlNewChild(listStyleNode, NULL, BAD_CAST "listItemType", BAD_CAST "checkHideChildren");
+    styleNode = xmlNewChild(DocNode, NULL, BAD_CAST "Style", NULL);
+    xmlNewProp(styleNode, BAD_CAST "id", BAD_CAST "LayerFolder_checkHideChildren");
+    listStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "ListStyle", NULL);
+    xmlNewChild(listStyleNode, NULL, BAD_CAST "listItemType", BAD_CAST "checkHideChildren");
 
-        styleNode = xmlNewChild(DocNode, NULL, BAD_CAST "Style", NULL);
-	xmlNewProp(styleNode, BAD_CAST "id", BAD_CAST "LayerFolder_checkOffOnly");
-	listStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "ListStyle", NULL);
-	xmlNewChild(listStyleNode, NULL, BAD_CAST "listItemType", BAD_CAST "checkOffOnly");
+    styleNode = xmlNewChild(DocNode, NULL, BAD_CAST "Style", NULL);
+    xmlNewProp(styleNode, BAD_CAST "id", BAD_CAST "LayerFolder_checkOffOnly");
+    listStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "ListStyle", NULL);
+    xmlNewChild(listStyleNode, NULL, BAD_CAST "listItemType", BAD_CAST "checkOffOnly");
 
-        styleNode = xmlNewChild(DocNode, NULL, BAD_CAST "Style", NULL);
-	xmlNewProp(styleNode, BAD_CAST "id", BAD_CAST "LayerFolder_radioFolder");
-	listStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "ListStyle", NULL);
-	xmlNewChild(listStyleNode, NULL, BAD_CAST "listItemType", BAD_CAST "radioFolder");
+    styleNode = xmlNewChild(DocNode, NULL, BAD_CAST "Style", NULL);
+    xmlNewProp(styleNode, BAD_CAST "id", BAD_CAST "LayerFolder_radioFolder");
+    listStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "ListStyle", NULL);
+    xmlNewChild(listStyleNode, NULL, BAD_CAST "listItemType", BAD_CAST "radioFolder");
 
 
-	StyleHashTable = msCreateHashTable();
+    StyleHashTable = msCreateHashTable();
 	
 }
 
 KmlRenderer::~KmlRenderer()
 {
-	if (XmlDoc)
-		xmlFreeDoc(XmlDoc);
+    if (XmlDoc)
+      xmlFreeDoc(XmlDoc);
 
-	if (StyleHashTable)
-		msFreeHashTable(StyleHashTable);
+    if (StyleHashTable)
+      msFreeHashTable(StyleHashTable);
 
     if(LineStyle)
-        msFree(LineStyle);
+      msFree(LineStyle);
 
-	xmlCleanupParser();
+    xmlCleanupParser();
 }
 
 imageObj* KmlRenderer::createImage(int, int, outputFormatObj*, colorObj*)
 {
-	return NULL;
+    return NULL;
 }
 
 int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
-{
-    
-    /* -------------------------------------------------------------------- */
-    /*      Write out the document.                                         */
-    /* -------------------------------------------------------------------- */
+{    
+/* -------------------------------------------------------------------- */
+/*      Write out the document.                                         */
+/* -------------------------------------------------------------------- */
 
     int bufSize = 0;
     xmlChar *buf = NULL;
@@ -135,7 +134,7 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
     if( msIO_needBinaryStdout() == MS_FAILURE )
       return MS_FAILURE;
 
-   xmlDocDumpFormatMemoryEnc(XmlDoc, &buf, &bufSize, "UTF-8", 1);
+    xmlDocDumpFormatMemoryEnc(XmlDoc, &buf, &bufSize, "UTF-8", 1);
 
 #if defined(USE_OGR)
     if (format && format->driver && strcasecmp(format->driver, "kmz") == 0)
@@ -153,7 +152,7 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
 #if defined(CPL_ZIP_API_OFFERED) 
     if (bZip)
     {
-         VSILFILE *fpZip;
+        VSILFILE *fpZip;
         int bytes_read;
         char buffer[1024];
         char *zip_filename =NULL;
@@ -164,10 +163,10 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
         CPLCreateFileInZip( hZip, "mapserver.kml", NULL );
         for (int i=0; i<bufSize; i+=chunkSize)
         {
-             int size = chunkSize;
-             if (i + size > bufSize)
-               size = bufSize - i;
-             CPLWriteFileInZip( hZip,  buf+i, size);
+            int size = chunkSize;
+            if (i + size > bufSize)
+              size = bufSize - i;
+            CPLWriteFileInZip( hZip,  buf+i, size);
         }
         CPLCloseFileInZip( hZip );
         CPLCloseZip( hZip );
@@ -175,17 +174,17 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
         context = msIO_getHandler(fp);
         fpZip = VSIFOpenL( zip_filename, "r" );
         
-         while( (bytes_read = VSIFReadL( buffer, 1, sizeof(buffer), fpZip )) > 0 )
-         {
-             if (context)
-               msIO_contextWrite(context, buffer, bytes_read);
-             else
-               msIO_fwrite( buffer, 1, bytes_read, fp );
-         }
-         VSIFCloseL( fpZip );
-         msFree( zip_filename);
-         xmlFree(buf);
-         return(MS_SUCCESS);
+        while( (bytes_read = VSIFReadL( buffer, 1, sizeof(buffer), fpZip )) > 0 )
+        {
+            if (context)
+              msIO_contextWrite(context, buffer, bytes_read);
+            else
+              msIO_fwrite( buffer, 1, bytes_read, fp );
+        }
+        VSIFCloseL( fpZip );
+        msFree( zip_filename);
+        xmlFree(buf);
+        return(MS_SUCCESS);
     }
 #endif
 
@@ -251,7 +250,7 @@ void KmlRenderer::processLayer(layerObj *layer, outputFormatObj *format)
       to use an agg driver*/
     asRaster = msLookupHashTable(&layer->metadata, "kml_outputasraster");
     if (!asRaster)
-       asRaster = msLookupHashTable(&(layer->map->web.metadata), "kml_outputasraster");
+      asRaster = msLookupHashTable(&(layer->map->web.metadata), "kml_outputasraster");
     if (asRaster && (strcasecmp(asRaster, "true") == 0 ||
                      strcasecmp(asRaster, "yes") == 0))
       msLayerAddProcessing(layer, "RENDERER=png24");
@@ -293,15 +292,15 @@ char* KmlRenderer::getLayerName(layerObj *layer)
       return NULL;
 
 
-     name = msLookupHashTable(&layer->metadata, "ows_name");
-     if (name && strlen(name) > 0)
-       return msStrdup(name);
+    name = msLookupHashTable(&layer->metadata, "ows_name");
+    if (name && strlen(name) > 0)
+      return msStrdup(name);
 
     if (layer->name && strlen(layer->name) > 0)
       return msStrdup(layer->name);
 
-     sprintf(stmp, "Layer%d",layer->index);
-     return msStrdup(stmp); 
+    sprintf(stmp, "Layer%d",layer->index);
+    return msStrdup(stmp); 
 
 }
 
@@ -359,7 +358,7 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
         map = layer->map;
 
         if (layer->map->mappath)
-            snprintf(MapPath, sizeof(MapPath), "%s", layer->map->mappath);
+          snprintf(MapPath, sizeof(MapPath), "%s", layer->map->mappath);
 
         /*First rendered layer - check mapfile projection*/
         checkProjection(layer->map);
@@ -374,74 +373,74 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
         MapCellsize = layer->map->cellsize;
         BgColor = layer->map->imagecolor;
 
-         xmlNewChild(DocNode, NULL, BAD_CAST "name", BAD_CAST layer->map->name);
-         aggFormat = msSelectOutputFormat( layer->map, "png24");
-         aggFormat->transparent = MS_TRUE;
+        xmlNewChild(DocNode, NULL, BAD_CAST "name", BAD_CAST layer->map->name);
+        aggFormat = msSelectOutputFormat( layer->map, "png24");
+        aggFormat->transparent = MS_TRUE;
          
     }
 
     currentLayer = layer;
 
-     if (!msLayerIsOpen(layer))
-     {
-         if (msLayerOpen(layer) != MS_SUCCESS)
-         {
-             msSetError(MS_MISCERR, "msLayerOpen failed", "KmlRenderer::startNewLayer" );
-         }
-     }
+    if (!msLayerIsOpen(layer))
+    {
+        if (msLayerOpen(layer) != MS_SUCCESS)
+        {
+            msSetError(MS_MISCERR, "msLayerOpen failed", "KmlRenderer::startNewLayer" );
+        }
+    }
 
-     /*pre process the layer to set things that make sense for kml output*/
-     if (img)
-       processLayer(layer, img->format);
-     else
-       processLayer(layer, NULL);
+    /*pre process the layer to set things that make sense for kml output*/
+    if (img)
+      processLayer(layer, img->format);
+    else
+      processLayer(layer, NULL);
 
-     if (msLookupHashTable(&layer->metadata, "kml_description"))
-       pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "kml_description");
-     else if (msLookupHashTable(&layer->metadata, "ows_description"))
-        pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "ows_description");
+    if (msLookupHashTable(&layer->metadata, "kml_description"))
+      pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "kml_description");
+    else if (msLookupHashTable(&layer->metadata, "ows_description"))
+      pszLayerDescMetadata = msLookupHashTable(&layer->metadata, "ows_description");
 
-     value=msLookupHashTable(&layer->metadata, "kml_include_items");
-     if (!value)
-       value=msLookupHashTable(&layer->metadata, "ows_include_items");
-     if (value)
-       papszLayerIncludeItems = msStringSplit(value, ',', &nIncludeItems);
+    value=msLookupHashTable(&layer->metadata, "kml_include_items");
+    if (!value)
+      value=msLookupHashTable(&layer->metadata, "ows_include_items");
+    if (value)
+      papszLayerIncludeItems = msStringSplit(value, ',', &nIncludeItems);
 
-     value=msLookupHashTable(&layer->metadata, "kml_exclude_items");
-     if (!value)
-       value=msLookupHashTable(&layer->metadata, "ows_exclude_items");
-     if (value)
-       papszLayerExcludeItems = msStringSplit(value, ',', &nExcludeItems);
+    value=msLookupHashTable(&layer->metadata, "kml_exclude_items");
+    if (!value)
+      value=msLookupHashTable(&layer->metadata, "ows_exclude_items");
+    if (value)
+      papszLayerExcludeItems = msStringSplit(value, ',', &nExcludeItems);
 
      
-     if (msLookupHashTable(&layer->metadata, "kml_name_item"))
-       pszLayerNameAttributeMetadata = msLookupHashTable(&layer->metadata, "kml_name_item");
+    if (msLookupHashTable(&layer->metadata, "kml_name_item"))
+      pszLayerNameAttributeMetadata = msLookupHashTable(&layer->metadata, "kml_name_item");
 
-     /*get all attributes*/
-     msLayerWhichItems(layer, MS_TRUE, NULL);
+    /*get all attributes*/
+    msLayerWhichItems(layer, MS_TRUE, NULL);
 
 
-     NumItems = layer->numitems;
-     if (NumItems)
-     {
-         Items = (char **)msSmallCalloc(NumItems, sizeof(char *));
-         for (int i=0; i<NumItems; i++)
-           Items[i] = msStrdup(layer->items[i]);
-     }
+    NumItems = layer->numitems;
+    if (NumItems)
+    {
+        Items = (char **)msSmallCalloc(NumItems, sizeof(char *));
+        for (int i=0; i<NumItems; i++)
+          Items[i] = msStrdup(layer->items[i]);
+    }
 
     
-     char* elevationAttribute = msLookupHashTable(&layer->metadata, "kml_elevation_attribute");
-     if( elevationAttribute )
-     {
-         mElevationFromAttribute = true;
-         for( int i = 0; i < layer->numitems; ++i )
-         {
-             if( strcasecmp( layer->items[i], elevationAttribute ) == 0 )
-             {
-                 mElevationAttributeIndex = i;
-             }
-         }
-     }  
+    char* elevationAttribute = msLookupHashTable(&layer->metadata, "kml_elevation_attribute");
+    if( elevationAttribute )
+    {
+        mElevationFromAttribute = true;
+        for( int i = 0; i < layer->numitems; ++i )
+        {
+            if( strcasecmp( layer->items[i], elevationAttribute ) == 0 )
+            {
+                mElevationAttributeIndex = i;
+            }
+        }
+    }  
 
     setupRenderingParams(&layer->metadata);
     return MS_SUCCESS;
@@ -477,69 +476,68 @@ int KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
 }
 
 int KmlRenderer::mergeRasterBuffer(imageObj *image, rasterBufferObj *rb) {
-   assert(rb && rb->type == MS_BUFFER_BYTE_RGBA);
-   char *tmpFileName = NULL;
-   char *tmpUrl = NULL;
-   FILE *tmpFile = NULL;
+    assert(rb && rb->type == MS_BUFFER_BYTE_RGBA);
+    char *tmpFileName = NULL;
+    char *tmpUrl = NULL;
+    FILE *tmpFile = NULL;
     
-   tmpFileName = msTmpFile(NULL, MapPath, image->imagepath, "png");
-   tmpFile = fopen(tmpFileName,"wb");
-   if (tmpFile)
-   {
+    tmpFileName = msTmpFile(NULL, MapPath, image->imagepath, "png");
+    tmpFile = fopen(tmpFileName,"wb");
+    if (tmpFile)
+    {
      
-     if (!aggFormat->vtable)
-      msInitializeRendererVTable(aggFormat);
+        if (!aggFormat->vtable)
+          msInitializeRendererVTable(aggFormat);
 
-     msSaveRasterBuffer(rb,tmpFile,aggFormat);
-     tmpUrl = msStrdup( image->imageurl);
-     tmpUrl = msStringConcatenate(tmpUrl, (char *)(msGetBasename(tmpFileName)));
-     tmpUrl = msStringConcatenate(tmpUrl, ".png");
+        msSaveRasterBuffer(rb,tmpFile,aggFormat);
+        tmpUrl = msStrdup( image->imageurl);
+        tmpUrl = msStringConcatenate(tmpUrl, (char *)(msGetBasename(tmpFileName)));
+        tmpUrl = msStringConcatenate(tmpUrl, ".png");
         
-     createGroundOverlayNode(LayerNode, tmpUrl, currentLayer);
-     msFree(tmpFileName);
-     msFree(tmpUrl);
-     fclose(tmpFile);
-     return MS_SUCCESS;
-   } else {
-      msSetError(MS_IOERR,"Failed to create file for kml overlay","KmlRenderer::mergeRasterBuffer()");
-      return MS_FAILURE;
-   }
+        createGroundOverlayNode(LayerNode, tmpUrl, currentLayer);
+        msFree(tmpFileName);
+        msFree(tmpUrl);
+        fclose(tmpFile);
+        return MS_SUCCESS;
+    } else {
+        msSetError(MS_IOERR,"Failed to create file for kml overlay","KmlRenderer::mergeRasterBuffer()");
+        return MS_FAILURE;
+    }
 }
 
 void KmlRenderer::setupRenderingParams(hashTableObj *layerMetadata)
 {
-	AltitudeMode = 0;
-	Extrude = 0;
-	Tessellate = 0;
+    AltitudeMode = 0;
+    Extrude = 0;
+    Tessellate = 0;
 
-	char *altitudeModeVal = msLookupHashTable(layerMetadata, "kml_altitudeMode");
-	if (altitudeModeVal)
-	{
-		if(strcasecmp(altitudeModeVal, "absolute") == 0)
-			AltitudeMode = absolute;
-		else if(strcasecmp(altitudeModeVal, "relativeToGround") == 0)
-			AltitudeMode = relativeToGround;
-		else if(strcasecmp(altitudeModeVal, "clampToGround") == 0)
-			AltitudeMode = clampToGround;
-	}
+    char *altitudeModeVal = msLookupHashTable(layerMetadata, "kml_altitudeMode");
+    if (altitudeModeVal)
+    {
+        if(strcasecmp(altitudeModeVal, "absolute") == 0)
+          AltitudeMode = absolute;
+        else if(strcasecmp(altitudeModeVal, "relativeToGround") == 0)
+          AltitudeMode = relativeToGround;
+        else if(strcasecmp(altitudeModeVal, "clampToGround") == 0)
+          AltitudeMode = clampToGround;
+    }
 
-	char *extrudeVal = msLookupHashTable(layerMetadata, "kml_extrude");
-	if (altitudeModeVal)
-	{
-		Extrude = atoi(extrudeVal);
-	}
+    char *extrudeVal = msLookupHashTable(layerMetadata, "kml_extrude");
+    if (altitudeModeVal)
+    {
+        Extrude = atoi(extrudeVal);
+    }
 
-	char *tessellateVal = msLookupHashTable(layerMetadata, "kml_tessellate");
-	if (tessellateVal)
-	{
-		Tessellate = atoi(tessellateVal);
-	}
+    char *tessellateVal = msLookupHashTable(layerMetadata, "kml_tessellate");
+    if (tessellateVal)
+    {
+        Tessellate = atoi(tessellateVal);
+    }
 
 }
 
 int KmlRenderer::checkProjection(mapObj *map)
 {
-    
     projectionObj *projection= &map->projection;
 #ifdef USE_PROJ
     if (projection && projection->numargs > 0 && pj_is_latlong(projection->proj))
@@ -561,16 +559,16 @@ int KmlRenderer::checkProjection(mapObj *map)
             char *pszMapProjectString = msGetProjectionString(projection);
             if (pszMapProjectString)
             {
-                 for(i=0; i<map->numlayers; i++)
-                 {
-                     lp = GET_LAYER(map, i);
-                     if (lp->projection.numargs == 0 && lp->transform == MS_TRUE)
-                     {
-                          msFreeProjection(&lp->projection);
-                          msLoadProjectionString(&lp->projection, pszMapProjectString);
-                     }
-                 }
-                 msFree(pszMapProjectString);
+                for(i=0; i<map->numlayers; i++)
+                {
+                    lp = GET_LAYER(map, i);
+                    if (lp->projection.numargs == 0 && lp->transform == MS_TRUE)
+                    {
+                        msFreeProjection(&lp->projection);
+                        msLoadProjectionString(&lp->projection, pszMapProjectString);
+                    }
+                }
+                msFree(pszMapProjectString);
             }
         }
         strcpy(epsg_string, "epsg:4326" );
@@ -601,7 +599,6 @@ int KmlRenderer::checkProjection(mapObj *map)
 
 xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUrl)
 {
-
     xmlNodePtr placemarkNode = xmlNewChild(parentNode, NULL, BAD_CAST "Placemark", NULL);
     /*always add a name. It will be replaced by a text value if available*/
     char tmpid[100];
@@ -612,11 +609,11 @@ xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUr
     }
     else
     {
-    sprintf(tmpid, ".%d", CurrentShapeIndex);
-    layerName = getLayerName(currentLayer);
-    stmp = msStringConcatenate(stmp, layerName);
-    stmp = msStringConcatenate(stmp, tmpid);
-    xmlNewChild(placemarkNode, NULL, BAD_CAST "name", BAD_CAST stmp);
+        sprintf(tmpid, ".%d", CurrentShapeIndex);
+        layerName = getLayerName(currentLayer);
+        stmp = msStringConcatenate(stmp, layerName);
+        stmp = msStringConcatenate(stmp, tmpid);
+        xmlNewChild(placemarkNode, NULL, BAD_CAST "name", BAD_CAST stmp);
     }
     msFree(layerName);
     msFree(stmp);
@@ -644,24 +641,23 @@ void KmlRenderer::renderLine(imageObj*, shapeObj *p, strokeStyleObj *style)
       level code caches shapes when rendering lines*/
     if (CurrentDrawnShapeIndex == -1 || p->index > CurrentDrawnShapeIndex)
     {
-    
-      xmlNodePtr geomNode = getGeomParentNode("LineString");
-      addAddRenderingSpecifications(geomNode);
-      addCoordsNode(geomNode, p->line[0].point, p->line[0].numpoints);
+        xmlNodePtr geomNode = getGeomParentNode("LineString");
+        addAddRenderingSpecifications(geomNode);
+        addCoordsNode(geomNode, p->line[0].point, p->line[0].numpoints);
           
-          /* more than one line => MultiGeometry*/
-      if (p->numlines > 1)
-      {
-        geomNode = getGeomParentNode("LineString"); // returns MultiGeom Node
-        for (int i=1; i<p->numlines; i++)
+        /* more than one line => MultiGeometry*/
+        if (p->numlines > 1)
         {
-          xmlNodePtr lineStringNode = xmlNewChild(geomNode, NULL, BAD_CAST "LineString", NULL);
-          addAddRenderingSpecifications(lineStringNode);
-          addCoordsNode(lineStringNode, p->line[i].point, p->line[i].numpoints);
+            geomNode = getGeomParentNode("LineString"); // returns MultiGeom Node
+            for (int i=1; i<p->numlines; i++)
+            {
+                xmlNodePtr lineStringNode = xmlNewChild(geomNode, NULL, BAD_CAST "LineString", NULL);
+                addAddRenderingSpecifications(lineStringNode);
+                addCoordsNode(lineStringNode, p->line[i].point, p->line[i].numpoints);
+            }
         }
-      }
       
-      CurrentDrawnShapeIndex = p->index;
+        CurrentDrawnShapeIndex = p->index;
     }
       
 }
@@ -681,23 +677,23 @@ void KmlRenderer::renderPolygon(imageObj*, shapeObj *p, colorObj *color)
     if (p->index != CurrentDrawnShapeIndex)
     {
     
-      xmlNodePtr geomParentNode = getGeomParentNode("Polygon");
+        xmlNodePtr geomParentNode = getGeomParentNode("Polygon");
 
-      for (int i=0; i<p->numlines; i++)
-      {
-        xmlNodePtr bdryNode = NULL;
+        for (int i=0; i<p->numlines; i++)
+        {
+            xmlNodePtr bdryNode = NULL;
 
-        if (i==0) /* __TODO__ check ring order*/
-          bdryNode = xmlNewChild(geomParentNode, NULL, BAD_CAST "outerBoundaryIs", NULL);
-        else
-          bdryNode = xmlNewChild(geomParentNode, NULL, BAD_CAST "innerBoundaryIs", NULL);
+            if (i==0) /* __TODO__ check ring order*/
+              bdryNode = xmlNewChild(geomParentNode, NULL, BAD_CAST "outerBoundaryIs", NULL);
+            else
+              bdryNode = xmlNewChild(geomParentNode, NULL, BAD_CAST "innerBoundaryIs", NULL);
 
-        xmlNodePtr ringNode = xmlNewChild(bdryNode, NULL, BAD_CAST "LinearRing", NULL);
-        addAddRenderingSpecifications(ringNode);
-        addCoordsNode(ringNode, p->line[i].point, p->line[i].numpoints);
-      }
+            xmlNodePtr ringNode = xmlNewChild(bdryNode, NULL, BAD_CAST "LinearRing", NULL);
+            addAddRenderingSpecifications(ringNode);
+            addCoordsNode(ringNode, p->line[i].point, p->line[i].numpoints);
+        }
 
-      CurrentDrawnShapeIndex = p->index;
+        CurrentDrawnShapeIndex = p->index;
       
     }
       
@@ -770,11 +766,11 @@ void KmlRenderer::renderGlyphs(imageObj*, double x, double y, labelStyleObj *sty
 
 void KmlRenderer::addAddRenderingSpecifications(xmlNodePtr node)
 {
-	/*
-          <extrude>0</extrude>                   <!-- boolean -->
-          <tessellate>0</tessellate>             <!-- boolean -->
-          <altitudeMode>clampToGround</altitudeMode> 
-	*/
+    /*
+      <extrude>0</extrude>                   <!-- boolean -->
+      <tessellate>0</tessellate>             <!-- boolean -->
+      <altitudeMode>clampToGround</altitudeMode> 
+    */
 
     if (Extrude)
       xmlNewChild(node, NULL, BAD_CAST "extrude", BAD_CAST "1");
@@ -800,8 +796,8 @@ int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleO
     imageObj *tmpImg = NULL;
     
     tmpImg = agg2CreateImage((int)(symbol->sizex*symstyle->scale), 
-                            (int)(symbol->sizey*symstyle->scale), 
-                            aggFormat, NULL);
+                             (int)(symbol->sizey*symstyle->scale), 
+                             aggFormat, NULL);
     tmpImg->format = aggFormat;
     if (!aggFormat->vtable)
       msInitializeRendererVTable(aggFormat);
@@ -862,29 +858,29 @@ void KmlRenderer::renderTruetypeSymbol(imageObj *img, double x, double y, symbol
 
 xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *imageHref, layerObj *layer)
 {
-	/*
-          <?xml version="1.0" encoding="UTF-8"?>
-          <kml xmlns="http://www.opengis.net/kml/2.2">
-          <GroundOverlay>
-          <name>GroundOverlay.kml</name>
-          <color>7fffffff</color>
-          <drawOrder>1</drawOrder>
-          <Icon>
-          <href>http://www.google.com/intl/en/images/logo.gif</href>
-          <refreshMode>onInterval</refreshMode>
-          <refreshInterval>86400</refreshInterval>
-          <viewBoundScale>0.75</viewBoundScale>
-          </Icon>
-          <LatLonBox>
-          <north>37.83234</north>
-          <south>37.832122</south>
-          <east>-122.373033</east>
-          <west>-122.373724</west>
-          <rotation>45</rotation>
-          </LatLonBox>
-          </GroundOverlay>
-          </kml>
-	*/
+    /*
+      <?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+      <GroundOverlay>
+      <name>GroundOverlay.kml</name>
+      <color>7fffffff</color>
+      <drawOrder>1</drawOrder>
+      <Icon>
+      <href>http://www.google.com/intl/en/images/logo.gif</href>
+      <refreshMode>onInterval</refreshMode>
+      <refreshInterval>86400</refreshInterval>
+      <viewBoundScale>0.75</viewBoundScale>
+      </Icon>
+      <LatLonBox>
+      <north>37.83234</north>
+      <south>37.832122</south>
+      <east>-122.373033</east>
+      <west>-122.373724</west>
+      <rotation>45</rotation>
+      </LatLonBox>
+      </GroundOverlay>
+      </kml>
+    */
     char	layerHexColor[32];
     xmlNodePtr groundOverlayNode = xmlNewChild(parentNode, NULL, BAD_CAST "GroundOverlay", NULL);
     char *layerName = getLayerName(layer);
@@ -902,8 +898,8 @@ xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *ima
 
     if (imageHref)
     {
-      xmlNodePtr iconNode = xmlNewChild(groundOverlayNode, NULL, BAD_CAST "Icon", NULL);
-      xmlNewChild(iconNode, NULL, BAD_CAST "href", BAD_CAST imageHref);
+        xmlNodePtr iconNode = xmlNewChild(groundOverlayNode, NULL, BAD_CAST "Icon", NULL);
+        xmlNewChild(iconNode, NULL, BAD_CAST "href", BAD_CAST imageHref);
     }
 
     char crdStr[64];
@@ -983,7 +979,6 @@ void KmlRenderer::endShape(imageObj*, shapeObj*)
 
 xmlNodePtr KmlRenderer::getGeomParentNode(const char *geomName)
 {
-    
     /*we do not need a multi-geometry for point layers*/
     if (currentLayer->type != MS_LAYER_POINT && currentLayer->type != MS_LAYER_ANNOTATION && GeomNode)
     {
@@ -997,26 +992,26 @@ xmlNodePtr KmlRenderer::getGeomParentNode(const char *geomName)
     }
     else
     {
-      GeomNode = xmlNewNode(NULL, BAD_CAST geomName);
-      return GeomNode;
+        GeomNode = xmlNewNode(NULL, BAD_CAST geomName);
+        return GeomNode;
     }
 }
 
 char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *symstyle)
 {
     char	symbolHexColor[32];
-	/*	
-                <Style id="randomColorIcon">
-                <IconStyle>
-                <color>ff00ff00</color>
-                <colorMode>random</colorMode>
-                <scale>1.1</scale>
-                <Icon>
-                <href>http://maps.google.com/mapfiles/kml/pal3/icon21.png</href>
-                </Icon>
-                </IconStyle>
-                </Style>
-	*/
+    /*	
+        <Style id="randomColorIcon">
+        <IconStyle>
+        <color>ff00ff00</color>
+        <colorMode>random</colorMode>
+        <scale>1.1</scale>
+        <Icon>
+        <href>http://maps.google.com/mapfiles/kml/pal3/icon21.png</href>
+        </Icon>
+        </IconStyle>
+        </Style>
+    */
 
     sprintf(symbolHexColor,"%02x%02x%02x%02x", symstyle->style->color.alpha, symstyle->style->color.blue,
             symstyle->style->color.green, symstyle->style->color.red);
@@ -1025,35 +1020,35 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
     char *symbolUrl = msLookupHashTable(StyleHashTable, SymbolName);
     if (!symbolUrl)
     {
-      char iconFileName[MS_MAXPATHLEN];
-      char iconUrl[MS_MAXPATHLEN];
+        char iconFileName[MS_MAXPATHLEN];
+        char iconUrl[MS_MAXPATHLEN];
 
-      if (img->imagepath)
-      {
-          char *tmpFileName = msTmpFile(NULL, MapPath, img->imagepath, "png");
-          snprintf(iconFileName, sizeof(iconFileName), "%s", tmpFileName);
-          msFree(tmpFileName);
-      }
-      else
-      {
-        sprintf(iconFileName, "symbol_%s_%.1f.%s", symbol->name, symstyle->scale, "png");
-      }
+        if (img->imagepath)
+        {
+            char *tmpFileName = msTmpFile(NULL, MapPath, img->imagepath, "png");
+            snprintf(iconFileName, sizeof(iconFileName), "%s", tmpFileName);
+            msFree(tmpFileName);
+        }
+        else
+        {
+            sprintf(iconFileName, "symbol_%s_%.1f.%s", symbol->name, symstyle->scale, "png");
+        }
 
-      if (createIconImage(iconFileName, symbol, symstyle) != MS_SUCCESS)
-      {
-        char errMsg[512];
-        sprintf(errMsg, "Error creating icon file '%s'", iconFileName);
-        msSetError(MS_IOERR, errMsg, "KmlRenderer::lookupSymbolStyle()" );
-        return NULL;
-      }
+        if (createIconImage(iconFileName, symbol, symstyle) != MS_SUCCESS)
+        {
+            char errMsg[512];
+            sprintf(errMsg, "Error creating icon file '%s'", iconFileName);
+            msSetError(MS_IOERR, errMsg, "KmlRenderer::lookupSymbolStyle()" );
+            return NULL;
+        }
 
-      if (img->imageurl)
-        sprintf(iconUrl, "%s%s.%s", img->imageurl, msGetBasename(iconFileName), "png");
-      else
-        snprintf(iconUrl, sizeof(iconUrl), "%s", iconFileName);
+        if (img->imageurl)
+          sprintf(iconUrl, "%s%s.%s", img->imageurl, msGetBasename(iconFileName), "png");
+        else
+          snprintf(iconUrl, sizeof(iconUrl), "%s", iconFileName);
 
-      hashObj *hash = msInsertHashTable(StyleHashTable, SymbolName, iconUrl);
-      symbolUrl = hash->data;
+        hashObj *hash = msInsertHashTable(StyleHashTable, SymbolName, iconUrl);
+        symbolUrl = hash->data;
     }
 
     return symbolUrl;
@@ -1070,16 +1065,16 @@ char* KmlRenderer::lookupPlacemarkStyle()
 
     if (SymbologyFlag[Line])
     {
-          /*
-            <LineStyle id="ID">
-            <!-- inherited from ColorStyle -->
-            <color>ffffffff</color>            <!-- kml:color -->
-            <colorMode>normal</colorMode>      <!-- colorModeEnum: normal or random -->
+        /*
+          <LineStyle id="ID">
+          <!-- inherited from ColorStyle -->
+          <color>ffffffff</color>            <!-- kml:color -->
+          <colorMode>normal</colorMode>      <!-- colorModeEnum: normal or random -->
 
-            <!-- specific to LineStyle -->
-            <width>1</width>                   <!-- float -->
-            </LineStyle>
-          */
+          <!-- specific to LineStyle -->
+          <width>1</width>                   <!-- float -->
+          </LineStyle>
+        */
     
         for (int i=0; i<numLineStyle; i++)
         {
@@ -1098,56 +1093,56 @@ char* KmlRenderer::lookupPlacemarkStyle()
 
     if (SymbologyFlag[Polygon])
     {
-          /*
-            <PolyStyle id="ID">
-            <!-- inherited from ColorStyle -->
-            <color>ffffffff</color>            <!-- kml:color -->
-            <colorMode>normal</colorMode>      <!-- kml:colorModeEnum: normal or random -->
+        /*
+          <PolyStyle id="ID">
+          <!-- inherited from ColorStyle -->
+          <color>ffffffff</color>            <!-- kml:color -->
+          <colorMode>normal</colorMode>      <!-- kml:colorModeEnum: normal or random -->
 
-            <!-- specific to PolyStyle -->
-            <fill>1</fill>                     <!-- boolean -->
-            <outline>1</outline>               <!-- boolean -->
-            </PolyStyle>
-          */
+          <!-- specific to PolyStyle -->
+          <fill>1</fill>                     <!-- boolean -->
+          <outline>1</outline>               <!-- boolean -->
+          </PolyStyle>
+        */
 
-      if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
-          PolygonColor.alpha == 255)
-        PolygonColor.alpha = MS_NINT(currentLayer->opacity*2.55);
-      sprintf(polygonHexColor,"%02x%02x%02x%02x", PolygonColor.alpha, PolygonColor.blue, PolygonColor.green, PolygonColor.red);
+        if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
+            PolygonColor.alpha == 255)
+          PolygonColor.alpha = MS_NINT(currentLayer->opacity*2.55);
+        sprintf(polygonHexColor,"%02x%02x%02x%02x", PolygonColor.alpha, PolygonColor.blue, PolygonColor.green, PolygonColor.red);
 
-      char polygonStyleName[64];
-      sprintf(polygonStyleName, "_polygon_%s", polygonHexColor);
-      styleName = msStringConcatenate(styleName, polygonStyleName);
+        char polygonStyleName[64];
+        sprintf(polygonStyleName, "_polygon_%s", polygonHexColor);
+        styleName = msStringConcatenate(styleName, polygonStyleName);
     }
 
     if (SymbologyFlag[Label])
     {
-          /*
-            <LabelStyle id="ID">
-            <!-- inherited from ColorStyle -->
-            <color>ffffffff</color>            <!-- kml:color -->
-            <colorMode>normal</colorMode>      <!-- kml:colorModeEnum: normal or random -->
+        /*
+          <LabelStyle id="ID">
+          <!-- inherited from ColorStyle -->
+          <color>ffffffff</color>            <!-- kml:color -->
+          <colorMode>normal</colorMode>      <!-- kml:colorModeEnum: normal or random -->
 
-            <!-- specific to LabelStyle -->
-            <scale>1</scale>                   <!-- float -->
-            </LabelStyle>
-          */
+          <!-- specific to LabelStyle -->
+          <scale>1</scale>                   <!-- float -->
+          </LabelStyle>
+        */
 
-      if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
-          LabelStyle.color->alpha == 255)
-        LabelStyle.color->alpha = MS_NINT(currentLayer->opacity*2.55);
-      sprintf(labelHexColor,"%02x%02x%02x%02x", LabelStyle.color->alpha, LabelStyle.color->blue, LabelStyle.color->green, LabelStyle.color->red);
+        if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
+            LabelStyle.color->alpha == 255)
+          LabelStyle.color->alpha = MS_NINT(currentLayer->opacity*2.55);
+        sprintf(labelHexColor,"%02x%02x%02x%02x", LabelStyle.color->alpha, LabelStyle.color->blue, LabelStyle.color->green, LabelStyle.color->red);
 
-          // __TODO__ add label scale
+        // __TODO__ add label scale
 
-      char labelStyleName[64];
-      sprintf(labelStyleName, "_label_%s", labelHexColor);
-      styleName = msStringConcatenate(styleName, labelStyleName);
+        char labelStyleName[64];
+        sprintf(labelStyleName, "_label_%s", labelHexColor);
+        styleName = msStringConcatenate(styleName, labelStyleName);
     }
 
     if (SymbologyFlag[Symbol])
     {
-          /*	
+        /*	
 		<Style id="randomColorIcon">
                 <IconStyle>
                 <color>ff00ff00</color>
@@ -1158,12 +1153,12 @@ char* KmlRenderer::lookupPlacemarkStyle()
                 </Icon>
                 </IconStyle>
 		</Style>
-          */
+        */
 
-          /* __TODO__ add label scale */
+        /* __TODO__ add label scale */
 
-      styleName = msStringConcatenate(styleName, "_");
-      styleName = msStringConcatenate(styleName, SymbolName);
+        styleName = msStringConcatenate(styleName, "_");
+        styleName = msStringConcatenate(styleName, SymbolName);
     }
 
     char *styleUrl = msLookupHashTable(StyleHashTable, styleName);
@@ -1176,7 +1171,7 @@ char* KmlRenderer::lookupPlacemarkStyle()
         styleUrl = hash->data;
         msFree(styleValue);
 
-            /* Insert new Style node into Document node*/
+        /* Insert new Style node into Document node*/
         xmlNodePtr styleNode = xmlNewChild(DocNode, NULL, BAD_CAST "Style", NULL);
         xmlNewProp(styleNode, BAD_CAST "id", BAD_CAST styleName);
 
@@ -1192,7 +1187,7 @@ char* KmlRenderer::lookupPlacemarkStyle()
             {
                 xmlNodePtr lineStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "LineStyle", NULL);
                 sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color->alpha, LineStyle[i].color->blue,
-                    LineStyle[i].color->green, LineStyle[i].color->red);
+                        LineStyle[i].color->green, LineStyle[i].color->red);
                 xmlNewChild(lineStyleNode, NULL, BAD_CAST "color", BAD_CAST lineHexColor);
 
                 char width[16];
@@ -1208,9 +1203,9 @@ char* KmlRenderer::lookupPlacemarkStyle()
             xmlNodePtr iconNode = xmlNewChild(iconStyleNode, NULL, BAD_CAST "Icon", NULL);
             xmlNewChild(iconNode, NULL, BAD_CAST "href", BAD_CAST SymbolUrl);
 
-                /*char scale[16];
-                sprintf(scale, "%.1f", style->scale);
-                xmlNewChild(iconStyleNode, NULL, BAD_CAST "scale", BAD_CAST scale);*/
+            /*char scale[16];
+              sprintf(scale, "%.1f", style->scale);
+              xmlNewChild(iconStyleNode, NULL, BAD_CAST "scale", BAD_CAST scale);*/
         }
         else
         {
@@ -1229,9 +1224,9 @@ char* KmlRenderer::lookupPlacemarkStyle()
             xmlNodePtr labelStyleNode = xmlNewChild(styleNode, NULL, BAD_CAST "LabelStyle", NULL);
             xmlNewChild(labelStyleNode, NULL, BAD_CAST "color", BAD_CAST labelHexColor);
 
-                /*char scale[16];
-                sprintf(scale, "%.1f", style->scale);
-                xmlNewChild(iconStyleNode, NULL, BAD_CAST "scale", BAD_CAST scale);*/
+            /*char scale[16];
+              sprintf(scale, "%.1f", style->scale);
+              xmlNewChild(iconStyleNode, NULL, BAD_CAST "scale", BAD_CAST scale);*/
         }
     }
 
@@ -1259,13 +1254,13 @@ void KmlRenderer::flushPlacemark()
 
 xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
 {
-      /*
-	<description>
-	<![CDATA[
-	  special characters here
-	]]> 
-	<description>
-      */
+    /*
+      <description>
+      <![CDATA[
+      special characters here
+      ]]> 
+      <description>
+    */
 
 
     /*description nodes for vector layers:
@@ -1296,10 +1291,10 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape)
     else if ((papszLayerIncludeItems && nIncludeItems > 0) || 
              (papszLayerExcludeItems && nExcludeItems > 0))
     {
-/* -------------------------------------------------------------------- */
-/*      preffered way is to use the ExtendedData tag (#3728)            */
-/*      http://code.google.com/apis/kml/documentation/extendeddata.html */
-/* -------------------------------------------------------------------- */
+        /* -------------------------------------------------------------------- */
+        /*      preffered way is to use the ExtendedData tag (#3728)            */
+        /*      http://code.google.com/apis/kml/documentation/extendeddata.html */
+        /* -------------------------------------------------------------------- */
         
         xmlNodePtr extendedDataNode = xmlNewNode(NULL, BAD_CAST "ExtendedData");
         xmlNodePtr dataNode = NULL; 
