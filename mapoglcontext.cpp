@@ -199,13 +199,13 @@ bool OglContext::initSharingContext()
 {
 	if (!(sharingContext=wglCreateContext(window)))
 	{
-		msSetError(MS_OGLERR, "Can't Create A GL Rendering Context. glError: %d", "OglContext::createContext()", glGetError());
+		msSetError(MS_OGLERR, "Can't Create A GL Rendering Context.", "OglContext::createContext()");
 		return FALSE;
 	}
 
 	if(!wglMakeCurrent(window,sharingContext))
 	{
-		msSetError(MS_OGLERR, "Can't Activate The GL Rendering Context. glError: %d", "OglContext::createContext()", glGetError());
+		msSetError(MS_OGLERR, "Can't Activate The GL Rendering Context.", "OglContext::createContext()");
 		return FALSE;
 	}
 
@@ -448,14 +448,14 @@ bool OglContext::initWindow()
 
 	if (tempConfigs == NULL || num_configs == 0)
 	{
-		msSetError(MS_OGLERR, "glXChooseFBConfig could not find any configs. Likely your video card or drivers are not supported. glError: %d", "OglContext::initWindow()", glGetError());
+		msSetError(MS_OGLERR, "glXChooseFBConfig could not find any configs. Likely your video card or drivers are not supported.", "OglContext::initWindow()");
 		return false;
 	}
 
 	GLXContext tempContext = glXCreateNewContext(window, *tempConfigs, GLX_RGBA_TYPE, NULL, 1);
 	if (tempContext == NULL)
 	{
-		msSetError(MS_OGLERR, "glXCreateNewContext failed. glError: %d", "OglContext::initWindow()", glGetError());
+		msSetError(MS_OGLERR, "glXCreateNewContext failed.", "OglContext::initWindow()");
 		return false;
 	}
 
@@ -464,13 +464,13 @@ bool OglContext::initWindow()
 	GLXPbuffer tempBuffer = glXCreatePbuffer(window, *tempConfigs, iPbufferAttributes);
 	if (tempBuffer == 0)
 	{
-		msSetError(MS_OGLERR, "glXCreatePbuffer failed. glError: %d", "OglContext::initWindow()", glGetError());
+		msSetError(MS_OGLERR, "glXCreatePbuffer failed.", "OglContext::initWindow()");
 		return false;
 	}
 
 	if (!glXMakeCurrent(window, tempBuffer, tempContext))
 	{
-		msSetError(MS_OGLERR, "glXMakeCurrent failed. glError: %d", "OglContext::initWindow()", glGetError());
+		msSetError(MS_OGLERR, "glXMakeCurrent failed.", "OglContext::initWindow()");
 		return false;
 	}
 
