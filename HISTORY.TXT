@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Coding style and formatting fixes (#3819, #3820, #3821, and more)
+
 - More improvements to OpenGL error handling (#3791)
 
 Version 6.0.0-beta5 (2011-04-06)
