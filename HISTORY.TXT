@@ -15,7 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
-- ...
+- More improvements to OpenGL error handling (#3791)
 
 Version 6.0.0-beta5 (2011-04-06)
 --------------------------------
