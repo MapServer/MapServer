@@ -1,5 +1,5 @@
 /******************************************************************************
- * 
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Google Earth KML output

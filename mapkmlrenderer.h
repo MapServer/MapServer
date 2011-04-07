@@ -1,5 +1,5 @@
 /******************************************************************************
- * 
+ * $Id$ 
  *
  * Project:  MapServer
  * Purpose:  Headers for mapkmlrenderer.cpp Google Earth KML output
