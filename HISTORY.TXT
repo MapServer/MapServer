@@ -60,7 +60,7 @@ Version 6.0.0-beta5 (2011-04-06)
 
 - configure: look for libxslt.so under lib64 as well
 
-- added missing ';' before charset in WFS DEscribeFeatureType header (#3793)
+- added missing ';' before charset in WFS DescribeFeatureType header (#3793)
 
 - add brushed line support for agg renderer (#3792)
 
