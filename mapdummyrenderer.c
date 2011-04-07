@@ -30,230 +30,230 @@
 #include "mapserver.h"
 
 int renderLineDummy(imageObj *img, shapeObj *p, strokeStyleObj *style) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return MS_FAILURE;
 }
 
 int renderPolygonDummy(imageObj *img, shapeObj *p, colorObj *color) {
-	msSetError(MS_RENDERERERR,"renderPolygon not implemented","renderPolygon()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"renderPolygon not implemented","renderPolygon()");
+    return MS_FAILURE;
 }
 
 int renderPolygonTiledDummy(imageObj *img, shapeObj *p, imageObj *tile) {
-	msSetError(MS_RENDERERERR,"renderPolygonTiled not implemented","renderPolygonTiled()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"renderPolygonTiled not implemented","renderPolygonTiled()");
+    return MS_FAILURE;
 }
 
 int renderLineTiledDummy(imageObj *img, shapeObj *p, imageObj *tile) {
-	msSetError(MS_RENDERERERR,"renderLineTiled not implemented","renderLineTiled()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"renderLineTiled not implemented","renderLineTiled()");
+    return MS_FAILURE;
 }
 
 int renderRasterGlyphsDummy(imageObj *img, double x, double y, int fontIndex,
-		colorObj *color, char* text) {
-	msSetError(MS_RENDERERERR,"renderRasterGlyphs not implemented","renderRasterGlyphs()");
-	return MS_FAILURE;
+        colorObj *color, char* text) {
+    msSetError(MS_RENDERERERR,"renderRasterGlyphs not implemented","renderRasterGlyphs()");
+    return MS_FAILURE;
 }
 
 int renderGlyphsDummy(imageObj *img, double x, double y,
-		labelStyleObj *style, char *text) {
-	msSetError(MS_RENDERERERR,"renderGlyphs not implemented","renderGlyphs()");
-	return MS_FAILURE;
+        labelStyleObj *style, char *text) {
+    msSetError(MS_RENDERERERR,"renderGlyphs not implemented","renderGlyphs()");
+    return MS_FAILURE;
 }
 
 int renderGlyphsLineDummy(imageObj *img,labelPathObj *labelpath,
-		labelStyleObj *style, char *text) {
-	msSetError(MS_RENDERERERR,"renderGlyphsLine not implemented","renderGlyphsLine()");
-	return MS_FAILURE;
+        labelStyleObj *style, char *text) {
+    msSetError(MS_RENDERERERR,"renderGlyphsLine not implemented","renderGlyphsLine()");
+    return MS_FAILURE;
 }
 
 int renderVectorSymbolDummy(imageObj *img, double x, double y,
-		symbolObj *symbol, symbolStyleObj *style) {
-	msSetError(MS_RENDERERERR,"renderVectorSymbol not implemented","renderVectorSymbol()");
-	return MS_FAILURE;
+        symbolObj *symbol, symbolStyleObj *style) {
+    msSetError(MS_RENDERERERR,"renderVectorSymbol not implemented","renderVectorSymbol()");
+    return MS_FAILURE;
 }
 
 void* createVectorSymbolTileDummy(int width, int height,
-		symbolObj *symbol, symbolStyleObj *style) {
-	msSetError(MS_RENDERERERR,"createVectorSymbolTile not implemented","createVectorSymbolTile()");
-	return NULL;
+        symbolObj *symbol, symbolStyleObj *style) {
+    msSetError(MS_RENDERERERR,"createVectorSymbolTile not implemented","createVectorSymbolTile()");
+    return NULL;
 }
 
 int renderPixmapSymbolDummy(imageObj *img, double x, double y,
-		symbolObj *symbol, symbolStyleObj *style) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return MS_FAILURE;
+        symbolObj *symbol, symbolStyleObj *style) {
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return MS_FAILURE;
 }
 
 void* createPixmapSymbolTileDummy(int width, int height,
-		symbolObj *symbol, symbolStyleObj *style) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return NULL;
+        symbolObj *symbol, symbolStyleObj *style) {
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return NULL;
 }
 
 int renderEllipseSymbolDummy(imageObj *image, double x, double y, 
-		symbolObj *symbol, symbolStyleObj *style) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return MS_FAILURE;
+        symbolObj *symbol, symbolStyleObj *style) {
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return MS_FAILURE;
 }
 
 void* createEllipseSymbolTileDummy(int width, int height,
-		symbolObj *symbol, symbolStyleObj *style) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return NULL;
+        symbolObj *symbol, symbolStyleObj *style) {
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return NULL;
 }
 
 int renderTruetypeSymbolDummy(imageObj *img, double x, double y,
-		symbolObj *symbol, symbolStyleObj *style) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return MS_FAILURE;
+        symbolObj *symbol, symbolStyleObj *style) {
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return MS_FAILURE;
 }
 
 void* createTruetypeSymbolTileDummy(int width, int height,
-		symbolObj *symbol, symbolStyleObj *style) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return NULL;
+        symbolObj *symbol, symbolStyleObj *style) {
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return NULL;
 }
 
 int renderTileDummy(imageObj *img, imageObj *tile, double x, double y) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return MS_FAILURE;
 }
 
 rasterBufferObj* loadImageFromFileDummy(char *path) {
-	msSetError(MS_RENDERERERR,"loadImageFromFile not implemented","loadImageFromFile()");
-	return NULL;
+    msSetError(MS_RENDERERERR,"loadImageFromFile not implemented","loadImageFromFile()");
+    return NULL;
 }
 
 
 int getRasterBufferHandleDummy(imageObj *img, rasterBufferObj *rb) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return MS_FAILURE;
 }
 
 int getRasterBufferCopyDummy(imageObj *img, rasterBufferObj *rb) {
-	msSetError(MS_RENDERERERR,"getRasterBufferCopy not implemented","getRasterBufferCopy()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"getRasterBufferCopy not implemented","getRasterBufferCopy()");
+    return MS_FAILURE;
 }
 
 rasterBufferObj* createRasterBufferDummy(int width, int height) {
-	msSetError(MS_RENDERERERR,"createRasterBuffer not implemented","createRasterBuffer()");
-	return NULL;
+    msSetError(MS_RENDERERERR,"createRasterBuffer not implemented","createRasterBuffer()");
+    return NULL;
 }
 
 int mergeRasterBufferDummy(imageObj *dest, rasterBufferObj *overlay, double opacity, int srcX, int srcY, int dstX, int dstY, int width, int height) {
-	msSetError(MS_RENDERERERR,"mergeRasterBuffer not implemented","mergeRasterBuffer()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"mergeRasterBuffer not implemented","mergeRasterBuffer()");
+    return MS_FAILURE;
 }
 
 int initializeRasterBufferDummy(rasterBufferObj *rb, int width, int height, int mode) {
-	msSetError(MS_RENDERERERR,"initializeRasterBuffer not implemented","initializeRasterBuffer()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"initializeRasterBuffer not implemented","initializeRasterBuffer()");
+    return MS_FAILURE;
 }
 
 
 
 /* image i/o */
 imageObj* createImageDummy(int width, int height, outputFormatObj *format, colorObj* bg) {
-	msSetError(MS_RENDERERERR,"createImage not implemented","createImage()");
-	return NULL;
+    msSetError(MS_RENDERERERR,"createImage not implemented","createImage()");
+    return NULL;
 }
 
 int saveImageDummy(imageObj *img, FILE *fp, outputFormatObj *format) {
-	msSetError(MS_RENDERERERR,"saveImage not implemented","saveImage()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"saveImage not implemented","saveImage()");
+    return MS_FAILURE;
 }
 /*...*/
 
 /* helper functions */
 int getTruetypeTextBBoxDummy(rendererVTableObj *renderer, char *font, double size, char *string,rectObj *rect, double **advances) {
-	msSetError(MS_RENDERERERR,"getTruetypeTextBBox not implemented","getTruetypeTextBBox()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"getTruetypeTextBBox not implemented","getTruetypeTextBBox()");
+    return MS_FAILURE;
 }
 
 int startLayerDummy(imageObj *img, mapObj *map, layerObj *layer) {
-	msSetError(MS_RENDERERERR,"startLayer not implemented","startLayer()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"startLayer not implemented","startLayer()");
+    return MS_FAILURE;
 }
 
 int endLayerDummy(imageObj *img, mapObj *map, layerObj *layer) {
-	msSetError(MS_RENDERERERR,"endLayer not implemented","endLayer()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"endLayer not implemented","endLayer()");
+    return MS_FAILURE;
 }
 
 int startShapeDummy(imageObj *img, shapeObj *shape) {
-	msSetError(MS_RENDERERERR,"startShape not implemented","startShape()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"startShape not implemented","startShape()");
+    return MS_FAILURE;
 }
 
 int endShapeDummy(imageObj *img, shapeObj *shape) {
-	msSetError(MS_RENDERERERR,"endShape not implemented","endShape()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"endShape not implemented","endShape()");
+    return MS_FAILURE;
 }
 
 int setClipDummy(imageObj *img, rectObj clipRect) {
-	msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+    return MS_FAILURE;
 }
 int resetClipDummy(imageObj *img) {
-	msSetError(MS_RENDERERERR,"resetClip not implemented","resetClip()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"resetClip not implemented","resetClip()");
+    return MS_FAILURE;
 }
 
 int freeImageDummy(imageObj *image) {
-	msSetError(MS_RENDERERERR,"freeImage not implemented","freeImage()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"freeImage not implemented","freeImage()");
+    return MS_FAILURE;
 }
 
 int freeTileDummy(imageObj *tile) {
-	msSetError(MS_RENDERERERR,"freeTile not implemented","freeTile()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"freeTile not implemented","freeTile()");
+    return MS_FAILURE;
 }
 
 int freeSymbolDummy(symbolObj *symbol) {
-	msSetError(MS_RENDERERERR,"freeSymbol not implemented","freeSymbol()");
-	return MS_FAILURE;
+    msSetError(MS_RENDERERERR,"freeSymbol not implemented","freeSymbol()");
+    return MS_FAILURE;
 }
 
 int cleanupDummy(void *renderer_data) {
-	return MS_SUCCESS;
+    return MS_SUCCESS;
 }
 
 int msInitializeDummyRenderer(rendererVTableObj *renderer) {
-	
-	renderer->use_imagecache = 0;
-	renderer->supports_pixel_buffer = 0;
-	renderer->supports_transparent_layers = 0;
-	renderer->supports_clipping = 0;
-	renderer->supports_bitmap_fonts = 0;
-	renderer->renderer_data = NULL;
-	renderer->transform_mode = MS_TRANSFORM_SIMPLIFY;
-	renderer->startLayer = &startLayerDummy;
-	renderer->endLayer = &endLayerDummy;
-	renderer->renderLine=&renderLineDummy;
-   renderer->renderLineTiled = NULL;
-	renderer->createImage=&createImageDummy;
-	renderer->saveImage=&saveImageDummy;
-	renderer->getRasterBufferHandle=&getRasterBufferHandleDummy;
-	renderer->getRasterBufferCopy=getRasterBufferCopyDummy;
-	renderer->initializeRasterBuffer=initializeRasterBufferDummy;
-	renderer->renderPolygon=&renderPolygonDummy;
-	renderer->renderGlyphs=&renderGlyphsDummy;
-	renderer->renderBitmapGlyphs = &renderGlyphsDummy;
-	renderer->freeImage=&freeImageDummy;
-	renderer->renderEllipseSymbol = &renderEllipseSymbolDummy;
-	renderer->renderVectorSymbol = &renderVectorSymbolDummy;
-	renderer->renderTruetypeSymbol = &renderTruetypeSymbolDummy;
-	renderer->renderPixmapSymbol = &renderPixmapSymbolDummy;
-	renderer->mergeRasterBuffer = &mergeRasterBufferDummy;
-	renderer->getTruetypeTextBBox = &getTruetypeTextBBoxDummy;
-	renderer->renderTile = &renderTileDummy;
-	renderer->renderPolygonTiled = &renderPolygonTiledDummy;
-	renderer->freeSymbol = &freeSymbolDummy;
-	renderer->cleanup = &cleanupDummy;
-	renderer->startShape = NULL;
-	renderer->endShape = NULL;
-	return MS_SUCCESS;
+    
+    renderer->use_imagecache = 0;
+    renderer->supports_pixel_buffer = 0;
+    renderer->supports_transparent_layers = 0;
+    renderer->supports_clipping = 0;
+    renderer->supports_bitmap_fonts = 0;
+    renderer->renderer_data = NULL;
+    renderer->transform_mode = MS_TRANSFORM_SIMPLIFY;
+    renderer->startLayer = &startLayerDummy;
+    renderer->endLayer = &endLayerDummy;
+    renderer->renderLine=&renderLineDummy;
+    renderer->renderLineTiled = NULL;
+    renderer->createImage=&createImageDummy;
+    renderer->saveImage=&saveImageDummy;
+    renderer->getRasterBufferHandle=&getRasterBufferHandleDummy;
+    renderer->getRasterBufferCopy=getRasterBufferCopyDummy;
+    renderer->initializeRasterBuffer=initializeRasterBufferDummy;
+    renderer->renderPolygon=&renderPolygonDummy;
+    renderer->renderGlyphs=&renderGlyphsDummy;
+    renderer->renderBitmapGlyphs = &renderGlyphsDummy;
+    renderer->freeImage=&freeImageDummy;
+    renderer->renderEllipseSymbol = &renderEllipseSymbolDummy;
+    renderer->renderVectorSymbol = &renderVectorSymbolDummy;
+    renderer->renderTruetypeSymbol = &renderTruetypeSymbolDummy;
+    renderer->renderPixmapSymbol = &renderPixmapSymbolDummy;
+    renderer->mergeRasterBuffer = &mergeRasterBufferDummy;
+    renderer->getTruetypeTextBBox = &getTruetypeTextBBoxDummy;
+    renderer->renderTile = &renderTileDummy;
+    renderer->renderPolygonTiled = &renderPolygonTiledDummy;
+    renderer->freeSymbol = &freeSymbolDummy;
+    renderer->cleanup = &cleanupDummy;
+    renderer->startShape = NULL;
+    renderer->endShape = NULL;
+    return MS_SUCCESS;
 }
 
 
