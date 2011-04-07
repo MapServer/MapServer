@@ -3092,12 +3092,15 @@ char *generateLegendTemplate(mapservObj *mapserv)
    /*
     * Read all the template file
     */
+   fread(file, length, 1, stream);
+/* Disabled for now due to Windows issue, see ticket #3814
    if( 1 != fread(file, length, 1, stream)) {
      msSetError(MS_IOERR, "Error while reading template file.", "generateLegendTemplate()");
      free(file);
      fclose(stream);
      return NULL;
    }
+*/
    file[length] = '\0';
 
    if(msValidateContexts(mapserv->map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
