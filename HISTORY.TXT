@@ -15,6 +15,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Fix setting of top-level mapObj member variables in PHP MapScript (#3815)
+
+- More robust OpenGL context creation on older video cards and drivers (#3791)
+
 - Allow users to set the maximum number of vector features to be drawn (#3739)
 
 - Fixed FCGI on Windows problem related to lexer (#3812)
