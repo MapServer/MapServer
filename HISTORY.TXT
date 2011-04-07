@@ -12,8 +12,8 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk): 
----------------------------- 
+Version 6.0.0-beta5 (2011-04-06)
+--------------------------------
 
 - Fix setting of top-level mapObj member variables in PHP MapScript (#3815)
 
