@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  http requests related functions

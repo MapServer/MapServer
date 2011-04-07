@@ -41,7 +41,7 @@
 #  include "cpl_string.h"
 #endif
 
-MS_CVSID("$Id: mapogr.cpp 10544 2010-09-30 11:04:28Z tamas $")
+MS_CVSID("$Id$")
 
 #ifdef USE_OGR
 
