@@ -2116,6 +2116,7 @@ else
 
   test -f $EXSLT_DIR/include/libexslt/exslt.h && EXSLT_INCDIR="$EXSLT_DIR/include"
   test -f $EXSLT_DIR/lib/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib"
+  test -f $EXSLT_DIR/lib64/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib64"
 
   if test -n "$EXSLT_LIBDIR" -a -n "$EXSLT_INCDIR" ; then
     dnl
