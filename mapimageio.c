@@ -767,6 +767,10 @@ int readPNG(char *path, rasterBufferObj *rb) {
 }
 
 int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format) {
+    gdIOCtx *ctx = NULL;
+
+    if (fp && (fp == stdout))
+        ctx = msIO_getGDIOCtx( fp );
 
     if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
         gdImageInterlace(ip, 1);
@@ -776,21 +780,30 @@ int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format) {
 
     if(strcasestr(format->driver, "/gif")) {
 #ifdef USE_GD_GIF
-        gdImageGif(ip, fp);
+        if (ctx)
+            gdImageGifCtx(ip, ctx);
+        else
+            gdImageGif(ip, fp);
 #else
         msSetError(MS_MISCERR, "GIF output is not available.", "saveImageGD()");
         return(MS_FAILURE);
 #endif
     } else if(strcasestr(format->driver, "/png")) {
 #ifdef USE_GD_PNG
-        gdImagePng(ip, fp);
+        if (ctx)
+            gdImagePngCtx(ip, ctx);
+        else
+            gdImagePng(ip, fp);
 #else
         msSetError(MS_MISCERR, "PNG output is not available.", "saveImageGD()");
         return(MS_FAILURE);
 #endif
     } else if(strcasestr(format->driver, "/jpeg")) {
 #ifdef USE_GD_JPEG
-        gdImageJpeg(ip, fp, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
+        if (ctx)
+            gdImageJpegCtx(ip, ctx, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
+        else
+            gdImageJpeg(ip, fp, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
 #else
         msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageGD()");
         return(MS_FAILURE);
