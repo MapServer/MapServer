@@ -79,6 +79,22 @@ are no more. To draw a label "box" in 6.0 you'd do:
 
 More verbose but *much* more flexible in the long run.
 
+------------------------------
+Mapfile Changes - line styling
+------------------------------
+
+All line styling must now be specified in layer STYLEs.
+
+The following parameters/keywords have been moved from SYMBOL
+to STYLE:
+
+PATTERN GAP LINECAP LINEJOIN LINEJOINMAXSIZE
+
+The SYMBOL STYLE parameter/keyword was renamed to PATTERN in
+version 5.
+
+The SYMBOL TYPE cartoline has been removed.
+
 -----------
 CGI Changes
 -----------
