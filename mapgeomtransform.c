@@ -103,8 +103,6 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
             continue;
         if(style->autoangle==MS_TRUE && line->numpoints>1) {
           style->angle = calcOrientation(&(line->point[line->numpoints-2]),p);
-          if(symbolset->symbol[style->symbol]->type==MS_SYMBOL_VECTOR)
-            style->angle = - style->angle;
         }
         msDrawMarkerSymbol(symbolset,image,p,style,scalefactor);
       }
@@ -118,8 +116,6 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
             continue;
         if(style->autoangle==MS_TRUE && line->numpoints>1) {
           style->angle = calcOrientation(p,&(line->point[1]));
-          if(symbolset->symbol[style->symbol]->type==MS_SYMBOL_VECTOR)
-            style->angle = - style->angle;
         }
         msDrawMarkerSymbol(symbolset,image,p,style,scalefactor);
       }
@@ -134,8 +130,6 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
             continue;
           if(style->autoangle==MS_TRUE) {
             style->angle = calcMidAngle(&(line->point[i-1]),&(line->point[i]),&(line->point[i+1]));
-            if(symbolset->symbol[style->symbol]->type==MS_SYMBOL_VECTOR)
-              style->angle = - style->angle;
           }
           msDrawMarkerSymbol(symbolset,image,p,style,scalefactor);
         }
