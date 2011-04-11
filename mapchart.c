@@ -184,6 +184,11 @@ int msDrawBarChart(mapObj *map, imageObj *image, pointObj *center,
      */
     upperLimit = (maxVal!=NULL)? *maxVal : MS_MAX(shapeMaxVal,0);
     lowerLimit = (minVal!=NULL)? *minVal : MS_MIN(shapeMinVal,0);
+    if(upperLimit==lowerLimit) {
+      /* treat the case where we would have an unspecified behavior */
+      upperLimit+=0.5;
+      lowerLimit-=0.5;
+    }
     
     pixperval=(float)height/(upperLimit-lowerLimit);
     vertOrigin=bottom+lowerLimit*pixperval;
