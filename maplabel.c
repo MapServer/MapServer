@@ -769,8 +769,14 @@ char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey) {
 /* assumes an angle of 0 regardless of what's in the label object */
 int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rectObj *rect, double **advances)
 {
+  rendererVTableObj *renderer = NULL;
+
+  if (map)
+    renderer =MS_MAP_RENDERER(map);
+
+  if (!renderer)
+    return MS_FAILURE;
   if(label->type == MS_TRUETYPE) {
-	rendererVTableObj *renderer = MS_MAP_RENDERER(map);
     char *font=msFontsetLookupFont(&(map->fontset), label->font);
     if(!font) {
     	//error message already set in fontset lookup
@@ -778,7 +784,6 @@ int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rect
     }
     return msGetTruetypeTextBBox(renderer,font,size,string,rect,advances);
   } else if(label->type == MS_BITMAP){
-	  rendererVTableObj *renderer = MS_MAP_RENDERER(map);
 	  if(renderer->supports_bitmap_fonts)
 		  return msGetRasterTextBBox(renderer,MS_NINT(label->size),string,rect);
 	  else {
