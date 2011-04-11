@@ -95,6 +95,12 @@ version 5.
 
 The SYMBOL TYPE cartoline has been removed.
 
+LINECAP triangle is not supported by AGG or Cairo, and is no longer
+available.  The triangle line end effect can be achieved using
+GEOMTRANSFORM start and end with a (filled) vector triangle symbol and
+ANGLE AUTO.  This will only work for the line ends, and not for
+dashes.
+
 -----------
 CGI Changes
 -----------
