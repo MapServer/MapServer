@@ -492,7 +492,7 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                   if(pw<1) pw=1;
                   if(ph<1) ph=1;
                   tile = getTile(image, symbol,&s,pw,ph,0);
-                  renderer->renderLineTiled(image, p, tile);
+                  renderer->renderLineTiled(image, offsetLine, tile);
                } else {
                   msSetError(MS_RENDERERERR, "renderer does not support brushed lines", "msDrawLineSymbol()");
                   return MS_FAILURE;
