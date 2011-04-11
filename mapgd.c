@@ -333,7 +333,7 @@ int renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
 
     k=0;
     for(i=0; i<stroke->patternlength; i++) {
-      for(j=0; j<stroke->pattern[i]; j++, k++) {
+      for(j=0; j<MS_NINT(stroke->pattern[i]); j++, k++) {
         style[k] = sc;
       }
       sc = ((sc==c)?gdTransparent:c);
