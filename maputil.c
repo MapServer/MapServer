@@ -779,7 +779,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
                 if(renderer->getRasterBufferHandle(img,&data) != MS_SUCCESS)
                    return MS_FAILURE;
 
-                nReturnVal = msSaveRasterBuffer(&data,stream,img->format );
+                nReturnVal = msSaveRasterBuffer(map,&data,stream,img->format );
             } else {
                 nReturnVal = renderer->saveImage(img, stream, img->format);
             }

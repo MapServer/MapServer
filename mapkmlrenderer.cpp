@@ -489,7 +489,7 @@ int KmlRenderer::mergeRasterBuffer(imageObj *image, rasterBufferObj *rb) {
         if (!aggFormat->vtable)
           msInitializeRendererVTable(aggFormat);
 
-        msSaveRasterBuffer(rb,tmpFile,aggFormat);
+        msSaveRasterBuffer(map,rb,tmpFile,aggFormat);
         tmpUrl = msStrdup( image->imageurl);
         tmpUrl = msStringConcatenate(tmpUrl, (char *)(msGetBasename(tmpFileName)));
         tmpUrl = msStringConcatenate(tmpUrl, ".png");

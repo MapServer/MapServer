@@ -119,7 +119,8 @@ int jpeg_buffer_empty_output_buffer (j_compress_ptr cinfo) {
 }
 
 
-int saveAsJPEG(rasterBufferObj *rb, streamInfo *info, outputFormatObj *format)  {
+int saveAsJPEG(mapObj *map /*not used*/, rasterBufferObj *rb, streamInfo *info,
+      outputFormatObj *format)  {
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
     int quality = atoi(msGetOutputFormatOption( format, "QUALITY", "75"));
@@ -349,7 +350,7 @@ int readPalette(const char *palette, rgbaPixel *entries, unsigned int *nEntries,
    return MS_SUCCESS;
 }
 
-int saveAsPNG(rasterBufferObj *rb, streamInfo *info, outputFormatObj *format) {
+int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj *format) {
     int force_pc256 = MS_FALSE;
     int force_palette = MS_FALSE;
    
@@ -381,7 +382,11 @@ int saveAsPNG(rasterBufferObj *rb, streamInfo *info, outputFormatObj *format) {
         } else {
             int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "0"));
             const char *palettePath = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
-
+            char szPath[MS_MAXPATHLEN];
+            if(map) {
+               msBuildPath(szPath, map->mappath, palettePath);
+               palettePath = szPath;
+            }
             if(readPalette(palettePath,paletteGiven,&numPaletteGivenEntries,format->transparent) != MS_SUCCESS) {
                 return MS_FAILURE;
             }
@@ -872,7 +877,7 @@ int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format)
     return MS_SUCCESS;
 }
 
-int msSaveRasterBuffer(rasterBufferObj *rb, FILE *stream,
+int msSaveRasterBuffer(mapObj *map, rasterBufferObj *rb, FILE *stream,
         outputFormatObj *format) {
 	if(rb->type == MS_BUFFER_GD) {
 		return saveGdImage(rb->data.gd_img, stream, format);
@@ -882,12 +887,12 @@ int msSaveRasterBuffer(rasterBufferObj *rb, FILE *stream,
         info.fp = stream;
         info.buffer = NULL;
         
-        return saveAsPNG(rb,&info,format);
+        return saveAsPNG(map, rb,&info,format);
     } else if(strcasestr(format->driver,"/jpeg")) {
         streamInfo info;
         info.fp = stream;
         info.buffer=NULL;
-        return saveAsJPEG(rb,&info,format);
+        return saveAsJPEG(map, rb,&info,format);
     } else {
         msSetError(MS_MISCERR,"unsupported image format\n", "msSaveRasterBuffer()");
         return MS_FAILURE;
@@ -903,12 +908,12 @@ int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer,
         streamInfo info;
         info.fp = NULL;
         info.buffer = buffer;
-        return saveAsPNG(data,&info,format);
+        return saveAsPNG(NULL, data,&info,format);
     } else if(strcasestr(format->driver,"/jpeg")) {
         streamInfo info;
         info.fp = NULL;
         info.buffer=buffer;
-        return saveAsJPEG(data,&info,format);
+        return saveAsJPEG(NULL, data,&info,format);
     } else {
         msSetError(MS_MISCERR,"unsupported image format\n", "msSaveRasterBuffer()");
         return MS_FAILURE;
