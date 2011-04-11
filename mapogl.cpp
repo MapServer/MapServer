@@ -57,7 +57,7 @@ int msSaveImageOgl(imageObj *img, FILE *fp, outputFormatObj *format)
     rasterBufferObj data;
     OglRenderer* renderer = getOglRenderer(img);
     renderer->readRasterBuffer(&data);        
-    return msSaveRasterBuffer(&data,fp,img->format );
+    return msSaveRasterBuffer(NULL,&data,fp,img->format );
 }
 
 int msDrawLineOgl(imageObj *img, shapeObj *p, strokeStyleObj *style)
