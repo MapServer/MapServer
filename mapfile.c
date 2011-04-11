@@ -2383,9 +2383,9 @@ int initStyle(styleObj *style) {
   style->patternlength = 0; /* solid line */
   style->gap = 0;
   style->position = MS_CC;
-  style->linecap = MS_CJC_ROUND;
-  style->linejoin = MS_CJC_NONE;
-  style->linejoinmaxsize = 3;
+  style->linecap = MS_CJC_DEFAULT_CAPS;
+  style->linejoin = MS_CJC_DEFAULT_JOINS;
+  style->linejoinmaxsize = MS_CJC_DEFAULT_JOIN_MAXSIZE;
 
   style->numbindings = 0;
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
@@ -2688,6 +2688,26 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_COLOR].item)
     writeAttributeBinding(stream, indent, "COLOR", &(style->bindings[MS_STYLE_BINDING_COLOR]));
   else writeColor(stream, indent, "COLOR", &(style->color));
+  
+  writeNumber(stream, indent, "GAP", 0, style->gap);
+
+  if(style->linecap != MS_CJC_DEFAULT_CAPS) {
+     writeKeyword(stream,indent,"LINECAP",(int)style->linecap,5,
+           MS_CJC_NONE,"NONE",
+           MS_CJC_ROUND, "ROUND",
+           MS_CJC_SQUARE, "SQUARE",
+           MS_CJC_BUTT, "BUTT",
+           MS_CJC_TRIANGLE, "TRIANGLE");
+  }
+  if(style->linejoin != MS_CJC_DEFAULT_JOINS) {
+     writeKeyword(stream,indent,"LINEJOIN",(int)style->linejoin,5,
+           MS_CJC_NONE,"NONE",
+           MS_CJC_ROUND, "ROUND",
+           MS_CJC_BEVEL, "BEVEL",
+           MS_CJC_MITER, "MITER");
+  }
+  writeNumber(stream, indent, "LINEJOINMAXSIZE", MS_CJC_DEFAULT_JOIN_MAXSIZE , style->linejoinmaxsize);
+
 
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, style->maxscaledenom);
   writeNumber(stream, indent, "MAXSIZE", MS_MAXSYMBOLSIZE, style->maxsize);
@@ -2719,6 +2739,13 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
      fprintf(stream,"\n");
      writeBlockEnd(stream,indent,"PATTERN");
      indent--;
+  }
+
+  if(style->position != MS_CC) {
+    writeKeyword(stream, indent, "POSITION", style->position, 9,
+          MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL",
+          MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC",
+          MS_LR, "LR");
   }
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SIZE].item)

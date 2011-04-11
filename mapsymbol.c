@@ -47,12 +47,6 @@ extern FILE *msyyin;
 static const unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
 static const unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
 
-/*
-** Symbol to string static arrays needed for writing map files.
-** Must be kept in sync with enumerations and defines found in mapserver.h.
-*/
-extern char *msPositionsText[]; /* Defined in mapfile.c */
-static char *msCapsJoinsCorners[7]={"NONE", "BEVEL", "BUTT", "MITER", "ROUND", "SQUARE", "TRIANGLE"};
 
 void freeImageCache(struct imageCacheObj *ic)
 {
