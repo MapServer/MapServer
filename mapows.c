@@ -2202,6 +2202,7 @@ outputFormatObj* msOwsIsOutputFormatValid(mapObj *map, const char *format,
     
     if (map && format && metadata && namespaces && name)
     {
+        msApplyDefaultOutputFormats(map);
         format_list = msOWSLookupMetadata(metadata, namespaces, name);
         n = 0;
         if ( format_list)

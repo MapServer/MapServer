@@ -671,7 +671,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
     else if (strcasecmp(names[i], "FORMAT") == 0) {
       const char *format_list = NULL;
-      outputFormatObj *psFormat=NULL;
       formatfound = 1;
 
       if (strcasecmp(values[i], "application/openlayers")!=0)
@@ -680,9 +679,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           format_list = msOWSLookupMetadata(&(map->web.metadata), "M","getmap_formatlist");
           if (format_list)
           {
-              psFormat = msOwsIsOutputFormatValid(map, values[i], &(map->web.metadata),
-                                                  "M", "getmap_formatlist");
-              if (psFormat == NULL &&
+              format = msOwsIsOutputFormatValid(map, values[i], &(map->web.metadata),
+                                                "M", "getmap_formatlist");
+              if (format == NULL &&
                   strcasecmp(values[i], "application/openlayers")!=0)
               {
                   msSetError(MS_IMGERR,
