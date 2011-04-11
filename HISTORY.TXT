@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- fix some valgrind found memory leaks (offset symbols, and gd io contexts)
+
 - skip marker symbol with no defined SYMBOL (caused some memory leaks with
   uninitialized vector points)
 

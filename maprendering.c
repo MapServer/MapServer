@@ -500,8 +500,10 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             }
          }
 
-         if(offsetLine!=p)
+         if(offsetLine!=p) {
             msFreeShape(offsetLine);
+            msFree(offsetLine);
+         }
       }
       else if( MS_RENDERER_IMAGEMAP(image->format) )
          msDrawLineSymbolIM(symbolset, image, p, style, scalefactor);
@@ -664,6 +666,7 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
 cleanup:
          if (offsetPolygon != p) {
             msFreeShape(offsetPolygon);
+            msFree(offsetPolygon);
          }
          return ret;
       }

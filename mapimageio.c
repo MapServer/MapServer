@@ -817,6 +817,7 @@ int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format) {
         msSetError(MS_MISCERR, "Unknown or unsupported format.", "saveImageGD()");
         return(MS_FAILURE);
     }
+    msFree(ctx);
 
     return MS_SUCCESS;
 }
