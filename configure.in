@@ -888,6 +888,7 @@ if test -n "$with_ftgl" -a "$with_ftgl" != "no" ; then
   fi
   
   test -f $FTGL_DIR/lib/libftgl.so && FTGL_LIBDIR="$FTGL_DIR/lib"
+  test -f $FTGL_DIR/lib/libftgl.dylib && FTGL_LIBDIR="$FTGL_DIR/lib"
   test -f $FTGL_DIR/lib64/libftgl.so && FTGL_LIBDIR="$FTGL_DIR/lib64"
    
   if test -z "$FTGL_LIBDIR" ; then
@@ -948,6 +949,7 @@ if test -n "$with_opengl" -a "$with_opengl" != "no" ; then
   fi
   
   test -f $OGL_DIR/lib/libGL.so -a -f $OGL_DIR/lib/libGLU.so && OGL_LIBDIR="$OGL_DIR/lib"
+  test -f $OGL_DIR/lib/libGL.dylib -a -f $OGL_DIR/lib/libGLU.dylib && OGL_LIBDIR="$OGL_DIR/lib"
   test -f $OGL_DIR/lib64/libGL.so -a -f $OGL_DIR/lib64/libGLU.so && OGL_LIBDIR="$OGL_DIR/lib64"
    
   if test -z "$OGL_LIBDIR" ; then
