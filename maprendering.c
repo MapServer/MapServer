@@ -679,7 +679,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
    int ret = MS_SUCCESS;
    if (!p)
       return MS_SUCCESS;
-   if (style->symbol >= symbolset->numsymbols || style->symbol < 0)
+   if (style->symbol >= symbolset->numsymbols || style->symbol <= 0)
       return MS_SUCCESS; /* no such symbol, 0 is OK   */
 
    if (image)
