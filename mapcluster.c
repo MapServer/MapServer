@@ -39,6 +39,10 @@ MS_CVSID("$Id$")
 #define EQUAL(a,b) (strcasecmp(a, b) == 0)
 #endif
 
+#ifndef EQUALN
+#define EQUALN(a,b,n) (strncasecmp(a, b,n) == 0)
+#endif
+
 #ifdef USE_CLUSTER_PLUGIN
 #define USE_CLUSTER_EXTERNAL
 #endif
