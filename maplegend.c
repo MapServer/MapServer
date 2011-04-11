@@ -70,7 +70,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
                                  altFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution, &map->imagecolor);
       renderer = MS_IMAGE_RENDERER(image_draw);
   }
-  else if (MS_RENDERER_PLUGIN(image_draw->format)) {
+  else {
       renderer = MS_IMAGE_RENDERER(image_draw);
       if (lp->opacity > 0 && lp->opacity < 100) {
           if (!renderer->supports_transparent_layers) {
