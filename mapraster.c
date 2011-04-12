@@ -523,7 +523,9 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     }
 
     if(strlen(filename) == 0) continue;
-    msDebug( "msDrawRasterLayerLow(%s): Filename is: %s\n", layer->name, filename);
+
+    if(layer->debug == MS_TRUE) 
+      msDebug( "msDrawRasterLayerLow(%s): Filename is: %s\n", layer->name, filename);
 
     /*
     ** If using a tileindex then build the path relative to that file if SHAPEPATH is not set.
@@ -536,7 +538,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     } else {
       msTryBuildPath3(szPath, map->mappath, map->shapepath, filename);
     }
-    msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, szPath);
+    if(layer->debug == MS_TRUE) 
+      msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, szPath);
 
     /* 
     ** Note: because we do decryption after the above path expansion 
