@@ -5127,8 +5127,7 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot) {
       msFree(cacheslot->labels[i].text);
       if (cacheslot->labels[i].labelpath)
         msFreeLabelPathObj(cacheslot->labels[i].labelpath);
-      if( cacheslot->labels[i].label.font != NULL )
-          msFree( cacheslot->labels[i].label.font );
+      freeLabel(&(cacheslot->labels[i].label));
       msFreeShape(cacheslot->labels[i].poly); /* empties the shape */
       msFree(cacheslot->labels[i].poly); /* free's the pointer */
       for(j=0;j<cacheslot->labels[i].numstyles; j++) freeStyle(&(cacheslot->labels[i].styles[j]));
