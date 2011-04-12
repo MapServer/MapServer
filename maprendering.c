@@ -254,6 +254,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
                &tmpraster,
                1.0,width,height,0,0,width,height
                );
+         msFreeImage(tile3img);
       }
       tile = addTileCache(img,tileimg,symbol,s,width,height);
    }
