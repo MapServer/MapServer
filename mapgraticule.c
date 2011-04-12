@@ -143,9 +143,6 @@ int msGraticuleLayerClose(layerObj *layer)
     pInfo->pboundinglines = NULL;
   }
 
-  free(layer->layerinfo);
-  layer->layerinfo = NULL;
-  
   return MS_SUCCESS;
 }
 
