@@ -682,7 +682,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
    else
       r->m_renderer_base.clear(AGG_NO_COLOR);
 
-   if (format->transparent || format->imagemode == MS_IMAGEMODE_RGBA ) {
+   if (!bg || format->transparent || format->imagemode == MS_IMAGEMODE_RGBA ) {
       r->use_alpha = true;
    } else {
       r->use_alpha = false;

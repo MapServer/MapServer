@@ -664,7 +664,7 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
   imageObj *image_draw = image;
-  outputFormatObj *transFormat = NULL, *altFormat=NULL;
+  outputFormatObj *altFormat=NULL;
   int retcode=MS_SUCCESS;
   int originalopacity = layer->opacity;
   const char *alternativeFomatString = NULL;
@@ -698,10 +698,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 	    rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
 		if (layer->opacity > 0 && layer->opacity < 100) {
 			if (!renderer->supports_transparent_layers) {
-				msApplyOutputFormat(&transFormat, image->format, MS_TRUE,
-						MS_NOOVERRIDE,MS_NOOVERRIDE);
 				image_draw = msImageCreate(image->width, image->height,
-						transFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
+						image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
 				if (!image_draw) {
 					msSetError(MS_MISCERR, "Unable to initialize temporary transparent image.",
 							"msDrawLayer()");
@@ -755,10 +753,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 	  renderer->getRasterBufferHandle(image_draw,&rb);
 	  renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);  
 	  msFreeImage(image_draw);
-
-	  /* deref and possibly free temporary transparent output format.  */
-	  msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-
   }
   
   msImageEndLayer(map,layer,image);
