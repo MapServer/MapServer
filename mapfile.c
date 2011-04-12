@@ -3416,10 +3416,6 @@ int freeLayer(layerObj *layer) {
 
   if(msLayerIsOpen(layer))
      msLayerClose(layer);
-  if( layer->layerinfo &&  layer->connectiontype == MS_GRATICULE) {
-     free(layer->layerinfo);
-     layer->layerinfo = NULL;
-  }
 
   msFree(layer->name);
   msFree(layer->group);
