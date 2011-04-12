@@ -1178,7 +1178,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
     const char *pszOutputSRS = NULL;
     lp = (GET_LAYER(map, map->layerorder[i]));
 
-    if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { /* found results */
+    if(lp->resultcache && lp->resultcache->numresults > 0) { /* found results */
 
 #ifdef USE_PROJ
       /* Determine output SRS, if map has none, then try using layer's native SRS */
@@ -1410,7 +1410,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
 
     lp = GET_LAYER(map, map->layerorder[i]);
 
-    if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
+    if(lp->resultcache && lp->resultcache->numresults > 0)  { /* found results */
       char *layerName;      
       const char *value;
       int featureIdIndex=-1; /* no feature id */

@@ -234,8 +234,8 @@ void msWCSFreeParams(wcsParamsObj *params)
 
 int msWCSIsLayerSupported(layerObj *layer)
 {
-    /* only raster layers, with 'DUMP TRUE' explicitly defined, are elligible to be served via WCS, WMS rasters are not ok */
-    if(layer->dump && (layer->type == MS_LAYER_RASTER) && layer->connectiontype != MS_WMS) return MS_TRUE;
+    /* only raster layers, are elligible to be served via WCS, WMS rasters are not ok */
+    if((layer->type == MS_LAYER_RASTER) && layer->connectiontype != MS_WMS) return MS_TRUE;
 
     return MS_FALSE;
 }

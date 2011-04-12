@@ -471,10 +471,8 @@ int msWFSIsLayerSupported(layerObj *lp)
 {
     /* In order to be supported, lp->type must be specified, even for 
     ** layers that are OGR, SDE, SDO, etc connections.
-    ** lp->dump must be explicitly set to TRUE in mapfile.
     */
-    if (lp->dump && 
-        (lp->type == MS_LAYER_POINT ||
+    if ((lp->type == MS_LAYER_POINT ||
          lp->type == MS_LAYER_LINE ||
          lp->type == MS_LAYER_POLYGON ) &&
         lp->connectiontype != MS_WMS && 
@@ -833,7 +831,6 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       if (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers))
           continue;
 
-      /* List only vector layers in which DUMP=TRUE */
       if (msWFSIsLayerSupported(lp))
       {
           msWFSDumpLayer(map, lp);
@@ -1946,7 +1943,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
 
       if (!bLayerFound) {
 	/* Requested layer name was not in capabilities:
-	 * either it just doesn't exist, or it's missing DUMP TRUE
+	 * either it just doesn't exist
 	 */
 	msSetError(MS_WFSERR, 
 		   "TYPENAME '%s' doesn't exist in this server.  Please check the capabilities and reformulate your request.",
