@@ -371,12 +371,16 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
                switch (symbol->type) {
                case MS_SYMBOL_PIXMAP:
                   ret = renderer->renderPixmapSymbol(image, point.x, point.y, symbol, style);
+                  break;
                case MS_SYMBOL_ELLIPSE:
                   ret = renderer->renderEllipseSymbol(image, point.x, point.y, symbol, style);
+                  break;
                case MS_SYMBOL_VECTOR:
                   ret = renderer->renderVectorSymbol(image, point.x, point.y, symbol, style);
+                  break;
                case MS_SYMBOL_TRUETYPE:
                   ret = renderer->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
+                  break;
                }
             }
             before_length += length;
