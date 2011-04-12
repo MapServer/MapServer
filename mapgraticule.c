@@ -144,6 +144,7 @@ int msGraticuleLayerClose(layerObj *layer)
   }
 
   free(layer->layerinfo);
+  layer->layerinfo = NULL;
   
   return MS_SUCCESS;
 }
