@@ -309,15 +309,13 @@ int renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
 {
   gdImagePtr ip;
   int c;
-
+  gdImagePtr brush;
+  
   if(!img || !p || !stroke) return MS_FAILURE;
   if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return MS_FAILURE;
 
   SETPEN(ip, stroke->color);
   c = stroke->color->pen;
-
-  /* GD only has to worry about stroke width and pattern, no end cap or join */
-  if(stroke->width > 1) gdImageSetThickness(ip, stroke->width);
 
   if(stroke->patternlength > 0) {
     int *style;
@@ -344,12 +342,30 @@ int renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
 
     c = gdStyled;
   }
+
+  if(stroke->width > 1) {
+     int brush_fc; 
+     brush = gdImageCreate(stroke->width, stroke->width);
+     gdImageColorAllocate(brush, gdImageRed(ip,0), gdImageGreen(ip, 0), gdImageBlue(ip, 0));
+     gdImageColorTransparent(brush,0);
+     brush_fc = gdImageColorAllocate(brush, gdImageRed(ip,c), gdImageGreen(ip,c), gdImageBlue(ip,c));
+     gdImageFilledEllipse(brush,MS_NINT(stroke->width/2),MS_NINT(stroke->width/2),
+           stroke->width,stroke->width, brush_fc);
+     gdImageSetBrush(ip, brush);
+     if(stroke->patternlength > 0) {
+       c = gdStyledBrushed;
+     } else {
+       c = gdBrushed;
+     }
+  }
     
   /* finally draw something */
   imagePolyline(ip, p, c);
 
   /* clean up */
-  gdImageSetThickness(ip, 1);
+  if(stroke->width>1) {
+     gdImageDestroy(brush);
+  }
   return MS_SUCCESS;
 }
 
