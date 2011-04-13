@@ -3094,7 +3094,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
         /* Special RADIUS value that changes the query into a bbox query */
         /* based on the bbox in the request parameters. */
-	      if( strcasecmp(values[i], "BBOX") == 0)
+        if( strcasecmp(values[i], "BBOX") == 0)
         {
             use_bbox = MS_TRUE;
         }
