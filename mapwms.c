@@ -3036,6 +3036,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   const char *format_list=NULL;
   int valid_format=MS_FALSE;
   int format_found = MS_FALSE;
+  int use_bbox = MS_FALSE;
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
@@ -3090,11 +3091,21 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
         /* This is not part of the spec, but some servers such as cubeserv */
         /* support it as a vendor-specific feature. */
         /* It's easy for MapServer to handle this so let's do it! */
-        int j;
-        for(j=0; j<map->numlayers; j++)
+
+        /* Special RADIUS value that changes the query into a bbox query */
+        /* based on the bbox in the request parameters. */
+	      if( strcasecmp(values[i], "BBOX") == 0)
         {
-            GET_LAYER(map, j)->tolerance = atoi(values[i]);
-            GET_LAYER(map, j)->toleranceunits = MS_PIXELS;
+            use_bbox = MS_TRUE;
+        }
+        else
+        {
+            int j;
+            for(j=0; j<map->numlayers; j++)
+            {
+                GET_LAYER(map, j)->tolerance = atoi(values[i]);
+                GET_LAYER(map, j)->toleranceunits = MS_PIXELS;
+            }
         }
     }
 
@@ -3131,44 +3142,58 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
           return msWMSException(map, nVersion, "LayerNotQueryable", wms_exception_format);
       }
   }
-  if(point.x == -1.0 || point.y == -1.0) {
+
+  if( use_bbox == MS_FALSE ) {
+
+    if(point.x == -1.0 || point.y == -1.0) {
+      if (nVersion >= OWS_1_3_0)
+        msSetError(MS_WMSERR, "Required I/J parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
+      else
+        msSetError(MS_WMSERR, "Required X/Y parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
+    }
+
+    /*wms1.3.0: check if the points are valid*/
     if (nVersion >= OWS_1_3_0)
-      msSetError(MS_WMSERR, "Required I/J parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
-    else
-      msSetError(MS_WMSERR, "Required X/Y parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
-    return msWMSException(map, nVersion, NULL, wms_exception_format);
+    {
+        if (point.x > map->width || point.y > map->height)
+        {
+            msSetError(MS_WMSERR, "Invalid I/J values", "msWMSFeatureInfo()");
+            return msWMSException(map, nVersion, "InvalidPoint", wms_exception_format);
+        }
+    }
+    /* Perform the actual query */
+    cellx = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width); /* note: don't adjust extent, WMS assumes incoming extent is correct */
+    celly = MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
+    point.x = MS_IMAGE2MAP_X(point.x, map->extent.minx, cellx);
+    point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
+
+    /* WMS 1.3.0 states that feature_count is *per layer*. 
+     * Its value is a positive integer, if omitted then the default is 1
+     */
+    if (feature_count < 1)
+        feature_count = 1;
+
+    map->query.type = MS_QUERY_BY_POINT;
+    map->query.mode = (feature_count==1?MS_QUERY_SINGLE:MS_QUERY_MULTIPLE);
+    map->query.layer = -1;
+    map->query.point = point;
+    map->query.buffer = 0;
+    map->query.maxresults = feature_count; 
+
+    if(msQueryByPoint(map) != MS_SUCCESS)
+      if((query_status=ms_error->code) != MS_NOTFOUND) return msWMSException(map, nVersion, NULL, wms_exception_format);
+
+  } else { /* use_bbox == MS_TRUE */
+    map->query.type = MS_QUERY_BY_RECT;
+    map->query.mode = MS_QUERY_MULTIPLE;
+    map->query.layer = -1;
+    map->query.rect = map->extent;
+    map->query.buffer = 0;
+    map->query.maxresults = feature_count;
+    if(msQueryByRect(map) != MS_SUCCESS)
+      if((query_status=ms_error->code) != MS_NOTFOUND) return msWMSException(map, nVersion, NULL, wms_exception_format);
   }
-
-  /*wms1.3.0: check if the points are valid*/
-  if (nVersion >= OWS_1_3_0)
-  {
-      if (point.x > map->width || point.y > map->height)
-      {
-          msSetError(MS_WMSERR, "Invalid I/J values", "msWMSFeatureInfo()");
-          return msWMSException(map, nVersion, "InvalidPoint", wms_exception_format);
-      }
-  }
-  /* Perform the actual query */
-  cellx = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width); /* note: don't adjust extent, WMS assumes incoming extent is correct */
-  celly = MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
-  point.x = MS_IMAGE2MAP_X(point.x, map->extent.minx, cellx);
-  point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
-
-  /* WMS 1.3.0 states that feature_count is *per layer*. 
-   * Its value is a positive integer, if omitted then the default is 1
-   */
-  if (feature_count < 1)
-      feature_count = 1;
-
-  map->query.type = MS_QUERY_BY_POINT;
-  map->query.mode = (feature_count==1?MS_QUERY_SINGLE:MS_QUERY_MULTIPLE);
-  map->query.layer = -1;
-  map->query.point = point;
-  map->query.buffer = 0;
-  map->query.maxresults = feature_count; 
-
-  if(msQueryByPoint(map) != MS_SUCCESS)
-    if((query_status=ms_error->code) != MS_NOTFOUND) return msWMSException(map, nVersion, NULL, wms_exception_format);
 
   /*validate the INFO_FORMAT*/
    valid_format = MS_FALSE;
