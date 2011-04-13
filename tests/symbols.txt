@@ -1,0 +1,23 @@
+SYMBOLSET
+    SYMBOL
+        NAME 'circle' 
+        TYPE ellipse 
+        FILLED true 
+        POINTS
+          1 1 
+        END 
+    END
+
+    SYMBOL
+        NAME 'xmarks-png'
+        TYPE PIXMAP
+        IMAGE 'xmarks.png'
+    END
+
+    SYMBOL
+        NAME 'home-png'
+        TYPE PIXMAP
+        IMAGE 'home.png'
+    END
+END
+
