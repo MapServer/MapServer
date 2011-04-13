@@ -143,6 +143,9 @@ int msGraticuleLayerClose(layerObj *layer)
     pInfo->pboundinglines = NULL;
   }
 
+  free(layer->layerinfo);
+  layer->layerinfo=NULL;
+
   return MS_SUCCESS;
 }
 
@@ -477,8 +480,11 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
       pInfo->bvertical   = 0;
   }
 
-  if (pInfo->dwhichlatitude >  pInfo->dendlatitude)
+  if (pInfo->dwhichlatitude >  pInfo->dendlatitude) {
+    /* free the lineObj and pointObj that have been erroneously allocated beforehand */
+    msFreeShape(shape);
     return MS_DONE;
+  }
 
   return MS_SUCCESS;
 }

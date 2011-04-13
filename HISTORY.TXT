@@ -15,6 +15,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- fix memory leaks in mapgraticule.c (#3831)
+
+- fix runtime sub validation against web metadata, was using wrong lookup key
+
 - clean up the symbolset if we've used an alternate renderer for a layer (#3834,#3616)
 
 - fix crash on embeded legend with cairo raster renderer
