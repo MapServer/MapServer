@@ -1600,8 +1600,13 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
             psSize = CPLGetXMLNode(psGraphic, "Size");
             if (psSize && psSize->psChild && psSize->psChild->pszValue)
               psStyle->size = atof(psSize->psChild->pszValue);
-            else
-              psStyle->size = 6; /* default value */
+            else 
+            {
+                /*do not set a default for external symbols #2305*/
+                psExternalGraphic =  CPLGetXMLNode(psGraphic, "ExternalGraphic");
+                if (!psExternalGraphic)
+                  psStyle->size = 6; /* default value */
+            }
 
             /*SLD 1.1.0 extract opacity, rotation, displacement*/
             psOpacity = CPLGetXMLNode(psGraphic, "Opacity");
@@ -2194,57 +2199,23 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                 if (psTmp && psTmp->psChild)
                 {
                     pszURL = (char*)psTmp->psChild->pszValue;
-                    /* pf@mapmedia.de:
-                       check if this external graphic is allready in Symbollist; 
-                       avoids unnecessary http requests; 
-                       this works only if we use the url as symbol->name hashkey!
-                    */
+                    
+                    /*external symbols using http will be automaticallly downloaded. The file should be 
+                      saved in a temporary directory (msAddImageSymbol) #2305*/
                     psStyle->symbol = msGetSymbolIndex(&map->symbolset, 
                                                        pszURL, 
-                                                       MS_FALSE);
-                    if (psStyle->symbol <= 0) 
+                                                       MS_TRUE);
+                    
+                    if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
+                      psStyle->symbolname = msStrdup(map->symbolset.symbol[psStyle->symbol]->name);
+
+                    /* set the color parameter if not set. Does not make sense */
+                    /* for pixmap but mapserver needs it. */
+                    if (psStyle->color.red == -1 || psStyle->color.green || psStyle->color.blue)
                     {
-                        if (strcasecmp(pszFormat, "GIF") == 0 || 
-                            strcasecmp(pszFormat, "image/gif") == 0)
-                          pszTmpSymbolName = msTmpFile(map, map->mappath, NULL, "gif");
-                        else
-                            pszTmpSymbolName = msTmpFile(map, map->mappath, NULL, "png");
-
-                        if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) == MS_SUCCESS)
-                        {
-                            /* the last parameter is used to set the GAP size in the symbol. 
-                               It is harcoded to be 2 * the size set for the symbol. This is
-                               used when using graphic strokes with line symblizers (symbols
-                               along the line). Set to be negative for rotation purpose. */
-                               
-                            psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName, pszURL,
-                                                                    (int)(-(2 * psStyle->size)));
-                            if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
-                              psStyle->symbolname = msStrdup(map->symbolset.symbol[psStyle->symbol]->name);
-
-                            /* set the color parameter if not set. Does not make sense */
-                            /* for pixmap but mapserver needs it. */
-                            if (psStyle->color.red == -1 || psStyle->color.green || psStyle->color.blue)
-                            {
-                                psStyle->color.red = 0;
-                                psStyle->color.green = 0;
-                                psStyle->color.blue = 0;
-                            }
-                        }        
-                    } 
-                    else 
-                    {
-                        if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
-                          psStyle->symbolname = msStrdup(map->symbolset.symbol[psStyle->symbol]->name);
-
-                        /* set the color parameter if not set. Does not make sense */
-                        /* for pixmap but mapserver needs it. */
-                        if (psStyle->color.red == -1 || psStyle->color.green || psStyle->color.blue)
-                        {
-                            psStyle->color.red = 0;
-                            psStyle->color.green = 0;
-                            psStyle->color.blue = 0;
-                        }
+                        psStyle->color.red = 0;
+                        psStyle->color.green = 0;
+                        psStyle->color.blue = 0;
                     }
                 }
             }

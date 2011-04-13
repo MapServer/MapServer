@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- SLD: use pixmap size when parameter size is not specified (#2305)
+
 - fix memory leaks in mapgraticule.c (#3831)
 
 - fix runtime sub validation against web metadata, was using wrong lookup key
