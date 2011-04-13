@@ -733,14 +733,34 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
       rendererVTableObj *renderer = MS_IMAGE_RENDERER(image);
       rendererVTableObj *altrenderer = MS_IMAGE_RENDERER(image_draw);
       rasterBufferObj rb;
+      int i;
       memset(&rb,0,sizeof(rasterBufferObj));
 
       altrenderer->endLayer(image_draw,map,layer);
 
       altrenderer->getRasterBufferHandle(image_draw,&rb);
       renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);  
-      msFreeImage(image_draw);
       
+      /* 
+       * hack to work around bug #3834: if we have use an alternate renderer, the symbolset may contain
+       * symbols that reference it. We want to remove those references before the altFormat is destroyed
+       * to avoid a segfault and/or a leak, and so the the main renderer doesn't pick the cache up thinking
+       * it's for him.
+       */
+      for(i=0; i<map->symbolset.numsymbols; i++) {
+         if (map->symbolset.symbol[i]!=NULL) {
+            symbolObj *s = map->symbolset.symbol[i];
+            if(s->renderer == altrenderer) {
+	            altrenderer->freeSymbol(s);
+               s->renderer = NULL;
+            }
+         }
+      }
+      msFreeImage(image_draw);
+
+      /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
+      msFree(map->imagetype);
+      map->imagetype = msStrdup(image->format->name);
   }
   else if( image != image_draw) {
 	  rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);

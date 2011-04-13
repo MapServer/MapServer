@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- clean up the symbolset if we've used an alternate renderer for a layer (#3834,#3616)
+
 - fix crash on embeded legend with cairo raster renderer
 
 - fix crashes in SVG renderer on polygon symbol fills (#3837)
