@@ -12,8 +12,8 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk): 
----------------------------- 
+Version 6.0.0-beta6 (2011-04-13)
+--------------------------------
 
 - SLD: use pixmap size when parameter size is not specified (#2305)
 
@@ -21,7 +21,8 @@ Current Version (SVN trunk):
 
 - fix runtime sub validation against web metadata, was using wrong lookup key
 
-- clean up the symbolset if we've used an alternate renderer for a layer (#3834,#3616)
+- clean up the symbolset if we've used an alternate renderer for a 
+  layer (#3834,#3616)
 
 - fix crash on embeded legend with cairo raster renderer
 
@@ -39,7 +40,8 @@ Current Version (SVN trunk):
 
 - fix segfault with marker symbols on short lines (#3823)
 
-- wms_getmap_formatlist causes first defined outputformat to be returned by getmap (#3826)
+- wms_getmap_formatlist causes first defined outputformat to be returned by 
+  getmap (#3826)
 
 - fix building of mapcluster.c when OGR support is disabled
 
@@ -69,6 +71,8 @@ Current Version (SVN trunk):
 - Coding style and formatting fixes (#3819, #3820, #3821, and more)
 
 - More improvements to OpenGL error handling (#3791)
+
+- Added WMS GetFeatureInfo RADIUS=bbox vendor-specific option (#3561)
 
 Version 6.0.0-beta5 (2011-04-06)
 --------------------------------
