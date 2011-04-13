@@ -129,8 +129,9 @@ typedef struct {
 int freeImageCairo(imageObj *img) {
     cairo_renderer *r = CAIRO_RENDERER(img);
     if(r) {
-        cairo_surface_destroy(r->surface);
         cairo_destroy(r->cr);
+        cairo_surface_finish(r->surface);
+        cairo_surface_destroy(r->surface);
         if(r->outputStream) {
             msBufferFree(r->outputStream);
             free(r->outputStream);
