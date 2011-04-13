@@ -1216,33 +1216,32 @@ msDrawRasterLayerPlugin( mapObj *map, layerObj *layer, imageObj *image)
 
 {
     rendererVTableObj *renderer = MS_IMAGE_RENDERER(image);
-    rasterBufferObj  rb;
+    rasterBufferObj  *rb = msSmallCalloc(1,sizeof(rasterBufferObj));
     int ret;
-    memset(&rb,0,sizeof(rasterBufferObj));
     if( renderer->supports_pixel_buffer )
     {
-    	if (MS_SUCCESS != renderer->getRasterBufferHandle( image, &rb )) {
+    	if (MS_SUCCESS != renderer->getRasterBufferHandle( image, rb )) {
     		msSetError(MS_MISCERR,"renderer failed to extract raster buffer","msDrawRasterLayer()");
     		return MS_FAILURE;
     	}
-        ret = msDrawRasterLayerLow( map, layer, image, &rb );
+        ret = msDrawRasterLayerLow( map, layer, image, rb );
     }
     else
     {
-        if (MS_SUCCESS != renderer->initializeRasterBuffer( &rb, image->width, image->height, MS_IMAGEMODE_RGBA )) {
+        if (MS_SUCCESS != renderer->initializeRasterBuffer( rb, image->width, image->height, MS_IMAGEMODE_RGBA )) {
         	msSetError(MS_MISCERR,"renderer failed to create raster buffer","msDrawRasterLayer()");
         	return MS_FAILURE;
         }
         
-        ret = msDrawRasterLayerLow( map, layer, image, &rb );
+        ret = msDrawRasterLayerLow( map, layer, image, rb );
         
         if( ret == 0 )
         {
-        	renderer->mergeRasterBuffer( image, &rb, 1.0, 0, 0, 0, 0, rb.width, rb.height );
+        	renderer->mergeRasterBuffer( image, rb, 1.0, 0, 0, 0, 0, rb->width, rb->height );
         }
 
-        msFreeRasterBuffer(&rb);
-        
+        msFreeRasterBuffer(rb);
+        free(rb); 
         
     }
 #define RB_GET_R(rb,x,y) *((rb)->data.rgba.r + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)

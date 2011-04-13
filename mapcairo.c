@@ -666,17 +666,22 @@ int renderEllipseSymbolCairo(imageObj *img, double x, double y, symbolObj *symbo
 
 
 int startLayerVectorCairo(imageObj *img, mapObj *map, layerObj *layer) {
-    cairo_renderer *r = CAIRO_RENDERER(img);
-    cairo_push_group (r->cr);
-    return MS_SUCCESS;
+   if(layer->opacity != 100) {
+      cairo_renderer *r = CAIRO_RENDERER(img);
+      cairo_push_group (r->cr);
+   }
+   return MS_SUCCESS;
 }
 
 int closeLayerVectorCairo(imageObj *img, mapObj *map, layerObj *layer) {
-    cairo_renderer *r = CAIRO_RENDERER(img);
-    cairo_pop_group_to_source (r->cr);
-    cairo_paint_with_alpha (r->cr, layer->opacity*0.01);
-    return MS_SUCCESS;
+   if(layer->opacity != 100) { 
+      cairo_renderer *r = CAIRO_RENDERER(img);
+      cairo_pop_group_to_source (r->cr);
+      cairo_paint_with_alpha (r->cr, layer->opacity*0.01);
+   }
+   return MS_SUCCESS;
 }
+
 int startLayerRasterCairo(imageObj *img, mapObj *map, layerObj *layer) {
     return MS_SUCCESS;
 }
@@ -752,6 +757,8 @@ int mergeRasterBufferCairo(imageObj *img, rasterBufferObj *rb, double opacity,
         cairo_set_source_surface (r->cr,src,0,0);
         cairo_paint_with_alpha(r->cr,opacity);
     }
+    cairo_surface_finish(src);
+    cairo_surface_destroy(src);
     return MS_SUCCESS;
 }
 
@@ -763,6 +770,7 @@ int freeSymbolCairo(symbolObj *s) {
         cairo_path_destroy(s->renderer_cache);
         break;
     case MS_SYMBOL_PIXMAP:
+        cairo_surface_finish(s->renderer_cache);
         cairo_surface_destroy(s->renderer_cache);
         break;
     }
