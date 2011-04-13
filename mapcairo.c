@@ -721,7 +721,7 @@ int getRasterBufferCopyCairo(imageObj *img, rasterBufferObj *rb) {
     rb->width = cairo_image_surface_get_width(r->surface);
     rb->height = cairo_image_surface_get_height(r->surface);
     pb = (unsigned char*)malloc(rb->height * rb->data.rgba.row_step * sizeof(unsigned char*));
-    memcpy(pb,cairo_image_surface_get_data(r->surface),rb->height * rb->data.rgba.row_step * sizeof(unsigned char*));
+    memcpy(pb,cairo_image_surface_get_data(r->surface),rb->height * rb->data.rgba.row_step);
     rb->data.rgba.pixels = pb;
     rb->data.rgba.r = &(pb[2]);
     rb->data.rgba.g = &(pb[1]);
