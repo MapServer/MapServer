@@ -32,6 +32,7 @@
 #include "setjmp.h"
 #include <assert.h>
 #include "jpeglib.h"
+#include <stdlib.h>
 
 #ifdef USE_GIF
 #include "gif_lib.h"
@@ -237,7 +238,7 @@ int remapPaletteForPNG(rasterBufferObj *rb, rgbPixel *rgb, unsigned char *a, int
    return MS_SUCCESS;
 }
 
-int savePalettePNG(rasterBufferObj *rb, streamInfo *info) {
+int savePalettePNG(rasterBufferObj *rb, streamInfo *info, int compression) {
    png_infop info_ptr;
    rgbPixel rgb[256];
    unsigned char a[256];
@@ -269,8 +270,7 @@ int savePalettePNG(rasterBufferObj *rb, streamInfo *info) {
    else
       png_set_write_fn(png_ptr,info, png_write_data_to_buffer, png_flush_data);
    
-   /* set max compression (writing a palette image is to gain size anyways */
-   png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
+   png_set_compression_level(png_ptr, compression);
    
    if (rb->data.palette.num_entries <= 2)
     sample_depth = 1;
@@ -355,8 +355,20 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
     int force_palette = MS_FALSE;
    
     int ret = MS_FAILURE;
-    const char *force_string;
-   
+
+    const char *force_string,*zlib_compression;
+    int compression = -1;
+
+    zlib_compression = msGetOutputFormatOption( format, "COMPRESSION", NULL);
+    if(zlib_compression && *zlib_compression) {
+      char *endptr;
+      compression = strtol(zlib_compression,&endptr,10);
+      if(*endptr || compression<-1 || compression>9) {
+         msSetError(MS_MISCERR,"failed to parse FORMATOPTION \"COMPRESSION=%s\", expecting integer from 0 to 9.","saveAsPNG()",zlib_compression);
+         return MS_FAILURE;
+      }
+    }
+
    
     force_string = msGetOutputFormatOption( format, "QUANTIZE_FORCE", NULL );
     if( force_string && (strcasecmp(force_string,"on") == 0  || strcasecmp(force_string,"yes") == 0 || strcasecmp(force_string,"true") == 0) )
@@ -407,7 +419,7 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
         }
         if(ret != MS_FAILURE) {
             ret = msClassifyRasterBuffer(rb,&qrb);
-            ret = savePalettePNG(&qrb,info);  
+            ret = savePalettePNG(&qrb,info,compression);  
         }
         //msFreeRasterBuffer(&qrb);
         return ret;
@@ -446,6 +458,7 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
         else
             color_type = PNG_COLOR_TYPE_RGB;
 	
+        png_set_compression_level(png_ptr, compression);
         png_set_IHDR(png_ptr, info_ptr, rb->width, rb->height,
                      8, color_type, PNG_INTERLACE_NONE,
                      PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
