@@ -903,17 +903,23 @@ xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *ima
     }
 
     char crdStr[64];
+    rectObj mapextent;
+    if (map->gt.need_geotransform == MS_TRUE)
+      mapextent = currentLayer->map->saved_extent;
+    else
+      mapextent = currentLayer->map->extent;
+
     xmlNodePtr latLonBoxNode = xmlNewChild(groundOverlayNode, NULL, BAD_CAST "LatLonBox", NULL);
-    sprintf(crdStr, "%.8f", currentLayer->map->extent.maxy);
+    sprintf(crdStr, "%.8f", mapextent.maxy);
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "north", BAD_CAST crdStr);
 
-    sprintf(crdStr, "%.8f", currentLayer->map->extent.miny);
+    sprintf(crdStr, "%.8f", mapextent.miny);
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "south", BAD_CAST crdStr);
 
-    sprintf(crdStr, "%.8f", currentLayer->map->extent.minx);
+    sprintf(crdStr, "%.8f", mapextent.minx);
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "west", BAD_CAST crdStr);
 
-    sprintf(crdStr, "%.8f", currentLayer->map->extent.maxx);
+    sprintf(crdStr, "%.8f", mapextent.maxx);
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "east", BAD_CAST crdStr);
 
     xmlNewChild(latLonBoxNode, NULL, BAD_CAST "rotation", BAD_CAST "0.0");

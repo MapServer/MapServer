@@ -15,7 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
-- ...
+- KML: latlon bbox for raster layers could end up being wrong for non-square requests (#3840)
 
 Version 6.0.0-beta6 (2011-04-13)
 --------------------------------
