@@ -9808,6 +9808,7 @@ echo "$as_me: error: \"could not find ftgl.h/FTGL.h in $FTGL_DIR/include/FTGL.\"
   fi
 
   test -f $FTGL_DIR/lib/libftgl.so && FTGL_LIBDIR="$FTGL_DIR/lib"
+  test -f $FTGL_DIR/lib/libftgl.dylib && FTGL_LIBDIR="$FTGL_DIR/lib"
   test -f $FTGL_DIR/lib64/libftgl.so && FTGL_LIBDIR="$FTGL_DIR/lib64"
 
   if test -z "$FTGL_LIBDIR" ; then
@@ -9908,6 +9909,7 @@ echo "$as_me: error: \"could not find gl.h in $OGL_DIR/include/.\"" >&2;}
   fi
 
   test -f $OGL_DIR/lib/libGL.so -a -f $OGL_DIR/lib/libGLU.so && OGL_LIBDIR="$OGL_DIR/lib"
+  test -f $OGL_DIR/lib/libGL.dylib -a -f $OGL_DIR/lib/libGLU.dylib && OGL_LIBDIR="$OGL_DIR/lib"
   test -f $OGL_DIR/lib64/libGL.so -a -f $OGL_DIR/lib64/libGLU.so && OGL_LIBDIR="$OGL_DIR/lib64"
 
   if test -z "$OGL_LIBDIR" ; then
@@ -15368,8 +15370,8 @@ echo "$as_me:$LINENO: result:   WMS Client:                ${WMS_LYR_ENABLED}" >
 echo "${ECHO_T}  WMS Client:                ${WMS_LYR_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   WFS Server:                ${WFS_SVR_ENABLED}" >&5
 echo "${ECHO_T}  WFS Server:                ${WFS_SVR_ENABLED}" >&6
-echo "$as_me:$LINENO: result:   WFS Client:                ${WMS_LYR_ENABLED}" >&5
-echo "${ECHO_T}  WFS Client:                ${WMS_LYR_ENABLED}" >&6
+echo "$as_me:$LINENO: result:   WFS Client:                ${WFS_LYR_ENABLED}" >&5
+echo "${ECHO_T}  WFS Client:                ${WFS_LYR_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   WCS Server:                ${WCS_SVR_ENABLED}" >&5
 echo "${ECHO_T}  WCS Server:                ${WCS_SVR_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   SOS Server:                ${SOS_SVR_ENABLED}" >&5
