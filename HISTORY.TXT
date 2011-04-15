@@ -20,6 +20,8 @@ Current Version (SVN trunk):
 Version 6.0.0-beta6 (2011-04-13)
 --------------------------------
 
+- define EQUAL/EQUALN macros if cpl_port.h was not included (#3844)
+
 - add configurable PNG/ZLIB compression level (#3841)
 
 - SLD: use pixmap size when parameter size is not specified (#2305)

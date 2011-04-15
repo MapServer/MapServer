@@ -37,10 +37,6 @@
 
 MS_CVSID("$Id$")
 
-#ifndef EQUALN
-#define EQUALN(a,b,n) (strncasecmp(a, b,n) == 0)
-#endif
-
 /*
 ** msOWSDispatch() is the entry point for any OWS request (WMS, WFS, ...)
 ** - If this is a valid request then it is processed and MS_SUCCESS is returned
