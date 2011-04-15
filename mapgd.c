@@ -309,7 +309,7 @@ int renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
 {
   gdImagePtr ip;
   int c;
-  gdImagePtr brush;
+  gdImagePtr brush=NULL;
   
   if(!img || !p || !stroke) return MS_FAILURE;
   if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return MS_FAILURE;
