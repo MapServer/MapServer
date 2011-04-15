@@ -4,7 +4,7 @@
 MapServer Migration Guide
 *****************************************************************************
 
-:Last Updated: 2011-03-17
+:Last Updated: 2011-04-15
 
 .. contents:: Table of Contents
     :depth: 2
@@ -79,6 +79,34 @@ are no more. To draw a label "box" in 6.0 you'd do:
 
 More verbose but *much* more flexible in the long run.
 
+---------------------------------
+Core Changes - Rendering Overhaul
+---------------------------------
+
+The rendering backends for MapServer have been refactored for version 6 to
+allow us to support all features across all rendering drivers (GD,AGG,PDF,SVG, etc...).
+
+* PDF support is output through the cairo library. The dependency on the non-free
+  pdflib library has been removed. 
+* SVG support is output through the cairo library. The native mapserver SVG driver
+  has been removed.
+* AGG support is compiled in by default (no external dependency) and is the
+  default renderer for png and jpeg outputs.
+* GD support is limited to PC256 imagemodes, i.e. png or gif. It is the default
+  renderer for gif output.
+* SWF (flash) support has been dropped.
+* Header files for libpng, libjpeg and giflib are now required for building MapServer.
+  Install the -devel packages of these libraries.
+* All symbols now rotated anticlockwise following the ANGLE parameter. Previous versions
+  rotated vector symbols clockwise.
+* Polygon fills with vector symbols will not cleanly join at tile boundaries. For hatching
+  type symbology, use the HATCH symbol instead of a diagonal vector symbol.
+* Some inconsistencies between renderers have been ironed out. People relying on precise
+  symbol placement should check those, as there may have been some subtle changes in symbol
+  sizes and widths, or spacing between symbols on lines.
+* Style blocks with no associated symbol on point layers will produce no output, as opposed
+  to a single pixel in previous versions. Use an ellipse symbol instead.
+
 ------------------------------
 Mapfile Changes - line styling
 ------------------------------
@@ -88,7 +116,7 @@ All line styling must now be specified in layer STYLEs.
 The following parameters/keywords have been moved from SYMBOL
 to STYLE:
 
-PATTERN GAP LINECAP LINEJOIN LINEJOINMAXSIZE
+PATTERN POSITION GAP LINECAP LINEJOIN LINEJOINMAXSIZE
 
 The SYMBOL STYLE parameter/keyword was renamed to PATTERN in
 version 5.
@@ -248,7 +276,23 @@ OUTPUTFORMAT
 The OUTPUTFORMAT parameter validation when reading from the mapfile 
 will now trigger an error on some problems that in the past were 
 silently fixed up.  For instance using RGBA IMAGEMODE with JPEG format 
-now triggers an error instead of switching to IMAGEMODE RGB silently.  
+now triggers an error instead of switching to IMAGEMODE RGB silently.
+
+The default outputformats names, drivers and mimetypes have been significantly
+reorganized:
+
+* png : AGG/PNG (image/png)
+* jpeg : AGG/JPEG (image/jpeg)
+* gif : GD/GIF (image/gif)
+* png8 : AGG/PNG8 (same as AGG/PNG, but with 256 color quantization applied)
+  (image/png; mode=8bit)
+* png24 : AGG/PNG (for backwards compatibility) (image/png; mode=24bit)
+* pdf : CAIRO/PDF (application/x-pdf)
+* svg : CAIRO/SVG (image/svg+xml)
+* GTiff : GDAL/GTiff (image/tiff)
+* kml : KML (application/vnd.google-earth.kml++xml)
+* kmz : KMZ (application/vnd.google-earth.kmz)
+                              
 
 -------
 Rasters
