@@ -32,8 +32,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapgml.h"
-#include "gdfonts.h"
-
+#include <ctype.h>
 #include "maptemplate.h"
 
 #include "mapogcsld.h"
