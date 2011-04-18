@@ -667,19 +667,15 @@ int renderEllipseSymbolCairo(imageObj *img, double x, double y, symbolObj *symbo
 
 
 int startLayerVectorCairo(imageObj *img, mapObj *map, layerObj *layer) {
-   if(layer->opacity != 100) {
-      cairo_renderer *r = CAIRO_RENDERER(img);
-      cairo_push_group (r->cr);
-   }
+   cairo_renderer *r = CAIRO_RENDERER(img);
+   cairo_push_group (r->cr);
    return MS_SUCCESS;
 }
 
 int closeLayerVectorCairo(imageObj *img, mapObj *map, layerObj *layer) {
-   if(layer->opacity != 100) { 
-      cairo_renderer *r = CAIRO_RENDERER(img);
-      cairo_pop_group_to_source (r->cr);
-      cairo_paint_with_alpha (r->cr, layer->opacity*0.01);
-   }
+   cairo_renderer *r = CAIRO_RENDERER(img);
+   cairo_pop_group_to_source (r->cr);
+   cairo_paint_with_alpha (r->cr, layer->opacity*0.01);
    return MS_SUCCESS;
 }
 
