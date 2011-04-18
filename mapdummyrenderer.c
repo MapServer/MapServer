@@ -253,6 +253,7 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer) {
     renderer->cleanup = &cleanupDummy;
     renderer->startShape = NULL;
     renderer->endShape = NULL;
+    renderer->renderPolygonHatched = NULL;
     return MS_SUCCESS;
 }
 

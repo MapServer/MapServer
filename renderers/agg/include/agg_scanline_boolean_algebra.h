@@ -850,8 +850,8 @@ namespace mapserver
         unsigned num1 = sl1.num_spans();
         unsigned num2 = sl2.num_spans();
 
-        typename Scanline1::const_iterator span1;// = sl1.begin();
-        typename Scanline2::const_iterator span2;// = sl2.begin();
+        typename Scanline1::const_iterator span1 = NULL;// = sl1.begin();
+        typename Scanline2::const_iterator span2 = NULL;// = sl2.begin();
 
         enum invalidation_e 
         { 

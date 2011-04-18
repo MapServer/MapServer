@@ -597,7 +597,11 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             spacing = (style->size <= 0)?scalefactor:style->size*scalefactor;
             spacing = MS_MIN(spacing, style->maxsize);
             spacing = MS_MAX(spacing, style->minsize);
-            ret = msHatchPolygon(image,offsetPolygon,spacing,width,style->angle, &style->color);
+            if(renderer->renderPolygonHatched) {
+               ret = renderer->renderPolygonHatched(image,offsetPolygon,spacing,width,style->angle, &style->color);
+            } else {
+               ret = msHatchPolygon(image,offsetPolygon,spacing,width,style->angle, &style->color);
+            }
             goto cleanup;
          }
          else {

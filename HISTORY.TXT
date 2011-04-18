@@ -15,6 +15,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- fix poor performance of polygon hatching (#3846)
+
+- upgrade clipper library to 4.2 (related to #3846)
+
 - Fix configure output for "WFS Client" (was reporting WMS info, #3842)
 
 - KML: latlon bbox for raster layers could end up being wrong for non-square
