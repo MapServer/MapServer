@@ -1448,6 +1448,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     center.x = (shape->line[0].point[0].x + shape->line[0].point[1].x)/2.0;
     center.y = (shape->line[0].point[0].y + shape->line[0].point[1].y)/2.0;
     r = MS_ABS(center.x - shape->line[0].point[0].x);
+    if(r == 0)
+       r = MS_ABS(center.y - shape->line[0].point[0].y);
+    if(r == 0)
+       return(MS_SUCCESS);
 
     if(layer->transform == MS_TRUE) {
 
