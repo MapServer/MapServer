@@ -5289,14 +5289,19 @@ static int loadMapInternal(mapObj *map)
         if( getString(&key) == MS_FAILURE )
             return MS_FAILURE;
 
-        if( getString(&value) == MS_FAILURE )
+        if( getString(&value) == MS_FAILURE ) {
+            free(key);
             return MS_FAILURE;
+        }
 
-        if (msSetConfigOption( map, key, value ) == MS_FAILURE)
+        if (msSetConfigOption( map, key, value ) == MS_FAILURE) {
+            free(key);
+            free(value);
             return MS_FAILURE;
+        }
 
-        free( key ); key=NULL;
-        free( value ); value=NULL;
+        free( key );
+        free( value );
     }
     break;
 
