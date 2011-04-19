@@ -1492,6 +1492,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
    * do not enter the image */
   if(layer->class[c]->numstyles > 0 && layer->class[c]->styles[0] != NULL) {
       double maxsize,maxunscaledsize;
+      styleObj *style = layer->class[c]->styles[0];
+      if (!MS_IS_VALID_ARRAY_INDEX(style->symbol, map->symbolset.numsymbols)) {
+          msSetError(MS_SYMERR, "Invalid symbol index: %d", "msDrawShape()", style->symbol);
+          return MS_FAILURE;
+      }
       maxsize = MS_MAX(
           msSymbolGetDefaultSize(map->symbolset.symbol[layer->class[c]->styles[0]->symbol]),
           MS_MAX(layer->class[c]->styles[0]->size,layer->class[c]->styles[0]->width)
