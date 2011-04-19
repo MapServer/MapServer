@@ -35,11 +35,13 @@
 
 MS_CVSID("$Id$")
 
-#define MSUNION_NUMITEMS        2
+#define MSUNION_NUMITEMS        3
 #define MSUNION_SOURCELAYERNAME        "Union:SourceLayerName"
 #define MSUNION_SOURCELAYERNAMEINDEX   -100
 #define MSUNION_SOURCELAYERGROUP        "Union:SourceLayerGroup"
 #define MSUNION_SOURCELAYERGROUPINDEX   -101
+#define MSUNION_SOURCELAYERVISIBLE        "Union:SourceLayerVisible"
+#define MSUNION_SOURCELAYERVISIBLEINDEX   -102
 
 typedef struct
 {
@@ -259,6 +261,8 @@ int msUnionLayerInitItemInfo(layerObj *layer)
             itemindexes[i] = MSUNION_SOURCELAYERNAMEINDEX;
         else if (EQUAL(layer->items[i], MSUNION_SOURCELAYERGROUP))
             itemindexes[i] = MSUNION_SOURCELAYERGROUPINDEX;
+        else if (EQUAL(layer->items[i], MSUNION_SOURCELAYERVISIBLE))
+            itemindexes[i] = MSUNION_SOURCELAYERVISIBLEINDEX;
         else
             itemindexes[i] = numitems++;
     }
@@ -350,6 +354,13 @@ static int BuildFeatureAttributes(layerObj *layer, layerObj* srclayer, shapeObj 
             values[i] = msStrdup(srclayer->name);
         else if (itemindexes[i] == MSUNION_SOURCELAYERGROUPINDEX)
             values[i] = msStrdup(srclayer->group);
+        else if (itemindexes[i] == MSUNION_SOURCELAYERVISIBLEINDEX)
+        {
+            if (srclayer->status == MS_OFF)
+                values[i] = msStrdup("0");
+            else
+                values[i] = msStrdup("1");
+        }
         else if (shape->values[itemindexes[i]])
             values[i] = msStrdup(shape->values[itemindexes[i]]);
         else
@@ -419,9 +430,23 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
 
             /* construct the item array */
             if (layer->iteminfo)
-                return BuildFeatureAttributes(layer, srclayer, shape);
+                rv = BuildFeatureAttributes(layer, srclayer, shape);
 
-            return MS_SUCCESS;
+            /* check the layer filter condition */
+            if(layer->filter.string != NULL && layer->numitems > 0 && layer->iteminfo)
+            {
+                if (layer->filter.type == MS_EXPRESSION && layer->filter.tokens == NULL)
+                    msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
+
+                if (!msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex)) 
+                {
+                    /* this shape is filtered */
+                    msFreeShape(shape);
+                    continue;
+                }
+            }
+
+            return rv;
         }
 
         ++layerinfo->layerIndex;
@@ -489,7 +514,7 @@ int msUnionLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 int msUnionLayerGetItems(layerObj *layer)
 {
     /* we support certain built in attributes */
-    layer->numitems = MSUNION_NUMITEMS;
+    layer->numitems = 2;
     layer->items = malloc(sizeof(char*) * (layer->numitems));
     MS_CHECK_ALLOC(layer->items, layer->numitems * sizeof(char*), MS_FAILURE);
     layer->items[0] = msStrdup(MSUNION_SOURCELAYERNAME);
