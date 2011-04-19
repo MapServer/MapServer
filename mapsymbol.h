@@ -72,6 +72,7 @@ typedef struct {
 	unsigned char *pixels; /*stores the actual pixel indexes*/
 	rgbaPixel *palette; /*rgba palette entries*/
 	unsigned int num_entries; /*number of palette entries*/
+   unsigned int scaling_maxval;
 } paletteArrayObj;
 
 typedef struct {

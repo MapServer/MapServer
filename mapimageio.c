@@ -194,18 +194,20 @@ int saveAsJPEG(mapObj *map /*not used*/, rasterBufferObj *rb, streamInfo *info,
 int remapPaletteForPNG(rasterBufferObj *rb, rgbPixel *rgb, unsigned char *a, int *num_a) {
    int bot_idx, top_idx, x;
    int remap[256];
-   /*
-   ** Step 3.5 [GRR]: remap the palette colors so that all entries with
-   ** the maximal alpha value (i.e., fully opaque) are at the end and can
-   ** therefore be omitted from the tRNS chunk.  Note that the ordering of
-   ** opaque entries is reversed from how Step 3 arranged them--not that
-   ** this should matter to anyone.
-   */
-   
+   unsigned int maxval = rb->data.palette.scaling_maxval; 
+  
    assert(rb->type == MS_BUFFER_BYTE_PALETTE);
    
+   /*
+   ** remap the palette colors so that all entries with
+   ** the maximal alpha value (i.e., fully opaque) are at the end and can
+   ** therefore be omitted from the tRNS chunk.  Note that the ordering of
+   ** opaque entries is reversed from how they were previously arranged
+   ** --not that this should matter to anyone.
+   */
+   
    for (top_idx = rb->data.palette.num_entries-1, bot_idx = x = 0;  x < rb->data.palette.num_entries;  ++x) {
-     if (rb->data.palette.palette[x].a == 255)
+     if (rb->data.palette.palette[x].a == maxval)
          remap[x] = top_idx--;
      else
          remap[x] = bot_idx++;
@@ -219,19 +221,28 @@ int remapPaletteForPNG(rasterBufferObj *rb, rgbPixel *rgb, unsigned char *a, int
    *num_a = bot_idx;
    
    for(x=0;x<rb->width*rb->height;x++)
-         rb->data.palette.pixels[x] = remap[rb->data.palette.pixels[x]];
+      rb->data.palette.pixels[x] = remap[rb->data.palette.pixels[x]];
    
+
    for (x = 0; x < rb->data.palette.num_entries; ++x) {
-      a[remap[x]] = rb->data.palette.palette[x].a;
-      if(a[remap[x]] == 255) {
+      if(maxval == 255) {
+         a[remap[x]] = rb->data.palette.palette[x].a;
          rgb[remap[x]].r = rb->data.palette.palette[x].r;
          rgb[remap[x]].g = rb->data.palette.palette[x].g;
          rgb[remap[x]].b = rb->data.palette.palette[x].b;
       } else {
-         double da = a[remap[x]]/255.0;
-         rgb[remap[x]].r = rb->data.palette.palette[x].r / da;
-         rgb[remap[x]].g = rb->data.palette.palette[x].g / da;
-         rgb[remap[x]].b = rb->data.palette.palette[x].b / da;
+         /* rescale palette */
+         rgb[remap[x]].r = (rb->data.palette.palette[x].r * 255 + (maxval >> 1)) / maxval;
+         rgb[remap[x]].g = (rb->data.palette.palette[x].g * 255 + (maxval >> 1)) / maxval;
+         rgb[remap[x]].b = (rb->data.palette.palette[x].b * 255 + (maxval >> 1)) / maxval;
+         a[remap[x]] = (rb->data.palette.palette[x].a * 255 + (maxval >> 1)) / maxval;
+      }
+      if(a[remap[x]] != 255) {
+         /* un-premultiply pixels */
+         double da = 255.0/a[remap[x]];
+         rgb[remap[x]].r *=  da;
+         rgb[remap[x]].g *=  da;
+         rgb[remap[x]].b *=  da;
       }
    }
    
@@ -287,7 +298,7 @@ int savePalettePNG(rasterBufferObj *rb, streamInfo *info, int compression) {
                PNG_FILTER_TYPE_DEFAULT);
    
    remapPaletteForPNG(rb,rgb,a,&num_a);
-   
+
    png_set_PLTE(png_ptr, info_ptr, (png_colorp)(rgb),rb->data.palette.num_entries);
    if(num_a)
       png_set_tRNS(png_ptr, info_ptr, a,num_a, NULL);
@@ -387,10 +398,13 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
         qrb.width = rb->width;
         qrb.height = rb->height;
         qrb.data.palette.pixels = (unsigned char*)malloc(qrb.width*qrb.height*sizeof(unsigned char));
+        qrb.data.palette.scaling_maxval = 255;
         if(force_pc256) {
             qrb.data.palette.palette = palette;
             qrb.data.palette.num_entries = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
-            ret = msQuantizeRasterBuffer(rb,&(qrb.data.palette.num_entries),qrb.data.palette.palette, NULL, 0);
+            ret = msQuantizeRasterBuffer(rb,&(qrb.data.palette.num_entries),qrb.data.palette.palette,
+                  NULL, 0,
+                  &qrb.data.palette.scaling_maxval);
         } else {
             int colorsWanted = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "0"));
             const char *palettePath = msGetOutputFormatOption( format, "PALETTE", "palette.txt");
@@ -414,14 +428,15 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
                 qrb.data.palette.palette = palette;
                 qrb.data.palette.num_entries = MS_MAX(colorsWanted,numPaletteGivenEntries);
                 ret = msQuantizeRasterBuffer(rb,&(qrb.data.palette.num_entries),qrb.data.palette.palette,
-                                             paletteGiven,numPaletteGivenEntries);            
+                                             paletteGiven,numPaletteGivenEntries,
+                                             &qrb.data.palette.scaling_maxval);            
             }
         }
         if(ret != MS_FAILURE) {
             ret = msClassifyRasterBuffer(rb,&qrb);
             ret = savePalettePNG(&qrb,info,compression);  
         }
-        //msFreeRasterBuffer(&qrb);
+        msFree(qrb.data.palette.pixels);
         return ret;
     }
     else if(rb->type == MS_BUFFER_BYTE_RGBA) {

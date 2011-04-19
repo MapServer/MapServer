@@ -121,16 +121,21 @@ static void pam_freeacolorhash (acolorhash_table acht);
  * - forced_palette: entries that should appear in the computed palette
  * - num_forced_palette_entries: number of entries contained in "force_palette". if 0,
  *   "force_palette" can be NULL
+ * - palette_scaling_maxval: the quantization process may have to reduce the image depth
+ *   by iteratively dividing the pixels by 2. In case palette_scaling_maxval is set to
+ *   something different than 255, the returned palette colors have to be scaled back up to
+ *   255, and rb's pixels will have been scaled down to maxsize (see bug #3848)
  */
 int msQuantizeRasterBuffer(rasterBufferObj *rb,
       unsigned int *reqcolors, rgbaPixel *palette,
-      rgbaPixel *forced_palette, int num_forced_palette_entries) {
+      rgbaPixel *forced_palette, int num_forced_palette_entries,
+      unsigned int *palette_scaling_maxval) {
           rgbaPixel **apixels=NULL; /* pointer to the start rows of truecolor pixels */
 	
     register rgbaPixel *pP;
     register int col;
     
-    unsigned char maxval, newmaxval;
+    unsigned char newmaxval;
     acolorhist_vector achv, acolormap=NULL;
     
     int row;
@@ -142,7 +147,7 @@ int msQuantizeRasterBuffer(rasterBufferObj *rb,
     
 	 assert(rb->type == MS_BUFFER_BYTE_RGBA);
 
-    maxval = 255;
+    *palette_scaling_maxval = 255;
 
     apixels=(rgbaPixel**)msSmallMalloc(rb->height*sizeof(rgbaPixel**));
     
@@ -162,41 +167,25 @@ int msQuantizeRasterBuffer(rasterBufferObj *rb,
                 apixels, rb->width, rb->height, MAXCOLORS, &colors );
         if ( achv != (acolorhist_vector) 0 )
             break;
-        newmaxval = maxval / 2;
+        newmaxval = *palette_scaling_maxval / 2;
         for ( row = 0; row < rb->height; ++row )
             for ( col = 0, pP = apixels[row]; col < rb->width; ++col, ++pP )
-                PAM_DEPTH( *pP, *pP, maxval, newmaxval );
-        maxval = newmaxval;
+                PAM_DEPTH( *pP, *pP, *palette_scaling_maxval, newmaxval );
+        *palette_scaling_maxval = newmaxval;
     }
     newcolors = MS_MIN(colors, *reqcolors);
-    acolormap = mediancut(achv, colors, rb->width*rb->height, maxval, newcolors);
+    acolormap = mediancut(achv, colors, rb->width*rb->height, *palette_scaling_maxval, newcolors);
     pam_freeacolorhist(achv);
     
     
     *reqcolors = newcolors;
 
 
-    /*
-     ** rescale the palette colors to a maxval of 255
-     */
-
-    if (maxval < 255) {
-        for (x = 0; x < newcolors; ++x) {
-            /* the rescaling part of this is really just PAM_DEPTH() broken out
-             *  for the PNG palette; the trans-remapping just puts the values
-             *  in different slots in the PNG palette */
-        	palette[x].r = (acolormap[x].acolor.r * 255 + (maxval >> 1)) / maxval;
-        	palette[x].g = (acolormap[x].acolor.g * 255 + (maxval >> 1)) / maxval;
-        	palette[x].b = (acolormap[x].acolor.b * 255 + (maxval >> 1)) / maxval;
-        	palette[x].a = (acolormap[x].acolor.a * 255 + (maxval >> 1)) / maxval;
-        }
-    } else {
-        for (x = 0; x < newcolors; ++x) {
-         palette[x].r = acolormap[x].acolor.r;
-         palette[x].g = acolormap[x].acolor.g;
-         palette[x].b = acolormap[x].acolor.b;
-         palette[x].a = acolormap[x].acolor.a;
-        }
+    for (x = 0; x < newcolors; ++x) {
+       palette[x].r = acolormap[x].acolor.r;
+       palette[x].g = acolormap[x].acolor.g;
+       palette[x].b = acolormap[x].acolor.b;
+       palette[x].a = acolormap[x].acolor.a;
     }
     
    free(acolormap);

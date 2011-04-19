@@ -2620,7 +2620,9 @@ typedef struct _autobuffer {
 
 
 /* in mapimageio.c */
-int msQuantizeRasterBuffer(rasterBufferObj *rb, unsigned int *reqcolors, rgbaPixel *palette, rgbaPixel *forced_palette, int num_forced_palette_entries);
+int msQuantizeRasterBuffer(rasterBufferObj *rb, unsigned int *reqcolors, rgbaPixel *palette,
+      rgbaPixel *forced_palette, int num_forced_palette_entries,
+      unsigned int *palette_scaling_maxval);
 int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb);
 int msSaveRasterBuffer(mapObj *map, rasterBufferObj *data, FILE *stream, outputFormatObj *format);
 int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer, outputFormatObj *format);
