@@ -398,19 +398,19 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
         srclayer = &layerinfo->layers[layerinfo->layerIndex];
         while (srclayer->vtable->LayerNextShape(srclayer, shape) == MS_SUCCESS)
         {
-            layerinfo->classIndex = msShapeGetClass(srclayer, layer->map, shape, layerinfo->classgroup, layerinfo->nclasses);
-            if((layerinfo->classIndex == -1) || (srclayer->class[layerinfo->classIndex]->status == MS_OFF)) 
+            if(strcasecmp(layer->styleitem, "AUTO") != 0) 
             {
-                // this shape is not visible, skip it
-                msFreeShape(shape);
-                if (rv == MS_SUCCESS)
-                    continue;
-                else 
-                    break;
-            }
-
-            if(layer->styleitem) 
-            {
+                /* need to retrieve the source layer classindex if styleitem AUTO is set */
+                layerinfo->classIndex = msShapeGetClass(srclayer, layer->map, shape, layerinfo->classgroup, layerinfo->nclasses);
+                if((layerinfo->classIndex == -1) || (srclayer->class[layerinfo->classIndex]->status == MS_OFF)) 
+                {
+                    // this shape is not visible, skip it
+                    msFreeShape(shape);
+                    if (rv == MS_SUCCESS)
+                        continue;
+                    else 
+                        break;
+                }
                 if(strcasecmp(srclayer->styleitem, "AUTO") != 0) 
                 {
                     /* Generic feature style handling as per RFC-61 */

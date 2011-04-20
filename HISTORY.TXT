@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Union Layer: fix for the STYLEITEM AUTO option (#3674)
+
 - Union Layer: Add support for the layer FILTER expressions, 
   add "Union:SourceLayerVisible" predefined attribute (#3674)
 
