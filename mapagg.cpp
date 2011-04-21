@@ -921,7 +921,6 @@ static mapserver::path_storage createHatch(int sx, int sy, double angle, double 
 
 int agg2RenderPolygonHatched(imageObj *img, shapeObj *poly, double spacing, double width, double angle, colorObj *color) {
    
-   int intspacing = (int)spacing;
    msComputeBounds(poly);
 
    /* 
