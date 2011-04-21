@@ -66,6 +66,11 @@
 
 #include "renderers/agg/include/agg_conv_clipper.h"
 
+#ifdef AGG_ALIASED_ENABLED
+#include "renderers/agg/include/agg_renderer_primitives.h"
+#include "renderers/agg/include/agg_rasterizer_outline.h"
+#endif
+
 #ifdef CPL_MSB
 typedef mapserver::order_argb band_order;
 #else
@@ -88,6 +93,10 @@ typedef mapserver::font_engine_freetype_int16 font_engine_type;
 typedef mapserver::font_cache_manager<font_engine_type> font_manager_type;
 typedef mapserver::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
 
+#ifdef AGG_ALIASED_ENABLED
+typedef mapserver::renderer_primitives<renderer_base> renderer_primitives;
+typedef mapserver::rasterizer_outline<renderer_primitives> rasterizer_outline;
+#endif
 static color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
 
 const mapserver::int8u* rasterfonts[]= { 
@@ -118,14 +127,23 @@ public:
 class AGG2Renderer {
 public:
 
-   AGG2Renderer(){
-   }
+   AGG2Renderer()
+#ifdef AGG_ALIASED_ENABLED
+      :
+   m_renderer_primitives(m_renderer_base),
+   m_rasterizer_primitives(m_renderer_primitives)
+#endif
+   {}
 
    band_type* buffer;
    rendering_buffer m_rendering_buffer;
    pixel_format m_pixel_format;
    renderer_base m_renderer_base;
    renderer_scanline m_renderer_scanline;
+#ifdef AGG_ALIASED_ENABLED
+   renderer_primitives m_renderer_primitives;
+   rasterizer_outline m_rasterizer_primitives;
+#endif
    rasterizer_scanline m_rasterizer_aa;
    mapserver::scanline_p8 sl_poly; /*packed scanlines, works faster when the area is larger
     than the perimeter, in number of pixels*/
@@ -169,6 +187,14 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
 
    AGG2Renderer *r = AGG_RENDERER(img);
    line_adaptor lines = line_adaptor(p);
+
+#ifdef AGG_ALIASED_ENABLED
+   r->m_rasterizer_primitives.reset();
+   r->m_renderer_primitives.line_color(aggColor(style->color));
+   r->m_rasterizer_primitives.add_path(lines);
+   return MS_SUCCESS;
+#endif
+
    r->m_rasterizer_aa.reset();
    r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
    r->m_renderer_scanline.color(aggColor(style->color));
@@ -176,7 +202,8 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
    if (style->patternlength <= 0) {
       mapserver::conv_stroke<line_adaptor> stroke(lines);
       stroke.width(style->width);
-      applyCJC(stroke, style->linecap, style->linejoin);
+      if(style->width>1)
+         applyCJC(stroke, style->linecap, style->linejoin);
       r->m_rasterizer_aa.add_path(stroke);
    } else {
       mapserver::conv_dash<line_adaptor> dash(lines);
@@ -190,7 +217,8 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
          }
       }
       stroke_dash.width(style->width);
-      applyCJC(stroke_dash, style->linecap, style->linejoin);
+      if(style->width>1)
+         applyCJC(stroke_dash, style->linecap, style->linejoin);
       r->m_rasterizer_aa.add_path(stroke_dash);
    }
    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
