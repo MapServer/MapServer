@@ -499,7 +499,10 @@ void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr,
             if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
                 /* We add the label_size to the mindistance value when comparing because we do want the mindistance 
                    value between the labels and not only from point to point. */
-                if(label_size > 0 && (mindistance != -1) && (cachePtr->classindex == cacheslot->labels[i].classindex) && (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= (mindistance + label_size))) { /* label is a duplicate */
+                if(label_size > 0 && (mindistance != -1) && 
+                   (cachePtr->layerindex == cacheslot->labels[i].layerindex) && (cachePtr->classindex == cacheslot->labels[i].classindex) && 
+                   (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) &&
+                   (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= (mindistance + label_size))) { /* label is a duplicate */
                     cachePtr->status = MS_FALSE;
                     return;
                 }

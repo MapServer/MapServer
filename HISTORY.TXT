@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Fixed mindsitance label test to check layer indexes. (#3851)
+
 - Fixed segmentation fault in PHP/MapScript and improved the php object method calls (#3730)
 
 - Fix build issue related to unnecessary use of gdal-config --dep-libs (#3316)
