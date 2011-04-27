@@ -15,7 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
-- ...
+- Fix build issue related to unnecessary use of gdal-config --dep-libs (#3316)
 
 Version 6.0.0-beta7 (2011-04-20)
 --------------------------------
