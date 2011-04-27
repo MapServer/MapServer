@@ -249,9 +249,8 @@ PHP_METHOD(styleObj, updateFromString)
     char *snippet;
     long snippet_len;
     int status = MS_FAILURE;
-    zval retval;
-    zval *args[2];
-    zval function_name;
+    zval *retval;
+    zval property_name, value;
     php_style_object *php_style;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -270,21 +269,17 @@ PHP_METHOD(styleObj, updateFromString)
         return;
     }
     
-    ZVAL_LONG(&retval, status);
-
     /* verify the symbol if needed */
     if (php_style->style->symbolname) 
     {
-        MAKE_STD_ZVAL(args[0]);
-        MAKE_STD_ZVAL(args[1]);
-        ZVAL_STRING(args[0], "symbolname", 1);
-        ZVAL_STRING(args[1], php_style->style->symbolname, 1);
-        MAPSCRIPT_CALL_METHOD(zobj, "__set", retval, 2, args);
-        zval_ptr_dtor(&args[0]);
-        zval_ptr_dtor(&args[1]);
+        INIT_ZVAL(property_name);
+        INIT_ZVAL(value);
+        ZVAL_STRING(&property_name, "symbolname", 1);
+        ZVAL_STRING(&value, php_style->style->symbolname, 1);
+        MAPSCRIPT_CALL_METHOD_2(zobj, "__set", retval, &property_name, &value);
     }
 
-    RETURN_LONG(Z_LVAL(retval));
+    RETURN_LONG(status);
 }
 /* }}} */
 

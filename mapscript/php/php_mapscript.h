@@ -33,6 +33,7 @@
 #define PHP_MAPSCRIPT_H
 
 #include "php.h"
+#include "zend_interfaces.h"
 #include "php_mapscript_util.h"
 
 #ifdef USE_PHP_REGEX

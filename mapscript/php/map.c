@@ -2191,9 +2191,7 @@ PHP_METHOD(mapObj, getMetaData)
     zval *zname;
     zval *zobj = getThis();
     php_map_object *php_map;
-    zval retval;
-    zval *args[1];
-    zval function_name;
+    zval *retval;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z",
@@ -2206,10 +2204,9 @@ PHP_METHOD(mapObj, getMetaData)
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     CHECK_OBJECT(mapscript_ce_hashtable, php_map->metadata, &php_map->map->web.metadata);
     
-    args[0] = zname; 
-    MAPSCRIPT_CALL_METHOD(php_map->metadata, "get", retval, 1, args);
+    MAPSCRIPT_CALL_METHOD_1(php_map->metadata, "get", retval, zname); 
 
-    RETURN_STRING(Z_STRVAL(retval),1);
+    RETURN_STRING(Z_STRVAL_P(retval),1);
 }
 /* }}} */
 
@@ -2220,9 +2217,7 @@ PHP_METHOD(mapObj, setMetaData)
     zval *zname, *zvalue;
     zval *zobj = getThis();
     php_map_object *php_map;
-    zval retval;
-    zval *args[2];
-    zval function_name;
+    zval *retval;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz",
@@ -2235,11 +2230,9 @@ PHP_METHOD(mapObj, setMetaData)
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     CHECK_OBJECT(mapscript_ce_hashtable, php_map->metadata, &php_map->map->web.metadata);
     
-    args[0] = zname; 
-    args[1] = zvalue; 
-    MAPSCRIPT_CALL_METHOD(php_map->metadata, "set", retval, 2, args);
+    MAPSCRIPT_CALL_METHOD_2(php_map->metadata, "set", retval, zname, zvalue);
 
-    RETURN_LONG(Z_LVAL(retval));
+    RETURN_LONG(Z_LVAL_P(retval));
 }
 /* }}} */
 
@@ -2250,9 +2243,7 @@ PHP_METHOD(mapObj, removeMetaData)
     zval *zname;
     zval *zobj = getThis();
     php_map_object *php_map;
-    zval retval;
-    zval *args[1];
-    zval function_name;
+    zval *retval;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z",
@@ -2265,10 +2256,9 @@ PHP_METHOD(mapObj, removeMetaData)
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     CHECK_OBJECT(mapscript_ce_hashtable, php_map->metadata, &php_map->map->web.metadata);
     
-    args[0] = zname; 
-    MAPSCRIPT_CALL_METHOD(php_map->metadata, "remove", retval, 1, args);
+    MAPSCRIPT_CALL_METHOD_1(php_map->metadata, "remove", retval, zname); 
 
-    RETURN_LONG(Z_LVAL(retval));
+    RETURN_LONG(Z_LVAL_P(retval));
 }
 /* }}} */
 

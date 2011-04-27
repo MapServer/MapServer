@@ -90,9 +90,11 @@
     parent.val = zobj; \
     parent.child_ptr = ptr;
 
-#define MAPSCRIPT_CALL_METHOD(zobj, function, retval, param_count, args)     \
-    ZVAL_STRING(&function_name, function, 0);                           \
-    call_user_function(EG(function_table), &zobj, &function_name, &retval, param_count, args TSRMLS_CC);
+#define MAPSCRIPT_CALL_METHOD_1(zobj, function_name, retval, arg1) \
+    zend_call_method_with_1_params(&zobj, Z_OBJCE_P(zobj), NULL, function_name, &retval, arg1);
+
+#define MAPSCRIPT_CALL_METHOD_2(zobj, function_name, retval, arg1, arg2) \
+    zend_call_method_with_2_params(&zobj, Z_OBJCE_P(zobj), NULL, function_name, &retval, arg1, arg2);
 
 #define STRING_EQUAL(string1, string2) \
     strcmp(string1, string2) == 0

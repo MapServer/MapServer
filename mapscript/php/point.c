@@ -175,15 +175,12 @@ PHP_METHOD(pointObj, __set)
    Set new point. Returns MS_FAILURE on error. */
 PHP_METHOD(pointObj, setXY)
 {
-    zval *x, *y, *m = NULL;
+    double x, y, m;
     zval *zobj = getThis();
-    zval retval;
-    zval *args[2];
-    zval property_name, function_name;
     php_point_object *php_point;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "dd|d",
                               &x, &y, &m) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
@@ -192,23 +189,13 @@ PHP_METHOD(pointObj, setXY)
     
     php_point = (php_point_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     
-    ZVAL_STRING(&property_name, "x", 0);      
-    args[0] = &property_name; 
-    args[1] = x; 
-    MAPSCRIPT_CALL_METHOD(zobj, "__set", retval, 2, args);
-            
-    ZVAL_STRING(&property_name, "y", 0);      
-    args[0] = &property_name; 
-    args[1] = y; 
-    MAPSCRIPT_CALL_METHOD(zobj, "__set", retval, 2, args);
+    php_point->point->x = x;
+    php_point->point->y = y;
 
 #ifdef USE_POINT_Z_M
-    if (m)
+    if (ZEND_NUM_ARGS() == 3)
     {
-        ZVAL_STRING(&property_name, "m", 0);      
-        args[0] = &property_name; 
-        args[1] = m; 
-        MAPSCRIPT_CALL_METHOD(zobj, "__set", retval, 2, args);
+            php_point->point->m = m;
     }
 #endif
 
@@ -221,15 +208,12 @@ PHP_METHOD(pointObj, setXY)
    Set new point. Returns MS_FAILURE on error. */
 PHP_METHOD(pointObj, setXYZ)
 {
-    zval *x, *y, *z, *m = NULL;
+    double x, y, z, m;
     zval *zobj = getThis();
-    zval retval;
-    zval *args[2];
-    zval property_name, function_name;
     php_point_object *php_point;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|z",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ddd|d",
                               &x, &y, &z, &m) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
@@ -238,28 +222,15 @@ PHP_METHOD(pointObj, setXYZ)
     
     php_point = (php_point_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     
-    ZVAL_STRING(&property_name, "x", 0);      
-    args[0] = &property_name; 
-    args[1] = x; 
-    MAPSCRIPT_CALL_METHOD(zobj, "__set", retval, 2, args);
-            
-    ZVAL_STRING(&property_name, "y", 0);      
-    args[0] = &property_name; 
-    args[1] = y; 
-    MAPSCRIPT_CALL_METHOD(zobj, "__set", retval, 2, args);
+    php_point->point->x = x;
+    php_point->point->y = y;
 
 #ifdef USE_POINT_Z_M
-    ZVAL_STRING(&property_name, "z", 0);      
-    args[0] = &property_name; 
-    args[1] = z; 
-    MAPSCRIPT_CALL_METHOD(zobj, "__set", retval, 2, args);
+    php_point->point->z = z;
 
-    if (m)
+    if (ZEND_NUM_ARGS() == 4)
     {
-        ZVAL_STRING(&property_name, "m", 0);      
-        args[0] = &property_name; 
-        args[1] = m; 
-        MAPSCRIPT_CALL_METHOD(zobj, "__set", retval, 2, args);
+        php_point->point->m = m;
     }
 #endif
 
