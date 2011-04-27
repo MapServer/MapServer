@@ -12,14 +12,15 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk): 
----------------------------- 
+Version 6.0.0-rc1 (2011-04-27)
+------------------------------
 
 - Fix for the styleitem handling with union layer (#3674)
 
-- Fixed mindsitance label test to check layer indexes. (#3851)
+- Fixed mindistance label test to check layer indexes. (#3851)
 
-- Fixed segmentation fault in PHP/MapScript and improved the php object method calls (#3730)
+- Fixed segmentation fault in PHP/MapScript and improved the php object
+  method calls (#3730)
 
 - Fix build issue related to unnecessary use of gdal-config --dep-libs (#3316)
 
