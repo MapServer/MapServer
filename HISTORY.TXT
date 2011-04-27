@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Fix for the styleitem handling with union layer (#3674)
+
 - Fixed mindsitance label test to check layer indexes. (#3851)
 
 - Fixed segmentation fault in PHP/MapScript and improved the php object method calls (#3730)

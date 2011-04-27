@@ -398,11 +398,11 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
         srclayer = &layerinfo->layers[layerinfo->layerIndex];
         while (srclayer->vtable->LayerNextShape(srclayer, shape) == MS_SUCCESS)
         {
-            if(strcasecmp(layer->styleitem, "AUTO") != 0) 
+            if(layer->styleitem) 
             {
                 /* need to retrieve the source layer classindex if styleitem AUTO is set */
                 layerinfo->classIndex = msShapeGetClass(srclayer, layer->map, shape, layerinfo->classgroup, layerinfo->nclasses);
-                if((layerinfo->classIndex == -1) || (srclayer->class[layerinfo->classIndex]->status == MS_OFF)) 
+                if(layerinfo->classIndex < 0 || layerinfo->classIndex >= srclayer->numclasses) 
                 {
                     // this shape is not visible, skip it
                     msFreeShape(shape);
