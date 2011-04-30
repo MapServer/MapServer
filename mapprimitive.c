@@ -1881,7 +1881,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
     center_label_position = (line_length - text_length) / 2.0;
   }
   
-  if(label->maxoverlapangle)
+  if(label->maxoverlapangle >=0)
      maxoverlapangle = label->maxoverlapangle/(180/MS_PI); // radian
 
   for (l=0; l < label_repeat; l++)
