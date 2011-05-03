@@ -49,6 +49,7 @@ typedef struct
     int classIndex;  /* current class index */
     int layerCount;  /* number of the source layers */
     layerObj* layers; /* structure to the source layers */
+    int *status;     /* the layer status */
     int *classgroup; /* current array of the valid classes */
     int nclasses;  /* number of the valid classes */
 } msUnionLayerInfo;
@@ -71,6 +72,7 @@ int msUnionLayerClose(layerObj *layer)
         freeLayer(&layerinfo->layers[i]);
     }
     msFree(layerinfo->layers);
+    msFree(layerinfo->status);
     msFree(layerinfo->classgroup);
     msFree(layerinfo);
     layer->layerinfo = NULL;
@@ -130,6 +132,9 @@ int msUnionLayerOpen(layerObj *layer)
     layerinfo->layers =(layerObj*)malloc(layerCount * sizeof(layerObj));
     MS_CHECK_ALLOC(layerinfo->layers, layerCount * sizeof(layerObj), MS_FAILURE);
 
+    layerinfo->status =(layerObj*)malloc(layerCount * sizeof(int));
+    MS_CHECK_ALLOC(layerinfo->status, layerCount * sizeof(int), MS_FAILURE);
+
     for(i=0; i < layerCount; i++)
     {
         int layerindex = msGetLayerIndex(map, layerNames[i]);
@@ -170,7 +175,8 @@ int msUnionLayerOpen(layerObj *layer)
             /* disable the connection pool for this layer */
             msLayerSetProcessingKey(&layerinfo->layers[i], "CLOSE_CONNECTION", "ALWAYS");
 
-            if (msLayerOpen(&layerinfo->layers[i]) != MS_SUCCESS)
+            layerinfo->status[i] = msLayerOpen(&layerinfo->layers[i]);
+            if (layerinfo->status[i] != MS_SUCCESS)
             {
                 if(layerNames)
                     msFreeCharArray(layerNames, layerinfo->layerCount);
@@ -318,7 +324,8 @@ int msUnionLayerWhichShapes(layerObj *layer, rectObj rect)
         if(srclayer->transform == MS_TRUE && srclayer->project && layer->transform == MS_TRUE && layer->project &&msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
             msProjectRect(&layer->projection, &srclayer->projection, &srcRect); /* project the searchrect to source coords */
 #endif        
-        if (msLayerWhichShapes(srclayer, srcRect) != MS_SUCCESS)
+        layerinfo->status[i] = msLayerWhichShapes(srclayer, srcRect);
+        if (layerinfo->status[i] == MS_FAILURE)
             return MS_FAILURE;
     }
 
@@ -395,58 +402,61 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
 
     while (layerinfo->layerIndex < layerinfo->layerCount)
     {
-        srclayer = &layerinfo->layers[layerinfo->layerIndex];
-        while (srclayer->vtable->LayerNextShape(srclayer, shape) == MS_SUCCESS)
+        if (layerinfo->status[layerinfo->layerIndex] == MS_SUCCESS)
         {
-            if(layer->styleitem) 
+            srclayer = &layerinfo->layers[layerinfo->layerIndex];
+            while (srclayer->vtable->LayerNextShape(srclayer, shape) == MS_SUCCESS)
             {
-                /* need to retrieve the source layer classindex if styleitem AUTO is set */
-                layerinfo->classIndex = msShapeGetClass(srclayer, layer->map, shape, layerinfo->classgroup, layerinfo->nclasses);
-                if(layerinfo->classIndex < 0 || layerinfo->classIndex >= srclayer->numclasses) 
+                if(layer->styleitem) 
                 {
-                    // this shape is not visible, skip it
-                    msFreeShape(shape);
-                    if (rv == MS_SUCCESS)
-                        continue;
-                    else 
-                        break;
+                    /* need to retrieve the source layer classindex if styleitem AUTO is set */
+                    layerinfo->classIndex = msShapeGetClass(srclayer, layer->map, shape, layerinfo->classgroup, layerinfo->nclasses);
+                    if(layerinfo->classIndex < 0 || layerinfo->classIndex >= srclayer->numclasses) 
+                    {
+                        // this shape is not visible, skip it
+                        msFreeShape(shape);
+                        if (rv == MS_SUCCESS)
+                            continue;
+                        else 
+                            break;
+                    }
+                    if(strcasecmp(srclayer->styleitem, "AUTO") != 0) 
+                    {
+                        /* Generic feature style handling as per RFC-61 */
+                        msLayerGetFeatureStyle(layer->map, srclayer, srclayer->class[layerinfo->classIndex], shape);
+                    }
                 }
-                if(strcasecmp(srclayer->styleitem, "AUTO") != 0) 
-                {
-                    /* Generic feature style handling as per RFC-61 */
-                    msLayerGetFeatureStyle(layer->map, srclayer, srclayer->class[layerinfo->classIndex], shape);
-                }
-            }
 
 #ifdef USE_PROJ
-            /* reproject to the target layer */
-            if(srclayer->project && msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
-	            msProjectShape(&(srclayer->projection), &(layer->projection), shape);
-            else
-	            srclayer->project = MS_FALSE;
+                /* reproject to the target layer */
+                if(srclayer->project && msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
+	                msProjectShape(&(srclayer->projection), &(layer->projection), shape);
+                else
+	                srclayer->project = MS_FALSE;
 #endif
-            
-            shape->tileindex = layerinfo->layerIndex;
+                
+                shape->tileindex = layerinfo->layerIndex;
 
-            /* construct the item array */
-            if (layer->iteminfo)
-                rv = BuildFeatureAttributes(layer, srclayer, shape);
+                /* construct the item array */
+                if (layer->iteminfo)
+                    rv = BuildFeatureAttributes(layer, srclayer, shape);
 
-            /* check the layer filter condition */
-            if(layer->filter.string != NULL && layer->numitems > 0 && layer->iteminfo)
-            {
-                if (layer->filter.type == MS_EXPRESSION && layer->filter.tokens == NULL)
-                    msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
-
-                if (!msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex)) 
+                /* check the layer filter condition */
+                if(layer->filter.string != NULL && layer->numitems > 0 && layer->iteminfo)
                 {
-                    /* this shape is filtered */
-                    msFreeShape(shape);
-                    continue;
-                }
-            }
+                    if (layer->filter.type == MS_EXPRESSION && layer->filter.tokens == NULL)
+                        msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
 
-            return rv;
+                    if (!msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex)) 
+                    {
+                        /* this shape is filtered */
+                        msFreeShape(shape);
+                        continue;
+                    }
+                }
+
+                return rv;
+            }
         }
 
         ++layerinfo->layerIndex;
