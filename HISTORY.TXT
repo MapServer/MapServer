@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Fix SLD containing a PropertyIsLike filter (#3855)
+
 - Fixed msUnionLayerNextShape to return correct values (#3859)  
 
 - Union layer: fix for the failure if one or more of the source layers 
