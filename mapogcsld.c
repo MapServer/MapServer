@@ -835,7 +835,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                     FLTPreParseFilterForAlias(psNode, psLayer->map, j, "G");
                                 }
 
-                                szExpression = FLTGetMapserverExpression(psNode, psLayer);
+                                szExpression = FLTGetCommonExpression(psNode, psLayer);
 
 /* ==================================================================== */
 /*      If the filter has a spatial filter or is a simple, we keep      */

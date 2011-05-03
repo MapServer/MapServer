@@ -403,13 +403,13 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 	    }
 	    else
 	    {
-              szExpression = FLTGetMapserverExpression(psNode, lp);
+              szExpression = FLTGetCommonExpression(psNode, lp);
 	    }
 	}
     }
     else
     {
-      szExpression = FLTGetMapserverExpression(psNode, lp);
+      szExpression = FLTGetCommonExpression(psNode, lp);
         
     }
    
