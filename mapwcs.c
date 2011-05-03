@@ -1886,6 +1886,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     msSetError( MS_WCSERR,  "Missing required FORMAT parameter.", "msWCSGetCoverage()" );
     return msWCSException(map, "MissingParameterValue", "format", params->version);
   }
+  msApplyDefaultOutputFormats(map);
   if(msGetOutputFormatIndex(map,params->format) == -1) {
     msSetError( MS_WCSERR,  "Unrecognized value for the FORMAT parameter.", "msWCSGetCoverage()" );
     return msWCSException(map, "InvalidParameterValue", "format", 

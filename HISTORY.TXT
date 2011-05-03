@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Fix missing initialization of default formats in WCS 1.x.
+
 - Fix maxoverlapangle when value is set to 0 (#3856)
 
 Version 6.0.0-rc1 (2011-04-27)
