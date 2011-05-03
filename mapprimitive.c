@@ -1126,7 +1126,7 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
     outside.point = (pointObj *)msSmallMalloc(sizeof(pointObj)*p->line[i].numpoints);
     inside.numpoints = outside.numpoints = p->line[i].numpoints;    
 
-    angle = asin(MS_ABS(p->line[i].point[1].x - p->line[i].point[0].x)/sqrt((pow((p->line[i].point[1].x - p->line[i].point[0].x),2.0) + pow((p->line[i].point[1].y - p->line[i].point[0].y),2.0))));
+    angle = asin(MS_ABS(p->line[i].point[1].x - p->line[i].point[0].x)/sqrt((((p->line[i].point[1].x - p->line[i].point[0].x)*(p->line[i].point[1].x - p->line[i].point[0].x)) + ((p->line[i].point[1].y - p->line[i].point[0].y)*(p->line[i].point[1].y - p->line[i].point[0].y)))));
     if(p->line[i].point[0].x < p->line[i].point[1].x)
       dy = sin(angle) * (w/2);
     else
@@ -1148,7 +1148,7 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
 
     for(j=2; j<p->line[i].numpoints; j++) {
 
-      angle = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2.0) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2.0))));
+      angle = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((((p->line[i].point[j].x - p->line[i].point[j-1].x)*(p->line[i].point[j].x - p->line[i].point[j-1].x)) + ((p->line[i].point[j].y - p->line[i].point[j-1].y)*(p->line[i].point[j].y - p->line[i].point[j-1].y)))));
       if(p->line[i].point[j-1].x < p->line[i].point[j].x)
         dy = sin(angle) * (w/2);
       else
@@ -1533,7 +1533,7 @@ void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, d
     (*line_lengths)[i] = 0;
     max_segment_length = 0;
     for(j=1;j<shape->line[i].numpoints;j++) {
-      segment_length = sqrt((pow((shape->line[i].point[j].x-shape->line[i].point[j-1].x),2.0) + pow((shape->line[i].point[j].y-shape->line[i].point[j-1].y),2.0)));
+      segment_length = sqrt((((shape->line[i].point[j].x-shape->line[i].point[j-1].x)*(shape->line[i].point[j].x-shape->line[i].point[j-1].x)) + ((shape->line[i].point[j].y-shape->line[i].point[j-1].y)*(shape->line[i].point[j].y-shape->line[i].point[j-1].y))));
       (*line_lengths)[i] += segment_length;
       (*segment_lengths)[i][j-1] = segment_length;
       if(segment_length > max_segment_length) {
@@ -1698,7 +1698,7 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
         (*labelpoints)[index]->y = t * (p->line[i].point[k+1].y - p->line[i].point[k].y) + p->line[i].point[k].y;
       }
 
-      theta = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2.0) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2.0))));
+      theta = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((((p->line[i].point[j].x - p->line[i].point[j-1].x)*(p->line[i].point[j].x - p->line[i].point[j-1].x)) + ((p->line[i].point[j].y - p->line[i].point[j-1].y)*(p->line[i].point[j].y - p->line[i].point[j-1].y)))));
     
       if(p->line[i].point[j-1].x < p->line[i].point[j].x || anglemode == MS_AUTO2) { /* i.e. to the left */
         if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
@@ -1804,6 +1804,8 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
   int kernel_size = 5;
   
   double letterspacing = 1.25;
+  /* As per RFC 60, if label->maxoverlapangle == 0 then fall back on pre-6.0 behavior 
+     which was to use maxoverlapangle = 0.4*MS_PI ( 40% of 180 degrees ) */
   double maxoverlapangle = 0.4 * MS_PI;
 
   offsets = NULL;
@@ -1882,7 +1884,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
   }
   
   if(label->maxoverlapangle >=0)
-     maxoverlapangle = label->maxoverlapangle/(180/MS_PI); // radian
+    maxoverlapangle = label->maxoverlapangle * MS_DEG_TO_RAD; // radian
 
   for (l=0; l < label_repeat; l++)
   {
@@ -2074,7 +2076,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
             /* If the difference between the last char angle and the current one 
               is greater than the MAXOVERLAPANGLE value (set at 80% of 180deg by default)
               , bail the label */
-            if ( k > 2 && fabs(theta - labelpath->angles[k-2]) > maxoverlapangle ) {
+            if ( maxoverlapangle > 0 && (k > 2 && fabs(theta - labelpath->angles[k-2]) > maxoverlapangle) ) {
                 goto LABEL_FAILURE;
             }
       
