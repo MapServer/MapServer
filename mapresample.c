@@ -1459,9 +1459,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     else
         sDummyMap.cellsize = dfNominalCellSize;
 
-    nLoadImgXSize = (int) MAX(1,(sSrcExtent.maxx - sSrcExtent.minx) 
+    nLoadImgXSize = MAX(1, (int) (sSrcExtent.maxx - sSrcExtent.minx) 
                               * (dfNominalCellSize / sDummyMap.cellsize));
-    nLoadImgYSize = (int) MAX(1,(sSrcExtent.maxy - sSrcExtent.miny) 
+    nLoadImgYSize = MAX(1, (int) (sSrcExtent.maxy - sSrcExtent.miny) 
                               * (dfNominalCellSize / sDummyMap.cellsize));
         
     /*
