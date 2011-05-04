@@ -60,7 +60,6 @@ print_body ()
 	echo ' '
 	echo 'static struct axisOrientationEpsgCodes_s {'
 	echo '	int	code;'
-	echo ' int	inverted; /*true=1, false =0*/'
 	echo '} axisOrientationEpsgCodes[] = {'
    
 	# unset first array element
@@ -68,7 +67,7 @@ print_body ()
    # traverse array and print out elements
         let count=0
 	for x in "${ARRAY[@]}"; do
-		echo "  {${x}},"
+		echo "  ${x},"
 		((count++))
 	done
 

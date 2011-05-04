@@ -78,14 +78,12 @@ static int msResolveSymbolNames(mapObj *map);
 static int msIsAxisInverted(int epsg_code)
 {
     int i;
-    /*check first in the static table*/
+    /*check the static table*/
     for (i=0; i<AXIS_ORIENTATION_TABLE_SIZE; i++)
     {
         if (axisOrientationEpsgCodes[i].code == epsg_code)
-          return axisOrientationEpsgCodes[i].inverted;
+          return MS_TRUE;
     }
-    if ( epsg_code >=4000 &&  epsg_code < 5000)
-      return MS_TRUE;
 
     return MS_FALSE;
     
@@ -1411,7 +1409,7 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       p->args[0] = init_string;
       p->numargs = 1;
 
-      if( atoi(code) >= 4000 && atoi(code) < 5000 )
+      if( msIsAxisInverted(atoi(code)))
       {
           p->args[1] = msStrdup("+epsgaxis=ne");
           p->numargs = 2;
@@ -1447,7 +1445,7 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       p->args[0] = init_string;
       p->numargs = 1;
 
-      if( atoi(code) >= 4000 && atoi(code) < 5000 )
+      if( msIsAxisInverted(atoi(code)))
       {
           p->args[1] = msStrdup("+epsgaxis=ne");
           p->numargs = 2;
@@ -1506,7 +1504,7 @@ int msLoadProjectionString(projectionObj *p, const char *value)
       p->args[0] = msStrdup(init_string);
       p->numargs = 1;
 
-      if( atoi(code) >= 4000 && atoi(code) < 5000 )
+      if( msIsAxisInverted(atoi(code)))
       {
           p->args[1] = msStrdup("+epsgaxis=ne");
           p->numargs = 2;
