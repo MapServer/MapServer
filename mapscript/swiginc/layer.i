@@ -216,6 +216,16 @@
         return self->resultcache->numresults;
     }
 
+    %newobject getResultsBounds;
+    rectObj *getResultsBounds() 
+    {
+        if (!self->resultcache) return NULL;
+        rectObj *bounds;
+        bounds = (rectObj *) malloc(sizeof(rectObj));
+        MS_COPYRECT(bounds, &self->resultcache->bounds);
+        return bounds;
+    }
+
     resultObj *getResult(int i) 
     {
         if (!self->resultcache) return NULL;
