@@ -4,7 +4,7 @@
 MapServer Migration Guide
 *****************************************************************************
 
-:Last Updated: 2011-04-15
+:Last Updated: 2011-05-04
 
 .. contents:: Table of Contents
     :depth: 2
@@ -78,6 +78,18 @@ are no more. To draw a label "box" in 6.0 you'd do:
   END
 
 More verbose but *much* more flexible in the long run.
+
+---------------------------------------
+Mapfile Changes - Label MAXOVERLAPANGLE
+---------------------------------------
+
+:ref:`RFC60` introduced a new MAXOVERLAPANGLE keyword to filter out ANGLE 
+FOLLOW labels in which characters overlap. This new option is enabled by 
+default in 6.0 with a default value for MAXOVERLAPANGLE of 22.5 degrees. 
+
+As per :ref:`RFC60`, it is possible to set MAXOVERLAPANGLE to 0 to fall back 
+on pre-6.0 behavior which was to use hardcoded maxoverlapangle = 0.4*MS_PI 
+(40% of 180 degrees = 72 degrees).
 
 ---------------------------------
 Core Changes - Rendering Overhaul
