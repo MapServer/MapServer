@@ -944,6 +944,33 @@ PHP_METHOD(layerObj, getNumResults)
 }
 /* }}} */
 
+/* {{{ proto int layer.getResultsBounds()
+   Returns the bounds of results from this layer in the last query. */
+PHP_METHOD(layerObj, getResultsBounds)
+{
+    zval *zobj = getThis();
+    php_layer_object *php_layer;
+    parent_object parent;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if (!php_layer->layer->resultcache)
+        RETURN_NULL();
+
+    /* Return result object */
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_rect(&(php_layer->layer->resultcache->bounds), 
+                          parent, return_value TSRMLS_CC);
+}
+/* }}} */
+
 /* {{{ proto int layer.getResult(int i)
    Returns a resultObj by index from a layer object.*/  
 PHP_METHOD(layerObj, getResult)
@@ -1925,6 +1952,7 @@ zend_function_entry layer_functions[] = {
     PHP_ME(layerObj, getProjection, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, setWKTProjection, layer_setWKTProjection_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, getNumResults, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(layerObj, getResultsBounds, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, getResult, layer_getResult_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, open, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, whichShapes, layer_whichShapes_args, ZEND_ACC_PUBLIC)
