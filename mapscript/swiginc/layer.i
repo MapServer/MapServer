@@ -219,8 +219,8 @@
     %newobject getResultsBounds;
     rectObj *getResultsBounds() 
     {
-        if (!self->resultcache) return NULL;
         rectObj *bounds;
+        if (!self->resultcache) return NULL;
         bounds = (rectObj *) malloc(sizeof(rectObj));
         MS_COPYRECT(bounds, &self->resultcache->bounds);
         return bounds;
