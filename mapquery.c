@@ -510,7 +510,7 @@ int msQueryByIndex(mapObj *map)
     }
   }
 
-  /* open this layer */
+  msLayerClose(lp); /* reset */
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
@@ -659,7 +659,7 @@ int msQueryByAttributes(mapObj *map)
 
   msInitShape(&shape);
 
-  /* open this layer */
+  msLayerClose(lp); /* reset */
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) {
     msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
@@ -839,6 +839,7 @@ int msQueryByFilter(mapObj *map)
       msCopyExpression(&lp->filter, map->query.filter); /* apply new filter */
     }
 
+    msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) goto query_error;
 
@@ -1028,7 +1029,7 @@ int msQueryByRect(mapObj *map)
       continue;
     }
 
-    /* open this layer */
+    msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
@@ -1235,7 +1236,7 @@ int msQueryByFeatures(mapObj *map)
     else
       tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
 
-    /* open this layer */
+    msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     
@@ -1539,7 +1540,7 @@ int msQueryByPoint(mapObj *map)
     rect.miny = map->query.point.y - t;
     rect.maxy = map->query.point.y + t;
 
-    /* open this layer */
+    msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
@@ -1733,7 +1734,7 @@ int msQueryByShape(mapObj *map)
     else
       tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
    
-    /* open this layer */
+    msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
@@ -1980,7 +1981,7 @@ int msQueryByOperator(mapObj *map)
       continue;
     }
     
-    /* open this layer */
+    msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
