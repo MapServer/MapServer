@@ -2231,7 +2231,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
         if(strlen(ph) > 0) coords = msStringConcatenate(coords, ph);
 
-        for(p=0; j<tShape.line[i].numpoints-1; p++) {
+        for(p=0; p<tShape.line[i].numpoints-1; p++) {
           snprintf(point, sizeof(point), pointFormat1, scale_x*tShape.line[i].point[p].x, scale_y*tShape.line[i].point[p].y);
           coords = msStringConcatenate(coords, point);
         }
