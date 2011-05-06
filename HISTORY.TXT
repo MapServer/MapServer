@@ -12,16 +12,17 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk): 
----------------------------- 
+Version 6.0.0-rc2 (2011-05-05)
+------------------------------
 
 - Fixed seg fault with [shpxy] tag... (#3860)
 
 - Removed obsolete msQueryByOperator() function
 
-- Call msLayerClose() before msLayerOpen() in the various query functions (#3692)
+- Call msLayerClose() before msLayerOpen() in the various query 
+  functions (#3692)
 
-- Use full list of epsg codes with inverted axis (#3582)
+- Fix WMS 1.3.0 to use full list of epsg codes with inverted axis (#3582)
 
 - PHP/Mapscript: Added getResultsBounds() method in layer object (#2967)
 
