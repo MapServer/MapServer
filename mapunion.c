@@ -240,6 +240,7 @@ int msUnionLayerInitItemInfo(layerObj *layer)
 {
     int i, j, numitems;
     int *itemindexes;
+    char* itemlist = NULL;
 
     msUnionLayerInfo* layerinfo = (msUnionLayerInfo*)layer->layerinfo;
 
@@ -270,39 +271,52 @@ int msUnionLayerInitItemInfo(layerObj *layer)
         else if (EQUAL(layer->items[i], MSUNION_SOURCELAYERVISIBLE))
             itemindexes[i] = MSUNION_SOURCELAYERVISIBLEINDEX;
         else
+        {
             itemindexes[i] = numitems++;
+            if (itemlist)
+            {
+                itemlist = msStringConcatenate(itemlist, ",");
+                itemlist = msStringConcatenate(itemlist, layer->items[i]);
+            }
+            else
+            {
+                itemlist = msStrdup(layer->items[i]);
+            }
+        }
     }
 
     for (i = 0; i < layerinfo->layerCount; i++)
-    {
+    { 
         layerObj* srclayer = &layerinfo->layers[i];
-         /* Cleanup any previous item selection */
-        msLayerFreeItemInfo(srclayer);
-        if(srclayer->items) 
+
+        /* reopen the layer to clear all expressions*/
+        msLayerClose(srclayer);
+        layerinfo->status[i] = msLayerOpen(srclayer);
+        if (layerinfo->status[i] != MS_SUCCESS)
         {
-            msFreeCharArray(srclayer->items, srclayer->numitems);
-            srclayer->items = NULL;
-            srclayer->numitems = 0;
+            msFree(itemlist);
+            return MS_FAILURE;
         }
-
-        if (numitems > 0)
+        
+        if (itemlist)
         {
-            /* now allocate and set the layer item parameters  */
-            srclayer->items = (char **)malloc(sizeof(char *)*numitems);
-            MS_CHECK_ALLOC(srclayer->items, sizeof(char *)*numitems, MS_FAILURE);
-            srclayer->numitems = numitems;
-            
-            for (j = 0; j < layer->numitems; j++)
+            /* get items requested by the union layer plus the required items */
+            msLayerSetProcessingKey(srclayer, "ITEMS", itemlist);
+            if (msLayerWhichItems(srclayer, TRUE, NULL) != MS_SUCCESS)
             {
-                if (itemindexes[j] >= 0)
-                    srclayer->items[itemindexes[j]] = msStrdup(layer->items[j]);
+                msFree(itemlist);
+                return MS_FAILURE;
             }
-
-            if (msLayerInitItemInfo(srclayer) != MS_SUCCESS)
+        }
+        else
+        {
+            /* get only the required items */
+            if (msLayerWhichItems(srclayer, FALSE, NULL) != MS_SUCCESS)
                 return MS_FAILURE;
         }
     }
 
+    msFree(itemlist);
     return MS_SUCCESS;
 }
 
@@ -349,9 +363,6 @@ static int BuildFeatureAttributes(layerObj *layer, layerObj* srclayer, shapeObj 
     char **values;
     int* itemindexes = layer->iteminfo;
     
-    if (layer->numitems == srclayer->numitems)
-        return MS_SUCCESS; /* we don't have custom attributes, no need to reconstruct the array */
-
     values = malloc(sizeof(char*) * (layer->numitems));
     MS_CHECK_ALLOC(values, layer->numitems * sizeof(char*), MS_FAILURE);;
 
