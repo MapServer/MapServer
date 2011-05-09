@@ -420,7 +420,7 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
                         else 
                             break;
                     }
-                    if(strcasecmp(srclayer->styleitem, "AUTO") != 0) 
+                    if(srclayer->styleitem && strcasecmp(srclayer->styleitem, "AUTO") != 0) 
                     {
                         /* Generic feature style handling as per RFC-61 */
                         msLayerGetFeatureStyle(layer->map, srclayer, srclayer->class[layerinfo->classIndex], shape);

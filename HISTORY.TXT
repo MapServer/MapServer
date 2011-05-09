@@ -15,7 +15,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
-- ...
+- Union layer: Fixed the potential seg fault when STYLEITEM AUTO is used (#3859)
 
 Version 6.0.0-rc2 (2011-05-05)
 ------------------------------
