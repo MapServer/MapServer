@@ -235,6 +235,22 @@ void msUnionLayerFreeItemInfo(layerObj *layer)
     }
 }
 
+/* clean up expression tokens */
+int msUnionLayerFreeExpressionTokens(layerObj *layer)
+{
+    int i,j;
+    freeExpressionTokens(&(layer->filter));
+    freeExpressionTokens(&(layer->cluster.group));
+    freeExpressionTokens(&(layer->cluster.filter));
+    for(i=0; i<layer->numclasses; i++) 
+    {    
+        freeExpressionTokens(&(layer->class[i]->expression));
+        freeExpressionTokens(&(layer->class[i]->text));
+        for(j=0; j<layer->class[i]->numstyles; j++)
+            freeExpressionTokens(&(layer->class[i]->styles[j]->_geomtransform));
+    }
+}
+
 /* allocate the iteminfo index array - same order as the item list */
 int msUnionLayerInitItemInfo(layerObj *layer)
 {
@@ -289,14 +305,7 @@ int msUnionLayerInitItemInfo(layerObj *layer)
     { 
         layerObj* srclayer = &layerinfo->layers[i];
 
-        /* reopen the layer to clear all expressions*/
-        msLayerClose(srclayer);
-        layerinfo->status[i] = msLayerOpen(srclayer);
-        if (layerinfo->status[i] != MS_SUCCESS)
-        {
-            msFree(itemlist);
-            return MS_FAILURE;
-        }
+        msUnionLayerFreeExpressionTokens(srclayer);
         
         if (itemlist)
         {
@@ -337,11 +346,7 @@ int msUnionLayerWhichShapes(layerObj *layer, rectObj rect)
         if (layer->styleitem && layer->numitems == 0)
         {
             /* need to initialize items */
-            /* reopen the layer to clear all expressions*/
-            msLayerClose(srclayer);
-            layerinfo->status[i] = msLayerOpen(srclayer);
-            if (layerinfo->status[i] != MS_SUCCESS)
-                return MS_FAILURE;
+            msUnionLayerFreeExpressionTokens(srclayer);
             
             /* get only the required items */
             if (msLayerWhichItems(srclayer, FALSE, NULL) != MS_SUCCESS)
