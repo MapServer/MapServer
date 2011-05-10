@@ -333,6 +333,21 @@ int msUnionLayerWhichShapes(layerObj *layer, rectObj rect)
     for (i = 0; i < layerinfo->layerCount; i++)
     {
         layerObj* srclayer = &layerinfo->layers[i];
+
+        if (layer->styleitem && layer->numitems == 0)
+        {
+            /* need to initialize items */
+            /* reopen the layer to clear all expressions*/
+            msLayerClose(srclayer);
+            layerinfo->status[i] = msLayerOpen(srclayer);
+            if (layerinfo->status[i] != MS_SUCCESS)
+                return MS_FAILURE;
+            
+            /* get only the required items */
+            if (msLayerWhichItems(srclayer, FALSE, NULL) != MS_SUCCESS)
+                return MS_FAILURE;
+        }
+
         srcRect = rect;
 #ifdef USE_PROJ
         if(srclayer->transform == MS_TRUE && srclayer->project && layer->transform == MS_TRUE && layer->project &&msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
