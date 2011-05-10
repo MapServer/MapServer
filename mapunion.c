@@ -433,9 +433,9 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
 
     while (layerinfo->layerIndex < layerinfo->layerCount)
     {
+        srclayer = &layerinfo->layers[layerinfo->layerIndex];
         if (layerinfo->status[layerinfo->layerIndex] == MS_SUCCESS)
         {
-            srclayer = &layerinfo->layers[layerinfo->layerIndex];
             while ((rv = srclayer->vtable->LayerNextShape(srclayer, shape)) == MS_SUCCESS)
             {
                 if(layer->styleitem) 

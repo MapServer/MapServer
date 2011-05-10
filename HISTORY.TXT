@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- Union layer: Fixed a potential seg fault in msUnionLayerNextShape (#3859)
+
 - Cluster layer: Fixed the problem when returning undefined attribute (#3700)
 
 - Union layer: Fix for the item initialization at the source layer (#3859)
