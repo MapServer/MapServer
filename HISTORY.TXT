@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk): 
 ---------------------------- 
 
+- apply fix for #3834 on legend icon rendering (#3866)
+
 - Union layer: Fixed a potential seg fault in msUnionLayerNextShape (#3859)
 
 - Cluster layer: Fixed the problem when returning undefined attribute (#3700)
@@ -25,8 +27,6 @@ Current Version (SVN trunk):
 
 Version 6.0.0-rc2 (2011-05-05)
 ------------------------------
-
-- apply fix for #3834 on legend icon rendering
 
 - Fixed seg fault with [shpxy] tag... (#3860)
 
