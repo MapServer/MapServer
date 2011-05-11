@@ -12,8 +12,8 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk): 
----------------------------- 
+Version 6.0.0 (2011-05-11)
+--------------------------
 
 - apply fix for #3834 on legend icon rendering (#3866)
 
