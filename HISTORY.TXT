@@ -26,6 +26,8 @@ Current Version (SVN trunk):
 Version 6.0.0-rc2 (2011-05-05)
 ------------------------------
 
+- apply fix for #3834 on legend icon rendering
+
 - Fixed seg fault with [shpxy] tag... (#3860)
 
 - Removed obsolete msQueryByOperator() function

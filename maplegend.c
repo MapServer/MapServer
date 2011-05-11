@@ -73,11 +73,9 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   else {
       renderer = MS_IMAGE_RENDERER(image_draw);
       if (lp->opacity > 0 && lp->opacity < 100) {
-          if (!renderer->supports_transparent_layers) {
-              msApplyOutputFormat(&transFormat, image->format, MS_TRUE,
-                                  MS_NOOVERRIDE,MS_NOOVERRIDE);
+         if (!renderer->supports_transparent_layers) {
               image_draw = msImageCreate(image->width, image->height,
-                                         transFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
+                  image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
               if (!image_draw) {
                   msSetError(MS_MISCERR, "Unable to initialize temporary transparent image.",
                              "msDrawLegendIcon()");
@@ -250,6 +248,21 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
 
       altrenderer->getRasterBufferHandle(image_draw,&rb);
       renderer->mergeRasterBuffer(image,&rb,lp->opacity*0.01,0,0,0,0,rb.width,rb.height);  
+      /* 
+       * hack to work around bug #3834: if we have use an alternate renderer, the symbolset may contain
+       * symbols that reference it. We want to remove those references before the altFormat is destroyed
+       * to avoid a segfault and/or a leak, and so the the main renderer doesn't pick the cache up thinking
+       * it's for him.
+       */
+      for(i=0; i<map->symbolset.numsymbols; i++) {
+         if (map->symbolset.symbol[i]!=NULL) {
+            symbolObj *s = map->symbolset.symbol[i];
+            if(s->renderer == altrenderer) {
+	            altrenderer->freeSymbol(s);
+               s->renderer = NULL;
+            }
+         }
+      }
       msFreeImage(image_draw);
       
   }
