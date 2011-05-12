@@ -12,6 +12,11 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Current Version (SVN trunk, 6.1-dev, future 6.2): 
+------------------------------------------------- 
+
+- ...
+
 Version 6.0.0 (2011-05-11)
 --------------------------
 
