@@ -22,7 +22,7 @@ directory where you extracted the MapServer source code package and...
 
 ::
 
- $ cd mapserver-5.0.x
+ $ cd mapserver-6.0.x
  $ ./configure
  $ make
 
@@ -163,7 +163,11 @@ GD and Support Libraries:
 
 - The GD library is the only component that is not optional.  
   Version 2.0.16 or more recent is required, and GD 2.0.35 or higher is
-  strongly recommended (see http://www.boutell.com/gd/ .
+  strongly recommended. 
+
+- To get the GD source code: The official home of the GD library is
+  http://www.libgd.org/ and in case it is down a copy of recent GD releases
+  is provided as a convenience at http://download.osgeo.org/mapserver/libgd/
 
 - Version 2.0.29 or more recent is required for the LABEL FOLLOW option 
   to work (curved labels, added in 4.10).
