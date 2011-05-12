@@ -198,9 +198,11 @@ PHP MapScript Changes
         - new symbolObj() returns the symbolObj. You don't need to 
                           get it with getSymbolObjectById().
 
+* Cloneable objects should be cloned with the PHP clone keyword. There is no more clone methods.
+
 * Class properties that have been removed
 
-  - mapObj: imagequality, interlace, scale, transparent
+  - mapObj: imagetype, imagequality, interlace, scale, transparent
   - classObj: maxscale, minscale
   - layerObj: labelsizeitem, labelangleitem, labelmaxscale, labelminscale, 
               maxscale, minscale, symbolscale, transparency
@@ -208,7 +210,6 @@ PHP MapScript Changes
   - scalebarObj: interlace, transparent
   - symbolObj: gap, stylelength
   - webObj: minscale, maxscale
-  - mapObj: imagetype
   
 * Class methods that have been removed
 
