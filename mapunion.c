@@ -47,6 +47,7 @@ typedef struct
 {
     int layerIndex;  /* current source layer index */
     int classIndex;  /* current class index */
+    char* classText;   /* current class text (autostyle) */
     int layerCount;  /* number of the source layers */
     layerObj* layers; /* structure to the source layers */
     int *status;     /* the layer status */
@@ -74,6 +75,7 @@ int msUnionLayerClose(layerObj *layer)
     msFree(layerinfo->layers);
     msFree(layerinfo->status);
     msFree(layerinfo->classgroup);
+    msFree(layerinfo->classText);
     msFree(layerinfo);
     layer->layerinfo = NULL;
 
@@ -117,6 +119,8 @@ int msUnionLayerOpen(layerObj *layer)
     layerinfo->nclasses = 0;
 
     layerinfo->layerCount = 0;
+
+    layerinfo->classText = NULL;
     
     layerNames = msStringSplit(layer->connection, ',', &layerCount);
 
@@ -254,7 +258,7 @@ int msUnionLayerFreeExpressionTokens(layerObj *layer)
 /* allocate the iteminfo index array - same order as the item list */
 int msUnionLayerInitItemInfo(layerObj *layer)
 {
-    int i, j, numitems;
+    int i, numitems;
     int *itemindexes;
     char* itemlist = NULL;
 
@@ -456,6 +460,13 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
                         /* Generic feature style handling as per RFC-61 */
                         msLayerGetFeatureStyle(layer->map, srclayer, srclayer->class[layerinfo->classIndex], shape);
                     }
+                    /* set up annotation */
+                    msFree(layerinfo->classText);
+                    if((srclayer->class[layerinfo->classIndex]->text.string || srclayer->labelitem) && 
+                        srclayer->class[layerinfo->classIndex]->label.size != -1)
+                        layerinfo->classText = msShapeGetAnnotation(srclayer, shape);
+                    else
+                        layerinfo->classText = NULL;
                 }
 
 #ifdef USE_PROJ
@@ -465,7 +476,10 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
                 else
 	                srclayer->project = MS_FALSE;
 #endif
-                
+                /* update the layer styles with the bound values */
+                if(msBindLayerToShape(srclayer, shape, MS_FALSE) != MS_SUCCESS)
+                    return MS_FAILURE;
+
                 shape->tileindex = layerinfo->layerIndex;
 
                 /* construct the item array */
@@ -611,7 +625,7 @@ static int msUnionLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, s
     }
     else
     {
-        int i;
+        int i,j;
         classObj* src = srclayer->class[layerinfo->classIndex];
         /* copy the style from the current class index */
         /* free any previous styles on the dst layer */
@@ -628,6 +642,13 @@ static int msUnionLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, s
                 msSetError(MS_MEMERR, "Failed to copy style.", "msUnionLayerGetAutoStyle()");
                 return MS_FAILURE;
             }
+            /* remove the bindings on the style */
+            for(j=0; j<MS_STYLE_BINDING_LENGTH; j++)
+            {
+                msFree(c->styles[i]->bindings[j].item);
+                c->styles[i]->bindings[j].item = NULL;
+            }
+            c->styles[i]->numbindings = 0;
         }
 
         if (msCopyLabel(&(c->label), &(src->label)) != MS_SUCCESS) 
@@ -636,8 +657,18 @@ static int msUnionLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, s
             return MS_FAILURE;
         }
 
+        /* remove the bindings on the label */
+        for(j=0; j<MS_LABEL_BINDING_LENGTH; j++)
+        {
+            msFree(c->label.bindings[j].item);
+            c->label.bindings[j].item = NULL;
+        }
+        c->label.numbindings = 0;
+
         c->type = src->type;
         c->layer = layer;
+        c->text.string = layerinfo->classText;
+        layerinfo->classText = NULL;
     }
     return MS_SUCCESS;
 }
