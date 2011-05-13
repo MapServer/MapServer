@@ -12,6 +12,11 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Version 6.0.1 (SVN branch-6-0):
+---------------------------
+
+- Union layer: Fixed the crash when styling source layers using attributes (#3870)
+
 Version 6.0.0 (2011-05-11)
 --------------------------
 
