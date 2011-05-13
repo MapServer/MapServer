@@ -46,7 +46,7 @@ int yyerror(parseObj *, const char *);
 %left INTERSECTS DISJOINT TOUCHES OVERLAPS CROSSES WITHIN CONTAINS BEYOND DWITHIN
 %left AREA LENGTH COMMIFY ROUND
 %left TOSTRING
-%left YYBUFFER
+%left YYBUFFER DIFFERENCE
 %left '+' '-'
 %left '*' '/' '%'
 %left NEG
@@ -544,6 +544,16 @@ shape_exp: SHAPE
       s->scratch = MS_TRUE;
       $$ = s;
     }
+  | DIFFERENCE '(' shape_exp ',' shape_exp ')' {
+      shapeObj *s;
+      s = msGEOSDifference($3, $5);
+      if(!s) {
+        yyerror(p, "Executing difference failed.");
+        return(-1);
+      }
+      s->scratch = MS_TRUE;
+      $$ = s;
+    }
 ;
 
 string_exp: STRING
@@ -655,6 +665,7 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_FUNCTION_ROUND: token = ROUND; break;
 
   case MS_TOKEN_FUNCTION_BUFFER: token = YYBUFFER; break;
+  case MS_TOKEN_FUNCTION_DIFFERENCE: token = DIFFERENCE; break;
 
   default:
     break;
