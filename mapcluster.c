@@ -115,6 +115,8 @@ struct cluster_layer_info
     int numFiltered;
     /* variables for collecting the best cluster and iterating with NextShape */
     clusterInfo* current;
+    /* check whether all shapes should be returned behind a cluster */
+    int get_all_shapes;
     double rank;
     /* root node of the quad tree */
     clusterTreeNode* root;
@@ -962,6 +964,12 @@ int RebuildClusters(layerObj *layer)
 
     layerinfo->current = layerinfo->finalized; /* restart */
 
+    /* check whether all shapes should be returned from a query */
+    if(msLayerGetProcessingKey(layer, "CLUSTER_GET_ALL_SHAPES") != NULL) 
+        layerinfo->get_all_shapes = MS_TRUE;
+    else
+        layerinfo->get_all_shapes = MS_FALSE;  
+
     /* identify the current extent */
     if(layer->transform == MS_TRUE)
         searchrect = map->extent;
@@ -1149,11 +1157,29 @@ int RebuildClusters(layerObj *layer)
                     avgy += current->y;
                     ++n;
 #endif
+                    /* setting the average position to the same value */
+                    current->avgx = layerinfo->current->avgx;
+                    current->avgy = layerinfo->current->avgy;
+                            
+                    if (current->next == NULL)
+                    {
+                        if (layerinfo->get_all_shapes == MS_TRUE)
+                        {
+                            /* insert the siblings into the finalization list */
+                            current->next = layerinfo->finalized;
+                            layerinfo->finalized = layerinfo->finalizedSiblings;
+                        }
+                        else
+                        {
+                            /* preserve the clustered siblings for later use */
+                            layerinfo->current->siblings = layerinfo->finalizedSiblings;
+                        }
+                        break;
+                    }
+                    
                     current = current->next;
                 }
 
-                /* preserve the clustered siblings for later use */
-                layerinfo->current->siblings = layerinfo->finalizedSiblings;
                 layerinfo->finalizedSiblings = NULL;
             }
         }
@@ -1412,6 +1438,8 @@ msClusterLayerInfo* msClusterInitialize(layerObj *layer)
     layerinfo->searchRect.maxy = -1;
 
     layerinfo->root = NULL;
+
+    layerinfo->get_all_shapes = MS_FALSE;
 
     layerinfo->numFeatures = 0;
     layerinfo->numNodes = 0;
