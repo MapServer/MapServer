@@ -1076,21 +1076,37 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         map->units = iUnits;
   }
 
+  if (sld_url || sld_body)
+  {
+       int nLayersBefore, nLayerAfter;
+       char request_tmp[32];
+       nLayersBefore = map->numlayers;
   /*apply sld if defined. This is done here so that bbox and srs are already applied*/
-  if (sld_url)
-  {
-      if ((status = msSLDApplySLDURL(map, sld_url, -1, NULL)) != MS_SUCCESS)
-        return msWMSException(map, nVersion, NULL, wms_exception_format);
-      
-  }
-  else if (sld_body)
-  {
-      if ((status =msSLDApplySLD(map, sld_body, -1, NULL)) != MS_SUCCESS)
-        return msWMSException(map, nVersion, NULL, wms_exception_format);
+       if (sld_url)
+       {
+           if ((status = msSLDApplySLDURL(map, sld_url, -1, NULL)) != MS_SUCCESS)
+             return msWMSException(map, nVersion, NULL, wms_exception_format);
+       }
+       else if (sld_body)
+       {
+           if ((status =msSLDApplySLD(map, sld_body, -1, NULL)) != MS_SUCCESS)
+             return msWMSException(map, nVersion, NULL, wms_exception_format);
+       }
+/* -------------------------------------------------------------------- */
+/*      SLD and styles can use the same layer multiple times. If        */
+/*      that is the case we duplicate the layer for drawing             */
+/*      purpose. We need to reset the ows request enable settings (#1602)*/
+/* -------------------------------------------------------------------- */
+       nLayerAfter=map->numlayers;
+       if (nLayersBefore != nLayerAfter)
+       {
+           strlcpy(request_tmp, "GetMap", sizeof(request_tmp));
+           msOWSRequestLayersEnabled(map, "M", request_tmp, ows_request); 
+       }
   }
   /* Validate Styles :
-  ** mapserv does not advertize any styles (the default styles are the
-  ** one that are used. So we are expecting here to have empty values
+  ** MapServer advertize styles through th group setting in a class object.
+  ** If no styles are set MapServer expects to have empty values
   ** for the styles parameter (...&STYLES=&...) Or for multiple Styles/Layers,
   ** we could have ...&STYLES=,,,. If that is not the
   ** case, we generate an exception.
@@ -1098,7 +1114,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   if(styles && strlen(styles) > 0)
   {
       char **tokens;
-      int n=0, i=0, k=0;
+      int n=0, i=0, k=0, l=0,m=0;
       char **layers=NULL;
       int numlayers =0;
       layerObj *lp = NULL;
@@ -1111,6 +1127,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           {
               if (layers == NULL)
               {
+                  int bLayerInserted = MS_FALSE;
+                  char request_tmp[32];
+                      
                   for(j=0; j<numentries; j++)
                   {     
                       if (strcasecmp(names[j], "LAYERS") == 0)
@@ -1118,6 +1137,51 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                           layers = msStringSplit(values[j], ',', &numlayers);
                       }
                   }
+/* -------------------------------------------------------------------- */
+/*      If the same layer is given more that once, we need to           */
+/*      duplicate it.                                                   */
+/* -------------------------------------------------------------------- */
+                  if (layers && numlayers>0)
+                  {
+                      for (m=0; m<numlayers;m++)
+                      {
+                          layerObj *psTmpLayer=NULL;
+                          int nIndex;
+                          char tmpId[128];
+                          for (l=0;l<numlayers;l++)
+                          {
+                              nIndex = msGetLayerIndex(map, layers[m]);
+                              if (m !=l && strcasecmp(layers[m], layers[l])== 0 &&
+                                  nIndex != -1)
+                              {
+                                  psTmpLayer = (layerObj *) malloc(sizeof(layerObj));
+                                  initLayer(psTmpLayer, map);
+                                  msCopyLayer(psTmpLayer, GET_LAYER(map,nIndex));
+                                  /* open the source layer */
+                                  if ( !psTmpLayer->vtable) 
+                                    msInitializeVirtualTable(psTmpLayer);
+
+                                  /*make the name unique*/
+                                  snprintf(tmpId, sizeof(tmpId), "%lx_%x_%d",(long)time(NULL),(int)getpid(),
+                                           map->numlayers);
+                                  if (psTmpLayer->name)
+                                    msFree(psTmpLayer->name);
+                                  psTmpLayer->name = strdup(tmpId);
+                                  msFree(layers[l]);
+                                  layers[l] = strdup(tmpId);
+                                  msInsertLayer(map, psTmpLayer, -1);   
+                                  bLayerInserted =MS_TRUE;
+                              }
+                          }
+                      }
+                  }
+                  
+                  if (bLayerInserted)
+                  {
+                      strlcpy(request_tmp, "GetMap", sizeof(request_tmp));
+                      msOWSRequestLayersEnabled(map, "M", request_tmp, ows_request); 
+                  }
+                 
               }
               if (layers && numlayers == n)
               {

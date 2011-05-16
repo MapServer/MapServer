@@ -158,6 +158,48 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     int bFailedExpression=0;
  
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
+/* -------------------------------------------------------------------- */
+/*      If the same layer is given more that once, we need to           */
+/*      duplicate it.                                                   */
+/* -------------------------------------------------------------------- */
+    if (pasLayers && nLayers>0)
+    {
+        int l,m;
+        for (m=0; m<nLayers;m++)
+        {
+            layerObj *psTmpLayer=NULL;
+            int nIndex;
+            char tmpId[128];
+            for (l=0;l<nLayers;l++)
+            {
+                if(pasLayers[m].name == NULL || pasLayers[l].name == NULL)
+                  continue;
+
+                nIndex = msGetLayerIndex(map, pasLayers[m].name);
+
+                if (m !=l && strcasecmp(pasLayers[m].name, pasLayers[l].name)== 0 &&
+                    nIndex != -1)
+                {
+                    psTmpLayer = (layerObj *) malloc(sizeof(layerObj));
+                    initLayer(psTmpLayer, map);
+                    msCopyLayer(psTmpLayer, GET_LAYER(map,nIndex));
+                    /* open the source layer */
+                    if ( !psTmpLayer->vtable) 
+                      msInitializeVirtualTable(psTmpLayer);
+
+                    /*make the name unique*/
+                    snprintf(tmpId, sizeof(tmpId), "%lx_%x_%d",(long)time(NULL),(int)getpid(),
+                             map->numlayers);
+                    if (psTmpLayer->name)
+                      msFree(psTmpLayer->name);
+                    psTmpLayer->name = strdup(tmpId);
+                    msFree(pasLayers[l].name);
+                    pasLayers[l].name = strdup(tmpId);
+                    msInsertLayer(map, psTmpLayer, -1);   
+                }
+            }
+        }
+    }
 
     if (pasLayers && nLayers > 0)
     {
@@ -174,7 +216,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
             for (j=0; j<nLayers; j++)
             {
-                    
 /* -------------------------------------------------------------------- */
 /*      copy :  - class                                                 */
 /*              - layer's labelitem                                     */
