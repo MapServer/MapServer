@@ -315,7 +315,7 @@ int msUnionLayerInitItemInfo(layerObj *layer)
         {
             /* get items requested by the union layer plus the required items */
             msLayerSetProcessingKey(srclayer, "ITEMS", itemlist);
-            if (msLayerWhichItems(srclayer, TRUE, NULL) != MS_SUCCESS)
+            if (msLayerWhichItems(srclayer, MS_TRUE, NULL) != MS_SUCCESS)
             {
                 msFree(itemlist);
                 return MS_FAILURE;
@@ -324,7 +324,7 @@ int msUnionLayerInitItemInfo(layerObj *layer)
         else
         {
             /* get only the required items */
-            if (msLayerWhichItems(srclayer, FALSE, NULL) != MS_SUCCESS)
+            if (msLayerWhichItems(srclayer, MS_FALSE, NULL) != MS_SUCCESS)
                 return MS_FAILURE;
         }
     }
@@ -353,7 +353,7 @@ int msUnionLayerWhichShapes(layerObj *layer, rectObj rect)
             msUnionLayerFreeExpressionTokens(srclayer);
             
             /* get only the required items */
-            if (msLayerWhichItems(srclayer, FALSE, NULL) != MS_SUCCESS)
+            if (msLayerWhichItems(srclayer, MS_FALSE, NULL) != MS_SUCCESS)
                 return MS_FAILURE;
         }
 
