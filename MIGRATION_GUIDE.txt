@@ -178,6 +178,31 @@ are evaluated in OGC WCS services. Previous versions used "wms_*"
 prefixed entries as fallback which is dropped in version 6.0 in favor of
 forcing explicit decisions.
 
+--------------------------------------------------------
+Mapfile Changes - Ability to escape single/double quotes
+--------------------------------------------------------
+
+We can now escape single and double quotes in strings and logical
+expressions. Examples:
+
+::
+
+  NAME "RO\"AD" # double quote inside a a double quote delimited string
+  NAME 'RO\'AD' # single quote inside a a single quote delimited string
+  FILTER ('[CTY_NAME]' = 'Ita\'sca') # logical expression that contains a single quote
+
+NOTE: The escape character (backslash) will only work if the
+following character is ", ' or \.
+
+For Windows users: if you have a path string delimited by single/double
+quotes that ends with \, you will have to escape the last backslash.
+
+::
+
+  SHAPEPATH "C:\ms4w\shapefiles\"
+  # should be modified to...
+  SHAPEPATH "C:\ms4w\shapefiles\\"
+
 ---------------------
 PHP MapScript Changes
 ---------------------
