@@ -136,7 +136,7 @@ int msUnionLayerOpen(layerObj *layer)
     layerinfo->layers =(layerObj*)malloc(layerCount * sizeof(layerObj));
     MS_CHECK_ALLOC(layerinfo->layers, layerCount * sizeof(layerObj), MS_FAILURE);
 
-    layerinfo->status =(layerObj*)malloc(layerCount * sizeof(int));
+    layerinfo->status =(int*)malloc(layerCount * sizeof(int));
     MS_CHECK_ALLOC(layerinfo->status, layerCount * sizeof(int), MS_FAILURE);
 
     for(i=0; i < layerCount; i++)
@@ -240,7 +240,7 @@ void msUnionLayerFreeItemInfo(layerObj *layer)
 }
 
 /* clean up expression tokens */
-int msUnionLayerFreeExpressionTokens(layerObj *layer)
+void msUnionLayerFreeExpressionTokens(layerObj *layer)
 {
     int i,j;
     freeExpressionTokens(&(layer->filter));
