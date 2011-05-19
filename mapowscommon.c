@@ -410,7 +410,7 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws
   if (version == OWS_1_0_0) {
     msLibXml2GenerateList(psRootNode, psNsOws, "Value", values, ',');
   }
-  if (version == OWS_1_1_0) {
+  if (version == OWS_1_1_0 || version == OWS_2_0_0) {
     psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "AllowedValues", NULL);
     msLibXml2GenerateList(psNode, psNsOws, "Value", values, ',');
   }

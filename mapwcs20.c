@@ -2873,7 +2873,10 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
                            wcs20ParamsObjPtr params, owsRequestObj *ows_request)
 {
     xmlDocPtr psDoc = NULL;       /* document pointer */
-    xmlNodePtr psRootNode, psOperationsNode, psServiceMetadataNode, psNode;
+    xmlNodePtr psRootNode,
+            psOperationsNode,
+            psServiceMetadataNode,
+            psNode;
     const char *updatesequence = NULL;
     xmlNsPtr psOwsNs = NULL,
             psXLinkNs = NULL,
@@ -2906,8 +2909,6 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     xmlSetNs(psRootNode, psWcsNs);
 
     xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->version );
-
-    /* TODO: remove updatesequence? */
 
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
     if (params->updatesequence != NULL)
@@ -2971,6 +2972,10 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
         psNode = msOWSCommonOperationsMetadataOperation(
             psOwsNs, psXLinkNs,
             "GetCapabilities", OWS_METHOD_GETPOST, script_url_encoded);
+        
+        xmlAddChild(psNode->last->last->last,
+            msOWSCommonOperationsMetadataDomainType(OWS_2_0_0, psOwsNs, "Constraint",
+                                                    "PostEncoding", "XML"));
         xmlAddChild(psOperationsNode, psNode);
 
         /* -------------------------------------------------------------------- */
@@ -2981,6 +2986,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             psNode = msOWSCommonOperationsMetadataOperation(
                 psOwsNs, psXLinkNs,
                 "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+            xmlAddChild(psNode->last->last->last,
+                msOWSCommonOperationsMetadataDomainType(OWS_2_0_0, psOwsNs, "Constraint",
+                                                        "PostEncoding", "XML"));
             xmlAddChild(psOperationsNode, psNode);
         }
 
@@ -2992,10 +3000,13 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             psNode = msOWSCommonOperationsMetadataOperation(
                 psOwsNs, psXLinkNs,
                 "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
-            xmlAddChild(psOperationsNode, psNode);
             
-            msFree(script_url_encoded);
+            xmlAddChild(psNode->last->last->last,
+                msOWSCommonOperationsMetadataDomainType(OWS_2_0_0, psOwsNs, "Constraint",
+                                                        "PostEncoding", "XML"));
+            xmlAddChild(psOperationsNode, psNode);
         }
+        msFree(script_url_encoded);
     }
 
     /* -------------------------------------------------------------------- */
