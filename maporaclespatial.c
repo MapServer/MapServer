@@ -2210,7 +2210,10 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
             OCIStmtExecute( hand->svchp, sthand->stmthp, hand->errhp, (ub4)ARRAY_SIZE, (ub4)0, (OCISnapshot *)NULL, (OCISnapshot *)NULL, (ub4)OCI_STMT_SCROLLABLE_READONLY ) )
                &&  TRY( hand,
             /* get rows fetched */
-            OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROW_COUNT, hand->errhp ) );
+            OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) )
+            && TRY( hand,
+            /* get rows count */
+            OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_count, (ub4 *)0, (ub4)OCI_ATTR_ROW_COUNT, hand->errhp ) );
     }
 
     if (!success)
