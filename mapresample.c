@@ -668,10 +668,10 @@ msAverageRasterResampler( imageObj *psSrcImage, colorObj offsite,
             dfYMax = MAX(MAX(y1[nDstX],y1[nDstX+1]),
                          MAX(y2[nDstX],y2[nDstX+1]));
 
-            dfXMin = MAX(dfXMin,0);
-            dfYMin = MAX(dfYMin,0);
-            dfXMax = MIN(dfXMax,psSrcImage->width);
-            dfYMax = MIN(dfYMax,psSrcImage->height);
+            dfXMin = MIN(MAX(dfXMin,0),psSrcImage->width+1);
+            dfYMin = MIN(MAX(dfYMin,0),psSrcImage->height+1);
+            dfXMax = MIN(MAX(-1,dfXMax),psSrcImage->width);
+            dfYMax = MIN(MAX(-1,dfYMax),psSrcImage->height);
                 
             memset( padfPixelSum, 0, sizeof(double)*bandCount );
     
