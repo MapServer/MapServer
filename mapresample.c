@@ -661,10 +661,10 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
             dfYMax = MAX(MAX(y1[nDstX],y1[nDstX+1]),
                          MAX(y2[nDstX],y2[nDstX+1]));
 
-            dfXMin = MAX(dfXMin,0);
-            dfYMin = MAX(dfYMin,0);
-            dfXMax = MIN(dfXMax,psSrcImage->width);
-            dfYMax = MIN(dfYMax,psSrcImage->height);
+            dfXMin = MIN(MAX(dfXMin,0),psSrcImage->width+1);
+            dfYMin = MIN(MAX(dfYMin,0),psSrcImage->height+1);
+            dfXMax = MIN(MAX(-1,dfXMax),psSrcImage->width);
+            dfYMax = MIN(MAX(-1,dfYMax),psSrcImage->height);
                 
             memset( padfPixelSum, 0, sizeof(double)*bandCount );
     
@@ -1512,6 +1512,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     sDummyMap.outputformat = msCloneOutputFormat( image->format );
     sDummyMap.width = nLoadImgXSize;
     sDummyMap.height = nLoadImgYSize;
+    sDummyMap.mappath = map->mappath;
+    sDummyMap.shapepath = map->shapepath;
     
 /* -------------------------------------------------------------------- */
 /*      If we are working in 256 color GD mode, allocate 0 as the       */
