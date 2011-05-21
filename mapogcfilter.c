@@ -2104,7 +2104,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
 
                     psTmpNode = CPLSearchXMLNode(psXMLNode,  "PropertyName");
-                    if (psTmpNode &&  psXMLNode->psChild && 
+                    if (psTmpNode &&  psTmpNode->psChild &&
                         psTmpNode->psChild->pszValue && 
                         strlen(psTmpNode->psChild->pszValue) > 0)
                     
@@ -2126,7 +2126,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
                     
                     psTmpNode = CPLSearchXMLNode(psXMLNode,  "Literal");
-                    if (psTmpNode &&  psXMLNode->psChild && 
+                    if (psTmpNode &&  psTmpNode->psChild &&
                         psTmpNode->psChild->pszValue && 
                         strlen(psTmpNode->psChild->pszValue) > 0)
                     {

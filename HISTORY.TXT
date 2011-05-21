@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Version 5.6.7 (SVN branch-5-6):
 ---------------------------
 
+- Fix segfault on malformed <PropertyIsLike> filters (#3888)
+
 - Fixed potential crash with AVERAGE resampling and crazy reprojection (#3886)
 
 - Fixed segmentation fault on invalid symbol (#3849)
