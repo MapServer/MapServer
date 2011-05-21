@@ -255,6 +255,10 @@
             return NULL;
     }
 
+    int setItems(char **items, int numitems) {
+        msLayerSetItems(self, items, numitems);
+    }
+
     int draw(mapObj *map, imageObj *image) 
     {
         return msDrawLayer(map, self, image);    
