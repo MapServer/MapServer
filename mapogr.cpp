@@ -1440,11 +1440,34 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
   int  iLayer;
 
-  for( iLayer = 0; iLayer < OGR_DS_GetLayerCount(hDS); iLayer++ )
+  if( EQUALN(pszLayerDef,"SELECT ",7) )
+  {
+      ACQUIRE_OGR_LOCK;
+      hLayer = OGR_DS_ExecuteSQL( hDS, pszLayerDef, NULL, NULL );
+      if( hLayer == NULL )
+      {
+          msSetError(MS_OGRERR,
+                     "ExecuteSQL(%s) failed.\n%s",
+                     "msOGRFileOpen()",
+                     pszLayerDef, CPLGetLastErrorMsg() );
+          RELEASE_OGR_LOCK;
+          msConnPoolRelease( layer, hDS );
+          CPLFree( pszLayerDef );
+          return NULL;
+      }
+      RELEASE_OGR_LOCK;
+      nLayerIndex = -1;
+  }
+
+  for( iLayer = 0; hLayer == NULL && iLayer < OGR_DS_GetLayerCount(hDS); iLayer++ )
   {
       hLayer = OGR_DS_GetLayer( hDS, iLayer );
-      if( hLayer != NULL 
+      if( hLayer != NULL
+#if GDAL_VERSION_NUM >= 1800
+          && EQUAL(OGR_L_GetName(hLayer),pszLayerDef) )
+#else
           && EQUAL(OGR_FD_GetName( OGR_L_GetLayerDefn(hLayer) ),pszLayerDef) )
+#endif
       {
           nLayerIndex = iLayer;
           break;
@@ -1458,25 +1481,6 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       nLayerIndex = atoi(pszLayerDef);
       if( nLayerIndex <  OGR_DS_GetLayerCount(hDS) )
           hLayer = OGR_DS_GetLayer( hDS, nLayerIndex );
-  }
-
-  if( hLayer == NULL && EQUALN(pszLayerDef,"SELECT",6) )
-  {
-      ACQUIRE_OGR_LOCK;
-      hLayer = OGR_DS_ExecuteSQL( hDS, pszLayerDef, NULL, NULL );
-      if( hLayer == NULL )
-      {
-          msSetError(MS_OGRERR, 
-                     "ExecuteSQL(%s) failed.\n%s",
-                     "msOGRFileOpen()", 
-                     pszLayerDef, CPLGetLastErrorMsg() );
-          RELEASE_OGR_LOCK;
-          msConnPoolRelease( layer, hDS );
-          CPLFree( pszLayerDef );
-          return NULL;
-      }
-      RELEASE_OGR_LOCK;
-      nLayerIndex = -1;
   }
 
   if (hLayer == NULL)
