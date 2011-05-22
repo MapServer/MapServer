@@ -327,10 +327,22 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
           return(-1);
       }
 
+#if GDAL_VERSION_NUM >= 1900
+      OGR_G_GetPoints(hGeom,
+                      &(line.point[0].x), sizeof(pointObj),
+                      &(line.point[0].y), sizeof(pointObj),
+                      NULL, 0);
+#endif
+
       for(j=0; j<numpoints; j++)
       {
-          dX = line.point[j].x = OGR_G_GetX( hGeom, j); 
+#if GDAL_VERSION_NUM < 1900
+          dX = line.point[j].x = OGR_G_GetX( hGeom, j);
           dY = line.point[j].y = OGR_G_GetY( hGeom, j);
+#else
+          dX = line.point[j].x;
+          dY = line.point[j].y;
+#endif
 
           /* Keep track of shape bounds */
           if (j == 0 && outshp->numlines == 0)
