@@ -57,7 +57,8 @@ public class MapThread extends Thread {
 	layerObj layer = map.getLayer(3);
 	if (layer!=null) {
 		layer.open();
-		shapeObj shape=layer.getFeature(0,-1);
+                layer.queryByIndex(map,0,-1,mapscriptConstants.MS_FALSE);
+                shapeObj shape=layer.getShape(layer.getResults().getResult(0));
 		if (shape!=null) {
 			shapeObj buffer=shape.buffer(0.1);
 			if (buffer != null) {
