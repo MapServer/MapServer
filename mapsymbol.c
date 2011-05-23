@@ -750,7 +750,9 @@ int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename) {
     stream = fopen(filename, "w");
     if (stream)
     {
+	fprintf(stream, "SYMBOLSET\n");
         retval = msSaveSymbolSetStream(symbolset, stream);
+	fprintf(stream, "END\n");
         fclose(stream);
     }
     else 
