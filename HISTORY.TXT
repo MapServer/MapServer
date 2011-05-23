@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 ------------------------------------------------- 
 
+- Ensure msLayerSetProcessingKey() supports setting a NULL value to clear
+  a processing key. 
+
 - Write SYMBOLSET/END tags when saving a symbol file (#3885)
 
 - Make java threadtests work again (#3887)

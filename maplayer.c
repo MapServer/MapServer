@@ -708,27 +708,44 @@ msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value)
 {
     int len = strlen(key);
     int i;
-    char *directive;
+    char *directive = NULL;
 
-    directive = (char *) msSmallMalloc(strlen(key)+strlen(value)+2);
-    sprintf( directive, "%s=%s", key, value );
+    if( value != NULL )
+    {
+        directive = (char *) msSmallMalloc(strlen(key)+strlen(value)+2);
+        sprintf( directive, "%s=%s", key, value );
+    }
 
     for( i = 0; i < layer->numprocessing; i++ )
     {
-        /* If the key is found, replace it */
         if( strncasecmp( key, layer->processing[i], len ) == 0 
             && layer->processing[i][len] == '=' )
         {
             free( layer->processing[i] );
-            layer->processing[i] = directive;
+
+            /* 
+            ** Either replace the existing entry with a new one or
+            ** clear the entry.
+            */
+            if( directive != NULL )
+                layer->processing[i] = directive;
+            else
+            {
+                layer->processing[i] = layer->processing[layer->numprocessing-1];
+                layer->processing[layer->numprocessing-1] = NULL;
+                layer->numprocessing--;
+            }
             return;
         }
     }
 
     /* otherwise add the directive at the end. */
 
-    msLayerAddProcessing( layer, directive );
-    free( directive );
+    if( directive != NULL )
+    {
+        msLayerAddProcessing( layer, directive );
+        free( directive );
+    }
 }
 
 void msLayerAddProcessing( layerObj *layer, const char *directive )
