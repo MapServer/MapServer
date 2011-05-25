@@ -408,14 +408,26 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   if (format == NULL || (!MS_DRIVER_GD(format) && !MS_DRIVER_AGG(format))) 
     format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
 
-  img.img.gd = gdImageCreate(width, height);
-  color = gdImageColorAllocate(img.img.gd, map->imagecolor.red, 
-                               map->imagecolor.green,
-                               map->imagecolor.blue); /* BG color */
-  nBlack = gdImageColorAllocate(img.img.gd, 0,0,0); /* Text color */
+  if(format->imagemode == MS_IMAGEMODE_RGB || format->imagemode == MS_IMAGEMODE_RGBA) {
+    img.img.gd = gdImageCreateTrueColor(width, height);
+        gdImageAlphaBlending(img.img.gd, 0);
+    color = gdTrueColor(map->imagecolor.red,
+                        map->imagecolor.green,
+                        map->imagecolor.blue); /* BG color */
+    nBlack = gdTrueColor(0,0,0); /* Text color */
+
+    gdImageFilledRectangle(img.img.gd, 0, 0, width, height, color);
+
+  } else {
+    img.img.gd = gdImageCreate(width, height);
+    color = gdImageColorAllocate(img.img.gd, map->imagecolor.red, 
+                                 map->imagecolor.green,
+                                 map->imagecolor.blue); /* BG color */
+    nBlack = gdImageColorAllocate(img.img.gd, 0,0,0); /* Text color */
+  }
 
   if (map->outputformat && map->outputformat->transparent)
-    gdImageColorTransparent(img.img.gd, 0);
+    gdImageColorTransparent(img.img.gd, color);
 
 
   nTextLength = strlen(errormsg); 
