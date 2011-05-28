@@ -139,11 +139,7 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
 styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
     int i;
     styleObj *style;
-    if (class->numstyles == 1) {
-        msSetError(MS_CHILDERR, "Cannot remove a class's sole style", "removeStyle()");
-        return NULL;
-    }
-    else if (nStyleIndex < 0 || nStyleIndex >= class->numstyles) {
+    if (nStyleIndex < 0 || nStyleIndex >= class->numstyles) {
         msSetError(MS_CHILDERR, "Cannot remove style, invalid nStyleIndex %d", "removeStyle()", nStyleIndex);
         return NULL;
     }
