@@ -75,7 +75,6 @@ typedef struct ms_MSSQL2008_layer_info_t
 
 #define SQL_COLUMN_NAME_MAX_LENGTH 128
 #define SQL_TABLE_NAME_MAX_LENGTH 128
-#define SQL_OID_SIZE 20
 
 #define DATA_ERROR_MESSAGE \
     "%s" \
@@ -574,7 +573,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     {
         char buffer[1000];
 
-        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(%d), %s)", layerinfo->geom_column, SQL_OID_SIZE, layerinfo->urid_name);
+        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = _strdup(buffer);
     } 
@@ -586,7 +585,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
             snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
         }
 
-        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(%d), %s)", layerinfo->geom_column, SQL_OID_SIZE, layerinfo->urid_name);
+        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = _strdup(buffer);
     }
@@ -1247,7 +1246,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 	char dummyBuffer[1];
 	char *wkbBuffer;
 	char *valueBuffer;
-	char oidBuffer[ SQL_OID_SIZE + 1 ];
+	char oidBuffer[ 16 ];		/* assuming the OID will always be a long this should be enough */
     long record_oid;
 	int t;
 
@@ -1387,7 +1386,6 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
                     case MS_LAYER_ANNOTATION:
                     case MS_LAYER_QUERY:
-                    case MS_LAYER_CHART:
                         result = dont_force(wkbBuffer, shape);
                         break;
 
@@ -1487,7 +1485,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
     if(layer->numitems == 0) 
     {
-        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(), convert(varchar(%d), %s)", layerinfo->geom_column, SQL_OID_SIZE, layerinfo->urid_name);
+        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(), convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
         columns_wanted = _strdup(buffer);
     } 
     else 
@@ -1496,7 +1494,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
             snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
         }
 
-        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(), convert(varchar(%d), %s)", layerinfo->geom_column, SQL_OID_SIZE, layerinfo->urid_name);
+        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(), convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = _strdup(buffer);
     }
