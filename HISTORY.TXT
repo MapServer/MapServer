@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 ------------------------------------------------- 
 
+- Fixed mssql2008 to return correct geometries with chart layer type (#3894)
+
 - Ensure msLayerSetProcessingKey() supports setting a NULL value to clear
   a processing key. 
 

@@ -1387,6 +1387,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
                     case MS_LAYER_ANNOTATION:
                     case MS_LAYER_QUERY:
+                    case MS_LAYER_CHART:
                         result = dont_force(wkbBuffer, shape);
                         break;
 
