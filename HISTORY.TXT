@@ -13,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
+- WFS: check if map projection is properly set before using it (#3897)
+
 - Fix for the memory corruption when mapping the string data type in the Java bindings (#3491)
 
 - Ensure the class is not marked BeforeFieldInit causing memory corruption with C#/CLR4 (#3438)
