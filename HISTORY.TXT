@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Version 6.0.1 (SVN branch-6-0):
 ---------------------------
 
+- Fixed order of metadata lookup for WMS GML GetFeatureInfo. 'ows' should 
+  come last, not first (#3636).
+
 - Fixed mssql2008 to return correct geometries with chart layer type (#3894)
 
 - Write SYMBOLSET/END tags when saving a symbol file (#3885)
