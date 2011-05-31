@@ -12,6 +12,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
+- WFS: check if map projection is properly set before using it (#3897)
+
 - Disabled some insecure (and potentially exploitable) mapserv command-line
   debug arguments (#3485). The --enable-cgi-cl-debug-args configure switch
   can be used to re-enable them for devs who really cannot get away without

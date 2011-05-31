@@ -1127,7 +1127,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
           /* get the extent of the layer (bbox will get further filtered later */
           /* if the client specifies BBOX or a spatial filter */
 
-          if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
+          if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS &&
+              pszMapSRS != NULL) {
             sprintf(szBuf, "init=epsg:%.10s", pszMapSRS+5);
 
             if (szBuf != NULL) {
