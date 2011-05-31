@@ -82,6 +82,47 @@ int msUnionLayerClose(layerObj *layer)
     return MS_SUCCESS;
 }
 
+int isScaleInRange(mapObj* map, layerObj *layer)
+{
+    if(map->scaledenom > 0) 
+    {
+        int i;
+        /* layer scale boundaries should be checked first */
+        if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom))
+            return MS_FALSE;
+        
+        if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom))
+            return MS_FALSE;
+
+        /* now check class scale boundaries (all layers *must* pass these tests) */
+        if(layer->numclasses > 0) 
+        {
+            for(i=0; i<layer->numclasses; i++) 
+            {
+                if((layer->class[i]->maxscaledenom > 0) && (map->scaledenom > layer->class[i]->maxscaledenom))
+                    continue; /* can skip this one, next class */
+                if((layer->class[i]->minscaledenom > 0) && (map->scaledenom <= layer->class[i]->minscaledenom))
+                    continue; /* can skip this one, next class */
+
+                break; /* can't skip this class (or layer for that matter) */
+            } 
+            if(i == layer->numclasses)
+                return MS_FALSE;
+
+        }
+
+        if (layer->maxscaledenom <= 0 && layer->minscaledenom <= 0) 
+        {
+            if((layer->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > layer->maxgeowidth))
+                return MS_FALSE;
+
+            if((layer->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < layer->mingeowidth))
+                return MS_FALSE;
+        }
+    }
+    return MS_TRUE;
+}
+
 int msUnionLayerOpen(layerObj *layer)
 {
     msUnionLayerInfo *layerinfo;
@@ -89,6 +130,9 @@ int msUnionLayerOpen(layerObj *layer)
     mapObj* map;
     int i;
     int layerCount;
+    const char* pkey;
+    int status_check;
+    int scale_check;
 
     if (layer->layerinfo != NULL)
     {
@@ -121,6 +165,20 @@ int msUnionLayerOpen(layerObj *layer)
     layerinfo->layerCount = 0;
 
     layerinfo->classText = NULL;
+
+    pkey = msLayerGetProcessingKey(layer, "UNION_STATUS_CHECK");
+    if(pkey && strcasecmp(pkey, "true") == 0) 
+        status_check = MS_TRUE;
+    else
+        status_check = MS_FALSE;
+
+    pkey = msLayerGetProcessingKey(layer, "UNION_SCALE_CHECK");
+    if(pkey && strcasecmp(pkey, "false") == 0) 
+        scale_check = MS_FALSE;
+    else
+        scale_check = MS_TRUE;
+
+    pkey = msLayerGetProcessingKey(layer, "UNION_SRCLAYER_CLOSE_CONNECTION");
     
     layerNames = msStringSplit(layer->connection, ',', &layerCount);
 
@@ -176,8 +234,25 @@ int msUnionLayerOpen(layerObj *layer)
                 return MS_FAILURE;
             }
 
-            /* disable the connection pool for this layer */
-            msLayerSetProcessingKey(&layerinfo->layers[i], "CLOSE_CONNECTION", "ALWAYS");
+            if (pkey)
+            {
+                /* override connection flag */
+                msLayerSetProcessingKey(&layerinfo->layers[i], "CLOSE_CONNECTION", pkey);
+            }
+
+            /* check is we should skip this source (status check) */
+            if (status_check && layerinfo->layers[i].status == MS_OFF)
+            {
+                layerinfo->status[i] = MS_DONE;
+                continue;
+            }
+
+            /* check is we should skip this source (scale check) */
+            if (scale_check && isScaleInRange(map, &layerinfo->layers[i]) == MS_FALSE)
+            {
+                layerinfo->status[i] = MS_DONE;
+                continue;
+            }
 
             layerinfo->status[i] = msLayerOpen(&layerinfo->layers[i]);
             if (layerinfo->status[i] != MS_SUCCESS)
@@ -309,6 +384,9 @@ int msUnionLayerInitItemInfo(layerObj *layer)
     { 
         layerObj* srclayer = &layerinfo->layers[i];
 
+        if (layerinfo->status[i] != MS_SUCCESS)
+            continue; /* skip empty layers */
+
         msUnionLayerFreeExpressionTokens(srclayer);
         
         if (itemlist)
@@ -346,6 +424,9 @@ int msUnionLayerWhichShapes(layerObj *layer, rectObj rect)
     for (i = 0; i < layerinfo->layerCount; i++)
     {
         layerObj* srclayer = &layerinfo->layers[i];
+
+        if (layerinfo->status[i] != MS_SUCCESS)
+            continue; /* skip empty layers */
 
         if (layer->styleitem && layer->numitems == 0)
         {
@@ -590,6 +671,9 @@ int msUnionLayerGetNumFeatures(layerObj *layer)
 
     for (i = 0; i < layerinfo->layerCount; i++)
     {
+        if (layerinfo->status[i] != MS_SUCCESS)
+            continue; /* skip empty layers */
+        
         c = msLayerGetNumFeatures(&layerinfo->layers[i]);
         if (c > 0)
             numFeatures += c;
