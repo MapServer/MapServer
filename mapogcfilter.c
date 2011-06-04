@@ -3223,11 +3223,12 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode, layerO
     bString = 0;
     if (psFilterNode->psRightNode->pszValue)
     {
-        sprintf(szTmp, "%s_type",  psFilterNode->psLeftNode->pszValue);
-        if (msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp) != NULL &&
-            (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", szTmp), "Character") == 0))
+        const char* pszOFGType;
+        snprintf(szTmp, sizeof(szTmp), "%s_type",  psFilterNode->psLeftNode->pszValue);
+        pszOFGType = msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp);
+        if (pszOFGType != NULL && strcasecmp(pszOFGType, "Character") == 0)
           bString = 1;
-        else if (FLTIsNumeric(psFilterNode->psRightNode->pszValue) == MS_FALSE)    
+        else if (FLTIsNumeric(psFilterNode->psRightNode->pszValue) == MS_FALSE)
           bString = 1;
     }
     
@@ -3444,11 +3445,12 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     bString = 0;
     if (aszBounds[0])
     {
-        sprintf(szTmp, "%s_type",  psFilterNode->psLeftNode->pszValue);
-        if (msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp) != NULL &&
-            (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", szTmp), "Character") == 0))
+        const char* pszOFGType;
+        snprintf(szTmp, sizeof(szTmp), "%s_type",  psFilterNode->psLeftNode->pszValue);
+        pszOFGType = msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp);
+        if (pszOFGType != NULL && strcasecmp(pszOFGType, "Character") == 0)
           bString = 1;
-        else if (FLTIsNumeric(aszBounds[0]) == MS_FALSE)    
+        else if (FLTIsNumeric(aszBounds[0]) == MS_FALSE)
           bString = 1;
     }
     if (!bString)
@@ -3532,11 +3534,12 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode,
     bString = 0;
     if (aszBounds[0])
     {
-        sprintf(szTmp, "%s_type",  psFilterNode->psLeftNode->pszValue);
-        if (msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp) != NULL &&
-            (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", szTmp), "Character") == 0))
+        const char* pszOFGType;
+        snprintf(szTmp, sizeof(szTmp), "%s_type",  psFilterNode->psLeftNode->pszValue);
+        pszOFGType = msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp);
+        if (pszOFGType != NULL && strcasecmp(pszOFGType, "Character") == 0)
           bString = 1;
-        else if (FLTIsNumeric(aszBounds[0]) == MS_FALSE)    
+        else if (FLTIsNumeric(aszBounds[0]) == MS_FALSE)
           bString = 1;
     }
     if (!bString)
