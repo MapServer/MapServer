@@ -3117,7 +3117,7 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
                     else
                       strlcat(buffer, "(", buffer_size);
 
-                    snprintf(bufferTmp, buffer_size, "(date_trunc('%s, %s) >= '%s", 
+                    snprintf(bufferTmp, buffer_size, "(date_trunc('%s', %s) >= '%s", 
                              timeresolution, timefield, tokens[0]);
                     strlcat(buffer, bufferTmp, buffer_size);
                     
