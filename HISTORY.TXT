@@ -15,6 +15,12 @@ For a complete change history, please see the Subversion log comments.
 Version 6.0.1 (SVN branch-6-0):
 ---------------------------
 
+- OGC Filter: fix segfault when a ows_varname_type or wfs_varname_type is
+  defined but not a gml_varname_type (#3902)
+
+- Fix regression of MapServer 6.0.0 when specifying a time range in WMS time
+  requests on a Postgis layer (#3909)
+
 - Fixed order of metadata lookup for WMS GML GetFeatureInfo. 'ows' should 
   come last, not first (#3636).
 
