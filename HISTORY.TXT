@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 Version 5.6.7 (SVN branch-5-6):
 ---------------------------
 
+- OGC Filter: fix segfault when a ows_varname_type or wfs_varname_type is
+  defined but not a gml_varname_type (#3902)
+
 - Fixed mssql2008 to return correct geometries with chart layer type (#3894)
 
 - Fix segfault with png-inimage exceptions and quantize_force=on (#2903)
