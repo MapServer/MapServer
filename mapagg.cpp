@@ -919,7 +919,7 @@ static mapserver::path_storage createHatch(int sx, int sy, double angle, double 
     return path;
 }
 
-int agg2RenderPolygonHatched(imageObj *img, shapeObj *poly, double spacing, double width, double angle, colorObj *color) {
+int agg2RenderPolygonHatched(imageObj *img, shapeObj *poly, double spacing, double width, double *pattern, int patternlength, double angle, colorObj *color) {
    
    msComputeBounds(poly);
 
@@ -940,9 +940,6 @@ int agg2RenderPolygonHatched(imageObj *img, shapeObj *poly, double spacing, doub
 
 
    //render the hatch clipped by the shape
-   mapserver::conv_stroke <mapserver::path_storage > stroke(hatch);
-   stroke.width(width);
-   stroke.line_cap(mapserver::butt_cap);
    
    polygon_adaptor polygons(poly);
    
@@ -954,7 +951,28 @@ int agg2RenderPolygonHatched(imageObj *img, shapeObj *poly, double spacing, doub
    mapserver::scanline_storage_aa8 storage2;
    mapserver::scanline_p8 sl1,sl2;
    ras1.filling_rule(mapserver::fill_non_zero);
-   ras1.add_path(stroke);                    
+   
+   
+   if(patternlength>1) {
+      //dash the hatch and render it clipped by the shape
+      mapserver::conv_dash<mapserver::path_storage > dash(hatch);
+      mapserver::conv_stroke<mapserver::conv_dash<mapserver::path_storage> > stroke(dash);
+      for (int i=0; i<patternlength; i+=2) {
+         if (i < patternlength-1) {
+            dash.add_dash(pattern[i], pattern[i+1]);
+         }
+      }
+      stroke.width(width);
+      stroke.line_cap(mapserver::butt_cap);
+      ras1.add_path(stroke);                    
+   } else {
+      //render the hatch clipped by the shape
+      mapserver::conv_stroke <mapserver::path_storage > stroke(hatch);
+      stroke.width(width);
+      stroke.line_cap(mapserver::butt_cap);
+      ras1.add_path(stroke);                    
+   }
+   
    mapserver::render_scanlines(ras1, r->sl_line, storage1);
    ras2.filling_rule(mapserver::fill_even_odd);
    ras2.add_path(polygons);
@@ -966,14 +984,8 @@ int agg2RenderPolygonHatched(imageObj *img, shapeObj *poly, double spacing, doub
 
 }
 
-int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, double angle, colorObj *color) {
-   assert(MS_RENDERER_PLUGIN(img->format));
-   msComputeBounds(poly);
-   int pw=(int)(poly->bounds.maxx-poly->bounds.minx+width*2)+1;
-   int ph=(int)(poly->bounds.maxy-poly->bounds.miny+width*2)+1;
-   mapserver::path_storage lines = createHatch(pw,ph, angle, spacing);
-   lines.transform(mapserver::trans_affine_translation(poly->bounds.minx-width,poly->bounds.miny-width));
-   polygon_adaptor polygons(poly);
+template<class VertexSource> void renderPolygonHatches(imageObj *img,VertexSource &clipper, colorObj *color) {
+
    shapeObj shape;
    msInitShape(&shape);
    int allocated = 20;
@@ -982,14 +994,6 @@ int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, 
    shape.numlines = 1;
    shape.line[0].point = (pointObj*)msSmallCalloc(allocated,sizeof(pointObj));
    shape.line[0].numpoints = 0;
-   mapserver::conv_stroke<mapserver::path_storage> stroke(lines);
-   stroke.width(width);
-   stroke.line_cap(mapserver::butt_cap);
-   //mapserver::conv_clipper<mapserver::path_storage,polygon_adaptor> clipper(*lines,polygons, mapserver::clipper_and);
-   //mapserver::conv_clipper<polygon_adaptor,mapserver::path_storage> clipper(polygons,lines, mapserver::clipper_and);
-   mapserver::conv_clipper<polygon_adaptor,mapserver::conv_stroke<mapserver::path_storage> > clipper(polygons,stroke, mapserver::clipper_and); 
-   clipper.rewind(0);
-   
    double x=0,y=0;
    unsigned int cmd, prevCmd=-1;
    while((cmd = clipper.vertex(&x,&y)) != mapserver::path_cmd_stop) {
@@ -1020,6 +1024,44 @@ int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, 
       prevCmd = cmd;
    }
    free(shape.line[0].point);
+}
+
+int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, double *pattern, int patternlength, double angle, colorObj *color) {
+   assert(MS_RENDERER_PLUGIN(img->format));
+   msComputeBounds(poly);
+   int pw=(int)(poly->bounds.maxx-poly->bounds.minx+width*2)+1;
+   int ph=(int)(poly->bounds.maxy-poly->bounds.miny+width*2)+1;
+   mapserver::path_storage lines = createHatch(pw,ph, angle, spacing);
+   lines.transform(mapserver::trans_affine_translation(poly->bounds.minx-width,poly->bounds.miny-width));
+   polygon_adaptor polygons(poly);
+
+
+
+   if(patternlength>1) {
+      //dash the hatch and render it clipped by the shape
+      mapserver::conv_dash<mapserver::path_storage > dash(lines);
+      mapserver::conv_stroke<mapserver::conv_dash<mapserver::path_storage> > stroke(dash);
+      for (int i=0; i<patternlength; i+=2) {
+         if (i < patternlength-1) {
+            dash.add_dash(pattern[i], pattern[i+1]);
+         }
+      }
+      stroke.width(width);
+      stroke.line_cap(mapserver::butt_cap);
+      mapserver::conv_clipper<polygon_adaptor,mapserver::conv_stroke<mapserver::conv_dash<mapserver::path_storage> > > clipper(polygons,stroke, mapserver::clipper_and); 
+      clipper.rewind(0);
+      renderPolygonHatches(img,clipper,color);
+   } else {
+      //render the hatch clipped by the shape
+      mapserver::conv_stroke <mapserver::path_storage > stroke(lines);
+      stroke.width(width);
+      stroke.line_cap(mapserver::butt_cap);
+      mapserver::conv_clipper<polygon_adaptor,mapserver::conv_stroke<mapserver::path_storage> > clipper(polygons,stroke, mapserver::clipper_and); 
+      clipper.rewind(0);
+      renderPolygonHatches(img,clipper,color);
+   }
+
+
    //assert(prevCmd == mapserver::path_cmd_line_to);
    //delete lines;
    return MS_SUCCESS;

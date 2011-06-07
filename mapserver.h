@@ -2191,7 +2191,7 @@ MS_DLL_EXPORT void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
 /*      Prototypes for functions in mapgeomutil.cpp                       */
 /* ==================================================================== */
 MS_DLL_EXPORT shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle, double endAngle, int isSlice);
-MS_DLL_EXPORT int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, double angle, colorObj *color);
+MS_DLL_EXPORT int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, double *pattern, int patternlength, double angle, colorObj *color);
 
 
 
@@ -2655,7 +2655,7 @@ struct rendererVTableObj {
 	int (*renderLine)(imageObj *img, shapeObj *p, strokeStyleObj *style);
 	int (*renderPolygon)(imageObj *img, shapeObj *p, colorObj *color);
 	int (*renderPolygonTiled)(imageObj *img, shapeObj *p, imageObj *tile);
-	int (*renderPolygonHatched)(imageObj *img, shapeObj *poly, double spacing, double width, double angle, colorObj *color);
+	int (*renderPolygonHatched)(imageObj *img, shapeObj *poly, double spacing, double width, double *pattern, int patternlength, double angle, colorObj *color);
 	int (*renderLineTiled)(imageObj *img, shapeObj *p, imageObj *tile);
 
 	int (*renderBitmapGlyphs)(imageObj *img, double x, double y,

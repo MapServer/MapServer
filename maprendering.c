@@ -586,6 +586,8 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             goto cleanup; /*finished plain polygon*/
          } else if(symbol->type == MS_SYMBOL_HATCH) {
             double width, spacing;
+            double pattern[MS_MAXPATTERNLENGTH];
+            int i;
 
             if(MS_VALID_COLOR(style->backgroundcolor)) {
                ret = renderer->renderPolygon(image,offsetPolygon, &style->backgroundcolor);
@@ -597,10 +599,16 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             spacing = (style->size <= 0)?scalefactor:style->size*scalefactor;
             spacing = MS_MIN(spacing, style->maxsize);
             spacing = MS_MAX(spacing, style->minsize);
+
+            /* scale the pattern by the factor applied to the width */
+            for(i=0;i<style->patternlength;i++) {
+               pattern[i] = style->pattern[i]*width/style->width;
+            }
+            
             if(renderer->renderPolygonHatched) {
-               ret = renderer->renderPolygonHatched(image,offsetPolygon,spacing,width,style->angle, &style->color);
+               ret = renderer->renderPolygonHatched(image,offsetPolygon,spacing,width,pattern,style->patternlength,style->angle, &style->color);
             } else {
-               ret = msHatchPolygon(image,offsetPolygon,spacing,width,style->angle, &style->color);
+               ret = msHatchPolygon(image,offsetPolygon,spacing,width,pattern,style->patternlength,style->angle, &style->color);
             }
             goto cleanup;
          }
