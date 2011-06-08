@@ -79,6 +79,7 @@ struct cluster_info
     int numcollected;
     int numremoved;
     int index;
+    clusterTreeNode* node;
     /* collection of the siblings */
     clusterInfo* siblings;
     /* next shape in the linked list */
@@ -278,6 +279,7 @@ static clusterInfo *clusterInfoCreate(msClusterLayerInfo* layerinfo)
     feature->numremoved = 0;
     feature->next = NULL;
     feature->group = NULL;
+    feature->node = NULL;
     feature->siblings = NULL;
     feature->index = layerinfo->numFeatures;
     feature->filter = -1; // not yet calculated
@@ -740,6 +742,7 @@ static int treeNodeAddShape(msClusterLayerInfo* layerinfo, clusterTreeNode* node
     node->numshapes++;
     shape->next = node->shapes;
     node->shapes = shape;
+    shape->node = node;
 
     return MS_SUCCESS;
 }
@@ -752,13 +755,13 @@ static int collectClusterShapes(msClusterLayerInfo* layerinfo, clusterTreeNode *
     clusterInfo* s = node->shapes;
 
     if(!msRectOverlap(&node->rect, &current->bounds))
-    return (!node->shapes && !node->subnode[0] && !node->subnode[1] 
-                 && !node->subnode[2] && !node->subnode[3]);
+        return (!node->shapes && !node->subnode[0] && !node->subnode[1] 
+              && !node->subnode[2] && !node->subnode[3]);
 
     /* removing the shapes from this node if overlap with the cluster */
     while (s)
     {
-        if (layerinfo->fnCompare(current, s))
+        if (s == current || layerinfo->fnCompare(current, s))
         {
             if (s != current && current->filter == 0)
             {
@@ -960,6 +963,9 @@ int RebuildClusters(layerObj *layer)
         return MS_FAILURE;
     }
 
+    if (layer->debug >= MS_DEBUGLEVEL_VVV)
+        msDebug("Clustering started.\n");
+
 	map = layer->map;
 
     layerinfo->current = layerinfo->finalized; /* restart */
@@ -1070,8 +1076,15 @@ int RebuildClusters(layerObj *layer)
         current->bounds.maxx = current->x + maxDistanceX;
         current->bounds.maxy = current->y + maxDistanceY;
 
-        current->x = current->shape.bounds.minx;
-        current->y = current->shape.bounds.miny;
+        /* if the shape doesn't overlap we must skip it to avoid further issues */
+        if(!msRectOverlap(&searchrect, &current->bounds))
+        {
+            msFreeShape(&current->shape);
+            msInitShape(&current->shape);
+
+            msDebug("Skipping an invalid shape falling outside of the given extent\n");
+            continue;
+        }
 
         /* construct the item array */
         if (layer->iteminfo)
@@ -1116,13 +1129,44 @@ int RebuildClusters(layerObj *layer)
         findBestCluster(layer, layerinfo, layerinfo->root);
 
         if (layerinfo->current == NULL)
+        {
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug("Clustering terminated.\n");
             break; /* completed */
+        }
 
         /* Update the feature count of the shape */
         InitShapeAttributes(layer, layerinfo->current);
         
         /* collecting the shapes of the cluster */
         collectClusterShapes(layerinfo, layerinfo->root, layerinfo->current);
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+        {
+            msDebug("processing cluster %p: rank=%lf fcount=%d ncoll=%d nfin=%d nfins=%d nflt=%d bounds={%lf %lf %lf %lf}\n", layerinfo->current, layerinfo->rank, layerinfo->current->numsiblings + 1, 
+            layerinfo->current->numcollected, layerinfo->numFinalized, layerinfo->numFinalizedSiblings, 
+            layerinfo->numFiltered, layerinfo->current->bounds.minx, layerinfo->current->bounds.miny, 
+            layerinfo->current->bounds.maxx, layerinfo->current->bounds.maxy);
+            if (layerinfo->current->node)
+            {
+                char pszBuffer[TREE_MAX_DEPTH + 1];
+                clusterTreeNode* node = layerinfo->current->node;
+                int position = node->position;
+                int i = 1;
+                while (position > 0 && i <= TREE_MAX_DEPTH)
+                {
+                    pszBuffer[TREE_MAX_DEPTH - i] = '0' + (position % 4);
+                    position = position >> 2;
+                    ++i;
+                }
+                pszBuffer[TREE_MAX_DEPTH] = 0;
+
+                msDebug(" ->node %p: count=%d index=%d pos=%s subn={%p %p %p %p} rect={%lf %lf %lf %lf}\n", 
+                    node, node->numshapes, node->index, pszBuffer + TREE_MAX_DEPTH - i + 1,
+                    node->subnode[0], node->subnode[1], node->subnode[2], node->subnode[3],
+                    node->rect.minx, node->rect.miny, node->rect.maxx, node->rect.maxy);
+            }
+        }
 
 #ifdef TESTCOUNT
         avgx = layerinfo->current->x;

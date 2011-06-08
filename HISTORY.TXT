@@ -15,7 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 ------------------------------------------------- 
 
-- Add support for dashes on polygon hatches (#3912)
+- Fix for the cluster processing if the shape bounds doesn't overlap 
+  with the given extent (#3913)
 
 - Union layer 3 new processing options added (#3900)
 
