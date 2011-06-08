@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Version 6.0.1 (SVN branch-6-0):
 ---------------------------
 
+- Fix for the cluster processing if the shape bounds doesn't overlap 
+  with the given extent (#3913)
+
 - OGC Filter: fix segfault when a ows_varname_type or wfs_varname_type is
   defined but not a gml_varname_type (#3902)
 

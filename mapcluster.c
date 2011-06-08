@@ -1062,8 +1062,15 @@ int RebuildClusters(layerObj *layer)
         current->bounds.maxx = current->x + maxDistanceX;
         current->bounds.maxy = current->y + maxDistanceY;
 
-        current->x = current->shape.bounds.minx;
-        current->y = current->shape.bounds.miny;
+        /* if the shape doesn't overlap we must skip it to avoid further issues */
+        if(!msRectOverlap(&searchrect, &current->bounds))
+        {
+            msFreeShape(&current->shape);
+            msInitShape(&current->shape);
+
+            msDebug("Skipping an invalid shape falling outside of the given extent\n");
+            continue;
+        }
 
         /* construct the item array */
         if (layer->iteminfo)
