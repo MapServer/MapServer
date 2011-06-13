@@ -2913,11 +2913,10 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           const char *labelTextString = OGR_ST_GetParamStr(hLabelStyle, 
                                                            OGRSTLabelTextString, 
                                                            &bIsNull);
-          if (labelTextString && isalnum(labelTextString[0]))
-              msLoadExpressionString(&(c->text), (char*)labelTextString);
-          else
-              msLoadExpressionString(&(c->text), 
-                              (char*)CPLSPrintf("\"%s\"", (char*)labelTextString));
+          char *escapedTextString = msStringEscape((char*)labelTextString);
+          msLoadExpressionString(&(c->text),
+                                 (char*)CPLSPrintf("\"%s\"", escapedTextString));
+          free(escapedTextString);
 
           c->label.angle = OGR_ST_GetParamDbl(hLabelStyle, 
                                               OGRSTLabelAngle, &bIsNull);
@@ -3042,11 +3041,10 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           /* See bug 3481 about the isalnum hack */
           const char *labelTextString = poLabelStyle->TextString(bIsNull);
 
-          if (labelTextString && isalnum(labelTextString[0]))
-              msLoadExpressionString(&(c->text), (char*)labelTextString);
-          else
-              msLoadExpressionString(&(c->text), 
-                              (char*)CPLSPrintf("\"%s\"", (char*)labelTextString));
+          char *escapedTextString = msStringEscape((char*)labelTextString);
+          msLoadExpressionString(&(c->text),
+                                 (char*)CPLSPrintf("\"%s\"", escapedTextString));
+          free(escapedTextString);
 
           c->label.angle = poLabelStyle->Angle(bIsNull);
 

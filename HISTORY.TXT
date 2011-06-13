@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 ------------------------------------------------- 
 
+- Fixed Using STYLEITEM AUTO, loadExpression fails when the label text
+  contains a space or begins with a double quote (#3481)
+
 - Fix for the cluster processing if the shape bounds doesn't overlap 
   with the given extent (#3913)
 
