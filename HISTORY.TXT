@@ -45,6 +45,9 @@ Version 6.0.1 (SVN branch-6-0):
 
 - Union layer: Fixed the crash when styling source layers using attributes (#3870)
 
+- Improve rangeset item checking so that Bands=1,2,3 is supported with WCS 1.0
+  (#3919).
+
 Version 6.0.0 (2011-05-11)
 --------------------------
 

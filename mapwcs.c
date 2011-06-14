@@ -48,41 +48,51 @@ MS_CVSID("$Id$")
 /*                    msWCSValidateRangeSetParam()                      */
 /************************************************************************/
 static int msWCSValidateRangeSetParam(layerObj *lp, char *name, const char *value) {
-  char **tokens;
-  int numtokens, i, match = 0;
-  char *tmpname = NULL;
-  const char *tmpvalue = NULL;
+    char **allowed_ri_values;
+    char **client_ri_values;
+    int  allowed_count, client_count;
+    int  i_client, i, all_match = 1;
+    char *tmpname = NULL;
+    const char *ri_values_list;
 
-  if (name) {
+    if( name == NULL )
+        return MS_FAILURE;
+
+    /* Fetch the available values list for the rangeset item and tokenize */
     tmpname = (char *)msSmallMalloc(sizeof(char)*strlen(name) + 10);
-
-    /* set %s_values */
     sprintf(tmpname,"%s_values", name);
+    ri_values_list = msOWSLookupMetadata(&(lp->metadata), "CO", tmpname);
+    msFree( tmpname );
+    
+    if (ri_values_list == NULL) 
+        return MS_FAILURE;
 
-    /* fetch value of tmpname (%s_values)*/
-    tmpvalue = msOWSLookupMetadata(&(lp->metadata), "CO", tmpname);
+    allowed_ri_values = msStringSplit( ri_values_list, ',', &allowed_count);
 
-    if (tmpvalue == NULL) 
-      return MS_FAILURE;
+    /* Parse the client value list into tokens. */
+    client_ri_values = msStringSplit( value, ',', &client_count );
+    
+    /* test each client value against the allowed list. */
 
-    /* split tmpvalue and loop through to find match */
-    tokens = msStringSplit(tmpvalue, ',', &numtokens);
-    if(tokens && numtokens > 0) {
-      for(i=0; i<numtokens; i++) {
-        if(strcasecmp(tokens[i], value) == 0) { /* we have a match */
-          match = 1;
-          break;
-        }
-      }
-      msFreeCharArray(tokens, numtokens);
+    for( i_client = 0; all_match && i_client < client_count; i_client++ )
+    {
+        for( i = 0; 
+             i < allowed_count
+                 && strcasecmp(client_ri_values[i_client],
+                               allowed_ri_values[i]) != 0;
+             i++ ) {}
+
+        if( i == allowed_count )
+            all_match = 0;
     }
-  }
 
-  if (tmpname) free(tmpname);
+    msFreeCharArray(allowed_ri_values, allowed_count );
+    msFreeCharArray(client_ri_values, client_count );
 
-  if (match == 0) return MS_FAILURE;
-
-  return MS_SUCCESS;
+    if (all_match == 0) 
+        return MS_FAILURE;
+    else
+        return MS_SUCCESS;
 }
 
 /************************************************************************/
