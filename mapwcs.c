@@ -235,6 +235,7 @@ void msWCSFreeParams(wcsParamsObj *params)
     if(params->exceptions) free(params->exceptions);
     if(params->time) free(params->time);
     if(params->interpolation) free(params->interpolation);
+    CSLDestroy( params->coverages );
   }
 }
 
@@ -1626,12 +1627,14 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* find the layer we are working with */
   lp = NULL;
   for(i=0; i<map->numlayers; i++) {
-     coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
+    coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
     if( EQUAL(coverageName, params->coverages[0]) &&
         (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
       lp = GET_LAYER(map, i);
+      free( coverageName );
       break;
     }
+    free( coverageName );
   }
 
   if(lp == NULL) {
@@ -1923,6 +1926,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   msLayerSetProcessingKey(lp, "BANDS", bandlist);
   snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
+  free( bandlist );
                
   /* create the image object  */
   if(!map->outputformat) {
