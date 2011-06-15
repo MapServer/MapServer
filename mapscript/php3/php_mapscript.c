@@ -16732,7 +16732,8 @@ DLEXPORT void php_ms_IO_getStdoutBufferBytes(INTERNAL_FUNCTION_PARAMETERS)
 
     php_write(gdBuf.data, gdBuf.size TSRMLS_CC);
 
-    RETURN_LONG(buf->data_len);
+    /* return the gdBuf.size, which is the "really used length" of the msIOBuffer */ 
+    RETURN_LONG(gdBuf.size); 
 }
 
 DLEXPORT void php_ms_IO_stripStdoutBufferContentType(INTERNAL_FUNCTION_PARAMETERS)

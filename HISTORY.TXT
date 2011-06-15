@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 Version 5.6.7 (SVN branch-5-6):
 ---------------------------
 
+- Fixed PHP/MapScript ms_iogetstdoutbufferbytes() always returning 0 bytes written (#3041)
+
 - OGC Filter: fix segfault when a ows_varname_type or wfs_varname_type is
   defined but not a gml_varname_type (#3902)
 
