@@ -5359,7 +5359,7 @@ PNG_INC=''
 PNG_ENABLED=''
 
 
-if test -n "$PNG_DIR" ; then
+if test -n "$PNG_DIR" -a "$with_png" != "yes" ; then
     test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl -o -f $PNG_DIR/lib/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib"
     test -f $PNG_DIR/lib64/libpng.a -o -f $PNG_DIR/lib64/libpng.so -o -f $PNG_DIR/lib64/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib64"
     test -f $PNG_DIR/libpng.a -o -f $PNG_DIR/libpng.so -o -f $PNG_DIR/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR"
