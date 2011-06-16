@@ -934,8 +934,9 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
  **********************************************************************/
 
 int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
-                             enum MS_CONNECTION_TYPE lastconnectiontype,
+                             int nRequestType, enum MS_CONNECTION_TYPE lastconnectiontype,
                              wmsParamsObj *psLastWMSParams,
+                             int nClickX, int nClickY, int nFeatureCount, const char *pszInfoFormat,
                              httpRequestObj *pasReqInfo, int *numRequests) 
 {
 #ifdef USE_WMS_LYR
@@ -963,9 +964,22 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * Build the request URL, this will also set layer projection and
  * compute BBOX in that projection.
  * ------------------------------------------------------------------ */
-    if ( msBuildWMSLayerURL(map, lp, WMS_GETMAP,
-                            0, 0, 0, NULL, &bbox, &bbox_width, &bbox_height,
-                            &sThisWMSParams) != MS_SUCCESS)
+
+    
+    if (nRequestType == WMS_GETMAP &&
+        ( msBuildWMSLayerURL(map, lp, WMS_GETMAP,
+                             0, 0, 0, NULL, &bbox, &bbox_width, &bbox_height,
+                             &sThisWMSParams) != MS_SUCCESS) )
+                                    {
+        /* an error was already reported. */
+        msFreeWmsParamsObj(&sThisWMSParams);
+        return MS_FAILURE;
+    }
+
+    else if (msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
+                                nClickX, nClickY, nFeatureCount, pszInfoFormat,
+                                NULL, NULL, NULL,
+                                &sThisWMSParams) == MS_FAILURE)
     {
         /* an error was already reported. */
         msFreeWmsParamsObj(&sThisWMSParams);
@@ -976,12 +990,12 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * Check if the request is empty, perhaps due to reprojection problems
  * or wms_extents restrictions.
  * ------------------------------------------------------------------ */
-    if( bbox_width == 0 || bbox_height == 0 )
+    if ((nRequestType == WMS_GETMAP) && (bbox_width == 0 || bbox_height == 0) )
     {
         msFreeWmsParamsObj(&sThisWMSParams);
         return MS_SUCCESS;  /* No overlap. */
     }
-
+    
 /* ------------------------------------------------------------------
  * Check if layer overlaps current view window (using wms_latlonboundingbox)
  * ------------------------------------------------------------------ */
@@ -1324,9 +1338,10 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         pszURL = NULL;
         pasReqInfo[(*numRequests)].pszHTTPCookieData = pszHTTPCookieData;
         pszHTTPCookieData = NULL;
-        if( bCacheToDisk )
+        if( bCacheToDisk ) {
             pasReqInfo[(*numRequests)].pszOutputFile =
-                msTmpFile(map, map->mappath, NULL, "img.tmp");
+                msTmpFile(map, map->mappath, NULL, "wms.tmp");
+        }
         else
             pasReqInfo[(*numRequests)].pszOutputFile = NULL;
         pasReqInfo[(*numRequests)].nStatus = 0;
@@ -1626,3 +1641,107 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 }
 
 
+int msWMSLayerFeatureInfo(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
+                          int nFeatureCount, const char *pszInfoFormat)
+{
+#ifdef USE_WMS_LYR
+
+    msIOContext *context;
+    
+    httpRequestObj *pasReqInfo;
+    wmsParamsObj sLastWMSParams;
+    int i, numReq = 0;
+
+    pasReqInfo = (httpRequestObj *)msSmallMalloc((nOWSLayers+1)*sizeof(httpRequestObj));
+    msHTTPInitRequestObj(pasReqInfo, nOWSLayers+1);
+    msInitWmsParamsObj(&sLastWMSParams);
+
+    /* Generate the http request */
+    for (i=0; i<map->numlayers; i++)
+    {
+        if (GET_LAYER(map,map->layerorder[i])->status == MS_ON)
+        { 
+            if (msPrepareWMSLayerRequest(map->layerorder[i], map, GET_LAYER(map,map->layerorder[i]), WMS_GETFEATUREINFO,
+                                         MS_WMS, &sLastWMSParams,
+                                         nClickX, nClickY, nFeatureCount, pszInfoFormat,
+                                         pasReqInfo, &numReq) == MS_FAILURE)
+            {
+                msFreeWmsParamsObj(&sLastWMSParams);
+                msFree(pasReqInfo);
+                return MS_FAILURE;
+            }
+        }
+    }
+    
+    if (msOWSExecuteRequests(pasReqInfo, numReq, map, MS_FALSE) == MS_FAILURE)
+    {
+        msHTTPFreeRequestObj(pasReqInfo, numReq);
+        msFree(pasReqInfo);
+        msFreeWmsParamsObj(&sLastWMSParams);
+        return MS_FAILURE;
+    }
+
+    context = msIO_getHandler( stdout );
+    if( context == NULL ) 
+    {
+        msHTTPFreeRequestObj(pasReqInfo, numReq);
+        msFree(pasReqInfo);
+        msFreeWmsParamsObj(&sLastWMSParams);
+        return MS_FAILURE;
+    }
+
+    msIO_printf("Content-type: %s%c%c",pasReqInfo[0].pszContentType, 10,10);
+
+    if( pasReqInfo[0].pszOutputFile )
+    {
+        FILE *fp;
+        char szBuf[MS_BUFFER_LENGTH];
+
+        fp = fopen(pasReqInfo[0].pszOutputFile, "r");
+        if (fp)
+        {
+            while(1)
+            {
+                size_t nSize;
+                nSize = fread(szBuf, sizeof(char), MS_BUFFER_LENGTH-1, fp);
+                if (nSize > 0)
+                    msIO_contextWrite( context, 
+                                       szBuf, 
+                                       nSize);
+                if (nSize != MS_BUFFER_LENGTH-1)
+                    break;
+            }
+            fclose(fp);
+            if (!map->debug)
+                unlink(pasReqInfo[0].pszOutputFile);
+        }
+        else
+        {
+            msSetError(MS_IOERR, "'%s'.", 
+                       "msWMSLayerFeatureInfo()", pasReqInfo[0].pszOutputFile);
+            return MS_FAILURE;
+        }
+    }
+    else
+    {
+        msIO_contextWrite( context, 
+                           pasReqInfo[0].result_data, 
+                           pasReqInfo[0].result_size );
+    }
+     
+    msHTTPFreeRequestObj(pasReqInfo, numReq);
+    msFree(pasReqInfo);
+    msFreeWmsParamsObj(&sLastWMSParams);
+
+    return MS_SUCCESS;
+#else
+/* ------------------------------------------------------------------
+ * WMS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WMSCONNERR, "WMS CLIENT CONNECTION support is not available.", 
+             "msWMSLayerFeatureInfo()");
+  return(MS_FAILURE);
+
+#endif /* USE_WMS_LYR */
+
+}

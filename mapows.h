@@ -382,8 +382,9 @@ int msInitWmsParamsObj(wmsParamsObj *wmsparams);
 void msFreeWmsParamsObj(wmsParamsObj *wmsparams);
 
 int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
-                             enum MS_CONNECTION_TYPE lastconnectiontype,
+                             int nRequestType, enum MS_CONNECTION_TYPE lastconnectiontype,
                              wmsParamsObj *psLastWMSParams,
+                             int nClickX, int nClickY, int nFeatureCount, const char *pszInfoFormat,
                              httpRequestObj *pasReqInfo, int *numRequests);
 int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, mapObj *map, layerObj *lp, 
@@ -391,9 +392,8 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              int nClickX, int nClickY, int nFeatureCount,
                              const char *pszInfoFormat); 
-
-
-
+int msWMSLayerFeatureInfo(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
+                          int nFeatureCount, const char *pszInfoFormat);
 
 /*====================================================================
  *   mapwfs.c

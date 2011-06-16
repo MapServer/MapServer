@@ -3100,6 +3100,9 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   int valid_format=MS_FALSE;
   int format_found = MS_FALSE;
   int use_bbox = MS_FALSE;
+  int wms_layer =  MS_FALSE;
+  const char *wms_connection = NULL;
+  int numOWSLayers = 0;
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
@@ -3126,9 +3129,13 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
               (map->name && strcasecmp(map->name, layers[k]) == 0) ||
               (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0)) &&
              (msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers)) )
-            {
-                numlayers_found++;     
-                GET_LAYER(map, j)->status = MS_ON;               
+         {
+             if (GET_LAYER(map, j)->connectiontype == MS_WMS) {
+                 wms_layer = MS_TRUE;
+                 wms_connection = GET_LAYER(map, j)->connection;
+             }
+             numlayers_found++;
+             GET_LAYER(map, j)->status = MS_ON;               
             }
         }
       }
@@ -3173,7 +3180,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     }
 
   }
-
+  
   if(numlayers_found == 0) 
   {
       if (query_layer)
@@ -3196,15 +3203,32 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 /*      check if all layers selected are queryable. If not send an      */
 /*      exception.                                                      */
 /* -------------------------------------------------------------------- */
-  
+
+  /* If a layer of type WMS was found... all layers have to be of that type and with the same connection */  
   for (i=0; i<map->numlayers; i++)
   {
-      if (GET_LAYER(map, i)->status == MS_ON && !msIsLayerQueryable(GET_LAYER(map, i)))
-      { 
-          msSetError(MS_WMSERR, "Requested layer(s) are not queryable.", "msWMSFeatureInfo()");
-          return msWMSException(map, nVersion, "LayerNotQueryable", wms_exception_format);
+      if (GET_LAYER(map, i)->status == MS_ON)
+      {
+          if (!msIsLayerQueryable(GET_LAYER(map, i))) 
+          {
+              msSetError(MS_WMSERR, "Requested layer(s) are not queryable.", "msWMSFeatureInfo()");
+              return msWMSException(map, nVersion, "LayerNotQueryable", wms_exception_format);
+          }
+          else if (wms_layer == MS_TRUE) 
+          {
+              if ( (GET_LAYER(map, i)->connectiontype != MS_WMS) || (strcasecmp(wms_connection, GET_LAYER(map, i)->connection) != 0) )
+              {
+                  msSetError(MS_WMSERR, "Requested WMS layer(s) are not queryable: type or connection differ", "msWMSFeatureInfo()");
+                  return msWMSException(map, nVersion, "LayerNotQueryable", wms_exception_format);
+              }
+              ++numOWSLayers;
+          }
       }
   }
+
+  /* It's a valid Cascading WMS GetFeatureInfo request */
+  if (wms_layer)
+      return msWMSLayerFeatureInfo(map, numOWSLayers, point.x, point.y, feature_count, info_format);
 
   if( use_bbox == MS_FALSE ) {
 

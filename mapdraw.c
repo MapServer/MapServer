@@ -331,7 +331,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
 #ifdef USE_WMS_LYR
       if(lp->connectiontype == MS_WMS) {
-        if(msPrepareWMSLayerRequest(map->layerorder[i], map, lp, lastconnectiontype, &sLastWMSParams, pasOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
+          if(msPrepareWMSLayerRequest(map->layerorder[i], map, lp, 1, lastconnectiontype, &sLastWMSParams, 0, 0, 0, NULL, pasOWSReqInfo, &numOWSRequests) == MS_FAILURE) {
           msFreeWmsParamsObj(&sLastWMSParams);
           msFreeImage(image);
           msFree(pasOWSReqInfo);
@@ -1314,8 +1314,8 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 
         msHTTPInitRequestObj(asReqInfo, 2);
 
-        if ( msPrepareWMSLayerRequest(1, map, layer,
-                                      0, NULL,
+        if ( msPrepareWMSLayerRequest(1, map, layer, 1,
+                                      0, NULL, 0, 0, 0, NULL,
                                       asReqInfo, &numReq) == MS_FAILURE  ||
              msOWSExecuteRequests(asReqInfo, numReq, map, MS_TRUE) == MS_FAILURE )
         {

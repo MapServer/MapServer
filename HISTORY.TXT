@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 ------------------------------------------------- 
 
+- Added WMS GetFeatureInfo Cascading (#3764)
+
 - Fixed png lib is not found on multiarch systems (#3921)
 
 - Fixed PHP MapScript opacity property of StyleObj no longer works (#3920)
