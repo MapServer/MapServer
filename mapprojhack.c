@@ -83,7 +83,7 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
 #ifdef USE_PROJ
     char *proj_str;
 
-    if( pj_is_latlong( psProj ) )
+    if( pj_is_latlong( psProj->proj ) )
         return MS_DD;
 
     proj_str = pj_get_def( psProj->proj, 0 );
