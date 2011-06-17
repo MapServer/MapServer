@@ -81,7 +81,12 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
 int GetMapserverUnitUsingProj(projectionObj *psProj)
 {
 #ifdef USE_PROJ
-    char *proj_str = pj_get_def( psProj->proj, 0 );
+    char *proj_str;
+
+    if( pj_is_latlong( psProj ) )
+        return MS_DD;
+
+    proj_str = pj_get_def( psProj->proj, 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Handle case of named units.                                     */
