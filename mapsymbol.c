@@ -274,8 +274,6 @@ void writeSymbol(symbolObj *s, FILE *stream)
 {
   int i;
 
-  if(s->inmapfile != MS_TRUE) return;
-
   fprintf(stream, "  SYMBOL\n");
   if(s->name != NULL) fprintf(stream, "    NAME \"%s\"\n", s->name);
   
@@ -734,7 +732,6 @@ int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
     }
     /* Don't ever write out the default symbol at index 0 */
     for (i=1; i<symbolset->numsymbols; i++) {
-        symbolset->symbol[i]->inmapfile = MS_TRUE;
         writeSymbol((symbolset->symbol[i]), stream);
     }
     return MS_SUCCESS;
