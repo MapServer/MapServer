@@ -725,16 +725,16 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
 }
 
 int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
-    int i;
-    if (!symbolset || !stream) {
-        msSetError(MS_SYMERR, "Cannot save symbolset.", "msSaveSymbolSetStream()");
-        return MS_FAILURE;
-    }
-    /* Don't ever write out the default symbol at index 0 */
-    for (i=1; i<symbolset->numsymbols; i++) {
-        writeSymbol((symbolset->symbol[i]), stream);
-    }
-    return MS_SUCCESS;
+  int i;
+  if (!symbolset || !stream) {
+    msSetError(MS_SYMERR, "Cannot save symbolset.", "msSaveSymbolSetStream()");
+    return MS_FAILURE;
+  }
+  /* Don't ever write out the default symbol at index 0 */
+  for (i=1; i<symbolset->numsymbols; i++) {
+    if(!map->symbolset.symbol[i]->inmapfile) writeSymbol((symbolset->symbol[i]), stream);
+  }
+  return MS_SUCCESS;
 }
 
 int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename) {
