@@ -14,6 +14,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 ------------------------------------------------- 
+- Correct SLD with spatial filters bbox and intersects (#3929)
 
 - Applied patch for ticket (symbol writing issues) (#3589)
 

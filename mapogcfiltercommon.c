@@ -566,21 +566,26 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
             else if (lp->map->projection.numargs > 0)
               msProjectShape(&lp->map->projection, &lp->projection, psTmpShape);
         }
+/* ==================================================================== */
+/*      use within for bbox. Not Disjoint does not work.                */
+/* ==================================================================== */
         if (bBBoxQuery)
-          sprintf(szBuffer, "%s", " (NOT ([shape] ");
+          sprintf(szBuffer, "%s", " ([shape] ");
+        //sprintf(szBuffer, "%s", " (NOT ([shape] ");
         else
           sprintf(szBuffer, "%s", " ([shape] ");
 
         pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
 
-        if (strcasecmp(psNode->pszValue, "intersect") == 0)
-          pszTmp = msStrdup(psNode->pszValue);
+        if (strncasecmp(psNode->pszValue, "intersect", 9) == 0)
+          pszTmp = msStrdup("intersects");
         else
           pszTmp = msStrdup(psNode->pszValue);
         msStringToLower(pszTmp);
         if (bBBoxQuery)
-          sprintf(szBuffer, " %s ", "disjoint");
+          sprintf(szBuffer, " %s ", "intersects");
+        //sprintf(szBuffer, " %s ", "disjoint");
         else
            sprintf(szBuffer, " %s ", pszTmp);
 
@@ -602,7 +607,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     sprintf(szBuffer, "%s", ")");
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
-     if (bBBoxQuery)
+    if (0)//bBBoxQuery)
      {
           sprintf(szBuffer, "%s", ")");
           pszExpression = msStringConcatenate(pszExpression, szBuffer);

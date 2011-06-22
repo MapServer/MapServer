@@ -400,6 +400,16 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                         nStatus = 
                             FLTApplyFilterToLayer(psNode, map,  
                                                   GET_LAYER(map, i)->index);
+/* -------------------------------------------------------------------- */
+/*      nothing found is a valid, do not exit.                          */
+/* -------------------------------------------------------------------- */
+                        if (nStatus !=  MS_SUCCESS)
+                        {
+                            errorObj   *ms_error;
+                            ms_error = msGetErrorObj();
+                            if(ms_error->code == MS_NOTFOUND)
+                              nStatus =  MS_SUCCESS;
+                        }
 
 
                         GET_LAYER(map, i)->status = nLayerStatus;
@@ -760,8 +770,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     CPLXMLNode *psElseFilter = NULL, *psFilter=NULL;
     CPLXMLNode *psTmpNode = NULL;
     FilterEncodingNode *psNode = NULL;
-    char *szExpression = NULL;
-    int i=0, nNewClasses=0, nClassBeforeFilter=0, nClassAfterFilter=0;
+    int nNewClasses=0, nClassBeforeFilter=0, nClassAfterFilter=0;
     int nClassAfterRule=0, nClassBeforeRule=0;
     char *pszTmpFilter = NULL;
     layerObj *psCurrentLayer = NULL;
@@ -876,8 +885,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                     FLTPreParseFilterForAlias(psNode, psLayer->map, j, "G");
                                 }
 
-                                szExpression = FLTGetCommonExpression(psNode, psLayer);
-
+  
 /* ==================================================================== */
 /*      If the filter has a spatial filter or is a simple, we keep      */
 /*      the node. This node will be parsed when applying the SLD and    */
@@ -887,11 +895,14 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      operators such as AND/OR/NOT) will be used to set the FILTER    */
 /*      element of the layer.                                           */
 /* ==================================================================== */
-                                if (FLTHasSpatialFilter(psNode)) 
-                                  psLayer->layerinfo = (void *)psNode;
-                                else
-                                  FLTFreeFilterEncodingNode(psNode);
-                                psNode = NULL;
+                                psLayer->layerinfo = (void *)psNode;
+                                /*
+                                szExpression = FLTGetCommonExpression(psNode, psLayer);
+                              if (FLTHasSpatialFilter(psNode)) 
+                                psLayer->layerinfo = (void *)psNode;
+                              else
+                                FLTFreeFilterEncodingNode(psNode);
+                              psNode = NULL;
 
                                 if (szExpression)
                                 {
@@ -906,6 +917,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                     msFree(szExpression);
                                     szExpression = NULL;
                                 }
+                                */
                             }
                         }
                         nClassAfterRule = psLayer->numclasses;
