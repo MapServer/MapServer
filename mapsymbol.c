@@ -732,7 +732,7 @@ int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
   }
   /* Don't ever write out the default symbol at index 0 */
   for (i=1; i<symbolset->numsymbols; i++) {
-    if(!map->symbolset.symbol[i]->inmapfile) writeSymbol((symbolset->symbol[i]), stream);
+    if(!symbolset->symbol[i]->inmapfile) writeSymbol((symbolset->symbol[i]), stream);
   }
   return MS_SUCCESS;
 }
