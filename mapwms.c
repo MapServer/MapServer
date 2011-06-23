@@ -2673,7 +2673,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                  for(j=i; j<map->numlayers; j++)
                    if (!pabLayerProcessed[j] &&
                        GET_LAYER(map, j)->group &&
-                       strcmp(lp->group, GET_LAYER(map, j)->group) == 0 )
+                       strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
+                       msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers))
                      group_layers[num_layers++] = j;
                  if ( num_layers > 0)
                  {
@@ -2741,7 +2742,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
              {
                  if (!pabLayerProcessed[j] &&
                      GET_LAYER(map, j)->group &&
-                     strcmp(lp->group, GET_LAYER(map, j)->group) == 0 )
+                     strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
+                     msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers))
                  {
                      msDumpLayer(map, (GET_LAYER(map, j)), nVersion, script_url_encoded, "  ");
                      pabLayerProcessed[j] = 1;
