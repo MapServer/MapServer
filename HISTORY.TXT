@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Version 6.0.1 (SVN branch-6-0):
 ---------------------------
 
+- Added writing of cluster object when saving map. Also improved handling of
+  cluster parsing errors (#3934)
+
 - Fix for the cluster processing if the shape bounds doesn't overlap 
   with the given extent (#3913)
 
