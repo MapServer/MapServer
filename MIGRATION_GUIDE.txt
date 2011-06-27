@@ -37,7 +37,7 @@ of numeric data but also means string operators must be used to concatenate attr
 values and string literals.
 
 * Old/bad: TEXT ([area] acres)
-* New (option 1)/good: TEXT ([area] + ' acres')
+* New (option 1)/good: TEXT ('[area]' + ' acres')
 * New (option 2)/good: TEXT '[area] acres'
 
 On the plus side you can now control the number of decimal places, round and even commify
