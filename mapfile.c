@@ -2302,6 +2302,14 @@ int loadCluster(clusterObj *cluster) {
     case(FILTER):
       if(loadExpression(&(cluster->filter)) == -1) return(-1);
       break;
+    default:
+      if(strlen(msyystring_buffer) > 0) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadCluster()", msyystring_buffer, msyylineno);
+        return(-1);
+      } else {
+        return(0); /* end of a string, not an error */
+      }
+
     }
   }
   return(MS_SUCCESS);
@@ -2330,10 +2338,18 @@ int msUpdateClusterFromString(clusterObj *cluster, char *string)
 }
 
 static void writeCluster(FILE *stream, int indent, clusterObj *cluster) {
+
+  if (cluster->maxdistance == 10 &&
+      cluster->buffer == 0.0 &&
+      cluster->region == NULL &&
+      cluster->group.string == NULL &&
+      cluster->filter.string == NULL)
+    return;  /* Nothing to write */
+
   indent++;
   writeBlockBegin(stream, indent, "CLUSTER");
-  writeNumber(stream, indent, "MAXDISTANCE", 0, cluster->maxdistance);
-  writeNumber(stream, indent, "BUFFER", 0, cluster->maxdistance);
+  writeNumber(stream, indent, "MAXDISTANCE", 10, cluster->maxdistance);
+  writeNumber(stream, indent, "BUFFER", 0, cluster->buffer);
   writeString(stream, indent, "REGION", NULL, cluster->region);
   writeExpression(stream, indent, "GROUP", &(cluster->group));
   writeExpression(stream, indent, "FILTER", &(cluster->filter));
@@ -3960,6 +3976,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   /* class - see below */
   writeString(stream, indent, "CLASSGROUP", NULL, layer->classgroup);
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
+  writeCluster(stream, indent, &(layer->cluster));
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
   writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 9, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION");
   writeString(stream, indent, "DATA", NULL, layer->data);
