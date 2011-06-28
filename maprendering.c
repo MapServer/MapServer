@@ -439,8 +439,9 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             else if(MS_VALID_COLOR(style->outlinecolor))
                s.color = &style->outlinecolor;
             else {
-               msSetError(MS_MISCERR,"no color defined for line styling","msDrawLineSymbol()");
-               return MS_FAILURE;
+               /* msSetError(MS_MISCERR,"no color defined for line styling","msDrawLineSymbol()"); 
+                * not really an error */
+               return MS_SUCCESS;
             }
             renderer->renderLine(image,offsetLine,&s);
          }
