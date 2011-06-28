@@ -958,7 +958,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       status = msDrawShape(map, layer, &shape, image, -1, MS_FALSE); /* all styles  */
     if(status != MS_SUCCESS) {
       msFreeShape(&shape);
-      msSetError(MS_MISCERR,"foo bar","msDrawLineSymbol()");
       retcode = MS_FAILURE;
       break;
     }
