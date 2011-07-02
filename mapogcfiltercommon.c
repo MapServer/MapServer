@@ -715,7 +715,6 @@ int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, char *ps
 {
     int retval;
 
-    msFreeQuery(&(map->query));
     msInitQuery(&(map->query));
     
     map->query.type = MS_QUERY_BY_FILTER;
