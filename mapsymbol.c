@@ -365,7 +365,6 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
                   symbol->imagepath = msStrdup(tmpfullfilename);
                   symbol->full_pixmap_path = msStrdup(tmpfullfilename);
               }
-              msFree(tmpfilename);
           }
           msFree(tmpfilename);
           msFree(tmppath);
