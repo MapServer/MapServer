@@ -929,7 +929,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
 
       if (unique_layer_names)
       {
-          pszName = (char*)malloc(sizeof(char)*(strlen(pszValue)+10));
+          pszName = (char*)malloc(sizeof(char)*(strlen(pszValue)+15));
           sprintf(pszName, "l%d:%s", layer->index, pszValue);
           layer->name = msStrdup(pszName);
           free(pszName);
@@ -939,7 +939,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   }
   else
   {
-      pszName = (char*)malloc(sizeof(char)*10);
+      pszName = (char*)malloc(sizeof(char)*15);
       sprintf(pszName, "l%d:", layer->index);
       layer->name = msStrdup(pszName);
       free(pszName);
