@@ -111,8 +111,8 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
         char *blank;
         double to_meter;
 
-        strncpy(to_meter_str,(strstr(proj_str,"to_meter=")+9),
-                sizeof(to_meter_str)-2);
+        strlcpy(to_meter_str,(strstr(proj_str,"to_meter=")+9),
+                sizeof(to_meter_str));
         pj_dalloc( proj_str );
 
         blank = strchr(to_meter_str, ' ');
