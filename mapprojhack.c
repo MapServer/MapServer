@@ -27,11 +27,7 @@
  ****************************************************************************/
 
 #include <string.h>
-#include "mapproject.h"
-
-enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS,
-               MS_DD, MS_PIXELS, MS_NAUTICALMILES};
-
+#include "mapserver.h"
 
 /************************************************************************/
 /*                        ConvertProjUnitStringToMS                     */
@@ -96,7 +92,7 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
         char units[32];
         char *blank;
 
-        strncpy( units, (strstr(proj_str,"units=")+6), sizeof(units)-2 );
+        strlcpy( units, (strstr(proj_str,"units=")+6), sizeof(units) );
         pj_dalloc( proj_str );
 
         blank = strchr(units, ' ');
