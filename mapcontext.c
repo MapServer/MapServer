@@ -497,7 +497,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
   pszStyleName =(char*)CPLGetXMLValue(psStyle,"Name",NULL);
   if(pszStyleName == NULL)
   {
-       pszStyleName = (char*)malloc(15);
+       pszStyleName = (char*)malloc(20);
        sprintf(pszStyleName, "Style{%d}", nStyle);
   }
   else
