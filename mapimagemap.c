@@ -204,7 +204,6 @@ static int matchdxfcolor(colorObj col)
 	if (lastcolor != -1)
 		return lastcolor;
 	while (tcolor < 256 && (ctable[tcolor].r != col.red || ctable[tcolor].g != col.green || ctable[tcolor].b != col.blue)){
-		tcolor++;
 		if (abs(
 					(ctable[tcolor].r - col.red) * (ctable[tcolor].r - col.red)+ 
 					(ctable[tcolor].b - col.blue) * (ctable[tcolor].b - col.blue) + 
@@ -217,6 +216,7 @@ static int matchdxfcolor(colorObj col)
 					(ctable[tcolor].g - col.green) * (ctable[tcolor].g - col.green)
 				);
 		}
+        tcolor++;
 	}
 	if (tcolor >= 256) tcolor = best;
 /* DEBUG_IF	printf("%d/%d/%d (%d/%d - %d), %d : %d/%d/%d<BR>\n", ctable[tcolor].r, ctable[tcolor].g, ctable[tcolor].b, tcolor, best, delta, lastcolor, col.red, col.green, col.blue); */
