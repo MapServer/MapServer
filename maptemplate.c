@@ -2448,10 +2448,10 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
             if(myHashTable)
               msFreeHashTable(myHashTable);
 
-            msFree(pszFullImgFname);
             msFreeImage(img);
 
             msSetError(MS_IOERR, "Error saving GD image to disk (%s).", "processIcon()", pszFullImgFname);
+            msFree(pszFullImgFname);
             return MS_FAILURE;
          }
          
