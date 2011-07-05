@@ -206,6 +206,7 @@ static int saveQueryResults(mapObj *map, char *filename) {
     }
   }
 
+  fclose(stream);
   return MS_SUCCESS;
 }
 
@@ -316,6 +317,7 @@ static int saveQueryParams(mapObj *map, char *filename) {
     fprintf(stream, "%d\n", MS_SHAPE_NULL); /* NULL shape */
   }
 
+  fclose(stream);
   return MS_SUCCESS;
 }
 
