@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Added missing fclose() when writing query files (#3943)
+
 - Fix double-free in msAddImageSymbol() when filename is a http resource (#3939)
 
 - Fix rendering of lines with outlinewidth set if not on first style (#3935)
