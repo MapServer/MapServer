@@ -486,7 +486,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     /* if necessary, project the searchrect to source coords */
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) msProjectRect(&map->projection, &layer->projection, &searchrect);
 #endif
-    status = msLayerWhichShapes(tlp, searchrect);
+    status = msLayerWhichShapes(tlp, searchrect, MS_FALSE);
     if (status != MS_SUCCESS) {
         /* Can be either MS_DONE or MS_FAILURE */
         if (status != MS_DONE) 

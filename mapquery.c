@@ -674,7 +674,7 @@ int msQueryByAttributes(mapObj *map)
     lp->project = MS_FALSE;
 #endif
 
-  status = msLayerWhichShapes(lp, searchrect);
+  status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
   if(status == MS_DONE) { /* no overlap */
     msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
     msLayerClose(lp);
@@ -853,7 +853,7 @@ int msQueryByFilter(mapObj *map)
       lp->project = MS_FALSE;
 #endif
 
-    status = msLayerWhichShapes(lp, search_rect);
+    status = msLayerWhichShapes(lp, search_rect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
       continue;
@@ -1035,7 +1035,7 @@ int msQueryByRect(mapObj *map)
     else
       lp->project = MS_FALSE;
 #endif
-    status = msLayerWhichShapes(lp, searchrect);
+    status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
       continue;
@@ -1276,7 +1276,7 @@ int msQueryByFeatures(mapObj *map)
 	lp->project = MS_FALSE;
 #endif
 
-      status = msLayerWhichShapes(lp, searchrect);
+      status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
       if(status == MS_DONE) { /* no overlap */
 	msLayerClose(lp);
 	break; /* next layer */
@@ -1548,7 +1548,7 @@ int msQueryByPoint(mapObj *map)
     else
       lp->project = MS_FALSE;
 #endif
-    status = msLayerWhichShapes(lp, searchrect);
+    status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
       continue;
@@ -1749,7 +1749,7 @@ int msQueryByShape(mapObj *map)
       lp->project = MS_FALSE;
 #endif
 
-    status = msLayerWhichShapes(lp, searchrect);
+    status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
       continue;

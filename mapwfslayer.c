@@ -772,7 +772,7 @@ int msWFSLayerOpen(layerObj *lp,
         {
             if (lp->layerinfo == NULL)
             {
-                if (msWFSLayerWhichShapes(lp, psInfo->rect) == MS_FAILURE)
+	      if (msWFSLayerWhichShapes(lp, psInfo->rect, MS_FALSE) == MS_FAILURE) /* no access to context (draw vs. query) here, although I doubt it matters... */
                   return MS_FAILURE;
             }
             return MS_SUCCESS;  /* Nothing to do... layer is already opened */
@@ -826,7 +826,7 @@ int msWFSLayerOpen(layerObj *lp,
         msProjectRect(&lp->map->projection, &lp->projection, &psInfo->rect); /* project the searchrect to source coords */
 #endif
 
-    if (msWFSLayerWhichShapes(lp, psInfo->rect) == MS_FAILURE)
+    if (msWFSLayerWhichShapes(lp, psInfo->rect, MS_FALSE) == MS_FAILURE)  /* no access to context (draw vs. query) here, although I doubt it matters... */
         status = MS_FAILURE;
     
 
@@ -1050,7 +1050,7 @@ int msWFSLayerGetItems(layerObj *layer)
  *
  **********************************************************************/
 
-int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
+int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery)
 {
 #ifdef USE_WFS_LYR
     msWFSLayerInfo *psInfo;
@@ -1210,7 +1210,7 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
     if ((status = msOGRLayerOpen(lp, psInfo->pszGMLFilename)) != MS_SUCCESS)
         return status;
     
-    status = msOGRLayerWhichShapes(lp, rect);
+    status = msOGRLayerWhichShapes(lp, rect, isQuery);
    
     /* Mark that the OGR Layer is valid */
     psInfo->bLayerHasValidGML = MS_TRUE;

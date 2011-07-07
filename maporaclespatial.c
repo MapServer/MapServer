@@ -1922,7 +1922,7 @@ int msOracleSpatialLayerClose( layerObj *layer )
 
 /* create SQL statement for retrieving shapes */
 /* Sets up cursor for use in *NextShape and *GetShape */
-int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
+int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
 {
     int success, i;
     int function = 0;
@@ -2199,6 +2199,9 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     
     if (success)
     {
+        int cursor_type = OCI_DEFAULT;
+        if(isQuery) cursor_type =OCI_STMT_SCROLLABLE_READONLY;
+
         success = TRY( hand,
             /* define spatial position adtp ADT object */
             OCIDefineByPos( sthand->stmthp, &adtp, hand->errhp, (ub4)numitemsinselect+1, (dvoid *)0, (sb4)0, SQLT_NTY, (dvoid *)0, (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT) )
@@ -2207,7 +2210,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
             OCIDefineObject( adtp, hand->errhp, dthand->tdo, (dvoid **)sthand->obj, (ub4 *)0, (dvoid **)sthand->ind, (ub4 *)0 ) )
                && TRY(hand,
             /* execute */
-            OCIStmtExecute( hand->svchp, sthand->stmthp, hand->errhp, (ub4)ARRAY_SIZE, (ub4)0, (OCISnapshot *)NULL, (OCISnapshot *)NULL, (ub4)OCI_STMT_SCROLLABLE_READONLY ) )
+            OCIStmtExecute( hand->svchp, sthand->stmthp, hand->errhp, (ub4)ARRAY_SIZE, (ub4)0, (OCISnapshot *)NULL, (OCISnapshot *)NULL, (ub4)cursor_type ) )
                &&  TRY( hand,
             /* get rows fetched */
             OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) )
@@ -3518,7 +3521,7 @@ int msOracleSpatialLayerClose(layerObj *layer)
   return MS_FAILURE;
 }
 
-int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect)
+int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerWhichShapes()" );
   return MS_FAILURE;

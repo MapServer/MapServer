@@ -152,7 +152,7 @@ int msGraticuleLayerClose(layerObj *layer)
 /**********************************************************************************************************************
  *
  */
-int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
+int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
   graticuleObj *pInfo = (graticuleObj *) layer->layerinfo;
   int iAxisTickCount = 0;
@@ -664,7 +664,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
  
     msLayerOpen(layer);
    
-    status = msLayerWhichShapes(layer, searchrect);
+    status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(layer);
       return NULL;

@@ -936,7 +936,7 @@ static int ValidateTree(msClusterLayerInfo* layerinfo, clusterTreeNode *node)
 #endif
 
 /* rebuild the clusters according to the current extent */
-int RebuildClusters(layerObj *layer)
+int RebuildClusters(layerObj *layer, int isQuery)
 {
     mapObj* map;
 	layerObj* srcLayer;
@@ -1045,7 +1045,7 @@ int RebuildClusters(layerObj *layer)
     srcLayer = &layerinfo->srcLayer;
 
     /* start retrieving the shapes */
-    status = msLayerWhichShapes(srcLayer, searchrect);
+    status = msLayerWhichShapes(srcLayer, searchrect, isQuery);
 	if(status == MS_DONE) 
 	{ /* no overlap */
         return MS_SUCCESS;
@@ -1365,10 +1365,10 @@ int msClusterLayerInitItemInfo(layerObj *layer)
 }
 
 /* Execute a query for this layer */
-int msClusterLayerWhichShapes(layerObj *layer, rectObj rect)
+int msClusterLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
     /* rebuild the cluster database */
-    return RebuildClusters(layer);
+  return RebuildClusters(layer, isQuery);
 }
 
 static int prepareShape(layerObj* layer, msClusterLayerInfo* layerinfo, clusterInfo* current, shapeObj* shape)

@@ -2392,7 +2392,7 @@ static int msOGRLayerIsOpen(layerObj *layer)
  * Returns MS_SUCCESS/MS_FAILURE, or MS_DONE if no shape matching the
  * layer's FILTER overlaps the selected region.
  **********************************************************************/
-int msOGRLayerWhichShapes(layerObj *layer, rectObj rect) 
+int msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) 
 {
 #ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;

@@ -457,7 +457,7 @@ int layerObj_whichShapes(layerObj *self, rectObj *poRect) {
     }
     self->connectiontype = oldconnectiontype;
 
-    return msLayerWhichShapes(self, *poRect);
+    return msLayerWhichShapes(self, *poRect, MS_FALSE);
 }
 
 

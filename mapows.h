@@ -435,7 +435,7 @@ int msWFSLayerOpen(layerObj *lp,
 int msWFSLayerIsOpen(layerObj *lp); 
 int msWFSLayerInitItemInfo(layerObj *layer);
 int msWFSLayerGetItems(layerObj *layer);
-int msWFSLayerWhichShapes(layerObj *layer, rectObj rect);
+int msWFSLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery);
 int msWFSLayerClose(layerObj *lp);
 MS_DLL_EXPORT char *msWFSExecuteGetFeature(layerObj *lp);
 

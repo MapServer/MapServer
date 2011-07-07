@@ -411,7 +411,7 @@ int msUnionLayerInitItemInfo(layerObj *layer)
     return MS_SUCCESS;
 }
 
-int msUnionLayerWhichShapes(layerObj *layer, rectObj rect)
+int msUnionLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
     int i;
     layerObj* srclayer;
@@ -443,7 +443,7 @@ int msUnionLayerWhichShapes(layerObj *layer, rectObj rect)
         if(srclayer->transform == MS_TRUE && srclayer->project && layer->transform == MS_TRUE && layer->project &&msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
             msProjectRect(&layer->projection, &srclayer->projection, &srcRect); /* project the searchrect to source coords */
 #endif        
-        layerinfo->status[i] = msLayerWhichShapes(srclayer, srcRect);
+        layerinfo->status[i] = msLayerWhichShapes(srclayer, srcRect, isQuery);
         if (layerinfo->status[i] == MS_FAILURE)
             return MS_FAILURE;
     }

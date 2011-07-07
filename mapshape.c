@@ -1962,7 +1962,7 @@ int msTiledSHPOpenFile(layerObj *layer)
 }
 
 
-int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
+int msTiledSHPWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
   int i, status;
   char *filename, tilename[MS_MAXPATHLEN];
@@ -1986,7 +1986,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
     shapeObj tshape;
 
     tlp = (GET_LAYER(layer->map, tSHP->tilelayerindex));
-    status= msLayerWhichShapes(tlp, rect);
+    status= msLayerWhichShapes(tlp, rect, isQuery);
     if(status != MS_SUCCESS) return(status); /* could be MS_DONE or MS_FAILURE */
 
     msTileIndexAbsoluteDir(tiFileAbsDir, layer);
@@ -2535,7 +2535,7 @@ int msSHPLayerIsOpen(layerObj *layer)
     return MS_FALSE;
 }
 
-int msSHPLayerWhichShapes(layerObj *layer, rectObj rect)
+int msSHPLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
   int i, n1=0, n2=0;
   int status;
