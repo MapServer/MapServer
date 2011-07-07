@@ -14,6 +14,7 @@ For a complete change history, please see the Subversion log comments.
 
 Version 6.0.1 (SVN branch-6-0):
 ---------------------------
+- Fix attribute binding for layer styles (#3941)
 
 - Added missing fclose() when writing query files (#3943)
 

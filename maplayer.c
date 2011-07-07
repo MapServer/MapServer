@@ -511,6 +511,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
       nt += msCountChars(layer->class[i]->expression.string, '[');
 
     nt += layer->class[i]->label.numbindings;
+    for(j=0; j<layer->class[i]->label.numstyles; j++) {
+      if(layer->class[i]->label.styles[j]->rangeitem) nt++;
+      nt += layer->class[i]->label.styles[j]->numbindings;
+      if(layer->class[i]->label.styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
+        nt += msCountChars(layer->class[i]->label.styles[j]->_geomtransform.string, '[');
+    }
 
     if(layer->class[i]->text.type == MS_EXPRESSION || (layer->class[i]->text.string && strchr(layer->class[i]->text.string,'[') != NULL && strchr(layer->class[i]->text.string,']') != NULL))
       nt += msCountChars(layer->class[i]->text.string, '[');
@@ -553,8 +559,15 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
         if(layer->class[i]->styles[j]->rangeitem) layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem);
         for(k=0; k<MS_STYLE_BINDING_LENGTH; k++)
           if(layer->class[i]->styles[j]->bindings[k].item) layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
-	if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) 
+        if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) 
           msTokenizeExpression(&(layer->class[i]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
+      }
+      for(j=0; j<layer->class[i]->label.numstyles; j++) {
+        if(layer->class[i]->label.styles[j]->rangeitem) layer->class[i]->label.styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->label.styles[j]->rangeitem);
+        for(k=0; k<MS_STYLE_BINDING_LENGTH; k++)
+          if(layer->class[i]->label.styles[j]->bindings[k].item) layer->class[i]->label.styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->label.styles[j]->bindings[k].item);
+        if(layer->class[i]->label.styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) 
+          msTokenizeExpression(&(layer->class[i]->label.styles[j]->_geomtransform), layer->items, &(layer->numitems));
       }
 
       /* class text and label bindings */
