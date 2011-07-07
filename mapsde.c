@@ -1474,7 +1474,7 @@ int msSDELayerCloseConnection(layerObj *layer)
 /*     starts a stream query using spatial filter.  Also limits the     */
 /*     query by the layer's FILTER item as well.                        */
 /* -------------------------------------------------------------------- */
-int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
+int msSDELayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
 #ifdef USE_SDE
     long status;
     SE_ENVELOPE envelope;

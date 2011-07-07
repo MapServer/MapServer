@@ -831,7 +831,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
         /* if necessary, project the searchrect to source coords */
         if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) msProjectRect(&map->projection, &layer->projection, &searchrect);
 #endif
-        status = msLayerWhichShapes(tlp, searchrect);
+        status = msLayerWhichShapes(tlp, searchrect, MS_TRUE);
         if (status != MS_SUCCESS) {
             goto cleanup;
         }
@@ -1242,7 +1242,7 @@ int msRASTERLayerInitItemInfo(layerObj *layer)
 /************************************************************************/
 /*                      msRASTERLayerWhichShapes()                      */
 /************************************************************************/
-int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect) 
+int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) 
 
 {
 #ifndef USE_GDAL

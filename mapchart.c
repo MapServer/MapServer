@@ -614,7 +614,7 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
             msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
     #endif
         
-        status = msLayerWhichShapes(layer, searchrect);
+        status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
         if(status == MS_DONE) { /* no overlap */
             msLayerClose(layer);
             return MS_SUCCESS;

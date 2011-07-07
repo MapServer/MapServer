@@ -165,7 +165,7 @@
         }
         self->connectiontype = oldconnectiontype;
 
-        return msLayerWhichShapes(self, rect);
+        return msLayerWhichShapes(self, rect, MS_FALSE);
     }	
 
     %newobject nextShape;

@@ -130,14 +130,14 @@ int msLayerSupportsCommonFilters(layerObj *layer)
 ** Note that for shapefiles we apply any maxfeatures constraint at this point. That may be the only
 ** connection type where this is feasible.
 */
-int msLayerWhichShapes(layerObj *layer, rectObj rect)
+int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
   if ( ! layer->vtable) {
       int rv =  msInitializeVirtualTable(layer);
       if (rv != MS_SUCCESS)
           return rv;
   }
-  return layer->vtable->LayerWhichShapes(layer, rect);
+  return layer->vtable->LayerWhichShapes(layer, rect, isQuery);
 }
 
 /*
@@ -1120,7 +1120,7 @@ int LayerDefaultIsOpen(layerObj *layer)
   return MS_FALSE;
 }
 
-int LayerDefaultWhichShapes(layerObj *layer, rectObj rect)
+int LayerDefaultWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
   return MS_SUCCESS;
 }

@@ -1648,7 +1648,7 @@ struct layerVTable {
   void (*LayerFreeItemInfo)(layerObj *layer);
   int (*LayerOpen)(layerObj *layer);
   int (*LayerIsOpen)(layerObj *layer);
-  int (*LayerWhichShapes)(layerObj *layer, rectObj rect);
+  int (*LayerWhichShapes)(layerObj *layer, rectObj rect, int isQuery);
   int (*LayerNextShape)(layerObj *layer, shapeObj *shape);
   int (*LayerGetShape)(layerObj *layer, shapeObj *shape, resultObj *record);
   int (*LayerClose)(layerObj *layer);
@@ -2062,7 +2062,7 @@ MS_DLL_EXPORT int msLayerOpen(layerObj *layer); /* in maplayer.c */
 MS_DLL_EXPORT int msClusterLayerOpen(layerObj *layer); /* in mapcluster.c */
 MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
 MS_DLL_EXPORT void msLayerClose(layerObj *layer);
-MS_DLL_EXPORT int msLayerWhichShapes(layerObj *layer, rectObj rect);
+MS_DLL_EXPORT int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery);
 MS_DLL_EXPORT int msLayerGetItemIndex(layerObj *layer, char *item);
 MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int get_all, char *metadata); 
 MS_DLL_EXPORT int msLayerNextShape(layerObj *layer, shapeObj *shape);
@@ -2378,7 +2378,7 @@ MS_DLL_EXPORT int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format,
 /* ==================================================================== */
 /*      Public prototype for mapogr.cpp functions.                      */
 /* ==================================================================== */
-int MS_DLL_EXPORT msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
+int MS_DLL_EXPORT msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery);
 int MS_DLL_EXPORT msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection); /* in mapogr.cpp */
 int MS_DLL_EXPORT msOGRLayerClose(layerObj *layer);
 

@@ -2399,7 +2399,7 @@ int msPostGISLayerInitItemInfo(layerObj *layer) {
 **
 ** Registered vtable->LayerWhichShapes function.
 */
-int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect) {
+int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
 #ifdef USE_POSTGIS
     msPostGISLayerInfo *layerinfo = NULL;
     char *strSQL = NULL;
