@@ -5261,7 +5261,7 @@ int msSaveMap(mapObj *map, char *filename)
 
   /* write symbol with INLINE tag in mapfile */
   for(i=0; i<map->symbolset.numsymbols; i++) {
-    writeSymbol(map->symbolset.symbol[i], stream);
+    if(map->symbolset.symbol[i]->inmapfile) writeSymbol(map->symbolset.symbol[i], stream);
   }
 
   writeProjection(stream, indent, &(map->projection));
