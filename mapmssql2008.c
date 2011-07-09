@@ -679,7 +679,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 }
 
 /* Execute SQL query for this layer */
-int msMSSQL2008LayerWhichShapes(layerObj *layer, rectObj rect, in isQuery)
+int msMSSQL2008LayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
     msMSSQL2008LayerInfo  *layerinfo = 0;
     char    *query_str = 0;
