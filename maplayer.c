@@ -1133,6 +1133,85 @@ LayerDefaultGetNumFeatures(layerObj *layer)
     return MS_FAILURE;
 }
 
+
+/************************************************************************/
+/*                          LayerDefaultEscapeSQLParam                  */
+/*                                                                      */
+/*      Default function used to escape strings and avoid sql           */
+/*      injection. Specific drivers should redefine if an escaping      */
+/*      function is available in the driver.                            */
+/************************************************************************/
+char *LayerDefaultEscapeSQLParam(layerObj *layer, const char* pszString)
+{
+     char *pszEscapedStr=NULL;
+     if (pszString)
+     {
+         int nSrcLen;
+         char c;
+         int i=0, j=0;
+         nSrcLen = (int)strlen(pszString);
+         pszEscapedStr = (char*) malloc( 2 * nSrcLen + 1);
+         for(i = 0, j = 0; i < nSrcLen; i++)
+         {
+             c = pszString[i];
+             if (c == '\'')
+             {
+                 pszEscapedStr[j++] = '\'';
+                 pszEscapedStr[j++] = '\'';
+             }
+             else if (c == '\\')
+             {
+                 pszEscapedStr[j++] = '\\';
+                 pszEscapedStr[j++] = '\\';
+             }
+             else
+               pszEscapedStr[j++] = c;
+         }
+         pszEscapedStr[j] = 0;
+     }  
+     return pszEscapedStr;
+}
+
+/************************************************************************/
+/*                          LayerDefaultEscapePropertyName              */
+/*                                                                      */
+/*      Return the property name in a properly escaped and quoted form. */
+/************************************************************************/
+char *LayerDefaultEscapePropertyName(layerObj *layer, const char* pszString)
+{
+     char* pszEscapedStr=NULL;
+     int i, j = 0;   
+
+     if (layer && pszString && strlen(pszString) > 0)
+     {
+         int nLength = strlen(pszString);
+
+         pszEscapedStr = (char*) malloc( 1 + 2 * nLength + 1 + 1);
+         pszEscapedStr[j++] = '"';
+
+         for (i=0; i<nLength; i++)
+         {
+             char c = pszString[i];
+             if (c == '"')
+             {
+                 pszEscapedStr[j++] = '"';
+                 pszEscapedStr[j++] ='"';
+             }
+             else if (c == '\\')
+             {
+                 pszEscapedStr[j++] = '\\';
+                 pszEscapedStr[j++] = '\\';
+             }
+             else
+               pszEscapedStr[j++] = c;
+         }
+         pszEscapedStr[j++] = '"';
+         pszEscapedStr[j++] = 0;
+        
+     }
+     return pszEscapedStr;
+}
+
 /*
  * msConnectLayer
  *
@@ -1189,6 +1268,10 @@ populateVirtualTable(layerVTableObj *vtable)
     vtable->LayerCreateItems = LayerDefaultCreateItems;
     
     vtable->LayerGetNumFeatures = LayerDefaultGetNumFeatures;
+
+    vtable->LayerEscapeSQLParam = LayerDefaultEscapeSQLParam;
+
+    vtable->LayerEscapePropertyName = LayerDefaultEscapePropertyName;
 
     return MS_SUCCESS;
 }
@@ -1354,6 +1437,31 @@ int msINLINELayerGetNumFeatures(layerObj *layer)
     return i;
 }
 
+
+/*
+Returns an escaped string
+*/
+char  *msLayerEscapeSQLParam(layerObj *layer, const char*pszString) 
+{
+    if ( ! layer->vtable) {
+        int rv =  msInitializeVirtualTable(layer);
+        if (rv != MS_SUCCESS)
+            return "";
+    }
+    return layer->vtable->LayerEscapeSQLParam(layer, pszString);
+}
+
+char  *msLayerEscapePropertyName(layerObj *layer, const char*pszString) 
+{
+    if ( ! layer->vtable) {
+        int rv =  msInitializeVirtualTable(layer);
+        if (rv != MS_SUCCESS)
+            return "";
+    }
+    return layer->vtable->LayerEscapePropertyName(layer, pszString);
+}
+
+
 int
 msINLINELayerInitializeVirtualTable(layerObj *layer)
 {
@@ -1384,6 +1492,9 @@ msINLINELayerInitializeVirtualTable(layerObj *layer)
 
     /* layer->vtable->LayerCreateItems, use default */
     layer->vtable->LayerGetNumFeatures = msINLINELayerGetNumFeatures;
+
+    /*layer->vtable->LayerEscapeSQLParam, use default*/
+    /*layer->vtable->LayerEscapePropertyName, use default*/
 
     return MS_SUCCESS;
 }

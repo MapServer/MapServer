@@ -165,13 +165,11 @@ int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
 int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
                           int iLayerIndex);
 
-char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,int connectiontype);
-char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
-char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode);
-char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
-                                       int connectiontype);
-char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
-                                            int connectiontype);
+char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,layerObj *lp);
+char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
+char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,layerObj *lp);
+char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
+char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
 int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 
 
