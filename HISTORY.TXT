@@ -14,6 +14,15 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+
+IMPORTANT SECURITY FIX:
+
+-  Fixes to prevent SQL injections through OGC filter encoding (in WMS, WFS 
+   and SOS), as well as a potential SQL injection in WMS time support. 
+   Your system may be vulnerable if it has MapServer with OGC protocols 
+   enabled, with layers connecting to an SQL RDBMS backend, either 
+   natively or via OGR (#3903)
+
 - Fix performance issue with Oracle and scrollable cursors (#3905)
 
 - Fix attribute binding for layer styles (#3941)

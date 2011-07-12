@@ -265,6 +265,8 @@ int FLTGML2Shape_XMLNode(CPLXMLNode *psNode, shapeObj *psShp)
 }
 
 
+
+
 /************************************************************************/
 /*                        FLTIsSimpleFilterNoSpatial                    */
 /*                                                                      */
@@ -2027,7 +2029,6 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
     char szTmp[256];
     char **tokens = NULL;
     int nTokens = 0, i=0, bString=0;
-    char *pszTmp;
 
     if (psFilterNode == NULL || lp == NULL)
       return NULL;
@@ -2052,8 +2053,8 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
                                 "PropertyIsLike") == 0)
             {
                  pszExpression = 
-                   FLTGetIsLikeComparisonSQLExpression(psFilterNode,
-                                                       connectiontype);
+                   FLTGetIsLikeComparisonSQLExpression(psFilterNode, lp);
+
             }
         }
     }
@@ -2092,16 +2093,21 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
                 {
                     for (i=0; i<nTokens; i++)
                     {
-                        if (i == 0)
-                        {
-                            pszTmp = tokens[0];
-                            if (FLTIsNumeric(pszTmp) == MS_FALSE)    
-                               bString = 1;
-                        }
+                        char *pszEscapedStr = NULL;
+                        if (strlen(tokens[i]) <= 0)
+                          continue;
+
+                        if (FLTIsNumeric((tokens[i])) == MS_FALSE)    
+                          bString = 1;
+
+                        pszEscapedStr = msLayerEscapeSQLParam(lp, tokens[i]);
                         if (bString)
-                            snprintf(szTmp, sizeof(szTmp), "(%s = '%s')" , pszAttribute, tokens[i]);
+                            snprintf(szTmp, sizeof(szTmp), "(%s = '%s')" , pszAttribute, pszEscapedStr);
                         else
-                            snprintf(szTmp, sizeof(szTmp), "(%s = %s)" , pszAttribute, tokens[i]);
+                            snprintf(szTmp, sizeof(szTmp), "(%s = %s)" , pszAttribute, pszEscapedStr);
+
+                        msFree(pszEscapedStr);
+                        pszEscapedStr=NULL;
 
                         if (pszExpression != NULL)
                           pszExpression = msStringConcatenate(pszExpression, " OR ");
@@ -2466,6 +2472,7 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode, layerO
 
 
 
+
 /************************************************************************/
 /*                      FLTGetBinaryComparisonSQLExpresssion            */
 /*                                                                      */
@@ -2478,6 +2485,7 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     char szBuffer[1024];
     int bString=0;
     char szTmp[256];
+    char* pszEscapedStr = NULL;
 
     szBuffer[0] = '\0';
     if (!psFilterNode || !
@@ -2507,12 +2515,10 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
       
 
     /*opening bracket*/
-    /*for postgis layers double quote the attribute name, allowing reserved names to
- *       be used as attribute name #3311*/
-    if (lp->connectiontype == MS_POSTGIS)
-      strlcat(szBuffer, " (\"", bufferSize);
-    else
-      strlcat(szBuffer, " (", bufferSize);
+    strlcat(szBuffer, " (", bufferSize);
+
+    pszEscapedStr = msLayerEscapePropertyName(lp, psFilterNode->psLeftNode->pszValue);
+
 
     /* attribute */
     /*case insensitive set ? */
@@ -2522,14 +2528,14 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
         psFilterNode->psRightNode->pOther && 
         (*(int *)psFilterNode->psRightNode->pOther) == 1)
     {
-        snprintf(szTmp, sizeof(szTmp), "lower(%s) ",  psFilterNode->psLeftNode->pszValue);
+        snprintf(szTmp, sizeof(szTmp), "lower(%s) ",  pszEscapedStr);
         strlcat(szBuffer, szTmp, bufferSize);
     }
     else
-      strlcat(szBuffer, psFilterNode->psLeftNode->pszValue, bufferSize);
+      strlcat(szBuffer, pszEscapedStr, bufferSize);
 
-    if (lp->connectiontype == MS_POSTGIS)
-     strlcat(szBuffer, "\"", bufferSize);
+    msFree(pszEscapedStr);
+    pszEscapedStr = NULL;
 
 
     /* logical operator */
@@ -2572,7 +2578,18 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
           strlcat(szBuffer, "'", bufferSize);
     
         if (psFilterNode->psRightNode->pszValue)
-          strlcat(szBuffer, psFilterNode->psRightNode->pszValue, bufferSize);
+        {
+            if (bString)
+            {
+               char* pszEscapedStr;
+                pszEscapedStr = msLayerEscapeSQLParam(lp, psFilterNode->psRightNode->pszValue);
+                strlcat(szBuffer, pszEscapedStr, bufferSize);
+                msFree(pszEscapedStr);
+                pszEscapedStr=NULL;
+            }
+            else
+                strlcat(szBuffer, psFilterNode->psRightNode->pszValue, bufferSize);
+        }
 
         if (bString)
           strlcat(szBuffer, "'", bufferSize);
@@ -2599,7 +2616,7 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     int nBounds = 0;
     int bString=0;
     char szTmp[256];
-
+    char* pszEscapedStr;
 
     szBuffer[0] = '\0';
     if (!psFilterNode ||
@@ -2647,7 +2664,11 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     strlcat(szBuffer, " (", bufferSize);
 
     /* attribute */
-    strlcat(szBuffer, psFilterNode->psLeftNode->pszValue, bufferSize);
+    pszEscapedStr = msLayerEscapePropertyName(lp, psFilterNode->psLeftNode->pszValue);
+
+    strlcat(szBuffer, pszEscapedStr, bufferSize);
+    msFree(pszEscapedStr);
+    pszEscapedStr = NULL;
 
     /*between*/
     strlcat(szBuffer, " BETWEEN ", bufferSize);
@@ -2655,7 +2676,11 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     /*bound 1*/
     if (bString)
       strlcat(szBuffer,"'", bufferSize);
-    strlcat(szBuffer, aszBounds[0], bufferSize);
+    pszEscapedStr = msLayerEscapeSQLParam( lp, aszBounds[0]);
+    strlcat(szBuffer, pszEscapedStr, bufferSize);
+    msFree(pszEscapedStr);
+    pszEscapedStr=NULL;
+
     if (bString)
       strlcat(szBuffer,"'", bufferSize);
 
@@ -2664,7 +2689,11 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     /*bound 2*/
     if (bString)
       strlcat(szBuffer, "'", bufferSize);
-    strlcat(szBuffer, aszBounds[1], bufferSize);
+    pszEscapedStr = msLayerEscapeSQLParam( lp, aszBounds[1]);
+    strlcat(szBuffer, pszEscapedStr, bufferSize);
+    msFree(pszEscapedStr);
+    pszEscapedStr=NULL;
+
     if (bString)
       strlcat(szBuffer,"'", bufferSize);
 
@@ -2900,7 +2929,7 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 /*      Build an sql expression for IsLike filter.                      */
 /************************************************************************/
 char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
-                                          int connectiontype)
+                                          layerObj *lp)
 {
     const size_t bufferSize = 1024;
     char szBuffer[1024];
@@ -2911,8 +2940,10 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
     char *pszEscape = NULL;
     char szTmp[4];
 
-    int nLength=0, i=0, iBuffer = 0;
+    int nLength=0, i=0, j=0;
     int  bCaseInsensitive = 0;
+
+    char *pszEscapedStr = NULL;
 
     if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
         !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
@@ -2928,15 +2959,29 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
         !pszEscape || strlen(pszEscape) == 0)
       return NULL;
 
- 
+    if (pszEscape[0] == '\'')
+    {
+        /* This might be valid, but the risk of SQL injection is too high */
+        /* and the below code is not ready for that */
+        /* Someone who does this has clearly suspect intentions ! */
+        msSetError(MS_MISCERR, "Single quote character is not allowed as an escaping character.",
+                   "FLTGetIsLikeComparisonSQLExpression()");
+        return NULL;
+    }
+
 
     szBuffer[0] = '\0';
     /*opening bracket*/
     strlcat(szBuffer, " (", bufferSize);
 
     /* attribute name */
-    strlcat(szBuffer, psFilterNode->psLeftNode->pszValue, bufferSize);
-    if (bCaseInsensitive == 1 && connectiontype == MS_POSTGIS)
+    pszEscapedStr = msLayerEscapePropertyName(lp, psFilterNode->psLeftNode->pszValue);
+
+    strlcat(szBuffer, pszEscapedStr, bufferSize);
+    msFree(pszEscapedStr);
+    pszEscapedStr = NULL;
+
+    if (bCaseInsensitive == 1 && lp->connectiontype == MS_POSTGIS)
       strlcat(szBuffer, " ilike '", bufferSize);
     else
       strlcat(szBuffer, " like '", bufferSize);
@@ -2944,46 +2989,60 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
    
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);
-    iBuffer = strlen(szBuffer);
-    for (i=0; i<nLength; i++)
+
+    pszEscapedStr = (char*) msSmallMalloc( 3 * nLength + 1);
+
+    for (i=0, j=0; i<nLength; i++)
     {
-        if (pszValue[i] != pszWild[0] && 
-            pszValue[i] != pszSingle[0] &&
-            pszValue[i] != pszEscape[0])
+        char c = pszValue[i];
+        if (c != pszWild[0] &&
+            c != pszSingle[0] &&
+            c != pszEscape[0])
         {
-            szBuffer[iBuffer] = pszValue[i];
-            iBuffer++;
-            szBuffer[iBuffer] = '\0';
-        }
-        else if  (pszValue[i] == pszSingle[0])
-        {
-             szBuffer[iBuffer] = '_';
-             iBuffer++;
-             szBuffer[iBuffer] = '\0';
-        }
-        else if  (pszValue[i] == pszEscape[0])
-        {
-            szBuffer[iBuffer] = pszEscape[0];
-            iBuffer++;
-            szBuffer[iBuffer] = '\0';
-            /*if (i<nLength-1)
+            if (c == '\'')
             {
-                szBuffer[iBuffer] = pszValue[i+1];
-                iBuffer++;
-                szBuffer[iBuffer] = '\0';
+                pszEscapedStr[j++] = '\'';
+                pszEscapedStr[j++] = '\'';
             }
-            */
+            else if (c == '\\')
+            {
+                pszEscapedStr[j++] = '\\';
+                pszEscapedStr[j++] = '\\';
+            }
+            else
+                pszEscapedStr[j++] = c;
         }
-        else if (pszValue[i] == pszWild[0])
+        else if  (c == pszSingle[0])
         {
-            strlcat(szBuffer, "%", bufferSize);
-            iBuffer++;
-            szBuffer[iBuffer] = '\0';
+            pszEscapedStr[j++] = '_';
         }
-    } 
+        else if  (c == pszEscape[0])
+        {
+            pszEscapedStr[j++] = pszEscape[0];
+            if (i+1<nLength)
+            {
+                char nextC = pszValue[i+1];
+                i++;
+                if (nextC == '\'')
+                {
+                    pszEscapedStr[j++] = '\'';
+                    pszEscapedStr[j++] = '\'';
+                }
+                else
+                    pszEscapedStr[j++] = nextC;
+            }
+        }
+        else if (c == pszWild[0])
+        {
+            pszEscapedStr[j++] = '%';
+        }
+    }
+    pszEscapedStr[j++] = 0;
+    strlcat(szBuffer, pszEscapedStr, bufferSize);
+    msFree(pszEscapedStr);
 
     strlcat(szBuffer, "'", bufferSize);
-    if (connectiontype != MS_OGR)
+    if (lp->connectiontype != MS_OGR)
     {
       strlcat(szBuffer, " escape '", bufferSize);
       szTmp[0] = pszEscape[0];
