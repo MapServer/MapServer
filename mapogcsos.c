@@ -1820,6 +1820,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   char *pszProcedureValue = NULL;
   int iItemPosition, status;
   shapeObj sShape;
+  char* pszEscapedStr = NULL;
 
   sBbox = map->extent;
 
@@ -2051,15 +2052,25 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
               pszBuffer = msStringConcatenate(pszBuffer, "(");
                             
               if (!bSpatialDB)
-                pszBuffer = msStringConcatenate(pszBuffer, "'[");
-
-              pszBuffer = msStringConcatenate(pszBuffer, (char *)pszProcedureItem);
+              {
+                  pszBuffer = msStringConcatenate(pszBuffer, "'[");
+                  pszBuffer = msStringConcatenate(pszBuffer, (char *)pszProcedureItem);
+              }
+              else
+              {
+                  pszEscapedStr = msLayerEscapePropertyName(lp, (char *)pszProcedureItem);
+                  pszBuffer = msStringConcatenate(pszBuffer, pszEscapedStr);
+                  msFree(pszEscapedStr);
+                  pszEscapedStr = NULL;
+              }
 
               if (!bSpatialDB)
                 pszBuffer = msStringConcatenate(pszBuffer, "]'");
 
               pszBuffer = msStringConcatenate(pszBuffer, " = '");
-              pszBuffer = msStringConcatenate(pszBuffer,  tokens[j]);
+              pszEscapedStr = msLayerEscapeSQLParam(lp, tokens[j]);
+              pszBuffer = msStringConcatenate(pszBuffer,  pszEscapedStr);
+              msFree(pszEscapedStr);
               pszBuffer = msStringConcatenate(pszBuffer,  "')");
             }
                                 

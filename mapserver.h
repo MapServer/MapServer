@@ -1556,6 +1556,8 @@ struct layerVTable {
 
     int (*LayerCreateItems)(layerObj *layer, int nt);
     int (*LayerGetNumFeatures)(layerObj *layer);
+    char* (*LayerEscapeSQLParam)(layerObj *layer, const char* pszString);
+    char* (*LayerEscapePropertyName)(layerObj *layer, const char* pszString);
 };
 #endif /*SWIG*/
 
@@ -1954,6 +1956,9 @@ MS_DLL_EXPORT int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, map
 
 /* maplayer.c */
 MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
+
+MS_DLL_EXPORT char *msLayerEscapeSQLParam(layerObj *layer, const char* pszString);
+MS_DLL_EXPORT char *msLayerEscapePropertyName(layerObj *layer, const char* pszString);
 
 /* These are special because SWF is using these */
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
