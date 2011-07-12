@@ -2468,7 +2468,40 @@ msPOSTGISLayerGetShapeVT(layerObj *layer, shapeObj *shape, int tile, long record
 }
 
 
-int
+char *msPostGISEscapeSQLParam(layerObj *layer, const char *pszString)
+{
+#ifdef USE_POSTGIS
+    msPOSTGISLayerInfo *layerinfo = NULL;
+    int nError;
+    size_t nSrcLen;
+    char* pszEscapedStr =NULL;
+
+    if (layer && pszString && strlen(pszString) > 0)
+    {
+        if(!msPOSTGISLayerIsOpen(layer))
+          msPOSTGISLayerOpen(layer);
+    
+        assert(layer->layerinfo != NULL);
+
+        layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+        nSrcLen = strlen(pszString);
+        pszEscapedStr = (char*) malloc( 2 * nSrcLen + 1);
+        PQescapeStringConn (layerinfo->conn, pszEscapedStr, pszString, nSrcLen, &nError);
+        if (nError != 0)
+        {
+            free(pszEscapedStr);
+            pszEscapedStr = NULL;
+        }
+    }
+    return pszEscapedStr;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISEscapeSQLParam()");
+    return NULL;
+#endif
+}
+
 msPOSTGISLayerInitializeVirtualTable(layerObj *layer)
 {
     assert(layer != NULL);
@@ -2496,6 +2529,7 @@ msPOSTGISLayerInitializeVirtualTable(layerObj *layer)
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
 
+    layer->vtable->LayerEscapeSQLParam = msPostGISEscapeSQLParam;
 
     return MS_SUCCESS;
 }
