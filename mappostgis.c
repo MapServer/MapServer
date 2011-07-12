@@ -580,7 +580,7 @@ static int prepare_database(const char *geom_table, const char *geom_column, lay
     if(layer->debug) {
         msDebug("query_string_0_6:%s\n", query_string_0_6);
     }
-    result = PQexec(layerinfo->conn, query_string_0_6);
+    result = PQexecParams(layerinfo->conn, query_string_0_6,0, NULL, NULL, NULL, NULL, 0);
 
     if(!result || PQresultStatus(result) != PGRES_COMMAND_OK)
     {
@@ -1263,7 +1263,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     free(geom_column_name);
     free(table_name);
 
-    query_result = PQexec(layerinfo->conn, query_str);
+    query_result = PQexecParams(layerinfo->conn, query_str,0, NULL, NULL, NULL, NULL, 0);
 
     if(!query_result || PQresultStatus(query_result) != PGRES_COMMAND_OK) {
         msSetError(MS_QUERYERR, "Error executing POSTGIS SQL statement (in FETCH ALL): %s\n-%s\nMore Help:", "msPOSTGISLayerGetShape()", query_str, PQerrorMessage(layerinfo->conn));
@@ -1455,7 +1455,7 @@ int msPOSTGISLayerGetItems(layerObj *layer)
     /* geom_column_name is needed later */
     free(table_name);
 
-    query_result = PQexec(layerinfo->conn, sql);
+    query_result = PQexecParams(layerinfo->conn, sql,0, NULL, NULL, NULL, NULL, 0);
 
     if(!query_result || PQresultStatus(query_result) != PGRES_TUPLES_OK) {
         msSetError(MS_QUERYERR, "Error executing POSTGIS SQL statement (in msPOSTGISLayerGetItems): %s\n-%s\n", "msPOSTGISLayerGetItems()", sql, PQerrorMessage(layerinfo->conn));
