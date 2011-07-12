@@ -3298,8 +3298,9 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
     return MS_FALSE;
 }
 
-char *msPostGISEscapeSQLParam(layerObj *layer, char *pszString)
+char *msPostGISEscapeSQLParam(layerObj *layer, const char *pszString)
 {
+#ifdef USE_POSTGIS
     msPostGISLayerInfo *layerinfo = NULL;
     int nError;
     size_t nSrcLen;
@@ -3323,6 +3324,12 @@ char *msPostGISEscapeSQLParam(layerObj *layer, char *pszString)
         }
     }
     return pszEscapedStr;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISEscapeSQLParam()");
+    return NULL;
+#endif
 }
 
 
