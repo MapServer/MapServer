@@ -1,0 +1,198 @@
+#
+# makefile.vc - Main MapServer makefile for MSVC++
+#
+# This VC++ makefile will build MAPSERVER.LIB, MAPSERV.EXE, and the other
+# MapServer command-line programs.
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+MAPSERVER_ROOT = .
+
+!INCLUDE nmake.opt
+
+BASE_CFLAGS = 	$(OPTFLAGS)
+
+CFLAGS=$(BASE_CFLAGS) $(MS_CFLAGS)
+CC=     cl
+LINK=   link
+
+#
+# Main MapServer library.
+#
+MS_DLL = libmap.dll
+
+MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
+		mapparser.obj maplexer.obj maptree.obj \
+		mapsearch.obj mapstring.obj mapsymbol.obj mapfile.obj \
+		maplegend.obj maputil.obj mapscale.obj mapquery.obj \
+		maplabel.obj maperror.obj mapprimitive.obj mapproject.obj\
+		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj maptime.obj \
+		maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
+		mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
+		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj \
+		mapgdal.obj mapwfs.obj mapwfslayer.obj mapows.obj maphttp.obj \
+		mappdf.obj mapcontext.obj mapdrawgdal.obj mapjoin.obj mapgraticule.obj \
+		mapmygis.obj mapimagemap.obj mapcopy.obj maprasterquery.obj \
+        mapogcfilter.obj mapogcsld.obj mapthread.obj mapobject.obj \
+		classobject.obj layerobject.obj mapwcs.obj mapgeos.obj strptime.obj \
+		mapcpl.obj mapio.obj mappool.obj mapsvg.obj mapregex.obj mappluginlayer.obj \
+                mapogcsos.obj mappostgresql.obj mapcrypto.obj \
+		$(EPPL_OBJ) $(REGEX_OBJ)
+
+MS_HDRS = 	map.h mapfile.h
+
+MS_EXE = 	mapserv.exe \
+                shp2img.exe legend.exe \
+		shptree.exe scalebar.exe sortshp.exe tile4ms.exe \
+		shptreevis.exe msencrypt.exe
+
+#
+#
+#
+default: 	all
+
+all:		$(MS_LIB) $(MS_EXE) mapscriptvars
+
+$(MS_OBJS):	$(MS_HDRS)
+
+$(MS_DLL) $(MS_LIB_DLL):	$(MS_LIB)
+	link /dll $(LDEBUG) \
+	   $(MS_OBJS) $(EXTERNAL_LIBS) \
+	   /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
+	
+$(MS_LIB):	$(MS_OBJS)
+	if exist $(GDAL_DIR)\gdal.pdb copy $(GDAL_DIR)\gdal.pdb .
+	lib /out:$(MS_LIB) $(MS_OBJS)
+
+!IFDEF DLLBUILD
+$(MS_EXE):	$(MS_DLL) $(MS_LIB_DLL)
+!ELSE
+$(MS_EXE):	$(MS_LIB)
+!ENDIF
+
+gd::
+	cd gd-1.2
+	nmake /f makefile.nt OPTFLAGS="$(OPTFLAGS)"
+	cd ..
+
+.c.obj:	
+	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
+
+.cpp.obj:	
+	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
+
+.c.exe:
+	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
+!IFDEF DLLBUILD
+	$(LINK) $(LDFLAGS) $*.obj $(LIBS_DLL)
+!ELSE
+        $(LINK) $(LDFLAGS) $*.obj $(LIBS)
+!ENDIF
+
+clean:
+	del *.obj
+	del $(REGEX_OBJ)
+	del *.lib
+	del *.dll
+	del $(MS_EXE)
+	del *.pdb
+	del *.exp
+	del *.ilk
+!IFDEF DOT_NET
+	cd mapscript\csharp
+	nmake /f makefile.vc clean
+	cd ..\..
+!ENDIF
+!IFDEF JAVA_HOME
+	cd mapscript\java
+	nmake /f makefile.vc clean
+	cd ..\..
+!ENDIF
+!IFDEF PHP_HOME
+	cd mapscript\php3
+	nmake /f makefile.vc clean
+	cd ..\..
+!ENDIF
+!IFDEF PYTHON_HOME
+    cd mapscript\python
+    -del mapscript_wrap.c
+    -rmdir /s /q build
+    cd ..\..
+!ENDIF
+
+
+mapscriptvars: makefile.vc nmake.opt
+	-del mapscriptvars
+	echo $(MS_BASE) > mapscriptvars
+	echo $(MS_DEFS) -DWIN32 -D_WIN32 >> mapscriptvars
+	echo $(INCLUDES) >> mapscriptvars
+	echo $(LIBS_DLL) >> mapscriptvars
+	echo $(LIBS) >> mapscriptvars
+	findstr MS_VERSION map.h | findstr define >> mapscriptvars
+
+install: $(MS_DLL) $(MS_EXE) python csharp java php
+	-mkdir $(BINDIR)
+	xcopy /y /r /d /f $(MS_DLL) $(BINDIR)
+	copy *.exe $(BINDIR)
+!IFDEF PYTHON_HOME
+    -mkdir $(BINDIR)\mapscript\python
+	xcopy /y /r /d /f .\mapscript\python\dist\*.zip $(BINDIR)\mapscript\python
+!ENDIF
+!IFDEF DOT_NET
+    -mkdir $(BINDIR)\mapscript\csharp
+	xcopy /y /r /d /f .\mapscript\csharp\*.dll $(BINDIR)\mapscript\csharp
+	xcopy /y /r /d /f .\mapscript\csharp\*.exe $(BINDIR)\mapscript\csharp
+	xcopy /y /r /d /f .\mapscript\csharp\*.manifest $(BINDIR)\mapscript\csharp
+	xcopy /y /r /d /f .\mapscript\csharp\*.config $(BINDIR)\mapscript\csharp
+!ENDIF
+!IFDEF JAVA_HOME
+    -mkdir $(BINDIR)\mapscript\java
+	xcopy /y /r /d /f .\mapscript\java\*.dll $(BINDIR)\mapscript\java
+	xcopy /y /r /d /f .\mapscript\java\*.jar $(BINDIR)\mapscript\java
+!ENDIF
+!IFDEF PHP_HOME
+    -mkdir $(BINDIR)\mapscript\php
+	xcopy /y /r /d /f .\mapscript\php3\*.dll $(BINDIR)\mapscript\php
+!ENDIF	
+
+!IFDEF PYTHON_HOME	
+python: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
+    cd mapscript\python
+    $(SWIG) -python -shadow -o mapscript_wrap.c ../mapscript.i
+    $(PYTHON_HOME)\PCBuild\python.exe setup.py bdist
+    cd ..\..
+!ELSE
+python:
+!ENDIF
+
+!IFDEF DOT_NET
+csharp: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
+    cd mapscript\csharp
+    nmake /f makefile.vc
+    cd ..\..
+!ELSE
+csharp:
+!ENDIF
+
+!IFDEF JAVA_HOME
+java: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
+    cd mapscript\java
+    nmake /f makefile.vc
+    cd ..\..
+!ELSE
+java:
+!ENDIF
+
+!IFDEF PHP_HOME
+php: mapscriptvars $(MS_DLL) $(MS_LIB_DLL)
+    cd mapscript\php3
+    nmake /f makefile.vc
+    cd ..\..
+!ELSE
+php:
+!ENDIF
