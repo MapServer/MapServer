@@ -1504,6 +1504,7 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
     xmlChar *buffer = NULL;
     int size = 0;
     msIOContext *context = NULL;
+    char* pszEscapedStr = NULL;
 
     sBbox = map->extent;
 
@@ -1726,12 +1727,20 @@ int msSOSGetObservation(mapObj *map, int nVersion, char **names,
                             
                             if (!bSpatialDB)
                               pszBuffer = msStringConcatenate(pszBuffer, "'[");
-                            pszBuffer = msStringConcatenate(pszBuffer, (char *)pszProcedureItem);
+                            pszEscapedStr = msLayerEscapePropertyName(lp, (char *)pszProcedureItem);
+                            pszBuffer = msStringConcatenate(pszBuffer, pszEscapedStr);
+                            msFree(pszEscapedStr);
+                            pszEscapedStr = NULL;
+
                             if (!bSpatialDB)
                               pszBuffer = msStringConcatenate(pszBuffer, "]'");
                                     
                             pszBuffer = msStringConcatenate(pszBuffer, " = '");
-                            pszBuffer = msStringConcatenate(pszBuffer,  tokens[j]);
+                            pszEscapedStr = msLayerEscapeSQLParam(lp, tokens[j]);
+                            pszBuffer = msStringConcatenate(pszBuffer,  pszEscapedStr);
+                            msFree(pszEscapedStr);
+                            pszEscapedStr=NULL;
+
                             pszBuffer = msStringConcatenate(pszBuffer,  "')");
                         }
                                 

@@ -13,6 +13,14 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN branch, may never be released):
 ----------------------------------------------------
 
+IMPORTANT SECURITY FIXE:
+
+-  Fixes to prevent SQL injections through OGC filter encoding (in WMS, WFS 
+   and SOS), as well as a potential SQL injection in WMS time support. 
+   Your system may be vulnerable if it has MapServer with OGC protocols 
+   enabled, with layers connecting to an SQL RDBMS backend, either 
+   natively or via OGR (#3903)
+
 - Disabled some insecure (and potentially exploitable) mapserv command-line
   debug arguments (#3485). The --enable-cgi-cl-debug-args configure switch
   can be used to re-enable them for devs who really cannot get away without
