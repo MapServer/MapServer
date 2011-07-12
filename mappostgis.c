@@ -550,7 +550,7 @@ int msPostGISRetrievePK(layerObj *layer) {
         return(MS_FAILURE);
     }
 
-    pgresult = PQexec(layerinfo->pgconn, sql);
+    pgresult = PQexecParams(layerinfo->pgconn, sql,0, NULL, NULL, NULL, NULL, 0);
     if ( !pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
         char *tmp1;
         char *tmp2 = NULL;
@@ -1773,7 +1773,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect) {
         msDebug("msPostGISLayerWhichShapes query: %s\n", strSQL);
     }
 
-    pgresult = PQexec(layerinfo->pgconn, strSQL);
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, 0);
 
     if ( layer->debug > 1 ) {
         msDebug("msPostGISLayerWhichShapes query status: %d\n", PQresultStatus(pgresult));
@@ -1905,7 +1905,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long reco
         msDebug("msPostGISLayerGetShape query: %s\n", strSQL);
     }
 
-    pgresult = PQexec(layerinfo->pgconn, strSQL);
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, 0);
 
     /* Something went wrong. */
     if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
@@ -1998,7 +1998,7 @@ int msPostGISLayerGetItems(layerObj *layer) {
         msDebug("msPostGISLayerGetItems executing SQL: %s\n", sql);
     }
 
-    pgresult = PQexec(layerinfo->pgconn, sql);
+    pgresult = PQexecParams(layerinfo->pgconn, sql,0, NULL, NULL, NULL, NULL, 0);
     
     if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
         msSetError(MS_QUERYERR, "Error (%s) executing SQL: %s", "msPostGISLayerGetItems()", PQerrorMessage(layerinfo->pgconn), sql);

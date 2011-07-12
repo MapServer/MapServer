@@ -13,6 +13,15 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
+
+IMPORTANT SECURITY FIXE:
+
+-  Fixes to prevent SQL injections through OGC filter encoding (in WMS, WFS 
+   and SOS), as well as a potential SQL injection in WMS time support. 
+   Your system may be vulnerable if it has MapServer with OGC protocols 
+   enabled, with layers connecting to an SQL RDBMS backend, either 
+   natively or via OGR (#3903)
+
 - WFS: check if map projection is properly set before using it (#3897)
 
 - Fix for the memory corruption when mapping the string data type in the Java bindings (#3491)
