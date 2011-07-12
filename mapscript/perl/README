@@ -1,0 +1,20 @@
+To build type:
+
+  perl Makefile.PL
+  make
+  make install
+
+MapScript requires Swig version 1.3+. If you must re-SWIG things use a command like:
+
+  swig -perl5 -shadow -outdir . -o mapscript_wrap.c ../mapscript.i
+
+and then follow the sequence of steps to install mapscript. 
+
+If you need to change the name of the mapscript module (default=mapscript) you need to:
+
+  1) edit ../mapscript.i and change the name of the swig module
+  2) edit Makefile.PL and edit the name 'mapscript' in the WriteMakefile subroutine call
+  3) edit plmodule.i and change the name 'mapscript' to whatever the new name
+     will be throughout the file
+
+and now build as normal.
