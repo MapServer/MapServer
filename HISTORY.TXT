@@ -9,10 +9,10 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version:
-----------------
+Version 4.10.7 (2010-07-12)
+---------------------------
 
-IMPORTANT SECURITY FIXE:
+IMPORTANT SECURITY FIXES:
 
 -  Fixes to prevent SQL injections through OGC filter encoding (in WMS, WFS 
    and SOS), as well as a potential SQL injection in WMS time support. 
@@ -20,6 +20,8 @@ IMPORTANT SECURITY FIXE:
    enabled, with layers connecting to an SQL RDBMS backend, either 
    natively or via OGR (#3903)
 
+-  Fixed potentially exploitable buffer overflows in OGC Filter Encoding
+   support (#3903)
 
 Version 4.10.6 (2010-07-09)
 ---------------------------
