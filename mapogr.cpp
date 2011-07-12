@@ -3698,6 +3698,66 @@ void msOGRCleanup( void )
 }
 
 /************************************************************************/
+/*                           msOGREscapeSQLParam                        */
+/************************************************************************/
+char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
+{
+    char* pszEscapedStr =NULL;
+#ifdef USE_OGR
+    if(layer && pszString && strlen(pszString) > 0)
+    {
+        char* pszEscapedOGRStr =  CPLEscapeString(pszString, strlen(pszString),  
+		                                    CPLES_SQL ); 
+	pszEscapedStr = msStrdup(pszEscapedOGRStr);
+        CPLFree(pszEscapedOGRStr);
+	return pszEscapedStr; 
+    }
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGREscapeSQLParam()");
+  return NULL;
+
+#endif /* USE_OGR */  
+}
+
+
+/************************************************************************/
+/*                           msOGREscapeSQLParam                        */
+/************************************************************************/
+char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
+{
+    char* pszEscapedStr =NULL;
+    int i =0;
+#ifdef USE_OGR
+    if(layer && pszString && strlen(pszString) > 0)
+    {
+        unsigned char ch;
+        for(i=0; (ch = ((unsigned char*)pszString)[i]) != '\0'; i++)
+        {
+            if ( !(isalnum(ch) || ch == '_' || ch > 127) )
+            {
+                return msStrdup("invalid_property_name");
+            }
+        }
+        pszEscapedStr = msStrdup(pszString);
+    }
+    return pszEscapedStr;
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGREscapePropertyName()");
+  return NULL;
+
+#endif /* USE_OGR */  
+}
+/************************************************************************/
 /*                  msOGRLayerInitializeVirtualTable()                  */
 /************************************************************************/
 int
@@ -3723,6 +3783,9 @@ msOGRLayerInitializeVirtualTable(layerObj *layer)
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
     /* layer->vtable->LayerGetAutoProjection, use defaut*/
+
+    layer->vtable->LayerEscapeSQLParam = msOGREscapeSQLParam;
+    layer->vtable->LayerEscapePropertyName = msOGREscapePropertyName;
 
     return MS_SUCCESS;
 }

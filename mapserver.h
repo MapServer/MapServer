@@ -1661,6 +1661,8 @@ struct layerVTable {
   int (*LayerCreateItems)(layerObj *layer, int nt);
   int (*LayerGetNumFeatures)(layerObj *layer);
   int (*LayerGetAutoProjection)(layerObj *layer, projectionObj *projection);
+  char* (*LayerEscapeSQLParam)(layerObj *layer, const char* pszString);
+  char* (*LayerEscapePropertyName)(layerObj *layer, const char* pszString);
 };
 #endif /*SWIG*/
 
@@ -2106,6 +2108,9 @@ MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
 MS_DLL_EXPORT int msLayerSupportsPaging(layerObj *layer);
 
 MS_DLL_EXPORT int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format);
+
+MS_DLL_EXPORT char *msLayerEscapeSQLParam(layerObj *layer, const char* pszString);
+MS_DLL_EXPORT char *msLayerEscapePropertyName(layerObj *layer, const char* pszString);
 
 /* These are special because SWF is using these */
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
