@@ -11,7 +11,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version:
 ----------------
-IMPORTANT SECURITY FIXE:
+
+IMPORTANT SECURITY FIXES:
 
 -  Fixes to prevent SQL injections through OGC filter encoding (in WMS, WFS 
    and SOS), as well as a potential SQL injection in WMS time support. 
