@@ -14,7 +14,7 @@ For a complete change history, please see the Subversion log comments.
 Current Version:
 ----------------
 
-IMPORTANT SECURITY FIXE:
+IMPORTANT SECURITY FIXES:
 
 -  Fixes to prevent SQL injections through OGC filter encoding (in WMS, WFS 
    and SOS), as well as a potential SQL injection in WMS time support. 
@@ -22,18 +22,8 @@ IMPORTANT SECURITY FIXE:
    enabled, with layers connecting to an SQL RDBMS backend, either 
    natively or via OGR (#3903)
 
-- WFS: check if map projection is properly set before using it (#3897)
-
-- Fix for the memory corruption when mapping the string data type in the Java bindings (#3491)
-
-- Ensure the class is not marked BeforeFieldInit causing memory corruption with C#/CLR4 (#3438)
-
-- Fixed MSSQL2008 driver returning invalid extent (#3498)
-
-- Backport the recent fixes in the MSSQL2008 driver (#3058, #3244)
-
-- Fix computation of shape bounds when the first line contains no points
-  (#3119)(fixes #3383)
+-  Fixed potentially exploitable buffer overflows in OGC Filter Encoding
+   support (#3903)
 
 - Disabled some insecure (and potentially exploitable) mapserv command-line
   debug arguments (#3485). The --enable-cgi-cl-debug-args configure switch
@@ -42,6 +32,23 @@ IMPORTANT SECURITY FIXE:
   production servers or those who don't understand the security implications).
 
 - Fixed possible buffer overflow in msTmpFile() (#3484)
+
+Other Fixes:
+
+- WFS: check if map projection is properly set before using it (#3897)
+
+- Fix for the memory corruption when mapping the string data type in the 
+  Java bindings (#3491)
+
+- Ensure the class is not marked BeforeFieldInit causing memory corruption 
+  with C#/CLR4 (#3438)
+
+- Fixed MSSQL2008 driver returning invalid extent (#3498)
+
+- Backport the recent fixes in the MSSQL2008 driver (#3058, #3244)
+
+- Fix computation of shape bounds when the first line contains no points
+  (#3119)(fixes #3383)
 
 - fix blending of transparent layers with AGG on MSB archs (#3471)
 
