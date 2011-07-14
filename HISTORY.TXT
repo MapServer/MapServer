@@ -12,6 +12,11 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Current Version (future 6.0.2, SVN branch-6-0):
+---------------------------
+
+- ...
+
 Version 6.0.1 (2011-07-12):
 ---------------------------
 
@@ -22,6 +27,8 @@ IMPORTANT SECURITY FIXES:
    Your system may be vulnerable if it has MapServer with OGC protocols 
    enabled, with layers connecting to an SQL RDBMS backend, either 
    natively or via OGR (#3903) 
+
+Other fixes:
 
 - Applied patch for ticket (symbol writing issues) (#3589)
 
