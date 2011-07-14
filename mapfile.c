@@ -4532,7 +4532,7 @@ static void writeLegend(FILE *stream, int indent, legendObj *legend)
 */
 void initScalebar(scalebarObj *scalebar)
 {
-  MS_INIT_COLOR(scalebar->imagecolor, 255,255,255,255);
+  MS_INIT_COLOR(scalebar->imagecolor, -1,-1,-1,255);
   scalebar->width = 200; 
   scalebar->height = 3;
   scalebar->style = 0; /* only 2 styles at this point */
