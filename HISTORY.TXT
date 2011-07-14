@@ -11,6 +11,11 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Version 5.6.8 (SVN branch-5-6):
+---------------------------
+
+- ...
+
 Version 5.6.7 (2011-07-12):
 ---------------------------
 
@@ -24,6 +29,8 @@ IMPORTANT SECURITY FIXES:
 
 -  Fixed potentially exploitable buffer overflows in OGC Filter Encoding
    support (#3903)
+
+Other Fixes:
 
 - Fixed PHP/MapScript ms_iogetstdoutbufferbytes() always returning 0 bytes 
   written (#3041)
