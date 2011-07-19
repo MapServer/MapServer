@@ -52,6 +52,7 @@
 #include "renderers/agg/include/agg_font_freetype.h"
 #include "renderers/agg/include/agg_conv_contour.h"
 #include "renderers/agg/include/agg_ellipse.h"
+#include "renderers/agg/include/agg_gamma_functions.h"
 
 #include "renderers/agg/include/agg_scanline_boolean_algebra.h"
 #include "renderers/agg/include/agg_scanline_storage_aa.h"
@@ -145,6 +146,7 @@ public:
    rasterizer_outline m_rasterizer_primitives;
 #endif
    rasterizer_scanline m_rasterizer_aa;
+   rasterizer_scanline m_rasterizer_aa_gamma;
    mapserver::scanline_p8 sl_poly; /*packed scanlines, works faster when the area is larger
     than the perimeter, in number of pixels*/
    mapserver::scanline_u8 sl_line; /*unpacked scanlines, works faster if the area is roughly
@@ -248,11 +250,11 @@ int agg2RenderLineTiled(imageObj *img, shapeObj *p, imageObj * tile) {
 int agg2RenderPolygon(imageObj *img, shapeObj *p, colorObj * color) {
    AGG2Renderer *r = AGG_RENDERER(img);
    polygon_adaptor polygons(p);
-   r->m_rasterizer_aa.reset();
-   r->m_rasterizer_aa.filling_rule(mapserver::fill_even_odd);
-   r->m_rasterizer_aa.add_path(polygons);
+   r->m_rasterizer_aa_gamma.reset();
+   r->m_rasterizer_aa_gamma.filling_rule(mapserver::fill_even_odd);
+   r->m_rasterizer_aa_gamma.add_path(polygons);
    r->m_renderer_scanline.color(aggColor(color));
-   mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_poly, r->m_renderer_scanline);
+   mapserver::render_scanlines(r->m_rasterizer_aa_gamma, r->sl_poly, r->m_renderer_scanline);
    return MS_SUCCESS;
 }
 
@@ -709,6 +711,10 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
    r->m_pixel_format.attach(r->m_rendering_buffer);
    r->m_renderer_base.attach(r->m_pixel_format);
    r->m_renderer_scanline.attach(r->m_renderer_base);
+   double gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
+   if(gamma > 0.0 && gamma < 1.0) {
+      r->m_rasterizer_aa_gamma.gamma(mapserver::gamma_linear(0.0,gamma));
+   }
    if( bg && !format->transparent )
       r->m_renderer_base.clear(aggColor(bg));
    else

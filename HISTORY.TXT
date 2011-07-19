@@ -14,6 +14,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+- Add gamma correction to AGG polygon rendering (#3165)
 
 - Initialize the scalebar image color to transparent by default (#3957)
 
