@@ -61,6 +61,7 @@ int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
       }
    }
    s->rotation = l->angle * MS_DEG_TO_RAD;
+   s->antialias = l->antialias;
    return MS_SUCCESS;
 }
 void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, double scalefactor) {

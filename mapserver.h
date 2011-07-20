@@ -2594,6 +2594,7 @@ typedef struct {
     colorObj *color;
     double outlinewidth;
     colorObj *outlinecolor;
+    int antialias; /*only for GD*/
 } labelStyleObj;
 
 #define INIT_LABEL_STYLE(s) {(s).font=NULL; (s).size=0; (s).rotation=0; (s).color=NULL; (s).outlinewidth=0; (s).outlinecolor=NULL;}
