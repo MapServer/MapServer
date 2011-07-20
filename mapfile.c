@@ -5931,26 +5931,64 @@ static void layerSubstituteString(layerObj *layer, char *from, char *to) {
   }
 }
 
+static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const char *option, hashTableObj *table) {
+  const char *filename; 
+
+  filename = msGetOutputFormatOption(format, option, NULL);
+  if(filename) {
+    const char *default_key = msFirstKeyFromHashTable(table);
+    while(default_key) {
+      if(!strncmp(default_key,"default_",8)) {
+        size_t buffer_size = (strlen(default_key)-5);
+        char *tag = (char *)msSmallMalloc(buffer_size);
+        snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
+
+        char *new_filename = msStrdup(filename);
+        new_filename = msCaseReplaceSubstring(new_filename, tag, msLookupHashTable(table, default_key));
+        free(tag);
+
+        msSetOutputFormatOption(format, option, new_filename);
+        free(new_filename);
+      }
+      default_key = msNextKeyFromHashTable(table, default_key);
+    }
+  }
+  return;
+}
+
+static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table) {
+  const char *default_key = msFirstKeyFromHashTable(table);
+  while(default_key) {
+    if(!strncmp(default_key,"default_",8)) {
+      size_t buffer_size = (strlen(default_key)-5);
+      char *tag = (char *)msSmallMalloc(buffer_size);
+      snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
+
+      layerSubstituteString(layer, tag, msLookupHashTable(table, default_key));
+      free(tag);
+    }
+    default_key = msNextKeyFromHashTable(table, default_key);
+  }
+  return;
+}
+
 /* 
 ** Loop through layer metadata for keys that have a default_%key% pattern to replace
 ** remaining %key% entries by their default value. 
 */
 void msApplyDefaultSubstitutions(mapObj *map) {
   int i;
+
+  /* output formats (#3751) */
+  for(i=0; i<map->numoutputformats; i++) {
+    applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "filename", &(map->web.validation));
+    applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "filename", &(map->web.metadata));
+  }
+
   for(i=0;i<map->numlayers;i++) {
     layerObj *layer = GET_LAYER(map, i);
-    const char *defaultkey = msFirstKeyFromHashTable(&(layer->metadata));
-    while(defaultkey) {
-      if(!strncmp(defaultkey,"default_",8)){
-          size_t buffer_size = (strlen(defaultkey)-5);
-        char *tmpstr = (char *)msSmallMalloc(buffer_size);
-        snprintf(tmpstr, buffer_size, "%%%s%%", &(defaultkey[8]));
-
-        layerSubstituteString(layer,tmpstr,msLookupHashTable(&(layer->metadata),defaultkey));
-        free(tmpstr);
-      }
-      defaultkey = msNextKeyFromHashTable(&(layer->metadata),defaultkey);
-    }
+    applyLayerDefaultSubstitutions(layer, &(layer->validation));
+    applyLayerDefaultSubstitutions(layer, &(layer->metadata));
   }
 }
 
@@ -5970,17 +6008,29 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs) 
     validation_pattern_key = (char *) msSmallMalloc(sizeof(char)*strlen(names[i]) + 20);
     sprintf(validation_pattern_key,"%s_validation_pattern", names[i]);
 
+    /* output formats (#3751) */
+    for(j=0; j<map->numoutputformats; j++) {
+      const char *filename = msGetOutputFormatOption(map->outputformatlist[j], "FILENAME", NULL);
+      if(filename && (strcasestr(filename, tag) != NULL)) {
+        if(msValidateParameter(values[i], msLookupHashTable(&(map->web.validation), names[i]), msLookupHashTable(&(map->web.metadata), validation_pattern_key), NULL, NULL) == MS_SUCCESS) {
+          char *new_filename = msStrdup(filename);
+          new_filename = msCaseReplaceSubstring(new_filename, tag, values[i]);
+          msSetOutputFormatOption(map->outputformatlist[j], "FILENAME", new_filename);
+          free(new_filename);
+	}
+      }
+    }
+
     for(j=0; j<map->numlayers; j++) {
       layerObj *layer = GET_LAYER(map, j);
 
       if(!layerNeedsSubstitutions(layer, tag)) continue;
 
-      if( layer->debug >= MS_DEBUGLEVEL_V ) 
-          msDebug( "  runtime substitution - Layer %s, tag %s...\n", 
-                   layer->name, tag);
+      if(layer->debug >= MS_DEBUGLEVEL_V) 
+        msDebug( "  runtime substitution - Layer %s, tag %s...\n", layer->name, tag);
 
       if(msValidateParameter(values[i], msLookupHashTable(&(layer->validation), names[i]),  msLookupHashTable(&(map->web.validation), names[i]),
-                                        msLookupHashTable(&(layer->metadata), validation_pattern_key), msLookupHashTable(&(map->web.validation), validation_pattern_key)) == MS_SUCCESS) {
+                                        msLookupHashTable(&(layer->metadata), validation_pattern_key), msLookupHashTable(&(map->web.metadata), validation_pattern_key)) == MS_SUCCESS) {
         layerSubstituteString(layer, tag, values[i]);
       }
     }

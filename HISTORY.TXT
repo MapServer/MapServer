@@ -14,6 +14,10 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+- Add runtime substitution for "filename" output format option (#3571) and
+  allow setting defaults in either metadata or validation (preferred) blocks
+  for both layer and output format.
+
 - Add non antialiased text rendering for GD (#3896)
 
 - Fixed OGC filter using expressions (#3481)
