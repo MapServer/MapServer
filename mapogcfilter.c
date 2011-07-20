@@ -31,6 +31,7 @@
 
 #ifdef USE_OGR
 #include "cpl_minixml.h"
+#include "cpl_string.h"
 #endif
 
 #include "mapogcfilter.h"
@@ -418,6 +419,8 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
     if (szExpression)
     {
+        char *escapedTextString;
+
         if (bConcatWhere)
           pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
 
@@ -441,8 +444,10 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 	if(lp->filter.string && lp->filter.type == MS_EXPRESSION)
 	  pszBuffer = msStringConcatenate(pszBuffer, ")");
         
-        
-        msLoadExpressionString(&lp->filter, pszBuffer);
+        escapedTextString = msStringEscape(pszBuffer); 
+        msLoadExpressionString(&lp->filter, 
+                               (char*)CPLSPrintf("\"%s\"", escapedTextString)); 
+        free(escapedTextString); 
         free(szExpression);
     }
 

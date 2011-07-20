@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+
+- Fixed OGC filter using expressions (#3481)
+
 - Fix incorrect rendering of GD lines between 1 and 2 pixels wide (#3962)
 
 - Add gamma correction to AGG polygon rendering (#3165)
