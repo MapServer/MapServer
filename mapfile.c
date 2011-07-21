@@ -5939,11 +5939,12 @@ static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const
     const char *default_key = msFirstKeyFromHashTable(table);
     while(default_key) {
       if(!strncmp(default_key,"default_",8)) {
+        char *new_filename = NULL;
         size_t buffer_size = (strlen(default_key)-5);
         char *tag = (char *)msSmallMalloc(buffer_size);
         snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
-        char *new_filename = msStrdup(filename);
+        new_filename = msStrdup(filename);
         new_filename = msCaseReplaceSubstring(new_filename, tag, msLookupHashTable(table, default_key));
         free(tag);
 
