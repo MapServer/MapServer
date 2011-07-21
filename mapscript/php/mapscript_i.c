@@ -352,11 +352,11 @@ int mapObj_selectOutputFormat(mapObj *self,
 
 int mapObj_applySLD(mapObj *self, char *sld)
 {
-    return msSLDApplySLD(self, sld, -1, NULL);
+  return msSLDApplySLD(self, sld, -1, NULL, NULL);
 }
 int mapObj_applySLDURL(mapObj *self, char *sld)
 {
-    return msSLDApplySLDURL(self, sld, -1, NULL);
+  return msSLDApplySLDURL(self, sld, -1, NULL, NULL);
 }
 
 char *mapObj_generateSLD(mapObj *self)
@@ -677,11 +677,11 @@ char *layerObj_executeWFSGetFeature(layerObj *self) {
 
 int layerObj_applySLD(layerObj *self, char *sld, char *stylelayer)
 {
-    return msSLDApplySLD(self->map, sld, self->index, stylelayer);
+  return msSLDApplySLD(self->map, sld, self->index, stylelayer, NULL);
 }
 int layerObj_applySLDURL(layerObj *self, char *sld, char *stylelayer)
 {
-    return msSLDApplySLDURL(self->map, sld, self->index, stylelayer);
+  return msSLDApplySLDURL(self->map, sld, self->index, stylelayer, NULL);
 }
 
 char *layerObj_generateSLD(layerObj *self)

@@ -59,7 +59,7 @@ MS_CVSID("$Id$")
 /*      used to do the match.                                           */
 /************************************************************************/
 int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
-                     char *pszStyleLayerName)
+                     char *pszStyleLayerName,  char **ppszLayerNames)
 {
 #ifdef USE_OGR
 
@@ -99,7 +99,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
             msSetError(MS_WMSERR, "Could not open SLD %s and save it in temporary file %s. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL, pszSLDTmpFile);
         }
         if (pszSLDbuf)
-          nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName);
+          nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName, ppszLayerNames);
     }
 
     return nStatus;
@@ -130,7 +130,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
 /*      the SLD layers onto the map layers.                             */
 /************************************************************************/
 int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
-                  char *pszStyleLayerName)
+                  char *pszStyleLayerName, char **ppszLayerNames)
 {
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
@@ -505,6 +505,26 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
               break;
         }
 	
+/* -------------------------------------------------------------------- */
+/*      if needed return a comma separated list of the layers found     */
+/*      in the sld.                                                     */
+/* -------------------------------------------------------------------- */
+        if (ppszLayerNames)
+        {
+            char *pszTmp = NULL;
+            for (i=0; i<nLayers; i++)
+            {
+                if (pasLayers[i].name)
+                {
+                    if (pszTmp !=NULL)
+                      pszTmp = msStringConcatenate(pszTmp, ",");
+                    pszTmp = msStringConcatenate(pszTmp, pasLayers[i].name);
+
+                }
+            }
+            *ppszLayerNames = pszTmp;
+            
+        }
 	for (i=0; i<nLayers; i++)
 	  freeLayer(&pasLayers[i]);
 	msFree(pasLayers);
@@ -2219,7 +2239,7 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
 
     char *pszFormat = NULL;
     CPLXMLNode *psURL=NULL, *psFormat=NULL, *psTmp=NULL;
-    char *pszURL=NULL, *pszTmpSymbolName=NULL;
+    char *pszURL=NULL;
     int status;
 
 

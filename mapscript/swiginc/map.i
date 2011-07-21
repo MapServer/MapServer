@@ -436,11 +436,11 @@
   /* SLD */
   
     int applySLD(char *sld) {
-        return msSLDApplySLD(self, sld, -1, NULL);
+      return msSLDApplySLD(self, sld, -1, NULL, NULL);
     }
 
     int applySLDURL(char *sld) {
-        return msSLDApplySLDURL(self, sld, -1, NULL);
+      return msSLDApplySLDURL(self, sld, -1, NULL, NULL);
     }
     
     %newobject generateSLD;

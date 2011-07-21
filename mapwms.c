@@ -420,7 +420,40 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
    msAdjustExtent(&(map->extent), map->width, map->height);
 
-   
+   /*
+     Check for SLDs first. If SLD is available LAYERS and STYLES parameters are non mandatory
+    */
+   for(i=0; map && i<numentries; i++)
+   {
+       /* check if SLD is passed.  If yes, check for OGR support */
+       if (strcasecmp(names[i], "SLD") == 0 || strcasecmp(names[i], "SLD_BODY") == 0)
+       {
+           sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
+
+           if (sldenabled == NULL)
+             sldenabled = "true";
+
+           if (ogrEnabled == 0)
+           {
+               msSetError(MS_WMSERR, "OGR support is not available.", "msWMSLoadGetMapParams()");
+               return msWMSException(map, nVersion, NULL, wms_exception_format);
+           }
+           else
+           {
+               if (strcasecmp(sldenabled, "true") == 0)
+               {
+                   if (strcasecmp(names[i], "SLD") == 0)
+                   {
+                       sld_url =  values[i];
+                   }
+                   if (strcasecmp(names[i], "SLD_BODY") == 0)
+                   {
+                       sld_body =  values[i];
+                   }
+               }
+           }
+       }
+   }
 
    for(i=0; map && i<numentries; i++)
    {
@@ -432,34 +465,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
 
     
-    /* check if SLD is passed.  If yes, check for OGR support */
-    if (strcasecmp(names[i], "SLD") == 0 || strcasecmp(names[i], "SLD_BODY") == 0)
-    {
-       sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
-
-       if (sldenabled == NULL)
-         sldenabled = "true";
-
-       if (ogrEnabled == 0)
-       {
-          msSetError(MS_WMSERR, "OGR support is not available.", "msWMSLoadGetMapParams()");
-          return msWMSException(map, nVersion, NULL, wms_exception_format);
-       }
-       else
-       {
-          if (strcasecmp(sldenabled, "true") == 0)
-          {
-            if (strcasecmp(names[i], "SLD") == 0)
-            {
-              sld_url =  values[i];
-            }
-            if (strcasecmp(names[i], "SLD_BODY") == 0)
-            {
-              sld_body =  values[i];
-            }
-          }
-       }
-    }
+   
 
     if (strcasecmp(names[i], "LAYERS") == 0)
     {
@@ -469,10 +475,14 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       MS_CHECK_ALLOC(layerOrder, map->numlayers * sizeof(int), MS_FAILURE)
 
       layers = msStringSplit(values[i], ',', &numlayers);
-      if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) {
-        msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
-                   "msWMSLoadGetMapParams()");
-        return msWMSException(map, nVersion, NULL, wms_exception_format);
+      if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) 
+      {
+          if (sld_url == NULL &&   sld_body == NULL)
+          {
+              msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
+                         "msWMSLoadGetMapParams()");
+              return msWMSException(map, nVersion, NULL, wms_exception_format);
+          }
       }
 
       if (nVersion >= OWS_1_3_0) {
@@ -864,9 +874,17 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   */
   if (validlayers == 0 || invalidlayers > 0)
   {
-      msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
-                 "msWMSLoadGetMapParams()");
-      return msWMSException(map, nVersion, "LayerNotDefined", wms_exception_format);
+      if (invalidlayers > 0)
+      {
+          msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
+                     "msWMSLoadGetMapParams()");
+          return msWMSException(map, nVersion, "LayerNotDefined", wms_exception_format);
+      }
+      if (validlayers == 0 && sld_url == NULL &&   sld_body == NULL)
+      {
+          msSetError(MS_WMSERR, "Missing required parameter LAYERS", "msWMSLoadGetMapParams()");
+          return msWMSException(map, nVersion, "MissingParameterValue", wms_exception_format);
+      }
   }
 
   /* validate srs value: When the SRS parameter in a GetMap request contains a
@@ -1080,16 +1098,32 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   {
        int nLayersBefore, nLayerAfter;
        char request_tmp[32];
+       char *pszLayerNames = NULL;
        nLayersBefore = map->numlayers;
-  /*apply sld if defined. This is done here so that bbox and srs are already applied*/
+
+
+/* -------------------------------------------------------------------- */
+/*      if LAYERS parameter was not given, set all layers to off        */
+/* -------------------------------------------------------------------- */
+       if (validlayers == 0) /*no LAYERS parameter is give*/
+       {        
+           for(j=0; j<map->numlayers; j++)
+           {
+                if (GET_LAYER(map, j)->status != MS_DEFAULT)
+                  GET_LAYER(map, j)->status = MS_OFF;
+           }
+       }
+
+
+       /*apply sld if defined. This is done here so that bbox and srs are already applied*/
        if (sld_url)
        {
-           if ((status = msSLDApplySLDURL(map, sld_url, -1, NULL)) != MS_SUCCESS)
+           if ((status = msSLDApplySLDURL(map, sld_url, -1, NULL, &pszLayerNames)) != MS_SUCCESS)
              return msWMSException(map, nVersion, NULL, wms_exception_format);
        }
        else if (sld_body)
        {
-           if ((status =msSLDApplySLD(map, sld_body, -1, NULL)) != MS_SUCCESS)
+           if ((status =msSLDApplySLD(map, sld_body, -1, NULL, &pszLayerNames)) != MS_SUCCESS)
              return msWMSException(map, nVersion, NULL, wms_exception_format);
        }
 /* -------------------------------------------------------------------- */
@@ -1103,6 +1137,43 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
            strlcpy(request_tmp, "GetMap", sizeof(request_tmp));
            msOWSRequestLayersEnabled(map, "M", request_tmp, ows_request); 
        }
+
+/* -------------------------------------------------------------------- */
+/*      We need to take into account where the LAYERS parameter was     */
+/*      not given (the LAYERS is option when an SLD is given). In       */
+/*      this particular case, we need to turn on the layers             */
+/*      identified the SLD (#1166).                                     */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+       if (validlayers == 0)
+       {
+           if (pszLayerNames)
+           {
+               char **tokens;
+               int ntokens=0;
+               tokens = msStringSplit(pszLayerNames, ',', &ntokens);
+               if (ntokens >0)
+               {
+                   for (i=0; i<ntokens; i++)
+                   {
+                        for (j=0; j<map->numlayers; j++)
+                        {
+                            if ( ((GET_LAYER(map, j)->name &&
+                                   strcasecmp(GET_LAYER(map, j)->name, tokens[i]) == 0) ||
+                                  (map->name && strcasecmp(map->name, tokens[i]) == 0) ||
+                                  (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, tokens[i]) == 0)) &&
+                                 ((msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers))) )
+                            {
+                                if (GET_LAYER(map, j)->status != MS_DEFAULT)
+                                  GET_LAYER(map, j)->status = MS_ON;
+                            }    
+                        }
+                   }
+               }
+           }
+       }
+       msFree(pszLayerNames);
+       
   }
   /* Validate Styles :
   ** MapServer advertize styles through th group setting in a class object.
@@ -3650,10 +3721,10 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
 /* -------------------------------------------------------------------- */
          else if (strcasecmp(names[i], "SLD") == 0 &&
                   values[i] && strlen(values[i]) > 0 && strcasecmp(sldenabled, "true") == 0)
-             msSLDApplySLDURL(map, values[i], -1, NULL);
+           msSLDApplySLDURL(map, values[i], -1, NULL, NULL);
          else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
                   values[i] && strlen(values[i]) > 0 && strcasecmp(sldenabled, "true") == 0)
-             msSLDApplySLD(map, values[i], -1, NULL);
+           msSLDApplySLD(map, values[i], -1, NULL, NULL);
          else if (strcasecmp(names[i], "RULE") == 0)
            psRule = values[i];
          else if (strcasecmp(names[i], "SCALE") == 0)

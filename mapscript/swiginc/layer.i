@@ -559,12 +559,12 @@
 
     int applySLD(char *sld, char *stylelayer) 
     {
-        return msSLDApplySLD(self->map, sld, self->index, stylelayer);
+      return msSLDApplySLD(self->map, sld, self->index, stylelayer, NULL);
     }
 
     int applySLDURL(char *sld, char *stylelayer) 
     {
-        return msSLDApplySLDURL(self->map, sld, self->index, stylelayer);
+      return msSLDApplySLDURL(self->map, sld, self->index, stylelayer, NULL);
     }
 
     %newobject generateSLD; 
