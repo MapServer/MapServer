@@ -30,9 +30,9 @@
 
 MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion);
 MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
-                                   char *pszStyleLayerName);
+                                   char *pszStyleLayerName, char **ppszLayerNames);
 MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, 
-                                char *pszStyleLayerName);
+                                char *pszStyleLayerName, char **ppszLayerNames);
 
 #ifdef USE_OGR
 
