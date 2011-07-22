@@ -67,7 +67,7 @@ print_body ()
    # traverse array and print out elements
         let count=0
 	for x in "${ARRAY[@]}"; do
-		echo "  ${x},"
+		echo " { ${x} },"
 		((count++))
 	done
 
