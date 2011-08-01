@@ -1342,7 +1342,7 @@ int msPostGISParseData(layerObj *layer) {
     */
     if ( ! (layerinfo->uid) ) {
         if ( strstr(layerinfo->fromsource, " ") ) {
-            msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  You must specifiy 'using unique' when supplying a subselect in the data definition.", "msPostGISParseData()");
+            msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  You must specify 'using unique' when supplying a subselect in the data definition.", "msPostGISParseData()");
             return MS_FAILURE;
         }
         if ( msPostGISRetrievePK(layer) != MS_SUCCESS ) {
