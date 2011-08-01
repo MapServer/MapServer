@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- WCS 1.0: WCS Exceptions raise mapscript exceptions (#3972)
+
 - WMS: LAYERS parameter is optional when sld is given (#1166)
 
 - Add runtime substitution for "filename" output format option (#3571) and
