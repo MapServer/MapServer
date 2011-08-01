@@ -179,6 +179,8 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
   msIO_printf("  </ServiceException>\n");
   msIO_printf("</ServiceExceptionReport>\n");
 
+  msResetErrorList();
+
   return MS_FAILURE;
 }
 
