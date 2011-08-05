@@ -976,10 +976,11 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         return MS_FAILURE;
     }
 
-    else if (msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
+    else if (nRequestType == WMS_GETFEATUREINFO &&
+             msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
                                 nClickX, nClickY, nFeatureCount, pszInfoFormat,
                                 NULL, NULL, NULL,
-                                &sThisWMSParams) == MS_FAILURE)
+                                &sThisWMSParams) != MS_SUCCESS )
     {
         /* an error was already reported. */
         msFreeWmsParamsObj(&sThisWMSParams);
