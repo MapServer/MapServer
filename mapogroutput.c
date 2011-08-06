@@ -219,6 +219,8 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     int i, out_field;
     OGRwkbGeometryType eLayerGType, eFeatureGType = wkbUnknown;
 
+    eLayerGType = OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hOGRLayer));
+
 /* -------------------------------------------------------------------- */
 /*      Transform point geometry.                                       */
 /* -------------------------------------------------------------------- */
@@ -236,7 +238,12 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
         OGR_G_SetPoint( hGeom, 0, 
                         shape->line[0].point[0].x,
                         shape->line[0].point[0].y,
-                        0.0 );
+#ifdef USE_POINT_Z_M
+                        shape->line[0].point[0].z
+#else
+                        0.0
+#endif
+                        );
     }
 
 /* -------------------------------------------------------------------- */
@@ -267,7 +274,12 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                 OGR_G_SetPoint( hGeom, i, 
                                 shape->line[j].point[i].x,
                                 shape->line[j].point[i].y,
-                                0.0 );
+#ifdef USE_POINT_Z_M
+                                shape->line[j].point[i].z
+#else
+                                0.0 
+#endif
+                                );
             }
 
             if( hML != NULL )
@@ -317,7 +329,12 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                 OGR_G_SetPoint( hRing, i, 
                                 shape->line[iOuter].point[i].x,
                                 shape->line[iOuter].point[i].y,
-                                0.0 );
+#ifdef USE_POINT_Z_M
+                                shape->line[iOuter].point[i].z
+#else
+                                0.0
+#endif
+                                );
             }
             
             OGR_G_AddGeometryDirectly( hGeom, hRing );
@@ -338,7 +355,12 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                     OGR_G_SetPoint( hRing, i, 
                                     shape->line[iRing].point[i].x,
                                     shape->line[iRing].point[i].y,
-                                    0.0 );
+#ifdef USE_POINT_Z_M
+                                    shape->line[iRing].point[i].z
+#else
+                                    0.0
+#endif
+                                    );
                 }
                 
                 OGR_G_AddGeometryDirectly( hGeom, hRing );
@@ -395,6 +417,20 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
         hGeom = OGR_G_ForceToMultiLineString( hGeom );
         
 #endif /* GDAL/OGR 1.8 or later */
+
+/* -------------------------------------------------------------------- */
+/*      Consider flattening the geometry to 2D if we want 2D            */
+/*      output.                                                         */
+/* -------------------------------------------------------------------- */
+    eLayerGType = OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hOGRLayer));
+
+    if( hGeom != NULL )
+        eFeatureGType = OGR_G_GetGeometryType( hGeom );
+
+    if( eLayerGType == wkbFlatten(eLayerGType) 
+        && hGeom != NULL 
+        && eFeatureGType != wkbFlatten(eFeatureGType) )
+        OGR_G_FlattenTo2D( hGeom );
 
 /* -------------------------------------------------------------------- */
 /*      Create the feature, and attach the geometry.                    */
@@ -651,7 +687,21 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         else if( strcasecmp(value,"MultiPolygon") == 0 )
             eGeomType = wkbMultiPolygon;
         else if( strcasecmp(value,"GeometryCollection") == 0 )
-            eGeomType = wkbMultiPolygon;
+            eGeomType = wkbGeometryCollection;
+        else if( strcasecmp(value,"Point25D") == 0 )
+            eGeomType = wkbPoint25D;
+        else if( strcasecmp(value,"LineString25D") == 0 )
+            eGeomType = wkbLineString25D;
+        else if( strcasecmp(value,"Polygon25D") == 0 )
+            eGeomType = wkbPolygon25D;
+        else if( strcasecmp(value,"MultiPoint25D") == 0 )
+            eGeomType = wkbMultiPoint25D;
+        else if( strcasecmp(value,"MultiLineString25D") == 0 )
+            eGeomType = wkbMultiLineString25D;
+        else if( strcasecmp(value,"MultiPolygon25D") == 0 )
+            eGeomType = wkbMultiPolygon25D;
+        else if( strcasecmp(value,"GeometryCollection25D") == 0 )
+            eGeomType = wkbGeometryCollection25D;
         else if( strcasecmp(value,"Unknown") == 0 
                  || strcasecmp(value,"Geometry") == 0 )
             eGeomType = wkbUnknown;

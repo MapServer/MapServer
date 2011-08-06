@@ -105,6 +105,8 @@ IMPORTANT SECURITY FIX:
 
 - Fix GetMapserverUnitUsingProj() for proj=latlong (#3883)
 
+- Add support for OGR output of 2.5D geometries (#3906)
+
 
 Version 6.0.0 (2011-05-11)
 --------------------------
