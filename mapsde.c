@@ -35,8 +35,6 @@
 #include "maptime.h"
 #include "mapthread.h"
 
-
-
 #ifdef USE_SDE
 #include <sdetype.h> /* ESRI SDE Client Includes */
 #include <sdeerno.h>
@@ -96,16 +94,12 @@ static layerId *lcache = NULL;
 /* -------------------------------------------------------------------- */
 int msSDELayerIsOpen(layerObj *layer) {
 #ifdef USE_SDE
-
-    if(layer->layerinfo) 
-        return(MS_TRUE); 
-    
-    return MS_FALSE;
-
+  if(layer->layerinfo) 
+    return(MS_TRUE); 
+  return MS_FALSE;
 #else
-    msSetError(MS_MISCERR, "SDE support is not available.",
-             "msSDELayerIsOpen()");
-    return(MS_FALSE);
+  msSetError(MS_MISCERR, "SDE support is not available.",  "msSDELayerIsOpen()");
+  return(MS_FALSE);
 #endif
 } 
 
@@ -1395,17 +1389,14 @@ int msSDELayerOpen(layerObj *layer) {
 /* -------------------------------------------------------------------- */
 int  msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
-
-
     msSDELayerInfo *sde=NULL;
-    
     sde = layer->layerinfo;
     
     /* Silently return if layer not opened. */
     if (!msSDELayerIsOpen(layer)) return MS_SUCCESS;  
     
     if(layer->debug) 
-        msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
+       msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
     
     if (sde->layerinfo) SE_layerinfo_free(sde->layerinfo);
     if (sde->coordref) SE_coordref_free(sde->coordref);
@@ -1423,9 +1414,7 @@ int  msSDELayerClose(layerObj *layer) {
     return MS_SUCCESS;
  
 #else
-    msSetError( MS_MISCERR, 
-              "SDE support is not available.", 
-              "msSDELayerClose()");
+    msSetError( MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
     return(MS_FALSE);
 #endif
 }
@@ -2081,65 +2070,45 @@ int msSDELayerCreateItems(layerObj *layer, int nt){
 /* -------------------------------------------------------------------- */
 int msSDELayerGetItems(layerObj *layer) {
 #ifdef USE_SDE
-    int status;
-    status = msSDELayerInitItemInfo(layer);
-
-    if (status != MS_SUCCESS) {
-        msSetError( MS_MISCERR,  
-                    "Unable to create SDE column info", 
-                    "msSDELayerGetItems()");
-        return(MS_FAILURE);     
-    }    
-    return (MS_SUCCESS);
-
+  int status;
+  status = msSDELayerInitItemInfo(layer);
+  if (status != MS_SUCCESS) {
+    msSetError( MS_MISCERR, "Unable to create SDE column info", "msSDELayerGetItems()");
+    return(MS_FAILURE);     
+  }    
+  return (MS_SUCCESS);
 #else
-    msSetError( MS_MISCERR, 
-                "SDE support is not available.", 
-                "msSDELayerGetItems()");
-    return(MS_FAILURE);
+  msSetError( MS_MISCERR, "SDE support is not available.", "msSDELayerGetItems()");
+  return(MS_FAILURE);
 #endif
 }
 
 /* -------------------------------------------------------------------- */
 /* msSDELayerFreeItemInfo                                               */
 /* -------------------------------------------------------------------- */
-void msSDELayerFreeItemInfo(layerObj *layer)
-{
+void msSDELayerFreeItemInfo(layerObj *layer) {
 #ifdef USE_SDE
-    msSDELayerInfo *sde = NULL;
-    int i;
-    if (!msSDELayerIsOpen(layer)) {
-        msSetError( MS_SDEERR,
-                    "SDE layer has not been opened.",
-                    "msSDELayerFreeItemInfo()");
-    }
-    sde = layer->layerinfo;
+  msSDELayerInfo *sde = NULL;
+
+  sde = layer->layerinfo;
+  if(sde) {
     if (sde->basedefs) {
-        SE_table_free_descriptions(sde->basedefs);  
-        sde->basedefs = NULL;
+      SE_table_free_descriptions(sde->basedefs);  
+      sde->basedefs = NULL;
     }
     if (sde->joindefs) {
-        SE_table_free_descriptions(sde->joindefs);
-        sde->joindefs = NULL;
+      SE_table_free_descriptions(sde->joindefs);
+      sde->joindefs = NULL;
     }
-    if (layer->iteminfo) {
-        msFree(layer->iteminfo);
-        layer->iteminfo = NULL;
-    }
+  }
 
-     if (layer->items) {
-         for (i=0; i< layer->numitems; i++) {
-             msFree(layer->items[i]);
-         }
-         msFree(layer->items);
-         layer->items = NULL;
-         layer->numitems = 0;
-     }
-
+  if (layer->iteminfo) {
+    msFree(layer->iteminfo);
+    layer->iteminfo = NULL;
+  }
 #else
-    msSetError( MS_MISCERR, 
-                "SDE support is not available.", 
-                "msSDELayerFreeItemInfo()");
+  msSetError( MS_MISCERR, "SDE support is not available.", "msSDELayerFreeItemInfo()");
+  return;
 #endif
 }
 
