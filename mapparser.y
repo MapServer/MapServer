@@ -474,11 +474,11 @@ logical_exp:
     }
   | shape_exp CONTAINS shape_exp {
       int rval;
-      rval = msGEOSWithin($1, $3);
+      rval = msGEOSContains($1, $3);
       if($1->scratch == MS_TRUE) msFreeShape($1);
       if($3->scratch == MS_TRUE) msFreeShape($3);
       if(rval == -1) {
-        yyerror(p, "Within operator failed.");
+        yyerror(p, "Contains operator failed.");
         return(-1);
       } else
         $$ = rval;
