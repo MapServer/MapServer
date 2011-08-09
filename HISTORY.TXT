@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (future 6.0.2, SVN branch-6-0):
 ---------------------------
+
+- Fixed contains operator in logical expresions (#3974)
+
 - Fix incorrect rendering of GD lines between 1 and 2 pixels wide (#3962)
 
 Version 6.0.1 (2011-07-12):

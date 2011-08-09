@@ -1850,11 +1850,11 @@ yyreduce:
 #line 475 "mapparser.y"
     {
       int rval;
-      rval = msGEOSWithin((yyvsp[-2].shpval), (yyvsp[0].shpval));
+      rval = msGEOSContains((yyvsp[-2].shpval), (yyvsp[0].shpval));
       if((yyvsp[-2].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-2].shpval));
       if((yyvsp[0].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[0].shpval));
       if(rval == -1) {
-        yyerror(p, "Within operator failed.");
+        yyerror(p, "Contains operator failed.");
         return(-1);
       } else
         (yyval.intval) = rval;
