@@ -230,15 +230,14 @@ typedef struct
 typedef wcs20coverageMetadataObj * wcs20coverageMetadataObjPtr;
 
 #define MS_WCS_20_PROFILE_CORE      "http://www.opengis.net/spec/WCS/2.0/conf/core"
-#define MS_WCS_20_PROFILE_KVP       "http://www.opengis.net/spec/WCS_protocol-binding_get-kvp/1.0"
-#define MS_WCS_20_PROFILE_POST      "http://www.opengis.net/spec/WCS_protocol-binding_post-xml/1.0"
-#define MS_WCS_20_PROFILE_GEOTIFF   "http://www.opengis.net/spec/WCS_coverage-encoding_geotiff/1.0/"
+#define MS_WCS_20_PROFILE_KVP       "http://www.opengis.net/spec/WCS_protocol-binding_get-kvp/1.0/conf/get-kvp"
+#define MS_WCS_20_PROFILE_POST      "http://www.opengis.net/spec/WCS_protocol-binding_post-xml/1.0/conf/post-xml"
+#define MS_WCS_20_PROFILE_GEOTIFF   "http://www.opengis.net/spec/WCS_encoding_geotiff/1.0/conf/geotiff"
 #define MS_WCS_20_PROFILE_GML_GEOTIFF "http://www.placeholder.com/GML_and_GeoTIFF"
-#define MS_WCS_20_PROFILE_EPSG      "http://www.placeholder.com/EPSG"
+#define MS_WCS_20_PROFILE_CRS      "http://www.opengis.net/spec/WCS_service-model_crs-predefined/1.0/conf/crs-predefined"
 #define MS_WCS_20_PROFILE_IMAGECRS  "http://www.placeholder.com/IMAGECRS"
-#define MS_WCS_20_PROFILE_SCALING   "http://www.placeholder.com/SCALING"
-#define MS_WCS_20_PROFILE_INTERPOLATION "http://www.placeholder.com/INTERPOLATION"
-#define MS_WCS_20_PROFILE_RANGESUBSET "http://www.placeholder.com/RANGESUBSET"
+#define MS_WCS_20_PROFILE_SCALING   "http://www.opengis.net/spec/WCS_service-model_scaling+interpolation/1.0/conf/scaling+interpolation"
+#define MS_WCS_20_PROFILE_RANGESUBSET "http://www.opengis.net/spec/WCS_service-model_band-subsetting/1.0/conf/band-subsetting"
 
 int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request);
 
