@@ -512,6 +512,7 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensi
   xmlNodePtr psRootNode = NULL;
 
   /* Do we need to reorient tuple axes? */
+  if(crs && strstr(crs, "imageCRS") == NULL)
   {
       projectionObj proj;
 
