@@ -848,58 +848,60 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   
   nclasses = 0;
   classgroup = NULL;
-  if (layer->classgroup && layer->numclasses > 0)
-      classgroup = msAllocateValidClassGroups(layer, &nclasses);
+  if(layer->classgroup && layer->numclasses > 0)
+    classgroup = msAllocateValidClassGroups(layer, &nclasses);
 
-  if (layer->minfeaturesize > 0)
-      minfeaturesize = Pix2LayerGeoref(map, layer, layer->minfeaturesize);
+  if(layer->minfeaturesize > 0)
+    minfeaturesize = Pix2LayerGeoref(map, layer, layer->minfeaturesize);
   
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
-      /* Check if the shape size is ok to be drawn */
-      if ((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) && 
-          (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE))
-      {
-          if( layer->debug >= MS_DEBUGLEVEL_V )
-              msDebug("msDrawVectorLayer(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
-          msFreeShape(&shape);
-          continue;
-      }
-      
-      shape.classindex = msShapeGetClass(layer, map, &shape, classgroup, nclasses);
-    if((shape.classindex == -1) || (layer->class[shape.classindex]->status == MS_OFF)) {
+    /* Check if the shape size is ok to be drawn */
+    if((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) && (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)) {
+      if(layer->debug >= MS_DEBUGLEVEL_V)
+        msDebug("msDrawVectorLayer(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
        msFreeShape(&shape);
        continue;
     }
+      
+    shape.classindex = msShapeGetClass(layer, map, &shape, classgroup, nclasses);
+    if((shape.classindex == -1) || (layer->class[shape.classindex]->status == MS_OFF)) {
+      msFreeShape(&shape);
+      continue;
+    }
   
-    if (maxfeatures >=0 && featuresdrawn >= maxfeatures)
-    {
-        status = MS_DONE;
-        break;
+    if(maxfeatures >=0 && featuresdrawn >= maxfeatures) {
+      status = MS_DONE;
+      break;
     }
     featuresdrawn++;
 
     cache = MS_FALSE;
-    if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1 || 
-        (layer->class[shape.classindex]->numstyles == 1 && layer->class[shape.classindex]->styles[0]->outlinewidth>0)))
+    if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1 || (layer->class[shape.classindex]->numstyles == 1 && layer->class[shape.classindex]->styles[0]->outlinewidth > 0))) {
+      int i;
       cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
+
+      /* we can't handle caching with attribute binding other than for the first style (#3976) */
+      for(i=1;i<layer->class[shape.classindex]->numstyles; i++) {
+        if(layer->class[shape.classindex]->styles[i]->numbindings > 0) cache = MS_FALSE;
+      }
+    }
          
     /* With 'STYLEITEM AUTO', we will have the datasource fill the class' */
     /* style parameters for this shape. */
     if(layer->styleitem) {
-        if(strcasecmp(layer->styleitem, "AUTO") == 0) {
-            if (msLayerGetAutoStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
-                retcode = MS_FAILURE;
-                break;
-            }
+      if(strcasecmp(layer->styleitem, "AUTO") == 0) {
+        if(msLayerGetAutoStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
+          retcode = MS_FAILURE;
+          break;
         }
-        else {
-            /* Generic feature style handling as per RFC-61 */
-            if (msLayerGetFeatureStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
-                retcode = MS_FAILURE;
-                break;
-            }
+      } else {
+        /* Generic feature style handling as per RFC-61 */
+        if(msLayerGetFeatureStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
+          retcode = MS_FAILURE;
+          break;
         }
+      }
 
       /* __TODO__ For now, we can't cache features with 'AUTO' style */
       cache = MS_FALSE;
@@ -908,7 +910,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(annotate && (layer->class[shape.classindex]->text.string || layer->labelitem) && layer->class[shape.classindex]->label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
-    
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
@@ -1227,7 +1228,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
             if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
               continue;
           }
-	      msDrawLineSymbol(&map->symbolset, image, &current->shape, (layer->class[current->shape.classindex]->styles[s]), layer->scalefactor);
+          msDrawLineSymbol(&map->symbolset, image, &current->shape, (layer->class[current->shape.classindex]->styles[s]), layer->scalefactor);
         }
       }
     }
