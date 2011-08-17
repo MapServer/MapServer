@@ -88,7 +88,7 @@ PHP_METHOD(webObj, __get)
     else IF_GET_STRING("legendformat", php_web->web->legendformat)
     else IF_GET_STRING("browseformat", php_web->web->browseformat)
     else IF_GET_OBJECT("extent", mapscript_ce_rect, php_web->extent, &php_web->web->extent)
-    else IF_GET_OBJECT("metadata", mapscript_ce_web, php_web->metadata, &php_web->web->metadata)
+    else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_web->metadata, &php_web->web->metadata)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);

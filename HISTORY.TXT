@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- PHP/Mapscript: Fixed webObj->metadata returns a webObj (#3971)
+
 - WCS 1.1: Added check for imageCRS in msOWSCommonBoundingBox() (#3966)
 
 - Fixed contains operator in logical expresions (#3974)
