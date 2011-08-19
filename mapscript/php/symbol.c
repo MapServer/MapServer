@@ -51,10 +51,6 @@ ZEND_BEGIN_ARG_INFO_EX(symbol_setPoints_args, 0, 0, 1)
   ZEND_ARG_INFO(0, points)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(symbol_setPattern_args, 0, 0, 1)
-  ZEND_ARG_INFO(0, pattern)
-ZEND_END_ARG_INFO()
-
 ZEND_BEGIN_ARG_INFO_EX(symbol_setImagePath_args, 0, 0, 1)
   ZEND_ARG_INFO(0, filename)
 ZEND_END_ARG_INFO()
@@ -165,7 +161,6 @@ PHP_METHOD(symbolObj, __set)
     else IF_SET_LONG("antialias", php_symbol->symbol->antialias, value) 
     else IF_SET_STRING("font", php_symbol->symbol->font, value)
     else if ( (STRING_EQUAL("numpoints", property)) ||
-         (STRING_EQUAL("patternlength", property)) ||
          (STRING_EQUAL("imagepath", property)))
     {
         mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);

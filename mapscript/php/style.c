@@ -69,6 +69,9 @@ ZEND_BEGIN_ARG_INFO_EX(style_setGeomTransform_args, 0, 0, 1)
   ZEND_ARG_INFO(0, transform)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(style_setPattern_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, pattern)
+ZEND_END_ARG_INFO()
 
 /* {{{ proto void __construct(classObj class [, styleObj style]) 
    Create a new styleObj instance */
@@ -132,6 +135,7 @@ PHP_METHOD(styleObj, __get)
     else IF_GET_DOUBLE("minsize", php_style->style->minsize)
     else IF_GET_DOUBLE("maxsize", php_style->style->maxsize)
     else IF_GET_DOUBLE("width", php_style->style->width)
+    else IF_GET_DOUBLE("outlinewidth", php_style->style->outlinewidth)
     else IF_GET_DOUBLE("minwidth", php_style->style->minwidth)
     else IF_GET_DOUBLE("maxwidth", php_style->style->maxwidth)
     else IF_GET_LONG("offsetx", php_style->style->offsetx)
@@ -141,10 +145,21 @@ PHP_METHOD(styleObj, __get)
     else IF_GET_DOUBLE("minvalue", php_style->style->minvalue)
     else IF_GET_DOUBLE("maxvalue", php_style->style->maxvalue)
     else IF_GET_STRING("rangeitem", php_style->style->rangeitem)
+    else IF_GET_LONG("rangeitemindex", php_style->style->rangeitemindex)
+    else IF_GET_DOUBLE("gap", php_style->style->gap)
+    else IF_GET_LONG("patternlength", php_style->style->patternlength)  
+    else IF_GET_LONG("position", php_style->style->position)
+    else IF_GET_LONG("linecap", php_style->style->linecap)
+    else IF_GET_LONG("linejoin", php_style->style->linejoin)
+    else IF_GET_LONG("linejoinmaxsize", php_style->style->linejoinmaxsize)
+    else IF_GET_DOUBLE("angle", php_style->style->angle)
+    else IF_GET_LONG("autoangle", php_style->style->autoangle)
     else IF_GET_LONG("opacity", php_style->style->opacity)
     else IF_GET_OBJECT("color", mapscript_ce_color, php_style->color, &php_style->style->color) 
     else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_style->outlinecolor, &php_style->style->outlinecolor) 
     else IF_GET_OBJECT("backgroundcolor", mapscript_ce_color, php_style->backgroundcolor, &php_style->style->backgroundcolor) 
+    else IF_GET_OBJECT("mincolor", mapscript_ce_color, php_style->mincolor, &php_style->style->mincolor) 
+    else IF_GET_OBJECT("maxcolor", mapscript_ce_color, php_style->maxcolor, &php_style->style->maxcolor) 
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -178,6 +193,7 @@ PHP_METHOD(styleObj, __set)
     else IF_SET_DOUBLE("minsize", php_style->style->minsize, value)
     else IF_SET_DOUBLE("maxsize", php_style->style->maxsize, value)
     else IF_SET_DOUBLE("width", php_style->style->width, value)
+    else IF_SET_DOUBLE("outlinewidth", php_style->style->outlinewidth, value)
     else IF_SET_DOUBLE("minwidth", php_style->style->minwidth, value)
     else IF_SET_DOUBLE("maxwidth", php_style->style->maxwidth, value)
     else IF_SET_LONG("offsetx", php_style->style->offsetx, value)
@@ -187,6 +203,14 @@ PHP_METHOD(styleObj, __set)
     else IF_SET_DOUBLE("minvalue", php_style->style->minvalue, value)
     else IF_SET_DOUBLE("maxvalue", php_style->style->maxvalue, value)
     else IF_SET_STRING("rangeitem", php_style->style->rangeitem, value)
+    else IF_SET_LONG("rangeitemindex", php_style->style->rangeitemindex, value)
+    else IF_SET_DOUBLE("gap", php_style->style->gap, value)
+    else IF_SET_LONG("position", php_style->style->position, value)
+    else IF_SET_LONG("linecap", php_style->style->linecap, value)
+    else IF_SET_LONG("linejoin", php_style->style->linejoin, value)
+    else IF_SET_LONG("linejoinmaxsize", php_style->style->linejoinmaxsize, value)
+    else IF_SET_DOUBLE("angle", php_style->style->angle, value)
+    else IF_SET_LONG("autoangle", php_style->style->autoangle, value)
     else if (STRING_EQUAL("opacity", property))
     {
         int alpha;
@@ -247,9 +271,14 @@ PHP_METHOD(styleObj, __set)
     }
     else if ( (STRING_EQUAL("color", property)) ||
               (STRING_EQUAL("outlinecolor", property)) ||
-              (STRING_EQUAL("backgroundcolor", property)))
+              (STRING_EQUAL("backgroundcolor", property)) ||
+              (STRING_EQUAL("maxcolor", property)) ||
+              (STRING_EQUAL("mincolor", property)))
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
+    }
+    else if ( (STRING_EQUAL("patternlength", property)))    {
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else 
     {
@@ -489,6 +518,83 @@ PHP_METHOD(styleObj, setGeomTransform)
 }
 /* }}} */
 
+/* {{{ proto int style.setpattern(array points)
+   Set the pattern of the style ) */ 
+PHP_METHOD(styleObj, setPattern)
+{
+    zval *zpattern, **ppzval;
+    HashTable *pattern_hash = NULL;
+    zval *zobj = getThis();
+    int index = 0, numelements = 0;
+    php_style_object *php_style;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a",
+                              &zpattern) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_style = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    pattern_hash = Z_ARRVAL_P(zpattern);
+
+    numelements = zend_hash_num_elements(pattern_hash);
+    if (numelements == 0)
+    {
+        mapscript_report_php_error(E_WARNING, 
+                                   "style->setpoints : invalid array of %d element(s) as parameter." TSRMLS_CC, numelements);
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    for(zend_hash_internal_pointer_reset(pattern_hash); 
+        zend_hash_has_more_elements(pattern_hash) == SUCCESS; 
+        zend_hash_move_forward(pattern_hash))
+    { 
+        
+        zend_hash_get_current_data(pattern_hash, (void **)&ppzval);
+        if (Z_TYPE_PP(ppzval) != IS_LONG)
+            convert_to_long(*ppzval);
+	     
+        php_style->style->pattern[index] = Z_LVAL_PP(ppzval);
+        index++;
+    }
+
+    php_style->style->patternlength = numelements;
+
+    RETURN_LONG(MS_SUCCESS);
+}
+/* }}} */
+
+/* {{{ proto int style.getPatternArray()
+   Returns an array containing the pattern.*/
+PHP_METHOD(styleObj, getPatternArray)
+{
+    zval *zobj = getThis();
+    php_style_object *php_style;
+    int index;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_style = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    
+    array_init(return_value);
+    
+    if (php_style->style->patternlength > 0)
+    {
+        for (index=0; index < php_style->style->patternlength; index++)
+        {
+            add_next_index_long(return_value, php_style->style->pattern[index]);
+        }
+    }
+}
+/* }}} */
+
 zend_function_entry style_functions[] = {
     PHP_ME(styleObj, __construct, style___construct_args, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(styleObj, __get, style___get_args, ZEND_ACC_PUBLIC)
@@ -500,6 +606,8 @@ zend_function_entry style_functions[] = {
     PHP_ME(styleObj, removeBinding, style_removeBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(styleObj, getGeomTransform, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(styleObj, setGeomTransform, style_setGeomTransform_args, ZEND_ACC_PUBLIC)
+    PHP_ME(styleObj, setPattern, style_setPattern_args, ZEND_ACC_PUBLIC) 
+    PHP_ME(styleObj, getPatternArray, NULL, ZEND_ACC_PUBLIC) 
     PHP_ME(styleObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };

@@ -68,18 +68,6 @@ extern zend_module_entry mapscript_module_entry;
 	zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
 #endif
 
-#ifndef Z_ADDREF_P
-#define Z_ADDREF_P(pz)                (pz)->refcount++
-#endif
-
-#ifndef Z_DELREF_P
-#define Z_DELREF_P(pz)                (pz)->refcount--
-#endif
-
-#ifndef Z_SET_REFCOUNT_P
-#define Z_SET_REFCOUNT_P(pz, rc)      (pz)->refcount = rc
-#endif
-
 /* Taken from the CAIRO php extension */
 /* turn error handling to exception mode and restore */
 #if defined(PHP_VERSION_ID) && PHP_VERSION_ID >= 50300
@@ -221,6 +209,8 @@ typedef struct _php_style_object {
     zval *color;
     zval *outlinecolor;
     zval *backgroundcolor;
+    zval *mincolor;
+    zval *maxcolor;
     styleObj *style;
 } php_style_object;
 
