@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (future 6.0.2, SVN branch-6-0):
 ---------------------------
 
+- PHP/Mapscript: Segmentation fault when getting complex object using PHP 5.2 (#3930)
+
 - Fixed contains operator in logical expresions (#3974)
 
 - Fix incorrect rendering of GD lines between 1 and 2 pixels wide (#3962)

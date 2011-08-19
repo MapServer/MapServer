@@ -43,6 +43,78 @@
 #define TSRMLS_CC
 #endif
 
+/* Add pseudo refcount macros for PHP version < 5.3 */
+#ifndef Z_REFCOUNT_PP
+
+#define Z_REFCOUNT_PP(ppz)				Z_REFCOUNT_P(*(ppz))
+#define Z_SET_REFCOUNT_PP(ppz, rc)		Z_SET_REFCOUNT_P(*(ppz), rc)
+#define Z_ADDREF_PP(ppz)				Z_ADDREF_P(*(ppz))
+#define Z_DELREF_PP(ppz)				Z_DELREF_P(*(ppz))
+#define Z_ISREF_PP(ppz)					Z_ISREF_P(*(ppz))
+#define Z_SET_ISREF_PP(ppz)				Z_SET_ISREF_P(*(ppz))
+#define Z_UNSET_ISREF_PP(ppz)			Z_UNSET_ISREF_P(*(ppz))
+#define Z_SET_ISREF_TO_PP(ppz, isref)	Z_SET_ISREF_TO_P(*(ppz), isref)
+
+#define Z_REFCOUNT_P(pz)				zval_refcount_p(pz)
+#define Z_SET_REFCOUNT_P(pz, rc)		zval_set_refcount_p(pz, rc)
+#define Z_ADDREF_P(pz)					zval_addref_p(pz)
+#define Z_DELREF_P(pz)					zval_delref_p(pz)
+#define Z_ISREF_P(pz)					zval_isref_p(pz)
+#define Z_SET_ISREF_P(pz)				zval_set_isref_p(pz)
+#define Z_UNSET_ISREF_P(pz)				zval_unset_isref_p(pz)
+#define Z_SET_ISREF_TO_P(pz, isref)		zval_set_isref_to_p(pz, isref)
+
+#define Z_REFCOUNT(z)					Z_REFCOUNT_P(&(z))
+#define Z_SET_REFCOUNT(z, rc)			Z_SET_REFCOUNT_P(&(z), rc)
+#define Z_ADDREF(z)						Z_ADDREF_P(&(z))
+#define Z_DELREF(z)						Z_DELREF_P(&(z))
+#define Z_ISREF(z)						Z_ISREF_P(&(z))
+#define Z_SET_ISREF(z)					Z_SET_ISREF_P(&(z))
+#define Z_UNSET_ISREF(z)				Z_UNSET_ISREF_P(&(z))
+#define Z_SET_ISREF_TO(z, isref)		Z_SET_ISREF_TO_P(&(z), isref)
+
+#if defined(__GNUC__)
+#define zend_always_inline inline __attribute__((always_inline))
+#elif defined(_MSC_VER)
+#define zend_always_inline __forceinline
+#else
+#define zend_always_inline inline
+#endif
+
+static zend_always_inline zend_uint zval_refcount_p(zval* pz) {
+	return pz->refcount;
+}
+
+static zend_always_inline zend_uint zval_set_refcount_p(zval* pz, zend_uint rc) {
+	return pz->refcount = rc;
+}
+
+static zend_always_inline zend_uint zval_addref_p(zval* pz) {
+	return ++pz->refcount;
+}
+
+static zend_always_inline zend_uint zval_delref_p(zval* pz) {
+	return --pz->refcount;
+}
+
+static zend_always_inline zend_bool zval_isref_p(zval* pz) {
+	return pz->is_ref;
+}
+
+static zend_always_inline zend_bool zval_set_isref_p(zval* pz) {
+	return pz->is_ref = 1;
+}
+
+static zend_always_inline zend_bool zval_unset_isref_p(zval* pz) {
+	return pz->is_ref = 0;
+}
+
+static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isref) {
+	return pz->is_ref = isref;
+}
+
+#endif
+
 /* PHP >=5.3 replaced ZVAL_DELREF by Z_DELREF_P */
 #if ZEND_MODULE_API_NO >= 20090626
 #define ZVAL_DELREF Z_DELREF_P
@@ -67,7 +139,7 @@
 #define MAPSCRIPT_DELREF(zobj) \
     if (zobj) \
     { \
-        if (READY_TO_DESTROY(zobj)) { \
+        if (Z_REFCOUNT_P(zobj) == 1) {    \
             zval_ptr_dtor(&zobj);       \
         } \
         else { \
@@ -121,22 +193,17 @@
 #define IF_GET_OBJECT(property_name, mapscript_ce, php_object_storage, internal_object) \
     if (strcmp(property, property_name)==0)  \
     {   \
-        if (php_object_storage) {                             \
-            MAPSCRIPT_ADDREF(php_object_storage); \
-            zval_ptr_dtor(return_value_ptr); \
-            zval_set_isref_p(php_object_storage); \
-            *return_value_ptr = php_object_storage; \
-            return; \
-        }                                               \
-       mapscript_fetch_object(mapscript_ce, zobj, NULL, (void*)internal_object, \
-                              &php_object_storage, &return_value_ptr TSRMLS_CC); \
-        return;                                                         \
+        if (!php_object_storage) {                             \
+            mapscript_fetch_object(mapscript_ce, zobj, NULL, (void*)internal_object, \
+                                   &php_object_storage TSRMLS_CC); \
+        }                                                               \
+        RETURN_ZVAL(php_object_storage, 1, 0);                          \
     } 
 
 #define CHECK_OBJECT(mapscript_ce, php_object_storage, internal_object) \
     if (!php_object_storage) {                                          \
         mapscript_fetch_object(mapscript_ce, zobj, NULL, (void*)internal_object, \
-                           &php_object_storage, NULL TSRMLS_CC); \
+                           &php_object_storage TSRMLS_CC); \
     }
 
 /* helpers for setters */
