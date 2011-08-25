@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Fix mapscript to build when TRUE macro is not defined (#3926)
+
 - Fix mapscript php build issues with MSVC (#4004)
 
 - PHP MapScript is missing many styleObj properties (#3901)

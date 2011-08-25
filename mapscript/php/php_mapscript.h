@@ -68,6 +68,11 @@ extern zend_module_entry mapscript_module_entry;
 	zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
 #endif
 
+/* it looks like that macro is not always defined: ticket #3926 */
+#ifndef TRUE
+#define TRUE 1
+#endif
+
 /* Taken from the CAIRO php extension */
 /* turn error handling to exception mode and restore */
 #if defined(PHP_VERSION_ID) && PHP_VERSION_ID >= 50300
