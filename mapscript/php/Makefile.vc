@@ -30,7 +30,11 @@ PHP4_FLAGS=/DZEND_WIN32 /DPHP_WIN32 /DPHP4 /DZTS /PHP_COMPILER_ID=VC9 /DZEND_DEB
 # Set flag for Visual Studio > 2003 & PHP < 5.3
 # see http://bugs.php.net/bug.php?id=39130
 !IF $(MSVC_VER) >= 1400
-VCFLAGS = -D_USE_32BIT_TIME_T
+!IFDEF WIN64
+VCFLAGS = -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
+!ELSE
+VCFLAGS = -D_USE_32BIT_TIME_T -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
+!ENDIF
 !ENDIF
 
 BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32 $(PHP4_FLAGS) $(VCFLAGS)
@@ -78,12 +82,13 @@ install:	all
 $(PHPMS_DLL):	$(PHPMS_OBJS)
 	link $(LDFLAGS) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
 		$(PHP_HOME)\lib\$(PHP_TS_LIB_NAME)
+	if exist $(PHPMS_DLL).manifest mt -manifest $(PHPMS_DLL).manifest -outputresource:$(PHPMS_DLL);2
 
 $(PHPPROJ_DLL):	$(PHPPROJ_OBJS)
 	link $(LDFLAGS) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
 		$(PHP_HOME)\lib\$(PHP_TS_LIB_NAME)
 
-$(PHPMS_OBJS):	php_mapscript_util.h php_mapscript.h $(MS_LIBS)
+$(PHPMS_OBJS):	php_mapscript_util.h php_mapscript.h
 
 .c.obj:
 	$(CC) $(CFLAGS) /DCOMPILE_DL=1 /c $*.c /Fo$*.obj
@@ -99,4 +104,5 @@ clean:
 	del *.pdb
 	del *.exp
 	del *.ilk
+	del *.manifest
 

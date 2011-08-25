@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Fix mapscript php build issues with MSVC (#4004)
+
 - PHP MapScript is missing many styleObj properties (#3901)
 
 - PHP/Mapscript: Segmentation fault when getting complex object using PHP 5.2  (#3930)
