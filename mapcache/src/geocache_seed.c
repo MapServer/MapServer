@@ -4,6 +4,7 @@
 #include <apr_getopt.h>
 #include <signal.h>
 #include <time.h>
+#include <apr_time.h>
 
 typedef struct geocache_context_seeding geocache_context_seeding;
 struct geocache_context_seeding{
@@ -27,7 +28,8 @@ static const apr_getopt_option_t seed_options[] = {
     { "zoom", 'z', TRUE, "min and max zoomlevels to seed" },
     { "extent", 'e', TRUE, "extent" },
     { "nthreads", 'n', TRUE, "number of parallel threads to use" },
-    { "help", 'h', FALSE, "show help" },    
+    { "older", 'o', TRUE, "reseed tiles older than supplied date (format: year/month/day hour:minute, eg: 2011/01/31 20:45" },
+    { "help", 'h', FALSE, "show help" },
     { NULL, 0, 0, NULL },
 };
 
@@ -71,7 +73,8 @@ void geocache_context_seeding_log(geocache_context *ctx, geocache_log_level leve
    /* do nothing */
 }
 
-int tile_exists(geocache_context *ctx, geocache_tileset *tileset,
+apr_time_t age_limit = 0;
+int should_seed_tile(geocache_context *ctx, geocache_tileset *tileset,
                     int x, int y, int z,
                     geocache_grid_link *grid_link,
                     geocache_context *tmpctx) {
@@ -79,7 +82,18 @@ int tile_exists(geocache_context *ctx, geocache_tileset *tileset,
     tile->x = x;
     tile->y = y;
     tile->z = z;
-    return tileset->cache->tile_exists(tmpctx,tile);
+    int should_seed = tileset->cache->tile_exists(tmpctx,tile)?0:1;
+    
+    /* if the tile exists and a time limit was specified, check the tile modification date */
+    if(!should_seed && age_limit) {
+       if(tileset->cache->tile_get(tmpctx,tile) == GEOCACHE_SUCCESS) {
+         if(tile->mtime && tile->mtime<age_limit) {
+            should_seed = 1;
+            geocache_tileset_tile_delete(tmpctx,tile);
+         }
+       }
+    }
+    return should_seed;
 }
 
 int curz;
@@ -114,7 +128,7 @@ int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocac
             }
             ctx->nextx = tile->grid_link->grid_limits[ctx->nextz][0];
         }
-        if(! tile_exists(gctx, ctx->tileset, ctx->nextx, ctx->nexty, ctx->nextz, ctx->grid_link, tmpcontext)){
+        if(should_seed_tile(gctx, ctx->tileset, ctx->nextx, ctx->nexty, ctx->nextz, ctx->grid_link, tmpcontext)){
            break;
         }
     }
@@ -201,15 +215,21 @@ static void* APR_THREAD_FUNC doseed(apr_thread_t *thread, void *data) {
 
 
 int usage(const char *progname, char *msg) {
-    printf("%s\nusage: %s options\n"
-            "-c|--config conffile : configuration file to load\n"
-            "-t|--tileset tileset : name of the tileset to seed\n"
-            "-g|--grid grid : name of the grid to seed\n"
-            "[-z|--zoom minzoom,maxzoom] : zoomlevels to seed\n"
-            "[-e|--extent minx,miny,maxx,maxy] : extent to seed\n"
-            "[-n|--nthreads n] : number of parallel threads\n",
-            msg,progname);
-    return 1;
+   int i=0;
+   if(msg)
+      printf("%s\nusage: %s options\n",msg,progname);
+   else
+      printf("usage: %s options\n",progname);
+
+   while(seed_options[i].name) {
+      if(seed_options[i].has_arg==TRUE) {
+         printf("-%c|--%s [value]: %s\n",seed_options[i].optch,seed_options[i].name, seed_options[i].description);
+      } else {
+         printf("-%c|--%s: %s\n",seed_options[i].optch,seed_options[i].name, seed_options[i].description);
+      }
+      i++;
+   }
+   return 1;
 }
 
 int main(int argc, const char **argv) {
@@ -229,6 +249,7 @@ int main(int argc, const char **argv) {
     int nthreads=1;
     int optch;
     int rv,n;
+    const char *old = NULL;
     const char *optarg;
     apr_initialize();
     (void) signal(SIGINT,handle_sig_int);
@@ -270,6 +291,10 @@ int main(int argc, const char **argv) {
                     return usage(argv[0], "failed to parse zooms, expecting comma separated 2 ints");
                 }
                 break;
+            case 'o':
+                old = optarg;
+                break;
+
         }
     }
     if (rv != APR_EOF) {
@@ -317,6 +342,18 @@ int main(int argc, const char **argv) {
         if(zooms[1]>= grid_link->grid->nlevels) zooms[1] = grid_link->grid->nlevels - 1;
     }
 
+    if(old) {
+      struct tm oldtime;
+      memset(&oldtime,0,sizeof(oldtime));
+      char *ret = strptime(old,"%Y/%m/%d %H:%M",&oldtime);
+      if(!ret || *ret){
+         return usage(argv[0],"failed to parse time");
+      }
+      if(APR_SUCCESS != apr_time_ansi_put(&age_limit,mktime(&oldtime))) {
+         return usage(argv[0],"failed to convert time");
+      }
+    }
+
     geocache_context_seeding_init(&ctx,cfg,tileset,zooms[0],zooms[1],grid_link);
     if(extent) {
        // update the grid limits
@@ -327,7 +364,7 @@ int main(int argc, const char **argv) {
     ctx.nexty = grid_link->grid_limits[zooms[0]][1];
 
     /* find the first tile to render if the first one already exists */
-    if(tile_exists(gctx, tileset,
+    if(!should_seed_tile(gctx, tileset,
              ctx.nextx, ctx.nexty, ctx.nextz,
              grid_link, gctx)) {
        geocache_tile *tile = geocache_tileset_tile_create(gctx->pool, tileset, grid_link);

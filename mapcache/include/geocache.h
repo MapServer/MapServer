@@ -998,6 +998,7 @@ void geocache_tileset_get_level(geocache_context *ctx, geocache_tileset *tileset
 
 void geocache_grid_get_closest_level(geocache_context *ctx, geocache_grid *grid, double resolution, int *level);
 void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile);
+void geocache_tileset_tile_delete(geocache_context *ctx, geocache_tile *tile);
 
 int geocache_grid_is_bbox_aligned(geocache_context *ctx, geocache_grid *grid, double *bbox);
 
