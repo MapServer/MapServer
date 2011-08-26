@@ -46,9 +46,9 @@ int _geocache_image_merge(request_rec *r, geocache_image *base, geocache_image *
                unsigned int og = optr[1];
                unsigned int ob = optr[2];
                unsigned int oa = optr[3];
-               bptr[0] = (unsigned char)(((or - br)*oa + (br << 8)) >> 8);
-               bptr[1] = (unsigned char)(((og - bg)*oa + (bg << 8)) >> 8);
-               bptr[2] = (unsigned char)(((ob - bb)*oa + (bb << 8)) >> 8);
+               bptr[0] += (unsigned char)(((or - br)*oa) >> 8);
+               bptr[1] += (unsigned char)(((og - bg)*oa) >> 8);
+               bptr[2] += (unsigned char)(((ob - bb)*oa) >> 8);
                bptr[3] = (ba==255)?255:(unsigned char)((oa + ba) - ((oa * ba + 255) >> 8));                        
             }
          }
