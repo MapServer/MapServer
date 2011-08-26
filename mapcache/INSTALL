@@ -14,15 +14,22 @@ The process for activating a module is usually distro specific, but can be resum
 following snippet that should be present in the apache configuration file(s):
 
 LoadModule geocache_module    modules/mod_geocache.so
+
+Next, a geocache configuration is mapped to the server url with the following snippet
+
 <IfModule geocache_module>
-    <Location /geocache>
-        SetHandler geocache
-        GeoCacheConfigFile "/path/to/geocache.xml"
-    </Location>
+    <Directory /path/to/directory>
+       Order Allow,Deny
+       Allow from all
+    </Directory>
+    GeoCacheAlias /geocache "/path/to/directory/geocache.xml"
 </IfModule>
 
 (as root)
 # apachectl restart
+
+If you have not disabled the demo service, you should now have access to it on
+http://myserver/geocache/dem
 
 
 Customizing the build, or if something went wrong
@@ -100,6 +107,13 @@ gdal (from 0.4 onwards) (optional)
 
 gdal (actually ogr) is used by the seeding utility to allow the seeding of tiles only intersecting a given polygon, e.g.
 to preseed all the tiles of a given country.
+
+geos (from 0.5 onwards) (optional)
+===================================
+
+--with-geos=/path/to/geos-config
+
+along with gdal/ogr, geos is needed by the seeder to test for the intersection of tiles with geographical features.
 
 pcre (optional)
 ===============
