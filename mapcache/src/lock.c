@@ -50,13 +50,16 @@ static char* num_encode(apr_pool_t *pool, int num) {
 char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatile *mt) {
    char *lockname = apr_psprintf(ctx->pool,
          "/%s-%s-%s%s", /*x,y,z,tilesetname*/
-         num_encode(ctx->pool,mt->tile.x), num_encode(ctx->pool,mt->tile.y),
-         num_encode(ctx->pool,mt->tile.z), mt->tile.tileset->name);
-   if(mt->tile.tileset->grid_links->nelts > 1) {
-      lockname = apr_pstrcat(ctx->pool,lockname,mt->tile.grid_link->grid->name,NULL);
+         num_encode(ctx->pool,mt->x), num_encode(ctx->pool,mt->y),
+         num_encode(ctx->pool,mt->z), mt->map.tileset->name);
+
+   /* if the tileset has multiple grids, add the name of the current grid to the lock key*/
+   if(mt->map.tileset->grid_links->nelts > 1) {
+      lockname = apr_pstrcat(ctx->pool,lockname,mt->map.grid_link->grid->name,NULL);
    }
-   if(mt->tile.dimensions && !apr_is_empty_table(mt->tile.dimensions)) {
-      const apr_array_header_t *elts = apr_table_elts(mt->tile.dimensions);
+
+   if(mt->map.dimensions && !apr_is_empty_table(mt->map.dimensions)) {
+      const apr_array_header_t *elts = apr_table_elts(mt->map.dimensions);
       int i;
       for(i=0;i<elts->nelts;i++) {
          apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);

@@ -170,14 +170,16 @@ static geocache_context_fcgi_request* fcgi_context_request_create(geocache_conte
 
 
 
-static int geocache_write_tile(geocache_context_fcgi_request *ctx, geocache_tile *tile) {
-   if(tile->tileset->format) {
-      if(!strcmp(tile->tileset->format->extension,"png"))
+
+static int geocache_fcgi_write_image_buffer(geocache_context_fcgi_request *ctx, geocache_buffer *im,
+      geocache_image_format *format) {
+   if(format) {
+      if(!strcmp(format->extension,"png"))
          FCGX_FPrintF(ctx->out,"Content-type: image/png\r\n\r\n");
       else
          FCGX_FPrintF(ctx->out,"Content-type: image/jpeg\r\n\r\n");
    } else {
-      geocache_image_format_type t = geocache_imageio_header_sniff((geocache_context*)ctx,tile->data);
+      geocache_image_format_type t = geocache_imageio_header_sniff((geocache_context*)ctx,im);
       if(t == GC_PNG)
          FCGX_FPrintF(ctx->out,"Content-type: image/png\r\n\r\n");
       else if(t == GC_JPEG)
@@ -186,9 +188,13 @@ static int geocache_write_tile(geocache_context_fcgi_request *ctx, geocache_tile
          return 500;
       }
    }
-   FCGX_PutStr((char*)tile->data->buf, tile->data->size,ctx->out);
+   FCGX_PutStr((char*)im->buf, im->size,ctx->out);
 
    return 200;
+}
+
+static int geocache_fcgi_write_tile(geocache_context_fcgi_request *ctx, geocache_tile *tile) {
+   return geocache_fcgi_write_image_buffer(ctx,tile->data, tile->tileset->format);
 }
 
 static int geocache_write_capabilities(geocache_context_fcgi_request *ctx, geocache_request_get_capabilities *request) {
@@ -226,10 +232,8 @@ int main(int argc, char **argv) {
       apr_table_t *params;
       geocache_context_fcgi_request *rctx = fcgi_context_request_create(globalctx,out,err); 
       geocache_context *ctx = (geocache_context*)rctx; 
-      geocache_tile *tile;
       geocache_request *request = NULL;
       char *pathInfo = FCGX_GetParam("PATH_INFO",envp);
-      int i;
       
 
       params = geocache_http_parse_param_string(ctx, FCGX_GetParam("QUERY_STRING",envp));
@@ -265,29 +269,25 @@ int main(int argc, char **argv) {
          request->service->create_capabilities_response(ctx,req,url,pathInfo,cfg);
          geocache_write_capabilities(rctx,req);
       } else if(request->type == GEOCACHE_REQUEST_GET_TILE) {
-         geocache_request_get_tile *req = (geocache_request_get_tile*)request;
-         for(i=0;i<req->ntiles;i++) {
-            geocache_tile *tile = req->tiles[i];
-            geocache_tileset_tile_get(ctx,tile);
-            if(GC_HAS_ERROR(ctx)) {
+         geocache_request_get_tile *req_tile = (geocache_request_get_tile*)request;
+         if( !req_tile->ntiles) {
                report_error_fcgi(rctx);
                goto cleanup;
-            }
          }
-         if(req->ntiles == 1) {
-            tile = req->tiles[0];
-         } else {
-            tile = geocache_image_merge_tiles(ctx,cfg->merge_format,req->tiles,req->ntiles);
-            
-            if(GC_HAS_ERROR(ctx) || !tile) {
-               if(!GC_HAS_ERROR(ctx))
-                  ctx->set_error(ctx, 500, "tile merging failed to return data");
+         geocache_tile *tile = geocache_core_get_tile(ctx,req_tile);
+         if(GC_HAS_ERROR(ctx)) {
                report_error_fcgi(rctx);
                goto cleanup;
-            }
-            tile->tileset = req->tiles[0]->tileset;
          }
-         geocache_write_tile((geocache_context_fcgi_request*)ctx,tile);
+         geocache_fcgi_write_tile(rctx,tile);
+      } else if( request->type == GEOCACHE_REQUEST_GET_MAP) {
+         geocache_request_get_map *req_map = (geocache_request_get_map*)request;
+         geocache_map *map = geocache_core_get_map(ctx,req_map);
+         if(GC_HAS_ERROR(ctx)) {
+            report_error_fcgi(rctx);
+            goto cleanup;
+         }
+         geocache_fcgi_write_image_buffer(rctx,map->data, map->tileset->format);
       }
 cleanup:
       apr_pool_destroy(ctx->pool);

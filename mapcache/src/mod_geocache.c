@@ -161,6 +161,29 @@ static geocache_context_apache_server* apache_server_context_create(server_rec *
 
 
 
+static int geocache_write_image_buffer(geocache_context_apache_request *ctx, geocache_buffer *im,
+      geocache_image_format *format) {
+   request_rec *r = ctx->request;
+
+   ap_set_content_length(r,im->size);
+   if(format) {
+      ap_set_content_type(r, format->mime_type);
+   } else {
+      geocache_image_format_type t = geocache_imageio_header_sniff((geocache_context*)ctx,im);
+      if(t == GC_PNG)
+         ap_set_content_type(r, "image/png");
+      else if(t == GC_JPEG)
+         ap_set_content_type(r, "image/jpeg");
+      else {
+         ctx->ctx.ctx.set_error((geocache_context*)ctx, 500, "unrecognized image format");
+         return report_error(ctx);
+      }
+   }
+   ap_rwrite((void*)im->buf, im->size, r);
+
+   return OK;
+}
+
 static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_tile *tile) {
    int rc;
    request_rec *r = ctx->request;
@@ -177,26 +200,9 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
       char *timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
       apr_rfc822_date(timestr, expires);
       apr_table_set(r->headers_out, "Expires", timestr);
-
    }
    ap_set_last_modified(r);
-   ap_set_content_length(r,tile->data->size);
-   if(tile->tileset->format) {
-      ap_set_content_type(r, tile->tileset->format->mime_type);
-   } else {
-      geocache_image_format_type t = geocache_imageio_header_sniff((geocache_context*)ctx,tile->data);
-      if(t == GC_PNG)
-         ap_set_content_type(r, "image/png");
-      else if(t == GC_JPEG)
-         ap_set_content_type(r, "image/jpeg");
-      else {
-         ctx->ctx.ctx.set_error((geocache_context*)ctx, 500, "unrecognized image format");
-         return report_error(ctx);
-      }
-   }
-   ap_rwrite((void*)tile->data->buf, tile->data->size, r);
-
-   return OK;
+   return geocache_write_image_buffer(ctx, tile->data, tile->tileset->format); 
 }
 
 static int geocache_write_capabilities(geocache_context_apache_request *ctx, geocache_request_get_capabilities *request) {
@@ -211,12 +217,10 @@ static int mod_geocache_request_handler(request_rec *r) {
    apr_table_t *params;
    geocache_cfg *config = NULL;
    geocache_request *request = NULL;
-   geocache_request_get_tile *req_tile = NULL;
 
    geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
    geocache_context *global_ctx = (geocache_context*)apache_ctx;
-   geocache_tile *tile;
-   int i,ret;
+   int ret;
 
    if (!r->handler || strcmp(r->handler, "geocache")) {
       return DECLINED;
@@ -258,68 +262,25 @@ static int mod_geocache_request_handler(request_rec *r) {
       request->service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,config);
       return geocache_write_capabilities(apache_ctx,req_caps);
    } else if( request->type == GEOCACHE_REQUEST_GET_TILE) {
-      req_tile = (geocache_request_get_tile*)request;
+      geocache_request_get_tile *req_tile = (geocache_request_get_tile*)request;
+      geocache_tile *tile = geocache_core_get_tile(global_ctx,req_tile);
+      if(GC_HAS_ERROR(global_ctx)) {
+         return report_error(apache_ctx);
+      }
+      ret = geocache_write_tile(apache_ctx,tile);
+      return ret;
 
       if( !req_tile->ntiles) {
          return report_error(apache_ctx);
       }
-
-
-      for(i=0;i<req_tile->ntiles;i++) {
-         geocache_tile *tile = req_tile->tiles[i];
-         geocache_tileset_tile_get(global_ctx, tile);
-         if(GC_HAS_ERROR(global_ctx)) {
-            return report_error(apache_ctx);
-         }
-      }
-      if(req_tile->ntiles == 1) {
-         tile = req_tile->tiles[0];
-      } else {
-         /* TODO: individual check on tiles if merging is allowed */
-         tile = (geocache_tile*)geocache_image_merge_tiles(global_ctx,config->merge_format,req_tile->tiles,req_tile->ntiles);
-         if(!tile || GC_HAS_ERROR(global_ctx)) {
-            return report_error(apache_ctx);
-         }
-         tile->tileset = req_tile->tiles[0]->tileset;
-      }
-      ret = geocache_write_tile(apache_ctx,tile);
-      return ret;
-   } else if(request->type == GEOCACHE_REQUEST_GET_MAP) {
-#ifdef USE_CAIRO
-      req_tile = (geocache_request_get_tile*)request;
-      if(req_tile->ntiles==1) {
-         geocache_tile *tile = req_tile->tiles[0];
-         geocache_tile **maptiles;
-         int nmaptiles;
-         geocache_tileset_get_map_tiles(global_ctx,tile->tileset,tile->grid_link,
-               req_tile->extent, req_tile->width, req_tile->height,
-               &nmaptiles,
-               &maptiles);
-         for(i=0;i<nmaptiles;i++) {
-            geocache_tile *tile = maptiles[i];
-            geocache_tileset_tile_get(global_ctx, tile);
-            if(GC_HAS_ERROR(global_ctx)) {
-               return report_error(apache_ctx);
-            }
-         }
-         geocache_image *getmapim = geocache_tileset_assemble_map_tiles(global_ctx,tile->tileset,tile->grid_link,
-               req_tile->extent, req_tile->width, req_tile->height,
-               nmaptiles,
-               maptiles);
-
-         geocache_tile *getmaptile = geocache_tileset_tile_create(global_ctx->pool,tile->tileset, tile->grid_link);
-         getmaptile->data = tile->tileset->format->write(global_ctx,getmapim,tile->tileset->format);
-         ret = geocache_write_tile(apache_ctx,getmaptile);
-         return ret;
-
-      } else{
-         global_ctx->set_error(global_ctx,501,"get map not implemented for merged layers");
+   } else if( request->type == GEOCACHE_REQUEST_GET_MAP) {
+      geocache_request_get_map *req_map = (geocache_request_get_map*)request;
+      geocache_map *map = geocache_core_get_map(global_ctx,req_map);
+      if(GC_HAS_ERROR(global_ctx)) {
          return report_error(apache_ctx);
       }
-#else
-      global_ctx->set_error(global_ctx,501,"wms getmap handling not configured in this build");
-      return report_error(apache_ctx);
-#endif
+      ret = geocache_write_image_buffer(apache_ctx,map->data, map->tileset->format);
+      return ret;
    } else {
       return report_error(apache_ctx);
    }

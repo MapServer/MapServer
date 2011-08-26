@@ -97,47 +97,44 @@ geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_
 }
 
 void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt) {
-   if(mt->tile.tileset->format) {
+   if(mt->map.tileset->format) {
       /* the tileset has a format defined, we will use it to encode the data */
       geocache_image tileimg;
       geocache_image *metatile;
       int i,j;
       int sx,sy;
-      tileimg.w = mt->tile.grid_link->grid->tile_sx;
-      tileimg.h = mt->tile.grid_link->grid->tile_sy;
-      if(!mt->imdata) {
-         metatile = geocache_imageio_decode(ctx, mt->tile.data);
-      } else {
-         metatile = mt->imdata;
-      }
+      tileimg.w = mt->map.grid_link->grid->tile_sx;
+      tileimg.h = mt->map.grid_link->grid->tile_sy;
+      metatile = geocache_imageio_decode(ctx, mt->map.data);
       if(!metatile) {
          ctx->set_error(ctx, 500, "failed to load image data from metatile");
          return;
       }
       tileimg.stride = metatile->stride;
-      for(i=0;i<mt->tile.tileset->metasize_x;i++) {
-         for(j=0;j<mt->tile.tileset->metasize_y;j++) {
-            sx = mt->tile.tileset->metabuffer + i * tileimg.w;
-            sy = mt->sy - (mt->tile.tileset->metabuffer + (j+1) * tileimg.w);
+      for(i=0;i<mt->map.tileset->metasize_x;i++) {
+         for(j=0;j<mt->map.tileset->metasize_y;j++) {
+            sx = mt->map.tileset->metabuffer + i * tileimg.w;
+            sy = mt->map.height - (mt->map.tileset->metabuffer + (j+1) * tileimg.w);
             tileimg.data = &(metatile->data[sy*metatile->stride + 4 * sx]);
-            if(mt->tile.tileset->watermark) {
-                geocache_image_merge(ctx,&tileimg,mt->tile.tileset->watermark);
+            if(mt->map.tileset->watermark) {
+                geocache_image_merge(ctx,&tileimg,mt->map.tileset->watermark);
                 GC_CHECK_ERROR(ctx);
             }
-            mt->tiles[i*mt->tile.tileset->metasize_x+j].data = mt->tile.tileset->format->write(ctx, &tileimg, mt->tile.tileset->format);
+            mt->tiles[i*mt->map.tileset->metasize_x+j].data =
+               mt->map.tileset->format->write(ctx, &tileimg, mt->map.tileset->format);
             GC_CHECK_ERROR(ctx);
          }
       }
    } else {
 #ifdef DEBUG
-      if(mt->tile.tileset->metasize_x != 1 ||
-            mt->tile.tileset->metasize_y != 1 ||
-            mt->tile.tileset->metabuffer != 0) {
+      if(mt->map.tileset->metasize_x != 1 ||
+            mt->map.tileset->metasize_y != 1 ||
+            mt->map.tileset->metabuffer != 0) {
          ctx->set_error(ctx, 500, "##### BUG ##### using a metatile with no format");
          return;
       }
 #endif
-      mt->tiles[0].data = mt->tile.data;
+      mt->tiles[0].data = mt->map.data;
    }
 }
 

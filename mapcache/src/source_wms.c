@@ -21,21 +21,21 @@
 
 /**
  * \private \memberof geocache_source_wms
- * \sa geocache_source::render_metatile()
+ * \sa geocache_source::render_map()
  */
-void _geocache_source_wms_render_metatile(geocache_context *ctx, geocache_metatile *tile) {
-    geocache_source_wms *wms = (geocache_source_wms*)tile->tile.tileset->source;
+void _geocache_source_wms_render_map(geocache_context *ctx, geocache_map *map) {
+    geocache_source_wms *wms = (geocache_source_wms*)map->tileset->source;
     apr_table_t *params = apr_table_clone(ctx->pool,wms->wms_default_params);
     apr_table_setn(params,"BBOX",apr_psprintf(ctx->pool,"%f,%f,%f,%f",
-             tile->bbox[0],tile->bbox[1],tile->bbox[2],tile->bbox[3]));
-    apr_table_setn(params,"WIDTH",apr_psprintf(ctx->pool,"%d",tile->sx));
-    apr_table_setn(params,"HEIGHT",apr_psprintf(ctx->pool,"%d",tile->sy));
+             map->extent[0],map->extent[1],map->extent[2],map->extent[3]));
+    apr_table_setn(params,"WIDTH",apr_psprintf(ctx->pool,"%d",map->width));
+    apr_table_setn(params,"HEIGHT",apr_psprintf(ctx->pool,"%d",map->height));
     apr_table_setn(params,"FORMAT","image/png");
-    apr_table_setn(params,"SRS",tile->tile.grid_link->grid->srs);
+    apr_table_setn(params,"SRS",map->grid_link->grid->srs);
  
     apr_table_overlap(params,wms->wms_params,0);
-    if(tile->tile.dimensions && !apr_is_empty_table(tile->tile.dimensions)) {
-       const apr_array_header_t *elts = apr_table_elts(tile->tile.dimensions);
+    if(map->dimensions && !apr_is_empty_table(map->dimensions)) {
+       const apr_array_header_t *elts = apr_table_elts(map->dimensions);
        int i;
        for(i=0;i<elts->nelts;i++) {
           apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);
@@ -43,14 +43,14 @@ void _geocache_source_wms_render_metatile(geocache_context *ctx, geocache_metati
        }
  
     }      
-    tile->tile.data = geocache_buffer_create(30000,ctx->pool);
-    geocache_http_request_url_with_params(ctx,wms->url,params,wms->http_headers,tile->tile.data);
+    map->data = geocache_buffer_create(30000,ctx->pool);
+    geocache_http_request_url_with_params(ctx,wms->url,params,wms->http_headers,map->data);
     GC_CHECK_ERROR(ctx);
  
-    if(!geocache_imageio_is_valid_format(ctx,tile->tile.data)) {
-       char *returned_data = apr_pstrndup(ctx->pool,(char*)tile->tile.data->buf,tile->tile.data->size);
-       ctx->set_error(ctx, 502, "wms request for tileset %s: %d %d %d returned an unsupported format:\n%s",
-             tile->tile.tileset->name, tile->tile.x, tile->tile.y, tile->tile.z, returned_data);
+    if(!geocache_imageio_is_valid_format(ctx,map->data)) {
+       char *returned_data = apr_pstrndup(ctx->pool,(char*)map->data->buf,map->data->size);
+       ctx->set_error(ctx, 502, "wms request for tileset %s returned an unsupported format:\n%s",
+             map->tileset->name, returned_data);
     }
 }
 
@@ -106,7 +106,7 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    }
    geocache_source_init(ctx, &(source->source));
    source->source.type = GEOCACHE_SOURCE_WMS;
-   source->source.render_metatile = _geocache_source_wms_render_metatile;
+   source->source.render_map = _geocache_source_wms_render_map;
    source->source.configuration_check = _geocache_source_wms_configuration_check;
    source->source.configuration_parse = _geocache_source_wms_configuration_parse;
    source->wms_default_params = apr_table_make(ctx->pool,4);;

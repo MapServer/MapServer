@@ -99,6 +99,41 @@ void geocache_grid_get_closest_level(geocache_context *ctx, geocache_grid *grid,
    }
 }
 
+int geocache_grid_is_bbox_aligned(geocache_context *ctx, geocache_grid *grid, double *bbox) {
+   double res = geocache_grid_get_resolution(bbox,grid->tile_sx,grid->tile_sy);
+   int z;
+   if(GEOCACHE_SUCCESS != geocache_grid_get_level(ctx, grid, &res, &z))
+      return GEOCACHE_FAILURE;
+
+   if (fmod(fabs(bbox[0]-grid->extent[0])/res,grid->tile_sx)<1 && 
+         fmod(fabs(bbox[1]-grid->extent[1])/res,grid->tile_sy)<1)
+      return GEOCACHE_SUCCESS;
+   else
+      return GEOCACHE_FAILURE;
+}
+
+/*
+ * update the tile by setting it's x,y,z value given a bbox.
+ * will return GEOCACHE_TILESET_WRONG_RESOLUTION or GEOCACHE_TILESET_WRONG_EXTENT
+ * if the bbox does not correspond to the tileset's configuration
+ */
+int geocache_grid_get_cell(geocache_context *ctx, geocache_grid *grid, double *bbox,
+      int *x, int *y, int *z) {
+   double res = geocache_grid_get_resolution(bbox,grid->tile_sx,grid->tile_sy);
+   if(GEOCACHE_SUCCESS != geocache_grid_get_level(ctx, grid, &res, z))
+      return GEOCACHE_FAILURE;
+   
+   *x = (int)round((bbox[0] - grid->extent[0]) / (res * grid->tile_sx));
+   *y = (int)round((bbox[1] - grid->extent[1]) / (res * grid->tile_sy));
+
+   if((fabs(bbox[0] - (*x * res * grid->tile_sx) - grid->extent[0] ) / res > 1) ||
+         (fabs(bbox[1] - (*y * res * grid->tile_sy) - grid->extent[1] ) / res > 1)) {
+      return GEOCACHE_FAILURE;
+   }
+   return GEOCACHE_SUCCESS;
+}
+
+
 void geocache_grid_get_xy(geocache_context *ctx, geocache_grid *grid, double dx, double dy,
         int z, int *x, int *y) {
 #ifdef DEBUG

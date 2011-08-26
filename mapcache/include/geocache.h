@@ -71,6 +71,7 @@ typedef struct geocache_source geocache_source;
 typedef struct geocache_buffer geocache_buffer;
 typedef struct geocache_tile geocache_tile;
 typedef struct geocache_metatile geocache_metatile;
+typedef struct geocache_map geocache_map;
 typedef struct geocache_source_wms geocache_source_wms;
 typedef struct geocache_source_gdal geocache_source_gdal;
 typedef struct geocache_cache_disk geocache_cache_disk;
@@ -242,7 +243,7 @@ struct geocache_source {
      *
      * sets the geocache_metatile::tile::data for the given tile
      */
-    void (*render_metatile)(geocache_context *ctx, geocache_metatile * mt);
+    void (*render_map)(geocache_context *ctx, geocache_map *map);
     void (*configuration_parse)(geocache_context *ctx, ezxml_t xml, geocache_source * source);
     void (*configuration_check)(geocache_context *ctx, geocache_source * source);
 };
@@ -376,9 +377,22 @@ struct geocache_request_get_tile {
     */
    int ntiles;
    
-   /* only used for getmap requests */
+};
+
+
+struct geocache_map {
+   geocache_tileset *tileset;
+   geocache_grid_link *grid_link;
+   apr_table_t *dimensions;
+   geocache_buffer *data;
    int width, height;
-   double *extent;
+   double extent[4];
+};
+
+struct geocache_request_get_map {
+   geocache_request request;
+   geocache_map **maps;
+   int nmaps;
 };
 
 struct geocache_request_get_capabilities {
@@ -764,8 +778,7 @@ struct geocache_tile {
     /**
      * encoded image data for the tile.
      * \sa geocache_cache::tile_get()
-     * \sa geocache_source::render_tile()
-     * \sa geocache_source::render_metatile()
+     * \sa geocache_source::render_map()
      * \sa geocache_image_format
      */
     geocache_buffer *data;
@@ -780,14 +793,11 @@ struct geocache_tile {
  * \extends geocache_tile
  */
 struct geocache_metatile {
-    geocache_tile tile; /**< the geocache_tile that corresponds to this metatile */
-    int sx; /**< metatile width */
-    int sy; /**< metatile height */
-    double bbox[4]; /**< the bounding box covered by this metatile */
-    int ntiles; /**< the number of geocache_metatile::tiles contained in this metatile */
-    geocache_tile *tiles; /**< the list of geocache_tile s contained in this metatile */
-    geocache_image *imdata;
-    void *lock; /**< pointer to opaque structure set by the locking mechanism */
+   geocache_map map;
+   int x,y,z;
+   int ntiles; /**< the number of geocache_metatile::tiles contained in this metatile */
+   geocache_tile *tiles; /**< the list of geocache_tile s contained in this metatile */
+   void *lock; /**< pointer to opaque structure set by the locking mechanism */
 };
 
 
@@ -914,13 +924,19 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
 #endif
 
 /**
- * \brief compute a tile's x,y and z value given a BBOX.
- * @param tile
- * @param bbox 
- * @param r
- * @return
+ * \brief check if the given bbox is aligned to the boundary of one of the grid's tiles
+ * @return GEOCACHE_SUCCESS if it aligns
+ * @return GEOCACHE_FAILURE if not
  */
-int geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, double *bbox);
+int geocache_grid_is_bbox_aligned(geocache_context *ctx, geocache_grid *grid, double *bbox);
+
+/**
+ * compute x,y,z value given a bbox.
+ * will return GEOCACHE_FAILURE
+ * if the bbox does not correspond to the tileset's configuration
+ */
+int geocache_grid_get_cell(geocache_context *ctx, geocache_grid *grid, double *bbox,
+      int *x, int *y, int *z);
 
 /**
  * \brief verify the created tile respects configured constraints
@@ -945,15 +961,27 @@ void geocache_tileset_get_level(geocache_context *ctx, geocache_tileset *tileset
 void geocache_grid_get_closest_level(geocache_context *ctx, geocache_grid *grid, double resolution, int *level);
 void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile);
 
+int geocache_grid_is_bbox_aligned(geocache_context *ctx, geocache_grid *grid, double *bbox);
+
 /**
- * \brief create and initialize a tile for the given tileset
+ * \brief create and initialize a tile for the given tileset and grid_link
  * @param tileset
+ * @param grid_link
  * @param pool
  * @return
  */
 geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *tileset, geocache_grid_link *grid_link);
 
 /**
+ * \brief create and initialize a map for the given tileset and grid_link
+ * @param tileset
+ * @param grid_link
+ * @param pool
+ * @return
+ */
+geocache_map* geocache_tileset_map_create(apr_pool_t *pool, geocache_tileset *tileset, geocache_grid_link *grid_link);
+
+   /**
  * \brief create and initalize a tileset
  * @param pool
  * @return
@@ -993,6 +1021,12 @@ void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatil
 
 
 /** @} */
+
+
+
+geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_get_tile *req_tile);
+
+geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_map *req_map);
 
 
 /* in grid.c */

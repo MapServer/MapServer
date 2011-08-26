@@ -37,31 +37,6 @@ void geocache_tileset_tile_validate(geocache_context *ctx, geocache_tile *tile) 
    }
 }
 
-/*
- * update the tile by setting it's x,y,z value given a bbox.
- * will return GEOCACHE_TILESET_WRONG_RESOLUTION or GEOCACHE_TILESET_WRONG_EXTENT
- * if the bbox does not correspond to the tileset's configuration
- */
-static int _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile *tile, double *bbox) {
-   double res = geocache_grid_get_resolution(bbox,tile->grid_link->grid->tile_sx,
-         tile->grid_link->grid->tile_sy);
-   if(GEOCACHE_SUCCESS != geocache_grid_get_level(ctx, tile->grid_link->grid, &res, &(tile->z)))
-      return GEOCACHE_FAILURE;
-   /* TODO: strict mode
-           if exact and self.extent_type == "strict" and not self.contains((minx, miny), res):
-               raise TileCacheException("Lower left corner (%f, %f) is outside layer bounds %s. \nTo remove this condition, set extent_type=loose in your configuration."
-                        % (minx, miny, self.bbox))
-               return None
-    */
-   tile->x = (int)round((bbox[0] - tile->grid_link->grid->extent[0]) / (res * tile->grid_link->grid->tile_sx));
-   tile->y = (int)round((bbox[1] - tile->grid_link->grid->extent[1]) / (res * tile->grid_link->grid->tile_sy));
-
-   if((fabs(bbox[0] - (tile->x * res * tile->grid_link->grid->tile_sx) - tile->grid_link->grid->extent[0] ) / res > 1) ||
-         (fabs(bbox[1] - (tile->y * res * tile->grid_link->grid->tile_sy) - tile->grid_link->grid->extent[1] ) / res > 1)) {
-      return GEOCACHE_FAILURE;
-   }
-   return GEOCACHE_SUCCESS;
-}
 
 void geocache_tileset_get_map_tiles(geocache_context *ctx, geocache_tileset *tileset,
       geocache_grid_link *grid_link,
@@ -141,6 +116,7 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       cairo_translate (cr, dstminx,dstminy);
       cairo_scale  (cr, f, f);
       cairo_set_source_surface (cr, srcsurface, 0, 0);
+      cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_NEAREST);
       cairo_paint (cr);
       cairo_restore(cr);
       cairo_surface_destroy(srcsurface);
@@ -158,37 +134,39 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
 static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, geocache_tile *tile) {
    geocache_metatile *mt = (geocache_metatile*)apr_pcalloc(ctx->pool, sizeof(geocache_metatile));
    int i,j,blx,bly;
-   double res = tile->grid_link->grid->levels[tile->z]->resolution;
+   geocache_tileset *tileset = tile->tileset;
+   geocache_grid *grid = tile->grid_link->grid;
+   double res = grid->levels[tile->z]->resolution;
    double gbuffer,gwidth,gheight;
-   mt->tile.tileset = tile->tileset;
-   mt->tile.grid_link = tile->grid_link;
-   mt->ntiles = mt->tile.tileset->metasize_x * mt->tile.tileset->metasize_y;
+   mt->map.tileset = tileset;
+   mt->map.grid_link = tile->grid_link;
+   mt->ntiles = tileset->metasize_x * tileset->metasize_y;
    mt->tiles = (geocache_tile*)apr_pcalloc(ctx->pool, mt->ntiles * sizeof(geocache_tile));
-   mt->sx =  mt->tile.tileset->metasize_x * tile->grid_link->grid->tile_sx + 2 * mt->tile.tileset->metabuffer;
-   mt->sy =  mt->tile.tileset->metasize_y * tile->grid_link->grid->tile_sy + 2 * mt->tile.tileset->metabuffer;
-   mt->tile.z = tile->z;
-   mt->tile.x = tile->x / mt->tile.tileset->metasize_x;
-   mt->tile.dimensions = tile->dimensions;
+   mt->map.width =  tileset->metasize_x * grid->tile_sx + 2 * tileset->metabuffer;
+   mt->map.height =  tileset->metasize_y * grid->tile_sy + 2 * tileset->metabuffer;
+   mt->map.dimensions = tile->dimensions;
+   mt->z = tile->z;
+   mt->x = tile->x / tileset->metasize_x;
    if(tile->x < 0)
-      mt->tile.x --;
-   mt->tile.y = tile->y / mt->tile.tileset->metasize_y;
+      mt->x --;
+   mt->y = tile->y / tileset->metasize_y;
    if(tile->y < 0)
-      mt->tile.y --;
+      mt->y --;
 
    //tilesize   = self.actualSize()
-   gbuffer = res * mt->tile.tileset->metabuffer;
-   gwidth = res * mt->tile.tileset->metasize_x * tile->grid_link->grid->tile_sx;
-   gheight = res * mt->tile.tileset->metasize_y * tile->grid_link->grid->tile_sy;
-   mt->bbox[0] = mt->tile.grid_link->grid->extent[0] + mt->tile.x * gwidth - gbuffer;
-   mt->bbox[1] = mt->tile.grid_link->grid->extent[1] + mt->tile.y * gheight - gbuffer;
-   mt->bbox[2] = mt->bbox[0] + gwidth + 2 * gbuffer;
-   mt->bbox[3] = mt->bbox[1] + gheight + 2 * gbuffer;
+   gbuffer = res * tileset->metabuffer;
+   gwidth = res * tileset->metasize_x * grid->tile_sx;
+   gheight = res * tileset->metasize_y * grid->tile_sy;
+   mt->map.extent[0] = grid->extent[0] + mt->x * gwidth - gbuffer;
+   mt->map.extent[1] = grid->extent[1] + mt->y * gheight - gbuffer;
+   mt->map.extent[2] = mt->map.extent[0] + gwidth + 2 * gbuffer;
+   mt->map.extent[3] = mt->map.extent[1] + gheight + 2 * gbuffer;
 
-   blx = mt->tile.x * mt->tile.tileset->metasize_x;
-   bly = mt->tile.y * mt->tile.tileset->metasize_y;
-   for(i=0; i<mt->tile.tileset->metasize_x; i++) {
-      for(j=0; j<mt->tile.tileset->metasize_y; j++) {
-         geocache_tile *t = &(mt->tiles[i*mt->tile.tileset->metasize_x+j]);
+   blx = mt->x * tileset->metasize_x;
+   bly = mt->y * tileset->metasize_y;
+   for(i=0; i<tileset->metasize_x; i++) {
+      for(j=0; j<tileset->metasize_y; j++) {
+         geocache_tile *t = &(mt->tiles[i*tileset->metasize_x+j]);
          t->dimensions = tile->dimensions;
          t->grid_link = tile->grid_link;
          t->z = tile->z;
@@ -209,13 +187,13 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, 
  */
 void _geocache_tileset_render_metatile(geocache_context *ctx, geocache_metatile *mt) {
    int i;
-   mt->tile.tileset->source->render_metatile(ctx, mt);
+   mt->map.tileset->source->render_map(ctx, &mt->map);
    GC_CHECK_ERROR(ctx);
    geocache_image_metatile_split(ctx, mt);
    GC_CHECK_ERROR(ctx);
    for(i=0;i<mt->ntiles;i++) {
       geocache_tile *tile = &(mt->tiles[i]);
-      mt->tile.tileset->cache->tile_set(ctx, tile);
+      mt->map.tileset->cache->tile_set(ctx, tile);
       GC_CHECK_ERROR(ctx);
    }
 }
@@ -266,10 +244,24 @@ geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *
    return tile;
 }
 
-
-int geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, double *bbox) {
-   return _geocache_tileset_tile_get_cell(ctx, tile,bbox);
+/*
+ * allocate and initialize a map for a given tileset
+ */
+geocache_map* geocache_tileset_map_create(apr_pool_t *pool, geocache_tileset *tileset, geocache_grid_link *grid_link) {
+   geocache_map *map = (geocache_map*)apr_pcalloc(pool, sizeof(geocache_map));
+   map->tileset = tileset;
+   map->grid_link = grid_link;
+   if(tileset->dimensions) {
+      int i;
+      map->dimensions = apr_table_make(pool,tileset->dimensions->nelts);
+      for(i=0;i<tileset->dimensions->nelts;i++) {
+         geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+         apr_table_set(map->dimensions,dimension->name,dimension->default_value);
+      }
+   }
+   return map;
 }
+
 
 /**
  * \brief return the image data for a given tile
