@@ -221,8 +221,14 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
    *hackptr2 = '\0';
    
    if(APR_SUCCESS != (ret = apr_dir_make_recursive(filename,APR_OS_DEFAULT,ctx->pool))) {
-       ctx->set_error(ctx, 500, "failed to create directory %s: %s",filename, apr_strerror(ret,errmsg,120));
-       return;
+       /* 
+        * apr_dir_make_recursive sometimes sends back this error, although it should not.
+        * ignore this one
+        */
+       if(!APR_STATUS_IS_EEXIST(ret)) {
+          ctx->set_error(ctx, 500, "failed to create directory %s: %s",filename, apr_strerror(ret,errmsg,120));
+          return;
+       }
    }
    *hackptr2 = '/';
 
