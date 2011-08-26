@@ -29,11 +29,13 @@
 
 #define GEOCACHE_SUCCESS 0
 #define GEOCACHE_FAILURE 1
+#define GEOCACHE_TRUE 1
+#define GEOCACHE_FALSE 0
 #define GEOCACHE_TILESET_WRONG_SIZE 2
 #define GEOCACHE_TILESET_WRONG_RESOLUTION 3
 #define GEOCACHE_TILESET_WRONG_EXTENT 4
 #define GEOCACHE_CACHE_MISS 5
-#define GEOCACHE_FILE_EXISTS 6
+#define GEOCACHE_FILE_LOCKED 6
 
 #define GEOCACHE_SERVICES_COUNT 2
 typedef enum {GEOCACHE_SERVICE_WMS=0, GEOCACHE_SERVICE_TMS} geocache_service_type;
@@ -105,6 +107,8 @@ struct geocache_cache{
    char* (*configuration_check)(geocache_cache *cache, apr_pool_t *pool);  
    int (*tile_lock)(geocache_tile *tile, request_rec *r);
    int (*tile_unlock)(geocache_tile *tile, request_rec *r);
+   int (*tile_lock_exists)(geocache_tile *tile, request_rec *r);
+   int (*tile_lock_wait)(geocache_tile *tile, request_rec *r);
 };
 
 typedef struct {
@@ -199,7 +203,6 @@ geocache_cache_disk* geocache_cache_disk_create(apr_pool_t *pool);
 /* functions exported in tileset.c */
 int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec *r);
 int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r);
-int geocache_tileset_tile_render(geocache_tile *tile, request_rec *r);
 geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, apr_pool_t *pool);
 geocache_tileset* geocache_tileset_create(apr_pool_t *pool);
 void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox);
@@ -215,6 +218,8 @@ int geocache_util_extract_int_list(char* args, const char sep, int **numbers,
       int *numbers_count, apr_pool_t *pool);
 int geocache_util_extract_double_list(char* args, const char sep, double **numbers,
       int *numbers_count, apr_pool_t *pool);
+int geocache_util_mutex_aquire(request_rec *r);
+int geocache_util_mutex_release(request_rec *r);
 
 typedef struct {
    geocache_buffer *buffer;

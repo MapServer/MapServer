@@ -41,7 +41,7 @@ int _geocache_cache_disk_tile_key_split(request_rec *r, geocache_tile *tile, cha
    return GEOCACHE_SUCCESS;
 }
 
-int _geocache_cache_disk_create_and_lock(geocache_tile *tile, request_rec *r) {
+int _geocache_cache_disk_tile_lock(geocache_tile *tile, request_rec *r) {
    char *filename;
    char *basename;
    char *dirname;
@@ -53,7 +53,7 @@ int _geocache_cache_disk_create_and_lock(geocache_tile *tile, request_rec *r) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to create directory %s",dirname);
       return GEOCACHE_FAILURE;
    }
-   filename = apr_psprintf(r->pool,"%s/%s",dirname,basename);
+   filename = apr_psprintf(r->pool,"%s/%s.lck",dirname,basename);
    /*create file, and fail if it already exists*/
    if(apr_file_open(&f, filename,
          APR_FOPEN_CREATE|APR_FOPEN_EXCL|APR_FOPEN_WRITE|APR_FOPEN_SHARELOCK|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
@@ -66,10 +66,9 @@ int _geocache_cache_disk_create_and_lock(geocache_tile *tile, request_rec *r) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to create file %s",filename);
          return GEOCACHE_FAILURE; /* we could not create the file */
       } else {
-         /* this shouldn't happen if the caller has properly mutex protected the call ? */
-         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "asked to create file %s, but it already exists",filename);
+         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "failed to create lockfile %s, because it already exists",filename);
          apr_file_close(f);
-         return GEOCACHE_FILE_EXISTS; /* we have write access, but the file already exists */
+         return GEOCACHE_FILE_LOCKED; /* we have write access, but the file already exists */
       }
    }
    rv = apr_file_lock(f, APR_FLOCK_EXCLUSIVE|APR_FLOCK_NONBLOCK);
@@ -85,20 +84,27 @@ int _geocache_cache_disk_create_and_lock(geocache_tile *tile, request_rec *r) {
    return GEOCACHE_SUCCESS;
 }
 
-int _geocache_cache_disk_unlock(geocache_tile *tile, request_rec *r) {
-   if(!tile->lock) {
-      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "attempting to unlock an already unlocked tile");
-      return GEOCACHE_FAILURE;
-   }
-   apr_finfo_t finfo;
+int _geocache_cache_disk_tile_unlock(geocache_tile *tile, request_rec *r) {
    apr_file_t *f = (apr_file_t*)tile->lock;
-   apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
-   if(!finfo.size) {
-      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "unlocking an empty tile, we will remove it");
-      const char *fname;
-      apr_file_name_get(&fname,f);
-      apr_file_remove(fname,r->pool);
+   const char *fname;
+   if(!tile->lock) {
+      char *filename;
+      char *lockname;
+      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "###### TILE UNLOCK ######### attempting to unlock a tile not created by this thread");
+      _geocache_cache_disk_tile_key(r, tile, &filename);
+      lockname = apr_psprintf(r->pool,"%s.lck",filename);
+      /*create file, and fail if it already exists*/
+      if(apr_file_open(&f, lockname,APR_FOPEN_READ,APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
+         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "###### TILE UNLOCK ######### tile is not locked");
+         return GEOCACHE_FAILURE;
+      }
+   } else {
+      f = (apr_file_t*)tile->lock;
    }
+
+   apr_file_name_get(&fname,f);
+   apr_file_remove(fname,r->pool);
+
    int rv = apr_file_unlock(f);
    if(rv != APR_SUCCESS) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to unlock file");
@@ -113,6 +119,43 @@ int _geocache_cache_disk_unlock(geocache_tile *tile, request_rec *r) {
    return rv;
 }
 
+int _geocache_cache_disk_tile_is_locked(geocache_tile *tile, request_rec *r) {
+   char *filename;
+   char *lockname;
+   apr_file_t *f;
+   if(tile->lock)
+      return GEOCACHE_TRUE;
+   _geocache_cache_disk_tile_key(r, tile, &filename);
+   lockname = apr_psprintf(r->pool,"%s.lck",filename);
+   if(apr_file_open(&f, lockname,APR_FOPEN_READ,APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
+      return GEOCACHE_FALSE;
+   } else {
+      apr_file_close(f);
+      return GEOCACHE_TRUE;
+   }
+}
+
+int _geocache_cache_disk_tile_wait_for_lock(geocache_tile *tile, request_rec *r) {
+   char *filename;
+   char *lockname;
+   apr_file_t *f;
+#ifdef DEBUG
+   if(tile->lock) {
+      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "### BUG ### waiting for a lock we have created ourself");
+      return GEOCACHE_FAILURE;
+   }
+#endif
+   _geocache_cache_disk_tile_key(r, tile, &filename);
+   lockname = apr_psprintf(r->pool,"%s.lck",filename);
+   if(apr_file_open(&f, lockname,APR_FOPEN_READ,APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
+      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "### BUG ### waiting for a lock on an unlocked file");
+      return GEOCACHE_FAILURE;
+   }
+   apr_file_lock(f,APR_FLOCK_SHARED);
+   apr_file_close(f);
+   return GEOCACHE_SUCCESS;
+}
+
 int _geocache_cache_disk_get(geocache_tile *tile, request_rec *r) {
    char *filename;
    apr_file_t *f;
@@ -121,70 +164,60 @@ int _geocache_cache_disk_get(geocache_tile *tile, request_rec *r) {
    apr_size_t size;
    _geocache_cache_disk_tile_key(r, tile, &filename);
    if(apr_file_open(&f, filename, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
-         APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
-      /* the file doesn't exist on the disk */
-      return GEOCACHE_CACHE_MISS;
-   }
-   apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
-   if(!finfo.size) {
-      /* 
-       * the file exists on the disk, but it has 0 length. This is normally because another
-       * thread / process has indicated it is doing the rendering.
-       * we put a shared lock on the resource, to wait until the other thread has finished
-       */
-      rv = apr_file_lock(f, APR_FLOCK_SHARED);
-      if(rv != APR_SUCCESS) {
-         const char *filename;
-         apr_file_name_get(&filename,f);
-         ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, "failed to set read lock on %s",filename);
-         return GEOCACHE_FAILURE;
-      }
-      apr_file_unlock(f);
-      /* should we reopen the file now ? */
-      apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
+         APR_OS_DEFAULT, r->pool) == APR_SUCCESS) {
+      rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
       if(!finfo.size) {
-         const char *filename;
-         apr_file_name_get(&filename,f);
          ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, "tile %s has no data",filename);
          return GEOCACHE_FAILURE;
       }
-   }
-   size = finfo.size;
-   /*
-    * at this stage, we have a handle to an open file that contains data.
-    * idealy, we should aquire a read lock, in case the data contained inside the file
-    * is incomplete.
-    * currently such a lock is not set, as we don't want to loose performance on tile accesses.
-    * any error that might happen at this stage should only occur if the tile isn't already cached,
-    * i.e. normally only once.
-    */
-   tile->data = geocache_buffer_create(size,r->pool);
-   //manually add the data to our buffer
-   apr_file_read(f,(void*)tile->data->buf,&size);
-   tile->data->size = size;
-   apr_file_close(f);
-   if(size != finfo.size) {
-      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to copy image data, got %d of %d bytes",(int)size, (int)finfo.size);
-      return GEOCACHE_FAILURE;
-   }
 
-   return GEOCACHE_SUCCESS;
+      size = finfo.size;
+      /*
+       * at this stage, we have a handle to an open file that contains data.
+       * idealy, we should aquire a read lock, in case the data contained inside the file
+       * is incomplete.
+       * currently such a lock is not set, as we don't want to loose performance on tile accesses.
+       * any error that might happen at this stage should only occur if the tile isn't already cached,
+       * i.e. normally only once.
+       */
+      tile->data = geocache_buffer_create(size,r->pool);
+      //manually add the data to our buffer
+      apr_file_read(f,(void*)tile->data->buf,&size);
+      tile->data->size = size;
+      apr_file_close(f);
+      if(size != finfo.size) {
+         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to copy image data, got %d of %d bytes",(int)size, (int)finfo.size);
+         return GEOCACHE_FAILURE;
+      }
+      return GEOCACHE_SUCCESS;
+   }
+   /* the file doesn't exist on the disk */
+   return GEOCACHE_CACHE_MISS;
 }
 
 int _geocache_cache_disk_set(geocache_tile *tile, request_rec *r) {
    apr_size_t bytes;
-   apr_file_t *f = (apr_file_t*)tile->lock;
+   apr_file_t *f;
+   char *filename;
 #ifdef DEBUG
    /* all this should be checked at a higher level */
    if(!tile->data || !tile->data->size) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "attempting to write empty tile to disk");
       return GEOCACHE_FAILURE;
    }
-   if(!f) {
+   if(!tile->lock) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "attempting to write to an unlocked tile");
       return GEOCACHE_FAILURE;
    }
 #endif
+   _geocache_cache_disk_tile_key(r, tile, &filename);
+   if(apr_file_open(&f, filename,
+         APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
+         APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
+      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to create file %s",filename);
+      return GEOCACHE_FAILURE; /* we could not create the file */
+   }
+
    bytes = (apr_size_t)tile->data->size;
    apr_file_write(f,(void*)tile->data->buf,&bytes);
 
@@ -192,6 +225,8 @@ int _geocache_cache_disk_set(geocache_tile *tile, request_rec *r) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to write image data to disk, wrote %d of %d bytes",(int)bytes, (int)tile->data->size);
       return GEOCACHE_FAILURE;
    }
+
+   apr_file_close(f);
    return GEOCACHE_SUCCESS;
 }
 
@@ -234,8 +269,10 @@ geocache_cache_disk* geocache_cache_disk_create(apr_pool_t *pool) {
    cache->cache.tile_set = _geocache_cache_disk_set;
    cache->cache.configuration_check = _geocache_cache_disk_configuration_check;
    cache->cache.configuration_parse = _geocache_cache_disk_configuration_parse;
-   cache->cache.tile_lock = _geocache_cache_disk_create_and_lock;
-   cache->cache.tile_unlock = _geocache_cache_disk_unlock;
+   cache->cache.tile_lock = _geocache_cache_disk_tile_lock;
+   cache->cache.tile_unlock = _geocache_cache_disk_tile_unlock;
+   cache->cache.tile_lock_exists = _geocache_cache_disk_tile_is_locked;
+   cache->cache.tile_lock_wait = _geocache_cache_disk_tile_wait_for_lock;
    return cache;
 }
 

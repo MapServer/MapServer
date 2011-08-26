@@ -52,66 +52,19 @@ static int _geocache_tileset_tile_get_cell(geocache_tile *tile, double *bbox, re
    return GEOCACHE_SUCCESS;
 }
 
-void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox) {
-
-   double res  = tile->tileset->resolutions[tile->z];
-   bbox[0] = tile->tileset->extent[0] + (res * tile->x * tile->sx);
-   bbox[1] = tile->tileset->extent[1] + (res * tile->y * tile->sy);
-   bbox[2] = tile->tileset->extent[0] + (res * (tile->x + 1) * tile->sx);
-   bbox[3] = tile->tileset->extent[1] + (res * (tile->y + 1) * tile->sy);
-
-}
-
-geocache_tileset* geocache_tileset_create(apr_pool_t *pool) {
-   geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(pool, sizeof(geocache_tileset));
-   tileset->metasize_x = tileset->metasize_y = 1;
-   tileset->metabuffer = 0;
-   tileset->tile_sx = tileset->tile_sy = 256;
-   tileset->extent[0]=tileset->extent[1]=tileset->extent[2]=tileset->extent[3]=0;
-   tileset->forwarded_params = apr_table_make(pool,1);
-   return tileset;
-}
-
-geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, apr_pool_t *pool) {
-   geocache_tile *tile = (geocache_tile*)apr_pcalloc(pool, sizeof(geocache_tile));
-   tile->tileset = tileset;
-   tile->sx = tileset->tile_sx;
-   tile->sy = tileset->tile_sy;
-   return tile;
-}
-
-int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec *r) {
-   if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
-      ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "tileset %s: wrong size. found %dx%d instead of %dx%d",
-            tile->tileset->name,tile->sx,tile->sy,tile->tileset->tile_sx,tile->tileset->tile_sy);
-      return GEOCACHE_TILESET_WRONG_SIZE;
+void _geocache_tileset_metatile_lock(geocache_metatile *mt, request_rec *r) {
+   int i;
+   for(i=0; i<mt->ntiles; i++) {
+      geocache_tile *tile = &(mt->tiles[i]);
+      mt->tile.tileset->cache->tile_lock(tile,r);
    }
-   return _geocache_tileset_tile_get_cell(tile,bbox,r);
 }
 
-int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r) {
-   int ret;
-   if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
-      ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r,
-            "tileset %s: asked for a %dx%d tile from a %dx%d tileset",tile->tileset->name,
-            tile->sx, tile->sy, tile->tileset->tile_sx, tile->tileset->tile_sy);
-      return GEOCACHE_FAILURE;
-   }
-   ret = tile->tileset->cache->tile_get(tile, r);
-   if(ret == GEOCACHE_CACHE_MISS) {
-      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
-            "cache miss: tileset %s - tile %d %d %d",tile->tileset->name,tile->x, tile->y,tile->z);
-      ret = geocache_tileset_tile_render(tile, r);
-      if(ret != GEOCACHE_SUCCESS) return ret;
-      //if successful, the cache will now contain the tile
-      ret = tile->tileset->cache->tile_get(tile, r);
-      if(ret != GEOCACHE_SUCCESS) {
-         ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r, "tileset %s: failed to re-get tile from cache after set", tile->tileset->name);
-         return ret;
-      }
-      return GEOCACHE_SUCCESS;
-   } else {
-      return ret;
+void _geocache_tileset_metatile_unlock(geocache_metatile *mt, request_rec *r) {
+   int i;
+   for(i=0; i<mt->ntiles; i++) {
+      geocache_tile *tile = &(mt->tiles[i]);
+      mt->tile.tileset->cache->tile_unlock(tile,r);
    }
 }
 
@@ -156,76 +109,126 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_tile *tile, re
    return mt;
 }
 
-int geocache_tileset_tile_render(geocache_tile *tile, request_rec *r) {
-   int ret;
-   if(tile->tileset->source->supports_metatiling) {
-      geocache_metatile *mt = _geocache_tileset_metatile_get(tile, r);
-      geocache_server_cfg *cfg = ap_get_module_config(r->server->module_config, &geocache_module);
-      int i;
-#ifdef DEBUG
-      if(!cfg) {
-         ap_log_error(APLOG_MARK, APLOG_CRIT, 0, r->server, "configuration not found in server context");
-         return HTTP_INTERNAL_SERVER_ERROR;
-      }
-#endif
-      ret = apr_global_mutex_lock(cfg->mutex);
-      if(ret != APR_SUCCESS) {
-         ap_log_error(APLOG_MARK, APLOG_CRIT, 0, r->server, "failed to aquire mutex lock");
-         return HTTP_INTERNAL_SERVER_ERROR;
-      }
-      apr_pool_cleanup_register(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
+void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox) {
+   double res  = tile->tileset->resolutions[tile->z];
+   bbox[0] = tile->tileset->extent[0] + (res * tile->x * tile->sx);
+   bbox[1] = tile->tileset->extent[1] + (res * tile->y * tile->sy);
+   bbox[2] = tile->tileset->extent[0] + (res * (tile->x + 1) * tile->sx);
+   bbox[3] = tile->tileset->extent[1] + (res * (tile->y + 1) * tile->sy);
+}
 
-      for(i=0;i<mt->ntiles;i++) {
-         geocache_tile *tile = &(mt->tiles[i]);
-         ret = tile->tileset->cache->tile_lock(tile,r);
+geocache_tileset* geocache_tileset_create(apr_pool_t *pool) {
+   geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(pool, sizeof(geocache_tileset));
+   tileset->metasize_x = tileset->metasize_y = 1;
+   tileset->metabuffer = 0;
+   tileset->tile_sx = tileset->tile_sy = 256;
+   tileset->extent[0]=tileset->extent[1]=tileset->extent[2]=tileset->extent[3]=0;
+   tileset->forwarded_params = apr_table_make(pool,1);
+   return tileset;
+}
+
+geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, apr_pool_t *pool) {
+   geocache_tile *tile = (geocache_tile*)apr_pcalloc(pool, sizeof(geocache_tile));
+   tile->tileset = tileset;
+   tile->sx = tileset->tile_sx;
+   tile->sy = tileset->tile_sy;
+   return tile;
+}
+
+int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec *r) {
+   if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
+      ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "tileset %s: wrong size. found %dx%d instead of %dx%d",
+            tile->tileset->name,tile->sx,tile->sy,tile->tileset->tile_sx,tile->tileset->tile_sy);
+      return GEOCACHE_TILESET_WRONG_SIZE;
+   }
+   return _geocache_tileset_tile_get_cell(tile,bbox,r);
+}
+
+int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r) {
+   int ret,i;
+   int isLocked;
+   geocache_metatile *mt;
+   if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
+      ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r,
+            "tileset %s: asked for a %dx%d tile from a %dx%d tileset",tile->tileset->name,
+            tile->sx, tile->sy, tile->tileset->tile_sx, tile->tileset->tile_sy);
+      return GEOCACHE_FAILURE;
+   }
+   ret = tile->tileset->cache->tile_get(tile, r);
+   if(ret == GEOCACHE_CACHE_MISS) {
+      /* the tile does not exist, we must take action before re-asking for it */
+
+      /*
+       * is the tile already being rendered by another thread ?
+       * the call is protected by the same mutex that sets the lock on the tile,
+       * so we can assure that:
+       * - if the lock does not exist, then this thread should do the rendering
+       * - if the lock exists, we should wait for the other thread to finish
+       */
+      ret = geocache_util_mutex_aquire(r);
+      if(ret != GEOCACHE_SUCCESS) return ret;
+
+      isLocked = tile->tileset->cache->tile_lock_exists(tile,r);
+      if(isLocked == GEOCACHE_FALSE) {
+         /* no other thread is doing the rendering, we aquire and lock a list of tiles to render */
+         mt = _geocache_tileset_metatile_get(tile,r);
+         _geocache_tileset_metatile_lock(mt,r);
+      }
+
+      ret = geocache_util_mutex_release(r);
+      if(ret != GEOCACHE_SUCCESS) return ret;
+
+      if(isLocked == GEOCACHE_TRUE) {
+         /* another thread is rendering the tile, we should wait for it to finish */
+         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,"cache wait: tileset %s - tile %d %d %d",
+               tile->tileset->name,tile->x, tile->y,tile->z);
+         tile->tileset->cache->tile_lock_wait(tile,r);
+      } else {
+         /* no other thread is doing the rendering, do it ourselves */
+         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,"cache miss: tileset %s - tile %d %d %d",
+               tile->tileset->name,tile->x, tile->y,tile->z);
+
+         ret = tile->tileset->source->render_metatile(mt, r);
          if(ret != GEOCACHE_SUCCESS) {
-            if(i != 0 || ret != GEOCACHE_FILE_EXISTS) {
-               /* we have managed to lock some tiles, but not all, we have a threading mixup issue */
-               ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r,"############ THREADING BUG ##############");
-               return GEOCACHE_FAILURE;
-            } else {
-               /* oh well, another thread has already started rendering this tile */
-               break;
-            }
+            geocache_util_mutex_aquire(r);
+            _geocache_tileset_metatile_unlock(mt,r);
+            geocache_util_mutex_release(r);
+            return ret;
          }
-      }
-      ret = apr_global_mutex_unlock(cfg->mutex);
-      if(ret != APR_SUCCESS) {
-         ap_log_error(APLOG_MARK, APLOG_CRIT, 0, r->server, "failed to release mutex");
-         return HTTP_INTERNAL_SERVER_ERROR;
-      }
-      apr_pool_cleanup_kill(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock);
-      if(i != mt->ntiles) {
-         return GEOCACHE_SUCCESS;
-      }
+         ret = geocache_image_metatile_split(mt,r);
+         if(ret != GEOCACHE_SUCCESS) {
+            geocache_util_mutex_aquire(r);
+            _geocache_tileset_metatile_unlock(mt,r);
+            geocache_util_mutex_release(r);
+            return ret;
+         }
 
-
-      ret = tile->tileset->source->render_metatile(mt, r);
-      if(ret != GEOCACHE_SUCCESS) {
          for(i=0;i<mt->ntiles;i++) {
             geocache_tile *tile = &(mt->tiles[i]);
-            tile->tileset->cache->tile_unlock(tile,r);
+            ret = tile->tileset->cache->tile_set(tile, r);
+            if(ret != GEOCACHE_SUCCESS) {
+               geocache_util_mutex_aquire(r);
+               _geocache_tileset_metatile_unlock(mt,r);
+               geocache_util_mutex_release(r);
+               return ret;
+            }
          }
+
+         geocache_util_mutex_aquire(r);
+         _geocache_tileset_metatile_unlock(mt,r);
+         geocache_util_mutex_release(r);
+
+         if(ret != GEOCACHE_SUCCESS) return ret;
+      }
+
+      ret = tile->tileset->cache->tile_get(tile, r);
+      if(ret != GEOCACHE_SUCCESS) {
+         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+               "tileset %s: failed to re-get tile from cache after set", tile->tileset->name);
          return ret;
       }
-      geocache_image_metatile_split(mt,r);
-
-      for(i=0;i<mt->ntiles;i++) {
-         geocache_tile *tile = &(mt->tiles[i]);
-         ret = tile->tileset->cache->tile_set(tile, r);
-         if(ret != GEOCACHE_SUCCESS) return ret;
-         ret = tile->tileset->cache->tile_unlock(tile,r);
-         if(ret != GEOCACHE_SUCCESS) return ret;
-         //TODO: unlock and delete tiles if error
-      }
-      return ret;
+      return GEOCACHE_SUCCESS;
    } else {
-      //lock the file before rendering ?
-      tile->tileset->cache->tile_lock(tile,r);
-      ret = tile->tileset->source->render_tile(tile, r);
-      if(ret != GEOCACHE_SUCCESS) return ret;
-      ret = tile->tileset->cache->tile_set(tile, r);
-      tile->tileset->cache->tile_unlock(tile,r);
       return ret;
    }
 }

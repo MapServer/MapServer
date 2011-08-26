@@ -17,6 +17,7 @@
 #include <geocache.h>
 #include <apr_strings.h>
 #include <apr_tables.h>
+#include <http_log.h>
 
 int geocache_util_extract_int_list(char* args, const char sep, int **numbers,
       int *numbers_count, apr_pool_t *pool) {
@@ -61,6 +62,30 @@ int geocache_util_extract_double_list(char* args, const char sep, double **numbe
       if(*endptr != 0)
          return GEOCACHE_FAILURE;
    }
+   return GEOCACHE_SUCCESS;
+}
+
+int geocache_util_mutex_aquire(request_rec *r) {
+   int ret;
+   geocache_server_cfg *cfg = ap_get_module_config(r->server->module_config, &geocache_module);
+   ret = apr_global_mutex_lock(cfg->mutex);
+   if(ret != APR_SUCCESS) {
+      ap_log_error(APLOG_MARK, APLOG_CRIT, 0, r->server, "failed to aquire mutex lock");
+      return HTTP_INTERNAL_SERVER_ERROR;
+   }
+   apr_pool_cleanup_register(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
+   return GEOCACHE_SUCCESS;
+}
+
+int geocache_util_mutex_release(request_rec *r) {
+   int ret;
+   geocache_server_cfg *cfg = ap_get_module_config(r->server->module_config, &geocache_module);
+   ret = apr_global_mutex_unlock(cfg->mutex);
+   if(ret != APR_SUCCESS) {
+      ap_log_error(APLOG_MARK, APLOG_CRIT, 0, r->server, "failed to release mutex");
+      return HTTP_INTERNAL_SERVER_ERROR;
+   }
+   apr_pool_cleanup_kill(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock);
    return GEOCACHE_SUCCESS;
 }
 
