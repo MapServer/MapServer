@@ -78,8 +78,8 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
             if(!title) {
                title = "no title set, add some in metadata";
             }
-            for(j=0;j<tileset->grids->nelts;j++) {
-               geocache_grid *grid = APR_ARRAY_IDX(tileset->grids,j,geocache_grid*);
+            for(j=0;j<tileset->grid_links->nelts;j++) {
+               geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
                tilesetcaps = apr_psprintf(ctx->pool,tms_1,onlineresource,
                      request->version,tileset->name,grid->name,grid->srs,title);
                caps = apr_psprintf(ctx->pool,"%s%s",caps,tilesetcaps);
@@ -90,7 +90,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
 
       } else {
          geocache_tileset *tileset = request->tileset;
-         geocache_grid *grid = request->grid;
+         geocache_grid *grid = request->grid_link->grid;
          int i;
          const char *title = apr_table_get(tileset->metadata,"title");
          if(!title) {
@@ -103,17 +103,17 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
          caps = apr_psprintf(ctx->pool,tms_2,
                request->version, onlineresource, request->version,
                title,abstract, grid->srs,
-               grid->extents[0][0], grid->extents[0][1],
-               grid->extents[0][2], grid->extents[0][3],
-               grid->extents[0][0], grid->extents[0][1],
+               grid->extent[0], grid->extent[1],
+               grid->extent[2], grid->extent[3],
+               grid->extent[0], grid->extent[1],
                grid->tile_sx, grid->tile_sy,
                tileset->format->mime_type,
                tileset->format->extension
          );
-         for(i=0;i<grid->levels;i++) {
+         for(i=0;i<grid->nlevels;i++) {
             caps = apr_psprintf(ctx->pool,"%s\n<TileSet href=\"%s/%s/%s/%d\" units-per-pixel=\"%.20f\" order=\"%d\"/>",
                   caps,onlineresource,request->version,tileset->name,i,
-                  grid->resolutions[i],i
+                  grid->levels[i]->resolution,i
             );
          }
          
@@ -136,7 +136,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
    int index = 0;
    char *last, *key, *endptr;
    geocache_tileset *tileset = NULL;
-   geocache_grid *grid = NULL;
+   geocache_grid_link *grid_link = NULL;
    char *pathinfo;
    int x=-1,y=-1,z=-1;
    
@@ -156,6 +156,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
          case 2: /* layer name */
             tileset = geocache_configuration_get_tileset(config,key);
             if(!tileset) {
+               /*tileset not found directly, test if it was given as "name@grid" notation*/
                char *tname = apr_pstrdup(ctx->pool,key);
                char *gname = tname;
                int i;
@@ -176,20 +177,20 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
                   ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid layer %s", tname);
                   return;
                }
-               for(i=0;i<tileset->grids->nelts;i++) {
-                  geocache_grid *sgrid = APR_ARRAY_IDX(tileset->grids,i,geocache_grid*);
-                  if(!strcmp(sgrid->name,gname)) {
-                     grid = sgrid;
+               for(i=0;i<tileset->grid_links->nelts;i++) {
+                  geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+                  if(!strcmp(sgrid->grid->name,gname)) {
+                     grid_link = sgrid;
                      break;
                   }
                }
-               if(!grid) {
+               if(!grid_link) {
                   ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid grid %s", gname);
                   return;
                }
 
             } else {
-               grid = APR_ARRAY_IDX(tileset->grids,0,geocache_grid*);
+               grid_link = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*);
             }
             break;
          case 3:
@@ -228,7 +229,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
       req->tiles[0]->x = x;
       req->tiles[0]->y = y;
       req->tiles[0]->z = z;
-      req->tiles[0]->grid = grid;
+      req->tiles[0]->grid_link = grid_link;
       geocache_tileset_tile_validate(ctx,req->tiles[0]);
       GC_CHECK_ERROR(ctx);
       *request = (geocache_request*)req;
@@ -239,7 +240,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
       req->request.request.type = GEOCACHE_REQUEST_GET_CAPABILITIES;
       if(index >= 2) {
          req->tileset = tileset;
-         req->grid = grid;
+         req->grid_link = grid_link;
       }
       if(index >= 1) {
          req->version = apr_pstrdup(ctx->pool,"1.0.0");

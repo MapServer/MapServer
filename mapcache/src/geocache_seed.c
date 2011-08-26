@@ -274,11 +274,11 @@ int main(int argc, const char **argv) {
             return usage(argv[0], "tileset not found in configuration");
         }
         if( ! grid_name ) {
-           grid = APR_ARRAY_IDX(tileset->grids,0,geocache_grid*);
+           grid = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*)->grid;
         } else {
            int i;
-           for(i=0;i<tileset->grids->nelts;i++) {
-              geocache_grid *sgrid = APR_ARRAY_IDX(tileset->grids,i,geocache_grid*);
+           for(i=0;i<tileset->grid_links->nelts;i++) {
+              geocache_grid *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*)->grid;
               if(!strcmp(sgrid->name,grid_name)) {
                grid = sgrid;
                break;
@@ -291,22 +291,22 @@ int main(int argc, const char **argv) {
         if(!zooms) {
             zooms = (int*)apr_pcalloc(gctx->pool,2*sizeof(int));
             zooms[0] = 1;
-            zooms[1] = grid->levels;
+            zooms[1] = grid->nlevels;
         }
         if(!extent) {
             extent = (double*)apr_pcalloc(gctx->pool,4*sizeof(double));
-            extent[0] = grid->extents[0][0];
-            extent[1] = grid->extents[0][1];
-            extent[2] = grid->extents[0][2];
-            extent[3] = grid->extents[0][3];
+            extent[0] = grid->extent[0];
+            extent[1] = grid->extent[1];
+            extent[2] = grid->extent[2];
+            extent[3] = grid->extent[3];
         }
     }
 
     geocache_context_seeding_init(&ctx,cfg,tileset,zooms[0],zooms[1],extent);
     for(n=zooms[0];n<=zooms[1];n++) {
-        geocache_grid_get_xy(gctx,grid,grid->extents[n][0],grid->extents[n][1],
+        geocache_grid_get_xy(gctx,grid,grid->extent[0],grid->extent[1],
                 n,&seed_tiles[n].firstx,&seed_tiles[n].firsty);
-        geocache_grid_get_xy(gctx,grid,grid->extents[n][2],grid->extents[n][3],
+        geocache_grid_get_xy(gctx,grid,grid->extent[2],grid->extent[3],
                 n,&seed_tiles[n].lastx,&seed_tiles[n].lasty);
     }
     ctx.nextz = zooms[0];

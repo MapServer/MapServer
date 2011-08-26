@@ -281,7 +281,8 @@
       <cache>disk</cache>
 
       <!-- grid: the "name" attribute of a preconfigured <grid> -->
-      <grid>WGS84,google</grid>
+      <grid restricted_extent="-10 40 10 50">WGS84</grid>
+      <grid>google</grid>
 
       <!-- metadata
          optional metadata tags used for responding to GetCapabilities request.
@@ -392,7 +393,8 @@
       <source>osm</source>
       <cache>disk</cache>
       <format>PNG</format>
-      <grid>google,WGS84</grid>
+      <grid>WGS84</grid>
+      <grid>google</grid>
       <metatile>5 5</metatile>
       <metabuffer>10</metabuffer>
    </tileset>

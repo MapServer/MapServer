@@ -103,17 +103,17 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    grid->srs = apr_pstrdup(pool,"epsg:4326");
    grid->unit = GEOCACHE_UNIT_DEGREES;
    grid->tile_sx = grid->tile_sy = 256;
-   grid->resolutions = wgs84_resolutions;
-   grid->levels = 16;
-   grid->extents = (double**)apr_pcalloc(pool,grid->levels*sizeof(double*));
-   grid->resolutions = (double*)apr_pcalloc(pool,grid->levels*sizeof(double));
-   for(i=0; i<grid->levels; i++) {
-      grid->extents[i] = (double*)apr_pcalloc(pool,4*sizeof(double));
-      grid->extents[i][0] = wgs84_extent[0];
-      grid->extents[i][1] = wgs84_extent[1];
-      grid->extents[i][2] = wgs84_extent[2];
-      grid->extents[i][3] = wgs84_extent[3];
-      grid->resolutions[i] = wgs84_resolutions[i];
+   grid->nlevels = 16;
+   grid->extent[0] = wgs84_extent[0];
+   grid->extent[1] = wgs84_extent[1];
+   grid->extent[2] = wgs84_extent[2];
+   grid->extent[3] = wgs84_extent[3];
+   grid->levels = (geocache_grid_level**)apr_pcalloc(pool,
+         grid->nlevels*sizeof(geocache_grid_level*));
+   for(i=0; i<grid->nlevels; i++) {
+      geocache_grid_level *level = (geocache_grid_level*)apr_pcalloc(pool,sizeof(geocache_grid_level));
+      level->resolution = wgs84_resolutions[i];
+      grid->levels[i] = level;
    }
    geocache_configuration_add_grid(cfg,grid,"WGS84");
 
@@ -123,18 +123,18 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    apr_table_add(grid->metadata,"title","GoogleMapsCompatible");
    apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
    grid->tile_sx = grid->tile_sy = 256;
-   grid->resolutions = google_resolutions;
-   grid->levels = 19;
+   grid->nlevels = 19;
    grid->unit = GEOCACHE_UNIT_METERS;
-   grid->extents = (double**)apr_pcalloc(pool,grid->levels*sizeof(double*));
-   grid->resolutions = (double*)apr_pcalloc(pool,grid->levels*sizeof(double));
-   for(i=0; i<grid->levels; i++) {
-      grid->extents[i] = (double*)apr_pcalloc(pool,4*sizeof(double));
-      grid->extents[i][0] = google_extent[0];
-      grid->extents[i][1] = google_extent[1];
-      grid->extents[i][2] = google_extent[2];
-      grid->extents[i][3] = google_extent[3];
-      grid->resolutions[i] = google_resolutions[i];
+   grid->extent[0] = google_extent[0];
+   grid->extent[1] = google_extent[1];
+   grid->extent[2] = google_extent[2];
+   grid->extent[3] = google_extent[3];
+   grid->levels = (geocache_grid_level**)apr_pcalloc(pool,
+         grid->nlevels*sizeof(geocache_grid_level*));
+   for(i=0; i<grid->nlevels; i++) {
+      geocache_grid_level *level = (geocache_grid_level*)apr_pcalloc(pool,sizeof(geocache_grid_level));
+      level->resolution = google_resolutions[i];
+      grid->levels[i] = level;
    }
    geocache_configuration_add_grid(cfg,grid,"GoogleMapsCompatible");
 
@@ -144,18 +144,18 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    apr_table_add(grid->metadata,"title","GoogleMapsCompatible");
    apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
    grid->tile_sx = grid->tile_sy = 256;
-   grid->resolutions = google_resolutions;
-   grid->levels = 19;
+   grid->nlevels = 19;
+   grid->extent[0] = google_extent[0];
+   grid->extent[1] = google_extent[1];
+   grid->extent[2] = google_extent[2];
+   grid->extent[3] = google_extent[3];
    grid->unit = GEOCACHE_UNIT_METERS;
-   grid->extents = (double**)apr_pcalloc(pool,grid->levels*sizeof(double*));
-   grid->resolutions = (double*)apr_pcalloc(pool,grid->levels*sizeof(double));
-   for(i=0; i<grid->levels; i++) {
-      grid->extents[i] = (double*)apr_pcalloc(pool,4*sizeof(double));
-      grid->extents[i][0] = google_extent[0];
-      grid->extents[i][1] = google_extent[1];
-      grid->extents[i][2] = google_extent[2];
-      grid->extents[i][3] = google_extent[3];
-      grid->resolutions[i] = google_resolutions[i];
+   grid->levels = (geocache_grid_level**)apr_pcalloc(pool,
+         grid->nlevels*sizeof(geocache_grid_level*));
+   for(i=0; i<grid->nlevels; i++) {
+      geocache_grid_level *level = (geocache_grid_level*)apr_pcalloc(pool,sizeof(geocache_grid_level));
+      level->resolution = google_resolutions[i];
+      grid->levels[i] = level;
    }
    geocache_configuration_add_grid(cfg,grid,"google");
 
@@ -342,8 +342,14 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
                value);
          return;
       }
-      grid->resolutions = values;
-      grid->levels = nvalues;
+      grid->nlevels = nvalues;
+      grid->levels = (geocache_grid_level**)apr_pcalloc(ctx->pool,
+            grid->nlevels*sizeof(geocache_grid_level));
+      while(nvalues--) {
+         grid->levels[nvalues] = (geocache_grid_level*)apr_pcalloc(ctx->pool,
+               sizeof(geocache_grid_level));
+         grid->levels[nvalues]->resolution = values[nvalues];
+      }
    }
 
    if(grid->srs == NULL) {
@@ -355,26 +361,21 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "grid \"%s\" has no (or invalid) extent configured"
             " You must add/correct a <extent> tag.", grid->name);
       return;
+   } else {
+         grid->extent[0] = extent[0];
+         grid->extent[1] = extent[1];
+         grid->extent[2] = extent[2];
+         grid->extent[3] = extent[3];
    }
    if(grid->tile_sx <= 0 || grid->tile_sy <= 0) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "grid \"%s\" has no (or invalid) tile size configured"
             " You must add/correct a <size> tag.", grid->name);
       return;
    }
-   if(!grid->levels) {
+   if(!grid->nlevels) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "grid \"%s\" has no resolutions configured."
             " You must add a <resolutions> tag.", grid->name);
       return;
-   } else {
-      int i;
-      grid->extents = apr_pcalloc(ctx->pool, grid->levels * sizeof(double*));
-      for(i=0;i<grid->levels;i++) {
-         grid->extents[i] = apr_pcalloc(ctx->pool, 4 * sizeof(double*));
-         grid->extents[i][0] = extent[0];
-         grid->extents[i][1] = extent[1];
-         grid->extents[i][2] = extent[2];
-         grid->extents[i][3] = extent[3];
-      }
    }
    geocache_configuration_add_grid(config,grid,name);
 }
@@ -569,20 +570,43 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    tileset = geocache_tileset_create(ctx);
    tileset->name = name;
 
-   if ((cur_node = ezxml_child(node,"grid")) != NULL) {
-      tileset->grids = apr_array_make(ctx->pool,1,sizeof(geocache_grid*));
-      char *grids = apr_pstrdup(ctx->pool,cur_node->txt);
-      char *key, *last;
-      for (key = apr_strtok(grids, ",", &last); key != NULL;
-            key = apr_strtok(NULL, ",", &last)) {
-         geocache_grid *grid = geocache_configuration_get_grid(config, key);
-         if(!grid) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" references grid \"%s\","
-                  " but it is not configured", name, key);
+   for(cur_node = ezxml_child(node,"grid"); cur_node; cur_node = cur_node->next) {
+      int i;
+      char *restrictedExtent = NULL;
+      if (tileset->grid_links == NULL) {
+         tileset->grid_links = apr_array_make(ctx->pool,1,sizeof(geocache_grid_link*));
+      }
+      geocache_grid *grid = geocache_configuration_get_grid(config, cur_node->txt);
+      if(!grid) {
+         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" references grid \"%s\","
+               " but it is not configured", name, cur_node->txt);
+         return;
+      }
+      geocache_grid_link *gridlink = apr_pcalloc(ctx->pool,sizeof(geocache_grid_link));
+      gridlink->grid = grid;
+      gridlink->grid_limits = apr_pcalloc(ctx->pool,grid->nlevels*sizeof(int*));
+      for(i=0;i<grid->nlevels;i++) {
+         gridlink->grid_limits[i] = apr_pcalloc(ctx->pool,4*sizeof(int));
+      }
+      restrictedExtent = (char*)ezxml_attr(cur_node,"restricted_extent");
+      if(restrictedExtent) {
+         double *extent;
+         int nvalues;
+         restrictedExtent = apr_pstrdup(ctx->pool,restrictedExtent);
+         if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, restrictedExtent, ' ', &extent, &nvalues) ||
+               nvalues != 4) {
+            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse extent array %s."
+                  "(expecting 4 space separated numbers, "
+                  "eg <grid restricted_extent=\"-180 -90 180 90\">foo</grid>",
+                  restrictedExtent);
             return;
          }
-         APR_ARRAY_PUSH(tileset->grids,geocache_grid*) = grid;
+         geocache_grid_compute_limits(grid,extent,gridlink->grid_limits);
+
+      } else {
+         geocache_grid_compute_limits(grid,grid->extent,gridlink->grid_limits);
       }
+      APR_ARRAY_PUSH(tileset->grid_links,geocache_grid_link*) = gridlink;
    }
 
    if ((cur_node = ezxml_child(node,"metadata")) != NULL) {
@@ -722,7 +746,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       return;
    } 
 
-   if(apr_is_empty_array(tileset->grids)) {
+   if(apr_is_empty_array(tileset->grid_links)) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" has no grids configured."
             " You must add a <grid> tag.", tileset->name);
       return;

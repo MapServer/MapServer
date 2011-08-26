@@ -78,6 +78,8 @@ typedef struct geocache_service_demo geocache_service_demo;
 typedef struct geocache_server_cfg geocache_server_cfg;
 typedef struct geocache_image geocache_image;
 typedef struct geocache_grid geocache_grid;
+typedef struct geocache_grid_level geocache_grid_level;
+typedef struct geocache_grid_link geocache_grid_link;
 typedef struct geocache_context geocache_context;
 typedef struct geocache_dimension geocache_dimension;
 
@@ -341,7 +343,7 @@ struct geocache_request_get_capabilities {
 struct geocache_request_get_capabilities_tms {
    geocache_request_get_capabilities request;
    geocache_tileset *tileset;
-   geocache_grid *grid;
+   geocache_grid_link *grid_link;
    char *version;
 };
 
@@ -656,7 +658,7 @@ geocache_cache* geocache_cache_disk_create(geocache_context *ctx);
  */
 struct geocache_tile {
     geocache_tileset *tileset; /**< the geocache_tileset that corresponds to the tile*/
-    geocache_grid *grid;
+    geocache_grid_link *grid_link;
     int x; /**< tile x index */
     int y; /**< tile y index */
     int z; /**< tile z index (zoom level) */
@@ -690,16 +692,32 @@ struct geocache_metatile {
     geocache_image *imdata;
 };
 
+
+struct geocache_grid_level {
+   double resolution;
+   unsigned int maxx, maxy;
+};
+
 struct geocache_grid {
    char *name;
-   int levels;
+   int nlevels;
    char *srs;
+   double extent[4];
    geocache_unit unit;
    int tile_sx, tile_sy; /**<width and height of a tile in pixels */
-   double *resolutions;
-   double **extents; /**< array of extents (one for each resolution) */
-
+   geocache_grid_level **levels;
    apr_table_t *metadata;
+};
+
+
+struct geocache_grid_link {
+   geocache_grid *grid;
+   /**
+    * precalculated limits for available each level: [minTileX, minTileY, maxTileX, maxTileY].
+    *
+    * a request is valid if x is in [minTileX, maxTileX[ and y in [minTileY,maxTileY]
+    */
+   int **grid_limits;
 };
 
 /**\class geocache_tileset
@@ -721,7 +739,7 @@ struct geocache_tileset {
     /**
      * list of grids that will be cached
      */
-    apr_array_header_t *grids;
+    apr_array_header_t *grid_links;
 
     /**
      * size of the metatile that should be requested to the geocache_tileset::source
@@ -859,6 +877,7 @@ void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile)
 /** @} */
 
 
+/* in grid.c */
 geocache_grid* geocache_grid_create(apr_pool_t *pool);
 
 /**
@@ -875,6 +894,7 @@ void geocache_grid_get_xy(geocache_context *ctx, geocache_grid *grid, double dx,
 
 double geocache_grid_get_resolution(geocache_grid *grid, double *bbox);
 void geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level);
+void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits);
 
 /* in util.c */
 int geocache_util_extract_int_list(geocache_context *ctx, const char* args, const char sep, int **numbers,

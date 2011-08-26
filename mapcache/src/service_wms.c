@@ -110,20 +110,21 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
       geocache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      geocache_grid *grid = APR_ARRAY_IDX(tileset->grids,0,geocache_grid*);
+      geocache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*);
+      geocache_grid *grid = grid_link->grid;
       char *resolutions="";
       
       int i;
-      for(i=0;i<grid->levels;i++) {
-         resolutions = apr_psprintf(ctx->pool,"%s%.20f ",resolutions,grid->resolutions[i]);
+      for(i=0;i<grid->nlevels;i++) {
+         resolutions = apr_psprintf(ctx->pool,"%s%.20f ",resolutions,grid->levels[i]->resolution);
       }
       char *tilesetcaps = apr_psprintf(ctx->pool,wms_tileset,
             grid->srs,
             grid->srs,
-            grid->extents[0][0],
-            grid->extents[0][1],
-            grid->extents[0][2],
-            grid->extents[0][3],
+            grid->extent[0],
+            grid->extent[1],
+            grid->extent[2],
+            grid->extent[3],
             resolutions,
             grid->tile_sx,
             grid->tile_sy,
@@ -173,14 +174,14 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
                dimensions = apr_pstrcat(ctx->pool,dimensions,"</Dimension>\n",NULL);
             }
          }
-         for(i=0;i<tileset->grids->nelts;i++) {
-            geocache_grid *grid = APR_ARRAY_IDX(tileset->grids,i,geocache_grid*);
+         for(i=0;i<tileset->grid_links->nelts;i++) {
+            geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*)->grid;
             char *bbox = apr_psprintf(ctx->pool,wms_bbox,
                   grid->srs,
-                  grid->extents[0][0],
-                  grid->extents[0][1],
-                  grid->extents[0][2],
-                  grid->extents[0][3],
+                  grid->extent[0],
+                  grid->extent[1],
+                  grid->extent[2],
+                  grid->extent[3],
                   grid->srs);
             srss = apr_pstrcat(ctx->pool,srss,bbox,NULL);
          }
@@ -308,16 +309,16 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
             return;
          }
          int i;
-         geocache_grid *grid = NULL;
-         for(i=0;i<tileset->grids->nelts;i++){
-            geocache_grid *sgrid = APR_ARRAY_IDX(tileset->grids,i,geocache_grid*);
-            if(strcasecmp(sgrid->srs,srs)) continue;
-            if(sgrid->tile_sx != width) continue;
-            if(sgrid->tile_sy != height) continue;
-            grid = sgrid;
+         geocache_grid_link *grid_link = NULL;
+         for(i=0;i<tileset->grid_links->nelts;i++){
+            geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+            if(strcasecmp(sgrid->grid->srs,srs)) continue;
+            if(sgrid->grid->tile_sx != width) continue;
+            if(sgrid->grid->tile_sy != height) continue;
+            grid_link = sgrid;
             break;
          }
-         if(!grid) {
+         if(!grid_link) {
                ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR,
                      "received unsuitable wms request: no suitable <grid> found");
                return;
@@ -328,8 +329,10 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
             ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate tile");
             return;
          }
-         tile->grid = grid;
+         tile->grid_link = grid_link;
          geocache_tileset_tile_lookup(ctx, tile, bbox);
+         GC_CHECK_ERROR(ctx);
+         geocache_tileset_tile_validate(ctx,tile);
          GC_CHECK_ERROR(ctx);
 
          /*look for dimensions*/

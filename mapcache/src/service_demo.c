@@ -75,13 +75,13 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       int i,j;
-      for(j=0;j<tileset->grids->nelts;j++) {
+      for(j=0;j<tileset->grid_links->nelts;j++) {
          char *resolutions="";
-         geocache_grid *grid = APR_ARRAY_IDX(tileset->grids,j,geocache_grid*);
+         geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
          layers = apr_psprintf(ctx->pool,"%s,%s_%s_layer",layers,tileset->name,grid->name);
-         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->resolutions[0]);
-         for(i=1;i<grid->levels;i++) {
-            resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->resolutions[i]);
+         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);
+         for(i=1;i<grid->nlevels;i++) {
+            resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->levels[i]->resolution);
          }
          char *ol_layer = apr_psprintf(ctx->pool,demo_layer,
                tileset->name,
@@ -90,10 +90,10 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
                grid->name,
                apr_pstrcat(ctx->pool,onlineresource,"/wms?",NULL),
                tileset->name,resolutions,
-               grid->extents[0][0],
-               grid->extents[0][1],
-               grid->extents[0][2],
-               grid->extents[0][3],
+               grid->extent[0],
+               grid->extent[1],
+               grid->extent[2],
+               grid->extent[3],
                grid->srs);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
       }

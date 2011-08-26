@@ -25,6 +25,30 @@ geocache_grid* geocache_grid_create(apr_pool_t *pool) {
    return grid;
 }
 
+void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits) {
+   int i;
+   double epsilon = 0.0000001;
+   for(i=0;i<grid->nlevels;i++) {
+      geocache_grid_level *level = grid->levels[i];
+      double unitheight = grid->tile_sy * level->resolution;
+      double unitwidth = grid->tile_sx * level->resolution;
+
+      level->maxy = ceil((grid->extent[3]-grid->extent[1] - 0.01* unitheight)/unitheight);
+      level->maxx = ceil((grid->extent[2]-grid->extent[0] - 0.01* unitwidth)/unitwidth);
+
+      limits[i][0] = floor((extent[0] - grid->extent[0]) / unitwidth + epsilon);
+      limits[i][2] = ceil((extent[2] - grid->extent[0]) / unitwidth - epsilon);
+      limits[i][1] = floor((extent[1] - grid->extent[1]) / unitheight + epsilon);
+      limits[i][3] = ceil((extent[3] - grid->extent[1]) / unitheight - epsilon);
+      // to avoid requesting out-of-range tiles
+      if (limits[i][0] < 0) limits[i][0] = 0;
+      if (limits[i][2] > level->maxx) limits[i][2] = level->maxx;
+      if (limits[i][1] < 0) limits[i][1] = 0;
+      if (limits[i][3] > level->maxy) limits[i][3] = level->maxy;
+
+   }
+}
+
 double geocache_grid_get_resolution(geocache_grid *grid, double *bbox) {
    double rx = (bbox[2] - bbox[0]) / (double)grid->tile_sx;
    double ry = (bbox[3] - bbox[1]) / (double)grid->tile_sy;
@@ -34,9 +58,9 @@ double geocache_grid_get_resolution(geocache_grid *grid, double *bbox) {
 void geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level) {
    double max_diff = *resolution / (double)GEOCACHE_MAX(grid->tile_sx, grid->tile_sy);
    int i;
-   for(i=0; i<grid->levels; i++) {
-      if(fabs(grid->resolutions[i] - *resolution) < max_diff) {
-         *resolution = grid->resolutions[i];
+   for(i=0; i<grid->nlevels; i++) {
+      if(fabs(grid->levels[i]->resolution - *resolution) < max_diff) {
+         *resolution = grid->levels[i]->resolution;
          *level = i;
          return;
       }
@@ -46,9 +70,15 @@ void geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double 
 
 void geocache_grid_get_xy(geocache_context *ctx, geocache_grid *grid, double dx, double dy,
         int z, int *x, int *y) {
-    double res = grid->resolutions[z];
-    *x = (int)((dx - grid->extents[z][0]) / (res * grid->tile_sx));
-    *y = (int)((dy - grid->extents[z][1]) / (res * grid->tile_sy));
+#ifdef DEBUG
+   if(z>=grid->nlevels) {
+      ctx->set_error(ctx,GEOCACHE_ERROR,"####BUG##### requesting invalid level");
+      return;
+   }
+#endif
+   double res = grid->levels[z]->resolution;
+   *x = (int)((dx - grid->extent[0]) / (res * grid->tile_sx));
+   *y = (int)((dy - grid->extent[1]) / (res * grid->tile_sy));
 }
 /* vim: ai ts=3 sts=3 et sw=3
 */

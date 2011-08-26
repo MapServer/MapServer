@@ -31,7 +31,7 @@ void _geocache_source_wms_render_metatile(geocache_context *ctx, geocache_metati
     apr_table_setn(params,"WIDTH",apr_psprintf(ctx->pool,"%d",tile->sx));
     apr_table_setn(params,"HEIGHT",apr_psprintf(ctx->pool,"%d",tile->sy));
     apr_table_setn(params,"FORMAT","image/png");
-    apr_table_setn(params,"SRS",tile->tile.grid->srs);
+    apr_table_setn(params,"SRS",tile->tile.grid_link->grid->srs);
  
     apr_table_overlap(params,wms->wms_params,0);
     if(tile->tile.dimensions && !apr_is_empty_table(tile->tile.dimensions)) {

@@ -91,7 +91,7 @@ geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_
    if(GC_HAS_ERROR(ctx)) {
       return NULL;
    }
-   tile->grid = tiles[0]->grid;
+   tile->grid_link = tiles[0]->grid_link;
    tile->tileset = tiles[0]->tileset;
    return tile;
 }
@@ -103,8 +103,8 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
       geocache_image *metatile;
       int i,j;
       int sx,sy;
-      tileimg.w = mt->tile.grid->tile_sx;
-      tileimg.h = mt->tile.grid->tile_sy;
+      tileimg.w = mt->tile.grid_link->grid->tile_sx;
+      tileimg.h = mt->tile.grid_link->grid->tile_sy;
       if(!mt->imdata) {
          metatile = geocache_imageio_decode(ctx, mt->tile.data);
       } else {
