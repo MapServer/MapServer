@@ -16,7 +16,13 @@
 
 #include "geocache.h"
 
-void _geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_image *overlay) {
+geocache_image* geocache_image_create(geocache_context *ctx) {
+    geocache_image *img = (geocache_image*)apr_pcalloc(ctx->pool,sizeof(geocache_image));
+    img->w= img->h= 0;
+    return img;
+}
+
+void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_image *overlay) {
    int i,j;
    unsigned char *browptr, *orowptr, *bptr, *optr;
    if(base->w != overlay->w || base->h != overlay->h) {
@@ -73,7 +79,7 @@ geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_
       if(tiles[i]->expires && ((tile->expires < tiles[i]->expires) || !tile->expires)) {
          tile->expires = tiles[i]->expires;
       }
-      _geocache_image_merge(ctx, base, overlay);
+      geocache_image_merge(ctx, base, overlay);
       if(GC_HAS_ERROR(ctx)) {
          return NULL;
       }
@@ -109,6 +115,10 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
             sx = mt->tile.tileset->metabuffer + i * tileimg.w;
             sy = mt->tile.sy - (mt->tile.tileset->metabuffer + (j+1) * tileimg.w);
             tileimg.data = &(metatile->data[sy*metatile->stride + 4 * sx]);
+            if(mt->tile.tileset->watermark) {
+                geocache_image_merge(ctx,&tileimg,mt->tile.tileset->watermark);
+                GC_CHECK_ERROR(ctx);
+            }
             mt->tiles[i*mt->tile.tileset->metasize_x+j].data = mt->tile.tileset->format->write(ctx, &tileimg, mt->tile.tileset->format);
             GC_CHECK_ERROR(ctx);
          }
@@ -121,8 +131,8 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
          ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "##### BUG ##### using a metatile with no format");
          return;
       }
-      mt->tiles[0].data = mt->tile.data;
 #endif
+      mt->tiles[0].data = mt->tile.data;
    }
 }
 

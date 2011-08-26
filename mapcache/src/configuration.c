@@ -612,6 +612,42 @@ void parseTileset(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
          tileset->metasize_x = values[0];
          tileset->metasize_y = values[1];
          xmlFree(value);
+      } else if(!xmlStrcmp(cur_node->name, BAD_CAST "watermark")) {
+         value = (char*)xmlNodeGetContent(cur_node);
+         if(!value || !*value) {
+             ctx->set_error(ctx,GEOCACHE_PARSE_ERROR, "watermark config entry empty");
+             return;
+         }
+         apr_pool_t *tmppool;
+         apr_pool_create(&tmppool,ctx->pool);
+         apr_file_t *f;
+         apr_finfo_t finfo;
+         int rv;
+         if(apr_file_open(&f, value, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
+                APR_OS_DEFAULT, tmppool) != APR_SUCCESS) {
+             ctx->set_error(ctx,GEOCACHE_DISK_ERROR, "failed to open watermark image %s",value);
+             return;
+         }
+         rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
+         if(!finfo.size) {
+            ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "watermark %s has no data",value);
+            return;
+         }
+
+         geocache_buffer *watermarkdata = geocache_buffer_create(finfo.size,tmppool);
+         //manually add the data to our buffer
+         apr_size_t size;
+         apr_file_read(f,(void*)watermarkdata->buf,&size);
+         watermarkdata->size = size;
+         apr_file_close(f);
+         if(size != finfo.size) {
+            ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to copy watermark image data, got %d of %d bytes",(int)size, (int)finfo.size);
+            return;
+         }
+         tileset->watermark = geocache_imageio_decode(ctx,watermarkdata);
+         GC_CHECK_ERROR(ctx);
+         apr_pool_destroy(tmppool);
+         xmlFree(value);
       } else if(!xmlStrcmp(cur_node->name, BAD_CAST "expires")) {
          value = (char*)xmlNodeGetContent(cur_node);
          char *endptr;
@@ -686,8 +722,27 @@ void parseTileset(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
    if(!tileset->format && (
          tileset->metasize_x != 1 ||
          tileset->metasize_y != 1 ||
-         tileset->metabuffer != 0)) {
-      tileset->format = config->merge_format;
+         tileset->metabuffer != 0 ||
+         tileset->watermark)) {
+       if(tileset->watermark) {
+          ctx->set_error(ctx,GEOCACHE_PARSE_ERROR,"tileset \"%s\" has no <format> configured, but it is needed for the watermark",
+                   tileset->name);
+          return;
+       } else {
+          ctx->set_error(ctx,GEOCACHE_PARSE_ERROR,"tileset \"%s\" has no <format> configured, but it is needed for metatiling",
+                   tileset->name);
+          return;
+       }
+   }
+
+   if(tileset->watermark) {
+       if(tileset->watermark->h != tileset->grid->tile_sy ||
+               tileset->watermark->w != tileset->grid->tile_sx) {
+           ctx->set_error(ctx,GEOCACHE_IMAGE_ERROR,"watermark size (%d,%d) does not match tile size (%d,%d)",
+                tileset->watermark->w, tileset->watermark->h,
+                tileset->grid->tile_sx, tileset->grid->tile_sx);
+           return;
+       }
    }
 
 

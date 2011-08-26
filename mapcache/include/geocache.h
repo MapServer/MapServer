@@ -498,15 +498,30 @@ struct geocache_image {
  */
 #define GET_IMG_PIXEL(img,x,y) (&((img).data[(y)*(img).stride + (x)*4]))
 
+
+/**
+ * \brief initialize a new geocache_image
+ */
+geocache_image* geocache_image_create(geocache_context *ctx);
+
 /**
  \brief merge a set of tiles into a single image
  \param tiles the list of tiles to merge
  \param ntiles the number of tiles in the list of tiles
  \param format the format to encode the resulting image
- \param r the context
+ \param ctx the context
  \returns a new tile with the merged image
  */
 geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_format *format, geocache_tile **tiles, int ntiles);
+
+/**
+ * \brief merge two images
+ * \param base the imae to merge onto
+ * \param overlay the image to overlay onto
+ * \param ctx the context
+ * when finished, base will be modified and have overlay merged onto it
+ */
+void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_image *overlay);
 
 /**
  * \brief split the given metatile into tiles
@@ -749,6 +764,11 @@ struct geocache_tileset {
      * a list of parameters that can be forwarded from the client to the geocache_tileset::source
      */
     apr_table_t *forwarded_params;
+    
+    /**
+     * image to be used as a watermark
+     */
+    geocache_image *watermark;
 
     /**
      * handle to the configuration this tileset belongs to

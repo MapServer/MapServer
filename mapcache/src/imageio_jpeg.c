@@ -198,7 +198,7 @@ geocache_image* _geocache_imageio_jpeg_decode(geocache_context *r, geocache_buff
    struct jpeg_error_mgr jerr;
    jpeg_create_decompress(&cinfo);
    cinfo.err = jpeg_std_error(&jerr);
-   geocache_image *img = apr_pcalloc(r->pool,sizeof(geocache_image));
+   geocache_image *img = geocache_image_create(r);
    if (_geocache_imageio_jpeg_mem_src(&cinfo,buffer->buf, buffer->size) != GEOCACHE_SUCCESS){
       return NULL;
    }

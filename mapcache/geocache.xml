@@ -67,8 +67,8 @@
     <tileset name="test">
         <source>vmap0</source>
         <cache>disk</cache>
+        <watermark>/Users/tbonfort/Documents/terriscope/logo-watermark.png</watermark>
         <grid>WGS84</grid>
-        <format>PNG_BEST</format>
         <expires>3600</expires>
     </tileset>
     <tileset name="test2">
@@ -90,6 +90,7 @@
           <title>osm mapserver served map of midi-pyrénées</title>
           <abstract>see http://mapserver-utils.googlecode.com</abstract>
        </metadata>
+       <watermark>/Users/tbonfort/Documents/terriscope/logo-watermark.png</watermark>
         <source>osm</source>
         <cache>disk</cache>
         <format>PNG</format>

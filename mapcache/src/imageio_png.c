@@ -76,7 +76,7 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    png_set_read_fn(png_ptr,&b,_geocache_imageio_png_read_func);
 
    png_read_info(png_ptr,info_ptr);
-   img = apr_pcalloc(ctx->pool,sizeof(geocache_image));
+   img = geocache_image_create(ctx);
    if(!png_get_IHDR(png_ptr, info_ptr, &img->w, &img->h,&bit_depth, &color_type,NULL,NULL,NULL)) {
       ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to read png header");
       return NULL;
