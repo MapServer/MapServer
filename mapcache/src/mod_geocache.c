@@ -81,12 +81,10 @@ void apache_context_server_log(geocache_context *c, geocache_log_level level, ch
 
 void apache_context_request_log(geocache_context *c, geocache_log_level level, char *message, ...) {
    geocache_context_apache_request *ctx = (geocache_context_apache_request*)c;
-   c->global_lock_aquire(c,0);
    va_list args;
    va_start(args,message);
    ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request,"%s",apr_pvsprintf(ctx->ctx.ctx.pool,message,args));
    va_end(args);
-   c->global_lock_release(c);
 }
 
 void geocache_util_mutex_aquire(geocache_context *gctx, int nonblocking) {
@@ -244,13 +242,17 @@ static int mod_geocache_request_handler(request_rec *r) {
 static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
    apr_status_t rc;
    geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
+   apr_lockmech_e lock_type = APR_LOCK_DEFAULT;
 #ifdef DEBUG
    if(!cfg) {
       ap_log_error(APLOG_MARK, APLOG_CRIT, 0, s, "configuration not found in server context");
       return 1;
    }
 #endif
-   rc = apr_global_mutex_create(&cfg->mutex,geocache_mutex_name,APR_LOCK_DEFAULT,p);
+#ifdef APR_HAS_PROC_PTHREAD_SERIALIZE
+   lock_type = APR_LOCK_PROC_PTHREAD;
+#endif
+   rc = apr_global_mutex_create(&cfg->mutex,geocache_mutex_name,lock_type,p);
    if(rc != APR_SUCCESS) {
       ap_log_error(APLOG_MARK, APLOG_CRIT, rc, s, "Could not create global parent mutex %s", geocache_mutex_name);
       return rc;
