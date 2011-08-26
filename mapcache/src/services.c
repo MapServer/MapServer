@@ -55,7 +55,7 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
       (*request)->service = service;
       return;
    }
-   ctx->set_error(ctx,404,"unknown service");
+   ctx->set_error(ctx,404,"unknown service %s",pathinfo);
 }
 
 /** @} */
