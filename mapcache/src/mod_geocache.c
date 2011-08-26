@@ -58,15 +58,15 @@ struct geocache_context_apache_request {
 
 int report_error(int code, geocache_context_apache_request *apache_ctx) {
    geocache_context *ctx= (geocache_context*)apache_ctx;
-   ctx->log(ctx,GEOCACHE_INFO,ctx->get_error_message(ctx));
+   char *msg = ctx->get_error_message(ctx);
+   if(!msg) {
+      msg = "an unspecified error has occured";
+   }
+   ctx->log(ctx,GEOCACHE_INFO,msg);
    if(ctx->config && ctx->config->reporting == GEOCACHE_REPORT_MSG) {
       apache_ctx->request->status = code;
       ap_set_content_type(apache_ctx->request, "text/plain");
-      if(GC_HAS_ERROR(ctx)) {
-         ap_rprintf(apache_ctx->request,"error: %s",ctx->get_error_message(ctx));
-      } else {
-         ap_rprintf(apache_ctx->request,"unspecified error");
-      }
+      ap_rprintf(apache_ctx->request,"error: %s",msg);
       return OK;
    } else {
       return code;
@@ -227,8 +227,12 @@ static int mod_geocache_request_handler(request_rec *r) {
       if(request || GC_HAS_ERROR(global_ctx))
          break;
    }
-   if(!request || GC_HAS_ERROR(global_ctx)) {
+   if(GC_HAS_ERROR(global_ctx)) {
       return report_error(HTTP_BAD_REQUEST, apache_ctx);
+   }
+   if(!request) {
+      global_ctx->set_error(global_ctx,GEOCACHE_REQUEST_ERROR,"failed to recognize request");
+      return report_error(HTTP_NOT_FOUND, apache_ctx);
    }
 
    if(request->type == GEOCACHE_REQUEST_GET_CAPABILITIES) {
