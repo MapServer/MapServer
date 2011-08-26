@@ -147,7 +147,27 @@ AC_DEFUN([APR_CHECK],[
     [with_apr_config=yes]
   )
     if test "$with_apr_config" = "yes"; then
-        AC_PATH_PROG(APRCONFIG, apr-config)
+        AC_MSG_CHECKING(for apr-config in default locations)
+        if test -n "$APXS"; then
+            APXSFULL=`which "$APXS"`
+            APXSDIR=`dirname "$APXSFULL"`
+            if test -x "$APXSDIR/apr-config"; then
+                APRCONFIG="$APXSDIR/apr-config"
+            elif test -x "$APXSDIR/apr-1-config"; then
+                APRCONFIG="$APXSDIR/apr-1-config"
+            fi
+        fi
+        if test -z "$APRCONFIG"; then
+            AC_PATH_PROG(APRCONFIG, apr-config)
+        fi
+        if test -z "$APRCONFIG"; then
+            AC_PATH_PROG(APRCONFIG, apr-1-config)
+        fi
+        if test -n "$APRCONFIG"; then
+            AC_MSG_RESULT([using $APRCONFIG, use --with-apr-config=/path/to/apr-(1-)config to modify])
+        else
+            AC_MSG_RESULT([not found])
+        fi
     elif test "$with_apr_config" = "no"; then
         AC_MSG_ERROR(apr-config is required and cannot be disabled)
     else
@@ -227,7 +247,7 @@ AC_DEFUN([FASTCGI_CHECK],[
         AC_HELP_STRING([--with-fastcgi=DIR],[Specify where FASTCGI is installed]),
         ,[with_fastcgi=no])
     
-    AC_CHECKING(whether to enable FASTCGI)
+    AC_MSG_CHECKING(whether to enable FASTCGI)
     FASTCGI_LIB=''
     FASTCGI_INC=''
     if test x"$with_fastcgi" == "xno"; then
