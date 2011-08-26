@@ -834,8 +834,8 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
       int prefixlen;
       geocache_service *service = NULL;
       service = config->services[i];
-      prefixlen = strlen(service->url_prefix);
       if(!service) continue; /* skip an unconfigured service */
+      prefixlen = strlen(service->url_prefix);
       if(strncmp(service->url_prefix,pathinfo, prefixlen)) continue; /*skip a service who's prefix does not correspond */
       if(*(pathinfo+prefixlen)!='/' && *(pathinfo+prefixlen)!='\0') continue; /*we matched the prefix but there are trailing characters*/
       pathinfo += prefixlen; /* advance pathinfo to after the service prefix */
