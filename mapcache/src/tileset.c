@@ -154,7 +154,14 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
    cairo_translate (cr, dstminx,dstminy);
    cairo_scale  (cr, hf, vf);
    cairo_set_source_surface (cr, srcsurface, 0, 0);
-   cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_NEAREST);
+   switch(ctx->config->resample_mode) {
+      case GEOCACHE_RESAMPLE_BILINEAR:
+         cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_BILINEAR);
+         break;
+      default:
+         cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_NEAREST);
+         break;
+   }
    cairo_paint (cr);
    cairo_surface_destroy(srcsurface);
    cairo_surface_destroy(dstsurface);

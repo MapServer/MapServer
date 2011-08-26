@@ -468,7 +468,7 @@
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
-            <MAP>/gro1/mapserver-utils/osm.map</MAP>
+            <MAP>/Users/tbonfort/dev/mapserver-utils/osm.map</MAP>
          </params>
       </getmap>
    </source>
@@ -751,5 +751,13 @@
    <!-- do not enable this yet, dragons ahead !!
    <pathinfo_hack/>
    -->
+   
+   <!-- resample mode
+        filter applied when resampling tiles for full wms requests.
+        can be either:
+        - nearest : fastest, poor quality
+        - bilinear: slower, higher qulity
+   -->
+   <resample_mode>bilinear</resample_mode>
 
 </geocache>

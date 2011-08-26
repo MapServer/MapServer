@@ -1091,6 +1091,18 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
          goto cleanup;
       }
    }
+   
+   config->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
+   if ((node = ezxml_child(doc,"resample_mode")) != NULL) {
+      if(!strcmp(node->txt,"nearest")) {
+         config->resample_mode = GEOCACHE_RESAMPLE_NEAREST;
+      } else if(!strcmp(node->txt,"bilinear")) {
+         config->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
+      } else {
+         ctx->set_error(ctx,400, "unknown value %s for node <resample_mode> (allowed values: nearest, bilinear", node->txt);
+         goto cleanup;
+      }
+   }
 
    if((node = ezxml_child(doc,"lock_dir")) != NULL) {
       config->lockdir = apr_pstrdup(ctx->pool, node->txt);

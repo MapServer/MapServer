@@ -766,6 +766,11 @@ typedef enum {
    GEOCACHE_GETMAP_FORWARD
 } geocache_getmap_strategy;
 
+typedef enum {
+   GEOCACHE_RESAMPLE_NEAREST,
+   GEOCACHE_RESAMPLE_BILINEAR
+} geocache_resample_mode;
+
 /**
  * a configuration that will be served
  */
@@ -819,6 +824,8 @@ struct geocache_cfg {
     geocache_buffer *empty_image;
 
     geocache_getmap_strategy getmap_strategy;
+
+    geocache_resample_mode resample_mode;
 
     apr_table_t *metadata;
 
