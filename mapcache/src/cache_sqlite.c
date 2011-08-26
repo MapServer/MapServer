@@ -147,9 +147,9 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
    sqlite3_stmt *stmt;
    char *sql;
    if(tile->dimensions) {
-      sql = "SELECT data from tiles where x=? and y=? and z=? and dim=?";
+      sql = "SELECT data,strftime(\"%s\",ctime) from tiles where x=? and y=? and z=? and dim=?";
    } else {
-      sql = "SELECT data from tiles where x=? and y=? and z=?";
+      sql = "SELECT data,strftime(\"%s\",ctime) from tiles where x=? and y=? and z=?";
    }
    sqlite3_prepare(handle,sql,-1,&stmt,NULL);
    sqlite3_bind_int(stmt,1,tile->x);
@@ -176,6 +176,8 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
       tile->data = geocache_buffer_create(size,ctx->pool);
       memcpy(tile->data->buf, blob,size);
       tile->data->size = size;
+      time_t mtime = sqlite3_column_int64(stmt, 1);
+      apr_time_ansi_put(&(tile->mtime),mtime);
       sqlite3_finalize(stmt);
       sqlite3_close(handle);
       return GEOCACHE_SUCCESS;
