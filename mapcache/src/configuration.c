@@ -299,6 +299,19 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       GC_CHECK_ERROR(ctx);
    } 
 
+   if ((cur_node = ezxml_child(node,"units")) != NULL) {
+      if(!strcasecmp(cur_node->txt,"dd")) {
+         grid->unit = GEOCACHE_UNIT_DEGREES;
+      } else if(!strcasecmp(cur_node->txt,"m")) {
+         grid->unit = GEOCACHE_UNIT_METERS;
+      } else if(!strcasecmp(cur_node->txt,"ft")) {
+         grid->unit = GEOCACHE_UNIT_FEET;
+      } else {
+         ctx->set_error(ctx, 400, "unknown unit %s for grid %s (valid values are \"dd\", \"m\", and \"ft\"",
+               cur_node->txt, grid->name);
+         return;
+      }
+   }
    if ((cur_node = ezxml_child(node,"srs")) != NULL) {
       grid->srs = apr_pstrdup(ctx->pool,cur_node->txt);
    }

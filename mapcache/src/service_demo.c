@@ -42,6 +42,7 @@ static char *demo_layer =
       "        \"%s\",{layers: '%s'},\n"
       "        { gutter:0,buffer:0,isBaseLayer:true,transitionEffect:'resize',\n"
       "          resolutions:[%s],\n"
+      "          units:\"%s\",\n"
       "          maxExtent: new OpenLayers.Bounds(%f,%f,%f,%f),\n"
       "          projection: new OpenLayers.Projection(\"%s\")\n"
       "        }\n"
@@ -52,6 +53,7 @@ static char *demo_layer_singletile =
       "        \"%s\",{layers: '%s'},\n"
       "        { gutter:0,ratio:1,isBaseLayer:true,transitionEffect:'resize',\n"
       "          resolutions:[%s],\n"
+      "          units:\"%s\",\n"
       "          singleTile:true,\n"
       "          maxExtent: new OpenLayers.Bounds(%f,%f,%f,%f),\n"
       "          projection: new OpenLayers.Projection(\"%s\")\n"
@@ -88,9 +90,16 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
       int i,j;
       for(j=0;j<tileset->grid_links->nelts;j++) {
          char *resolutions="";
+         char *unit="dd";
          geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
+         if(grid->unit == GEOCACHE_UNIT_METERS) {
+            unit="m";
+         } else if(grid->unit == GEOCACHE_UNIT_FEET) {
+            unit="ft";
+         }
          layers = apr_psprintf(ctx->pool,"%s,%s_%s_layer",layers,tileset->name,grid->name);
          resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);
+         
          for(i=1;i<grid->nlevels;i++) {
             resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->levels[i]->resolution);
          }
@@ -100,7 +109,7 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
                tileset->name,
                grid->name,
                apr_pstrcat(ctx->pool,onlineresource,"/wms?",NULL),
-               tileset->name,resolutions,
+               tileset->name,resolutions,unit,
                grid->extent[0],
                grid->extent[1],
                grid->extent[2],
@@ -116,7 +125,7 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
                tileset->name,
                grid->name,
                apr_pstrcat(ctx->pool,onlineresource,"/wms?",NULL),
-               tileset->name,resolutions,
+               tileset->name,resolutions,unit,
                grid->extent[0],
                grid->extent[1],
                grid->extent[2],
