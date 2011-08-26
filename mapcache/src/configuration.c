@@ -24,6 +24,7 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
    } else {
       geocache_configuration_parse_xml(ctx,filename,config);
    }
+   GC_CHECK_ERROR(ctx);
 
    if(!config->lockdir || !strlen(config->lockdir)) {
       config->lockdir = apr_pstrdup(ctx->pool, "/tmp");

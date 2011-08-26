@@ -1155,6 +1155,9 @@ geocache_feature_info* geocache_tileset_feature_info_create(apr_pool_t *pool, ge
  */
 geocache_tileset* geocache_tileset_create(geocache_context *ctx);
 
+void geocache_tileset_configuration_check(geocache_context *ctx, geocache_tileset *tileset);
+void geocache_tileset_add_watermark(geocache_context *ctx, geocache_tileset *tileset, const char *filename);
+
 
 /**
  * lock the tile
@@ -1307,6 +1310,7 @@ struct geocache_image_format_png_q {
  */
 geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buffer *buffer);
 
+void geocache_image_create_empty(geocache_context *ctx, geocache_cfg *cfg);
 /**
  * @param r
  * @param buffer

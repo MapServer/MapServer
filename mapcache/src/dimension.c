@@ -54,6 +54,10 @@ static const char** _geocache_dimension_intervals_print(geocache_context *ctx, g
    return ret;
 }
 
+static void _geocache_dimension_intervals_parse_json(geocache_context *ctx, geocache_dimension *dim,
+      cJSON *node) {
+}
+
 static void _geocache_dimension_intervals_parse_xml(geocache_context *ctx, geocache_dimension *dim,
       ezxml_t node) {
    const char *entry = node->txt;
@@ -123,6 +127,38 @@ static const char** _geocache_dimension_regex_print(geocache_context *ctx, geoca
    return ret;
 }
 
+static void _geocache_dimension_regex_parse_json(geocache_context *ctx, geocache_dimension *dim,
+      cJSON *node) {
+   geocache_dimension_regex *dimension = (geocache_dimension_regex*)dim;
+   cJSON *tmp = cJSON_GetObjectItem(node,"regex");
+   if(tmp && tmp->valuestring && *(tmp->valuestring)) {
+      dimension->regex_string = apr_pstrdup(ctx->pool,tmp->valuestring);
+#ifdef USE_PCRE
+      const char *pcre_err;
+      int pcre_offset;
+      dimension->pcregex = pcre_compile(dimension->regex_string,0,&pcre_err, &pcre_offset,0);
+      if(!dimension->pcregex) {
+         ctx->set_error(ctx,400,"failed to compile regular expression \"%s\" for dimension \"%s\": %s",
+               dimension->regex_string,dim->name,pcre_err);
+         return;
+      }
+#else
+      int rc = regcomp(dimension->regex, dimension->regex_string, REG_EXTENDED);
+      if(rc) {
+         char errmsg[200];
+         regerror(rc,dimension->regex,errmsg,200);
+         ctx->set_error(ctx,400,"failed to compile regular expression \"%s\" for dimension \"%s\": %s",
+               dimension->regex_string,dim->name,errmsg);
+         return;
+      }
+#endif
+   }
+   if(!dimension->regex_string) {
+      ctx->set_error(ctx,400,"failed to parse dimension \"%s\" regex: none supplied", dim->name);
+      return;
+   }
+}
+
 static void _geocache_dimension_regex_parse_xml(geocache_context *ctx, geocache_dimension *dim,
       ezxml_t node) {
    const char *entry = node->txt;
@@ -180,6 +216,33 @@ static const char** _geocache_dimension_values_print(geocache_context *ctx, geoc
    return ret;
 }
 
+static void _geocache_dimension_values_parse_json(geocache_context *ctx, geocache_dimension *dim,
+      cJSON *node) {
+   cJSON *tmp;
+   geocache_dimension_values *dimension = (geocache_dimension_values*)dim;
+   tmp = cJSON_GetObjectItem(node,"values");
+   if(tmp) {
+      int i;
+      dimension->values = (char**)apr_pcalloc(ctx->pool,cJSON_GetArraySize(tmp)*sizeof(char*));
+      for(i=0;i<cJSON_GetArraySize(tmp);i++) {
+         if(!tmp->valuestring || !*(tmp->valuestring)) {
+            ctx->set_error(ctx,400,"invalid value for dimension %s",dim->name);
+            return;
+         }
+         dimension->values[dimension->nvalues]=apr_pstrdup(ctx->pool,tmp->valuestring);
+         dimension->nvalues++;
+      }
+   }
+   tmp = cJSON_GetObjectItem(node,"case_sensitive");
+   if(tmp && tmp->type == cJSON_True) {
+      dimension->case_sensitive = 1;
+   }
+   if(!dimension->nvalues) {
+      ctx->set_error(ctx, 400, "dimension \"%s\" has no values",dim->name);
+      return;
+   }
+}
+
 static void _geocache_dimension_values_parse_xml(geocache_context *ctx, geocache_dimension *dim,
       ezxml_t node) {
    int count = 1;
@@ -218,6 +281,7 @@ geocache_dimension* geocache_dimension_values_create(apr_pool_t *pool) {
    dimension->nvalues = 0;
    dimension->dimension.validate = _geocache_dimension_values_validate;
    dimension->dimension.configuration_parse_xml = _geocache_dimension_values_parse_xml;
+   dimension->dimension.configuration_parse_json = _geocache_dimension_values_parse_json;
    dimension->dimension.print_ogc_formatted_values = _geocache_dimension_values_print;
    return (geocache_dimension*)dimension;
 }
@@ -238,6 +302,7 @@ geocache_dimension* geocache_dimension_intervals_create(apr_pool_t *pool) {
    dimension->nintervals = 0;
    dimension->dimension.validate = _geocache_dimension_intervals_validate;
    dimension->dimension.configuration_parse_xml = _geocache_dimension_intervals_parse_xml;
+   dimension->dimension.configuration_parse_json = _geocache_dimension_intervals_parse_json;
    dimension->dimension.print_ogc_formatted_values = _geocache_dimension_intervals_print;
    return (geocache_dimension*)dimension;
 }
@@ -249,6 +314,7 @@ geocache_dimension* geocache_dimension_regex_create(apr_pool_t *pool) {
 #endif
    dimension->dimension.validate = _geocache_dimension_regex_validate;
    dimension->dimension.configuration_parse_xml = _geocache_dimension_regex_parse_xml;
+   dimension->dimension.configuration_parse_json = _geocache_dimension_regex_parse_json;
    dimension->dimension.print_ogc_formatted_values = _geocache_dimension_regex_print;
    return (geocache_dimension*)dimension;
 }

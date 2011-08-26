@@ -272,6 +272,59 @@ static void parse_cache_json(geocache_context *ctx, cJSON *node, geocache_cfg *c
 
 
 }
+
+
+static void parse_dimension_json(geocache_context *ctx, cJSON *node, geocache_tileset *tileset) {
+   char *type = NULL;
+   cJSON *tmp;
+   geocache_dimension *dimension;
+
+   tmp = cJSON_GetObjectItem(node,"type");
+   if(tmp) type = tmp->valuestring;
+   if(!type || !strlen(type)) {
+      ctx->set_error(ctx, 400, "mandatory \"type\" not found in dimension for tileset %s", tileset->name);
+      return;
+   }
+   if(!strcmp(type,"values")) {
+      dimension = geocache_dimension_values_create(ctx->pool);
+   } else if(!strcmp(type,"regex")) {
+      dimension = geocache_dimension_regex_create(ctx->pool);
+   } else if(!strcmp(type,"intervals")) {
+      dimension = geocache_dimension_intervals_create(ctx->pool);
+   } else if(!strcmp(type,"time")) {
+      ctx->set_error(ctx,501,"time dimension type not implemented yet");
+      return;
+      dimension = geocache_dimension_time_create(ctx->pool);
+   } else {
+      ctx->set_error(ctx,400,"unknown dimension type \"%s\"",type);
+      return;
+   }
+   
+   tmp = cJSON_GetObjectItem(node,"unit");
+   if(tmp &&tmp->valuestring) {
+      dimension->unit = apr_pstrdup(ctx->pool,tmp->valuestring);
+   }
+   tmp = cJSON_GetObjectItem(node,"name");
+   if(tmp && tmp->valuestring) {
+      dimension->name = apr_pstrdup(ctx->pool,tmp->valuestring);
+   }
+   tmp = cJSON_GetObjectItem(node,"default");
+   if(tmp && tmp->valuestring) {
+      dimension->default_value = apr_pstrdup(ctx->pool,tmp->valuestring);
+   }
+   
+
+   tmp = cJSON_GetObjectItem(node,"props");
+   if(!tmp || tmp->type != cJSON_Object) {
+      ctx->set_error(ctx, 400, "mandatory \"props\" not found in dimension %s for tileset %s",
+            dimension->name, tileset->name);
+      return;
+   } else {
+      dimension->configuration_parse_json(ctx,dimension,tmp);
+      GC_CHECK_ERROR(ctx);
+   }
+}
+
 static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg *cfg) {
    char *name = NULL;
    cJSON *tmp;
@@ -305,7 +358,152 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
       GC_CHECK_ERROR(ctx);
    }
    
+   tmp = cJSON_GetObjectItem(node,"grids");
+   if(tmp && cJSON_GetArraySize(tmp)) {
+      tileset->grid_links = apr_array_make(ctx->pool,1,sizeof(geocache_grid_link*));
+      int i;
+      for(i=0;i<cJSON_GetArraySize(tmp);i++) {
+         cJSON *jgrid = cJSON_GetArrayItem(tmp,i);
+         cJSON *jchild;
+         char *gridname;
+         geocache_grid_link *gridlink = apr_pcalloc(ctx->pool,sizeof(geocache_grid_link));
+         switch(jgrid->type) {
+            case cJSON_String:
+               gridname = jgrid->valuestring;
+               break;
+            case cJSON_Object:
+               jchild = cJSON_GetObjectItem(jgrid,"ref");
+               if(!jchild || jchild->type != cJSON_String || !jchild->valuestring) {
+                  ctx->set_error(ctx, 400, "tileset \"%s\" references grid with no \"ref\"",name);
+                  return;
+               }
+               gridname = jchild->valuestring;
+               jchild = cJSON_GetObjectItem(jgrid,"extent");
+               if(jchild) {
+                  gridlink->restricted_extent = apr_pcalloc(ctx->pool,4*sizeof(double));
+                  parse_extent_json(ctx,jchild,gridlink->restricted_extent);
+                  GC_CHECK_ERROR(ctx);
+               }
+               break;
+            default:
+               ctx->set_error(ctx, 400, "tileset grid can either be a string or a {\"ref\":\"gridname\",\"extent\":{minx,miny,maxx,maxy} for tileset %s",name);
+               return;
+         }
+         geocache_grid *grid = geocache_configuration_get_grid(cfg,gridname);
+         if(!grid) {
+            ctx->set_error(ctx, 400, "tileset %s references unknown grid \"%s\"",name,gridname);
+            return;
+         }
+         
+         gridlink->grid = grid;
+         gridlink->grid_limits = apr_pcalloc(ctx->pool,grid->nlevels*sizeof(int*));
+         for(i=0;i<grid->nlevels;i++) {
+            gridlink->grid_limits[i] = apr_pcalloc(ctx->pool,4*sizeof(int));
+         }
+         double *extent;
+         if(gridlink->restricted_extent &&
+               gridlink->restricted_extent[2]>gridlink->restricted_extent[0] &&
+               gridlink->restricted_extent[3]>gridlink->restricted_extent[1]) {
+            extent = gridlink->restricted_extent;
+         } else {
+            extent = grid->extent;
+         }
+         geocache_grid_compute_limits(grid,extent,gridlink->grid_limits);
 
+         /* compute wgs84 bbox if it wasn't supplied already */
+         if(tileset->wgs84bbox[0] >= tileset->wgs84bbox[2] &&
+               !strcasecmp(grid->srs,"EPSG:4326")) {
+            tileset->wgs84bbox[0] = extent[0];
+            tileset->wgs84bbox[1] = extent[1];
+            tileset->wgs84bbox[2] = extent[2];
+            tileset->wgs84bbox[3] = extent[3];
+         }
+         APR_ARRAY_PUSH(tileset->grid_links,geocache_grid_link*) = gridlink;
+      }
+   } else {
+      ctx->set_error(ctx, 400, "tileset \"%s\" references no grids",name);
+      return;
+   }
+   tmp = cJSON_GetObjectItem(node,"cache");
+   if(!tmp || !tmp->valuestring) {
+      ctx->set_error(ctx, 400, "tileset \"%s\" references no cache",name);
+      return;
+   } else {
+      tileset->cache = geocache_configuration_get_cache(cfg,tmp->valuestring);
+      if(!tileset->cache) {
+         ctx->set_error(ctx, 400, "tileset \"%s\" references invalid cache \"%s\"",name,tmp->valuestring);
+         return;
+      }
+   }
+   tmp = cJSON_GetObjectItem(node,"source");
+   if(!tmp || !tmp->valuestring) {
+      ctx->set_error(ctx, 400, "tileset \"%s\" references no source",name);
+      return;
+   } else {
+      tileset->source = geocache_configuration_get_source(cfg,tmp->valuestring);
+      if(!tileset->source) {
+         ctx->set_error(ctx, 400, "tileset \"%s\" references invalid source \"%s\"",name,tmp->valuestring);
+         return;
+      }
+   }
+   tmp = cJSON_GetObjectItem(node,"format");
+   if(tmp && tmp->valuestring) {
+      tileset->format = geocache_configuration_get_image_format(cfg,tmp->valuestring);
+      if(!tileset->format) {
+         ctx->set_error(ctx, 400, "tileset \"%s\" references invalid format \"%s\"",name,tmp->valuestring);
+         return;
+      }
+   }
+
+   //dimensions
+   tmp = cJSON_GetObjectItem(node,"dimensions");
+   if(tmp) {
+      int i;
+      for(i=0;i<cJSON_GetArraySize(tmp);i++) {
+         cJSON *item = cJSON_GetArrayItem(tmp,i);
+         parse_dimension_json(ctx,item,tileset);
+         GC_CHECK_ERROR(ctx);
+      }
+   }
+
+   //metatile
+   tmp = cJSON_GetObjectItem(node,"metatile");
+   if(tmp && tmp->type == cJSON_Object) {
+      cJSON *e = cJSON_GetObjectItem(tmp,"size");
+      if(e->type == cJSON_Array && cJSON_GetArraySize(e) == 2 ) {
+         tileset->metasize_x = cJSON_GetArrayItem(e,0)->valueint;
+         tileset->metasize_y = cJSON_GetArrayItem(e,1)->valueint;
+      }
+      e = cJSON_GetObjectItem(tmp,"buffer");
+      if(e && e->type == cJSON_Number) {
+         tileset->metabuffer = e->valueint;
+      }
+   }
+   
+   //watermark
+   tmp = cJSON_GetObjectItem(node,"watermark");
+   if(tmp && tmp->valuestring) {
+      geocache_tileset_add_watermark(ctx,tileset,tmp->valuestring);
+      GC_CHECK_ERROR(ctx);
+   }
+
+   //expire and auto_expire
+   tmp = cJSON_GetObjectItem(node,"expires");
+   if(tmp && tmp->type == cJSON_Object) {
+      cJSON *e = cJSON_GetObjectItem(tmp,"delay");
+      if(e->type == cJSON_Number) {
+         tileset->expires = e->valueint;
+         e = cJSON_GetObjectItem(tmp,"auto");
+         if(e->type == cJSON_True) {
+            tileset->auto_expire = tileset->expires;
+         }
+
+      }
+   }
+   geocache_tileset_configuration_check(ctx,tileset);
+   GC_CHECK_ERROR(ctx);
+   
+   geocache_configuration_add_tileset(cfg,tileset,name);
 
 
 
@@ -427,7 +625,55 @@ static void parse_format_json(geocache_context *ctx, cJSON *node, geocache_cfg *
 
    geocache_configuration_add_image_format(cfg,format,name);
 }
-static void parse_service_json(geocache_context *ctx, cJSON *node, geocache_cfg *cfg) {
+static void parse_service_json(geocache_context *ctx, cJSON *node, geocache_cfg *config) {
+   cJSON *tmp = cJSON_GetObjectItem(node,"type");
+   char *type = NULL;
+   if(tmp) type = tmp->valuestring;
+   if(!type || !strlen(type)) {
+      ctx->set_error(ctx, 400, "mandatory attribute \"type\" not found in service");
+      return;
+   }
+   tmp = cJSON_GetObjectItem(node,"enabled");
+   if(tmp && tmp->type == cJSON_False) {
+      return;
+   }
+   
+   geocache_service *new_service;
+   if (!strcasecmp(type,"wms")) {
+      new_service = geocache_service_wms_create(ctx);
+      config->services[GEOCACHE_SERVICE_WMS] = new_service;
+   }
+   else if (!strcasecmp(type,"tms")) {
+      new_service = geocache_service_tms_create(ctx);
+      config->services[GEOCACHE_SERVICE_TMS] = new_service;
+   }
+   else if (!strcasecmp(type,"wmts")) {
+      new_service = geocache_service_wmts_create(ctx);
+      config->services[GEOCACHE_SERVICE_WMTS] = new_service;
+   }
+   else if (!strcasecmp(type,"kml")) {
+      new_service = geocache_service_kml_create(ctx);
+      config->services[GEOCACHE_SERVICE_KML] = new_service;
+   }
+   else if (!strcasecmp(type,"gmaps")) {
+      new_service = geocache_service_gmaps_create(ctx);
+      config->services[GEOCACHE_SERVICE_GMAPS] = new_service;
+   }
+   else if (!strcasecmp(type,"ve")) {
+      new_service = geocache_service_ve_create(ctx);
+      config->services[GEOCACHE_SERVICE_VE] = new_service;
+   }
+   else if (!strcasecmp(type,"demo")) {
+      new_service = geocache_service_demo_create(ctx);
+      config->services[GEOCACHE_SERVICE_DEMO] = new_service;
+   } else {
+      ctx->set_error(ctx,400,"unknown <service> type %s",type);
+   }
+   
+   tmp = cJSON_GetObjectItem(node,"props");
+   if(tmp && new_service->configuration_parse_json) {
+      new_service->configuration_parse_json(ctx,tmp,new_service);
+   }
 }
 
 
@@ -479,6 +725,14 @@ void geocache_configuration_parse_json(geocache_context *ctx, const char *filena
          if(GC_HAS_ERROR(ctx)) goto cleanup;
       }
    }
+   entry = cJSON_GetObjectItem(root,"formats");
+   if(entry) {
+      for(i=0;i<cJSON_GetArraySize(entry);i++) {
+         item = cJSON_GetArrayItem(entry,i);
+         parse_format_json(ctx,item,config);
+         if(GC_HAS_ERROR(ctx)) goto cleanup;
+      }
+   }
    entry = cJSON_GetObjectItem(root,"tilesets");
    if(entry) {
       for(i=0;i<cJSON_GetArraySize(entry);i++) {
@@ -492,14 +746,6 @@ void geocache_configuration_parse_json(geocache_context *ctx, const char *filena
       parse_keyvalues(ctx, entry, config->metadata);
       if(GC_HAS_ERROR(ctx)) goto cleanup;
    }
-   entry = cJSON_GetObjectItem(root,"formats");
-   if(entry) {
-      for(i=0;i<cJSON_GetArraySize(entry);i++) {
-         item = cJSON_GetArrayItem(entry,i);
-         parse_format_json(ctx,item,config);
-         if(GC_HAS_ERROR(ctx)) goto cleanup;
-      }
-   }
    entry = cJSON_GetObjectItem(root,"services");
    if(entry) {
       for(i=0;i<cJSON_GetArraySize(entry);i++) {
@@ -510,12 +756,46 @@ void geocache_configuration_parse_json(geocache_context *ctx, const char *filena
    }
    entry = cJSON_GetObjectItem(root,"config");
    if(entry) {
+
+      /* directory where to store temporary lock files */
+      cJSON *tmp = cJSON_GetObjectItem(entry,"lock_dir");
+      if(tmp && tmp->valuestring) {
+         config->lockdir = apr_pstrdup(ctx->pool,tmp->valuestring);
+      }
+
+      /* error reporting */
+      tmp = cJSON_GetObjectItem(entry,"errors");
+      if(tmp && tmp->valuestring) {
+         if(!strcmp(tmp->valuestring,"log")) {
+            config->reporting = GEOCACHE_REPORT_LOG;
+         } else if(!strcmp(tmp->valuestring,"report")) {
+            config->reporting = GEOCACHE_REPORT_MSG;
+         } else if(!strcmp(tmp->valuestring,"empty_img")) {
+            config->reporting = GEOCACHE_REPORT_EMPTY_IMG;
+            geocache_image_create_empty(ctx, config);
+            if(GC_HAS_ERROR(ctx)) goto cleanup;
+         } else if(!strcmp(tmp->valuestring, "report_img")) {
+            config->reporting = GEOCACHE_REPORT_ERROR_IMG;
+            ctx->set_error(ctx,501,"<errors>: report_img not implemented");
+            goto cleanup;
+         } else {
+            ctx->set_error(ctx,400,"<errors>: unknown value %s (allowed are log, report, empty_img, report_img)",
+                  tmp->valuestring);
+            goto cleanup;
+         }
+      }
+
       /* lock_dir, error_reporting */
+   }
+
+   /* final checks */
+   if(!config->lockdir) {
+      config->lockdir = apr_pstrdup(ctx->pool,"/tmp");
    }
 
 
 cleanup:
-   cJSON_Delete(root);
+   //cJSON_Delete(root);
    fclose(f);
-   free(filedata);
+   //free(filedata);
 }

@@ -53,11 +53,11 @@
   ],
   "sources": [
     {
-      "name":"test",
+      "name":"vmap0",
       "type":"wms",
       "props": {
         "http": {
-          "url":"http://localhost/xxxccv",
+          "url":"http://vmap0.tiles.osgeo.org/wms/vmap0",
           "headers": {
             "User-Agent":"mod-geocache/trunk",
             "Referer":"http://foosite"
@@ -65,7 +65,8 @@
         },
         "getmap": {
           "params":{
-            "LAYERS":"basic"
+            "LAYERS":"basic",
+            "FORMAT":"image/png"
           }
         },
         "getfeatureinfo": {
@@ -105,14 +106,14 @@
   "tilesets": [
     {
       "name": "test",
-      "source": "test",
+      "source": "vmap0",
       "grids": [
         "WGS84",
         { "ref":"g", "extent":[10,10,20,20]}
       ],
       "wgs84_extent":[-180,-90,180,90],
       "format": "png",
-      "cache": "disk",
+      "cache": "sqlite",
       "metatile": {
         "size":[5,5],
         "buffer":10
@@ -122,11 +123,13 @@
         "auto": false
       },
       "dimensions": [
-      ],
-      "watermark":"/path/to/logo.png"
+      ]
+      ,"watermark":"/home/tbonfort/dev/mod-geocache/static/watermark.png"
     }
   ],
   "services": [
+    { "type":"demo" },
+    { "type":"wms" }
   ],
   "config": {
     "error_reporting":"message",

@@ -282,6 +282,7 @@ static void _geocache_cache_sqlite_configuration_post_config(geocache_context *c
       geocache_cache *cache, geocache_cfg *cfg) {
    sqlite3 *db;
    char *errmsg;
+   int ret;
 
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
 
@@ -297,9 +298,14 @@ static void _geocache_cache_sqlite_configuration_post_config(geocache_context *c
             char *dbname = _get_dbname(ctx,(geocache_cache_sqlite*)cache,tileset,grid);
             sqlite3_open(dbname, &db);
             if(tileset->dimensions) {
-               sqlite3_exec(db, "create table if not exists tiles(x integer, y integer, z integer, data blob, dim text, ctime datetime, atime datetime, hitcount integer default 0, primary key(x,y,z,dim))", 0, 0, &errmsg);
+               ret = sqlite3_exec(db, "create table if not exists tiles(x integer, y integer, z integer, data blob, dim text, ctime datetime, atime datetime, hitcount integer default 0, primary key(x,y,z,dim))", 0, 0, &errmsg);
             } else {
-               sqlite3_exec(db, "create table if not exists tiles(x integer, y integer, z integer, data blob, ctime datetime, atime datetime, hitcount integer default 0, primary key (x,y,z))", 0, 0, &errmsg);
+               ret = sqlite3_exec(db, "create table if not exists tiles(x integer, y integer, z integer, data blob, ctime datetime, atime datetime, hitcount integer default 0, primary key (x,y,z))", 0, 0, &errmsg);
+            }
+            if(ret != SQLITE_OK) {
+               ctx->set_error(ctx,500,"sqlite backend failed to create tiles table: %s",sqlite3_errmsg(db));
+               sqlite3_close(db);
+               return;
             }
             sqlite3_close(db);
          }

@@ -18,6 +18,89 @@
 #include <apr_strings.h>
 #include <math.h>
 
+void geocache_tileset_configuration_check(geocache_context *ctx, geocache_tileset *tileset) {
+   
+   /* check we have all we want */
+   if(tileset->cache == NULL) {
+      /* TODO: we should allow tilesets with no caches */
+      ctx->set_error(ctx, 400, "tileset \"%s\" has no cache configured.", tileset->name);
+      return;
+   }
+   if(tileset->source == NULL) {
+      ctx->set_error(ctx, 400, "tileset \"%s\" has no source configured.", tileset->name);
+      return;
+   } 
+
+   if(apr_is_empty_array(tileset->grid_links)) {
+      ctx->set_error(ctx, 400, "tileset \"%s\" has no grids configured", tileset->name);
+      return;
+   } 
+#ifdef USE_PROJ
+   /* not implemented yet, will be used to automatically calculate wgs84bbox with proj */
+   else if(tileset->wgs84bbox[0]>=tileset->wgs84bbox[2]) {
+      geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*);
+      double *extent = sgrid->grid->extent;
+      if(sgrid->restricted_extent) {
+         extent = sgrid->restricted_extent;
+      }
+   }
+#endif
+   if(!tileset->format && tileset->source->type == GEOCACHE_SOURCE_GDAL) {
+      ctx->set_error(ctx,400, "tileset \"%s\" references a gdal source. <format> tag is missing and mandatory in this case",
+            tileset->name);
+      return;
+   }
+
+   if(tileset->metabuffer < 0 || tileset->metasize_x < 1 || tileset->metasize_y < 1) {
+      ctx->set_error(ctx,400,"tileset \"%s\" has invalid metasize %d,%d or metabuffer %d",
+            tileset->name,tileset->metasize_x,tileset->metasize_y,tileset->metabuffer);
+      return;
+   }
+
+   if(!tileset->format && (
+         tileset->metasize_x != 1 ||
+         tileset->metasize_y != 1 ||
+         tileset->metabuffer != 0 ||
+         tileset->watermark)) {
+       if(tileset->watermark) {
+          ctx->set_error(ctx,400,"tileset \"%s\" has no <format> configured, but it is needed for the watermark",
+                   tileset->name);
+          return;
+       } else {
+          ctx->set_error(ctx,400,"tileset \"%s\" has no <format> configured, but it is needed for metatiling",
+                   tileset->name);
+          return;
+       }
+   }
+}
+
+void geocache_tileset_add_watermark(geocache_context *ctx, geocache_tileset *tileset, const char *filename) {
+   apr_file_t *f;
+   apr_finfo_t finfo;
+   int rv;
+   if(apr_file_open(&f, filename, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
+            APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
+      ctx->set_error(ctx,500, "failed to open watermark image %s",filename);
+      return;
+   }
+   rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
+   if(!finfo.size) {
+      ctx->set_error(ctx, 500, "watermark %s has no data",filename);
+      return;
+   }
+
+   geocache_buffer *watermarkdata = geocache_buffer_create(finfo.size,ctx->pool);
+   //manually add the data to our buffer
+   apr_size_t size = finfo.size;
+   apr_file_read(f,watermarkdata->buf,&size);
+   watermarkdata->size = size;
+   if(size != finfo.size) {
+      ctx->set_error(ctx, 500,  "failed to copy watermark image data, got %d of %d bytes",(int)size, (int)finfo.size);
+      return;
+   }
+   apr_file_close(f);
+   tileset->watermark = geocache_imageio_decode(ctx,watermarkdata);
+}
 
 void geocache_tileset_tile_validate(geocache_context *ctx, geocache_tile *tile) {
    if(tile->z < 0 || tile->z >= tile->grid_link->grid->nlevels) {

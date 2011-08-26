@@ -569,31 +569,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
              ctx->set_error(ctx,400, "watermark config entry empty");
              return;
          }
-         apr_file_t *f;
-         apr_finfo_t finfo;
-         int rv;
-         if(apr_file_open(&f, cur_node->txt, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
-                APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
-             ctx->set_error(ctx,500, "failed to open watermark image %s",cur_node->txt);
-             return;
-         }
-         rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
-         if(!finfo.size) {
-            ctx->set_error(ctx, 500, "watermark %s has no data",cur_node->txt);
-            return;
-         }
-
-         geocache_buffer *watermarkdata = geocache_buffer_create(finfo.size,ctx->pool);
-         //manually add the data to our buffer
-         apr_size_t size;
-         apr_file_read(f,(void*)watermarkdata->buf,&size);
-         watermarkdata->size = size;
-         if(size != finfo.size) {
-            ctx->set_error(ctx, 500,  "failed to copy watermark image data, got %d of %d bytes",(int)size, (int)finfo.size);
-            return;
-         }
-         apr_file_close(f);
-         tileset->watermark = geocache_imageio_decode(ctx,watermarkdata);
+         geocache_tileset_add_watermark(ctx,tileset,cur_node->txt);
          GC_CHECK_ERROR(ctx);
    }
       
@@ -642,55 +618,9 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          }
          tileset->format = format;
    }
-   if(!tileset->format && tileset->source->type == GEOCACHE_SOURCE_GDAL) {
-      ctx->set_error(ctx,400, "tileset \"%s\" references a gdal source. <format> tag is missing and mandatory in this case",
-            tileset->name);
-      return;
-   }
-   
-   /* check we have all we want */
-   if(tileset->cache == NULL) {
-      /* TODO: we should allow tilesets with no caches */
-      ctx->set_error(ctx, 400, "tileset \"%s\" has no cache configured."
-            " You must add a <cache> tag.", tileset->name);
-      return;
-   }
-   if(tileset->source == NULL) {
-      ctx->set_error(ctx, 400, "tileset \"%s\" has no source configured."
-            " You must add a <source> tag.", tileset->name);
-      return;
-   } 
 
-   if(apr_is_empty_array(tileset->grid_links)) {
-      ctx->set_error(ctx, 400, "tileset \"%s\" has no grids configured."
-            " You must add a <grid> tag.", tileset->name);
-      return;
-   } else if(!havewgs84bbox) {
-#ifdef USE_PROJ
-      geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*);
-      double *extent = sgrid->grid->extent;
-      if(sgrid->restricted_extent) {
-         extent = sgrid->restricted_extent;
-      }
-#endif
-   }
-
-   if(!tileset->format && (
-         tileset->metasize_x != 1 ||
-         tileset->metasize_y != 1 ||
-         tileset->metabuffer != 0 ||
-         tileset->watermark)) {
-       if(tileset->watermark) {
-          ctx->set_error(ctx,400,"tileset \"%s\" has no <format> configured, but it is needed for the watermark",
-                   tileset->name);
-          return;
-       } else {
-          ctx->set_error(ctx,400,"tileset \"%s\" has no <format> configured, but it is needed for metatiling",
-                   tileset->name);
-          return;
-       }
-   }
-
+   geocache_tileset_configuration_check(ctx,tileset);
+   GC_CHECK_ERROR(ctx);
    geocache_configuration_add_tileset(config,tileset,name);
    return;
 }
@@ -749,15 +679,6 @@ void parseServices(geocache_context *ctx, ezxml_t root, geocache_cfg *config) {
    }
 }
 
-static void createEmptyImages(geocache_context *ctx, geocache_cfg *cfg) {
-   unsigned int color=0;
-   if(!strstr(cfg->merge_format->mime_type,"png")) {
-      color = 0xffffffff;
-   }
-   cfg->empty_image = cfg->merge_format->create_empty_image(ctx, cfg->merge_format,
-         256,256, color);
-   GC_CHECK_ERROR(ctx);
-}
 
 void geocache_configuration_parse_xml(geocache_context *ctx, const char *filename, geocache_cfg *config) {
    ezxml_t doc, node;
@@ -895,7 +816,7 @@ void geocache_configuration_parse_xml(geocache_context *ctx, const char *filenam
          config->reporting = GEOCACHE_REPORT_MSG;
       } else if(!strcmp(node->txt,"empty_img")) {
          config->reporting = GEOCACHE_REPORT_EMPTY_IMG;
-         createEmptyImages(ctx, config);
+         geocache_image_create_empty(ctx, config);
          if(GC_HAS_ERROR(ctx)) goto cleanup;
       } else if(!strcmp(node->txt, "report_img")) {
          config->reporting = GEOCACHE_REPORT_ERROR_IMG;
