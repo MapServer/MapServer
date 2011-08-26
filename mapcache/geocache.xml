@@ -507,18 +507,6 @@
          -->
       </http>
    </source>
-   <source name="helinuc" type="wms">
-      <http>
-         <url>http://localhost/cgi-bin/mapserv?</url>
-      </http>
-      <getmap>
-         <params>
-            <FORMAT>image/png</FORMAT>
-            <LAYERS>default</LAYERS>
-            <MAP>/Users/tbonfort/dev/helinuc.map</MAP>
-         </params>
-      </getmap>
-   </source>
    <source name="osm" type="wms">
       <http>
          <url>http://localhost/cgi-bin/mapserv?</url>
@@ -527,7 +515,7 @@
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
-            <MAP>/Users/tbonfort/dev/mapserver-utils/osm-michelin.map</MAP>
+            <MAP>/Users/tbonfort/dev/mapserver-utils/osm-google.map</MAP>
          </params>
       </getmap>
    </source>
@@ -712,13 +700,6 @@
       <format>mixed</format>
       <grid>WGS84</grid>
    </tileset>
-   <tileset name="helinuc">
-      <source>helinuc</source>
-      <cache>disk</cache>
-      <format>PNG</format>
-      <grid>WGS84</grid>
-      <grid>g</grid>
-   </tileset>
    <tileset name="brgm">
       <source>basic</source>
       <cache>disk</cache>
@@ -787,7 +768,7 @@
       <forwarding_rule name="foo rule">
             <append_pathinfo>true</append_pathinfo>
             <http>
-               <url>http://localhost/geocacheproxy</url>
+               <url>http://server/geocacheproxy</url>
             </http>
       </forwarding_rule>
       <!-- full_wms

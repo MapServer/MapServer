@@ -51,6 +51,8 @@ struct seed_cmd {
    int z;
 };
 
+int depthfirst = 1;
+
 cmd mode = GEOCACHE_CMD_SEED; /* the mode the utility will be running in: either seed or delete */
 
 static const apr_getopt_option_t seed_options[] = {
@@ -131,8 +133,24 @@ int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
 
 int lastmsglen = 0;
 void progresslog(int x, int y, int z) {
+
    if(quiet) return;
    char msg[1024];
+   
+   sprintf(msg,"seeding tile %d %d %d",x,y,z);
+   if(lastmsglen) {
+      char erasestring[1024];
+      int len = GEOCACHE_MIN(1023,lastmsglen);
+      memset(erasestring,' ',len);
+      erasestring[len+1]='\0';
+      sprintf(erasestring,"\r%%%ds\r",lastmsglen);
+      printf(erasestring," ");
+   }
+   lastmsglen = strlen(msg);
+   printf("%s",msg);
+   fflush(NULL);
+   return;
+
    if(queuedtilestot>nthreads) {
       seededtilestot = queuedtilestot - nthreads;
       struct timeval now_t;
@@ -171,76 +189,63 @@ void progresslog(int x, int y, int z) {
 }
 
 
-
-void cmd_thread() {
-   int z = minzoom;
-   int x = grid_link->grid_limits[z][0];
-   int y = grid_link->grid_limits[z][1];
-   geocache_context cmd_ctx = ctx;
-   apr_pool_create(&cmd_ctx.pool,ctx.pool);
-   geocache_tile *tile = geocache_tileset_tile_create(ctx.pool, tileset, grid_link);
-   tile->dimensions = dimensions;
-
-   while(1) {
-      apr_pool_clear(cmd_ctx.pool);
-      if(sig_int_received || error_detected) { //stop if we were asked to stop by hitting ctrl-c
-         //remove all items from the queue
-         void *entry;
-         while (apr_queue_trypop(work_queue,&entry)!=APR_EAGAIN) {queuedtilestot--;}
-         break;
-      }
-      cmd action = GEOCACHE_CMD_SKIP;
-      tile->x = x;
-      tile->y = y;
-      tile->z = z;
-      int tile_exists = tileset->cache->tile_exists(&cmd_ctx,tile);
-      int intersects = -1;
-      /* if the tile exists and a time limit was specified, check the tile modification date */
-      if(tile_exists) {
-         if(age_limit) {
-            if(tileset->cache->tile_get(&cmd_ctx,tile) == GEOCACHE_SUCCESS) {
-               if(tile->mtime && tile->mtime<age_limit) {
-                  /* the tile modification time is older than the specified limit */
+void cmd_recurse(geocache_context *cmd_ctx, geocache_tile *tile) {
+   apr_pool_clear(cmd_ctx->pool);
+   if(sig_int_received || error_detected) { //stop if we were asked to stop by hitting ctrl-c
+      //remove all items from the queue
+      void *entry;
+      while (apr_queue_trypop(work_queue,&entry)!=APR_EAGAIN) {queuedtilestot--;}
+      return;
+   }
+   int tile_exists = tileset->cache->tile_exists(cmd_ctx,tile);
+   cmd action = GEOCACHE_CMD_SKIP;
+   int intersects = -1;
+   /* if the tile exists and a time limit was specified, check the tile modification date */
+   if(tile_exists) {
+      if(age_limit) {
+         if(tileset->cache->tile_get(cmd_ctx,tile) == GEOCACHE_SUCCESS) {
+            if(tile->mtime && tile->mtime<age_limit) {
+               /* the tile modification time is older than the specified limit */
 #ifdef USE_CLIPPERS
-                  /* check we are in the requested features before deleting the tile */
-                  if(nClippers > 0) {
-                     intersects = ogr_features_intersect_tile(&cmd_ctx,tile);
-                  }
-#endif
-                  if(intersects != 0) {
-                     /* the tile intersects the ogr features, or there was no clipping asked for: seed it */
-                     if(mode == GEOCACHE_CMD_SEED) {
-                        geocache_tileset_tile_delete(&cmd_ctx,tile,GEOCACHE_TRUE);
-                        action = GEOCACHE_CMD_SEED;
-                     }
-                     else { //if(action == GEOCACHE_CMD_DELETE)
-                        action = GEOCACHE_CMD_DELETE;
-                     }
-                  } else {
-                     /* the tile does not intersect the ogr features, and already exists, do nothing */
-                     action = GEOCACHE_CMD_SKIP;
-                  }
+               /* check we are in the requested features before deleting the tile */
+               if(nClippers > 0) {
+                  intersects = ogr_features_intersect_tile(cmd_ctx,tile);
                }
-            } else {
-               //BUG: tile_exists returned true, but tile_get returned a failure. not sure what to do.
-               action = GEOCACHE_CMD_SKIP;
+#endif
+               if(intersects != 0) {
+                  /* the tile intersects the ogr features, or there was no clipping asked for: seed it */
+                  if(mode == GEOCACHE_CMD_SEED) {
+                     geocache_tileset_tile_delete(cmd_ctx,tile,GEOCACHE_TRUE);
+                     action = GEOCACHE_CMD_SEED;
+                  }
+                  else { //if(action == GEOCACHE_CMD_DELETE)
+                     action = GEOCACHE_CMD_DELETE;
+                  }
+               } else {
+                  /* the tile does not intersect the ogr features, and already exists, do nothing */
+                  action = GEOCACHE_CMD_SKIP;
+               }
             }
          } else {
-            if(mode == GEOCACHE_CMD_DELETE) {
-               //the tile exists and we are in delete mode: delete it
-               action = GEOCACHE_CMD_DELETE;
-            } else {
-               // the tile exists and we are in seed mode, skip to next one
-               action = GEOCACHE_CMD_SKIP;
-            }
+            //BUG: tile_exists returned true, but tile_get returned a failure. not sure what to do.
+            action = GEOCACHE_CMD_SKIP;
          }
       } else {
-         // the tile does not exist
-         if(mode == GEOCACHE_CMD_SEED) {
+         if(mode == GEOCACHE_CMD_DELETE) {
+            //the tile exists and we are in delete mode: delete it
+            action = GEOCACHE_CMD_DELETE;
+         } else {
+            // the tile exists and we are in seed mode, skip to next one
+            action = GEOCACHE_CMD_SKIP;
+         }
+      }
+   } else {
+      // the tile does not exist
+      if(mode == GEOCACHE_CMD_SEED) {
 #ifdef USE_CLIPPERS
          /* check we are in the requested features before deleting the tile */
          if(nClippers > 0) {
-            if(ogr_features_intersect_tile(&cmd_ctx,tile)) {
+            if(ogr_features_intersect_tile(cmd_ctx,tile)) {
                action = GEOCACHE_CMD_SEED;
             } else {
                action = GEOCACHE_CMD_SKIP;
@@ -251,47 +256,71 @@ void cmd_thread() {
 #else
          action = GEOCACHE_CMD_SEED;
 #endif
-         } else {
-            action = GEOCACHE_CMD_SKIP;
-         }
+      } else {
+         action = GEOCACHE_CMD_SKIP;
       }
+   }
 
-      if(action == GEOCACHE_CMD_SEED || action == GEOCACHE_CMD_DELETE){
-         //current x,y,z needs seeding, add it to the queue
-         struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
-         cmd->x = x;
-         cmd->y = y;
-         cmd->z = z;
-         cmd->command = action;
-         apr_queue_push(work_queue,cmd);
-         queuedtilestot++;
-         progresslog(x,y,z);
-      }
-      //compute next x,y,z
-      x += tileset->metasize_x;
-      if(x >= grid_link->grid_limits[z][2]) {
-         //x is too big, increment y
-         y += tileset->metasize_y;
-         if(y >= grid_link->grid_limits[z][3]) {
-            //y is too big, increment z
-            z += 1;
-            if(z > maxzoom) break; //we've finished seeding
-            y = grid_link->grid_limits[z][1]; //set y to the smallest value for current z
+   if(action == GEOCACHE_CMD_SEED || action == GEOCACHE_CMD_DELETE){
+      //current x,y,z needs seeding, add it to the queue
+      struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
+      cmd->x = tile->x;
+      cmd->y = tile->y;
+      cmd->z = tile->z;
+      cmd->command = action;
+      apr_queue_push(work_queue,cmd);
+      queuedtilestot++;
+      progresslog(tile->x,tile->y,tile->z);
+   }
+
+   //recurse into our 4 child metatiles
+   int i,j;
+   int curx = tile->x;
+   int cury = tile->y;
+   int curz = tile->z;
+   tile->z += 1;
+   if(tile->z > maxzoom) {
+      tile->z -= 1;
+      return;
+   }
+   for(i=0;i<2;i++) {
+      tile->x = curx*2 + i* tileset->metasize_x;
+      if(tile->x >= grid_link->grid_limits[tile->z][0] && tile->x < grid_link->grid_limits[tile->z][2]) {
+         for(j=0;j<2;j++) {
+            tile->y = cury*2 + j * tileset->metasize_y; 
+            if(tile->y >= grid_link->grid_limits[tile->z][1] && tile->y < grid_link->grid_limits[tile->z][3]) {
+               cmd_recurse(cmd_ctx,tile);
+            }
          }
-         x = grid_link->grid_limits[z][0]; //set x to smallest value for current z
       }
+   }
+   tile->x = curx;
+   tile->y = cury;
+   tile->z = curz;
+}
+
+void cmd_thread() {
+   int z = minzoom;
+   int x = grid_link->grid_limits[z][0];
+   int y = grid_link->grid_limits[z][1];
+   geocache_context cmd_ctx = ctx;
+   apr_pool_create(&cmd_ctx.pool,ctx.pool);
+   geocache_tile *tile = geocache_tileset_tile_create(ctx.pool, tileset, grid_link);
+   tile->dimensions = dimensions;
+   tile->x = x;
+   tile->y = y;
+   tile->z = z;
+   cmd_recurse(&cmd_ctx,tile);
+   //instruct rendering threads to stop working
+   int n;
+   for(n=0;n<nthreads;n++) {
+      struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
+      cmd->command = GEOCACHE_CMD_STOP;
+      apr_queue_push(work_queue,cmd);
    }
 
    if(error_detected) {
       printf("%s\n",ctx.get_error_message(&ctx));
-   }
-
-   //instruct rendering threads to stop working
-   int i;
-   for(i=0;i<nthreads;i++) {
-      struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
-      cmd->command = GEOCACHE_CMD_STOP;
-      apr_queue_push(work_queue,cmd);
    }
 }
 
