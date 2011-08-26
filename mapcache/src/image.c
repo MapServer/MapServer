@@ -15,14 +15,12 @@
  */
 
 #include "geocache.h"
-#include <http_log.h>
 
-
-int _geocache_image_merge(request_rec *r, geocache_image *base, geocache_image *overlay) {
+int _geocache_image_merge(geocache_context *r, geocache_image *base, geocache_image *overlay) {
    int i,j;
    unsigned char *browptr, *orowptr, *bptr, *optr;
    if(base->w != overlay->w || base->h != overlay->h) {
-      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "attempting to merge images with different sizes");
+      r->set_error(r, GEOCACHE_IMAGE_ERROR, "attempting to merge images with different sizes");
       return GEOCACHE_FAILURE;
    }
    browptr = base->data;
@@ -60,7 +58,7 @@ int _geocache_image_merge(request_rec *r, geocache_image *base, geocache_image *
    return GEOCACHE_SUCCESS;
 }
 
-geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_image_format *format, geocache_tile **tiles, int ntiles) {
+geocache_tile* geocache_image_merge_tiles(geocache_context *r, geocache_image_format *format, geocache_tile **tiles, int ntiles) {
    geocache_image *base,*overlay;
    int i;
    geocache_tile *tile = apr_pcalloc(r->pool,sizeof(geocache_tile));
@@ -86,7 +84,7 @@ geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_image_format 
    return tile;
 }
 
-int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r) {
+int geocache_image_metatile_split(geocache_metatile *mt, geocache_context *r) {
    if(mt->tile.tileset->format) {
       /* the tileset has a format defined, we will use it to encode the data */
       geocache_image tileimg;
@@ -97,7 +95,7 @@ int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r) {
       tileimg.h = mt->tile.tileset->tile_sy;
       metatile = geocache_imageio_decode(r, mt->tile.data);
       if(!metatile) {
-         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to load image data from metatile");
+         r->set_error(r, GEOCACHE_IMAGE_ERROR, "failed to load image data from metatile");
          return GEOCACHE_FAILURE;
       }
       tileimg.stride = metatile->stride;
@@ -115,7 +113,7 @@ int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r) {
       if(mt->tile.tileset->metasize_x != 1 ||
             mt->tile.tileset->metasize_y != 1 ||
             mt->tile.tileset->metabuffer != 0) {
-         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "##### BUG ##### using a metatile with no format");
+         r->set_error(r, GEOCACHE_IMAGE_ERROR, "##### BUG ##### using a metatile with no format");
          return GEOCACHE_FAILURE;
       }
       mt->tiles[0].data = mt->tile.data;

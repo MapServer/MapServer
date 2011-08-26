@@ -6,7 +6,6 @@
  */
 
 #include "geocache.h"
-#include <http_log.h>
 #include <apr_strings.h>
 #include <math.h>
 
@@ -18,7 +17,7 @@
  * \private \memberof geocache_service_wms
  * \sa geocache_service::parse_request()
  */
-geocache_request* _geocache_service_wms_parse_request(request_rec *r, apr_table_t *params, geocache_cfg *config) {
+geocache_request* _geocache_service_wms_parse_request(geocache_context *r, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    char *str = NULL;
    double *bbox;
    geocache_request *request = NULL;
@@ -35,13 +34,13 @@ geocache_request* _geocache_service_wms_parse_request(request_rec *r, apr_table_
    if(!str)
       str = (char*)apr_table_get(params,"bbox");
    if(!str) {
-      ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wms request with no bbox");
+      r->log(r,GEOCACHE_INFO, "received wms request with no bbox");
       return NULL;
    } else {
       int nextents;
-      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(str,',',&bbox,&nextents,r->pool) ||
+      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(str,',',&bbox,&nextents,r) ||
             nextents != 4) {
-         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wms request with invalid bbox");
+         r->log(r,GEOCACHE_INFO, "received wms request with invalid bbox");
          return NULL;
       }
    }
@@ -50,7 +49,7 @@ geocache_request* _geocache_service_wms_parse_request(request_rec *r, apr_table_
    if(!str)
       str = (char*)apr_table_get(params,"layers");
    if(!str) {
-      ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wms request with no layers");
+      r->log(r,GEOCACHE_INFO, "received wms request with no layers");
       return NULL;
    } else {
       char *last, *key;
@@ -66,11 +65,10 @@ geocache_request* _geocache_service_wms_parse_request(request_rec *r, apr_table_
          geocache_tile *tile;
          geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
          if(!tileset) {
-            ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
-                  "received wms request with invalid layer %s", key);
+            r->log(r,GEOCACHE_INFO, "received wms request with invalid layer %s", key);
             return NULL;
          }
-         tile = geocache_tileset_tile_create(tileset,r->pool);
+         tile = geocache_tileset_tile_create(tileset,r);
          ret = geocache_tileset_tile_lookup(tile,bbox,r);
          if(ret != GEOCACHE_SUCCESS) {
             return NULL;
@@ -85,7 +83,7 @@ geocache_request* _geocache_service_wms_parse_request(request_rec *r, apr_table_
 
 }
 
-geocache_request* _geocache_service_wmts_parse_request(request_rec *r, apr_table_t *params, geocache_cfg *config) {
+geocache_request* _geocache_service_wmts_parse_request(geocache_context *r, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    char *str = NULL;
    double scale,res;
    int tilerow,tilecol;
@@ -107,7 +105,7 @@ geocache_request* _geocache_service_wmts_parse_request(request_rec *r, apr_table
    } else {
       scale = strtod(str,&endptr);
       if(*endptr != 0) {
-         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with invalid scale %s", str);
+         r->log(r,GEOCACHE_INFO, "received wmts request with invalid scale %s", str);
          return NULL;
       }
    }
@@ -120,7 +118,7 @@ geocache_request* _geocache_service_wmts_parse_request(request_rec *r, apr_table
    } else {
       tilerow = strtol(str,&endptr,10);
       if(*endptr != 0) {
-         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with invalid tilerow %s", str);
+         r->log(r,GEOCACHE_INFO, "received wmts request with invalid tilerow %s", str);
          return NULL;
       }
    }
@@ -133,7 +131,7 @@ geocache_request* _geocache_service_wmts_parse_request(request_rec *r, apr_table
    } else {
       tilecol = strtol(str,&endptr,10);
       if(*endptr != 0) {
-         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with invalid tilecol %s", str);
+         r->log(r,GEOCACHE_INFO, "received wmts request with invalid tilecol %s", str);
          return NULL;
       }
    }
@@ -141,25 +139,25 @@ geocache_request* _geocache_service_wmts_parse_request(request_rec *r, apr_table
    if(!str)
       str = (char*)apr_table_get(params,"layer");
    if(!str) {
-      ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with no layer");
+      r->log(r,GEOCACHE_INFO, "received wmts request with no layer");
       return NULL;
    } else {
       geocache_tileset *tileset = geocache_configuration_get_tileset(config,str);
       if(!tileset) {
-         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with invalid layer %s",str);
+         r->log(r,GEOCACHE_INFO, "received wmts request with invalid layer %s",str);
          return NULL;
       }
       if(tileset->units == GEOCACHE_UNIT_UNSET) {
-         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts on layer %s that has no unit configured",str);
+         r->log(r,GEOCACHE_INFO, "received wmts on layer %s that has no unit configured",str);
          return NULL;
       }
       request = (geocache_request*)apr_pcalloc(r->pool,sizeof(geocache_request));
       request->ntiles = 1;
       request->tiles = (geocache_tile**)apr_pcalloc(r->pool,sizeof(geocache_tile*)); 
-      request->tiles[0] = geocache_tileset_tile_create(tileset,r->pool);
+      request->tiles[0] = geocache_tileset_tile_create(tileset,r);
       res = .00028 * scale / geocache_meters_per_unit[tileset->units];
       if(GEOCACHE_SUCCESS != geocache_tileset_get_level(tileset, &res, &request->tiles[0]->z, r)) {
-         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts on layer %s with invalid resolution / level", tileset->name);
+         r->log(r,GEOCACHE_INFO, "received wmts on layer %s with invalid resolution / level", tileset->name);
          return NULL;
       }
       
@@ -175,8 +173,7 @@ geocache_request* _geocache_service_wmts_parse_request(request_rec *r, apr_table
  * \private \memberof geocache_service_tms
  * \sa geocache_service::parse_request()
  */
-geocache_request* _geocache_service_tms_parse_request(request_rec *r, apr_table_t *params, geocache_cfg *config) {
-   char *pathinfo = apr_pstrdup(r->pool,r->path_info);
+geocache_request* _geocache_service_tms_parse_request(geocache_context *r, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    int index = 0;
    char *last, *key, *endptr;
    geocache_tileset *tileset = NULL;
@@ -189,47 +186,45 @@ geocache_request* _geocache_service_tms_parse_request(request_rec *r, apr_table_
       switch(++index) {
       case 1: /* version */
          if(strcmp("1.0.0",key)) {
-            ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
-                  "received tms request with invalid version %s", key);
+            r->log(r,GEOCACHE_INFO, "received tms request with invalid version %s", key);
             return NULL;
          }
          break;
       case 2: /* layer name */
          tileset = geocache_configuration_get_tileset(config,key);
          if(!tileset) {
-            ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
-                  "received tms request with invalid layer %s", key);
+            r->log(r,GEOCACHE_INFO, "received tms request with invalid layer %s", key);
             return NULL;
          }
          request = (geocache_request*)apr_pcalloc(r->pool,sizeof(geocache_request));
          request->ntiles = 1;
          request->tiles = (geocache_tile**)apr_pcalloc(r->pool,sizeof(geocache_tile*)); 
-         tile = geocache_tileset_tile_create(tileset,r->pool);
+         tile = geocache_tileset_tile_create(tileset,r);
          request->tiles[0]=tile;
          break;
       case 3:
          tile->z = (int)strtol(key,&endptr,10);
          if(*endptr != 0) {
-            ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received tms request %s with invalid z %s", r->path_info, key);
+            r->log(r,GEOCACHE_INFO, "received tms request %s with invalid z %s", pathinfo, key);
             return NULL;
          }
          break;
       case 4:
          tile->x = (int)strtol(key,&endptr,10);
          if(*endptr != 0) {
-            ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received tms request %s with invalid x %s", r->path_info, key);
+            r->log(r,GEOCACHE_INFO, "received tms request %s with invalid x %s", pathinfo, key);
             return NULL;
          }
          break;
       case 5:
          tile->y = (int)strtol(key,&endptr,10);
          if(*endptr != '.') {
-            ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received tms request %s with invalid y %s", r->path_info, key);
+            r->log(r,GEOCACHE_INFO, "received tms request %s with invalid y %s", pathinfo, key);
             return NULL;
          }
          break;
       default:
-         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received tms request %s with invalid parameter %s", r->path_info, key);
+         r->log(r,GEOCACHE_INFO, "received tms request %s with invalid parameter %s", pathinfo, key);
          return NULL;
       }
    }
@@ -237,27 +232,27 @@ geocache_request* _geocache_service_tms_parse_request(request_rec *r, apr_table_
       return request;
    }
    else {
-      ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received tms request %s with wrong number of arguments", r->path_info);
+      r->log(r,GEOCACHE_INFO, "received tms request %s with wrong number of arguments", pathinfo);
       return NULL;
    }
 }
 
-geocache_service* geocache_service_wms_create(apr_pool_t *pool) {
-   geocache_service_wms* service = (geocache_service_wms*)apr_pcalloc(pool, sizeof(geocache_service_wms));
+geocache_service* geocache_service_wms_create(geocache_context *r) {
+   geocache_service_wms* service = (geocache_service_wms*)apr_pcalloc(r->pool, sizeof(geocache_service_wms));
    service->service.type = GEOCACHE_SERVICE_WMS;
    service->service.parse_request = _geocache_service_wms_parse_request;
    return (geocache_service*)service;
 }
 
-geocache_service* geocache_service_tms_create(apr_pool_t *pool) {
-   geocache_service_tms* service = (geocache_service_tms*)apr_pcalloc(pool, sizeof(geocache_service_tms));
+geocache_service* geocache_service_tms_create(geocache_context *r) {
+   geocache_service_tms* service = (geocache_service_tms*)apr_pcalloc(r->pool, sizeof(geocache_service_tms));
    service->service.type = GEOCACHE_SERVICE_TMS;
    service->service.parse_request = _geocache_service_tms_parse_request;
    return (geocache_service*)service;
 }
 
-geocache_service* geocache_service_wmts_create(apr_pool_t *pool) {
-   geocache_service_wmts* service = (geocache_service_wmts*)apr_pcalloc(pool, sizeof(geocache_service_wmts));
+geocache_service* geocache_service_wmts_create(geocache_context *r) {
+   geocache_service_wmts* service = (geocache_service_wmts*)apr_pcalloc(r->pool, sizeof(geocache_service_wmts));
    service->service.type = GEOCACHE_SERVICE_WMTS;
    service->service.parse_request = _geocache_service_wmts_parse_request;
    return (geocache_service*)service;

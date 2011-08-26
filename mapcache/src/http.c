@@ -18,7 +18,6 @@
 #include <curl/curl.h>
 #include <apr_hash.h>
 #include <apr_strings.h>
-#include <http_log.h>
 #include <stdio.h>
 
 
@@ -28,7 +27,7 @@ size_t _geocache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void
    return geocache_buffer_append(buffer, realsize, ptr);
 }
 
-int geocache_http_request_url(request_rec *r, char *url, geocache_buffer *data) {
+int geocache_http_request_url(geocache_context *r, char *url, geocache_buffer *data) {
    CURL *curl_handle;
    curl_handle = curl_easy_init();
    int ret;
@@ -36,7 +35,7 @@ int geocache_http_request_url(request_rec *r, char *url, geocache_buffer *data) 
    /* specify URL to get */
    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
 #ifdef DEBUG
-   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,"##### START #####\ncurl requesting url %s",url);
+   r->log(r, GEOCACHE_LOG_DEBUG, "##### START #####\ncurl requesting url %s",url);
 #endif
    /* send all data to this function  */ 
    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _geocache_curl_memory_callback);
@@ -54,19 +53,19 @@ int geocache_http_request_url(request_rec *r, char *url, geocache_buffer *data) 
    /* get it! */ 
    ret = curl_easy_perform(curl_handle);
    if(ret != CURLE_OK) {
-      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,"curl failed to request url %s : %s", url, error_msg);
-      return ret;
+      r->set_error(r, GEOCACHE_HTTP_ERROR, "curl failed to request url %s : %s", url, error_msg);
+      return r->get_error(r);
    }
 
    /* cleanup curl stuff */ 
    curl_easy_cleanup(curl_handle);
 #ifdef DEBUG
-   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,"##### END #####\nrequested url %s",url);
+   r->log(r, GEOCACHE_LOG_DEBUG, "##### END #####\nrequested url %s",url);
 #endif
    return GEOCACHE_SUCCESS;
 }
 
-int geocache_http_request_url_with_params(request_rec *r, char *url, apr_table_t *params, geocache_buffer *data) {
+int geocache_http_request_url_with_params(geocache_context *r, char *url, apr_table_t *params, geocache_buffer *data) {
    char *fullUrl = geocache_http_build_url(r,url,params);
    return geocache_http_request_url(r,fullUrl,data);
 }
@@ -90,7 +89,7 @@ static APR_DECLARE_NONSTD(int) _geocache_key_value_append_callback(void *cnt, co
 #undef _mystr
 }
 
-char* geocache_http_build_url(request_rec *r, char *base, apr_table_t *params) {
+char* geocache_http_build_url(geocache_context *r, char *base, apr_table_t *params) {
    if(!apr_is_empty_table(params)) {
       int stringLength = 0, baseLength;
       char *builtUrl,*builtUrlPtr;
@@ -127,7 +126,7 @@ char* geocache_http_build_url(request_rec *r, char *base, apr_table_t *params) {
 }
 
 /* Parse form data from a string. The input string is preserved. */
-apr_table_t *geocache_http_parse_param_string(request_rec *r, char *args_str) {
+apr_table_t *geocache_http_parse_param_string(geocache_context *r, char *args_str) {
    apr_table_t *params;
    char *args = apr_pstrdup(r->pool,args_str);
    char *key;

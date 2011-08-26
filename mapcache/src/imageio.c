@@ -15,7 +15,6 @@
  */
 
 #include "geocache.h"
-#include <http_log.h>
 #include <png.h>
 #include <jpeglib.h>
 
@@ -37,7 +36,7 @@ int geocache_imageio_image_has_alpha(geocache_image *img) {
    return 0;
 }
 
-int geocache_imageio_is_valid_format(request_rec *r, geocache_buffer *buffer) {
+int geocache_imageio_is_valid_format(geocache_context *r, geocache_buffer *buffer) {
    geocache_image_format_type t = geocache_imageio_header_sniff(r,buffer);
    if(t==GC_PNG || t==GC_JPEG) {
       return GEOCACHE_TRUE;
@@ -46,7 +45,7 @@ int geocache_imageio_is_valid_format(request_rec *r, geocache_buffer *buffer) {
    }
 }
 
-geocache_image_format_type geocache_imageio_header_sniff(request_rec *r, geocache_buffer *buffer) {
+geocache_image_format_type geocache_imageio_header_sniff(geocache_context *r, geocache_buffer *buffer) {
    if(!buffer) {
       return GC_UNKNOWN;
    }
@@ -61,14 +60,14 @@ geocache_image_format_type geocache_imageio_header_sniff(request_rec *r, geocach
 
 
 
-geocache_image* geocache_imageio_decode(request_rec *r, geocache_buffer *buffer) {
+geocache_image* geocache_imageio_decode(geocache_context *r, geocache_buffer *buffer) {
    geocache_image_format_type type = geocache_imageio_header_sniff(r,buffer);
    if(type == GC_PNG) {
       return _geocache_imageio_png_decode(r,buffer);
    } else if(type == GC_JPEG) {
       return _geocache_imageio_jpeg_decode(r,buffer);
    } else {
-      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "geocache_imageio_decode: unrecognized image format");
+      r->set_error(r, GEOCACHE_IMAGE_ERROR, "geocache_imageio_decode: unrecognized image format");
       return NULL;
    }
 }

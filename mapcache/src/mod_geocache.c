@@ -32,10 +32,133 @@
 
 static char* geocache_mutex_name = "geocache_mutex";
 
+typedef struct geocache_context_apache geocache_context_apache;
+typedef struct geocache_context_apache_request geocache_context_apache_request;
+typedef struct geocache_context_apache_server geocache_context_apache_server;
 
-static int geocache_write_tile(request_rec *r, geocache_tile *tile) {
+
+struct geocache_context_apache {
+   geocache_context ctx;
+};
+
+struct geocache_context_apache_server {
+   geocache_context_apache ctx;
+   server_rec *server;
+};
+
+struct geocache_context_apache_request {
+   geocache_context_apache ctx;
+   request_rec *request;
+};
+
+
+void apache_context_set_error(geocache_context *c, geocache_error_code code, char *message, ...) {
+   va_list args;
+   va_start(args,message);
+   c->_errmsg = apr_pvsprintf(c->pool,message,args);
+   c->_errcode = code;
+}
+
+
+int apache_context_get_error(geocache_context *c) {
+   return c->_errcode;
+}
+
+char* apache_context_get_error_message(geocache_context *c) {
+   return c->_errmsg;
+}
+
+void apache_context_server_log(geocache_context *c, geocache_log_level level, char *message, ...) {
+   geocache_context_apache_server *ctx = (geocache_context_apache_server*)c;
+   va_list args;
+   va_start(args,message);
+   ap_log_error(APLOG_MARK, APLOG_INFO, 0, ctx->server,"%s",apr_pvsprintf(ctx->ctx.ctx.pool,message,args));
+}
+
+void apache_context_request_log(geocache_context *c, geocache_log_level level, char *message, ...) {
+   geocache_context_apache_request *ctx = (geocache_context_apache_request*)c;
+   va_list args;
+   va_start(args,message);
+   ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request,"%s",apr_pvsprintf(ctx->ctx.ctx.pool,message,args));
+}
+
+void init_apache_context(geocache_context_apache *ctx) {
+   ctx->ctx.set_error = apache_context_set_error;
+   ctx->ctx.get_error = apache_context_get_error;
+   ctx->ctx.get_error_message = apache_context_get_error_message;
+}
+
+int geocache_util_mutex_aquire(geocache_context *r, int nonblocking) {
+   int ret;
+   geocache_context_apache_request *ctx = (geocache_context_apache_request*)r;
+   geocache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &geocache_module);
+   ret = apr_global_mutex_lock(cfg->mutex);
+   if(ret != APR_SUCCESS) {
+      ap_log_error(APLOG_MARK, APLOG_CRIT, 0, ctx->request->server, "failed to aquire mutex lock");
+      return HTTP_INTERNAL_SERVER_ERROR;
+   }
+   apr_pool_cleanup_register(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
+   return GEOCACHE_SUCCESS;
+}
+
+int geocache_util_mutex_release(geocache_context *r) {
+   int ret;
+   geocache_context_apache_request *ctx = (geocache_context_apache_request*)r;
+   geocache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &geocache_module);
+   ret = apr_global_mutex_unlock(cfg->mutex);
+   if(ret != APR_SUCCESS) {
+      ap_log_error(APLOG_MARK, APLOG_CRIT, 0, ctx->request->server, "failed to release mutex");
+      return HTTP_INTERNAL_SERVER_ERROR;
+   }
+   apr_pool_cleanup_kill(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock);
+   return GEOCACHE_SUCCESS;
+}
+
+void init_apache_request_context(geocache_context_apache_request *ctx) {
+   init_apache_context(ctx);
+   ctx->ctx.ctx.log = apache_context_request_log;
+   ctx->ctx.ctx.global_lock_aquire = geocache_util_mutex_aquire;
+   ctx->ctx.ctx.global_lock_release = geocache_util_mutex_release;
+}
+
+void init_apache_server_context(geocache_context_apache_server *ctx) {
+   init_apache_context(ctx);
+   ctx->ctx.ctx.log = apache_context_server_log;
+   ctx->ctx.ctx.global_lock_aquire = geocache_util_mutex_aquire;
+   ctx->ctx.ctx.global_lock_release = geocache_util_mutex_release;
+}
+
+
+
+static geocache_context_apache* apache_context_create(apr_pool_t *pool) {
+   geocache_context_apache *ctx = apr_pcalloc(pool, sizeof(geocache_context_apache));
+   ctx->ctx.pool = pool;
+   init_apache_context(ctx);
+   return ctx;
+}
+
+static geocache_context_apache_request* apache_request_context_create(request_rec *r) {
+   geocache_context_apache_request *ctx = apr_pcalloc(r->pool, sizeof(geocache_context_apache_request));
+   ctx->ctx.ctx.pool = r->pool;
+   ctx->request = r;
+   init_apache_server_context(ctx);
+   return ctx;
+}
+
+static geocache_context_apache_server* apache_server_context_create(server_rec *s, apr_pool_t *pool) {
+   geocache_context_apache_server *ctx = apr_pcalloc(pool, sizeof(geocache_context_apache_server));
+   ctx->ctx.ctx.pool = pool;
+   ctx->server = s;
+   init_apache_server_context(ctx);
+   return ctx;
+}
+
+
+
+
+static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_tile *tile) {
    int rc;
-
+   request_rec *r = ctx->request;
 
    ap_update_mtime(r, tile->mtime);
    if((rc = ap_meets_conditions(r)) != OK) {
@@ -59,7 +182,7 @@ static int geocache_write_tile(request_rec *r, geocache_tile *tile) {
       else
          ap_set_content_type(r, "image/jpeg");
    } else {
-      geocache_image_format_type t = geocache_imageio_header_sniff(r,tile->data);
+      geocache_image_format_type t = geocache_imageio_header_sniff((geocache_context*)ctx,tile->data);
       if(t == GC_PNG)
          ap_set_content_type(r, "image/png");
       else if(t == GC_JPEG)
@@ -78,6 +201,7 @@ static int mod_geocache_request_handler(request_rec *r) {
    apr_table_t *params;
    geocache_cfg *config = NULL;
    geocache_request *request;
+   geocache_context_apache_request *ctx = apache_request_context_create(r); 
    geocache_tile *tile;
    int i;
 
@@ -88,14 +212,14 @@ static int mod_geocache_request_handler(request_rec *r) {
       return HTTP_METHOD_NOT_ALLOWED;
    }
 
-   params = geocache_http_parse_param_string(r, r->args);
+   params = geocache_http_parse_param_string((geocache_context*)ctx, r->args);
    config = ap_get_module_config(r->per_dir_config, &geocache_module);
 
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
       /* loop through the services that have been configured */
       geocache_service *service = config->services[i];
       if(!service) continue;
-      request = service->parse_request(r,params,config);
+      request = service->parse_request((geocache_context*)ctx,r->path_info,params,config);
       /* the service has recognized the request if it returns a non NULL value */
       if(request)
          break;
@@ -107,7 +231,7 @@ static int mod_geocache_request_handler(request_rec *r) {
 
    for(i=0;i<request->ntiles;i++) {
       geocache_tile *tile = request->tiles[i];
-      int rv = geocache_tileset_tile_get(tile, r);
+      int rv = geocache_tileset_tile_get(tile, (geocache_context*)ctx);
       if(rv != GEOCACHE_SUCCESS) {
          return HTTP_NOT_FOUND;
       }
@@ -117,14 +241,14 @@ static int mod_geocache_request_handler(request_rec *r) {
    } else {
       /* TODO: individual check on tiles if merging is allowed */
 
-      tile = (geocache_tile*)geocache_image_merge_tiles(r,config->merge_format,request->tiles,request->ntiles);
+      tile = (geocache_tile*)geocache_image_merge_tiles((geocache_context*)ctx,config->merge_format,request->tiles,request->ntiles);
       if(!tile) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "tile merging failed to return data");
          return HTTP_INTERNAL_SERVER_ERROR;
       }
       tile->tileset = request->tiles[0]->tileset;
    }
-   return geocache_write_tile(r,tile);
+   return geocache_write_tile(ctx,tile);
 }
 
 static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
@@ -165,6 +289,7 @@ static void mod_geocache_register_hooks(apr_pool_t *p) {
 }
 
 static void* mod_geocache_create_dir_conf(apr_pool_t *pool, char *x) {
+
    geocache_cfg *cfg = geocache_configuration_create(pool);
    return cfg;
 }
@@ -178,9 +303,10 @@ static void* mod_geocache_create_server_conf(apr_pool_t *pool, server_rec *s) {
 
 static const char* geocache_set_config_file(cmd_parms *cmd, void *cfg, const char *val) {
    geocache_cfg *config = (geocache_cfg*)cfg;
+   geocache_context_apache_server *ctx = apache_server_context_create(cmd->server,cmd->pool);
    char *msg = NULL;
    config->configFile = apr_pstrdup(cmd->pool,val);
-   msg = geocache_configuration_parse(val,config,cmd->pool);
+   msg = geocache_configuration_parse(val,config,(geocache_context*)ctx);
    ap_log_error(APLOG_MARK, APLOG_INFO, 0, cmd->server, "loaded geocache configuration file from %s", config->configFile);
    return msg;
 }

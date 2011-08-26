@@ -15,7 +15,6 @@
  */
 
 #include "geocache.h"
-#include <http_log.h>
 #include <jpeglib.h>
 
 /**\addtogroup imageio_jpg */
@@ -137,7 +136,7 @@ int _geocache_imageio_jpeg_buffer_empty_output_buffer (j_compress_ptr cinfo) {
    return TRUE;
 }
 
-geocache_buffer* _geocache_imageio_jpeg_encode(geocache_image *img, geocache_image_format *format, request_rec *r) {
+geocache_buffer* _geocache_imageio_jpeg_encode(geocache_image *img, geocache_image_format *format, geocache_context *r) {
    struct jpeg_compress_struct cinfo;
    struct jpeg_error_mgr jerr;
    int quality = 85;
@@ -193,7 +192,7 @@ geocache_buffer* _geocache_imageio_jpeg_encode(geocache_image *img, geocache_ima
    return buffer;
 }
 
-geocache_image* _geocache_imageio_jpeg_decode(request_rec *r, geocache_buffer *buffer) {
+geocache_image* _geocache_imageio_jpeg_decode(geocache_context *r, geocache_buffer *buffer) {
    struct jpeg_decompress_struct cinfo = {NULL};
    struct jpeg_error_mgr jerr;
    jpeg_create_decompress(&cinfo);
@@ -241,7 +240,7 @@ geocache_image* _geocache_imageio_jpeg_decode(request_rec *r, geocache_buffer *b
       }
       else
       {
-         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "unsupported jpeg format");
+         r->set_error(r, GEOCACHE_IMAGE_ERROR, "unsupported jpeg format");
          jpeg_destroy_decompress(&cinfo);
          return NULL;
       }

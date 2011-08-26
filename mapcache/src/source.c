@@ -6,17 +6,16 @@
  */
 
 #include "geocache.h"
-#include <http_log.h>
 
-static int _geocache_source_render_tile(geocache_tile *tile, request_rec *r) {
+static int _geocache_source_render_tile(geocache_tile *tile, geocache_context *r) {
    return GEOCACHE_FAILURE;
 }
 
-static int _geocache_source_render_metatile(geocache_metatile *tile, request_rec *r) {
+static int _geocache_source_render_metatile(geocache_metatile *tile, geocache_context *r) {
    return GEOCACHE_FAILURE;
 }
 
-void geocache_source_init(geocache_source *source, apr_pool_t *pool) {
+void geocache_source_init(geocache_source *source, geocache_context *r) {
 	source->data_extent[0] =
 			source->data_extent[1] =
 			source->data_extent[2] =
