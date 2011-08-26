@@ -31,7 +31,7 @@
 #define APR_ARRAY_PUSH(ary,type) (*((type *)apr_array_push(ary)))
 #endif
 
-#if APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3
+#if APR_MAJOR_VERSION < 1 || (APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3)
 
 
 
@@ -48,6 +48,30 @@ APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p,
 
 
 #endif
+
+#if APR_MAJOR_VERSION < 1
+   #ifndef APR_FOPEN_READ
+      #define APR_FOPEN_READ APR_READ
+   #endif
+   #ifndef APR_FOPEN_BUFFERED
+      #define APR_FOPEN_BUFFERED APR_BUFFERED
+   #endif
+
+   #ifndef APR_FOPEN_BINARY
+      #define APR_FOPEN_BINARY APR_BINARY
+   #endif
+   
+   #ifndef APR_FOPEN_CREATE
+      #define APR_FOPEN_CREATE APR_CREATE
+   #endif
+
+
+   #ifndef APR_FOPEN_WRITE
+      #define APR_FOPEN_WRITE APR_WRITE
+   #endif
+#endif
+
+
 
 #endif /* UTIL_H_ */
 /* vim: ai ts=3 sts=3 et sw=3

@@ -75,7 +75,7 @@ int geocache_util_extract_double_list(geocache_context *ctx, const char* cargs, 
    return GEOCACHE_SUCCESS;
 }
 
-#if APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3
+#if APR_MAJOR_VERSION < 1 || (APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3)
 APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p, const apr_table_t *t)
 {
     const apr_array_header_t *array = apr_table_elts(t);
