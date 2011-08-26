@@ -30,8 +30,13 @@ static int encbase = 63; /* 26 + 26+ 10 + 1 */
 
 static char* num_encode(apr_pool_t *pool, int num) {
    int n = num,r;
-   int i = 0;
-   char *ret = apr_pcalloc(pool,10); /* allocate 10 chars, should be amply sufficient */
+   int i = 0
+   /* allocate 10 chars, should be amply sufficient:
+    * yes, this *really* should be amply sufficient:
+    * 10 chars, in 63 base = 10^63 different values.
+    * the earth is 40000km wide, which means we will start having
+    * a problem if a tile is less than 40000 * 1000 / 10^63 = 4e-56 meters wide*/;
+   char *ret = apr_pcalloc(pool,10); 
    while(1) {
       r = n % encbase;
       n = n / encbase;
