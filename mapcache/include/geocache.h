@@ -63,6 +63,7 @@
 
 
 typedef struct geocache_image_format geocache_image_format;
+typedef struct geocache_image_format_mixed geocache_image_format_mixed;
 typedef struct geocache_image_format_png geocache_image_format_png;
 typedef struct geocache_image_format_png_q geocache_image_format_png_q;
 typedef struct geocache_image_format_jpeg geocache_image_format_jpeg;
@@ -683,6 +684,13 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
  * \returns GEOCACHE_FALSE if the image has more than one color
  */
 int geocache_image_blank_color(geocache_image* image);
+
+
+/**
+ * \brief check if image has some non opaque pixels
+ */
+int geocache_image_has_alpha(geocache_image *img);
+
 /** @} */
 
 
@@ -1158,6 +1166,16 @@ struct geocache_image_format_png {
     geocache_compression_type compression_level; /**< PNG compression level to apply */
 };
 
+struct geocache_image_format_mixed {
+   geocache_image_format format;
+   geocache_image_format *transparent;
+   geocache_image_format *opaque;
+};
+
+
+geocache_image_format* geocache_imageio_create_mixed_format(apr_pool_t *pool,
+      char *name, geocache_image_format *transparent, geocache_image_format *opaque);
+
 /**\class geocache_image_format_png_q
  * \brief Quantized PNG format
  * \extends geocache_image_format_png
@@ -1232,10 +1250,6 @@ geocache_image_format_type geocache_imageio_header_sniff(geocache_context *ctx, 
  */
 int geocache_imageio_is_valid_format(geocache_context *ctx, geocache_buffer *buffer);
 
-/**
- * \brief check if image has some non opaque pixels
- */
-int geocache_imageio_image_has_alpha(geocache_image *img);
 
 /**
  * decodes given buffer

@@ -174,7 +174,7 @@ static int geocache_write_image_buffer(geocache_context_apache_request *ctx, geo
    request_rec *r = ctx->request;
 
    ap_set_content_length(r,im->size);
-   if(format) {
+   if(format && format->mime_type) {
       ap_set_content_type(r, format->mime_type);
    } else {
       geocache_image_format_type t = geocache_imageio_header_sniff((geocache_context*)ctx,im);

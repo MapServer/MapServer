@@ -106,7 +106,11 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
          ezxml_t tileformat = ezxml_add_child(caps,"TileFormat",0);
          ezxml_set_attr(tileformat,"width",apr_psprintf(ctx->pool,"%d",grid->tile_sx));
          ezxml_set_attr(tileformat,"height",apr_psprintf(ctx->pool,"%d",grid->tile_sy));
-         ezxml_set_attr(tileformat,"mime-type",tileset->format->mime_type);
+         if(tileset->format->mime_type) {
+            ezxml_set_attr(tileformat,"mime-type",tileset->format->mime_type);
+         } else {
+            ezxml_set_attr(tileformat,"mime-type","image/unknown");
+         }
          ezxml_set_attr(tileformat,"extension",tileset->format->extension);
          
          ezxml_t tilesets = ezxml_add_child(caps,"TileSets",0);

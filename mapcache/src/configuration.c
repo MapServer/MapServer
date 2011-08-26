@@ -484,6 +484,25 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       }
       format = geocache_imageio_create_jpeg_format(ctx->pool,
             name,quality);
+   } else if(!strcmp(type,"MIXED")){
+      geocache_image_format *transparent=NULL, *opaque=NULL;
+      if ((cur_node = ezxml_child(node,"transparent")) != NULL) {
+         transparent = geocache_configuration_get_image_format(config,cur_node->txt);
+      }
+      if(!transparent) {
+         ctx->set_error(ctx,400, "mixed format %s references unknown transparent format %s"
+               "(order is important, format %s should appear first)",
+               name,cur_node->txt,cur_node->txt);
+      }
+      if ((cur_node = ezxml_child(node,"opaque")) != NULL) {
+         opaque = geocache_configuration_get_image_format(config,cur_node->txt);
+      }
+      if(!opaque) {
+         ctx->set_error(ctx,400, "mixed format %s references unknown opaque format %s"
+               "(order is important, format %s should appear first)",
+               name,cur_node->txt,cur_node->txt);
+      }
+      format = geocache_imageio_create_mixed_format(ctx->pool,name,transparent, opaque);
    } else {
       ctx->set_error(ctx, 400, "unknown format type %s for format \"%s\"", type, name);
       return;

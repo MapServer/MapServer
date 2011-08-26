@@ -22,6 +22,21 @@ geocache_image* geocache_image_create(geocache_context *ctx) {
     return img;
 }
 
+int geocache_image_has_alpha(geocache_image *img) {
+   size_t i,j;
+   unsigned char *ptr, *rptr = img->data;
+   for(i=0;i<img->h;i++) {     
+      ptr = rptr;
+      for(j=0;j<img->w;j++) {
+         if(ptr[3]<(unsigned char)255)
+            return 1;
+         ptr += 4;
+      }
+      rptr += img->stride;
+   }
+   return 0;
+}
+
 void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_image *overlay) {
    int i,j,starti,startj;
    unsigned char *browptr, *orowptr, *bptr, *optr;

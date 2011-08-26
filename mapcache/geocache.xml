@@ -203,6 +203,11 @@
       <compression>best</compression>
    </format>
 
+   <format name="mixed" type="MIXED">
+      <transparent>PNG_BEST</transparent>
+      <opaque>JPEG</opaque>
+   </format>
+
    <!--
    <source name="bluemarble" type="gdal">
       <data>/gro2/data/bluemarble/bluemarble.vrt</data>
@@ -274,7 +279,7 @@
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
-            <MAP>/home/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
+            <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
          </params>
       </getmap>
    </source>
@@ -441,7 +446,7 @@
    <tileset name="test2">
       <source>nexrad</source>
       <cache>disk</cache>
-      <format>PNG</format>
+      <format>mixed</format>
       <grid>WGS84</grid>
    </tileset>
    <tileset name="test3">

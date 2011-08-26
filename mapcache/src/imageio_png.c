@@ -154,7 +154,7 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_im
 
    png_set_write_fn(png_ptr, buffer, _geocache_imageio_png_write_func, _geocache_imageio_png_flush_func);
 
-   if(geocache_imageio_image_has_alpha(img))
+   if(geocache_image_has_alpha(img))
       color_type = PNG_COLOR_TYPE_RGB_ALPHA;
    else
       color_type = PNG_COLOR_TYPE_RGB;

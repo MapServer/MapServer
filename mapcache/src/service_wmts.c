@@ -122,7 +122,10 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       ezxml_set_attr(style,"isDefault","true");
       ezxml_set_txt(ezxml_add_child(style,"ows:Identifier",0),"default");
       
-      ezxml_set_txt(ezxml_add_child(layer,"Format",0),tileset->format->mime_type);
+      if(tileset->format->mime_type)
+         ezxml_set_txt(ezxml_add_child(layer,"Format",0),tileset->format->mime_type);
+      else
+         ezxml_set_txt(ezxml_add_child(layer,"Format",0),"image/unknown");
    
 
       char *dimensionstemplate="";
