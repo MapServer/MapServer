@@ -113,7 +113,11 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, 
    mt->tile.sy =  mt->tile.tileset->metasize_y * tile->sy + 2 * mt->tile.tileset->metabuffer;
    mt->tile.z = tile->z;
    mt->tile.x = tile->x / mt->tile.tileset->metasize_x;
+   if(tile->x < 0)
+      mt->tile.x --;
    mt->tile.y = tile->y / mt->tile.tileset->metasize_y;
+   if(tile->y < 0)
+      mt->tile.y --;
 
    //tilesize   = self.actualSize()
    gbuffer = res * mt->tile.tileset->metabuffer;
