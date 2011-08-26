@@ -18,7 +18,9 @@
 #include <apr_file_io.h>
 #include <apr_strings.h>
 
-
+#if THREADED_MPM
+#include <unistd.h>
+#endif
 
 
 #ifdef USE_SEMLOCK
@@ -125,13 +127,14 @@ void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt
    char errmsg[120];
    apr_file_t *lock;
    apr_status_t rv;
-   rv = apr_file_open(&lock,lockname,APR_WRITE|APR_CREATE|APR_EXCL|APR_SHARELOCK|APR_XTHREAD,APR_OS_DEFAULT,ctx->pool);
+   rv = apr_file_open(&lock,lockname,APR_WRITE|APR_CREATE|APR_EXCL,APR_OS_DEFAULT,ctx->pool);
    if(rv!=APR_SUCCESS) {
       ctx->set_error(ctx,500, "failed to create lockfile %s: %s",
             lockname, apr_strerror(rv,errmsg,120));
       return;
    }
-
+#if THREADED_MPM
+#else
    /* we aquire an exclusive (i.e. write) lock on the file. For this to work, the file has to be opened with APR_WRITE mode */
    rv = apr_file_lock(lock,APR_FLOCK_EXCLUSIVE|APR_FLOCK_NONBLOCK);
    if(rv!=APR_SUCCESS) {
@@ -139,6 +142,7 @@ void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt
             lockname, apr_strerror(rv,errmsg,120));
       return;
    }
+#endif
    mt->lock = lock;
 #endif
 }
@@ -171,11 +175,15 @@ void geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile *
       return;
    }
    apr_file_t *lock = (apr_file_t*)mt->lock;
+   mt->lock = NULL;
+#if THREADED_MPM
+#else
    rv = apr_file_unlock(lock);
    if(rv!=APR_SUCCESS) {
       ctx->set_error(ctx,500, "failed to unlock lockfile %s: %s",
             lockname, apr_strerror(rv,errmsg,120));
    }
+#endif
    rv = apr_file_close(lock);
    if(rv!=APR_SUCCESS) {
       ctx->set_error(ctx,500, "failed to close lockfile %s: %s",
@@ -219,7 +227,7 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
    apr_status_t rv;
    char errmsg[120];
    apr_file_t *lock;
-   rv = apr_file_open(&lock,lockname,APR_READ|APR_SHARELOCK|APR_XTHREAD,APR_OS_DEFAULT,ctx->pool);
+   rv = apr_file_open(&lock,lockname,APR_READ,APR_OS_DEFAULT,ctx->pool);
    if(APR_STATUS_IS_ENOENT(rv)) {
       /* the lock file does not exist, the metatile is not locked */
       return GEOCACHE_FALSE;
@@ -231,6 +239,10 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
                apr_strerror(rv,errmsg,120));
          return GEOCACHE_FALSE;
       } else {
+#if THREADED_MPM
+         apr_file_close(lock);
+         return GEOCACHE_TRUE;
+#else
          /* the file exists, which means there probably is a lock. make sure it isn't locked anyhow */
          rv = apr_file_lock(lock,APR_FLOCK_SHARED|APR_FLOCK_NONBLOCK);
          if(rv != APR_SUCCESS) {
@@ -263,7 +275,7 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
             }
             return GEOCACHE_FALSE;
          }
-
+#endif
       }
    }
 #endif
@@ -306,7 +318,7 @@ void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatil
    char errmsg[120];
    apr_file_t *lock;
    apr_status_t rv;
-   rv = apr_file_open(&lock,lockname,APR_READ|APR_SHARELOCK|APR_XTHREAD,APR_OS_DEFAULT,ctx->pool);
+   rv = apr_file_open(&lock,lockname,APR_READ,APR_OS_DEFAULT,ctx->pool);
    if(rv != APR_SUCCESS) {
       if(APR_STATUS_IS_ENOENT(rv)) {
          /* the lock file does not exist, it might have been removed since we checked.
@@ -319,7 +331,16 @@ void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatil
          return;
       }
    }
-   
+#if THREADED_MPM
+   apr_file_close(lock);
+   while(!APR_STATUS_IS_ENOENT(rv)) {
+      usleep(500000);
+      rv = apr_file_open(&lock,lockname,APR_READ,APR_OS_DEFAULT,ctx->pool);
+      if(rv == APR_SUCCESS) {
+         apr_file_close(lock);
+      }
+   }
+#else
    rv = apr_file_lock(lock,APR_FLOCK_SHARED);
    if(rv!=APR_SUCCESS) {
       ctx->set_error(ctx,500, "lock_wait: failed to aquire a shared lock on lockfile %s: %s",
@@ -330,6 +351,7 @@ void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatil
       ctx->set_error(ctx,500, "lock_wait: failed to close lockfile %s: %s",
             lockname, apr_strerror(rv,errmsg,120));
    }
+#endif
 
 #endif
 }
