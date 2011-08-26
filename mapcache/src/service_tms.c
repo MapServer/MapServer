@@ -92,6 +92,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
          geocache_tileset *tileset = request->tileset;
          geocache_grid *grid = request->grid_link->grid;
          int i;
+         double *extent = (request->grid_link->restricted_extent)?request->grid_link->restricted_extent:request->grid_link->grid->extent;
          const char *title = apr_table_get(tileset->metadata,"title");
          if(!title) {
             title = "no title set, add some in metadata";
@@ -103,8 +104,8 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
          caps = apr_psprintf(ctx->pool,tms_2,
                request->version, onlineresource, request->version,
                title,abstract, grid->srs,
-               grid->extent[0], grid->extent[1],
-               grid->extent[2], grid->extent[3],
+               extent[0], extent[1],
+               extent[2], extent[3],
                grid->extent[0], grid->extent[1],
                grid->tile_sx, grid->tile_sy,
                tileset->format->mime_type,
