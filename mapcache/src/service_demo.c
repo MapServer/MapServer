@@ -170,7 +170,6 @@ static char *demo_layer_ve =
       "    );\n"
       "    map.addLayer(%s_ve_layer)\n\n";
 
-#ifdef USE_CAIRO
 static char *demo_layer_singletile =
       "    var %s_slayer = new OpenLayers.Layer.WMS( \"%s-%s (singleTile)\",\n"
       "        \"%s\",{layers: '%s'},\n"
@@ -184,7 +183,6 @@ static char *demo_layer_singletile =
       "        }\n"
       "    );\n"
       "    map.addLayer(%s_slayer)\n\n";
-#endif
 
 static char *demo_footer =
       "%s"
