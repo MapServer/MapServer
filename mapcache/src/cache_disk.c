@@ -20,6 +20,7 @@
 #include <apr_file_io.h>
 #include <string.h>
 #include <errno.h>
+#include "ngtemplate.h"
 
 #ifdef HAVE_SYMLINK
 #include <unistd.h>
@@ -87,10 +88,44 @@ static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *
   
 }
 
-static int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *tile) {
+
+static void _geocache_cache_template_tile_key(geocache_context *ctx, geocache_tile *tile, char **path) {
+   geocache_cache_disk_template *tcache = (geocache_cache_disk_template*)tile->tileset->cache;
+
+   /* Init some structs */
+   ngt_template* template = ngt_new();
+   ngt_dictionary* dictionary = ngt_dictionary_new();
+
+   /* Set some stuff in the dictionary */
+   ngt_set_string(dictionary, "tileset", tile->tileset->name);
+   ngt_set_string(dictionary, "grid", tile->grid_link->grid->name);
+   ngt_set_string(dictionary, "ext", tile->tileset->format?tile->tileset->format->extension:"png");
+   ngt_set_string(dictionary,"x",apr_psprintf(ctx->pool,"%d",tile->x));
+   ngt_set_string(dictionary,"y",apr_psprintf(ctx->pool,"%d",tile->y));
+   ngt_set_string(dictionary,"z",apr_psprintf(ctx->pool,"%d",tile->z));
+   ngt_set_string(dictionary,"inv_x",apr_psprintf(ctx->pool,"%d",tile->grid_link->grid->levels[tile->z]->maxx - tile->x - 1));
+   ngt_set_string(dictionary,"inv_y",apr_psprintf(ctx->pool,"%d",tile->grid_link->grid->levels[tile->z]->maxy - tile->y - 1));
+   ngt_set_string(dictionary,"inv_z",apr_psprintf(ctx->pool,"%d",tile->grid_link->grid->nlevels - tile->z - 1));
+
+   /* Associate the template with the dictionary and template string and expand the template */
+   template->template = apr_pstrdup(ctx->pool,tcache->template);
+   ctx->log(ctx,GEOCACHE_WARNING, "template is %s", template->template);
+   ngt_set_dictionary(template, dictionary);
+   ngt_expand(template, path);
+   ctx->log(ctx,GEOCACHE_WARNING, "key is %s", *path);
+
+   /* Clean stuff up */
+   apr_pool_cleanup_register(ctx->pool, *path,(void*)free, apr_pool_cleanup_null);
+   ngt_destroy(template);
+   ngt_dictionary_destroy(dictionary);
+
+}
+
+static int _geocache_cache_filesystem_has_tile(geocache_context *ctx, geocache_tile *tile) {
+   geocache_cache_filesystem *fcache = (geocache_cache_filesystem*)tile->tileset->cache;
    char *filename;
    apr_file_t *f;
-   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   fcache->tile_key(ctx, tile, &filename);
    if(GC_HAS_ERROR(ctx)) {
       return GEOCACHE_FALSE;
    }
@@ -102,12 +137,13 @@ static int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *t
       return GEOCACHE_FALSE;
 }
 
-static void _geocache_cache_disk_delete(geocache_context *ctx, geocache_tile *tile) {
+static void _geocache_cache_filesystem_delete(geocache_context *ctx, geocache_tile *tile) {
+   geocache_cache_filesystem *fcache = (geocache_cache_filesystem*)tile->tileset->cache;
    apr_status_t ret;
    char errmsg[120];
    char *filename;
    apr_file_t *f;
-   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   fcache->tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
 
    /* delete the tile file if it already exists */
@@ -136,13 +172,14 @@ static void _geocache_cache_disk_delete(geocache_context *ctx, geocache_tile *ti
  * \private \memberof geocache_cache_disk
  * \sa geocache_cache::tile_get()
  */
-static int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
+static int _geocache_cache_filesystem_get(geocache_context *ctx, geocache_tile *tile) {
+   geocache_cache_filesystem *fcache = (geocache_cache_filesystem*)tile->tileset->cache;
    char *filename;
    apr_file_t *f;
    apr_finfo_t finfo;
    apr_status_t rv;
    apr_size_t size;
-   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   fcache->tile_key(ctx, tile, &filename);
    if(GC_HAS_ERROR(ctx)) {
       return GEOCACHE_FAILURE;
    }
@@ -195,7 +232,8 @@ static int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) 
  * \private \memberof geocache_cache_disk
  * \sa geocache_cache::tile_set()
  */
-static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
+static void _geocache_cache_filesystem_set(geocache_context *ctx, geocache_tile *tile) {
+   geocache_cache_filesystem *fcache = (geocache_cache_filesystem*)tile->tileset->cache;
    apr_size_t bytes;
    apr_file_t *f;
    apr_status_t ret;
@@ -208,7 +246,7 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
       return;
    }
 #endif
-   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   fcache->tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
 
    /* find the location of the last '/' in the string */
@@ -244,12 +282,12 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
 
   
 #ifdef HAVE_SYMLINK
-   if(((geocache_cache_disk*)tile->tileset->cache)->symlink_blank) {
+   if(fcache->symlink_blank) {
       geocache_image *image = geocache_imageio_decode(ctx, tile->data);
       GC_CHECK_ERROR(ctx);
       if(geocache_image_blank_color(image) != GEOCACHE_FALSE) {
          char *blankname;
-         _geocache_cache_disk_blank_tile_key(ctx,tile,image->data,&blankname);
+         fcache->blank_key(ctx,tile,image->data,&blankname);
          GC_CHECK_ERROR(ctx);
          ctx->global_lock_aquire(ctx);
          GC_CHECK_ERROR(ctx);
@@ -339,6 +377,17 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
 /**
  * \private \memberof geocache_cache_disk
  */
+static void _geocache_cache_template_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
+   ezxml_t cur_node;
+   geocache_cache_disk_template *dcache = (geocache_cache_disk_template*)cache;
+
+   if ((cur_node = ezxml_child(node,"template")) != NULL) {
+      dcache->template = apr_pstrdup(ctx->pool,cur_node->txt);
+   }
+}
+/**
+ * \private \memberof geocache_cache_disk
+ */
 static void _geocache_cache_disk_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
    ezxml_t cur_node;
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
@@ -350,7 +399,7 @@ static void _geocache_cache_disk_configuration_parse_xml(geocache_context *ctx, 
    if ((cur_node = ezxml_child(node,"symlink_blank")) != NULL) {
       if(strcasecmp(cur_node->txt,"false")){
 #ifdef HAVE_SYMLINK
-         dcache->symlink_blank = 1;
+         dcache->cache.symlink_blank = 1;
 #else
          ctx->set_error(ctx,400,"cache %s: host system does not support file symbolic linking",cache->name);
          return;
@@ -359,6 +408,14 @@ static void _geocache_cache_disk_configuration_parse_xml(geocache_context *ctx, 
    }
 }
    
+static void _geocache_cache_template_configuration_post_config(geocache_context *ctx, geocache_cache *cache,
+      geocache_cfg *cfg) {
+   geocache_cache_disk_template *dcache = (geocache_cache_disk_template*)cache;
+   if(!dcache->template || !strlen(dcache->template)) {
+      ctx->set_error(ctx, 400, "disk cache %s has no base directory",cache->name);
+      return;
+   }
+}
 /**
  * \private \memberof geocache_cache_disk
  */
@@ -367,7 +424,7 @@ static void _geocache_cache_disk_configuration_post_config(geocache_context *ctx
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
    /* check all required parameters are configured */
    if(!dcache->base_directory || !strlen(dcache->base_directory)) {
-      ctx->set_error(ctx, 400, "disk cache %s has no base directory",dcache->cache.name);
+      ctx->set_error(ctx, 400, "disk cache %s has no base directory",dcache->cache.cache.name);
       return;
    }
    
@@ -387,20 +444,49 @@ static void _geocache_cache_disk_configuration_post_config(geocache_context *ctx
  * \brief creates and initializes a geocache_disk_cache
  */
 geocache_cache* geocache_cache_disk_create(geocache_context *ctx) {
-   geocache_cache_disk *cache = apr_pcalloc(ctx->pool,sizeof(geocache_cache_disk));
+   geocache_cache_disk *dcache = apr_pcalloc(ctx->pool,sizeof(geocache_cache_disk));
+   geocache_cache_filesystem *fcache = (geocache_cache_filesystem*)dcache;
+   geocache_cache *cache = (geocache_cache*)dcache;
    if(!cache) {
       ctx->set_error(ctx, 500, "failed to allocate disk cache");
       return NULL;
    }
-   cache->symlink_blank = 0;
-   cache->cache.metadata = apr_table_make(ctx->pool,3);
-   cache->cache.type = GEOCACHE_CACHE_DISK;
-   cache->cache.tile_delete = _geocache_cache_disk_delete;
-   cache->cache.tile_get = _geocache_cache_disk_get;
-   cache->cache.tile_exists = _geocache_cache_disk_has_tile;
-   cache->cache.tile_set = _geocache_cache_disk_set;
-   cache->cache.configuration_post_config = _geocache_cache_disk_configuration_post_config;
-   cache->cache.configuration_parse_xml = _geocache_cache_disk_configuration_parse_xml;
+   fcache->symlink_blank = 0;
+   fcache->tile_key = _geocache_cache_disk_tile_key;
+   fcache->blank_key = _geocache_cache_disk_blank_tile_key;
+   cache->metadata = apr_table_make(ctx->pool,3);
+   cache->type = GEOCACHE_CACHE_DISK;
+   cache->tile_delete = _geocache_cache_filesystem_delete;
+   cache->tile_get = _geocache_cache_filesystem_get;
+   cache->tile_exists = _geocache_cache_filesystem_has_tile;
+   cache->tile_set = _geocache_cache_filesystem_set;
+   cache->configuration_post_config = _geocache_cache_disk_configuration_post_config;
+   cache->configuration_parse_xml = _geocache_cache_disk_configuration_parse_xml;
+   return (geocache_cache*)cache;
+}
+
+/**
+ * \brief creates and initializes a geocache_cache_disk_template
+ */
+geocache_cache* geocache_cache_disk_template_create(geocache_context *ctx) {
+   geocache_cache_disk_template *dcache = apr_pcalloc(ctx->pool,sizeof(geocache_cache_disk_template));
+   geocache_cache_filesystem *fcache = (geocache_cache_filesystem*)dcache;
+   geocache_cache *cache = (geocache_cache*)dcache;
+   if(!cache) {
+      ctx->set_error(ctx, 500, "failed to allocate disk template cache");
+      return NULL;
+   }
+   fcache->symlink_blank = 0;
+   fcache->tile_key = _geocache_cache_template_tile_key;
+   fcache->blank_key = _geocache_cache_disk_blank_tile_key;
+   cache->metadata = apr_table_make(ctx->pool,3);
+   cache->type = GEOCACHE_CACHE_DISK_TEMPLATE;
+   cache->tile_delete = _geocache_cache_filesystem_delete;
+   cache->tile_get = _geocache_cache_filesystem_get;
+   cache->tile_exists = _geocache_cache_filesystem_has_tile;
+   cache->tile_set = _geocache_cache_filesystem_set;
+   cache->configuration_post_config = _geocache_cache_template_configuration_post_config;
+   cache->configuration_parse_xml = _geocache_cache_template_configuration_parse_xml;
    return (geocache_cache*)cache;
 }
 

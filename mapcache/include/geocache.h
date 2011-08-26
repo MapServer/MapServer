@@ -87,7 +87,9 @@ typedef struct geocache_source_wms geocache_source_wms;
 #if 0
 typedef struct geocache_source_gdal geocache_source_gdal;
 #endif
+typedef struct geocache_cache_filesystem geocache_cache_filesystem;
 typedef struct geocache_cache_disk geocache_cache_disk;
+typedef struct geocache_cache_disk_template geocache_cache_disk_template;
 typedef struct geocache_http geocache_http;
 typedef struct geocache_request geocache_request;
 typedef struct geocache_request_proxy geocache_request_proxy;
@@ -318,7 +320,8 @@ struct geocache_source_gdal {
 
 /** @{ */
 typedef enum {
-    GEOCACHE_CACHE_DISK
+    GEOCACHE_CACHE_DISK,
+    GEOCACHE_CACHE_DISK_TEMPLATE
 #ifdef USE_MEMCACHE
        ,GEOCACHE_CACHE_MEMCACHE
 #endif
@@ -364,14 +367,33 @@ struct geocache_cache {
     void (*configuration_post_config)(geocache_context *ctx, geocache_cache * cache, geocache_cfg *config);
 };
 
+/**\class geocache_cache_filesystem
+ * \brief a geocache_cache on a filesytem
+ * \implements geocache_cache
+ */
+struct geocache_cache_filesystem {
+    geocache_cache cache;
+    void (*tile_key)(geocache_context *ctx, geocache_tile *tile, char **path);
+    void (*blank_key)(geocache_context *ctx, geocache_tile *tile, unsigned char *color, char **path);
+    int symlink_blank;
+};
+
+/**\class geocache_cache_disk
+ * \brief a geocache_cache 
+ * \implements geocache_cache
+ */
+struct geocache_cache_disk {
+    geocache_cache_filesystem cache;
+    char *base_directory;
+};
+
 /**\class geocache_cache_disk
  * \brief a geocache_cache on a filesytem
  * \implements geocache_cache
  */
-struct geocache_cache_disk {
-    geocache_cache cache;
-    char *base_directory;
-    int symlink_blank;
+struct geocache_cache_disk_template {
+    geocache_cache_filesystem cache;
+    char *template;
 };
 
 
@@ -912,6 +934,7 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx);
  * \memberof geocache_cache_disk
  */
 geocache_cache* geocache_cache_disk_create(geocache_context *ctx);
+geocache_cache* geocache_cache_disk_template_create(geocache_context *ctx);
 
 
 /** \defgroup tileset Tilesets*/
