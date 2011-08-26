@@ -26,9 +26,6 @@
       <!-- 
            the spatial reference this tileset is in. a WMS client will need this for
            getMap requests.
-           note that when configuring a tileset, its <grid> and <source> srs should match. If
-           they do not match you will be warned, but this is not an error, as there are cases
-           when this is needed (for example epsg:900913 and epsg:3857 are equivalent).
       -->
       <srs>epsg:4326</srs>
 
@@ -313,8 +310,17 @@
       <!-- cache: the "name" attribute of a preconfigured <cache> -->
       <cache>disk</cache>
 
-      <!-- grid: the "name" attribute of a preconfigured <grid> -->
-         <!--<grid restricted_extent="-10 40 10 50">WGS84</grid>-->
+      <!-- grid: the "name" attribute of a preconfigured <grid> 
+         you can also use the following notation to limit the area that will be cached and served to clients:
+         <grid restricted_extent="-10 40 10 50">WGS84</grid>
+         this way is better than using a grid with a limited extent, as in this way the tiles that are already
+         cached are not invalidated should you want to modify the restricted extent in the future. When using
+         the restricted_extent attribute, you should give the corresponding information to the client that will
+         be using the service.
+
+         NOTE: when adding a <grid> element, you *MUST* make sure that the source you have selected is able to
+         return images in the grid's srs.
+      -->
       <grid>WGS84</grid>
       <grid>google</grid>
 
@@ -377,20 +383,41 @@
          cache, it's just they don't exist anymore for mod-geocache
       -->
       <dimensions>
-         <!-- dimension 
-            the example here creates a TIME dimension
-             * WMS and WMTS clients can now add a &TIME=value to their request string. If they don't
-            specify this key/value, the default will be to use TIME=foobar
-             * the allowed values for TIME= are foobar (it is important to add the default value to the
+         <!-- values dimension 
+            the example here creates a DIM1 dimension
+             * WMS and WMTS clients can now add a &DIM1=value to their request string. If they don't
+            specify this key/value, the default will be to use DIM1=foobar
+             * the allowed values for DIM1= are foobar (it is important to add the default value to the
                allowed values entry), foobarbaz, foo and bar.
-             * the value specified for TIME will be forwarded to the WMS source
-             * the produced tile will be stored in base/gridname/TIME/value/xx/xx/xx/xx/xx/xx.png
+             * the value specified for DIM1 will be forwarded to the WMS source
+             * the produced tile will be stored in base/gridname/DIM1/value/xx/xx/xx/xx/xx/xx.png
                file. i.e. their are as many different caches created as their are values in the
                <values> tag.
          -->
-         <dimension type="regex" name="MAPFILE" default="/path/to/mapfile.map">^[a-zA-Z0-9\./]*\.map$</dimension>
-         <dimension type="values" name="TIME" default="foobar" unit="ISO8601">foobar,foobarbaz,foo,bar</dimension>
+         <dimension type="values" name="DIM1" default="foobar">foobar,foobarbaz,foo,bar</dimension>
+         
+         <!-- regex dimension
+            the following creates a MAPFILE dimension, for using the same mod-geocache tileset with different
+            mapserver mapfiles. the name of the mapfiles need not be known to mod-geocache, and can therefore be 
+            created even after mod-geocache has been started.
+            when a user passes a MAPFILE=/path/to/mapfile, the string "path/to/mapfile" is validated against
+            the supplied regular expression. The one in this example allows a name composed of aphanumeric characters
+            spearated by slashes (/) and finishing with ".map", but will faill if there are two consecutive dots (..)
+            in the path, to prevent filesystem traversal.
+         -->
+         <dimension type="regex" name="MAPFILE" default="/path/to/mapfile.map">^(?!.*\.\.)[a-zA-Z0-9\./]*\.map$</dimension>
+
+         <!-- intervals dimension
+            the syntax is the same as common-ows, i.e. a comma separated list of "min/max/resolution" entries.
+            eg: 
+               * 0/5000/1000 allows the values 0,1000,2000,3000,4000 and 5000
+               * 0/100/0 allows any values between 0 and 100
+               * both values can be combined: 0/5000/1000,0/100/0
+         -->
          <dimension name="ELEVATION" type="intervals" default="0">0/5000/1000</dimension>
+
+         <!-- coming in a future version: support for ISO8601 date/time dimensions -->
+
       </dimensions>
    </tileset>
    <tileset name="test2">
