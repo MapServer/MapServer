@@ -273,6 +273,7 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
                ctx->set_error(ctx,500, "lock_exists: failed to close lockfile %s: %s",
                      lockname, apr_strerror(rv,errmsg,120));
             }
+            //TODO: remove the file as we will fail later if not
             return GEOCACHE_FALSE;
          }
 #endif

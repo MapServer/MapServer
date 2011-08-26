@@ -662,8 +662,8 @@
       <grid>MILLER</grid>
       <grid>WGS84</grid>
       <grid>g</grid>
-      <metatile>10 10</metatile>
-      <expires>1</expires>
+      <metatile>5 5</metatile>
+      <expires>10000</expires>
       <metabuffer>10</metabuffer>
    </tileset>
 

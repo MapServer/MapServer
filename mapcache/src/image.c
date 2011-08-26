@@ -93,7 +93,7 @@ geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_
       if(!overlay) return NULL;
       if(tile->mtime < tiles[i]->mtime)
          tile->mtime = tiles[i]->mtime;
-      if(tiles[i]->expires && ((tile->expires < tiles[i]->expires) || !tile->expires)) {
+      if(tiles[i]->expires < tile->expires) {
          tile->expires = tiles[i]->expires;
       }
       geocache_image_merge(ctx, base, overlay);

@@ -199,10 +199,6 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
    int rc;
    request_rec *r = ctx->request;
 
-   ap_update_mtime(r, tile->mtime);
-   if((rc = ap_meets_conditions(r)) != OK) {
-      return rc;
-   }
    if(tile->expires) {
       apr_time_t now = apr_time_now();
       apr_time_t additional = apr_time_from_sec(tile->expires);
@@ -213,6 +209,10 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
       apr_table_set(r->headers_out, "Expires", timestr);
    }
    ap_set_last_modified(r);
+   ap_update_mtime(r, tile->mtime);
+   if((rc = ap_meets_conditions(r)) != OK) {
+      return rc;
+   }
    return geocache_write_image_buffer(ctx, tile->data, tile->tileset->format); 
 }
 
