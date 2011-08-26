@@ -18,3 +18,6 @@ configure: configure.in
 	@autoconf
 	@echo "configure has been updated/created and should be (re)run before continuing"
 	@exit 1
+
+apache-restart:
+	sudo $(APACHECTL) restart
