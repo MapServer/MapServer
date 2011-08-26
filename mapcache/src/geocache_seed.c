@@ -154,11 +154,6 @@ int should_seed_tile(geocache_context *ctx, geocache_tileset *tileset,
     /* check we are in the requested features before deleting the tile */
     if(nClippers > 0) {
        intersects = ogr_features_intersect_tile(ctx,tile);
-    if(intersects!= 0) {
-      printf("keeping tile\n");
-    } else {
-      printf("skipping tile\n");
-    }
     }
 #endif
     if(intersects!= 0) {
@@ -193,9 +188,9 @@ int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocac
 
     while(1) {
         ctx->nextx += ctx->tileset->metasize_x;
-        if(ctx->nextx > tile->grid_link->grid_limits[ctx->nextz][2]+ctx->tileset->metasize_x) {
+        if(ctx->nextx > tile->grid_link->grid_limits[ctx->nextz][2]) {
             ctx->nexty += ctx->tileset->metasize_y;
-            if(ctx->nexty >= tile->grid_link->grid_limits[ctx->nextz][3]+ctx->tileset->metasize_y) {
+            if(ctx->nexty >= tile->grid_link->grid_limits[ctx->nextz][3]) {
                 ctx->nextz += 1;
                 if(ctx->nextz > ctx->maxzoom) break;
                 ctx->nexty = tile->grid_link->grid_limits[ctx->nextz][1];
@@ -270,7 +265,7 @@ static void* APR_THREAD_FUNC doseed(apr_thread_t *thread, void *data) {
         seededtilestot+=tile->tileset->metasize_x*tile->tileset->metasize_y;
         time_t now = time(NULL);
         if(now-lastlogtime>5) {
-           printf("\t\t\t\t\t\t\t\t\t\t\t\rseeding level %d at %g tiles/sec (avg:%.2f)\r",tile->z,
+           printf("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\rseeding level %d at %.2f tiles/sec (avg:%.2f)\r",tile->z,
                  seededtiles/((double)(now-lastlogtime)),
                  seededtilestot/((double)(now-starttime)));
            fflush(NULL);
@@ -546,6 +541,18 @@ int main(int argc, const char **argv) {
        // update the grid limits
        geocache_grid_compute_limits(grid_link->grid,extent,grid_link->grid_limits);
     }
+
+    /* adjust our grid limits so they align on the metatile limits
+     * we need to do this because the seeder does not check for individual tiles, it
+     * goes from one metatile to the next*/
+
+    for(n=0;n<grid_link->grid->nlevels;n++) {
+      grid_link->grid_limits[n][0] = (grid_link->grid_limits[n][0]/tileset->metasize_x)*tileset->metasize_x;
+      grid_link->grid_limits[n][1] = (grid_link->grid_limits[n][1]/tileset->metasize_y)*tileset->metasize_y;
+      grid_link->grid_limits[n][2] = (grid_link->grid_limits[n][2]/tileset->metasize_x+1)*tileset->metasize_x;
+      grid_link->grid_limits[n][3] = (grid_link->grid_limits[n][3]/tileset->metasize_y+1)*tileset->metasize_y;
+    }
+
     ctx.nextz = zooms[0];
     ctx.nextx = grid_link->grid_limits[zooms[0]][0];
     ctx.nexty = grid_link->grid_limits[zooms[0]][1];
