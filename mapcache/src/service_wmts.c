@@ -112,60 +112,6 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
          onlineresource,onlineresource,onlineresource);
    
    
-   apr_hash_index_t *grid_index = apr_hash_first(ctx->pool,cfg->grids);
-
-   while(grid_index) {
-      geocache_grid *grid;
-      char *epsgnum;
-      const void *key; apr_ssize_t keylen;
-      char *matrix;
-      int level;
-      const char *WellKnownScaleSet;
-      apr_hash_this(grid_index,&key,&keylen,(void**)&grid);
-      
-      /*locate the number after epsg: in the grd srs*/
-      epsgnum = strchr(grid->srs,':');
-      if(!epsgnum) {
-         epsgnum = grid->srs;
-      } else {
-         epsgnum++;
-      }
-      
-      WellKnownScaleSet = apr_table_get(grid->metadata,"WellKnownScaleSet");
-      
-      caps = apr_psprintf(ctx->pool,"%s"
-            "  <TileMatrixSet>\n"
-            "    <ows:Identifier>%s</ows:Identifier>\n"
-            "    <ows:SupportedCRS>urn:ogc:def:crs:EPSG::%s</ows:SupportedCRS>\n",
-            caps,grid->name,epsgnum);
-      
-      if(WellKnownScaleSet) {
-         caps = apr_psprintf(ctx->pool,"%s"
-            "    <WellKnownScaleSet>%s</WellKnownScaleSet>\n",
-            caps,WellKnownScaleSet);
-      }
-      
-      for(level=0;level<grid->levels;level++) {
-         int matrixwidth, matrixheight;
-         double scaledenom, unitwidth, unitheight;
-         unitwidth = grid->tile_sx * grid->resolutions[level];
-         unitheight = grid->tile_sy * grid->resolutions[level];
-                  
-         scaledenom = grid->resolutions[level] * geocache_meters_per_unit[grid->unit] / 0.00028;
-         matrixwidth = ceil((grid->extents[level][2]-grid->extents[level][0] - 0.01 * unitwidth)/unitwidth);
-         matrixheight = ceil((grid->extents[level][3]-grid->extents[level][1] - 0.01* unitheight)/unitheight);      
-         matrix = apr_psprintf(ctx->pool,wmts_matrix,
-               grid->name, level,
-               scaledenom,
-               grid->extents[level][0],grid->extents[level][3],
-               grid->tile_sx, grid->tile_sy,
-               matrixwidth,matrixheight);
-         caps = apr_psprintf(ctx->pool,"%s%s",caps,matrix);
-      }
-      caps = apr_pstrcat(ctx->pool,caps,"  </TileMatrixSet>\n",NULL);
-      grid_index = apr_hash_next(grid_index);
-   }
-   
    apr_hash_index_t *layer_index = apr_hash_first(ctx->pool,cfg->tilesets);
    while(layer_index) {
       int i;
@@ -233,14 +179,69 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             "    <TileMatrixSetLink>\n"
             "%s"
             "    </TileMatrixSetLink>\n"
-            "    <ResourceURL format=\"%s\" resourceType=\"tile\"\n"
-            "                 template=\"%s/wmts/1.0.0/%s/default/%s{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.%s\"/>\n"
+            "    <ResourceURL format=\"%s\" resourceType=\"tile\""
+            " template=\"%s/wmts/1.0.0/%s/default/%s{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.%s\"/>\n"
             "  </Layer>\n",caps,title,abstract,
             tileset->name,dimensions,tileset->format->mime_type,tmsets,
             tileset->format->mime_type,onlineresource,
             tileset->name, dimensionstemplate,tileset->format->extension);
       layer_index = apr_hash_next(layer_index);
    }
+   
+   apr_hash_index_t *grid_index = apr_hash_first(ctx->pool,cfg->grids);
+
+   while(grid_index) {
+      geocache_grid *grid;
+      char *epsgnum;
+      const void *key; apr_ssize_t keylen;
+      char *matrix;
+      int level;
+      const char *WellKnownScaleSet;
+      apr_hash_this(grid_index,&key,&keylen,(void**)&grid);
+      
+      /*locate the number after epsg: in the grd srs*/
+      epsgnum = strchr(grid->srs,':');
+      if(!epsgnum) {
+         epsgnum = grid->srs;
+      } else {
+         epsgnum++;
+      }
+      
+      WellKnownScaleSet = apr_table_get(grid->metadata,"WellKnownScaleSet");
+      
+      caps = apr_psprintf(ctx->pool,"%s"
+            "  <TileMatrixSet>\n"
+            "    <ows:Identifier>%s</ows:Identifier>\n"
+            "    <ows:SupportedCRS>urn:ogc:def:crs:EPSG::%s</ows:SupportedCRS>\n",
+            caps,grid->name,epsgnum);
+      
+      if(WellKnownScaleSet) {
+         caps = apr_psprintf(ctx->pool,"%s"
+            "    <WellKnownScaleSet>%s</WellKnownScaleSet>\n",
+            caps,WellKnownScaleSet);
+      }
+      
+      for(level=0;level<grid->levels;level++) {
+         int matrixwidth, matrixheight;
+         double scaledenom, unitwidth, unitheight;
+         unitwidth = grid->tile_sx * grid->resolutions[level];
+         unitheight = grid->tile_sy * grid->resolutions[level];
+                  
+         scaledenom = grid->resolutions[level] * geocache_meters_per_unit[grid->unit] / 0.00028;
+         matrixwidth = ceil((grid->extents[level][2]-grid->extents[level][0] - 0.01 * unitwidth)/unitwidth);
+         matrixheight = ceil((grid->extents[level][3]-grid->extents[level][1] - 0.01* unitheight)/unitheight);      
+         matrix = apr_psprintf(ctx->pool,wmts_matrix,
+               grid->name, level,
+               scaledenom,
+               grid->extents[level][0],grid->extents[level][3],
+               grid->tile_sx, grid->tile_sy,
+               matrixwidth,matrixheight);
+         caps = apr_psprintf(ctx->pool,"%s%s",caps,matrix);
+      }
+      caps = apr_pstrcat(ctx->pool,caps,"  </TileMatrixSet>\n",NULL);
+      grid_index = apr_hash_next(grid_index);
+   }
+   
    caps = apr_pstrcat(ctx->pool,caps,"</Contents>\n</Capabilities>\n",NULL);
    request->request.capabilities = caps;
 }
