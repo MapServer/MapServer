@@ -13,19 +13,9 @@ struct geocache_context_seeding{
     geocache_tileset *tileset;
     int minzoom;
     int maxzoom;
-    double *extent;
     int nextx,nexty,nextz;
     geocache_grid_link *grid_link;
 };
-
-typedef struct {
-    int firstx;
-    int firsty;
-    int lastx;
-    int lasty;
-} gc_tiles_for_zoom;
-
-gc_tiles_for_zoom seed_tiles[100]; //TODO: bug here if more than 100 zoomlevels, or if multithreaded usage on multiple tilesets
 
 int sig_int_received = 0;
 
@@ -92,11 +82,17 @@ int tile_exists(geocache_context *ctx, geocache_tileset *tileset,
     return tileset->cache->tile_exists(tmpctx,tile);
 }
 
+int curz;
+int seededtilestot, seededtiles;
+time_t lastlogtime,starttime;
+
+
 int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocache_tile *tile, geocache_context *tmpcontext) {
     geocache_context *gctx= (geocache_context*)ctx;
 
     gctx->global_lock_aquire(gctx);
     if(ctx->nextz > ctx->maxzoom) {
+       printf("this thread has finished seeding\n");
         gctx->global_lock_release(gctx);
         return GEOCACHE_FAILURE;
         //we have no tiles left to process
@@ -107,20 +103,20 @@ int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocac
     tile->z = ctx->nextz;
 
 
-
     while(1) {
         ctx->nextx += ctx->tileset->metasize_x;
-        if(ctx->nextx > seed_tiles[tile->z].lastx) {
+        if(ctx->nextx >= tile->grid_link->grid_limits[ctx->nextz][2]) {
             ctx->nexty += ctx->tileset->metasize_y;
-            if(ctx->nexty > seed_tiles[tile->z].lasty) {
+            if(ctx->nexty >= tile->grid_link->grid_limits[ctx->nextz][3]) {
                 ctx->nextz += 1;
                 if(ctx->nextz > ctx->maxzoom) break;
-                ctx->nexty = seed_tiles[ctx->nextz].firsty;
+                ctx->nexty = tile->grid_link->grid_limits[ctx->nextz][1];
             }
-            ctx->nextx = seed_tiles[ctx->nextz].firstx;
+            ctx->nextx = tile->grid_link->grid_limits[ctx->nextz][0];
         }
-        if(! tile_exists(gctx, ctx->tileset, ctx->nextx, ctx->nexty, ctx->nextz, ctx->grid_link, tmpcontext))
-            break;
+        if(! tile_exists(gctx, ctx->tileset, ctx->nextx, ctx->nexty, ctx->nextz, ctx->grid_link, tmpcontext)){
+           break;
+        }
     }
     gctx->global_lock_release(gctx);
     return GEOCACHE_SUCCESS;
@@ -130,7 +126,6 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
         geocache_cfg *cfg,
         geocache_tileset *tileset,
         int minzoom, int maxzoom,
-        double *extent,
         geocache_grid_link *grid_link) {
     int ret;
     geocache_context *gctx = (geocache_context*)ctx;
@@ -144,7 +139,6 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
     gctx->global_lock_release = geocache_context_seeding_lock_release;
     gctx->log = geocache_context_seeding_log;
     ctx->get_next_tile = geocache_context_seeding_get_next_tile;
-    ctx->extent = extent;
     ctx->minzoom = minzoom;
     ctx->maxzoom = maxzoom;
     ctx->tileset = tileset;
@@ -180,6 +174,21 @@ static void* APR_THREAD_FUNC doseed(apr_thread_t *thread, void *data) {
             apr_thread_exit(thread,GEOCACHE_FAILURE);
         }
         apr_pool_clear(tile_ctx.pool);
+        gctx->global_lock_aquire(gctx);
+
+        seededtiles+=tile->tileset->metasize_x*tile->tileset->metasize_y;
+        seededtilestot+=tile->tileset->metasize_x*tile->tileset->metasize_y;
+        time_t now = time(NULL);
+        if(now-lastlogtime>5) {
+           printf("\t\t\t\t\t\t\t\t\t\t\t\rseeding level %d at %g tiles/sec (avg:%.2f)\r",tile->z,
+                 seededtiles/((double)(now-lastlogtime)),
+                 seededtilestot/((double)(now-starttime)));
+           fflush(NULL);
+
+           lastlogtime = now;
+           seededtiles = 0;
+        }
+        gctx->global_lock_release(gctx);
     }
 
     if(gctx->get_error(gctx)) {
@@ -227,6 +236,10 @@ int main(int argc, const char **argv) {
     geocache_context_init(gctx);
     cfg = geocache_configuration_create(gctx->pool);
     apr_getopt_init(&opt, gctx->pool, argc, argv);
+    
+    curz=-1;
+    seededtiles=seededtilestot=0;
+    starttime = lastlogtime = time(NULL);
     /* parse the all options based on opt_option[] */
     while ((rv = apr_getopt_long(opt, seed_options, &optch, &optarg)) == APR_SUCCESS) {
         switch (optch) {
@@ -235,6 +248,9 @@ int main(int argc, const char **argv) {
                 break;
             case 'c':
                 configfile = optarg;
+                break;
+            case 'g':
+                grid_name = optarg;
                 break;
             case 't':
                 tileset_name = optarg;
@@ -299,25 +315,30 @@ int main(int argc, const char **argv) {
         }
         if(zooms[0]<0) zooms[0] = 0;
         if(zooms[1]>= grid_link->grid->nlevels) zooms[1] = grid_link->grid->nlevels - 1;
-        if(!extent) {
-            extent = (double*)apr_pcalloc(gctx->pool,4*sizeof(double));
-            extent[0] = grid_link->grid->extent[0];
-            extent[1] = grid_link->grid->extent[1];
-            extent[2] = grid_link->grid->extent[2];
-            extent[3] = grid_link->grid->extent[3];
-        }
     }
 
-    geocache_context_seeding_init(&ctx,cfg,tileset,zooms[0],zooms[1],extent,grid_link);
-    for(n=zooms[0];n<=zooms[1];n++) {
-        geocache_grid_get_xy(gctx,grid_link->grid,grid_link->grid->extent[0],grid_link->grid->extent[1],
-                n,&seed_tiles[n].firstx,&seed_tiles[n].firsty);
-        geocache_grid_get_xy(gctx,grid_link->grid,grid_link->grid->extent[2],grid_link->grid->extent[3],
-                n,&seed_tiles[n].lastx,&seed_tiles[n].lasty);
+    geocache_context_seeding_init(&ctx,cfg,tileset,zooms[0],zooms[1],grid_link);
+    if(extent) {
+       // update the grid limits
+       geocache_grid_compute_limits(grid_link->grid,extent,grid_link->grid_limits);
     }
     ctx.nextz = zooms[0];
-    ctx.nextx = seed_tiles[zooms[0]].firstx;
-    ctx.nexty = seed_tiles[zooms[0]].firsty;
+    ctx.nextx = grid_link->grid_limits[zooms[0]][0];
+    ctx.nexty = grid_link->grid_limits[zooms[0]][1];
+
+    /* find the first tile to render if the first one already exists */
+    if(tile_exists(gctx, tileset,
+             ctx.nextx, ctx.nexty, ctx.nextz,
+             grid_link, gctx)) {
+       geocache_tile *tile = geocache_tileset_tile_create(gctx->pool, tileset, grid_link);
+       geocache_context_seeding_get_next_tile(&ctx,tile,gctx);
+       if(ctx.nextz > ctx.maxzoom) {
+          printf("nothing to do, all tiles are present\n");
+          return 0;
+       }
+
+    } 
+
 
     if( ! nthreads ) {
         return usage(argv[0],"failed to parse nthreads, must be int");
@@ -332,9 +353,11 @@ int main(int argc, const char **argv) {
         }
     }
     if(gctx->get_error(gctx)) {
-        gctx->log(gctx,GEOCACHE_ERROR,gctx->get_error_message(gctx));
+        printf("%s",gctx->get_error_message(gctx));
     }
 
+    if(seededtilestot>0)
+      printf("seeded %d tiles at %g tiles/sec\n",seededtilestot, seededtilestot/((double)(time(NULL)-starttime)));
 
     return 0;
 }

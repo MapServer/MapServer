@@ -333,7 +333,7 @@
          NOTE: when adding a <grid> element, you *MUST* make sure that the source you have selected is able to
          return images in the grid's srs.
       -->
-         <grid restricted_extent="-10 40 10 50">WGS84</grid>
+         <grid>WGS84</grid>
       <grid>google</grid>
 
       <!-- metadata
