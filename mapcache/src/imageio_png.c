@@ -279,19 +279,26 @@ static void pam_freeacolorhash (acolorhash_table acht);
  * - rb: the rasterBuffer to quantize
  * - reqcolors: the desired number of colors the palette should contain. will be set
  *   with the actual number of entries in the computed palette
+ * - palette: preallocated array of palette entries that will be populated by the
+ *   function
+ * - maxval: max value of pixel intensity. In some cases, the input data has to
+ *   be rescaled to compute the quantization. if the returned value of maxscale is
+ *   less than 255, this means that the input pixels have been rescaled, and that
+ *   the returned palette must be upscaled before being written to the png file
  * - forced_palette: entries that should appear in the computed palette
  * - num_forced_palette_entries: number of entries contained in "force_palette". if 0,
  *   "force_palette" can be NULL
  */
 int _geocache_imageio_quantize_image(geocache_image *rb,
       unsigned int *reqcolors, rgbaPixel *palette,
+      unsigned int *maxval,
       rgbaPixel *forced_palette, int num_forced_palette_entries) {
 
    rgbaPixel **apixels=NULL; /* pointer to the start rows of truecolor pixels */
    register rgbaPixel *pP;
    register int col;
 
-   unsigned char maxval, newmaxval;
+   unsigned char newmaxval;
    acolorhist_vector achv, acolormap=NULL;
 
    int row;
@@ -302,7 +309,7 @@ int _geocache_imageio_quantize_image(geocache_image *rb,
    /*  int channels;  */
 
 
-   maxval = 255;
+   *maxval = 255;
 
    apixels=(rgbaPixel**)malloc(rb->h*sizeof(rgbaPixel**));
    if(!apixels) return GEOCACHE_FAILURE;
@@ -323,41 +330,25 @@ int _geocache_imageio_quantize_image(geocache_image *rb,
             apixels, rb->w, rb->h, MAXCOLORS, &colors );
       if ( achv != (acolorhist_vector) 0 )
          break;
-      newmaxval = maxval / 2;
+      newmaxval = *maxval / 2;
       for ( row = 0; row < rb->h; ++row )
          for ( col = 0, pP = apixels[row]; col < rb->w; ++col, ++pP )
-            PAM_DEPTH( *pP, *pP, maxval, newmaxval );
-      maxval = newmaxval;
+            PAM_DEPTH( *pP, *pP, *maxval, newmaxval );
+      *maxval = newmaxval;
    }
    newcolors = GEOCACHE_MIN(colors, *reqcolors);
-   acolormap = mediancut(achv, colors, rb->w*rb->h, maxval, newcolors);
+   acolormap = mediancut(achv, colors, rb->w*rb->h, *maxval, newcolors);
    pam_freeacolorhist(achv);
 
 
    *reqcolors = newcolors;
 
 
-   /*
-    ** rescale the palette colors to a maxval of 255
-    */
-
-   if (maxval < 255) {
-      for (x = 0; x < newcolors; ++x) {
-         /* the rescaling part of this is really just PAM_DEPTH() broken out
-          *  for the PNG palette; the trans-remapping just puts the values
-          *  in different slots in the PNG palette */
-         palette[x].r = (acolormap[x].acolor.r * 255 + (maxval >> 1)) / maxval;
-         palette[x].g = (acolormap[x].acolor.g * 255 + (maxval >> 1)) / maxval;
-         palette[x].b = (acolormap[x].acolor.b * 255 + (maxval >> 1)) / maxval;
-         palette[x].a = (acolormap[x].acolor.a * 255 + (maxval >> 1)) / maxval;
-      }
-   } else {
-      for (x = 0; x < newcolors; ++x) {
-         palette[x].r = acolormap[x].acolor.r;
-         palette[x].g = acolormap[x].acolor.g;
-         palette[x].b = acolormap[x].acolor.b;
-         palette[x].a = acolormap[x].acolor.a;
-      }
+   for (x = 0; x < newcolors; ++x) {
+      palette[x].r = acolormap[x].acolor.r;
+      palette[x].g = acolormap[x].acolor.g;
+      palette[x].b = acolormap[x].acolor.b;
+      palette[x].a = acolormap[x].acolor.a;
    }
 
    free(acolormap);
@@ -366,7 +357,8 @@ int _geocache_imageio_quantize_image(geocache_image *rb,
 }
 
 
-int _geocache_imageio_classify(geocache_image *rb, unsigned char *pixels, rgbaPixel *palette, int numPaletteEntries) {
+int _geocache_imageio_classify(geocache_image *rb, unsigned char *pixels,
+      rgbaPixel *palette, int numPaletteEntries) {
    register int ind;
    unsigned char *outrow,*pQ;
    register rgbaPixel *pP;
@@ -951,7 +943,9 @@ acolorhash_table acht;
 
 /** \endcond DONOTDOCUMENT */
 
-int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels, rgbaPixel *palette, int numPaletteEntries, rgbPixel *rgb, unsigned char *a, int *num_a) {
+int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels,
+      rgbaPixel *palette, int numPaletteEntries, unsigned int maxval,
+      rgbPixel *rgb, unsigned char *a, int *num_a) {
    int bot_idx, top_idx, x;
    int remap[256];
    /*
@@ -963,7 +957,7 @@ int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels, rgbaPixe
     */
 
    for (top_idx = numPaletteEntries-1, bot_idx = x = 0;  x < numPaletteEntries;  ++x) {
-      if (palette[x].a == 255)
+      if (palette[x].a == maxval)
          remap[x] = top_idx--;
       else
          remap[x] = bot_idx++;
@@ -979,12 +973,18 @@ int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels, rgbaPixe
       pixels[x] = remap[pixels[x]];
 
    for (x = 0; x < numPaletteEntries; ++x) {
-      a[remap[x]] = palette[x].a;
-      rgb[remap[x]].r = palette[x].r;
-      rgb[remap[x]].g = palette[x].g;
-      rgb[remap[x]].b = palette[x].b;
+      if(maxval == 255) {
+         a[remap[x]] = palette[x].a;
+         rgb[remap[x]].r = palette[x].r;
+         rgb[remap[x]].g = palette[x].g;
+         rgb[remap[x]].b = palette[x].b;
+      } else {
+         rgb[remap[x]].r = (palette[x].r * 255 + (maxval >> 1)) / maxval;
+         rgb[remap[x]].g = (palette[x].g * 255 + (maxval >> 1)) / maxval;
+         rgb[remap[x]].b = (palette[x].b * 255 + (maxval >> 1)) / maxval;
+         a[remap[x]] = (palette[x].a * 255 + (maxval >> 1)) / maxval;
+      }
    }
-
    return GEOCACHE_SUCCESS;
 }
 
@@ -993,7 +993,8 @@ int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels, rgbaPixe
  * \private \memberof geocache_image_format_png_q
  * \sa geocache_image_format::write()
  */
-geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache_image *image, geocache_image_format *format) {
+geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache_image *image,
+      geocache_image_format *format) {
    int ret;
    geocache_buffer *buffer = geocache_buffer_create(3000,ctx->pool);
    geocache_image_format_png_q *f = (geocache_image_format_png_q*)format;
@@ -1001,7 +1002,8 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
    unsigned int numPaletteEntries = f->ncolors;
    unsigned char *pixels = (unsigned char*)apr_pcalloc(ctx->pool,image->w*image->h*sizeof(unsigned char));
    rgbaPixel palette[256];
-   ret = _geocache_imageio_quantize_image(image,&numPaletteEntries,palette, NULL, 0);
+   unsigned int maxval;
+   ret = _geocache_imageio_quantize_image(image,&numPaletteEntries,palette, &maxval, NULL, 0);
    ret = _geocache_imageio_classify(image,pixels,palette,numPaletteEntries);
    png_infop info_ptr;
    rgbPixel rgb[256];
@@ -1048,7 +1050,8 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
    else if(compression == GEOCACHE_COMPRESSION_FAST)
       png_set_compression_level (png_ptr, Z_BEST_SPEED);
    
-   _geocache_imageio_remap_palette(pixels, image->w * image->h, palette, numPaletteEntries,rgb,a,&num_a);
+   _geocache_imageio_remap_palette(pixels, image->w * image->h, palette, numPaletteEntries,
+         maxval,rgb,a,&num_a);
    
    png_set_PLTE(png_ptr, info_ptr, (png_colorp)(rgb),numPaletteEntries);
    if(num_a)
