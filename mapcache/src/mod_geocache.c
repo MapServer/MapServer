@@ -197,7 +197,7 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
 static int mod_geocache_request_handler(request_rec *r) {
    apr_table_t *params;
    geocache_cfg *config = NULL;
-   geocache_request *request;
+   geocache_request *request = NULL;
    geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
    geocache_context *global_ctx = (geocache_context*)apache_ctx;
    geocache_tile *tile;
