@@ -55,7 +55,7 @@ geocache_image_format_type geocache_imageio_header_sniff(request_rec *r, geocach
    } else if(buffer->size >= 2 && buffer->buf[0] == 0xFF && buffer->buf[1] == 0xD8) {
       return GC_JPEG;
    } else {
-      return GC_PNG;
+      return GC_UNKNOWN;
    }
 }
 
