@@ -1,6 +1,11 @@
 Unix compilation instructions
 -----------------------------
 
+If you are using an svn checkout rather than a tarball distribution, you must first
+run autoconf in the root directory, to create the configure file from configure.in:
+
+$ autoconf
+
 For unix users, the compilation process should resume to:
 
 $ ./configure
@@ -29,7 +34,7 @@ Next, a geocache configuration is mapped to the server url with the following sn
 # apachectl restart
 
 If you have not disabled the demo service, you should now have access to it on
-http://myserver/geocache/dem
+http://myserver/geocache/demo
 
 
 Customizing the build, or if something went wrong
@@ -58,8 +63,8 @@ apr-config is sometimes called apr-1-config on some systems. The path to the apr
 from the previous apxs utility. you can use this switch to override which apr will be used. beware that using a different
 version of apr than the one that is linked to by apache will likely cause bugs.
 
-apr-util (optional)
-===================
+apr-util
+========
 
 --with-apu-config=/path/to/apu-config
 
@@ -86,6 +91,26 @@ libjpeg
 
 this is the path where the libjpeg headers and libs can be located.
 the configure script will be looking for [path]/include/jpeg.h and [path]/lib/libjpeg.so
+
+pixman (from 0.5 onwards) (recommended)
+=======================================
+
+--with-pixman=[yes|no|/path/to/pkgconfig/pixman.pc]
+
+pixman is a pixel manipulation library used to assemble image tiles when responding
+to non-tiled wms requests. Pixman support is recommended as it is highly optimized
+and will take advantage of recent processor extensions (mms, sse, ...) to speed up
+blending and resampling operations. In case the pixman library is not found, mod-geocache
+will fall back to internal pixel operations that are slower.
+
+sqlite (from 0.5 onwards) (optional)
+====================================
+
+--with-sqlite[=/path/to/sqlite/prefix]
+
+sqlite is used to enable the sqlite and mbtiles cache backend. version 3.5.0 or newer is
+required.
+
 
 gdal (from 0.4 onwards) (optional)
 ===================================
