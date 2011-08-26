@@ -747,13 +747,11 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
              ctx->set_error(ctx,400, "watermark config entry empty");
              return;
          }
-         apr_pool_t *tmppool;
-         apr_pool_create(&tmppool,ctx->pool);
          apr_file_t *f;
          apr_finfo_t finfo;
          int rv;
          if(apr_file_open(&f, cur_node->txt, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
-                APR_OS_DEFAULT, tmppool) != APR_SUCCESS) {
+                APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
              ctx->set_error(ctx,500, "failed to open watermark image %s",cur_node->txt);
              return;
          }
@@ -763,19 +761,18 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
             return;
          }
 
-         geocache_buffer *watermarkdata = geocache_buffer_create(finfo.size,tmppool);
+         geocache_buffer *watermarkdata = geocache_buffer_create(finfo.size,ctx->pool);
          //manually add the data to our buffer
          apr_size_t size;
          apr_file_read(f,(void*)watermarkdata->buf,&size);
          watermarkdata->size = size;
-         apr_file_close(f);
          if(size != finfo.size) {
             ctx->set_error(ctx, 500,  "failed to copy watermark image data, got %d of %d bytes",(int)size, (int)finfo.size);
             return;
          }
+         apr_file_close(f);
          tileset->watermark = geocache_imageio_decode(ctx,watermarkdata);
          GC_CHECK_ERROR(ctx);
-         apr_pool_destroy(tmppool);
    }
       
 
