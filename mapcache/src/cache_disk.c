@@ -313,13 +313,17 @@ int _geocache_cache_disk_set(geocache_tile *tile, request_rec *r) {
                return GEOCACHE_FAILURE;
             }
             apr_file_close(f);
+#ifdef DEBUG
             ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "created blank tile %s",blankname);
+#endif
          }
          if(apr_file_link(blankname,filename) != GEOCACHE_SUCCESS) {
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to link tile %s to %s",filename, blankname);
             return GEOCACHE_FAILURE; /* we could not create the file */
          }
+#ifdef DEBUG        
          ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "linked blank tile %s to %s",filename,blankname);
+#endif
          return GEOCACHE_SUCCESS;
       }
    }
