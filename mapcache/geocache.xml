@@ -500,37 +500,19 @@
       each service is accessible at the url http://host/path/to/geocache/{service},
       eg http://myhost/geocache/wms for OGC WMS.
    -->
-   <service type="wms" enabled="true"/>
+   <service type="wms" enabled="true">
+      <forwarding_rule name="foo rule">
+            <http>
+               <url>http://localhost/cgi-bin/mapserv?map=/gro1/mapserver-utils/osm.map</url>
+            </http>
+      </forwarding_rule>
+   </service>
    <service type="wmts" enabled="true"/>
    <service type="tms" enabled="true"/>
    <service type="kml" enabled="true"/>
    <service type="gmaps" enabled="true"/>
    <service type="ve" enabled="true"/>
    <service type="demo" enabled="true"/>
-   <services>
-      <!-- OGC WMS -->
-      <wms>true</wms>
-      
-      <!-- OSGEO TMS -->
-      <tms>true</tms>
-      
-      <!-- Virtualearth/Bing quadkey-->
-      <ve>true</ve>
-
-      <!-- kml superoverlays -->
-      <kml>true</kml>
-      
-      <!-- OGC WMTS -->
-      <wmts>true</wmts>
-      
-      <!-- Google Maps -->
-      <gmaps>true</gmaps>
-
-      <!-- demo
-         interface with a simple openlayers map serving the configured layers through WMS.
-      -->
-      <demo>true</demo>
-   </services>
 
    <!-- errors
         configure how error will be reported back to a client:

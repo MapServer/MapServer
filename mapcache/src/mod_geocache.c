@@ -239,7 +239,11 @@ static int geocache_write_proxied_response(geocache_context_apache_request *ctx,
       int i;
       for(i=0;i<elts->nelts;i++) {
          apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);
-         apr_table_set(r->headers_out, entry.key, entry.val);
+         if(!strcasecmp(entry.key,"Content-Type")) {
+            ap_set_content_type(r,entry.val);
+         } else {
+            apr_table_set(r->headers_out, entry.key, entry.val);
+         }
       }
 
    }

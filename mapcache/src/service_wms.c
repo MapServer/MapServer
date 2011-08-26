@@ -295,21 +295,29 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
    int width=0, height=0;
    double *bbox;
    int isGetMap=0;
-   
+   int errcode = 200;
+   char *errmsg = NULL;
+   geocache_service_wms *wms_service = (geocache_service_wms*)this;
+
+   *request = NULL;
+
    str = apr_table_get(params,"SERVICE");
    if(!str) {
-      ctx->set_error(ctx,400,"received wms request with no service param");
-      return;
+      errcode=400;
+      errmsg = "received wms request with no service param";
+      goto proxies;
    }
    if( strcasecmp(str,"wms") ) {
-      ctx->set_error(ctx,400,"received wms request with invalid service param %s", str);
-      return;
+      errcode = 400;
+      errmsg = apr_psprintf(ctx->pool,"received wms request with invalid service param %s", str);
+      goto proxies;
    }
       
    str = apr_table_get(params,"REQUEST");
    if(!str) {
-      ctx->set_error(ctx, 400, "received wms with no request");
-      return;
+      errcode = 400;
+      errmsg = "received wms with no request";
+      goto proxies;
    }
 
    if( ! strcasecmp(str,"getmap")) {
@@ -319,66 +327,75 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          *request = (geocache_request*)
             apr_pcalloc(ctx->pool,sizeof(geocache_request_get_capabilities_wms));
          (*request)->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
-         return; /* OK */
+         goto proxies; /* OK */
       } else if( ! strcasecmp(str,"getfeatureinfo") ) {
          //nothing
       } else {
-         ctx->set_error(ctx, 501, "received wms with invalid request %s",str);
-         return;
+         errcode = 501;
+         errmsg = apr_psprintf(ctx->pool,"received wms with invalid request %s",str);
+         goto proxies;
       }
    }
 
 
    str = apr_table_get(params,"BBOX");
    if(!str) {
-      ctx->set_error(ctx, 400, "received wms request with no bbox");
-      return;
+      errcode = 400;
+      errmsg = "received wms request with no bbox";
+      goto proxies;
    } else {
       int nextents;
       if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, str,',',&bbox,&nextents) ||
             nextents != 4) {
-         ctx->set_error(ctx, 400, "received wms request with invalid bbox");
-         return;
+         errcode = 400;
+         errmsg = "received wms request with invalid bbox";
+         goto proxies;
       }
    }
 
    str = apr_table_get(params,"WIDTH");
    if(!str) {
-      ctx->set_error(ctx, 400, "received wms request with no width");
-      return;
+      errcode = 400;
+      errmsg = "received wms request with no width";
+      goto proxies;
    } else {
       char *endptr;
       width = (int)strtol(str,&endptr,10);
       if(*endptr != 0 || width <= 0) {
-         ctx->set_error(ctx, 400, "received wms request with invalid width");
-         return;
+         errcode = 400;
+         errmsg = "received wms request with invalid width";
+         goto proxies;
       }
    }
 
    str = apr_table_get(params,"HEIGHT");
    if(!str) {
-      ctx->set_error(ctx, 400, "received wms request with no height");
-      return;
+      errcode = 400;
+      errmsg = "received wms request with no height";
+      goto proxies;
    } else {
       char *endptr;
       height = (int)strtol(str,&endptr,10);
       if(*endptr != 0 || height <= 0) {
-         ctx->set_error(ctx, 400, "received wms request with invalid height");
-         return;
+         errcode = 400;
+         errmsg = "received wms request with invalid height";
+         goto proxies;
       }
    }
 
    srs = apr_table_get(params,"SRS");
    if(!srs) {
-      ctx->set_error(ctx, 400, "received wms request with no srs");
-      return;
+      errcode = 400;
+      errmsg = "received wms request with no srs";
+      goto proxies;
    }
 
    if(isGetMap) {
       str = apr_table_get(params,"LAYERS");
       if(!str) {
-         ctx->set_error(ctx, 400, "received wms request with no layers");
-         return;
+         errcode = 400;
+         errmsg = "received wms request with no layers";
+         goto proxies;
       } else {
          char *last, *key, *layers;
          int count=1;
@@ -397,8 +414,9 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                key = apr_strtok(NULL, sep, &last)) {
             geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
             if(!tileset) {
-               ctx->set_error(ctx, 404, "received wms request with invalid layer %s", key);
-               return;
+               errcode = 404;
+               errmsg = apr_psprintf(ctx->pool,"received wms request with invalid layer %s", key);
+               goto proxies;
             }
             int i;
             geocache_grid_link *grid_link = NULL;
@@ -419,9 +437,10 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                break;
             }
             if(!grid_link) {
-               ctx->set_error(ctx, 400,
+               errcode = 400;
+               errmsg = apr_psprintf(ctx->pool,
                      "received unsuitable wms request: no <grid> with suitable srs found for layer %s",tileset->name);
-               return;
+               goto proxies;
             }
 
             /* verify we align on the tileset's grid */ 
@@ -464,8 +483,9 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
 #else
                int ret = geocache_grid_get_cell(ctx, grid_link->grid, bbox, &tile->x, &tile->y, &tile->z);
                if(ret != GEOCACHE_SUCCESS) {
-                  ctx->set_error(ctx,500,"###BUG###: grid_get_cell returned failure");
-                  return;
+                  errcode = 500;
+                  errmsg = "###BUG###: grid_get_cell returned failure";
+                  goto proxies;
                }
 #endif
                geocache_tileset_tile_validate(ctx,tile);
@@ -502,37 +522,43 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                      if(ok == GEOCACHE_SUCCESS)
                         apr_table_setn(dimtable,dimension->name,tmpval);
                      else {
-                        ctx->set_error(ctx,400,"dimension \"%s\" value \"%s\" fails to validate",
+                        errcode = 400;
+                        errmsg = apr_psprintf(ctx->pool, "dimension \"%s\" value \"%s\" fails to validate",
                               dimension->name, value);
-                        return;
+                        goto proxies;
                      }
                   }
                }
             }
          }
          if(tile_req && tile_req->ntiles == 0) {
-            ctx->set_error(ctx,404,"request for tile outside of restricted extent");
-            return;
+            errcode = 404;
+            errmsg = "request for tile outside of restricted extent";
+            goto proxies;
          }
       }
    } else {
       //getfeatureinfo
       str = apr_table_get(params,"QUERY_LAYERS");
       if(!str) {
-         ctx->set_error(ctx, 400, "received wms getfeatureinfo request with no query layers");
-         return;
+         errcode = 400;
+         errmsg = "received wms getfeatureinfo request with no query layers";
+         goto proxies;
       } else if(strstr(str,",")) {
-         ctx->set_error(ctx,501, "wms getfeatureinfo not implemented for multiple layers");
-         return;
+         errcode = 501;
+         errmsg = "wms getfeatureinfo not implemented for multiple layers";
+         goto proxies;
       } else {
          geocache_tileset *tileset = geocache_configuration_get_tileset(config,str);
          if(!tileset) {
-            ctx->set_error(ctx, 404, "received wms getfeatureinfo request with invalid layer %s", str);
-            return;
+            errcode = 404;
+            errmsg = apr_psprintf(ctx->pool,"received wms getfeatureinfo request with invalid layer %s", str);
+            goto proxies;
          }
          if(!tileset->source->info_formats) {
-            ctx->set_error(ctx, 404, "received wms getfeatureinfo request for unqueryable layer %s", str);
-            return;
+            errcode = 404;
+            errmsg = apr_psprintf(ctx->pool,"received wms getfeatureinfo request for unqueryable layer %s", str);
+            goto proxies;
          }
          int i;
          geocache_grid_link *grid_link = NULL;
@@ -543,35 +569,40 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             break;
          }
          if(!grid_link) {
-            ctx->set_error(ctx, 400,
+            errcode = 400;
+            errmsg = apr_psprintf(ctx->pool,
                   "received unsuitable wms request: no <grid> with suitable srs found for layer %s",tileset->name);
-            return;
+            goto proxies;
          }
          int x,y;
          
          str = apr_table_get(params,"X");
          if(!str) {
-            ctx->set_error(ctx, 400, "received wms getfeatureinfo request with no X");
-            return;
+            errcode = 400;
+            errmsg = "received wms getfeatureinfo request with no X";
+            goto proxies;
          } else {
             char *endptr;
             x = (int)strtol(str,&endptr,10);
             if(*endptr != 0 || x <= 0 || x>=width) {
-               ctx->set_error(ctx, 400, "received wms request with invalid X");
-               return;
+               errcode = 400;
+               errmsg = "received wms request with invalid X";
+               goto proxies;
             }
          }
 
          str = apr_table_get(params,"Y");
          if(!str) {
-            ctx->set_error(ctx, 400, "received wms getfeatureinfo request with no Y");
-            return;
+            errcode = 400;
+            errmsg = "received wms getfeatureinfo request with no Y";
+            goto proxies;
          } else {
             char *endptr;
             y = (int)strtol(str,&endptr,10);
             if(*endptr != 0 || y <= 0 || y>=height) {
-               ctx->set_error(ctx, 400, "received wms request with invalid Y");
-               return;
+               errcode = 400;
+               errmsg = "received wms request with invalid Y";
+               goto proxies;
             }
          }
          
@@ -580,8 +611,9 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          fi->j = y;
          fi->format = apr_pstrdup(ctx->pool,apr_table_get(params,"INFO_FORMAT"));
          if(!fi->format) {
-            ctx->set_error(ctx, 400, "received wms getfeatureinfo request with no INFO_FORMAT");
-            return;
+            errcode = 400;
+            errmsg = "received wms getfeatureinfo request with no INFO_FORMAT";
+            goto proxies;
          }
 
          if(fi->map.dimensions) {
@@ -596,9 +628,10 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                   if(ok == GEOCACHE_SUCCESS)
                      apr_table_setn(fi->map.dimensions,dimension->name,tmpval);
                   else {
-                     ctx->set_error(ctx,400,"dimension \"%s\" value \"%s\" fails to validate",
+                     errcode = 400;
+                     errmsg = apr_psprintf(ctx->pool,"dimension \"%s\" value \"%s\" fails to validate",
                            dimension->name, value);
-                     return;
+                     goto proxies;
                   }
                }
             }
@@ -616,6 +649,54 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
 
       }
    }
+
+proxies:
+   /* 
+    * if we don't have a gettile or getmap request we can treat from the cache tiles, look to see if we have a rule
+    * that tells us to forward the request somewhere else
+    */
+   if(errcode == 200 && 
+         *request && (
+            ((*request)->type == GEOCACHE_REQUEST_GET_TILE) ||
+            (((*request)->type == GEOCACHE_REQUEST_GET_MAP) && 
+               ctx->config->getmap_strategy != GEOCACHE_GETMAP_ASSEMBLE)
+            )) {
+      /* if we're here, then we have succesfully parsed the request and can treat it ourselves, i.e. from cached tiles */
+      return;
+   } else {
+      /* look to see if we can proxy the request somewhere*/
+      int i,j;
+      for(i=0;i<wms_service->forwarding_rules->nelts;i++) {
+         geocache_forwarding_rule *rule = APR_ARRAY_IDX(wms_service->forwarding_rules,i,geocache_forwarding_rule*);
+         int got_a_match = 1;
+         for(j=0;j<rule->match_params->nelts;j++) {
+            geocache_dimension *match_param = APR_ARRAY_IDX(rule->match_params,j,geocache_dimension*);
+            const char *value = apr_table_get(params,match_param->name);
+            if(match_param->validate(ctx,match_param,(char**)&value) == GEOCACHE_FAILURE) {
+               got_a_match = 0;
+               break;
+            }
+         }
+         if( got_a_match == 1 ) {
+            geocache_request_proxy *req_proxy = apr_pcalloc(ctx->pool,sizeof(geocache_request_proxy));
+            *request = (geocache_request*)req_proxy;
+            (*request)->service = this;
+            (*request)->type = GEOCACHE_REQUEST_PROXY;
+            req_proxy->http = rule->http;
+            req_proxy->params = params;
+            return;
+         }
+      }
+   }
+
+   /* 
+    * if we are here, then we are either in the getfeatureinfo / getcapabilities / getmap case,
+    * or there was an error parsing the request and no rules to proxy it elsewhere
+    */
+   if(errcode != 200) {
+      ctx->set_error(ctx,errcode,errmsg);
+      return;
+   }
 #ifdef DEBUG
    if((*request)->type != GEOCACHE_REQUEST_GET_TILE && (*request)->type != GEOCACHE_REQUEST_GET_MAP && 
          (*request)->type != GEOCACHE_REQUEST_GET_FEATUREINFO  ) {
@@ -627,7 +708,58 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
 
 void _configuration_parse_wms(geocache_context *ctx, ezxml_t node, geocache_service *gservice) {
    assert(gservice->type == GEOCACHE_SERVICE_WMS);
+   geocache_service_wms *wms = (geocache_service_wms*)gservice;
+   ezxml_t rule_node;
+   for( rule_node = ezxml_child(node,"forwarding_rule"); rule_node; rule_node = rule_node->next) {
+      char *name = (char*)ezxml_attr(rule_node,"name");
+      if(!name) name = "(null)";
+      geocache_forwarding_rule *rule = apr_pcalloc(ctx->pool, sizeof(geocache_forwarding_rule));
+      rule->name = apr_pstrdup(ctx->pool,name);
+      rule->match_params = apr_array_make(ctx->pool,1,sizeof(geocache_dimension*));
 
+      ezxml_t http_node = ezxml_child(rule_node,"http");
+      if(!http_node) {
+         ctx->set_error(ctx,500,"rule \"%s\" does not contain an <http> block",name);
+         return;
+      }
+      rule->http = geocache_http_configuration_parse(ctx,http_node);
+      GC_CHECK_ERROR(ctx);
+
+      ezxml_t param_node;
+      for(param_node = ezxml_child(rule_node,"param"); param_node; param_node = param_node->next) {
+         char *name = (char*)ezxml_attr(param_node,"name");
+         char *type = (char*)ezxml_attr(param_node,"type");
+
+         geocache_dimension *dimension = NULL;
+
+         if(!name || !strlen(name)) {
+            ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in forwarding rule <param>");
+            return;
+         }
+
+         if(type && *type) {
+            if(!strcmp(type,"values")) {
+               dimension = geocache_dimension_values_create(ctx->pool);
+            } else if(!strcmp(type,"regex")) {
+               dimension = geocache_dimension_regex_create(ctx->pool);
+            } else {
+               ctx->set_error(ctx,400,"unknown <param> type \"%s\". expecting \"values\" or \"regex\".",type);
+               return;
+            }
+         } else {
+            ctx->set_error(ctx,400, "mandatory attribute \"type\" not found in <dimensions>");
+            return;
+         }
+
+         dimension->name = apr_pstrdup(ctx->pool,name);
+
+         dimension->parse(ctx,dimension,param_node->txt);
+         GC_CHECK_ERROR(ctx);
+
+         APR_ARRAY_PUSH(rule->match_params,geocache_dimension*) = dimension;
+      }
+      APR_ARRAY_PUSH(wms->forwarding_rules,geocache_forwarding_rule*) = rule;
+   }
 }
 
 geocache_service* geocache_service_wms_create(geocache_context *ctx) {
@@ -636,6 +768,7 @@ geocache_service* geocache_service_wms_create(geocache_context *ctx) {
       ctx->set_error(ctx, 500, "failed to allocate wms service");
       return NULL;
    }
+   service->forwarding_rules = apr_array_make(ctx->pool,0,sizeof(geocache_forwarding_rule*));
    service->service.url_prefix = apr_pstrdup(ctx->pool,"");
    service->service.name = apr_pstrdup(ctx->pool,"wms");
    service->service.type = GEOCACHE_SERVICE_WMS;

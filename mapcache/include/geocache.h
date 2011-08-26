@@ -88,6 +88,7 @@ typedef struct geocache_request_get_capabilities geocache_request_get_capabiliti
 typedef struct geocache_request_get_capabilities_demo geocache_request_get_capabilities_demo;
 typedef struct geocache_request_get_capabilities_wms geocache_request_get_capabilities_wms;
 typedef struct geocache_request_get_capabilities_wmts geocache_request_get_capabilities_wmts;
+typedef struct geocache_forwarding_rule geocache_forwarding_rule;
 typedef struct geocache_request_get_capabilities_tms geocache_request_get_capabilities_tms;
 typedef struct geocache_request_get_capabilities_kml geocache_request_get_capabilities_kml;
 
@@ -494,6 +495,13 @@ struct geocache_request_proxy {
    apr_table_t *params;
 };
 
+struct geocache_forwarding_rule {
+   char *name;
+   geocache_http *http;
+   apr_array_header_t *match_params;  /* actually those are geocache_dimensions */
+};
+
+
 
 
 /** \defgroup services Services*/
@@ -552,6 +560,7 @@ struct geocache_service {
  */
 struct geocache_service_wms {
     geocache_service service;
+    apr_array_header_t *forwarding_rules;
 };
 
 /**\class geocache_service_kml
