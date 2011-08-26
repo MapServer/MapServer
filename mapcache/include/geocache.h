@@ -1012,37 +1012,18 @@ geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *
 
 /** @} */
 
-typedef enum {
-   GEOCACHE_DIMENSION_VALUES,
-   GEOCACHE_DIMENSION_INTERVAL,
-   GEOCACHE_DIMENSION_REGEX
-} geocache_dimension_type;
-
-typedef struct geocache_dimension_entry geocache_dimension_entry;
-
 struct geocache_dimension {
-   geocache_dimension_type type;
    char *name;
+   char *unit;
    apr_table_t *metadata;
    char *default_value;
-   int (*validate)(geocache_context *context, geocache_dimension *dimension, const char *value);
-};
-typedef struct geocache_dimension_values geocache_dimension_values;
-
-struct geocache_dimension_values {
-   geocache_dimension dimension;
    int nvalues;
    char **values;
+   int (*validate)(geocache_context *context, geocache_dimension *dimension, const char *value);
 };
 
-geocache_dimension_values* geocache_dimension_values_create(apr_pool_t *pool);
+geocache_dimension* geocache_dimension_create(apr_pool_t *pool);
 
-typedef struct geocache_dimension_regexp geocache_dimension_regexp;
-
-struct geocache_dimension_regexp {
-   geocache_dimension dimension;
-   regex_t *regex;
-};
 #endif /* GEOCACHE_H_ */
 /* vim: ai ts=3 sts=3 et sw=3
 */

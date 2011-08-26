@@ -180,6 +180,30 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       if(!abstract) {
          abstract = "no abstract set, add some in metadata";
       }
+
+      char *dimensions="";
+      if(tileset->dimensions) {
+         int i;
+         for(i=0;i<tileset->dimensions->nelts;i++) {
+            geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+            dimensions = apr_psprintf(ctx->pool,"%s"
+                  "    <Dimension>\n"
+                  "      <ows:Identifier>%s</ows:Identifier>\n"
+                  "      <Default>%s</Default>\n",
+                  dimensions,
+                  dimension->name,
+                  dimension->default_value);
+            if(dimension->unit) {
+               dimension = apr_pstrcat(ctx->pool,dimension,
+                  "      <UOM>",dimension->unit,"</UOM>\n",NULL);
+            }
+            int i = dimension->nvalues;
+            while(i--) {
+               dimensions = apr_pstrcat(ctx->pool,dimensions,"      <Value>",dimension->values[i],"</Value>\n",NULL);
+            }
+            dimensions = apr_pstrcat(ctx->pool,dimensions,"    </Dimension>\n",NULL);
+         }
+      }
       
       caps = apr_psprintf(ctx->pool,"%s"
             "  <Layer>\n"
@@ -193,12 +217,13 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             "    <Style isDefault=\"true\">\n"
             "      <ows:Identifier>_null</ows:Identifier>\n"
             "    </Style>\n"
+            "%s" /*dimensions*/
             "    <Format>%s</Format>\n"
             "    <TileMatrixSetLink>\n"
             "      <TileMatrixSet>%s</TileMatrixSet>\n"
             "    </TileMatrixSetLink>\n"
-            "  </Layer>",caps,title,abstract,
-            tileset->name,tileset->format->mime_type,tileset->grid->name);
+            "  </Layer>\n",caps,title,abstract,
+            tileset->name,dimensions,tileset->format->mime_type,tileset->grid->name);
       layer_index = apr_hash_next(layer_index);
    }
    caps = apr_pstrcat(ctx->pool,caps,"</Contents>\n</Capabilities>\n",NULL);
@@ -357,6 +382,28 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       
       row = matrixheight-row-1;
       
+      /*look for dimensions*/
+      if(tileset->dimensions) {
+         int i;
+         req->tiles[0]->dimensions = apr_table_make(ctx->pool,tileset->dimensions->nelts);
+         for(i=0;i<tileset->dimensions->nelts;i++) {
+            geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+            const char *value;
+            if((value = apr_table_get(params,dimension->name)) != NULL) {
+               int ok = dimension->validate(ctx,dimension,value);
+               GC_CHECK_ERROR(ctx);
+               if(ok == GEOCACHE_SUCCESS)
+                  apr_table_setn(req->tiles[0]->dimensions,dimension->name,value);
+               else {
+                  ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"dimension \"%s\" value \"%s\" fails to validate",
+                        dimension->name, value);
+                  return;
+               }
+            } else {
+               apr_table_setn(req->tiles[0]->dimensions,dimension->name,dimension->default_value);
+            }
+         }
+      }
       
       
       req->tiles[0]->x = col;

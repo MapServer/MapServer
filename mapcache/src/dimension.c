@@ -16,27 +16,31 @@
 
 #include "geocache.h"
 
-
-int _geocache_dimension_values_validate(geocache_context *ctx, geocache_dimension *dimension, const char *value) {
+int _geocache_dimension_validate(geocache_context *ctx, geocache_dimension *dim, const char *value) {
    int i;
-   geocache_dimension_values *dim = (geocache_dimension_values*)dimension;
-#ifdef DEBUG
-   if(dimension->type != GEOCACHE_DIMENSION_VALUES) {
-      ctx->set_error(ctx, GEOCACHE_ERROR, "##### BUG ###### dimension values 1");
-      return;
-   }
-#endif
-   for(i=0;i<dim->nvalues;i++) {
-      if(!strcmp(value,dim->values[i]))
-         return GEOCACHE_SUCCESS;
+   if(dim->unit && !strcmp(dim->unit,"ISO8601")) {
+      for(i=0;i<dim->nvalues;i++) {
+         if(!strcmp(value,dim->values[i]))
+            return GEOCACHE_SUCCESS;
+      }
+   } else if(dim->unit && !strcmp(dim->unit,"m")) {
+      for(i=0;i<dim->nvalues;i++) {
+         if(!strcmp(value,dim->values[i]))
+            return GEOCACHE_SUCCESS;
+      }
+   } else {
+      for(i=0;i<dim->nvalues;i++) {
+         if(!strcmp(value,dim->values[i]))
+            return GEOCACHE_SUCCESS;
+      }
    }
    return GEOCACHE_FAILURE;
 }
-geocache_dimension_values* geocache_dimension_values_create(apr_pool_t *pool) {
-   geocache_dimension_values *dimension = apr_pcalloc(pool, sizeof(geocache_dimension_values));
-   dimension->dimension.type = GEOCACHE_DIMENSION_VALUES;
+
+geocache_dimension* geocache_dimension_create(apr_pool_t *pool) {
+   geocache_dimension *dimension = apr_pcalloc(pool, sizeof(geocache_dimension));
    dimension->nvalues = 0;
-   dimension->dimension.validate = _geocache_dimension_values_validate;
+   dimension->validate = _geocache_dimension_validate;
    return dimension;
 }
 

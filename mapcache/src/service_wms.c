@@ -21,7 +21,7 @@
 /** @{ */
 
 
-static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" standalone=\"no\" ?>\n"
+static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
         "<!DOCTYPE WMT_MS_Capabilities SYSTEM\n"
             "\"http://schemas.opengeospatial.net/wms/1.1.1/WMS_MS_Capabilities.dtd\" [\n"
               "<!ELEMENT VendorSpecificCapabilities (TileSet*) >\n"
@@ -79,6 +79,7 @@ static char *wms_layer = "<Layer queryable=\"0\" opaque=\"0\" cascaded=\"1\">\n"
               "<Title>%s</Title>\n"
               "<Abstract>%s</Abstract>\n"
               "<SRS>%s</SRS>\n"
+              "%s"
               "<BoundingBox srs=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n"
             "</Layer>\n";
 
@@ -108,6 +109,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       char *resolutions="";
+      
       int i;
       for(i=0;i<tileset->grid->levels;i++) {
          resolutions = apr_psprintf(ctx->pool,"%s%.20f ",resolutions,tileset->grid->resolutions[i]);
@@ -145,11 +147,34 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
          if(!abstract) {
             abstract = "no abstract set, add some in metadata";
          }
+      char *dimensions = "";
+      if(tileset->dimensions) {
+         int i;
+         for(i=0;i<tileset->dimensions->nelts;i++) {
+            geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+            dimensions = apr_psprintf(ctx->pool,"%s"
+                  "<Dimension name=\"%s\" default=\"%s\"",
+                  dimensions,
+                  dimension->name,
+                  dimension->default_value);
+            if(dimension->unit) {
+               dimensions = apr_pstrcat(ctx->pool,dimensions,
+                  " units=\"%s\"",dimension->unit,NULL);
+            }
+            dimensions = apr_pstrcat(ctx->pool,dimensions,">",dimension->values[0],NULL);
+            int j;
+            for(j=1;j<dimension->nvalues;j++) {
+               dimensions = apr_pstrcat(ctx->pool,dimensions,",",dimension->values[j],NULL);
+            }
+            dimensions = apr_pstrcat(ctx->pool,dimensions,"</Dimension>\n",NULL);
+         }
+      }
          char *layercaps = apr_psprintf(ctx->pool,wms_layer,
                tileset->name,
                title,
                abstract,
                tileset->grid->srs,
+               dimensions,
                tileset->grid->srs,
                tileset->grid->extents[0][0],
                tileset->grid->extents[0][1],

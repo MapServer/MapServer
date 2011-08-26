@@ -215,21 +215,28 @@ void parseDimensions(geocache_context *ctx, ezxml_t node, geocache_tileset *tile
    apr_array_header_t *dimensions = apr_array_make(ctx->pool,1,sizeof(geocache_dimension*));
    for(dimension_node = ezxml_child(node,"dimension"); dimension_node; dimension_node = dimension_node->next) {
       char *name = (char*)ezxml_attr(dimension_node,"name");
-      char *default_value, *values, *key, *last;
+      char *key, *last, *values;
       int count = 1;
+      geocache_dimension *dimension = geocache_dimension_create(ctx->pool);
       ezxml_t dchild_node;
       if(!name || !strlen(name)) {
          ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <dimension>");
          return;
       }
-      name = apr_pstrdup(ctx->pool,name);
+      dimension->name = apr_pstrdup(ctx->pool,name);
 
+
+      dchild_node = ezxml_child(dimension_node,"unit");
+      if(dchild_node && dchild_node->txt) {
+         dimension->unit = apr_pstrdup(ctx->pool,dchild_node->txt);
+      }
+      
       dchild_node = ezxml_child(dimension_node,"default");
       if(!dchild_node || !dchild_node->txt) {
          ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimension> \"%s\" has no default value",name);
          return;
       }
-      default_value = apr_pstrdup(ctx->pool,dchild_node->txt);
+      dimension->default_value = apr_pstrdup(ctx->pool,dchild_node->txt);
       
       dchild_node = ezxml_child(dimension_node,"values");
       if(!dchild_node || !dchild_node->txt) {
@@ -237,9 +244,6 @@ void parseDimensions(geocache_context *ctx, ezxml_t node, geocache_tileset *tile
          return;
       }
       values = apr_pstrdup(ctx->pool,dchild_node->txt);
-      geocache_dimension_values *dimension = geocache_dimension_values_create(ctx->pool);
-      dimension->dimension.name = name;
-      dimension->dimension.default_value = default_value;
       for(key=values;*key;key++) if(*key == ',') count++;
 
       dimension->values = (char**)apr_pcalloc(ctx->pool,count*sizeof(char*));
@@ -253,7 +257,7 @@ void parseDimensions(geocache_context *ctx, ezxml_t node, geocache_tileset *tile
          ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimension> \"%s\" has no values",name);
          return;
       }
-      APR_ARRAY_PUSH(dimensions,geocache_dimension*) = (geocache_dimension*)dimension;
+      APR_ARRAY_PUSH(dimensions,geocache_dimension*) = dimension;
    }
    if(apr_is_empty_array(dimensions)) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimensions> for tileset \"%s\" has no dimensions defined (expecting <dimension> children)",tileset->name);

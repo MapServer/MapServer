@@ -303,8 +303,8 @@
          are currently used to populate the GetCapabilities document.
       -->
       <metadata>
-         <title>osm mapserver served map of midi-pyrénées</title>
-         <abstract>see http://mapserver-utils.googlecode.com</abstract>
+         <title>vmap0 map</title>
+         <abstract>blabla</abstract>
       </metadata>
 
       <!-- watermark
@@ -377,6 +377,10 @@
                comma separated list of values that are allowed for the dimension
             -->
             <values>foobar,foobarbaz,foo,bar</values>
+         </dimension>
+         <dimension name="ELEVATION">
+            <default>0</default>
+            <values>0,1000,2000,3000,4000</values>
          </dimension>
       </dimensions>
    </tileset>
