@@ -100,10 +100,12 @@ static int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *t
    if(GC_HAS_ERROR(ctx)) {
       return GEOCACHE_FALSE;
    }
-   if(apr_file_open(&f, filename, APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool) == APR_SUCCESS)
-       return GEOCACHE_TRUE;
+   if(apr_file_open(&f, filename, APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool) == APR_SUCCESS) {
+      apr_file_close(f);
+      return GEOCACHE_TRUE;
+   }
    else
-       return GEOCACHE_FALSE;
+      return GEOCACHE_FALSE;
 }
 
 static void _geocache_cache_disk_delete(geocache_context *ctx, geocache_tile *tile) {
