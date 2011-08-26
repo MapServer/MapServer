@@ -273,45 +273,46 @@ AC_DEFUN(FASTCGI_CHECK,[
         AC_HELP_STRING([--with-fastcgi=DIR],[Specify where FASTCGI is installed]),
         FASTCGI_DIR=$withval,FASTCGI_DIR='')
     
-    AC_EXPAND_PATH($FASTCGI_DIR, FASTCGI_DIR)
     AC_CHECKING(where FASTCGI is installed)
     FASTCGI_LIB=''
     FASTCGI_INC=''  
-    FASTCGI_FOUND='no'  
-    
-    if test -n "$FASTCGI_DIR" ; then
-        test -f $FASTCGI_DIR/lib/libfcgi.a -o -f $FASTCGI_DIR/lib/libfcgi.so -o -f $FASTCGI_DIR/lib/libfcgi.sl -o -f $FASTCGI_DIR/lib/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR/lib"
-        test -f $FASTCGI_DIR/lib64/libfcgi.a -o -f $FASTCGI_DIR/lib64/libfcgi.so -o -f $FASTCGI_DIR/lib64/libfcgi.sl -o -f $FASTCGI_DIR/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR/lib64"
-        test -f $FASTCGI_DIR/libfcgi.a -o -f $FASTCGI_DIR/libfcgi.so -o -f $FASTCGI_DIR/libfcgi.sl -o -f $FASTCGI_DIR/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR"
-        test -f $FASTCGI_DIR/include/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR/include"
-        test -f $FASTCGI_DIR/lib/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR/lib"
-        test -f $FASTCGI_DIR/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR"
-        
-        if test -n "$FASTCGI_LIBDIR" ; then   
-          FASTCGI_LIB="-L$FASTCGI_LIBDIR -lfcgi"
-          AC_MSG_RESULT([        using libfastcgi from $FASTCGI_LIB])
-        else
-          AC_MSG_ERROR([cannot find fastcgi lib in $FASTCGI_DIR])
-        fi
-        
-        if test -n "$FASTCGI_INCLUDE" ; then
-          AC_CHECK_HEADER([$FASTCGI_INCLUDE/fcgiapp.h],FASTCGI_INC=-I$FASTCGI_INCLUDE,
-            [AC_MSG_ERROR([cannot find fastcgi headers])])
-        else
-            AC_MSG_ERROR([cannot find fastcgi headers in $FASTCGI_DIR])
+    if test -n "$FASTCGI_DIR" -a x"$FASTCGI_DIR" != "xyes"; then
+        if test x"$FASTCGI_DIR" != "xno"; then
+            AC_EXPAND_PATH($FASTCGI_DIR, FASTCGI_DIR)
+            test -f $FASTCGI_DIR/lib/libfcgi.a -o -f $FASTCGI_DIR/lib/libfcgi.so -o -f $FASTCGI_DIR/lib/libfcgi.sl -o -f $FASTCGI_DIR/lib/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR/lib"
+            test -f $FASTCGI_DIR/lib64/libfcgi.a -o -f $FASTCGI_DIR/lib64/libfcgi.so -o -f $FASTCGI_DIR/lib64/libfcgi.sl -o -f $FASTCGI_DIR/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR/lib64"
+            test -f $FASTCGI_DIR/libfcgi.a -o -f $FASTCGI_DIR/libfcgi.so -o -f $FASTCGI_DIR/libfcgi.sl -o -f $FASTCGI_DIR/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR"
+            test -f $FASTCGI_DIR/include/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR/include"
+            test -f $FASTCGI_DIR/lib/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR/lib"
+            test -f $FASTCGI_DIR/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR"
+            
+            if test -n "$FASTCGI_LIBDIR" ; then   
+              FASTCGI_LIB="-L$FASTCGI_LIBDIR -lfcgi"
+              AC_MSG_RESULT([        using libfastcgi from $FASTCGI_LIB])
+            else
+              AC_MSG_ERROR([cannot find fastcgi lib in $FASTCGI_DIR])
+            fi
+            
+            if test -n "$FASTCGI_INCLUDE" ; then
+              AC_CHECK_HEADER([$FASTCGI_INCLUDE/fcgiapp.h],FASTCGI_INC=-I$FASTCGI_INCLUDE,
+                [AC_MSG_ERROR([cannot find fastcgi headers])])
+            else
+                AC_MSG_ERROR([cannot find fastcgi headers in $FASTCGI_DIR])
+            fi
         fi
     else
-    
-      dnl check for fastcgi in system locations
-    
-      AC_CHECK_LIB(fcgi, FCGX_Init, FASTCGI_LIB="-lfcgi",,)
-      AC_CHECK_HEADER([fcgiapp.h],,
-            [AC_MSG_ERROR([cannot find fastcgi headers in system path])])
-      if test -n "$FASTCGI_LIB" ; then
-        AC_MSG_RESULT([using libfastcgi from system libs.])
-      else
-        AC_MSG_ERROR([FASTCGI (libfastcgi) library cannot be found. install or reconfigure with --with-fastcgi=DIR])
-      fi
+        if test x"$FASTCGI_DIR" != "xno"; then
+          dnl check for fastcgi in system locations
+        
+          AC_CHECK_LIB(fcgi, FCGX_Init, FASTCGI_LIB="-lfcgi",,)
+          AC_CHECK_HEADER([fcgiapp.h],,
+                [AC_MSG_ERROR([cannot find fastcgi headers in system path])])
+          if test -n "$FASTCGI_LIB" ; then
+            AC_MSG_RESULT([using libfastcgi from system libs.])
+          else
+            AC_MSG_ERROR([FASTCGI (libfastcgi) library cannot be found. install or reconfigure with --with-fastcgi=DIR])
+          fi
+        fi
     fi
         
     AC_SUBST(FASTCGI_INC,$FASTCGI_INC)

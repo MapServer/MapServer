@@ -10602,6 +10602,12 @@ else
 fi
 
 
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking where FASTCGI is installed..." >&5
+$as_echo "$as_me: checking where FASTCGI is installed..." >&6;}
+    FASTCGI_LIB=''
+    FASTCGI_INC=''
+    if test -n "$FASTCGI_DIR" -a x"$FASTCGI_DIR" != "xyes"; then
+        if test x"$FASTCGI_DIR" != "xno"; then
 
   if test -z "$FASTCGI_DIR" || echo "$FASTCGI_DIR" | grep '^/' >/dev/null ; then
     FASTCGI_DIR="$FASTCGI_DIR"
@@ -10609,30 +10615,23 @@ fi
     FASTCGI_DIR="`pwd`/$FASTCGI_DIR"
   fi
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking where FASTCGI is installed..." >&5
-$as_echo "$as_me: checking where FASTCGI is installed..." >&6;}
-    FASTCGI_LIB=''
-    FASTCGI_INC=''
-    FASTCGI_FOUND='no'
+            test -f $FASTCGI_DIR/lib/libfcgi.a -o -f $FASTCGI_DIR/lib/libfcgi.so -o -f $FASTCGI_DIR/lib/libfcgi.sl -o -f $FASTCGI_DIR/lib/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR/lib"
+            test -f $FASTCGI_DIR/lib64/libfcgi.a -o -f $FASTCGI_DIR/lib64/libfcgi.so -o -f $FASTCGI_DIR/lib64/libfcgi.sl -o -f $FASTCGI_DIR/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR/lib64"
+            test -f $FASTCGI_DIR/libfcgi.a -o -f $FASTCGI_DIR/libfcgi.so -o -f $FASTCGI_DIR/libfcgi.sl -o -f $FASTCGI_DIR/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR"
+            test -f $FASTCGI_DIR/include/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR/include"
+            test -f $FASTCGI_DIR/lib/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR/lib"
+            test -f $FASTCGI_DIR/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR"
 
-    if test -n "$FASTCGI_DIR" ; then
-        test -f $FASTCGI_DIR/lib/libfcgi.a -o -f $FASTCGI_DIR/lib/libfcgi.so -o -f $FASTCGI_DIR/lib/libfcgi.sl -o -f $FASTCGI_DIR/lib/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR/lib"
-        test -f $FASTCGI_DIR/lib64/libfcgi.a -o -f $FASTCGI_DIR/lib64/libfcgi.so -o -f $FASTCGI_DIR/lib64/libfcgi.sl -o -f $FASTCGI_DIR/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR/lib64"
-        test -f $FASTCGI_DIR/libfcgi.a -o -f $FASTCGI_DIR/libfcgi.so -o -f $FASTCGI_DIR/libfcgi.sl -o -f $FASTCGI_DIR/libfcgi.dylib && FASTCGI_LIBDIR="$FASTCGI_DIR"
-        test -f $FASTCGI_DIR/include/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR/include"
-        test -f $FASTCGI_DIR/lib/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR/lib"
-        test -f $FASTCGI_DIR/fcgiapp.h && FASTCGI_INCLUDE="$FASTCGI_DIR"
-
-        if test -n "$FASTCGI_LIBDIR" ; then
-          FASTCGI_LIB="-L$FASTCGI_LIBDIR -lfcgi"
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libfastcgi from $FASTCGI_LIB" >&5
+            if test -n "$FASTCGI_LIBDIR" ; then
+              FASTCGI_LIB="-L$FASTCGI_LIBDIR -lfcgi"
+              { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libfastcgi from $FASTCGI_LIB" >&5
 $as_echo "        using libfastcgi from $FASTCGI_LIB" >&6; }
-        else
-          as_fn_error $? "cannot find fastcgi lib in $FASTCGI_DIR" "$LINENO" 5
-        fi
+            else
+              as_fn_error $? "cannot find fastcgi lib in $FASTCGI_DIR" "$LINENO" 5
+            fi
 
-        if test -n "$FASTCGI_INCLUDE" ; then
-          as_ac_Header=`$as_echo "ac_cv_header_$FASTCGI_INCLUDE/fcgiapp.h" | $as_tr_sh`
+            if test -n "$FASTCGI_INCLUDE" ; then
+              as_ac_Header=`$as_echo "ac_cv_header_$FASTCGI_INCLUDE/fcgiapp.h" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$FASTCGI_INCLUDE/fcgiapp.h" "$as_ac_Header" "$ac_includes_default"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   FASTCGI_INC=-I$FASTCGI_INCLUDE
@@ -10641,13 +10640,14 @@ else
 fi
 
 
-        else
-            as_fn_error $? "cannot find fastcgi headers in $FASTCGI_DIR" "$LINENO" 5
+            else
+                as_fn_error $? "cannot find fastcgi headers in $FASTCGI_DIR" "$LINENO" 5
+            fi
         fi
     else
+        if test x"$FASTCGI_DIR" != "xno"; then
 
-
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FCGX_Init in -lfcgi" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FCGX_Init in -lfcgi" >&5
 $as_echo_n "checking for FCGX_Init in -lfcgi... " >&6; }
 if test "${ac_cv_lib_fcgi_FCGX_Init+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -10687,7 +10687,7 @@ if test "x$ac_cv_lib_fcgi_FCGX_Init" = x""yes; then :
   FASTCGI_LIB="-lfcgi"
 fi
 
-      ac_fn_c_check_header_mongrel "$LINENO" "fcgiapp.h" "ac_cv_header_fcgiapp_h" "$ac_includes_default"
+          ac_fn_c_check_header_mongrel "$LINENO" "fcgiapp.h" "ac_cv_header_fcgiapp_h" "$ac_includes_default"
 if test "x$ac_cv_header_fcgiapp_h" = x""yes; then :
 
 else
@@ -10695,12 +10695,13 @@ else
 fi
 
 
-      if test -n "$FASTCGI_LIB" ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: using libfastcgi from system libs." >&5
+          if test -n "$FASTCGI_LIB" ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: using libfastcgi from system libs." >&5
 $as_echo "using libfastcgi from system libs." >&6; }
-      else
-        as_fn_error $? "FASTCGI (libfastcgi) library cannot be found. install or reconfigure with --with-fastcgi=DIR" "$LINENO" 5
-      fi
+          else
+            as_fn_error $? "FASTCGI (libfastcgi) library cannot be found. install or reconfigure with --with-fastcgi=DIR" "$LINENO" 5
+          fi
+        fi
     fi
 
     FASTCGI_INC=$FASTCGI_INC
