@@ -16,6 +16,8 @@
 
 #include "geocache.h"
 #include <apr_strings.h>
+#include <apr_file_info.h>
+#include <apr_file_io.h>
 #include <math.h>
 
 void geocache_tileset_configuration_check(geocache_context *ctx, geocache_tileset *tileset) {

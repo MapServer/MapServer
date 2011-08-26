@@ -15,6 +15,9 @@
  */
 
 #include "geocache.h"
+#include <apr_file_info.h>
+#include <apr_strings.h>
+#include <apr_file_io.h>
 
 void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config) {
    int len = strlen(filename);

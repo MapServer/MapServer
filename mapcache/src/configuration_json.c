@@ -1,6 +1,6 @@
 #include "geocache.h"
 #include <errno.h>
-
+#include <apr_strings.h>
 
 static void parse_extent_json(geocache_context *ctx, cJSON *node, double *extent) {
    int i = cJSON_GetArraySize(node);

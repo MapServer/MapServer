@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+#include <apr_strings.h>
 #include "geocache.h"
 
 geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_get_tile *req_tile) {

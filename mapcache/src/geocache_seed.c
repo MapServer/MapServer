@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <apr_time.h>
 #include <apr_queue.h>
+#include <apr_strings.h>
 
 #if defined(USE_OGR) && defined(USE_GEOS)
 #define USE_CLIPPERS
