@@ -93,19 +93,14 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
    }
 #endif
 
+   geocache_image_format *format = req_map->getmap_format; /* always defined, defaults to JPEG */
+   
    if(req_map->getmap_strategy == GEOCACHE_GETMAP_ERROR) {
       ctx->set_error(ctx, 404, "full wms support disabled");
       return NULL;
    } else if(req_map->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE) {
       int i;
       geocache_map *basemap = req_map->maps[0];
-      geocache_image_format *format = basemap->tileset->format;
-      if(req_map->getmap_format) {
-         format = req_map->getmap_format;
-      }
-      if(!format) {
-         format = ctx->config->default_image_format; /* this one is always defined */
-      }
       geocache_image *baseim = _core_get_single_map(ctx,basemap,req_map->resample_mode);
       if(GC_HAS_ERROR(ctx)) return NULL;
       for(i=1;i<req_map->nmaps;i++) {
@@ -118,7 +113,7 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
          if(!basemap->expires || overlaymap->expires<basemap->expires) basemap->expires = overlaymap->expires;
 
       }
-      basemap->data = format->write(ctx,baseim,basemap->tileset->format);
+      basemap->data = format->write(ctx,baseim,format);
       return basemap;
    } else /*if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_FORWARD)*/ {
       int i;
@@ -137,7 +132,7 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
             geocache_image_merge(ctx,baseim,overlayim);
             if(GC_HAS_ERROR(ctx)) return NULL;
          }
-         basemap->data = basemap->tileset->format->write(ctx,baseim,basemap->tileset->format);
+         basemap->data = format->write(ctx,baseim,format);
       }
       return basemap;
    }

@@ -427,7 +427,7 @@
            values under around 80 produce small images but with visible artifacts.
            YMMV
       -->
-      <quality>95</quality>   
+      <quality>75</quality>   
    </format>
    <format name="PNG_BEST" type ="PNG">
       <compression>best</compression>
@@ -697,10 +697,10 @@
       <format>mixed</format>
       <grid>WGS84</grid>
    </tileset>
-   <tileset name="test3">
+   <tileset name="brgm">
       <source>basic</source>
       <cache>disk</cache>
-      <format>PNG8</format>
+      <format>PNG</format>
       <grid>WGS84</grid>
       <metatile>5 5</metatile>
       <metabuffer>30</metabuffer>
@@ -711,7 +711,7 @@
          <abstract>see http://mapserver-utils.googlecode.com</abstract>
       </metadata>
       <source>osm</source>
-      <cache>tmpl</cache>
+      <cache>disk</cache>
       <format>PNG</format>
       <grid>FXX</grid>
       <grid>MILLER</grid>
@@ -781,6 +781,12 @@
       - bilinear: slower, higher qulity
       -->
       <resample_mode>bilinear</resample_mode>
+      
+      <!-- format
+         image format to use when assembling tiles
+      -->
+      <format>myjpeg</format>
+
    </service>
    <service type="wmts" enabled="true"/>
    <service type="tms" enabled="true"/>

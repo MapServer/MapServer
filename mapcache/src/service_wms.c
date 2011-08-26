@@ -962,6 +962,15 @@ void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_
       }
    }
    
+   wms->getmap_format = geocache_configuration_get_image_format(cfg,"JPEG");
+   if ((rule_node = ezxml_child(node,"format")) != NULL) {
+      wms->getmap_format = geocache_configuration_get_image_format(cfg,rule_node->txt);
+      if(!wms->getmap_format) {
+         ctx->set_error(ctx,400, "unknown <format> %s for wms service", rule_node->txt);
+         return;
+      }
+   }
+   
    if ((rule_node = ezxml_child(node,"resample_mode")) != NULL) {
       if(!strcmp(rule_node->txt,"nearest")) {
          wms->resample_mode = GEOCACHE_RESAMPLE_NEAREST;
@@ -992,6 +1001,7 @@ geocache_service* geocache_service_wms_create(geocache_context *ctx) {
 #endif
    service->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
    service->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
+   service->getmap_format = NULL;
    return (geocache_service*)service;
 }
 
