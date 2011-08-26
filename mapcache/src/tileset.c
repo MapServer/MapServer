@@ -86,7 +86,8 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       double *bbox, int width, int height,
       int ntiles,
       geocache_tile **tiles) {
-   double resolution = geocache_grid_get_resolution(bbox, width, height);
+   double hresolution = geocache_grid_get_resolution(bbox, width, width);
+   double vresolution = geocache_grid_get_resolution(bbox, height, height);
    double tilebbox[4];
    geocache_image *image = geocache_image_create(ctx);
    image->w = width;
@@ -107,15 +108,18 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       cairo_surface_t* srcsurface= cairo_image_surface_create_for_data(im->data, CAIRO_FORMAT_ARGB32,
             im->w, im->h,im->stride);
       /*compute the pixel position of top left corner*/
-      double dstminx = floor((tilebbox[0]-bbox[0])/resolution);
-      double dstminy = floor((bbox[3]-tilebbox[3])/resolution);
-      double f = tileresolution/resolution;
-      double dstwidth = ceil(im->w*f);
-      f = dstwidth/(double)im->w;
+      double dstminx = floor((tilebbox[0]-bbox[0])/hresolution);
+      double dstminy = floor((bbox[3]-tilebbox[3])/vresolution);
+      double hf = tileresolution/hresolution;
+      double vf = tileresolution/vresolution;
+      double dstwidth = ceil(im->w*hf);
+      double dstheight = ceil(im->h*vf);
+      hf = dstwidth/(double)im->w;
+      vf = dstheight/(double)im->h;
       cairo_save(cr);
       //cairo_clip(cr);
       cairo_translate (cr, dstminx,dstminy);
-      cairo_scale  (cr, f, f);
+      cairo_scale  (cr, hf, vf);
       cairo_set_source_surface (cr, srcsurface, 0, 0);
       cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_NEAREST);
       cairo_paint (cr);
