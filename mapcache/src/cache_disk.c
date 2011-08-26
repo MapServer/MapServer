@@ -238,7 +238,7 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
       ret = apr_file_remove(filename,ctx->pool);
       if(ret != APR_SUCCESS) {
          ctx->set_error(ctx, 500,  "failed to remove existing file %s: %s",filename, apr_strerror(ret,errmsg,120));
-         return; /* we could not create the file */
+         return; /* we could not delete the file */
       }
    }
 
@@ -262,9 +262,10 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
             if(APR_SUCCESS != (ret = apr_dir_make_recursive(
                   blankdirname,
                   APR_OS_DEFAULT,ctx->pool))) {
-               ctx->set_error(ctx, 500,  "failed to create directory %s for blank tiles",blankdirname, apr_strerror(ret,errmsg,120));
-               ctx->global_lock_release(ctx);
-               return;
+                  if(!APR_STATUS_IS_EEXIST(ret)) {
+                     ctx->set_error(ctx, 500,  "failed to create directory %s for blank tiles",blankdirname, apr_strerror(ret,errmsg,120));
+                     return;
+                  }
             }
             if((ret = apr_file_open(&f, blankname,
                   APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
