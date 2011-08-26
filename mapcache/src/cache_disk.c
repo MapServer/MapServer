@@ -25,7 +25,7 @@
 #include <unistd.h>
 #endif
 
-void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *tile, unsigned char *color, char **path) {
+static void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *tile, unsigned char *color, char **path) {
    *path = apr_psprintf(ctx->pool,"%s/%s/%s/blanks/%02X%02X%02X%02X.%s",
          ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
          tile->tileset->name,
@@ -93,7 +93,7 @@ static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *
   
 }
 
-int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *tile) {
+static int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *tile) {
    char *filename;
    apr_file_t *f;
    _geocache_cache_disk_tile_key(ctx, tile, &filename);
@@ -114,7 +114,7 @@ int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *tile) {
  * \private \memberof geocache_cache_disk
  * \sa geocache_cache::tile_get()
  */
-int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
+static int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
    char *filename;
    apr_file_t *f;
    apr_finfo_t finfo;
@@ -173,7 +173,7 @@ int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
  * \private \memberof geocache_cache_disk
  * \sa geocache_cache::tile_set()
  */
-void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
+static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
    apr_size_t bytes;
    apr_file_t *f;
    apr_status_t ret;
@@ -296,7 +296,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
 /**
  * \private \memberof geocache_cache_disk
  */
-void _geocache_cache_disk_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
+static void _geocache_cache_disk_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
    ezxml_t cur_node;
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
 
@@ -319,7 +319,7 @@ void _geocache_cache_disk_configuration_parse(geocache_context *ctx, ezxml_t nod
 /**
  * \private \memberof geocache_cache_disk
  */
-void _geocache_cache_disk_configuration_check(geocache_context *ctx, geocache_cache *cache) {
+static void _geocache_cache_disk_configuration_check(geocache_context *ctx, geocache_cache *cache) {
    apr_status_t status;
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
    /* check all required parameters are configured */
