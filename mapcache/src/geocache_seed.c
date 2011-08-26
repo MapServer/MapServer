@@ -74,10 +74,11 @@ void geocache_context_seeding_lock_release(geocache_context *gctx) {
 }
 
 void geocache_context_seeding_log(geocache_context *ctx, geocache_log_level level, char *msg, ...) {
-    va_list args;
+    /*va_list args;
     va_start(args,msg);
     vfprintf(stderr,msg,args);
-    va_end(args);
+    va_end(args);*/
+   /* do nothing */
 }
 
 int tile_exists(geocache_context *ctx, geocache_tileset *tileset,
