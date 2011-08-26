@@ -81,6 +81,79 @@ void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_
    }
 }
 
+#include <math.h>
+
+void geocache_image_copy_resampled_nearest(geocache_context *ctx, geocache_image *src, geocache_image *dst,
+      double off_x, double off_y, double scale_x, double scale_y) {
+   int dstx,dsty;
+   unsigned char *dstrowptr = dst->data;
+   for(dsty=0; dsty<dst->h; dsty++) {
+      int *dstptr = (int*)dstrowptr;
+      int srcy = round((dsty-off_y)/scale_y);
+      if(srcy >= 0 && srcy < src->h) {
+         for(dstx=0; dstx<dst->w;dstx++) {
+            int srcx = round((dstx-off_x)/scale_x);
+            if(srcx >= 0 && srcx < src->w) {
+               *dstptr = *((int*)&(src->data[srcy*src->stride+srcx*4]));
+            }
+            dstptr ++;
+         }
+      }
+      dstrowptr += dst->stride;
+   }
+} 
+
+static inline void bilinear_pixel(geocache_image *img, double x, double y, unsigned char *dst) {
+   int px,py;
+   px = (int)x;
+   py = (int)y;
+
+   int px1 = (px==(img->w-1))?(px):(px+1);
+   int py1 = (py==(img->h-1))?(py):(py+1);
+
+   unsigned char *p1 = &img->data[py*img->stride+px*4];
+   unsigned char *p2 = &img->data[py*img->stride+px1*4];
+   unsigned char *p3 = &img->data[py1*img->stride+px*4];
+   unsigned char *p4 = &img->data[py1*img->stride+px1*4];
+
+   // Calculate the weights for each pixel
+   float fx = x - px;
+   float fy = y - py;
+   float fx1 = 1.0f - fx;
+   float fy1 = 1.0f - fy;
+
+   int w1 = fx1 * fy1 * 256.0f;
+   int w2 = fx  * fy1 * 256.0f;
+   int w3 = fx1 * fy  * 256.0f;
+   int w4 = fx  * fy  * 256.0f;
+
+   // Calculate the weighted sum of pixels (for each color channel)
+   dst[0] = (p1[0] * w1 + p2[0] * w2 + p3[0] * w3 + p4[0] * w4) >> 8;
+   dst[1] = (p1[1] * w1 + p2[1] * w2 + p3[1] * w3 + p4[1] * w4) >> 8;
+   dst[2] = (p1[2] * w1 + p2[2] * w2 + p3[2] * w3 + p4[2] * w4) >> 8;
+   dst[3] = (p1[3] * w1 + p2[3] * w2 + p3[3] * w3 + p4[3] * w4) >> 8;
+}
+
+void geocache_image_copy_resampled_bilinear(geocache_context *ctx, geocache_image *src, geocache_image *dst,
+      double off_x, double off_y, double scale_x, double scale_y) {
+   int dstx,dsty;
+   unsigned char *dstrowptr = dst->data;
+   for(dsty=0; dsty<dst->h; dsty++) {
+      unsigned char *dstptr = dstrowptr;
+      double srcy = (dsty-off_y)/scale_y;
+      if(srcy >= 0 && srcy < src->h) {
+         for(dstx=0; dstx<dst->w;dstx++) {
+            double srcx = (dstx-off_x)/scale_x;
+            if(srcx >= 0 && srcx < src->w) {
+               bilinear_pixel(src,srcx,srcy,dstptr);
+            }
+            dstptr += 4;
+         }
+      }
+      dstrowptr += dst->stride;
+   }
+} 
+
 geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_format *format, geocache_tile **tiles, int ntiles) {
    geocache_image *base,*overlay;
    int i;

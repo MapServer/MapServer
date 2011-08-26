@@ -87,19 +87,6 @@ libjpeg
 this is the path where the libjpeg headers and libs can be located.
 the configure script will be looking for [path]/include/jpeg.h and [path]/lib/libjpeg.so
 
-cairo (optional)
-=================
-
---with-pkg-config=/path/to/pkg-config
---with-cairo=/path/to/cairo.pc
-
-cairo support is required if you want to enable full wms getmap support, i.e. reconstructing a full getmap request
-by assembling tiles next to one another.
-cairo configuration step requires the pkg-config utility.
-if your cairo libs and headers aren't in a default location, there's a chance they won't be picked up by the default
-pkg-config utility. In that case, you can use the --with-cairo=/path/to/cairo.pc to explicitely tell pkg-config
-where to find the configuration options for your version of cairo. 
-
 gdal (from 0.4 onwards) (optional)
 ===================================
 

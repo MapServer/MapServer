@@ -46,7 +46,6 @@ geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_ge
    return rettile;
 }
 
-#ifdef USE_CAIRO
 geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
 
    geocache_tile **maptiles;
@@ -75,7 +74,6 @@ geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
          nmaptiles, maptiles);
    return getmapim;
 }
-#endif
 
 geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_map *req_map) {
 #ifdef DEBUG
@@ -89,7 +87,6 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
       ctx->set_error(ctx, 404, "full wms support disabled");
       return NULL;
    } else if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE) {
-#ifdef USE_CAIRO
       int i;
       geocache_map *basemap = req_map->maps[0];
       geocache_image *baseim = _core_get_single_map(ctx,basemap);
@@ -107,10 +104,6 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
 
       basemap->data = basemap->tileset->format->write(ctx,baseim,basemap->tileset->format);
       return basemap;
-#else
-      ctx->set_error(ctx,501,"cairo not enabled: wms getmap handling by assembling tiles not configured in this build");
-      return NULL;
-#endif
    } else /*if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_FORWARD)*/ {
       int i;
       geocache_map *basemap = req_map->maps[0];

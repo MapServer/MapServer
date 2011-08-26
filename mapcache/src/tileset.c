@@ -76,11 +76,6 @@ void geocache_tileset_get_map_tiles(geocache_context *ctx, geocache_tileset *til
    *ntiles = i;
 }
 
-#ifdef USE_CAIRO
-
-#include <cairo/cairo.h>
-#include <math.h>
-
 geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geocache_tileset *tileset,
       geocache_grid_link *grid_link,
       double *bbox, int width, int height,
@@ -101,9 +96,6 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
    if(ntiles == 0) {
       return image;
    }
-   cairo_surface_t* dstsurface= cairo_image_surface_create_for_data(image->data, CAIRO_FORMAT_ARGB32,
-         width, height,image->stride);
-   cairo_t *cr = cr = cairo_create (dstsurface);
 
    /* compute the number of tiles horizontally and vertically */
    for(i=0;i<ntiles;i++) {
@@ -120,8 +112,6 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
    srcimage->stride = srcimage->w*4;
    srcimage->data = calloc(1,srcimage->w*srcimage->h*4*sizeof(unsigned char));
    apr_pool_cleanup_register(ctx->pool, srcimage->data, (void*)free, apr_pool_cleanup_null) ;
-   cairo_surface_t* srcsurface= cairo_image_surface_create_for_data(srcimage->data, CAIRO_FORMAT_ARGB32,
-         srcimage->w, srcimage->h,srcimage->stride);
 
    /* copy the tiles data into the src image */
    for(i=0;i<ntiles;i++) {
@@ -150,30 +140,21 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
    double dstminy = (bbox[3]-tilebbox[3])/vresolution;
    double hf = tileresolution/hresolution;
    double vf = tileresolution/vresolution;
-   cairo_translate (cr, dstminx,dstminy);
-   cairo_scale  (cr, hf, vf);
-   cairo_set_source_surface (cr, srcsurface, 0, 0);
    if(fabs(hf-1)<0.0001 && fabs(vf-1)<0.0001) {
       //use nearest resampling if we are at the resolution of the tiles
-      cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_NEAREST);
+      geocache_image_copy_resampled_nearest(ctx,srcimage,image,dstminx,dstminy,hf,vf);
    } else {
       switch(ctx->config->resample_mode) {
          case GEOCACHE_RESAMPLE_BILINEAR:
-            cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_BILINEAR);
+            geocache_image_copy_resampled_bilinear(ctx,srcimage,image,dstminx,dstminy,hf,vf);
             break;
          default:
-            cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_NEAREST);
+            geocache_image_copy_resampled_nearest(ctx,srcimage,image,dstminx,dstminy,hf,vf);
             break;
       }
    }
-   cairo_paint (cr);
-   cairo_surface_destroy(srcsurface);
-   cairo_surface_destroy(dstsurface);
-   cairo_destroy(cr);
    return image;
 }
-
-#endif
 
 /*
  * compute the metatile that should be rendered for the given tile

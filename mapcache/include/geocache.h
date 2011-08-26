@@ -742,6 +742,12 @@ geocache_image* geocache_image_create(geocache_context *ctx);
  */
 geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_format *format, geocache_tile **tiles, int ntiles);
 
+void geocache_image_copy_resampled_nearest(geocache_context *ctx, geocache_image *src, geocache_image *dst,
+      double off_x, double off_y, double scale_x, double scale_y);
+void geocache_image_copy_resampled_bilinear(geocache_context *ctx, geocache_image *src, geocache_image *dst,
+      double off_x, double off_y, double scale_x, double scale_y);
+
+
 /**
  * \brief merge two images
  * \param base the imae to merge onto
@@ -1075,13 +1081,11 @@ void geocache_tileset_get_map_tiles(geocache_context *ctx, geocache_tileset *til
       int *ntiles,
       geocache_tile ***tiles);
 
-#ifdef USE_CAIRO
 geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geocache_tileset *tileset,
       geocache_grid_link *grid_link,
       double *bbox, int width, int height,
       int ntiles,
       geocache_tile **tiles);
-#endif
 
 /**
  * compute x,y,z value given a bbox.
