@@ -46,8 +46,9 @@ void geocache_http_request_url(geocache_context *ctx, char *url, apr_table_t *he
 
    curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, error_msg);
    curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
-   curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, 5);
+   curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, 10);
    curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
+   curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
 
 
    struct curl_slist *curl_headers=NULL;
