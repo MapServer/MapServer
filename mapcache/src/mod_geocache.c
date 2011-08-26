@@ -384,9 +384,8 @@ static int mod_geocache_request_handler(request_rec *r) {
       return report_error(apache_ctx);
    }
 }
-#define ap_unixd_setup_child unixd_setup_child
 static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
-   apr_status_t rc,rv;
+   apr_status_t rc;
    geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
    apr_lockmech_e lock_type = APR_LOCK_DEFAULT;
    server_rec *sconf;
@@ -420,11 +419,14 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
       geocache_server_cfg* config = ap_get_module_config(sconf->module_config, &geocache_module);
       config->mutex = cfg->mutex;
    }
-   
+
+#if APR_HAS_FORK
    /* fork a child process to let it accomplish post-configuration tasks with the uid of the runtime user */
    apr_proc_t proc;
+   apr_status_t rv;
    rv = apr_proc_fork(&proc, ptemp);
    if (rv == APR_INCHILD) {
+#define ap_unixd_setup_child unixd_setup_child
       ap_unixd_setup_child();
       geocache_context *ctx = (geocache_context*)apache_server_context_create(s,p);
       for (sconf = s; sconf; sconf = sconf->next) {
@@ -466,6 +468,31 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
       ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "failed to fork geocache post-config child");
       return APR_EGENERAL;
    }
+#else /* APR_HAS_FORK */
+   geocache_context *ctx = (geocache_context*)apache_server_context_create(s,p);
+   for (sconf = s; sconf; sconf = sconf->next) {
+      geocache_server_cfg* config = ap_get_module_config(sconf->module_config, &geocache_module);
+      if(config->aliases) {
+         apr_hash_index_t *entry = apr_hash_first(ptemp,config->aliases);
+
+         /* loop through the configured configurations */
+         while (entry) {
+            const char *alias;
+            apr_ssize_t aliaslen;
+            geocache_cfg *c;
+            apr_hash_this(entry,(const void**)&alias,&aliaslen,(void**)&c);
+            geocache_configuration_post_config(ctx, c);
+            if(GC_HAS_ERROR(ctx)) {
+               ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "post config for %s failed: %s", alias,
+                     ctx->get_error_message(ctx));
+               return APR_EGENERAL;
+            }
+            entry = apr_hash_next(entry);
+         }
+      }
+   }
+   return OK;
+#endif
 }
 
 static void mod_geocache_child_init(apr_pool_t *pool, server_rec *s) {
