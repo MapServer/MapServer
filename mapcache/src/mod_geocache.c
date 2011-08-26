@@ -421,6 +421,7 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
       config->mutex = cfg->mutex;
    }
    
+#ifdef EXPERIMENTAL_POST_CONFIG
    /* fork a child process to let it accomplish post-configuration tasks with the uid of the runtime user */
    apr_proc_t proc;
    rv = apr_proc_fork(&proc, ptemp);
@@ -465,6 +466,9 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
       ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "failed to fork geocache post-config child");
       return APR_EGENERAL;
    }
+#else
+   return OK;
+#endif
 }
 
 static void mod_geocache_child_init(apr_pool_t *pool, server_rec *s) {
@@ -600,6 +604,12 @@ static const char* geocache_add_alias(cmd_parms *cmd, void *cfg, const char *ali
    if(GC_HAS_ERROR(ctx)) {
       return ctx->get_error_message(ctx);
    }
+#ifndef EXPERIMENTAL_POST_CONFIG
+   geocache_configuration_post_config(ctx,config);
+   if(GC_HAS_ERROR(ctx)) {
+      return ctx->get_error_message(ctx);
+   }
+#endif
    ap_log_error(APLOG_MARK, APLOG_INFO, 0, cmd->server, "loaded geocache configuration file from %s on alias %s", config->configFile, alias);
    if(!sconfig->aliases) {
       sconfig->aliases = apr_hash_make(cmd->pool);
