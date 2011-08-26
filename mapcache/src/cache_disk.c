@@ -11,6 +11,19 @@
 #include <apr_file_io.h>
 #include <http_log.h>
 
+
+
+char *_geocache_cache_disk_blank_tile_key(request_rec *r, geocache_tile *tile, unsigned char *color) {
+   char *path = apr_psprintf(r->pool,"%s/%s/blanks/%02X%02X%02X%02X.%s",
+         ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
+         tile->tileset->name,
+         color[0],
+         color[1],
+         color[2],
+         color[3],
+         tile->tileset->format?tile->tileset->format->extension:"png");
+   return path;
+}
 /**
  * \brief return filename for given tile
  * 
@@ -274,6 +287,44 @@ int _geocache_cache_disk_set(geocache_tile *tile, request_rec *r) {
    }
 #endif
    _geocache_cache_disk_tile_key(r, tile, &filename);
+
+   if(((geocache_cache_disk*)tile->tileset->cache)->symlink_blank) {
+      geocache_image *image = geocache_imageio_decode(r, tile->data);
+      if(geocache_image_blank_color(image) != GEOCACHE_FALSE) {
+         char *blankname = _geocache_cache_disk_blank_tile_key(r,tile,image->data);
+         if(apr_file_open(&f, blankname, APR_FOPEN_READ, APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
+            /* create the blank file */
+            if(APR_SUCCESS != apr_dir_make_recursive(apr_psprintf(r->pool, "%s/%s/blanks",((geocache_cache_disk*)tile->tileset->cache)->base_directory,tile->tileset->name),APR_OS_DEFAULT,r->pool)) {
+               ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to create directory for blank tiles");
+               return GEOCACHE_FAILURE;
+            }
+            if(apr_file_open(&f, blankname,
+                  APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
+                  APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
+               ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to create file %s",blankname);
+               return GEOCACHE_FAILURE; /* we could not create the file */
+            }
+            
+            bytes = (apr_size_t)tile->data->size;
+            apr_file_write(f,(void*)tile->data->buf,&bytes);
+
+            if(bytes != tile->data->size) {
+               ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to write image data to disk, wrote %d of %d bytes",(int)bytes, (int)tile->data->size);
+               return GEOCACHE_FAILURE;
+            }
+            apr_file_close(f);
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "created blank tile %s",blankname);
+         }
+         if(apr_file_link(blankname,filename) != GEOCACHE_SUCCESS) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to link tile %s to %s",filename, blankname);
+            return GEOCACHE_FAILURE; /* we could not create the file */
+         }
+         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "linked blank tile %s to %s",filename,blankname);
+         return GEOCACHE_SUCCESS;
+      }
+   }
+   
+   /* go the normal way: either we haven't configured blank tile detection, or the tile was not blank */
    if(apr_file_open(&f, filename,
          APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
          APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
@@ -305,6 +356,12 @@ char* _geocache_cache_disk_configuration_parse(xmlNode *xml, geocache_cache *cac
          xmlChar* value = xmlNodeGetContent(cur_node);
          dcache->base_directory = (char*)value;
       }
+      if(!xmlStrcmp(cur_node->name, BAD_CAST "symlink_blank")) {
+         xmlChar* value = xmlNodeGetContent(cur_node);
+         if(xmlStrcasecmp(value,BAD_CAST "false")) {
+            dcache->symlink_blank = 1;
+         }
+      }
    }
    return NULL;
 }
@@ -314,20 +371,25 @@ char* _geocache_cache_disk_configuration_parse(xmlNode *xml, geocache_cache *cac
  */
 char* _geocache_cache_disk_configuration_check(geocache_cache *cache, apr_pool_t *pool) {
    apr_status_t status;
-   apr_dir_t *dir;
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
    /* check all required parameters are configured */
    if(!dcache->base_directory || !strlen(dcache->base_directory)) {
       return apr_psprintf(pool,"disk cache %s has no base directory",dcache->cache.name);
    }
-
-   status = apr_dir_open(&dir, dcache->base_directory, pool);
+   
+   /*create our directory for blank images*/
+   status = apr_dir_make_recursive(dcache->base_directory,APR_OS_DEFAULT,pool);
    if(status != APR_SUCCESS) {
-      return apr_psprintf(pool, "failed to access directory %s for cache %s",
-            dcache->base_directory, dcache->cache.name);
+      return apr_psprintf(pool, "failed to create directory %s for cache %s",dcache->base_directory,dcache->cache.name );
    }
-   /* TODO: more checks on directory readability/writability */
-   apr_dir_close(dir);
+   
+   /*win32 isn't buildable yet, but put this check in now for reminders*/
+#ifdef _WIN32
+   if(dcache->symlink_blank) {
+      return apr_psprintf(pool, "linking blank tiles isn't supported on WIN32 due to platform limitations");
+   }
+#endif
+
    return NULL;
 }
 
@@ -336,6 +398,7 @@ char* _geocache_cache_disk_configuration_check(geocache_cache *cache, apr_pool_t
  */
 geocache_cache* geocache_cache_disk_create(apr_pool_t *pool) {
    geocache_cache_disk *cache = apr_pcalloc(pool,sizeof(geocache_cache_disk));
+   cache->symlink_blank = 0;
    cache->cache.type = GEOCACHE_CACHE_DISK;
    cache->cache.tile_get = _geocache_cache_disk_get;
    cache->cache.tile_set = _geocache_cache_disk_set;

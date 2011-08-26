@@ -96,6 +96,10 @@ int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r) {
       tileimg.w = mt->tile.tileset->tile_sx;
       tileimg.h = mt->tile.tileset->tile_sy;
       metatile = geocache_imageio_decode(r, mt->tile.data);
+      if(!metatile) {
+         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to load image data from metatile");
+         return GEOCACHE_FAILURE;
+      }
       tileimg.stride = metatile->stride;
       if(!metatile) return GEOCACHE_FAILURE;
       for(i=0;i<mt->tile.tileset->metasize_x;i++) {
@@ -118,5 +122,19 @@ int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r) {
 #endif
    }
    return GEOCACHE_SUCCESS;
+}
+
+int geocache_image_blank_color(geocache_image* image) {
+   int* pixptr;
+   int r,c;
+   for(r=0;r<image->h;r++) {
+      pixptr = (int*)(image->data + r * image->stride);
+      for(c=0;c<image->w;c++) {
+         if(*(pixptr++) != *((int*)image->data)) {
+            return GEOCACHE_FALSE;
+         }
+      }
+   }
+   return GEOCACHE_TRUE;
 }
 

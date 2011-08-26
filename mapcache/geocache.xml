@@ -2,6 +2,7 @@
 <geocache>
     <cache name="disk" type="disk">
         <base>/tmp</base>
+        <symlink_blank/>
     </cache>
     <format name="PNGQ_FAST" type ="PNG">
         <compression>fast</compression>

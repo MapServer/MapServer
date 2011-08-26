@@ -214,6 +214,7 @@ struct geocache_cache {
 struct geocache_cache_disk {
    geocache_cache cache;
    char *base_directory;
+   int symlink_blank;
 };
 
 /** @} */
@@ -241,7 +242,7 @@ struct geocache_request {
 
 #define GEOCACHE_SERVICES_COUNT 3
 
-typedef enum {GEOCACHE_SERVICE_WMTS=0, GEOCACHE_SERVICE_TMS, GEOCACHE_SERVICE_WMS} geocache_service_type;
+typedef enum {GEOCACHE_SERVICE_WMS=0, GEOCACHE_SERVICE_TMS, GEOCACHE_SERVICE_WMTS} geocache_service_type;
 
 typedef enum {GEOCACHE_UNIT_UNSET = 0, GEOCACHE_UNIT_METERS, GEOCACHE_UNIT_DEGREES, GEOCACHE_UNIT_FEET} geocache_unit;
 
@@ -344,6 +345,13 @@ geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_image_format 
  */
 int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r);
 
+/**
+ * \brief check if given image is composed of a unique color
+ * \param image the geocache_image to process
+ * \returns GEOCACHE_TRUE if the image contains a single color
+ * \returns GEOCACHE_FALSE if the image has more than one color
+ */
+int geocache_image_blank_color(geocache_image* image);
 /** @} */
 
 
