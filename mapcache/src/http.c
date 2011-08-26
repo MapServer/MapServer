@@ -28,7 +28,7 @@ size_t _geocache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void
    return geocache_buffer_append(buffer, realsize, ptr);
 }
 
-void geocache_http_request_url(geocache_context *ctx, char *url, geocache_buffer *data) {
+void geocache_http_request_url(geocache_context *ctx, char *url, apr_table_t *headers, geocache_buffer *data) {
    CURL *curl_handle;
    curl_handle = curl_easy_init();
    int ret;
@@ -48,9 +48,20 @@ void geocache_http_request_url(geocache_context *ctx, char *url, geocache_buffer
    curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
    curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
 
-   /* some servers don't like requests that are made without a user-agent field, so we provide one */ 
-   curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "mod_geocache/0.1");
 
+   struct curl_slist *curl_headers=NULL;
+   if(headers) {
+      const apr_array_header_t *array = apr_table_elts(headers);
+      apr_table_entry_t *elts = (apr_table_entry_t *) array->elts;
+      int i;
+      for (i = 0; i < array->nelts; i++) {
+         curl_headers = curl_slist_append(curl_headers, apr_pstrcat(ctx->pool,elts[i].key,": ",elts[i].val,NULL));
+      }
+   }
+   if(!headers || !apr_table_get(headers,"User-Agent")) {
+      curl_headers = curl_slist_append(curl_headers, "User-Agent: "GEOCACHE_USERAGENT);
+   }
+   curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, curl_headers);
    /* get it! */ 
    ret = curl_easy_perform(curl_handle);
    if(ret != CURLE_OK) {
@@ -60,9 +71,9 @@ void geocache_http_request_url(geocache_context *ctx, char *url, geocache_buffer
    curl_easy_cleanup(curl_handle);
 }
 
-void geocache_http_request_url_with_params(geocache_context *ctx, char *url, apr_table_t *params, geocache_buffer *data) {
+void geocache_http_request_url_with_params(geocache_context *ctx, char *url, apr_table_t *params, apr_table_t *headers, geocache_buffer *data) {
    char *fullUrl = geocache_http_build_url(ctx,url,params);
-   geocache_http_request_url(ctx,fullUrl,data);
+   geocache_http_request_url(ctx,fullUrl,headers,data);
 }
 
 /* calculate the length of the string formed by key=value&, and add it to cnt */

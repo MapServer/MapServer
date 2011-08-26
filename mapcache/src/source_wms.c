@@ -44,7 +44,7 @@ void _geocache_source_wms_render_metatile(geocache_context *ctx, geocache_metati
  
     }      
     tile->tile.data = geocache_buffer_create(30000,ctx->pool);
-    geocache_http_request_url_with_params(ctx,wms->url,params,tile->tile.data);
+    geocache_http_request_url_with_params(ctx,wms->url,params,NULL,tile->tile.data);
     GC_CHECK_ERROR(ctx);
  
     if(!geocache_imageio_is_valid_format(ctx,tile->tile.data)) {

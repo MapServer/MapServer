@@ -46,6 +46,8 @@
 #define GEOCACHE_CACHE_MISS 5
 #define GEOCACHE_FILE_LOCKED 6
 
+#define GEOCACHE_VERSION "0.3-dev"
+#define GEOCACHE_USERAGENT "geocache/"GEOCACHE_VERSION
 
 
 
@@ -544,8 +546,8 @@ int geocache_image_blank_color(geocache_image* image);
 
 /** \defgroup http HTTP Request handling*/
 /** @{ */
-void geocache_http_request_url(geocache_context *ctx, char *url, geocache_buffer *data);
-void geocache_http_request_url_with_params(geocache_context *ctx, char *url, apr_table_t *params, geocache_buffer *data);
+void geocache_http_request_url(geocache_context *ctx, char *url, apr_table_t *headers, geocache_buffer *data);
+void geocache_http_request_url_with_params(geocache_context *ctx, char *url, apr_table_t *params, apr_table_t *headers, geocache_buffer *data);
 char* geocache_http_build_url(geocache_context *ctx, char *base, apr_table_t *params);
 apr_table_t *geocache_http_parse_param_string(geocache_context *ctx, char *args);
 /** @} */
