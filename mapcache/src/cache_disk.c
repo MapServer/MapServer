@@ -183,6 +183,8 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
          char *blankname;
          _geocache_cache_disk_blank_tile_key(ctx,tile,image->data,&blankname);
          GC_CHECK_ERROR(ctx);
+         ctx->global_lock_aquire(ctx, 0);
+         GC_CHECK_ERROR(ctx);
          if(apr_file_open(&f, blankname, APR_FOPEN_READ, APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
             /* create the blank file */
             if(APR_SUCCESS != apr_dir_make_recursive(
@@ -190,12 +192,14 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
                         ((geocache_cache_disk*)tile->tileset->cache)->base_directory,tile->tileset->name),
                         APR_OS_DEFAULT,ctx->pool)) {
                ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create directory for blank tiles");
+               ctx->global_lock_release(ctx);
                return;
             }
             if(apr_file_open(&f, blankname,
                   APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
                   APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
                ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create file %s",blankname);
+               ctx->global_lock_release(ctx);
                return; /* we could not create the file */
             }
 
@@ -204,6 +208,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
 
             if(bytes != tile->data->size) {
                ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to write image data to disk, wrote %d of %d bytes",(int)bytes, (int)tile->data->size);
+               ctx->global_lock_release(ctx);
                return;
             }
             apr_file_close(f);
@@ -211,6 +216,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
             ctx->log(ctx,GEOCACHE_DEBUG,"created blank tile %s",blankname);
 #endif
          }
+         ctx->global_lock_release(ctx);
          if(apr_file_link(blankname,filename) != GEOCACHE_SUCCESS) {
             ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to link tile %s to %s",filename, blankname);
             return; /* we could not create the file */
