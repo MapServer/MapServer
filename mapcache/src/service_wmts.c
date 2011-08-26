@@ -193,9 +193,9 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
          bboxes = apr_psprintf(ctx->pool,"%s"
                "    <ows:BoundingBox>\n"
                "      <ows:CRS>%s</ows:CRS>\n"
-               "      <ows:LowerCorner>%f %f</ows:Lowercorner>\n"
-               "      <ows:Uppercorner>%f %f</ows:UpperCorner>\n"
-               "    <ows:BoundingBox>\n",
+               "      <ows:LowerCorner>%f %f</ows:LowerCorner>\n"
+               "      <ows:UpperCorner>%f %f</ows:UpperCorner>\n"
+               "    </ows:BoundingBox>\n",
                bboxes,
                geocache_grid_get_crs(ctx,grid_link->grid),
                bbox[0],bbox[1],
