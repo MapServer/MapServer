@@ -698,7 +698,8 @@ proxies:
       return;
    }
 #ifdef DEBUG
-   if((*request)->type != GEOCACHE_REQUEST_GET_TILE && (*request)->type != GEOCACHE_REQUEST_GET_MAP && 
+   if((*request)->type != GEOCACHE_REQUEST_GET_TILE && (*request)->type != GEOCACHE_REQUEST_GET_MAP &&
+         (*request)->type != GEOCACHE_REQUEST_GET_CAPABILITIES &&
          (*request)->type != GEOCACHE_REQUEST_GET_FEATUREINFO  ) {
       ctx->set_error(ctx,500,"BUG: request not gettile or getmap");
       return;
