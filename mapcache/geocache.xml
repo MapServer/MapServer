@@ -289,7 +289,7 @@
       <wmsparams>
          <FORMAT>image/png</FORMAT>
          <LAYERS>default</LAYERS>
-         <MAP>/home/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
+         <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
       </wmsparams>
    </source>
    <source name="nexrad" type="wms">
@@ -519,5 +519,5 @@
         the default setting is to report the error message back to the user. In production, you might want to set this to "log"
         if you're paranoid, or to "empty_img" if you want to play nice with non-conforming clients.
    -->
-   <errors>empty_img</errors>
+   <errors>report</errors>
 </geocache>
