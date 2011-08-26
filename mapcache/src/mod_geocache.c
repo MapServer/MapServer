@@ -75,8 +75,7 @@ void apache_context_server_log(geocache_context *c, geocache_log_level level, ch
    geocache_context_apache_server *ctx = (geocache_context_apache_server*)c;
    va_list args;
    va_start(args,message);
-   char *msg;
-   vasprintf(&msg,message,args);
+   char *msg = apr_pvsprintf(c->pool,message,args);
    va_end(args);
    ap_log_error(APLOG_MARK, APLOG_INFO, 0, ctx->server,"%s",msg);
    free(msg);
