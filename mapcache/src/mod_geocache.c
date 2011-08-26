@@ -79,6 +79,15 @@ int report_error(geocache_context_apache_request *apache_ctx) {
       } else {
          return code;
       }
+   } else if(ctx->config && ctx->config->reporting == GEOCACHE_REPORT_ERROR_IMG) {
+         apache_ctx->request->status = code;
+         geocache_image *errim = geocache_error_image(ctx,256,256,msg);
+         geocache_buffer *buf = ctx->config->merge_format->write(ctx,errim,ctx->config->merge_format);
+         ap_set_content_length(apache_ctx->request, buf->size);
+         apr_table_set(apache_ctx->request->headers_out, "X-Geocache-Error", msg);
+         ap_set_content_type(apache_ctx->request, ctx->config->merge_format->mime_type);
+         ap_rwrite((void*)buf->buf, buf->size, apache_ctx->request);
+         return OK;
    }
    else {
       return code;
