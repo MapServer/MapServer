@@ -24,14 +24,14 @@
 int geocache_imageio_image_has_alpha(geocache_image *img) {
    int i,j;
    unsigned char *ptr, *rptr = img->data;
-   for(i=0;i<img->h;i++) {
-      rptr += img->stride;
+   for(i=0;i<img->h;i++) {     
       ptr = rptr;
-      for(j=0;j<img->w;i++) {
+      for(j=0;j<img->w;j++) {
          if(ptr[3]<255)
             return 1;
          ptr += 4;
       }
+      rptr += img->stride;
    }
    return 0;
 }

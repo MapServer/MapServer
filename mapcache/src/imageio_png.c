@@ -84,7 +84,7 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    img->stride = img->w * 4;
    row_pointers = apr_pcalloc(ctx->pool,img->h * sizeof(unsigned char*));
 
-   png_bytep rowptr = img->data;
+   unsigned char *rowptr = img->data;
    for(i=0;i<img->h;i++) {
       row_pointers[i] = rowptr;
       rowptr += img->stride;
@@ -95,7 +95,7 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    png_set_strip_16(png_ptr);
    png_set_gray_to_rgb(png_ptr);
    png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
-
+   
    png_read_update_info(png_ptr, info_ptr);
 #ifdef DEBUG
    if(img->stride != png_get_rowbytes(png_ptr, info_ptr)) {
@@ -105,6 +105,7 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
 #endif
    
    png_read_image(png_ptr, row_pointers);
+   
    png_read_end(png_ptr,NULL);
    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 
@@ -153,7 +154,7 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_im
       color_type = PNG_COLOR_TYPE_RGB_ALPHA;
    else
       color_type = PNG_COLOR_TYPE_RGB;
-
+      
    png_set_IHDR(png_ptr, info_ptr, img->w, img->h,
          8, color_type, PNG_INTERLACE_NONE,
          PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
@@ -163,6 +164,8 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_im
       png_set_compression_level (png_ptr, Z_BEST_SPEED);
 
    png_write_info(png_ptr, info_ptr);
+   if(color_type == PNG_COLOR_TYPE_RGB)
+       png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);
 
    png_bytep rowptr = img->data;
    for(row=0;row<img->h;row++) {

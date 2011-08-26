@@ -105,7 +105,7 @@ static geocache_context_fcgi* fcgi_context_create() {
    geocache_context_fcgi *ctx = apr_pcalloc(pool, sizeof(geocache_context_fcgi));
    ctx->ctx.pool = pool;
    init_fcgi_context(ctx);
-   ret = apr_proc_mutex_create(&ctx->mutex,"/tmp/geocache.mutex",APR_LOCK_PROC_PTHREAD,pool);
+   ret = apr_proc_mutex_create(&ctx->mutex,"geocache_mutex",APR_LOCK_DEFAULT,pool);
    if(ret != APR_SUCCESS) {
       ctx->ctx.set_error(&ctx->ctx,GEOCACHE_MUTEX_ERROR,"failed to created mutex");
    } else {
@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
       apr_table_t *params;
       geocache_context *ctx = (geocache_context*) fcgi_context_request_create(globalctx,out,err); 
       geocache_tile *tile;
-      geocache_request *request;
+      geocache_request *request = NULL;
       char *pathInfo = FCGX_GetParam("PATH_INFO",envp);
 
       int i;
