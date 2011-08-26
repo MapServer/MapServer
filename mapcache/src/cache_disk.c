@@ -357,19 +357,21 @@ static void _geocache_cache_disk_configuration_parse(geocache_context *ctx, ezxm
  * \private \memberof geocache_cache_disk
  */
 static void _geocache_cache_disk_configuration_check(geocache_context *ctx, geocache_cache *cache) {
-   apr_status_t status;
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
    /* check all required parameters are configured */
    if(!dcache->base_directory || !strlen(dcache->base_directory)) {
       ctx->set_error(ctx, 400, "disk cache %s has no base directory",dcache->cache.name);
       return;
    }
-
-   /*create our directory for blank images*/
-   status = apr_dir_make_recursive(dcache->base_directory,APR_OS_DEFAULT,ctx->pool);
-   if(status != APR_SUCCESS) {
-      ctx->set_error(ctx, 500, "failed to create directory %s for cache %s",dcache->base_directory,dcache->cache.name );
-      return;
+   
+   apr_dir_t *basedir;
+   apr_status_t rv;
+   rv = apr_dir_open(&basedir,dcache->base_directory,ctx->pool);
+   char errmsg[120];
+   if(rv != APR_SUCCESS) {
+      ctx->log(ctx,GEOCACHE_WARNING, "failed to open base directory %s for cache %s: %s."\
+            " This might lead to problems later on if the apache user does not have the rights to create this directory",
+            dcache->base_directory,cache->name,apr_strerror(rv,errmsg,120));
    }
    return;
 }
