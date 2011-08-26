@@ -274,12 +274,8 @@ static geocache_buffer* _geocache_imageio_jpg_create_empty(geocache_context *ctx
    empty->h = height;
    empty->stride = width * 4;
 
-   /*temp switch format compression*/
-   int tmpquality = f->quality;
-   f->quality = 1;
    geocache_buffer *buf = format->write(ctx,empty,format);
    apr_pool_destroy(pool);
-   f->quality = tmpquality;
    return buf;
 }
 

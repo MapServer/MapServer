@@ -1093,12 +1093,8 @@ static geocache_buffer* _geocache_imageio_png_create_empty(geocache_context *ctx
    empty->h = height;
    empty->stride = width * 4;
 
-   /*temp switch format compression*/
-   geocache_compression_type tmpcomp = f->compression_level;
-   f->compression_level = GEOCACHE_COMPRESSION_BEST;
    geocache_buffer *buf = format->write(ctx,empty,format);
    apr_pool_destroy(pool);
-   f->compression_level = tmpcomp;
    return buf;
 }
 
