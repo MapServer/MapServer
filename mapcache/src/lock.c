@@ -69,12 +69,19 @@ char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatil
          lockname = apr_pstrcat(ctx->pool,lockname,dimvalue,NULL);
       }
 
-   }      
+   }
+
+#ifdef __APPLE__
+#ifndef SEM_NAME_LEN
+#define SEM_NAME_LEN 31
+#endif
+#endif
+
 #ifdef SEM_NAME_LEN
    /* truncate the lockname to the number of allowed characters */
-#warning "current platform only supports short semaphore names. lock name max length: " SEM_NAME_LEN
+#warning "current platform only supports short semaphore names. you may see failed requests"
    if(strlen(lockname) >= SEM_NAME_LEN) {
-      lockname[SEM_NAME_LEN]='\0';
+      lockname[SEM_NAME_LEN-1]='\0';
    }
 #endif
    return lockname;
