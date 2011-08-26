@@ -143,11 +143,10 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       cairo_set_source_surface (cr, srcsurface, 0, 0);
       cairo_paint (cr);
       cairo_restore(cr);
-
-      
-
-
+      cairo_surface_destroy(srcsurface);
    }
+   cairo_surface_destroy(dstsurface);
+   cairo_destroy(cr);
    return image;
 }
 
