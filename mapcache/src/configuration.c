@@ -104,7 +104,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    grid->srs = apr_pstrdup(pool,"epsg:4326");
    grid->unit = GEOCACHE_UNIT_DEGREES;
    grid->tile_sx = grid->tile_sy = 256;
-   grid->nlevels = 16;
+   grid->nlevels = 19;
    grid->extent[0] = wgs84_extent[0];
    grid->extent[1] = wgs84_extent[1];
    grid->extent[2] = wgs84_extent[2];
