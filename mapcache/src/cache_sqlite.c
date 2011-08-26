@@ -379,7 +379,7 @@ geocache_cache* geocache_cache_mbtiles_create(geocache_context *ctx) {
    cache->delete_stmt.sql = apr_pstrdup(ctx->pool,
          "delete from tiles where tile_column=:x and tile_row=:y and zoom_level=:z");
    cache->hitstat_stmt.sql = apr_pstrdup(ctx->pool,
-         "update tiles set hitcount=hitcount+1, atime=datetime('now') where x=:x and y=:y and z=:z and dim=:dim");
+         "select 1");
    return (geocache_cache*)cache;
 }
 
