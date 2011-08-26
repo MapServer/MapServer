@@ -27,7 +27,6 @@ int _geocache_source_wms_render_tile(geocache_tile *tile, request_rec *r) {
 int _geocache_source_wms_render_metatile(geocache_metatile *tile, request_rec *r) {
    geocache_wms_source *wms = (geocache_wms_source*)tile->tile.tileset->source;
    int ret;
-   geocache_image_format_type format;
    apr_table_t *params = apr_table_clone(r->pool,wms->wms_default_params);
    apr_table_setn(params,"BBOX",apr_psprintf(r->pool,"%f,%f,%f,%f",
          tile->bbox[0],tile->bbox[1],tile->bbox[2],tile->bbox[3]));
@@ -46,8 +45,7 @@ int _geocache_source_wms_render_metatile(geocache_metatile *tile, request_rec *r
       return GEOCACHE_FAILURE;
    }
    
-   format = geocache_imageio_header_sniff(r,tile->tile.data);
-   if(format == GEOCACHE_IMAGE_FORMAT_UNKNOWN) {
+   if(!geocache_imageio_is_valid_format(r,tile->tile.data)) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
             "wms request failed for tileset %s: %d %d %d returned an unsupported format",
             tile->tile.tileset->name, tile->tile.x, tile->tile.y, tile->tile.z);

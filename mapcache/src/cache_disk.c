@@ -22,7 +22,7 @@ int _geocache_cache_disk_tile_key(request_rec *r, geocache_tile *tile, char **pa
          tile->y / 1000000,
          (tile->y / 1000) % 1000,
          tile->y % 1000,
-         (tile->tileset->source->image_format == GEOCACHE_IMAGE_FORMAT_PNG)?"png":"jpg");
+         tile->tileset->format?tile->tileset->format->extension:"xxx");
    return GEOCACHE_SUCCESS;
 }
 
@@ -36,8 +36,9 @@ int _geocache_cache_disk_tile_key_split(request_rec *r, geocache_tile *tile, cha
          tile->x % 1000,
          tile->y / 1000000,
          (tile->y / 1000) % 1000);
-   *basename = apr_psprintf(r->pool,"%03d.%s",tile->y % 1000,
-         (tile->tileset->source->image_format == GEOCACHE_IMAGE_FORMAT_PNG)?"png":"jpg");
+   *basename = apr_psprintf(r->pool,"%03d.%s",
+         tile->y % 1000,
+         tile->tileset->format?tile->tileset->format->extension:"xxx");
    return GEOCACHE_SUCCESS;
 }
 

@@ -17,7 +17,6 @@ static int _geocache_source_render_metatile(geocache_metatile *tile, request_rec
 }
 
 void geocache_source_init(geocache_source *source, apr_pool_t *pool) {
-	source->image_format = GEOCACHE_IMAGE_FORMAT_UNKNOWN;
 	source->data_extent[0] =
 			source->data_extent[1] =
 			source->data_extent[2] =

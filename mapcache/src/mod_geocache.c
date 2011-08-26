@@ -53,10 +53,22 @@ static int geocache_write_tile(request_rec *r, geocache_tile *tile) {
    }
    ap_set_last_modified(r);
    ap_set_content_length(r,tile->data->size);
-   if(tile->tileset->source->image_format == GEOCACHE_IMAGE_FORMAT_PNG) 
-      ap_set_content_type(r, "image/png");
-   else
-      ap_set_content_type(r, "image/jpeg");
+   if(tile->tileset->format) {
+      if(!strcmp(tile->tileset->format->extension,"png"))
+         ap_set_content_type(r, "image/png");
+      else
+         ap_set_content_type(r, "image/jpeg");
+   } else {
+      geocache_image_format_type t = geocache_imageio_header_sniff(r,tile->data);
+      if(t == GC_PNG)
+         ap_set_content_type(r, "image/png");
+      else if(t == GC_JPEG)
+         ap_set_content_type(r, "image/jpeg");
+      else {
+         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "unrecognized image format");
+         return HTTP_INTERNAL_SERVER_ERROR;
+      }
+   }
    ap_rwrite((void*)tile->data->buf, tile->data->size, r);
 
    return OK;
@@ -105,7 +117,7 @@ static int mod_geocache_request_handler(request_rec *r) {
    } else {
       /* TODO: individual check on tiles if merging is allowed */
 
-      tile = (geocache_tile*)geocache_image_merge_tiles(r,request->tiles,request->ntiles);
+      tile = (geocache_tile*)geocache_image_merge_tiles(r,config->merge_format,request->tiles,request->ntiles);
       if(!tile) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "tile merging failed to return data");
          return HTTP_INTERNAL_SERVER_ERROR;

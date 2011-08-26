@@ -39,10 +39,15 @@
 #define GEOCACHE_FILE_LOCKED 6
 
 #define GEOCACHE_SERVICES_COUNT 2
+typedef enum {GC_UNKNOWN, GC_PNG, GC_JPEG} geocache_image_format_type;
 typedef enum {GEOCACHE_SERVICE_WMS=0, GEOCACHE_SERVICE_TMS} geocache_service_type;
-
+typedef enum {GEOCACHE_COMPRESSION_BEST, GEOCACHE_COMPRESSION_FAST, GEOCACHE_COMPRESSION_DEFAULT} geocache_compression_type;
 typedef enum {GEOCACHE_SOURCE_WMS} geocache_source_type;
-typedef enum {GEOCACHE_IMAGE_FORMAT_UNKNOWN, GEOCACHE_IMAGE_FORMAT_PNG, GEOCACHE_IMAGE_FORMAT_JPEG} geocache_image_format_type;
+
+typedef struct geocache_image_format geocache_image_format;
+typedef struct geocache_image_format_png geocache_image_format_png;
+typedef struct geocache_image_format_png_q geocache_image_format_png_q;
+typedef struct geocache_image_format_jpeg geocache_image_format_jpeg;
 
 typedef struct geocache_cfg geocache_cfg;
 typedef struct geocache_tileset geocache_tileset;
@@ -62,14 +67,35 @@ typedef struct geocache_image geocache_image;
 
 extern module AP_MODULE_DECLARE_DATA geocache_module;
 
-struct geocache_buffer{
+struct geocache_buffer {
    unsigned char* buf ;     /* buffer */
    size_t size ; /* bytes used */
    size_t avail ;  /* bytes allocated */
    apr_pool_t* pool; /*apache pool to allocate from */
 };
 
-struct geocache_tile{
+struct geocache_image_format {
+   char *name;
+   char *extension;
+   geocache_buffer* (*write)(geocache_image *image, geocache_image_format *format, request_rec *r);
+};
+
+struct geocache_image_format_jpeg {
+   geocache_image_format format;
+   int quality;
+};
+
+struct geocache_image_format_png {
+   geocache_image_format format;
+   geocache_compression_type compression_level;
+};
+
+struct geocache_image_format_png_q {
+   geocache_image_format_png format;
+   int ncolors;
+};
+
+struct geocache_tile {
    geocache_tileset *tileset;
    int x,y,z;
    int sx,sy;
@@ -79,7 +105,7 @@ struct geocache_tile{
    int expires;
 };
 
-struct geocache_metatile{
+struct geocache_metatile {
    geocache_tile tile;
    double bbox[4];
    int ntiles;
@@ -87,11 +113,10 @@ struct geocache_metatile{
 };
 
 
-struct geocache_source{
+struct geocache_source {
    char *name;
    char *srs;
    double data_extent[4];
-   geocache_image_format_type image_format;
    geocache_source_type type;
    int supports_metatiling;
    int (*render_tile)(geocache_tile *tile, request_rec *r);
@@ -102,7 +127,7 @@ struct geocache_source{
 
 
 
-struct geocache_wms_source{
+struct geocache_wms_source {
    geocache_source source;
    char *url;
    apr_table_t *wms_default_params;
@@ -112,7 +137,7 @@ struct geocache_wms_source{
 
 typedef enum {GEOCACHE_CACHE_DISK} geocache_cache_type;
 
-struct geocache_cache{
+struct geocache_cache {
    char *name;
    geocache_cache_type type;
    int (*tile_get)(geocache_tile *tile, request_rec *r);
@@ -125,22 +150,22 @@ struct geocache_cache{
    int (*tile_lock_wait)(geocache_tile *tile, request_rec *r);
 };
 
-struct geocache_cache_disk{
+struct geocache_cache_disk {
    geocache_cache cache;
    char *base_directory;
 };
 
-struct geocache_request{
+struct geocache_request {
    geocache_tile **tiles;
    int ntiles;
 };
 
-struct geocache_service{
+struct geocache_service {
    geocache_service_type type;
    geocache_request* (*parse_request)(request_rec *r, apr_table_t *params, geocache_cfg *config);
 };
 
-struct geocache_service_wms{
+struct geocache_service_wms {
    geocache_service service;
 };
 
@@ -159,9 +184,10 @@ struct geocache_tileset {
    int metasize_x, metasize_y;
    int metabuffer;
    int expires;
-   geocache_image_format_type format;
    geocache_cache *cache;
    geocache_source *source;
+   geocache_image_format *format; /* the format to use when storing tiles when metatiling */
+   geocache_image_format *cache_format; /* the format to use when storing a tile coming from a source, leave to NULL if you want to directly store what the source has produced */
    apr_table_t *forwarded_params;
 };
 
@@ -171,6 +197,8 @@ struct geocache_cfg {
    apr_hash_t *sources;
    apr_hash_t *caches;
    apr_hash_t *tilesets;
+   apr_hash_t *image_formats;
+   geocache_image_format *merge_format;
 };
 
 struct geocache_server_cfg{
@@ -202,6 +230,8 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool);
 geocache_source* geocache_configuration_get_source(geocache_cfg *config, const char *key);
 geocache_cache* geocache_configuration_get_cache(geocache_cfg *config, const char *key);
 geocache_tileset* geocache_configuration_get_tileset(geocache_cfg *config, const char *key);
+geocache_image_format *geocache_configuration_get_image_format(geocache_cfg *config, const char *key);
+void geocache_configuration_add_image_format(geocache_cfg *config, geocache_image_format *format, const char * key);
 void geocache_configuration_add_source(geocache_cfg *config, geocache_source *source, const char * key);
 void geocache_configuration_add_tileset(geocache_cfg *config, geocache_tileset *tileset, const char * key);
 void geocache_configuration_add_cache(geocache_cfg *config, geocache_cache *cache, const char * key);
@@ -238,12 +268,15 @@ int geocache_util_mutex_aquire(request_rec *r);
 int geocache_util_mutex_release(request_rec *r);
 
 /* in image.c */
-geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_tile **tiles, int ntiles);
+geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_image_format *format, geocache_tile **tiles, int ntiles);
 int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r);
 
 /* in imageio.c */
-geocache_buffer* geocache_imageio_encode(request_rec *r, geocache_image *img, geocache_image_format_type format);
 geocache_image_format_type geocache_imageio_header_sniff(request_rec *r, geocache_buffer *buffer);
+int geocache_imageio_is_valid_format(request_rec *r, geocache_buffer *buffer);
 geocache_image* geocache_imageio_decode(request_rec *r, geocache_buffer *buffer);
+geocache_image_format* geocache_imageio_create_png_format(apr_pool_t *pool, char *name, geocache_compression_type compression);
+geocache_image_format* geocache_imageio_create_png_q_format(apr_pool_t *pool, char *name, geocache_compression_type compression, int ncolors);
+geocache_image_format* geocache_imageio_create_jpeg_format(apr_pool_t *pool, char *name, int quality);
 
 #endif /* GEOCACHE_H_ */

@@ -11,6 +11,18 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    cfg->caches = apr_hash_make(pool);
    cfg->sources = apr_hash_make(pool);
    cfg->tilesets = apr_hash_make(pool);
+   cfg->image_formats = apr_hash_make(pool);
+
+   geocache_configuration_add_image_format(cfg,
+         geocache_imageio_create_png_format(pool,"PNG",GEOCACHE_COMPRESSION_FAST),
+         "PNG");
+   geocache_configuration_add_image_format(cfg,
+         geocache_imageio_create_png_q_format(pool,"PNG",GEOCACHE_COMPRESSION_FAST,256),
+         "PNG8");
+   geocache_configuration_add_image_format(cfg,
+         geocache_imageio_create_jpeg_format(pool,"JPEG",95),
+         "JPEG");
+   cfg->merge_format = geocache_configuration_get_image_format(cfg,"PNG");
    return cfg;
 }
 
@@ -26,6 +38,10 @@ geocache_tileset *geocache_configuration_get_tileset(geocache_cfg *config, const
    return (geocache_tileset*)apr_hash_get(config->tilesets, (void*)key, APR_HASH_KEY_STRING);
 }
 
+geocache_image_format *geocache_configuration_get_image_format(geocache_cfg *config, const char *key) {
+   return (geocache_image_format*)apr_hash_get(config->image_formats, (void*)key, APR_HASH_KEY_STRING);
+}
+
 void geocache_configuration_add_source(geocache_cfg *config, geocache_source *source, const char * key) {
    apr_hash_set(config->sources, key, APR_HASH_KEY_STRING, (void*)source);
 }
@@ -36,6 +52,10 @@ void geocache_configuration_add_tileset(geocache_cfg *config, geocache_tileset *
 
 void geocache_configuration_add_cache(geocache_cfg *config, geocache_cache *cache, const char * key) {
    apr_hash_set(config->caches, key, APR_HASH_KEY_STRING, (void*)cache);
+}
+
+void geocache_configuration_add_image_format(geocache_cfg *config, geocache_image_format *format, const char * key) {
+   apr_hash_set(config->image_formats, key, APR_HASH_KEY_STRING, (void*)format);
 }
 
 int extractNameAndTypeAttributes(xmlDoc *doc, xmlAttr *attribute, char **name, char **type) {
@@ -90,17 +110,6 @@ char* parseSource(xmlNode *node, geocache_cfg *config, apr_pool_t *pool) {
    source->name = name;
    for(cur_node = node->children; cur_node; cur_node = cur_node->next) {
       if(cur_node->type != XML_ELEMENT_NODE) continue;
-      if(!xmlStrcmp(cur_node->name, BAD_CAST "format")) {
-         char* value = (char*)xmlNodeGetContent(cur_node);
-         if(!strcmp(value,"image/png")) {
-            source->image_format = GEOCACHE_IMAGE_FORMAT_PNG;
-         } else if(!strcmp(value,"image/jpeg")) {
-            source->image_format = GEOCACHE_IMAGE_FORMAT_JPEG;
-         } else {
-            return apr_psprintf(pool, "unknown image format %s in source \"%s\"",value,name);
-         }
-         xmlFree(BAD_CAST value);
-      }
       if(!xmlStrcmp(cur_node->name, BAD_CAST "srs")) {
          char* value = (char*)xmlNodeGetContent(cur_node);
          source->srs = value;
@@ -113,6 +122,81 @@ char* parseSource(xmlNode *node, geocache_cfg *config, apr_pool_t *pool) {
    if(msg) return msg;
    geocache_configuration_add_source(config,source,name);
 
+   return NULL;
+}
+
+char* parseFormat(xmlNode *node, geocache_cfg *config, apr_pool_t *pool) {
+   char *name = NULL,  *type = NULL;
+   xmlChar *value = NULL;
+   geocache_image_format *format = NULL;
+   xmlNode *cur_node;
+   if(xmlStrcmp(node->name, BAD_CAST "format")) {
+      return apr_psprintf(pool,"SEVERE: <%s> is not a format tag",node->name);
+   }
+   extractNameAndTypeAttributes(node->doc, node->properties, &name, &type);
+   if(!name || !strlen(name))
+      return "mandatory attribute \"name\" not found in <format>";
+   if(!type || !strlen(type))
+      return "mandatory attribute \"type\" not found in <format>";
+   if(!strcmp(type,"PNG")) {
+      int colors = -1;
+      geocache_compression_type compression = GEOCACHE_COMPRESSION_DEFAULT;
+      for(cur_node = node->children; cur_node; cur_node = cur_node->next) {
+         if(cur_node->type != XML_ELEMENT_NODE) continue;
+         if(!xmlStrcmp(cur_node->name, BAD_CAST "compression")) {
+            value = xmlNodeGetContent(cur_node);
+            if(!xmlStrcmp(value, BAD_CAST "fast")) {
+               compression = GEOCACHE_COMPRESSION_FAST;
+            } else if(!xmlStrcmp(value, BAD_CAST "best")) {
+               compression = GEOCACHE_COMPRESSION_BEST;
+            } else {
+               return apr_psprintf(pool, "unknown compression type %s for format \"%s\"", value, name);
+            }
+         } else if(!xmlStrcmp(cur_node->name, BAD_CAST "colors")) {
+            value = xmlNodeGetContent(cur_node);
+            char *endptr;
+            colors = (int)strtol((char*)value,&endptr,10);
+            if(*endptr != 0 || colors < 2 || colors > 256)
+               return apr_psprintf(pool,"failed to parse colors \"%s\" for format \"%s\""
+                     "(expecting an  integer between 2 and 256 "
+                     "eg <colors>256</colors>",
+                     value,name);     
+            xmlFree(value);
+         } else {
+            return apr_psprintf(pool, "unknown tag %s for format \"%s\"", cur_node->name, name);
+         }
+         if(colors != -1) {
+            format = geocache_imageio_create_png_format(pool,name,compression);
+         } else {
+            format = geocache_imageio_create_png_q_format(pool,name,compression, colors);
+         }
+      }
+   } else if(!strcmp(type,"JPEG")){
+      int quality = 95;
+      for(cur_node = node->children; cur_node; cur_node = cur_node->next) {
+         if(cur_node->type != XML_ELEMENT_NODE) continue;
+         if(!xmlStrcmp(cur_node->name, BAD_CAST "quality")) {
+            value = xmlNodeGetContent(cur_node);
+            char *endptr;
+            quality = (int)strtol((char*)value,&endptr,10);
+            if(*endptr != 0 || quality < 1 || quality > 100)
+               return apr_psprintf(pool,"failed to parse quality \"%s\" for format \"%s\""
+                     "(expecting an  integer between 1 and 100 "
+                     "eg <quality>90</quality>",
+                     value,name);     
+            xmlFree(value);
+         }
+      }
+      format = geocache_imageio_create_jpeg_format(pool,name,quality);
+   } else {
+      return apr_psprintf(pool, "unknown format type %s for format \"%s\"", type, name);
+   }
+   if(format == NULL) {
+      return apr_psprintf(pool, "failed to parse format \"%s\"", name);
+   }
+
+
+   geocache_configuration_add_image_format(config,format,name);
    return NULL;
 }
 
@@ -274,16 +358,12 @@ char* parseTileset(xmlNode *node, geocache_cfg *config, apr_pool_t *pool) {
          xmlFree(value);
       } else if(!xmlStrcmp(cur_node->name, BAD_CAST "format")) {
          value = (char*)xmlNodeGetContent(cur_node);
-         if(!strcasecmp("PNG", value)) {
-            tileset->format = GEOCACHE_IMAGE_FORMAT_PNG;
-         } else if(!strcasecmp("JPEG", value) || !strcasecmp("JPG", value)) {
-            tileset->format = GEOCACHE_IMAGE_FORMAT_JPEG;
-         } else {
-            return apr_psprintf(pool,"failed to parse format %s."
-                              "(expecting PNG or JPEG, "
-                              "eg <format>PNG</format>",
-                              value);
+         geocache_image_format *format = geocache_configuration_get_image_format(config,value);
+         if(!format) {
+            return apr_psprintf(pool,"tileset \"%s\" references format \"%s\","
+                  " but it is not configured",name,value);
          }
+         tileset->format = format;
          xmlFree(value);
       }
    }
@@ -309,6 +389,12 @@ char* parseTileset(xmlNode *node, geocache_cfg *config, apr_pool_t *pool) {
    if(!tileset->levels) {
       return apr_psprintf(pool,"tileset \"%s\" has no resolutions configured."
             " You must add a <resolutions> tag.", tileset->name);
+   }
+   if(!tileset->format && (
+         tileset->metasize_x != 1 ||
+         tileset->metasize_y != 1 ||
+         tileset->metabuffer != 0)) {
+      tileset->format = config->merge_format;
    }
 
 
@@ -339,7 +425,13 @@ char* geocache_configuration_parse(const char *filename, geocache_cfg *config, a
             char *msg = parseCache(cur_node, config, pool);
             if(msg)
                return msg;
-         } else if(!xmlStrcmp(cur_node->name, BAD_CAST "tileset")) {
+         } 
+         else if(!xmlStrcmp(cur_node->name, BAD_CAST "format")) {
+            char *msg = parseFormat(cur_node, config, pool);
+            if(msg)
+               return msg;
+         }
+         else if(!xmlStrcmp(cur_node->name, BAD_CAST "tileset")) {
             char *msg = parseTileset(cur_node, config, pool);
             if(msg)
                return msg;
@@ -359,6 +451,14 @@ char* geocache_configuration_parse(const char *filename, geocache_cfg *config, a
                   }
                }
             }
+         } else if(!xmlStrcmp(cur_node->name, BAD_CAST "merge_format")) {
+            char* value = (char*) xmlNodeGetContent(cur_node);
+            geocache_image_format *format = geocache_configuration_get_image_format(config,value);
+            if(!format) {
+               return apr_psprintf(pool,"merge_format tag references format %s but it is not configured",
+                                 value);
+            }
+            config->merge_format = format;
          } else {
             return apr_psprintf(pool,"failed to parse geocache config file %s: unknown tag <%s>",
                   filename, cur_node->name);

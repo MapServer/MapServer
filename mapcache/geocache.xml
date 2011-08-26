@@ -3,19 +3,23 @@
     <cache name="disk" type="disk">
         <base>/tmp</base>
     </cache>
+    <format name="PNGQ_FAST" type ="PNG">
+        <compression>fast</compression>
+        <colors>256</colors>
+    </format>
     <source name="vmap0" type="wms">
         <url>http://vmap0.tiles.osgeo.org/wms/vmap0</url>
         <srs>epsg:4326</srs>
-        <format>image/png</format>
         <wmsparams>
+            <FORMAT>image/png</FORMAT>
         	<LAYERS>basic</LAYERS>
         </wmsparams>
     </source>
     <source name="nexrad" type="wms">
         <url>http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi</url>
         <srs>epsg:4326</srs>
-        <format>image/png</format>
         <wmsparams>
+            <FORMAT>image/png</FORMAT>
             <LAYERS>nexrad_base_reflect</LAYERS>
             <TRANSPARENT>true</TRANSPARENT>
         </wmsparams>
@@ -23,8 +27,8 @@
     <source name="basic" type="wms">
         <url>http://geoservices.brgm.fr/geologie?</url>
         <srs>epsg:4326</srs>
-        <format>image/png</format>
         <wmsparams>
+            <FORMAT>image/png</FORMAT>
             <LAYERS>GRAVI_BASE</LAYERS>
             <TRANSPARENT>true</TRANSPARENT>
         </wmsparams>
@@ -34,11 +38,9 @@
         <srs>epsg:4326</srs>
         <cache>disk</cache>
         <size>256 256</size>
+        <format>PNG8</format>
         <resolutions>0.703125 0.3515625 0.17578125 0.087890625 0.0439453125 0.02197265625 0.010986328125 0.0054931640625 0.00274658203125 0.001373291015625 0.0006866455078125 0.00034332275390625 0.000171661376953125 0.0000858306884765625 0.00004291534423828125</resolutions>
         <extent>-180 -90 180 90</extent>
-        <metatile>5 5</metatile>
-        <metabuffer>30</metabuffer>
-        <format>JPG</format>
         <expires>3600</expires>
     </tileset>
     <tileset name="test2">
@@ -46,6 +48,7 @@
         <srs>epsg:4326</srs>
         <cache>disk</cache>
         <size>256 256</size>
+        <format>PNG</format>
         <resolutions>0.703125 0.3515625 0.17578125 0.087890625 0.0439453125 0.02197265625 0.010986328125 0.0054931640625 0.00274658203125 0.001373291015625 0.0006866455078125 0.00034332275390625 0.000171661376953125 0.0000858306884765625 0.00004291534423828125</resolutions>
         <extent>-180 -90 180 90</extent>
     </tileset>
@@ -54,12 +57,13 @@
         <srs>epsg:4326</srs>
         <cache>disk</cache>
         <size>256 256</size>
+        <format>PNG8</format>
         <resolutions>0.703125 0.3515625 0.17578125 0.087890625 0.0439453125 0.02197265625 0.010986328125 0.0054931640625 0.00274658203125 0.001373291015625 0.0006866455078125 0.00034332275390625 0.000171661376953125 0.0000858306884765625 0.00004291534423828125</resolutions>
         <extent>-180 -90 180 90</extent>
         <metatile>5 5</metatile>
         <metabuffer>30</metabuffer>
     </tileset>
-    
+    <merge_format>PNGQ_FAST</merge_format>
     
     <services>
         <wms>true</wms>
