@@ -10,8 +10,9 @@
 
 #ifdef USE_OGR
 #include "ogr_api.h"
+#include "geos_c.h"
 int nClippers = 0;
-OGRGeometryH *clippers=NULL;
+const GEOSPreparedGeometry **clippers=NULL;
 #endif
 
 geocache_tileset *tileset;
@@ -90,30 +91,30 @@ void geocache_context_seeding_log(geocache_context *ctx, geocache_log_level leve
 #ifdef USE_OGR
 int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
    geocache_metatile *mt = geocache_tileset_metatile_get(ctx,tile);
-   OGRGeometryH mtbboxls = OGR_G_CreateGeometry(wkbLinearRing);
+   GEOSCoordSequence *mtbboxls = GEOSCoordSeq_create(5,2);
    double *e = mt->map.extent;
-   OGR_G_SetPoint_2D(mtbboxls,0,e[0],e[1]);
-   OGR_G_SetPoint_2D(mtbboxls,1,e[2],e[1]);
-   OGR_G_SetPoint_2D(mtbboxls,2,e[2],e[3]);
-   OGR_G_SetPoint_2D(mtbboxls,3,e[0],e[3]);
-   OGR_G_SetPoint_2D(mtbboxls,4,e[0],e[1]);
-   OGRGeometryH mtbbox = OGR_G_CreateGeometry(wkbPolygon);
-   OGR_G_AddGeometry(mtbbox,mtbboxls);
+   GEOSCoordSeq_setX(mtbboxls,0,e[0]);
+   GEOSCoordSeq_setY(mtbboxls,0,e[1]);
+   GEOSCoordSeq_setX(mtbboxls,1,e[2]);
+   GEOSCoordSeq_setY(mtbboxls,1,e[1]);
+   GEOSCoordSeq_setX(mtbboxls,2,e[2]);
+   GEOSCoordSeq_setY(mtbboxls,2,e[3]);
+   GEOSCoordSeq_setX(mtbboxls,3,e[0]);
+   GEOSCoordSeq_setY(mtbboxls,3,e[3]);
+   GEOSCoordSeq_setX(mtbboxls,4,e[0]);
+   GEOSCoordSeq_setY(mtbboxls,4,e[1]);
+   GEOSGeometry *mtbbox = GEOSGeom_createLinearRing(mtbboxls);
    int i;
    int intersects = 0;
    for(i=0;i<nClippers;i++) {
-      OGRGeometryH clipper = clippers[i];
-      OGRGeometryH clipresult;
-      clipresult = OGR_G_Intersection(mtbbox,clipper);
-      if(clipresult && !OGR_G_IsEmpty(clipresult))
+      const GEOSPreparedGeometry *clipper = clippers[i];
+      if(GEOSPreparedIntersects(clipper,mtbbox)) {
          intersects = 1;
-      OGR_G_DestroyGeometry(clipresult);
+         break;
+      }
    }
-   OGR_G_DestroyGeometry(mtbbox);
-   OGR_G_DestroyGeometry(mtbboxls);
+   GEOSGeom_destroy(mtbbox);
    return intersects;
-
-
 }
 
 #endif
@@ -128,12 +129,14 @@ void progresslog(int x, int y, int z) {
       gettimeofday(&now_t,NULL);
       float duration = ((now_t.tv_sec-lastlogtime.tv_sec)*1000000+(now_t.tv_usec-lastlogtime.tv_usec))/1000000.0;
       float totalduration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
-      if(duration>=1) {
+      if(duration>=5) {
          int ntilessincelast = seededtilestot-seededtiles;
          sprintf(msg,"seeding level %d: %f metatiles/sec (avg since start: %f)",z,ntilessincelast/duration,
                seededtilestot/totalduration);
          lastlogtime=now_t;
          seededtiles=seededtilestot;
+      } else {
+         return;
       }
    } else {
       sprintf(msg,"seeding level %d",z);
@@ -141,6 +144,9 @@ void progresslog(int x, int y, int z) {
    }
    if(lastmsglen) {
       char erasestring[1024];
+      int len = GEOCACHE_MIN(1023,lastmsglen);
+      memset(erasestring,' ',len);
+      erasestring[len+1]='\0';
       sprintf(erasestring,"\r%%%ds\r",lastmsglen);
       printf(erasestring," ");
    }
@@ -272,6 +278,32 @@ static void* APR_THREAD_FUNC seed_thread(apr_thread_t *thread, void *data) {
    }
    apr_thread_exit(thread,GEOCACHE_SUCCESS);
    return NULL;
+}
+
+
+void
+notice(const char *fmt, ...) {
+        va_list ap;
+
+        fprintf( stdout, "NOTICE: ");
+       
+        va_start (ap, fmt);
+        vfprintf( stdout, fmt, ap);
+        va_end(ap);
+        fprintf( stdout, "\n" );
+}
+
+void
+log_and_exit(const char *fmt, ...) {
+        va_list ap;
+
+        fprintf( stdout, "ERROR: ");
+       
+        va_start (ap, fmt);
+        vfprintf( stdout, fmt, ap);
+        va_end(ap);
+        fprintf( stdout, "\n" );
+        exit(1);
 }
 
 
@@ -469,20 +501,26 @@ int main(int argc, const char **argv) {
       }
 
 
-      clippers = (OGRGeometryH*)malloc(nClippers*sizeof(OGRGeometryH));
+      initGEOS(notice, log_and_exit);
+      clippers = (const GEOSPreparedGeometry**)malloc(nClippers*sizeof(GEOSPreparedGeometry*));
 
 
       OGRFeatureH hFeature;
-
+      GEOSWKTReader *geoswktreader = GEOSWKTReader_create();
       OGR_L_ResetReading(layer);
       extent = apr_pcalloc(ctx.pool,4*sizeof(double));
       int f=0;
       while( (hFeature = OGR_L_GetNextFeature(layer)) != NULL ) {
          OGRGeometryH geom = OGR_F_GetGeometryRef(hFeature);
          if(!geom ||  !OGR_G_IsValid(geom)) continue;
-         clippers[f] = OGR_G_Clone(OGR_F_GetGeometryRef(hFeature));
+         char *wkt;
+         OGR_G_ExportToWkt(geom,&wkt);
+         GEOSGeometry *geosgeom = GEOSWKTReader_read(geoswktreader,wkt);
+         free(wkt);
+         clippers[f] = GEOSPrepare(geosgeom);
+         //GEOSGeom_destroy(geosgeom);
          OGREnvelope ogr_extent;
-         OGR_G_GetEnvelope	(clippers[f], &ogr_extent);	
+         OGR_G_GetEnvelope	(geom, &ogr_extent);	
          if(f == 0) {
             extent[0] = ogr_extent.MinX;
             extent[1] = ogr_extent.MinY;
@@ -618,7 +656,7 @@ int main(int argc, const char **argv) {
            struct timeval now_t;
            gettimeofday(&now_t,NULL);
            float duration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
-           printf("\nseeded %d tiles at %g tiles/sec\n",seededtilestot, seededtilestot/duration);
+           printf("\nseeded %d metatiles at %g tiles/sec\n",seededtilestot, seededtilestot/duration);
         }
     }
     return 0;
