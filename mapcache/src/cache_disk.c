@@ -107,6 +107,29 @@ static int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *t
 }
 
 static void _geocache_cache_disk_delete(geocache_context *ctx, geocache_tile *tile) {
+   apr_status_t ret;
+   char errmsg[120];
+   char *filename;
+   apr_file_t *f;
+   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   GC_CHECK_ERROR(ctx);
+
+   /* delete the tile file if it already exists */
+   if((ret = apr_file_open(&f, filename,APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool)) == APR_SUCCESS) {
+      apr_file_close(f);
+      ret = apr_file_remove(filename,ctx->pool);
+      if(ret != APR_SUCCESS) {
+         ctx->set_error(ctx, 500,  "failed to remove existing file %s: %s",filename, apr_strerror(ret,errmsg,120));
+         return; /* we could not delete the file */
+      }
+   } else {
+      int code = 500;
+      if(ret == ENOENT) {
+         code = 404;
+      }
+      ctx->set_error(ctx, code,  "failed to remove file %s: %s",filename, apr_strerror(ret,errmsg,120));
+      return; /* we could not open the file */
+   }
 }
 
 
@@ -206,6 +229,17 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
        return;
    }
    *hackptr2 = '/';
+
+   /* delete the tile file if it already exists */
+   if((ret = apr_file_open(&f, filename,APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool)) == APR_SUCCESS) {
+      apr_file_close(f);
+      ret = apr_file_remove(filename,ctx->pool);
+      if(ret != APR_SUCCESS) {
+         ctx->set_error(ctx, 500,  "failed to remove existing file %s: %s",filename, apr_strerror(ret,errmsg,120));
+         return; /* we could not create the file */
+      }
+   }
+
   
 #ifdef HAVE_SYMLINK
    if(((geocache_cache_disk*)tile->tileset->cache)->symlink_blank) {

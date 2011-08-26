@@ -352,5 +352,26 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
       }
    }
 }
+
+void geocache_tileset_tile_delete(geocache_context *ctx, geocache_tile *tile) {
+   int i;
+   /*delete the tile itself*/
+   tile->tileset->cache->tile_delete(ctx,tile);
+   GC_CHECK_ERROR(ctx);
+
+   geocache_metatile *mt = _geocache_tileset_metatile_get(ctx, tile);
+   for(i=0;i<mt->ntiles;i++) {
+      geocache_tile *subtile = &mt->tiles[i];
+      /* skip deleting the actual tile */
+      if(subtile->x == tile->x && subtile->y == tile->y) continue;
+      subtile->tileset->cache->tile_delete(ctx,tile);
+      /* silently pass failure if the tile was not found */
+      if(ctx->get_error(ctx) == 404) {
+         ctx->clear_errors(ctx);
+      }
+      GC_CHECK_ERROR(ctx);
+   }
+}
+
 /* vim: ai ts=3 sts=3 et sw=3
 */
