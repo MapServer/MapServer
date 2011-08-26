@@ -59,7 +59,8 @@ const char* geocache_grid_get_crs(geocache_context *ctx, geocache_grid *grid) {
 const char* geocache_grid_get_srs(geocache_context *ctx, geocache_grid *grid) {
    return (const char*)grid->srs;
 }
-void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits) {
+
+void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits, int tolerance) {
    int i;
    double epsilon = 0.0000001;
    for(i=0;i<grid->nlevels;i++) {
@@ -70,10 +71,10 @@ void geocache_grid_compute_limits(const geocache_grid *grid, const double *exten
       level->maxy = ceil((grid->extent[3]-grid->extent[1] - 0.01* unitheight)/unitheight);
       level->maxx = ceil((grid->extent[2]-grid->extent[0] - 0.01* unitwidth)/unitwidth);
 
-      limits[i][0] = floor((extent[0] - grid->extent[0]) / unitwidth + epsilon);
-      limits[i][2] = ceil((extent[2] - grid->extent[0]) / unitwidth - epsilon);
-      limits[i][1] = floor((extent[1] - grid->extent[1]) / unitheight + epsilon);
-      limits[i][3] = ceil((extent[3] - grid->extent[1]) / unitheight - epsilon);
+      limits[i][0] = floor((extent[0] - grid->extent[0]) / unitwidth + epsilon) - tolerance;
+      limits[i][2] = ceil((extent[2] - grid->extent[0]) / unitwidth - epsilon) + tolerance;
+      limits[i][1] = floor((extent[1] - grid->extent[1]) / unitheight + epsilon) - tolerance;
+      limits[i][3] = ceil((extent[3] - grid->extent[1]) / unitheight - epsilon) + tolerance;
       // to avoid requesting out-of-range tiles
       if (limits[i][0] < 0) limits[i][0] = 0;
       if (limits[i][2] > level->maxx) limits[i][2] = level->maxx;

@@ -483,7 +483,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
 
    for(cur_node = ezxml_child(node,"grid"); cur_node; cur_node = cur_node->next) {
       int i;
-      char *restrictedExtent = NULL;
+      char *restrictedExtent = NULL, *sTolerance = NULL;
       if (tileset->grid_links == NULL) {
          tileset->grid_links = apr_array_make(ctx->pool,1,sizeof(geocache_grid_link*));
       }
@@ -516,7 +516,20 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       } else {
          extent = grid->extent;
       }
-      geocache_grid_compute_limits(grid,extent,gridlink->grid_limits);
+
+      int tolerance = 5;
+      sTolerance = (char*)ezxml_attr(cur_node,"tolerance");
+      if(sTolerance) {
+         char *endptr;
+         tolerance = (int)strtol(sTolerance,&endptr,10);
+         if(*endptr != 0 || tolerance < 0) {
+            ctx->set_error(ctx, 400, "failed to parse grid tolerance %s (expecting a positive integer)",
+                  sTolerance);  
+            return;
+         }
+      }
+
+      geocache_grid_compute_limits(grid,extent,gridlink->grid_limits,tolerance);
       
       /* compute wgs84 bbox if it wasn't supplied already */
       if(!havewgs84bbox && !strcasecmp(grid->srs,"EPSG:4326")) {

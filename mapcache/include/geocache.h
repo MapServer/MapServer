@@ -1262,8 +1262,21 @@ double geocache_grid_get_resolution(double *bbox, int sx, int sy);
 double geocache_grid_get_horizontal_resolution(double *bbox, int width);
 double geocache_grid_get_vertical_resolution(double *bbox, int height);
 
+/**
+ * \brief compute grid level given a resolution
+ * \param grid
+ * \param resolution
+ * \param level
+ */
 int geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level);
-void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits);
+
+/**
+ * \brief precompute min/max x/y values for the given extent
+ * \param grid 
+ * \param extent
+ * \param tolerance the number of tiles around the given extent that can be requested without returning an error.
+ */
+void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits, int tolerance);
 
 /* in util.c */
 int geocache_util_extract_int_list(geocache_context *ctx, const char* args, const char *sep, int **numbers,

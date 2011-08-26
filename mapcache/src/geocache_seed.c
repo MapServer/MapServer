@@ -647,7 +647,7 @@ int main(int argc, const char **argv) {
 
     if(extent) {
        // update the grid limits
-       geocache_grid_compute_limits(grid_link->grid,extent,grid_link->grid_limits);
+       geocache_grid_compute_limits(grid_link->grid,extent,grid_link->grid_limits,0);
     }
 
     /* adjust our grid limits so they align on the metatile limits
