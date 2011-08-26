@@ -151,8 +151,8 @@ static int geocache_write_tile(geocache_context_fcgi_request *ctx, geocache_tile
    return 200;
 }
 
-static int geocache_write_capabilities(geocache_context_fcgi_request *ctx, geocache_request *request) {
-   FCGX_FPrintF(ctx->out,"Content-type: text/xml\r\n\r\n");
+static int geocache_write_capabilities(geocache_context_fcgi_request *ctx, geocache_request_get_capabilities *request) {
+   FCGX_FPrintF(ctx->out,"Content-type: %s\r\n\r\n",request->mime_type);
    FCGX_PutStr(request->capabilities, strlen(request->capabilities),ctx->out);
 
    return 200;
@@ -185,54 +185,59 @@ int main(int argc, char **argv) {
       apr_table_t *params;
       geocache_context *ctx = (geocache_context*) fcgi_context_request_create(globalctx,out,err); 
       geocache_tile *tile;
+      geocache_service *service;
       geocache_request *request = NULL;
-      char *host = FCGX_GetParam("SERVER_NAME",envp);
-      char *port = FCGX_GetParam("SERVER_PORT",envp);
-      char *fullhost;
-      if(FCGX_GetParam("HTTPS",envp)) {
-         if(!port || !strcmp(port,"443")) {
-            fullhost = apr_psprintf(ctx->pool,"https://%s",host);
-         } else {
-            fullhost = apr_psprintf(ctx->pool,"https://%s:%s",host,port);
-         }
-      } else {
-         if(!port || !strcmp(port,"80")) {
-            fullhost = apr_psprintf(ctx->pool,"http://%s",host);
-         } else {
-            fullhost = apr_psprintf(ctx->pool,"http://%s:%s",host,port);
-         }
-      }
       char *pathInfo = FCGX_GetParam("PATH_INFO",envp);
-      char *uri = apr_psprintf(ctx->pool,"%s%s",
-            fullhost,
-            FCGX_GetParam("SCRIPT_NAME",envp)
-            );
-
       int i;
-
+      
 
       params = geocache_http_parse_param_string((geocache_context*)ctx, FCGX_GetParam("QUERY_STRING",envp));
-
       for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
-         geocache_service *service = cfg->services[i];
+         service = cfg->services[i];
          if(!service) continue;
-         request = service->parse_request(ctx,uri,pathInfo,params,cfg);
+         request = service->parse_request(ctx,pathInfo,params,cfg);
          if(request)
             break;
       }
+      
       if(!request || GC_HAS_ERROR(ctx)) {
          FCGX_FPrintF(out,"Status: 404 Not Found\r\n\r\n");
          goto cleanup;
       }
       if(request->type == GEOCACHE_REQUEST_GET_CAPABILITIES) {
-         geocache_write_capabilities((geocache_context_fcgi_request*)ctx,request);
+         geocache_request_get_capabilities *req = (geocache_request_get_capabilities*)request;
+         char *host = FCGX_GetParam("SERVER_NAME",envp);
+         char *port = FCGX_GetParam("SERVER_PORT",envp);
+         char *fullhost;
+         char *url;
+         if(FCGX_GetParam("HTTPS",envp)) {
+            if(!port || !strcmp(port,"443")) {
+               fullhost = apr_psprintf(ctx->pool,"https://%s",host);
+            } else {
+               fullhost = apr_psprintf(ctx->pool,"https://%s:%s",host,port);
+            }
+         } else {
+            if(!port || !strcmp(port,"80")) {
+               fullhost = apr_psprintf(ctx->pool,"http://%s",host);
+            } else {
+               fullhost = apr_psprintf(ctx->pool,"http://%s:%s",host,port);
+            }
+         }
+         url = apr_psprintf(ctx->pool,"%s%s",
+               fullhost,
+               FCGX_GetParam("SCRIPT_NAME",envp)
+               );
+         ctx->log(ctx,GEOCACHE_INFO,"toto");
+         service->create_capabilities_response(ctx,req,url,pathInfo,cfg);
+         geocache_write_capabilities((geocache_context_fcgi_request*)ctx,req);
       } else {
-         if(!request->ntiles) {
+         geocache_request_get_tile *req = (geocache_request_get_tile*)request;
+         if(!req->ntiles) {
             FCGX_FPrintF(out,"Status: 404 Not Found\r\n\r\n");
             goto cleanup;
          }
-         for(i=0;i<request->ntiles;i++) {
-            geocache_tile *tile = request->tiles[i];
+         for(i=0;i<req->ntiles;i++) {
+            geocache_tile *tile = req->tiles[i];
             geocache_tileset_tile_get(ctx,tile);
             if(GC_HAS_ERROR(ctx)) {
                ctx->log(ctx,GEOCACHE_DEBUG,ctx->get_error_message(ctx));
@@ -240,10 +245,10 @@ int main(int argc, char **argv) {
                goto cleanup;
             }
          }
-         if(request->ntiles == 1) {
-            tile = request->tiles[0];
+         if(req->ntiles == 1) {
+            tile = req->tiles[0];
          } else {
-            tile = geocache_image_merge_tiles(ctx,cfg->merge_format,request->tiles,request->ntiles);
+            tile = geocache_image_merge_tiles(ctx,cfg->merge_format,req->tiles,req->ntiles);
             if(!tile) {
                ctx->log(ctx,GEOCACHE_ERROR, "tile merging failed to return data");
                if(ctx->get_error(ctx)) {
@@ -254,7 +259,7 @@ int main(int argc, char **argv) {
                FCGX_FPrintF(out,"Status: 500 Internal Server Error\r\n\r\n");
                goto cleanup;
             }
-            tile->tileset = request->tiles[0]->tileset;
+            tile->tileset = req->tiles[0]->tileset;
          }
          geocache_write_tile((geocache_context_fcgi_request*)ctx,tile);
       }

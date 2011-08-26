@@ -15,6 +15,7 @@
  */
 
 #include "geocache.h"
+#include <apr_strings.h>
 #include <jpeglib.h>
 
 /**\addtogroup imageio_jpg */
@@ -254,7 +255,9 @@ geocache_image* _geocache_imageio_jpeg_decode(geocache_context *r, geocache_buff
 geocache_image_format* geocache_imageio_create_jpeg_format(apr_pool_t *pool, char *name, int quality ) {
    geocache_image_format_jpeg *format = apr_pcalloc(pool, sizeof(geocache_image_format_jpeg));
    format->format.name = name;
-   format->format.extension = "jpg";
+   format->format.extension = apr_pstrdup(pool,"jpg");
+   format->format.mime_type = apr_pstrdup(pool,"image/jpeg");
+
    format->format.write = _geocache_imageio_jpeg_encode;
    format->quality = quality;
    return (geocache_image_format*)format;

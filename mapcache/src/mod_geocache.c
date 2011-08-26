@@ -171,10 +171,7 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
    ap_set_last_modified(r);
    ap_set_content_length(r,tile->data->size);
    if(tile->tileset->format) {
-      if(!strcmp(tile->tileset->format->extension,"png"))
-         ap_set_content_type(r, "image/png");
-      else
-         ap_set_content_type(r, "image/jpeg");
+      ap_set_content_type(r, tile->tileset->format->mime_type);
    } else {
       geocache_image_format_type t = geocache_imageio_header_sniff((geocache_context*)ctx,tile->data);
       if(t == GC_PNG)
@@ -191,9 +188,9 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
    return OK;
 }
 
-static int geocache_write_capabilities(geocache_context_apache_request *ctx, geocache_request *request) {
+static int geocache_write_capabilities(geocache_context_apache_request *ctx, geocache_request_get_capabilities *request) {
    request_rec *r = ctx->request;
-   ap_set_content_type(r, "text/xml");
+   ap_set_content_type(r, request->mime_type);
    ap_rputs(request->capabilities, r);
 
    return OK;
@@ -203,12 +200,13 @@ static int mod_geocache_request_handler(request_rec *r) {
    apr_table_t *params;
    geocache_cfg *config = NULL;
    geocache_request *request = NULL;
+   geocache_request_get_tile *req_tile = NULL;
+
    geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
    geocache_context *global_ctx = (geocache_context*)apache_ctx;
    geocache_tile *tile;
-   request_rec *original;
+   geocache_service *service;
    int i,ret;
-   char *uri;
 
    if (!r->handler || strcmp(r->handler, "geocache")) {
       return DECLINED;
@@ -219,16 +217,12 @@ static int mod_geocache_request_handler(request_rec *r) {
 
    params = geocache_http_parse_param_string(global_ctx, r->args);
    config = ap_get_module_config(r->per_dir_config, &geocache_module);
-   if(r->main)
-      original = r->main;
-   else
-      original = r;
-   uri = ap_construct_url(r->pool,original->parsed_uri.path,original);
+
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
       /* loop through the services that have been configured */
-      geocache_service *service = config->services[i];
+      service = config->services[i];
       if(!service) continue;
-      request = service->parse_request(global_ctx,uri,original->path_info,params,config);
+      request = service->parse_request(global_ctx,r->path_info,params,config);
       /* the service has recognized the request if it returns a non NULL value */
       if(request || GC_HAS_ERROR(global_ctx))
          break;
@@ -238,28 +232,53 @@ static int mod_geocache_request_handler(request_rec *r) {
    }
 
    if(request->type == GEOCACHE_REQUEST_GET_CAPABILITIES) {
-      return geocache_write_capabilities(apache_ctx,request);
-   } else if( request->type != GEOCACHE_REQUEST_GET_TILE || !request->ntiles) {
+      geocache_request_get_capabilities *req_caps = (geocache_request_get_capabilities*)request;
+      request_rec *original;
+      char *url;
+      if(r->main)
+         original = r->main;
+      else
+         original = r;
+      url = ap_construct_url(r->pool,original->uri,original);
+
+      /*
+       * remove the path_info from the end of the url (we want the url of the base of the service)
+       * TODO: is there an apache api to access this ?
+       */
+      if(*(original->path_info)) {
+         char *end = strstr(url,original->path_info);
+         if(end) {
+            *end = '\0';
+         }
+      }
+      service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,config);
+      return geocache_write_capabilities(apache_ctx,req_caps);
+   } else if( request->type != GEOCACHE_REQUEST_GET_TILE) {
+      return report_error(HTTP_BAD_REQUEST, apache_ctx);
+   }
+   req_tile = (geocache_request_get_tile*)request;
+
+   if( !req_tile->ntiles) {
       return report_error(HTTP_BAD_REQUEST, apache_ctx);
    }
 
 
-   for(i=0;i<request->ntiles;i++) {
-      geocache_tile *tile = request->tiles[i];
+   for(i=0;i<req_tile->ntiles;i++) {
+      geocache_tile *tile = req_tile->tiles[i];
       geocache_tileset_tile_get(global_ctx, tile);
       if(GC_HAS_ERROR(global_ctx)) {
          return report_error(HTTP_INTERNAL_SERVER_ERROR, apache_ctx);
       }
    }
-   if(request->ntiles == 1) {
-      tile = request->tiles[0];
+   if(req_tile->ntiles == 1) {
+      tile = req_tile->tiles[0];
    } else {
       /* TODO: individual check on tiles if merging is allowed */
-      tile = (geocache_tile*)geocache_image_merge_tiles(global_ctx,config->merge_format,request->tiles,request->ntiles);
+      tile = (geocache_tile*)geocache_image_merge_tiles(global_ctx,config->merge_format,req_tile->tiles,req_tile->ntiles);
       if(!tile || GC_HAS_ERROR(global_ctx)) {
          return report_error(HTTP_INTERNAL_SERVER_ERROR, apache_ctx);
       }
-      tile->tileset = request->tiles[0]->tileset;
+      tile->tileset = req_tile->tiles[0]->tileset;
    }
    ret = geocache_write_tile(apache_ctx,tile);
    return ret;

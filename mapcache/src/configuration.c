@@ -65,7 +65,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
          0.597164283371
    };
    double wgs84_extent[4]={-180,-90,180,90};
-   double google_extent[4]={-20037508.3392,-20037508.3392,20037508.3392,20037508.3392};
+   double google_extent[4]={-20037508.34,-20037508.34,20037508.34,20037508.34};
 
    geocache_cfg *cfg = (geocache_cfg*)apr_pcalloc(pool, sizeof(geocache_cfg));
    cfg->caches = apr_hash_make(pool);

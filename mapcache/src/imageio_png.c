@@ -16,6 +16,8 @@
 
 #include "geocache.h"
 #include <png.h>
+#include <apr_strings.h>
+
 
 /**\addtogroup imageio_png */
 /** @{ */
@@ -1066,7 +1068,8 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
 geocache_image_format* geocache_imageio_create_png_format(apr_pool_t *pool, char *name, geocache_compression_type compression) {
    geocache_image_format_png *format = apr_pcalloc(pool, sizeof(geocache_image_format_png));
    format->format.name = name;
-   format->format.extension = "png";
+   format->format.extension = apr_pstrdup(pool,"png");
+   format->format.mime_type = apr_pstrdup(pool,"image/png");
    format->compression_level = compression;
    format->format.write = _geocache_imageio_png_encode;
    return (geocache_image_format*)format;
@@ -1075,7 +1078,8 @@ geocache_image_format* geocache_imageio_create_png_format(apr_pool_t *pool, char
 geocache_image_format* geocache_imageio_create_png_q_format(apr_pool_t *pool, char *name, geocache_compression_type compression, int ncolors) {
    geocache_image_format_png_q *format = apr_pcalloc(pool, sizeof(geocache_image_format_png_q));
    format->format.format.name = name;
-   format->format.format.extension = "png";
+   format->format.format.extension = apr_pstrdup(pool,"png");
+   format->format.format.mime_type = apr_pstrdup(pool,"image/png");
    format->format.compression_level = compression;
    format->format.format.write = _geocache_imageio_png_q_encode;
    format->ncolors = ncolors;

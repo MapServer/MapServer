@@ -63,6 +63,11 @@ typedef struct geocache_source_wms geocache_source_wms;
 typedef struct geocache_source_gdal geocache_source_gdal;
 typedef struct geocache_cache_disk geocache_cache_disk;
 typedef struct geocache_request geocache_request;
+typedef struct geocache_request_get_capabilities geocache_request_get_capabilities;
+typedef struct geocache_request_get_capabilities_wms geocache_request_get_capabilities_wms;
+typedef struct geocache_request_get_capabilities_tms geocache_request_get_capabilities_tms;
+
+typedef struct geocache_request_get_tile geocache_request_get_tile;
 typedef struct geocache_service geocache_service;
 typedef struct geocache_service_wms geocache_service_wms;
 typedef struct geocache_service_wmts geocache_service_wmts;
@@ -287,27 +292,57 @@ struct geocache_cache_disk {
 typedef enum {
    GEOCACHE_REQUEST_UNKNOWN,
    GEOCACHE_REQUEST_GET_TILE,
-   GEOCACHE_REQUEST_GET_CAPABILITIES
+   GEOCACHE_REQUEST_GET_MAP,
+   GEOCACHE_REQUEST_GET_CAPABILITIES,
 } geocache_request_type;
 /**
  * \brief a request sent by a client
  */
+
 struct geocache_request {
    geocache_request_type type;
+};
 
+struct geocache_request_get_tile {
+   geocache_request request;
+
+   /**
+    * a list of tiles requested by the client
+    */
+   geocache_tile **tiles;
+
+   /**
+    * the number of tiles requested by the client.
+    * If more than one, and merging is enabled,
+    * the supplied tiles will be merged together
+    * before being returned to the client
+    */
+   int ntiles;
+};
+
+struct geocache_request_get_capabilities {
+   geocache_request request;
+
+   /**
+    * the body of the capabilities
+    */
    char *capabilities;
-    /**
-     * a list of tiles requested by the client
-     */
-    geocache_tile **tiles;
 
-    /**
-     * the number of tiles requested by the client.
-     * If more than one, and merging is enabled,
-     * the supplied tiles will be merged together
-     * before being returned to the client
-     */
-    int ntiles;
+   /**
+    * the mime type
+    */
+   char *mime_type;
+};
+
+struct geocache_request_get_capabilities_tms {
+   geocache_request_get_capabilities request;
+   geocache_tileset *tileset;
+   char *version;
+};
+
+struct geocache_request_get_capabilities_wms {
+   geocache_request_get_capabilities request;
+   char *version;
 };
 
 /** \defgroup services Services*/
@@ -330,9 +365,15 @@ struct geocache_service {
     geocache_service_type type;
     /**
      * \returns a geocache_request corresponding to the parameters received
-     * \returns NULL if the request does not correspond the the service
+     * \returns NULL if the request does not correspond to the service
      */
-    geocache_request * (*parse_request)(geocache_context *ctx, char *uri, char *path_info, apr_table_t *params, geocache_cfg * config);
+    geocache_request * (*parse_request)(geocache_context *ctx, char *path_info, apr_table_t *params, geocache_cfg * config);
+
+    /**
+     * \param request the received request (should be of type GEOCACHE_REQUEST_CAPABILITIES
+     * \param url the full url at which the service is available
+     */
+    void (*create_capabilities_response)(geocache_context *ctx, geocache_request_get_capabilities *request, char *url, char *path_info, geocache_cfg *config);
 };
 
 /**\class geocache_service_wms
@@ -776,6 +817,7 @@ typedef enum {
 struct geocache_image_format {
     char *name; /**< the key by which this format will be referenced */
     char *extension; /**< the extension to use when saving a file with this format */
+    char *mime_type;
     geocache_buffer * (*write)(geocache_context *ctx, geocache_image *image, geocache_image_format * format);
     /**< pointer to a function that returns a geocache_buffer containing the given image encoded
      * in the specified format
