@@ -975,13 +975,6 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
 #endif
 
 /**
- * \brief check if the given bbox is aligned to the boundary of one of the grid's tiles
- * @return GEOCACHE_SUCCESS if it aligns
- * @return GEOCACHE_FAILURE if not
- */
-int geocache_grid_is_bbox_aligned(geocache_context *ctx, geocache_grid *grid, double *bbox);
-
-/**
  * compute x,y,z value given a bbox.
  * will return GEOCACHE_FAILURE
  * if the bbox does not correspond to the tileset's configuration

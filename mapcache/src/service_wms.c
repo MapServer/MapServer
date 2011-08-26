@@ -372,8 +372,9 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             }
 
             /* verify we align on the tileset's grid */ 
+            int tmpx,tmpy,tmpz;
             if(grid_link->grid->tile_sx != width || grid_link->grid->tile_sy != height ||
-                  geocache_grid_is_bbox_aligned(ctx, grid_link->grid, bbox) != GEOCACHE_SUCCESS) {
+                  geocache_grid_get_cell(ctx, grid_link->grid, bbox, &tmpx,&tmpy,&tmpz) != GEOCACHE_SUCCESS) {
                type = GEOCACHE_REQUEST_GET_MAP;
             }
          }
