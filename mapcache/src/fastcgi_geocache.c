@@ -70,29 +70,26 @@ void init_fcgi_context(geocache_context_fcgi *ctx) {
    ctx->ctx.log = fcgi_context_log;
 }
 
-int geocache_fcgi_mutex_aquire(geocache_context *r, int nonblocking) {
+void geocache_fcgi_mutex_aquire(geocache_context *gctx, int nonblocking) {
    int ret;
-   geocache_context_fcgi_request *ctx = (geocache_context_fcgi_request*)r;
+   geocache_context_fcgi_request *ctx = (geocache_context_fcgi_request*)gctx;
    ret = apr_proc_mutex_lock(ctx->ctx.mutex);
    if(ret != APR_SUCCESS) {
-      r->set_error(r, GEOCACHE_MUTEX_ERROR, "failed to aquire mutex lock");
-      return GEOCACHE_FAILURE;
+      gctx->set_error(gctx, GEOCACHE_MUTEX_ERROR, "failed to aquire mutex lock");
+      return;
    }
-   apr_pool_cleanup_register(r->pool, ctx->ctx.mutex, (void*)apr_proc_mutex_unlock, apr_pool_cleanup_null);
-
-   return GEOCACHE_SUCCESS;
+   apr_pool_cleanup_register(gctx->pool, ctx->ctx.mutex, (void*)apr_proc_mutex_unlock, apr_pool_cleanup_null);
 }
 
-int geocache_fcgi_mutex_release(geocache_context *r) {
+void geocache_fcgi_mutex_release(geocache_context *gctx) {
    int ret;
-   geocache_context_fcgi_request *ctx = (geocache_context_fcgi_request*)r;
+   geocache_context_fcgi_request *ctx = (geocache_context_fcgi_request*)gctx;
    ret = apr_proc_mutex_unlock(ctx->ctx.mutex);
    if(ret != APR_SUCCESS) {
-      r->set_error(r, GEOCACHE_MUTEX_ERROR,  "failed to release mutex");
-      return GEOCACHE_FAILURE;
+      gctx->set_error(gctx, GEOCACHE_MUTEX_ERROR,  "failed to release mutex");
+      return;
    }
-   apr_pool_cleanup_kill(r->pool, ctx->ctx.mutex, (void*)apr_proc_mutex_unlock);
-   return GEOCACHE_SUCCESS;
+   apr_pool_cleanup_kill(gctx->pool, ctx->ctx.mutex, (void*)apr_proc_mutex_unlock);
 }
 
 void init_fcgi_request_context(geocache_context_fcgi_request *ctx) {

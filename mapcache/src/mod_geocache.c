@@ -70,30 +70,27 @@ void apache_context_request_log(geocache_context *c, geocache_log_level level, c
    va_end(args);
 }
 
-int geocache_util_mutex_aquire(geocache_context *r, int nonblocking) {
+void geocache_util_mutex_aquire(geocache_context *gctx, int nonblocking) {
    int ret;
-   geocache_context_apache_request *ctx = (geocache_context_apache_request*)r;
+   geocache_context_apache_request *ctx = (geocache_context_apache_request*)gctx;
    geocache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &geocache_module);
    ret = apr_global_mutex_lock(cfg->mutex);
    if(ret != APR_SUCCESS) {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, 0, ctx->request->server, "failed to aquire mutex lock");
-      return HTTP_INTERNAL_SERVER_ERROR;
+      gctx->set_error(gctx,GEOCACHE_MUTEX_ERROR,"failed to lock mutex");
+      return;
    }
-   apr_pool_cleanup_register(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
-   return GEOCACHE_SUCCESS;
+   apr_pool_cleanup_register(gctx->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
 }
 
-int geocache_util_mutex_release(geocache_context *r) {
+void geocache_util_mutex_release(geocache_context *gctx) {
    int ret;
-   geocache_context_apache_request *ctx = (geocache_context_apache_request*)r;
+   geocache_context_apache_request *ctx = (geocache_context_apache_request*)gctx;
    geocache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &geocache_module);
    ret = apr_global_mutex_unlock(cfg->mutex);
    if(ret != APR_SUCCESS) {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, 0, ctx->request->server, "failed to release mutex");
-      return HTTP_INTERNAL_SERVER_ERROR;
+      gctx->set_error(gctx,GEOCACHE_MUTEX_ERROR,"failed to unlock mutex");
+      return;
    }
-   apr_pool_cleanup_kill(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock);
-   return GEOCACHE_SUCCESS;
 }
 
 void init_apache_request_context(geocache_context_apache_request *ctx) {

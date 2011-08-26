@@ -10,7 +10,6 @@
 #include <apr_strings.h>
 #include <apr_file_io.h>
 
-
 void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *tile, unsigned char *color, char **path) {
    *path = apr_psprintf(ctx->pool,"%s/%s/blanks/%02X%02X%02X%02X.%s",
          ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
@@ -74,6 +73,16 @@ void _geocache_cache_disk_tile_key_split(geocache_context *ctx, geocache_tile *t
    if(!*basename || !*path) {
       ctx->set_error(ctx,GEOCACHE_ALLOC_ERROR, "failed to allocate tile key");
    }
+}
+
+int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *tile) {
+   char *filename;
+   apr_file_t *f;
+   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   if(apr_file_open(&f, filename, APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool) == APR_SUCCESS)
+       return GEOCACHE_TRUE;
+   else
+       return GEOCACHE_FALSE;
 }
 
 /**
@@ -418,6 +427,7 @@ geocache_cache* geocache_cache_disk_create(geocache_context *ctx) {
    cache->symlink_blank = 0;
    cache->cache.type = GEOCACHE_CACHE_DISK;
    cache->cache.tile_get = _geocache_cache_disk_get;
+   cache->cache.tile_exists = _geocache_cache_disk_has_tile;
    cache->cache.tile_set = _geocache_cache_disk_set;
    cache->cache.configuration_check = _geocache_cache_disk_configuration_check;
    cache->cache.configuration_parse = _geocache_cache_disk_configuration_parse;

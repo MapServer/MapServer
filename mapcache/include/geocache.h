@@ -118,7 +118,7 @@ struct geocache_context {
     * \returns GEOCACHE_LOCKED if \param nonblocking was set to 1 and another instance has already aquired
     *          the lock
     */
-   int (*global_lock_aquire)(geocache_context *ctx, int nonblocking);
+   void (*global_lock_aquire)(geocache_context *ctx, int nonblocking);
    
    /**
     * \brief release a previously aquired lock
@@ -127,7 +127,7 @@ struct geocache_context {
     * calling this function after an unsuccessful call to global_lock_aquire() or from a different thread
     * or process that has called global_lock_aquire() has undefined behavior
     */
-   int (*global_lock_release)(geocache_context *ctx);
+   void (*global_lock_release)(geocache_context *ctx);
    
    apr_pool_t *pool;
    char *_errmsg;
@@ -237,6 +237,8 @@ struct geocache_cache {
     * \memberof geocache_cache
     */
    int (*tile_get)(geocache_context *ctx, geocache_tile *tile);
+
+   int (*tile_exists)(geocache_context *ctx, geocache_tile *tile);
    
    /**
     * set tile content to cache
@@ -675,6 +677,20 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx);
  * @param bbox the bounding box to populate
  */
 void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox);
+
+
+/**
+ * \brief compute x y value for given lon/lat (dx/dy) and given zoomlevel
+ * @param ctx
+ * @param tileset
+ * @param dx
+ * @param dy
+ * @param z
+ * @param x
+ * @param y
+ */
+void geocache_tileset_get_xy(geocache_context *ctx, geocache_tileset *tileset, double dx, double dy,int z, int *x, int *y);
+
 
 /** @} */
 

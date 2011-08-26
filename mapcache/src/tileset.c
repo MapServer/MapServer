@@ -52,6 +52,13 @@ static void _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile
    }
 }
 
+void geocache_tileset_get_xy(geocache_context *ctx, geocache_tileset *tileset, double dx, double dy,
+        int z, int *x, int *y) {
+    double res = tileset->resolutions[z];
+    *x = (int)((dx - tileset->extent[0]) / (res * tileset->tile_sx));
+    *y = (int)((dy - tileset->extent[1]) / (res * tileset->tile_sy));
+}
+
 /*
  * for each of the metatile's tiles, ask the underlying cache to lock it
  */
@@ -222,6 +229,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
    }
    ret = tile->tileset->cache->tile_get(ctx, tile);
    GC_CHECK_ERROR(ctx);
+
    if(ret == GEOCACHE_CACHE_MISS) {
       /* the tile does not exist, we must take action before re-asking for it */
 
@@ -232,6 +240,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
        * - if the lock does not exist, then this thread should do the rendering
        * - if the lock exists, we should wait for the other thread to finish
        */
+
       ctx->global_lock_aquire(ctx,0);
       GC_CHECK_ERROR(ctx);
 
