@@ -1,0 +1,21 @@
+APXS=@APXS@
+APACHECTL=@APACHECTL@
+CFLAGS=@CFLAGS@
+CURLCONFIG=@CURLCONFIG@
+XML2CONFIG=@XML2CONFIG@
+
+CURL_CFLAGS=@CURL_CFLAGS@
+CURL_LIBS=@CURL_LIBS@
+
+XML2_CFLAGS=@XML2_CFLAGS@
+XML2_LIBS=@XML2_LIBS@
+
+CAIRO_ENABLED=@CAIRO_ENABLED@
+CAIRO_INC=@CAIRO_INC@
+CAIRO_LIB=@CAIRO_LIB@
+
+MERGE_ENABLED=@MERGE_ENABLED@
+
+
+OBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_yatc.c | sed "s/^\(.*\)\.c$$/\1.o/") 
+LOBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_yatc.c | sed "s/^\(.*\)\.c$$/\1.lo/")

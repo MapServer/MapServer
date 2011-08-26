@@ -1,0 +1,27 @@
+include ./Makefile.inc
+
+DIRS=src
+
+all: .header force_look
+	cd src; $(MAKE) $(MFLAGS)
+	
+install: .header
+	cd src; make install
+
+.header: include/yatc.h include/util.h
+	$(MAKE) clean
+	touch .header
+	
+force_look:
+	true
+
+src/.libs/mod_yatc.so: src/mod_yatc.c $(SRCS) include/yatc.h
+	$(APXS) -Wc,"$(CFLAGS)" -Iinclude $(CAIRO_INC) $(MERGE_ENABLED) $(CAIRO_ENABLED) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(CAIRO_LIB) -c src/mod_yatc.c $(SRCS)
+
+#install: src/.libs/mod_yatc.so
+	#$(APACHECTL) stop
+#	$(APXS) -i -a -n yatc src/mod_yatc.la
+	#$(APACHECTL) start
+
+clean:
+	cd src; $(MAKE) clean
