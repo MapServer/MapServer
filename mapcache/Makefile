@@ -1,13 +1,13 @@
 include ./Makefile.inc
 
-all: configure .header
+all: .header
 	cd src; $(MAKE) $(MFLAGS)
 	
 install-module: .header
 	cd src; $(MAKE) install-module
 
 # make clean and rerun if essential files have been modified
-.header: include/geocache.h include/util.h include/errors.h Makefile Makefile.inc src/Makefile
+.header: configure include/geocache.h include/util.h include/errors.h Makefile Makefile.inc src/Makefile
 	$(MAKE) clean
 	@touch .header
 	
