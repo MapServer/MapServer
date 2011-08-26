@@ -1,34 +1,139 @@
 {
- "grids": [
-  {
-   "name":"grid1",
-   "extent":[0,3,4,4],
-   "resolutions":[0,2],
-   "size":[256,256],
-   "metadata": {
-    "title":"foo grid title",
-    "fail":"sdffd"
-   },
-   
-   "units":"m" /*sdvfdsffff
-                 rgsdg
-                 */
-
-
-
-
-  }, //comment
-  {
-   "name":"grid2"
+  "grids": [
+    {
+      "name":"grid1",
+      "extent":[0,3,4,4],
+      "resolutions":[0,2],
+      "size":[256,256],
+      "metadata": {
+        "title":"foo grid title",
+        "fail":"sdffd"
+      },
+      "units":"m",
+      "srs":"EPSG:4325",
+      "srsaliases":["EPSG:2345","foo"]
+    }
+  ],
+  "caches": [
+    {
+      "name":"disk",
+      "type":"disk",
+      "props": {
+        "base_dir":"/tmp",
+        "symlink_blank":true
+      }
+    },
+    {
+      "name":"tmpl",
+      "type":"disk",
+      "props": {
+        "template":"/tmp/templ-test/{tileset}-{grid}-{dim}/{z}/{y}/{x}.{ext}"
+      }
+    },
+    {
+      "name":"memcache",
+      "type":"memcache",
+      "props": {
+        "servers": [
+          {
+            "host":"localhost",
+            "port":11211
+          }
+        ]
+      }
+    },
+    {
+      "name":"sqlite",
+      "type":"sqlite3",
+      "props": {
+        "base_dir":"/tmp",
+        "hit_stats":false
+      }
+    }
+  ],
+  "sources": [
+    {
+      "name":"test",
+      "type":"wms",
+      "props": {
+        "http": {
+          "url":"http://localhost/xxxccv",
+          "headers": {
+            "User-Agent":"mod-geocache/trunk",
+            "Referer":"http://foosite"
+          }
+        },
+        "getmap": {
+          "params":{
+            "LAYERS":"basic"
+          }
+        },
+        "getfeatureinfo": {
+          "params":{
+            "QUERY_LAYERS":"basic"
+          },
+          "info_formats":["text/html"]
+        }
+      } 
+    }
+  ],
+  "formats": [
+    {
+      "name":"jpg",
+      "type":"jpg",
+      "props": {
+        "quality":85
+      }
+    },
+    {
+      "name":"png",
+      "type":"png",
+      "props": {
+        "colors":256,
+        "compression":"best"
+      }
+    },
+    {
+      "name":"mixed",
+      "type":"mixed",
+      "props": {
+        "opaque":"jpg",
+        "transparent":"png"
+      }
+    }
+  ],
+  "tilesets": [
+    {
+      "name": "test",
+      "source": "test",
+      "grids": [
+        "WGS84",
+        { "ref":"g", "extent":[10,10,20,20]}
+      ],
+      "wgs84_extent":[-180,-90,180,90],
+      "format": "png",
+      "cache": "disk",
+      "metatile": {
+        "size":[5,5],
+        "buffer":10
+      },
+      "expires": {
+        "delay": 3600,
+        "auto": false
+      },
+      "dimensions": [
+      ],
+      "watermark":"/path/to/logo.png"
+    }
+  ],
+  "services": [
+  ],
+  "config": {
+    "error_reporting":"message",
+    "lock_dir":"/tmp"
   }
- ],
- "formats": [
-  {
-   "name":"png"
-  }
- ]
 }
 
-/* vim: ai ts=1 sts=1 et sw=1
+/* vim: ai ts=2 sts=2 et sw=2
 */
 
