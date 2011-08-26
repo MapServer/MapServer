@@ -22,7 +22,7 @@ geocache.fcgi: fastcgi_geocache.c $(OBJS)
 	$(LIBTOOL) --mode=link --tag CC $(CC) -o geocache.fcgi $(CFLAGS) $(INCLUDES) $(FCGI_INC) fastcgi_geocache.c $(LOBJS) $(LIBS) $(FCGI_LIB)
 
 geocache_seed: geocache_seed.c $(OBJS)
-	$(LIBTOOL) --mode=link --tag CC $(CC) -o geocache_seed $(CFLAGS) $(INCLUDES) geocache_seed.c $(LOBJS) $(LIBS) 
+	$(LIBTOOL) --mode=link --tag CC $(CC) -o geocache_seed $(CFLAGS) $(INCLUDES) geocache_seed.c $(LOBJS) $(LIBS) $(SEEDER_EXTRALIBS)
 
 
 clean:

@@ -27,11 +27,16 @@
 #include <apr_global_mutex.h>
 #include "util.h"
 #include "ezxml.h"
+#include "ezxml.h"
 #include "errors.h"
+
+#if 0
 #ifdef USE_GDAL
 #include <gdal.h>
 #include <cpl_conv.h>
 #endif
+#endif
+
 #include <assert.h>
 #include <apr_time.h>
 
@@ -79,7 +84,9 @@ typedef struct geocache_request_get_feature_info geocache_request_get_feature_in
 typedef struct geocache_map geocache_map;
 typedef struct geocache_proxied_response geocache_proxied_response;
 typedef struct geocache_source_wms geocache_source_wms;
+#if 0
 typedef struct geocache_source_gdal geocache_source_gdal;
+#endif
 typedef struct geocache_cache_disk geocache_cache_disk;
 typedef struct geocache_http geocache_http;
 typedef struct geocache_request geocache_request;
@@ -288,6 +295,7 @@ struct geocache_source_wms {
     geocache_http *http;
 };
 
+#if 0
 #ifdef USE_GDAL
 /**\class geocache_source_gdal
  * \brief GDAL geocache_source
@@ -301,6 +309,7 @@ struct geocache_source_gdal {
 };
 #endif
 /** @} */
+#endif
 
 
 /** \defgroup cache Caches */
