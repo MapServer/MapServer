@@ -9,6 +9,25 @@ $ make
 (as root)
 # make install
 
+The installation script takes care of putting the built module in the apache module directory.
+The process for activating a module is usually distro specific, but can be resumed by the 
+following snippet that should be present in the apache configuration file(s):
+
+LoadModule geocache_module    modules/mod_geocache.so
+<IfModule geocache_module>
+    <Location /geocache>
+        SetHandler geocache
+        GeoCacheConfigFile "/path/to/geocache.xml"
+    </Location>
+</IfModule>
+
+(as root)
+# apachectl restart
+
+
+Customizing the build, or if something went wrong
+-------------------------------------------------
+
 mod-geocache requires apache, liburl, libxml2 and libpng development headers.
 The configure script will try to locate them in default system locations, that can be
 overriden or specified with switches (./configure --help should give you a full list):
