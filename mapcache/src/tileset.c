@@ -213,7 +213,7 @@ void geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, do
  */
 void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
    int isLocked,ret;
-   geocache_metatile *mt;
+   geocache_metatile *mt=NULL;
    if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
       ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, 
             "tileset %s: asked for a %dx%d tile from a %dx%d tileset",tile->tileset->name,
