@@ -66,7 +66,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
                ezxml_set_attr(tilemap,"srs",grid->srs);
                if(profile)
                   ezxml_set_attr(tilemap,"profile",profile);
-               char *href = apr_pstrcat(ctx->pool,onlineresource,"/tms/1.0.0/",tileset->name,"@",grid->srs,NULL);
+               char *href = apr_pstrcat(ctx->pool,onlineresource,"/tms/1.0.0/",tileset->name,"@",grid->name,NULL);
                ezxml_set_attr(tilemap,"href",href);
             }
             tileindex_index = apr_hash_next(tileindex_index);
