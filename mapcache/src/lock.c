@@ -30,7 +30,9 @@ char *geocache_tileset_tile_lock_key(geocache_context *ctx, geocache_tile *tile)
 /**
  * \brief lock the given tile so other processes know it is being processed
  *
- * this function creates a file with a .lck  extension and puts an exclusive lock on it
+ * this function call is protected by a mutex
+ *
+ * this function creates a named semaphore and aquires a lock on it
  * \sa geocache_cache::tile_lock()
  * \sa geocache_cache::tile_lock_exists()
  * \private \memberof geocache_cache_disk
@@ -49,6 +51,8 @@ void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile) {
 /**
  * \brief unlock a previously locked tile
  *
+ * this function call is protected by a mutex
+ *
  * \sa geocache_cache::tile_unlock()
  * \sa geocache_cache::tile_lock_exists()
  */
@@ -61,10 +65,13 @@ void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile) {
      return;
   }
   sem_post(lock);
+  /*check if the semaphore is held by others*/
   sem_getvalue(lock,&semvalue);
   if(semvalue>0) {
+     /*no one is using the lock, delete it*/
      sem_unlink(lockname);
   } else {
+     /*just close it as others are using it*/
      sem_close(lock);
   }
   tile->lock = NULL;
@@ -72,6 +79,9 @@ void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile) {
 
 /**
  * \brief query tile to check if the corresponding lockfile exists
+ * 
+ * this function call is protected by a mutex
+ *
  * \sa geocache_cache::tile_lock()
  * \sa geocache_cache::tile_unlock()
  */
