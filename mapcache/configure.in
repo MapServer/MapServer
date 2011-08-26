@@ -167,7 +167,7 @@ AC_DEFUN([CAIRO_CHECK],[
                 AC_MSG_ERROR([cairo support requested, but not found.Try installing the cairo development headers])
             fi
         else
-          CAIRO_CONFIG=$with_cairo_config
+          CAIRO_CONFIG=$with_cairo
         fi
     fi
     
