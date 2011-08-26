@@ -886,6 +886,7 @@ struct geocache_cfg {
  */
 void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config);
 void geocache_configuration_parse_json(geocache_context *ctx, const char *filename, geocache_cfg *config);
+void parse_keyvalues(geocache_context *ctx, cJSON *node, apr_table_t *tbl);
 void geocache_configuration_parse_xml(geocache_context *ctx, const char *filename, geocache_cfg *config);
 geocache_cfg* geocache_configuration_create(apr_pool_t *pool);
 geocache_source* geocache_configuration_get_source(geocache_cfg *config, const char *key);

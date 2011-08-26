@@ -240,6 +240,24 @@ static void _geocache_cache_sqlite_set(geocache_context *ctx, geocache_tile *til
    sqlite3_close(handle);
 }
 
+static void _geocache_cache_sqlite_configuration_parse_json(geocache_context *ctx, cJSON *node, geocache_cache *cache) {
+   cJSON *tmp;
+   geocache_cache_sqlite *dcache = (geocache_cache_sqlite*)cache;
+
+   tmp = cJSON_GetObjectItem(node,"base_dir");
+   if(tmp && tmp->valuestring) {
+      dcache->dbdir = apr_pstrdup(ctx->pool, tmp->valuestring);
+   } else {
+      ctx->set_error(ctx,400,"cache %s has invalid base_dir",cache->name);
+      return;
+   }
+   if((tmp = cJSON_GetObjectItem(node,"hit_stats")) != NULL) {
+      if(tmp->valueint) {
+         dcache->hitstats = 1;
+      }
+   }
+}
+
 static void _geocache_cache_sqlite_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
    ezxml_t cur_node;
    geocache_cache_sqlite *dcache = (geocache_cache_sqlite*)cache;
@@ -307,6 +325,7 @@ geocache_cache* geocache_cache_sqlite_create(geocache_context *ctx) {
    cache->cache.tile_set = _geocache_cache_sqlite_set;
    cache->cache.configuration_post_config = _geocache_cache_sqlite_configuration_post_config;
    cache->cache.configuration_parse_xml = _geocache_cache_sqlite_configuration_parse_xml;
+   cache->cache.configuration_parse_json = _geocache_cache_sqlite_configuration_parse_json;
    return (geocache_cache*)cache;
 }
 

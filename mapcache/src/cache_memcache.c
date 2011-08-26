@@ -165,6 +165,53 @@ static void _geocache_cache_memcache_set(geocache_context *ctx, geocache_tile *t
 /**
  * \private \memberof geocache_cache_memcache
  */
+static void _geocache_cache_memcache_configuration_parse_json(geocache_context *ctx, cJSON *node, geocache_cache *cache) {
+   geocache_cache_memcache *dcache = (geocache_cache_memcache*)cache;
+   cJSON *servers = cJSON_GetObjectItem(node,"servers");
+   int n;
+   if(!servers || !(n = cJSON_GetArraySize(servers))) {
+      ctx->set_error(ctx,400,"memcache cache %s has no servers configured",cache->name);
+      return;
+   }
+   if(APR_SUCCESS != apr_memcache_create(ctx->pool, n, 0, &dcache->memcache)) {
+      ctx->set_error(ctx,400,"cache %s: failed to create memcache backend", cache->name);
+      return;
+   }
+   while(n--) {
+      cJSON *jserver = cJSON_GetArrayItem(servers,n);
+      cJSON *jhostname = cJSON_GetObjectItem(jserver,"host");
+      cJSON *jport = cJSON_GetObjectItem(jserver,"port");
+      apr_memcache_server_t *server;
+      apr_port_t port = 11211;
+      char *host;
+      if(!jhostname || !jhostname->valuestring || !strlen(jhostname->valuestring)) {
+         ctx->set_error(ctx,400,"memcache cache %s has no hostname configured",cache->name);
+         return;
+      }
+      host = apr_pstrdup(ctx->pool,jhostname->valuestring);
+      if(jport && jport->valueint) {
+         port = jport->valueint;
+      }
+      if(APR_SUCCESS != apr_memcache_server_create(ctx->pool,host,port,4,5,50,10000,&server)) {
+         ctx->set_error(ctx,400,"cache %s: failed to create server %s:%d",cache->name,host,port);
+         return;
+      }
+      if(APR_SUCCESS != apr_memcache_add_server(dcache->memcache,server)) {
+         ctx->set_error(ctx,400,"cache %s: failed to add server %s:%d",cache->name,host,port);
+         return;
+      }
+      if(APR_SUCCESS != apr_memcache_set(dcache->memcache,"geocache_test_key","geocache",8,0,0)) {
+         ctx->set_error(ctx,400,"cache %s: failed to add test key to server %s:%d",cache->name,host,port);
+         return;
+      }
+   }
+
+   
+
+}
+/**
+ * \private \memberof geocache_cache_memcache
+ */
 static void _geocache_cache_memcache_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
    ezxml_t cur_node;
    geocache_cache_memcache *dcache = (geocache_cache_memcache*)cache;
@@ -227,7 +274,7 @@ static void _geocache_cache_memcache_configuration_post_config(geocache_context 
       geocache_cfg *cfg) {
    geocache_cache_memcache *dcache = (geocache_cache_memcache*)cache;
    if(!dcache->memcache || dcache->memcache->ntotal==0) {
-      ctx->set_error(ctx,400,"cache %s has no servers configured");
+      ctx->set_error(ctx,400,"cache %s has no servers configured",cache->name);
    }
 }
 
@@ -249,6 +296,7 @@ geocache_cache* geocache_cache_memcache_create(geocache_context *ctx) {
    cache->cache.tile_delete = _geocache_cache_memcache_delete;
    cache->cache.configuration_post_config = _geocache_cache_memcache_configuration_post_config;
    cache->cache.configuration_parse_xml = _geocache_cache_memcache_configuration_parse_xml;
+   cache->cache.configuration_parse_json = _geocache_cache_memcache_configuration_parse_json;
    return (geocache_cache*)cache;
 }
 

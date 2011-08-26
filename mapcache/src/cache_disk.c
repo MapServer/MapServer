@@ -411,6 +411,40 @@ static void _geocache_cache_disk_configuration_parse_xml(geocache_context *ctx, 
       }
    }
 }
+
+/**
+ * \private \memberof geocache_cache_disk
+ */
+static void _geocache_cache_disk_configuration_parse_json(geocache_context *ctx, cJSON *node, geocache_cache *cache) {
+   cJSON *tmp;
+   geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
+
+   if((tmp = cJSON_GetObjectItem(node,"base_dir")) != NULL) {
+      if(tmp->valuestring) {
+         dcache->base_directory = apr_pstrdup(ctx->pool, tmp->valuestring);
+      } else {
+         ctx->set_error(ctx,400,"cache %s has invalid base_dir",cache->name);
+         return;
+      }
+      if((tmp = cJSON_GetObjectItem(node,"symlink_blank")) != NULL) {
+         if(tmp->valueint) {
+#ifdef HAVE_SYMLINK
+            dcache->symlink_blank = 1;
+#else
+            ctx->set_error(ctx,400,"cache %s: host system does not support file symbolic linking",cache->name);
+            return;
+#endif
+         }
+      }
+   } else if((tmp = cJSON_GetObjectItem(node,"template")) != NULL) {
+      if(tmp->valuestring) {
+         dcache->filename_template = apr_pstrdup(ctx->pool, tmp->valuestring);
+      } else {
+         ctx->set_error(ctx,400,"cache %s has invalid template",cache->name);
+         return;
+      }
+   }
+}
    
 /**
  * \private \memberof geocache_cache_disk
@@ -444,6 +478,7 @@ geocache_cache* geocache_cache_disk_create(geocache_context *ctx) {
    cache->cache.tile_set = _geocache_cache_disk_set;
    cache->cache.configuration_post_config = _geocache_cache_disk_configuration_post_config;
    cache->cache.configuration_parse_xml = _geocache_cache_disk_configuration_parse_xml;
+   cache->cache.configuration_parse_json = _geocache_cache_disk_configuration_parse_json;
    return (geocache_cache*)cache;
 }
 
