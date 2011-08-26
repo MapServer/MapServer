@@ -204,7 +204,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             }
             dimensions = apr_pstrcat(ctx->pool,dimensions,"    </Dimension>\n",NULL);
 
-            dimensionstemplate = apr_pstrcat(ctx->pool,dimensionstemplate,dimension->name,"/{",dimension->name,"}/",NULL);
+            dimensionstemplate = apr_pstrcat(ctx->pool,dimensionstemplate,"{",dimension->name,"}/",NULL);
          }
       }
       char *tmsets="";
@@ -234,7 +234,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             "%s"
             "    </TileMatrixSetLink>\n"
             "    <ResourceURL format=\"%s\" resourceType=\"tile\"\n"
-            "                 template=\"%s/wmts/1.0.0/%s/default/{TileMatrixSet}/{TileMatrix}/%s{TileRow}/{TileCol}.%s\"/>\n"
+            "                 template=\"%s/wmts/1.0.0/%s/default/%s{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.%s\"/>\n"
             "  </Layer>\n",caps,title,abstract,
             tileset->name,dimensions,tileset->format->mime_type,tmsets,
             tileset->format->mime_type,onlineresource,
@@ -354,23 +354,10 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
                dimtable = apr_table_make(ctx->pool,tileset->dimensions->nelts);
             int i = apr_table_elts(dimtable)->nelts;
             if(i != tileset->dimensions->nelts) {
-               ctx->log(ctx,GEOCACHE_DEBUG,"add dim %s",key);
                /*we still have some dimensions to parse*/
                geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
-               if(!strcmp(key,dimension->name)) {
-                  /*we have found the key in the url, advance to next token*/
-                  key = apr_strtok(NULL, "/", &last);
-                  if(!key) {
-                     ctx->set_error(ctx,GEOCACHE_PARSE_ERROR,"failed to parse value for dimension %s",dimension->name);
-                     return;
-                  }
-                  apr_table_set(dimtable,dimension->name,key);
-               } else {
-                  /*key wasn't included in the url*/
-                  ctx->set_error(ctx,GEOCACHE_PARSE_ERROR,"dimension %s not found in request (got %s)",dimension->name, key);
-                  return;
-               }
-            continue;
+               apr_table_set(dimtable,dimension->name,key);
+               continue;
             }
          }
          if(!tilerow) {
