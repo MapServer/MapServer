@@ -65,6 +65,7 @@ typedef struct geocache_cache_disk geocache_cache_disk;
 typedef struct geocache_request geocache_request;
 typedef struct geocache_request_get_capabilities geocache_request_get_capabilities;
 typedef struct geocache_request_get_capabilities_wms geocache_request_get_capabilities_wms;
+typedef struct geocache_request_get_capabilities_wmts geocache_request_get_capabilities_wmts;
 typedef struct geocache_request_get_capabilities_tms geocache_request_get_capabilities_tms;
 
 typedef struct geocache_request_get_tile geocache_request_get_tile;
@@ -345,6 +346,11 @@ struct geocache_request_get_capabilities_wms {
    char *version;
 };
 
+struct geocache_request_get_capabilities_wmts {
+   geocache_request_get_capabilities request;
+   char *version;
+};
+
 /** \defgroup services Services*/
 /** @{ */
 
@@ -411,6 +417,12 @@ geocache_service* geocache_service_wms_create(geocache_context *ctx);
  * \memberof geocache_service_tms
  */
 geocache_service* geocache_service_tms_create(geocache_context *ctx);
+
+/**
+ * \brief create and initialize a geocache_service_wtms
+ * \memberof geocache_service_wtms
+ */
+geocache_service* geocache_service_wmts_create(geocache_context *ctx);
 
 /** @} */
 

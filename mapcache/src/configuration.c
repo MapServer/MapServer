@@ -671,7 +671,14 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
                      config->services[GEOCACHE_SERVICE_TMS] = geocache_service_tms_create(ctx);
                   }
                   xmlFree(value);
+               } else if(!xmlStrcmp(service_node->name, BAD_CAST "wmts")) {
+                  xmlChar* value = xmlNodeGetContent(service_node);
+                  if(!value || !*value || xmlStrcmp(value, BAD_CAST "false")) {
+                     config->services[GEOCACHE_SERVICE_WMTS] = geocache_service_wmts_create(ctx);
+                  }
+                  xmlFree(value);
                }
+               
             }
          } else if(!xmlStrcmp(cur_node->name, BAD_CAST "merge_format")) {
             char* value = (char*) xmlNodeGetContent(cur_node);

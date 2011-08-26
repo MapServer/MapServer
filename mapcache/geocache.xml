@@ -83,5 +83,6 @@
     <services>
         <wms>true</wms>
         <tms>true</tms>
+        <wmts>true</wmts>
     </services>
 </geocache>

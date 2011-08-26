@@ -144,6 +144,18 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
    request->request.mime_type = apr_pstrdup(ctx->pool,"text/xml");
 }
 
+void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
+   geocache_request_get_capabilities_wmts *request = (geocache_request_get_capabilities_wmts*)req;
+#ifdef DEBUG
+   if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
+      ctx->set_error(ctx,GEOCACHE_ERROR,"wrong wms capabilities request");
+      return;
+   }
+#endif
+   request->request.mime_type = apr_pstrdup(ctx->pool,"text/xml");
+   request->request.capabilities = "this is the wmts capabilitities";
+}
+
 static const char *tms_0 = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
       "<Services>\n"
       "<TileMapService version=\"1.0.0\" href=\"%s/1.0.0/\" />\n"
@@ -377,6 +389,40 @@ geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, cha
 }
 
 /**
+ * \brief parse a WMTS request
+ * \private \memberof geocache_service_wmts
+ * \sa geocache_service::parse_request()
+ */
+geocache_request* _geocache_service_wmts_parse_request(geocache_context *ctx, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
+   char *str;
+   str = (char*)apr_table_get(params,"SERVICE");
+   if(!str)
+      str = (char*)apr_table_get(params,"service");
+   if(!str || strcasecmp(str,"wmts")) {
+      return NULL;
+   }
+      
+   str = (char*)apr_table_get(params,"REQUEST");
+   if(!str)
+      str = (char*)apr_table_get(params,"request");
+   if(!str) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no request");
+      return NULL;
+   }
+   if( ! strcasecmp(str,"getcapabilities") ) {
+      geocache_request_get_capabilities_wmts *request = (geocache_request_get_capabilities_wmts*)
+            apr_pcalloc(ctx->pool,sizeof(geocache_request_get_capabilities_wmts));
+      request->request.request.type = GEOCACHE_REQUEST_GET_CAPABILITIES;
+      return (geocache_request*)request;
+   } else if( strcasecmp(str,"gettile")) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with invalid request %s",str);
+      return NULL;
+   } else {
+      //TODO getTile
+      return NULL;
+   }
+}
+/**
  * \brief parse a TMS request
  * \private \memberof geocache_service_tms
  * \sa geocache_service::parse_request()
@@ -386,6 +432,10 @@ geocache_request* _geocache_service_tms_parse_request(geocache_context *ctx, cha
    char *last, *key, *endptr;
    geocache_tileset *tileset = NULL;
    int x,y,z;
+   
+   /*if we have some key/values, then we're not a tms request*/
+   if(!apr_is_empty_table(params))
+      return NULL;
    /* parse a path_info like /1.0.0/global_mosaic/0/0/0.jpg */
    if(pathinfo) {
       for (key = apr_strtok(pathinfo, "/", &last); key != NULL;
@@ -481,6 +531,18 @@ geocache_service* geocache_service_tms_create(geocache_context *ctx) {
    service->service.type = GEOCACHE_SERVICE_TMS;
    service->service.parse_request = _geocache_service_tms_parse_request;
    service->service.create_capabilities_response = _create_capabilities_tms;
+   return (geocache_service*)service;
+}
+
+geocache_service* geocache_service_wmts_create(geocache_context *ctx) {
+   geocache_service_wmts* service = (geocache_service_wmts*)apr_pcalloc(ctx->pool, sizeof(geocache_service_wmts));
+   if(!service) {
+      ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate wtms service");
+      return NULL;
+   }
+   service->service.type = GEOCACHE_SERVICE_WMTS;
+   service->service.parse_request = _geocache_service_wmts_parse_request;
+   service->service.create_capabilities_response = _create_capabilities_wmts;
    return (geocache_service*)service;
 }
 
