@@ -22,12 +22,12 @@
 /** @{ */
 
 int geocache_imageio_image_has_alpha(geocache_image *img) {
-   int i,j;
+   size_t i,j;
    unsigned char *ptr, *rptr = img->data;
    for(i=0;i<img->h;i++) {     
       ptr = rptr;
       for(j=0;j<img->w;j++) {
-         if(ptr[3]<255)
+         if(ptr[3]<(unsigned char)255)
             return 1;
          ptr += 4;
       }
@@ -36,8 +36,8 @@ int geocache_imageio_image_has_alpha(geocache_image *img) {
    return 0;
 }
 
-int geocache_imageio_is_valid_format(geocache_context *r, geocache_buffer *buffer) {
-   geocache_image_format_type t = geocache_imageio_header_sniff(r,buffer);
+int geocache_imageio_is_valid_format(geocache_context *ctx, geocache_buffer *buffer) {
+   geocache_image_format_type t = geocache_imageio_header_sniff(ctx,buffer);
    if(t==GC_PNG || t==GC_JPEG) {
       return GEOCACHE_TRUE;
    } else {
@@ -45,7 +45,7 @@ int geocache_imageio_is_valid_format(geocache_context *r, geocache_buffer *buffe
    }
 }
 
-geocache_image_format_type geocache_imageio_header_sniff(geocache_context *r, geocache_buffer *buffer) {
+geocache_image_format_type geocache_imageio_header_sniff(geocache_context *ctx, geocache_buffer *buffer) {
    if(!buffer) {
       return GC_UNKNOWN;
    }
@@ -60,14 +60,14 @@ geocache_image_format_type geocache_imageio_header_sniff(geocache_context *r, ge
 
 
 
-geocache_image* geocache_imageio_decode(geocache_context *r, geocache_buffer *buffer) {
-   geocache_image_format_type type = geocache_imageio_header_sniff(r,buffer);
+geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *buffer) {
+   geocache_image_format_type type = geocache_imageio_header_sniff(ctx,buffer);
    if(type == GC_PNG) {
-      return _geocache_imageio_png_decode(r,buffer);
+      return _geocache_imageio_png_decode(ctx,buffer);
    } else if(type == GC_JPEG) {
-      return _geocache_imageio_jpeg_decode(r,buffer);
+      return _geocache_imageio_jpeg_decode(ctx,buffer);
    } else {
-      r->set_error(r, GEOCACHE_IMAGE_ERROR, "geocache_imageio_decode: unrecognized image format");
+      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "geocache_imageio_decode: unrecognized image format");
       return NULL;
    }
 }

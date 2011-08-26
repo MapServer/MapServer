@@ -1,8 +1,17 @@
 /*
- * tileset.c
+ *  Copyright 2010 Thomas Bonfort
  *
- *  Created on: Oct 11, 2010
- *      Author: tom
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "geocache.h"
@@ -43,8 +52,8 @@ static void _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile
                         % (minx, miny, self.bbox))
                return None
     */
-   tile->x = (int)((bbox[0] - tile->tileset->extent[0]) / (res * tile->tileset->tile_sx));
-   tile->y = (int)((bbox[1] - tile->tileset->extent[1]) / (res * tile->tileset->tile_sy));
+   tile->x = (int)round((bbox[0] - tile->tileset->extent[0]) / (res * tile->tileset->tile_sx));
+   tile->y = (int)round((bbox[1] - tile->tileset->extent[1]) / (res * tile->tileset->tile_sy));
 
    if((fabs(bbox[0] - (tile->x * res * tile->tileset->tile_sx) - tile->tileset->extent[0] ) / res > 1) ||
          (fabs(bbox[1] - (tile->y * res * tile->tileset->tile_sy) - tile->tileset->extent[1] ) / res > 1)) {
@@ -272,7 +281,6 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
 #endif
          /* this will query the source to create the tiles, and save them to the cache */
          _geocache_tileset_render_metatile(ctx, mt);
-         GC_CHECK_ERROR(ctx);
          
          /* remove the lockfiles */
          ctx->global_lock_aquire(ctx,0);

@@ -212,7 +212,6 @@ static int mod_geocache_request_handler(request_rec *r) {
       tile = request->tiles[0];
    } else {
       /* TODO: individual check on tiles if merging is allowed */
-
       tile = (geocache_tile*)geocache_image_merge_tiles(global_ctx,config->merge_format,request->tiles,request->ntiles);
       if(!tile) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "tile merging failed to return data");

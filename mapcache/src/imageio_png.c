@@ -103,7 +103,7 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
       return NULL;
    }
 #endif
-   
+
    png_read_image(png_ptr, row_pointers);
    
    png_read_end(png_ptr,NULL);
@@ -124,7 +124,7 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_im
    geocache_buffer *buffer = NULL;
    int compression = ((geocache_image_format_png*)format)->compression_level;
    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL,NULL);
-
+   ctx->log(ctx,GEOCACHE_DEBUG,"png no palette");
    if (!png_ptr) {
       ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to allocate png_struct structure");
       return NULL;
@@ -1025,11 +1025,6 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
    png_set_write_fn(png_ptr,buffer, _geocache_imageio_png_write_func, _geocache_imageio_png_flush_func);
 
 
-   if(compression == GEOCACHE_COMPRESSION_BEST)
-      png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
-   else if(compression == GEOCACHE_COMPRESSION_FAST)
-      png_set_compression_level (png_ptr, Z_BEST_SPEED);
-
    if (numPaletteEntries <= 2)
       sample_depth = 1;
    else if (numPaletteEntries <= 4)
@@ -1044,14 +1039,21 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
          0, PNG_COMPRESSION_TYPE_DEFAULT,
          PNG_FILTER_TYPE_DEFAULT);
 
+   if(compression == GEOCACHE_COMPRESSION_BEST)
+      png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
+   else if(compression == GEOCACHE_COMPRESSION_FAST)
+      png_set_compression_level (png_ptr, Z_BEST_SPEED);
+   
    _geocache_imageio_remap_palette(pixels, image->w * image->h, palette, numPaletteEntries,rgb,a,&num_a);
+   
+   ctx->log(ctx,GEOCACHE_DEBUG,"png palette: %d %d\n",numPaletteEntries,num_a);
 
    png_set_PLTE(png_ptr, info_ptr, (png_colorp)(rgb),numPaletteEntries);
    if(num_a)
       png_set_tRNS(png_ptr, info_ptr, a,num_a, NULL);
 
    png_write_info(png_ptr, info_ptr);
-   png_set_packing(png_ptr);
+   //png_set_packing(png_ptr);
 
    for(row=0;row<image->h;row++) {
       unsigned char *rowptr = &(pixels[row*image->w]);

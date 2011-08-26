@@ -35,22 +35,6 @@ struct geocache_context_fcgi_request {
    FCGX_Stream *err;
 };
 
-void fcgi_context_set_error(geocache_context *c, geocache_error_code code, char *message, ...) {
-   va_list args;
-   va_start(args,message);
-   c->_errmsg = apr_pvsprintf(c->pool,message,args);
-   c->_errcode = code;
-}
-
-
-int fcgi_context_get_error(geocache_context *c) {
-   return c->_errcode;
-}
-
-char* fcgi_context_get_error_message(geocache_context *c) {
-   return c->_errmsg;
-}
-
 void fcgi_context_log(geocache_context *c, geocache_log_level level, char *message, ...) {
    va_list args;
    va_start(args,message);
@@ -62,8 +46,6 @@ void fcgi_request_context_log(geocache_context *c, geocache_log_level level, cha
    va_start(args,message);
    FCGX_FPrintF(((geocache_context_fcgi_request*)c)->err,"%s\n",apr_pvsprintf(c->pool,message,args));
 }
-
-
 
 void init_fcgi_context(geocache_context_fcgi *ctx) {
    geocache_context_init((geocache_context*)ctx);
@@ -101,8 +83,13 @@ void init_fcgi_request_context(geocache_context_fcgi_request *ctx) {
 static geocache_context_fcgi* fcgi_context_create() {
    int ret;
    apr_pool_t *pool;
-   apr_pool_create_core(&pool);
+   if(apr_pool_create_core(&pool) != APR_SUCCESS) {
+      return NULL;
+   }
    geocache_context_fcgi *ctx = apr_pcalloc(pool, sizeof(geocache_context_fcgi));
+   if(!ctx) {
+      return NULL;
+   }
    ctx->ctx.pool = pool;
    init_fcgi_context(ctx);
    ctx->ctx.log(ctx,GEOCACHE_DEBUG,"before mutex");
