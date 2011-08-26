@@ -400,7 +400,7 @@
             the following creates a MAPFILE dimension, for using the same mod-geocache tileset with different
             mapserver mapfiles. the name of the mapfiles need not be known to mod-geocache, and can therefore be 
             created even after mod-geocache has been started.
-            when a user passes a MAPFILE=/path/to/mapfile, the string "path/to/mapfile" is validated against
+            when a user passes a MAPFILE=/path/to/mapfile, the string "/path/to/mapfile" is validated against
             the supplied (PCRE) regular expression. The one in this example allows a name composed of aphanumeric characters
             spearated by slashes (/) and finishing with ".map" ( [a-zA-Z0-9\./]*\.map$ ) , but will faill if there
             are two consecutive dots (..) in the path, to prevent filesystem traversal  ( (?!.*\.\.) ).
