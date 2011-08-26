@@ -1,12 +1,12 @@
 # Required initializer
-AC_INIT(mod_mapcache,0.1,tbonfort@terriscope.fr)
+AC_INIT(mod_geocache,0.1,tbonfort@terriscope.fr)
 
 # don't let AC_PROG_CC force "-g -O2"
-: ${CFLAGS="-Wall"}
+#: ${CFLAGS="-Wall"}
 
 AC_PROG_CC
 
-
+CFLAGS=$CFLAGS
 
 # macro that is used to parse a --with-xml2-config parameter
 AC_DEFUN([XML2_CHECK],[
@@ -95,8 +95,7 @@ AC_DEFUN([APXS_CHECK],[
       AC_MSG_RESULT([$APACHECTL])
     fi
     AC_SUBST(APACHECTL)
-    AC_SUBST(APXS_CFLAGS,`$APXS -q CFLAGS`)
-    AC_SUBST(APXS_INCLUDEDIR,-I`$APXS -q INCLUDEDIR`)
+    AC_SUBST(APXS_INC,-I`$APXS -q INCLUDEDIR`)
     AC_SUBST(APXS_LIBS,`$APXS -q LIBS`)
     AC_SUBST(APXS_LDFLAGS,`$APXS -q LDFLAGS`)
     
@@ -238,7 +237,7 @@ AC_DEFUN([DEBUG_CHECK],[
     if test "$enable_debug" == "yes"; then
         CFLAGS="$CFLAGS -g -O0 -DDEBUG"
     else
-        CFLAGS="-O2 -DNDEBUG"
+        CFLAGS="$CFLAGS -O2 -DNDEBUG"
     fi
     AC_SUBST(CFLAGS,$CFLAGS)
 ])
