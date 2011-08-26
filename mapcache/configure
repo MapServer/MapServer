@@ -618,6 +618,7 @@ PNG_INC
 LIBTOOL
 APR_LIBS
 APR_INC
+APR_CFLAGS
 APRCONFIG
 TARGETS
 FASTCGI_LIB
@@ -3797,6 +3798,8 @@ $as_echo "yes" >&6; }
     if test -z "$APRCONFIG"; then
         as_fn_error $? "apr-config utility not found. use --with-apr-config to specify its location." "$LINENO" 5
     fi
+
+    APR_CFLAGS=`$APRCONFIG --cppflags --cflags`
 
     APR_INC=`$APRCONFIG --includes`
 

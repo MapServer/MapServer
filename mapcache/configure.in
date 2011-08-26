@@ -183,6 +183,7 @@ AC_DEFUN([APR_CHECK],[
         AC_MSG_ERROR(apr-config utility not found. use --with-apr-config to specify its location.)
     fi
     AC_SUBST(APRCONFIG)
+    AC_SUBST(APR_CFLAGS,`$APRCONFIG --cppflags --cflags`) 
     AC_SUBST(APR_INC,`$APRCONFIG --includes`)
     AC_SUBST(APR_LIBS,`$APRCONFIG --link-libtool`)
     AC_SUBST(LIBTOOL, `$APRCONFIG --apr-libtool`)
