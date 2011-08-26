@@ -975,16 +975,9 @@ int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels, rgbaPixe
 
    for (x = 0; x < numPaletteEntries; ++x) {
       a[remap[x]] = palette[x].a;
-      if(a[remap[x]] == 255) {
-         rgb[remap[x]].r = palette[x].r;
-         rgb[remap[x]].g = palette[x].g;
-         rgb[remap[x]].b = palette[x].b;
-      } else {
-         double da = a[remap[x]]/255.0;
-         rgb[remap[x]].r = palette[x].r / da;
-         rgb[remap[x]].g = palette[x].g / da;
-         rgb[remap[x]].b = palette[x].b / da;
-      }
+      rgb[remap[x]].r = palette[x].r;
+      rgb[remap[x]].g = palette[x].g;
+      rgb[remap[x]].b = palette[x].b;
    }
 
    return GEOCACHE_SUCCESS;

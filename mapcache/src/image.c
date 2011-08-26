@@ -49,7 +49,7 @@ int _geocache_image_merge(request_rec *r, geocache_image *base, geocache_image *
                bptr[0] = (unsigned char)(((or - br)*oa + (br << 8)) >> 8);
                bptr[1] = (unsigned char)(((og - bg)*oa + (bg << 8)) >> 8);
                bptr[2] = (unsigned char)(((ob - bb)*oa + (bb << 8)) >> 8);
-               bptr[3] = (unsigned char)((oa + ba) - ((oa * ba + 255) >> 8));                        
+               bptr[3] = (ba==255)?255:(unsigned char)((oa + ba) - ((oa * ba + 255) >> 8));                        
             }
          }
          bptr+=4;optr+=4;
