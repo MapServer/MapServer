@@ -435,7 +435,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
       apr_time_t now = apr_time_now();
       apr_time_t stale = tile->mtime + apr_time_from_sec(tile->tileset->auto_expire);
       if(stale<now) {
-         geocache_tileset_tile_delete(ctx,tile);
+         geocache_tileset_tile_delete(ctx,tile,GEOCACHE_TRUE);
          GC_CHECK_ERROR(ctx);
          ret = GEOCACHE_CACHE_MISS;
       }
@@ -510,23 +510,25 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
    }
 }
 
-void geocache_tileset_tile_delete(geocache_context *ctx, geocache_tile *tile) {
+void geocache_tileset_tile_delete(geocache_context *ctx, geocache_tile *tile, int whole_metatile) {
    int i;
    /*delete the tile itself*/
    tile->tileset->cache->tile_delete(ctx,tile);
    GC_CHECK_ERROR(ctx);
 
-   geocache_metatile *mt = geocache_tileset_metatile_get(ctx, tile);
-   for(i=0;i<mt->ntiles;i++) {
-      geocache_tile *subtile = &mt->tiles[i];
-      /* skip deleting the actual tile */
-      if(subtile->x == tile->x && subtile->y == tile->y) continue;
-      subtile->tileset->cache->tile_delete(ctx,tile);
-      /* silently pass failure if the tile was not found */
-      if(ctx->get_error(ctx) == 404) {
-         ctx->clear_errors(ctx);
+   if(whole_metatile) {
+      geocache_metatile *mt = geocache_tileset_metatile_get(ctx, tile);
+      for(i=0;i<mt->ntiles;i++) {
+         geocache_tile *subtile = &mt->tiles[i];
+         /* skip deleting the actual tile */
+         if(subtile->x == tile->x && subtile->y == tile->y) continue;
+         subtile->tileset->cache->tile_delete(ctx,subtile);
+         /* silently pass failure if the tile was not found */
+         if(ctx->get_error(ctx) == 404) {
+            ctx->clear_errors(ctx);
+         }
+         GC_CHECK_ERROR(ctx);
       }
-      GC_CHECK_ERROR(ctx);
    }
 }
 
