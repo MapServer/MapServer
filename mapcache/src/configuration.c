@@ -140,6 +140,29 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
       grid->levels[i] = level;
    }
    geocache_configuration_add_grid(cfg,grid,"GoogleMapsCompatible");
+   
+   grid = geocache_grid_create(pool);
+   grid->name = apr_pstrdup(pool,"g");
+   grid->srs = apr_pstrdup(pool,"epsg:900913");
+   APR_ARRAY_PUSH(grid->srs_aliases,char*) = apr_pstrdup(pool,"epsg:3857");
+   apr_table_add(grid->metadata,"title","GoogleMapsCompatible");
+   apr_table_add(grid->metadata,"profile","global-mercator");
+   apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
+   grid->tile_sx = grid->tile_sy = 256;
+   grid->nlevels = 19;
+   grid->unit = GEOCACHE_UNIT_METERS;
+   grid->extent[0] = google_extent[0];
+   grid->extent[1] = google_extent[1];
+   grid->extent[2] = google_extent[2];
+   grid->extent[3] = google_extent[3];
+   grid->levels = (geocache_grid_level**)apr_pcalloc(pool,
+         grid->nlevels*sizeof(geocache_grid_level*));
+   for(i=0; i<grid->nlevels; i++) {
+      geocache_grid_level *level = (geocache_grid_level*)apr_pcalloc(pool,sizeof(geocache_grid_level));
+      level->resolution = google_resolutions[i];
+      grid->levels[i] = level;
+   }
+   geocache_configuration_add_grid(cfg,grid,"g");
 
    return cfg;
 }
