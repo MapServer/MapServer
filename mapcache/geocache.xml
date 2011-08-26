@@ -348,13 +348,13 @@
    <!-- memcache cache
         entry accepts multiple <server> entries
         requires a fairly recent apr-util library and headers
-   -->
    <cache name="memcache" type="memcache">
       <server>
          <host>localhost</host>
          <port>11211</port>
       </server>
    </cache>
+   -->
    
    <!-- sqlite cache
         requires building with "with-sqlite"
@@ -493,7 +493,7 @@
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
-            <MAP>/gro1/mapserver-utils/osm.map</MAP>
+            <MAP>/Users/tbonfort/dev/mapserver-utils/osm.map</MAP>
          </params>
       </getmap>
    </source>
@@ -692,7 +692,7 @@
          <abstract>see http://mapserver-utils.googlecode.com</abstract>
       </metadata>
       <source>osm</source>
-      <cache>disk</cache>
+      <cache>sqlite</cache>
       <format>PNG</format>
       <grid>FXX</grid>
       <grid>MILLER</grid>

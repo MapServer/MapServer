@@ -20,7 +20,6 @@
 #include <apr_file_io.h>
 #include <string.h>
 #include <errno.h>
-#include "ngtemplate.h"
 
 #ifdef HAVE_SYMLINK
 #include <unistd.h>
@@ -48,7 +47,7 @@ static void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_
  * \param r 
  * \private \memberof geocache_cache_disk
  */
-static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, char **path) {
+static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, const char **path) {
    char *start;
    start = apr_pstrcat(ctx->pool,
          ((geocache_cache_disk*)tile->tileset->cache)->base_directory,"/",
@@ -89,41 +88,25 @@ static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *
 }
 
 
-static void _geocache_cache_template_tile_key(geocache_context *ctx, geocache_tile *tile, char **path) {
+static void _geocache_cache_template_tile_key(geocache_context *ctx, geocache_tile *tile, const char **path) {
    geocache_cache_disk_template *tcache = (geocache_cache_disk_template*)tile->tileset->cache;
+   *path = tcache->template;
+   *path = geocache_util_str_replace(ctx->pool,*path, "{{tileset}}", tile->tileset->name);
+   *path = geocache_util_str_replace(ctx->pool,*path, "{{grid}}", tile->grid_link->grid->name);
+   *path = geocache_util_str_replace(ctx->pool,*path, "{{ext}}", tile->tileset->format?tile->tileset->format->extension:"png");
+   *path = geocache_util_str_replace(ctx->pool,*path, "{{x}}",apr_psprintf(ctx->pool,"%d",tile->x));
+   *path = geocache_util_str_replace(ctx->pool,*path, "{{y}}",apr_psprintf(ctx->pool,"%d",tile->y));
+   *path = geocache_util_str_replace(ctx->pool,*path, "{{z}}",apr_psprintf(ctx->pool,"%d",tile->z));
+   *path = geocache_util_str_replace(ctx->pool,*path, "{{inv_x}}",apr_psprintf(ctx->pool,"%d",tile->grid_link->grid->levels[tile->z]->maxx - tile->x - 1));
+   *path = geocache_util_str_replace(ctx->pool,*path, "{{inv_y}}",apr_psprintf(ctx->pool,"%d",tile->grid_link->grid->levels[tile->z]->maxy - tile->y - 1));
+   *path = geocache_util_str_replace(ctx->pool,*path, "{{inv_z}}",apr_psprintf(ctx->pool,"%d",tile->grid_link->grid->nlevels - tile->z - 1));
 
-   /* Init some structs */
-   ngt_template* template = ngt_new();
-   ngt_dictionary* dictionary = ngt_dictionary_new();
-
-   /* Set some stuff in the dictionary */
-   ngt_set_string(dictionary, "tileset", tile->tileset->name);
-   ngt_set_string(dictionary, "grid", tile->grid_link->grid->name);
-   ngt_set_string(dictionary, "ext", tile->tileset->format?tile->tileset->format->extension:"png");
-   ngt_set_string(dictionary,"x",apr_psprintf(ctx->pool,"%d",tile->x));
-   ngt_set_string(dictionary,"y",apr_psprintf(ctx->pool,"%d",tile->y));
-   ngt_set_string(dictionary,"z",apr_psprintf(ctx->pool,"%d",tile->z));
-   ngt_set_string(dictionary,"inv_x",apr_psprintf(ctx->pool,"%d",tile->grid_link->grid->levels[tile->z]->maxx - tile->x - 1));
-   ngt_set_string(dictionary,"inv_y",apr_psprintf(ctx->pool,"%d",tile->grid_link->grid->levels[tile->z]->maxy - tile->y - 1));
-   ngt_set_string(dictionary,"inv_z",apr_psprintf(ctx->pool,"%d",tile->grid_link->grid->nlevels - tile->z - 1));
-
-   /* Associate the template with the dictionary and template string and expand the template */
-   template->template = apr_pstrdup(ctx->pool,tcache->template);
-   ctx->log(ctx,GEOCACHE_WARNING, "template is %s", template->template);
-   ngt_set_dictionary(template, dictionary);
-   ngt_expand(template, path);
    ctx->log(ctx,GEOCACHE_WARNING, "key is %s", *path);
-
-   /* Clean stuff up */
-   apr_pool_cleanup_register(ctx->pool, *path,(void*)free, apr_pool_cleanup_null);
-   ngt_destroy(template);
-   ngt_dictionary_destroy(dictionary);
-
 }
 
 static int _geocache_cache_filesystem_has_tile(geocache_context *ctx, geocache_tile *tile) {
    geocache_cache_filesystem *fcache = (geocache_cache_filesystem*)tile->tileset->cache;
-   char *filename;
+   const char *filename;
    apr_file_t *f;
    fcache->tile_key(ctx, tile, &filename);
    if(GC_HAS_ERROR(ctx)) {
@@ -141,7 +124,7 @@ static void _geocache_cache_filesystem_delete(geocache_context *ctx, geocache_ti
    geocache_cache_filesystem *fcache = (geocache_cache_filesystem*)tile->tileset->cache;
    apr_status_t ret;
    char errmsg[120];
-   char *filename;
+   const char *filename;
    apr_file_t *f;
    fcache->tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
@@ -174,7 +157,7 @@ static void _geocache_cache_filesystem_delete(geocache_context *ctx, geocache_ti
  */
 static int _geocache_cache_filesystem_get(geocache_context *ctx, geocache_tile *tile) {
    geocache_cache_filesystem *fcache = (geocache_cache_filesystem*)tile->tileset->cache;
-   char *filename;
+   const char *filename;
    apr_file_t *f;
    apr_finfo_t finfo;
    apr_status_t rv;
@@ -238,7 +221,8 @@ static void _geocache_cache_filesystem_set(geocache_context *ctx, geocache_tile 
    apr_file_t *f;
    apr_status_t ret;
    char errmsg[120];
-   char *filename, *hackptr1, *hackptr2=NULL;
+   const char *filename, *hackptr1;
+   char *hackptr2=NULL;
 #ifdef DEBUG
    /* all this should be checked at a higher level */
    if(!tile->data || !tile->data->size) {
@@ -253,7 +237,7 @@ static void _geocache_cache_filesystem_set(geocache_context *ctx, geocache_tile 
    hackptr1 = filename;
    while(*hackptr1) {
       if(*hackptr1 == '/')
-         hackptr2 = hackptr1;
+         hackptr2 = (char*)hackptr1;
       hackptr1++;
    }
    *hackptr2 = '\0';

@@ -373,7 +373,7 @@ struct geocache_cache {
  */
 struct geocache_cache_filesystem {
     geocache_cache cache;
-    void (*tile_key)(geocache_context *ctx, geocache_tile *tile, char **path);
+    void (*tile_key)(geocache_context *ctx, geocache_tile *tile, const char **path);
     void (*blank_key)(geocache_context *ctx, geocache_tile *tile, unsigned char *color, char **path);
     int symlink_blank;
 };
@@ -1242,6 +1242,8 @@ int geocache_util_extract_int_list(geocache_context *ctx, const char* args, cons
         int *numbers_count);
 int geocache_util_extract_double_list(geocache_context *ctx, const char* args, const char sep, double **numbers,
         int *numbers_count);
+const char *geocache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr,
+      const char *replacement );
 
 /*
 int geocache_util_mutex_aquire(geocache_context *r);
