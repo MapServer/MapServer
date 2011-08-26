@@ -195,6 +195,33 @@ static int geocache_write_image_buffer(geocache_context_apache_request *ctx, geo
    return OK;
 }
 
+static int geocache_write_map(geocache_context_apache_request *ctx, geocache_map *map) {
+   int rc;
+   char *timestr;
+   request_rec *r = ctx->request;
+
+   if(map->expires) {
+      apr_time_t now = apr_time_now();
+      apr_time_t additional = apr_time_from_sec(map->expires);
+      apr_time_t expires = now + additional;
+      apr_table_set(r->headers_out, "Cache-Control",apr_psprintf(r->pool, "max-age=%d", map->expires));
+      timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
+      apr_rfc822_date(timestr, expires);
+      apr_table_setn(r->headers_out, "Expires", timestr);
+   }
+   if(map->mtime) {
+      ap_update_mtime(r, map->mtime);
+      if((rc = ap_meets_conditions(r)) != OK) {
+         return rc;
+      }
+      timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
+      apr_rfc822_date(timestr, map->mtime);
+      apr_table_setn(r->headers_out, "Last-Modified", timestr);
+   }
+   return geocache_write_image_buffer(ctx, map->data, map->tileset->format); 
+}
+
+
 static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_tile *tile) {
    int rc;
    char *timestr;
@@ -343,7 +370,7 @@ static int mod_geocache_request_handler(request_rec *r) {
       if(GC_HAS_ERROR(global_ctx)) {
          return report_error(apache_ctx);
       }
-      ret = geocache_write_image_buffer(apache_ctx,map->data, map->tileset->format);
+      ret = geocache_write_map(apache_ctx,map);
       return ret;
    } else if( request->type == GEOCACHE_REQUEST_GET_FEATUREINFO) {
       geocache_request_get_feature_info *req_fi = (geocache_request_get_feature_info*)request;

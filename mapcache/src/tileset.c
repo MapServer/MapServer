@@ -270,7 +270,7 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx) {
    geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(ctx->pool, sizeof(geocache_tileset));
    tileset->metasize_x = tileset->metasize_y = 1;
    tileset->metabuffer = 0;
-   tileset->expires = 0;
+   tileset->expires = 300; /*set a reasonable default to 5 mins */
    tileset->auto_expire = 0;
    tileset->metadata = apr_table_make(ctx->pool,3);
    tileset->dimensions = NULL;
@@ -286,7 +286,11 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx) {
 geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *tileset, geocache_grid_link *grid_link) {
    geocache_tile *tile = (geocache_tile*)apr_pcalloc(pool, sizeof(geocache_tile));
    tile->tileset = tileset;
-   tile->expires = tileset->expires;
+   if(tileset->auto_expire) {
+      tile->expires = tileset->auto_expire;
+   } else {
+      tile->expires = tileset->expires;
+   }
    tile->grid_link = grid_link;
    if(tileset->dimensions) {
       int i;
@@ -432,13 +436,12 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
             ctx->set_error(ctx, 500, "tileset %s: failed to re-get tile %d %d %d from cache after set", tile->tileset->name,tile->x,tile->y,tile->z);
          }
       }
-      /* update the tile expiration time */
-      if(tile->tileset->auto_expire && tile->mtime) {
-         apr_time_t now = apr_time_now();
-         apr_time_t expire_time = tile->mtime + apr_time_from_sec(tile->tileset->auto_expire);
-         tile->expires = apr_time_sec(expire_time-now);
-
-      }
+   }
+   /* update the tile expiration time */
+   if(tile->tileset->auto_expire && tile->mtime) {
+      apr_time_t now = apr_time_now();
+      apr_time_t expire_time = tile->mtime + apr_time_from_sec(tile->tileset->auto_expire);
+      tile->expires = apr_time_sec(expire_time-now);
    }
 }
 

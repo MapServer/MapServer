@@ -51,6 +51,15 @@ geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
       geocache_tileset_tile_get(ctx, tile);
       if(GC_HAS_ERROR(ctx))
          return NULL;
+      
+      /* update the map modification time if it is older than the tile mtime */
+      if(tile->mtime>map->mtime) map->mtime = tile->mtime;
+
+      /* set the map expiration delay to the tile expiration delay,
+       * either if the map hasn't got an expiration delay yet
+       * or if the tile expiration is shorter than the map expiration
+       */
+      if(!map->expires || tile->expires<map->expires) map->expires = tile->expires;
    }
    geocache_image *getmapim = geocache_tileset_assemble_map_tiles(ctx,map->tileset,map->grid_link,
          map->extent, map->width, map->height,
@@ -82,6 +91,9 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
          if(GC_HAS_ERROR(ctx)) return NULL;
          geocache_image_merge(ctx,baseim,overlayim);
          if(GC_HAS_ERROR(ctx)) return NULL;
+         if(overlaymap->mtime > basemap->mtime) basemap->mtime = overlaymap->mtime;
+         if(!basemap->expires || overlaymap->expires<basemap->expires) basemap->expires = overlaymap->expires;
+
       }
 
       basemap->data = basemap->tileset->format->write(ctx,baseim,basemap->tileset->format);

@@ -428,6 +428,8 @@ struct geocache_map {
    geocache_buffer *data;
    int width, height;
    double extent[4];
+   apr_time_t mtime; /**< last modification time */
+   int expires; /**< time in seconds after which the tile should be rechecked for validity */
 };
 
 struct geocache_feature_info {
