@@ -47,6 +47,7 @@ geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
          &nmaptiles, &maptiles);
    for(i=0;i<nmaptiles;i++) {
       geocache_tile *tile = maptiles[i];
+      tile->dimensions = map->dimensions;
       geocache_tileset_tile_get(ctx, tile);
       if(GC_HAS_ERROR(ctx))
          return NULL;
