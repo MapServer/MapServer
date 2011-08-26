@@ -1,4 +1,4 @@
-<!--comment-->
+<?xml version="1.0" encoding="UTF-8"?>
 <geocache>
    <grid name="testgrid">
       <srs>epsg:4326</srs>
@@ -19,7 +19,7 @@
         <srs>epsg:4326</srs>
         <wmsparams>
             <FORMAT>image/png</FORMAT>
-        	<LAYERS>basic</LAYERS>
+            <LAYERS>basic</LAYERS>
         </wmsparams>
     </source>
     <source name="osm" type="wms">
@@ -79,6 +79,13 @@
         <metabuffer>10</metabuffer>
     </tileset>
     <merge_format>PNGQ_FAST</merge_format>
+    
+    <!-- this is the location where locks will be stored when a tile
+         is not in the cache.
+         this directory MUST exist, and be accessible for reading and
+         writing by the user running apache (usually www-data or nobody)
+    -->
+    <lock_dir>/tmp/mylocks</lock_dir>
     
     <services>
         <wms>true</wms>

@@ -22,6 +22,7 @@
 #include <apr_strings.h>
 #include <apr_hash.h>
 #include <apr_file_io.h>
+#include <apr_file_info.h>
 
 geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    geocache_grid *grid;
@@ -84,7 +85,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
          geocache_imageio_create_jpeg_format(pool,"JPEG",95),
          "JPEG");
    cfg->merge_format = geocache_configuration_get_image_format(cfg,"PNG");
-   cfg->lockdir = "/tmp/geocache_locks";
+   cfg->lockdir = NULL;
    cfg->reporting = GEOCACHE_REPORT_MSG;
 
    grid = geocache_grid_create(pool);
@@ -726,19 +727,31 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
       return;
    }
 
-   /* check our lock directory is valid and writable */
-   if(APR_SUCCESS != apr_dir_make_recursive(config->lockdir, APR_OS_DEFAULT, ctx->pool)) {
-       ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to create lock directory %s",config->lockdir);
-       return;
+   /* check our lock directory exists */
+   if(!config->lockdir) {
+      ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "no lock directory configured."
+            " You should add one with the <lock_dir> configuration tag");
+      return;
+   } else {
+      apr_dir_t *dir;
+      int ret = apr_dir_open(&dir,config->lockdir, ctx->pool);
+      if(APR_SUCCESS != ret) {
+          ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to open directory %s, does it exist?",config->lockdir);
+          return;
+      }
+      apr_dir_close(dir);
+#ifdef notused
+      testlockfilename = apr_psprintf(ctx->pool,"%s/test.lock",config->lockdir);
+      if(apr_file_open(&testlockfile, testlockfilename, APR_FOPEN_CREATE|APR_FOPEN_WRITE,
+                  APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
+          ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create test lockfile %s",testlockfilename);
+          return; /* we could not create the file */
+      }
+      apr_file_close(testlockfile);
+      apr_file_remove(testlockfilename,ctx->pool);
+#endif
    }
-   testlockfilename = apr_psprintf(ctx->pool,"%s/test.lock",config->lockdir);
-   if(apr_file_open(&testlockfile, testlockfilename, APR_FOPEN_CREATE|APR_FOPEN_WRITE,
-               APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
-       ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create test lockfile %s",testlockfilename);
-       return; /* we could not create the file */
-   }
-   apr_file_close(testlockfile);
-   apr_file_remove(testlockfilename,ctx->pool);
+   
 
    if(!config->services[GEOCACHE_SERVICE_WMS] &&
          !config->services[GEOCACHE_SERVICE_TMS]) {
