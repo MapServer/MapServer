@@ -24,13 +24,6 @@
 #if APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3
 
 
-/**
- * Create a hard link to the specified file.
- * @param from_path The full path to the original file (using / on all systems)
- * @param to_path The full path to the new file (using / on all systems)
- * @remark Both files must reside on the same device.
- */
-APR_DECLARE(apr_status_t) apr_file_link(const char *from_path, const char *to_path);
 
 /**
  * Create a new table whose contents are deep copied from the given
@@ -46,6 +39,17 @@ APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p,
 
 #endif
 
+#if APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 4
+
+/**
+ * Create a hard link to the specified file.
+ * @param from_path The full path to the original file (using / on all systems)
+ * @param to_path The full path to the new file (using / on all systems)
+ * @remark Both files must reside on the same device.
+ */
+APR_DECLARE(apr_status_t) apr_file_link(const char *from_path, const char *to_path);
+
+#endif
 
 
 #endif /* UTIL_H_ */

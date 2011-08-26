@@ -294,7 +294,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
       /* the previous step has successfully finished, we can now query the cache to return the tile content */
       ret = tile->tileset->cache->tile_get(ctx, tile);
       if(ret != GEOCACHE_SUCCESS) {
-         ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: failed to re-get tile from cache after set", tile->tileset->name);
+         ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: failed to re-get tile %d %d %d from cache after set", tile->tileset->name,tile->x,tile->y,tile->z);
       }
    }
 }
