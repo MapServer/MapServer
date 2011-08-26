@@ -7,7 +7,7 @@ $ ./configure
 $ make
 
 (as root)
-# make install
+# make install-module
 
 The installation script takes care of putting the built module in the apache module directory.
 The process for activating a module is usually distro specific, but can be resumed by the 
@@ -28,7 +28,7 @@ LoadModule geocache_module    modules/mod_geocache.so
 Customizing the build, or if something went wrong
 -------------------------------------------------
 
-mod-geocache requires apache, liburl, and libpng development headers.
+mod-geocache requires apache, libcurl, libjpeg and libpng development headers.
 The configure script will try to locate them in default system locations, that can be
 overriden or specified with switches (./configure --help should give you a full list):
 
@@ -40,6 +40,24 @@ apache apxs
 apxs is the apache extension tool that is used for building and installing the module to a local
 apache instance. it should be installed along with a standard apache build, or supplied by
 distros when installing the apache development packages.
+apxs is sometimes called apxs2 (notably on debian)
+
+apr
+===
+
+--with-apr-config=/path/to/apr-config
+
+apr-config is sometimes called apr-1-config on some systems. The path to the apr libraries is susually determined
+from the previous apxs utility. you can use this switch to override which apr will be used. beware that using a different
+version of apr than the one that is linked to by apache will likely cause bugs.
+
+apr-util (optional)
+===================
+
+--with-apu-config=/path/to/apu-config
+
+apu-config is sometimes called apu-1-config. the apr-util library is used to enable the memcached cache backend for
+stroing tiles. If you don't plan on using it you can safely ignore or disable it.
 
 libcurl
 =======
@@ -53,6 +71,93 @@ libpng
 
 this is the path where the libpng headers and libs can be located.
 the configure script will be looking for [path]/include/png.h and [path]/lib/libpng.so
+
+libjpeg
+======
+
+--with-jpeg=/path/to/jpeg/prefix
+
+this is the path where the libjpeg headers and libs can be located.
+the configure script will be looking for [path]/include/jpeg.h and [path]/lib/libjpeg.so
+
+cairo (optional)
+=================
+
+--with-pkg-config=/path/to/pkg-config
+--with-cairo=/path/to/cairo.pc
+
+cairo support is required if you want to enable full wms getmap support, i.e. reconstructing a full getmap request
+by assembling tiles next to one another.
+cairo configuration step requires the pkg-config utility.
+if your cairo libs and headers aren't in a default location, there's a chance they won't be picked up by the default
+pkg-config utility. In that case, you can use the --with-cairo=/path/to/cairo.pc to explicitely tell pkg-config
+where to find the configuration options for your version of cairo. 
+
+gdal (from 0.4 onwards) (optional)
+===================================
+
+--with-gdal=/path/to/gdal-config
+
+gdal (actually ogr) is used by the seeding utility to allow the seeding of tiles only intersecting a given polygon, e.g.
+to preseed all the tiles of a given country.
+
+pcre (optional)
+===============
+
+--with-pcre=/path/to/pcre/prefix
+
+pcre (perl compatible regular expressions) can be used instead of posix regular expressions for validating WMS dimensions.
+they are more powerfull than posix REs (and might be slower). you don't need this if you aren't planning on using WMS
+dimension support with regex validation, or if your validation needs are covered by posix REs.
+
+fastcgi support (optional)
+==========================
+
+mod-geocache can run as a fastcgi executable. Note that the overhead of fastcgi is non-negligeable with respect to 
+the throughput you may obtain with a native apache module. Note that the fastcgi build is less tested, and may lag behind
+compared to the apache module version on some minor details (most notably on error reporting, and cache-control header
+generation).
+
+--with-fastcgi=/path/to/fastcgi/prefix
+
+give the location of the fastcgi libraries and headers.
+
+Experimental options, use at your own risk
+------------------------------------------
+
+debug
+=====
+
+--enable-debug
+
+enables some extra tests inside the code, and prints out many more debugging messages to the server logs. you should
+probably not enable this unless you want to track down a problem happening inside mod-geocache.
+
+file locking
+============
+
+--with-lock-mechanism=file|semaphore
+
+mod-geocache needs to keep a cross-process and cross-thread lock on tiles so that requests for tiles of a same metatile
+don't end up becoming multiple requests for the same metatile on the wms server. The default mechanism "file" is highly
+recommended unless you know what you are doing.
+
+This can be configured in two different ways in mod-geocache, each with their advantage and inconvenience:
+
+ * file : mod-geocache will use a file to signal other rendering threads that the given metatile is being rendered by the
+   wms source. (the location of these files is configurable with the <lock_dir> configuration directive). In the case of 
+   threaded mpm, this has the inconvenience that we cannot be signaled by the operating system that this file has been
+   deleted, and thus must resort to sleeping every .5 sec and checking if the file still exists until the file is deleted.
+   This isn't very efficient, but should not be problematic in practice as this loop only happens if the tile wasn't
+   already in the cache, i.e. at most once per tile for the whole lifetime of the cache.
+
+ * semaphore : mod-geocache can use posix semaphores for waiting on tile rendering. This method has the inconvenience
+   that if a rendering thread crashes (or more likely is killed by the system administrator while waiting for the wms
+   source to finish rendering), the semaphore lives on in the operating system and will prevent all accesses to the
+   tile until the sempahore is manually deleted. As apache threads are locked while waiting for this semaphore that
+   will never be released, you might end up with loads of idle processes stacking up. (stuck semaphores on linux can
+   be discarded by deleteing the files of the form sem.x-x-x-gridname-tilesetname(...)  that are located in /dev/shm/.
+   The "file" maechanism does not have this limitation, as stale lockfiles can be deleted upon server restart.
 
 
 Win32 compilation instructions
