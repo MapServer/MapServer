@@ -82,6 +82,7 @@ typedef struct geocache_request_get_capabilities_tms geocache_request_get_capabi
 typedef struct geocache_request_get_capabilities_kml geocache_request_get_capabilities_kml;
 
 typedef struct geocache_request_get_tile geocache_request_get_tile;
+typedef struct geocache_request_get_map geocache_request_get_map;
 typedef struct geocache_service geocache_service;
 typedef struct geocache_service_wms geocache_service_wms;
 typedef struct geocache_service_wmts geocache_service_wmts;
@@ -130,6 +131,13 @@ struct geocache_context {
      * \memberof geocache_context
      */
     char* (*get_error_message)(geocache_context * ctx);
+    
+    /**
+     * \brief get human readable message for the error
+     * \memberof geocache_context
+     */
+    char* (*clear_errors)(geocache_context * ctx);
+
 
     /**
      * \brief log a message
@@ -367,6 +375,10 @@ struct geocache_request_get_tile {
     * before being returned to the client
     */
    int ntiles;
+   
+   /* only used for getmap requests */
+   int width, height;
+   double *extent;
 };
 
 struct geocache_request_get_capabilities {
@@ -605,6 +617,10 @@ geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_
  * when finished, base will be modified and have overlay merged onto it
  */
 void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_image *overlay);
+
+void geocache_image_copy_resampled(geocache_context *ctx, geocache_image *src, geocache_image *dst,
+      int srcX, int srcY, int srcW, int srcH,
+      int dstX, int dstY, int dstW, int dstH);
 
 /**
  * \brief split the given metatile into tiles
@@ -874,9 +890,28 @@ struct geocache_tileset {
      * handle to the configuration this tileset belongs to
      */
     geocache_cfg *config;
-    
+   
+    /**
+     * should we service wms requests not aligned to a grid
+     */
+    int full_wms;
+
     apr_table_t *metadata;
 };
+
+void geocache_tileset_get_map_tiles(geocache_context *ctx, geocache_tileset *tileset,
+      geocache_grid_link *grid_link,
+      double *bbox, int width, int height,
+      int *ntiles,
+      geocache_tile ***tiles);
+
+#ifdef USE_CAIRO
+geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geocache_tileset *tileset,
+      geocache_grid_link *grid_link,
+      double *bbox, int width, int height,
+      int ntiles,
+      geocache_tile **tiles);
+#endif
 
 /**
  * \brief compute a tile's x,y and z value given a BBOX.
@@ -885,7 +920,7 @@ struct geocache_tileset {
  * @param r
  * @return
  */
-void geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, double *bbox);
+int geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, double *bbox);
 
 /**
  * \brief verify the created tile respects configured constraints
@@ -907,7 +942,7 @@ void geocache_tileset_tile_validate(geocache_context *ctx, geocache_tile *tile);
  */
 void geocache_tileset_get_level(geocache_context *ctx, geocache_tileset *tileset, double *resolution, int *level);
 
-
+void geocache_grid_get_closest_level(geocache_context *ctx, geocache_grid *grid, double resolution, int *level);
 void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile);
 
 /**
@@ -978,8 +1013,8 @@ const char* geocache_grid_get_srs(geocache_context *ctx, geocache_grid *grid);
  */
 void geocache_grid_get_xy(geocache_context *ctx, geocache_grid *grid, double dx, double dy, int z, int *x, int *y);
 
-double geocache_grid_get_resolution(geocache_grid *grid, double *bbox);
-void geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level);
+double geocache_grid_get_resolution(double *bbox, int sx, int sy);
+int geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level);
 void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits);
 
 /* in util.c */

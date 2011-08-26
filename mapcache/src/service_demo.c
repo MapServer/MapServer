@@ -47,6 +47,17 @@ static char *demo_layer =
       "        }\n"
       "    );\n";  
 
+static char *demo_layer_singletile =
+      "    var %s_%s_slayer = new OpenLayers.Layer.WMS( \"%s-%s (singleTile)\",\n"
+      "        \"%s\",{layers: '%s'},\n"
+      "        { gutter:0,ratio:1,isBaseLayer:true,transitionEffect:'resize',\n"
+      "          resolutions:[%s],\n"
+      "          singleTile:true,\n"
+      "          maxExtent: new OpenLayers.Bounds(%f,%f,%f,%f),\n"
+      "          projection: new OpenLayers.Projection(\"%s\")\n"
+      "        }\n"
+      "    );\n";  
+
 /**
  * \brief parse a demo request
  * \private \memberof geocache_service_demo
@@ -96,6 +107,23 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
                grid->extent[3],
                grid->srs);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
+
+#ifdef USE_CAIRO
+         layers = apr_psprintf(ctx->pool,"%s,%s_%s_slayer",layers,tileset->name,grid->name);
+         ol_layer = apr_psprintf(ctx->pool,demo_layer_singletile,
+               tileset->name,
+               grid->name,
+               tileset->name,
+               grid->name,
+               apr_pstrcat(ctx->pool,onlineresource,"/wms?",NULL),
+               tileset->name,resolutions,
+               grid->extent[0],
+               grid->extent[1],
+               grid->extent[2],
+               grid->extent[3],
+               grid->srs);
+         caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
+#endif
       }
       tileindex_index = apr_hash_next(tileindex_index);
    }

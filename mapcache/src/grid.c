@@ -67,23 +67,36 @@ void geocache_grid_compute_limits(const geocache_grid *grid, const double *exten
    }
 }
 
-double geocache_grid_get_resolution(geocache_grid *grid, double *bbox) {
-   double rx = (bbox[2] - bbox[0]) / (double)grid->tile_sx;
-   double ry = (bbox[3] - bbox[1]) / (double)grid->tile_sy;
+double geocache_grid_get_resolution(double *bbox, int sx, int sy) {
+   double rx = (bbox[2] - bbox[0]) / (double)sx;
+   double ry = (bbox[3] - bbox[1]) / (double)sy;
    return GEOCACHE_MAX(rx,ry);
 }
 
-void geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level) {
+int geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level) {
    double max_diff = *resolution / (double)GEOCACHE_MAX(grid->tile_sx, grid->tile_sy);
    int i;
    for(i=0; i<grid->nlevels; i++) {
       if(fabs(grid->levels[i]->resolution - *resolution) < max_diff) {
          *resolution = grid->levels[i]->resolution;
          *level = i;
-         return;
+         return GEOCACHE_SUCCESS;
       }
    }
-   ctx->set_error(ctx, 400, "grid %s: failed lookup for resolution %f", grid->name, *resolution);
+   return GEOCACHE_FAILURE;
+}
+
+void geocache_grid_get_closest_level(geocache_context *ctx, geocache_grid *grid, double resolution, int *level) {
+   double dst = fabs(grid->levels[0]->resolution - resolution);
+   *level = 0;
+   int i;
+   for(i=1; i<grid->nlevels; i++) {
+      double curdst = fabs(grid->levels[i]->resolution - resolution);
+      if( curdst < dst) {
+         dst = curdst;
+         *level = i;
+      }
+   }
 }
 
 void geocache_grid_get_xy(geocache_context *ctx, geocache_grid *grid, double dx, double dy,

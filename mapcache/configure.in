@@ -109,6 +109,78 @@ AC_DEFUN([CURL_CHECK],[
     AC_SUBST(CURL_LIBS,`$CURLCONFIG --libs`)
 ])
 
+AC_DEFUN([PKGCONFIG_CHECK],[
+    AC_SUBST(PKGCONFIG)
+    AC_ARG_WITH(pkg-config,
+    AC_HELP_STRING([--with-pkg-config[=PATH]],[path to pkg-config)]),
+    ,
+    [with_pkg_config=yes])
+    if test "$with_pkg_config" = "no"; then
+        AC_MSG_CHECKING(for pkg-config usability)
+        AC_MSG_RESULT(disabled by request)
+    else
+        if test "$with_pkg_config" = "yes" ; then
+            AC_PATH_PROG(PKGCONFIG, pkg-config)
+        else
+            AC_MSG_CHECKING(for pkg-config usability in $with_pkg_config)
+            if test -x "$with_pkg_config"; then
+                PKGCONFIG=$with_pkg_config
+                AC_MSG_RESULT(yes)
+            else
+                AC_MSG_ERROR($with_pkg_config not found or not executable)
+            fi
+        fi
+        if test -z "$PKGCONFIG"; then
+            AC_MSG_ERROR(pkg-config utility not found. use --with-pkg-config to specify its location.)
+        fi
+    fi
+    AC_SUBST(PKGCONFIG)
+])
+
+AC_DEFUN([CAIRO_CHECK],[
+    AC_ARG_WITH(cairo,
+        AC_HELP_STRING([--with-cairo[[=ARG]]],[Include Cairo Support (ARG=yes/no/path to cairo.pc)]),
+        ,
+        [with_cairo=yes])
+    
+    if test "$with_cairo" = "no" -o "$with_cairo" = "" ; then
+      AC_MSG_RESULT(no)
+      CAIRO_CONFIG="no"
+    else
+        if test -z "$PKGCONFIG"; then
+            AC_MSG_ERROR([cairo support requested, but pkg-config not found/configured])
+        fi
+        if test "$with_cairo" = "yes" ; then
+            AC_MSG_CHECKING(for cairo pkg-config entry)
+            `$PKGCONFIG --silence-errors -- cairo >> /dev/null`
+            if test $? -eq 0 ; then
+                AC_MSG_RESULT(found)
+                CAIRO_CONFIG="cairo cairo-png"
+            else
+                AC_MSG_ERROR([cairo support requested, but not found.Try installing the cairo development headers])
+            fi
+        else
+          CAIRO_CONFIG=$with_cairo_config
+        fi
+    fi
+    
+    if test "$CAIRO_CONFIG" = "no" ; then
+      AC_MSG_WARN([cairo support has been disabled or could not be configured.
+                   full WMS support cannot be enabled on the resulting build])
+      CAIRO_ENABLED=
+      CAIRO_INC=
+      CAIRO_LIB=
+    else
+      CAIRO_ENABLED="-DUSE_CAIRO"
+      CAIRO_LIB=`$PKGCONFIG --libs $CAIRO_CONFIG`
+      CAIRO_INC=`$PKGCONFIG --cflags $CAIRO_CONFIG`
+    fi
+    AC_SUBST(CAIRO_ENABLED,$CAIRO_ENABLED)
+    AC_SUBST(CAIRO_INC,$CAIRO_INC)
+    AC_SUBST(CAIRO_LIB,$CAIRO_LIB)
+])
+
+
 AC_DEFUN([APU_CHECK],[
   AC_SUBST(APUCONFIG)
   AC_SUBST(MEMCACHE_ENABLED)
@@ -512,7 +584,8 @@ fi
 
 APR_CHECK
 APU_CHECK
-
+PKGCONFIG_CHECK
+CAIRO_CHECK
 PNG_CHECK
 
 JPEG_CHECK

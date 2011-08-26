@@ -257,35 +257,72 @@ static int mod_geocache_request_handler(request_rec *r) {
       }
       request->service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,config);
       return geocache_write_capabilities(apache_ctx,req_caps);
-   } else if( request->type != GEOCACHE_REQUEST_GET_TILE) {
-      return report_error(apache_ctx);
-   }
-   req_tile = (geocache_request_get_tile*)request;
+   } else if( request->type == GEOCACHE_REQUEST_GET_TILE) {
+      req_tile = (geocache_request_get_tile*)request;
 
-   if( !req_tile->ntiles) {
-      return report_error(apache_ctx);
-   }
-
-
-   for(i=0;i<req_tile->ntiles;i++) {
-      geocache_tile *tile = req_tile->tiles[i];
-      geocache_tileset_tile_get(global_ctx, tile);
-      if(GC_HAS_ERROR(global_ctx)) {
+      if( !req_tile->ntiles) {
          return report_error(apache_ctx);
       }
-   }
-   if(req_tile->ntiles == 1) {
-      tile = req_tile->tiles[0];
+
+
+      for(i=0;i<req_tile->ntiles;i++) {
+         geocache_tile *tile = req_tile->tiles[i];
+         geocache_tileset_tile_get(global_ctx, tile);
+         if(GC_HAS_ERROR(global_ctx)) {
+            return report_error(apache_ctx);
+         }
+      }
+      if(req_tile->ntiles == 1) {
+         tile = req_tile->tiles[0];
+      } else {
+         /* TODO: individual check on tiles if merging is allowed */
+         tile = (geocache_tile*)geocache_image_merge_tiles(global_ctx,config->merge_format,req_tile->tiles,req_tile->ntiles);
+         if(!tile || GC_HAS_ERROR(global_ctx)) {
+            return report_error(apache_ctx);
+         }
+         tile->tileset = req_tile->tiles[0]->tileset;
+      }
+      ret = geocache_write_tile(apache_ctx,tile);
+      return ret;
+   } else if(request->type == GEOCACHE_REQUEST_GET_MAP) {
+#ifdef USE_CAIRO
+      req_tile = (geocache_request_get_tile*)request;
+      if(req_tile->ntiles==1) {
+         geocache_tile *tile = req_tile->tiles[0];
+         geocache_tile **maptiles;
+         int nmaptiles;
+         geocache_tileset_get_map_tiles(global_ctx,tile->tileset,tile->grid_link,
+               req_tile->extent, req_tile->width, req_tile->height,
+               &nmaptiles,
+               &maptiles);
+         for(i=0;i<nmaptiles;i++) {
+            geocache_tile *tile = maptiles[i];
+            geocache_tileset_tile_get(global_ctx, tile);
+            if(GC_HAS_ERROR(global_ctx)) {
+               return report_error(apache_ctx);
+            }
+         }
+         geocache_image *getmapim = geocache_tileset_assemble_map_tiles(global_ctx,tile->tileset,tile->grid_link,
+               req_tile->extent, req_tile->width, req_tile->height,
+               nmaptiles,
+               maptiles);
+
+         geocache_tile *getmaptile = geocache_tileset_tile_create(global_ctx->pool,tile->tileset, tile->grid_link);
+         getmaptile->data = tile->tileset->format->write(global_ctx,getmapim,tile->tileset->format);
+         ret = geocache_write_tile(apache_ctx,getmaptile);
+         return ret;
+
+      } else{
+         global_ctx->set_error(global_ctx,501,"get map not implemented for merged layers");
+         return report_error(apache_ctx);
+      }
+#else
+      global_ctx->set_error(global_ctx,501,"wms getmap handling not configured in this build");
+      return report_error(apache_ctx);
+#endif
    } else {
-      /* TODO: individual check on tiles if merging is allowed */
-      tile = (geocache_tile*)geocache_image_merge_tiles(global_ctx,config->merge_format,req_tile->tiles,req_tile->ntiles);
-      if(!tile || GC_HAS_ERROR(global_ctx)) {
-         return report_error(apache_ctx);
-      }
-      tile->tileset = req_tile->tiles[0]->tileset;
+      return report_error(apache_ctx);
    }
-   ret = geocache_write_tile(apache_ctx,tile);
-   return ret;
 }
 
 static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {

@@ -42,10 +42,11 @@ void geocache_tileset_tile_validate(geocache_context *ctx, geocache_tile *tile) 
  * will return GEOCACHE_TILESET_WRONG_RESOLUTION or GEOCACHE_TILESET_WRONG_EXTENT
  * if the bbox does not correspond to the tileset's configuration
  */
-static void _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile *tile, double *bbox) {
-   double res = geocache_grid_get_resolution(tile->grid_link->grid,bbox);
-   geocache_grid_get_level(ctx, tile->grid_link->grid, &res, &(tile->z));
-   GC_CHECK_ERROR(ctx);
+static int _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile *tile, double *bbox) {
+   double res = geocache_grid_get_resolution(bbox,tile->grid_link->grid->tile_sx,
+         tile->grid_link->grid->tile_sy);
+   if(GEOCACHE_SUCCESS != geocache_grid_get_level(ctx, tile->grid_link->grid, &res, &(tile->z)))
+      return GEOCACHE_FAILURE;
    /* TODO: strict mode
            if exact and self.extent_type == "strict" and not self.contains((minx, miny), res):
                raise TileCacheException("Lower left corner (%f, %f) is outside layer bounds %s. \nTo remove this condition, set extent_type=loose in your configuration."
@@ -57,10 +58,100 @@ static void _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile
 
    if((fabs(bbox[0] - (tile->x * res * tile->grid_link->grid->tile_sx) - tile->grid_link->grid->extent[0] ) / res > 1) ||
          (fabs(bbox[1] - (tile->y * res * tile->grid_link->grid->tile_sy) - tile->grid_link->grid->extent[1] ) / res > 1)) {
-      ctx->set_error(ctx, 404, "grid %s: supplied bbox not aligned on configured grid",tile->grid_link->grid->name);
+      return GEOCACHE_FAILURE;
    }
+   return GEOCACHE_SUCCESS;
 }
 
+void geocache_tileset_get_map_tiles(geocache_context *ctx, geocache_tileset *tileset,
+      geocache_grid_link *grid_link,
+      double *bbox, int width, int height,
+      int *ntiles,
+      geocache_tile ***tiles) {
+   double resolution;
+   int level;
+   resolution = geocache_grid_get_resolution(bbox, width, height);
+   geocache_grid_get_closest_level(ctx,grid_link->grid,resolution,&level);
+   int mx,my,Mx,My;
+   int x,y;
+   geocache_grid_get_xy(ctx,grid_link->grid,bbox[0],bbox[1],level,&mx,&my);
+   geocache_grid_get_xy(ctx,grid_link->grid,bbox[2],bbox[3],level,&Mx,&My);
+   *ntiles = (Mx-mx+1)*(My-my+1);
+   if(*ntiles<=0) {
+      ctx->set_error(ctx,500,"BUG: negative number of tiles");
+      return;
+   }
+   int i=0;
+   *tiles = (geocache_tile**)apr_pcalloc(ctx->pool, *ntiles*sizeof(geocache_tile*));
+   for(x=mx;x<=Mx;x++) {
+      for(y=my;y<=My;y++) {
+         geocache_tile *tile = geocache_tileset_tile_create(ctx->pool,tileset, grid_link);
+         tile->x = x;
+         tile->y = y;
+         tile->z = level;
+         geocache_tileset_tile_validate(ctx,tile);
+         if(GC_HAS_ERROR(ctx)) {
+            //clear the error message
+            ctx->clear_errors(ctx);
+         } else {
+            (*tiles)[i++]=tile;
+         }
+      }
+   }
+   *ntiles = i;
+}
+
+#ifdef USE_CAIRO
+
+#include <cairo/cairo.h>
+#include <math.h>
+
+geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geocache_tileset *tileset,
+      geocache_grid_link *grid_link,
+      double *bbox, int width, int height,
+      int ntiles,
+      geocache_tile **tiles) {
+   double resolution = geocache_grid_get_resolution(bbox, width, height);
+   double tilebbox[4];
+   geocache_image *image = geocache_image_create(ctx);
+   image->w = width;
+   image->h = height;
+   image->stride = width*4;
+   image->data = apr_pcalloc(ctx->pool,width*height*4*sizeof(unsigned char));
+   cairo_surface_t* dstsurface= cairo_image_surface_create_for_data(image->data, CAIRO_FORMAT_ARGB32,
+         width, height,image->stride);
+   cairo_t *cr = cr = cairo_create (dstsurface);
+
+   int i;
+   for(i=0;i<ntiles;i++) {
+      geocache_tile *tile = tiles[i];
+      double tileresolution = tile->grid_link->grid->levels[tile->z]->resolution;
+      geocache_tileset_tile_bbox(tile,tilebbox);
+      geocache_image *im = geocache_imageio_decode(ctx,tile->data);
+      cairo_surface_t* srcsurface= cairo_image_surface_create_for_data(im->data, CAIRO_FORMAT_ARGB32,
+            im->w, im->h,im->stride);
+      /*compute the pixel position of top left corner*/
+      double dstminx = floor((tilebbox[0]-bbox[0])/resolution);
+      double dstminy = floor((bbox[3]-tilebbox[3])/resolution);
+      double f = tileresolution/resolution;
+      double dstwidth = ceil(im->w*f);
+      f = dstwidth/(double)im->w;
+      cairo_save(cr);
+      //cairo_clip(cr);
+      cairo_translate (cr, dstminx,dstminy);
+      cairo_scale  (cr, f, f);
+      cairo_set_source_surface (cr, srcsurface, 0, 0);
+      cairo_paint (cr);
+      cairo_restore(cr);
+
+      
+
+
+   }
+   return image;
+}
+
+#endif
 
 /*
  * compute the metatile that should be rendered for the given tile
@@ -177,8 +268,8 @@ geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *
 }
 
 
-void geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, double *bbox) {
-   _geocache_tileset_tile_get_cell(ctx, tile,bbox);
+int geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, double *bbox) {
+   return _geocache_tileset_tile_get_cell(ctx, tile,bbox);
 }
 
 /**

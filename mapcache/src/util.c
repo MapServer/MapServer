@@ -115,6 +115,11 @@ void _geocache_context_set_error_default(geocache_context *ctx, int code, char *
     va_end(args);
 }
 
+void _geocache_context_clear_error_default(geocache_context *ctx) {
+   ctx->_errcode = 0;
+   ctx->_errmsg = NULL;
+}
+
 
 void geocache_context_init(geocache_context *ctx) {
     ctx->_errcode = 0;
@@ -122,6 +127,7 @@ void geocache_context_init(geocache_context *ctx) {
     ctx->get_error = _geocache_context_get_error_default;
     ctx->get_error_message = _geocache_context_get_error_msg_default;
     ctx->set_error = _geocache_context_set_error_default;
+    ctx->clear_errors = _geocache_context_clear_error_default;
 }
 
 /* vim: ai ts=3 sts=3 et sw=3
