@@ -108,12 +108,14 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       cairo_surface_t* srcsurface= cairo_image_surface_create_for_data(im->data, CAIRO_FORMAT_ARGB32,
             im->w, im->h,im->stride);
       /*compute the pixel position of top left corner*/
-      double dstminx = ((tilebbox[0]-bbox[0])/hresolution);
-      double dstminy = ((bbox[3]-tilebbox[3])/vresolution);
+      double dstminx = floor((tilebbox[0]-bbox[0])/hresolution);
+      double dstminy = floor((bbox[3]-tilebbox[3])/vresolution);
       double hf = tileresolution/hresolution;
       double vf = tileresolution/vresolution;
-      double dstwidth = (im->w*hf);
-      double dstheight = (im->h*vf);
+      double dstwidth = ceil(im->w*hf);
+      double dstheight = ceil(im->h*vf);
+      hf = dstwidth/(double)im->w;
+      vf = dstheight/(double)im->h;
       cairo_save(cr);
       //cairo_clip(cr);
       cairo_translate (cr, dstminx,dstminy);
