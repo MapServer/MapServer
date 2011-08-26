@@ -1073,8 +1073,6 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
 static geocache_buffer* _geocache_imageio_png_create_empty(geocache_context *ctx, geocache_image_format *format,
       size_t width, size_t height, unsigned int color) {
 
-   geocache_image_format_png *f = (geocache_image_format_png*)format;
-
    apr_pool_t *pool = NULL;
    if(apr_pool_create(&pool,ctx->pool) != APR_SUCCESS) {
       ctx->set_error(ctx,500,"png create empty: failed to create temp memory pool");
