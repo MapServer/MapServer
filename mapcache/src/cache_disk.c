@@ -58,23 +58,17 @@ static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *
       const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
       int i = elts->nelts;
       while(i--) {
-         int lastisdot = 0;
          apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
-         char *iter = entry->val;
+         char *dimval = apr_pstrdup(ctx->pool,entry->val);
+         char *iter = dimval;
          while(*iter) {
-            if(lastisdot) {
-               if(*iter == '.') {
-                  ctx->set_error(ctx,500,"invalid sequence .. in dimension %s",entry->key);
-                  return;
-               } else {
-                  lastisdot = 0;
-               }
-            } else if(*iter == '.') {
-               lastisdot = 1;
+            /* replace dangerous characters by '#' */
+            if(*iter == '.' || *iter == '/') {
+               *iter = '#';
             }
             iter++;
          }
-         start = apr_pstrcat(ctx->pool,start,"/",entry->key,"/",entry->val,NULL);
+         start = apr_pstrcat(ctx->pool,start,"/",entry->key,"/",dimval,NULL);
       }
    }
    *path = apr_psprintf(ctx->pool,"%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",
