@@ -187,6 +187,55 @@ AC_DEFUN([CAIRO_CHECK],[
     AC_SUBST(CAIRO_LIB,$CAIRO_LIB)
 ])
 
+AC_DEFUN([PIXMAN_CHECK],[
+    AC_ARG_WITH(pixman,
+        AC_HELP_STRING([--with-pixman[[=ARG]]],[Include Pixman Support (ARG=yes/no/path to pixman.pc)]),
+        ,
+        [with_pixman=yes])
+    
+    if test "$with_pixman" = "no" -o "$with_pixman" = "" ; then
+      AC_MSG_RESULT(no)
+      PIXMAN_CONFIG="no"
+    else
+        if test -z "$PKGCONFIG"; then
+            AC_MSG_ERROR([pixman support requested, but pkg-config not found/configured])
+        fi
+        if test "$with_pixman" = "yes" ; then
+            AC_MSG_CHECKING(for pixman pkg-config entry)
+            `$PKGCONFIG --silence-errors -- pixman >> /dev/null`
+            if test $? -eq 0 ; then
+                AC_MSG_RESULT(found)
+                PIXMAN_CONFIG="pixman"
+            else
+               `$PKGCONFIG --silence-errors -- pixman-1 >> /dev/null`
+               if test $? -eq 0 ; then
+                  AC_MSG_RESULT(found)
+                  PIXMAN_CONFIG="pixman-1"
+               else
+                  AC_MSG_ERROR([pixman support requested, but not found.Try installing the pixman development headers])
+               fi
+            fi
+        else
+          PIXMAN_CONFIG=$with_pixman
+        fi
+    fi
+    
+    if test "$PIXMAN_CONFIG" = "no" ; then
+      AC_MSG_WARN([pixman support has been disabled or could not be configured.
+                   full WMS will use the internal (usually slower) image merging functions])
+      PIXMAN_ENABLED=
+      PIXMAN_INC=
+      PIXMAN_LIB=
+    else
+      PIXMAN_ENABLED="-DUSE_PIXMAN"
+      PIXMAN_LIB=`$PKGCONFIG --libs $PIXMAN_CONFIG`
+      PIXMAN_INC=`$PKGCONFIG --cflags $PIXMAN_CONFIG`
+    fi
+    AC_SUBST(PIXMAN_ENABLED,$PIXMAN_ENABLED)
+    AC_SUBST(PIXMAN_INC,$PIXMAN_INC)
+    AC_SUBST(PIXMAN_LIB,$PIXMAN_LIB)
+])
+
 
 AC_DEFUN([APU_CHECK],[
   AC_SUBST(APUCONFIG)
@@ -712,6 +761,7 @@ APU_CHECK
 SQLITE_CHECK
 PKGCONFIG_CHECK
 # CAIRO_CHECK
+PIXMAN_CHECK
 PNG_CHECK
 
 JPEG_CHECK

@@ -15,6 +15,11 @@
  */
 
 #include "geocache.h"
+#ifdef USE_PIXMAN
+#include <pixman.h>
+#else
+#include <math.h>
+#endif
 
 geocache_image* geocache_image_create(geocache_context *ctx) {
     geocache_image *img = (geocache_image*)apr_pcalloc(ctx->pool,sizeof(geocache_image));
@@ -47,6 +52,7 @@ void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_
    }
    starti = (base->h - overlay->h)/2;
    startj = (base->w - overlay->w)/2;
+
    browptr = base->data + starti * base->stride + startj*4;
    orowptr = overlay->data;
    for(i=0;i<overlay->h;i++) {
@@ -81,28 +87,7 @@ void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_
    }
 }
 
-#include <math.h>
-
-void geocache_image_copy_resampled_nearest(geocache_context *ctx, geocache_image *src, geocache_image *dst,
-      double off_x, double off_y, double scale_x, double scale_y) {
-   int dstx,dsty;
-   unsigned char *dstrowptr = dst->data;
-   for(dsty=0; dsty<dst->h; dsty++) {
-      int *dstptr = (int*)dstrowptr;
-      int srcy = round((dsty-off_y)/scale_y);
-      if(srcy >= 0 && srcy < src->h) {
-         for(dstx=0; dstx<dst->w;dstx++) {
-            int srcx = round((dstx-off_x)/scale_x);
-            if(srcx >= 0 && srcx < src->w) {
-               *dstptr = *((int*)&(src->data[srcy*src->stride+srcx*4]));
-            }
-            dstptr ++;
-         }
-      }
-      dstrowptr += dst->stride;
-   }
-} 
-
+#ifndef USE_PIXMAN
 static inline void bilinear_pixel(geocache_image *img, double x, double y, unsigned char *dst) {
    int px,py;
    px = (int)x;
@@ -133,9 +118,62 @@ static inline void bilinear_pixel(geocache_image *img, double x, double y, unsig
    dst[2] = (p1[2] * w1 + p2[2] * w2 + p3[2] * w3 + p4[2] * w4) >> 8;
    dst[3] = (p1[3] * w1 + p2[3] * w2 + p3[3] * w3 + p4[3] * w4) >> 8;
 }
+#endif
+
+void geocache_image_copy_resampled_nearest(geocache_context *ctx, geocache_image *src, geocache_image *dst,
+      double off_x, double off_y, double scale_x, double scale_y) {
+#ifdef USE_PIXMAN
+   pixman_image_t *si = pixman_image_create_bits(PIXMAN_a8r8g8b8,src->w,src->h,
+         (uint32_t*)src->data,src->stride);
+   pixman_image_t *bi = pixman_image_create_bits(PIXMAN_a8r8g8b8,dst->w,dst->h,
+         (uint32_t*)dst->data,dst->stride);
+   pixman_transform_t transform;
+   pixman_transform_init_translate(&transform,pixman_double_to_fixed(-off_x),pixman_double_to_fixed(-off_y));
+   pixman_transform_scale(&transform,NULL,pixman_double_to_fixed(1.0/scale_x),pixman_double_to_fixed(1.0/scale_y));
+   pixman_image_set_transform (si, &transform);
+   pixman_image_set_filter(si,PIXMAN_FILTER_NEAREST, NULL, 0);
+   pixman_image_composite (PIXMAN_OP_SRC, si, NULL, bi,
+                            0, 0, 0, 0, 0, 0, dst->w,dst->h);
+   pixman_image_unref(si);
+   pixman_image_unref(bi);
+#else
+   int dstx,dsty;
+   unsigned char *dstrowptr = dst->data;
+   for(dsty=0; dsty<dst->h; dsty++) {
+      int *dstptr = (int*)dstrowptr;
+      int srcy = round((dsty-off_y)/scale_y);
+      if(srcy >= 0 && srcy < src->h) {
+         for(dstx=0; dstx<dst->w;dstx++) {
+            int srcx = round((dstx-off_x)/scale_x);
+            if(srcx >= 0 && srcx < src->w) {
+               *dstptr = *((int*)&(src->data[srcy*src->stride+srcx*4]));
+            }
+            dstptr ++;
+         }
+      }
+      dstrowptr += dst->stride;
+   }
+#endif
+} 
+
 
 void geocache_image_copy_resampled_bilinear(geocache_context *ctx, geocache_image *src, geocache_image *dst,
       double off_x, double off_y, double scale_x, double scale_y) {
+#ifdef USE_PIXMAN
+   pixman_image_t *si = pixman_image_create_bits(PIXMAN_a8r8g8b8,src->w,src->h,
+         (uint32_t*)src->data,src->stride);
+   pixman_image_t *bi = pixman_image_create_bits(PIXMAN_a8r8g8b8,dst->w,dst->h,
+         (uint32_t*)dst->data,dst->stride);
+   pixman_transform_t transform;
+   pixman_transform_init_translate(&transform,pixman_double_to_fixed(-off_x),pixman_double_to_fixed(-off_y));
+   pixman_transform_scale(&transform,NULL,pixman_double_to_fixed(1.0/scale_x),pixman_double_to_fixed(1.0/scale_y));
+   pixman_image_set_transform (si, &transform);
+   pixman_image_set_filter(si,PIXMAN_FILTER_BILINEAR, NULL, 0);
+   pixman_image_composite (PIXMAN_OP_SRC, si, NULL, bi,
+                            0, 0, 0, 0, 0, 0, dst->w,dst->h);
+   pixman_image_unref(si);
+   pixman_image_unref(bi);
+#else
    int dstx,dsty;
    unsigned char *dstrowptr = dst->data;
    for(dsty=0; dsty<dst->h; dsty++) {
@@ -152,6 +190,7 @@ void geocache_image_copy_resampled_bilinear(geocache_context *ctx, geocache_imag
       }
       dstrowptr += dst->stride;
    }
+#endif
 } 
 
 geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_format *format, geocache_tile **tiles, int ntiles) {
