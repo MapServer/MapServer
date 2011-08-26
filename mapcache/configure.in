@@ -2,7 +2,7 @@
 AC_INIT(mod_geocache,0.1,tbonfort@terriscope.fr)
 
 # don't let AC_PROG_CC force "-g -O2"
-#: ${CFLAGS="-Wall"}
+: ${CFLAGS="-Wall"}
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_LIBTOOL
@@ -240,7 +240,7 @@ AC_DEFUN([DEBUG_CHECK],[
     if test "$enable_debug" == "yes"; then
         CFLAGS="$CFLAGS -g -O0 -DDEBUG"
     else
-        CFLAGS="$CFLAGS -O2 -DNDEBUG"
+        CFLAGS="-O2 $CFLAGS -DNDEBUG"
     fi
     AC_SUBST(CFLAGS,$CFLAGS)
 ])

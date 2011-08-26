@@ -2302,10 +2302,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # don't let AC_PROG_CC force "-g -O2"
-#: ${CFLAGS="-Wall"}
-
-ACLOCAL_AMFLAGS=-I m4
-
+: ${CFLAGS="-Wall"}
 
 
 case `pwd` in
@@ -3807,13 +3804,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:3810: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:3807: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:3813: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:3810: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:3816: output\"" >&5)
+  (eval echo "\"\$as_me:3813: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -5019,7 +5016,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5022 "configure"' > conftest.$ac_ext
+  echo '#line 5019 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -6548,11 +6545,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6551: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6548: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6555: \$? = $ac_status" >&5
+   echo "$as_me:6552: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6887,11 +6884,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6890: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6887: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6894: \$? = $ac_status" >&5
+   echo "$as_me:6891: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6992,11 +6989,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6995: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6992: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6999: \$? = $ac_status" >&5
+   echo "$as_me:6996: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -7047,11 +7044,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7050: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7047: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7054: \$? = $ac_status" >&5
+   echo "$as_me:7051: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9431,7 +9428,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 9434 "configure"
+#line 9431 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9527,7 +9524,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 9530 "configure"
+#line 9527 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10337,7 +10334,7 @@ fi
     if test "$enable_debug" == "yes"; then
         CFLAGS="$CFLAGS -g -O0 -DDEBUG"
     else
-        CFLAGS="$CFLAGS -O2 -DNDEBUG"
+        CFLAGS="-O2 $CFLAGS -DNDEBUG"
     fi
     CFLAGS=$CFLAGS
 
