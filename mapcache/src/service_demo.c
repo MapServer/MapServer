@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+#include <ctype.h>
 #include "geocache.h"
 #include <apr_strings.h>
 #include <math.h>
@@ -109,7 +110,7 @@ static char *demo_ve_extra =
       "}\n";
 
 static char *demo_layer_wms =
-      "    var %s_%s_wms_layer = new OpenLayers.Layer.WMS( \"%s-%s-WMS\",\n"
+      "    var %s_wms_layer = new OpenLayers.Layer.WMS( \"%s-%s-WMS\",\n"
       "        \"%s\",{layers: '%s'},\n"
       "        { gutter:0,buffer:0,isBaseLayer:true,transitionEffect:'resize',\n"
       "          resolutions:[%s],\n"
@@ -119,10 +120,10 @@ static char *demo_layer_wms =
       "          sphericalMercator: %s\n"
       "        }\n"
       "    );\n"
-      "    map.addLayer(%s_%s_wms_layer)\n\n";
+      "    map.addLayer(%s_wms_layer)\n\n";
 
 static char *demo_layer_tms =
-      "    var %s_%s_tms_layer = new OpenLayers.Layer.TMS( \"%s-%s-TMS\",\n"
+      "    var %s_tms_layer = new OpenLayers.Layer.TMS( \"%s-%s-TMS\",\n"
       "        \"%s\",\n"
       "        { layername: '%s@%s', type: \"%s\", serviceVersion:\"1.0.0\",\n"
       "          gutter:0,buffer:0,isBaseLayer:true,transitionEffect:'resize',\n"
@@ -134,10 +135,10 @@ static char *demo_layer_tms =
       "          sphericalMercator: %s\n"
       "        }\n"
       "    );\n"
-      "    map.addLayer(%s_%s_tms_layer)\n\n";
+      "    map.addLayer(%s_tms_layer)\n\n";
 
 static char *demo_layer_wmts =
-      "    var %s_%s_wmts_layer = new OpenLayers.Layer.WMTS({\n"
+      "    var %s_wmts_layer = new OpenLayers.Layer.WMTS({\n"
       "        name: \"%s-%s-WMTS\",\n"
       "        url: \"%s\",\n"
       "        layer: '%s',\n"
@@ -152,10 +153,10 @@ static char *demo_layer_wmts =
       "        sphericalMercator: %s\n"
       "      }\n"
       "    );\n"
-      "    map.addLayer(%s_%s_wmts_layer)\n\n";
+      "    map.addLayer(%s_wmts_layer)\n\n";
 
 static char *demo_layer_ve =
-      "    var %s_%s_ve_layer = new OpenLayers.Layer.TMS( \"%s-%s-VE\",\n"
+      "    var %s_ve_layer = new OpenLayers.Layer.TMS( \"%s-%s-VE\",\n"
       "        \"%s\",\n"
       "        { layername: '%s@%s',\n"
       "          getURL: get_ve_url,\n"
@@ -167,11 +168,11 @@ static char *demo_layer_ve =
       "          sphericalMercator: %s\n"
       "        }\n"
       "    );\n"
-      "    map.addLayer(%s_%s_ve_layer)\n\n";
+      "    map.addLayer(%s_ve_layer)\n\n";
 
 #ifdef USE_CAIRO
 static char *demo_layer_singletile =
-      "    var %s_%s_slayer = new OpenLayers.Layer.WMS( \"%s-%s (singleTile)\",\n"
+      "    var %s_slayer = new OpenLayers.Layer.WMS( \"%s-%s (singleTile)\",\n"
       "        \"%s\",{layers: '%s'},\n"
       "        { gutter:0,ratio:1,isBaseLayer:true,transitionEffect:'resize',\n"
       "          resolutions:[%s],\n"
@@ -182,7 +183,7 @@ static char *demo_layer_singletile =
       "          sphericalMercator: %s\n"
       "        }\n"
       "    );\n"
-      "    map.addLayer(%s_%s_slayer)\n\n";
+      "    map.addLayer(%s_slayer)\n\n";
 #endif
 
 static char *demo_footer =
@@ -200,6 +201,150 @@ static char *demo_footer =
       "    </div>\n"
       "</body>\n"
       "</html>\n";
+
+static char *demo_head_gmaps =
+      "<!DOCTYPE html>\n"
+      "<html>\n"
+      "<head>\n"
+      "<meta name=\"viewport\" content=\"initial-scale=1.0, user-scalable=no\" />\n"
+      "<title>mod_geocache gmaps demo</title>\n"
+      "<style type=\"text/css\">\n"
+      "  html { height: 100% }\n"
+      "  body { height: 100%; margin: 0px; padding: 0px }\n"
+      "  #map_canvas { height: 100% }\n"
+      "</style>\n"
+      "<script type=\"text/javascript\"\n"
+      "    src=\"http://maps.google.com/maps/api/js?sensor=false\">\n"
+      "</script>\n"
+      "<script type=\"text/javascript\">\n"
+      "  // Normalize the coords so that they repeat horizontally\n"
+      "  // like standard google maps\n"
+      "  function getNormalizedCoord(coord, zoom) {\n"
+      "    var y = coord.y;\n"
+      "    var x = coord.x;\n"
+      "\n"
+      "    // tile range in one direction\n"
+      "    // 0 = 1 tile, 1 = 2 tiles, 2 = 4 tiles, 3 = 8 tiles, etc.\n"
+      "    var tileRange = 1 << zoom;\n"
+      "\n"
+      "    // don't repeat across y-axis (vertically)\n"
+      "    if (y < 0 || y >= tileRange) {\n"
+      "      return null;\n"
+      "    }\n"
+      "\n"
+      "    // repeat accross x-axis\n"
+      "    if (x < 0 || x >= tileRange) {\n"
+      "      x = (x % tileRange + tileRange) % tileRange;\n"
+      "    }\n"
+      "\n"
+      "    return { x: x, y: y };\n"
+      "  }\n"
+      "\n"
+      "function makeLayer(name, url, size, extension) {\n"
+      "  var layer = {\n"
+      "    name: name,\n"
+      "    TypeOptions: {\n"
+      "      getTileUrl: function(coord, zoom) {\n"
+      "        var normCoord = getNormalizedCoord(coord, zoom);\n"
+      "        if (!normCoord) {\n"
+      "          return null;\n"
+      "        }\n"
+      "        var bound = Math.pow(2, zoom);\n"
+      "        return url+zoom+'/'+normCoord.x+'/'+(bound-normCoord.y-1)+'.'+extension;\n"
+      "      },\n"
+      "      tileSize: size,\n"
+      "      isPng: true,\n"
+      "      maxZoom: 18,\n"
+      "      minZoom: 0,\n"
+      "      name: name\n"
+      "    },\n"
+      "    OverlayTypeOptions: {\n"
+      "      getTileUrl: function(coord, zoom) {\n"
+      "        var normCoord = getNormalizedCoord(coord, zoom);\n"
+      "        if (!normCoord) {\n"
+      "          return null;\n"
+      "        }\n"
+      "        var bound = Math.pow(2, zoom);\n"
+      "        return url+zoom+'/'+normCoord.x+'/'+(bound-normCoord.y-1)+'.'+extension;\n"
+      "      },\n"
+      "      tileSize: size,\n"
+      "      isPng: true,\n"
+      "      maxZoom: 18,\n"
+      "      minZoom: 0,\n"
+      "      opacity: 0.5,  // o=transparenty, 1=opaque\n"
+      "      name: name+'_overlay'\n"
+      "    }\n"
+      "  };\n"
+      "\n"
+      "  layer.MapType = new google.maps.ImageMapType(layer.TypeOptions);\n"
+      "  layer.OverlayMapType = new google.maps.ImageMapType(layer.OverlayTypeOptions);\n"
+      "  layer.OverlayMapType.hide = function() {\n"
+      "    if (this.map_) {\n"
+      "      this.map_.overlayMapTypes.setAt(0, null);\n"
+      "    }\n"
+      "  };\n"
+      "  layer.OverlayMapType.show = function() {\n"
+      "    if (this.map_) {\n"
+      "      this.map_.overlayMapTypes.setAt(0, this);\n"
+      "    }\n"
+      "  };\n"
+      "  layer.OverlayMapType.toggle = function() {\n"
+      "    if (this.map_) {\n"
+      "      if (this.map_.overlayMapTypes.getAt(0)) {\n"
+      "          this.hide();\n"
+      "      } else {\n"
+      "          this.show();\n"
+      "      }\n"
+      "    }\n"
+      "  };\n"
+      "  return layer;\n"
+      "}\n"
+      "\n"
+      "var layers = Array();\n";
+
+/*
+ * name, baseurl, name, grid, size, size, extension
+*/
+static char *demo_layer_gmaps = "layers.push(makeLayer('%s %s', '%s/tms/1.0.0/%s@%s/', new google.maps.Size(%d,%d), '%s'));\n";
+
+static char *demo_footer_gmaps = 
+      "%s\n"
+      "function initialize() {\n"
+      "  var latlng = new google.maps.LatLng(0,0);\n"
+      "  var ids = Array();\n"
+      "  for (var i=0; i<layers.length; i++) {\n"
+      "    ids.push(layers[i].name);\n"
+      "  }\n"
+      "  ids.push(google.maps.MapTypeId.ROADMAP);\n"
+      "  var myOptions = {\n"
+      "    zoom: 1,\n"
+      "    center: latlng,\n"
+      "    mapTypeControlOptions: {\n"
+      "      mapTypeIds: ids\n"
+      "    }\n"
+      "  };\n"
+      "  var map = new google.maps.Map(document.getElementById('map_canvas'),\n"
+      "      myOptions);\n"
+      "  var input = \"\";\n"
+      "  for (var i=0; i<layers.length; i++) {\n"
+      "    map.mapTypes.set(layers[i].name, layers[i].MapType);\n"
+      "    layers[i].OverlayMapType.map_ = map;\n"
+      "    map.overlayMapTypes.setAt(i, null);\n"
+      "    input += '<input type=\"button\" value=\"'+layers[i].name+' Overlay\" onclick=\"layers['+i+'].OverlayMapType.toggle();\"></input>';\n"
+      "  }\n"
+      "  map.setMapTypeId(layers[0].name);\n"
+      "  document.getElementById('toolbar').innerHTML = input;\n"
+      "}\n"
+      "\n"
+      "</script>\n"
+      "</head>\n"
+      "<body onload=\"initialize()\">\n"
+      "  <div id=\"toolbar\" style=\"width:100%; height:20px; text-align:center\">&nbsp;</div>\n"
+      "  <div id=\"map_canvas\" style=\"width:100%; height:100%\"></div>\n"
+      "</body>\n"
+      "</html>\n";
+
+
 
 /**
  * \brief parse a demo request
@@ -276,6 +421,12 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
             smerc = "true";
          }
+         char *ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
+         /* normalize name to something that is a valid variable name */
+         for(i=0; i<strlen(ol_layer_name); i++)
+            if ((!i && !isalpha(ol_layer_name[i]) && ol_layer_name[i] != '_')
+                   || (!isalnum(ol_layer_name[i]) && ol_layer_name[i] != '_'))
+                ol_layer_name[i] = '_';
 
          resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
          for(i=1;i<grid->nlevels;i++) {
@@ -283,8 +434,7 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
          }
 
          ol_layer = apr_psprintf(ctx->pool,demo_layer_wms,
-               tileset->name,
-               grid->name,
+               ol_layer_name,
                tileset->name,
                grid->name,
                apr_pstrcat(ctx->pool,url_prefix,"/wms?",NULL),
@@ -297,14 +447,12 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
                grid->extent[3],
                grid->srs,
                smerc,
-               tileset->name,
-               grid->name);
+               ol_layer_name);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
 
 #ifdef USE_CAIRO
          ol_layer = apr_psprintf(ctx->pool,demo_layer_singletile,
-               tileset->name,
-               grid->name,
+               ol_layer_name,
                tileset->name,
                grid->name,
                apr_pstrcat(ctx->pool,url_prefix,"/wms?",NULL),
@@ -315,8 +463,7 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
                grid->extent[3],
                grid->srs,
                smerc,
-               tileset->name,
-               grid->name);
+               ol_layer_name);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
 #endif
       }
@@ -354,6 +501,12 @@ void _create_demo_tms(geocache_context *ctx, geocache_request_get_capabilities *
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
             smerc = "true";
          }
+         char *ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
+         /* normalize name to something that is a valid variable name */
+         for(i=0; i<strlen(ol_layer_name); i++)
+            if ((!i && !isalpha(ol_layer_name[i]) && ol_layer_name[i] != '_')
+                   || (!isalnum(ol_layer_name[i]) && ol_layer_name[i] != '_'))
+                ol_layer_name[i] = '_';
 
          resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
          for(i=1;i<grid->nlevels;i++) {
@@ -361,8 +514,7 @@ void _create_demo_tms(geocache_context *ctx, geocache_request_get_capabilities *
          }
 
          ol_layer = apr_psprintf(ctx->pool, demo_layer_tms,
-            tileset->name,
-            grid->name,
+            ol_layer_name,
             tileset->name,
             grid->name,
             apr_pstrcat(ctx->pool,url_prefix,"/tms/",NULL),
@@ -379,8 +531,7 @@ void _create_demo_tms(geocache_context *ctx, geocache_request_get_capabilities *
             grid->extent[3],
             grid->srs,
             smerc,
-            tileset->name,
-            grid->name);
+            ol_layer_name);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
       }
       tileindex_index = apr_hash_next(tileindex_index);
@@ -417,6 +568,12 @@ void _create_demo_wmts(geocache_context *ctx, geocache_request_get_capabilities 
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
             smerc = "true";
          }
+         char *ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
+         /* normalize name to something that is a valid variable name */
+         for(i=0; i<strlen(ol_layer_name); i++)
+            if ((!i && !isalpha(ol_layer_name[i]) && ol_layer_name[i] != '_')
+                   || (!isalnum(ol_layer_name[i]) && ol_layer_name[i] != '_'))
+                ol_layer_name[i] = '_';
 
          resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
          for(i=1;i<grid->nlevels;i++) {
@@ -424,8 +581,7 @@ void _create_demo_wmts(geocache_context *ctx, geocache_request_get_capabilities 
          }
 
          ol_layer = apr_psprintf(ctx->pool, demo_layer_wmts,
-            tileset->name,
-            grid->name,
+            ol_layer_name,
             tileset->name,
             grid->name,
             apr_pstrcat(ctx->pool,url_prefix,"/wmts/",NULL),
@@ -440,8 +596,7 @@ void _create_demo_wmts(geocache_context *ctx, geocache_request_get_capabilities 
             grid->extent[3],
             grid->srs,
             smerc,
-            tileset->name,
-            grid->name);
+            ol_layer_name);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
       }
       tileindex_index = apr_hash_next(tileindex_index);
@@ -475,6 +630,12 @@ void _create_demo_ve(geocache_context *ctx, geocache_request_get_capabilities *r
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
             smerc = "true";
          }
+         char *ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
+         /* normalize name to something that is a valid variable name */
+         for(i=0; i<strlen(ol_layer_name); i++)
+            if ((!i && !isalpha(ol_layer_name[i]) && ol_layer_name[i] != '_')
+                   || (!isalnum(ol_layer_name[i]) && ol_layer_name[i] != '_'))
+                ol_layer_name[i] = '_';
 
          resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
          for(i=1;i<grid->nlevels;i++) {
@@ -482,8 +643,7 @@ void _create_demo_ve(geocache_context *ctx, geocache_request_get_capabilities *r
          }
 
          ol_layer = apr_psprintf(ctx->pool, demo_layer_ve,
-            tileset->name,
-            grid->name,
+            ol_layer_name,
             tileset->name,
             grid->name,
             apr_pstrcat(ctx->pool,url_prefix,"/ve",NULL),
@@ -497,13 +657,63 @@ void _create_demo_ve(geocache_context *ctx, geocache_request_get_capabilities *r
             grid->extent[3],
             grid->srs,
             smerc,
-            tileset->name,
-            grid->name);
+            ol_layer_name);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
       }
       tileindex_index = apr_hash_next(tileindex_index);
    }
    caps = apr_psprintf(ctx->pool,demo_footer,caps);
+   
+   req->capabilities = caps;
+}
+
+void _create_demo_gmaps(geocache_context *ctx, geocache_request_get_capabilities *req,
+         const char *url_prefix) {
+   req->mime_type = apr_pstrdup(ctx->pool,"text/html");
+   char *caps = apr_pstrdup(ctx->pool,demo_head_gmaps);
+   char *ol_layer;
+   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
+   while(tileindex_index) {
+      geocache_tileset *tileset;
+      const void *key; apr_ssize_t keylen;
+      apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
+      int i,j;
+      for(j=0;j<tileset->grid_links->nelts;j++) {
+         char *resolutions="";
+         char *unit="dd";
+         char *smerc = "false";
+         geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
+         if(grid->unit == GEOCACHE_UNIT_METERS) {
+            unit="m";
+         } else if(grid->unit == GEOCACHE_UNIT_FEET) {
+            unit="ft";
+         }
+         if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
+            smerc = "true";
+         }
+         else
+            continue; /* skip layers that are not in google projrction */
+
+         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
+         for(i=1;i<grid->nlevels;i++) {
+            resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->levels[i]->resolution);
+         }
+
+         ol_layer = apr_psprintf(ctx->pool, demo_layer_gmaps,
+            tileset->name,
+            grid->name,
+            url_prefix,
+            tileset->name,
+            grid->name,
+            grid->tile_sx,
+            grid->tile_sy,
+            tileset->format->extension
+         );
+         caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
+      }
+      tileindex_index = apr_hash_next(tileindex_index);
+   }
+   caps = apr_psprintf(ctx->pool,demo_footer_gmaps,caps);
    
    req->capabilities = caps;
 }
@@ -528,8 +738,9 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
             return _create_demo_wmts(ctx,req,onlineresource);
          case GEOCACHE_SERVICE_VE:
             return _create_demo_ve(ctx,req,onlineresource);
-         case GEOCACHE_SERVICE_KML:
          case GEOCACHE_SERVICE_GMAPS:
+            return _create_demo_gmaps(ctx,req,onlineresource);
+         case GEOCACHE_SERVICE_KML:
             req->mime_type = apr_pstrdup(ctx->pool,"text/plain");
             req->capabilities = apr_pstrdup(ctx->pool,"not implemented");
             return;
