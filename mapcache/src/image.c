@@ -61,6 +61,7 @@ void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_
          pixman_int_to_fixed(-startj),
          pixman_int_to_fixed(-starti));
    pixman_image_set_filter(si,PIXMAN_FILTER_NEAREST, NULL, 0);
+   pixman_image_set_transform (si, &transform);
    pixman_image_composite (PIXMAN_OP_OVER, si, si, bi,
                             0, 0, 0, 0, 0, 0, base->w,base->h);
    pixman_image_unref(si);
