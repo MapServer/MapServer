@@ -43,7 +43,6 @@ void _geocache_imageio_png_flush_func(png_structp png_ptr) {
 
 geocache_image* _geocache_imageio_png_decode(request_rec *r, geocache_buffer *buffer) {
    geocache_image *img;
-   png_uint_32 row_bytes;
    int bit_depth,color_type,i;
    unsigned char **row_pointers;
    png_structp png_ptr = NULL;
@@ -94,30 +93,19 @@ geocache_image* _geocache_imageio_png_decode(request_rec *r, geocache_buffer *bu
    }
 
 
-   if (color_type == PNG_COLOR_TYPE_PALETTE)
-      /* expand palette images to RGB */
-      png_set_expand(png_ptr);
-   if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-      /* expand low bit-depth grayscale to 8bits */
-      png_set_expand(png_ptr);
-   if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
-      /* expand transparency chunks to full alpha */
-      png_set_expand(png_ptr);
-   if (bit_depth == 16)
-      /* scale 16bits down to 8 */
-      png_set_strip_16(png_ptr);
-   if (color_type == PNG_COLOR_TYPE_GRAY ||
-         color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-      /* convert grayscale to rgba */
-      png_set_gray_to_rgb(png_ptr);
-
-   //png_set_bgr(png_ptr);
-   if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY)
-      png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
+   png_set_expand(png_ptr);
+   png_set_strip_16(png_ptr);
+   png_set_gray_to_rgb(png_ptr);
+   png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
 
    png_read_update_info(png_ptr, info_ptr);
-   row_bytes = png_get_rowbytes(png_ptr, info_ptr);
-
+#ifdef DEBUG
+   if(img->stride != png_get_rowbytes(png_ptr, info_ptr)) {
+      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "### BUG ### failed to decompress PNG to RGBA");
+      return NULL;
+   }
+#endif
+   
    png_read_image(png_ptr, row_pointers);
    png_read_end(png_ptr,NULL);
    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
@@ -962,28 +950,28 @@ int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels, rgbaPixe
    int bot_idx, top_idx, x;
    int remap[256];
    /*
-   ** remap the palette colors so that all entries with
-   ** the maximal alpha value (i.e., fully opaque) are at the end and can
-   ** therefore be omitted from the tRNS chunk.  Note that the ordering of
-   ** opaque entries is reversed from how Step 3 arranged them--not that
-   ** this should matter to anyone.
-   */
+    ** remap the palette colors so that all entries with
+    ** the maximal alpha value (i.e., fully opaque) are at the end and can
+    ** therefore be omitted from the tRNS chunk.  Note that the ordering of
+    ** opaque entries is reversed from how Step 3 arranged them--not that
+    ** this should matter to anyone.
+    */
 
    for (top_idx = numPaletteEntries-1, bot_idx = x = 0;  x < numPaletteEntries;  ++x) {
-     if (palette[x].a == 255)
+      if (palette[x].a == 255)
          remap[x] = top_idx--;
-     else
+      else
          remap[x] = bot_idx++;
    }
    /* sanity check:  top and bottom indices should have just crossed paths */
    if (bot_idx != top_idx + 1) {
-     return GEOCACHE_FAILURE;
+      return GEOCACHE_FAILURE;
    }
 
    *num_a = bot_idx;
 
    for(x=0;x<npixels;x++)
-         pixels[x] = remap[pixels[x]];
+      pixels[x] = remap[pixels[x]];
 
    for (x = 0; x < numPaletteEntries; ++x) {
       a[remap[x]] = palette[x].a;
