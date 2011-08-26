@@ -261,7 +261,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
    if(service) {
       /*KVP Parsing*/
       if( strcasecmp(service,"wmts") ) {
-         ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"received wmts request with invalid service param %s", str);
+         ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"received wmts request with invalid service param %s", service);
          return;
       }
       str = apr_table_get(params,"REQUEST");
