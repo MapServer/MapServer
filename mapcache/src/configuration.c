@@ -1017,7 +1017,11 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
    config->getmap_strategy = GEOCACHE_GETMAP_ERROR;
    if ((node = ezxml_child(doc,"full_wms")) != NULL) {
       if(!strcmp(node->txt,"assemble")) {
+#ifdef USE_CAIRO
          config->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
+#else
+         ctx->set_error(ctx,400, "\"assemble\" <full_wms> not supported with current build. reconfigure with --enable-cairo");
+#endif
       } else if(!strcmp(node->txt,"forward")) {
          config->getmap_strategy = GEOCACHE_GETMAP_FORWARD;
       } else if(*node->txt && strcmp(node->txt,"error")) {

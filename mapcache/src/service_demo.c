@@ -450,22 +450,22 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
                ol_layer_name);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
 
-#ifdef USE_CAIRO
-         ol_layer = apr_psprintf(ctx->pool,demo_layer_singletile,
-               ol_layer_name,
-               tileset->name,
-               grid->name,
-               apr_pstrcat(ctx->pool,url_prefix,"/wms?",NULL),
-               tileset->name,resolutions,unit,
-               grid->extent[0],
-               grid->extent[1],
-               grid->extent[2],
-               grid->extent[3],
-               grid->srs,
-               smerc,
-               ol_layer_name);
-         caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
-#endif
+         if(ctx->config->getmap_strategy != GEOCACHE_GETMAP_ERROR) {
+            ol_layer = apr_psprintf(ctx->pool,demo_layer_singletile,
+                  ol_layer_name,
+                  tileset->name,
+                  grid->name,
+                  apr_pstrcat(ctx->pool,url_prefix,"/wms?",NULL),
+                  tileset->name,resolutions,unit,
+                  grid->extent[0],
+                  grid->extent[1],
+                  grid->extent[2],
+                  grid->extent[3],
+                  grid->srs,
+                  smerc,
+                  ol_layer_name);
+            caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
+         }
       }
       tileindex_index = apr_hash_next(tileindex_index);
    }
