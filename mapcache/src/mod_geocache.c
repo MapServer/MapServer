@@ -277,6 +277,9 @@ static int mod_geocache_request_handler(request_rec *r) {
          }
       }
       request->service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,config);
+      if(GC_HAS_ERROR(global_ctx)) {
+         return report_error(apache_ctx);
+      }
       return geocache_write_capabilities(apache_ctx,req_caps);
    } else if( request->type == GEOCACHE_REQUEST_GET_TILE) {
       geocache_request_get_tile *req_tile = (geocache_request_get_tile*)request;

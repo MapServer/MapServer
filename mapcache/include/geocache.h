@@ -82,6 +82,7 @@ typedef struct geocache_source_gdal geocache_source_gdal;
 typedef struct geocache_cache_disk geocache_cache_disk;
 typedef struct geocache_request geocache_request;
 typedef struct geocache_request_get_capabilities geocache_request_get_capabilities;
+typedef struct geocache_request_get_capabilities_demo geocache_request_get_capabilities_demo;
 typedef struct geocache_request_get_capabilities_wms geocache_request_get_capabilities_wms;
 typedef struct geocache_request_get_capabilities_wmts geocache_request_get_capabilities_wmts;
 typedef struct geocache_request_get_capabilities_tms geocache_request_get_capabilities_tms;
@@ -463,6 +464,15 @@ struct geocache_request_get_capabilities_wmts {
    geocache_request_get_capabilities request;
 };
 
+/**
+ * the capabilities request for a specific service, to be able to create
+ * demo pages specific to a given service
+ */
+struct geocache_request_get_capabilities_demo {
+   geocache_request_get_capabilities request;
+   geocache_service *service;
+};
+
 
 
 /** \defgroup services Services*/
@@ -548,6 +558,7 @@ struct geocache_service_wmts {
  */
 struct geocache_service_demo {
     geocache_service service;
+
 };
 
 /**\class geocache_service_ve

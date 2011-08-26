@@ -67,21 +67,55 @@ static char *demo_layer_singletile =
  */
 void _geocache_service_demo_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
       const char *cpathinfo, apr_table_t *params, geocache_cfg *config) {
-   *request = (geocache_request*)apr_pcalloc(
-               ctx->pool,sizeof(geocache_request_get_capabilities));
+   geocache_request_get_capabilities_demo *drequest =
+      (geocache_request_get_capabilities_demo*)apr_pcalloc(
+            ctx->pool,sizeof(geocache_request_get_capabilities_demo));
+   *request = (geocache_request*)drequest;
    (*request)->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
+   if(!cpathinfo || *cpathinfo=='\0' || !strcmp(cpathinfo,"/")) {
+      /*we have no specified service, create the link page*/
+      drequest->service = NULL;
+      return;
+   } else {
+      cpathinfo++; /* skip the leading / */
+      int i;
+      for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
+         /* loop through the services that have been configured */
+         int prefixlen;
+         geocache_service *service = NULL;
+         service = config->services[i];
+         if(!service) continue; /* skip an unconfigured service */
+         prefixlen = strlen(service->url_prefix);
+         if(strncmp(service->url_prefix,cpathinfo, prefixlen)) continue; /*skip a service who's prefix does not correspond */
+         if(*(cpathinfo+prefixlen)!='/' && *(cpathinfo+prefixlen)!='\0') continue; /*we matched the prefix but there are trailing characters*/
+         drequest->service = service;
+         return;
+      }
+      ctx->set_error(ctx,404,"demo service \"%s\" not recognised or not enabled",cpathinfo);
+   }
 }
 
-void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capabilities *req,
-      char *url, char *path_info, geocache_cfg *cfg) {
-   geocache_request_get_capabilities *request = (geocache_request_get_capabilities*)req;
-   request->mime_type = apr_pstrdup(ctx->pool,"text/html");
-   const char *onlineresource = apr_table_get(cfg->metadata,"url");
-   if(!onlineresource) {
-      onlineresource = url;
+void _create_demo_front(geocache_context *ctx, geocache_request_get_capabilities *req,
+      const char *urlprefix) {
+   req->mime_type = apr_pstrdup(ctx->pool,"text/html");
+   char *caps = apr_pstrdup(ctx->pool,
+         "<html><head><title>geocache demo landing page</title></head><body>");
+   int i;
+   for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
+      geocache_service *service = ctx->config->services[i];
+      if(!service || service->type == GEOCACHE_SERVICE_DEMO) continue; /* skip an unconfigured service, and the demo one */
+      caps = apr_pstrcat(ctx->pool,caps,"<a href=\"",urlprefix,"/demo/",service->url_prefix,"\">",
+            service->url_prefix,"</a><br/>",NULL);
    }
+
+   req->capabilities = caps;
+}
+
+void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *req,
+         const char *url_prefix) {
+   req->mime_type = apr_pstrdup(ctx->pool,"text/html");
    char *caps = apr_pstrdup(ctx->pool,demo_head);
-   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
+   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    char *layers="";
    while(tileindex_index) {
       geocache_tileset *tileset;
@@ -108,7 +142,7 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
                grid->name,
                tileset->name,
                grid->name,
-               apr_pstrcat(ctx->pool,onlineresource,"/wms?",NULL),
+               apr_pstrcat(ctx->pool,url_prefix,"/wms?",NULL),
                tileset->name,resolutions,unit,
                grid->extent[0],
                grid->extent[1],
@@ -124,7 +158,7 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
                grid->name,
                tileset->name,
                grid->name,
-               apr_pstrcat(ctx->pool,onlineresource,"/wms?",NULL),
+               apr_pstrcat(ctx->pool,url_prefix,"/wms?",NULL),
                tileset->name,resolutions,unit,
                grid->extent[0],
                grid->extent[1],
@@ -154,7 +188,38 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
                "</body>\n"
                "</html>\n",caps,layers);
    
-   request->capabilities = caps;
+   req->capabilities = caps;
+}
+
+void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capabilities *req,
+      char *url, char *path_info, geocache_cfg *cfg) {
+   geocache_request_get_capabilities_demo *request = (geocache_request_get_capabilities_demo*)req;
+   const char *onlineresource = apr_table_get(cfg->metadata,"url");
+   if(!onlineresource) {
+      onlineresource = url;
+   }
+
+   if(!request->service) {
+      return _create_demo_front(ctx,req,onlineresource);
+   } else {
+      switch(request->service->type) {
+         case GEOCACHE_SERVICE_WMS:
+            return _create_demo_wms(ctx,req,onlineresource);
+         case GEOCACHE_SERVICE_GMAPS:
+         case GEOCACHE_SERVICE_TMS:
+         case GEOCACHE_SERVICE_WMTS:
+         case GEOCACHE_SERVICE_KML:
+         case GEOCACHE_SERVICE_VE:
+            req->mime_type = apr_pstrdup(ctx->pool,"text/plain");
+            req->capabilities = apr_pstrdup(ctx->pool,"not implemented");
+            return;
+         case GEOCACHE_SERVICE_DEMO:
+            ctx->set_error(ctx,400,"selected service does not provide a demo page");
+            return;
+      }
+   }
+
+
    
 }
 
