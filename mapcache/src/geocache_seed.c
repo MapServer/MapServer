@@ -4,6 +4,7 @@
 #include <apr_getopt.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/time.h>
 #include <apr_time.h>
 #include <apr_queue.h>
 
@@ -21,15 +22,14 @@ int minzoom=0;
 int maxzoom=0;
 geocache_grid_link *grid_link;
 int nthreads=1;
-
+int quiet = 0;
 int sig_int_received = 0;
 int error_detected = 0;
 apr_queue_t *work_queue;
 
 apr_time_t age_limit = 0;
-int curz;
-int seededtilestot, seededtiles;
-time_t lastlogtime,starttime;
+int seededtilestot=0, seededtiles=0, queuedtilestot=0;
+struct timeval lastlogtime,starttime;
 
 typedef enum {
    GEOCACHE_CMD_SEED,
@@ -61,6 +61,7 @@ static const apr_getopt_option_t seed_options[] = {
     { "ogr-where", 'w', TRUE, "filter to apply on layer features"},
 #endif
     { "help", 'h', FALSE, "show help" },
+    { "quiet", 'q', FALSE, "don't show progress info" },
     { NULL, 0, 0, NULL },
 };
 
@@ -117,6 +118,37 @@ int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
 
 #endif
 
+int lastmsglen = 0;
+void progresslog(int x, int y, int z) {
+   if(quiet) return;
+   char msg[1024];
+   if(queuedtilestot>nthreads) {
+      seededtilestot = queuedtilestot - nthreads;
+      struct timeval now_t;
+      gettimeofday(&now_t,NULL);
+      float duration = ((now_t.tv_sec-lastlogtime.tv_sec)*1000000+(now_t.tv_usec-lastlogtime.tv_usec))/1000000.0;
+      float totalduration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
+      if(duration>=1) {
+         int ntilessincelast = seededtilestot-seededtiles;
+         sprintf(msg,"seeding level %d: %f metatiles/sec (avg since start: %f)",z,ntilessincelast/duration,
+               seededtilestot/totalduration);
+         lastlogtime=now_t;
+         seededtiles=seededtilestot;
+      }
+   } else {
+      sprintf(msg,"seeding level %d",z);
+   
+   }
+   if(lastmsglen) {
+      char erasestring[1024];
+      sprintf(erasestring,"\r%%%ds\r",lastmsglen);
+      printf(erasestring," ");
+   }
+   lastmsglen = strlen(msg);
+   printf("%s",msg);
+   fflush(NULL);
+}
+
 
 
 void cmd_thread() {
@@ -133,7 +165,7 @@ void cmd_thread() {
       if(sig_int_received || error_detected) { //stop if we were asked to stop by hitting ctrl-c
          //remove all items from the queue
          void *entry;
-         while (apr_queue_trypop(work_queue,&entry)!=APR_EAGAIN) {}
+         while (apr_queue_trypop(work_queue,&entry)!=APR_EAGAIN) {queuedtilestot--;}
          break;
       }
       int should_seed = 0;
@@ -190,6 +222,8 @@ void cmd_thread() {
          cmd->z = z;
          cmd->command = GEOCACHE_CMD_SEED;
          apr_queue_push(work_queue,cmd);
+         queuedtilestot++;
+         progresslog(x,y,z);
       }
       //compute next x,y,z
       x += tileset->metasize_x;
@@ -292,9 +326,9 @@ int main(int argc, const char **argv) {
     ctx.global_lock_release = dummy_lock_release;
     apr_getopt_init(&opt, ctx.pool, argc, argv);
     
-    curz=-1;
-    seededtiles=seededtilestot=0;
-    starttime = lastlogtime = time(NULL);
+    seededtiles=seededtilestot=queuedtilestot=0;
+    gettimeofday(&starttime,NULL);
+    lastlogtime=starttime;
     apr_table_t *dimensions = apr_table_make(ctx.pool,3);
     char *dimkey = NULL,*dimvalue = NULL,*key,*last,*optargcpy = NULL;
     int keyidx;
@@ -304,6 +338,9 @@ int main(int argc, const char **argv) {
         switch (optch) {
             case 'h':
                 return usage(argv[0],NULL);
+                break;
+            case 'q':
+                quiet = 1;
                 break;
             case 'c':
                 configfile = optarg;
@@ -577,8 +614,12 @@ int main(int argc, const char **argv) {
            printf("%s",ctx.get_error_message(&ctx));
         }
 
-        if(seededtilestot>0)
-           printf("seeded %d tiles at %g tiles/sec\n",seededtilestot, seededtilestot/((double)(time(NULL)-starttime)));
+        if(seededtilestot>0) {
+           struct timeval now_t;
+           gettimeofday(&now_t,NULL);
+           float duration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
+           printf("\nseeded %d tiles at %g tiles/sec\n",seededtilestot, seededtilestot/duration);
+        }
     }
     return 0;
 }
