@@ -69,6 +69,19 @@ static const char *wmts_0 =
       "      </ows:HTTP>\n"
       "    </ows:DCP>\n"
       "  </ows:Operation>\n"
+      "  <ows:Operation name=\"GetFeatureInfo\">\n"
+      "    <ows:DCP>\n"
+      "      <ows:HTTP>\n"
+      "        <ows:Get xlink:href=\"%s/wmts?\">\n"
+      "          <ows:Constraint name=\"GetEncoding\">\n"
+      "            <ows:AllowedValues>\n"
+      "              <ows:Value>KVP</ows:Value>\n"
+      "            </ows:AllowedValues>\n"
+      "          </ows:Constraint>\n"
+      "        </ows:Get>\n"
+      "      </ows:HTTP>\n"
+      "    </ows:DCP>\n"
+      "  </ows:Operation>\n"
       "</ows:OperationsMetadata>\n"
       "<Contents>\n";
       
@@ -109,7 +122,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    
    caps = apr_psprintf(ctx->pool,wmts_0,
          title, "providername_todo", onlineresource, "individualname_todo",
-         onlineresource,onlineresource,onlineresource);
+         onlineresource,onlineresource,onlineresource,onlineresource);
    
    
    apr_hash_index_t *layer_index = apr_hash_first(ctx->pool,cfg->tilesets);
@@ -157,7 +170,9 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       }
       char *tmsets = "";
       char *bboxes = "";
-      
+      char *infoformats = "";
+
+
       if(tileset->wgs84bbox[0] != tileset->wgs84bbox[2]) {
          bboxes = apr_psprintf(ctx->pool,
                "    <ows:WGS84BoundingBox>\n"
@@ -213,6 +228,18 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
                bbox[0],bbox[1],
                bbox[2],bbox[3]);
       }
+
+      if(tileset->source->info_formats) {
+         int i;
+         for(i=0;i<tileset->source->info_formats->nelts;i++) {
+            char *iformat = APR_ARRAY_IDX(tileset->source->info_formats,i,char*);
+            infoformats = apr_psprintf(ctx->pool,"%s"
+                  "    <InfoFormat>%s</InfoFormat>\n"
+                  "    <ResourceURL format=\"%s\" resourceType=\"FeatureInfo\""
+                  " template=\"%s/wmts/1.0.0/%s/default/%s{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}/{J}/{I}.%d\"/>\n",
+                  infoformats,iformat,iformat,onlineresource,tileset->name,dimensionstemplate,i);
+         }
+      }
       caps = apr_psprintf(ctx->pool,"%s"
             "  <Layer>\n"
             "    <ows:Title>%s</ows:Title>\n"
@@ -223,12 +250,13 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             "    </Style>\n"
             "%s" /*dimensions*/
             "    <Format>%s</Format>\n"
+            "%s" /*infoFormats*/
             "%s" /*TileMatrixsetLinks*/
             "%s" /*BoundinBoxes*/
             "    <ResourceURL format=\"%s\" resourceType=\"tile\""
             " template=\"%s/wmts/1.0.0/%s/default/%s{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.%s\"/>\n"
             "  </Layer>\n",caps,title,abstract,
-            tileset->name,dimensions,tileset->format->mime_type,tmsets,bboxes,
+            tileset->name,dimensions,tileset->format->mime_type,infoformats,tmsets,bboxes,
             tileset->format->mime_type,onlineresource,
             tileset->name, dimensionstemplate,tileset->format->extension);
       layer_index = apr_hash_next(layer_index);
@@ -293,7 +321,8 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
 void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
       const char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    const char *str, *service = NULL, *style = NULL, *version = NULL, *layer = NULL, *matrixset = NULL,
-               *matrix = NULL, *tilecol = NULL, *tilerow = NULL, *format = NULL, *extension = NULL;
+               *matrix = NULL, *tilecol = NULL, *tilerow = NULL, *format = NULL, *extension = NULL,
+               *infoformat = NULL, *fi_i = NULL, *fi_j = NULL;
    apr_table_t *dimtable = NULL;
    geocache_tileset *tileset = NULL;
    int row,col,level;
@@ -315,7 +344,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
          req->request.request.type = GEOCACHE_REQUEST_GET_CAPABILITIES;
          *request = (geocache_request*)req;
          return;
-      } else if( ! strcasecmp(str,"gettile")) {
+      } else if( ! strcasecmp(str,"gettile") || ! strcasecmp(str,"getfeatureinfo")) {
          /* extract our wnated parameters, they will be validated later on */
          tilerow = apr_table_get(params,"TILEROW");
          style = apr_table_get(params,"STYLE");
@@ -345,6 +374,15 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
                } else {
                   apr_table_set(dimtable,dimension->name,dimension->default_value);
                }
+            }
+         }
+         if(!strcasecmp(str,"getfeatureinfo")) {
+            infoformat = apr_table_get(params,"INFOFORMAT");
+            fi_i = apr_table_get(params,"I");
+            fi_j = apr_table_get(params,"J");
+            if(!infoformat || !fi_i || !fi_j) {
+               ctx->set_error(ctx, 400, "received wmts featureinfo request with missing infoformat, i or j");
+               return;
             }
          }
       } else {
@@ -408,15 +446,36 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
          }
 
          if(!tilecol) {
-            /*this is the last element of the uri, and it will also contain the file extension*/
+            /*if we have a get tile request this is the last element of the uri, and it will also contain the file extension*/
             
+            /*split the string at the first '.'*/
+            char *charptr = key;
+            while(*charptr && *charptr != '.') charptr++;
+
+            if(*charptr == '.') {
+               /*replace '.' with '\0' and advance*/
+               *charptr++ = '\0';
+               tilecol = key;
+               extension = charptr;
+            } else {
+               tilecol = key;
+            }
+            continue;
+         }
+
+         if(!fi_j) {
+            fi_j = key;
+            continue;
+         }
+
+         if(!fi_i) {
             /*split the string at the first '.'*/
             char *charptr = key;
             while(*charptr && *charptr != '.') charptr++;
 
             /*replace '.' with '\0' and advance*/
             *charptr++ = '\0';
-            tilecol = key;
+            fi_i = key;
             extension = charptr;
             continue;
          }
@@ -515,57 +574,106 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       }
    }
 
-   if(!format && !extension) {
-      ctx->set_error(ctx, 404, "received wmts request with no format");
-      return;
-   } else {
-      if(format && strcmp(format,tileset->format->mime_type)) {
-         ctx->set_error(ctx, 404, "received wmts request with invalid format \"%s\" (expecting %s)",
-               format,tileset->format->mime_type);
+   if(!fi_j) { /*we have a getTile request*/
+      if(!format && !extension) {
+         ctx->set_error(ctx, 404, "received wmts request with no format");
+         return;
+      } else {
+         if(format && strcmp(format,tileset->format->mime_type)) {
+            ctx->set_error(ctx, 404, "received wmts request with invalid format \"%s\" (expecting %s)",
+                  format,tileset->format->mime_type);
+            return;
+         }
+         if(extension && strcmp(extension,tileset->format->extension)) {
+            ctx->set_error(ctx, 404, "received wmts request with invalid extension \"%s\" (expecting %s)",
+                  extension,tileset->format->extension);
+            return;
+         }
+      }
+
+
+      geocache_request_get_tile *req = (geocache_request_get_tile*)apr_pcalloc(
+            ctx->pool,sizeof(geocache_request_get_tile));
+
+      req->request.type = GEOCACHE_REQUEST_GET_TILE;
+      req->ntiles = 1;
+      req->tiles = (geocache_tile**)apr_pcalloc(ctx->pool,sizeof(geocache_tile*));     
+
+
+      req->tiles[0] = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
+      if(!req->tiles[0]) {
+         ctx->set_error(ctx, 500, "failed to allocate tile");
          return;
       }
-      if(extension && strcmp(extension,tileset->format->extension)) {
-         ctx->set_error(ctx, 404, "received wmts request with invalid extension \"%s\" (expecting %s)",
-               extension,tileset->format->extension);
+
+      /*populate dimensions*/
+      if(tileset->dimensions) {
+         int i;
+         req->tiles[0]->dimensions = apr_table_make(ctx->pool,tileset->dimensions->nelts);
+         for(i=0;i<tileset->dimensions->nelts;i++) {
+            geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+            const char *value = apr_table_get(dimtable,dimension->name);
+            apr_table_set(req->tiles[0]->dimensions,dimension->name,value);
+         }
+      }
+
+      req->tiles[0]->x = col;
+      req->tiles[0]->y = grid_link->grid->levels[level]->maxy - row - 1;
+      req->tiles[0]->z = level;
+
+      geocache_tileset_tile_validate(ctx,req->tiles[0]);
+      GC_CHECK_ERROR(ctx);
+
+      *request = (geocache_request*)req;
+      return;
+   } else { /* we have a featureinfo request */
+      if(!fi_i || (!infoformat && !extension)) {
+         ctx->set_error(ctx,400,"received wmts featureinfo request with missing i,j, or format");
          return;
       }
-   }
-
-
-   geocache_request_get_tile *req = (geocache_request_get_tile*)apr_pcalloc(
-         ctx->pool,sizeof(geocache_request_get_tile));
-
-   req->request.type = GEOCACHE_REQUEST_GET_TILE;
-   req->ntiles = 1;
-   req->tiles = (geocache_tile**)apr_pcalloc(ctx->pool,sizeof(geocache_tile*));     
-
-
-   req->tiles[0] = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
-   if(!req->tiles[0]) {
-      ctx->set_error(ctx, 500, "failed to allocate tile");
-      return;
-   }
-   
-   /*populate dimensions*/
-   if(tileset->dimensions) {
-      int i;
-      req->tiles[0]->dimensions = apr_table_make(ctx->pool,tileset->dimensions->nelts);
-      for(i=0;i<tileset->dimensions->nelts;i++) {
-         geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
-         const char *value = apr_table_get(dimtable,dimension->name);
-         apr_table_set(req->tiles[0]->dimensions,dimension->name,value);
+            
+      char *endptr;
+      if(!tileset->source->info_formats) {
+         ctx->set_error(ctx,400,"tileset %s does not support featureinfo requests", tileset->name);
+         return;
       }
+      geocache_request_get_feature_info *req_fi = (geocache_request_get_feature_info*)apr_pcalloc(
+            ctx->pool, sizeof(geocache_request_get_feature_info));
+      req_fi->request.type = GEOCACHE_REQUEST_GET_FEATUREINFO;
+      geocache_feature_info *fi = geocache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
+      req_fi->fi = fi;
+      if(infoformat) {
+         fi->format = (char*)infoformat;
+      }
+      if(extension) {
+         int fi_index = (int)strtol(extension,&endptr,10);
+         if(endptr == extension || fi_index < 0 || fi_index >= tileset->source->info_formats->nelts) {
+            ctx->set_error(ctx, 404, "received wmts featureinfo request with invalid extension %s",extension);
+            return;
+         }
+         fi->format = APR_ARRAY_IDX(tileset->source->info_formats,fi_index,char*);
+      }
+
+
+      fi->i = (int)strtol(fi_i,&endptr,10);
+      if(*endptr != 0 || fi->i < 0 || fi->i >= grid_link->grid->tile_sx) {
+         ctx->set_error(ctx, 404, "received wmts featureinfo request with invalid I %s",fi_i);
+         return;
+      }
+      fi->j = (int)strtol(fi_j,&endptr,10);
+      if(*endptr != 0 || fi->j < 0 || fi->j >= grid_link->grid->tile_sy) {
+         ctx->set_error(ctx, 404, "received wmts featureinfo request with invalid J %s",fi_j);
+         return;
+      }
+      fi->map.width = grid_link->grid->tile_sx;
+      fi->map.height = grid_link->grid->tile_sy;
+      geocache_grid_get_extent(ctx,grid_link->grid,
+            col,
+            grid_link->grid->levels[level]->maxy-row-1,
+            level,
+            fi->map.extent);
+      *request = (geocache_request*)req_fi;
    }
-   
-   req->tiles[0]->x = col;
-   req->tiles[0]->y = grid_link->grid->levels[level]->maxy - row - 1;
-   req->tiles[0]->z = level;
-
-   geocache_tileset_tile_validate(ctx,req->tiles[0]);
-   GC_CHECK_ERROR(ctx);
-
-   *request = (geocache_request*)req;
-   return;
 }
 
 geocache_service* geocache_service_wmts_create(geocache_context *ctx) {

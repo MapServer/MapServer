@@ -246,10 +246,12 @@
          the LAYERS parameter is mandatory.
          usual parameters here are FORMAT , or MAP if using mapserver
       -->
-      <wmsparams>
-         <FORMAT>image/png</FORMAT>
-         <LAYERS>basic</LAYERS>
-      </wmsparams>
+      <getmap>
+         <params>
+            <FORMAT>image/png</FORMAT>
+            <LAYERS>basic</LAYERS>
+         </params>
+      </getmap>
       
       <!-- http
 
@@ -286,27 +288,39 @@
    </source>
    <source name="osm" type="wms">
       <url>http://localhost/cgi-bin/mapserv?</url>
-      <wmsparams>
-         <FORMAT>image/png</FORMAT>
-         <LAYERS>default</LAYERS>
-         <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
-      </wmsparams>
+      <getmap>
+         <params>
+            <FORMAT>image/png</FORMAT>
+            <LAYERS>default</LAYERS>
+            <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
+         </params>
+      </getmap>
    </source>
    <source name="nexrad" type="wms">
       <url>http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi</url>
-      <wmsparams>
-         <FORMAT>image/png</FORMAT>
-         <LAYERS>nexrad_base_reflect</LAYERS>
-         <TRANSPARENT>true</TRANSPARENT>
-      </wmsparams>
+      <getmap>
+         <params>
+            <FORMAT>image/png</FORMAT>
+            <LAYERS>nexrad_base_reflect</LAYERS>
+            <TRANSPARENT>true</TRANSPARENT>
+         </params>
+      </getmap>
    </source>
    <source name="basic" type="wms">
       <url>http://geoservices.brgm.fr/geologie?</url>
-      <wmsparams>
-         <FORMAT>image/png</FORMAT>
-         <LAYERS>GRAVI_BASE</LAYERS>
-         <TRANSPARENT>true</TRANSPARENT>
-      </wmsparams>
+      <getmap>
+         <params>
+            <FORMAT>image/png</FORMAT>
+            <LAYERS>GRAVI_BASE</LAYERS>
+            <TRANSPARENT>true</TRANSPARENT>
+         </params>
+      </getmap>
+      <getfeatureinfo>
+         <info_formats>text/plain,application/vnd.ogc.gml</info_formats>
+         <params>
+            <QUERY_LAYERS>GRAVI_BASE</QUERY_LAYERS>
+         </params>
+      </getfeatureinfo>
    </source>
 
    <!-- tileset

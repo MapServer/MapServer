@@ -33,7 +33,7 @@ void _geocache_source_wms_render_map(geocache_context *ctx, geocache_map *map) {
     apr_table_setn(params,"FORMAT","image/png");
     apr_table_setn(params,"SRS",map->grid_link->grid->srs);
  
-    apr_table_overlap(params,wms->wms_params,0);
+    apr_table_overlap(params,wms->getmap_params,0);
     if(map->dimensions && !apr_is_empty_table(map->dimensions)) {
        const apr_array_header_t *elts = apr_table_elts(map->dimensions);
        int i;
@@ -54,6 +54,39 @@ void _geocache_source_wms_render_map(geocache_context *ctx, geocache_map *map) {
     }
 }
 
+void _geocache_source_wms_query(geocache_context *ctx, geocache_feature_info *fi) {
+    geocache_map *map = (geocache_map*)fi;
+    geocache_source_wms *wms = (geocache_source_wms*)map->tileset->source;
+    
+    apr_table_t *params = apr_table_clone(ctx->pool,wms->wms_default_params);
+    apr_table_overlap(params,wms->getmap_params,0);
+    apr_table_setn(params,"BBOX",apr_psprintf(ctx->pool,"%f,%f,%f,%f",
+             map->extent[0],map->extent[1],map->extent[2],map->extent[3]));
+    apr_table_setn(params,"REQUEST","GetFeatureInfo");
+    apr_table_setn(params,"WIDTH",apr_psprintf(ctx->pool,"%d",map->width));
+    apr_table_setn(params,"HEIGHT",apr_psprintf(ctx->pool,"%d",map->height));
+    apr_table_setn(params,"SRS",map->grid_link->grid->srs);
+    apr_table_setn(params,"X",apr_psprintf(ctx->pool,"%d",fi->i));
+    apr_table_setn(params,"Y",apr_psprintf(ctx->pool,"%d",fi->j));
+    apr_table_setn(params,"INFO_FORMAT",fi->format);
+ 
+    apr_table_overlap(params,wms->getfeatureinfo_params,0);
+    if(map->dimensions && !apr_is_empty_table(map->dimensions)) {
+       const apr_array_header_t *elts = apr_table_elts(map->dimensions);
+       int i;
+       for(i=0;i<elts->nelts;i++) {
+          apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);
+          apr_table_setn(params,entry.key,entry.val);
+       }
+ 
+    }      
+
+    map->data = geocache_buffer_create(30000,ctx->pool);
+    geocache_http_request_url_with_params(ctx,wms->url,params,wms->http_headers,map->data);
+    GC_CHECK_ERROR(ctx);
+   
+}
+
 /**
  * \private \memberof geocache_source_wms
  * \sa geocache_source::configuration_parse()
@@ -66,9 +99,41 @@ void _geocache_source_wms_configuration_parse(geocache_context *ctx, ezxml_t nod
    if ((cur_node = ezxml_child(node,"url")) != NULL) {
       src->url = apr_pstrdup(ctx->pool,cur_node->txt);
    }
-   if ((cur_node = ezxml_child(node,"wmsparams")) != NULL) {
-      for(cur_node = cur_node->child; cur_node; cur_node = cur_node->sibling) {
-         apr_table_set(src->wms_params, cur_node->name, cur_node->txt);
+   if ((cur_node = ezxml_child(node,"getmap")) != NULL){
+      ezxml_t gm_node;
+      if ((gm_node = ezxml_child(cur_node,"params")) != NULL) {
+         for(gm_node = gm_node->child; gm_node; gm_node = gm_node->sibling) {
+            apr_table_set(src->getmap_params, gm_node->name, gm_node->txt);
+         }
+      } else {
+         ctx->set_error(ctx,400,"wms source %s <getmap> has no <params> block (should contain at least <LAYERS> child)",source->name);
+         return;
+      }
+   } else {
+      ctx->set_error(ctx,400,"wms source %s has no <getmap> block",source->name);
+      return;
+   }
+   if ((cur_node = ezxml_child(node,"getfeatureinfo")) != NULL){
+      ezxml_t fi_node;
+      if ((fi_node = ezxml_child(cur_node,"info_formats")) != NULL) {
+         source->info_formats = apr_array_make(ctx->pool,3,sizeof(char*));
+         char *iformats = apr_pstrdup(ctx->pool,fi_node->txt);
+         char *key,*last;
+         for (key = apr_strtok(iformats, "," , &last); key != NULL;
+               key = apr_strtok(NULL, ",", &last)) {
+            APR_ARRAY_PUSH(source->info_formats,char*) = key;
+         }
+      } else {
+         ctx->set_error(ctx,400,"wms source %s <getfeatureinfo> has no <info_formats> tag",source->name);
+         return;
+      }
+      if ((fi_node = ezxml_child(cur_node,"params")) != NULL) {
+         for(fi_node = fi_node->child; fi_node; fi_node = fi_node->sibling) {
+            apr_table_set(src->getfeatureinfo_params, fi_node->name, fi_node->txt);
+         }
+      } else {
+         ctx->set_error(ctx,400,"wms source %s <getfeatureinfo> has no <params> block (should contain at least <QUERY_LAYERS> child)",source->name);
+         return;
       }
    }
    if ((cur_node = ezxml_child(node,"http")) != NULL) {
@@ -93,8 +158,13 @@ void _geocache_source_wms_configuration_check(geocache_context *ctx, geocache_so
    if(!strlen(src->url)) {
       ctx->set_error(ctx, 400, "wms source %s has no url",source->name);
    }
-   if(!apr_table_get(src->wms_params,"LAYERS")) {
+   if(!apr_table_get(src->getmap_params,"LAYERS")) {
       ctx->set_error(ctx, 400, "wms source %s has no LAYERS", source->name);
+   }
+   if(source->info_formats) {
+      if(!apr_table_get(src->getfeatureinfo_params,"QUERY_LAYERS")) {
+         ctx->set_error(ctx, 400, "wms source %s has no QUERY_LAYERS", source->name);
+      }
    }
 }
 
@@ -109,8 +179,10 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    source->source.render_map = _geocache_source_wms_render_map;
    source->source.configuration_check = _geocache_source_wms_configuration_check;
    source->source.configuration_parse = _geocache_source_wms_configuration_parse;
+   source->source.query_info = _geocache_source_wms_query;
    source->wms_default_params = apr_table_make(ctx->pool,4);;
-   source->wms_params = apr_table_make(ctx->pool,4);
+   source->getmap_params = apr_table_make(ctx->pool,4);
+   source->getfeatureinfo_params = apr_table_make(ctx->pool,4);
    source->http_headers = apr_table_make(ctx->pool,1);
    apr_table_add(source->wms_default_params,"VERSION","1.1.1");
    apr_table_add(source->wms_default_params,"REQUEST","GetMap");

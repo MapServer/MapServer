@@ -71,6 +71,8 @@ typedef struct geocache_source geocache_source;
 typedef struct geocache_buffer geocache_buffer;
 typedef struct geocache_tile geocache_tile;
 typedef struct geocache_metatile geocache_metatile;
+typedef struct geocache_feature_info geocache_feature_info;
+typedef struct geocache_request_get_feature_info geocache_request_get_feature_info;
 typedef struct geocache_map geocache_map;
 typedef struct geocache_source_wms geocache_source_wms;
 typedef struct geocache_source_gdal geocache_source_gdal;
@@ -238,12 +240,17 @@ struct geocache_source {
     double data_extent[4]; /**< extent in which this source can produce data */
     geocache_source_type type;
     apr_table_t *metadata;
+
+    apr_array_header_t *info_formats;
     /**
      * \brief get the data for the metatile
      *
      * sets the geocache_metatile::tile::data for the given tile
      */
     void (*render_map)(geocache_context *ctx, geocache_map *map);
+
+    void (*query_info)(geocache_context *ctx, geocache_feature_info *fi);
+
     void (*configuration_parse)(geocache_context *ctx, ezxml_t xml, geocache_source * source);
     void (*configuration_check)(geocache_context *ctx, geocache_source * source);
 };
@@ -256,7 +263,8 @@ struct geocache_source_wms {
     geocache_source source;
     char *url; /**< the base WMS url */
     apr_table_t *wms_default_params; /**< default WMS parameters (SERVICE,REQUEST,STYLES,VERSION) */
-    apr_table_t *wms_params; /**< WMS parameters specified in configuration */
+    apr_table_t *getmap_params; /**< WMS parameters specified in configuration */
+    apr_table_t *getfeatureinfo_params; /**< WMS parameters specified in configuration */
     apr_table_t *http_headers;
 };
 
@@ -351,6 +359,7 @@ typedef enum {
    GEOCACHE_REQUEST_GET_TILE,
    GEOCACHE_REQUEST_GET_MAP,
    GEOCACHE_REQUEST_GET_CAPABILITIES,
+   GEOCACHE_REQUEST_GET_FEATUREINFO
 } geocache_request_type;
 /**
  * \brief a request sent by a client
@@ -387,6 +396,17 @@ struct geocache_map {
    geocache_buffer *data;
    int width, height;
    double extent[4];
+};
+
+struct geocache_feature_info {
+   geocache_map map;
+   int i,j;
+   char *format;
+};
+
+struct geocache_request_get_feature_info {
+   geocache_request request;
+   geocache_feature_info *fi;
 };
 
 struct geocache_request_get_map {
@@ -975,7 +995,14 @@ geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *
  */
 geocache_map* geocache_tileset_map_create(apr_pool_t *pool, geocache_tileset *tileset, geocache_grid_link *grid_link);
 
-   /**
+
+/**
+ * \brief create and initialize a feature_info for the given tileset and grid_link
+ */
+geocache_feature_info* geocache_tileset_feature_info_create(apr_pool_t *pool, geocache_tileset *tileset,
+      geocache_grid_link *grid_link);
+
+/**
  * \brief create and initalize a tileset
  * @param pool
  * @return
@@ -1013,6 +1040,8 @@ void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatil
 geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_get_tile *req_tile);
 
 geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_map *req_map);
+
+geocache_feature_info *geocache_core_get_featureinfo(geocache_context *ctx, geocache_request_get_feature_info *req_fi);
 
 
 /* in grid.c */

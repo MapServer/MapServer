@@ -253,6 +253,24 @@ geocache_map* geocache_tileset_map_create(apr_pool_t *pool, geocache_tileset *ti
    return map;
 }
 
+/*
+ * allocate and initialize a feature_info for a given tileset
+ */
+geocache_feature_info* geocache_tileset_feature_info_create(apr_pool_t *pool, geocache_tileset *tileset,
+      geocache_grid_link *grid_link) {
+   geocache_feature_info *fi = (geocache_feature_info*)apr_pcalloc(pool, sizeof(geocache_feature_info));
+   fi->map.tileset = tileset;
+   fi->map.grid_link = grid_link;
+   if(tileset->dimensions) {
+      int i;
+      fi->map.dimensions = apr_table_make(pool,tileset->dimensions->nelts);
+      for(i=0;i<tileset->dimensions->nelts;i++) {
+         geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+         apr_table_set(fi->map.dimensions,dimension->name,dimension->default_value);
+      }
+   }
+   return fi;
+}
 
 /**
  * \brief return the image data for a given tile

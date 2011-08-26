@@ -213,6 +213,15 @@ static int geocache_write_capabilities(geocache_context_apache_request *ctx, geo
    return OK;
 }
 
+static int geocache_write_featureinfo(geocache_context_apache_request *ctx, geocache_feature_info *fi) {
+   request_rec *r = ctx->request;
+   ap_set_content_type(r, fi->format);
+   ap_set_content_length(r,fi->map.data->size);
+   ap_rwrite((void*)fi->map.data->buf, fi->map.data->size, r);
+
+   return OK;
+}
+
 static int mod_geocache_request_handler(request_rec *r) {
    apr_table_t *params;
    geocache_cfg *config = NULL;
@@ -280,6 +289,14 @@ static int mod_geocache_request_handler(request_rec *r) {
          return report_error(apache_ctx);
       }
       ret = geocache_write_image_buffer(apache_ctx,map->data, map->tileset->format);
+      return ret;
+   } else if( request->type == GEOCACHE_REQUEST_GET_FEATUREINFO) {
+      geocache_request_get_feature_info *req_fi = (geocache_request_get_feature_info*)request;
+      geocache_feature_info *fi = geocache_core_get_featureinfo(global_ctx,req_fi);
+      if(GC_HAS_ERROR(global_ctx)) {
+         return report_error(apache_ctx);
+      }
+      ret = geocache_write_featureinfo(apache_ctx, fi);
       return ret;
    } else {
       return report_error(apache_ctx);

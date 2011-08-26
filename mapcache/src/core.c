@@ -59,9 +59,9 @@ geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
 geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_map *req_map) {
 #ifdef USE_CAIRO
 #ifdef DEBUG
-   if(req_maps->nmaps ==0) {
+   if(req_map->nmaps ==0) {
       ctx->set_error(ctx,500,"BUG: get_map called with 0 maps");
-      return;
+      return NULL;
    }
 #endif
    int i;
@@ -84,3 +84,31 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
    return NULL;
 #endif
 }
+
+geocache_feature_info *geocache_core_get_featureinfo(geocache_context *ctx,
+      geocache_request_get_feature_info *req_fi) {
+   geocache_feature_info *fi = req_fi->fi;
+   geocache_tileset *tileset = fi->map.tileset;
+   if(tileset->source->info_formats) {
+      int i;
+      for(i=0;i<tileset->source->info_formats->nelts;i++) {
+         if(!strcmp(fi->format, APR_ARRAY_IDX(tileset->source->info_formats,i,char*))) {
+            break;
+         }
+      }
+      if(i == tileset->source->info_formats->nelts) {
+         ctx->set_error(ctx,404, "unsupported feature info format %s",fi->format);
+         return NULL;
+      }
+      tileset->source->query_info(ctx,fi);
+      if(GC_HAS_ERROR(ctx)) return NULL;
+      return fi;
+   } else {
+      ctx->set_error(ctx,404, "tileset %s does not support feature info requests");
+      return NULL;
+   }
+}
+
+
+/* vim: ai ts=3 sts=3 et sw=3
+*/

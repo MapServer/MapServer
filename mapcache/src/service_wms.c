@@ -56,6 +56,17 @@ static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"UTF-8
                   "</HTTP>\n"
                 "</DCPType>\n"
               "</GetMap>\n"
+              "<GetFeatureInfo>\n"
+                "<Format>text/plain</Format>\n"
+                "<Format>application/vnd.ogc.gml</Format>\n"
+                "<DCPType>\n"
+                  "<HTTP>\n"
+                    "<Get>\n"
+                      "<OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s/wms?\" />\n"
+                    "</Get>\n"
+                  "</HTTP>\n"
+                "</DCPType>\n"
+              "</GetFeatureInfo>\n"
             "</Request>\n"
             "<Exception>\n"
               "<Format>text/plain</Format>\n"
@@ -77,7 +88,7 @@ static char *wms_tileset = "<TileSet>\n"
 static char *wms_bbox = 
                "<BoundingBox srs=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n"
                "<SRS>%s</SRS>\n";
-static char *wms_layer = "<Layer queryable=\"0\" opaque=\"0\" cascaded=\"1\">\n"
+static char *wms_layer = "<Layer queryable=\"%d\" cascaded=\"1\">\n"
               "<Name>%s</Name>\n"
               "<Title>%s</Title>\n"
               "<Abstract>%s</Abstract>\n"
@@ -103,7 +114,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
    if(!title) {
       title = "no title set, add some in metadata";
    }
-   char *caps = apr_psprintf(ctx->pool,wms_capabilities_preamble,title,url,url,url);
+   char *caps = apr_psprintf(ctx->pool,wms_capabilities_preamble,title,url,url,url,url);
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
 
    while(tileindex_index) {
@@ -198,6 +209,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
             srss = apr_pstrcat(ctx->pool,srss,bbox,NULL);
          }
          char *layercaps = apr_psprintf(ctx->pool,wms_layer,
+               tileset->source->info_formats?1:0,
                tileset->name,
                title,
                abstract,
@@ -225,6 +237,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
    const char *srs=NULL;
    int width=0, height=0;
    double *bbox;
+   int isGetMap=0;
    
    str = apr_table_get(params,"SERVICE");
    if(!str) {
@@ -241,14 +254,21 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
       ctx->set_error(ctx, 400, "received wms with no request");
       return;
    }
-   if( ! strcasecmp(str,"getcapabilities") ) {
-      *request = (geocache_request*)
+
+   if( ! strcasecmp(str,"getmap")) {
+      isGetMap = 1;
+   } else {
+      if( ! strcasecmp(str,"getcapabilities") ) {
+         *request = (geocache_request*)
             apr_pcalloc(ctx->pool,sizeof(geocache_request_get_capabilities_wms));
-      (*request)->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
-      return; /* OK */
-   } else if( strcasecmp(str,"getmap")) {
-      ctx->set_error(ctx, 501, "received wms with invalid request %s",str);
-      return;
+         (*request)->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
+         return; /* OK */
+      } else if( ! strcasecmp(str,"getfeatureinfo") ) {
+         //nothing
+      } else {
+         ctx->set_error(ctx, 501, "received wms with invalid request %s",str);
+         return;
+      }
    }
 
 
@@ -297,29 +317,153 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
       return;
    }
 
-   str = apr_table_get(params,"LAYERS");
-   if(!str) {
-      ctx->set_error(ctx, 400, "received wms request with no layers");
-      return;
+   if(isGetMap) {
+      str = apr_table_get(params,"LAYERS");
+      if(!str) {
+         ctx->set_error(ctx, 400, "received wms request with no layers");
+         return;
+      } else {
+         char *last, *key, *layers;
+         int count=1;
+         char *sep=",";
+         geocache_request_get_map *map_req = NULL;
+         geocache_request_get_tile *tile_req = NULL;
+         layers = apr_pstrdup(ctx->pool,str);
+         for(key=layers;*key;key++) if(*key == ',') count++;
+
+         /* we have to loop twice on the requested layers, once to determine the request type,
+          * and a second time to actually populate the request structure */
+
+         /*first pass around requested layers to see if we have a getTile or a getMap request*/
+         geocache_request_type type = GEOCACHE_REQUEST_GET_TILE;
+         for (key = apr_strtok(layers, sep, &last); key != NULL;
+               key = apr_strtok(NULL, sep, &last)) {
+            geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
+            if(!tileset) {
+               ctx->set_error(ctx, 404, "received wms request with invalid layer %s", key);
+               return;
+            }
+            int i;
+            geocache_grid_link *grid_link = NULL;
+            for(i=0;i<tileset->grid_links->nelts;i++){
+               geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+               if(strcasecmp(sgrid->grid->srs,srs)) continue;
+               grid_link = sgrid;
+               break;
+            }
+            if(!grid_link) {
+               ctx->set_error(ctx, 400,
+                     "received unsuitable wms request: no <grid> with suitable srs found for layer %s",tileset->name);
+               return;
+            }
+
+            /* verify we align on the tileset's grid */ 
+            if(grid_link->grid->tile_sx != width || grid_link->grid->tile_sy != height ||
+                  geocache_grid_is_bbox_aligned(ctx, grid_link->grid, bbox) != GEOCACHE_SUCCESS) {
+               type = GEOCACHE_REQUEST_GET_MAP;
+            }
+         }
+
+         if(type == GEOCACHE_REQUEST_GET_TILE) {
+            tile_req = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_tile));
+            tile_req->request.type = GEOCACHE_REQUEST_GET_TILE;
+            tile_req->tiles = apr_pcalloc(ctx->pool, count*sizeof(geocache_tile*));
+            *request = (geocache_request*)tile_req;
+         } else {
+            map_req = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_map));
+            map_req->request.type = GEOCACHE_REQUEST_GET_MAP;
+            map_req->maps = apr_pcalloc(ctx->pool, count*sizeof(geocache_map*));
+            *request = (geocache_request*)map_req;
+         }
+
+
+         layers = apr_pstrdup(ctx->pool,str);
+         for (key = apr_strtok(layers, sep, &last); key != NULL;
+               key = apr_strtok(NULL, sep, &last)) {
+            geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
+            int i;
+            geocache_grid_link *grid_link = NULL;
+            for(i=0;i<tileset->grid_links->nelts;i++){
+               grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+               if(strcasecmp(grid_link->grid->srs,srs)) continue;
+               break;
+            }
+            apr_table_t *dimtable = NULL;
+            if(type == GEOCACHE_REQUEST_GET_TILE) {
+               geocache_tile *tile = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
+#ifndef DEBUG
+               geocache_grid_get_cell(ctx, grid_link->grid, bbox, &tile->x, &tile->y, &tile->z);
+#else
+               int ret = geocache_grid_get_cell(ctx, grid_link->grid, bbox, &tile->x, &tile->y, &tile->z);
+               if(ret != GEOCACHE_SUCCESS) {
+                  ctx->set_error(ctx,500,"###BUG###: grid_get_cell returned failure");
+                  return;
+               }
+#endif
+               geocache_tileset_tile_validate(ctx,tile);
+               if(GC_HAS_ERROR(ctx)) {
+                  /* don't bail out just yet, in case multiple tiles have been requested */
+                  ctx->clear_errors(ctx);
+               } else {
+                  tile_req->tiles[tile_req->ntiles++] = tile;
+               }
+               dimtable = tile->dimensions;
+
+            } else {
+               geocache_map *map = geocache_tileset_map_create(ctx->pool,tileset,grid_link);
+               map->width = width;
+               map->height = height;
+               map->extent[0] = bbox[0];
+               map->extent[1] = bbox[1];
+               map->extent[2] = bbox[2];
+               map->extent[3] = bbox[3];
+               map_req->maps[map_req->nmaps++] = map;
+               dimtable = map->dimensions;
+            }
+
+            /*look for dimensions*/
+            if(dimtable) {
+               int i;
+               for(i=0;i<tileset->dimensions->nelts;i++) {
+                  geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+                  const char *value;
+                  if((value = (char*)apr_table_get(params,dimension->name)) != NULL) {
+                     char *tmpval = apr_pstrdup(ctx->pool,value);
+                     int ok = dimension->validate(ctx,dimension,&tmpval);
+                     GC_CHECK_ERROR(ctx);
+                     if(ok == GEOCACHE_SUCCESS)
+                        apr_table_setn(dimtable,dimension->name,tmpval);
+                     else {
+                        ctx->set_error(ctx,400,"dimension \"%s\" value \"%s\" fails to validate",
+                              dimension->name, value);
+                        return;
+                     }
+                  }
+               }
+            }
+         }
+         if(tile_req && tile_req->ntiles == 0) {
+            ctx->set_error(ctx,404,"request for tile outside of restricted extent");
+            return;
+         }
+      }
    } else {
-      char *last, *key, *layers;
-      int count=1;
-      char *sep=",";
-      geocache_request_get_map *map_req = NULL;
-      geocache_request_get_tile *tile_req = NULL;
-      layers = apr_pstrdup(ctx->pool,str);
-      for(key=layers;*key;key++) if(*key == ',') count++;
-      
-      /* we have to loop twice on the requested layers, once to determine the request type,
-       * and a second time to actually populate the request structure */
-      
-      /*first pass around requested layers to see if we have a getTile or a getMap request*/
-      geocache_request_type type = GEOCACHE_REQUEST_GET_TILE;
-      for (key = apr_strtok(layers, sep, &last); key != NULL;
-            key = apr_strtok(NULL, sep, &last)) {
-         geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
+      //getfeatureinfo
+      str = apr_table_get(params,"QUERY_LAYERS");
+      if(!str) {
+         ctx->set_error(ctx, 400, "received wms getfeatureinfo request with no query layers");
+         return;
+      } else if(strstr(str,",")) {
+         ctx->set_error(ctx,501, "wms getfeatureinfo not implemented for multiple layers");
+         return;
+      } else {
+         geocache_tileset *tileset = geocache_configuration_get_tileset(config,str);
          if(!tileset) {
-            ctx->set_error(ctx, 404, "received wms request with invalid layer %s", key);
+            ctx->set_error(ctx, 404, "received wms getfeatureinfo request with invalid layer %s", str);
+            return;
+         }
+         if(!tileset->source->info_formats) {
+            ctx->set_error(ctx, 404, "received wms getfeatureinfo request for unqueryable layer %s", str);
             return;
          }
          int i;
@@ -331,77 +475,48 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             break;
          }
          if(!grid_link) {
-               ctx->set_error(ctx, 400,
-                     "received unsuitable wms request: no <grid> with suitable srs found for layer %s",tileset->name);
-               return;
+            ctx->set_error(ctx, 400,
+                  "received unsuitable wms request: no <grid> with suitable srs found for layer %s",tileset->name);
+            return;
          }
-
-         /* verify we align on the tileset's grid */ 
-         if(grid_link->grid->tile_sx != width || grid_link->grid->tile_sy != height ||
-               geocache_grid_is_bbox_aligned(ctx, grid_link->grid, bbox) != GEOCACHE_SUCCESS) {
-            type = GEOCACHE_REQUEST_GET_MAP;
-         }
-      }
-
-      if(type == GEOCACHE_REQUEST_GET_TILE) {
-         tile_req = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_tile));
-         tile_req->request.type = GEOCACHE_REQUEST_GET_TILE;
-         tile_req->tiles = apr_pcalloc(ctx->pool, count*sizeof(geocache_tile*));
-         *request = (geocache_request*)tile_req;
-      } else {
-         map_req = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_map));
-         map_req->request.type = GEOCACHE_REQUEST_GET_MAP;
-         map_req->maps = apr_pcalloc(ctx->pool, count*sizeof(geocache_map*));
-         *request = (geocache_request*)map_req;
-      }
-
-
-      layers = apr_pstrdup(ctx->pool,str);
-      for (key = apr_strtok(layers, sep, &last); key != NULL;
-            key = apr_strtok(NULL, sep, &last)) {
-         geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
-         int i;
-         geocache_grid_link *grid_link = NULL;
-         for(i=0;i<tileset->grid_links->nelts;i++){
-            grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
-            if(strcasecmp(grid_link->grid->srs,srs)) continue;
-            break;
-         }
-         apr_table_t *dimtable = NULL;
-         if(type == GEOCACHE_REQUEST_GET_TILE) {
-            geocache_tile *tile = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
-#ifndef DEBUG
-            geocache_grid_get_cell(ctx, grid_link->grid, bbox, &tile->x, &tile->y, &tile->z);
-#else
-            int ret = geocache_grid_get_cell(ctx, grid_link->grid, bbox, &tile->x, &tile->y, &tile->z);
-            if(ret != GEOCACHE_SUCCESS) {
-               ctx->set_error(ctx,500,"###BUG###: grid_get_cell returned failure");
-               return;
-            }
-#endif
-            geocache_tileset_tile_validate(ctx,tile);
-            if(GC_HAS_ERROR(ctx)) {
-               /* don't bail out just yet, in case multiple tiles have been requested */
-               ctx->clear_errors(ctx);
-            } else {
-               tile_req->tiles[tile_req->ntiles++] = tile;
-            }
-            dimtable = tile->dimensions;
-
+         int x,y;
+         
+         str = apr_table_get(params,"X");
+         if(!str) {
+            ctx->set_error(ctx, 400, "received wms getfeatureinfo request with no X");
+            return;
          } else {
-            geocache_map *map = geocache_tileset_map_create(ctx->pool,tileset,grid_link);
-            map->width = width;
-            map->height = height;
-            map->extent[0] = bbox[0];
-            map->extent[1] = bbox[1];
-            map->extent[2] = bbox[2];
-            map->extent[3] = bbox[3];
-            map_req->maps[map_req->nmaps++] = map;
-            dimtable = map->dimensions;
+            char *endptr;
+            x = (int)strtol(str,&endptr,10);
+            if(*endptr != 0 || x <= 0 || x>=width) {
+               ctx->set_error(ctx, 400, "received wms request with invalid X");
+               return;
+            }
+         }
+
+         str = apr_table_get(params,"Y");
+         if(!str) {
+            ctx->set_error(ctx, 400, "received wms getfeatureinfo request with no Y");
+            return;
+         } else {
+            char *endptr;
+            y = (int)strtol(str,&endptr,10);
+            if(*endptr != 0 || y <= 0 || y>=height) {
+               ctx->set_error(ctx, 400, "received wms request with invalid Y");
+               return;
+            }
          }
          
-         /*look for dimensions*/
-         if(dimtable) {
+         geocache_feature_info *fi = geocache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
+         fi->i = x;
+         fi->j = y;
+         fi->format = apr_pstrdup(ctx->pool,apr_table_get(params,"INFO_FORMAT"));
+         if(!fi->format) {
+            ctx->set_error(ctx, 400, "received wms getfeatureinfo request with no INFO_FORMAT");
+            return;
+         }
+
+         if(fi->map.dimensions) {
             int i;
             for(i=0;i<tileset->dimensions->nelts;i++) {
                geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
@@ -411,7 +526,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                   int ok = dimension->validate(ctx,dimension,&tmpval);
                   GC_CHECK_ERROR(ctx);
                   if(ok == GEOCACHE_SUCCESS)
-                     apr_table_setn(dimtable,dimension->name,tmpval);
+                     apr_table_setn(fi->map.dimensions,dimension->name,tmpval);
                   else {
                      ctx->set_error(ctx,400,"dimension \"%s\" value \"%s\" fails to validate",
                            dimension->name, value);
@@ -420,14 +535,22 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                }
             }
          }
-      }
-      if(tile_req && tile_req->ntiles == 0) {
-         ctx->set_error(ctx,404,"request for tile outside of restricted extent");
-         return;
+         fi->map.width = width;
+         fi->map.height = height;
+         fi->map.extent[0] = bbox[0];
+         fi->map.extent[1] = bbox[1];
+         fi->map.extent[2] = bbox[2];
+         fi->map.extent[3] = bbox[3];
+         geocache_request_get_feature_info *req_fi = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_feature_info));
+         req_fi->request.type = GEOCACHE_REQUEST_GET_FEATUREINFO;
+         req_fi->fi = fi;
+         *request = (geocache_request*)req_fi;
+
       }
    }
 #ifdef DEBUG
-   if((*request)->type != GEOCACHE_REQUEST_GET_TILE && (*request)->type != GEOCACHE_REQUEST_GET_MAP) {
+   if((*request)->type != GEOCACHE_REQUEST_GET_TILE && (*request)->type != GEOCACHE_REQUEST_GET_MAP && 
+         (*request)->type != GEOCACHE_REQUEST_GET_FEATUREINFO  ) {
       ctx->set_error(ctx,500,"BUG: request not gettile or getmap");
       return;
    }
