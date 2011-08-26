@@ -318,7 +318,6 @@
 
    <!--
         a cache is where tiles are stored once they have been rendered
-        the only "type" available right now is "disk"
    -->
    <cache name="disk" type="disk">
 
@@ -341,12 +340,26 @@
 
    <!-- memcache cache
         entry accepts multiple <server> entries
+        requires a fairly recent apr-util library and headers
    -->
    <cache name="memcache" type="memcache">
       <server>
          <host>localhost</host>
          <port>11211</port>
       </server>
+   </cache>
+   
+   <!-- sqlite cache
+        requires building with "with-sqlite"
+   -->
+   <cache name="sqlite" type="sqlite3">
+      <!-- base
+           
+           absolute filesystem path where the sqlite database files will be stored.
+           this directory needs to be readable and writable by the user running
+           apache
+      -->
+      <base>/tmp</base>
    </cache>
 
    <!-- format
