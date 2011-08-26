@@ -2048,7 +2048,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # don't let AC_PROG_CC force "-g -O2"
-: ${CFLAGS="-Wall"}
+: ${CFLAGS="-Wall --std=c99"}
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
