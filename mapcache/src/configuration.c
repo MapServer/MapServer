@@ -529,6 +529,7 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          ctx->set_error(ctx,400, "mixed format %s references unknown transparent format %s"
                "(order is important, format %s should appear first)",
                name,cur_node->txt,cur_node->txt);
+         return;
       }
       if ((cur_node = ezxml_child(node,"opaque")) != NULL) {
          opaque = geocache_configuration_get_image_format(config,cur_node->txt);
@@ -537,6 +538,7 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          ctx->set_error(ctx,400, "mixed format %s references unknown opaque format %s"
                "(order is important, format %s should appear first)",
                name,cur_node->txt,cur_node->txt);
+         return;
       }
       format = geocache_imageio_create_mixed_format(ctx->pool,name,transparent, opaque);
    } else {
