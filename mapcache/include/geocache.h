@@ -496,12 +496,14 @@ struct geocache_request_proxy {
    geocache_request request;
    geocache_http *http;
    apr_table_t *params;
+   char *pathinfo;
 };
 
 struct geocache_forwarding_rule {
    char *name;
    geocache_http *http;
    apr_array_header_t *match_params;  /* actually those are geocache_dimensions */
+   int append_pathinfo;
 };
 
 

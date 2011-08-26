@@ -665,7 +665,7 @@
          <abstract>see http://mapserver-utils.googlecode.com</abstract>
       </metadata>
       <source>osm</source>
-      <cache>memcache</cache>
+      <cache>disk</cache>
       <format>PNG</format>
       <grid>FXX</grid>
       <grid>MILLER</grid>
@@ -710,14 +710,12 @@
            tilesets, and can optionally forward all the rest to (an)other server(s)
            TODO: this needs way more documenting
       -->
-      <!--
       <forwarding_rule name="foo rule">
             <append_pathinfo>true</append_pathinfo>
             <http>
                <url>http://localhost/</url>
             </http>
       </forwarding_rule>
-      -->
    </service>
    <service type="wmts" enabled="true"/>
    <service type="tms" enabled="true"/>

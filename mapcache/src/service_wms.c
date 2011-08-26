@@ -713,6 +713,11 @@ proxies:
             (*request)->type = GEOCACHE_REQUEST_PROXY;
             req_proxy->http = rule->http;
             req_proxy->params = params;
+            if(rule->append_pathinfo) {
+               req_proxy->pathinfo = pathinfo;
+            } else {
+               req_proxy->pathinfo = NULL;
+            }
             return;
          }
       }
@@ -727,9 +732,10 @@ proxies:
       return;
    }
 #ifdef DEBUG
-   if((*request)->type != GEOCACHE_REQUEST_GET_TILE && (*request)->type != GEOCACHE_REQUEST_GET_MAP &&
-         (*request)->type != GEOCACHE_REQUEST_GET_CAPABILITIES &&
-         (*request)->type != GEOCACHE_REQUEST_GET_FEATUREINFO  ) {
+   if((*request)->type != GEOCACHE_REQUEST_GET_TILE &&
+         (*request)->type != GEOCACHE_REQUEST_GET_MAP && 
+         (*request)->type != GEOCACHE_REQUEST_GET_FEATUREINFO && 
+         (*request)->type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
       ctx->set_error(ctx,500,"BUG: request not gettile or getmap");
       return;
    }
@@ -747,6 +753,12 @@ void _configuration_parse_wms(geocache_context *ctx, ezxml_t node, geocache_serv
       rule->name = apr_pstrdup(ctx->pool,name);
       rule->match_params = apr_array_make(ctx->pool,1,sizeof(geocache_dimension*));
 
+      ezxml_t pathinfo_node = ezxml_child(rule_node,"append_pathinfo");
+      if(pathinfo_node && !strcasecmp(pathinfo_node->txt,"true")) {
+         rule->append_pathinfo = 1;
+      } else {
+         rule->append_pathinfo = 0;
+      }
       ezxml_t http_node = ezxml_child(rule_node,"http");
       if(!http_node) {
          ctx->set_error(ctx,500,"rule \"%s\" does not contain an <http> block",name);

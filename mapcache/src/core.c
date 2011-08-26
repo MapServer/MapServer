@@ -132,7 +132,12 @@ geocache_proxied_response *geocache_core_proxy_request(geocache_context *ctx, ge
 
     response->data = geocache_buffer_create(30000,ctx->pool);
     response->headers = apr_table_make(ctx->pool,1);
-    geocache_http_do_request_with_params(ctx,req_proxy->http,req_proxy->params,response->data,response->headers);
+    geocache_http *http = req_proxy->http;
+    if(req_proxy->pathinfo) {
+      http = geocache_http_clone(ctx,http);
+      http->url = apr_pstrcat(ctx->pool,http->url,req_proxy->pathinfo,NULL);
+    }
+    geocache_http_do_request_with_params(ctx,http,req_proxy->params,response->data,response->headers);
     return response;
 }
 
