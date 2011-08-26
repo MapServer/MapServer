@@ -27,6 +27,7 @@
 #include "gdal_alg.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+
 /**
  * \private \memberof geocache_source_gdal
  * \sa geocache_source::render_metatile()
@@ -34,7 +35,7 @@
 void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metatile *tile) {
    geocache_source_gdal *gdal = (geocache_source_gdal*)tile->tile.tileset->source;
    char *srcSRS = "", *dstSRS;        
-   tile->tile.data = geocache_buffer_create(30000,ctx->pool);
+   geocache_buffer *data = geocache_buffer_create(0,ctx->pool);
    GC_CHECK_ERROR(ctx);
    GDALDatasetH  hDataset;
 
@@ -115,7 +116,7 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
    adfDstGeoTransform[3] = tile->bbox[3];
    adfDstGeoTransform[1] = dfXRes;
    adfDstGeoTransform[5] = -dfYRes;
-   hDstDS = GDALCreate( hDriver, "tempd_gdal_image", tile->tile.grid->tile_sx, tile->tile.grid->tile_sy, 4, GDT_Byte, NULL );
+   hDstDS = GDALCreate( hDriver, "tempd_gdal_image", tile->sx, tile->sy, 4, GDT_Byte, NULL );
 
    /* -------------------------------------------------------------------- */
    /*      Write out the projection definition.                            */
@@ -163,13 +164,45 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
    if( hGenImgProjArg != NULL )
       GDALDestroyGenImgProjTransformer( hGenImgProjArg );
 
+   if(GDALGetRasterCount(hDstDS) != 4) {
+      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"gdal did not create a 4 band image");
+      return;
+   }
+
+   GDALRasterBandH *redband, *greenband, *blueband, *alphaband;
+
+   redband = GDALGetRasterBand(hDstDS,1);
+   greenband = GDALGetRasterBand(hDstDS,2);
+   blueband = GDALGetRasterBand(hDstDS,3);
+   alphaband = GDALGetRasterBand(hDstDS,4);
+
+   unsigned char *rasterdata = apr_palloc(ctx->pool,tile->sx*tile->sy*4);
+   data->buf = rasterdata;
+   data->avail = tile->sx*tile->sy*4;
+   data->size = tile->sx*tile->sy*4;
+
+   GDALRasterIO(redband,GF_Read,0,0,tile->sx,tile->sy,(void*)(rasterdata),tile->sx,tile->sy,GDT_Byte,4,4*tile->sx);
+   GDALRasterIO(greenband,GF_Read,0,0,tile->sx,tile->sy,(void*)(rasterdata+1),tile->sx,tile->sy,GDT_Byte,4,4*tile->sx);
+   GDALRasterIO(blueband,GF_Read,0,0,tile->sx,tile->sy,(void*)(rasterdata+2),tile->sx,tile->sy,GDT_Byte,4,4*tile->sx);
+   if(GDALGetRasterCount(hDataset)==4)
+      GDALRasterIO(alphaband,GF_Read,0,0,tile->sx,tile->sy,(void*)(rasterdata+3),tile->sx,tile->sy,GDT_Byte,4,4*tile->sx);
+   else {
+      unsigned char *alphaptr;
+      int i;
+      for(alphaptr = rasterdata+3, i=0; i<tile->sx*tile->sy; i++, alphaptr+=4) {
+         *alphaptr = 255;
+      }
+   }
+
+   tile->imdata = geocache_image_create(ctx);
+   tile->imdata->w = tile->sx;
+   tile->imdata->h = tile->sy;
+   tile->imdata->stride = tile->sx * 4;
+   tile->imdata->data = rasterdata;
+
+
    GDALClose( hDstDS );
    GDALClose( hDataset);
-   if(!geocache_imageio_is_valid_format(ctx,tile->tile.data)) {
-      char *returned_data = apr_pstrndup(ctx->pool,(char*)tile->tile.data->buf,tile->tile.data->size);
-      ctx->set_error(ctx, GEOCACHE_SOURCE_GDAL_ERROR, "gdal request for tileset %s: %d %d %d returned an unsupported format:\n%s",
-            tile->tile.tileset->name, tile->tile.x, tile->tile.y, tile->tile.z, returned_data);
-   }
 }
 
 /**

@@ -212,6 +212,11 @@
       <compression>best</compression>
    </format>
 
+   <!--
+   <source name="bluemarble" type="gdal">
+      <data>/gro2/data/bluemarble/bluemarble.vrt</data>
+   </source>
+   -->
    <!-- source
 
       the service to query for obtaining images if they are not in the cache
@@ -296,9 +301,9 @@
          the supplied image is read when the configuration is loaded.
          if you make changes to the image, they will NOT be reflected on tiles already
          stored in the cache, nor on newly stored tiles until the server is restarted
-      <watermark>/Users/tbonfort/Documents/terriscope/logo-watermark.png</watermark>
+      <watermark>/home/tbonfort/dev/mod-geocache/static/watermark.png</watermark>
       -->
-
+      
       <!-- format
          (optional) format to use when storing a tile. this should be a format with high
          compression, eg. png with compression "best", as the compression operation is only
@@ -391,6 +396,16 @@
       <metatile>5 5</metatile>
       <metabuffer>10</metabuffer>
    </tileset>
+
+   <!--
+   <tileset name="bluemarble">
+      <source>bluemarble</source>
+      <cache>disk</cache>
+      <metatile>5 5</metatile>
+      <format>PNG</format>
+      <grid>google,WGS84</grid>
+   </tileset>
+   -->
 
 
    <!-- merge_format

@@ -687,6 +687,7 @@ struct geocache_metatile {
     double bbox[4]; /**< the bounding box covered by this metatile */
     int ntiles; /**< the number of geocache_metatile::tiles contained in this metatile */
     geocache_tile *tiles; /**< the list of geocache_tile s contained in this metatile */
+    geocache_image *imdata;
 };
 
 struct geocache_grid {

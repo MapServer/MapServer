@@ -183,6 +183,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       }
 
       char *dimensions="";
+      char *dimensionstemplate="";
       if(tileset->dimensions) {
          for(i=0;i<tileset->dimensions->nelts;i++) {
             geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
@@ -202,6 +203,8 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
                dimensions = apr_pstrcat(ctx->pool,dimensions,"      <Value>",dimension->values[i],"</Value>\n",NULL);
             }
             dimensions = apr_pstrcat(ctx->pool,dimensions,"    </Dimension>\n",NULL);
+
+            dimensionstemplate = apr_pstrcat(ctx->pool,dimensionstemplate,dimension->name,"/{",dimension->name,"}/",NULL);
          }
       }
       char *tmsets="";
@@ -223,15 +226,18 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             "    </ows:WGS84BoundingBox>\n"*/
             "    <ows:Identifier>%s</ows:Identifier>\n"
             "    <Style isDefault=\"true\">\n"
-            "      <ows:Identifier>_null</ows:Identifier>\n"
+            "      <ows:Identifier>default</ows:Identifier>\n"
             "    </Style>\n"
             "%s" /*dimensions*/
             "    <Format>%s</Format>\n"
             "    <TileMatrixSetLink>\n"
             "%s"
             "    </TileMatrixSetLink>\n"
+            "    <ResourceURL format=\"%s\" resourceType=\"tile\"\n"
+            "                 template=\"%s/wmts/default/{TileMatrixSet}/{TileMatrix}/%s{TileRow}/{TileCol}.%s\"/>\n"
             "  </Layer>\n",caps,title,abstract,
-            tileset->name,dimensions,tileset->format->mime_type,tmsets);
+            tileset->name,dimensions,tileset->format->mime_type,tmsets,
+            tileset->format->mime_type,onlineresource,dimensionstemplate,tileset->format->extension);
       layer_index = apr_hash_next(layer_index);
    }
    caps = apr_pstrcat(ctx->pool,caps,"</Contents>\n</Capabilities>\n",NULL);

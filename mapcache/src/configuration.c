@@ -703,6 +703,11 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          }
          tileset->format = format;
    }
+   if(!tileset->format && tileset->source->type == GEOCACHE_SOURCE_GDAL) {
+      ctx->set_error(ctx,GEOCACHE_PARSE_ERROR, "tileset \"%s\" references a gdal source. <format> tag is missing and mandatory in this case",
+            tileset->name);
+      return;
+   }
    
    /* check we have all we want */
    if(tileset->cache == NULL) {

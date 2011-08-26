@@ -105,7 +105,11 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
       int sx,sy;
       tileimg.w = mt->tile.grid->tile_sx;
       tileimg.h = mt->tile.grid->tile_sy;
-      metatile = geocache_imageio_decode(ctx, mt->tile.data);
+      if(!mt->imdata) {
+         metatile = geocache_imageio_decode(ctx, mt->tile.data);
+      } else {
+         metatile = mt->imdata;
+      }
       if(!metatile) {
          ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to load image data from metatile");
          return;
