@@ -119,7 +119,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
             char *order = apr_psprintf(ctx->pool,"%d",i);
             ezxml_set_attr(xmltileset,"href",
                   apr_pstrcat(ctx->pool,onlineresource,"/tms/",request->version,"/",
-                     tileset->name,"@",grid->srs,
+                     tileset->name,"@",grid->name,
                      "/",order,NULL));
             ezxml_set_attr(xmltileset,"units-per-pixel",apr_psprintf(ctx->pool,"%f",grid->levels[i]->resolution));
             ezxml_set_attr(xmltileset,"order",order);
