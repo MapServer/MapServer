@@ -35,10 +35,7 @@ static char* geocache_mutex_name = "geocache_mutex";
 
 static int geocache_write_tile(request_rec *r, geocache_tile *tile) {
    int rc;
-   if(tile->tileset->source->image_format == GEOCACHE_IMAGE_FORMAT_PNG) 
-      ap_set_content_type(r, "image/png");
-   else
-      ap_set_content_type(r, "image/jpeg");
+
 
    ap_update_mtime(r, tile->mtime);
    if((rc = ap_meets_conditions(r)) != OK) {
@@ -46,6 +43,10 @@ static int geocache_write_tile(request_rec *r, geocache_tile *tile) {
    }
    ap_set_last_modified(r);
    ap_set_content_length(r,tile->data->size);
+   if(tile->tileset->source->image_format == GEOCACHE_IMAGE_FORMAT_PNG) 
+      ap_set_content_type(r, "image/png");
+   else
+      ap_set_content_type(r, "image/jpeg");
    ap_rwrite((void*)tile->data->buf, tile->data->size, r);
 
    return OK;
