@@ -2,8 +2,22 @@
  "grids": [
   {
    "name":"grid1",
-   "extent":[0,3,4,4]
-  },
+   "extent":[0,3,4,4],
+   "resolutions":[0,2],
+   "size":[256,256],
+   "metadata": {
+    "title":"foo grid title",
+    "fail":"sdffd"
+   },
+   
+   "units":"m" /*sdvfdsffff
+                 rgsdg
+                 */
+
+
+
+
+  }, //comment
   {
    "name":"grid2"
   }

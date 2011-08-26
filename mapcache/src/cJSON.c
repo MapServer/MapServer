@@ -234,7 +234,24 @@ static const char *parse_object(cJSON *item,const char *value);
 static char *print_object(cJSON *item,int depth,int fmt);
 
 /* Utility to jump whitespace and cr/lf */
-static const char *skip(const char *in) {while (in && *in && (unsigned char)*in<=32) in++; return in;}
+static const char *skip(const char *in) {
+   while (in && *in && (unsigned char)*in<=32) in++;
+#ifndef STRICT_JSON
+   /* skip a c-style / * comment */
+   if(in && *in=='/' && (in+1) && *(in+1)=='*') {
+     in += 2;
+     while(in && *in && !(*in=='*' && (in+1) && *(in+1) && *(in+1)=='/')) in++;
+     return skip(in+2);
+   }
+   /* skip a cpp-style // comment */
+   if(in && *in=='/' && (in+1) && *(in+1)=='/') {
+     in += 2;
+     while(in && *in && *in!='\n') in++;
+     return skip(in+1);
+   }
+#endif
+   return in;
+}
 
 /* Parse an object - create a new root, and populate. */
 cJSON *cJSON_Parse(const char *value)

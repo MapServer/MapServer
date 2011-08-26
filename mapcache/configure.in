@@ -414,6 +414,18 @@ AC_DEFUN([DEBUG_CHECK],[
     AC_SUBST(CFLAGS,$CFLAGS)
 ])
 
+AC_DEFUN([JSON_STRICT_CHECK],[
+    AC_ARG_ENABLE(strict-json,
+        AC_HELP_STRING([--enable-strict-json],[Make the JSON parser be strict and reject comments]),
+        ,
+        [enable_strict_json=no]
+    )
+    if test "$enable_strict_json" == "yes"; then
+        CFLAGS="$CFLAGS -DSTRICT_JSON"
+    fi
+    AC_SUBST(CFLAGS,$CFLAGS)
+])
+
 AC_DEFUN([AC_EXPAND_PATH],[
   if test -z "$1" || echo "$1" | grep '^/' >/dev/null ; then
     $2="$1"
@@ -722,6 +734,7 @@ AC_DEFUN([LOCKMECH_CHECK],[
 ])
 
 DEBUG_CHECK
+JSON_STRICT_CHECK
 
 LOCKMECH_CHECK
 

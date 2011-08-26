@@ -18,9 +18,22 @@ static void parse_extent_json(geocache_context *ctx, cJSON *node, double *extent
    }
 }
 
+static void parse_metadata(geocache_context *ctx, cJSON *node, apr_table_t *metadata) {
+   if(!node->child) return;
+   cJSON *child = node->child;
+   while(child) {
+      if(child->type != cJSON_String) {
+         ctx->set_error(ctx,400,"metadata can only contain string values");
+         return;
+      }
+      apr_table_set(metadata,child->string,child->valuestring);
+      child = child->next;
+   }
+}
+
 static void parse_grid_json(geocache_context *ctx, cJSON *node, geocache_cfg *cfg) {
    char *name = NULL;
-   double extent[4];
+   int i;
    cJSON *tmp;
    geocache_grid *grid;
 
@@ -40,6 +53,13 @@ static void parse_grid_json(geocache_context *ctx, cJSON *node, geocache_cfg *cf
    }
    grid = geocache_grid_create(ctx->pool);
    grid->name = name;
+   
+   tmp = cJSON_GetObjectItem(node,"metadata");
+   if(tmp) {
+      parse_metadata(ctx,tmp,grid->metadata);
+      GC_CHECK_ERROR(ctx);
+   }
+
 
    tmp = cJSON_GetObjectItem(node,"extent");
    if(!tmp) {
@@ -48,6 +68,63 @@ static void parse_grid_json(geocache_context *ctx, cJSON *node, geocache_cfg *cf
    }
    parse_extent_json(ctx,tmp,grid->extent);
    GC_CHECK_ERROR(ctx);
+   
+   tmp = cJSON_GetObjectItem(node,"resolutions");
+   if(!tmp) {
+      ctx->set_error(ctx, 400, "resolutions not found in grid \"%s\"",name);
+      return;
+   }
+   i = cJSON_GetArraySize(tmp);
+   if(i == 0) {
+      ctx->set_error(ctx,400,"resolutions for grid %s is not an array",name);
+      return;
+   }
+   grid->levels = apr_pcalloc(ctx->pool,i*sizeof(geocache_grid_level*));
+   grid->nlevels = i;
+   for(i=0;i<grid->nlevels;i++) {
+      cJSON *item = cJSON_GetArrayItem(tmp,i);
+      if(item->type != cJSON_Number) {
+         ctx->set_error(ctx,400,"failed to parse resolution %s in grid %s (not a number)", item->valuestring,name);
+         return;
+      }
+      grid->levels[i] = apr_pcalloc(ctx->pool,sizeof(geocache_grid_level));
+      grid->levels[i]->resolution = item->valuedouble;
+   }
+   
+   tmp = cJSON_GetObjectItem(node,"size");
+   if(!tmp) {
+      ctx->set_error(ctx, 400, "size not found in grid \"%s\"",name);
+      return;
+   }
+   i = cJSON_GetArraySize(tmp);
+   if(i != 2) {
+      ctx->set_error(ctx,400,"size for grid %s is not a correct array, expecting [width,height]",name);
+      return;
+   }
+   for(i=0;i<2;i++) {
+      cJSON *item = cJSON_GetArrayItem(tmp,i);
+      if(item->type != cJSON_Number) {
+         ctx->set_error(ctx,400,"failed to parse size %s in grid %s (not a number)", item->valuestring,name);
+         return;
+      }
+      if(i==0)
+         grid->tile_sx = item->valueint;
+      else
+         grid->tile_sy = item->valueint;
+   }
+   tmp = cJSON_GetObjectItem(node,"units");
+   if(tmp && tmp->valuestring) {
+      if(!strcasecmp(tmp->valuestring,"dd"))
+         grid->unit = GEOCACHE_UNIT_DEGREES;
+      else if(!strcasecmp(tmp->valuestring,"m"))
+         grid->unit = GEOCACHE_UNIT_METERS;
+      else if(!strcasecmp(tmp->valuestring,"ft"))
+         grid->unit = GEOCACHE_UNIT_FEET;
+      else {
+         ctx->set_error(ctx,400,"unknown unit %s for grid %s",tmp->valuestring,name);
+         return;
+      }
+   }
 
    geocache_configuration_add_grid(cfg,grid,name);   
 }
