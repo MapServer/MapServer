@@ -384,11 +384,12 @@ static int mod_geocache_request_handler(request_rec *r) {
       return report_error(apache_ctx);
    }
 }
-
+#define ap_unixd_setup_child unixd_setup_child
 static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
-   apr_status_t rc;
+   apr_status_t rc,rv;
    geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
    apr_lockmech_e lock_type = APR_LOCK_DEFAULT;
+   server_rec *sconf;
 
    if(!cfg) {
       ap_log_error(APLOG_MARK, APLOG_CRIT, 0, s, "configuration not found in server context");
@@ -415,17 +416,63 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 #ifndef DISABLE_VERSION_STRING
    ap_add_version_component(p, GEOCACHE_USERAGENT);
 #endif
-   for (s = s->next; s; s = s->next) {
-      geocache_server_cfg* config = ap_get_module_config(s->module_config, &geocache_module);
+   for (sconf = s->next; sconf; sconf = sconf->next) {
+      geocache_server_cfg* config = ap_get_module_config(sconf->module_config, &geocache_module);
       config->mutex = cfg->mutex;
    }
+   
+   /* fork a child process to let it accomplish post-configuration tasks with the uid of the runtime user */
+   apr_proc_t proc;
+   rv = apr_proc_fork(&proc, ptemp);
+   if (rv == APR_INCHILD) {
+      ap_unixd_setup_child();
+      geocache_context *ctx = (geocache_context*)apache_server_context_create(s,ptemp);
+      for (sconf = s; sconf; sconf = sconf->next) {
+         geocache_server_cfg* config = ap_get_module_config(sconf->module_config, &geocache_module);
+         if(config->aliases) {
+            apr_hash_index_t *entry = apr_hash_first(ptemp,config->aliases);
 
-   return OK;
+            /* loop through the configured configurations */
+            while (entry) {
+               const char *alias;
+               apr_ssize_t aliaslen;
+               geocache_cfg *c;
+               apr_hash_this(entry,(const void**)&alias,&aliaslen,(void**)&c);
+               geocache_configuration_post_config(ctx, c);
+               if(GC_HAS_ERROR(ctx)) {
+                  ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "post config for %s failed: %s", alias,
+                        ctx->get_error_message(ctx));
+                  exit(0);
+               }
+               entry = apr_hash_next(entry);
+            }
+         }
+      }
+      exit(0);
+   } else if (rv == APR_INPARENT) {
+      apr_exit_why_e exitwhy;
+      int exitcode;
+      apr_proc_wait(&proc,&exitcode,&exitwhy,APR_WAIT);
+      if(exitwhy != APR_PROC_EXIT) {
+         ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "geocache post-config child terminated abnormally");
+      } else {
+         if(exitcode != 0) {
+            return APR_EGENERAL;
+         }
+      }
+      return OK;
+   } else {
+      ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "failed to fork geocache post-config child");
+      return APR_EGENERAL;
+   }
 }
 
 static void mod_geocache_child_init(apr_pool_t *pool, server_rec *s) {
-   geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
-   apr_global_mutex_child_init(&(cfg->mutex),cfg->mutex_name, pool);
+   while(s) {
+      geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
+      apr_global_mutex_child_init(&(cfg->mutex),cfg->mutex_name, pool);
+      s = s->next;
+   }
 }
 
 static int geocache_alias_matches(const char *uri, const char *alias_fakename)

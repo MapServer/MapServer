@@ -64,7 +64,9 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
          apr_table_setn(config->metadata,"url",url);
       }
    }
+}
 
+void geocache_configuration_post_config(geocache_context *ctx, geocache_cfg *config) {
    apr_hash_index_t *cachei = apr_hash_first(ctx->pool,config->caches);
    while(cachei) {
       geocache_cache *cache;
@@ -74,7 +76,9 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
       GC_CHECK_ERROR(ctx);
       cachei = apr_hash_next(cachei);
    }
-}
+} 
+
+
 geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    geocache_grid *grid;
    int i;

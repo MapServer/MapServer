@@ -224,6 +224,11 @@ int main(int argc, char **argv) {
       c->log(c,500,"failed to parse %s: %s",conffile,c->get_error_message(c));
       return 1;
    }
+   geocache_configuration_post_config(ctx, cfg);
+   if(GC_HAS_ERROR(c)) {
+      c->log(c,500,"post-config failed for %s: %s",conffile,c->get_error_message(c));
+      return 1;
+   }
    
    while (FCGX_Accept(&in, &out, &err, &envp) >= 0) {
       apr_table_t *params;
