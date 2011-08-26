@@ -86,8 +86,8 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       double *bbox, int width, int height,
       int ntiles,
       geocache_tile **tiles) {
-   double hresolution = geocache_grid_get_resolution(bbox, width, width);
-   double vresolution = geocache_grid_get_resolution(bbox, height, height);
+   double hresolution = geocache_grid_get_horizontal_resolution(bbox, width);
+   double vresolution = geocache_grid_get_vertical_resolution(bbox, height);
    double tilebbox[4];
    geocache_image *image = geocache_image_create(ctx);
    image->w = width;
@@ -121,7 +121,7 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       cairo_translate (cr, dstminx,dstminy);
       cairo_scale  (cr, hf, vf);
       cairo_set_source_surface (cr, srcsurface, 0, 0);
-      cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_NEAREST);
+      cairo_pattern_set_filter (cairo_get_source (cr), CAIRO_FILTER_BILINEAR);
       cairo_paint (cr);
       cairo_restore(cr);
       cairo_surface_destroy(srcsurface);

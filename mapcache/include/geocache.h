@@ -1150,6 +1150,9 @@ void geocache_grid_get_extent(geocache_context *ctx, geocache_grid *grid,
 void geocache_grid_get_xy(geocache_context *ctx, geocache_grid *grid, double dx, double dy, int z, int *x, int *y);
 
 double geocache_grid_get_resolution(double *bbox, int sx, int sy);
+double geocache_grid_get_horizontal_resolution(double *bbox, int width);
+double geocache_grid_get_vertical_resolution(double *bbox, int height);
+
 int geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level);
 void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits);
 

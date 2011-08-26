@@ -84,9 +84,18 @@ void geocache_grid_compute_limits(const geocache_grid *grid, const double *exten
 }
 
 double geocache_grid_get_resolution(double *bbox, int sx, int sy) {
-   double rx = (bbox[2] - bbox[0]) / (double)sx;
-   double ry = (bbox[3] - bbox[1]) / (double)sy;
+   double rx =  geocache_grid_get_horizontal_resolution(bbox,sx);
+   double ry =  geocache_grid_get_vertical_resolution(bbox,sy);
    return GEOCACHE_MAX(rx,ry);
+}
+
+
+double geocache_grid_get_horizontal_resolution(double *bbox, int width) {
+   return (bbox[2] - bbox[0]) / (double)width;
+}
+
+double geocache_grid_get_vertical_resolution(double *bbox, int height) {
+   return (bbox[3] - bbox[1]) / (double)height;
 }
 
 int geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level) {
