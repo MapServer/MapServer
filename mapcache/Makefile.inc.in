@@ -18,5 +18,5 @@ JPEG_LIB=@JPEG_LIB@
 
 
 
-OBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_geocache.c | sed "s/^\(.*\)\.c$$/\1.o/") 
-LOBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_geocache.c | sed "s/^\(.*\)\.c$$/\1.lo/")
+OBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_geocache.c | grep -v fastcgi_geocache.c |sed "s/^\(.*\)\.c$$/\1.o/") 
+LOBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_geocache.c | grep -v fastcgi_geocache.c | sed "s/^\(.*\)\.c$$/\1.lo/")

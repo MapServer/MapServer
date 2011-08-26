@@ -25,14 +25,11 @@
 #include <apr_tables.h>
 #include <apr_hash.h>
 #include <apr_global_mutex.h>
-#include <httpd.h>
-#include <http_config.h>
 #include <libxml/tree.h>
 #include "util.h"
 #include "errors.h"
 #include <assert.h>
 #include <apr_time.h>
-
 
 #define GEOCACHE_SUCCESS 0
 #define GEOCACHE_FAILURE 1
@@ -69,7 +66,6 @@ typedef struct geocache_server_cfg geocache_server_cfg;
 typedef struct geocache_image geocache_image;
 typedef struct geocache_context geocache_context;
 
-extern module AP_MODULE_DECLARE_DATA geocache_module;
 
 
 /** \defgroup utility Utility */
@@ -131,7 +127,7 @@ struct geocache_context {
     * calling this function after an unsuccessful call to global_lock_aquire() or from a different thread
     * or process that has called global_lock_aquire() has undefined behavior
     */
-   void (*global_lock_release)(geocache_context *c);
+   int (*global_lock_release)(geocache_context *c);
    
    apr_pool_t *pool;
    char *_errmsg;

@@ -59,12 +59,22 @@ static int _geocache_tileset_tile_get_cell(geocache_tile *tile, double *bbox, ge
 /*
  * for each of the metatile's tiles, ask the underlying cache to lock it
  */
-void _geocache_tileset_metatile_lock(geocache_metatile *mt, geocache_context *r) {
-   int i;
+int _geocache_tileset_metatile_lock(geocache_metatile *mt, geocache_context *r) {
+   int i,ret;
    for(i=0; i<mt->ntiles; i++) {
       geocache_tile *tile = &(mt->tiles[i]);
-      mt->tile.tileset->cache->tile_lock(tile,r);
+      ret = mt->tile.tileset->cache->tile_lock(tile,r);
+      if(ret != GEOCACHE_SUCCESS) {
+         /* undo successful locks */
+         int j;
+         for(j=0;j<i;j++) {
+            tile = &(mt->tiles[j]);
+            mt->tile.tileset->cache->tile_unlock(tile,r);
+         }
+         return ret;
+      }
    }
+   return GEOCACHE_SUCCESS;
 }
 
 /*
@@ -237,7 +247,12 @@ int geocache_tileset_tile_get(geocache_tile *tile, geocache_context *r) {
       if(isLocked == GEOCACHE_FALSE) {
          /* no other thread is doing the rendering, we aquire and lock a list of tiles to render */
          mt = _geocache_tileset_metatile_get(tile,r);
-         _geocache_tileset_metatile_lock(mt,r);
+         ret = _geocache_tileset_metatile_lock(mt,r);
+         if(ret != GEOCACHE_SUCCESS) {
+            r->set_error(r,GEOCACHE_TILESET_ERROR,"failed to lock tiles. do you have write permission?");
+            r->global_lock_release(r);
+            return ret;
+         }
       }
 
       r->global_lock_release(r);

@@ -18,8 +18,9 @@
 #include <curl/curl.h>
 #include <apr_hash.h>
 #include <apr_strings.h>
-#include <stdio.h>
+#include <ctype.h>
 
+#define MAX_STRING_LEN 10000
 
 size_t _geocache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void *data) {
    geocache_buffer *buffer = (geocache_buffer*)data;
@@ -42,7 +43,7 @@ int geocache_http_request_url(geocache_context *r, char *url, geocache_buffer *d
 
    /* we pass our geocache_buffer struct to the callback function */ 
    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)data);
-   
+
    curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, error_msg);
    curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
    curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
@@ -88,6 +89,62 @@ static APR_DECLARE_NONSTD(int) _geocache_key_value_append_callback(void *cnt, co
    return 1;
 #undef _mystr
 }
+
+static char _geocache_x2c(const char *what)
+{
+    register char digit;
+    digit = ((what[0] >= 'A') ? ((what[0] & 0xdf) - 'A') + 10
+             : (what[0] - '0'));
+    digit *= 16;
+    digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10
+              : (what[1] - '0'));
+    return (digit);
+}
+
+#ifdef _WIN32
+#define IS_SLASH(s) ((s == '/') || (s == '\\'))
+#else
+#define IS_SLASH(s) (s == '/')
+#endif
+
+int _geocache_unescape_url(char *url) {
+   register int badesc, badpath;
+   char *x, *y;
+
+   badesc = 0;
+   badpath = 0;
+   /* Initial scan for first '%'. Don't bother writing values before
+    * seeing a '%' */
+   y = strchr(url, '%');
+   if (y == NULL) {
+      return GEOCACHE_SUCCESS;
+   }
+   for (x = y; *y; ++x, ++y) {
+      if (*y != '%')
+         *x = *y;
+      else {
+         if (!isxdigit(*(y + 1)) || !isxdigit(*(y + 2))) {
+            badesc = 1;
+            *x = '%';
+         }
+         else {
+            *x = _geocache_x2c(y + 1);
+            y += 2;
+            if (IS_SLASH(*x) || *x == '\0')
+               badpath = 1;
+         }
+      }
+   }
+   *x = '\0';
+   if (badesc)
+      return GEOCACHE_FAILURE;
+   else if (badpath)
+      return GEOCACHE_FAILURE;
+   else
+      return GEOCACHE_SUCCESS;
+}
+
+
 
 char* geocache_http_build_url(geocache_context *r, char *base, apr_table_t *params) {
    if(!apr_is_empty_table(params)) {
@@ -152,12 +209,12 @@ apr_table_t *geocache_http_parse_param_string(geocache_context *r, char *args_st
       value = strchr(key, '=');
       if (value) {
          *value++ = '\0'; /* replace '=' by \0, thus terminating the key string */
-         ap_unescape_url(key);
-         ap_unescape_url(value);
+         _geocache_unescape_url(key);
+         _geocache_unescape_url(value);
       }
       else {
          value = "";
-         ap_unescape_url(key);
+         _geocache_unescape_url(key);
       }
       /* Store key/value pair in our form hash. */
       apr_table_addn(params, key, value);

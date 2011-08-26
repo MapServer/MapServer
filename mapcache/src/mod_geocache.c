@@ -30,6 +30,9 @@
 #include "unixd.h"
 #endif 
 
+module AP_MODULE_DECLARE_DATA geocache_module;
+
+
 static char* geocache_mutex_name = "geocache_mutex";
 
 typedef struct geocache_context_apache geocache_context_apache;
@@ -57,6 +60,7 @@ void apache_context_set_error(geocache_context *c, geocache_error_code code, cha
    va_start(args,message);
    c->_errmsg = apr_pvsprintf(c->pool,message,args);
    c->_errcode = code;
+   va_end(args);
 }
 
 
@@ -73,6 +77,7 @@ void apache_context_server_log(geocache_context *c, geocache_log_level level, ch
    va_list args;
    va_start(args,message);
    ap_log_error(APLOG_MARK, APLOG_INFO, 0, ctx->server,"%s",apr_pvsprintf(ctx->ctx.ctx.pool,message,args));
+   va_end(args);
 }
 
 void apache_context_request_log(geocache_context *c, geocache_log_level level, char *message, ...) {
@@ -80,6 +85,7 @@ void apache_context_request_log(geocache_context *c, geocache_log_level level, c
    va_list args;
    va_start(args,message);
    ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request,"%s",apr_pvsprintf(ctx->ctx.ctx.pool,message,args));
+   va_end(args);
 }
 
 void init_apache_context(geocache_context_apache *ctx) {
@@ -115,33 +121,24 @@ int geocache_util_mutex_release(geocache_context *r) {
 }
 
 void init_apache_request_context(geocache_context_apache_request *ctx) {
-   init_apache_context(ctx);
+   init_apache_context((geocache_context_apache*)ctx);
    ctx->ctx.ctx.log = apache_context_request_log;
    ctx->ctx.ctx.global_lock_aquire = geocache_util_mutex_aquire;
    ctx->ctx.ctx.global_lock_release = geocache_util_mutex_release;
 }
 
 void init_apache_server_context(geocache_context_apache_server *ctx) {
-   init_apache_context(ctx);
+   init_apache_context((geocache_context_apache*)ctx);
    ctx->ctx.ctx.log = apache_context_server_log;
    ctx->ctx.ctx.global_lock_aquire = geocache_util_mutex_aquire;
    ctx->ctx.ctx.global_lock_release = geocache_util_mutex_release;
-}
-
-
-
-static geocache_context_apache* apache_context_create(apr_pool_t *pool) {
-   geocache_context_apache *ctx = apr_pcalloc(pool, sizeof(geocache_context_apache));
-   ctx->ctx.pool = pool;
-   init_apache_context(ctx);
-   return ctx;
 }
 
 static geocache_context_apache_request* apache_request_context_create(request_rec *r) {
    geocache_context_apache_request *ctx = apr_pcalloc(r->pool, sizeof(geocache_context_apache_request));
    ctx->ctx.ctx.pool = r->pool;
    ctx->request = r;
-   init_apache_server_context(ctx);
+   init_apache_request_context(ctx);
    return ctx;
 }
 
@@ -202,6 +199,7 @@ static int mod_geocache_request_handler(request_rec *r) {
    geocache_cfg *config = NULL;
    geocache_request *request;
    geocache_context_apache_request *ctx = apache_request_context_create(r); 
+   geocache_context *c = (geocache_context*)ctx;
    geocache_tile *tile;
    int i;
 
@@ -212,14 +210,14 @@ static int mod_geocache_request_handler(request_rec *r) {
       return HTTP_METHOD_NOT_ALLOWED;
    }
 
-   params = geocache_http_parse_param_string((geocache_context*)ctx, r->args);
+   params = geocache_http_parse_param_string(c, r->args);
    config = ap_get_module_config(r->per_dir_config, &geocache_module);
 
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
       /* loop through the services that have been configured */
       geocache_service *service = config->services[i];
       if(!service) continue;
-      request = service->parse_request((geocache_context*)ctx,r->path_info,params,config);
+      request = service->parse_request(c,r->path_info,params,config);
       /* the service has recognized the request if it returns a non NULL value */
       if(request)
          break;
@@ -231,8 +229,9 @@ static int mod_geocache_request_handler(request_rec *r) {
 
    for(i=0;i<request->ntiles;i++) {
       geocache_tile *tile = request->tiles[i];
-      int rv = geocache_tileset_tile_get(tile, (geocache_context*)ctx);
+      int rv = geocache_tileset_tile_get(tile, c);
       if(rv != GEOCACHE_SUCCESS) {
+         c->log(c,c->get_error(c),c->get_error_message(c));
          return HTTP_NOT_FOUND;
       }
    }

@@ -17,6 +17,7 @@
 #include <geocache.h>
 #include <apr_strings.h>
 #include <apr_tables.h>
+#include <curl/curl.h>
 
 int geocache_util_extract_int_list(char* args, const char sep, int **numbers,
       int *numbers_count, geocache_context *r) {
@@ -63,6 +64,12 @@ int geocache_util_extract_double_list(char* args, const char sep, double **numbe
    }
    return GEOCACHE_SUCCESS;
 }
+
+void geocache_context_init_parent(geocache_context *ctx) {
+   curl_global_init(CURL_GLOBAL_ALL);
+}
+
+void geocache_context_init(geocache_context *ctx, geocache_context *parent);
 
 /*
 int geocache_util_mutex_aquire(geocache_context *r) {
