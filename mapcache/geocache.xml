@@ -171,6 +171,18 @@
       <symlink_blank/>
    </cache>
 
+   <!-- memcache cache
+        entry accepts multiple <server> entries
+   -->
+   <!--
+   <cache name="memcache" type="memcache">
+      <server>
+         <host>localhost</host>
+         <port>11211</port>
+      </server>
+   </cache>
+   -->
+
    <!-- format
 
         a format is an image algorithm used for compressing images

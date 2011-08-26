@@ -109,6 +109,71 @@ AC_DEFUN([CURL_CHECK],[
     AC_SUBST(CURL_LIBS,`$CURLCONFIG --libs`)
 ])
 
+AC_DEFUN([APU_CHECK],[
+  AC_SUBST(APUCONFIG)
+  AC_SUBST(MEMCACHE_ENABLED)
+  AC_ARG_WITH(apu_config,
+    AC_HELP_STRING([--with-apu-config], [path to apu-config program]),
+    ,
+    [with_apu_config=yes]
+  )
+    if test "$with_apu_config" = "yes"; then
+        AC_MSG_CHECKING(for apu-config in default locations)
+        if test -n "$APXS"; then
+            APXSFULL=`which "$APXS"`
+            APXSDIR=`dirname "$APXSFULL"`
+            if test -x "$APXSDIR/apu-config"; then
+                APUCONFIG="$APXSDIR/apu-config"
+            elif test -x "$APXSDIR/apu-1-config"; then
+                APUCONFIG="$APXSDIR/apu-1-config"
+            fi
+        fi
+        if test -z "$APUCONFIG"; then
+            AC_PATH_PROG(APUCONFIG, apu-config)
+        fi
+        if test -z "$APUCONFIG"; then
+            AC_PATH_PROG(APUCONFIG, apu-1-config)
+        fi
+        if test -n "$APUCONFIG"; then
+            AC_MSG_RESULT([using $APUCONFIG, use --with-apu-config=/path/to/apu-(1-)config to modify])
+        else
+            AC_MSG_RESULT([not found])
+        fi
+    else
+        AC_MSG_CHECKING(for apu-config usability in $with_apu_config)
+        if test -x "$with_apu_config"; then
+            APUCONFIG=$with_apu_config
+            AC_MSG_RESULT(yes)
+        else
+            AC_MSG_ERROR($with_apu_config not found or not executable)
+        fi
+    fi
+    if test -z "$APUCONFIG"; then
+        AC_MSG_ERROR(apu-config utility not found. memcache backend will be disabled)
+    else
+       OLDLDFLAGS="$LDFLAGS" ; LDFLAGS="$LDFLAGS `$APUCONFIG --ldflags --libs --link-ld`"
+       OLDCPPFLAGS="$CPPFLAGS" ; CPPFLAGS="$CPPFLAGS `$APUCONFIG --includes`"
+       AC_CHECK_LIB(aprutil-1, apr_memcache_hash,[APU_LIBS=`$APUCONFIG --link-libtool`],)
+       if test -z "$APU_LIBS"; then
+          AC_CHECK_LIB(aprutil, apr_memcache_hash,[APU_LIBS=`$APUCONFIG --link-libtool`],
+                    [AC_MSG_WARN([unable to link to apr-util, memcache cache backend disabled])])
+       fi
+       if test -n "$APU_LIBS"; then
+          AC_CHECK_HEADER([apr_memcache.h],[
+                          MEMCACHE_ENABLED=[-DUSE_MEMCACHE]
+                          APU_INC=`$APUCONFIG --includes`
+                          ],
+                         [AC_MSG_WARN([apr_memcache.h not found, memcache cache backend disabled])])
+       fi
+       CPPFLAGS="$OLDCPPFLAGS"
+       LDFLAGS="$OLDLDFLAGS"
+    fi
+    AC_SUBST(APUCONFIG)
+    AC_SUBST(MEMCACHE_ENABLED)
+    AC_SUBST(APU_INC) 
+    AC_SUBST(APU_LIBS)
+])
+
 AC_DEFUN([APR_CHECK],[
   AC_SUBST(APRCONFIG)
   AC_ARG_WITH(apr_config,
@@ -446,6 +511,7 @@ else
 fi
 
 APR_CHECK
+APU_CHECK
 
 PNG_CHECK
 

@@ -537,6 +537,13 @@ void parseCache(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    }
    if(!strcmp(type,"disk")) {
       cache = geocache_cache_disk_create(ctx);
+   } else if(!strcmp(type,"memcache")) {
+#ifdef USE_MEMCACHE
+      cache = geocache_cache_memcache_create(ctx);
+#else
+      ctx->set_error(ctx,400, "failed to add cache %s: memcache support is not available on this build",name);
+      return;
+#endif
    } else {
       ctx->set_error(ctx, 400, "unknown cache type %s for cache \"%s\"", type, name);
       return;

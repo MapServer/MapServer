@@ -41,6 +41,10 @@
 #include <regex.h>
 #endif
 
+#ifdef USE_MEMCACHE
+#include <apr_memcache.h>
+#endif
+
 #define GEOCACHE_SUCCESS 0
 #define GEOCACHE_FAILURE 1
 #define GEOCACHE_TRUE 1
@@ -267,6 +271,9 @@ struct geocache_source_gdal {
 /** @{ */
 typedef enum {
     GEOCACHE_CACHE_DISK
+#ifdef USE_MEMCACHE
+       ,GEOCACHE_CACHE_MEMCACHE
+#endif
 } geocache_cache_type;
 
 /** \interface geocache_cache
@@ -307,6 +314,25 @@ struct geocache_cache_disk {
     char *base_directory;
     int symlink_blank;
 };
+
+#ifdef USE_MEMCACHE
+
+typedef struct geocache_cache_memcache geocache_cache_memcache;
+/**\class geocache_cache_memcache
+ * \brief a geocache_cache on memcached servers
+ * \implements geocache_cache
+ */
+struct geocache_cache_memcache {
+    geocache_cache cache;
+    apr_memcache_t *memcache;
+};
+
+/**
+ * \memberof geocache_cache_memcache
+ */
+geocache_cache* geocache_cache_memcache_create(geocache_context *ctx);
+
+#endif
 
 /** @} */
 
