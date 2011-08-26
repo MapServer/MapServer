@@ -90,6 +90,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    grid = geocache_grid_create(pool);
    grid->name = "WGS84";
    grid->srs = "epsg:4326";
+   grid->unit = GEOCACHE_UNIT_DEGREES;
    grid->tile_sx = grid->tile_sy = 256;
    grid->resolutions = wgs84_resolutions;
    grid->levels = 16;
@@ -111,6 +112,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    grid->tile_sx = grid->tile_sy = 256;
    grid->resolutions = google_resolutions;
    grid->levels = 19;
+   grid->unit = GEOCACHE_UNIT_METERS;
    grid->extents = (double**)apr_pcalloc(pool,grid->levels*sizeof(double*));
    grid->resolutions = (double*)apr_pcalloc(pool,grid->levels*sizeof(double));
    for(i=0; i<grid->levels; i++) {
@@ -675,6 +677,12 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
                   xmlChar* value = xmlNodeGetContent(service_node);
                   if(!value || !*value || xmlStrcmp(value, BAD_CAST "false")) {
                      config->services[GEOCACHE_SERVICE_WMTS] = geocache_service_wmts_create(ctx);
+                  }
+                  xmlFree(value);
+               } else if(!xmlStrcmp(service_node->name, BAD_CAST "demo")) {
+                  xmlChar* value = xmlNodeGetContent(service_node);
+                  if(!value || !*value || xmlStrcmp(value, BAD_CAST "false")) {
+                     config->services[GEOCACHE_SERVICE_DEMO] = geocache_service_demo_create(ctx);
                   }
                   xmlFree(value);
                }

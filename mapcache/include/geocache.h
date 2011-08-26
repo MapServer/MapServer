@@ -73,6 +73,7 @@ typedef struct geocache_service geocache_service;
 typedef struct geocache_service_wms geocache_service_wms;
 typedef struct geocache_service_wmts geocache_service_wmts;
 typedef struct geocache_service_tms geocache_service_tms;
+typedef struct geocache_service_demo geocache_service_demo;
 typedef struct geocache_server_cfg geocache_server_cfg;
 typedef struct geocache_image geocache_image;
 typedef struct geocache_grid geocache_grid;
@@ -352,18 +353,25 @@ struct geocache_request_get_capabilities_wmts {
    char *version;
 };
 
+
+
 /** \defgroup services Services*/
 /** @{ */
 
-#define GEOCACHE_SERVICES_COUNT 3
+#define GEOCACHE_SERVICES_COUNT 4
 
 typedef enum {
-    GEOCACHE_SERVICE_WMS = 0, GEOCACHE_SERVICE_TMS, GEOCACHE_SERVICE_WMTS
+    GEOCACHE_SERVICE_WMS = 0, GEOCACHE_SERVICE_TMS, GEOCACHE_SERVICE_WMTS,
+    GEOCACHE_SERVICE_DEMO
 } geocache_service_type;
 
+#define GEOCACHE_UNITS_COUNT 3
 typedef enum {
-    GEOCACHE_UNIT_UNSET = 0, GEOCACHE_UNIT_METERS, GEOCACHE_UNIT_DEGREES, GEOCACHE_UNIT_FEET
+    GEOCACHE_UNIT_METERS=0, GEOCACHE_UNIT_DEGREES, GEOCACHE_UNIT_FEET
 } geocache_unit;
+
+/* defined in util.c*/
+extern const double geocache_meters_per_unit[GEOCACHE_UNITS_COUNT];
 
 /** \interface geocache_service
  * \brief a standard service (eg WMS, TMS)
@@ -414,6 +422,14 @@ struct geocache_service_wmts {
     geocache_service service;
 };
 
+/**\class geocache_service_demo
+ * \brief a demo service
+ * \implements geocache_service
+ */
+struct geocache_service_demo {
+    geocache_service service;
+};
+
 /**
  * \brief create and initialize a geocache_service_wms
  * \memberof geocache_service_wms
@@ -431,6 +447,12 @@ geocache_service* geocache_service_tms_create(geocache_context *ctx);
  * \memberof geocache_service_wtms
  */
 geocache_service* geocache_service_wmts_create(geocache_context *ctx);
+
+/**
+ * \brief create and initialize a geocache_service_demo
+ * \memberof geocache_service_demo
+ */
+geocache_service* geocache_service_demo_create(geocache_context *ctx);
 
 /**
  * \brief return the request that corresponds to the given url
@@ -653,6 +675,7 @@ struct geocache_grid {
    char *name;
    int levels;
    char *srs;
+   geocache_unit unit;
    int tile_sx, tile_sy; /**<width and height of a tile in pixels */
    double *resolutions;
    double **extents; /**< array of extents (one for each resolution) */
