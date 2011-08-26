@@ -14,7 +14,8 @@
  *  limitations under the License.
  */
 
-#include <geocache.h>
+#include "geocache.h"
+#include "util.h"
 #include <apr_strings.h>
 #include <apr_tables.h>
 #include <curl/curl.h>
@@ -65,6 +66,34 @@ int geocache_util_extract_double_list(geocache_context *ctx, char* args, const c
    return GEOCACHE_SUCCESS;
 }
 
+
+#if APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3
+
+APR_DECLARE(apr_status_t) apr_file_link(const char *from_path, 
+                                          const char *to_path)
+{
+    if (link(from_path, to_path) == -1) {
+        return errno;
+    }
+    return APR_SUCCESS;
+}
+
+APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p, const apr_table_t *t)
+{
+    const apr_array_header_t *array = apr_table_elts(t);
+    apr_table_entry_t *elts = (apr_table_entry_t *) array->elts;
+    apr_table_t *new = apr_table_make(p, array->nelts);
+    int i;
+
+    for (i = 0; i < array->nelts; i++) {
+        apr_table_add(new, elts[i].key, elts[i].val);
+    }
+
+    return new;
+}
+
+#endif
+
 geocache_error_code _geocache_context_get_error_default(geocache_context *ctx) {
     return ctx->_errcode;
 }
@@ -96,6 +125,4 @@ void geocache_context_init(geocache_context *ctx) {
     ctx->get_error_message = _geocache_context_get_error_msg_default;
     ctx->set_error = _geocache_context_set_error_default;
 }
-
-
 
