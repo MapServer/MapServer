@@ -1,0 +1,46 @@
+Unix compilation instructions
+-----------------------------
+
+For unix users, the compilation process should resume to:
+
+$ ./configure
+$ make
+
+(as root)
+# make install
+
+mod-geocache requires apache, liburl, libxml2 and libpng development headers.
+The configure script will try to locate them in default system locations, that can be
+overriden or specified with switches (./configure --help should give you a full list):
+
+apache apxs
+===========
+
+--with-apxs=/path/to/apxs
+
+apxs is the apache extension tool that is used for building and installing the module to a local
+apache instance. it should be installed along with a standard apache build, or supplied by
+distros when installing the apache development packages.
+
+libcurl
+=======
+
+--with-curl-config=/path/to/curl-config
+
+libxml2
+=======
+
+--with-xml2-config=/path/to/xml2-config
+
+libpng
+======
+
+--with-png=/path/to/png/prefix
+
+this is the path where the libpng headers and libs can be located.
+the configure script will be looking for [path]/include/png.h and [path]/lib/libpng.so
+
+
+Win32 compilation instructions
+------------------------------
+TODO
