@@ -823,8 +823,6 @@ struct geocache_cfg {
     apr_table_t *metadata;
 
     const char *lockdir;
-
-    int pathinfo_hack;
 };
 
 /**

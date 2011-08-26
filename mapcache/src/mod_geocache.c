@@ -27,7 +27,6 @@
 #include <http_log.h>
 #include "geocache.h"
 #include <unistd.h>
-#include <stdlib.h>
 
 #ifdef AP_NEED_SET_MUTEX_PERMS
 #include "unixd.h"
@@ -259,6 +258,9 @@ static int mod_geocache_request_handler(request_rec *r) {
    geocache_cfg *config = NULL;
    geocache_request *request = NULL;
 
+   geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
+   geocache_context *global_ctx = (geocache_context*)apache_ctx;
+   int ret;
 
    if (!r->handler || strcmp(r->handler, "geocache")) {
       return DECLINED;
@@ -267,20 +269,12 @@ static int mod_geocache_request_handler(request_rec *r) {
       return HTTP_METHOD_NOT_ALLOWED;
    }
    
-   geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
-   geocache_context *global_ctx = (geocache_context*)apache_ctx;
-   int ret;
-   
    
 
    params = geocache_http_parse_param_string(global_ctx, r->args);
    config = ap_get_module_config(r->per_dir_config, &geocache_module);
-   char *path_info = r->path_info;
-   if(config->pathinfo_hack) {
-      path_info = r->uri;
-   }
 
-   geocache_service_dispatch_request(global_ctx,&request,path_info,params,config);
+   geocache_service_dispatch_request(global_ctx,&request,r->path_info,params,config);
    if(GC_HAS_ERROR(global_ctx)) {
       return report_error(apache_ctx);
    }
@@ -299,13 +293,13 @@ static int mod_geocache_request_handler(request_rec *r) {
        * remove the path_info from the end of the url (we want the url of the base of the service)
        * TODO: is there an apache api to access this ?
        */
-      if(*(path_info)) {
-         char *end = strstr(url,path_info);
+      if(*(original->path_info)) {
+         char *end = strstr(url,original->path_info);
          if(end) {
             *end = '\0';
          }
       }
-      request->service->create_capabilities_response(global_ctx,req_caps,url,path_info,config);
+      request->service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,config);
       if(GC_HAS_ERROR(global_ctx)) {
          return report_error(apache_ctx);
       }
