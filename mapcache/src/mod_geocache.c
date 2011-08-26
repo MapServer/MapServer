@@ -191,8 +191,8 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
 }
 
 static int geocache_write_capabilities(geocache_context_apache_request *ctx, geocache_request *request) {
-   int rc;
    request_rec *r = ctx->request;
+   ap_set_content_type(r, "text/xml");
    ap_rputs(request->capabilities, r);
 
    return OK;

@@ -20,12 +20,123 @@
 
 /** \addtogroup services */
 /** @{ */
+static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" standalone=\"no\" ?>\n"
+        "<!DOCTYPE WMT_MS_Capabilities SYSTEM\n"
+            "\"http://schemas.opengeospatial.net/wms/1.1.1/WMS_MS_Capabilities.dtd\" [\n"
+              "<!ELEMENT VendorSpecificCapabilities (TileSet*) >\n"
+              "<!ELEMENT TileSet (SRS, BoundingBox?, Resolutions, Width, Height, Format, Layers*, Styles*) >\n"
+              "<!ELEMENT Resolutions (#PCDATA) >\n"
+              "<!ELEMENT Width (#PCDATA) >\n"
+              "<!ELEMENT Height (#PCDATA) >\n"
+              "<!ELEMENT Layers (#PCDATA) >\n"
+              "<!ELEMENT Styles (#PCDATA) > ]>\n"
+        "<WMT_MS_Capabilities version=\"1.1.1\">\n"
+          "<Service>\n"
+            "<Name>OGC:WMS</Name>\n"
+            "<Title></Title>\n"
+            "<OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n"
+          "</Service>\n"
+          "<Capability>\n"
+            "<Request>\n"
+              "<GetCapabilities>\n"
+                "<Format>application/vnd.ogc.wms_xml</Format>\n"
+                "<DCPType>\n"
+                  "<HTTP>\n"
+                    "<Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n"
+                  "</HTTP>\n"
+                "</DCPType>\n"
+              "</GetCapabilities>\n"
+              "<GetMap>\n"
+                "<Format>image/png</Format>\n"
+                "<Format>image/jpeg</Format>\n"
+                "<DCPType>\n"
+                  "<HTTP>\n"
+                    "<Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n"
+                  "</HTTP>\n"
+                "</DCPType>\n"
+              "</GetMap>\n"
+            "</Request>\n"
+            "<Exception>\n"
+              "<Format>text/plain</Format>\n"
+            "</Exception>\n"
+            "<VendorSpecificCapabilities>\n";
 
+
+static char *wms_tileset = "<TileSet>\n"
+                "<SRS>%s</SRS>\n"
+                "<BoundingBox SRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n"
+                "<Resolutions>%s</Resolutions>\n"
+                "<Width>%d</Width>\n"
+                "<Height>%d</Height>\n"
+                "<Format>image/png</Format>\n"
+                "<Layers>%s</Layers>\n"
+                "<Styles></Styles>\n"
+              "</TileSet>\n";
+
+static char *wms_layer = "<Layer queryable=\"0\" opaque=\"0\" cascaded=\"1\">\n"
+              "<Name>%s</Name>\n"
+              "<Title>%s</Title>\n"
+              "<SRS>%s</SRS>\n"
+              "<BoundingBox srs=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n"
+            "</Layer>\n";
 
 geocache_request* _geocache_service_wms_capabilities(geocache_context *ctx, geocache_cfg *cfg) {
    geocache_request *request = (geocache_request*)apr_pcalloc(ctx->pool,sizeof(geocache_request));
    request->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
-   request->capabilities = apr_pstrdup(ctx->pool,"<?xml>this is the capabilities document");
+   char *host = "http://foo?";
+   char *caps = apr_psprintf(ctx->pool,wms_capabilities_preamble,host,host,host);
+   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
+
+   while(tileindex_index) {
+      geocache_tileset *tileset;
+      const void *key; apr_ssize_t keylen;
+      apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
+      char *resolutions="";
+      int i;
+      for(i=0;i<tileset->grid->levels;i++) {
+         resolutions = apr_psprintf(ctx->pool,"%s%f ",resolutions,tileset->grid->resolutions[i]);
+      }
+      char *tilesetcaps = apr_psprintf(ctx->pool,wms_tileset,
+            tileset->grid->srs,
+            tileset->grid->srs,
+            tileset->grid->extents[0][0],
+            tileset->grid->extents[0][1],
+            tileset->grid->extents[0][2],
+            tileset->grid->extents[0][3],
+            resolutions,
+            tileset->grid->tile_sx,
+            tileset->grid->tile_sy,
+            tileset->name);
+      caps = apr_psprintf(ctx->pool,"%s%s",caps,tilesetcaps);
+      tileindex_index = apr_hash_next(tileindex_index);
+   }
+
+   caps = apr_psprintf(ctx->pool,"%s%s",caps,"</VendorSpecificCapabilities>\n"
+            "<UserDefinedSymbolization SupportSLD=\"0\" UserLayer=\"0\" UserStyle=\"0\" RemoteWFS=\"0\"/>\n"
+            "<Layer>\n");
+
+   tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
+   while(tileindex_index) {
+         geocache_tileset *tileset;
+         const void *key; apr_ssize_t keylen;
+         apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
+         char *layercaps = apr_psprintf(ctx->pool,wms_layer,
+               tileset->name,
+               tileset->name,
+               tileset->grid->srs,
+               tileset->grid->srs,
+               tileset->grid->extents[0][0],
+               tileset->grid->extents[0][1],
+               tileset->grid->extents[0][2],
+               tileset->grid->extents[0][3]);
+         caps = apr_psprintf(ctx->pool,"%s%s",caps,layercaps);
+         tileindex_index = apr_hash_next(tileindex_index);
+      }
+
+   caps = apr_psprintf(ctx->pool,"%s%s",caps,"</Layer>\n"
+             "</Capability>\n"
+           "</WMT_MS_Capabilities>\n");
+   request->capabilities = caps;
    return request;
 }
 
