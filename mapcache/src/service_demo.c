@@ -184,6 +184,29 @@ static char *demo_layer_singletile =
       "    );\n"
       "    map.addLayer(%s_slayer)\n\n";
 
+static char *demo_control_featureinfo =
+      "    var %s_info = new OpenLayers.Control.WMSGetFeatureInfo({\n"
+      "      url: '%s',\n"
+      "      infoFormat: '%s',\n"
+      "      title: 'Identify features by clicking',\n"
+      "      queryVisible: true,\n"
+      "      eventListeners: {\n"
+      "        getfeatureinfo: function(event) {\n"
+      "            map.addPopup(new OpenLayers.Popup.FramedCloud(\n"
+      "                'chicken',\n"
+      "                map.getLonLatFromPixel(event.xy),\n"
+      "                null,\n"
+      "                event.text,\n"
+      "                null,\n"
+      "                true\n"
+      "            ));\n"
+      "        }\n"
+      "      }\n"
+      "    });\n"
+      "    map.addControl(%s_info);\n"
+      "    %s_info.activate()\n\n";
+
+
 static char *demo_footer =
       "%s"
       "    if(!map.getCenter())\n"
@@ -473,6 +496,15 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
                   ol_layer_name);
             caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
          }
+      }
+      if(tileset->source->info_formats) {
+         ol_layer = apr_psprintf(ctx->pool, demo_control_featureinfo,
+               tileset->name,
+               apr_pstrcat(ctx->pool,url_prefix,"?",NULL),
+               APR_ARRAY_IDX(tileset->source->info_formats,0,char*),
+               tileset->name,
+               tileset->name);
+         caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
       }
       tileindex_index = apr_hash_next(tileindex_index);
    }

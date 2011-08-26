@@ -498,7 +498,7 @@ int main(int argc, const char **argv) {
     if( ! configfile ) {
         return usage(argv[0],"config not specified");
     } else {
-        geocache_configuration_parse(&ctx,configfile,cfg);
+        geocache_configuration_parse(&ctx,configfile,cfg,0);
         if(ctx.get_error(&ctx))
             return usage(argv[0],ctx.get_error_message(&ctx));
         geocache_configuration_post_config(&ctx,cfg);

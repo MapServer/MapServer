@@ -36,7 +36,7 @@ geocache_image_format_type geocache_imageio_header_sniff(geocache_context *ctx, 
    }
    if(buffer->size >= 8 && png_sig_cmp((png_bytep)buffer->buf, 0, 8) == 0) {
       return GC_PNG;
-   } else if(buffer->size >= 2 && buffer->buf[0] == 0xFF && buffer->buf[1] == 0xD8) {
+   } else if(buffer->size >= 2 && ((unsigned char*)buffer->buf)[0] == 0xFF && ((unsigned char*)buffer->buf)[1] == 0xD8) {
       return GC_JPEG;
    } else {
       return GC_UNKNOWN;

@@ -44,7 +44,7 @@ void _geocache_source_wms_render_map(geocache_context *ctx, geocache_map *map) {
  
     }      
     map->data = geocache_buffer_create(30000,ctx->pool);
-    geocache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL);
+    geocache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL,NULL);
     GC_CHECK_ERROR(ctx);
  
     if(!geocache_imageio_is_valid_format(ctx,map->data)) {
@@ -82,7 +82,7 @@ void _geocache_source_wms_query(geocache_context *ctx, geocache_feature_info *fi
     }      
 
     map->data = geocache_buffer_create(30000,ctx->pool);
-    geocache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL);
+    geocache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL,NULL);
     GC_CHECK_ERROR(ctx);
    
 }

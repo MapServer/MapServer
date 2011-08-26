@@ -211,37 +211,6 @@ void geocache_image_copy_resampled_bilinear(geocache_context *ctx, geocache_imag
 #endif
 } 
 
-geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_format *format, geocache_tile **tiles, int ntiles) {
-   geocache_image *base,*overlay;
-   int i;
-   geocache_tile *tile = apr_pcalloc(ctx->pool,sizeof(geocache_tile));
-   tile->mtime = tiles[0]->mtime;
-   tile->expires = tiles[0]->expires;
-   base = geocache_imageio_decode(ctx, tiles[0]->data);
-   if(!base) return NULL;
-   for(i=1; i<ntiles; i++) {
-      overlay = geocache_imageio_decode(ctx, tiles[i]->data);
-      if(!overlay) return NULL;
-      if(tile->mtime < tiles[i]->mtime)
-         tile->mtime = tiles[i]->mtime;
-      if(tiles[i]->expires < tile->expires) {
-         tile->expires = tiles[i]->expires;
-      }
-      geocache_image_merge(ctx, base, overlay);
-      if(GC_HAS_ERROR(ctx)) {
-         return NULL;
-      }
-   }
-
-   tile->data = format->write(ctx, base, format);
-   if(GC_HAS_ERROR(ctx)) {
-      return NULL;
-   }
-   tile->grid_link = tiles[0]->grid_link;
-   tile->tileset = tiles[0]->tileset;
-   return tile;
-}
-
 void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt) {
    if(mt->map.tileset->format) {
       /* the tileset has a format defined, we will use it to encode the data */

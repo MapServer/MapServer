@@ -714,7 +714,8 @@ proxies:
    if(errcode == 200 && 
          *request && (
             /* if its a single tile we're ok*/
-            ((*request)->type == GEOCACHE_REQUEST_GET_TILE && ((geocache_request_get_tile*)(*request))->ntiles == 1) ||  
+            ((*request)->type == GEOCACHE_REQUEST_GET_TILE && ((geocache_request_get_tile*)(*request))->ntiles == 1) ||
+            ((*request)->type == GEOCACHE_REQUEST_GET_FEATUREINFO) ||
             
             /* if we have a getmap or multiple tiles, we must check that assembling is allowed */
             (((*request)->type == GEOCACHE_REQUEST_GET_MAP || ( 

@@ -170,7 +170,7 @@
       <metadata>
          <title>Géoportail - Antilles françaises</title>
       </metadata>
-      <extent>-6815744 1572864 -6291456 2097152</extent>
+      <extent>-6791168 1761280 -6553600 2023424</extent>
       <srs>EPSG:310915814</srs>
       <srsalias>IGNF:GEOPORTALANF</srsalias>
       <srsalias>EPSG:310495002</srsalias>
@@ -379,15 +379,13 @@
         requires building with "with-sqlite"
    -->
    <cache name="sqlite" type="sqlite3">
-      <!-- dbname_template
+      <!-- base
            
-           template string used to construct a filename from a tileset name and
-           a grid name. once the template replacements have occured, the
-           generated filename needs to point to a readable and writable file
-           by the user running apache
+           absolute filesystem path where the sqlite database files will be stored.
+           this directory needs to be readable and writable by the user running
+           apache
       -->
-      <dbname_template>/tmp/{tileset}#{grid}.db</dbname_template>
-
+      <dbname_template>/tmp/{tileset}-{grid}.db</dbname_template>
       <!-- hitstats
            log last access time and total number of hits for each tile in the cache.
            note that this slows the tile accesses drastically as it requires a write
@@ -397,7 +395,7 @@
    </cache>
 
    <cache name="mbtiles" type="mbtiles">
-      <dbname_template>/home/tbonfort/Documents/MapBox/tiles/natural-earth-1.mbtiles</dbname_template>
+      <dbname_template>/Users/tbonfort/Documents/MapBox/tiles/natural-earth-1.mbtiles</dbname_template>
    </cache>
 
    <!-- format
@@ -509,6 +507,18 @@
          -->
       </http>
    </source>
+   <source name="helinuc" type="wms">
+      <http>
+         <url>http://localhost/cgi-bin/mapserv?</url>
+      </http>
+      <getmap>
+         <params>
+            <FORMAT>image/png</FORMAT>
+            <LAYERS>default</LAYERS>
+            <MAP>/Users/tbonfort/dev/helinuc.map</MAP>
+         </params>
+      </getmap>
+   </source>
    <source name="osm" type="wms">
       <http>
          <url>http://localhost/cgi-bin/mapserv?</url>
@@ -517,7 +527,7 @@
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
-            <MAP>/gro1/mapserver-utils/osm.map</MAP>
+            <MAP>/Users/tbonfort/dev/mapserver-utils/osm-michelin.map</MAP>
          </params>
       </getmap>
    </source>
@@ -607,8 +617,8 @@
          the supplied image is read when the configuration is loaded.
          if you make changes to the image, they will NOT be reflected on tiles already
          stored in the cache, nor on newly stored tiles until the server is restarted
-      -->
       <watermark>/home/tbonfort/dev/mod-geocache/static/watermark.png</watermark>
+      -->
       
       <!-- format
          (optional) format to use when storing a tile. this should be a format with high
@@ -702,6 +712,13 @@
       <format>mixed</format>
       <grid>WGS84</grid>
    </tileset>
+   <tileset name="helinuc">
+      <source>helinuc</source>
+      <cache>disk</cache>
+      <format>PNG</format>
+      <grid>WGS84</grid>
+      <grid>g</grid>
+   </tileset>
    <tileset name="brgm">
       <source>basic</source>
       <cache>disk</cache>
@@ -711,7 +728,9 @@
       <metabuffer>30</metabuffer>
    </tileset>
    <tileset name="natural-earth-1">
+      <source>osm</source>
       <cache>mbtiles</cache>
+      <format>PNG</format>
       <grid>g</grid>
    </tileset>
    <tileset name="osm">
@@ -724,7 +743,6 @@
       <format>PNG</format>
       <grid>FXX</grid>
       <grid>MILLER</grid>
-      <grid>ANF</grid>
       <grid>WGS84</grid>
       <grid>g</grid>
       <metatile>5 5</metatile>
@@ -765,13 +783,13 @@
            It will intercept wms getmap requests that can be treated from configured
            tilesets, and can optionally forward all the rest to (an)other server(s)
            TODO: this needs way more documenting
+      -->
       <forwarding_rule name="foo rule">
             <append_pathinfo>true</append_pathinfo>
             <http>
-               <url>http://localhost/</url>
+               <url>http://localhost/geocacheproxy</url>
             </http>
       </forwarding_rule>
-      -->
       <!-- full_wms
            configure response to wms requests that are not aligned to a tileset's grids.
            responding to requests that are not in the SRS of a configured grid is not supported, but
@@ -824,10 +842,5 @@
         this location should be writable by the apache user
    -->
    <lock_dir>/tmp</lock_dir>
-   
-   <!-- do not enable this yet, dragons ahead !!
-   <pathinfo_hack/>
-   -->
-   
 
 </geocache>

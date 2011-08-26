@@ -86,7 +86,7 @@ typedef struct geocache_metatile geocache_metatile;
 typedef struct geocache_feature_info geocache_feature_info;
 typedef struct geocache_request_get_feature_info geocache_request_get_feature_info;
 typedef struct geocache_map geocache_map;
-typedef struct geocache_proxied_response geocache_proxied_response;
+typedef struct geocache_http_response geocache_http_response;
 typedef struct geocache_source_wms geocache_source_wms;
 #if 0
 typedef struct geocache_source_gdal geocache_source_gdal;
@@ -219,7 +219,7 @@ void geocache_context_init(geocache_context *ctx);
  * 
  */
 struct geocache_buffer {
-    unsigned char* buf; /**< pointer to the actual data contained in buffer */
+    void* buf; /**< pointer to the actual data contained in buffer */
     size_t size; /**< number of bytes actually used in the buffer */
     size_t avail; /**< number of bytes allocated */
     apr_pool_t* pool; /**< apache pool to allocate from */
@@ -485,9 +485,11 @@ struct geocache_request_get_tile {
    
 };
 
-struct geocache_proxied_response {
+struct geocache_http_response {
    geocache_buffer *data;
    apr_table_t *headers;
+   long code;
+   apr_time_t mtime;
 };
 
 struct geocache_map {
@@ -777,16 +779,6 @@ struct geocache_image {
  */
 geocache_image* geocache_image_create(geocache_context *ctx);
 
-/**
- \brief merge a set of tiles into a single image
- \param tiles the list of tiles to merge
- \param ntiles the number of tiles in the list of tiles
- \param format the format to encode the resulting image
- \param ctx the context
- \returns a new tile with the merged image
- */
-geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_format *format, geocache_tile **tiles, int ntiles);
-
 void geocache_image_copy_resampled_nearest(geocache_context *ctx, geocache_image *src, geocache_image *dst,
       double off_x, double off_y, double scale_x, double scale_y);
 void geocache_image_copy_resampled_bilinear(geocache_context *ctx, geocache_image *src, geocache_image *dst,
@@ -832,9 +824,9 @@ int geocache_image_has_alpha(geocache_image *img);
 
 /** \defgroup http HTTP Request handling*/
 /** @{ */
-void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocache_buffer *data, apr_table_t *headers);
+void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocache_buffer *data, apr_table_t *headers, long *http_code);
 void geocache_http_do_request_with_params(geocache_context *ctx, geocache_http *req, apr_table_t *params,
-      geocache_buffer *data, apr_table_t *headers);
+      geocache_buffer *data, apr_table_t *headers, long *http_code);
 char* geocache_http_build_url(geocache_context *ctx, char *base, apr_table_t *params);
 apr_table_t *geocache_http_parse_param_string(geocache_context *ctx, char *args);
 /** @} */
@@ -917,7 +909,7 @@ struct geocache_cfg {
  * @param pool
  * @return
  */
-void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config);
+void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config, int cgi);
 void geocache_configuration_post_config(geocache_context *ctx, geocache_cfg *config);
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 void geocache_configuration_parse_json(geocache_context *ctx, const char *filename, geocache_cfg *config);
@@ -1229,13 +1221,15 @@ void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatil
 
 
 
-geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_get_tile *req_tile);
+geocache_http_response* geocache_core_get_capabilities(geocache_context *ctx, geocache_service *service, geocache_request_get_capabilities *req_caps, char *url, char *path_info, geocache_cfg *config);
+geocache_http_response* geocache_core_get_tile(geocache_context *ctx, geocache_request_get_tile *req_tile);
 
-geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_map *req_map);
+geocache_http_response* geocache_core_get_map(geocache_context *ctx, geocache_request_get_map *req_map);
 
-geocache_feature_info *geocache_core_get_featureinfo(geocache_context *ctx, geocache_request_get_feature_info *req_fi);
+geocache_http_response* geocache_core_get_featureinfo(geocache_context *ctx, geocache_request_get_feature_info *req_fi);
 
-geocache_proxied_response *geocache_core_proxy_request(geocache_context *ctx, geocache_request_proxy *req_proxy);
+geocache_http_response* geocache_core_proxy_request(geocache_context *ctx, geocache_request_proxy *req_proxy);
+geocache_http_response* geocache_core_respond_to_error(geocache_context *ctx, geocache_service *service);
 
 
 /* in grid.c */

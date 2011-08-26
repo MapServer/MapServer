@@ -46,7 +46,7 @@ int geocache_buffer_append(geocache_buffer *buffer, size_t len, void *data) {
    size_t total = buffer->size + len;
    if(total > buffer->avail)
       _geocache_buffer_realloc(buffer,total);
-   memcpy(&(buffer->buf[buffer->size]), data, len);
+   memcpy(buffer->buf + buffer->size, data, len);
    buffer->size += len;
    return len;
 }

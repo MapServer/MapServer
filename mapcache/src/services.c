@@ -46,8 +46,9 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
       //if(*(pathinfo+prefixlen)!='/' && *(pathinfo+prefixlen)!='\0') continue; /*we matched the prefix but there are trailing characters*/
       pathinfo += prefixlen; /* advance pathinfo to after the service prefix */
       service->parse_request(ctx,service,request,pathinfo,params,config);
-      GC_CHECK_ERROR(ctx);
       (*request)->service = service;
+      
+      /* stop looping on services */
       return;
    }
    ctx->set_error(ctx,404,"unknown service %s",pathinfo);

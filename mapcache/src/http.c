@@ -22,12 +22,6 @@
 
 #define MAX_STRING_LEN 10000
 
-static const int n_headers_to_extract = 2;
-static char* headers_to_extract[] = {
-   "Content-Type",
-   "Foo-Header"
-};
-
 struct _header_struct {
    apr_table_t *headers;
    geocache_context *ctx;
@@ -41,32 +35,29 @@ size_t _geocache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void
 
 size_t _geocache_curl_header_callback( void *ptr, size_t size, size_t nmemb,  void  *userdata) {
    struct _header_struct *h = (struct _header_struct*)userdata;
-   int i;
    char *header = apr_pstrndup(h->ctx->pool,ptr,size*nmemb);
    char *endptr = strstr(header,"\r\n");
    if(!endptr) {
-      /* invalid header ? */
+      endptr = strstr(header,"\n");
+      if(!endptr) {
+         /* skip invalid header */
 #ifdef DEBUG
-      h->ctx->log(h->ctx,GEOCACHE_DEBUG,"received header %s with no trailing \\r\\n",header);
+         h->ctx->log(h->ctx,GEOCACHE_DEBUG,"received header %s with no trailing \\r\\n",header);
 #endif
-      return size*nmemb;
+         return size*nmemb;
+      }
    }
-   for(i=0;i<n_headers_to_extract;i++) {
-      int keylen = strlen(headers_to_extract[i]);
-      char *startptr; 
-      if(size*nmemb<=keylen+4) /* +4 is for the ": " after the key, and terminating "\r\n" */
-         continue; 
-      if(!strstr(ptr,headers_to_extract[i])) continue;
-      /* the header contains our key */
-      startptr = header+keylen+2;
+   char *colonptr = strchr(header,':');
+   if(colonptr) {
+      *colonptr = '\0';
       *endptr = '\0';
-      apr_table_setn(h->headers,headers_to_extract[i],startptr);
-      //h->ctx->log(h->ctx,GEOCACHE_DEBUG,"%s:%s",headers_to_extract[i],startptr);
+      apr_table_setn(h->headers,header,colonptr+2);
    }
+
    return size*nmemb;
 }
 
-void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocache_buffer *data, apr_table_t *headers) {
+void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocache_buffer *data, apr_table_t *headers, long *http_code) {
    CURL *curl_handle;
    curl_handle = curl_easy_init();
    int ret;
@@ -94,7 +85,6 @@ void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocach
    curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, error_msg);
    curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
    curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, 10);
-   curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
    curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
 
 
@@ -113,6 +103,11 @@ void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocach
    curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, curl_headers);
    /* get it! */ 
    ret = curl_easy_perform(curl_handle);
+   if(http_code)
+      curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, http_code);
+   else
+      curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
+
    if(ret != CURLE_OK) {
       ctx->set_error(ctx, 502, "curl failed to request url %s : %s", req->url, error_msg);
    }
@@ -121,10 +116,10 @@ void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocach
 }
 
 void geocache_http_do_request_with_params(geocache_context *ctx, geocache_http *req, apr_table_t *params,
-      geocache_buffer *data, apr_table_t *headers) {
+      geocache_buffer *data, apr_table_t *headers, long *http_code) {
    geocache_http *request = geocache_http_clone(ctx,req);
    request->url = geocache_http_build_url(ctx,req->url,params);
-   geocache_http_do_request(ctx,request,data,headers);
+   geocache_http_do_request(ctx,request,data,headers, http_code);
 }
 
 /* calculate the length of the string formed by key=value&, and add it to cnt */

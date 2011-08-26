@@ -118,9 +118,9 @@ static int _geocache_cache_memcache_get(geocache_context *ctx, geocache_tile *ti
    /* extract the tile modification time from the end of the data returned */
    memcpy(
          &tile->mtime,
-         &(tile->data->buf[tile->data->size-sizeof(apr_time_t)]),
+         &(((char*)tile->data->buf)[tile->data->size-sizeof(apr_time_t)]),
          sizeof(apr_time_t));
-   tile->data->buf[tile->data->size+sizeof(apr_time_t)]='\0';
+   ((char*)tile->data->buf)[tile->data->size+sizeof(apr_time_t)]='\0';
    tile->data->avail = tile->data->size;
    tile->data->size -= sizeof(apr_time_t);
    return GEOCACHE_SUCCESS;

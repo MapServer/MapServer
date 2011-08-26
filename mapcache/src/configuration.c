@@ -19,7 +19,7 @@
 #include <apr_strings.h>
 #include <apr_file_io.h>
 
-void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config) {
+void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config, int cgi) {
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    int len = strlen(filename);
    const char *ext = &(filename[len-3]);
@@ -45,20 +45,22 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
             ,config->lockdir,apr_strerror(rv,errmsg,120));
       return;
    }
-   apr_finfo_t finfo;
-   while ((apr_dir_read(&finfo, APR_FINFO_DIRENT|APR_FINFO_TYPE|APR_FINFO_NAME, lockdir)) == APR_SUCCESS) {
-      if(finfo.filetype == APR_REG) {
-         if(!strncmp(finfo.name, GEOCACHE_LOCKFILE_PREFIX, strlen(GEOCACHE_LOCKFILE_PREFIX))) {
-            ctx->log(ctx,GEOCACHE_WARNING,"found old lockfile %s/%s, deleting it",config->lockdir,
-                  finfo.name);
-            rv = apr_file_remove(apr_psprintf(ctx->pool,"%s/%s",config->lockdir, finfo.name),ctx->pool);
-            if(rv != APR_SUCCESS) {
-               ctx->set_error(ctx,500, "failed to remove lockfile %s: %s",finfo.name,apr_strerror(rv,errmsg,120));
-               return;
+   if(!cgi) {
+      apr_finfo_t finfo;
+      while ((apr_dir_read(&finfo, APR_FINFO_DIRENT|APR_FINFO_TYPE|APR_FINFO_NAME, lockdir)) == APR_SUCCESS) {
+         if(finfo.filetype == APR_REG) {
+            if(!strncmp(finfo.name, GEOCACHE_LOCKFILE_PREFIX, strlen(GEOCACHE_LOCKFILE_PREFIX))) {
+               ctx->log(ctx,GEOCACHE_WARNING,"found old lockfile %s/%s, deleting it",config->lockdir,
+                     finfo.name);
+               rv = apr_file_remove(apr_psprintf(ctx->pool,"%s/%s",config->lockdir, finfo.name),ctx->pool);
+               if(rv != APR_SUCCESS) {
+                  ctx->set_error(ctx,500, "failed to remove lockfile %s: %s",finfo.name,apr_strerror(rv,errmsg,120));
+                  return;
+               }
+
             }
 
          }
-      
       }
    }
    apr_dir_close(lockdir);
