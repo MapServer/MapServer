@@ -41,6 +41,16 @@ static int geocache_write_tile(request_rec *r, geocache_tile *tile) {
    if((rc = ap_meets_conditions(r)) != OK) {
       return rc;
    }
+   if(tile->expires) {
+      apr_time_t now = apr_time_now();
+      apr_time_t additional = apr_time_from_sec(tile->expires);
+      apr_time_t expires = now + additional;
+      apr_table_mergen(r->headers_out, "Cache-Control",apr_psprintf(r->pool, "max-age=%d", tile->expires));
+      char *timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
+      apr_rfc822_date(timestr, expires);
+      apr_table_setn(r->headers_out, "Expires", timestr);
+
+   }
    ap_set_last_modified(r);
    ap_set_content_length(r,tile->data->size);
    if(tile->tileset->source->image_format == GEOCACHE_IMAGE_FORMAT_PNG) 

@@ -65,6 +65,7 @@ typedef struct {
    geocache_buffer *data;
    void *lock;
    apr_time_t mtime;
+   int expires;
 } geocache_tile;
 
 typedef struct {
@@ -146,6 +147,7 @@ struct geocache_tileset {
    double *resolutions;
    int metasize_x, metasize_y;
    int metabuffer;
+   int expires;
    geocache_image_format_type format;
    geocache_cache *cache;
    geocache_source *source;

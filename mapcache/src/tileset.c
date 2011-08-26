@@ -161,6 +161,7 @@ geocache_tileset* geocache_tileset_create(apr_pool_t *pool) {
    geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(pool, sizeof(geocache_tileset));
    tileset->metasize_x = tileset->metasize_y = 1;
    tileset->metabuffer = 0;
+   tileset->expires = 0;
    tileset->tile_sx = tileset->tile_sy = 256;
    tileset->extent[0]=tileset->extent[1]=tileset->extent[2]=tileset->extent[3]=0;
    tileset->forwarded_params = apr_table_make(pool,1);
@@ -174,6 +175,7 @@ geocache_tileset* geocache_tileset_create(apr_pool_t *pool) {
 geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, apr_pool_t *pool) {
    geocache_tile *tile = (geocache_tile*)apr_pcalloc(pool, sizeof(geocache_tile));
    tile->tileset = tileset;
+   tile->expires = tileset->expires;
    tile->sx = tileset->tile_sx;
    tile->sy = tileset->tile_sy;
    return tile;

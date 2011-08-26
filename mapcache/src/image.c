@@ -65,12 +65,16 @@ geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_tile **tiles,
    int i;
    geocache_tile *tile = apr_pcalloc(r->pool,sizeof(geocache_tile));
    tile->mtime = tiles[0]->mtime;
+   tile->expires = tiles[0]->expires;
    base = geocache_imageio_decode(r, tiles[0]->data);
    if(!base) return NULL;
    for(i=1; i<ntiles; i++) {
       overlay = geocache_imageio_decode(r, tiles[i]->data);
       if(tile->mtime < tiles[i]->mtime)
          tile->mtime = tiles[i]->mtime;
+      if(tiles[i]->expires && ((tile->expires < tiles[i]->expires) || !tile->expires)) {
+         tile->expires = tiles[i]->expires;
+      }
       if(!overlay) return NULL;
       _geocache_image_merge(r, base, overlay);
    }

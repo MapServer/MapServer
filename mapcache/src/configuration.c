@@ -252,17 +252,25 @@ char* parseTileset(xmlNode *node, geocache_cfg *config, apr_pool_t *pool) {
          tileset->metasize_x = values[0];
          tileset->metasize_y = values[1];
          xmlFree(value);
+      } else if(!xmlStrcmp(cur_node->name, BAD_CAST "expires")) {
+         value = (char*)xmlNodeGetContent(cur_node);
+         char *endptr;
+         tileset->expires = (int)strtol(value,&endptr,10);
+         if(*endptr != 0)
+            return apr_psprintf(pool,"failed to parse expires %s."
+                  "(expecting an  integer, "
+                  "eg <expires>3600</expires>",
+                  value);     
+         xmlFree(value);
       } else if(!xmlStrcmp(cur_node->name, BAD_CAST "metabuffer")) {
          value = (char*)xmlNodeGetContent(cur_node);
          char *endptr;
          tileset->metabuffer = (int)strtol(value,&endptr,10);
          if(*endptr != 0)
             return apr_psprintf(pool,"failed to parse metabuffer %s."
-                  "(expecting an integer integer, "
+                  "(expecting an  integer, "
                   "eg <metabuffer>1</metabuffer>",
                   value);     
-
-
          xmlFree(value);
       } else if(!xmlStrcmp(cur_node->name, BAD_CAST "format")) {
          value = (char*)xmlNodeGetContent(cur_node);

@@ -39,6 +39,7 @@
         <metatile>5 5</metatile>
         <metabuffer>30</metabuffer>
         <format>JPG</format>
+        <expires>3600</expires>
     </tileset>
     <tileset name="test2">
         <source>nexrad</source>
