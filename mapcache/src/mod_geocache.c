@@ -249,7 +249,7 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
       return 1;
    }
 #endif
-#ifdef APR_HAS_PROC_PTHREAD_SERIALIZE
+#if APR_HAS_PROC_PTHREAD_SERIALIZE
    lock_type = APR_LOCK_PROC_PTHREAD;
 #endif
    rc = apr_global_mutex_create(&cfg->mutex,geocache_mutex_name,lock_type,p);
