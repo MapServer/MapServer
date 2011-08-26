@@ -89,7 +89,7 @@ struct geocache_context {
     * \brief query context to know if an error has occured
     * \memberof geocache_context
     */
-   int (*get_error)(geocache_context *ctx);
+   geocache_error_code (*get_error)(geocache_context *ctx);
    
    /**
     * \brief get human readable message for the error
@@ -131,8 +131,10 @@ struct geocache_context {
    
    apr_pool_t *pool;
    char *_errmsg;
-   int _errcode;
+   geocache_error_code _errcode;
 };
+
+void geocache_context_init(geocache_context *ctx);
 
 #define GC_CHECK_ERROR_RETURN(ctx) (if(((geocache_context*)ctx)->_errcode) return GEOCACHE_FAILURE;)
 #define GC_CHECK_ERROR(ctx) if(((geocache_context*)ctx)->_errcode) return;

@@ -22,7 +22,10 @@ mod_geocache.o:  mod_geocache.c $(OBJS)
 	
 geocache.fcgi: fastcgi_geocache.c $(OBJS)
 	$(LIBTOOL) --mode=link $(CC) -o geocache.fcgi $(GC_CFLAGS) $(APR_CFLAGS) $(FCGI_INC) fastcgi_geocache.c $(LOBJS) $(GC_LIBS) $(APR_LIBS) $(FCGI_LIB)
-	
+
+geocache_seed: geocache_seed.c $(OBJS)
+	$(LIBTOOL) --mode=link $(CC) -o geocache_seed $(GC_CFLAGS) $(APR_CFLAGS) geocache_seed.c $(LOBJS) $(GC_LIBS) $(APR_LIBS)
+
 
 clean:
 	rm -f *.o

@@ -65,5 +65,37 @@ int geocache_util_extract_double_list(geocache_context *ctx, char* args, const c
    return GEOCACHE_SUCCESS;
 }
 
+geocache_error_code _geocache_context_get_error_default(geocache_context *ctx) {
+    return ctx->_errcode;
+}
+
+char* _geocache_context_get_error_msg_default(geocache_context *ctx) {
+    return ctx->_errmsg;
+}
+
+void _geocache_context_set_error_default(geocache_context *ctx, geocache_error_code code, char *msg, ...) {
+    char *fmt;
+    va_list args;
+    va_start(args,msg);
+
+    if(ctx->_errmsg) {
+        fmt=apr_psprintf(ctx->pool,"%s\n%s",ctx->_errmsg,msg);
+    } else {
+        fmt=msg;
+        ctx->_errcode = code;
+    }
+    ctx->_errmsg = apr_pvsprintf(ctx->pool,fmt,args);
+    va_end(args);
+}
+
+
+void geocache_context_init(geocache_context *ctx) {
+    ctx->_errcode = GEOCACHE_NO_ERROR;
+    ctx->_errmsg = NULL;
+    ctx->get_error = _geocache_context_get_error_default;
+    ctx->get_error_message = _geocache_context_get_error_msg_default;
+    ctx->set_error = _geocache_context_set_error_default;
+}
+
 
 

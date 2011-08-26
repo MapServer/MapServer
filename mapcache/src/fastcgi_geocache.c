@@ -66,9 +66,7 @@ void fcgi_request_context_log(geocache_context *c, geocache_log_level level, cha
 
 
 void init_fcgi_context(geocache_context_fcgi *ctx) {
-   ctx->ctx.set_error = fcgi_context_set_error;
-   ctx->ctx.get_error = fcgi_context_get_error;
-   ctx->ctx.get_error_message = fcgi_context_get_error_message;
+   geocache_context_init((geocache_context*)ctx);
    ctx->ctx.log = fcgi_context_log;
 }
 

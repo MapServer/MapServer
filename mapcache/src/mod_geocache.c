@@ -54,24 +54,6 @@ struct geocache_context_apache_request {
    request_rec *request;
 };
 
-
-void apache_context_set_error(geocache_context *c, geocache_error_code code, char *message, ...) {
-   va_list args;
-   va_start(args,message);
-   c->_errmsg = apr_pvsprintf(c->pool,message,args);
-   c->_errcode = code;
-   va_end(args);
-}
-
-
-int apache_context_get_error(geocache_context *c) {
-   return c->_errcode;
-}
-
-char* apache_context_get_error_message(geocache_context *c) {
-   return c->_errmsg;
-}
-
 void apache_context_server_log(geocache_context *c, geocache_log_level level, char *message, ...) {
    geocache_context_apache_server *ctx = (geocache_context_apache_server*)c;
    va_list args;
@@ -86,12 +68,6 @@ void apache_context_request_log(geocache_context *c, geocache_log_level level, c
    va_start(args,message);
    ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request,"%s",apr_pvsprintf(ctx->ctx.ctx.pool,message,args));
    va_end(args);
-}
-
-void init_apache_context(geocache_context_apache *ctx) {
-   ctx->ctx.set_error = apache_context_set_error;
-   ctx->ctx.get_error = apache_context_get_error;
-   ctx->ctx.get_error_message = apache_context_get_error_message;
 }
 
 int geocache_util_mutex_aquire(geocache_context *r, int nonblocking) {
@@ -121,14 +97,14 @@ int geocache_util_mutex_release(geocache_context *r) {
 }
 
 void init_apache_request_context(geocache_context_apache_request *ctx) {
-   init_apache_context((geocache_context_apache*)ctx);
+   geocache_context_init((geocache_context*)ctx);
    ctx->ctx.ctx.log = apache_context_request_log;
    ctx->ctx.ctx.global_lock_aquire = geocache_util_mutex_aquire;
    ctx->ctx.ctx.global_lock_release = geocache_util_mutex_release;
 }
 
 void init_apache_server_context(geocache_context_apache_server *ctx) {
-   init_apache_context((geocache_context_apache*)ctx);
+   geocache_context_init((geocache_context*)ctx);
    ctx->ctx.ctx.log = apache_context_server_log;
    ctx->ctx.ctx.global_lock_aquire = geocache_util_mutex_aquire;
    ctx->ctx.ctx.global_lock_release = geocache_util_mutex_release;
