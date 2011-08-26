@@ -76,16 +76,23 @@ void apache_context_server_log(geocache_context *c, geocache_log_level level, ch
    geocache_context_apache_server *ctx = (geocache_context_apache_server*)c;
    va_list args;
    va_start(args,message);
-   ap_log_error(APLOG_MARK, APLOG_INFO, 0, ctx->server,"%s",apr_pvsprintf(ctx->ctx.ctx.pool,message,args));
+   char *msg;
+   vasprintf(&msg,message,args);
    va_end(args);
+   ap_log_error(APLOG_MARK, APLOG_INFO, 0, ctx->server,"%s",msg);
+   free(msg);
 }
 
 void apache_context_request_log(geocache_context *c, geocache_log_level level, char *message, ...) {
    geocache_context_apache_request *ctx = (geocache_context_apache_request*)c;
    va_list args;
    va_start(args,message);
-   ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request,"%s",apr_pvsprintf(ctx->ctx.ctx.pool,message,args));
+   char *msg;
+   vasprintf(&msg,message,args);
    va_end(args);
+   ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request,"%s",msg);
+   free(msg);
+
 }
 
 void geocache_util_mutex_aquire(geocache_context *gctx) {
@@ -127,7 +134,7 @@ void init_apache_server_context(geocache_context_apache_server *ctx) {
 
 static geocache_context_apache_request* apache_request_context_create(request_rec *r) {
    geocache_context_apache_request *ctx = apr_pcalloc(r->pool, sizeof(geocache_context_apache_request));
-   ctx->ctx.ctx.pool = r->pool;
+   apr_pool_create(&ctx->ctx.ctx.pool,r->pool);
    ctx->ctx.ctx.config = ap_get_module_config(r->per_dir_config, &geocache_module);
    ctx->request = r;
    init_apache_request_context(ctx);
@@ -136,7 +143,7 @@ static geocache_context_apache_request* apache_request_context_create(request_re
 
 static geocache_context_apache_server* apache_server_context_create(server_rec *s, apr_pool_t *pool) {
    geocache_context_apache_server *ctx = apr_pcalloc(pool, sizeof(geocache_context_apache_server));
-   ctx->ctx.ctx.pool = pool;
+   apr_pool_create(&ctx->ctx.ctx.pool,pool);
    ctx->ctx.ctx.config = NULL;
    ctx->server = s;
    init_apache_server_context(ctx);
@@ -194,7 +201,7 @@ static int mod_geocache_request_handler(request_rec *r) {
    geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
    geocache_context *global_ctx = (geocache_context*)apache_ctx;
    geocache_tile *tile;
-   int i;
+   int i,ret;
 
    if (!r->handler || strcmp(r->handler, "geocache")) {
       return DECLINED;
@@ -237,7 +244,9 @@ static int mod_geocache_request_handler(request_rec *r) {
       }
       tile->tileset = request->tiles[0]->tileset;
    }
-   return geocache_write_tile(apache_ctx,tile);
+   ret = geocache_write_tile(apache_ctx,tile);
+   apr_pool_clear(global_ctx->pool);
+   return ret;
 }
 
 static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
