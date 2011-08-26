@@ -45,8 +45,7 @@ static ezxml_t _wmts_service_identification(geocache_context *ctx, const char *t
 }
 
 static ezxml_t _wmts_operations_metadata(geocache_context *ctx, const char *onlineresource, const char *operationstr) {
-   ezxml_t node = ezxml_new("ows:OperationsMetadata");
-   ezxml_t operation = ezxml_add_child(node,"ows:Operation",0);
+   ezxml_t operation = ezxml_new("ows:Operation");
    ezxml_set_attr(operation,"name",operationstr);
    ezxml_t dcp = ezxml_add_child(operation,"ows:DCP",0);
    ezxml_t http = ezxml_add_child(dcp,"ows:HTTP",0);
@@ -56,14 +55,14 @@ static ezxml_t _wmts_operations_metadata(geocache_context *ctx, const char *onli
    ezxml_set_attr(constraint,"name","GetEncoding");
    ezxml_t allowedvalues = ezxml_add_child(constraint,"ows:AllowedValues",0);
    ezxml_set_txt(ezxml_add_child(allowedvalues,"ows:Value",0),"KVP");
-   return node;
+   return operation;
 
 }
 
 static ezxml_t _wmts_service_provider(geocache_context *ctx, const char *onlineresource, const char *contact) {
    ezxml_t node = ezxml_new("ows:ServiceProvider");
-   ezxml_set_txt(ezxml_add_child(node,"ProviderName",0),contact);
-   ezxml_set_txt(ezxml_add_child(node,"ProviderSite",0),onlineresource);
+   ezxml_set_txt(ezxml_add_child(node,"ows:ProviderName",0),contact);
+   ezxml_set_attr(ezxml_add_child(node,"ows:ProviderSite",0),"xlink:href",onlineresource);
    return node;
 }
 
@@ -71,6 +70,8 @@ static ezxml_t _wmts_service_provider(geocache_context *ctx, const char *onliner
 void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
    geocache_request_get_capabilities_wmts *request = (geocache_request_get_capabilities_wmts*)req;
    ezxml_t caps;
+   ezxml_t contents;
+   ezxml_t operations_metadata;
 #ifdef DEBUG
    if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
       ctx->set_error(ctx,500,"wrong wmts capabilities request");
@@ -94,10 +95,13 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    caps = _wmts_capabilities();
    ezxml_insert(_wmts_service_identification(ctx,title),caps,0);
    ezxml_insert(_wmts_service_provider(ctx,onlineresource,"contact_todo"),caps,0);
-   ezxml_insert(_wmts_operations_metadata(ctx,onlineresource,"GetCapabilities"),caps,0);
-   ezxml_insert(_wmts_operations_metadata(ctx,onlineresource,"GetTile"),caps,0);
-   ezxml_insert(_wmts_operations_metadata(ctx,onlineresource,"GetFeatureInfo"),caps,0);
 
+   operations_metadata = ezxml_add_child(caps,"ows:OperationsMetadata",0);
+   ezxml_insert(_wmts_operations_metadata(ctx,onlineresource,"GetCapabilities"),operations_metadata,0);
+   ezxml_insert(_wmts_operations_metadata(ctx,onlineresource,"GetTile"),operations_metadata,0);
+   ezxml_insert(_wmts_operations_metadata(ctx,onlineresource,"GetFeatureInfo"),operations_metadata,0);
+
+   contents = ezxml_add_child(caps,"Contents",0);
    
    apr_hash_index_t *layer_index = apr_hash_first(ctx->pool,cfg->tilesets);
    while(layer_index) {
@@ -106,7 +110,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       const void *key; apr_ssize_t keylen;
       apr_hash_this(layer_index,&key,&keylen,(void**)&tileset);
       
-      ezxml_t layer = ezxml_add_child(caps,"Layer",0);
+      ezxml_t layer = ezxml_add_child(contents,"Layer",0);
       const char *title = apr_table_get(tileset->metadata,"title");
       if(title) {
          ezxml_set_txt(ezxml_add_child(layer,"ows:Title",0),title);
@@ -204,11 +208,11 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
 
          double *gbbox = grid_link->restricted_extent?grid_link->restricted_extent:grid_link->grid->extent;
          ezxml_t bbox = ezxml_add_child(layer,"ows:BoundingBox",0);
-         ezxml_set_txt(ezxml_add_child(bbox,"ows:CRS",0),geocache_grid_get_crs(ctx,grid_link->grid));
          ezxml_set_txt(ezxml_add_child(bbox,"ows:LowerCorner",0),
                apr_psprintf(ctx->pool,"%f %f",gbbox[0], gbbox[1]));
          ezxml_set_txt(ezxml_add_child(bbox,"ows:UpperCorner",0),
                apr_psprintf(ctx->pool,"%f %f",gbbox[2], gbbox[3]));
+         ezxml_set_attr(bbox,"crs",geocache_grid_get_crs(ctx,grid_link->grid));
       }
       layer_index = apr_hash_next(layer_index);
    }
@@ -225,7 +229,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       
       WellKnownScaleSet = apr_table_get(grid->metadata,"WellKnownScaleSet");
      
-      ezxml_t tmset = ezxml_add_child(caps,"TileMatrixSet",0);
+      ezxml_t tmset = ezxml_add_child(contents,"TileMatrixSet",0);
       ezxml_set_txt(ezxml_add_child(tmset,"ows:Identifier",0),grid->name);
       ezxml_set_txt(ezxml_add_child(tmset,"ows:SupportedCRS",0),geocache_grid_get_crs(ctx,grid));
       
@@ -244,8 +248,8 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
                   grid->extent[1] + glevel->maxy * glevel->resolution * grid->tile_sy));
          ezxml_set_txt(ezxml_add_child(tm,"TileWidth",0),apr_psprintf(ctx->pool,"%d",grid->tile_sx));
          ezxml_set_txt(ezxml_add_child(tm,"TileHeight",0),apr_psprintf(ctx->pool,"%d",grid->tile_sy));
-         ezxml_set_txt(ezxml_add_child(tm,"MatrixWidth",0),apr_psprintf(ctx->pool,"%d",glevel->maxx));
-         ezxml_set_txt(ezxml_add_child(tm,"MatrixHeight",0),apr_psprintf(ctx->pool,"%d",glevel->maxy));
+         ezxml_set_txt(ezxml_add_child(tm,"MatrixWidth",0),apr_psprintf(ctx->pool,"%d",glevel->maxx+1));
+         ezxml_set_txt(ezxml_add_child(tm,"MatrixHeight",0),apr_psprintf(ctx->pool,"%d",glevel->maxy+1));
       }
       grid_index = apr_hash_next(grid_index);
    }
