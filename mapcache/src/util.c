@@ -75,19 +75,6 @@ int geocache_util_extract_double_list(geocache_context *ctx, const char* cargs, 
    return GEOCACHE_SUCCESS;
 }
 
-
-
-#if APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 4
-APR_DECLARE(apr_status_t) apr_file_link(const char *from_path, 
-                                          const char *to_path)
-{
-    if (link(from_path, to_path) == -1) {
-        return errno;
-    }
-    return APR_SUCCESS;
-}
-#endif
-
 #if APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3
 APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p, const apr_table_t *t)
 {
