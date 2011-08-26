@@ -128,7 +128,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       ezxml_set_attr(style,"isDefault","true");
       ezxml_set_txt(ezxml_add_child(style,"ows:Identifier",0),"default");
       
-      if(tileset->format->mime_type)
+      if(tileset->format && tileset->format->mime_type)
          ezxml_set_txt(ezxml_add_child(layer,"Format",0),tileset->format->mime_type);
       else
          ezxml_set_txt(ezxml_add_child(layer,"Format",0),"image/unknown");
@@ -154,7 +154,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             dimensionstemplate = apr_pstrcat(ctx->pool,dimensionstemplate,"{",dimension->name,"}/",NULL);
          }
       }
-      if(tileset->source->info_formats) {
+      if(tileset->source && tileset->source->info_formats) {
          int i;
          for(i=0;i<tileset->source->info_formats->nelts;i++) {
             char *iformat = APR_ARRAY_IDX(tileset->source->info_formats,i,char*);
@@ -169,11 +169,15 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       }
 
       ezxml_t resourceurl = ezxml_add_child(layer,"ResourceURL",0);
-      ezxml_set_attr(resourceurl,"format",tileset->format->mime_type);
+      if(tileset->format && tileset->format->mime_type)
+         ezxml_set_attr(resourceurl,"format",tileset->format->mime_type);
+      else
+         ezxml_set_attr(resourceurl,"format","image/unknown");
       ezxml_set_attr(resourceurl,"resourceType","tile");
       ezxml_set_attr(resourceurl,"template",
             apr_pstrcat(ctx->pool,onlineresource,"wmts/1.0.0/",tileset->name,"/default/",
-               dimensionstemplate,"{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.",tileset->format->extension,NULL));
+               dimensionstemplate,"{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.",
+               ((tileset->format)?tileset->format->extension:"xxx"),NULL));
       
 
       if(tileset->wgs84bbox[0] != tileset->wgs84bbox[2]) {
@@ -535,21 +539,26 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
    }
 
    if(!fi_j) { /*we have a getTile request*/
-      if(!format && !extension) {
-         ctx->set_error(ctx, 404, "received wmts request with no format");
-         return;
-      } else {
-         if(format && strcmp(format,tileset->format->mime_type)) {
-            ctx->set_error(ctx, 404, "received wmts request with invalid format \"%s\" (expecting %s)",
-                  format,tileset->format->mime_type);
+
+#ifdef PEDANTIC_WMTS_FORMAT_CHECK
+      if(tileset->format) {
+         if(!format && !extension) {
+            ctx->set_error(ctx, 404, "received wmts request with no format");
             return;
-         }
-         if(extension && strcmp(extension,tileset->format->extension)) {
-            ctx->set_error(ctx, 404, "received wmts request with invalid extension \"%s\" (expecting %s)",
-                  extension,tileset->format->extension);
-            return;
+         } else {
+            if(format && tileset->format && strcmp(format,tileset->format->mime_type)) {
+               ctx->set_error(ctx, 404, "received wmts request with invalid format \"%s\" (expecting %s)",
+                     format,tileset->format->mime_type);
+               return;
+            }
+            if(extension && tileset->format && strcmp(extension,tileset->format->extension)) {
+               ctx->set_error(ctx, 404, "received wmts request with invalid extension \"%s\" (expecting %s)",
+                     extension,tileset->format->extension);
+               return;
+            }
          }
       }
+#endif
 
 
       geocache_request_get_tile *req = (geocache_request_get_tile*)apr_pcalloc(
@@ -593,7 +602,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       }
             
       char *endptr;
-      if(!tileset->source->info_formats) {
+      if(!tileset->source || !tileset->source->info_formats) {
          ctx->set_error(ctx,400,"tileset %s does not support featureinfo requests", tileset->name);
          return;
       }

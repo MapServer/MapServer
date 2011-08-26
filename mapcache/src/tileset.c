@@ -28,10 +28,6 @@ void geocache_tileset_configuration_check(geocache_context *ctx, geocache_tilese
       ctx->set_error(ctx, 400, "tileset \"%s\" has no cache configured.", tileset->name);
       return;
    }
-   if(tileset->source == NULL) {
-      ctx->set_error(ctx, 400, "tileset \"%s\" has no source configured.", tileset->name);
-      return;
-   } 
 
    if(apr_is_empty_array(tileset->grid_links)) {
       ctx->set_error(ctx, 400, "tileset \"%s\" has no grids configured", tileset->name);
@@ -47,7 +43,7 @@ void geocache_tileset_configuration_check(geocache_context *ctx, geocache_tilese
       }
    }
 #endif
-   if(!tileset->format && tileset->source->type == GEOCACHE_SOURCE_GDAL) {
+   if(!tileset->format && tileset->source && tileset->source->type == GEOCACHE_SOURCE_GDAL) {
       ctx->set_error(ctx,400, "tileset \"%s\" references a gdal source. <format> tag is missing and mandatory in this case",
             tileset->name);
       return;
@@ -318,6 +314,12 @@ geocache_metatile* geocache_tileset_metatile_get(geocache_context *ctx, geocache
  */
 void _geocache_tileset_render_metatile(geocache_context *ctx, geocache_metatile *mt) {
    int i;
+#ifdef DEBUG
+   if(!mt->map.tileset->source) {
+      ctx->set_error(ctx,500,"###BUG### tileset_render_metatile called on tileset with no source");
+      return;
+   }
+#endif
    mt->map.tileset->source->render_map(ctx, &mt->map);
    GC_CHECK_ERROR(ctx);
    geocache_image_metatile_split(ctx, mt);
@@ -431,8 +433,9 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
    ret = tile->tileset->cache->tile_get(ctx, tile);
    GC_CHECK_ERROR(ctx);
 
-   if(ret == GEOCACHE_SUCCESS && tile->tileset->auto_expire && tile->mtime) {
-      /* the cache is in auto-expire mode, and can return the tile modification date
+   if(ret == GEOCACHE_SUCCESS && tile->tileset->auto_expire && tile->mtime && tile->tileset->source) {
+      /* the cache is in auto-expire mode, and can return the tile modification date,
+       * and there is a source configured so we can possibly update it,
        * so we check to see if it is stale */
       apr_time_t now = apr_time_now();
       apr_time_t stale = tile->mtime + apr_time_from_sec(tile->tileset->auto_expire);
@@ -444,6 +447,13 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
    }
 
    if(ret == GEOCACHE_CACHE_MISS) {
+      /* bail out straight away if the tileset has no source */
+      if(!tile->tileset->source) {
+         ctx->set_error(ctx,404,"tile not in cache, and no source configured for tileset %s",
+               tile->tileset->name);
+         return;
+      }
+
       /* the tile does not exist, we must take action before re-asking for it */
 
       /*

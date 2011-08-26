@@ -711,9 +711,7 @@
       <metabuffer>30</metabuffer>
    </tileset>
    <tileset name="natural-earth-1">
-      <source>osm</source>
       <cache>mbtiles</cache>
-      <format>PNG</format>
       <grid>g</grid>
    </tileset>
    <tileset name="osm">

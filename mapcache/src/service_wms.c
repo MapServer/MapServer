@@ -171,7 +171,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
       
       ezxml_t layerxml = ezxml_add_child(toplayer,"Layer",0);
       ezxml_set_attr(layerxml, "cascaded", "1");
-      ezxml_set_attr(layerxml, "queryable", tileset->source->info_formats?"1":"0"),
+      ezxml_set_attr(layerxml, "queryable", (tileset->source && tileset->source->info_formats)?"1":"0"),
       ezxml_set_txt(ezxml_add_child(layerxml,"Name",0),tileset->name);
 
       ezxml_t tsxml = ezxml_add_child(vendorxml, "TileSet",0);
@@ -611,7 +611,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             errmsg = apr_psprintf(ctx->pool,"received wms getfeatureinfo request with invalid layer %s", str);
             goto proxies;
          }
-         if(!tileset->source->info_formats) {
+         if(!tileset->source || !tileset->source->info_formats) {
             errcode = 404;
             errmsg = apr_psprintf(ctx->pool,"received wms getfeatureinfo request for unqueryable layer %s", str);
             goto proxies;

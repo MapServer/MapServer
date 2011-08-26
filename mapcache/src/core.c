@@ -117,7 +117,14 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
       return basemap;
    } else /*if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_FORWARD)*/ {
       int i;
-      geocache_map *basemap = req_map->maps[0];
+      for(i=0;i<req_map->nmaps;i++) {
+         if(!req_map->maps[i]->tileset->source) {
+            ctx->set_error(ctx,404,"cannot forward request for tileset %s: no source configured",
+                  req_map->maps[i]->tileset->name);
+            return NULL;
+         }
+      }
+      geocache_map *basemap = req_map->maps[i];
       basemap->tileset->source->render_map(ctx, basemap);
       if(GC_HAS_ERROR(ctx)) return NULL;
       if(req_map->nmaps>1) {
@@ -156,6 +163,10 @@ geocache_feature_info *geocache_core_get_featureinfo(geocache_context *ctx,
       geocache_request_get_feature_info *req_fi) {
    geocache_feature_info *fi = req_fi->fi;
    geocache_tileset *tileset = fi->map.tileset;
+   if(!tileset->source) {
+      ctx->set_error(ctx,404,"cannot query tileset %s: no source defined",tileset->name);
+      return NULL;
+   }
    if(tileset->source->info_formats) {
       int i;
       for(i=0;i<tileset->source->info_formats->nelts;i++) {
