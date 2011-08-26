@@ -64,7 +64,7 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
       return NULL;
    }
 #else
-   global_ctx->set_error(global_ctx,501,"wms getmap handling not configured in this build");
-   return report_error(apache_ctx);
+   ctx->set_error(ctx,501,"wms getmap handling not configured in this build");
+   return NULL;
 #endif
 }
