@@ -217,3 +217,5 @@ apr_table_t *geocache_http_parse_param_string(geocache_context *r, char *args_st
 }
 
 
+/* vim: ai ts=3 sts=3 et sw=3
+*/

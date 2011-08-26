@@ -150,3 +150,5 @@ int geocache_image_blank_color(geocache_image* image) {
    return GEOCACHE_TRUE;
 }
 
+/* vim: ai ts=3 sts=3 et sw=3
+*/

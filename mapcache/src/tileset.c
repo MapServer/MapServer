@@ -307,3 +307,5 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
       }
    }
 }
+/* vim: ai ts=3 sts=3 et sw=3
+*/

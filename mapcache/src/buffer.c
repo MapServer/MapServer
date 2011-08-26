@@ -50,3 +50,5 @@ int geocache_buffer_append(geocache_buffer *buffer, size_t len, void *data) {
    buffer->size += len;
    return len;
 }
+/* vim: ai ts=3 sts=3 et sw=3
+*/

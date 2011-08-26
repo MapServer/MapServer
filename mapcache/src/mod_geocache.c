@@ -365,3 +365,5 @@ module AP_MODULE_DECLARE_DATA geocache_module =
       mod_geocache_cmds,
       mod_geocache_register_hooks
 };
+/* vim: ai ts=3 sts=3 et sw=3
+*/

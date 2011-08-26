@@ -384,3 +384,5 @@ geocache_service* geocache_service_wmts_create(geocache_context *ctx) {
 }
 
 /** @} */
+/* vim: ai ts=3 sts=3 et sw=3
+*/

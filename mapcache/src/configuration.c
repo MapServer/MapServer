@@ -800,3 +800,5 @@ cleanup:
    ezxml_free(doc);
    return;
 }
+/* vim: ai ts=3 sts=3 et sw=3
+*/

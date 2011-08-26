@@ -128,4 +128,5 @@ geocache_service* geocache_service_demo_create(geocache_context *ctx) {
    return (geocache_service*)service;
 }
 
-/** @} */
+/** @} *//* vim: ai ts=3 sts=3 et sw=3
+*/

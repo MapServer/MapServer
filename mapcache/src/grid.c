@@ -24,3 +24,5 @@ geocache_grid* geocache_grid_create(apr_pool_t *pool) {
    grid->metadata = apr_table_make(pool,3);
    return grid;
 }
+/* vim: ai ts=3 sts=3 et sw=3
+*/

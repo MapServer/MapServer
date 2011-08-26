@@ -99,3 +99,5 @@ geocache_source* geocache_source_gdal_create(geocache_context *ctx) {
 
 
 
+/* vim: ai ts=3 sts=3 et sw=3
+*/

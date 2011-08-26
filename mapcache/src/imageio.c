@@ -74,3 +74,5 @@ geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *
 
 /** @} */
 
+/* vim: ai ts=3 sts=3 et sw=3
+*/

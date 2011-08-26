@@ -45,3 +45,5 @@ typedef enum {
 } geocache_error_reporting;
 
 #endif /* ERRORS_H_ */
+/* vim: ai ts=3 sts=3 et sw=3
+*/

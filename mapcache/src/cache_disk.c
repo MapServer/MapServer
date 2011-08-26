@@ -305,3 +305,5 @@ geocache_cache* geocache_cache_disk_create(geocache_context *ctx) {
    return (geocache_cache*)cache;
 }
 
+/* vim: ai ts=3 sts=3 et sw=3
+*/

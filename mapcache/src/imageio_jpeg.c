@@ -268,3 +268,5 @@ geocache_image_format* geocache_imageio_create_jpeg_format(apr_pool_t *pool, cha
 
 
 
+/* vim: ai ts=3 sts=3 et sw=3
+*/

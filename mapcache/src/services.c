@@ -64,3 +64,5 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
 
 
 
+/* vim: ai ts=3 sts=3 et sw=3
+*/

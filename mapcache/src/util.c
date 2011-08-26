@@ -137,3 +137,5 @@ void geocache_context_init(geocache_context *ctx) {
     ctx->set_error = _geocache_context_set_error_default;
 }
 
+/* vim: ai ts=3 sts=3 et sw=3
+*/

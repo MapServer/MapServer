@@ -1042,3 +1042,5 @@ struct geocache_dimension_regexp {
    regex_t *regex;
 };
 #endif /* GEOCACHE_H_ */
+/* vim: ai ts=3 sts=3 et sw=3
+*/

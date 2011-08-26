@@ -1093,3 +1093,5 @@ geocache_image_format* geocache_imageio_create_png_q_format(apr_pool_t *pool, ch
 
 /** @} */
 
+/* vim: ai ts=3 sts=3 et sw=3
+*/

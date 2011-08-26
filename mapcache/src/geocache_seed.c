@@ -312,3 +312,5 @@ int main(int argc, const char **argv) {
 
     return 0;
 }
+/* vim: ai ts=3 sts=3 et sw=3
+*/

@@ -53,3 +53,5 @@ APR_DECLARE(apr_status_t) apr_file_link(const char *from_path, const char *to_pa
 
 
 #endif /* UTIL_H_ */
+/* vim: ai ts=3 sts=3 et sw=3
+*/
