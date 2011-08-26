@@ -282,7 +282,7 @@ void cmd_thread() {
    }
 
    if(error_detected) {
-      printf(ctx.get_error_message(&ctx));
+      printf("%s\n",ctx.get_error_message(&ctx));
    }
 
    //instruct rendering threads to stop working
