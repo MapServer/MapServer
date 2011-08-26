@@ -18,7 +18,7 @@ fcgihelp:
 mod_geocache.la: mod_geocache.o
 
 mod_geocache.o:  mod_geocache.c $(OBJS)
-	$(APXS) $(APXS_WCFLAGS) $(GC_LIBS) -c mod_geocache.c $(LOBJS)
+	$(APXS) $(APXS_WCFLAGS) $(APXS_WLDFLAGS) -c mod_geocache.c $(LOBJS)
 	
 geocache.fcgi: fastcgi_geocache.c $(OBJS)
 	$(LIBTOOL) --mode=link $(CC) -o geocache.fcgi $(GC_CFLAGS) $(APR_CFLAGS) $(FCGI_INC) fastcgi_geocache.c $(LOBJS) $(GC_LIBS) $(APR_LIBS) $(FCGI_LIB)

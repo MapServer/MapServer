@@ -28,6 +28,10 @@
 #include <libxml/tree.h>
 #include "util.h"
 #include "errors.h"
+#ifdef USE_GDAL
+#include <gdal.h>
+#include <cpl_conv.h>
+#endif
 #include <assert.h>
 #include <apr_time.h>
 
@@ -56,6 +60,7 @@ typedef struct geocache_buffer geocache_buffer;
 typedef struct geocache_tile geocache_tile;
 typedef struct geocache_metatile geocache_metatile;
 typedef struct geocache_source_wms geocache_source_wms;
+typedef struct geocache_source_gdal geocache_source_gdal;
 typedef struct geocache_cache_disk geocache_cache_disk;
 typedef struct geocache_request geocache_request;
 typedef struct geocache_service geocache_service;
@@ -182,7 +187,8 @@ int geocache_buffer_append(geocache_buffer *buffer, size_t len, void *data);
 /** @{ */
 
 typedef enum {
-    GEOCACHE_SOURCE_WMS
+    GEOCACHE_SOURCE_WMS,
+    GEOCACHE_SOURCE_GDAL
 } geocache_source_type;
 
 /**\interface geocache_source
@@ -194,13 +200,6 @@ struct geocache_source {
     double data_extent[4]; /**< extent in which this source can produce data */
     geocache_source_type type;
     int supports_metatiling;
-    /**
-     * \brief get the data for the tile
-     *
-     * sets the geocache_tile::data for the given tile
-     * \deprecated
-     */
-    void (*render_tile)(geocache_context *ctx, geocache_tile * tile);
     /**
      * \brief get the data for the metatile
      *
@@ -222,6 +221,18 @@ struct geocache_source_wms {
     apr_table_t *wms_params; /**< WMS parameters specified in configuration */
 };
 
+#ifdef USE_GDAL
+/**\class geocache_source_gdal
+ * \brief GDAL geocache_source
+ * \implements geocache_source
+ */
+struct geocache_source_gdal {
+    geocache_source source;
+    char *datastr; /**< the gdal source string*/
+    apr_table_t *gdal_params; /**< GDAL parameters specified in configuration */
+    GDALDatasetH *poDataset;
+};
+#endif
 /** @} */
 
 
@@ -494,6 +505,11 @@ void geocache_configuration_add_cache(geocache_cfg *config, geocache_cache *cach
  * \memberof geocache_source
  */
 void geocache_source_init(geocache_context *ctx, geocache_source *source);
+
+/**
+ * \memberof geocache_source_gdal
+ */
+geocache_source* geocache_source_gdal_create(geocache_context *ctx);
 
 /**
  * \memberof geocache_source_wms

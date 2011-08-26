@@ -21,27 +21,6 @@
 
 /**
  * \private \memberof geocache_source_wms
- * \sa geocache_source::render_tile()
- */
-void _geocache_source_wms_render_tile(geocache_context *ctx, geocache_tile *tile) {
-   geocache_source_wms *wms = (geocache_source_wms*)tile->tileset->source;
-   apr_table_t *params = apr_table_clone(ctx->pool,wms->wms_default_params);
-   double bbox[4];
-   geocache_tileset_tile_bbox(tile,bbox);
-   apr_table_setn(params,"BBOX",apr_psprintf(ctx->pool,"%f,%f,%f,%f",bbox[0],bbox[1],bbox[2],bbox[3]));
-   apr_table_setn(params,"WIDTH",apr_psprintf(ctx->pool,"%d",tile->sx));
-   apr_table_setn(params,"HEIGHT",apr_psprintf(ctx->pool,"%d",tile->sy));
-   apr_table_setn(params,"FORMAT","image/png");
-   apr_table_setn(params,"SRS",tile->tileset->srs);
-   
-   apr_table_overlap(params,wms->wms_params,0);
-        
-   tile->data = geocache_buffer_create(1000,ctx->pool);
-   geocache_http_request_url_with_params(ctx,wms->url,params,tile->data);
-}
-
-/**
- * \private \memberof geocache_source_wms
  * \sa geocache_source::render_metatile()
  */
 void _geocache_source_wms_render_metatile(geocache_context *ctx, geocache_metatile *tile) {
@@ -116,7 +95,6 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    geocache_source_init(ctx, &(source->source));
    source->source.type = GEOCACHE_SOURCE_WMS;
    source->source.supports_metatiling = 1;
-   source->source.render_tile = _geocache_source_wms_render_tile;
    source->source.render_metatile = _geocache_source_wms_render_metatile;
    source->source.configuration_check = _geocache_source_wms_configuration_check;
    source->source.configuration_parse = _geocache_source_wms_configuration_parse;

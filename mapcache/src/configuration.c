@@ -125,6 +125,8 @@ void parseSource(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
    geocache_source *source = NULL;
    if(!strcmp(type,"wms")) {
       source = geocache_source_wms_create(ctx);
+   } else if(!strcmp(type,"gdal")) {
+      source = geocache_source_gdal_create(ctx);
    } else {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "unknown source type %s for source \"%s\"", type, name);
       return;
