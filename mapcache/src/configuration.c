@@ -590,10 +590,9 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       }
       restrictedExtent = (char*)ezxml_attr(cur_node,"restricted_extent");
       if(restrictedExtent) {
-         double *extent;
          int nvalues;
          restrictedExtent = apr_pstrdup(ctx->pool,restrictedExtent);
-         if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, restrictedExtent, ' ', &extent, &nvalues) ||
+         if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, restrictedExtent, ' ', &gridlink->restricted_extent, &nvalues) ||
                nvalues != 4) {
             ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse extent array %s."
                   "(expecting 4 space separated numbers, "
@@ -601,7 +600,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
                   restrictedExtent);
             return;
          }
-         geocache_grid_compute_limits(grid,extent,gridlink->grid_limits);
+         geocache_grid_compute_limits(grid,gridlink->restricted_extent,gridlink->grid_limits);
 
       } else {
          geocache_grid_compute_limits(grid,grid->extent,gridlink->grid_limits);

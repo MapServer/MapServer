@@ -153,36 +153,70 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             dimensionstemplate = apr_pstrcat(ctx->pool,dimensionstemplate,"{",dimension->name,"}/",NULL);
          }
       }
-      char *tmsets="";
+      char *tmsets = "";
+      char *bboxes = "";
       for(i=0;i<tileset->grid_links->nelts;i++) {
+         char *matrixlimits = "";
          geocache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+         if(grid_link->restricted_extent) {
+            int j;
+            matrixlimits = "      <TileMatrixSetLimits>";
+            for(j=0;j<grid_link->grid->nlevels;j++) {
+               matrixlimits = apr_psprintf(ctx->pool,"%s\n"
+                     "        <TileMatrixLimits>\n"
+                     "          <TileMatrix>%s:%d</TileMatrix>\n"
+                     "          <MinTileRow>%d</MinTileRow>\n"
+                     "          <MaxTileRow>%d</MaxTileRow>\n"
+                     "          <MinTileCol>%d</MinTileCol>\n"
+                     "          <MaxTileCol>%d</MaxTileCol>\n"
+                     "        </TileMatrixLimits>",
+                     matrixlimits,
+                     grid_link->grid->name,j,
+                     grid_link->grid_limits[j][0],
+                     grid_link->grid_limits[j][2]-1,
+                     grid_link->grid_limits[j][1],
+                     grid_link->grid_limits[j][3]-1);
+
+            }
+            matrixlimits = apr_pstrcat(ctx->pool,matrixlimits,"\n      </TileMatrixSetLimits>\n",NULL);
+         }
          tmsets = apr_pstrcat(ctx->pool,tmsets,
+               "    <TileMatrixSetLink>\n"
                "      <TileMatrixSet>",
                grid_link->grid->name,
                "</TileMatrixSet>\n",
+               matrixlimits,
+               "    </TileMatrixSetLink>\n",
                NULL);
+
+         double *bbox = grid_link->restricted_extent?grid_link->restricted_extent:grid_link->grid->extent;
+         bboxes = apr_psprintf(ctx->pool,"%s"
+               "    <ows:BoundingBox>\n"
+               "      <ows:CRS>%s</ows:CRS>\n"
+               "      <ows:LowerCorner>%f %f</ows:Lowercorner>\n"
+               "      <ows:Uppercorner>%f %f</ows:UpperCorner>\n"
+               "    <ows:BoundingBox>\n",
+               bboxes,
+               geocache_grid_get_crs(ctx,grid_link->grid),
+               bbox[0],bbox[1],
+               bbox[2],bbox[3]);
       }
       caps = apr_psprintf(ctx->pool,"%s"
             "  <Layer>\n"
             "    <ows:Title>%s</ows:Title>\n"
             "    <ows:Abstract>%s</ows:Abstract>\n"
-            /*"    <ows:WGS84BoundingBox>\n"
-            "      <ows:LowerCorner>%f %f</ows:LowerCorner>\n"
-            "      <ows:UpperCorner>%f %f</ows:UpperCorner>\n"
-            "    </ows:WGS84BoundingBox>\n"*/
             "    <ows:Identifier>%s</ows:Identifier>\n"
             "    <Style isDefault=\"true\">\n"
             "      <ows:Identifier>default</ows:Identifier>\n"
             "    </Style>\n"
             "%s" /*dimensions*/
             "    <Format>%s</Format>\n"
-            "    <TileMatrixSetLink>\n"
-            "%s"
-            "    </TileMatrixSetLink>\n"
+            "%s" /*TileMatrixsetLinks*/
+            "%s" /*BoundinBoxes*/
             "    <ResourceURL format=\"%s\" resourceType=\"tile\""
             " template=\"%s/wmts/1.0.0/%s/default/%s{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.%s\"/>\n"
             "  </Layer>\n",caps,title,abstract,
-            tileset->name,dimensions,tileset->format->mime_type,tmsets,
+            tileset->name,dimensions,tileset->format->mime_type,tmsets,bboxes,
             tileset->format->mime_type,onlineresource,
             tileset->name, dimensionstemplate,tileset->format->extension);
       layer_index = apr_hash_next(layer_index);
@@ -212,8 +246,8 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       caps = apr_psprintf(ctx->pool,"%s"
             "  <TileMatrixSet>\n"
             "    <ows:Identifier>%s</ows:Identifier>\n"
-            "    <ows:SupportedCRS>urn:ogc:def:crs:EPSG::%s</ows:SupportedCRS>\n",
-            caps,grid->name,epsgnum);
+            "    <ows:SupportedCRS>%s</ows:SupportedCRS>\n",
+            caps,grid->name,geocache_grid_get_crs(ctx,grid));
       
       if(WellKnownScaleSet) {
          caps = apr_psprintf(ctx->pool,"%s"

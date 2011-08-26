@@ -25,6 +25,23 @@ geocache_grid* geocache_grid_create(apr_pool_t *pool) {
    return grid;
 }
 
+const char* geocache_grid_get_crs(geocache_context *ctx, geocache_grid *grid) {
+   char *epsgnum;
+
+   /*locate the number after epsg: in the grd srs*/
+   epsgnum = strchr(grid->srs,':');
+   if(!epsgnum) {
+      epsgnum = grid->srs;
+   } else {
+      epsgnum++;
+   }
+
+   return apr_psprintf(ctx->pool,"urn:ogc:def:crs:EPSG::%s",epsgnum);
+}
+
+const char* geocache_grid_get_srs(geocache_context *ctx, geocache_grid *grid) {
+   return (const char*)grid->srs;
+}
 void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits) {
    int i;
    double epsilon = 0.0000001;

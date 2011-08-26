@@ -717,6 +717,7 @@ struct geocache_grid_link {
     *
     * a request is valid if x is in [minTileX, maxTileX[ and y in [minTileY,maxTileY]
     */
+   double *restricted_extent;
    int **grid_limits;
 };
 
@@ -879,6 +880,9 @@ void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile)
 
 /* in grid.c */
 geocache_grid* geocache_grid_create(apr_pool_t *pool);
+
+const char* geocache_grid_get_crs(geocache_context *ctx, geocache_grid *grid);
+const char* geocache_grid_get_srs(geocache_context *ctx, geocache_grid *grid);
 
 /**
  * \brief compute x y value for given lon/lat (dx/dy) and given zoomlevel
